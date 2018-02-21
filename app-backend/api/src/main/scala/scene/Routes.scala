@@ -25,10 +25,16 @@ import com.azavea.rf.database.SceneDao
 import doobie.util.transactor.Transactor
 import com.azavea.rf.database.filter.Filterables._
 
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-
+import com.azavea.rf.datamodel._
+import com.azavea.rf.database.Filterable
+import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.datamodel._
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 trait SceneRoutes extends Authentication
     with Config

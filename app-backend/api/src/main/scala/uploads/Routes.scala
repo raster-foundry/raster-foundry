@@ -1,19 +1,28 @@
 package com.azavea.rf.api.uploads
 
-import com.azavea.rf.common.{AWSBatch, Authentication, CommonHandlers, UserErrorHandler, S3}
-import com.azavea.rf.database.tables.Uploads
-import com.azavea.rf.database.{ActionRunner, Database}
+import com.azavea.rf.common.{AWSBatch, Authentication, CommonHandlers, S3, UserErrorHandler}
 import com.azavea.rf.datamodel._
-
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-
 import java.net.URI
 import java.util.UUID
+
+import cats.effect.IO
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import doobie.util.transactor.Transactor
+import com.azavea.rf.datamodel._
+import cats.implicits._
+import com.azavea.rf.database.UploadDao
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
+import com.azavea.rf.database.filter.Filterables._
 
 
 trait UploadRoutes extends Authentication
@@ -21,9 +30,8 @@ trait UploadRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler
-    with AWSBatch
-    with ActionRunner {
-  implicit def database: Database
+    with AWSBatch {
+  implicit def xa: Transactor[IO]
 
   val uploadRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -48,8 +56,7 @@ trait UploadRoutes extends Authentication
     (withPagination & uploadQueryParams) {
       (page: PageRequest, queryParams: UploadQueryParameters) =>
       complete {
-        list[Upload](Uploads.listUploads(page.offset, page.limit, queryParams, user),
-          page.offset, page.limit)
+        UploadDao.query.filter(queryParams).page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -57,7 +64,7 @@ trait UploadRoutes extends Authentication
   def getUpload(uploadId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        readOne[Upload](Uploads.getUpload(uploadId, user))
+        UploadDao.query.filter(fr"id = ${uploadId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture
       }
     }
   }
@@ -86,7 +93,7 @@ trait UploadRoutes extends Authentication
           case _ => throw new IllegalStateException("Unsupported import type")
         }
 
-        onSuccess(write[Upload](Uploads.insertUpload(uploadToInsert, user))) { upload =>
+        onSuccess(UploadDao.insert(uploadToInsert, user).transact(xa).unsafeToFuture) { upload =>
           if (upload.uploadStatus == UploadStatus.Uploaded) {
             kickoffSceneImport(upload.id)
           }
@@ -99,34 +106,37 @@ trait UploadRoutes extends Authentication
   def updateUpload(uploadId: UUID): Route = authenticate { user =>
     entity(as[Upload]) { updateUpload =>
       authorize(user.isInRootOrSameOrganizationAs(updateUpload)) {
-        onSuccess(for {
-          u <- readOne[Upload](Uploads.getUpload(updateUpload.id, user))
-          c <- update(Uploads.updateUpload(updateUpload, uploadId, user))
-        } yield {
-          (u, c) match {
-            case (Some(upload), 1) =>
-              if (upload.uploadStatus != UploadStatus.Uploaded &&
-                updateUpload.uploadStatus == UploadStatus.Uploaded
-              ) kickoffSceneImport(upload.id)
-              StatusCodes.NoContent
-            case (_, 0) => StatusCodes.NotFound
-            case (_, 1) => StatusCodes.NoContent
-            case (_, _) => StatusCodes.NoContent
+        onSuccess {
+          val x = for {
+            u <- UploadDao.query.filter(fr"id = ${uploadId}").ownerFilter(user).selectOption
+            c <- UploadDao.update(updateUpload, uploadId, user)
+          } yield {
+            (u, c) match {
+              case (Some(upload), 1) =>
+                if (upload.uploadStatus != UploadStatus.Uploaded &&
+                  updateUpload.uploadStatus == UploadStatus.Uploaded
+                ) kickoffSceneImport(upload.id)
+                StatusCodes.NoContent
+              case (_, 0) => StatusCodes.NotFound
+              case (_, 1) => StatusCodes.NoContent
+              case (_, _) => StatusCodes.NoContent
+            }
           }
-        }){ s => complete(s) }
+          x.transact(xa).unsafeToFuture
+        }{ s => complete(s) }
       }
     }
   }
 
   def deleteUpload(uploadId: UUID): Route = authenticate { user =>
-    onSuccess(drop(Uploads.deleteUpload(uploadId, user))) {
+    onSuccess(UploadDao.query.filter(fr"id = ${uploadId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
 
   def getUploadCredentials(uploadId: UUID): Route = authenticate { user =>
     extractTokenHeader { jwt =>
-      onSuccess(readOne[Upload](Uploads.getUpload(uploadId, user))) {
+      onSuccess(UploadDao.query.filter(fr"id = ${uploadId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture) {
         case Some(_) => complete(CredentialsService.getCredentials(user, uploadId, jwt.toString))
         case None => complete(StatusCodes.NotFound)
       }

@@ -100,6 +100,13 @@ trait Filterables {
     List(dsParams.name.map({ name => fr"name = $name" }))
   }
 
+  implicit val uploadQueryParameters = Filterable[Any, UploadQueryParameters] {uploadParams: UploadQueryParameters =>
+    List(
+      uploadParams.datasource.map({ ds => fr"datasource = ${ds}"}),
+      uploadParams.organization.map({ organization => fr"organization_id = ${organization}"}),
+      uploadParams.uploadStatus.map({ uploadStatus => fr"upload_status = ${uploadStatus}"})
+    )
+  }
 
   implicit val exportQueryparamsFilter = Filterable[Any, ExportQueryParameters] { exportParams: ExportQueryParameters =>
     List(
