@@ -23,6 +23,11 @@ import java.util.UUID
 import cats.effect.IO
 import com.azavea.rf.database.SceneDao
 import doobie.util.transactor.Transactor
+import com.azavea.rf.database.filter.Filterables._
+
+
+import doobie._, doobie.implicits._
+import doobie.postgres._, doobie.postgres.implicits._
 
 
 trait SceneRoutes extends Authentication
@@ -84,7 +89,7 @@ trait SceneRoutes extends Authentication
   def createScene: Route = authenticate { user =>
     entity(as[Scene.Create]) { newScene =>
       authorize(user.isInRootOrSameOrganizationAs(newScene)) {
-        onSuccess(SceneDao.insertScene(newScene, user)) { scene =>
+        onSuccess(SceneDao.insertScene(newScene, user).transact(xa).unsafeToFuture) { scene =>
           if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested) kickoffSceneIngest(scene.id)
           complete((StatusCodes.Created, scene))
         }
@@ -95,7 +100,7 @@ trait SceneRoutes extends Authentication
   def getScene(sceneId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        SceneDao.query.selectOption(sceneId).filter(user)
+        SceneDao.query.filter(user).selectOption(sceneId).transact(xa).unsafeToFuture
       }
     }
   }
@@ -103,7 +108,7 @@ trait SceneRoutes extends Authentication
   def updateScene(sceneId: UUID): Route = authenticate { user =>
     entity(as[Scene]) { updatedScene =>
       authorize(user.isInRootOrSameOrganizationAs(updatedScene)) {
-        onSuccess(SceneDao.updateScene(updatedScene, sceneId, user)) { (result, kickoffIngest) =>
+        onSuccess(SceneDao.updateScene(updatedScene, sceneId, user).transact(xa).unsafeToFuture) { (result, kickoffIngest) =>
           if (kickoffIngest) kickoffSceneIngest(sceneId)
           completeSingleOrNotFound(result)
         }
@@ -118,7 +123,7 @@ trait SceneRoutes extends Authentication
   }
 
   def getDownloadUrl(sceneId: UUID): Route = authenticate { user =>
-    onSuccess(SceneDao.query.filter(user).selectOption(sceneId)) { scene =>
+    onSuccess(SceneDao.query.filter(user).selectOption(sceneId).transact(xa).unsafeToFuture) { scene =>
       complete {
         scene.getOrElse {
           throw new Exception("Scene does not exist or is not accessible by this user")
