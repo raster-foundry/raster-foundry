@@ -40,9 +40,9 @@ object OrganizationDao extends Dao[Organization] {
     )
   }
 
-  def createOrganization(newOrg: Organization.Create): Future[Organization] = ???
+  def createOrganization(newOrg: Organization.Create): ConnectionIO[Organization] = ???
 
-  def updateOrganization(org: Organization, id: UUID): Future[Int] = ???
+  def updateOrganization(org: Organization, id: UUID): ConnectionIO[Int] = ???
 
 }
 

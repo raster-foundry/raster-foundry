@@ -149,7 +149,7 @@ object ProjectDao extends Dao[Project] {
     updateStatusQuery.update.run
   }
 
-  def addScenesToProjects(sceneIds: NonEmptyList[UUID], projectId: UUID): ConnectionIO[Int] = {
+  def addScenesToProject(sceneIds: NonEmptyList[UUID], projectId: UUID): ConnectionIO[Int] = {
     // Filter duplicates
     //
 
@@ -180,7 +180,7 @@ object ProjectDao extends Dao[Project] {
         val inserts = "INSERT INTO scenes_to_projects (scene_id, project_id, accepted, scene_order, mosaic_definition) VALUES (?, ?, ?, ?, ?)"
         Update[stp](inserts).updateMany(stps)
       }
-      _ <- {(sql"""
+      _ <- {sql"""
                UPDATE projects
                SET extent = subquery.extent
                FROM
@@ -191,8 +191,7 @@ object ProjectDao extends Dao[Project] {
                   WHERE projects.id = ${projectId}
                   GROUP BY projects.id) AS subquery
                WHERE projects.id = ${projectId};
-              """).update.run
-      }
+              """.update.run}
       _ <- updateSceneIngestStatus(projectId)
     } yield sceneToProjectInserts
   }
