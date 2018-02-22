@@ -35,6 +35,7 @@ trait ExportRoutes extends Authentication
   with UserErrorHandler
   with LazyLogging
   with AWSBatch {
+
   implicit def xa: Transactor[IO]
 
   val exportRoutes: Route = handleExceptions(userExceptionHandler) {
@@ -86,9 +87,7 @@ trait ExportRoutes extends Authentication
   def getExportDefinition(exportId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        readOne[Export](Exports.getExport(exportId, user))
-          .map { _.map { Exports.getExportDefinition(_, user) } }
-          .map(_.sequence.map(_.flatten)).flatten
+        ExportDao.getExportDefinition(exportId, user).transact(xa).unsafeToFuture
       }
     }
   }
@@ -98,13 +97,13 @@ trait ExportRoutes extends Authentication
       authorize(user.isInRootOrSameOrganizationAs(newExport)) {
         newExport.exportOptions.as[ExportOptions] match {
           case Left(df:DecodingFailure) => complete((StatusCodes.BadRequest, s"JSON decoder exception: ${df.show}"))
-          case Right(x) =>
-            onSuccess(write(Exports.insertExport(newExport, user))) { export =>
-              val updateExport = user.updateDefaultExportSource(export)
-              kickoffProjectExport(updateExport.id)
-              update(Exports.updateExport(updateExport, updateExport.id, user))
-              complete((StatusCodes.Created, updateExport))
+          case Right(x) => {
+            val updatedExport = user.updateDefaultExportSource(newExport.toExport(user))
+            onSuccess(ExportDao.insert(updatedExport, user).transact(xa).unsafeToFuture) { export =>
+              kickoffProjectExport(export.id)
+              complete((StatusCodes.Created, export))
             }
+          }
         }
       }
     }
@@ -113,7 +112,7 @@ trait ExportRoutes extends Authentication
   def updateExport(exportId: UUID): Route = authenticate { user =>
     entity(as[Export]) { updateExport =>
       authorize(user.isInRootOrSameOrganizationAs(updateExport)) {
-        onSuccess(update(Exports.updateExport(updateExport, exportId, user))) {
+        onSuccess(ExportDao.update(updateExport, exportId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -121,7 +120,7 @@ trait ExportRoutes extends Authentication
   }
 
   def deleteExport(exportId: UUID): Route = authenticate { user =>
-    onSuccess(drop(Exports.deleteExport(exportId, user))) {
+    onSuccess(ExportDao.query.filter(fr"id = ${exportId}").delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
@@ -130,7 +129,7 @@ trait ExportRoutes extends Authentication
     rejectEmptyResponse {
       complete {
         (for {
-          export: Export <- OptionT(readOne[Export](Exports.getExportWithStatus(exportId, user, ExportStatus.Exported)))
+          export: Export <- OptionT(ExportDao.query.selectOption(exportId).transact(xa).unsafeToFuture)
           list: List[String] <- OptionT.fromOption[Future] { export.getExportOptions.map(_.getSignedUrls(): List[String]) }
         } yield list).value
       }
@@ -141,7 +140,10 @@ trait ExportRoutes extends Authentication
     rejectEmptyResponse {
       complete {
         (for {
-          export: Export <- OptionT(readOne[Export](Exports.getExportWithStatus(exportId, user, ExportStatus.Exported)))
+          export: Export <- OptionT(
+            // ExportDao.getWithStatus(exportId, user, ExportStatus.Exported).transact(xa).unsafeToFuture
+            ExportDao.query.selectOption(exportId).transact(xa).unsafeToFuture
+          )
           list: List[String] <- OptionT.fromOption[Future] { export.getExportOptions.map(_.getObjectKeys(): List[String]) }
         } yield list).value
       }
@@ -150,10 +152,9 @@ trait ExportRoutes extends Authentication
 
   def redirectRoute(exportId: UUID, objectKey: String): Route = authenticateWithParameter { user =>
     implicit def javaURLAsAkkaURI(url: URL): Uri = Uri(url.toString)
-    val x: Future[Option[Uri]] = for {
-      export <- readOne[Export](Exports.getExportWithStatus(exportId, user, ExportStatus.Exported))
-      uri <- OptionT.fromOption[Future] { export.flatMap(_.getExportOptions.map(_.getSignedUrl(objectKey): Uri)) }.value
-    } yield uri
+    val x: Future[Option[Uri]] =
+      OptionT(ExportDao.query.selectOption(exportId).transact(xa).unsafeToFuture)
+        .flatMap { y: Export => { OptionT.fromOption[Future]{y.getExportOptions.map(_.getSignedUrl(objectKey): Uri)}}}.value
 
     onComplete(x) { y =>
       y match {

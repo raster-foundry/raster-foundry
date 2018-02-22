@@ -55,5 +55,13 @@ object ExportDao extends Dao[Export] {
         "visibility", "toolrun_id", "export_options"
     )
   }
+
+  def insert(export: Export, user: User): ConnectionIO[Export] = ???
+
+  def update(export: Export, id: UUID, user: User): ConnectionIO[Int] = ???
+
+  def getWithStatus(id: UUID, user: User, status: ExportStatus): ConnectionIO[Export] = ???
+
+  def getExportDefinition(id: UUID, user: User): ConnectionIO[ExportDefinition] = ???
 }
 
