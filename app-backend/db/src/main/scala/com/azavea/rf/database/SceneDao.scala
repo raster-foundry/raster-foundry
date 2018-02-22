@@ -42,31 +42,8 @@ object SceneDao extends Dao[Scene] {
   def insert(newScene: Scene.Create, user: User): ConnectionIO[Scene.WithRelated] = ???
 }
 
-case class WithRelated(
-                        id: UUID,
-                        createdAt: Timestamp,
-                        createdBy: String,
-                        modifiedAt: Timestamp,
-                        modifiedBy: String,
-                        owner: String,
-                        organizationId: UUID,
-                        ingestSizeBytes: Int,
-                        visibility: Visibility,
-                        tags: List[String],
-                        datasource: UUID,
-                        sceneMetadata: Json,
-                        name: String,
-                        tileFootprint: Option[Projected[MultiPolygon]],
-                        dataFootprint: Option[Projected[MultiPolygon]],
-                        metadataFiles: List[String],
-                        images: Json,
-                        thumbnails: Json,
-                        ingestLocation: Option[String],
-                        filterFields: SceneFilterFields = new SceneFilterFields(),
-                        statusFields: SceneStatusFields
-                      )
 
-object SceneWithRelatedDao extends Dao[WithRelated] {
+object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   val tableName = "scenes"
 //  import com.azavea.rf.database.filter.Filterables._
 //  val y = SceneWithRelatedDao.query.filter(fr"scenes.id = '0017d408-5888-4ae1-b6f7-b7f09be32b9c'").select.transact(xa).unsafeRunSync
