@@ -10,6 +10,8 @@ export default (app) => {
             'ngInject';
             this.$log = $log;
             this.$http = $http;
+
+            this.thumbnailSize = '512';
         }
 
         sendHttpRequest(req) {
@@ -56,7 +58,7 @@ export default (app) => {
             let token = btoa(apiKey + ':');
             let req = {
                 'method': 'GET',
-                'url': link,
+                'url': link + '?width=' + this.thumbnailSize,
                 'headers': {
                     'Authorization': 'Basic ' + token,
                     'Content-Type': 'arraybuffer'
