@@ -1,6 +1,6 @@
 package com.azavea.rf.api.exports
 
-import akka.http.scaladsl.server.{Route, PathMatcher}
+import akka.http.scaladsl.server.{PathMatcher, Route}
 import akka.http.scaladsl.model.{StatusCodes, Uri}
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
@@ -9,18 +9,24 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
 import io.circe.syntax._
-
 import com.azavea.rf.common._
-import com.azavea.rf.database.tables.{Exports, Users}
-import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
-
 import java.net.URL
 import java.util.UUID
+
+import cats.effect.IO
+import com.azavea.rf.database.ExportDao
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Success
+import com.typesafe.scalalogging.LazyLogging
+import doobie.util.transactor.Transactor
+import com.azavea.rf.database.filter.Filterables._
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 trait ExportRoutes extends Authentication
   with ExportQueryParameterDirective
@@ -28,9 +34,8 @@ trait ExportRoutes extends Authentication
   with CommonHandlers
   with UserErrorHandler
   with LazyLogging
-  with AWSBatch
-  with ActionRunner {
-  implicit def database: Database
+  with AWSBatch {
+  implicit def xa: Transactor[IO]
 
   val exportRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -65,8 +70,7 @@ trait ExportRoutes extends Authentication
     (withPagination & exportQueryParams) {
       (page: PageRequest, queryParams: ExportQueryParameters) =>
         complete {
-          list[Export](Exports.listExports(page.offset, page.limit, queryParams, user),
-            page.offset, page.limit)
+          ExportDao.query.filter(queryParams).ownerFilter(user).page(page).transact(xa).unsafeToFuture()
         }
     }
   }
@@ -74,7 +78,7 @@ trait ExportRoutes extends Authentication
   def getExport(exportId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        readOne[Export](Exports.getExport(exportId, user))
+        ExportDao.query.ownerFilter(user).filter(fr"id = ${exportId}").selectOption.transact(xa).unsafeToFuture()
       }
     }
   }
