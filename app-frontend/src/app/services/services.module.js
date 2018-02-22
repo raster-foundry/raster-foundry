@@ -46,6 +46,7 @@ require('./scenes/datasource.service')(shared);
 require('./scenes/rasterFoundryRepository.service')(shared);
 require('./scenes/planetRepository.service')(shared);
 require('./scenes/cmrRepository.service')(shared);
+require('./scenes/datasourceLicense.service')(shared);
 
 // map
 require('./map/map.service')(shared);

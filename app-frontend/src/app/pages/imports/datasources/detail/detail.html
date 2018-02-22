@@ -12,6 +12,59 @@
       </div>
       <!-- Dashboard Header -->
       <div class="cta-row">
+        <rf-call-to-action-item title="License" class="panel panel-off-white">
+          <div class="cta-flex-text">
+            Set the usage license for <strong>{{$ctrl.datasource.name}}</strong> datasource.
+          </div>
+          <table class="table">
+            <col width="30%">
+            <col width="70%">
+            <thead>
+              <tr>
+                <th>License</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+          <tbody>
+          <tr>
+            <td>
+              <button
+                class="btn btn-text btn-licenses"
+                ng-if="!$ctrl.isSearchLicense"
+                ng-click="$ctrl.onSelectLicense()">
+                {{$ctrl.selectedLicense}}
+                <span>|<span class="icon-caret-down"></span></span>
+              </button>
+              <input
+                class="license-input"
+                ng-if="$ctrl.isSearchLicense"
+                ng-model="$ctrl.licenseInput"
+                ng-change="$ctrl.onLicenseInputChange()"
+                ng-blur="$ctrl.onLicenseFieldBlur()">
+              </input>
+              <div class="license-selections"
+                   ng-if="$ctrl.showMatchedLicenses">
+                   <div class="label-name-option"
+                        ng-attr-title="{{license.name}}"
+                        ng-repeat="license in $ctrl.matchedLicenses"
+                        ng-click="$ctrl.onLicenseClick(license)"
+                        ng-mouseover="$ctrl.onLicenseHover(true)"
+                        ng-mouseleave="$ctrl.onLicenseHover(false)">
+                        {{license.short_name}}
+                   </div>
+              </div>
+            </td>
+            <td>
+              <a target="_blank" ng-href="{{$ctrl.selectedLicenseUrl}}">
+                {{$ctrl.selectedLicenseUrlDisplay}}
+              </a>
+            </td>
+          </tr>
+          </tbody>
+          </table>
+        </rf-call-to-action-item>
+      </div>
+      <div class="cta-row">
         <rf-call-to-action-item title="Bands" class="panel panel-off-white">
           <div class="cta-flex-text">
             Add or change the names and numbers of bands for the <strong>{{$ctrl.datasource.name}}</strong> datasource.
