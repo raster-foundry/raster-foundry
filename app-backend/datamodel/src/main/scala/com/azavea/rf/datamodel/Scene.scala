@@ -202,4 +202,8 @@ object Scene {
         statusFields
       )
   }
+
+  object WithRelated {
+    def fromRecords(records: Seq[(Scene, Option[Image], Option[Band], Option[Thumbnail])]): Iterable[Scene.WithRelated] = ???
+  }
 }

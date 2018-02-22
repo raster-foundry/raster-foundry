@@ -46,5 +46,11 @@ object Filters {
     val f2 = mapTokenParams.projectId.map(projectId => fr"project_id = $projectId")
     List(f1, f2)
   }
+
+  def thumbnailQP(thumbnailParams: ThumbnailQueryParameters): List[Option[Fragment]] = {
+    List(
+      thumbnailParams.sceneId.map(sceneId => fr"scene_id = ${sceneId}")
+    )
+  }
 }
 

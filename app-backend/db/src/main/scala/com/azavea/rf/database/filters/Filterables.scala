@@ -135,6 +135,10 @@ trait Filterables {
     Filters.timestampQP(cips.timestampParams) ++
     Filters.imageQP(cips.imageParams)
   }
+
+  implicit val thumbnailParamsFilter = Filterable[Any, ThumbnailQueryParameters] { params: ThumbnailQueryParameters =>
+    Filters.thumbnailQP(params)
+  }
 }
 
 object Filterables extends Filterables
