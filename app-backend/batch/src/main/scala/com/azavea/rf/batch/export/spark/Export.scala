@@ -34,7 +34,7 @@ import geotrellis.spark.io.file._
 import geotrellis.spark.io.hadoop._
 import geotrellis.spark.io.s3._
 import geotrellis.spark.regrid._
-import geotrellis.spark.resample._
+import geotrellis.spark.resample.ZoomResample
 import geotrellis.spark.tiling._
 import geotrellis.vector.MultiPolygon
 import org.apache.hadoop.fs.Path
@@ -155,7 +155,7 @@ object Export extends SparkJob with Config with LazyLogging {
         if (requestedLayerId.zoom <= maxAvailableZoom)
           queryLayer(requestedQuery)
         else
-          queryLayer(maxQuery).resample(maxAvailableZoom, requestedLayerId.zoom)
+          ZoomResample(queryLayer(maxQuery), maxAvailableZoom, requestedLayerId.zoom)
 
       val md = query.metadata
 
