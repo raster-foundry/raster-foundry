@@ -3149,6 +3149,10 @@ gaze@^1.0.0:
   dependencies:
     globule "^1.0.0"
 
+gdal-js@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/gdal-js/-/gdal-js-1.1.0.tgz#78da0e024f98e122206e64ae4f627662acfee5ad"
+
 generate-function@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/generate-function/-/generate-function-2.0.0.tgz#6858fe7c0969b7d4e9093337647ac79f60dfbe74"
@@ -4414,6 +4418,12 @@ loader-utils@^1.0.2:
 loadjs@^3.5.2:
   version "3.5.2"
   resolved "https://registry.yarnpkg.com/loadjs/-/loadjs-3.5.2.tgz#add0e0e0322859840b362598f762c02f5539ce0b"
+
+loam@1.0.0-alpha.6:
+  version "1.0.0-alpha.6"
+  resolved "https://registry.yarnpkg.com/loam/-/loam-1.0.0-alpha.6.tgz#3dc37c62db465416234d9e4abbde51b33de351d7"
+  dependencies:
+    gdal-js "^1.1.0"
 
 lodash-es@^4.2.1:
   version "4.17.4"

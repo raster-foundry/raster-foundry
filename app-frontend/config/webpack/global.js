@@ -102,7 +102,9 @@ module.exports = function (_path) {
                 _assets: path.join(_path, 'src', 'assets'),
                 _scripts: path.join(_path, 'src', 'assets', 'js'),
                 _images: path.join(_path, 'src', 'assets', 'images'),
-                _font: path.join(_path, 'src', 'assets', 'font')
+                _font: path.join(_path, 'src', 'assets', 'font'),
+                loamLib: path.join(_path, 'node_modules', 'loam', 'lib'),
+                gdalJs: path.join(_path, 'node_modules', 'gdal-js')
             }
         },
 
@@ -172,6 +174,9 @@ module.exports = function (_path) {
                     'url-loader?name=assets/video/[name]_[hash].[ext]&limit=10000'
                 ]
             }, {
+                test: /(loam-worker\.js|gdal\.js|gdal\.wasm|gdal\.data)$/,
+                loader: 'file-loader?name=[name].[ext]'
+            }, {
                 test: require.resolve('angular-deferred-bootstrap'),
                 loaders: [
                     'expose?deferredBootstrapper'
@@ -206,6 +211,11 @@ module.exports = function (_path) {
                 test: require.resolve('mathjs'),
                 loaders: [
                     'expose?mathjs'
+                ]
+            }, {
+                test: require.resolve('loam'),
+                loaders: [
+                    'expose?loam'
                 ]
             }, {
                 test: /node_modules[\\\/]auth0-lock[\\\/].*\.js$/,
