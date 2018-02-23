@@ -174,7 +174,7 @@
         </div>
       </ng-container>
       <ng-container ng-show="$ctrl.shouldShowFileList()">
-        <p><strong>{{$ctrl.selectedFiles.length}}</strong> file(s) have been selected totalling <strong>{{$ctrl.getTotalFileSize() | byteFmt: 2}}</strong></p>
+        <p><strong>{{$ctrl.selectedFileDatasets.length}}</strong> file(s) have been selected totalling <strong>{{$ctrl.getTotalFileSize() | byteFmt: 2}}</strong></p>
         <div class="row align-right">
           <button class="btn"
                   ng-click="$ctrl.removeAllFiles()"
@@ -194,13 +194,34 @@
           </button>
         </div>
         <div class="list-group">
-          <div class="list-group-item" ng-repeat="file in $ctrl.selectedFiles">
+          <div class="list-group-item" ng-repeat="fileDS in $ctrl.selectedFileDatasets">
             <div class="list-group-overflow">
+              <span class="icon-warning color-warning"
+                ng-if="fileDS.bandCount < 0"
+                tooltips
+                tooltip-template="This file could not be inspected. Please verify that it is a valid GeoTiff."
+                tooltip-size="small"
+                tooltip-class="rf-tooltip" tooltip-side="top">
+              </span>
+              <span class="icon-warning color-warning"
+                ng-if="$ctrl.datasource.bands.length && fileDS.bandCount >= 0 && fileDS.bandCount !== $ctrl.datasource.bands.length"
+                tooltips
+                tooltip-template="This file has {{fileDS.bandCount}} band(s) but the Datasource you chose specifies {{$ctrl.datasource.bands.length}}."
+                tooltip-size="small"
+                tooltip-class="rf-tooltip" tooltip-side="top">
+              </span>
+              <span class="icon-warning color-warning"
+                ng-if="!$ctrl.datasource.bands.length"
+                tooltips
+                tooltip-template="The Datasource you chose has no bands specified. This file has {{fileDS.bandCount}} band(s)."
+                tooltip-size="small"
+                tooltip-class="rf-tooltip" tooltip-side="top">
+              </span>
               <span title="{{$ctrl.scene.name}}">
-                <strong class="color-dark">{{file.name}}</strong>
+                <strong class="color-dark">{{fileDS.file.name}}</strong>
               </span>
               <br>
-              <span>{{file.size | byteFmt: 2}}</span>
+              <span>{{fileDS.file.size | byteFmt: 2}}</span>
             </div>
             <div class="list-group-right">
               <button class="btn btn-square btn-secondary" ng-click="$ctrl.removeFileAtIndex($index)" >
