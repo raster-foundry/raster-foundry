@@ -297,6 +297,11 @@
     }
     .scene-metadata-scrollable {
       overflow: auto;
+      position: relative;
+
+      .selectize-dropdown {
+          width: calc(100% - 2em);
+      }
     }
   }
   .scene-preview-container {
