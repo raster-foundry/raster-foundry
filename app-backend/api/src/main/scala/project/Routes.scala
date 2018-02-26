@@ -1,19 +1,22 @@
 package com.azavea.rf.api.project
 
 import java.sql.Timestamp
-import java.util.{Date, UUID}
+import java.util.{Calendar, Date, UUID}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Success, Failure}
 
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{Uri, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling._
+import akka.http.scaladsl.server.Directives._
 import com.azavea.rf.api.scene._
 
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
+import com.azavea.rf.api.utils.Config
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.common.S3.{putObject, getSignedUrl}
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.database.query._
 import com.azavea.rf.database.tables._
@@ -27,6 +30,7 @@ import io.circe.Json
 import io.circe.generic.JsonCodec
 import io.circe.optics.JsonPath._
 import kamon.akka.http.KamonTraceDirectives
+import com.amazonaws.services.s3.AmazonS3URI
 
 import com.typesafe.scalalogging.LazyLogging
 
@@ -39,6 +43,7 @@ case class AnnotationFeatureCollectionCreate (
 )
 
 trait ProjectRoutes extends Authentication
+    with Config
     with QueryParametersCommon
     with SceneQueryParameterDirective
     with PaginationDirectives
@@ -109,6 +114,13 @@ trait ProjectRoutes extends Authentication
                 deleteProjectAnnotations(projectId)
               }
             }
+        } ~
+        pathPrefix("shapefile") {
+          get {
+            traceName("project-annotations-shapefile") {
+              exportAnnotationShapefile(projectId)
+            }
+          }
         } ~
         pathPrefix(JavaUUID) { annotationId =>
           pathEndOrSingleSlash {
@@ -307,6 +319,31 @@ trait ProjectRoutes extends Authentication
       val annotationsCreate = fc.features map { _.toAnnotationCreate }
       complete {
         Annotations.insertAnnotations(annotationsCreate, projectId, user)
+      }
+    }
+  }
+
+  def exportAnnotationShapefile(projectId: UUID): Route = authenticate { user =>
+    onComplete(
+      Annotations.listAllAnnotations(projectId, user)
+        .map { annotations =>
+          val zipfile = AnnotationShapefileService.annotationsToShapefile(annotations)
+          val key = new AmazonS3URI(user.getDefaultAnnotationShapefileSource(dataBucket))
+          val result = putObject(dataBucket, key.toString(), zipfile.toJava)
+
+          zipfile.delete(true)
+
+          val cal = Calendar.getInstance()
+          cal.add(Calendar.DAY_OF_YEAR, 1)
+          val tomorrow = cal.getTime()
+          result.setExpirationTime(tomorrow)
+          Uri(getSignedUrl(dataBucket, key.toString).toString)
+        }
+    ) {
+      uri =>
+      uri match {
+        case Success(u: Uri) => redirect(u, StatusCodes.TemporaryRedirect)
+        case _ => throw new Exception("Error generating annotation download URI")
       }
     }
   }

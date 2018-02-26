@@ -18,6 +18,8 @@ object Dependencies {
   val geotrellisVector        = "org.locationtech.geotrellis" %% "geotrellis-vector"                 % Version.geotrellis
   val geotrellisUtil          = "org.locationtech.geotrellis" %% "geotrellis-util"                   % Version.geotrellis
   val geotrellisShapefile     = "org.locationtech.geotrellis" %% "geotrellis-shapefile"              % Version.geotrellis
+  val geotrellisGeotools      = "org.locationtech.geotrellis" %% "geotrellis-geotools"               % Version.geotrellis
+  val geotools                = "org.geotools"                 % "gt-shapefile"                      % Version.geotools
   val spark                   = "org.apache.spark"            %% "spark-core"                        % Version.spark % "provided"
   val sparkCore               = "org.apache.spark"            %% "spark-core"                        % Version.spark
   val hadoopAws               = "org.apache.hadoop"            % "hadoop-aws"                        % Version.hadoop
