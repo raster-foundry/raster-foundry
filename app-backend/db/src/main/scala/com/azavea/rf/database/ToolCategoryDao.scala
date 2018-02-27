@@ -22,14 +22,12 @@ object ToolCategoryDao extends Dao[ToolCategory] {
   """ ++ tableF
 
   def insertToolCategory(category: ToolCategory, user: User): ConnectionIO[ToolCategory] = {
-    val id = UUID.randomUUID
-
-    (fr"INSERT INTO" ++ tableF ++ fr"""
+    (fr"""INSERT INTO tool_categories
         (slug_label, created_at, created_by, modified_at, modified_by, category)
-        VALUE
-        (${category.slugLabel}, NOW(), ${user.id}, now(), ${user.id}, ${category.category})
+        VALUES
+        (${category.slugLabel}, NOW(), ${user.id}, NOW(), ${user.id}, ${category.category})
     """).update.withUniqueGeneratedKeys[ToolCategory](
-      "slug_label", "created_at", "created_by", "modified_at", "modified_by", "category"
+      "slug_label", "created_at", "modified_at", "created_by", "modified_by", "category"
     )
   }
 

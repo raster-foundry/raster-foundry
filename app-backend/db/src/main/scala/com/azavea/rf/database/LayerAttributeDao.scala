@@ -55,14 +55,14 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
 
   def getAllAttributes(attributeName: String)(implicit xa: Transactor[IO]): Future[List[LayerAttribute]] = ???
 
-  def insertLayerAttribute(layerAttribute: LayerAttribute)(implicit xa: Transactor[IO]): Future[Int] = {
+  def insertLayerAttribute(layerAttribute: LayerAttribute)(implicit xa: Transactor[IO]): ConnectionIO[Int] = {
     val insertStatement = fr"INSERT into" ++ tableF ++
       fr"""
           (layer_name, zoom, name, value)
       VALUES
           (${layerAttribute.layerName}, ${layerAttribute.zoom}, ${layerAttribute.name}, ${layerAttribute.value})
       """
-    insertStatement.update.run.transact(xa).unsafeToFuture
+    insertStatement.update.run
   }
 
   def layerExists(layerId: LayerId)(implicit xa: Transactor[IO]): Future[Boolean] = {

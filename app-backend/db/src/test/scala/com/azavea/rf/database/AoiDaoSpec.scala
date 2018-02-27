@@ -17,22 +17,22 @@ import org.scalatest._
 
 class AoiDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
 
-//  test("insertion") {
-//    val testPoly = Projected(MultiPolygon(Polygon(Point(1, 0), Point(1, 1), Point(0, 1), Point(1, 0))), 3857)
-//
-//    val transaction = for {
-//      usr <- defaultUserQ
-//      org <- rootOrgQ
-//      aoiIn <- {
-//        val aoi = AOI.Create(org.id, testPoly, List(1,2).asJson, Some(usr.id)).toAOI(usr)
-//        AoiDao.createAOI(aoi,
-//      }
-//      aoiOut <- AoiDao.query.filter(fr"id = ${aoiIn.id}").selectQ.unique
-//    } yield aoiOut
-//
-//    val result = transaction.transact(xa).unsafeRunSync
-//    result.area shouldBe testPoly
-//  }
+  test("insertion") {
+    val testPoly = Projected(MultiPolygon(Polygon(Point(1, 0), Point(1, 1), Point(0, 1), Point(1, 0))), 3857)
+
+    val transaction = for {
+      usr <- defaultUserQ
+      org <- rootOrgQ
+      proj <- changeDetectionProjQ
+      aoiIn <- {
+        val aoi = AOI.Create(org.id, testPoly, List(1,2).asJson, Some(usr.id)).toAOI(usr)
+        AoiDao.createAOI(aoi, proj.id, usr)
+      }
+    } yield aoiIn
+
+    val result : AOI = transaction.transact(xa).unsafeRunSync
+    result.area shouldBe testPoly
+  }
 
   test("types") { check(AoiDao.selectF.query[AOI]) }
 }

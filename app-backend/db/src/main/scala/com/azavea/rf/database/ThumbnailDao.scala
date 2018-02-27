@@ -21,9 +21,9 @@ object ThumbnailDao extends Dao[Thumbnail] {
     FROM
   """ ++ tableF
 
-  def insert(thumbnail: Thumbnail, user: User): ConnectionIO[Thumbnail] = {
+  def insert(thumbnail: Thumbnail): ConnectionIO[Thumbnail] = {
     (fr"""
-      INSERT INTO ${tableName} (
+      INSERT INTO thumbnails (
         id, created_at, modified_at, organization_id, width_px,
         height_px, scene, url, thumbnail_size
       ) VALUES (
@@ -36,9 +36,9 @@ object ThumbnailDao extends Dao[Thumbnail] {
     )
   }
 
-  def update(thumbnail: Thumbnail, thumbnailId: UUID, user: User): ConnectionIO[Int] = {
+  def update(thumbnail: Thumbnail, thumbnailId: UUID): ConnectionIO[Int] = {
     (fr"""
-      UPDATE ${tableName} SET
+      UPDATE thumbnails SET
         modified_at = NOW(),
         width_px = ${thumbnail.widthPx},
         height_px = ${thumbnail.heightPx},

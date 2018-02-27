@@ -3,7 +3,7 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.database.meta.RFMeta._
-import com.azavea.rf.datamodel.User
+import com.azavea.rf.datamodel.{User, UserRole}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -77,7 +77,7 @@ object UserDao extends Dao[User] {
        INSERT INTO users
           (id, organization_id, role, created_at, modified_at, email_notifications)
        VALUES
-          (${newUser.id}, ${newUser.organizationId}, ${newUser.role}, ${now}, ${now}, false)
+          (${newUser.id}, ${newUser.organizationId}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false)
        """.update.withUniqueGeneratedKeys[User](
       "id", "organization_id", "role", "created_at", "modified_at", "dropbox_credential", "planet_credential", "email_notifications"
     )
