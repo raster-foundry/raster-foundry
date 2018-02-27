@@ -4,6 +4,8 @@ import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.database.util._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.tool.ast._
+import MapAlgebraAST._
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
@@ -14,6 +16,7 @@ import com.lonelyplanet.akka.http.extensions.PageRequest
 import scala.concurrent.Future
 import java.sql.Timestamp
 import java.util.{Date, UUID}
+import java.net.URI
 
 
 object ExportDao extends Dao[Export] {
@@ -64,19 +67,20 @@ object ExportDao extends Dao[Export] {
 
   def getExportDefinition(id: UUID, user: User): ConnectionIO[ExportDefinition] = ???
 
-  def getExportStyle(export: Export, exportOptions: ExportOptions, user): OptionT[Future, Either[SimpleInput, ASTInput]] = {
-    (export.projectId, export.toolRunId) match {
-      // Exporting a tool-run
-      case (_, Some(id)) => astInput(id, user).map(Right(_))
-      // Exporting a project
-      case (Some(id), None) => {
-        val work: Future[Option[Either[SimpleInput, ASTInput]]] =
-          simpleInput(pid, export, user, exportOptions).map(si => Some(Left(si)))
-        OptionT(work)
-      }
-      // Invalid
-      case _ => OptionT.none
-    }
+  def getExportStyle(export: Export, exportOptions: ExportOptions, user: User): OptionT[Future, Either[SimpleInput, ASTInput]] = {
+    // (export.projectId, export.toolRunId) match {
+    //   // Exporting a tool-run
+    //   case (_, Some(id)) => astInput(id, user).map(Right(_))
+    //   // Exporting a project
+    //   case (Some(id), None) => {
+    //     val work: Future[Option[Either[SimpleInput, ASTInput]]] =
+    //       simpleInput(pid, export, user, exportOptions).map(si => Some(Left(si)))
+    //     OptionT(work)
+    //   }
+    //   // Invalid
+    //   case _ => OptionT.none
+    // }
+    ???
   }
 
   /**
@@ -88,14 +92,15 @@ object ExportDao extends Dao[Export] {
   private def astInput(
     toolRunId: UUID,
     user: User
-  )(implicit database: DB): OptionT[Future, ASTInput] = {
-    for {
-      tRun   <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-      ast    <- OptionT.pure[Future](tRun.executionParameters.as[MapAlgebraAST].valueOr(throw _))
-      (scenes, projects) <- ingestLocs(ast, user)
-    } yield {
-      ASTInput(ast, scenes, projects)
-    }
+  ): OptionT[Future, ASTInput] ={
+    // for {
+    //   tRun   <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
+    //   ast    <- OptionT.pure[Future](tRun.executionParameters.as[MapAlgebraAST].valueOr(throw _))
+    //   (scenes, projects) <- ingestLocs(ast, user)
+    // } yield {
+    //   ASTInput(ast, scenes, projects)
+    // }
+    ???
   }
 
   private def simpleInput(
@@ -103,23 +108,30 @@ object ExportDao extends Dao[Export] {
     export: Export,
     user: User,
     exportOptions: ExportOptions
-  )(implicit database: DB): Future[SimpleInput] = {
-    getScenes(export, user)
-      .flatMap({ iterable =>
-        iterable.toList
-          .map({ scene =>
-            if(exportOptions.raw)
-              Future(ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), None))
-            else
-              ScenesToProjects.getColorCorrectParams(projectId, scene.id) map ({ ccp =>
-                ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), ccp.flatten)
-              })
-          })
-          .sequence
-          .map({ layers =>
-            SimpleInput(layers.toArray, exportOptions.mask.map(_.geom))
-          })
-      })
+  ): Future[SimpleInput] = {
+    val scenesWithRelated = SceneWithRelatedDao.query
+      .filter(fr"""
+        scenes.id IN (
+          SELECT scene_id
+          FROM scenes_to_projects
+          WHERE project_id = ${projectId}
+        )
+      """).list
+
+    scenesWithRelated.flatMap(scenes => {
+      val exportDef: = (for {
+        scene <- scenes
+        colorParams <- SceneToProjectDao.getColorCorrectParams(projectId, scene.id)
+        exportDef <- {
+          if (exportOptions.raw) {
+            ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), None)
+          } else {
+            ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), Some(colorParams))
+          }
+        }
+      } yield exportDef)
+      exportDef.map(layers => SimpleInput(layers.toArray, exportOptions.mask.map(_.geom)))
+    })
   }
 
   /** Obtain the ingest locations for all Scenes and Projects which are
@@ -133,30 +145,31 @@ object ExportDao extends Dao[Export] {
   private def ingestLocs(
     ast: MapAlgebraAST,
     user: User
-  )(implicit database: DB): OptionT[Future, (Map[UUID, String], Map[UUID, List[(UUID, String)]])] = {
+  ): OptionT[Future, (Map[UUID, String], Map[UUID, List[(UUID, String)]])] = {
 
-    val (scenes, projects): (Stream[SceneRaster], Stream[ProjectRaster]) =
-      ast.tileSources
-        .toStream
-        .foldLeft((Stream.empty[SceneRaster], Stream.empty[ProjectRaster]))({
-          case ((sacc, pacc), s: SceneRaster) => (s #:: sacc, pacc)
-          case ((sacc, pacc), p: ProjectRaster) => (sacc, p #:: pacc)
-          case ((sacc, pacc), _) => (sacc, pacc)
-        })
+    // val (scenes, projects): (Stream[SceneRaster], Stream[ProjectRaster]) =
+    //   ast.tileSources
+    //     .toStream
+    //     .foldLeft((Stream.empty[SceneRaster], Stream.empty[ProjectRaster]))({
+    //       case ((sacc, pacc), s: SceneRaster) => (s #:: sacc, pacc)
+    //       case ((sacc, pacc), p: ProjectRaster) => (sacc, p #:: pacc)
+    //       case ((sacc, pacc), _) => (sacc, pacc)
+    //     })
 
-    val scenesF: OptionT[Future, Map[UUID, String]] =
-      scenes.map({ case SceneRaster(_, sceneId, _, _, _) =>
-        OptionT(Scenes.getScene(sceneId, user)).flatMap(s =>
-          OptionT.fromOption(s.ingestLocation.map((s.id, _)))
-        )
-      }).sequence.map(_.toMap)
+    // val scenesF: OptionT[Future, Map[UUID, String]] =
+    //   scenes.map({ case SceneRaster(_, sceneId, _, _, _) =>
+    //     OptionT(Scenes.getScene(sceneId, user)).flatMap(s =>
+    //       OptionT.fromOption(s.ingestLocation.map((s.id, _)))
+    //     )
+    //   }).sequence.map(_.toMap)
 
-    val projectsF: OptionT[Future, Map[UUID, List[(UUID, String)]]] =
-      projects.map({ case ProjectRaster(id, projId, _, _, _) =>
-        OptionT(ScenesToProjects.allSceneIngestLocs(id)).map((id, _))
-      }).sequence.map(_.toMap)
+    // val projectsF: OptionT[Future, Map[UUID, List[(UUID, String)]]] =
+    //   projects.map({ case ProjectRaster(id, projId, _, _, _) =>
+    //     OptionT(ScenesToProjects.allSceneIngestLocs(id)).map((id, _))
+    //   }).sequence.map(_.toMap)
 
-    (scenesF, projectsF).mapN((_,_))
+    // (scenesF, projectsF).mapN((_,_))
+    ???
   }
 }
 
