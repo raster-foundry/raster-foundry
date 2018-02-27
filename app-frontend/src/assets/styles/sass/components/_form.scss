@@ -200,16 +200,15 @@ input[type=radio] {
     padding-right: 3em;
   }
 
-  .btn-link {
-    border: none;
+  .clear-search {
     position: absolute;
     right: 0;
-    padding: 0.7em;
-    color: $shade-light;
-    pointer-events: none;
-    i {
-        pointer-events: auto;
-    }
+    top: 0;
+    bottom: 0;
+    border: none;
+    background: none;
+    color: $shade-dark;
+    box-shadow: none;
   }
 
   .input-icon {

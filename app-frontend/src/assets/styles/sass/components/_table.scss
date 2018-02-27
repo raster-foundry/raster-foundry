@@ -18,6 +18,19 @@ table.table {
     vertical-align: bottom;
     font-weight: 600;
     color: $shade-dark;
+
+    a {
+      font-weight: 600;
+      color: $shade-dark;
+
+      &:hover {
+        color: darken($link-color, 10%);
+      }
+    }
+
+    i {
+      text-decoration: none !important;
+    }
   }
 
   th,
@@ -25,4 +38,8 @@ table.table {
     padding: 1rem;
     border-top: 1px solid $border-color-default;
   }
+}
+
+.table-sort {
+  display: block;
 }

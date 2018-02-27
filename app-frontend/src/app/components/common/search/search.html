@@ -9,7 +9,8 @@
          }"
          ng-disabled="$ctrl.disabled"
          ng-change="$ctrl.onSearch({value: $ctrl.searchText})"/>
-  <button type="button" class="btn btn-link" ng-click="$ctrl.clearSearch()">
+  <button type="button" class="btn btn-tiny clear-search" ng-click="$ctrl.clearSearch()">
+    <span class="sr-only">Clear search</span>
     <i class="icon-cross"></i>
   </button>
 </div>

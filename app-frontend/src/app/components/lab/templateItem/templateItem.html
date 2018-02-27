@@ -1,25 +1,20 @@
-<div class="panel-body">
-  <div class="row">
-    <div class="column noflex">
-      <img ng-if="$ctrl.templateData.screenshots[0]"
-       ng-src="{{$ctrl.templateData.screenshots[0].url}}"
-       class="rounded-img item-img">
-      <div ng-if="!$ctrl.templateData.screenshots.length"
-           class="rounded-img item-img image-placeholder"
-           style="height: 75px; width: 75px;">
-      </div><br>
-      <!-- Temporarily add execute btn until detail page designed -->
-      <a ui-sref="lab.startAnalysis({
-                    templateid: $ctrl.templateData.id, template: $ctrl.templateData
-                  })"
-         class="btn btn-primary btn-tiny btn-block">
-        Use Template
-      </a>
-    </div>
-    <div class="column">
-      <h4 class="panel-title">{{$ctrl.templateData.title}}</h4>
-      <p>{{$ctrl.templateData.description}}</p>
-      <strong>Created by: {{$ctrl.BUILDCONFIG.APP_NAME}}</strong>
-    </div>
+<!-- Once we enable ng-click, 
+     for viewing template detail 
+     page, we should remove the <a> -->
+<a class="TEMP-analysis-link"
+   ui-sref="lab.startAnalysis({
+    templateid: $ctrl.templateData.id, template: $ctrl.templateData
+  })">
+<h5 class="analysis-title">{{$ctrl.templateData.title}}</h5>
+<small class="analysis-author">Created by: {{$ctrl.BUILDCONFIG.APP_NAME}}</small>
+<div class="analysis-preview">
+  <img ng-if="$ctrl.templateData.screenshots[0]"
+   ng-src="{{$ctrl.templateData.screenshots[0].url}}">
+  <div ng-if="!$ctrl.templateData.screenshots.length"
+       class="image-placeholder">
   </div>
 </div>
+<p class="analysis-description">
+  {{$ctrl.templateData.description}}
+</p>
+</a>

@@ -1,17 +1,91 @@
-<div class="tabbed-list-header-container">
-  <ul class="tabbed-list-header app-width-container">
-    <li>
-      <a ui-sref="lab.browse.templates"
-         ui-sref-active="active">
-        Templates
-      </a>
-    </li>
-    <li>
-      <a ui-sref="lab.browse.analyses"
-         ui-sref-active="active">
-        My Analyses
-      </a>
-    </li>
-  </ul>
+<div class="library-hero"
+     ng-if="'lab.browse.templates' | isState">
+  <div class="container dashboard">
+    <h1 class="hero-title">
+      {{$ctrl.BUILDCONFIG.APP_NAME}} Analyses
+    </h1>
+    <p class="hero-subtitle">Templates to get you started analyzing your data</p>
+
+    <div class="library-featured">
+      <div class="featured-item">
+        <div class="item-body">
+          <div class="item-preview">
+            <img src="" alt="">
+          </div>
+          <div class="item-title">Burn extent</div>
+        </div>
+        <div class="item-description">Assess the damage of fire caused to the land</div>
+      </div>
+      <div class="featured-item"
+           ng-click="$ctrl.openTemplateCreateModal()">
+        <div class="item-body">
+          <div class="item-preview">
+            <img ng-attr-src="{{$ctrl.customAnalysis}}">
+          </div>
+          <div class="item-title">Create your own</div>
+        </div>
+        <div class="item-description">Build from scratch for your unique purposes</div>
+      </div>
+      <div class="featured-item">
+        <div class="item-body">
+          <div class="item-preview">
+            <img src="" alt="">
+          </div>
+          <div class="item-title">NDVI</div>
+        </div>
+        <div class="item-description">Detect the levels of vegetation in your data</div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<div class="navbar secondary-navbar">
+  <div class="container dashboard">
+    <div class="navbar-section primary">
+      <nav>
+        <a ui-sref="lab.browse.analyses"
+           ui-sref-active="active">
+          My Analyses
+        </a>
+        <a ui-sref="lab.browse.templates"
+           ui-sref-active="active">
+          Templates
+        </a>
+      </nav>
+    </div>
+    <div class="navbar-section secondary">
+      <button type="button"
+              class="btn btn-primary"
+              ng-click="$ctrl.openTemplateCreateModal()">
+        New analysis
+      </button>
+    </div>
+  </div>
+</div>
+
 <ui-view></ui-view>
+
+<div class="container dashboard">
+  <div class="library-help">
+    <div class="help-section-title">
+      <h2 class="help-title">Publicizing a template</h2>
+    </div>
+    <div class="help-section-body">
+      <div class="help-group">
+        <h5>Getting started with the lab</h5>
+        <p>Create analyses in the lab that fit your needs.</p>
+        <a href="#">Lab help guide</a>
+      </div>
+      <div class="help-group">
+        <h5>Building templates for others</h5>
+        <p>Templates are highly resuable and customizable. </p>
+        <a href="#">Building with other in mind</a>
+      </div>
+      <div class="help-group">
+        <h5>Submit for template for review</h5>
+        <p>Select a template to share publicly with people all over the world.</p>
+        <a href="#">Submission process</a>
+      </div>
+    </div>
+  </div>
+</div>

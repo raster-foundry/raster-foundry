@@ -45,6 +45,7 @@ class DiagramContainerController {
         return {
             analysis: state.lab.analysis,
             readonly: state.lab.readonly,
+            controls: state.lab.controls,
             selectingNode: state.lab.selectingNode,
             selectedNode: state.lab.selectedNode,
             reduxState: state

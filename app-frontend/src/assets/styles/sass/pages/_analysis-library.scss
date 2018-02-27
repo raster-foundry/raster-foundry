@@ -1,0 +1,157 @@
+.library-hero {
+  background-image: url(#{$image-path}/topography-pattern.svg);
+  background-size: 30rem;
+  background-color: $shade-normal;
+  padding: 4rem;
+  text-align: center;
+  color: $white;
+
+  .container {
+    display: block;
+  }
+
+  .hero-title {
+    color: $white;
+    margin: 0;
+  }
+
+  .hero-subtitle {
+    @extend .h4;
+    font-weight: 600;
+    color: lighten($text-base, 20%);
+    margin-top: 1rem;
+  }
+}
+
+.library-featured {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  margin-top: 10rem;
+}
+
+.featured-item {
+  width: 20rem;
+  margin: 0 4rem;
+  cursor: pointer;
+  
+  .item-body {
+    background-color: $shade-dark;
+    border-radius: $border-radius-base;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .item-preview {
+    width: 15rem;
+    height: 15rem;
+    margin-top: -7.5rem;
+    border-radius: 50%;
+    border: 3px solid darken($shade-dark, 5%);
+    background-color: darken($shade-dark, 5%);
+    overflow: hidden;
+    position: relative;
+    transition: .2s ease-in-out transform,
+                .2s ease-in-out box-shadow;
+
+    img {
+      width: 105%;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  .item-title {
+    @extend .h5;
+    color: $white;
+    font-weight: 600;
+  }
+
+  .item-description {
+    margin-top: 1rem;
+    color: $white;
+  }
+
+  &:hover {
+    .item-preview {
+      transform: translateY(-10px);
+      box-shadow: $focus-shadow;
+    }
+  }
+}
+
+.analysis-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.analysis-block {
+  display: flex;
+  flex-direction: column;
+  flex-basis: 31%;
+  margin-bottom: 2.5rem;
+
+  .TEMP-analysis-link {
+    text-decoration: none !important;
+  }
+
+  .analysis-title {
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .analysis-author {
+    margin: 0 0 5px;
+    color: $shade-normal;
+    display: block;
+  }
+
+  .analysis-preview {
+    height: 8rem;
+    overflow: hidden;
+    border-radius: $border-radius-base;
+    background-color: $off-white;
+  }
+
+  .analysis-description {
+    margin: 5px 0 0;
+    color: $text-base;
+    line-height: 1.4;
+  }
+}
+
+.library-help {
+  display: flex;
+  width: 100%;
+  border: 1px solid $border-color-default;
+  margin-bottom: 4rem;
+  border-radius: $border-radius-base;
+  overflow: hidden;
+
+  .help-section-title {
+    align-items: center;
+    display: flex;
+    padding: 4rem;
+
+    .help-title {
+      font-weight: 400;
+      margin: 0;
+    }
+  }
+
+  .help-section-body {
+    display: flex;
+    background: $off-white;
+    padding: 3rem;
+    border-left: 1px solid $border-color-default;
+  }
+
+  .help-group {
+    flex: 1;
+  }
+}
