@@ -18,10 +18,26 @@ import java.sql.Timestamp
 import java.util.{Date, UUID}
 import java.net.URI
 
+//object ExportLayerDefinitionDao extends Dao[ExportLayerDefinition] {
+//  val tableName = "exports"
+//  //
+//  //  implicit val c = Composite[ExportLayerDefinition]
+//
+//  val selectF = fr"""
+//    SELECT
+//      id, created_at, created_by, modified_at, modified_by, owner,
+//      organization_id, project_id, export_status, export_type,
+//      visibility, toolrun_id, export_options
+//    FROM
+//  """ ++ tableF
+//
+//}
 
 object ExportDao extends Dao[Export] {
 
   val tableName = "exports"
+  //
+  //  implicit val c = Composite[ExportLayerDefinition]
 
   val selectF = fr"""
     SELECT
@@ -109,29 +125,26 @@ object ExportDao extends Dao[Export] {
     user: User,
     exportOptions: ExportOptions
   ): Future[SimpleInput] = {
-    val scenesWithRelated = SceneWithRelatedDao.query
-      .filter(fr"""
-        scenes.id IN (
-          SELECT scene_id
-          FROM scenes_to_projects
-          WHERE project_id = ${projectId}
-        )
-      """).list
 
-    scenesWithRelated.flatMap(scenes => {
-      val exportDef: = (for {
-        scene <- scenes
-        colorParams <- SceneToProjectDao.getColorCorrectParams(projectId, scene.id)
-        exportDef <- {
-          if (exportOptions.raw) {
-            ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), None)
-          } else {
-            ExportLayerDefinition(scene.id, new URI(scene.ingestLocation.getOrElse("")), Some(colorParams))
-          }
-        }
-      } yield exportDef)
-      exportDef.map(layers => SimpleInput(layers.toArray, exportOptions.mask.map(_.geom)))
-    })
+    val exportLayerDefinitions = fr"""
+    SELECT scenes.id, scenes.ingest_location, stp.mosaic_definition
+    FROM
+      scenes
+    LEFT JOIN
+      scenes_to_projects stp
+    ON
+      stp.scene_id = scenes.id
+    WHERE
+      stp.project_id = ${projectId}
+  """.query[ExportLayerDefinition2].list
+
+    for {
+      elds <- exportLayerDefinitions
+      simpleInput <- {
+
+        SimpleInput(elds.toArray, exportOptions.mask.map(_.geom))
+      }
+    } yield simpleInput
   }
 
   /** Obtain the ingest locations for all Scenes and Projects which are
