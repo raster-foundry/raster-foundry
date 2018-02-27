@@ -5,6 +5,7 @@ import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.database.util._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._
+import cats.implicits._
 import MapAlgebraAST._
 
 import doobie._, doobie.implicits._
@@ -100,14 +101,20 @@ object ExportDao extends Dao[Export] {
     toolRunId: UUID,
     user: User
   ): ConnectionIO[ASTInput] ={
-    // for {
-    //   tRun   <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-    //   ast    <- OptionT.pure[Future](tRun.executionParameters.as[MapAlgebraAST].valueOr(throw _))
-    //   (scenes, projects) <- ingestLocs(ast, user)
-    // } yield {
-    //   ASTInput(ast, scenes, projects)
-    // }
-    ???
+    for {
+      toolRun <- ToolRunDao.query.filter(toolRunId).ownerFilter(user).select
+      ast <- {
+        val z = toolRun.executionParameters.as[MapAlgebraAST] match {
+          case Left(e) => throw e
+          case Right(thing) => thing
+        }
+        z.pure[ConnectionIO]
+      }
+      sceneLocs <- sceneIngestLocs(ast, user)
+      projectLocs <- projectIngestLocs(ast, user)
+    } yield {
+      ASTInput(ast, sceneLocs, projectLocs)
+    }
   }
 
   private def simpleInput(
@@ -151,10 +158,10 @@ object ExportDao extends Dao[Export] {
     * @note Projects are represented with a map from project ID to a map from scene ID to
     *       ingest location
     */
-  private def ingestLocs(
+  private def sceneIngestLocs(
     ast: MapAlgebraAST,
     user: User
-  ): OptionT[Future, (Map[UUID, String], Map[UUID, List[(UUID, String)]])] = {
+  ): ConnectionIO[Map[UUID, String]] = {
 
     val (scenes, projects): (Stream[SceneRaster], Stream[ProjectRaster]) =
        ast.tileSources
@@ -167,35 +174,49 @@ object ExportDao extends Dao[Export] {
 
     val sceneIds = scenes.map(_.id)
     val sceneIngestLocs = for {
-      scenes <- SceneDao.query.filter(Fragments.in(fr"id", sceneIds)).list
-    } yield scenes.map{ scene =>
-      scene.ingestLocation.map((scene.id, _))
-    }.toMap
+      scenes <- SceneDao.query.filter(sceneIds.toList.toNel.map(ids => Fragments.in(fr"id", ids))).list
+    } yield {
+      scenes.map{ scene =>
+        scene.ingestLocation.map((scene.id, _))
+      }.flatten.toMap
+    }
+    sceneIngestLocs
+  }
+
+  private def projectIngestLocs(ast: MapAlgebraAST, user: User): ConnectionIO[Map[UUID, List[(UUID, String)]]] = {
+
+    val (scenes, projects): (Stream[SceneRaster], Stream[ProjectRaster]) =
+      ast.tileSources
+        .toStream
+        .foldLeft((Stream.empty[SceneRaster], Stream.empty[ProjectRaster]))({
+          case ((sacc, pacc), s: SceneRaster) => (s #:: sacc, pacc)
+          case ((sacc, pacc), p: ProjectRaster) => (sacc, p #:: pacc)
+          case ((sacc, pacc), _) => (sacc, pacc)
+        })
 
     val projectIds = projects.map(_.id)
 
     val sceneProjectSelect = fr"""
-    SELECT stp.project_id, stp.scene_id, scenes.ingest_location
+    SELECT stp.project_id, array_agg(stp.scene_id), array_agg(scenes.ingest_location)
     FROM
       scenes_to_projects as stp
     LEFT JOIN
       scenes
     ON
       stp.scene_id = scenes.id
-    """ ++ Fragments.whereAnd(Fragments.in(fr"stp.project_id", projectIds))
+    """ ++ Fragments.whereAndOpt(projectIds.toList.toNel.map(ids => Fragments.in(fr"stp.project_id", ids))) ++ fr"GROUP BY stp.project_id"
     val projectSceneLocs = for {
-      stps <- sceneProjectSelect.query[(UUID, UUID, Option[String])].list
+      stps <- sceneProjectSelect.query[(UUID, List[UUID], List[String])].list
     } yield {
-      val optionStps = stps.map { case (pID, sID, loc) =>
-        loc.map((pID, sID, _))
-      }
-      optionStps.groupBy(_._1)
+      stps.map{ case (pID, sID, loc) =>
+        if (loc.isEmpty) {
+          None
+        } else {
+          Some((pID, sID zip loc))
+        }
+      }.flatten.toMap
     }
-
-    val m = for {
-      a <- sceneIngestLocs
-      p <- projectSceneLocs
-    } yield (a, p).mapN((_,_))
+    projectSceneLocs
   }
 }
 
