@@ -1,0 +1,28 @@
+.library-hero {
+  background-image: url(#{$image-path}/topography-pattern-light.svg);
+  background-color: $off-white;
+  color: $text-base;
+  border-bottom: 1px solid $shade-light;
+
+  .hero-title {
+    color: $text-base;
+  }
+}
+
+.featured-item {
+
+  .item-body {
+    background-color: $white;
+    border: 1px solid $shade-light;
+  }
+
+  .item-preview {
+    border: 1px solid $shade-light;
+    background-color: $off-white;
+  }
+
+  .item-title,
+  .item-description {
+    color: $text-base;
+  }
+}

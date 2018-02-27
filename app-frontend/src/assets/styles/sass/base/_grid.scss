@@ -79,6 +79,18 @@
 .column.spacer {
   width: 5rem;
   flex: none;
+
+  &.bordered {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+
+    &:after {
+      content: '';
+      width: 1px;
+      background-color: $gray-lightest;
+    }
+  }
 }
 
 .column.noflex {

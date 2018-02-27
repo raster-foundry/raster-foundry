@@ -1,26 +1,35 @@
-<div class="container dashboard app-width-container">
+<div class="container dashboard">
   <div class="main">
     <div class="row content stack-sm">
       <div class="column-3">
+          <label class="h5" for="search-input">Search analyses templates</label>
           <rf-search on-search="$ctrl.search(value)"
                      placeholder="Search for templates"
                      auto-focus="true">
           </rf-search>
+          <h5>Categories</h5>
+          <ul class="list-unstyled">
+            <li><a href="#" class="link-light">Agriculture</a></li>
+            <li><a href="#" class="link-light">Aggregates</a></li>
+            <li><a href="#" class="link-light">Energy</a></li>
+            <li><a href="#" class="link-light">Environment</a></li>
+            <li><a href="#" class="link-light">Infrastructure</a></li>
+            <li><a href="#" class="link-light">Forestry</a></li>
+          </ul>
           <div class="aside aside-filters">
             <section>
-              <h5>Create a new template</h5>
+              <h5>Not seeing the analysis you need?</h5>
               <p>
-                Build a custom template that you can use to execute powerful analyses.
+                Build the analysis of your dreams in the lab.
               </p>
-              <button type="button"
-                      class="btn btn-default btn-block"
-                      ng-click="$ctrl.openTemplateCreateModal()">
-                New template
-              </button>
+              <a ng-click="$ctrl.openTemplateCreateModal()">
+                Go to the lab now.
+              </a>
             </section>
           </div>
       </div>
-      <div class="column-9">
+      <div class="column spacer bordered"></div>
+      <div class="column-8">
 
         <!-- Loading indicator -->
         <div ng-show="$ctrl.loading">
@@ -43,12 +52,14 @@
         </div>
 
         <!-- Temporarily removed ng-click until after demo done and detail page designed. -->
-        <rf-template-item
-            class="panel panel-off-white"
-            ng-repeat="templateData in $ctrl.templateList | filter: {title: $ctrl.searchString}"
-            template-data="templateData"
-            ng-click=""
-        ></rf-template-item>
+        <div class="analysis-grid">
+          <rf-template-item
+              class="analysis-block"
+              ng-repeat="templateData in $ctrl.templateList | filter: {title: $ctrl.searchString}"
+              template-data="templateData"
+              ng-click=""
+          ></rf-template-item>
+        </div>
 
         <!-- Pagination -->
         <div class="list-group text-center"

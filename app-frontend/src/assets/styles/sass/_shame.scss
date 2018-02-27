@@ -2892,34 +2892,6 @@ rf-reclassify-table {
   margin: 0 auto !important;
 }
 
-.paginated-results-table {
-  $cell-padding: 0.75em 1.5em;
-  width: 100%;
-  border-radius: $border-radius-base;
-  tr:not(.header) {
-    border: 1px solid $gray-lightest;
-    background: $off-white;
-  }
-  th {
-    text-align: left;
-    padding: $cell-padding;
-    font-weight: bold;
-    a {
-      font-weight: bold;
-    }
-  }
-  td {
-    padding: $cell-padding;
-  }
-  .date-column {
-      width: 13em;
-  }
-  .action-column {
-      width: 0;
-      padding: 1em 0;
-  }
-}
-
 .pagination-count {
   margin-bottom: 1em;
 }
