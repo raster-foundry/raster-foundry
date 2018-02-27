@@ -49,6 +49,10 @@ object Dao {
     def filter[M >: Model, T](thing: T)(implicit filterable: Filterable[M, T]): QueryBuilder[Model] =
       this.copy(filters = filters ++ filterable.toFilters(thing))
 
+    def filter[M >: Model](id: UUID)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+      this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
+    }
+
     def ownerFilterF(user: User): Option[Fragment] = {
       if (user.isInRootOrganization) {
         None

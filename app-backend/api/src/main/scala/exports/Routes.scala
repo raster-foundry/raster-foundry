@@ -79,7 +79,7 @@ trait ExportRoutes extends Authentication
   def getExport(exportId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        ExportDao.query.ownerFilter(user).filter(fr"id = ${exportId}").selectOption.transact(xa).unsafeToFuture()
+        ExportDao.query.ownerFilter(user).filter(exportId).selectOption.transact(xa).unsafeToFuture()
       }
     }
   }
@@ -120,7 +120,7 @@ trait ExportRoutes extends Authentication
   }
 
   def deleteExport(exportId: UUID): Route = authenticate { user =>
-    onSuccess(ExportDao.query.filter(fr"id = ${exportId}").delete.transact(xa).unsafeToFuture) {
+    onSuccess(ExportDao.query.filter(exportId).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
@@ -140,10 +140,7 @@ trait ExportRoutes extends Authentication
     rejectEmptyResponse {
       complete {
         (for {
-          export: Export <- OptionT(
-            // ExportDao.getWithStatus(exportId, user, ExportStatus.Exported).transact(xa).unsafeToFuture
-            ExportDao.query.selectOption(exportId).transact(xa).unsafeToFuture
-          )
+          export: Export <- OptionT(ExportDao.query.selectOption(exportId).transact(xa).unsafeToFuture)
           list: List[String] <- OptionT.fromOption[Future] { export.getExportOptions.map(_.getObjectKeys(): List[String]) }
         } yield list).value
       }
