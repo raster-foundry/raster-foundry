@@ -217,9 +217,9 @@ The scenarios above make’s a few things very clear:
 
 While you can do almost anything with RBAC, the risk of ‘role-explosion’ is very real and if RBAC is implemented so as to emulate ACL functionality, it is unavoidable. In addition, the administrative overhead of RBAC would be significant. It would most-likely be necessary to present an interface to users that largely obscures the underlying access-control system.
 
-On the other hand implementing an access-control system using ABAC would allow the access-control system to more closely parallel what is presented to users.
+On the other hand implementing an access-control system using ACLs would allow the access-control system to more closely parallel what is presented to users.
 
-I propose that ABAC is the approach that we take.
+I propose that an ACL-centric is the approach that we take.
 
 ### Implementation Details
 
