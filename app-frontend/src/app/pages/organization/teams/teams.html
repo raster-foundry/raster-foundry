@@ -1,0 +1,35 @@
+<div class="admin-users-content container column-stretch dashboard">
+  <div class="admin-users-actions">
+    <input type="text" class="form-control user-search" placeholder="Search for teams">
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.newTeamModal()">
+      New Team
+    </button>
+  </div>
+  <table class="admin-table admin-team-table">
+    <tbody>
+      <tr ng-repeat="team in $ctrl.teams track by team.id">
+        <td class="name">
+          Team Name
+        </td>
+        <td class="users">
+          <a class="users-more" title="See all users">...</a>
+          <div class="user-avatar"
+               ng-repeat="user in team.users track by user"
+               ng-attr-title="{{user}}"
+          ></div>
+        </td>
+        <td class="teams">
+          20 Members
+        </td>
+        <td class="actions">
+          <rf-dropdown
+              data-options="team.options"
+          >
+            <span class="icon-caret-down"></span>
+          </rf-dropdown>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
