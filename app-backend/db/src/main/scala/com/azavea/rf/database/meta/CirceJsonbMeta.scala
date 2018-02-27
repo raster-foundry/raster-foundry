@@ -11,8 +11,10 @@ import cats.effect.IO
 import cats.syntax.either._
 import com.azavea.rf.datamodel.ColorCorrect
 import io.circe._
+import io.circe.syntax._
 import org.postgresql.util.PGobject
 import com.azavea.rf.datamodel.ColorCorrect._
+import java.net.URI
 
 trait CirceJsonbMeta {
   implicit val jsonbMeta: Meta[Json] =
@@ -27,14 +29,19 @@ trait CirceJsonbMeta {
   )
 
   implicit val colorCorrectionMeta: Meta[ColorCorrect.Params] = {
-    Meta.other[PGobject]("jsonb").xmap[ColorCorrect.Params](
-      a => io.circe.parser.parse(a.getValue).leftMap[ColorCorrect.Params](e => throw e).merge,
-      a => {
-        val o = new PGobject
-        o.setType("jsonb")
-        o.setValue(a.asJson.noSpaces)
-        o
-      }
+    Meta.other[Json]("jsonb").xmap[ColorCorrect.Params](
+      a => a.as[ColorCorrect.Params] match {
+        case Right(p) => p
+        case Left(e) => throw e
+      },
+      a => a.asJson
+    )
+  }
+
+  implicit val uriMeta: Meta[URI] = {
+    Meta.other[String]("text").xmap[URI](
+      a => new URI(a),
+      a => a.toString
     )
   }
 }

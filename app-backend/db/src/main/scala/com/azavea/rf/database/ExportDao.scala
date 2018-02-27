@@ -35,6 +35,8 @@ import java.net.URI
 
 object ExportDao extends Dao[Export] {
 
+  Meta[ColorCorrect.Params]
+
   val tableName = "exports"
   //
   //  implicit val c = Composite[ExportLayerDefinition]
@@ -136,7 +138,9 @@ object ExportDao extends Dao[Export] {
       stp.scene_id = scenes.id
     WHERE
       stp.project_id = ${projectId}
-  """.query[ExportLayerDefinition2].list
+  """.query[ExportLayerDefinition].list
+
+
 
     for {
       elds <- exportLayerDefinitions
