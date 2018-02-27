@@ -10,6 +10,9 @@ export function fetchStatistics(nodeId) {
         const state = getState();
         let lastUpdate = state.lab.lastAnalysisRefresh;
         let cachedStats = state.lab.statistics.get(nodeId);
+        // TODO update this when we allow nodes to be in multiple analyses correctly
+        let node = state.lab.nodes.get(nodeId);
+
         if (!cachedStats ||
             cachedStats.error ||
             cachedStats.data && lastUpdate > cachedStats.fetched
@@ -19,7 +22,7 @@ export function fetchStatistics(nodeId) {
                 meta: {nodeId},
                 payload: authedRequest({
                     method: 'get',
-                    url: `${state.api.tileUrl}/tools/${state.lab.analysis.id}` +
+                    url: `${state.api.tileUrl}/analysis/${node.analysisId}` +
                         `/statistics/?node=${nodeId}&voidCache=true&token=${state.api.apiToken}`
                 }, state)
             });

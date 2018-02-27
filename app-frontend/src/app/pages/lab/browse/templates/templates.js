@@ -2,9 +2,12 @@
 
 class LabBrowseTemplatesController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $state, analysisService, modalService
+        $log, $scope, $state,
+        templateService,
+        analysisService, modalService
     ) {
         'ngInject';
+        this.templateService = templateService;
         this.analysisService = analysisService;
         this.$scope = $scope;
         this.$state = $state;
@@ -35,9 +38,9 @@ class LabBrowseTemplatesController {
 
     fetchTemplateList(page = 1) {
         this.loadingTemplates = true;
-        this.analysisService.fetchTemplates(
+        this.templateService.fetchTemplates(
             {
-                pageSize: 10,
+                pageSize: 12,
                 page: page - 1,
                 sort: 'createdAt,desc'
             }

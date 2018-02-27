@@ -1,0 +1,144 @@
+<div class="sidebar-overlay node" ng-show="$ctrl.loadingProjects">
+  <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.loadingProjects}"></span>
+</div>
+<div class="sidebar-overlay node" ng-show="$ctrl.createNodeSelection">
+  <div class="overlay-content">
+    <div>Click the diagram where you want to place the node(s)</div>
+    <button type="button" class="btn btn-light" ng-click="$ctrl.cancelCreatingNode()">Cancel</button>
+  </div>
+</div>
+<div class="lab-sidebar-container" ng-if="$ctrl.createNode">
+  <div class="lab-sidebar-header">
+    <button class="btn btn-square btn-tiny btn-transparent"
+            ng-click="$ctrl.startCreatingNode('select')" ng-class="{'btn-spacer': $ctrl.createNode === 'select'}">
+      <span class="icon-arrow-left"></span>
+    </button>
+    <div class="lab-sidebar-header-text">
+      <h4 ng-if="$ctrl.createNode === 'select'">
+        Choose a node type to create
+      </h4>
+      <span ng-if="$ctrl.createNode === 'project'">
+        Source Data
+      </span>
+      <span ng-if="$ctrl.createNode === 'function'">
+        Functions / Operators
+      </span>
+      <span ng-if="$ctrl.createNode === 'formula'">
+        MAML expression
+      </span>
+      <span ng-if="$ctrl.createNode === 'template'">
+        Templates
+      </span>
+    </div>
+    <button class="btn btn-square btn-tiny btn-transparent"
+            ng-click="$ctrl.stopCreatingNode()">
+      <span class="icon-cross"></span>
+    </button>
+  </div>
+  <div class="lab-sidebar-selections" ng-if="$ctrl.createNode === 'select'">
+    <button class="btn btn-ghost lab-selection"
+            ng-click="$ctrl.startCreatingNode('project')">
+      <h5>Input</h5>
+      <p>Input nodes allow you to select a project and band that calculations are then run on</p>
+    </button>
+    <button class="btn btn-ghost lab-selection"
+            ng-click="$ctrl.startCreatingNode('function')">
+      <h5>Function</h5>
+      <p>Function nodes are linked with other input or function nodes to compute a result</p>
+    </button>
+    <button class="btn btn-ghost lab-selection"
+            ng-click="$ctrl.startCreatingNode('formula')">
+      <h5>Formula</h5>
+      <p>Create a set of nodes from a MAML formula</p>
+    </button>
+    <button class="btn btn-ghost lab-selection"
+            ng-click="$ctrl.startCreatingNode('template')">
+      <h5>Template</h5>
+      <p>Import from a published template</p>
+    </button>
+  </div>
+  <div ng-if-start="$ctrl.createNode === 'function'">
+    <div class="lab-sidebar-search">
+      <input type="text" placeholder="Search functions and operators" class="form-control"
+             ng-model="$ctrl.functionSearch">
+    </div>
+  </div>
+  <div class="sidebar-scrollable" ng-if-end>
+    <div class="lab-node-item" ng-repeat="fn in $ctrl.functionNodes">
+      <span class="lab-node-name">{{fn.op}}</span>
+      <span class="lab-node-more">{{fn.label}}</span>
+      <button class="btn btn-square btn-primary"
+              ng-click="$ctrl.addNode(fn)">
+        <span class="icon-plus"></span>
+      </button>
+    </div>
+  </div>
+  <div class="lab-sidebar-section" ng-if-start="$ctrl.createNode === 'formula'">
+    <div class="lab-maml-container">
+      <h6>Enter MAML expression</h6>
+      <textarea class="form-control"
+                rows="4"
+                ng-model="$ctrl.mamlExpression"
+                placeholder="Enter an algebraic expression that represents the operation that should be computed"
+                ng-model-options="{ debounce: 500 }"></textarea>
+      <button class="btn"
+              ng-class="{'btn-danger': $ctrl.mamlError,
+                         'btn-primary': !$ctrl.mamlError}"
+              ng-click="$ctrl.addFormulaNode()"
+              ng-disabled="$ctrl.mamlError || !$ctrl.maml">
+        <span ng-show="!$ctrl.mamlError">Add formula</span>
+        <span class="maml-error" ng-attr-title="{{$ctrl.mamlError}}">
+          {{$ctrl.mamlError}}
+        </span>
+      </button>
+    </div>
+    <p>Raster Source: Denoted by an unreserved text symbol: "NIR or SWIR"</p>
+    <p>Constant: Denoted by a symbol preceeded by an underscor: "_G or _NF"</p>
+    <p>Constant with a default: Denoted as above, but with an added assignment, wrapped in parenthesis: "(_G=1) or (_NF=0.167)"</p>
+    <p>Operator/Function: Any of the reserved symbols below</p>
+
+  </div>
+  <div>
+    <div class="lab-sidebar-search">
+      <input type="text" placeholder="Search allowed functions/operators" class="form-control"
+             ng-model="$ctrl.functionSearch">
+    </div>
+  </div>
+  <div class="sidebar-scrollable fixed-height" ng-if-end>
+    <div class="lab-node-item" ng-repeat="fn in $ctrl.functionNodes">
+      <span class="lab-node-name">{{fn.op}}</span>
+      <span class="lab-node-more">{{fn.label}}</span>
+    </div>
+  </div>
+  <div ng-if-start="$ctrl.createNode === 'project' || $ctrl.createNode === 'template'">
+    <div class="lab-sidebar-search">
+      <input type="text" ng-attr-placeholder="Search {{$ctrl.createNode}}s" class="form-control"
+             ng-model="$ctrl.searchText" ng-model-options="{debounce: 1000}">
+    </div>
+  </div>
+  <div class="sidebar-scrollable" ng-if-end>
+    <div class="lab-node-item" ng-repeat="item in $ctrl.itemList">
+      <span class="node-name">{{item.name}}</span>
+      <button class="btn btn-square btn-primary"
+              ng-click="$ctrl.addNode(item)">
+        <span class="icon-plus"></span>
+      </button>
+    </div>
+  </div>
+  <div class="sidebar-static lab-static-footer" ng-if="$ctrl.shouldShowPagination()">
+    <div class="list-group text-center">
+      <ul uib-pagination
+          previous-text="&lsaquo;"
+          next-text="&rsaquo;"
+          items-per-page="$ctrl.pagination.pageSize"
+          total-items="$ctrl.pagination.count"
+          ng-model="$ctrl.pagination.currentPage"
+          max-size="4"
+          rotate="true"
+          boundary-link-numbers="true"
+          force-ellipses="true"
+          ng-change="$ctrl.currentPageLoader($ctrl.pagination.currentPage)">
+      </ul>
+    </div>
+  </div>
+</div>

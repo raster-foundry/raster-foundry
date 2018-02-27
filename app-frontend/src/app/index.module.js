@@ -53,8 +53,9 @@ const App = angular.module(
         require('./pages/lab/template/template.js').name,
 
         require('./pages/lab/navbar/navbar.module.js').name,
+        require('./pages/lab/workspace/workspace.js').name,
         require('./pages/lab/browse/browse.js').name,
-        require('./pages/lab/browse/analyses/analyses.js').name,
+        require('./pages/lab/browse/workspaces/workspaces.js').name,
         require('./pages/lab/browse/templates/templates.js').name,
 
         require('./pages/projects/projects.module.js').name,

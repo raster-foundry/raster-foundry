@@ -1,6 +1,6 @@
 /* global L */
 import { FrameView } from '../../../components/map/labMap/frame.module.js';
-import LabActions from '_redux/actions/lab-actions';
+import AnalysisActions from '_redux/actions/analysis-actions';
 import NodeActions from '_redux/actions/node-actions';
 
 class LabAnalysisController {
@@ -21,7 +21,7 @@ class LabAnalysisController {
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis,
-            Object.assign({}, LabActions, NodeActions)
+            Object.assign({}, AnalysisActions, NodeActions)
         )(this);
         $scope.$on('$destroy', unsubscribe);
 
@@ -77,7 +77,7 @@ class LabAnalysisController {
         if (this.analysisId && !analysis) {
             this.fetchAnalysis(this.analysisId);
         } else if (analysis) {
-            this.loadAnalysis(analysis);
+            this.loadAnalysis(analysis, {readonly: false, controls: true});
         } else if (!this.analysisId) {
             this.$state.go('lab.browse.analyses');
         }

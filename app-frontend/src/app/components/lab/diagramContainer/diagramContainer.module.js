@@ -1,11 +1,12 @@
 /* global joint */
 import angular from 'angular';
 import _ from 'lodash';
+import {Map} from 'immutable';
 import diagramContainerTpl from './diagramContainer.html';
 
-import LabActions from '_redux/actions/lab-actions';
+import WorkspaceActions from '_redux/actions/workspace-actions';
 import NodeActions from '_redux/actions/node-actions';
-import { nodesFromAst, getNodeDefinition } from '_redux/node-utils';
+import { nodesFromAnalysis, astFromAnalysisNodes, getNodeDefinition } from '_redux/node-utils';
 
 const DiagramContainerComponent = {
     templateUrl: diagramContainerTpl,
@@ -34,19 +35,42 @@ class DiagramContainerController {
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis,
-            Object.assign({}, LabActions, NodeActions)
+            Object.assign({}, WorkspaceActions, NodeActions)
         )(this);
         $scope.$on('$destroy', unsubscribe);
 
         this.debouncedUpdateNode = _.debounce(this.updateNode, 300);
     }
 
+    $postLink() {
+        this.$scope.$watch('$ctrl.workspace', (workspace) => {
+            // check if analyses have been added or deleted
+            if (workspace && this.analyses) {
+                const newAnalyses = workspace.analyses;
+                const comparator = (a1, a2) => a1.id === a2.id;
+                const added = _.differenceWith(newAnalyses, this.analyses, comparator);
+                const removed = _.differenceWith(this.analyses, newAnalyses, comparator);
+
+                if (removed.length) {
+                    this.removeAnalyses(removed);
+                }
+
+                if (added.length) {
+                    this.addAnalyses(added);
+                }
+            }
+        });
+    }
+
     mapStateToThis(state) {
         return {
-            analysis: state.lab.analysis,
+            workspace: state.lab.workspace,
+            extractNodes: state.lab.nodes,
             readonly: state.lab.readonly,
+            controls: state.lab.controls,
             selectingNode: state.lab.selectingNode,
             selectedNode: state.lab.selectedNode,
+            createNodeSelection: state.lab.createNodeSelection,
             reduxState: state
         };
     }
@@ -66,11 +90,11 @@ class DiagramContainerController {
 
         this.contextInitialized = true;
 
-        const analysisWatch = this.$scope.$watch('$ctrl.analysis', (analysis) => {
-            if (analysis && !this.shapes) {
+        const workspaceWatch = this.$scope.$watch('$ctrl.workspace', (workspace) => {
+            if (workspace && !this.shapes) {
                 this.initDiagram();
             } else {
-                analysisWatch();
+                workspaceWatch();
             }
         });
     }
@@ -81,18 +105,23 @@ class DiagramContainerController {
         }
     }
 
-
     initDiagram() {
-        let definition = this.analysis.executionParameters ?
-            this.analysis.executionParameters :
-            this.analysis;
+        let extract = this.workspace.analyses.map((analysis) => {
+            return this.labUtils.extractShapes(
+                analysis,
+                this.cellDimensions
+            );
+        }).reduce((a, b) => ({
+            shapes: a.shapes.concat(b.shapes),
+            nodes: a.nodes.merge(b.nodes)
+        }), {shapes: [], nodes: new Map()});
 
-        let extract = this.labUtils.extractShapes(
-            definition,
-            this.cellDimensions
-        );
-        let labNodes = nodesFromAst(definition);
-        this.initNodes(labNodes);
+        this.analyses = this.workspace.analyses.slice();
+        let labNodes = this.workspace.analyses.map((analysis) => {
+            return nodesFromAnalysis(analysis);
+        }).reduce((a, b) => a.merge(b), new Map());
+
+        this.setNodes(labNodes);
 
         this.shapes = extract.shapes;
         this.shapes.forEach((shape) => {
@@ -106,6 +135,7 @@ class DiagramContainerController {
 
         if (!this.graph) {
             this.graph = new joint.dia.Graph();
+            this.graph.on('remove', (cell) => this.onCellDelete(cell));
         } else {
             this.graph.clear();
         }
@@ -149,7 +179,8 @@ class DiagramContainerController {
                 color: '#aaa',
                 thickness: 1
             });
-            this.paper.on('blank:pointerdown', () => {
+            this.paper.on('blank:pointerdown', (event) => {
+                this.onMouseClick(event);
                 this.panActive = true;
                 this.$scope.$evalAsync();
             });
@@ -187,6 +218,129 @@ class DiagramContainerController {
             });
             this.applyPositionOverrides(this.graph);
             this.scaleToContent();
+        }
+    }
+
+    addAnalyses(analyses) {
+        if (!analyses.length) {
+            throw new Error('called addAnalyses without analyses');
+        }
+
+        let placedAnalyses = analyses.map((a) => {
+            if (a.addLocation) {
+                return this.setRelativePositions(a);
+            }
+            return a;
+        });
+
+        // TODO remove any added nodes that are already on the graph
+        let newNodes = placedAnalyses.map((analysis) => {
+            return nodesFromAnalysis(analysis);
+        }).reduce((a, b) => a.merge(b), new Map());
+        this.setNodes(newNodes.merge(this.extractNodes));
+
+        let extract = placedAnalyses.map((analysis) => {
+            return this.labUtils.extractShapes(
+                analysis,
+                this.cellDimensions
+            );
+        }).reduce((a, b) => ({
+            shapes: a.shapes.concat(b.shapes),
+            nodes: a.nodes.merge(b.nodes)
+        }), {shapes: [], nodes: new Map()});
+
+        this.nodes = extract.nodes.merge(this.nodes);
+
+        const shapes = extract.shapes;
+        shapes.forEach((shape) => {
+            shape.on('change:position', (node, position) => {
+                if (this.nodePositionsSet) {
+                    this.onShapeMove(shape.id, position);
+                }
+            });
+        });
+
+        shapes.forEach(s => {
+            this.graph.addCell(s);
+        });
+
+        this.shapes = shapes.concat(this.shapes);
+        this.applyPositionOverrides(this.graph);
+        this.scaleToContent();
+
+        this.analyses = this.analyses.concat(placedAnalyses);
+    }
+
+    setRelativePositions(analysis) {
+        const setOrigin = analysis.addLocation;
+
+        const layoutGraph = new joint.dia.Graph();
+
+        const extract = this.labUtils.extractShapes(
+            analysis,
+            this.cellDimensions
+        );
+
+        const shapes = extract.shapes;
+        shapes.forEach(s => layoutGraph.addCell(s));
+
+        let padding = this.cellDimensions.width * this.nodeSeparationFactor;
+
+        joint.layout.DirectedGraph.layout(layoutGraph, {
+            setLinkVertices: false,
+            rankDir: 'LR',
+            nodeSep: padding,
+            rankSep: padding * 2
+        });
+
+        let nodePositions = new Map();
+        shapes.forEach(shape => {
+            if (shape.attributes.position) {
+                const position = {
+                    x: shape.attributes.position.x + setOrigin.x,
+                    y: shape.attributes.position.y + setOrigin.y
+                };
+                nodePositions = nodePositions.set(
+                    shape.attributes.id, position
+                );
+            }
+        });
+
+        const nodes = nodesFromAnalysis(analysis).map(
+            node => _.merge(
+                node, {
+                    metadata: { positionOverride: nodePositions.get(node.id) }
+                }
+            )
+        );
+
+        return astFromAnalysisNodes(analysis, nodes);
+    }
+
+    removeAnalyses() {
+        throw new Error('Removing analyses is not yet supported');
+        // removeAnalyses(analyses) {
+        // analyses.forEach((analysis) => {
+        //     const analysisId = analysis.id;
+        //     let nodesToRemove = this.nodes.filter((node) => node.analysisId === analysisId);
+        //     let linksToRemove = [];
+        //     nodesToRemove.forEach((node) => {
+        //         this.graph.getCell(node.id);
+        //     });
+        // });
+        // get all analysis nodes
+        // get cell, t
+    }
+
+    onCellDelete(cell) {
+        const isLink = cell.attributes.type === 'link';
+
+        if (isLink) {
+            const childNodeId = cell.attributes.source.id;
+            const parentNodeId = cell.attributes.target.id;
+            this.splitAnalysis(childNodeId, parentNodeId);
+        } else {
+            throw new Error('Deleted cell that wasn\'t a link. This shouldn\'t be possible');
         }
     }
 
@@ -331,6 +485,17 @@ class DiagramContainerController {
             this.cancelNodeSelect();
         } else {
             this.startNodeCompare();
+        }
+    }
+
+    onMouseClick(event) {
+        if (this.createNodeSelection) {
+            let origin = this.paper.options.origin;
+            let clickLocation = {
+                x: (event.offsetX - origin.x) / this.scale,
+                y: (event.offsetY - origin.y) / this.scale
+            };
+            this.finishCreatingNode(clickLocation);
         }
     }
 

@@ -7,18 +7,18 @@
      ng-class="{ 'is-dragging': $ctrl.panActive }"
      ng-if="!$ctrl.readonly"
 >
-  <!-- <button class="btn btn-default btn-square btn-small" -->
-  <!-- type="button" -->
-  <!-- title="Add Node" -->
-  <!-- disabled> -->
-  <!-- <i class="icon-plus"></i> -->
-  <!-- </button> -->
-  <!-- <button class="btn btn-default btn-square btn-small" -->
-  <!-- type="button" -->
-  <!-- title="Add Equation" -->
-  <!-- disabled> -->
-  <!-- &#x3C;/&#x3E; -->
-  <!-- </button> -->
+  <button class="btn btn-default btn-square btn-small"
+          type="button"
+          title="Add Node"
+          ng-click="$ctrl.startCreatingNode()">
+    <i class="icon-plus"></i>
+  </button>
+  <button class="btn btn-default btn-square btn-small"
+          type="button"
+          title="Insert Formula"
+          ng-click="$ctrl.startCreatingNode('formula')">
+    &#x3C;/&#x3E;
+  </button>
   <button class="btn btn-default btn-square btn-small"
           type="button"
           title="Preview Node"
@@ -43,6 +43,7 @@
   <!-- </button> -->
 </div>
 <div class="map-container-controls"
+     ng-if="$ctrl.controls"
      ng-class="{ 'is-dragging': $ctrl.panActive }">
   <div class="map-zoom" title="Current Zoom">{{($ctrl.scale * 100).toFixed(0)}}%</div>
   <button class="btn btn-default btn-square btn-small"

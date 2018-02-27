@@ -6,26 +6,26 @@
 <div class="node-actions">
   <div class="node-button-group" ng-if="!$ctrl.readonly">
     <button class="btn node-button" type="button"
-            ng-if="$ctrl.model.get('cellType') !== 'const' && !$ctrl.analysisErrors.size"
+            ng-if="$ctrl.model.get('cellType') !== 'const' && !$ctrl.errors.size"
             ng-click="$ctrl.preview()">
       <span class="icon-map"></span>
     </button>
     <button class="btn node-button" type="button"
-            ng-if="!$ctrl.analysisErrors.size &&
+            ng-if="!$ctrl.errors.size &&
                    $ctrl.model.get('cellType') !== 'const'"
             ng-class="{'active': $ctrl.currentView === 'HISTOGRAM'}"
             ng-click="$ctrl.toggleHistogram()">
       <span class="icon-histogram"></span>
     </button>
     <button class="btn node-button" type="button"
-            ng-if="!$ctrl.analysisErrors.size &&
+            ng-if="!$ctrl.errors.size &&
                    $ctrl.model.get('cellType') !== 'const'"
             ng-class="{'active': $ctrl.currentView === 'STATISTICS'}"
             ng-click="$ctrl.toggleStatistics()">
       Stats
     </button>
     <button class="btn node-button" type="button"
-            ng-if="!$ctrl.toolErrors.size &&
+            ng-if="!$ctrl.errors.size &&
                    $ctrl.model.get('cellType') !== 'const'"
             ng-click="$ctrl.onNodeShare()">
         <span class="icon-share"></span>

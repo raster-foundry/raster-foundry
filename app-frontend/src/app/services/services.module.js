@@ -2,10 +2,13 @@ const shared = angular.module('services', []);
 
 // analyses
 require('./analysis/analysis.service')(shared);
+require('./analysis/template.service')(shared);
+require('./analysis/workspace.service')(shared);
 require('./analysis/labUtils.service')(shared);
 require('./analysis/reclassify.service')(shared);
 require('./analysis/histogram.service')(shared);
 require('./tools/toolTag.service')(shared);
+require('./analysis/maml.service')(shared);
 
 // auth
 require('./auth/auth.service')(shared);

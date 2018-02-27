@@ -3,10 +3,11 @@ import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
 
 import labBrowseTpl from './pages/lab/browse/browse.html';
-import labBrowseAnalysesTpl from './pages/lab/browse/analyses/analyses.html';
+import labBrowseWorkspacesTpl from './pages/lab/browse/workspaces/workspaces.html';
 import labBrowseTemplatesTpl from './pages/lab/browse/templates/templates.html';
 import labTemplateTpl from './pages/lab/template/template.html';
 import labAnalysisTpl from './pages/lab/analysis/analysis.html';
+import labWorkspaceTpl from './pages/lab/workspace/workspace.html';
 import labStartAnalysisTpl from './pages/lab/startAnalysis/startAnalysis.html';
 import labNavbarTpl from './pages/lab/navbar/navbar.html';
 
@@ -307,6 +308,9 @@ function labStates($stateProvider) {
             title: 'View a Template',
             url: '/template/:templateid',
             parent: 'lab',
+            params: {
+                template: null
+            },
             templateUrl: labTemplateTpl,
             controller: 'LabTemplateController',
             controllerAs: '$ctrl'
@@ -342,25 +346,45 @@ function labStates($stateProvider) {
                 }
             }
         })
+        .state('lab.workspace', {
+            title: 'Workspace',
+            url: '/workspace/:workspaceid',
+            parent: 'lab',
+            params: {
+                'workspace': null
+            },
+            views: {
+                'navmenu@root': {
+                    templateUrl: labNavbarTpl,
+                    controller: 'LabNavbarController',
+                    controllerAs: '$ctrl'
+                },
+                '': {
+                    templateUrl: labWorkspaceTpl,
+                    controller: 'LabWorkspaceController',
+                    controllerAs: '$ctrl'
+                }
+            }
+        })
         .state('lab.browse', {
             url: '/browse',
             templateUrl: labBrowseTpl,
             controller: 'LabBrowseController',
             controllerAs: '$ctrl',
-            redirectTo: 'lab.browse.analyses'
+            redirectTo: 'lab.browse.workspaces'
         })
         .state('lab.browse.templates', {
-            title: 'Analysis Search',
+            title: 'Template Search',
             url: '/templates?:page?:query?analysiscategory&analysistag',
             templateUrl: labBrowseTemplatesTpl,
             controller: 'LabBrowseTemplatesController',
             controllerAs: '$ctrl'
         })
-        .state('lab.browse.analyses', {
-            title: 'Analyses',
-            url: '/analyses?:page',
-            templateUrl: labBrowseAnalysesTpl,
-            controller: 'LabBrowseAnalysesController',
+        .state('lab.browse.workspaces', {
+            title: 'Workspaces',
+            url: '/workspaces?:page',
+            templateUrl: labBrowseWorkspacesTpl,
+            controller: 'LabBrowseWorkspacesController',
             controllerAs: '$ctrl'
         });
 }

@@ -1615,6 +1615,7 @@ rf-lab-node {
 .node-status {
   padding: .25em;
   pointer-events: auto;
+  cursor: pointer;
 }
 
 .node-header-colorblock {
@@ -2892,34 +2893,6 @@ rf-reclassify-table {
   margin: 0 auto !important;
 }
 
-.paginated-results-table {
-  $cell-padding: 0.75em 1.5em;
-  width: 100%;
-  border-radius: $border-radius-base;
-  tr:not(.header) {
-    border: 1px solid $gray-lightest;
-    background: $off-white;
-  }
-  th {
-    text-align: left;
-    padding: $cell-padding;
-    font-weight: bold;
-    a {
-      font-weight: bold;
-    }
-  }
-  td {
-    padding: $cell-padding;
-  }
-  .date-column {
-      width: 13em;
-  }
-  .action-column {
-      width: 0;
-      padding: 1em 0;
-  }
-}
-
 .pagination-count {
   margin-bottom: 1em;
 }
@@ -2960,6 +2933,31 @@ rf-reclassify-table {
         /* outline: 2px solid $brand-secondary; */
         /* outline-radius: 5px; */
         box-shadow: 0 0 3pt 2pt $brand-secondary;
+    }
+}
+
+.linkable {
+    pointer-events: auto;
+    cursor: copy;
+    * {
+        pointer-events: none;
+    }
+    &:hover {
+        box-shadow: 0 0 3pt 2pt $green;
+    }
+}
+
+.unlinkable {
+    pointer-events: auto;
+    cursor: not-allowed;
+    :not(.node-link) {
+        pointer-events: none;
+    }
+    .node-link>button {
+        pointer-events: auto;
+    }
+    &:hover {
+        box-shadow: 0 0 3pt 2pt $red;
     }
 }
 
@@ -3031,4 +3029,13 @@ rf-reclassify-table {
 
 .copy-confirmation {
   font-size: 2rem;
+}
+
+.node-link {
+  position: absolute;
+  right: -0.5em;
+  top: 0.2em;
+  transform: translateX(100%);
+  pointer-events: auto;
+  cursor: pointer;
 }

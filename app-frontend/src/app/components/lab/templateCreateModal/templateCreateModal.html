@@ -19,13 +19,20 @@
           <label for="name">Template Name</label>
           <input id="name" type="text" class="form-control"
                  placeholder="New template name"
-                 ng-model="$ctrl.templateBuffer.title"
+                 ng-model="$ctrl.templateBuffer.name"
                  ng-disabled="$ctrl.isProcessing">
         </div>
         <div class="form-group">
-          <label for="name">Template Description</label>
-          <input id="name" type="text" class="form-control"
-                placeholder="New template description"
+          <label for="details">Template Details</label>
+          <input id="details" type="text" class="form-control"
+                placeholder="Short description"
+                ng-model="$ctrl.templateBuffer.details"
+                ng-disabled="$ctrl.isProcessing">
+        </div>
+        <div class="form-group">
+          <label for="description">Template Description</label>
+          <input id="description" type="text" class="form-control"
+                placeholder="Long Description"
                 ng-model="$ctrl.templateBuffer.description"
                 ng-disabled="$ctrl.isProcessing">
         </div>

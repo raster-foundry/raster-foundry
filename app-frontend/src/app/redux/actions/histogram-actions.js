@@ -35,10 +35,13 @@ function createRenderDefinition(histogram) {
 }
 
 // Histogram ActionCreators
-export function fetchHistogram(nodeId) {
+export function fetchHistogram(node) {
     return (dispatch, getState) => {
         let state = getState();
-        let lastUpdate = state.lab.lastAnalysisRefresh;
+        const nodeId = node.id;
+        const analysisId = node.analysisId;
+
+        let lastUpdate = state.lab.analysisRefreshes.get(analysisId);
         let cachedHistogram = state.lab.histograms.get(nodeId);
 
         if (!cachedHistogram ||
@@ -51,7 +54,7 @@ export function fetchHistogram(nodeId) {
                 payload: authedRequest(
                     {
                         method: 'get',
-                        url: `${state.api.tileUrl}/tools/${state.lab.analysis.id}`
+                        url: `${state.api.tileUrl}/tools/${analysisId}`
                             + `/histogram?node=${nodeId}&voidCache=true&token=${state.api.apiToken}`
                     },
                     state
@@ -79,7 +82,7 @@ export function fetchHistogram(nodeId) {
                         let promise = authedRequest({
                             method: 'put',
                             url: `${callbackState.api.apiUrl}` +
-                                `/api/tool-runs/${callbackState.lab.analysis.id}`,
+                                `/api/analyses/${analysisId}`,
                             data: updatedAnalysis
                         }, callbackState);
                         dispatch({

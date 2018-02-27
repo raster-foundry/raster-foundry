@@ -1,25 +1,19 @@
 <span class="navbar-vertical-divider"></span>
-<span ng-if="$ctrl.analysis.title">
-  <span class="navbar-detail-title"
-        ng-attr-title="{{$ctrl.analysis.title}}">
-    {{$ctrl.analysis.title}}
-  </span>
-</span>
-<span class="detail-title-container" ng-if="$ctrl.analysis.name && !$ctrl.editing">
+<span class="detail-title-container" ng-if="$ctrl.workspace.name && !$ctrl.editing">
   <button class="btn btn-tiny pate-title-edit detail-title-edit"
           ng-show="!$ctrl.updating"
           ng-click="$ctrl.toggleEdit()">
     <span class="icon-pencil"></span>
   </button>
   <span ng-show="$ctrl.updating" class="icon-load animate-spin"></span>
-  <span class="navbar-detail-title" ng-attr-title="{{$ctrl.analysis.name}}">
-    {{$ctrl.analysis.name}}
+  <span class="navbar-detail-title" ng-attr-title="{{$ctrl.workspace.name}}">
+    {{$ctrl.workspace.name}}
   </span>
 </span>
 <span ng-if="$ctrl.editing">
   <form class="inline-form" ng-submit="$ctrl.finishEdit()">
     <div class="form-group all-in-one">
-      <input id="name" type="text" class="form-control" placeholder="Edit Analysis Name"
+      <input id="name" type="text" class="form-control" placeholder="Edit Workspace Name"
              ng-model="$ctrl.nameBuffer" ng-attr-autofocus="{{$ctrl.editing || undefined }}"
              ng-disabled="$ctrl.updating">
       <button class="btn btn-link flex-last" ng-if="!$ctrl.updating">
@@ -33,8 +27,8 @@
     </div>
   </form>
 </span>
-<span ng-if="!$ctrl.analysis && !this.updating">
+<span ng-if="!$ctrl.workspace && !this.updating">
   <span class="navbar-detail-title">
-    <span class="icon-load animate-spin"></span> Loading Analysis...
+    <span class="icon-load animate-spin"></span> Loading Workspace...
   </span>
 </span>

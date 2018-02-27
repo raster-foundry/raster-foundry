@@ -1,14 +1,16 @@
 /* globals BUILDCONFIG */
+import _ from 'lodash';
 
 export default (app) => {
     class AnalysisService {
-        constructor($resource, $http, $q, authService, APP_CONFIG) {
+        constructor($resource, $http, $q, APP_CONFIG, authService, uuid4) {
             'ngInject';
             this.$http = $http;
             this.$q = $q;
             this.authService = authService;
+            this.uuid4 = uuid4;
             this.Template = $resource(
-                `${BUILDCONFIG.API_HOST}/api/tools/:id/`, {
+                `${BUILDCONFIG.API_HOST}/api/templates/:id/`, {
                     id: '@properties.id'
                 }, {
                     query: {
@@ -21,11 +23,18 @@ export default (app) => {
                     },
                     create: {
                         method: 'POST'
+                    },
+                    update: {
+                        method: 'PUT',
+                        url: `${BUILDCONFIG.API_HOST}/api/templates/:id`
+                    },
+                    delete: {
+                        method: 'DELETE'
                     }
                 }
             );
             this.Analysis = $resource(
-                `${BUILDCONFIG.API_HOST}/api/tool-runs/:id/`, {
+                `${BUILDCONFIG.API_HOST}/api/analyses/:id/`, {
                     id: '@id'
                 }, {
                     create: {
@@ -120,30 +129,23 @@ export default (app) => {
             return this.Template.get({id}).$promise;
         }
 
+        updateTemplate(template) {
+            let update = _.cloneDeep(template);
+            update.organizationId = update.organization.id;
+            delete update.organization;
+            return this.Template.update({id: template.id}, update).$promise;
+        }
+
+        deleteTemplate(id) {
+            return this.Template.delete({id}).$promise;
+        }
+
         deleteAnalysis(id) {
             return this.Analysis.delete({id}).$promise;
         }
 
         getAnalysis(id) {
             return this.Analysis.get({id}).$promise;
-        }
-
-        createTemplate(template) {
-            return this.authService.getCurrentUser().then(
-                user => {
-                    const templateDefaults = {
-                        organizationId: user.organizationId,
-                        requirements: '',
-                        license: '',
-                        compatibleDataSources: [],
-                        stars: 5.0,
-                        tags: [],
-                        categories: [],
-                        owner: user.id
-                    };
-                    return this.Template.create(Object.assign(templateDefaults, template)).$promise;
-                }
-            );
         }
 
         createAnalysis(analysis) {
@@ -308,13 +310,45 @@ export default (app) => {
             return sources;
         }
 
-        generateAnalysis(template) {
+        generateAnalysisFromTemplate(template) {
             // A template run is quite similar to a template except that the definition lives under
             // 'executionParameters' instead.
             return {
-                visibility: 'PUBLIC',
+                name: template.name,
+                visibility: 'PRIVATE',
                 template: template.id,
-                executionParameters: angular.copy(template.definition)
+                executionParameters: _.clone(template.latestVersion.analysis.executionParameters)
+            };
+        }
+
+        generateAnalysisFromFunction(opNode) {
+            return {
+                visibility: 'PRIVATE',
+                executionParameters: {
+                    id: this.uuid4.generate(),
+                    metadata: {
+                        label: opNode.label,
+                        collapsable: true,
+                        minArgs: opNode.minArgs,
+                        maxArgs: opNode.maxArgs
+                    },
+                    apply: opNode.op,
+                    args: []
+                }
+            };
+        }
+
+        generateAnalysisFromInput(project) {
+            return {
+                visibility: 'PRIVATE',
+                executionParameters: {
+                    id: this.uuid4.generate(),
+                    metadata: {
+                        label: project.name
+                    },
+                    type: 'projectSrc',
+                    projId: project.id
+                }
             };
         }
 

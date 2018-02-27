@@ -235,6 +235,21 @@
   padding: 0.3em 0.3em;
 }
 
+.btn-icon {
+  font-size: 1.2rem;
+  padding: 0.2rem 0rem;
+  &.invert-green {
+      color: white;
+      background: $green;
+      border: none;
+  }
+  &.invert-red {
+      color: white;
+      background: $red;
+      border: none;
+  }
+}
+
 .btn-tiny {
   font-size: 1.2rem;
   padding: .7rem .5rem;
@@ -395,4 +410,8 @@ Copy button on project share page
 .btn-copy-page {
   width: 77.47px;
   height: 32px;
+}
+
+.btn-spacer {
+    visibility: hidden;
 }

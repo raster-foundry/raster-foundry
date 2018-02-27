@@ -1,7 +1,7 @@
 import angular from 'angular';
 
 import diagramNodeHeaderTpl from './diagramNodeHeader.html';
-import LabActions from '_redux/actions/lab-actions';
+import AnalysisActions from '_redux/actions/analysis-actions';
 import NodeActions from '_redux/actions/node-actions';
 import { getNodeDefinition } from '_redux/node-utils';
 
@@ -21,17 +21,19 @@ class DiagramNodeHeaderController {
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis.bind(this),
-            Object.assign({}, LabActions, NodeActions)
+            Object.assign({}, AnalysisActions, NodeActions)
         )(this);
         $scope.$on('$destroy', unsubscribe);
     }
 
     mapStateToThis(state) {
         return {
+            workspace: state.lab.workspace,
             readonly: state.lab.readonly,
             previewNodes: state.lab.previewNodes,
-            analysisErrors: state.lab.analysisErrors,
-            node: getNodeDefinition(state, this)
+            errors: state.lab.errors,
+            node: getNodeDefinition(state, this),
+            linkNode: state.lab.linkNode
         };
     }
 

@@ -133,9 +133,8 @@ export default (app) => {
         findToken(tokens, params) {
             if (params.project) {
                 return tokens.results.find(t => t.project === params.project);
-            } else if (params.toolRun) {
-                // TODO swithc this to t.analysis once the backend is updated
-                return tokens.results.find(t => t.toolRun === params.toolRun);
+            } else if (params.analysis) {
+                return tokens.results.find(t => t.analysis === params.analysis);
             }
             return null;
         }

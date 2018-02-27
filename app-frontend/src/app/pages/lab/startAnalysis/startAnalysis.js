@@ -1,4 +1,4 @@
-import LabActions from '_redux/actions/lab-actions';
+import AnalysisActions from '_redux/actions/analysis-actions';
 
 class LabStartAnalysisController {
     constructor(
@@ -10,7 +10,7 @@ class LabStartAnalysisController {
 
         this.analysisService = analysisService;
 
-        let unsubscribe = $ngRedux.connect(this.mapStateToThis, LabActions)(this);
+        let unsubscribe = $ngRedux.connect(this.mapStateToThis, AnalysisActions)(this);
         $scope.$on('$destroy', unsubscribe);
     }
 
@@ -25,8 +25,8 @@ class LabStartAnalysisController {
             this.fromScratch = true;
         } else {
             this.templateDefinition = this.template.definition;
-            this.analysis = this.analysisService.generateAnalysis(this.template);
-            this.loadAnalysis(this.analysis, true);
+            this.analysis = this.analysisService.generateAnalysisFromTemplate(this.template);
+            this.loadAnalysis(this.analysis, {readonly: true, controls: true});
         }
     }
 
@@ -37,8 +37,8 @@ class LabStartAnalysisController {
             this.template = template;
             this.templateDefinition = template.definition;
             this.loadingTemplate = false;
-            this.analysis = this.analysisService.generateAnalysis(this.template);
-            this.loadAnalysis(this.analysis, true);
+            this.analysis = this.analysisService.generateAnalysisFromTemplate(this.template);
+            this.loadAnalysis(this.analysis, {readonly: true, controls: true});
         });
     }
 

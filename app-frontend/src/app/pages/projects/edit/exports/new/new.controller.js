@@ -187,7 +187,7 @@ export default class NewExportController {
             .then(t => {
                 this.currentTemplate = t;
                 this.currentAnalysisSources = this.analysisService.generateSourcesFromAST(t);
-                this.currentAnalysis = this.analysisService.generateAnalysis(t);
+                this.currentAnalysis = this.analysisService.generateAnalysisFromTemplate(t);
                 this.isAnalysis = false;
             });
     }

@@ -2,7 +2,8 @@ import _ from 'lodash';
 import {OrderedMap, Map} from 'immutable';
 import { API_INIT } from './actions/api-actions';
 
-import { ANALYSIS_ACTION_PREFIX } from './actions/lab-actions';
+// import { ANALYSIS_ACTION_PREFIX } from './actions/analysis-actions';
+import { WORKSPACE_ACTION_PREFIX } from './actions/workspace-actions';
 import { NODE_ACTION_PREFIX } from './actions/node-actions';
 import { HISTOGRAM_ACTION_PREFIX } from './actions/histogram-actions';
 import { STATISTICS_ACTION_PREFIX } from './actions/statistics-actions';
@@ -11,7 +12,8 @@ import { SHAPES_ACTION_PREFIX } from './actions/shape-actions';
 
 import { ANNOTATIONS_ACTION_PREFIX } from './actions/annotation-actions';
 
-import { analysisReducer } from './reducers/analysis-reducer';
+// import { analysisReducer } from './reducers/analysis-reducer';
+import { workspaceReducer } from './reducers/workspace-reducer';
 import { nodeReducer } from './reducers/node-reducer';
 import { histogramReducer } from './reducers/histogram-reducer';
 import { statisticsReducer } from './reducers/statistics-reducer';
@@ -22,13 +24,20 @@ import { shapeReducer} from './reducers/shape-reducer';
 
 const INITIAL_LAB_STATE = {
     // analysis state
-    lastAnalysisSave: null, lastAnalysisRefresh: null, analysis: null,
-    analysisErrors: new Map(),
-    updating: false, fetching: false, error: null,
-    readonly: null,
+    lastWorkspaceSave: null,
+    analysisSaves: new Map(),
+    analysisRefreshes: new Map(),
+    workspace: null,
+    errors: new Map(),
+    updating: false,
+    fetching: false,
+    error: null,
+    readonly: false,
+    controls: true,
 
     // node state
     nodes: new Map(), previewNodes: [], selectingNode: null, selectedNode: null,
+    createNode: null, createNodeSelection: null, linkNode: null,
 
     // histogram & statistics state
     histograms: new Map(), statistics: new Map()
@@ -42,8 +51,10 @@ function lab(state = INITIAL_LAB_STATE, action) {
     const prefix = _.first(action.type.split('_'));
 
     switch (prefix) {
-    case ANALYSIS_ACTION_PREFIX:
-        return analysisReducer(state, action);
+    case WORKSPACE_ACTION_PREFIX:
+        return workspaceReducer(state, action);
+    // case ANALYSIS_ACTION_PREFIX:
+    //     return analysisReducer(state, action);
     case NODE_ACTION_PREFIX:
         return nodeReducer(state, action);
     case HISTOGRAM_ACTION_PREFIX:

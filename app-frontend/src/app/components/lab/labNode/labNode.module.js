@@ -1,9 +1,10 @@
 import angular from 'angular';
+import _ from 'lodash';
 
 import labNodeTpl from './labNode.html';
-import LabActions from '_redux/actions/lab-actions';
+
 import NodeActions from '_redux/actions/node-actions';
-import { getNodeDefinition } from '_redux/node-utils';
+import { getNodeDefinition, nodeIsChildOf } from '_redux/node-utils';
 
 class LabNodeController {
     constructor($ngRedux, $scope, $log, $element, modalService, tokenService,
@@ -19,7 +20,7 @@ class LabNodeController {
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis.bind(this),
-            Object.assign({}, LabActions, NodeActions)
+            NodeActions
         )(this);
         $scope.$on('$destroy', unsubscribe);
 
@@ -33,6 +34,16 @@ class LabNodeController {
                 this.$element.addClass('selectable');
             } else {
                 this.$element.removeClass('selectable');
+            }
+        });
+        $scope.$watch('$ctrl.linkNode', (linkNode) => {
+            if (linkNode && this.isLinkable(linkNode)) {
+                this.$element.addClass('linkable');
+            } else if (linkNode && !this.isLinkable(linkNode)) {
+                this.$element.addClass('unlinkable');
+            } else {
+                this.$element.removeClass('linkable');
+                this.$element.removeClass('unlinkable');
             }
         });
         $scope.$watch('$ctrl.selectedNode', (selectedNode) => {
@@ -49,14 +60,23 @@ class LabNodeController {
     }
 
     mapStateToThis(state) {
-        return {
+        const workspace = state.lab.workspace;
+        const node = getNodeDefinition(state, this);
+        const analysisId = node && node.analysisId;
+        const analysis = _.find(workspace.analyses, (a) => a.id === analysisId);
+
+        const selector = {
             readonly: state.lab.readonly,
-            analysis: state.lab.analysis,
             selectingNode: state.lab.selectingNode,
             selectedNode: state.lab.selectedNode,
-            analysisErrors: state.lab.analysisErrors,
-            node: getNodeDefinition(state, this)
+            errors: state.lab.errors,
+            workspace,
+            node,
+            nodes: state.lab.nodes,
+            analysis,
+            linkNode: state.lab.linkNode
         };
+        return selector;
     }
 
     $onInit() {
@@ -74,7 +94,7 @@ class LabNodeController {
     }
 
     preview() {
-        if (!this.selectingNode) {
+        if (!this.selectingNode && this.nodeId) {
             this.selectNode(this.nodeId);
         }
     }
@@ -156,11 +176,15 @@ class LabNodeController {
             event.stopPropagation();
             this.selectNode(this.nodeId);
         }
+        if (this.linkNode && this.isLinkable(this.linkNode)) {
+            event.stopPropagation();
+            this.finishLinkingNodes(this.nodeId);
+        }
     }
 
     onNodeShare() {
         const nodeType = this.model.get('cellType');
-        if (this.nodeId && this.analysis.id) {
+        if (this.node) {
             if (nodeType === 'projectSrc') {
                 this.tokenService.getOrCreateAnalysisMapToken({
                     organizationId: this.analysis.organizationId,
@@ -177,7 +201,7 @@ class LabNodeController {
                 this.tokenService.getOrCreateAnalysisMapToken({
                     organizationId: this.analysis.organizationId,
                     name: this.analysis.name + ' - ' + this.analysis.id,
-                    toolRun: this.analysis.id
+                    analysis: this.analysis.id
                 }).then((mapToken) => {
                     this.publishModal(
                         // eslint-disable-next-line max-len
@@ -200,6 +224,13 @@ class LabNodeController {
             });
         }
         return false;
+    }
+
+    isLinkable(otherNode) {
+        return otherNode !== this.nodeId &&
+            this.ifCellType('function') &&
+            !this.node.args.includes(otherNode) &&
+            !nodeIsChildOf(this.nodeId, otherNode, this.nodes);
     }
 }
 

@@ -1,0 +1,103 @@
+<div class="container dashboard">
+  <div class="row content stack-sm">
+    <div class="column-3">
+        <label class="h5" for="search-input">Search workspaces</label>
+        <rf-search on-search="$ctrl.search(value)"
+                   placeholder="Search for workspaces"
+                   auto-focus="true"
+                   disabled="true">
+        </rf-search>
+        <div class="aside aside-filters">
+          <section>
+            <h5>Create a new workspace</h5>
+            <p>
+              Build the analysis of your dreams in the lab.
+            </p>
+            <a ng-click="$ctrl.openTemplateCreateModal()">
+              New workspace
+            </a>
+          </section>
+        </div>
+    </div>
+    <div class="column spacer bordered"></div>
+    <div class="column-8">
+      <!-- Loading indicator -->
+      <div ng-show="$ctrl.loading">
+        <span class="list-placeholder h3">
+          <i class="icon-load animate-spin"></i>
+        </span>
+      </div>
+      <!-- Loading indicator -->
+
+      <div class="font-size-small pagination-count"
+         ng-if="!$ctrl.searchString"
+      >
+        Showing <strong>{{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}}</strong> of <strong>{{$ctrl.pagination.count}}</strong> workspaces
+      </div>
+
+      <div class="font-size-small pagination-count"
+         ng-if="$ctrl.searchString"
+      >
+         Showing results for "<strong>{{$ctrl.searchString}}</strong>"
+      </div>
+
+      <!-- Temporarily removed ng-click until after demo done and detail page designed. -->
+      <table class="table" ng-show="!$ctrl.loading">
+        <thead>
+          <tr>
+            <th>
+              <rf-sorting-header direction="$ctrl.sortingDirection"
+                                 on-sort-change="$ctrl.onSortChange('name')"
+                                 is-active="$ctrl.sortingField === 'name'"
+              >Name</rf-sorting-header>
+            </th>
+            <th width="200">
+              <rf-sorting-header direction="$ctrl.sortingDirection"
+                               on-sort-change="$ctrl.onSortChange('modifiedAt')"
+                               is-active="$ctrl.sortingField === 'modifiedAt'">
+              Last Modified
+            </rf-sorting-header>
+            </th>
+            <th width="120" class="text-right">
+              <a class="link-danger font-600"
+                 ng-click="$ctrl.deleteSelected()"
+                 ng-hide="!$ctrl.selected.size">
+               <i class="icon-trash"></i> selected</a>
+            </th>
+          </tr>
+        </thead>
+        <tr ng-repeat="workspace in $ctrl.workspacesList | filter: {title: $ctrl.searchString}" class="row-hover-controls">
+          <td><a ui-sref="lab.workspace({workspaceid: workspace.id, workspace: workspace})">
+            {{workspace.name || 'Untitled workspace'}}
+          </a></td>
+          <td>{{workspace.modifiedAt | date : 'longDate'}}</td>
+          <td class="row-controls">
+            <label class="checkbox" ng-class="{active: $ctrl.selected.has(workspaec.id)}">
+              <input type="checkbox"
+                     ng-checked="$ctrl.selected.has(workspace.id)"
+                     ng-click="$ctrl.toggleWorkspaceSelection(workspace.id)"
+              >
+            </label>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Pagination -->
+      <div class="list-group text-center"
+           ng-show="!$ctrl.loading && $ctrl.lastWorkspaceResponse &&
+                    $ctrl.pagination.show && !$ctrl.errorMsg &&
+                    !$ctrl.searchString">
+        <ul uib-pagination
+            items-per-page="$ctrl.lastWorkspaceResponse.pageSize"
+            total-items="$ctrl.pagination.count"
+            ng-model="$ctrl.currentPage"
+            max-size="4"
+            rotate="true"
+            boundary-link-numbers="true"
+            force-ellipses="true"
+            ng-change="$ctrl.fetchWorkspacesList($ctrl.currentPage)">
+        </ul>
+      </div>
+      <!-- Pagination -->
+    </div>
+</div>

@@ -1,14 +1,13 @@
-import * as LabActions from '_redux/actions/lab-actions';
+import * as WorkspaceActions from '_redux/actions/workspace-actions';
 
 class LabNavbarController {
-    constructor(analysisService, $state, $ngRedux, $scope) {
+    constructor($state, $ngRedux, $scope) {
         'ngInject';
 
-        this.analysisService = analysisService;
         this.$state = $state;
         this.$ngRedux = $ngRedux;
 
-        let unsubscribe = $ngRedux.connect(this.mapStateToThis, LabActions)(this);
+        let unsubscribe = $ngRedux.connect(this.mapStateToThis, WorkspaceActions)(this);
         $scope.$on('$destroy', unsubscribe);
     }
 
@@ -17,18 +16,18 @@ class LabNavbarController {
 
     mapStateToThis(state) {
         return {
-            analysis: state.lab.analysis,
+            workspace: state.lab.workspace,
             updating: state.lab.updating
         };
     }
 
     toggleEdit() {
-        this.nameBuffer = this.analysis.name;
+        this.nameBuffer = this.workspace.name;
         this.editing = !this.editing;
     }
 
     finishEdit() {
-        this.updateAnalysisName(this.nameBuffer);
+        this.updateWorkspaceName(this.nameBuffer);
         this.toggleEdit();
     }
 }

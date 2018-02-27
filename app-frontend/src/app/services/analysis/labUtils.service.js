@@ -116,7 +116,7 @@ export default (app) => {
             return ports;
         }
 
-        getNodeAttributes(node) {
+        getNodeAttributes(analysis, node) {
             let rectInputs = getNodeArgs(node).length;
             let rectOutputs = ['Output'];
             let ports = this.createPorts(rectInputs, rectOutputs);
@@ -133,7 +133,8 @@ export default (app) => {
                 metadata: node.metadata,
                 classMap: node.classMap,
                 value: node.constant,
-                positionOverride: node.metadata && node.metadata.positionOverride
+                positionOverride: node.metadata && node.metadata.positionOverride,
+                analysisId: analysis.id
             });
         }
 
@@ -187,11 +188,11 @@ export default (app) => {
         }
 
         extractShapes(
-            ast, cellDimensions
+            analysis, cellDimensions
         ) {
             let nodes = new Map();
             let shapes = [];
-            let json = Object.assign({}, ast);
+            let json = Object.assign({}, analysis.executionParameters);
             let inputs = [json];
 
             while (inputs.length) {
@@ -206,7 +207,7 @@ export default (app) => {
 
                 // Input nodes not of the layer type are not made into rectangles
                 if (!input.type || input.type === 'projectSrc' || input.type === 'const') {
-                    let rectAttrs = this.getNodeAttributes(input);
+                    let rectAttrs = this.getNodeAttributes(analysis, input);
 
                     rectangle = this.constructRect(
                         rectAttrs,

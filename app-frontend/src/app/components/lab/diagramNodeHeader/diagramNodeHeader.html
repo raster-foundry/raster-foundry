@@ -23,8 +23,6 @@
   </div>
   <div class="node-header-text">
     <div class="node-header-type">
-      <!-- <span class="icon-info"
-            ng-if="$ctrl.node.apply"></span> -->
       {{$ctrl.typeMap[$ctrl.node.type] || 'Operation'}}
     </div>
     <div class="node-header-name-container">
@@ -32,6 +30,7 @@
         <span class="node-header-label">{{$ctrl.node.metadata.label}}</span>
         <button class="btn node-button node-header-edit"
                 type="button"
+                ng-if="!$ctrl.readonly"
                 ng-click="$ctrl.toggleNodeLabelEdit()">
           <span class="icon-pencil"></span>
         </button>
@@ -59,8 +58,30 @@
       </span>
     </div>
   </div>
-  <div class="node-status" ng-attr-title="{{$ctrl.analysisErrors.get($ctrl.nodeId)}}">
+  <div class="node-status" ng-attr-title="{{$ctrl.errors.get($ctrl.nodeId)}}">
     <span class="icon-warning color-warning"
-          ng-if="$ctrl.analysisErrors.has($ctrl.nodeId) && !$ctrl.readonly">
+          ng-if="$ctrl.errors.has($ctrl.nodeId) && !$ctrl.readonly">
   </div>
+  <div class="node-status"
+       ng-attr-title="{{$ctrl.errors.get($ctrl.nodeId)}}"
+       ng-if="!$ctrl.readonly">
+    <span class="icon-trash color-danger"
+          title="Delete node"
+          ng-click="$ctrl.deleteNode($ctrl.nodeId)"
+    ></span>
+  </div>
+</div>
+<div class="node-link" ng-show="!$ctrl.linkNode">
+  <button class="btn btn-icon invert-green"
+          title="Link to the input of another node"
+          ng-click="$ctrl.startLinkingNodes($ctrl.nodeId)">
+    <span class="icon-link"></span>
+  </button>
+</div>
+<div class="node-link" ng-show="$ctrl.linkNode === $ctrl.nodeId">
+  <button class="btn btn-icon invert-red"
+          title="Cancel linking nodes"
+          ng-click="$ctrl.cancelLinkingNodes()">
+    <span class="icon-cross"></span>
+  </button>
 </div>

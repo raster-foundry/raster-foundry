@@ -42,6 +42,8 @@ export default angular.module('index.components', [
     require('./components/lab/classifyNode/classifyNode.module.js').name,
     require('./components/lab/nodeStatistics/nodeStatistics.module.js').name,
     require('./components/lab/labNode/labNode.module.js').name,
+    require('./components/lab/workspaceCreateModal/workspaceCreateModal.js').name,
+    require('./components/lab/nodeCreateSidebar/nodeCreateSidebar.js').name,
     require('./components/map/nodeSelector/nodeSelector.module.js').name,
 
     // map components

@@ -29,18 +29,20 @@ const allowedOps = [
 
 class TemplateCreateModalController {
     constructor(
-        $scope, $state, uuid4, analysisService
+        $scope, $state, uuid4, templateService, analysisService
     ) {
         'ngInject';
         this.$scope = $scope;
         this.$state = $state;
         this.uuid4 = uuid4;
+        this.templateService = templateService;
         this.analysisService = analysisService;
     }
 
     $onInit() {
         this.templateBuffer = {
-            title: '',
+            name: '',
+            details: '',
             description: '',
             visibility: 'PRIVATE'
         };
@@ -59,10 +61,20 @@ class TemplateCreateModalController {
         let expressionTree = null;
         try {
             expressionTree = mathjs.parse(this.definitionExpression);
-            this.templateBuffer.definition = this.expressionTreeToMAML(expressionTree);
-            this.analysisService.createTemplate(this.templateBuffer).then(template => {
+            let maml = this.expressionTreeToMAML(expressionTree);
+            this.templateService.createTemplate(this.templateBuffer).then(template => {
+                this.templateService.publishTemplateVersion(template.id, {
+                    version: '1.0',
+                    description: template.description,
+                    analysis: {
+                        visibility: template.visibility,
+                        organizationId: template.organizationId,
+                        executionParameters: maml,
+                        readonly: true
+                    }
+                });
                 this.dismiss();
-                this.$state.go('lab.startAnalysis', { templateid: template.id });
+                this.$state.go('lab.template', { templateid: template.id });
             });
         } catch (e) {
             this.currentError = 'The template definition is not valid';
@@ -179,7 +191,7 @@ class TemplateCreateModalController {
         } else if (!bracesBalanced) {
             this.currentParsingError = 'The braces in this expression are not balanced';
         }
-        return this.templateBuffer.title && this.definitionExpression && parensBalanced;
+        return this.templateBuffer.name && this.definitionExpression && parensBalanced;
     }
 
     validateParenDepth() {

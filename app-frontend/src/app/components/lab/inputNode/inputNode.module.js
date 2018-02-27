@@ -3,7 +3,7 @@
 import angular from 'angular';
 
 import inputNodeTpl from './inputNode.html';
-import LabActions from '_redux/actions/lab-actions';
+import WorkspaceActions from '_redux/actions/workspace-actions';
 import NodeActions from '_redux/actions/node-actions';
 import { getNodeDefinition } from '_redux/node-utils';
 import { Set } from 'immutable';
@@ -30,7 +30,7 @@ class InputNodeController {
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis.bind(this),
-            Object.assign({}, LabActions, NodeActions)
+            Object.assign({}, WorkspaceActions, NodeActions)
         )(this);
         $scope.$on('$destroy', unsubscribe);
 
@@ -46,9 +46,9 @@ class InputNodeController {
 
     mapStateToThis(state) {
         return {
-            analysis: state.lab.analysis,
+            workspace: state.lab.workspace,
             previewNodes: state.lab.previewNodes,
-            analysisErrors: state.lab.analysisErrors,
+            errors: state.lab.errors,
             node: getNodeDefinition(state, this)
         };
     }
@@ -118,12 +118,12 @@ class InputNodeController {
 
     checkValidity() {
         let hasError = !this.allInputsDefined();
-        if (hasError && !this.analysisErrors.has(this.nodeId)) {
+        if (hasError && !this.errors.has(this.nodeId)) {
             this.setNodeError({
                 nodeId: this.nodeId,
                 error: 'Inputs must have all fields filled'
             });
-        } else if (!hasError && this.analysisErrors.has(this.nodeId)) {
+        } else if (!hasError && this.errors.has(this.nodeId)) {
             this.setNodeError({
                 nodeId: this.nodeId
             });
@@ -144,7 +144,7 @@ class InputNodeController {
                     payload: Object.assign({}, this.node, {
                         projId: project.id
                     }),
-                    hard: !this.analysisErrors.size
+                    hard: !this.errors.size
                 });
             });
     }
@@ -156,7 +156,7 @@ class InputNodeController {
             payload: Object.assign({}, this.node, {
                 band: index
             }),
-            hard: !this.analysisErrors.size
+            hard: !this.errors.size
         });
     }
 
@@ -169,7 +169,7 @@ class InputNodeController {
         this.checkValidity();
         this.updateNode({
             payload,
-            hard: !this.analysisErrors.size
+            hard: !this.errors.size
         });
     }
 

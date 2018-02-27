@@ -3,7 +3,7 @@ import _ from 'lodash';
 import d3 from 'd3';
 import {Map} from 'immutable';
 import nodeHistogramTpl from './nodeHistogram.html';
-import LabActions from '_redux/actions/lab-actions';
+import WorkspaceActions from '_redux/actions/workspace-actions';
 import HistogramActions from '_redux/actions/histogram-actions';
 import { getNodeDefinition, getNodeHistogram } from '_redux/node-utils';
 import {
@@ -32,7 +32,7 @@ class NodeHistogramController {
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis.bind(this),
-            Object.assign({}, LabActions, HistogramActions)
+            Object.assign({}, WorkspaceActions, HistogramActions)
         )(this);
         $scope.$on('$destroy', unsubscribe);
 
@@ -55,19 +55,21 @@ class NodeHistogramController {
     }
 
     mapStateToThis(state) {
-        let node = getNodeDefinition(state, this);
-        let nodeMetadata = node && node.metadata;
-        let renderDefinition = nodeMetadata && nodeMetadata.renderDefinition;
-        let histogramOptions = nodeMetadata && nodeMetadata.histogramOptions;
-        let isSource = node.type && node.type.toLowerCase().includes('src');
+        const workspace = state.lab.analysis;
+        const node = getNodeDefinition(state, this);
+        const lastAnalysisRefresh = state.lab.analysisRefreshes.get(node.analysisId);
+        const nodeMetadata = node && node.metadata;
+        const renderDefinition = nodeMetadata && nodeMetadata.renderDefinition;
+        const histogramOptions = nodeMetadata && nodeMetadata.histogramOptions;
+        const isSource = node.type && node.type.toLowerCase().includes('src');
         return {
-            analysis: state.lab.analysis,
-            analysisErrors: state.lab.analysisErrors,
+            workspace,
+            errors: state.lab.errors,
             node,
             nodeMetadata,
             histogramOptions,
             renderDefinition,
-            lastAnalysisRefresh: state.lab.lastAnalysisRefresh,
+            lastAnalysisRefresh,
             histogram: getNodeHistogram(state, this),
             isSource
         };
@@ -169,7 +171,7 @@ class NodeHistogramController {
         });
         // re-fetch histogram any time there's a hard update
         this.$scope.$watch('$ctrl.lastAnalysisRefresh', () => {
-            this.fetchHistogram(this.nodeId);
+            this.fetchHistogram(this.node);
         });
     }
 
