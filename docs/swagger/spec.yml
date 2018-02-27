@@ -1575,7 +1575,11 @@ paths:
         required: true
         type: string
         description: Bounding box of the form "bbox=southwest_lng,southwest_lat,northeast_lng,northeast_lat". Delimit multiple with semicolons.
-      - $ref: '#/parameters/zoom'
+      - name: zoom
+        in: query
+        required: true
+        type: number
+        description: The zoom level used to split the bbox into a grid
       - $ref: '#/parameters/node'
       responses:
         200:
