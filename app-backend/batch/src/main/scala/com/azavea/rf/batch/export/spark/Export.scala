@@ -9,7 +9,7 @@ import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.common.S3.putObject
+import com.azavea.rf.common.S3.putObjectString
 
 import com.azavea.maml.serve._
 import com.azavea.maml.eval._
@@ -295,7 +295,7 @@ object Export extends SparkJob with Config with LazyLogging {
       }
 
       logger.info(s"Writing status into the ${params.statusBucket}/${exportDef.id}")
-      putObject(
+      putObjectString(
         params.statusBucket,
         exportDef.id.toString,
         ExportStatus.Exported
@@ -304,7 +304,7 @@ object Export extends SparkJob with Config with LazyLogging {
       case t: Throwable =>
         logger.info(s"Writing status into the ${params.statusBucket}/${exportDef.id}")
         logger.error(t.stackTraceString)
-        putObject(
+        putObjectString(
           params.statusBucket,
           exportDef.id.toString,
           ExportStatus.Failed

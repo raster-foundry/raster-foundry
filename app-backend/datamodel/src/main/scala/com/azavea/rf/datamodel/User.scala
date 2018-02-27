@@ -57,6 +57,9 @@ case class User(
 
   def getDefaultExportSource(export: Export, dataBucket: String): URI =
     new URI(s"s3://$dataBucket/user-exports/${URLEncoder.encode(id, "UTF-8")}/${export.id}")
+
+  def getDefaultAnnotationShapefileSource(dataBucket: String): URI =
+    new URI(s"s3://$dataBucket/user-exports/${URLEncoder.encode(id, "UTF-8")}/annotations/${UUID.randomUUID}/annotations.zip")
 }
 
 object User {

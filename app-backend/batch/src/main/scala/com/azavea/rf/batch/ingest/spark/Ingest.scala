@@ -9,7 +9,7 @@ import com.azavea.rf.batch.ingest.json._
 import com.azavea.rf.batch.ingest.model._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf.Config
-import com.azavea.rf.common.S3.putObject
+import com.azavea.rf.common.S3.putObjectString
 import com.azavea.rf.datamodel.IngestStatus
 
 import geotrellis.raster._
@@ -325,7 +325,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
     try {
       ingestDefinition.layers.foreach(ingestLayer(params, _))
       if (params.testRun) ingestDefinition.layers.foreach(Validation.validateCatalogEntry)
-      putObject(
+      putObjectString(
         params.statusBucket,
         ingestDefinition.id.toString,
         IngestStatus.Ingested
@@ -333,7 +333,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
     } catch {
       case t: Throwable =>
         logger.error(t.stackTraceString)
-        putObject(
+        putObjectString(
           params.statusBucket,
           ingestDefinition.id.toString,
           IngestStatus.Failed

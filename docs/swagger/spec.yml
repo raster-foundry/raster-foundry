@@ -828,6 +828,26 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+  /projects/{uuid}/annotations/shapefile:
+    x-resource: Projects
+    get:
+      summary: Get a shapefile containing all annotations on this project
+      parameters:
+        - $ref: '#/parameters/uuid'
+      tags:
+        - Imagery
+      responses:
+        307:
+          description: redirect to a signed s3 download URL
+        404:
+          description: The UUID parameter does not refer to a project  or the user does not have access to the project it refers to.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error.
+          schema:
+            $ref: '#/definitions/Error'
+
   /projects/{uuid}/annotations/{uuid2}:
     x-resouce: Projects
     get:

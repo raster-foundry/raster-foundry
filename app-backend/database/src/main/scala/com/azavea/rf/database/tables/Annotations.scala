@@ -89,6 +89,16 @@ object Annotations extends TableQuery(tag => new Annotations(tag)) with LazyLogg
     )
   }
 
+  def listAllAnnotations(projectId: UUID, user: User)(implicit database: DB) = {
+    val filteredAnnotations = Annotations
+      .filter(_.owner === user.id)
+      .filter(_.projectId === projectId)
+
+    database.db.run{
+      filteredAnnotations.result
+    }
+  }
+
   /** Insert a Annotation given a create case class with a user
     *
     * @param annotationToCreate Annotation.Create object to use to create full Annotation
