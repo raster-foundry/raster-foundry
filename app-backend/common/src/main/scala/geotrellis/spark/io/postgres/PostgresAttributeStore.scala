@@ -10,6 +10,11 @@ import com.azavea.rf.datamodel.LayerAttribute
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
 import geotrellis.raster.io.json._
 import geotrellis.spark.LayerId
 import geotrellis.spark.io.DiscreteLayerAttributeStore
@@ -44,17 +49,19 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(im
 
   def read[T: JsonFormat](layerId: LayerId, attributeName: String): T = {
     logger.debug(s"read($layerId-$attributeName)")
-    Await.result(LayerAttributeDao.getAttribute(layerId, attributeName)
+    Await.result(LayerAttributeDao.getAttribute(layerId, attributeName).transact(xa).unsafeToFuture
       .map(_.value.noSpaces.parseJson.convertTo[T]), awaitTimeout)
   }
 
   def readAll[T: JsonFormat](attributeName: String): Map[LayerId, T] = {
     logger.debug(s"readAll($attributeName)")
-    Await.result(LayerAttributeDao.getAllAttributes(attributeName).map {
-      _.map { attribute =>
-        attribute.layerId -> attribute.value.noSpaces.parseJson.convertTo[T]
-      }.toMap
-    }, awaitTimeout)
+    Await.result(
+      LayerAttributeDao.getAllAttributes(attributeName).transact(xa).unsafeToFuture.map {
+        _.map { attribute =>
+          attribute.layerId -> attribute.value.noSpaces.parseJson.convertTo[T]
+        }.toMap
+      }, awaitTimeout
+    )
   }
 
   def write[T: JsonFormat](layerId: LayerId, attributeName: String, value: T): Unit = {
@@ -66,52 +73,65 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(im
         name = attributeName,
         value = parse(value.toJson.toString).valueOr(throw _)
       )
-    ), awaitTimeout)
+    ).transact(xa).unsafeToFuture, awaitTimeout)
   }
 
   def getHistogram[T: JsonFormat](layerId: LayerId): Future[Option[T]] = {
     logger.debug(s"getHistogram($layerId)")
-    LayerAttributeDao.getAttribute(layerId, "histogram").map{ attribute =>
-      Option(attribute.value.noSpaces.parseJson.convertTo[T])
-    }
+    LayerAttributeDao.getAttribute(layerId, "histogram").transact(xa).unsafeToFuture
+      .map { attribute =>
+        Option(attribute.value.noSpaces.parseJson.convertTo[T])
+      }
   }
 
   def layerExists(layerId: LayerId): Boolean = {
     logger.debug(s"layerExists($layerId)")
-    Await.result(LayerAttributeDao.layerExists(layerId), awaitTimeout)
+    Await.result(LayerAttributeDao.layerExists(layerId).transact(xa).unsafeToFuture, awaitTimeout)
   }
 
   def delete(layerId: LayerId): Unit = {
     logger.debug(s"delete($layerId)")
-    Await.result(LayerAttributeDao.delete(layerId), awaitTimeout)
+    Await.result(LayerAttributeDao.delete(layerId).transact(xa).unsafeToFuture, awaitTimeout)
   }
 
   def delete(layerId: LayerId, attributeName: String): Unit = {
     logger.debug(s"delete($layerId-$attributeName)")
-    Await.result(LayerAttributeDao.delete(layerId, attributeName), awaitTimeout)
+    Await.result(LayerAttributeDao.delete(layerId, attributeName).transact(xa).unsafeToFuture, awaitTimeout)
   }
 
   def layerIds: Seq[LayerId] = {
     logger.debug(s"layerIds($layerIds)")
-    Await.result(LayerAttributeDao.layerIds.map(_.map { case (name, zoom) => LayerId(name, zoom) }.toSeq), awaitTimeout)
+    Await.result(
+      LayerAttributeDao.layerIds.transact(xa).unsafeToFuture
+        .map(_.map { case (name, zoom) => LayerId(name, zoom) }.toSeq),
+      awaitTimeout
+    )
   }
 
   def layerIds(layerNames: Set[String]): Seq[LayerId] = {
     logger.debug(s"layerIdsWithLayerNames($layerNames)")
-    Await.result(LayerAttributeDao.layerIds(layerNames).map(
-      _.map { case (name, zoom) => LayerId(name, zoom) }.toSeq), awaitTimeout)
+    Await.result(
+      LayerAttributeDao.layerIds(layerNames).transact(xa).unsafeToFuture
+        .map { _.map { case (name, zoom) => LayerId(name, zoom) }.toSeq },
+      awaitTimeout
+    )
   }
 
   def maxZoomsForLayers(layerNames: Set[String]): Future[Option[Map[String, Int]]] = {
     logger.debug(s"maxZoomsForLayers($layerNames)")
-    LayerAttributeDao.maxZoomsForLayers(layerNames).map {
-      case seq if seq.length > 0 => seq.toMap.some
-      case _ => None
-    }
+    LayerAttributeDao.maxZoomsForLayers(layerNames).transact(xa).unsafeToFuture
+      .map {
+        case seq if seq.length > 0 => seq.toMap.some
+        case _ => None
+      }
   }
 
   def availableAttributes(id: LayerId): Seq[String] = {
     logger.debug(s"availableAttributes($id")
-    Await.result(LayerAttributeDao.availableAttributes(id.name, id.zoom).map(_.toSeq), awaitTimeout)
+    Await.result(
+      LayerAttributeDao.availableAttributes(id).transact(xa).unsafeToFuture
+        .map(_.toSeq),
+      awaitTimeout
+    )
   }
 }
