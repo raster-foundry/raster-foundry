@@ -9,13 +9,15 @@ import scala.util.{Failure, Success}
 import akka.http.scaladsl.model.{Uri, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling._
+import cats.data.NonEmptyList
 import cats.effect.IO
+import cats.implicits._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.common.AWSBatch
-import com.azavea.rf.database.{AnnotationDao, AoiDao, ProjectDao, SceneToProjectDao}
+import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.GeoJsonCodec._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
@@ -29,10 +31,10 @@ import kamon.akka.http.KamonTraceDirectives
 import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
 import com.azavea.rf.database.filter.Filterables._
-
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 
 @JsonCodec
@@ -405,7 +407,7 @@ trait ProjectRoutes extends Authentication
 
   def acceptScenes(projectId: UUID): Route = authenticate { user =>
     entity(as[BulkAcceptParams]) { sceneParams =>
-      SceneToProjectDao.bulkAddScenes(projectId, sceneParams.sceneIds).transact(xa).unsafeToFuture().map { sceneIds =>
+      onSuccess(SceneToProjectDao.bulkAddScenes(projectId, sceneParams.sceneIds).transact(xa).unsafeToFuture()) { sceneIds =>
         complete(sceneIds)
       }
     }
@@ -414,7 +416,7 @@ trait ProjectRoutes extends Authentication
   def listProjectScenes(projectId: UUID): Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
-        ProjectDao.listProjectScenes(projectId, page, sceneParams, user).transact(xa).unsafeToFuture
+        SceneWithRelatedDao.listProjectScenes(projectId, page, sceneParams, user).transact(xa).unsafeToFuture
       }
     }
   }
@@ -476,26 +478,25 @@ trait ProjectRoutes extends Authentication
   }
 
   def addProjectScenes(projectId: UUID): Route = authenticate { user =>
-    entity(as[Seq[UUID]]) { sceneIds =>
+    entity(as[NonEmptyList[UUID]]) { sceneIds =>
       if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
         complete(StatusCodes.RequestEntityTooLarge)
       }
-      val scenesFuture = ProjectDao.addScenesToProject(sceneIds, projectId, user).transact(xa).unsafeToFuture().map { scenes =>
-        val scenesToKickoff = scenes.filter(scene =>
-          scene.statusFields.ingestStatus == IngestStatus.ToBeIngested || (
-            scene.statusFields.ingestStatus == IngestStatus.Ingesting &&
-              scene.modifiedAt.before(
-                new Timestamp((new Date(System.currentTimeMillis()-1*24*60*60*1000)).getTime)
-              )
-          )
-        )
-        logger.info(s"Kicking off ${scenesToKickoff.size} scene ingests")
-        scenesToKickoff.map(_.id).map(kickoffSceneIngest)
+      val scenesAdded = ProjectDao.addScenesToProject(sceneIds, projectId, user)
+      val scenesToIngest = SceneWithRelatedDao.query.filter(fr"""
+        ingest_status = ${IngestStatus.ToBeIngested.toString} OR
+        (ingest_status = ${IngestStatus.Ingesting.toString} AND (now() - modified_at) > '1 day'::interval))
+        """).filter(fr"scenes.id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})").list
+      val x: ConnectionIO[List[Scene.WithRelated]] = for {
+        _ <- scenesAdded
+        scenes <- scenesToIngest
+      } yield {
+        logger.info(s"Kicking off ${scenes.size} scene ingests")
+        scenes.map(_.id).map(kickoffSceneIngest)
         scenes
       }
-      complete {
-        scenesFuture
-      }
+
+      complete{ x.transact(xa).unsafeToFuture }
     }
   }
 

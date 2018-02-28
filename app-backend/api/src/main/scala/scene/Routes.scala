@@ -12,7 +12,6 @@ import io.circe.syntax._
 import io.circe.parser._
 import kamon.akka.http.KamonTraceDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-
 import com.azavea.rf.database.filter.Filterables._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -21,12 +20,10 @@ import java.net._
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.database.SceneDao
+import com.azavea.rf.database.{Filterable, SceneDao, SceneWithRelatedDao}
 import doobie.util.transactor.Transactor
 import com.azavea.rf.database.filter.Filterables._
-
 import com.azavea.rf.datamodel._
-import com.azavea.rf.database.Filterable
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
 import cats.implicits._
@@ -87,7 +84,7 @@ trait SceneRoutes extends Authentication
   def listScenes: Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
-        SceneDao.query.filter(sceneParams).filter(user).page(page)
+        SceneWithRelatedDao.query.filter(sceneParams).filter(user).page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -95,7 +92,7 @@ trait SceneRoutes extends Authentication
   def createScene: Route = authenticate { user =>
     entity(as[Scene.Create]) { newScene =>
       authorize(user.isInRootOrSameOrganizationAs(newScene)) {
-        onSuccess(SceneDao.insertScene(newScene, user).transact(xa).unsafeToFuture) { scene =>
+        onSuccess(SceneDao.insert(newScene, user).transact(xa).unsafeToFuture) { scene =>
           if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested) kickoffSceneIngest(scene.id)
           complete((StatusCodes.Created, scene))
         }
@@ -106,7 +103,7 @@ trait SceneRoutes extends Authentication
   def getScene(sceneId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        SceneDao.query.filter(user).selectOption(sceneId).transact(xa).unsafeToFuture
+        SceneWithRelatedDao.query.filter(user).selectOption(sceneId).transact(xa).unsafeToFuture
       }
     }
   }
@@ -114,7 +111,7 @@ trait SceneRoutes extends Authentication
   def updateScene(sceneId: UUID): Route = authenticate { user =>
     entity(as[Scene]) { updatedScene =>
       authorize(user.isInRootOrSameOrganizationAs(updatedScene)) {
-        onSuccess(SceneDao.updateScene(updatedScene, sceneId, user).transact(xa).unsafeToFuture) { (result, kickoffIngest) =>
+        onSuccess(SceneDao.update(updatedScene, sceneId, user).transact(xa).unsafeToFuture) { (result, kickoffIngest) =>
           if (kickoffIngest) kickoffSceneIngest(sceneId)
           completeSingleOrNotFound(result)
         }
@@ -123,13 +120,13 @@ trait SceneRoutes extends Authentication
   }
 
   def deleteScene(sceneId: UUID): Route = authenticate { user =>
-    onSuccess(SceneDao.deleteScene(sceneId, user)) {
+    onSuccess(SceneDao.query.filter(fr"id = ${sceneId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
 
   def getDownloadUrl(sceneId: UUID): Route = authenticate { user =>
-    onSuccess(SceneDao.query.filter(user).selectOption(sceneId).transact(xa).unsafeToFuture) { scene =>
+    onSuccess(SceneWithRelatedDao.query.filter(user).selectOption(sceneId).transact(xa).unsafeToFuture) { scene =>
       complete {
         scene.getOrElse {
           throw new Exception("Scene does not exist or is not accessible by this user")

@@ -21,8 +21,20 @@ object ThumbnailDao extends Dao[Thumbnail] {
     FROM
   """ ++ tableF
 
+  def insertMany(thumbnails: Seq[Thumbnail]): ConnectionIO[Int] = {
+    val insertSql = """
+      INSERT INTO thumbnails (
+        id, created_at, modified_at, organization_id, width_px,
+        height_px, scene, url, thumbnail_size
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?, ?, ?
+      )
+    """
+    Update[Thumbnail](insertSql).updateMany(thumbnails.toList)
+  }
+
   def insert(thumbnail: Thumbnail): ConnectionIO[Thumbnail] = {
-    (fr"""
+    fr"""
       INSERT INTO thumbnails (
         id, created_at, modified_at, organization_id, width_px,
         height_px, scene, url, thumbnail_size
@@ -30,7 +42,7 @@ object ThumbnailDao extends Dao[Thumbnail] {
         ${thumbnail.id}, NOW(), NOW(), ${thumbnail.organizationId}, ${thumbnail.widthPx},
         ${thumbnail.heightPx}, ${thumbnail.sceneId}, ${thumbnail.url}, ${thumbnail.thumbnailSize}
       )
-    """).update.withUniqueGeneratedKeys[Thumbnail](
+    """.update.withUniqueGeneratedKeys[Thumbnail](
       "id", "created_at", "modified_at", "organization_id", "width_px",
       "height_px", "scene", "url", "thumbnail_size"
     )

@@ -94,8 +94,8 @@ case class Scene(
     this.tileFootprint,
     this.dataFootprint,
     this.metadataFiles,
-    images.asJson,
-    thumbnails.asJson,
+    images.toList,
+    thumbnails.toList,
     this.ingestLocation,
     this.filterFields,
     this.statusFields
@@ -173,8 +173,8 @@ object Scene {
      tileFootprint: Option[Projected[MultiPolygon]],
      dataFootprint: Option[Projected[MultiPolygon]],
      metadataFiles: List[String],
-     images: Json,
-     thumbnails: Json,
+     images: List[Image.WithRelated],
+     thumbnails: List[Thumbnail],
      ingestLocation: Option[String],
      filterFields: SceneFilterFields = new SceneFilterFields(),
      statusFields: SceneStatusFields

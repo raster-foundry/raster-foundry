@@ -9,7 +9,7 @@ import cats._
 import cats.data._
 import cats.effect.IO
 import cats.syntax.either._
-import com.azavea.rf.datamodel.ColorCorrect
+import com.azavea.rf.datamodel.{Band, ColorCorrect, Image, Thumbnail}
 import io.circe._
 import io.circe.syntax._
 import org.postgresql.util.PGobject
@@ -37,6 +37,64 @@ trait CirceJsonbMeta {
       a => a.asJson
     )
   }
+
+
+  implicit val thumbnailMeta: Meta[List[Thumbnail]] = {
+    Meta.other[PGobject]("jsonb").xmap[List[Thumbnail]](
+      a => io.circe.parser.parse(a.getValue).leftMap[Json](e => throw e).merge.as[List[Thumbnail]] match {
+        case Right(p) => p
+        case Left(e) => throw e
+      }, // failure raises an exception
+      a => {
+        val o = new PGobject
+        o.setType("jsonb")
+        o.setValue(a.asJson.noSpaces)
+        o
+      }
+    )
+  }
+
+
+  implicit val imageWithRelated: Meta[List[Image.WithRelated]] = {
+    Meta.other[PGobject]("jsonb").xmap[List[Image.WithRelated]](
+      a => io.circe.parser.parse(a.getValue).leftMap[Json](e => throw e).merge.as[List[Image.WithRelated]] match {
+        case Right(p) => p
+        case Left(e) => throw e
+      }, // failure raises an exception
+      a => {
+        val o = new PGobject
+        o.setType("jsonb")
+        o.setValue(a.asJson.noSpaces)
+        o
+      }
+    )
+  }
+
+
+  implicit val bandMeta: Meta[List[Band]] = {
+    Meta.other[PGobject]("jsonb").xmap[List[Band]](
+      a => io.circe.parser.parse(a.getValue).leftMap[Json](e => throw e).merge.as[List[Band]] match {
+        case Right(p) => p
+        case Left(e) => throw e
+      }, // failure raises an exception
+      a => {
+        val o = new PGobject
+        o.setType("jsonb")
+        o.setValue(a.asJson.noSpaces)
+        o
+      }
+    )
+  }
+
+  //  implicit val bandMeta: Meta[Seq[Band]] = {
+//    Meta.other[Json]("jsonb").xmap[Seq[Band]](
+//      a => a.as[Seq[Band]] match {
+//        case Right(p) => p
+//        case Left(e) => throw e
+//      },
+//      a => a.asJson
+//    )
+//  }
 
   implicit val uriMeta: Meta[URI] = {
     Meta.other[String]("text").xmap[URI](

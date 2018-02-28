@@ -3,6 +3,7 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.{Scene, SceneFilterFields, SceneStatusFields, User, Visibility}
 import doobie._
@@ -15,12 +16,14 @@ import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
 
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
 import io.circe.{Decoder, Encoder, Json}
+
 import scala.reflect.runtime.universe.TypeTag
 
 
@@ -39,22 +42,62 @@ object SceneDao extends Dao[Scene] {
     FROM
   """ ++ tableF
 
-  def insert(newScene: Scene.Create, user: User): ConnectionIO[Scene.WithRelated] = ???
+  def insert(sceneCreate: Scene.Create, user: User): ConnectionIO[Scene.WithRelated] = {
+    val scene = sceneCreate.toScene(user)
+    val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id))
+    val images = (sceneCreate.images map { im: Image.Banded => im.toImage(user) }).zipWithIndex
+    val bands = images map { case (im: Image, ind: Int) =>
+      sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
+    }
+
+    val sceneInsert = fr"""
+      INSERT INTO ${tableName} (
+         id, created_at, created_by, modified_at, modified_by, owner,
+         organization_id, ingest_size_bytes, visibility, tags,
+         datasource, scene_metadata, name, tile_footprint,
+         data_footprint, metadata_files, ingest_location, cloud_cover,
+         acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
+         boundary_status, ingest_status
+      ) VALUES (
+        ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
+        ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
+        ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
+        ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
+        ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
+        ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus}, ${scene.statusFields.ingestStatus}
+      )
+    """.update.run
+
+
+    val thumbnailInsert = ThumbnailDao.insertMany(thumbnails)
+    val imageInsert = ImageDao.insertManyImages(images.map(_._1))
+    val bandInsert = BandDao.createMany(bands.flatten)
+    val sceneWithRelatedquery = SceneWithRelatedDao.query.filter(scene.id).select
+
+    for {
+      _ <- sceneInsert
+      _ <- thumbnailInsert
+      _ <- imageInsert
+      _ <- bandInsert
+      sceneWithRelated <- sceneWithRelatedquery
+    } yield sceneWithRelated
+  }
+
+  def update(scene: Scene, id: UUID, user: User): ConnectionIO[(Int, Boolean)] = {
+
+    ???
+  }
 }
 
 
 object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   val tableName = "scenes"
-//  import com.azavea.rf.database.filter.Filterables._
-//  val y = SceneWithRelatedDao.query.filter(fr"scenes.id = '0017d408-5888-4ae1-b6f7-b7f09be32b9c'").select.transact(xa).unsafeRunSync
 
-  def codecMeta[A: Encoder : Decoder : TypeTag]: Meta[A] =
-    Meta[Json].xmap[A](
-      _.as[A].fold[A](throw _, identity),
-      _.asJson
-    )
+  def projectFilterFragment(projectId: UUID): Fragment = fr"scenes.id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})"
 
-  implicit val ThumbnailMeta = codecMeta[Thumbnail]
+  def listProjectScenes(projectId: UUID, page: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
+    query.filter(projectFilterFragment(projectId)).filter(sceneParams).ownerFilter(user).page(page)
+  }
 
   val selectF = sql"""
                      SELECT scenes.id,

@@ -1,5 +1,6 @@
 package com.azavea.rf.database.filter
 
+import java.sql.Timestamp
 import java.util.UUID
 
 import com.azavea.rf.database.meta.RFMeta._
@@ -11,6 +12,9 @@ import doobie.implicits._
 import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
+import cats._
+import cats.data._
+import cats.effect.IO
 
 
 trait Filterables {
@@ -24,7 +28,7 @@ trait Filterables {
   implicit val permissionsFilter = Filterable[Any, User] { user: User =>
     val filter =
       if (!user.isInRootOrganization) {
-        Some(fr"organization_id = ${user.organizationId}")
+        Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id})")
       } else {
         None
       }
@@ -67,6 +71,41 @@ trait Filterables {
       annotParams.maxConfidence.map({ maxc => fr"max_confidence = $maxc" }),
       annotParams.quality.map({ quality => fr"quality = $quality" })
     )
+  }
+
+  implicit val combinedSceneQueryParams = Filterable[Any, CombinedSceneQueryParams] { combineSceneParams =>
+    val sceneParams = combineSceneParams.sceneParams
+    Filters.userQP(combineSceneParams.userParams) ++
+    Filters.timestampQP(combineSceneParams.timestampParams) ++
+    Filters.organizationQP(combineSceneParams.orgParams) ++
+    Filters.imageQP(combineSceneParams.imageParams) ++
+      List(
+        sceneParams.maxCloudCover.map({ mcc => fr"cloud_cover <= $mcc" }),
+        sceneParams.minCloudCover.map({ mcc => fr"cloud_cover >= $mcc" }),
+        sceneParams.minAcquisitionDatetime.map({ mac => fr"acquisition_datetime >= $mac" }),
+        sceneParams.maxAcquisitionDatetime.map({ mac => fr"acquisition_datetime <= $mac" }),
+        sceneParams.datasource.toList.toNel.map({ds => Fragments.in(fr"datasource", ds) }),
+        sceneParams.month.toList.toNel.map(
+          { months => Fragments.in(fr"date_part('month', acquisition_date)", months) }
+        ),
+        sceneParams.minDayOfMonth.map(
+          { day => fr"date_part('day', acquisition_date) >= $day" }
+        ),
+        sceneParams.maxDayOfMonth.map(
+          { day => fr"date_part('day', acquisition_date) >= $day" }
+        ),
+        sceneParams.maxSunAzimuth.map({ msa => fr"sun_azimuth <= ${msa}" }),
+        sceneParams.minSunAzimuth.map({ msa => fr"sun_azimuth >= ${msa}" }),
+        sceneParams.maxSunElevation.map({ mse => fr"sun_elevation <= ${mse}" }),
+        sceneParams.minSunElevation.map({ mse => fr"sun_elevation >= ${mse}" }),
+        sceneParams.ingested.map({
+          case true => fr"ingest_status = 'INGESTED'"
+          case _ => fr"ingest_status != 'INGESTED'"
+        }),
+        sceneParams.ingestStatus.toList.toNel.map({
+          statuses => Fragments.in(fr"ingest_status", statuses)
+        })
+      )
   }
 
   implicit val mapTokenQueryParametersFilter = Filterable[Any, CombinedMapTokenQueryParameters] { mapTokenParams: CombinedMapTokenQueryParameters =>

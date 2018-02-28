@@ -142,7 +142,7 @@ object ProjectDao extends Dao[Project] {
     updateStatusQuery.update.run
   }
 
-  def addScenesToProject(sceneIds: NonEmptyList[UUID], projectId: UUID): ConnectionIO[Int] = {
+  def addScenesToProject(sceneIds: NonEmptyList[UUID], projectId: UUID, user: User): ConnectionIO[Int] = {
     // Filter duplicates
     //
 

@@ -59,6 +59,18 @@ object ImageDao extends Dao[Image] {
     transaction
   }
 
+  def insertManyImages(images: List[Image]): ConnectionIO[Int] = {
+    val insertSql = s"""INSERT INTO ${tableName}
+        (id, created_at, modified_at, organization_id, created_by, modified_by,
+        owner, raw_data_bytes, visibility, filename, sourceuri, scene,
+        image_metadata, resolution_meters, metadata_files)
+      VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """
+
+    Update[Image](insertSql).updateMany(images)
+  }
+
   //update images
   def updateImage(image: Image, id: UUID, user: User): ConnectionIO[Int] = {
     val now = new Timestamp((new java.util.Date()).getTime())
