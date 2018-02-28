@@ -2,8 +2,6 @@ package com.azavea.rf.api.healthcheck
 
 import cats.free.Free
 import com.azavea.rf.api.Codec._
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.Users
 import io.circe.generic.JsonCodec
 
 import scala.concurrent.ExecutionContext.Implicits.global
