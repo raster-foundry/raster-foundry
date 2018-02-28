@@ -116,6 +116,17 @@ object ExportDao extends Dao[Export] {
     } yield ExportDefinition(export.id, inputDefinition, outDef)
   }
 
+  def getExportStyle(export: Export, exportOptions: ExportOptions, user: User)(implicit xa: Transactor[IO]): ConnectionIO[Either[SimpleInput, ASTInput]] = {
+    (export.projectId, export.toolRunId) match {
+      // Exporting a tool-run
+      case (_, Some(toolRunId)) => astInput(toolRunId, user).map(Right(_))
+      // Exporting a project
+      case (Some(projectId), None) => simpleInput(projectId, export, user, exportOptions).map(Left(_))
+      // Invalid
+      case _ => throw new Exception("Invalid export configuration")
+    }
+  }
+
 
   /**
     * An AST could include nodes that ask for scenes from the same
