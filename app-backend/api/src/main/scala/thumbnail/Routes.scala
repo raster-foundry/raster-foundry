@@ -81,7 +81,7 @@ trait ThumbnailRoutes extends Authentication
   def createThumbnail: Route = authenticate { user =>
     entity(as[Thumbnail.Create]) { newThumbnail =>
       authorize(user.isInRootOrSameOrganizationAs(newThumbnail)) {
-        onSuccess(ThumbnailDao.insert(newThumbnail.toThumbnail, user).transact(xa).unsafeToFuture) { thumbnail =>
+        onSuccess(ThumbnailDao.insert(newThumbnail.toThumbnail).transact(xa).unsafeToFuture) { thumbnail =>
           complete(StatusCodes.Created, thumbnail)
         }
       }
@@ -115,7 +115,7 @@ trait ThumbnailRoutes extends Authentication
   def updateThumbnail(thumbnailId: UUID): Route = authenticate { user =>
     entity(as[Thumbnail]) { updatedThumbnail =>
       authorize(user.isInRootOrSameOrganizationAs(updatedThumbnail)) {
-        onSuccess(ThumbnailDao.update(updatedThumbnail, thumbnailId, user).transact(xa).unsafeToFuture) {
+        onSuccess(ThumbnailDao.update(updatedThumbnail, thumbnailId).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
