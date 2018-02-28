@@ -133,7 +133,7 @@ trait ExportRoutes extends Authentication
     rejectEmptyResponse {
       complete {
         (for {
-          export: Export <- OptionT(ExportDao.query.selectOption(exportId).transact(xa).unsafeToFuture)
+          export: Export <- OptionT(ExportDao.query.filter(exportId).selectOption.transact(xa).unsafeToFuture)
           list: List[String] <- OptionT.fromOption[Future] { export.getExportOptions.map(_.getSignedUrls(): List[String]) }
         } yield list).value
       }
@@ -144,7 +144,7 @@ trait ExportRoutes extends Authentication
     rejectEmptyResponse {
       complete {
         (for {
-          export: Export <- OptionT(ExportDao.query.selectOption(exportId).transact(xa).unsafeToFuture)
+          export: Export <- OptionT(ExportDao.query.filter(exportId).selectOption.transact(xa).unsafeToFuture)
           list: List[String] <- OptionT.fromOption[Future] { export.getExportOptions.map(_.getObjectKeys(): List[String]) }
         } yield list).value
       }
@@ -154,7 +154,7 @@ trait ExportRoutes extends Authentication
   def redirectRoute(exportId: UUID, objectKey: String): Route = authenticateWithParameter { user =>
     implicit def javaURLAsAkkaURI(url: URL): Uri = Uri(url.toString)
     val x: Future[Option[Uri]] =
-      OptionT(ExportDao.query.selectOption(exportId).transact(xa).unsafeToFuture)
+      OptionT(ExportDao.query.filter(exportId).selectOption.transact(xa).unsafeToFuture)
         .flatMap { y: Export => { OptionT.fromOption[Future]{y.getExportOptions.map(_.getSignedUrl(objectKey): Uri)}}}.value
 
     onComplete(x) { y =>

@@ -92,7 +92,7 @@ trait ThumbnailRoutes extends Authentication
     withPagination { page =>
       rejectEmptyResponse {
         complete {
-          ThumbnailDao.query.ownerFilter(user).selectOption(thumbnailId).transact(xa).unsafeToFuture
+          ThumbnailDao.query.ownerFilter(user).filter(thumbnailId).selectOption.transact(xa).unsafeToFuture
         }
       }
     }

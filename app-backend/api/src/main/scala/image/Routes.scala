@@ -66,7 +66,7 @@ trait ImageRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          ImageDao.query.filter(user).selectOption(imageId).transact(xa).unsafeToFuture
+          ImageDao.query.filter(user).filter(imageId).selectOption.transact(xa).unsafeToFuture
         }
       }
     }

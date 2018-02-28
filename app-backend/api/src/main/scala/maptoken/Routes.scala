@@ -69,7 +69,7 @@ trait MapTokenRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          MapTokenDao.query.filter(user).selectOption(mapTokenId).transact(xa).unsafeToFuture
+          MapTokenDao.query.filter(user).filter(mapTokenId).selectOption.transact(xa).unsafeToFuture
         }
       }
     }

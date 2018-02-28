@@ -116,10 +116,6 @@ object Dao {
     def selectOption: ConnectionIO[Option[Model]] =
       selectQ.option
 
-    def selectOption(id: UUID): ConnectionIO[Option[Model]] = {
-      (selectF ++ fr"id = $id").query[Model].option
-    }
-
     /** Select a single value - throw on failure */
     def select: ConnectionIO[Model] = {
       selectQ.unique

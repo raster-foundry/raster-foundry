@@ -275,7 +275,7 @@ trait ProjectRoutes extends Authentication
   def getProject(projectId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        ProjectDao.query.filter(user).selectOption(projectId).transact(xa).unsafeToFuture
+        ProjectDao.query.filter(user).filter(projectId).selectOption.transact(xa).unsafeToFuture
       }
     }
   }
@@ -352,7 +352,7 @@ trait ProjectRoutes extends Authentication
   def getAnnotation(annotationId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        AnnotationDao.query.filter(user).selectOption(annotationId).transact(xa).unsafeToFuture.map {
+        AnnotationDao.query.filter(user).filter(annotationId).selectOption.transact(xa).unsafeToFuture.map {
           _ map { _.toGeoJSONFeature }
         }
       }

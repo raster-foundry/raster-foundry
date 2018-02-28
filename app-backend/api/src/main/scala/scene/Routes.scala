@@ -103,7 +103,7 @@ trait SceneRoutes extends Authentication
   def getScene(sceneId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        SceneWithRelatedDao.query.filter(user).selectOption(sceneId).transact(xa).unsafeToFuture
+        SceneWithRelatedDao.query.filter(user).filter(sceneId).selectOption.transact(xa).unsafeToFuture
       }
     }
   }
@@ -126,7 +126,7 @@ trait SceneRoutes extends Authentication
   }
 
   def getDownloadUrl(sceneId: UUID): Route = authenticate { user =>
-    onSuccess(SceneWithRelatedDao.query.filter(user).selectOption(sceneId).transact(xa).unsafeToFuture) { scene =>
+    onSuccess(SceneWithRelatedDao.query.filter(user).filter(sceneId).selectOption.transact(xa).unsafeToFuture) { scene =>
       complete {
         scene.getOrElse {
           throw new Exception("Scene does not exist or is not accessible by this user")

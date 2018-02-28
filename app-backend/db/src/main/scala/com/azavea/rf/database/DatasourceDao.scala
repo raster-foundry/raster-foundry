@@ -73,12 +73,6 @@ object DatasourceDao extends Dao[Datasource] {
       .run
   }
 
-  def getDatasource(id: UUID, user: User): ConnectionIO[Option[Datasource]] = {
-    this.query
-      .filter(fr"owner = ${user.id} or owner = 'default'")
-      .selectOption
-  }
-
   def createDatasource(dsCreate: Datasource.Create, user: User): ConnectionIO[Datasource] = {
     val datasource = dsCreate.toDatasource(user)
     this.create(datasource, user)

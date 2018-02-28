@@ -51,7 +51,7 @@ trait AoiRoutes extends Authentication
   def getAOI(id: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        AoiDao.query.filter(user).selectOption(id).transact(xa).unsafeToFuture
+        AoiDao.query.filter(user).filter(id).selectOption.transact(xa).unsafeToFuture
       }
     }
   }
