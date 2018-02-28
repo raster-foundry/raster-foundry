@@ -319,7 +319,7 @@ trait ProjectRoutes extends Authentication
       val annotationsCreate = fc.features map { _.toAnnotationCreate }
       complete {
         AnnotationDao.insertAnnotations(annotationsCreate.toList, projectId, user).transact(xa).unsafeToFuture
-          .map { as => fromSeqToFeatureCollection(as.toSeq)}
+          .map { annotations: List[Annotation] => fromSeqToFeatureCollection[Annotation, Annotation.GeoJSON](annotations) }
       }
     }
   }

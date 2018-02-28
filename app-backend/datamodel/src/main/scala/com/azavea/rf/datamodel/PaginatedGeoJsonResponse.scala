@@ -25,7 +25,7 @@ object GeoJsonCodec {
 
   @ConfiguredJsonCodec
   case class GeoJsonFeatureCollection[T <: GeoJSONFeature](
-    features: Seq[T],
+    features: Iterable[T],
     _type: String = "FeatureCollection"
   )
 
@@ -36,11 +36,11 @@ object GeoJsonCodec {
     hasNext: Boolean,
     page: Int,
     pageSize: Int,
-    features: Seq[T],
+    features: Iterable[T],
     _type: String = "FeatureCollection"
   )
 
-  def fromSeqToFeatureCollection[T1 <: GeoJSONSerializable[T2], T2 <: GeoJSONFeature](features: Seq[T1]): GeoJsonFeatureCollection[T2] = {
+  def fromSeqToFeatureCollection[T1 <: GeoJSONSerializable[T2], T2 <: GeoJSONFeature](features: Iterable[T1]): GeoJsonFeatureCollection[T2] = {
     GeoJsonFeatureCollection[T2](
       features map { _.toGeoJSONFeature },
       "FeatureCollection"
@@ -54,7 +54,7 @@ object GeoJsonCodec {
       resp.hasNext,
       resp.page,
       resp.pageSize,
-      ((resp.results: Seq[T1]) map { _.toGeoJSONFeature }),
+      ((resp.results: Iterable[T1]) map { _.toGeoJSONFeature }),
       "FeatureCollection"
     )
   }
