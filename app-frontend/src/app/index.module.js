@@ -94,11 +94,21 @@ const App = angular.module(
         require('./pages/settings/connections/connections.module.js').name,
         require('./pages/settings/organizations/organizations.module.js').name,
 
-        require('./pages/organization/organization.module.js').name,
-        require('./pages/organization/metrics/metrics.module.js').name,
-        require('./pages/organization/teams/teams.module.js').name,
-        require('./pages/organization/users/users.module.js').name,
-        require('./pages/organization/settings/settings.module.js').name
+        require('./pages/admin/admin.module.js').name,
+        require('./pages/admin/organization/organization.module.js').name,
+        require('./pages/admin/organization/metrics/metrics.module.js').name,
+        require('./pages/admin/organization/teams/teams.module.js').name,
+        require('./pages/admin/organization/users/users.module.js').name,
+        require('./pages/admin/organization/settings/settings.module.js').name,
+
+        require('./pages/admin/platform/platform.module.js').name,
+        require('./pages/admin/platform/metrics/metrics.module.js').name,
+        require('./pages/admin/platform/users/users.module.js').name,
+        require('./pages/admin/platform/organizations/organizations.module.js').name,
+        require('./pages/admin/platform/organizations/detail/detail.module.js').name,
+        require('./pages/admin/platform/organizations/detail/features/features.js').name,
+        require('./pages/admin/platform/organizations/detail/limits/limits.js').name,
+        require('./pages/admin/platform/organizations/detail/settings/settings.js').name
     ]
 );
 

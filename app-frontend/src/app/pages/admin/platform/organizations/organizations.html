@@ -1,0 +1,45 @@
+<ui-view>
+  <div class="admin-users-content container column-stretch dashboard">
+    <div class="admin-users-actions">
+      <input type="text" class="form-control admin-search" placeholder="Search for organizations">
+      <button type="button" class="btn btn-primary"
+              ng-click="$ctrl.newOrgModal()">
+        New Organization
+      </button>
+    </div>
+    <table class="admin-table admin-platform-org-table">
+      <tbody>
+        <tr ng-repeat="organization in $ctrl.organizations track by $index">
+          <td class="name">
+            <div class="placeholder-avatar"></div>
+            <div>
+              {{organization.name}}
+            </div>
+          </td>
+          <td class="email">
+            {{organization.email}}
+          </td>
+          <td class="subscription">
+            {{organization.subscription.name}}
+          </td>
+          <td class="users">
+            <a ui-sref="admin.organization.users({id: organization.id})">
+              <ng-pluralize
+                  count="organization.userCount"
+                  when="{'0': 'No users',
+                         'one': '1 user',
+                         'other': '{} users'}"
+              ></ng-pluralize>
+            </a>
+          </td>
+          <td class="actions">
+            <a ui-sref="admin.organization.metrics({id: organization.id})">View page</a>
+            <rf-dropdown data-options="organization.options">
+              <span class="icon-caret-down"></span>
+            </rf-dropdown>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</ui-view>
