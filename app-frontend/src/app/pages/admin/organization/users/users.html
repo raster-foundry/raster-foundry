@@ -1,12 +1,12 @@
 <div class="admin-users-content container column-stretch dashboard">
   <div class="admin-users-actions">
-    <input type="text" class="form-control user-search" placeholder="Search for users">
+    <input type="text" class="form-control admin-search" placeholder="Search for users">
     <button type="button" class="btn btn-primary"
             ng-click="$ctrl.newUserModal()">
       New User
     </button>
   </div>
-  <table class="admin-table admin-user-table">
+  <table class="admin-table admin-org-user-table">
     <tbody>
       <tr ng-repeat="user in $ctrl.users track by $index">
         <td class="username">

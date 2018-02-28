@@ -43,7 +43,7 @@
   <!-- Nav Right -->
   <div class="navbar-section secondary">
     <nav>
-      <div class="admin-logo" ui-sref="organization.metrics" feature-flag="profile-org-edit"></div>
+      <div class="admin-logo" ui-sref="admin" feature-flag="profile-org-edit"></div>
       <div ng-if="$ctrl.authService.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
           <img ng-if="$ctrl.authService.getProfile().picture" class="avatar" ng-src="{{$ctrl.authService.getProfile().picture}}">
