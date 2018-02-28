@@ -1716,6 +1716,8 @@ paths:
         - Lab
       parameters:
         - $ref: '#/parameters/project'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/tool'
         - $ref: '#/parameters/owner'
         - $ref: '#/parameters/createdBy'
