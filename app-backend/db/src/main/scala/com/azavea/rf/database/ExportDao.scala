@@ -7,10 +7,14 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._
 import cats.implicits._
 import MapAlgebraAST._
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import cats._
+import cats.data._
+import cats.effect.IO
+import cats.implicits._
 import io.circe._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 
@@ -19,14 +23,13 @@ import java.sql.Timestamp
 import java.util.{Date, UUID}
 import java.net.URI
 
+import cats.free.Free
+import doobie.free.connection
+
 
 object ExportDao extends Dao[Export] {
 
-  Meta[ColorCorrect.Params]
-
   val tableName = "exports"
-  //
-  //  implicit val c = Composite[ExportLayerDefinition]
 
   val selectF = fr"""
     SELECT
@@ -70,26 +73,49 @@ object ExportDao extends Dao[Export] {
     (selectF ++ fr"WHERE id = ${id} AND export_status = ${status}").query[Export].option
   }
 
-  def getExportDefinition(id: UUID, user: User): ConnectionIO[ExportDefinition] = ???
+  def getExportDefinition(export: Export, user: User): ConnectionIO[ExportDefinition] = {
+    val exportOptions = export.exportOptions.as[ExportOptions] match {
+      case Left(e) => throw new Exception(s"Did not find options for export ${export.id}: ${e}")
+      case Right(eo) => eo
+    }
 
-  def getExportStyle(export: Export, exportOptions: ExportOptions, user: User)(implicit xa: Transactor[IO]): OptionT[Future, Either[SimpleInput, ASTInput]] = {
-//     (export.projectId, export.toolRunId) match {
-//       // Exporting a tool-run
-//       case (_, Some(toolRunId)) => astInput(toolRunId, user).map(Right(_))
-//       // Exporting a project
-//       case (Some(projectId), None) => {
-//         val work: Future[Option[Either[SimpleInput, ASTInput]]] = {
-//           val x = simpleInput(projectId, export, user, exportOptions).attempt.transact(xa).unsafeToFuture()
-//           x.
-//           Some())
-//         }
-//         OptionT(work)
-//       }
-//       // Invalid
-//       case _ => OptionT.none
-//     }
-    ???
+    val dropboxToken = for {
+      user <- UserDao.query.filter(fr"id = ${user.id}").selectOption
+    } yield {
+      user.flatMap(_.dropboxCredential)
+    }
+
+    val outputDefinition = for {
+      dbxToken <- dropboxToken
+    } yield {
+      OutputDefinition(
+        crs = exportOptions.getCrs,
+        rasterSize = exportOptions.rasterSize,
+        render = Some(exportOptions.render),
+        crop = exportOptions.crop,
+        stitch = exportOptions.stitch,
+        source = exportOptions.source,
+        dropboxCredential = dbxToken
+      )
+    }
+
+    val exportInput = (export.projectId, export.toolRunId) match {
+      // Exporting a tool-run
+      case (_, Some(toolRunId)) => Right(astInput(toolRunId, user))
+      // Exporting a project
+      case (Some(projectId), None) => Left(simpleInput(projectId, export, user, exportOptions))
+      case (None, None) => throw new Exception(s"Export Definitions ${export.id} does not have project or ast input defined")
+    }
+
+    for {
+      outDef <- outputDefinition
+      inputDefinition <- exportInput match {
+        case Left(si) => si.map(s => InputDefinition(export.projectId, exportOptions.resolution, Left(s)))
+        case Right(asti) => asti.map(s => InputDefinition(export.projectId, exportOptions.resolution, Right(s)))
+      }
+    } yield ExportDefinition(export.id, inputDefinition, outDef)
   }
+
 
   /**
     * An AST could include nodes that ask for scenes from the same
@@ -104,12 +130,11 @@ object ExportDao extends Dao[Export] {
     for {
       toolRun <- ToolRunDao.query.filter(toolRunId).ownerFilter(user).select
       ast <- {
-        val z = toolRun.executionParameters.as[MapAlgebraAST] match {
+        toolRun.executionParameters.as[MapAlgebraAST] match {
           case Left(e) => throw e
-          case Right(thing) => thing
+          case Right(mapAlgebraAST) => mapAlgebraAST
         }
-        z.pure[ConnectionIO]
-      }
+      }.pure[ConnectionIO]
       sceneLocs <- sceneIngestLocs(ast, user)
       projectLocs <- projectIngestLocs(ast, user)
     } yield {
@@ -163,38 +188,25 @@ object ExportDao extends Dao[Export] {
     user: User
   ): ConnectionIO[Map[UUID, String]] = {
 
-    val (scenes, projects): (Stream[SceneRaster], Stream[ProjectRaster]) =
-       ast.tileSources
-         .toStream
-         .foldLeft((Stream.empty[SceneRaster], Stream.empty[ProjectRaster]))({
-           case ((sacc, pacc), s: SceneRaster) => (s #:: sacc, pacc)
-           case ((sacc, pacc), p: ProjectRaster) => (sacc, p #:: pacc)
-           case ((sacc, pacc), _) => (sacc, pacc)
-         })
+    val sceneIds: Set[UUID] = ast.tileSources.flatMap {
+      case s: SceneRaster => Some(s.id)
+      case _ => None
+    }
 
-    val sceneIds = scenes.map(_.id)
-    val sceneIngestLocs = for {
+    for {
       scenes <- SceneDao.query.filter(sceneIds.toList.toNel.map(ids => Fragments.in(fr"id", ids))).list
     } yield {
-      scenes.map{ scene =>
+      scenes.flatMap{ scene =>
         scene.ingestLocation.map((scene.id, _))
-      }.flatten.toMap
+      }.toMap
     }
-    sceneIngestLocs
   }
 
   private def projectIngestLocs(ast: MapAlgebraAST, user: User): ConnectionIO[Map[UUID, List[(UUID, String)]]] = {
-
-    val (scenes, projects): (Stream[SceneRaster], Stream[ProjectRaster]) =
-      ast.tileSources
-        .toStream
-        .foldLeft((Stream.empty[SceneRaster], Stream.empty[ProjectRaster]))({
-          case ((sacc, pacc), s: SceneRaster) => (s #:: sacc, pacc)
-          case ((sacc, pacc), p: ProjectRaster) => (sacc, p #:: pacc)
-          case ((sacc, pacc), _) => (sacc, pacc)
-        })
-
-    val projectIds = projects.map(_.id)
+    val projectIds: Set[UUID] = ast.tileSources.flatMap {
+      case s: ProjectRaster => Some(s.id)
+      case _ => None
+    }
 
     val sceneProjectSelect = fr"""
     SELECT stp.project_id, array_agg(stp.scene_id), array_agg(scenes.ingest_location)
@@ -208,13 +220,13 @@ object ExportDao extends Dao[Export] {
     val projectSceneLocs = for {
       stps <- sceneProjectSelect.query[(UUID, List[UUID], List[String])].list
     } yield {
-      stps.map{ case (pID, sID, loc) =>
+      stps.flatMap{ case (pID, sID, loc) =>
         if (loc.isEmpty) {
           None
         } else {
           Some((pID, sID zip loc))
         }
-      }.flatten.toMap
+      }.toMap
     }
     projectSceneLocs
   }
