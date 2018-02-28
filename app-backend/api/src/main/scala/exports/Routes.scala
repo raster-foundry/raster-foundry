@@ -86,8 +86,12 @@ trait ExportRoutes extends Authentication
 
   def getExportDefinition(exportId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete {
-        ExportDao.getExportDefinition(exportId, user).transact(xa).unsafeToFuture
+      val exportDefinition = for {
+        export <- ExportDao.query.filter(exportId).select
+        eo <- ExportDao.getExportDefinition(export, user)
+      } yield eo
+      onSuccess(exportDefinition.transact(xa).unsafeToFuture) { eo =>
+        complete{eo}
       }
     }
   }
