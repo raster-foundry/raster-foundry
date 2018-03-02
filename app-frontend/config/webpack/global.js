@@ -96,11 +96,13 @@ module.exports = function (_path) {
             modulesDirectories: ['node_modules'],
             alias: {
                 _appRoot: path.join(_path, 'src', 'app'),
-                _images: path.join(_path, 'src', 'app', 'assets', 'images'),
-                _stylesheets: path.join(_path, 'src', 'app', 'assets', 'styles'),
-                _scripts: path.join(_path, 'src', 'app', 'assets', 'js'),
+                _stylesheets: path.join(_path, 'src', 'assets', 'styles'),
                 _api: path.join(_path, 'src', 'app', 'api'),
-                _redux: path.join(_path, 'src', 'app', 'redux')
+                _redux: path.join(_path, 'src', 'app', 'redux'),
+                _assets: path.join(_path, 'src', 'assets'),
+                _scripts: path.join(_path, 'src', 'assets', 'js'),
+                _images: path.join(_path, 'src', 'assets', 'images'),
+                _font: path.join(_path, 'src', 'assets', 'font')
             }
         },
 

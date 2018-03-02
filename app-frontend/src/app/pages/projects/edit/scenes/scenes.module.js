@@ -59,19 +59,6 @@ class ProjectsScenesController {
         );
     }
 
-    openSceneDetailModal(scene) {
-        this.$parent.removeHoveredScene();
-
-        this.modalService.open({
-            component: 'rfSceneDetailModal',
-            resolve: {
-                scene: () => scene,
-                repository: () => this.repository
-            }
-        });
-    }
-
-
     openImportModal() {
         this.modalService.open({
             component: 'rfSceneImportModal',

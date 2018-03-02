@@ -174,8 +174,8 @@ export default class ProjectsAdvancedColorController {
                 map.setGeojson(scene.id, this.sceneService.getStyledFootprint(scene));
             });
         } else {
-            this.selectedScenes.delete(scene.id);
-            this.selectedLayers.delete(scene.id);
+            this.selectedScenes = this.selectedScenes.delete(scene.id);
+            this.selectedLayers = this.selectedLayers.delete(scene.id);
             this.getMap().then((map) => {
                 map.deleteGeojson(scene.id);
             });
