@@ -36,6 +36,7 @@ import 'mathjs';
 import 'angular-uuid4';
 import 'angular-hotkeys';
 import 'ui-select';
+import 'angular-ui-tree';
 
 // local scripts
 // import '../assets/js/...';

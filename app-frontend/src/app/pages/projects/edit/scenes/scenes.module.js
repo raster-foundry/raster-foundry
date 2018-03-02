@@ -1,8 +1,5 @@
 import angular from 'angular';
 
-require('angular-ui-tree/dist/angular-ui-tree.min.css');
-require('angular-ui-tree/dist/angular-ui-tree.min.js');
-
 class ProjectsScenesController {
     constructor( // eslint-disable-line max-params
         $log, $state, $scope, modalService, projectService, RasterFoundryRepository

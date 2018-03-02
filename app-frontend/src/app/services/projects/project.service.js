@@ -149,7 +149,6 @@ export default (app) => {
                     updateSceneOrder: {
                         method: 'PUT',
                         url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/order/`,
-                        cache: false,
                         params: {
                             projectId: '@projectId'
                         }
