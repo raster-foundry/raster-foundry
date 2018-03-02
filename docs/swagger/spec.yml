@@ -1562,6 +1562,33 @@ paths:
           description: Update an existing geoprocessing tool
         404:
           description: Error message if insufficient permissions to update a tool
+  /tools/{uuid}/raw:
+    x-resource: Tools
+    get:
+      summary: Get raw analyses render as a single band tiff
+      tags:
+        - Lab
+      parameters:
+      - $ref: '#/parameters/uuid'
+      - name: bbox
+        in: query
+        required: true
+        type: string
+        description: Bounding box of the form "bbox=southwest_lng,southwest_lat,northeast_lng,northeast_lat". Delimit multiple with semicolons.
+      - name: zoom
+        in: query
+        required: true
+        type: number
+        description: The zoom level used to split the bbox into a grid
+      - $ref: '#/parameters/node'
+      responses:
+        200:
+          description: Retrieve raw analyses render as a single band tiff
+          schema:
+            type: string
+            format: binary
+        404:
+          description: Error message returned if insufficent permissions or no raw analyses exist
   /tool-tags/:
     x-resource: Tools
     get:
@@ -1689,6 +1716,8 @@ paths:
         - Lab
       parameters:
         - $ref: '#/parameters/project'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/tool'
         - $ref: '#/parameters/owner'
         - $ref: '#/parameters/createdBy'
@@ -2400,6 +2429,13 @@ parameters:
     description: Feed source URI
     in: query
     type: string
+    required: false
+  node:
+    name: nodeId
+    description: UUID of a node
+    in: query
+    type: string
+    format: uuid
     required: false
 
 definitions:
