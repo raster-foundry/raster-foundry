@@ -1,11 +1,14 @@
 import angular from 'angular';
+
+require('angular-ui-tree/dist/angular-ui-tree.min.css');
+require('angular-ui-tree/dist/angular-ui-tree.min.js');
+
 class ProjectsScenesController {
     constructor( // eslint-disable-line max-params
         $log, $state, $scope, modalService, projectService, RasterFoundryRepository
     ) {
         'ngInject';
         this.$log = $log;
-        this.$state = $state;
         this.modalService = modalService;
         this.projectId = $state.params.projectid;
         this.$parent = $scope.$parent.$ctrl;
@@ -14,6 +17,21 @@ class ProjectsScenesController {
             name: 'Raster Foundry',
             service: RasterFoundryRepository
         };
+    }
+
+    $onInit() {
+        // eslint-disable-next-line
+        let thisItem = this;
+        this.treeOptions = {
+            dropped: function (e) {
+                thisItem.onSceneDropped(e.source.nodesScope.$modelValue);
+            }
+        };
+    }
+
+    onSceneDropped(orderedScenes) {
+        let orderedSceneIds = orderedScenes.map(s => s.id);
+        this.updateSceneOrder(orderedSceneIds);
     }
 
     removeSceneFromProject(scene, $event) {
@@ -51,9 +69,15 @@ class ProjectsScenesController {
             }
         });
     }
+
+    updateSceneOrder(orderedSceneIds) {
+        this.projectService.updateSceneOrder(this.projectId, orderedSceneIds).then(() => {
+            this.$parent.layerFromProject();
+        });
+    }
 }
 
-const ProjectsScenesModule = angular.module('pages.projects.edit.scenes', []);
+const ProjectsScenesModule = angular.module('pages.projects.edit.scenes', ['ui.tree']);
 
 ProjectsScenesModule.controller(
     'ProjectsScenesController', ProjectsScenesController

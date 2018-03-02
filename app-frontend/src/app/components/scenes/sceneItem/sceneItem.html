@@ -1,5 +1,7 @@
 <div class="list-group-item has-action {{$ctrl.isDisabled ? 'is-disabled' : ''}}">
-  <div ng-if="$ctrl.isDraggable" ui-tree-handle>
+  <div title="Drag to reorder this scene"
+       ng-if="$ctrl.isDraggable"
+       ui-tree-handle>
     <i class="icon-gripper"></i>
   </div>
   <div class="item-img-container">

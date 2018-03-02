@@ -137,6 +137,22 @@ export default (app) => {
                             projectId: '@projectId',
                             sceneId: '@sceneId'
                         }
+                    },
+                    sceneOrder: {
+                        method: 'GET',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/order/`,
+                        cache: false,
+                        params: {
+                            projectId: '@projectId'
+                        }
+                    },
+                    updateSceneOrder: {
+                        method: 'PUT',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/order/`,
+                        cache: false,
+                        params: {
+                            projectId: '@projectId'
+                        }
                     }
                 }
             );
@@ -496,6 +512,17 @@ export default (app) => {
 
         getProjectAois(projectId) {
             return this.Project.projectAois({projectId: projectId}).$promise;
+        }
+
+        getSceneOrder(projectId) {
+            return this.Project.sceneOrder({projectId: projectId}).$promise;
+        }
+
+        updateSceneOrder(projectId, sceneIds) {
+            return this.Project.updateSceneOrder(
+                {projectId: projectId},
+                sceneIds
+            ).$promise;
         }
     }
 

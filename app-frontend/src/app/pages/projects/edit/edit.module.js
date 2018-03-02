@@ -55,9 +55,7 @@ class ProjectsEditController {
                         this.projectUpdateListeners.forEach((wait) => {
                             wait.resolve(project);
                         });
-                        this.getSceneList().then(() => {
-                            this.getDatasources();
-                        });
+                        this.getAndReorderSceneList();
                         if (this.project.isAOIProject) {
                             this.getPendingSceneList();
                         }
@@ -84,6 +82,21 @@ class ProjectsEditController {
                 this.fitProjectExtent();
             }
         }
+    }
+
+    getAndReorderSceneList() {
+        this.projectService.getSceneOrder(this.projectId).then(
+            (res) => {
+                this.orderedSceneId = res.results;
+            },
+            () => {
+                this.$log.log('error getting ordered scene IDs');
+            }
+        ).finally(() => {
+            this.getSceneList().then(() => {
+                this.getDatasources();
+            });
+        });
     }
 
     waitForProject() {
@@ -114,7 +127,9 @@ class ProjectsEditController {
                     (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
                 ));
 
-                this.sceneList = allScenes;
+                this.sceneList = this.orderedSceneId.map((id) => {
+                    return allScenes.filter(s => s.id === id)[0];
+                });
                 for (const scene of this.sceneList) {
                     let scenelayer = this.layerService.layerFromScene(scene, this.projectId);
                     this.sceneLayers = this.sceneLayers.set(scene.id, scenelayer);
