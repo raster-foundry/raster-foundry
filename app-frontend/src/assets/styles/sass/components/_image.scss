@@ -25,6 +25,24 @@
     border: 1px solid $border-color-default;
     display: flex;
     justify-content: center;
+
+    &.previewable {
+        cursor: zoom-in;
+
+        &:hover:before {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+
+            content: "Details";
+
+            color: $white;
+            background: $brand-primary;
+
+            padding: 0.5em;
+            border-radius: 3px;
+        }
+    }
 }
 
 .item-img {

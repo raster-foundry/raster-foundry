@@ -30,6 +30,9 @@
   <div class="sidebar-scrollable">
     <div class="list-group">
       <rf-scene-item
+          previewable
+          clickable
+          ng-click="$ctrl.setSelected(scene, !$ctrl.isSelected(scene))"
           scene="scene"
           repository="$ctrl.repository"
           selected="$ctrl.isSelected(scene)"

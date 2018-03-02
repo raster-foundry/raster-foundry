@@ -11,7 +11,10 @@ const ShapeItemComponent = {
 };
 
 class ShapeItemController {
-    constructor() {}
+    constructor($attrs) {
+        this.isPreviewable = $attrs.hasOwnProperty('previewable');
+        this.isClickable = $attrs.hasOwnProperty('clickable');
+    }
     $postLink() {
         this.shapeJson = JSON.stringify(this.shape);
     }

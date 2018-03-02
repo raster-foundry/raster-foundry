@@ -83,16 +83,6 @@ class ImportListController {
         });
     }
 
-    viewSceneDetail(scene) {
-        this.modalService.open({
-            component: 'rfSceneDetailModal',
-            resolve: {
-                scene: () => scene,
-                repository: () => this.repository
-            }
-        });
-    }
-
     importModal() {
         this.modalService.open({
             component: 'rfSceneImportModal',

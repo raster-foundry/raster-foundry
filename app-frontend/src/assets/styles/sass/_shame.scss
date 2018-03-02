@@ -476,10 +476,14 @@ rf-project-editor .leaflet-tile {
   }
 }
 
-.list-group-item.is-disabled {
-  opacity: 0.5;
+.list-group-item {
+    &.disabled {
+        opacity: 0.5;
+    }
+    &.clickable {
+        cursor: pointer;
+    }
 }
-
 .checkbox-container {
   height: 2rem;
   width: 2rem;

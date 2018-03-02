@@ -17,8 +17,9 @@ const SceneItemComponent = {
 
 class SceneItemController {
     constructor(
-      $scope, $attrs,
-      thumbnailService, mapService, datasourceService) {
+        $scope, $attrs,
+        thumbnailService, mapService, datasourceService, modalService
+    ) {
         'ngInject';
 
         this.$scope = $scope;
@@ -28,7 +29,12 @@ class SceneItemController {
 
         this.thumbnailService = thumbnailService;
         this.mapService = mapService;
+        this.isDraggable = $attrs.hasOwnProperty('draggable');
+        this.isPreviewable = $attrs.hasOwnProperty('previewable');
+        this.isClickable = $attrs.hasOwnProperty('clickable');
         this.datasourceService = datasourceService;
+        this.modalService = modalService;
+        this.$scope = $scope;
     }
 
     $onInit() {
@@ -79,6 +85,16 @@ class SceneItemController {
             return true;
         }
         return false;
+    }
+
+    openSceneDetailModal() {
+        this.modalService.open({
+            component: 'rfSceneDetailModal',
+            resolve: {
+                scene: () => this.scene,
+                repository: () => this.repository
+            }
+        });
     }
 }
 
