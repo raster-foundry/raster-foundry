@@ -7,7 +7,8 @@
   <div class="item-img-container">
     <rf-status-tag entity-type="scene"
                    ng-if="$ctrl.scene.statusFields.ingestStatus"
-                   status="$ctrl.scene.statusFields.ingestStatus"></rf-status-tag>
+                   status="$ctrl.scene.statusFields.ingestStatus"
+                   ng-class="{'on-drag': $ctrl.isDraggable}"></rf-status-tag>
     <img ng-attr-src="{{$ctrl.thumbnail}}"
          ng-if="$ctrl.thumbnail"
          class="rounded-img item-img">

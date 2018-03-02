@@ -2,6 +2,7 @@ import angular from 'angular';
 import {Map, Set} from 'immutable';
 import ProjectActions from '_redux/actions/project-actions';
 import AnnotationActions from '_redux/actions/annotation-actions';
+import _ from 'lodash';
 
 class ProjectsEditController {
     constructor( // eslint-disable-line max-params
@@ -127,9 +128,9 @@ class ProjectsEditController {
                     (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
                 ));
 
-                this.sceneList = this.orderedSceneId.map((id) => {
+                this.sceneList = _.uniqBy(this.orderedSceneId.map((id) => {
                     return allScenes.filter(s => s.id === id)[0];
-                });
+                }), 'id');
                 for (const scene of this.sceneList) {
                     let scenelayer = this.layerService.layerFromScene(scene, this.projectId);
                     this.sceneLayers = this.sceneLayers.set(scene.id, scenelayer);

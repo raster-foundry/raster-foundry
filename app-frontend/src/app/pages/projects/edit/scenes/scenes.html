@@ -44,8 +44,8 @@
   </div>
 </div>
 <div class="sidebar-scrollable"
-     data-empty-placeholder-enabled="false"
-     ui-tree="$ctrl.treeOptions">
+     ui-tree="$ctrl.treeOptions"
+     data-empty-placeholder-enabled="false">
   <div
     class="list-group"
     ng-model="$ctrl.$parent.sceneList"
@@ -56,7 +56,7 @@
         ng-click="$ctrl.openSceneDetailModal(scene)"
         ng-mouseover="$ctrl.$parent.setHoveredScene(scene)"
         ng-mouseleave="$ctrl.$parent.removeHoveredScene()"
-        ng-repeat="scene in $ctrl.$parent.sceneList track by $index"
+        ng-repeat="scene in $ctrl.$parent.sceneList track by scene.id"
         ui-tree-node
         draggable>
       <button class="btn btn-tiny" ng-click="$ctrl.removeSceneFromProject(scene, $event)">

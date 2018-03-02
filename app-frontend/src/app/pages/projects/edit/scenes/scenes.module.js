@@ -1,3 +1,4 @@
+/* globals document */
 import angular from 'angular';
 
 class ProjectsScenesController {
@@ -20,10 +21,23 @@ class ProjectsScenesController {
         // eslint-disable-next-line
         let thisItem = this;
         this.treeOptions = {
+            dragStart: function (e) {
+                thisItem.onSceneDragStart(e);
+            },
             dropped: function (e) {
                 thisItem.onSceneDropped(e.source.nodesScope.$modelValue);
             }
         };
+    }
+
+    onSceneDragStart(e) {
+        this.setDragPlaceholderHeight(e);
+    }
+
+    setDragPlaceholderHeight(e) {
+        const ele = angular.element(document.querySelector('.list-group-item'));
+        const placeholder = angular.element(e.elements.placeholder);
+        placeholder.css('height', ele.css('height'));
     }
 
     onSceneDropped(orderedScenes) {
