@@ -3,17 +3,21 @@ import { authedRequest } from '_api/authentication';
 export const ANALYSIS_LOAD = 'ANALYSIS_LOAD';
 export const ANALYSIS_UPDATE_NAME = 'ANALYSIS_UPDATE_NAME';
 export const ANALYSIS_FETCH = 'ANALYSIS_FETCH';
+export const ANALYSIS_SET_OPTIONS = 'ANALYSIS_SET_OPTIONS';
 
 export const ANALYSIS_ACTION_PREFIX = 'ANALYSIS';
 
 // Analysis ActionCreators
 
-export function loadAnalysis(payload, readonly) {
-    let action = {type: ANALYSIS_LOAD, payload};
-    if (readonly) {
-        Object.assign(action, {readonly: true});
-    }
-    return action;
+export function loadAnalysis(analysis, options) {
+    return (dispatch) => {
+        let loadAction = {type: ANALYSIS_LOAD, payload: analysis};
+        let optionAction = {type: ANALYSIS_SET_OPTIONS, payload: options};
+        if (options) {
+            dispatch(optionAction);
+        }
+        dispatch(loadAction);
+    };
 }
 
 export function updateAnalysisName(name) {
@@ -53,6 +57,10 @@ export function fetchAnalysis(analysisId) {
     };
 }
 
+export function setDisplayOptions(options) {
+    return {type: ANALYSIS_SET_OPTIONS, options};
+}
+
 export default {
-    loadAnalysis, updateAnalysisName, fetchAnalysis
+    loadAnalysis, updateAnalysisName, fetchAnalysis, setDisplayOptions
 };

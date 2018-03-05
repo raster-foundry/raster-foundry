@@ -307,6 +307,9 @@ function labStates($stateProvider) {
             title: 'View a Template',
             url: '/template/:templateid',
             parent: 'lab',
+            params: {
+                template: null
+            },
             templateUrl: labTemplateTpl,
             controller: 'LabTemplateController',
             controllerAs: '$ctrl'
@@ -350,7 +353,7 @@ function labStates($stateProvider) {
             redirectTo: 'lab.browse.analyses'
         })
         .state('lab.browse.templates', {
-            title: 'Analysis Search',
+            title: 'Template Search',
             url: '/templates?:page?:query?analysiscategory&analysistag',
             templateUrl: labBrowseTemplatesTpl,
             controller: 'LabBrowseTemplatesController',

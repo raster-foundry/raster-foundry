@@ -1,4 +1,5 @@
 /* globals BUILDCONFIG */
+import _ from 'lodash';
 
 export default (app) => {
     class AnalysisService {
@@ -21,6 +22,13 @@ export default (app) => {
                     },
                     create: {
                         method: 'POST'
+                    },
+                    update: {
+                        method: 'PUT',
+                        url: `${BUILDCONFIG.API_HOST}/api/tools/:id`
+                    },
+                    delete: {
+                        method: 'DELETE'
                     }
                 }
             );
@@ -118,6 +126,17 @@ export default (app) => {
 
         getTemplate(id) {
             return this.Template.get({id}).$promise;
+        }
+
+        updateTemplate(template) {
+            let update = _.cloneDeep(template);
+            update.organizationId = update.organization.id;
+            delete update.organization;
+            return this.Template.update({id: template.id}, update).$promise;
+        }
+
+        deleteTemplate(id) {
+            return this.Template.delete({id}).$promise;
         }
 
         deleteAnalysis(id) {

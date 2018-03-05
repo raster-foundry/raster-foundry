@@ -43,6 +43,7 @@
   <!-- </button> -->
 </div>
 <div class="map-container-controls"
+     ng-if="$ctrl.controls"
      ng-class="{ 'is-dragging': $ctrl.panActive }">
   <div class="map-zoom" title="Current Zoom">{{($ctrl.scale * 100).toFixed(0)}}%</div>
   <button class="btn btn-default btn-square btn-small"

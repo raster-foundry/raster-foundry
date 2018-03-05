@@ -26,7 +26,7 @@ class LabStartAnalysisController {
         } else {
             this.templateDefinition = this.template.definition;
             this.analysis = this.analysisService.generateAnalysis(this.template);
-            this.loadAnalysis(this.analysis, true);
+            this.loadAnalysis(this.analysis, {readonly: true, controls: true});
         }
     }
 
@@ -38,7 +38,7 @@ class LabStartAnalysisController {
             this.templateDefinition = template.definition;
             this.loadingTemplate = false;
             this.analysis = this.analysisService.generateAnalysis(this.template);
-            this.loadAnalysis(this.analysis, true);
+            this.loadAnalysis(this.analysis, {readonly: true, controls: true});
         });
     }
 

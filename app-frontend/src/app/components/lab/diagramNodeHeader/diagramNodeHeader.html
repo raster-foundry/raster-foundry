@@ -32,6 +32,7 @@
         <span class="node-header-label">{{$ctrl.node.metadata.label}}</span>
         <button class="btn node-button node-header-edit"
                 type="button"
+                ng-if="!$ctrl.readonly"
                 ng-click="$ctrl.toggleNodeLabelEdit()">
           <span class="icon-pencil"></span>
         </button>

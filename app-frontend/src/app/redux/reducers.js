@@ -25,7 +25,8 @@ const INITIAL_LAB_STATE = {
     lastAnalysisSave: null, lastAnalysisRefresh: null, analysis: null,
     analysisErrors: new Map(),
     updating: false, fetching: false, error: null,
-    readonly: null,
+    readonly: false,
+    controls: true,
 
     // node state
     nodes: new Map(), previewNodes: [], selectingNode: null, selectedNode: null,
