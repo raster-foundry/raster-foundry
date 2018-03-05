@@ -149,8 +149,6 @@ class DiagramContainerController {
                 color: '#aaa',
                 thickness: 1
             });
-            // this.paper.on('cell:pointerdown', this.onCellClick.bind(this));
-            // this.paper.on('blank:pointerclick', this.onPaperClick.bind(this));
             this.paper.on('blank:pointerdown', () => {
                 this.panActive = true;
                 this.$scope.$evalAsync();
