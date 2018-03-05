@@ -3,6 +3,7 @@ package com.azavea.rf.database
 import java.util.UUID
 
 import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel.{BatchParams, ColorCorrect, MosaicDefinition, SceneToProject}
 import doobie._
 import doobie.implicits._
@@ -15,6 +16,7 @@ import cats.implicits._
 import geotrellis.slick.Projected
 import geotrellis.vector.Polygon
 
+import doobie.Fragments._
 import scala.concurrent.Future
 
 
@@ -24,27 +26,74 @@ object SceneToProjectDao extends Dao[SceneToProject] {
 
   val selectF = sql"""
     SELECT
-      scene_id, project_id, scene_order, mosaic_definition, accepted
+      scene_id, project_id, accepted, scene_order, mosaic_definition
     FROM
   """ ++ tableF
 
   /** Unclear what this is supposed to return from the current implementation */
-  def acceptScene(projectId: UUID, sceneId: UUID) = ???
+  def acceptScene(projectId: UUID, sceneId: UUID): ConnectionIO[Int] = {
+    fr"""
+      UPDATE scenes_to_projects SET accepted = true WHERE project_id = ${projectId} AND scene_id = ${sceneId}
+    """.update.run
+  }
 
-  def bulkAddScenes(projectId: UUID, scenesIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = ???
-
-  def setManualOrder(projectId: UUID, sceneIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = ???
+  def setManualOrder(projectId: UUID, sceneIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = {
+    val updates = for {
+      i <- sceneIds.indices
+    } yield {
+      fr"""
+      UPDATE scenes_to_projects SET scene_order = ${i} WHERE project_id = ${projectId} AND scene_id = ${sceneIds(i)}
+    """.update.run
+    }
+    for {
+      _ <- updates.toList.sequence
+    } yield sceneIds
+  }
 
   // Check swagger spec for appropriate return type
-  def getMosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]] ): ConnectionIO[Seq[MosaicDefinition]] = ???
+  def getMosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]]): ConnectionIO[Seq[MosaicDefinition]] = {
 
-  // I don't think return type here is important, should makybe be int since no content is returned
-  def setColorCorrectParams(projectId: UUID, sceneId: UUID, colorCorrectParams: ColorCorrect.Params): ConnectionIO[Seq[SceneToProject]] = ???
+    val filters = List(
+      polygonOption.map(polygon => fr"ST_Intersects(scenes.tile_footprint, ${polygon}"),
+      Some(fr"scenes_to_projects.project_id = ${projectId}")
+    )
+    val select = fr"""
+    SELECT
+      scene_id, project_id, scene_order, mosaic_definition, accepted
+    FROM
+      scenes_to_projects
+    LEFT JOIN
+      scenes
+    ON scenes.id = scenes_to_projects.scene_id
+      """
+    for {
+      stps <- (select ++ whereAndOpt(filters: _*)).query[SceneToProject].list
+    } yield {
+      MosaicDefinition.fromScenesToProjects(stps)
+    }
+  }
 
-  // Unclear what type is supposed to be returned here
-  def getColorCorrectParams(projectId: UUID, sceneId: UUID): ConnectionIO[ColorCorrect.Params] = ???
+  def getMosaicDefinition(projectId: UUID): ConnectionIO[Seq[MosaicDefinition]] = {
+    getMosaicDefinition(projectId, None)
+  }
 
-  // I don't think return type here is important, should makybe be int since no content is returned
-  def setColorCorrectParamsBatch(projectId: UUID, batchParams: BatchParams): ConnectionIO[Seq[SceneToProject]] = ???
+  def setColorCorrectParams(projectId: UUID, sceneId: UUID, colorCorrectParams: ColorCorrect.Params): ConnectionIO[SceneToProject] = {
+    fr"""
+      UPDATE scenes_to_projects SET mosaic_definition = ${colorCorrectParams} WHERE project_id = ${projectId} AND scene_id = ${sceneId}
+    """.update.withUniqueGeneratedKeys("scene_id", "project_id", "accepted", "scene_order", "mosaic_definition")
+  }
+
+  def getColorCorrectParams(projectId: UUID, sceneId: UUID): ConnectionIO[Option[ColorCorrect.Params]] = {
+    for {
+      stp <- query.filter(fr"project_id = ${projectId} AND scene_id = ${sceneId}").select
+    } yield {
+      stp.colorCorrectParams
+    }
+  }
+
+  def setColorCorrectParamsBatch(projectId: UUID, batchParams: BatchParams): ConnectionIO[List[SceneToProject]] = {
+    val updates: ConnectionIO[List[SceneToProject]] = batchParams.items.map( params => setColorCorrectParams(projectId, params.sceneId, params.params)).sequence
+    updates
+  }
 }
 

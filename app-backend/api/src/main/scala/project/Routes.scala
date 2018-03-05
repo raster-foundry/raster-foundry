@@ -401,14 +401,19 @@ trait ProjectRoutes extends Authentication
 
   def acceptScene(projectId: UUID, sceneId: UUID): Route = authenticate { user =>
     complete {
-      SceneToProjectDao.acceptScene(projectId, sceneId)
+      SceneToProjectDao.acceptScene(projectId, sceneId).transact(xa).unsafeToFuture
     }
   }
 
   def acceptScenes(projectId: UUID): Route = authenticate { user =>
     entity(as[BulkAcceptParams]) { sceneParams =>
-      onSuccess(SceneToProjectDao.bulkAddScenes(projectId, sceneParams.sceneIds).transact(xa).unsafeToFuture()) { sceneIds =>
-        complete(sceneIds)
+      sceneParams.sceneIds.toNel.map(ids => ProjectDao.addScenesToProject(ids, projectId, user)) match {
+        case Some(addQuery) => {
+          onSuccess(addQuery.transact(xa).unsafeToFuture) {
+            numAdded => complete(sceneParams.sceneIds)
+          }
+        }
+        case _ => complete(StatusCodes.BadRequest)
       }
     }
   }
@@ -483,10 +488,7 @@ trait ProjectRoutes extends Authentication
         complete(StatusCodes.RequestEntityTooLarge)
       }
       val scenesAdded = ProjectDao.addScenesToProject(sceneIds, projectId, user)
-      val scenesToIngest = SceneWithRelatedDao.query.filter(fr"""
-        ingest_status = ${IngestStatus.ToBeIngested.toString} OR
-        (ingest_status = ${IngestStatus.Ingesting.toString} AND (now() - modified_at) > '1 day'::interval))
-        """).filter(fr"scenes.id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})").list
+      val scenesToIngest = SceneWithRelatedDao.getScenesToIngest(projectId)
       val x: ConnectionIO[List[Scene.WithRelated]] = for {
         _ <- scenesAdded
         scenes <- scenesToIngest
@@ -513,8 +515,14 @@ trait ProjectRoutes extends Authentication
       if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
         complete(StatusCodes.RequestEntityTooLarge)
       }
-      complete {
-        ProjectDao.replaceScenesInProject(sceneIds, projectId).transact(xa).unsafeToFuture()
+
+      sceneIds.toList.toNel match {
+        case Some(ids) => {
+          complete {
+            ProjectDao.replaceScenesInProject(ids, projectId, user).transact(xa).unsafeToFuture()
+          }
+        }
+        case _ => complete(StatusCodes.BadRequest)
       }
     }
   }

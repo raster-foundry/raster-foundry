@@ -16,6 +16,7 @@ import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
 
+import com.azavea.rf.database.util.Page
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import io.circe._
 import io.circe.syntax._
@@ -24,7 +25,6 @@ import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
 import io.circe.{Decoder, Encoder, Json}
 
-import scala.reflect.runtime.universe.TypeTag
 
 
 object SceneDao extends Dao[Scene] {
@@ -93,10 +93,165 @@ object SceneDao extends Dao[Scene] {
 object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   val tableName = "scenes"
 
-  def projectFilterFragment(projectId: UUID): Fragment = fr"scenes.id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})"
+  def listProjectScenes(projectId: UUID, pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
 
-  def listProjectScenes(projectId: UUID, page: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
-    query.filter(projectFilterFragment(projectId)).filter(sceneParams).ownerFilter(user).page(page)
+    val projectFilterFragment = fr"id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})"
+    val queryFilters = makeFilters(List(sceneParams)).flatten ++ List(Some(projectFilterFragment))
+    val paginatedQuery = listQuery(queryFilters, Some(pageRequest)).query[Scene.WithRelated].list
+    val countQuery = (fr"SELECT count(*) FROM scenes" ++ Fragments.whereAndOpt(queryFilters: _*)).query[Int].unique
+
+    for {
+      page <- paginatedQuery
+      count <- countQuery
+    } yield {
+      val hasPrevious = pageRequest.offset > 0
+      val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
+
+      PaginatedResponse[Scene.WithRelated](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
+    }
+  }
+
+  def listScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
+
+    val queryFilters = makeFilters(List(sceneParams)).flatten
+
+    val paginatedQuery = listQuery(queryFilters, Some(pageRequest)).query[Scene.WithRelated].list
+    val countQuery = (fr"SELECT count(*) FROM scenes" ++ Fragments.whereAndOpt(queryFilters: _*)).query[Int].unique
+
+    for {
+      page <- paginatedQuery
+      count <- countQuery
+    } yield {
+      val hasPrevious = pageRequest.offset > 0
+      val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
+
+      val sorted = page.map(_.filterFields.acquisitionDate.get.getTime).sorted.reverse
+      val maybeSorted = page.map(_.filterFields.acquisitionDate.get.getTime)
+      val isSorted = sorted == maybeSorted
+
+      PaginatedResponse[Scene.WithRelated](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
+    }
+  }
+
+  def getScene(sceneId: UUID, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
+    val queryFilters = List(Some(fr"id = ${sceneId}"), ownerEditFilter(user))
+    listQuery(queryFilters, None).query[Scene.WithRelated].option
+  }
+
+  def getScenesToIngest(projectId: UUID): ConnectionIO[List[Scene.WithRelated]] = {
+    val fragments = List(
+      Some(fr"""ingest_status = ${IngestStatus.ToBeIngested.toString}
+           OR (ingest_status = ${IngestStatus.Ingesting.toString} AND (now() - modified_at) > '1 day'::interval))
+        """),
+      Some(fr"scenes.id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})")
+    )
+    listQuery(fragments, None).query[Scene.WithRelated].list
+  }
+
+  def listQuery(fragments: List[Option[Fragment]], page: Option[PageRequest]): Fragment = {
+      fr"""WITH
+        scenes_q AS (
+          SELECT *, coalesce(acquisition_date, created_at) as acquisition_date_sort
+          FROM scenes""" ++ Fragments.whereAndOpt(fragments: _*) ++
+        fr"""
+        ), images_q AS (
+          SELECT * FROM images WHERE images.scene IN (SELECT id FROM scenes_q)
+        ), thumbnails_q AS (
+          SELECT * FROM thumbnails WHERE thumbnails.scene IN (SELECT id FROM scenes_q)
+        ), bands_q AS (
+          SELECT * FROM bands WHERE image_id IN (SELECT id FROM images_q)
+        )
+      SELECT scenes_q.id,
+             scenes_q.created_at,
+             scenes_q.created_by,
+             scenes_q.modified_at,
+             scenes_q.modified_by,
+             scenes_q.owner,
+             scenes_q.organization_id,
+             scenes_q.ingest_size_bytes,
+             scenes_q.visibility,
+             scenes_q.tags,
+             scenes_q.datasource,
+             scenes_q.scene_metadata,
+             scenes_q.name,
+             scenes_q.tile_footprint,
+             scenes_q.data_footprint,
+             scenes_q.metadata_files,
+             images_with_bands.j :: jsonb AS images,
+             tnails.thumbnails :: jsonb,
+             scenes_q.ingest_location,
+             scenes_q.cloud_cover,
+             scenes_q.acquisition_date,
+             scenes_q.sun_azimuth,
+             scenes_q.sun_elevation,
+             scenes_q.thumbnail_status,
+             scenes_q.boundary_status,
+             scenes_q.ingest_status
+      FROM scenes_q
+      LEFT JOIN (
+        SELECT
+          scene,
+          json_agg (
+            json_build_object(
+              'id', i.id,
+              'createdAt', to_char(i.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+              'modifiedAt', to_char(i.modified_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+              'organizationId', i.organization_id,
+              'createdBy', i.created_by,
+              'modifiedBy', i.modified_by,
+              'owner', i.owner,
+              'rawDataBytes', i.raw_data_bytes,
+              'visibility', i.visibility,
+              'filename', i.filename,
+              'sourceUri', i.sourceuri,
+              'scene', i.scene,
+              'imageMetadata', i.image_metadata,
+              'resolutionMeters', i.resolution_meters,
+              'metadataFiles', i.metadata_files,
+              'bands', b.bands
+            )
+          ) AS j
+        FROM images_q AS i
+        LEFT JOIN (
+          SELECT
+            image_id,
+            json_agg(
+              json_build_object(
+                'id', b.id,
+                'image', b.image_id,
+                'name', b.name,
+                'number', b.number,
+                'wavelength', b.wavelength
+              )
+            ) AS bands
+            FROM bands_q AS b
+            GROUP BY image_id
+          ) AS b ON i.id = b.image_id
+        GROUP BY scene
+      ) AS images_with_bands ON scenes_q.id = images_with_bands.scene
+      LEFT JOIN (
+        SELECT
+          scene,
+          json_agg(
+            json_build_object(
+              'id', t.id,
+              'createdAt', to_char(t.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+              'modifiedAt', to_char(t.modified_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+              'organizationId', t.organization_id,
+              'widthPx', t.width_px,
+              'heightPx', t.height_px,
+              'sceneId', t.scene,
+              'url', t.url,
+              'thumbnailSize', t.thumbnail_size
+            )
+          ) AS thumbnails
+        FROM thumbnails_q AS t
+        GROUP BY scene
+      ) AS tnails ON scenes_q.id = tnails.scene""" ++ Page(page)
+  }
+
+  def makeFilters[T](myList: List[T])(implicit filterable: Filterable[Scene.WithRelated, T]) = {
+    myList.map(filterable.toFilters(_))
   }
 
   val selectF = sql"""

@@ -2,6 +2,7 @@ package com.azavea.rf.database
 
 import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.database.filter.Filterables._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -12,7 +13,6 @@ import java.util.UUID
 import java.sql.{Date, Timestamp}
 
 import com.lonelyplanet.akka.http.extensions.PageRequest
-import com.azavea.rf.database.filter.Filterables._
 import scala.concurrent.Future
 
 import com.azavea.rf.datamodel._
@@ -30,7 +30,6 @@ import cats._
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
-
 
 
 object ProjectDao extends Dao[Project] {
@@ -129,23 +128,27 @@ object ProjectDao extends Dao[Project] {
     val updateStatusQuery =
       sql"""
            UPDATE scenes
-           SET ingest_status = 'TOBEINGESTED'
+           SET ingest_status = ${IngestStatus.ToBeIngested} :: ingest_status
            FROM
              (SELECT scene_id
               FROM scenes
               INNER JOIN scenes_to_projects ON scene_id = scenes.id
-              WHERE project_id = '30ee749c-7bf3-4d28-838a-d4aeeb451911') sub
-           WHERE scenes.ingest_status IN ('NOTINGESTED',
-                                          'FAILED')
-             AND sub.scene_id = scenes.id;
+              WHERE project_id = ${projectId}) sub
+           WHERE (scenes.ingest_status = ${IngestStatus.NotIngested.toString} OR
+                  scenes.ingest_stuatus = ${IngestStatus.Failed.toString})
+           AND sub.scene_id = scenes.id
          """
     updateStatusQuery.update.run
   }
 
-  def addScenesToProject(sceneIds: NonEmptyList[UUID], projectId: UUID, user: User): ConnectionIO[Int] = {
-    // Filter duplicates
-    //
+  def addScenesToProject(sceneIds: List[UUID], projectId: UUID, user: User): ConnectionIO[Int] = {
+    sceneIds.toNel match {
+      case Some(ids) => addScenesToProject(ids, projectId, user)
+      case _ => 0.pure[ConnectionIO]
+    }
+  }
 
+  def addScenesToProject(sceneIds: NonEmptyList[UUID], projectId: UUID, user: User): ConnectionIO[Int] = {
     val inClause = Fragments.in(fr"scenes.id", sceneIds)
     val x = sql"""
          SELECT scenes.id,
@@ -239,12 +242,19 @@ object ProjectDao extends Dao[Project] {
     }
   }
 
-  // Not Sure if This is Used Anywhere
-  def replaceScenesInProject(sceneIds: Seq[UUID], projectId: UUID): ConnectionIO[Iterable[Scene]] = {
-    val deleteQuery = sql"DELETE FROM scenes_to_projects WHERE project_id = ${projectId}"
-    val insertQuery = sql"INSERT INTO "
-    SceneToProject
-    ???
+  def replaceScenesInProject(sceneIds: NonEmptyList[UUID], projectId: UUID, user: User): ConnectionIO[Iterable[Scene]] = {
+    val deleteQuery = sql"DELETE FROM scenes_to_projects WHERE project_id = ${projectId}".update.run
+    val scenesAdded = addScenesToProject(sceneIds, projectId, user)
+    val projectScenes = SceneDao
+      .query
+      .filter(fr"scenes.id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId}")
+      .list
+
+    for {
+      _ <- deleteQuery
+      _ <- scenesAdded
+      scenes <- projectScenes
+    } yield scenes
   }
 
   def deleteScenesFromProject(sceneIds: List[UUID], projectId: UUID): ConnectionIO[Int] = {
@@ -253,9 +263,13 @@ object ProjectDao extends Dao[Project] {
     deleteQuery.update.run
   }
 
-  def addScenesToProjectFromQuery(combinedSceneQueryParams: CombinedSceneQueryParams, projectId: UUID, user: User): ConnectionIO[List[Scene]] = {
-//    SceneDao.query.filter(combinedSceneQueryParams)
-    ???
+  def addScenesToProjectFromQuery(sceneParams: CombinedSceneQueryParams, projectId: UUID, user: User): ConnectionIO[Int] = {
+
+    for {
+      scenes <- SceneDao.query.filter(sceneParams).list
+      scenesAdded <- addScenesToProject(scenes.map(_.id), projectId, user)
+    } yield scenesAdded
+
   }
 
   def create(

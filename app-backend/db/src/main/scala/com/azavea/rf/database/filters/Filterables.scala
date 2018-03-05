@@ -73,7 +73,7 @@ trait Filterables {
     )
   }
 
-  implicit val combinedSceneQueryParams = Filterable[Any, CombinedSceneQueryParams] { combineSceneParams =>
+  implicit val combinedSceneQueryParams = Filterable[Any, CombinedSceneQueryParams] { combineSceneParams: CombinedSceneQueryParams =>
     val sceneParams = combineSceneParams.sceneParams
     Filters.userQP(combineSceneParams.userParams) ++
     Filters.timestampQP(combineSceneParams.timestampParams) ++
@@ -82,8 +82,8 @@ trait Filterables {
       List(
         sceneParams.maxCloudCover.map({ mcc => fr"cloud_cover <= $mcc" }),
         sceneParams.minCloudCover.map({ mcc => fr"cloud_cover >= $mcc" }),
-        sceneParams.minAcquisitionDatetime.map({ mac => fr"acquisition_datetime >= $mac" }),
-        sceneParams.maxAcquisitionDatetime.map({ mac => fr"acquisition_datetime <= $mac" }),
+        sceneParams.minAcquisitionDatetime.map({ mac => fr"acquisition_date >= $mac" }),
+        sceneParams.maxAcquisitionDatetime.map({ mac => fr"acquisition_date <= $mac" }),
         sceneParams.datasource.toList.toNel.map({ds => Fragments.in(fr"datasource", ds) }),
         sceneParams.month.toList.toNel.map(
           { months => Fragments.in(fr"date_part('month', acquisition_date)", months) }
@@ -104,6 +104,10 @@ trait Filterables {
         }),
         sceneParams.ingestStatus.toList.toNel.map({
           statuses => Fragments.in(fr"ingest_status", statuses)
+        }),
+        sceneParams.bboxPolygon.map({ bboxes =>
+          val fragments = bboxes.map(bbox => fr"ST_Intersects(data_footprint, ${bbox})")
+          Fragments.and(fragments: _*)
         })
       )
   }

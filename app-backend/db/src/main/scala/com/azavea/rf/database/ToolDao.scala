@@ -25,7 +25,7 @@ object ToolDao extends Dao[Tool] {
     SELECT
       id, created_at, modified_at, created_by, modified_by, owner, organization_id, title,
       description, requirements, license, visibility, compatible_data_sources, stars, definition
-    """
+    FROM """ ++ tableF
 
   def insert(newTool: Tool.Create, user: User): ConnectionIO[Tool] = {
     val id = UUID.randomUUID()

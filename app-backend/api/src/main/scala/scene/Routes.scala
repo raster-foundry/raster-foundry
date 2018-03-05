@@ -84,7 +84,7 @@ trait SceneRoutes extends Authentication
   def listScenes: Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
-        SceneWithRelatedDao.query.filter(sceneParams).filter(user).page(page).transact(xa).unsafeToFuture
+        SceneWithRelatedDao.listScenes(page, sceneParams, user).transact(xa).unsafeToFuture
       }
     }
   }

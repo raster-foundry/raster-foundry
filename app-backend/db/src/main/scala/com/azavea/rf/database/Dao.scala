@@ -65,6 +65,18 @@ object Dao {
       this.copy(filters = filters ++ filterable.toFilters(ownerFilterF(user)))
     }
 
+    def ownerFilterF2(user: User): Option[Fragment] = {
+      if (user.isInRootOrganization) {
+        None
+      } else {
+        Some(fr"(organization = ${user.organizationId} OR owner = ${user.id})")
+      }
+    }
+
+    def ownerFilter2[M >: Model](user: User)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+      this.copy(filters = filters ++ filterable.toFilters(ownerFilterF2(user)))
+    }
+
     /** Provide a list of responses within the PaginatedResponse wrapper */
     def page(pageRequest: PageRequest): ConnectionIO[PaginatedResponse[Model]] = {
       for {

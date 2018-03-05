@@ -45,7 +45,7 @@ trait DatasourceRoutes extends Authentication
   def listDatasources: Route = authenticate { user =>
     (withPagination & datasourceQueryParams) { (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
       complete {
-        DatasourceDao.query.filter(datasourceParams).filter(user).list(page).transact(xa).unsafeToFuture
+        DatasourceDao.query.filter(datasourceParams).filter(user).page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -54,7 +54,7 @@ trait DatasourceRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          DatasourceDao.query.filter(fr"owner = ${user.id} or owner = 'default'").selectOption.transact(xa).unsafeToFuture
+          DatasourceDao.query.filter(fr"owner = ${user.id} or owner = 'default'").filter(fr"id = ${datasourceId}").selectOption.transact(xa).unsafeToFuture
         }
       }
     }

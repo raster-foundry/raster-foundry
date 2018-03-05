@@ -29,12 +29,17 @@ trait CirceJsonbMeta {
   )
 
   implicit val colorCorrectionMeta: Meta[ColorCorrect.Params] = {
-    Meta.other[Json]("jsonb").xmap[ColorCorrect.Params](
-      a => a.as[ColorCorrect.Params] match {
+    Meta.other[PGobject]("jsonb").xmap[ColorCorrect.Params](
+      a => io.circe.parser.parse(a.getValue).leftMap[Json](e => throw e).merge.as[ColorCorrect.Params] match {
         case Right(p) => p
         case Left(e) => throw e
       },
-      a => a.asJson
+      a => {
+        val o = new PGobject
+        o.setType("jsonb")
+        o.setValue(a.asJson.noSpaces)
+        o
+      }
     )
   }
 
