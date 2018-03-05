@@ -128,14 +128,14 @@ object ProjectDao extends Dao[Project] {
     val updateStatusQuery =
       sql"""
            UPDATE scenes
-           SET ingest_status = ${IngestStatus.ToBeIngested} :: ingest_status
+           SET ingest_status = ${IngestStatus.ToBeIngested.toString} :: ingest_status
            FROM
              (SELECT scene_id
               FROM scenes
               INNER JOIN scenes_to_projects ON scene_id = scenes.id
               WHERE project_id = ${projectId}) sub
-           WHERE (scenes.ingest_status = ${IngestStatus.NotIngested.toString} OR
-                  scenes.ingest_stuatus = ${IngestStatus.Failed.toString})
+           WHERE (scenes.ingest_status = ${IngestStatus.NotIngested.toString} :: ingest_status OR
+                  scenes.ingest_status = ${IngestStatus.Failed.toString} :: ingest_status )
            AND sub.scene_id = scenes.id
          """
     updateStatusQuery.update.run

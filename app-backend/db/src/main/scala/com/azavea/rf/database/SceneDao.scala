@@ -140,8 +140,8 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
 
   def getScenesToIngest(projectId: UUID): ConnectionIO[List[Scene.WithRelated]] = {
     val fragments = List(
-      Some(fr"""ingest_status = ${IngestStatus.ToBeIngested.toString}
-           OR (ingest_status = ${IngestStatus.Ingesting.toString} AND (now() - modified_at) > '1 day'::interval))
+      Some(fr"""(ingest_status = ${IngestStatus.ToBeIngested.toString} :: ingest_status
+           OR (ingest_status = ${IngestStatus.Ingesting.toString} :: ingest_status AND (now() - modified_at) > '1 day'::interval))
         """),
       Some(fr"scenes.id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})")
     )
