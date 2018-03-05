@@ -2,14 +2,21 @@ package com.azavea.rf.tile.image
 
 import com.azavea.rf.common.utils.TileUtils
 import com.azavea.rf.common.cache.CacheClient
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.ExtendedPostgresDriver.api._
-import com.azavea.rf.database.tables.ScenesToProjects
+import com.azavea.rf.database.{SceneToProjectDao}
+import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.datamodel.{ColorRampMosaic, Project, SingleBandOptions}
 import com.azavea.rf.tile._
+
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
+import cats.effect.IO
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.GridBounds
@@ -37,7 +44,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
   val rfCache = new CacheClient(memcachedClient)
 
   def tileLayerMetadata(id: UUID, zoom: Int)(
-    implicit database: Database, sceneIds: Set[UUID]
+    implicit xa: Transactor[IO], sceneIds: Set[UUID]
   ): OptionT[Future, (Int, TileLayerMetadata[SpatialKey])] = {
     logger.debug(s"Requesting tile layer metadata (layer: $id, zoom: $zoom")
     LayerCache.maxZoomForLayers(Set(id)).mapFilter {
@@ -58,28 +65,29 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
     */
   def apply(
     project: Project, zoom: Int, col: Int, row: Int
-  )(implicit database: Database): OptionT[Future, MultibandTile] =
+  )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] =
     traceName(s"SingleBandMosaic.apply(${project.id})") {
       logger.debug(s"Creating single band mosaic (project: ${project.id}, zoom: $zoom, col: $col, row: $row)")
 
       val polygonBbox: Projected[Polygon] = TileUtils.getTileBounds(zoom, col, row)
       project.singleBandOptions match {
         case Some(singleBandOptions: SingleBandOptions.Params) =>
-          val futureTiles: Future[Seq[(MultibandTile, Array[Histogram[Double]])]] = database.db.run {
-            ScenesToProjects.filter(_.projectId === project.id).map(_.sceneId).result
-          } flatMap {
-            sceneIds => {
-              Future.sequence(
-                sceneIds map { sceneId =>
-                  SingleBandMosaic
-                    .fetch(sceneId, zoom, col, row)(database, sceneIds.toSet)
-                    .value
-                    .zip(LayerCache.layerHistogram(sceneId, zoom).value)
-                    .map ({ case (tile, histogram) => for (a <- tile; b <- histogram) yield (a, b) })
+          val futureTiles: Future[Seq[(MultibandTile, Array[Histogram[Double]])]] =
+            SceneToProjectDao.query.filter(fr"project_id = ${project.id}").list.transact(xa).unsafeToFuture
+              .map { _.map { _.sceneId }}
+              .flatMap {
+                sceneIds => {
+                  Future.sequence(
+                    sceneIds map { sceneId =>
+                      SingleBandMosaic
+                        .fetch(sceneId, zoom, col, row)(xa, sceneIds.toSet)
+                        .value
+                        .zip(LayerCache.layerHistogram(sceneId, zoom).value)
+                        .map ({ case (tile, histogram) => for (a <- tile; b <- histogram) yield (a, b) })
+                    }
+                  ).map(_.flatten)
                 }
-              ).map(_.flatten)
-            }
-          }
+              }
           val futureColoredTile =
             for {
               tiles: Seq[(MultibandTile, Array[Histogram[Double]])] <- futureTiles
@@ -94,7 +102,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
 
   def render(
     project: Project, zoomOption: Option[Int], bboxOption: Option[String], colorCorrect: Boolean
-  )(implicit database: Database): OptionT[Future, MultibandTile] =
+  )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] =
     traceName(s"SingleBandMosaic.render(${project.id})") {
     val bboxPolygon: Option[Projected[Polygon]] =
       try {
@@ -112,12 +120,12 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
     project.singleBandOptions match {
       case Some(singleBandOptions: SingleBandOptions.Params) =>
         val futureTiles: Future[Seq[(MultibandTile, Array[Histogram[Double]])]] =
-          database.db.run {
-            ScenesToProjects.filter(_.projectId === project.id).map(_.sceneId).result
-          } flatMap { sceneIds: Seq[UUID] =>
+          SceneToProjectDao.query.filter(fr"project_id = ${project.id}").list.transact(xa).unsafeToFuture
+            .map { _.map { _.sceneId } }
+            .flatMap { sceneIds: Seq[UUID] =>
           Future.sequence(
               sceneIds map { sceneId: UUID =>
-                SingleBandMosaic.fetchRenderedExtent(sceneId, zoom, bboxPolygon)(database, sceneIds.toSet).value
+                SingleBandMosaic.fetchRenderedExtent(sceneId, zoom, bboxPolygon)(xa, sceneIds.toSet).value
               }
           ).map(_.flatten)
         }
@@ -152,7 +160,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
   def fetch(id: UUID, zoom: Int, col: Int, row: Int)(
-      implicit database: Database,
+      implicit xa: Transactor[IO],
       sceneIds: Set[UUID]
   ): OptionT[Future, MultibandTile] = {
     tileLayerMetadata(id, zoom).flatMap {
@@ -185,7 +193,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
   }
 
   def fetchRenderedExtent(id: UUID, zoom: Int,  bbox: Option[Projected[Polygon]])(
-    implicit database: Database, sceneIds: Set[UUID])
+    implicit xa: Transactor[IO], sceneIds: Set[UUID])
       : OptionT[Future, (MultibandTile, Array[Histogram[Double]])] =
     tileLayerMetadata(id, zoom).flatMap {
       case (sourceZoom, tlm) =>

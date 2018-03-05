@@ -2,7 +2,6 @@ package com.azavea.rf.tile.tool
 
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image.Mosaic
-import com.azavea.rf.database.Database
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.maml._
 import com.azavea.maml.ast._
@@ -35,10 +34,10 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
-class TileResolver(xa: Transactor[IO], ec: ExecutionContext) extends LazyLogging {
+class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLogging {
 
   implicit val execution: ExecutionContext = ec
-  implicit val xa = RFTransactor.xa
+  implicit val xa: Transactor[IO] = xaa
 
   val store = PostgresAttributeStore()
 

@@ -1,14 +1,14 @@
 package com.azavea.rf.tile
 
 import com.azavea.rf.datamodel.{Tool, ToolRun, User}
+import com.azavea.rf.database.ToolRunDao
+import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.tile.tool._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.maml._
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables._
 import com.azavea.rf.common.{Config => CommonConfig}
 import com.azavea.maml.eval._
 import com.azavea.maml.ast.Expression
@@ -29,10 +29,18 @@ import spray.json.DefaultJsonProtocol._
 import cats.data._
 import cats.data.Validated._
 import cats.implicits._
+import cats.effect.IO
 import java.util.UUID
 import java.sql.Timestamp
 
 import com.azavea.rf.database.util.RFTransactor
+import doobie.util.transactor.Transactor
+
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 import scala.concurrent._
 import scala.util._
@@ -122,7 +130,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   }
 
 
-  val tileResolver = new TileResolver(implicitly[Database], implicitly[ExecutionContext])
+  val tileResolver = new TileResolver(implicitly[Transactor[IO]], implicitly[ExecutionContext])
 
   /** Calculate the histogram for the least resolute zoom level to automatically render tiles */
   def modelLayerGlobalHistogram(
@@ -156,7 +164,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   }
 
   def toolRun(toolRunId: UUID, user: User, voidCache: Boolean = false): OptionT[Future, ToolRun] = {
-    OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
+    OptionT(ToolRunDao.query.filter(toolRunId).ownerFilter(user).selectOption.transact(xa).unsafeToFuture)
   }
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */

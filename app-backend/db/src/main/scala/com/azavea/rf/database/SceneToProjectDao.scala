@@ -12,6 +12,8 @@ import cats._
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
+import geotrellis.slick.Projected
+import geotrellis.vector.Polygon
 
 import scala.concurrent.Future
 
@@ -34,7 +36,7 @@ object SceneToProjectDao extends Dao[SceneToProject] {
   def setManualOrder(projectId: UUID, sceneIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = ???
 
   // Check swagger spec for appropriate return type
-  def getMosaicDefinition(projectId: UUID): ConnectionIO[MosaicDefinition] = ???
+  def getMosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]] ): ConnectionIO[Seq[MosaicDefinition]] = ???
 
   // I don't think return type here is important, should makybe be int since no content is returned
   def setColorCorrectParams(projectId: UUID, sceneId: UUID, colorCorrectParams: ColorCorrect.Params): ConnectionIO[Seq[SceneToProject]] = ???

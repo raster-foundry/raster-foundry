@@ -1,6 +1,5 @@
 package com.azavea.rf.tile
 
-import com.azavea.rf.database.Database
 import com.azavea.rf.common.cache._
 import geotrellis.proj4._
 import geotrellis.raster._

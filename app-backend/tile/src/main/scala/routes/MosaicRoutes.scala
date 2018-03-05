@@ -3,9 +3,10 @@ package com.azavea.rf.tile.routes
 import com.azavea.rf.common.RfStackTrace
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image.Mosaic
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.ScenesToProjects
-import com.azavea.rf.datamodel.ColorCorrect
+import com.azavea.rf.datamodel.{ColorCorrect, SceneToProject}
+import com.azavea.rf.database.{SceneToProjectDao}
+import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.database.meta.RFMeta._
 
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
@@ -20,6 +21,12 @@ import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.data.OptionT
 import cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
+import cats.effect.IO
 
 import scala.concurrent._
 import scala.util._
@@ -38,7 +45,7 @@ object MosaicRoutes extends LazyLogging with KamonTrace {
   def tiffAsHttpResponse(tiff: MultibandGeoTiff): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/tiff`), tiff.toByteArray))
 
-  def mosaicProject(projectId: UUID)(implicit database: Database): Route =
+  def mosaicProject(projectId: UUID)(implicit xa: Transactor[IO]): Route =
     pathPrefix("export") {
       optionalHeaderValueByName("Accept") { acceptContentType =>
         traceName("tiles-export-request") {
@@ -105,16 +112,24 @@ object MosaicRoutes extends LazyLogging with KamonTrace {
     }
 
   /** Return the histogram (with color correction applied) for a list of scenes in a project */
-  def getProjectScenesHistogram(projectId: UUID)(implicit database: Database): Route = {
-    val sceneIdsFuture = OptionT(ScenesToProjects.allScenes(projectId).map(_.toSet.some))
+  def getProjectScenesHistogram(projectId: UUID)(implicit xa: Transactor[IO]): Route = {
+    val sceneIdFuture: Future[Set[UUID]] =
+      SceneToProjectDao.query
+        .filter(fr"project_id=${projectId}")
+        .list
+        .transact(xa).unsafeToFuture
+        .map( _.map(_.sceneId).toSet )
 
-    def correctedHistograms(sceneId: UUID, projectId: UUID) = sceneIdsFuture.flatMap { implicit sceneIds =>
+    def correctedHistograms(sceneId: UUID, projectId: UUID) = sceneIdFuture.flatMap { implicit sceneIds =>
       val tileFuture = StitchLayer(sceneId, 64)
       // getColorCorrectParams returns a Future[Option[Option]] for some reason
-      val ccParamFuture = ScenesToProjects.getColorCorrectParams(projectId, sceneId).map { _.flatten }
+      val ccParamFuture =
+        SceneToProjectDao.getColorCorrectParams(projectId, sceneId)
+        .transact(xa).unsafeToFuture
+
       for {
         tile <- tileFuture
-        params <- OptionT(ccParamFuture)
+        params <- ccParamFuture
       } yield {
         val (rgbBands, rgbHist) = params.reorderBands(tile, tile.histogramDouble)
         val sceneBands = ColorCorrect(rgbBands, rgbHist, params).bands
