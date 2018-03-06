@@ -20,7 +20,7 @@ import java.net._
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.database.{Filterable, SceneDao, SceneWithRelatedDao}
+import com.azavea.rf.database.{SceneDao, SceneWithRelatedDao}
 import doobie.util.transactor.Transactor
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._

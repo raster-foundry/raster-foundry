@@ -26,7 +26,7 @@ object DatasourceDao extends Dao[Datasource] {
   val selectF = sql"""
       SELECT
         id, created_at, created_by, modified_at, modified_by, owner,
-        organization_id, name, visibility, composites, extras, bands
+        organization_id, name, visibility, composites, extras, bands, license_name
       FROM
     """ ++ tableF
 
@@ -37,15 +37,15 @@ object DatasourceDao extends Dao[Datasource] {
     val ownerId = util.Ownership.checkOwner(user, Some(datasource.owner))
     (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, created_at, created_by, modified_at, modified_by, owner,
-      organization_id, name, visibility, composites, extras, bands)
+      organization_id, name, visibility, composites, extras, bands, licenseName)
     VALUES
       (${datasource.id}, ${datasource.createdAt}, ${datasource.createdBy}, ${datasource.modifiedAt},
       ${datasource.modifiedBy}, ${ownerId}, ${datasource.organizationId}, ${datasource.name},
       ${datasource.visibility}, ${datasource.composites},
-      ${datasource.extras}, ${datasource.bands})
+      ${datasource.extras}, ${datasource.bands}, ${datasource.licenseName})
     """).update.withUniqueGeneratedKeys[Datasource](
       "id", "created_at", "created_by", "modified_at", "modified_by", "owner",
-      "organization_id", "name", "visibility", "composites", "extras", "bands"
+      "organization_id", "name", "visibility", "composites", "extras", "bands", "license_name"
     )
   }
 
@@ -61,7 +61,8 @@ object DatasourceDao extends Dao[Datasource] {
       visibility = ${datasource.visibility},
       composites = ${datasource.composites},
       extras = ${datasource.extras},
-      bands = ${datasource.bands}
+      bands = ${datasource.bands},
+      license_name = ${datasource.licenseName}
       where id = ${id} AND owner = ${user.id}
       """
     updateQuery.update.run
