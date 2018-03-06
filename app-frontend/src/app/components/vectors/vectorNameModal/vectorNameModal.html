@@ -1,0 +1,37 @@
+<div class="modal-scrollable-body">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.handleClose()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <h4 class="modal-title" ng-if="!$ctrl.resolve.project">
+      Create shape
+    </h4>
+  </div>
+
+  <!-- Body for SELECT_FILE -->
+  <div class="modal-body">
+    <div class="content">
+      <h4>Shape name</h4>
+      <form ng-submit="$ctrl.handleSave()">
+        <input type="text" class="form-control" ng-model="$ctrl.shapeName" autofocus>
+      </form>
+    </div>
+  </div>
+
+  <!--Default Footer-->
+  <div class="modal-footer">
+    <button type="button" class="btn pull-left"
+            ng-click="$ctrl.handleCancel()">
+      Cancel
+    </button>
+
+    <div class="color-danger" ng-if="$ctrl.error">There was an error saving the shape.</div>
+
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.handleSave()"
+            ng-disabled="!$ctrl.shapeName.length"
+    >
+      Save
+    </button>
+  </div>
+</div>

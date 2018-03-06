@@ -192,7 +192,10 @@ export const annotationReducer = typeToReducer({
             let annotation = state.annotations.get(editingAnnotation);
             action.asyncDispatch({
                 type: `${PROJECT_EDIT_LAYER}_START`,
-                payload: annotation.geometry
+                payload: {
+                    geometry: annotation.geometry,
+                    options: {}
+                }
             });
 
             return Object.assign({}, state, {
@@ -273,7 +276,10 @@ export const annotationReducer = typeToReducer({
                 });
                 action.asyncDispatch({
                     type: `${PROJECT_EDIT_LAYER}_START`,
-                    payload: drawnGeojson.geometry
+                    payload: {
+                        geometry: drawnGeojson.geometry,
+                        options: {}
+                    }
                 });
             } else {
                 let coordinates = _.map(drawnGeojson.geometry.coordinates[0], (c) => {
@@ -323,7 +329,10 @@ export const annotationReducer = typeToReducer({
             });
             action.asyncDispatch({
                 type: `${PROJECT_EDIT_LAYER}_START`,
-                payload: drawnGeojson.geometry
+                payload: {
+                    geometry: drawnGeojson.geometry,
+                    options: {}
+                }
             });
             return state;
         default:

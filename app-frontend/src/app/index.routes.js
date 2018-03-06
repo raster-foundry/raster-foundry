@@ -38,14 +38,24 @@ import tokensTpl from './pages/settings/tokens/tokens.html';
 import apiTokensTpl from './pages/settings/tokens/api/api.html';
 import mapTokensTpl from './pages/settings/tokens/map/map.html';
 import connectionsTpl from './pages/settings/connections/connections.html';
+import organizationsTpl from './pages/settings/organizations/organizations.html';
+
 import errorTpl from './pages/error/error.html';
 import shareTpl from './pages/share/share.html';
 import homeTpl from './pages/home/home.html';
 import importsTpl from './pages/imports/imports.html';
-import importsListTpl from './pages/imports/list/list.html';
+import rasterListTpl from './pages/imports/raster/raster.html';
+import vectorListTpl from './pages/imports/vector/vector.html';
 import importsDatasourcesTpl from './pages/imports/datasources/datasources.html';
 import importsDatasourcesListTpl from './pages/imports/datasources/list/list.html';
 import importsDatasourcesDetailTpl from './pages/imports/datasources/detail/detail.html';
+
+import organizationTpl from './pages/organization/organization.html';
+import organizationMetricsTpl from './pages/organization/metrics/metrics.html';
+import organizationUsersTpl from './pages/organization/users/users.html';
+import organizationTeamsTpl from './pages/organization/teams/teams.html';
+import organizationSettingsTpl from './pages/organization/settings/settings.html';
+
 
 function projectEditStates($stateProvider) {
     let addScenesQueryParams = [
@@ -123,7 +133,8 @@ function projectEditStates($stateProvider) {
             url: '/browse/:sceneid?' + addScenesQueryParams,
             templateUrl: projectsSceneBrowserTpl,
             controller: 'ProjectsSceneBrowserController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            reloadOnSearch: false
         })
         .state('projects.edit.order', {
             url: '/order',
@@ -263,6 +274,13 @@ function settingsStates($stateProvider) {
             templateUrl: connectionsTpl,
             controller: 'ConnectionsController',
             controllerAs: '$ctrl'
+        })
+        .state('settings.organizations', {
+            title: 'Organizations test page',
+            url: '/organizations',
+            templateUrl: organizationsTpl,
+            controller: 'OrganizationSettingsController',
+            controllerAs: '$ctrl'
         });
 }
 
@@ -382,11 +400,18 @@ function importStates($stateProvider) {
             controllerAs: '$ctrl',
             abstract: true
         })
-        .state('imports.list', {
-            title: 'Imports',
-            url: '/list?:page',
-            templateUrl: importsListTpl,
-            controller: 'ImportsListController',
+        .state('imports.rasters', {
+            title: 'Rasters',
+            url: '/rasters?:page',
+            templateUrl: rasterListTpl,
+            controller: 'RasterListController',
+            controllerAs: '$ctrl'
+        })
+        .state('imports.vectors', {
+            title: 'Vectors',
+            url: '/vectors?:page',
+            templateUrl: vectorListTpl,
+            controller: 'VectorListController',
             controllerAs: '$ctrl'
         })
         .state('imports.datasources', {
@@ -412,6 +437,47 @@ function importStates($stateProvider) {
         });
 }
 
+function adminStates($stateProvider) {
+    $stateProvider
+        .state('organization', {
+            parent: 'root',
+            title: 'Organization',
+            url: '/organization/:id',
+            templateUrl: organizationTpl,
+            controller: 'OrganizationController',
+            controllerAs: '$ctrl',
+            abstract: true
+        })
+        .state('organization.metrics', {
+            title: 'Organization Metrics',
+            url: '/metrics',
+            templateUrl: organizationMetricsTpl,
+            controller: 'OrganizationMetricsController',
+            controllerAs: '$ctrl'
+        })
+        .state('organization.users', {
+            title: 'Organization Users',
+            url: '/users',
+            templateUrl: organizationUsersTpl,
+            controller: 'OrganizationUsersController',
+            controllerAs: '$ctrl'
+        })
+        .state('organization.teams', {
+            title: 'Organization Teams',
+            url: '/teams',
+            templateUrl: organizationTeamsTpl,
+            controller: 'OrganizationTeamsController',
+            controllerAs: '$ctrl'
+        })
+        .state('organization.settings', {
+            title: 'Organization Settings',
+            url: '/settings',
+            templateUrl: organizationSettingsTpl,
+            controller: 'OrganizationSettingsController',
+            controllerAs: '$ctrl'
+        });
+}
+
 function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvider, $locationProvider) {
     'ngInject';
 
@@ -432,6 +498,7 @@ function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvi
     shareStates($stateProvider);
     homeStates($stateProvider);
     importStates($stateProvider);
+    adminStates($stateProvider);
 
     $stateProvider
         .state('error', {

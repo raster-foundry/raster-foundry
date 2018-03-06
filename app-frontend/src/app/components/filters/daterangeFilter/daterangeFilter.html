@@ -1,0 +1,12 @@
+<div class="filter">
+  <label>{{$ctrl.filter.label}}</label>
+  <div class="flex-fill">
+    <span ng-if="$ctrl.datefilterPreset">{{$ctrl.datefilterPreset}}</span>
+    <span ng-if="!$ctrl.datefilterPreset">{{$ctrl.datefilter.start.calendar()}} to {{$ctrl.datefilter.end.calendar()}}</span>
+  </div>
+</div>
+<div class="filter">
+  <label></label>
+  <button class="btn btn-small btn-primary flex-fill"
+          ng-click="$ctrl.openDateRangePickerModal()">{{$ctrl.hasDatetimeFilter ? 'Update ' : 'Set '}}Date</button>
+</div>

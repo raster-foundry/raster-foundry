@@ -3,9 +3,7 @@ import typeToReducer from 'type-to-reducer';
 import {
     PROJECT_SET_MAP, PROJECT_SET_ID, PROJECT_EDIT_LAYER
 } from '_redux/actions/project-actions';
-
-const RED = '#E57373';
-// const BLUE = '#3388FF';
+const GREEN = '#81C784';
 
 export const projectReducer = typeToReducer({
     [PROJECT_SET_MAP]: (state, action) => {
@@ -20,20 +18,21 @@ export const projectReducer = typeToReducer({
     },
     [PROJECT_EDIT_LAYER]: {
         START: (state, action) => {
-            const geometry = action.payload;
+            const geometry = action.payload.geometry;
+            const options = Object.assign({
+                draggable: true,
+                fillColor: GREEN,
+                color: GREEN,
+                opacity: 0.9,
+                pane: 'editable'
+            }, action.payload.options);
             const mapWrapper = state.projectMap;
             let editHandler;
             if (geometry.type === 'Polygon') {
                 let coordinates = geometry.coordinates[0].map(c => [c[1], c[0]]);
                 let polygonLayer = L.polygon(
                     coordinates,
-                    {
-                        draggable: true,
-                        fillColor: RED,
-                        color: RED,
-                        opacity: 0.5,
-                        pane: 'editable'
-                    }
+                    options
                 );
                 mapWrapper.setLayer('draw', polygonLayer, false);
                 mapWrapper.map.panTo(polygonLayer.getCenter());

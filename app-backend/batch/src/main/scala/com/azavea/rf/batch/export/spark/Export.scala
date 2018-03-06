@@ -9,7 +9,7 @@ import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.common.S3.putObject
+import com.azavea.rf.common.S3.putObjectString
 
 import com.azavea.maml.serve._
 import com.azavea.maml.eval._
@@ -33,6 +33,8 @@ import geotrellis.spark.io._
 import geotrellis.spark.io.file._
 import geotrellis.spark.io.hadoop._
 import geotrellis.spark.io.s3._
+import geotrellis.spark.regrid._
+import geotrellis.spark.resample.ZoomResample
 import geotrellis.spark.tiling._
 import geotrellis.vector.MultiPolygon
 import org.apache.hadoop.fs.Path
@@ -47,6 +49,8 @@ object Export extends SparkJob with Config with LazyLogging {
 
   val jobName = "Export"
 
+  val defaultRasterSize = 4000
+
   def astExport(
     ed: ExportDefinition,
     ast: MapAlgebraAST,
@@ -57,11 +61,17 @@ object Export extends SparkJob with Config with LazyLogging {
     interpretRDD(ast, ed.input.resolution, sceneLocs, projLocs) match {
       case Invalid(errs) => throw InterpreterException(errs)
       case Valid(rdd) => {
-
-        val mt: MapKeyTransform = rdd.metadata.layout.mapTransform
         val crs: CRS = rdd.metadata.crs
 
         if(!ed.output.stitch) {
+          val targetRDD: TileLayerRDD[SpatialKey] =
+            ed.output.rasterSize match {
+              case Some(size) => rdd.regrid(size)
+              case None => rdd.regrid(defaultRasterSize)
+            }
+
+          val mt: MapKeyTransform = targetRDD.metadata.layout.mapTransform
+
           /* Create GeoTiffs and output them */
           val singles: RDD[(SpatialKey, SinglebandGeoTiff)] =
             rdd.map({ case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs)) })
@@ -103,14 +113,32 @@ object Export extends SparkJob with Config with LazyLogging {
   )(implicit @transient sc: SparkContext): Unit = {
     val rdds = layers.map { ld =>
       val (reader, store) = getRfLayerManagement(ld)
-      val layerId = LayerId(ld.layerId.toString, ed.input.resolution)
-      val md = store.readMetadata[TileLayerMetadata[SpatialKey]](layerId)
-      val hist = ld.colorCorrections.map { _ => store.read[Array[Histogram[Double]]](LayerId(layerId.name, 0), "histogram") }
-      val crs = ed.output.crs.getOrElse(md.crs)
+      val requestedLayerId = LayerId(ld.layerId.toString, ed.input.resolution)
 
-      val q = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
+      val maxAvailableZoom =
+        store
+          .layerIds
+          .filter { case LayerId(name, _) => name == requestedLayerId.name }
+          .map { _.zoom }
+          .max
 
-      val query: ContextRDD[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]] =
+      val maxLayerId = requestedLayerId.copy(zoom = maxAvailableZoom)
+      val maxMetadata = store.readMetadata[TileLayerMetadata[SpatialKey]](maxLayerId)
+      val maxMapTransform = maxMetadata.mapTransform
+
+      val layoutScheme = ZoomedLayoutScheme(maxMetadata.crs, math.min(maxMetadata.tileCols, maxMetadata.tileRows))
+
+      val requestedMapTransform = layoutScheme.levelForZoom(requestedLayerId.zoom).layout.mapTransform
+
+      lazy val requestedQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](requestedLayerId)
+      lazy val maxQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](maxLayerId)
+
+      val hist =
+        ld
+          .colorCorrections
+          .map { _ => store.read[Array[Histogram[Double]]](requestedLayerId.copy(zoom = 0), "histogram") }
+
+      val queryLayer = (q: BoundLayerQuery[SpatialKey, TileLayerMetadata[SpatialKey], RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]) =>
         mask
           .fold(q)(mp => q.where(Intersects(mp)))
           .result
@@ -123,12 +151,23 @@ object Export extends SparkJob with Config with LazyLogging {
             }
           })})
 
-      ed.output.rasterSize match {
-        case Some(rs) if md.crs != crs || rs != md.tileCols || rs != md.tileRows =>
+      val query: MultibandTileLayerRDD[SpatialKey] =
+        if (requestedLayerId.zoom <= maxAvailableZoom)
+          queryLayer(requestedQuery)
+        else
+          ZoomResample(queryLayer(maxQuery), maxAvailableZoom, requestedLayerId.zoom)
+
+      val md = query.metadata
+
+      (ed.output.rasterSize, ed.output.crs) match {
+        case (Some(rs), Some(crs)) =>
           query.reproject(ZoomedLayoutScheme(crs, rs))._2
-        case _ if md.crs != crs =>
-          query.reproject(ZoomedLayoutScheme(crs, math.min(md.tileCols, md.tileRows)))._2
-        case _ => query
+        case (None, Some(crs)) =>
+          query.reproject(ZoomedLayoutScheme(crs, defaultRasterSize))._2
+        case (Some(rs), None) =>
+          query.regrid(rs)
+        case (None, None) =>
+          query.regrid(defaultRasterSize)
       }
     }
 
@@ -256,7 +295,7 @@ object Export extends SparkJob with Config with LazyLogging {
       }
 
       logger.info(s"Writing status into the ${params.statusBucket}/${exportDef.id}")
-      putObject(
+      putObjectString(
         params.statusBucket,
         exportDef.id.toString,
         ExportStatus.Exported
@@ -265,7 +304,7 @@ object Export extends SparkJob with Config with LazyLogging {
       case t: Throwable =>
         logger.info(s"Writing status into the ${params.statusBucket}/${exportDef.id}")
         logger.error(t.stackTraceString)
-        putObject(
+        putObjectString(
           params.statusBucket,
           exportDef.id.toString,
           ExportStatus.Failed

@@ -5,6 +5,8 @@ require('./annotateToolbar.scss');
 
 import AnnotationActions from '_redux/actions/annotation-actions';
 
+const GREEN = '#81C784';
+
 const AnnotateToolbarComponent = {
     templateUrl: annotateToolbarTpl,
     controller: 'AnnotateToolbarController',
@@ -102,14 +104,18 @@ class AnnotateToolbarController {
         this.drawRectangleHandler = new L.Draw.Rectangle(mapWrapper.map, {
             shapeOptions: {
                 weight: 2,
-                fillOpacity: 0.2
+                fillOpacity: 0.2,
+                color: GREEN,
+                fillColor: GREEN
             }
         });
         this.drawPolygonHandler = new L.Draw.Polygon(mapWrapper.map, {
             allowIntersection: false,
             shapeOptions: {
                 weight: 2,
-                fillOpacity: 0.2
+                fillOpacity: 0.2,
+                color: GREEN,
+                fillColor: GREEN
             }
         });
         this.drawMarkerHandler = new L.Draw.Marker(mapWrapper.map, {

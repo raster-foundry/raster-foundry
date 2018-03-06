@@ -51,7 +51,7 @@ package object exports extends Config {
       val now = new Timestamp(new Date().getTime)
 
       if (!S3.doesObjectExist(bucket, s"${key}/RFUploadAccessTestFile")) {
-        S3.putObject(
+        S3.putObjectString(
           dataBucket,
           s"${key}/RFUploadAccessTestFile",
           s"Allow Upload Access for RF: ${key} at ${now.toString}"

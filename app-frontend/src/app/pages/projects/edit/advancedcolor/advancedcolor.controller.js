@@ -3,7 +3,8 @@ import {Map} from 'immutable';
 export default class ProjectsAdvancedColorController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $q, projectService, layerService, sceneService, $state, mapService,
-        datasourceService, mapUtilsService, colorCorrectService, projectEditService
+        datasourceService, mapUtilsService, colorCorrectService, projectEditService,
+        RasterFoundryRepository
     ) {
         'ngInject';
         this.projectService = projectService;
@@ -18,6 +19,10 @@ export default class ProjectsAdvancedColorController {
         this.$parent = $scope.$parent.$ctrl;
         this.$q = $q;
         this.$log = $log;
+        this.repository = {
+            name: 'Raster Foundry',
+            service: RasterFoundryRepository
+        };
         this.getMap = () => mapService.getMap('edit');
     }
 

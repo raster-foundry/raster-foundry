@@ -21,7 +21,7 @@ package object ast extends MapAlgebraCodec {
     def _label: Option[String] = root.metadata.label.string.getOption(self)
     def _symbol: Option[String] = root.selectDynamic("apply").string.getOption(self)
 
-    def _fields: Seq[String] = root.obj.getOption(self).map(_.fields).getOrElse(Seq())
+    def _keys: Seq[String] = root.obj.getOption(self).map(_.keys.toSeq).getOrElse(Seq())
   }
 
   implicit class CirceMapAlgebraHCursorMethods(val self: HCursor) {
@@ -30,7 +30,7 @@ package object ast extends MapAlgebraCodec {
     def _label: Option[String] = self.value._label
     def _symbol: Option[String] = self.value._symbol
 
-    def _fields: Seq[String] = self.value._fields
+    def _keys: Seq[String] = self.value._keys
   }
 
   implicit class MapAlgebraASTHelperMethods(val self: MapAlgebraAST) {

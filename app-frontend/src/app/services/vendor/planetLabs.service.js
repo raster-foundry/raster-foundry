@@ -1,4 +1,7 @@
 /* globals btoa, Uint8Array, _ */
+import turfBbox from '@turf/bbox';
+import turfBboxPolygon from '@turf/bbox-polygon';
+
 export default (app) => {
     class PlanetLabsService {
         constructor(
@@ -7,6 +10,8 @@ export default (app) => {
             'ngInject';
             this.$log = $log;
             this.$http = $http;
+
+            this.thumbnailSize = '512';
         }
 
         sendHttpRequest(req) {
@@ -21,6 +26,7 @@ export default (app) => {
         }
 
         filterScenes(apiKey, requestBody) {
+            // TODO figure out how to use the browser cache for this
             let token = btoa(apiKey + ':');
             let req = {
                 'method': 'POST',
@@ -52,7 +58,7 @@ export default (app) => {
             let token = btoa(apiKey + ':');
             let req = {
                 'method': 'GET',
-                'url': link,
+                'url': link + '?width=' + this.thumbnailSize,
                 'headers': {
                     'Authorization': 'Basic ' + token,
                     'Content-Type': 'arraybuffer'
@@ -73,8 +79,8 @@ export default (app) => {
         }
 
         planetFeatureToScene(planetScenes) {
-            // TODO: may need to further reshape planet data property to match RF data properties
             let scenes = planetScenes.features.map((feature) => {
+                const tileFootprint = turfBboxPolygon(turfBbox(feature));
                 return {
                     id: feature.id,
                     createdAt: feature.properties.acquired,
@@ -82,16 +88,18 @@ export default (app) => {
                     modifiedAt: feature.properties.published,
                     modifiedBy: 'planet',
                     owner: 'planet',
-                    datasource: feature.properties.provider,
+                    datasource: feature.properties.item_type,
                     sceneMetadata: feature.properties,
-                    name: feature.properties.item_type,
+                    name: feature.id,
                     tileFootprint: {
                         type: 'MultiPolygon',
-                        coordinates: [feature.geometry.coordinates]
+                        coordinates: [tileFootprint.geometry.coordinates]
                     },
                     dataFootprint: {
                         type: 'MultiPolygon',
-                        coordinates: [feature.geometry.coordinates]
+                        coordinates: feature.geometry.type === 'MultiPolygon' ?
+                            feature.geometry.coordinates :
+                            [feature.geometry.coordinates]
                     },
                     // eslint-disable-next-line no-underscore-dangle
                     thumbnails: [{url: feature._links.thumbnail}],
@@ -101,7 +109,9 @@ export default (app) => {
                         sunAzimuth: feature.properties.sun_azimuth,
                         sunElevation: feature.properties.sun_elevation
                     },
-                    statusFields: {}
+                    statusFields: {},
+                    // eslint-disable-next-line no-underscore-dangle
+                    permissions: feature._permissions
                 };
             });
 
@@ -109,8 +119,9 @@ export default (app) => {
         }
 
         constructRequestBody(params, bbox) {
-            let ds = params.datasource && params.datasource.length ? params.datasource :
-                ['PSScene3Band', 'PSScene4Band', 'PSOrthoTile', 'REOrthoTile'];
+            let ds = params.datasource && params.datasource.length ?
+                [params.datasource] :
+                ['PSScene4Band', 'REOrthoTile'];
             let config = Object.keys(params).map((key) => {
                 if (key === 'maxAcquisitionDatetime' && params[key]) {
                     return {
@@ -152,17 +163,22 @@ export default (app) => {
                 return null;
             });
 
-            let permission = [{
+            let permissionFilter = {
                 'type': 'PermissionFilter',
                 'config': ['assets.analytic:download']
-            }];
+            };
 
-            let bboxFilter = [{
+            let geometryFilter = {
                 'type': 'GeometryFilter',
-                'field_name': 'geometry',
-                'config': {
+                'field_name': 'geometry'
+            };
+
+            if (params.shape) {
+                geometryFilter.config = params.shape.geometry;
+            } else {
+                geometryFilter.config = {
                     'type': 'Polygon',
-                    'coordinates': [
+                    coordinates: [
                         [
                             [bbox.getNorthEast().lng, bbox.getNorthEast().lat],
                             [bbox.getSouthEast().lng, bbox.getSouthEast().lat],
@@ -171,14 +187,14 @@ export default (app) => {
                             [bbox.getNorthEast().lng, bbox.getNorthEast().lat]
                         ]
                     ]
-                }
-            }];
+                };
+            }
 
             return {
                 'item_types': ds,
                 'filter': {
                     'type': 'AndFilter',
-                    'config': _.compact(config.concat(permission).concat(bboxFilter))
+                    'config': _.compact(config.concat([permissionFilter, geometryFilter]))
                 }
             };
         }

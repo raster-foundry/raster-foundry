@@ -31,7 +31,7 @@
     <div class="list-group">
       <rf-scene-item
           scene="scene"
-          selectable
+          repository="$ctrl.repository"
           selected="$ctrl.isSelected(scene)"
           on-select="$ctrl.setSelected(scene, selected)"
           ng-mouseover="$ctrl.$parent.setHoveredScene(scene)"

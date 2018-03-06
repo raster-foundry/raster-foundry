@@ -828,6 +828,26 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+  /projects/{uuid}/annotations/shapefile:
+    x-resource: Projects
+    get:
+      summary: Get a shapefile containing all annotations on this project
+      parameters:
+        - $ref: '#/parameters/uuid'
+      tags:
+        - Imagery
+      responses:
+        307:
+          description: redirect to a signed s3 download URL
+        404:
+          description: The UUID parameter does not refer to a project  or the user does not have access to the project it refers to.
+          schema:
+            $ref: '#/definitions/Error'
+        default:
+          description: Unexpected error.
+          schema:
+            $ref: '#/definitions/Error'
+
   /projects/{uuid}/annotations/{uuid2}:
     x-resouce: Projects
     get:
@@ -1542,6 +1562,33 @@ paths:
           description: Update an existing geoprocessing tool
         404:
           description: Error message if insufficient permissions to update a tool
+  /tools/{uuid}/raw:
+    x-resource: Tools
+    get:
+      summary: Get raw analyses render as a single band tiff
+      tags:
+        - Lab
+      parameters:
+      - $ref: '#/parameters/uuid'
+      - name: bbox
+        in: query
+        required: true
+        type: string
+        description: Bounding box of the form "bbox=southwest_lng,southwest_lat,northeast_lng,northeast_lat". Delimit multiple with semicolons.
+      - name: zoom
+        in: query
+        required: true
+        type: number
+        description: The zoom level used to split the bbox into a grid
+      - $ref: '#/parameters/node'
+      responses:
+        200:
+          description: Retrieve raw analyses render as a single band tiff
+          schema:
+            type: string
+            format: binary
+        404:
+          description: Error message returned if insufficent permissions or no raw analyses exist
   /tool-tags/:
     x-resource: Tools
     get:
@@ -1669,6 +1716,8 @@ paths:
         - Lab
       parameters:
         - $ref: '#/parameters/project'
+        - $ref: '#/parameters/page'
+        - $ref: '#/parameters/pageSize'
         - $ref: '#/parameters/tool'
         - $ref: '#/parameters/owner'
         - $ref: '#/parameters/createdBy'
@@ -1922,6 +1971,29 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/ShapeFeatureCollectionCreate'
+      responses:
+        201:
+          description: GeoJSON shapes successfully created
+          schema:
+            $ref: '#/definitions/ShapeFeatureCollection'
+        default:
+          description: Unexpected error.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /shapes/upload:
+    x-resource: Projects
+    post:
+      summary: Create shapes belonging to the current user using POSTed data
+      tags:
+        - Imagery
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: name
+          in: formData
+          type: file
+          required: true
       responses:
         201:
           description: GeoJSON shapes successfully created
@@ -2357,6 +2429,13 @@ parameters:
     description: Feed source URI
     in: query
     type: string
+    required: false
+  node:
+    name: nodeId
+    description: UUID of a node
+    in: query
+    type: string
+    format: uuid
     required: false
 
 definitions:

@@ -80,7 +80,8 @@ const App = angular.module(
         require('./pages/projects/edit/sharing/sharing.module.js').name,
 
         require('./pages/imports/imports.module.js').name,
-        require('./pages/imports/list/list.module.js').name,
+        require('./pages/imports/raster/raster.module.js').name,
+        require('./pages/imports/vector/vector.module.js').name,
         require('./pages/imports/datasources/datasources.module.js').name,
         require('./pages/imports/datasources/list/list.module.js').name,
         require('./pages/imports/datasources/detail/detail.module.js').name,
@@ -90,7 +91,14 @@ const App = angular.module(
         require('./pages/settings/tokens/tokens.module.js').name,
         require('./pages/settings/tokens/api/api.module.js').name,
         require('./pages/settings/tokens/map/map.module.js').name,
-        require('./pages/settings/connections/connections.module.js').name
+        require('./pages/settings/connections/connections.module.js').name,
+        require('./pages/settings/organizations/organizations.module.js').name,
+
+        require('./pages/organization/organization.module.js').name,
+        require('./pages/organization/metrics/metrics.module.js').name,
+        require('./pages/organization/teams/teams.module.js').name,
+        require('./pages/organization/users/users.module.js').name,
+        require('./pages/organization/settings/settings.module.js').name
     ]
 );
 

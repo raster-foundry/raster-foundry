@@ -27,7 +27,7 @@ object PureInterpreter extends LazyLogging {
       case MapAlgebraAST.Source(_, _) | MapAlgebraAST.LiteralTile(_, _, _) | MapAlgebraAST.SceneRaster(_, _, _, _, _) | MapAlgebraAST.ProjectRaster(_, _, _, _, _) => true
       case _ => false
     })) {
-      Valid(Monoid.empty)
+      Valid(Monoid[M].empty)
     } else {
       Invalid(NonEmptyList.of(NonEvaluableNode(ast.asMaml._1, Some("missing source nodes"))))
     }
@@ -45,13 +45,13 @@ object PureInterpreter extends LazyLogging {
   ): Interpreted[M] = ast match {
     /* Validate leaf nodes */
     case MapAlgebraAST.Source(id, _) if !allowUnevaluable => Invalid(NonEmptyList.of(NonEvaluableNode(ast.asMaml._1, Some("missing source nodes"))))
-    case MapAlgebraAST.Source(id, _) if allowUnevaluable => Valid(Monoid.empty)
+    case MapAlgebraAST.Source(id, _) if allowUnevaluable => Valid(Monoid[M].empty)
     case MapAlgebraAST.ToolReference(id, _) if !allowUnevaluable => Invalid(NonEmptyList.of(NonEvaluableNode(ast.asMaml._1, Some("missing source nodes"))))
-    case MapAlgebraAST.ToolReference(id, _) if allowUnevaluable => Valid(Monoid.empty)
-    case MapAlgebraAST.SceneRaster(id, _,  _, _, _) => Valid(Monoid.empty)
-    case MapAlgebraAST.ProjectRaster(id, _, _, _, _) => Valid(Monoid.empty)
-    case MapAlgebraAST.Constant(_, _, _) => Valid(Monoid.empty)
-    case MapAlgebraAST.LiteralTile(_, _, _) => Valid(Monoid.empty)
+    case MapAlgebraAST.ToolReference(id, _) if allowUnevaluable => Valid(Monoid[M].empty)
+    case MapAlgebraAST.SceneRaster(id, _,  _, _, _) => Valid(Monoid[M].empty)
+    case MapAlgebraAST.ProjectRaster(id, _, _, _, _) => Valid(Monoid[M].empty)
+    case MapAlgebraAST.Constant(_, _, _) => Valid(Monoid[M].empty)
+    case MapAlgebraAST.LiteralTile(_, _, _) => Valid(Monoid[M].empty)
 
     /* Unary operations must have only one arguments */
     case op: MapAlgebraAST.UnaryOperation => {
@@ -59,19 +59,19 @@ object PureInterpreter extends LazyLogging {
       val kids: Interpreted[M] = op.args.foldMap(a => interpret(a, allowUnevaluable))
 
       /* Unary ops must only have one argument */
-      val argLen: Interpreted[M] = if (op.args.length == 1) Valid(Monoid.empty) else {
+      val argLen: Interpreted[M] = if (op.args.length == 1) Valid(Monoid[M].empty) else {
         Invalid(NonEmptyList.of(IncorrectArgCount(ast.asMaml._1, 1)))
       }
 
       /* Combine these (potential) errors via their Semigroup instance */
-      kids.combine(argLen).combine(hasSources(op))
+      kids.combine(argLen).combine(hasSources[M](op))
     }
 
     /* All binary operations must have at least 2 arguments */
     case op: MapAlgebraAST.Operation => {
       val kids: Interpreted[M] = op.args.foldMap(a => interpret(a, allowUnevaluable))
 
-      val argLen: Interpreted[M] = if (op.args.length > 1) Valid(Monoid.empty) else {
+      val argLen: Interpreted[M] = if (op.args.length > 1) Valid(Monoid[M].empty) else {
         Invalid(NonEmptyList.of(IncorrectArgCount(ast.asMaml._1, 2)))
       }
 

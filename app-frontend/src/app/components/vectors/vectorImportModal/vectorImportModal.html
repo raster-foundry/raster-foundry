@@ -1,0 +1,161 @@
+<div class="modal-scrollable-body">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.handleClose()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <h4 class="modal-title" ng-if="!$ctrl.resolve.project">
+      Upload Shape
+    </h4>
+  </div>
+
+  <!-- Body for SELECT_FILE -->
+  <div class="modal-body"
+       ngf-multiple=false
+       ngf-pattern="'*.zip'"
+       ngf-drop-available=true
+       ng-model="$ctrl.selectedFile"
+       ngf-keep="'distinct'"
+       ngf-change="$ctrl.fileSelected($file)"
+       ngf-drop
+       ng-if="$ctrl.currentStepIs('SELECT_FILE')">
+    <div class="content">
+      <h3 class="no-margin">Select a zipped shapefile</h3>
+      <ng-container ng-if="!$ctrl.selectedFile">
+        <p>Select shape files from your computer. {{$ctrl.BUILDCONFIG.APP_NAME}} currently allows for uploading zipped shape files only.</p>
+        <br/>
+        <br/>
+
+        <div class="text-center">
+          <button class="btn btn-primary"
+                  ngf-multiple=false
+                  ng-model="$ctrl.selectedFile"
+                  ngf-pattern="'*.zip'"
+                  ngf-change="$ctrl.fileSelected($file)"
+                  ngf-select
+          >
+            Select File
+          </button>
+
+          <br/>
+          <br/>
+
+          or drag and drop file
+        </div>
+      </ng-container>
+      <ng-container ng-if="$ctrl.selectedFile">
+        <div class="list-group">
+          <div class="list-group-item">
+            <div class="list-group-overflow">
+              <input type="text"
+                     class="form-control"
+                     ng-attr-placeholder="Save as: {{$ctrl.selectedFile.name}}"
+                     ng-model="$ctrl.shapeName">
+              <br>
+              <span>{{$ctrl.selectedFile.size | byteFmt: 2}}</span>
+            </div>
+            <div class="list-group-right">
+              <button class="btn btn-square btn-secondary" ng-click="$ctrl.removeFile()" >
+                <i class="icon-cross"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Body for UPLOADING_FILE -->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('UPLOADING_FILE')">
+    <div class="content">
+      <h3 class="no-margin">
+        Upload in progress...
+      </h3>
+      <div class="list-group">
+        <div class="list-group-item no-flex">
+          <div class="list-group-item-contents">
+            <div class="list-group-overflow">
+              <span title="{{$ctrl.selectedFile.name}}">
+                <strong class="color-dark">{{$ctrl.selectedFile.name}}</strong>
+                <br>
+                <i>{{$ctrl.shapeName}}</i>
+              </span>
+              <br>
+              <span ng-if="$ctrl.uploadProgress">
+                {{
+                $ctrl.selectedFile.size * (
+                $ctrl.uploadProgress.loaded / $ctrl.uploadProgress.total
+                )
+                | byteFmt: 2
+                }} /
+              </span>
+              <span>{{$ctrl.selectedFile.size | byteFmt: 2}}</span>
+            </div>
+            <div class="list-group-right">
+              {{
+              $ctrl.progressKB
+              || '0'
+              }}%
+              <button title="Cancel Upload"
+                      class="btn btn-square btn-danger"
+                      ng-if="!$ctrl.aborted && !$ctrl.shape"
+                      ng-click="$ctrl.abortUpload()">
+                <i class="icon-cross"></i>
+              </button>
+              <button disabled="true"
+                      ng-if="$ctrl.shape"
+                      class="btn btn-square btn-secondary">
+                <i class="icon-check"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body for FINISH -->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('FINISH')">
+    <div class="content">
+      Upload finished
+      <div class="list-group">
+        <rf-shape-item shape="$ctrl.shape">
+        </rf-shape-item>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body for FAILED -->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('FAILED')">
+    <div class="content">
+      Upload failed.<br>
+      {{$ctrl.uploadError}}
+    </div>
+  </div>
+
+  <!--Default Footer-->
+  <div class="modal-footer">
+    <button type="button" class="btn pull-left"
+            ng-if="$ctrl.allowClose() && !$ctrl.allowDone()"
+            ng-click="$ctrl.handleClose()">
+      Cancel
+    </button>
+
+    <button type="button" class="btn"
+            ng-if="$ctrl.hasPrevious()"
+            ng-click="$ctrl.handlePrevious()"
+            ng-disabled="!$ctrl.allowPrevious()">
+      Back
+    </button>
+    <button type="button" class="btn btn-primary"
+            ng-if="$ctrl.hasNext()"
+            ng-click="$ctrl.handleNext()"
+            ng-disabled="!$ctrl.allowNext()">
+      Next
+    </button>
+    <button type="button" class="btn btn-primary"
+            ng-if="$ctrl.allowDone()"
+            ng-click="$ctrl.handleDone()">
+      Done
+    </button>
+  </div>
+</div>

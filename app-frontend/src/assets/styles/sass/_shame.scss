@@ -31,6 +31,9 @@ div.image-placeholder {
   }
   div {
     align-self: center;
+    text-align: center;
+    font-size: 1.1rem;
+    opacity: 0.7;
   }
 }
 
@@ -88,6 +91,8 @@ dl.meta-list > dt {
 
 dl.meta-list > dd {
   margin-bottom: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .clear-image-source-filter{
@@ -103,6 +108,13 @@ dl.meta-list > dd {
 
 .form-control.input-dark.image-source{
   margin-right: 0rem
+}
+
+.scene-item-lock {
+  color: $shade-normal;
+  background-color: $off-white;
+  border-radius: 2px;
+  padding: 5px;
 }
 
 //
@@ -426,6 +438,7 @@ rf-project-editor .leaflet-tile {
   animation: 2s linear 0s normal none infinite spin;
 }
 .filter-group {
+  display: block;
   border-bottom: 1px solid $shade-dark;
   padding-top: 1rem;
   padding-bottom: 1rem;
@@ -898,9 +911,41 @@ div.lab-workspace.is-dragging {
   }
 }
 
+.map-container-draw-controls {
+  position: absolute;
+  top: 2em;
+  left: 50%;
+  transform: translateX(-50%);
+  background: $white;
+  border: 1px solid $shade-light;
+  border-radius: 3px;
+  padding: 1em;
+  z-index: 1049;
+  width: 40em;
+
+  display: flex;
+  flex-direction: row;
+
+  .map-draw-title {
+    flex: 1;
+    display: flex;
+    justify-content: space-around;
+    flex-direction: column;
+  }
+
+  .map-draw-actions {
+    display: flex;
+    justify-content: space-between;
+    :not(:last-child) {
+      margin-right: 0.5em;
+    }
+  }
+}
+
 .map-container-controls {
   position: absolute;
   top: .5rem;
+
   right: .5rem;
   z-index: 1025;
   display: flex;
@@ -916,6 +961,7 @@ div.lab-workspace.is-dragging {
   }
   &.align-left {
       left: 0.5rem;
+      right: auto; // ie11 fix
       right: initial;
   }
 }
@@ -1601,7 +1647,7 @@ rf-operation-node{
   pointer-events: auto;
   padding: 1em;
   display: flex;
-  align-items: center;
+  align-items: stretch; //ie 11 fix uses stretch instead of center
 }
 
 rf-classify-node {
@@ -2000,19 +2046,18 @@ rf-node-selector {
   height: 2.5em;
   display: flex;
 
-
   .btn {
     color: $white;
     font-weight: 700;
-    width: 15em;
-    flex: 1;
+    width: 21rem;
+    flex: none; // ie11 fix, we use width so dont need flex
     display: flex;
     justify-content: space-between;
   }
 }
 
 .node-selector-close {
-  flex: 0;
+  flex: none; // ie11 fix uses none instead of 0
   display: flex;
   flex-direction: column;
   .btn {
@@ -2022,7 +2067,7 @@ rf-node-selector {
 
 .node-select {
   position: relative;
-  width: 15em;
+  width: 21rem;
   height: 1em;
   background: $shade-dark;
 }
@@ -2031,7 +2076,7 @@ rf-node-selector {
   position: absolute;
   top: 2em;
   background: $shade-dark;
-  width: 15em;
+  width: 21rem;
   max-height: 16em;
   overflow-x: hidden;
   overflow-y: auto;
@@ -2939,4 +2984,15 @@ rf-reclassify-table {
 
 .measurement-result {
     margin-bottom: 1em;
+}
+
+.list-group-overflow p, .list-group-overflow span {
+  white-space: initial;
+}
+
+.leaflet-div-icon {
+    background: $green;
+    border: none;
+    opacity: 0.9;
+    border-radius: 50%;
 }

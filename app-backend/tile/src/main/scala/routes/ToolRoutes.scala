@@ -156,7 +156,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
             val colorRamp = providedRamps.getOrElse(colorRampName, providedRamps("viridis"))
             val components = for {
               (lastUpdateTime, ast) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
-              (expression, metadata) <- OptionT.pure[Future, (Expression, Option[NodeMetadata])](ast.asMaml)
+              (expression, metadata) <- OptionT.pure[Future](ast.asMaml)
               cMap  <- LayerCache.toolRunColorMap(toolRunId, nodeId, user, colorRamp, colorRampName)
             } yield (expression, metadata, cMap, lastUpdateTime)
 
@@ -221,7 +221,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
             val nodeId = node.map(UUID.fromString(_))
             val components = for {
               (lastUpdateTime, ast) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
-              (expression, metadata) <- OptionT.pure[Future, (Expression, Option[NodeMetadata])](ast.asMaml)
+              (expression, metadata) <- OptionT.pure[Future](ast.asMaml)
             } yield (expression, metadata, lastUpdateTime)
             complete {
               components.value.flatMap(

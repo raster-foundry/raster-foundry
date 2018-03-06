@@ -236,3 +236,31 @@
     }
   }
 }
+
+/*
+ * rf-dropdown classes
+*/
+.rf-dropdown {
+    width: 10em;
+    position: absolute;
+    bottom: 0;
+    transform: translateY(100%);
+    background: $white;
+    border: 1px solid $shade-light;
+    border-radius: 3px 0 3px 3px;
+    z-index: 100;
+
+    .rf-dropdown-item {
+        padding: 0.5em 1em;
+        cursor: pointer;
+        &:hover {
+            background: $off-white;
+        }
+        &:first-child {
+            padding-top: 1em;
+        }
+        &:last-child {
+            padding-bottom: 1em;
+        }
+    }
+}

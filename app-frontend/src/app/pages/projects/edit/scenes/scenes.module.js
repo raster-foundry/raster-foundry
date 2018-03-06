@@ -1,7 +1,7 @@
 import angular from 'angular';
 class ProjectsScenesController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, modalService, projectService
+        $log, $state, $scope, modalService, projectService, RasterFoundryRepository
     ) {
         'ngInject';
         this.$log = $log;
@@ -10,6 +10,10 @@ class ProjectsScenesController {
         this.projectId = $state.params.projectid;
         this.$parent = $scope.$parent.$ctrl;
         this.projectService = projectService;
+        this.repository = {
+            name: 'Raster Foundry',
+            service: RasterFoundryRepository
+        };
     }
 
     removeSceneFromProject(scene, $event) {
@@ -32,7 +36,8 @@ class ProjectsScenesController {
         this.modalService.open({
             component: 'rfSceneDetailModal',
             resolve: {
-                scene: () => scene
+                scene: () => scene,
+                repository: () => this.repository
             }
         });
     }

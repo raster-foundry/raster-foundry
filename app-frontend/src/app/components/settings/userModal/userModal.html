@@ -1,0 +1,49 @@
+<div class="vertical-modal">
+  <div class="header">
+    <div class="header-title">
+      Add User
+    </div>
+    <span
+        class="modal-close icon-cross"
+        ng-click="$ctrl.dismiss()"
+    ></span>
+  </div>
+  <div class="modal-body">
+    <form name="$ctrl.form" class="form-group">
+      <label>
+        Name
+        <input
+            type="text"
+            class="form-control"
+            name="name"
+            ng-model="name"
+        >
+      </label>
+      <label>
+        Email
+        <input
+            type="email"
+            class="form-control"
+            name="email"
+            ng-model="email">
+      </label>
+      <label>
+        Role
+        <select
+            class="form-control"
+            name="role"
+            ng-model="role"
+        >
+          <option value="manager">Managers</option>
+          <option value="Uploader">Uploader</option>
+          <option value="viewer">Viewers</option>
+        </select>
+      </label>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-light" ng-click="$ctrl.dismiss()">Cancel</button>
+    <button type="button" class="btn btn-primary" ng-click="$ctrl.onAdd()">Add</button>
+  </div>
+</div>
+
