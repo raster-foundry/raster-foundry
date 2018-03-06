@@ -20,24 +20,18 @@ class SceneItemController {
       $scope, $attrs,
       thumbnailService, mapService, datasourceService) {
         'ngInject';
+
+        this.$scope = $scope;
+        this.$parent = $scope.$parent.$ctrl;
+
+        this.isDraggable = $attrs.hasOwnProperty('draggable');
+
         this.thumbnailService = thumbnailService;
         this.mapService = mapService;
-        this.isDraggable = $attrs.hasOwnProperty('draggable');
         this.datasourceService = datasourceService;
-        this.$scope = $scope;
     }
 
     $onInit() {
-        if (this.isDraggable) {
-            Object.assign(this.$scope.$parent.$treeScope.$callbacks, {
-                dragStart: function () {
-                    this.mapService.disableFootprints = true;
-                },
-                dragStop: function () {
-                    this.mapService.disableFootprints = false;
-                }
-            });
-        }
         this.$scope.$watch('$ctrl.scene.datasource', () => {
             if (this.repository) {
                 this.repository.service.getDatasource(this.scene).then((datasource) => {

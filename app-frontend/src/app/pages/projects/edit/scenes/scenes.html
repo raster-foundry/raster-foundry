@@ -43,15 +43,22 @@
     </div>
   </div>
 </div>
-<div class="sidebar-scrollable">
-  <div class="list-group">
+<div class="sidebar-scrollable"
+     ui-tree="$ctrl.treeOptions"
+     data-empty-placeholder-enabled="false">
+  <div
+    class="list-group"
+    ng-model="$ctrl.$parent.sceneList"
+    ui-tree-nodes>
     <rf-scene-item
         scene="scene"
         repository="$ctrl.repository"
         ng-click="$ctrl.openSceneDetailModal(scene)"
         ng-mouseover="$ctrl.$parent.setHoveredScene(scene)"
         ng-mouseleave="$ctrl.$parent.removeHoveredScene()"
-        ng-repeat="scene in $ctrl.$parent.sceneList track by scene.id">
+        ng-repeat="scene in $ctrl.$parent.sceneList track by scene.id"
+        ui-tree-node
+        draggable>
       <button class="btn btn-tiny" ng-click="$ctrl.removeSceneFromProject(scene, $event)">
         <i class="icon-trash"></i>
       </button>
