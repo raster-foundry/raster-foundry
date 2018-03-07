@@ -83,6 +83,48 @@ object SceneDao extends Dao[Scene] {
     } yield sceneWithRelated
   }
 
+  def insertMaybe(sceneCreate: Scene.Create, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
+    val scene = sceneCreate.toScene(user)
+    val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id))
+    val images = (sceneCreate.images map { im: Image.Banded => im.toImage(user) }).zipWithIndex
+    val bands = images map { case (im: Image, ind: Int) =>
+      sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
+    }
+
+    val sceneInsert = fr"""
+      INSERT INTO ${tableName} (
+         id, created_at, created_by, modified_at, modified_by, owner,
+         organization_id, ingest_size_bytes, visibility, tags,
+         datasource, scene_metadata, name, tile_footprint,
+         data_footprint, metadata_files, ingest_location, cloud_cover,
+         acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
+         boundary_status, ingest_status
+      ) VALUES (
+        ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
+        ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
+        ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
+        ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
+        ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
+        ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus}, ${scene.statusFields.ingestStatus}
+      )
+    """.update.run
+
+
+    val thumbnailInsert = ThumbnailDao.insertMany(thumbnails)
+    val imageInsert = ImageDao.insertManyImages(images.map(_._1))
+    val bandInsert = BandDao.createMany(bands.flatten)
+    val sceneWithRelatedquery = SceneWithRelatedDao.query.filter(scene.id).selectOption
+
+    for {
+      _ <- sceneInsert
+      _ <- thumbnailInsert
+      _ <- imageInsert
+      _ <- bandInsert
+      sceneWithRelated <- sceneWithRelatedquery
+    } yield sceneWithRelated
+  }
+
+
   def update(scene: Scene, id: UUID, user: User): ConnectionIO[(Int, Boolean)] = {
 
     ???

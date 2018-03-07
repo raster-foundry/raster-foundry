@@ -7,13 +7,13 @@ import doobie.hikari.implicits._
 import scala.concurrent.duration._
 
 trait Config {
-  private val config = ConfigFactory.load()
-  private val databaseConfig = config.getConfig("db")
-  val jdbcNoDBUrl = databaseConfig.getString("url")
-  val jdbcDBName = databaseConfig.getString("name")
+//  private val config = ConfigFactory.load()
+//  private val databaseConfig = config.getConfig("db")
+  val jdbcNoDBUrl = "jdbc:postgresql://database.service.rasterfoundry.internal/"
+  val jdbcDBName = "rasterfoundry"
   val jdbcUrl = jdbcNoDBUrl + jdbcDBName
-  val dbUser = databaseConfig.getString("user")
-  val dbPassword = databaseConfig.getString("password")
+  val dbUser = "rasterfoundry"
+  val dbPassword = "rasterfoundry"
 }
 
 object RFTransactor extends Config {

@@ -14,6 +14,7 @@ import geotrellis.spark.io.postgres.PostgresAttributeStore
 import geotrellis.spark.io.s3._
 import geotrellis.vector._
 import com.amazonaws.services.s3.AmazonS3URI
+import com.azavea.rf.database.util.RFTransactor
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import doobie.util.transactor.Transactor
 import spray.json.DefaultJsonProtocol._
@@ -75,7 +76,7 @@ object S3ToPostgres {
   val name = "migration_s3_postgres"
 
   def main(args: Array[String]): Unit = {
-    implicit val db = DB.DEFAULT
+    implicit val xa = RFTransactor.xa
 
     val job = args.toList match {
       case List(uri, attributeTable, layerName) => S3ToPostgres(new AmazonS3URI(uri), attributeTable, Some(layerName))
