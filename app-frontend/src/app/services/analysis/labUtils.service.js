@@ -252,7 +252,7 @@ export default (app) => {
                         shapes.push(link);
                     }
                     inputs = inputs.concat(
-                        getNodeArgs(input)
+                        getNodeArgs(input).reverse()
                             .map((a) => {
                                 return Object.assign({
                                     parent: rectangle
