@@ -15,6 +15,7 @@ import io.circe.syntax._
 import org.postgresql.util.PGobject
 import com.azavea.rf.datamodel.ColorCorrect._
 import java.net.URI
+import java.util.UUID
 
 trait CirceJsonbMeta {
   implicit val jsonbMeta: Meta[Json] =
@@ -91,19 +92,16 @@ trait CirceJsonbMeta {
     )
   }
 
-  //  implicit val bandMeta: Meta[Seq[Band]] = {
-//    Meta.other[Json]("jsonb").xmap[Seq[Band]](
-//      a => a.as[Seq[Band]] match {
-//        case Right(p) => p
-//        case Left(e) => throw e
-//      },
-//      a => a.asJson
-//    )
-//  }
-
   implicit val uriMeta: Meta[URI] = {
     Meta.other[String]("text").xmap[URI](
       a => new URI(a),
+      a => a.toString
+    )
+  }
+
+  implicit val uuidMeta: Meta[UUID] = {
+    Meta.other[String]("text").xmap[UUID](
+      a => UUID.fromString(a),
       a => a.toString
     )
   }

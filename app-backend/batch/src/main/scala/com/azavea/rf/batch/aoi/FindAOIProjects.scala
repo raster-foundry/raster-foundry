@@ -1,58 +1,49 @@
 package com.azavea.rf.batch.aoi
 
 import com.azavea.rf.batch.Job
-import com.azavea.rf.database.tables._
-import com.azavea.rf.database.{Database => DB}
 import java.sql.Timestamp
 import java.time.ZonedDateTime
 
 import cats.effect.IO
+import cats.syntax.option._
+import doobie.{ConnectionIO, Fragment, Fragments}
+import doobie.implicits._
 import doobie.util.transactor.Transactor
 
+import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.util.RFTransactor
+
 import scala.util.{Failure, Success}
+import java.util.UUID
 
 case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job {
   val name = FindAOIProjects.name
 
-//  import database.driver.api._
-//
-//  /** Convert Long to Timestamp function */
-//  protected val toTimestamp = SimpleFunction.unary[Long, Timestamp]("to_timestamp")
-//
   def run: Unit = {
-//    logger.info("Finding AOI projects...")
-//    Users.getUserById(systemUser).flatMap { userOpt =>
-//      val user = userOpt.getOrElse {
-//        val e = new Exception(s"User $systemUser doesn't exist.")
-//        sendError(e)
-//        throw e
-//      }
-//
-//      database.db.run {
-//        Projects
-//          .filterToSharedOrganizationIfNotInRoot(user)
-//          .filter { p =>
-//            p.isAOIProject && p.aoisLastChecked <= toTimestamp(p.aoiCadenceMillis * (-1l) + ZonedDateTime.now.toInstant.toEpochMilli)
-//          }
-//          .join(AoisToProjects)
-//          .on { case (p, o) => p.id === o.projectId }
-//          .join(AOIs)
-//          .on { case ((_, atp), a) => atp.aoiId === a.id }
-//          .map { case ((p, _), _) => p.id }
-//          .result
-//      }
-//    } onComplete {
-//      case Success(seq) => {
-//        println(s"ProjectIds: ${seq.map(_.toString).mkString(",")}")
-//        stop
-//      }
-//      case Failure(e) => {
-//        e.printStackTrace()
-//        sendError(e)
-//        stop
-//        sys.exit(1)
-//      }
-//    }
+    def timeToEpoch(timeFunc: String): Fragment = Fragment.const(s"extract(epoch from ${timeFunc})")
+    val aoiProjectsToUpdate: ConnectionIO[List[UUID]] = {
+
+      // get ids only
+      val baseSelect: Fragment = sql"select id from projects"
+
+      //  check to make sure the project is an aoi project
+      val isAoi: Option[Fragment] = fr"is_aoi_project=true".some
+
+      // Check to make sure now is later than last checked + cadence
+      val nowGtLastCheckedPlusCadence: Option[Fragment] = {
+        timeToEpoch("now()") ++
+          fr" > " ++
+          timeToEpoch("aois_last_checked") ++
+          fr"+ aoi_cadence_millis / 1000"
+      }.some
+
+      (baseSelect ++ Fragments.whereAndOpt(isAoi, nowGtLastCheckedPlusCadence))
+        .query[UUID]
+        .stream
+        .compile.toList
+    }
+
+    aoiProjectsToUpdate.transact(xa).unsafeRunSync.foreach(println)
   }
 }
 
@@ -60,12 +51,8 @@ object FindAOIProjects {
   val name = "find_aoi_projects"
 
   def main(args: Array[String]): Unit = {
-//    implicit val db = DB.DEFAULT
-//
-//    val job = args.toList match {
-//      case _ => FindAOIProjects()
-//    }
-//
-//    job.run
+    implicit val xa = RFTransactor.xa
+    val job = FindAOIProjects()
+    job.run
   }
 }

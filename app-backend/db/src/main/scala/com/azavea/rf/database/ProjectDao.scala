@@ -46,6 +46,18 @@ object ProjectDao extends Dao[Project] {
     FROM
   """ ++ tableF
 
+  // TODO: add the ability to filter to specific fields / abstract out default
+  // selectF. should take an Option[List[String]] of fields and construct select
+  // statement with a Fragment.const
+  def getProjectById(projectId: UUID, user: Option[User]): ConnectionIO[Project] = {
+    val idFilter = Some(fr"where id = ${projectId}")
+    val visFilter = user flatMap filterUserVisibility
+
+    (selectF ++ Fragments.whereAndOpt(idFilter, visFilter))
+      .query[Project]
+      .unique
+  }
+
   def insertProject(newProject: Project.Create, user: User): ConnectionIO[Project] = {
     val id = UUID.randomUUID()
     val now = new Timestamp((new java.util.Date()).getTime())
@@ -72,7 +84,7 @@ object ProjectDao extends Dao[Project] {
     )
   }
 
-  def filterUserVisibility(user: User) = {
+  def filterUserVisibility(user: User): Option[Fragment] = {
     user.isInRootOrganization match {
       case true => None
       case _ => Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id} OR visibility = 'PUBLIC')")
