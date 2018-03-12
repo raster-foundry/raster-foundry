@@ -1,7 +1,6 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.LayerAttribute
 import doobie._
 import doobie.implicits._

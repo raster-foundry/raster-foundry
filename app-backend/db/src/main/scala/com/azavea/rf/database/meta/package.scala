@@ -7,5 +7,4 @@ package object meta {
       with SingleBandOptionsMeta
       with EnumMeta
 
-  object RFMeta extends RFMeta
 }

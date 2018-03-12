@@ -2,7 +2,7 @@ package com.azavea.rf.database
 
 import java.sql.Timestamp
 
-import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.{User, UserRole}
 import doobie._
 import doobie.implicits._
@@ -13,7 +13,6 @@ import cats.data._
 import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
-import com.azavea.rf.database.filter.Filterables._
 
 import scala.concurrent.Future
 

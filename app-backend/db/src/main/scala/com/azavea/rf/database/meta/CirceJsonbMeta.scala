@@ -98,12 +98,5 @@ trait CirceJsonbMeta {
       a => a.toString
     )
   }
-
-  implicit val uuidMeta: Meta[UUID] = {
-    Meta.other[String]("text").xmap[UUID](
-      a => UUID.fromString(a),
-      a => a.toString
-    )
-  }
 }
 

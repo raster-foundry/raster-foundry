@@ -8,9 +8,11 @@ import cats.effect.IO
 import cats.syntax.option._
 import doobie.{ConnectionIO, Fragment, Fragments}
 import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 
-import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util.RFTransactor
 
 import scala.util.{Failure, Success}

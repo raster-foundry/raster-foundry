@@ -3,7 +3,7 @@ package com.azavea.rf.database.filter
 import java.sql.Timestamp
 import java.util.UUID
 
-import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.meta.RFMeta
 import com.azavea.rf.database.Filterable
 import com.azavea.rf.datamodel._
 import cats.implicits._
@@ -17,7 +17,7 @@ import cats.data._
 import cats.effect.IO
 
 
-trait Filterables {
+trait Filterables extends RFMeta {
 
   implicit val aoiQueryParamsFilter = Filterable[Any, AoiQueryParameters] { qp: AoiQueryParameters =>
       Filters.organizationQP(qp.orgParams) ++

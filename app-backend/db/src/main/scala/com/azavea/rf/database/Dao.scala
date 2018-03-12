@@ -1,6 +1,6 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.filter.Filterables
 import com.azavea.rf.database.util._
 import com.azavea.rf.datamodel._
 
@@ -15,7 +15,7 @@ import java.util.UUID
 /**
  * This is abstraction over the listing of arbitrary types from the DB with filters/pagination
  */
-abstract class Dao[Model: Composite] {
+abstract class Dao[Model: Composite] extends Filterables {
 
   val tableName: String
 

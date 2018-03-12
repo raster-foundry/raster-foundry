@@ -2,8 +2,7 @@ package com.azavea.rf.database
 
 import java.util.UUID
 
-import com.azavea.rf.database.meta.RFMeta._
-import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.{BatchParams, ColorCorrect, MosaicDefinition, SceneToProject}
 import doobie._
 import doobie.implicits._

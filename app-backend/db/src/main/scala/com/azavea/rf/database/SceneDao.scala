@@ -2,8 +2,7 @@ package com.azavea.rf.database
 
 import java.sql.Timestamp
 
-import com.azavea.rf.database.meta.RFMeta._
-import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.{Scene, SceneFilterFields, SceneStatusFields, User, Visibility}
 import doobie._

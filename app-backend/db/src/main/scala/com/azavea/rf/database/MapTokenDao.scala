@@ -1,6 +1,6 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
 import doobie._
 import doobie.implicits._

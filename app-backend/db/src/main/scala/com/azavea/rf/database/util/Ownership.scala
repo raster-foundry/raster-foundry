@@ -1,12 +1,12 @@
 package com.azavea.rf.database.util
 
-import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.database.filter.Filterables
 
 import doobie._
 import doobie.implicits._
 
-object Ownership {
+object Ownership extends Filterables {
 
   def checkOwner(createUser: User, ownerUserId: Option[String]): String = {
     (createUser, ownerUserId) match {

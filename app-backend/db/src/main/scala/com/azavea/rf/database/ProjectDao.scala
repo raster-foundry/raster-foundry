@@ -1,8 +1,6 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.datamodel._
-import com.azavea.rf.database.filter.Filterables._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -15,6 +13,7 @@ import java.sql.{Date, Timestamp}
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import scala.concurrent.Future
 
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.color._
 import com.lonelyplanet.akka.http.extensions._
