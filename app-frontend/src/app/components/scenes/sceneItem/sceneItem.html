@@ -8,7 +8,7 @@
   </div>
   <div class="item-img-container"
        ng-class="{'previewable': $ctrl.isPreviewable}"
-       ng-click="$ctrl.isPreviewable && $ctrl.openSceneDetailModal()"
+       ng-click="$ctrl.isPreviewable && $ctrl.openSceneDetailModal($event)"
   >
     <rf-status-tag entity-type="scene"
                    ng-if="$ctrl.scene.statusFields.ingestStatus"

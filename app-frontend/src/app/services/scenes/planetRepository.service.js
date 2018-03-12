@@ -56,6 +56,7 @@ export default (app) => {
                         reject();
                     });
                 }
+                this.thumbnailSize = 512;
             });
         }
 
@@ -232,7 +233,7 @@ export default (app) => {
         getThumbnail(scene, trim = false) {
             return this.$q((resolve, reject) => {
                 this.planetLabsService.getThumbnail(
-                    this.planetToken, scene.thumbnails[0].url
+                    this.planetToken, scene.thumbnails[0].url, this.thumbnailSize
                 ).then((response) => {
                     let thumbnail = `data:image/png;base64,${response}`;
                     if (trim) {
@@ -250,7 +251,7 @@ export default (app) => {
             });
         }
 
-        // assumes thumbnail is 256x256, which is true for planet thumbnails
+        // assumes thumbnail is 512x512, which is true for planet thumbnails
         trimThumbnail(thumbnail) {
             function rowBlank(imageData, width, y) {
                 for (let x = 0; x < width; x = x + 1) {
@@ -271,8 +272,8 @@ export default (app) => {
             }
 
             return this.$q((resolve, reject) => {
-                const width = 256;
-                const height = 256;
+                const width = this.thumbnailSize;
+                const height = this.thumbnailSize;
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
