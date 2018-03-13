@@ -1,7 +1,9 @@
 /* global BUILDCONFIG, L */
-const ASSETLOGO = BUILDCONFIG.LOGOURL || BUILDCONFIG.LOGOFILE ?
+let assetLogo = BUILDCONFIG.LOGOFILE ?
     require(`../../../assets/images/${BUILDCONFIG.LOGOFILE}`) :
     require('../../../assets/images/raster-foundry-logo.svg');
+
+assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
 
 export default class ShareController {
     constructor( // eslint-disable-line max-params
@@ -10,7 +12,7 @@ export default class ShareController {
         'ngInject';
         this.$log = $log;
         this.$state = $state;
-        this.logoAsset = ASSETLOGO;
+        this.logoAsset = assetLogo;
         this.authService = authService;
         this.projectService = projectService;
         this.mapUtilsService = mapUtilsService;
