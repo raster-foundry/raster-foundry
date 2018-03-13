@@ -15,7 +15,6 @@ import doobie.util.transactor.Transactor
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util.RFTransactor
 
-import scala.util.{Failure, Success}
 import java.util.UUID
 
 case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job {
