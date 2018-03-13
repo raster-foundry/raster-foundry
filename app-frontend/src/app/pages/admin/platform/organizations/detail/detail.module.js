@@ -2,7 +2,7 @@ import angular from 'angular';
 
 class PlatformOrganizationDetailController {
     constructor() {
-        
+
     }
 }
 

@@ -87,7 +87,8 @@ class SceneItemController {
         return false;
     }
 
-    openSceneDetailModal() {
+    openSceneDetailModal(e) {
+        e.stopPropagation();
         this.modalService.open({
             component: 'rfSceneDetailModal',
             resolve: {
