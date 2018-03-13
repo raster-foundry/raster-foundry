@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.33.1](https://github.com/raster-foundry/raster-foundry/tree/0.33.1) (2018-03-13)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.33.0...0.33.1)
+
+**Merged pull requests:**
+
+- Fix share page bug. [\#3051](https://github.com/raster-foundry/raster-foundry/pull/3051)
+
 ## [0.33.0](https://github.com/raster-foundry/raster-foundry/tree/0.33.0) (2018-03-13)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.32.0...0.33.0)
