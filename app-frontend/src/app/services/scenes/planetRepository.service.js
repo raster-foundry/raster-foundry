@@ -14,6 +14,7 @@ export default (app) => {
             this.permissionSource = ' from planet.com';
             this.skipThumbnailClipping = true;
             this.previewOnMap = true;
+            this.thumbnailSize = 512;
         }
 
         initRepository() {
@@ -56,7 +57,6 @@ export default (app) => {
                         reject();
                     });
                 }
-                this.thumbnailSize = 512;
             });
         }
 
@@ -251,7 +251,7 @@ export default (app) => {
             });
         }
 
-        // assumes thumbnail is 512x512, which is true for planet thumbnails
+        // Assumes the dimensions stored in `this.thumbnailSize` are correct
         trimThumbnail(thumbnail) {
             function rowBlank(imageData, width, y) {
                 for (let x = 0; x < width; x = x + 1) {
