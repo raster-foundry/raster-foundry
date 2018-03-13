@@ -10,8 +10,6 @@ export default (app) => {
             'ngInject';
             this.$log = $log;
             this.$http = $http;
-
-            this.thumbnailSize = '512';
         }
 
         sendHttpRequest(req) {
@@ -54,11 +52,12 @@ export default (app) => {
             return this.sendHttpRequest(req);
         }
 
-        getThumbnail(apiKey, link) {
+
+        getThumbnail(apiKey, link, size) {
             let token = btoa(apiKey + ':');
             let req = {
                 'method': 'GET',
-                'url': link + '?width=' + this.thumbnailSize,
+                'url': link + '?width=' + size,
                 'headers': {
                     'Authorization': 'Basic ' + token,
                     'Content-Type': 'arraybuffer'
@@ -69,8 +68,8 @@ export default (app) => {
             return this.$http(req).then(
                 (response) => {
                     let arr = new Uint8Array(response.data);
-                    let raw = String.fromCharCode.apply(null, arr);
-                    return btoa(raw);
+                    let rawString = this.uint8ToString(arr);
+                    return btoa(rawString);
                 },
                 (error) => {
                     return error;
@@ -197,6 +196,15 @@ export default (app) => {
                     'config': _.compact(config.concat([permissionFilter, geometryFilter]))
                 }
             };
+        }
+
+        uint8ToString(u8a) {
+            const CHUNK_SZ = 0x8000;
+            let result = [];
+            for (let i = 0; i < u8a.length; i += CHUNK_SZ) {
+                result.push(String.fromCharCode.apply(null, u8a.subarray(i, i + CHUNK_SZ)));
+            }
+            return result.join('');
         }
     }
 

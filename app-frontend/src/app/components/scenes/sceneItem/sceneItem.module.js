@@ -17,27 +17,27 @@ const SceneItemComponent = {
 
 class SceneItemController {
     constructor(
-      $scope, $attrs,
-      thumbnailService, mapService, datasourceService) {
+        $scope, $attrs,
+        thumbnailService, mapService, datasourceService, modalService
+    ) {
         'ngInject';
+
+        this.$scope = $scope;
+        this.$parent = $scope.$parent.$ctrl;
+
+        this.isDraggable = $attrs.hasOwnProperty('draggable');
+
         this.thumbnailService = thumbnailService;
         this.mapService = mapService;
         this.isDraggable = $attrs.hasOwnProperty('draggable');
+        this.isPreviewable = $attrs.hasOwnProperty('previewable');
+        this.isClickable = $attrs.hasOwnProperty('clickable');
         this.datasourceService = datasourceService;
+        this.modalService = modalService;
         this.$scope = $scope;
     }
 
     $onInit() {
-        if (this.isDraggable) {
-            Object.assign(this.$scope.$parent.$treeScope.$callbacks, {
-                dragStart: function () {
-                    this.mapService.disableFootprints = true;
-                },
-                dragStop: function () {
-                    this.mapService.disableFootprints = false;
-                }
-            });
-        }
         this.$scope.$watch('$ctrl.scene.datasource', () => {
             if (this.repository) {
                 this.repository.service.getDatasource(this.scene).then((datasource) => {
@@ -85,6 +85,17 @@ class SceneItemController {
             return true;
         }
         return false;
+    }
+
+    openSceneDetailModal(e) {
+        e.stopPropagation();
+        this.modalService.open({
+            component: 'rfSceneDetailModal',
+            resolve: {
+                scene: () => this.scene,
+                repository: () => this.repository
+            }
+        });
     }
 }
 

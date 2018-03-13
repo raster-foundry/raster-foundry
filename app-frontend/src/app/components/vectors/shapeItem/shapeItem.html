@@ -1,4 +1,6 @@
-<div class="list-group-item has-action {{$ctrl.isDisabled ? 'is-disabled' : ''}}">
+<div class="list-group-item"
+     ng-class="{'disabled': $ctrl.isDisabled,
+                'clickable': $ctrl.isClickable}">
   <div class="list-group-overflow">
     <div>
       <span title="{{$ctrl.shape.properties.name}}">

@@ -1,11 +1,19 @@
-<div class="list-group-item has-action {{$ctrl.isDisabled ? 'is-disabled' : ''}}">
-  <div ng-if="$ctrl.isDraggable" ui-tree-handle>
+<div class="list-group-item"
+     ng-class="{'disabled': $ctrl.isDisabled,
+                'clickable': $ctrl.isClickable}">
+  <div title="Drag to reorder this scene"
+       ng-if="$ctrl.isDraggable"
+       ui-tree-handle>
     <i class="icon-gripper"></i>
   </div>
-  <div class="item-img-container">
+  <div class="item-img-container"
+       ng-class="{'previewable': $ctrl.isPreviewable}"
+       ng-click="$ctrl.isPreviewable && $ctrl.openSceneDetailModal($event)"
+  >
     <rf-status-tag entity-type="scene"
                    ng-if="$ctrl.scene.statusFields.ingestStatus"
-                   status="$ctrl.scene.statusFields.ingestStatus"></rf-status-tag>
+                   status="$ctrl.scene.statusFields.ingestStatus"
+                   ng-class="{'on-drag': $ctrl.isDraggable}"></rf-status-tag>
     <img ng-attr-src="{{$ctrl.thumbnail}}"
          ng-if="$ctrl.thumbnail"
          class="rounded-img item-img">

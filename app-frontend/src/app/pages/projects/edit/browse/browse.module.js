@@ -301,16 +301,6 @@ class ProjectsSceneBrowserController {
         this.selectNoScenes();
         this.$state.go('projects.edit.scenes');
     }
-
-    openSceneDetailModal(scene) {
-        this.modalService.open({
-            component: 'rfSceneDetailModal',
-            resolve: {
-                scene: () => scene,
-                repository: () => this.currentRepository
-            }
-        });
-    }
 }
 
 const ProjectsSceneBrowserModule = angular.module('pages.projects.edit.browse', []);

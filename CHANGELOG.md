@@ -1,8 +1,21 @@
 # Change Log
 
-## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/HEAD)
+## [0.33.0](https://github.com/raster-foundry/raster-foundry/tree/0.33.0) (2018-03-13)
 
-[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.31.0...HEAD)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.32.0...0.33.0)
+
+**Merged pull requests:**
+
+- Use BUILDCONFIG logo on share page [\#3050](https://github.com/raster-foundry/raster-foundry/pull/3050)
+- Fix broken planet thumbnails. [\#3046](https://github.com/raster-foundry/raster-foundry/pull/3046)
+- Fix node ordering in lab [\#3030](https://github.com/raster-foundry/raster-foundry/pull/3030)
+- Preview scenes by clicking the thumbnail, select by clicking [\#3026](https://github.com/raster-foundry/raster-foundry/pull/3026)
+- Enable scene re-ordering in the UI [\#3010](https://github.com/raster-foundry/raster-foundry/pull/3010)
+- Add platform routes and skeleton [\#3005](https://github.com/raster-foundry/raster-foundry/pull/3005)
+
+## [0.32.0](https://github.com/raster-foundry/raster-foundry/tree/0.32.0) (2018-03-06)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.31.0...0.32.0)
 
 **Merged pull requests:**
 
