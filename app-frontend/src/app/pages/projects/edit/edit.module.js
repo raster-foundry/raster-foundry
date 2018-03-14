@@ -132,18 +132,22 @@ class ProjectsEditController {
                         this.orderedSceneId = res.results;
                         this.sceneList = _.uniqBy(this.orderedSceneId.map((id) => {
                             // eslint-disable-next-line
-                            return allScenes.filter(s => s.id === id)[0];
+                            return _.find(allScenes, {id});
                         }), 'id');
-                        for (const scene of this.sceneList) {
-                            let scenelayer =
-                                this.layerService.layerFromScene(scene, this.projectId);
-                            this.sceneLayers = this.sceneLayers.set(scene.id, scenelayer);
-                        }
+
+                        this.sceneLayers = this.sceneList.map(scene => ({
+                            id: scene.id,
+                            layer: this.layerService.layerFromScene(scene, this.projectId)
+                        })).reduce((sceneLayers, {id, layer}) => {
+                            sceneLayers.set(id, layer);
+                            return sceneLayers;
+                        }, new Map());
+
                         this.layerFromProject();
                         this.initColorComposites();
                     },
-                    () => {
-                        this.$log.log('error getting ordered scene IDs');
+                    (err) => {
+                        this.$log.error('Error while adding scenes to projects', err);
                     }
                 );
             },
