@@ -37,7 +37,7 @@
             {{$ctrl.datasource ? $ctrl.datasource.name : 'Loading datasource'}}
           </dd>
           <dt ng-repeat-start="(field, value) in $ctrl.scene.filterFields">
-            {{field}}
+            {{field === 'acquisitionDate' ? field + ' (UTC)' : field}}
           </dt>
           <dd ng-repeat-end>{{field !== 'acquisitionDate' ? value : $ctrl.accDateDisplay}}</dd>
           <dt ng-if-start="$ctrl.scene.createdAt">Created Date</dt>
