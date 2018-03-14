@@ -127,16 +127,25 @@ class ProjectsEditController {
                 this.addUningestedScenesToMap(allScenes.filter(
                     (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
                 ));
-
-                this.sceneList = _.uniqBy(this.orderedSceneId.map((id) => {
-                    return allScenes.filter(s => s.id === id)[0];
-                }), 'id');
-                for (const scene of this.sceneList) {
-                    let scenelayer = this.layerService.layerFromScene(scene, this.projectId);
-                    this.sceneLayers = this.sceneLayers.set(scene.id, scenelayer);
-                }
-                this.layerFromProject();
-                this.initColorComposites();
+                this.projectService.getSceneOrder(this.projectId).then(
+                    (res) => {
+                        this.orderedSceneId = res.results;
+                        this.sceneList = _.uniqBy(this.orderedSceneId.map((id) => {
+                            // eslint-disable-next-line
+                            return allScenes.filter(s => s.id === id)[0];
+                        }), 'id');
+                        for (const scene of this.sceneList) {
+                            let scenelayer =
+                                this.layerService.layerFromScene(scene, this.projectId);
+                            this.sceneLayers = this.sceneLayers.set(scene.id, scenelayer);
+                        }
+                        this.layerFromProject();
+                        this.initColorComposites();
+                    },
+                    () => {
+                        this.$log.log('error getting ordered scene IDs');
+                    }
+                );
             },
             (error) => {
                 this.sceneRequestState.errorMsg = error;
