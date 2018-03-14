@@ -251,7 +251,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
 //    }
 //  }.flatMap(identity)
 
-  def run: Unit = {
+  def run: Unit = ???
 //    logger.info("Importing scenes...")
 //    Users.getUserById(systemUser).flatMap { (userOpt) =>
 //      scenesFromCsv(
@@ -281,7 +281,6 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
 //        sys.exit(1)
 //      }
 //    }
-  }
 }
 
 object ImportLandsat8 {

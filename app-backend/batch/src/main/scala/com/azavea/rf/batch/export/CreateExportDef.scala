@@ -10,6 +10,7 @@ import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuild
 import com.amazonaws.services.elasticmapreduce.model.{AddJobFlowStepsRequest, AddJobFlowStepsResult, HadoopJarStepConfig, StepConfig}
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.util._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.database.{ExportDao, UserDao}
 import com.azavea.rf.datamodel._

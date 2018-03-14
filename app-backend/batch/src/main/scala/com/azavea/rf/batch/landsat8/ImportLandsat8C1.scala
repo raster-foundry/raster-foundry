@@ -265,7 +265,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
     }
   }
 
-  def run(implicit xa: Transactor[IO]): Unit = {
+  def run: Unit = {
     logger.info("Importing scenes...")
 
     val userQuery = UserDao.query.filter(fr"id = ${systemUser}").select

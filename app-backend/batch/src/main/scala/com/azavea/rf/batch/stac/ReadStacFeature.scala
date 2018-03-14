@@ -24,7 +24,6 @@ import geotrellis.proj4.CRS
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.stac
-import com.azavea.rf.database.tables._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.Job
 import com.azavea.rf.batch.util.conf.Config
