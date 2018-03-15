@@ -13,16 +13,21 @@ const ProjectPublishModalComponent = {
 };
 
 class ProjectPublishModalController {
-    constructor($q, projectService, $log, tokenService, authService, $window, $state) {
+    constructor(
+        $q, $log, $window, $state, $timeout,
+        projectService, tokenService, authService
+    ) {
         'ngInject';
+
+        this.$q = $q;
+        this.$log = $log;
+        this.$window = $window;
+        this.$state = $state;
+        this.$timeout = $timeout;
 
         this.authService = authService;
         this.projectService = projectService;
-        this.$log = $log;
         this.tokenService = tokenService;
-        this.$q = $q;
-        this.$window = $window;
-        this.$state = $state;
     }
 
     $onInit() {
@@ -160,6 +165,19 @@ class ProjectPublishModalController {
                     }
                 );
             }
+        }
+    }
+
+    onCopyClick(e, url, type) {
+        if (url && url.length) {
+            this.copyType = type;
+            angular.element(e.currentTarget).css({
+                width: angular.element(e.currentTarget).prop('offsetWidth'),
+                height: angular.element(e.currentTarget).prop('offsetHeight')
+            });
+            this.$timeout(() => {
+                delete this.copyType;
+            }, 1000);
         }
     }
 }

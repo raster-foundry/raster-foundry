@@ -48,13 +48,15 @@ const urlMappings = {
 
 class SharingController {
     constructor(
-        $log, $state, $window,
+        $log, $state, $window, $timeout,
         projectService, projectEditService, tokenService
     ) {
         'ngInject';
         this.$log = $log;
         this.$state = $state;
         this.$window = $window;
+        this.$timeout = $timeout;
+
         this.projectService = projectService;
         this.projectEditService = projectEditService;
         this.tokenService = tokenService;
@@ -157,6 +159,19 @@ class SharingController {
     onSharePageOpen() {
         if (this.project) {
             this.$window.open(this.shareUrl, '_blank');
+        }
+    }
+
+    onCopyClick(e, url, type) {
+        if (url && url.length) {
+            this.copyType = type;
+            angular.element(e.currentTarget).css({
+                width: angular.element(e.currentTarget).prop('offsetWidth'),
+                height: angular.element(e.currentTarget).prop('offsetHeight')
+            });
+            this.$timeout(() => {
+                delete this.copyType;
+            }, 1000);
         }
     }
 }

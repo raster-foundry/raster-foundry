@@ -33,8 +33,10 @@
           <input id="tile-link" type="text" class="form-control"
                  value="{{$ctrl.shareUrl}}" readonly>
           <button class="btn btn-link"
-                  clipboard text="$ctrl.shareUrl">
-            Copy
+                  clipboard text="$ctrl.shareUrl"
+                  ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')">
+                  <span ng-show="$ctrl.copyType !== 'page'">Copy</span>
+                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'page'"></span>
           </button>
           <button class="btn btn-primary"
                   ng-click="$ctrl.openProjectShare()">
@@ -47,16 +49,22 @@
         <div class="form-group all-in-one">
           <input id="tile-link" type="text" class="form-control"
                   value="{{$ctrl.tileLayerUrls.standard}}" readonly>
-          <button clipboard text="$ctrl.tileLayerUrls.standard" class="btn btn-link">
-            Copy
+          <button class="btn btn-link"
+                  clipboard text="$ctrl.tileLayerUrls.standard"
+                  ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.standard, 'zxy')">
+                  <span ng-show="$ctrl.copyType !== 'zxy'">Copy</span>
+                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'zxy'"></span>
           </button>
         </div>
         <label for="tile-link">ArcGIS Tile Layer URL</label>
         <div class="form-group all-in-one">
           <input id="tile-link" type="text" class="form-control"
                   value="{{$ctrl.tileLayerUrls.arcGIS}}" readonly>
-          <button clipboard text="$ctrl.tileLayerUrls.arcGIS" class="btn btn-link">
-            Copy
+          <button class="btn btn-link"
+                  clipboard text="$ctrl.tileLayerUrls.arcGIS"
+                  ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.arcGIS, 'arcGIS')">
+                  <span ng-show="$ctrl.copyType !== 'arcGIS'">Copy</span>
+                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'arcGIS'"></span>
           </button>
         </div>
       </div>
@@ -66,8 +74,10 @@
           <input id="tile-link" type="text" class="form-control"
                  value="{{$ctrl.mapToken.id}}" readonly>
           <button class="btn btn-link"
-                  clipboard text="$ctrl.mapToken.id">
-            Copy
+                  clipboard text="$ctrl.mapToken.id"
+                  ng-click="$ctrl.onCopyClick($event, $ctrl.mapToken.id, 'token')">
+                  <span ng-show="$ctrl.copyType !== 'token'">Copy</span>
+                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'token'"></span>
           </button>
         </div>
       </div>
@@ -79,16 +89,22 @@
         <div class="form-group all-in-one">
           <input id="tile-link" type="text" class="form-control"
                   value="{{$ctrl.tileLayerUrls.standard}}" readonly>
-          <button clipboard text="$ctrl.tileLayerUrls.standard" class="btn btn-link">
-            Copy
+          <button class="btn btn-link"
+                  clipboard text="$ctrl.tileLayerUrls.standard"
+                  ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.standard, 'zxy')">
+                  <span ng-show="$ctrl.copyType !== 'zxy'">Copy</span>
+                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'zxy'"></span>
           </button>
         </div>
         <label for="tile-link">ArcGIS Tile Layer URL</label>
         <div class="form-group all-in-one">
           <input id="tile-link" type="text" class="form-control"
                   value="{{$ctrl.tileLayerUrls.arcGIS}}" readonly>
-          <button clipboard text="$ctrl.tileLayerUrls.arcGIS" class="btn btn-link">
-            Copy
+          <button class="btn btn-link"
+                  clipboard text="$ctrl.tileLayerUrls.arcGIS"
+                  ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.arcGIS, 'arcGIS')">
+                  <span ng-show="$ctrl.copyType !== 'arcGIS'">Copy</span>
+                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'arcGIS'"></span>
           </button>
         </div>
         <label>Token</label>
@@ -96,8 +112,10 @@
           <input id="tile-link" type="text" class="form-control"
                  value="{{$ctrl.analysisToken}}" readonly>
           <button class="btn btn-link"
-                  clipboard text="$ctrl.analysisToken">
-            Copy
+                  clipboard text="$ctrl.analysisToken"
+                  ng-click="$ctrl.onCopyClick($event, $ctrl.analysisToken, 'token')">
+                  <span ng-show="$ctrl.copyType !== 'token'">Copy</span>
+                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'token'"></span>
           </button>
         </div>
       </div>
