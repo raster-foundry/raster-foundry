@@ -108,24 +108,24 @@ object Scene {
   /** Case class extracted from a POST request */
   @JsonCodec
   case class Create(
-                     id: Option[UUID],
-                     organizationId: UUID,
-                     ingestSizeBytes: Int,
-                     visibility: Visibility,
-                     tags: List[String],
-                     datasource: UUID,
-                     sceneMetadata: Json,
-                     name: String,
-                     owner: Option[String],
-                     tileFootprint: Option[Projected[MultiPolygon]],
-                     dataFootprint: Option[Projected[MultiPolygon]],
-                     metadataFiles: List[String],
-                     images: List[Image.Banded],
-                     thumbnails: List[Thumbnail.Identified],
-                     ingestLocation: Option[String],
-                     filterFields: SceneFilterFields = new SceneFilterFields(),
-                     statusFields: SceneStatusFields
-                   ) extends OwnerCheck {
+    id: Option[UUID],
+    organizationId: UUID,
+    ingestSizeBytes: Int,
+    visibility: Visibility,
+    tags: List[String],
+    datasource: UUID,
+    sceneMetadata: Json,
+    name: String,
+    owner: Option[String],
+    tileFootprint: Option[Projected[MultiPolygon]],
+    dataFootprint: Option[Projected[MultiPolygon]],
+    metadataFiles: List[String],
+    images: List[Image.Banded],
+    thumbnails: List[Thumbnail.Identified],
+    ingestLocation: Option[String],
+    filterFields: SceneFilterFields = new SceneFilterFields(),
+    statusFields: SceneStatusFields
+ ) extends OwnerCheck {
     def toScene(user: User): Scene = {
       val now = new Timestamp((new java.util.Date()).getTime())
 
@@ -157,27 +157,27 @@ object Scene {
 
   @JsonCodec
   case class WithRelated(
-     id: UUID,
-     createdAt: Timestamp,
-     createdBy: String,
-     modifiedAt: Timestamp,
-     modifiedBy: String,
-     owner: String,
-     organizationId: UUID,
-     ingestSizeBytes: Int,
-     visibility: Visibility,
-     tags: List[String],
-     datasource: UUID,
-     sceneMetadata: Json,
-     name: String,
-     tileFootprint: Option[Projected[MultiPolygon]],
-     dataFootprint: Option[Projected[MultiPolygon]],
-     metadataFiles: List[String],
-     images: List[Image.WithRelated],
-     thumbnails: List[Thumbnail],
-     ingestLocation: Option[String],
-     filterFields: SceneFilterFields = new SceneFilterFields(),
-     statusFields: SceneStatusFields
+    id: UUID,
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    modifiedBy: String,
+    owner: String,
+    organizationId: UUID,
+    ingestSizeBytes: Int,
+    visibility: Visibility,
+    tags: List[String],
+    datasource: UUID,
+    sceneMetadata: Json,
+    name: String,
+    tileFootprint: Option[Projected[MultiPolygon]],
+    dataFootprint: Option[Projected[MultiPolygon]],
+    metadataFiles: List[String],
+    images: List[Image.WithRelated],
+    thumbnails: List[Thumbnail],
+    ingestLocation: Option[String],
+    filterFields: SceneFilterFields = new SceneFilterFields(),
+    statusFields: SceneStatusFields
   ) {
     def toScene: Scene =
       Scene(
@@ -201,9 +201,5 @@ object Scene {
         filterFields,
         statusFields
       )
-  }
-
-  object WithRelated {
-    def fromRecords(records: Seq[(Scene, Option[Image], Option[Band], Option[Thumbnail])]): Iterable[Scene.WithRelated] = ???
   }
 }
