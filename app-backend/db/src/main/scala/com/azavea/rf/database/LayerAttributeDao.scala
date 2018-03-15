@@ -52,7 +52,16 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       .option
   }
 
-  def getAllAttributes(attributeName: String)(implicit xa: Transactor[IO]): ConnectionIO[List[LayerAttribute]] = ???
+  def getAllAttributes(attributeName: String)(implicit xa: Transactor[IO]): ConnectionIO[List[LayerAttribute]] = {
+    {
+      selectF ++ fr"""
+        WHERE
+          name = ${attributeName}
+      """
+    }
+      .query[LayerAttribute]
+      .list
+  }
 
   def insertLayerAttribute(layerAttribute: LayerAttribute)(implicit xa: Transactor[IO]): ConnectionIO[Int] = {
     val insertStatement = fr"INSERT into" ++ tableF ++
