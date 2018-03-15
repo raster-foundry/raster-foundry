@@ -128,10 +128,6 @@ object ProjectDao extends Dao[Project] {
       projectDeleteCount <- query.filter(fr"id = ${id}").delete
     } yield projectDeleteCount
   }
-//
-//  def listAOIs(projectId: UUID, page: PageRequest, user: User): Future[PaginatedResponse[Project]] = ???
-//
-//  def listProjectScenes(projectId: UUID, page: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): Future[PaginatedResponse[Scene]] = ???
 
   type stp = (UUID, UUID, Boolean, Option[Int], Option[Json])
 
