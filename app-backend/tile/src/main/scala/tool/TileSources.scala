@@ -1,6 +1,5 @@
 package com.azavea.rf.tile.tool
 
-import com.azavea.rf.database.Database
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image._
 import com.azavea.rf.tool.ast._
@@ -55,7 +54,7 @@ object TileSources extends LazyLogging {
       .map(dataWindow)
       .sequence
       .map({ pairs =>
-        val (extents, zooms) = pairs.unzip
+        val (extents, zooms): (Stream[Extent], Stream[Int]) = pairs.unzip
         val extent: Extent = extents.reduce(_ combine _)
 
         /* The average of all the reported optimal zoom levels. */
@@ -70,12 +69,12 @@ object TileSources extends LazyLogging {
     * which one could read a Layer for the purpose of calculating a representative
     * histogram.
     */
-  def dataWindow(r: RFMLRaster)(implicit database: Database): OptionT[Future, (Extent, Int)] = r match {
+  def dataWindow(r: RFMLRaster)(implicit xa: Transactor[IO]): OptionT[Future, (Extent, Int)] = r match {
     case MapAlgebraAST.SceneRaster(id, sceneId, Some(_), _, _) => {
-      OptionT.fromOption(GlobalSummary.minAcceptableSceneZoom(sceneId, store, 256))
+      OptionT(Future { GlobalSummary.minAcceptableSceneZoom(sceneId, store, 256) })
     }
     case MapAlgebraAST.ProjectRaster(id, projId, Some(_), _, _) => {
-      GlobalSummary.minAcceptableProjectZoom(projId, 256)
+      OptionT[Future, (Extent, Int)](GlobalSummary.minAcceptableProjectZoom(projId, 256).map(Some(_)))
     }
 
     /* Don't attempt work for a RFMLRaster which will fail AST validation anyway */

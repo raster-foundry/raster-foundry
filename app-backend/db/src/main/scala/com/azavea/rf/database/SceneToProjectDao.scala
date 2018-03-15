@@ -15,6 +15,9 @@ import cats.implicits._
 import geotrellis.slick.Projected
 import geotrellis.vector.Polygon
 
+import geotrellis.raster.histogram._
+import doobie.Fragments._
+
 import doobie.Fragments._
 import scala.concurrent.Future
 
@@ -82,17 +85,18 @@ object SceneToProjectDao extends Dao[SceneToProject] {
     """.update.withUniqueGeneratedKeys("scene_id", "project_id", "accepted", "scene_order", "mosaic_definition")
   }
 
-  def getColorCorrectParams(projectId: UUID, sceneId: UUID): ConnectionIO[Option[ColorCorrect.Params]] = {
-    for {
-      stp <- query.filter(fr"project_id = ${projectId} AND scene_id = ${sceneId}").select
-    } yield {
-      stp.colorCorrectParams
-    }
+  def getColorCorrectParams(projectId: UUID, sceneId: UUID): ConnectionIO[ColorCorrect.Params] = {
+    query
+      .filter(fr"project_id = ${projectId} AND scene_id = ${sceneId}")
+      .select
+      .map { stp: SceneToProject => stp.colorCorrectParams }
   }
 
   def setColorCorrectParamsBatch(projectId: UUID, batchParams: BatchParams): ConnectionIO[List[SceneToProject]] = {
     val updates: ConnectionIO[List[SceneToProject]] = batchParams.items.map( params => setColorCorrectParams(projectId, params.sceneId, params.params)).sequence
     updates
   }
+
+  def getSceneHistogram(projectId: UUID): ConnectionIO[Option[List[Array[Histogram[Int]]]]] = ???
 }
 

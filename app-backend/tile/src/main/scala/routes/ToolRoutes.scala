@@ -142,7 +142,7 @@ class ToolRoutes extends Authentication
     }
   }
 
-  val tileResolver = new TileResolver(implicitly[Database], implicitly[ExecutionContext])
+  val tileResolver = new TileResolver(implicitly[Transactor[IO]], implicitly[ExecutionContext])
   val tmsInterpreter = BufferingInterpreter.DEFAULT
   val emptyPng = IntConstantNoDataArrayTile(Array(0), 1, 1).renderPng(RgbaPngEncoding)
   val emptyTile = IntConstantNoDataArrayTile(Array(0), 1, 1)

@@ -4,9 +4,9 @@ import com.azavea.rf.common.RfStackTrace
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image.Mosaic
 import com.azavea.rf.datamodel.{ColorCorrect, SceneToProject}
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.{SceneToProjectDao}
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.meta.RFMeta._
+import com.azavea.rf.database.util.RFTransactor
 
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
@@ -14,9 +14,10 @@ import geotrellis.raster.render.Png
 import geotrellis.proj4._
 import geotrellis.slick.Projected
 import geotrellis.vector.Extent
+import geotrellis.raster.histogram._
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes}
+import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes, StatusCodes}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.data.OptionT
@@ -36,6 +37,7 @@ import java.util.UUID
 object MosaicRoutes extends LazyLogging with KamonTrace {
   val system = AkkaSystem.system
   implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
+  implicit lazy val xa = RFTransactor.xa
 
   val emptyTilePng = IntArrayTile.ofDim(256, 256).renderPng
 
@@ -113,62 +115,63 @@ object MosaicRoutes extends LazyLogging with KamonTrace {
 
   /** Return the histogram (with color correction applied) for a list of scenes in a project */
   def getProjectScenesHistogram(projectId: UUID)(implicit xa: Transactor[IO]): Route = {
-    val sceneIdFuture: Future[Set[UUID]] =
-      SceneToProjectDao.query
-        .filter(fr"project_id=${projectId}")
-        .list
-        .transact(xa).unsafeToFuture
-        .map( _.map(_.sceneId).toSet )
+    def correctedHistograms(sceneId: UUID, projectId: UUID): OptionT[Future, Vector[Histogram[Int]]] = {
+        val tileFuture:OptionT[Future, MultibandTile] = StitchLayer(sceneId, 64)
+        val ccParamF:OptionT[Future, ColorCorrect.Params] = OptionT(SceneToProjectDao.getColorCorrectParams(projectId, sceneId).transact(xa).unsafeToFuture.map(_.some))
 
-    def correctedHistograms(sceneId: UUID, projectId: UUID) = sceneIdFuture.flatMap { implicit sceneIds =>
-      val tileFuture = StitchLayer(sceneId, 64)
-      // getColorCorrectParams returns a Future[Option[Option]] for some reason
-      val ccParamFuture =
-        SceneToProjectDao.getColorCorrectParams(projectId, sceneId)
-        .transact(xa).unsafeToFuture
-
-      for {
-        tile <- tileFuture
-        params <- ccParamFuture
-      } yield {
-        val (rgbBands, rgbHist) = params.reorderBands(tile, tile.histogramDouble)
-        val sceneBands = ColorCorrect(rgbBands, rgbHist, params).bands
-        sceneBands.map(tile => tile.histogram)
-      }
+        for {
+          tile <- tileFuture
+          params <- ccParamF
+        } yield {
+          val (rgbBands, rgbHist) = params.reorderBands(tile, tile.histogramDouble)
+          val sceneBands = ColorCorrect(rgbBands, rgbHist, params).bands
+          sceneBands.map(tile => tile.histogram)
+        }
     }
-    entity(as[Array[UUID]]) { sceneIds =>
-      val scenesHistograms = Future.sequence(sceneIds
-        .map(correctedHistograms(_, projectId)) // Array[OptionT]
-        .map(_.value).toList                    // Array[Future[Option[...]]]
-      )                                         // Future[Array[Option[...]]]
 
-      val mergedBandHistograms = scenesHistograms.map { scenes =>
-        // We need to switch this from a list of histograms by tile, to a list of histograms by band,
-        // hence the transpose call.
-        // Then reduce each band down to a single histogram (still leaving us with an array of histograms,
-        // one for each band).
-        val mergedHists = scenes.flatten.transpose.map { bandHists =>
-          bandHists.reduceLeft((lHist, rHist) => lHist.merge(rHist))
-        }
-        // Turn histograms into value -> count mapping.
-        // TODO: This is more complicated than it needs to be because there's only one way to map over
-        // a histogram's (val, count) pairs.
-        mergedHists.map(hist => {
-          val valCounts = ArrayBuffer[(Int, Long)]()
-          hist.foreach { (value, count) => valCounts += Tuple2(value, count) }
-          valCounts.toMap
-        })
-      }
+    entity(as[Seq[UUID]]) { sceneIds =>
       complete {
-        val future = mergedBandHistograms
+        SceneToProjectDao.query
+          .filter(fr"project_id=${projectId}")
+          .list
+          .transact(xa).unsafeToFuture
+          .flatMap { stps: List[SceneToProject] =>
+            val vSceneIds: List[UUID] = stps.map( _.sceneId )
+            // if (sceneIds.forall(vSceneIds.contains(_))) {
+              // Verify that scenes POSTed to the endpoint are in the project
+              val histograms: Seq[Future[Option[Vector[Histogram[Int]]]]] = sceneIds.map(correctedHistograms(_, projectId).value)
+              val scenesHistograms = Future.sequence(
+                histograms
+              )
 
-        future onComplete {
-          case Success(s) => s
-          case Failure(e) =>
-            logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
-        }
+              val mergedBandHistograms = scenesHistograms.map { scenes =>
+                // We need to switch this from a list of histograms by tile, to a list of histograms by band,
+                // hence the transpose call.
+                // Then reduce each band down to a single histogram (still leaving us with an array of histograms,
+                // one for each band).
+                val mergedHists = scenes.flatten.transpose.map { bandHists =>
+                  bandHists.reduceLeft((lHist, rHist) => lHist.merge(rHist))
+                }
+                // Turn histograms into value -> count mapping.
+                // TODO: This is more complicated than it needs to be because there's only one way to map over
+                // a histogram's (val, count) pairs.
+                mergedHists.map(hist => {
+                  val valCounts = ArrayBuffer[(Int, Long)]()
+                  hist.foreach { (value, count) => valCounts += Tuple2(value, count) }
+                  valCounts.toMap
+                })
+              }
 
-        future
+              mergedBandHistograms onComplete {
+                case Success(s) => s
+                case Failure(e) =>
+                  logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+              }
+              mergedBandHistograms
+            // } else {
+            //   Future { HttpResponse(400, entity = "At least one scene in the request is not in the project") }
+            // }
+          }
       }
     }
   }

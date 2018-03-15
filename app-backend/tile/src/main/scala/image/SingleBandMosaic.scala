@@ -2,9 +2,8 @@ package com.azavea.rf.tile.image
 
 import com.azavea.rf.common.utils.TileUtils
 import com.azavea.rf.common.cache.CacheClient
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.{SceneToProjectDao}
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.meta.RFMeta._
 import com.azavea.rf.datamodel.{ColorRampMosaic, Project, SingleBandOptions}
 import com.azavea.rf.tile._
 

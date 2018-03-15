@@ -40,7 +40,7 @@ object StitchLayer extends LazyLogging with Config {
     * Because this is an expensive operation the stitched tile is cached.
     * For non-cached version use [[stitch]] function.
     */
-  def apply(id: UUID, size: Int)(implicit sceneIds: Set[UUID]): OptionT[Future, MultibandTile] =
+  def apply(id: UUID, size: Int): OptionT[Future, MultibandTile] =
     OptionT(rfCache.caching(s"stitch-${id}-${size}")(
       stitch(store, id.toString, size)
     ))

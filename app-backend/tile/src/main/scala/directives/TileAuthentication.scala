@@ -3,14 +3,13 @@ package com.azavea.rf.tile
 import com.azavea.rf.common.Authentication
 import com.azavea.rf.common.cache.CacheClient
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.{MapTokenDao, ProjectDao, UserDao}
 import com.azavea.rf.datamodel.{User, Visibility}
 
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
 import akka.http.scaladsl.server.{AuthenticationFailedRejection, Directive1, Directives}
 import doobie.util.transactor.Transactor
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.meta.RFMeta._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
