@@ -6,5 +6,5 @@ package object meta {
       with CirceJsonbMeta
       with SingleBandOptionsMeta
       with EnumMeta
-
+      with BatchMeta
 }

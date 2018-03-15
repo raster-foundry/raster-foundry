@@ -15,7 +15,6 @@ import io.circe.syntax._
 import org.postgresql.util.PGobject
 import com.azavea.rf.datamodel.ColorCorrect._
 import java.net.URI
-import java.util.UUID
 
 trait CirceJsonbMeta {
   implicit val jsonbMeta: Meta[Json] =
