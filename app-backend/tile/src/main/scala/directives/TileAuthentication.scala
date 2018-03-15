@@ -6,6 +6,7 @@ import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.{MapTokenDao, ProjectDao, UserDao}
 import com.azavea.rf.datamodel.{User, Visibility}
+import com.azavea.rf.database.util.RFTransactor
 
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
 import akka.http.scaladsl.server.{AuthenticationFailedRejection, Directive1, Directives}

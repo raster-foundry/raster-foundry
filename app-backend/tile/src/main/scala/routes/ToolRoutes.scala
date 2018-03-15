@@ -9,6 +9,7 @@ import com.azavea.rf.tile.tool._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.maml._
+import com.azavea.rf.database.util.RFTransactor
 
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
@@ -50,7 +51,7 @@ class ToolRoutes extends Authentication
   with CommonHandlers
   with KamonTraceDirectives {
 
-  implicit def xa: Transactor[IO]
+  implicit lazy val xa = RFTransactor.xa
 
   lazy val memcachedClient = KryoMemcachedClient.DEFAULT
   val rfCache = new CacheClient(memcachedClient)

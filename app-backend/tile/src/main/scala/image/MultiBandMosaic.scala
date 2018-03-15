@@ -337,6 +337,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
               cacheKey match {
                 case Some(key) =>
                   rfCache.cachingOptionT(s"tile-${sceneId}-${key}")(tile)
+                case _ =>
               }
               tile
           }

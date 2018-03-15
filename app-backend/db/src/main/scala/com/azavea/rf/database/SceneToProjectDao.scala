@@ -96,7 +96,5 @@ object SceneToProjectDao extends Dao[SceneToProject] {
     val updates: ConnectionIO[List[SceneToProject]] = batchParams.items.map( params => setColorCorrectParams(projectId, params.sceneId, params.params)).sequence
     updates
   }
-
-  def getSceneHistogram(projectId: UUID): ConnectionIO[Option[List[Array[Histogram[Int]]]]] = ???
 }
 

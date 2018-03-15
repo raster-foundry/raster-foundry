@@ -3,6 +3,7 @@ package com.azavea.rf.tile
 import com.azavea.rf.common.CommonHandlers
 import com.azavea.rf.tile.routes._
 import com.azavea.rf.tile.tool._
+import com.azavea.rf.database.util.RFTransactor
 
 import com.azavea.maml.serve.InterpreterExceptionHandling
 import akka.http.scaladsl.server._
@@ -22,7 +23,7 @@ class Router extends LazyLogging
     with InterpreterExceptionHandling
     with TileErrorHandler {
 
-  implicit def xa: Transactor[IO]
+  implicit lazy val xa = RFTransactor.xa
 
   val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
