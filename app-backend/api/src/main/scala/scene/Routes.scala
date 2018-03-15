@@ -111,7 +111,7 @@ trait SceneRoutes extends Authentication
   def updateScene(sceneId: UUID): Route = authenticate { user =>
     entity(as[Scene]) { updatedScene =>
       authorize(user.isInRootOrSameOrganizationAs(updatedScene)) {
-        onSuccess(SceneDao.update(updatedScene, sceneId, user).transact(xa).unsafeToFuture) { (result, kickoffIngest) =>
+        onSuccess(SceneDao.update(updatedScene, sceneId, user).transact(xa).unsafeToFuture) { case (result, kickoffIngest) =>
           if (kickoffIngest) kickoffSceneIngest(sceneId)
           completeSingleOrNotFound(result)
         }

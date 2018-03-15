@@ -1,7 +1,5 @@
 package com.azavea.rf.database
 
-import java.sql.Timestamp
-
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.{Scene, SceneFilterFields, SceneStatusFields, User, Visibility}
@@ -24,9 +22,14 @@ import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
 import io.circe.{Decoder, Encoder, Json}
 
+import scala.concurrent.duration._
 
+import java.sql.Timestamp
+import java.util.Date
 
 object SceneDao extends Dao[Scene] {
+
+  type KickoffIngest = Boolean
 
   val tableName = "scenes"
 
@@ -101,7 +104,7 @@ object SceneDao extends Dao[Scene] {
       ) VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
         ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
-        ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
+         ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
         ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus}, ${scene.statusFields.ingestStatus}
@@ -124,9 +127,51 @@ object SceneDao extends Dao[Scene] {
   }
 
 
-  def update(scene: Scene, id: UUID, user: User): ConnectionIO[(Int, Boolean)] = {
+  def update(scene: Scene, id: UUID, user: User): ConnectionIO[(Int, KickoffIngest)] = {
+    val idFilter = fr"id = ${id}".some
+    val now = new Date()
 
-    ???
+    val lastModifiedIO: ConnectionIO[Timestamp] =
+      (sql"select modified_at from scenes" ++ Fragments.whereAndOpt(ownerEditFilter(user), idFilter))
+        .query[Timestamp]
+        .unique
+    val updateIO: ConnectionIO[Int] = (sql"""
+    UPDATE scenes
+    SET
+      modified_at = ${now}, // now
+      modified_by = ${user.id},
+      visibility = ${scene.visibility},
+      tags = ${scene.tags},
+      datasource = ${scene.datasource},
+      scene_metadata = ${scene.sceneMetadata},
+      name = ${scene.name},
+      cloud_cover = ${scene.filterFields.cloudCover},
+      acquisition_date = ${scene.filterFields.acquisitionDate},
+      sun_azimuth = ${scene.filterFields.sunAzimuth},
+      sun_elevation = ${scene.filterFields.sunElevation},
+      thumbnail_status = ${scene.statusFields.thumbnailStatus},
+      boundary_status = ${scene.statusFields.boundaryStatus},
+      ingest_status = ${scene.statusFields.boundaryStatus}
+    """ ++ Fragments.whereAndOpt(ownerEditFilter(user), idFilter))
+      .update
+      .run
+
+    lastModifiedIO flatMap {
+      case ts: Timestamp =>
+        updateIO map {
+          case n =>
+            scene.statusFields.ingestStatus match {
+              case IngestStatus.ToBeIngested =>
+                (n, true)
+              case IngestStatus.Failed =>
+                (n, true)
+              case IngestStatus.Ingesting =>
+                (n, ts.getTime < now.getTime - (24 hours).toMillis)
+              case _ =>
+                (n, false)
+            }
+        }
+    }
   }
 }
 
