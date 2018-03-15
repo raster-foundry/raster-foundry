@@ -273,7 +273,6 @@ import _root_.io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel, common % "test->test;compile->compile")
   .dependsOn(tool)
-  .dependsOn(batch)
   .enablePlugins(GatlingPlugin)
   .settings(commonSettings:_*)
   .settings({
@@ -284,6 +283,7 @@ lazy val tile = Project("tile", file("tile"))
       Dependencies.geotrellisS3,
       Dependencies.akkaSprayJson,
       Dependencies.akkaCirceJson,
+      Dependencies.akkaHttpCors,
       Dependencies.circeCore % "it,test",
       Dependencies.circeGeneric % "it,test",
       Dependencies.circeParser % "it,test",
@@ -295,10 +295,11 @@ lazy val tile = Project("tile", file("tile"))
     )
   })
   .settings(assemblyMergeStrategy in assembly := {
+    case m if m.toLowerCase.endsWith("manifest.mf") => MergeStrategy.discard
+    case m if m.toLowerCase.matches("meta-inf.*\\.sf$") => MergeStrategy.discard
     case "reference.conf" => MergeStrategy.concat
     case "application.conf" => MergeStrategy.concat
     case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") => MergeStrategy.discard
-    case "META-INF/MANIFEST.MF" => MergeStrategy.discard
     case PathList("META-INF", "aop.xml") => aopMerge
     case _ => MergeStrategy.first
   })

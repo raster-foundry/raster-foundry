@@ -1,8 +1,8 @@
 object Version {
   val rasterFoundry      = "0.1"
-  val akka               = "2.5.6"
-  val akkaHttp           = "10.1.0-RC1"
-  val geotrellis         = "1.2.1-SNAPSHOT"
+  val akka               = "2.5.11"
+  val akkaHttp           = "10.0.11"
+  val geotrellis         = "1.2.1"
   val geotools           = "17.1"
   val hikariCP           = "3.2.0"
   val postgres           = "42.1.1"
