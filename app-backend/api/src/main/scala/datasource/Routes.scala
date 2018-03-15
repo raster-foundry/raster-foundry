@@ -81,7 +81,7 @@ trait DatasourceRoutes extends Authentication
   }
 
   def deleteDatasource(datasourceId: UUID): Route = authenticate { user =>
-    onSuccess(DatasourceDao.filter(fr"owner = ${user.id}").filter(datasourceId).delete) {
+    onSuccess(DatasourceDao.query.filter(fr"owner = ${user.id}").filter(datasourceId).delete.transact(xa).unsafeToFuture) {
        completeSingleOrNotFound
     }
   }

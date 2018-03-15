@@ -45,9 +45,6 @@ object ProjectDao extends Dao[Project] {
     FROM
   """ ++ tableF
 
-  // TODO: add the ability to filter to specific fields / abstract out default
-  // selectF. should take an Option[List[String]] of fields and construct select
-  // statement with a Fragment.const
   def getProjectById(projectId: UUID, user: Option[User]): ConnectionIO[Project] = {
     val idFilter = Some(fr"where id = ${projectId}")
     val visFilter = user flatMap filterUserVisibility

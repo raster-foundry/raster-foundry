@@ -3,6 +3,7 @@ package com.azavea.rf.api.project
 import java.sql.Timestamp
 import java.util.{Calendar, Date, UUID}
 
+import com.amazonaws.services.s3.AmazonS3URI
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -17,6 +18,7 @@ import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.common.AWSBatch
+import com.azavea.rf.common.S3._
 import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.GeoJsonCodec._
@@ -326,7 +328,7 @@ trait ProjectRoutes extends Authentication
 
   def exportAnnotationShapefile(projectId: UUID): Route = authenticate { user =>
     onComplete(
-      Annotations.listAllAnnotations(projectId, user)
+      AnnotationDao.listAnnotationsForProject(projectId, user)
         .map { annotations =>
           val zipfile = AnnotationShapefileService.annotationsToShapefile(annotations)
           val key = new AmazonS3URI(user.getDefaultAnnotationShapefileSource(dataBucket))
@@ -339,7 +341,7 @@ trait ProjectRoutes extends Authentication
           val tomorrow = cal.getTime()
           result.setExpirationTime(tomorrow)
           Uri(getSignedUrl(dataBucket, key.toString).toString)
-        }
+        }.transact(xa).unsafeToFuture
     ) {
       uri =>
       uri match {
