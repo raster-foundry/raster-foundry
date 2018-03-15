@@ -71,18 +71,18 @@ Workflow:
 
 #### Templates
 * UUID id  
-* String Name  
-* String Details  
-* String Description  
+* String name  
+* String details  
+* String description  
 * String thumbnailUrl  
 * UUID[User] owner  
 * UUID[User] createdBy  
 * UUID[User] modifiedBy  
 * Date createdAt  
 * Date modifiedAt  
-* UUID Organization  
+* UUID[Organization] organization  
 * Visiblity visiblity  
-* String Requirements  
+* String requirements  
 * UUID[license] license  
 
 #### TemplateCategory
@@ -90,8 +90,8 @@ Workflow:
 * Category
   
 #### TemplateTag
-* Template
-* Tag
+* UUID[Template] template
+* UUID[Tag] tag
 
 #### TemplateVersion
 * Int: id - auto increment so it's easy to sort by  
@@ -110,17 +110,18 @@ Workflow:
 * UUID[Analysis] activeAnalysis  
   
 #### WorkspaceCategory
-* workspace  
-* category  
+* UUID[Workspace] workspace  
+* UUID[Category] category  
 
 #### WorkspaceTag
-* workspace  
-* tag  
+* UUID[Workspace] workspace  
+* UUID[Tag] tag  
 
 #### WorkspaceAnalysis
-* workspace  
-* analysis  
-* createdAt  
-* modifiedAt  
-* createdBy  
-* modifiedBy  
+* UUID[Workspace] workspace  
+* UUID[Analysis] analysis  
+* Date createdAt  
+* Date modifiedAt  
+* UUID[User] createdBy  
+* UUID[User] modifiedBy  
+  
