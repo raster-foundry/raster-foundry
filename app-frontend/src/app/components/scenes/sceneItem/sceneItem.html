@@ -26,7 +26,7 @@
     <div>
       <span title="{{$ctrl.scene.name}}">
         <strong class="color-dark">
-          {{$ctrl.getReferenceDate() | date}}
+          {{($ctrl.getReferenceDate() | date : 'mediumDate' : '+0000') + ' (UTC)'}}
         </strong>
       </span>
     </div>

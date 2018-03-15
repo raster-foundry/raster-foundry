@@ -133,7 +133,7 @@ class SceneDetailModalController {
     }
 
     formatAcqDate(date) {
-        return date.length ? this.moment(date).format('MM/DD/YYYY') : 'MM/DD/YYYY';
+        return date.length ? this.moment.utc(date).format('MM/DD/YYYY') + ' (UTC)' : 'MM/DD/YYYY';
     }
 
     openDatePickerModal(date) {
