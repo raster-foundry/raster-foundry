@@ -211,10 +211,6 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
 
-      val sorted = page.map(_.filterFields.acquisitionDate.get.getTime).sorted.reverse
-      val maybeSorted = page.map(_.filterFields.acquisitionDate.get.getTime)
-      val isSorted = sorted == maybeSorted
-
       PaginatedResponse[Scene.WithRelated](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
     }
   }

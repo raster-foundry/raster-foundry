@@ -167,7 +167,8 @@ object ProjectDao extends Dao[Project] {
                 datasources.visibility,
                 datasources.composites,
                 datasources.extras,
-                datasources.bands
+                datasources.bands,
+                datasources.license_name
          FROM scenes
          INNER JOIN datasources ON scenes.datasource = datasources.id
          WHERE NOT (scenes.id = ANY(ARRAY(SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})::UUID[])) AND """ ++ inClause

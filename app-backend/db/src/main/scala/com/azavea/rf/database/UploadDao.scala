@@ -31,19 +31,19 @@ object UploadDao extends Dao[Upload] {
     sql"""
        INSERT INTO uploads
          (id, created_at, created_by, modified_at, modified_by,
-          organization_id, upload_status, file_type, upload_type,
-          files, datasource, metadata, visibility, owner, project_id,
+          owner, organization_id, upload_status, file_type, upload_type,
+          files, datasource, metadata, visibility, project_id,
           source)
        VALUES (
          ${upload.id}, ${upload.createdAt}, ${upload.createdBy}, ${upload.modifiedAt}, ${upload.modifiedBy},
-         ${upload.organizationId}, ${upload.uploadStatus}, ${upload.fileType}, ${upload.uploadType}, ${upload.files},
-         ${upload.datasource}, ${upload.metadata}, ${upload.visibility}, ${upload.owner}, ${upload.projectId},
+         ${upload.owner}, ${upload.organizationId}, ${upload.uploadStatus}, ${upload.fileType}, ${upload.uploadType},
+         ${upload.files}, ${upload.datasource}, ${upload.metadata}, ${upload.visibility}, ${upload.projectId},
          ${upload.source}
        )
       """.update.withUniqueGeneratedKeys[Upload](
       "id", "created_at", "created_by", "modified_at", "modified_by",
-      "organization_id", "upload_status", "file_type", "upload_type",
-      "files", "datasource", "metadata", "visibility", "owner", "project_id",
+      "owner", "organization_id", "upload_status", "file_type", "upload_type",
+      "files", "datasource", "metadata", "visibility", "project_id",
       "source"
     )
   }
