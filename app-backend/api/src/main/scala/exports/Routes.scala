@@ -36,7 +36,7 @@ trait ExportRoutes extends Authentication
   with LazyLogging
   with AWSBatch {
 
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val exportRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

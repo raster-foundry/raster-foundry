@@ -42,7 +42,7 @@ trait SceneRoutes extends Authentication
     with UserErrorHandler
     with KamonTraceDirectives {
 
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val sceneRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

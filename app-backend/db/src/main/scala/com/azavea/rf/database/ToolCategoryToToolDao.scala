@@ -14,7 +14,7 @@ object ToolCategoryToToolDao extends Dao[ToolCategoryToTool] {
 
   val selectF = sql"""
     SELECT
-      tool_id, tool_category_slug
+      tool_category_slug, tool_id
     FROM
   """ ++ tableF
 }

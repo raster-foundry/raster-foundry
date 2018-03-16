@@ -58,7 +58,7 @@ trait ProjectRoutes extends Authentication
     with KamonTraceDirectives
     with LazyLogging {
 
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val BULK_OPERATION_MAX_LIMIT = 100
 

@@ -16,7 +16,7 @@ import doobie.postgres.implicits._
 
 
 trait ConfigRoutes extends Authentication {
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
   val configRoutes: Route = {
     pathEndOrSingleSlash {
       get {

@@ -27,7 +27,7 @@ trait FeatureFlagRoutes extends Authentication
   with CommonHandlers
   with UserErrorHandler {
 
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val featureFlagRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

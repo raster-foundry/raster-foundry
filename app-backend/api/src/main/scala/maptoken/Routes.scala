@@ -32,7 +32,7 @@ trait MapTokenRoutes extends Authentication
     with CommonHandlers
     with UserErrorHandler {
 
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val mapTokenRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

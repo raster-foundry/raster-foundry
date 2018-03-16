@@ -39,9 +39,9 @@ object ExportDao extends Dao[Export] {
   """ ++ tableF
 
   def insert(export: Export, user: User): ConnectionIO[Export] = {
+    val insertF: Fragment = Fragment.const(s"INSERT INTO ${tableName} (")
     val ownerId = util.Ownership.checkOwner(user, Some(export.owner))
-    (fr"""
-      INSERT INTO ${tableName} (
+    (insertF ++fr"""
         id, created_at, created_by, modified_at, modified_by, owner,
         organization_id, project_id, export_status, export_type,
         visibility, toolrun_id, export_options

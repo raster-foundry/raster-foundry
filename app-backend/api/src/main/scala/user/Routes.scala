@@ -36,7 +36,7 @@ trait UserRoutes extends Authentication
     with UserErrorHandler
     with LazyLogging {
 
-  implicit def xa: Transactor[IO]
+  implicit val xa: Transactor[IO]
 
   val userRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

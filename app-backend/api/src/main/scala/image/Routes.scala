@@ -29,7 +29,7 @@ trait ImageRoutes extends Authentication
     with CommonHandlers
     with UserErrorHandler {
 
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val imageRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

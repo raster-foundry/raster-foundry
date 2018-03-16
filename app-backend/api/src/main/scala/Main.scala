@@ -33,7 +33,7 @@ object Main extends App
     implicit val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
 
-  implicit lazy val xa = RFTransactor.xa
+  val xa = RFTransactor.xa
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync
   println(s"Server Started (${canSelect})")
 

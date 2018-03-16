@@ -31,7 +31,7 @@ trait UploadRoutes extends Authentication
     with CommonHandlers
     with UserErrorHandler
     with AWSBatch {
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val uploadRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

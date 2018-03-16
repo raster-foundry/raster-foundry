@@ -7,6 +7,7 @@ import com.azavea.rf.common._
 import com.azavea.rf.api.project.ProjectSpecHelper
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.datamodel._
+import com.azavea.rf.database.util.RFTransactor
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
@@ -25,12 +26,12 @@ class AoiSpec extends WordSpec
     with ScalatestRouteTest
     with ProjectSpecHelper
     with Config
-    with Router
-    with DBSpec {
+    with Router {
+
+  implicit val xa = RFTransactor.xa
 
   /* Implicit glue to make the compiler happy */
   implicit val ec = system.dispatcher
-  implicit def database = db
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(5).second)
 
   val baseRoutes = routes

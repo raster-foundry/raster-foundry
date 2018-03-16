@@ -21,8 +21,8 @@ object ToolTagDao extends Dao[ToolTag] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, created_by, modified_by,
-      organization_id, tag, owner
+      id, created_at, modified_at, organization_id, created_by, modified_by,
+      owner, tag
     FROM
   """ ++ tableF
 

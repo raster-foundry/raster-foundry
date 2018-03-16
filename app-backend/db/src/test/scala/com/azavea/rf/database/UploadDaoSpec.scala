@@ -1,6 +1,6 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.datamodel.Scene
+import com.azavea.rf.datamodel._
 import com.azavea.rf.database.Implicits._
 
 import doobie._, doobie.implicits._
@@ -10,7 +10,6 @@ import doobie.postgres._, doobie.postgres.implicits._
 import doobie.scalatest.imports._
 import org.scalatest._
 
-
-class SceneDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
-  test("selection types") { check(SceneDao.selectF.query[Scene]) }
+class UploadDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
+  test("selection types") { check(UploadDao.selectF.query[Upload]) }
 }

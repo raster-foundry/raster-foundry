@@ -47,7 +47,7 @@ trait ShapeRoutes extends Authentication
   with UserErrorHandler
   with LazyLogging {
 
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val shapeRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

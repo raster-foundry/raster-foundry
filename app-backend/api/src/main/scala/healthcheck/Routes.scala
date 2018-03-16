@@ -21,7 +21,7 @@ import doobie.postgres.implicits._
   */
 trait HealthCheckRoutes extends Authentication with RollbarNotifier {
 
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val healthCheckExceptionHandler = ExceptionHandler {
     case e: PSQLException =>

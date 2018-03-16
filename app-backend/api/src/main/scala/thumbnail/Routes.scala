@@ -35,7 +35,7 @@ trait ThumbnailRoutes extends Authentication
     with Config
     with KamonTraceDirectives {
 
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val thumbnailRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

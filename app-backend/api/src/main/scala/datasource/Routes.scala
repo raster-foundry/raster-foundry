@@ -28,7 +28,7 @@ trait DatasourceRoutes extends Authentication
     with PaginationDirectives
     with UserErrorHandler
     with CommonHandlers {
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val datasourceRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

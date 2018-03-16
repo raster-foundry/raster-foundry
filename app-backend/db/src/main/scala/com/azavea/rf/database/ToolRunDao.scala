@@ -34,7 +34,7 @@ object ToolRunDao extends Dao[ToolRun] {
 
     sql"""
           INSERT INTO tool_runs
-            (id, created_at, created_by, modified_at, modified_by, visibility, organization
+            (id, created_at, created_by, modified_at, modified_by, visibility, organization,
              execution_parameters, owner, name)
           VALUES
             (${id}, ${now}, ${user.id}, ${now}, ${user.id}, ${newRun.visibility}, ${newRun.organizationId},

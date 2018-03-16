@@ -23,7 +23,7 @@ trait LicenseRoutes extends Authentication
   with CommonHandlers
   with UserErrorHandler {
 
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val licenseRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

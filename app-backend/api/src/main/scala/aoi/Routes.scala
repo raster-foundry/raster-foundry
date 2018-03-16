@@ -25,7 +25,8 @@ trait AoiRoutes extends Authentication
     with QueryParametersCommon
     with PaginationDirectives
     with CommonHandlers {
-  implicit def xa: Transactor[IO]
+
+  val xa: Transactor[IO]
 
   val aoiRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

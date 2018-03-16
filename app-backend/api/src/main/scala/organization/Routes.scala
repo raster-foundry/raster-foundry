@@ -33,7 +33,7 @@ trait OrganizationRoutes extends Authentication
     with CommonHandlers
     with UserErrorHandler {
 
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val organizationRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

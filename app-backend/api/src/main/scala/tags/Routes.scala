@@ -25,7 +25,7 @@ trait ToolTagRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler {
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val toolTagRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {

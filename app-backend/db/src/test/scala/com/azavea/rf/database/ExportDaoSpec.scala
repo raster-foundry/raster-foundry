@@ -22,7 +22,9 @@ class ExportDaoSpec extends FunSuite with Matchers with IOChecker with DBTestCon
       usr <- defaultUserQ
       org <- rootOrgQ
       proj <- changeDetectionProjQ
-      exportIn <- ExportDao.create(usr, org.id, Some(proj.id), testStatus, ExportType.Dropbox, Visibility.Public, Some(usr.id), None, JsonObject.empty.asJson)
+      exportIn <- ExportDao.insert(
+        Export.Create(org.id, Some(proj.id), testStatus, ExportType.Dropbox, Visibility.Public, Some(usr.id), None, JsonObject.empty.asJson).toExport(usr), usr
+      )
       exportOut <- ExportDao.query.filter(fr"id = ${exportIn.id}").selectQ.unique
     } yield exportOut
 

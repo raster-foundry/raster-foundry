@@ -61,7 +61,7 @@ object SceneToProjectDao extends Dao[SceneToProject] {
     )
     val select = fr"""
     SELECT
-      scene_id, project_id, scene_order, mosaic_definition, accepted
+      scene_id, project_id, accepted, scene_order, mosaic_definition
     FROM
       scenes_to_projects
     LEFT JOIN

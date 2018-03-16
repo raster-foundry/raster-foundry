@@ -36,7 +36,7 @@ object DatasourceDao extends Dao[Datasource] {
     val ownerId = util.Ownership.checkOwner(user, Some(datasource.owner))
     (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, created_at, created_by, modified_at, modified_by, owner,
-      organization_id, name, visibility, composites, extras, bands, licenseName)
+      organization_id, name, visibility, composites, extras, bands, license_name)
     VALUES
       (${datasource.id}, ${datasource.createdAt}, ${datasource.createdBy}, ${datasource.modifiedAt},
       ${datasource.modifiedBy}, ${ownerId}, ${datasource.organizationId}, ${datasource.name},

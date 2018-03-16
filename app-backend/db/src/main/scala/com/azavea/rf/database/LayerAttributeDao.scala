@@ -76,7 +76,7 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
   def layerExists(layerId: LayerId)(implicit xa: Transactor[IO]): ConnectionIO[Boolean] = {
     (fr"SELECT 1 FROM" ++ tableF ++ fr"""
       WHERE layer_name = ${layerId.name} LIMIT 1
-    """).query[LayerAttribute].list.map(!_.isEmpty)
+    """).query[Int].list.map(!_.isEmpty)
   }
 
   def delete(layerId: LayerId)(implicit xa: Transactor[IO]) = {
@@ -94,31 +94,28 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       .delete
   }
 
-  def layerIds(implicit xa: Transactor[IO]): ConnectionIO[Iterable[(String, Int)]] = {
-    (fr"SELECT layer_name, zoom FROM" ++ tableF).query[LayerAttribute].list.map {
-      _.map(l => l.layerName -> l.zoom)
-    }
+  def layerIds(implicit xa: Transactor[IO]): ConnectionIO[List[(String, Int)]] = {
+    (fr"SELECT layer_name, zoom FROM" ++ tableF)
+      .query[(String, Int)].list
   }
 
-  def layerIds(layerNames: Set[String])(implicit xa: Transactor[IO]): ConnectionIO[Iterable[(String, Int)]] = {
+  def layerIds(layerNames: Set[String])(implicit xa: Transactor[IO]): ConnectionIO[List[(String, Int)]] = {
     val f1 = layerNames.toList.toNel.map(lns => in(fr"layer_name", lns))
-    (fr"SELECT layer_name, zoom FROM" ++ tableF ++ whereAndOpt(f1)).query[LayerAttribute].list.map {
-      _.map(l => l.layerName -> l.zoom)
-    }
+                                        (fr"SELECT layer_name, zoom FROM" ++ tableF ++ whereAndOpt(f1))
+      .query[(String, Int)].list
   }
 
-  def maxZoomsForLayers(layerNames: Set[String])(implicit xa: Transactor[IO]): ConnectionIO[Seq[(String, Int)]] = {
+  def maxZoomsForLayers(layerNames: Set[String])(implicit xa: Transactor[IO]): ConnectionIO[List[(String, Int)]] = {
     val f1 = layerNames.toList.toNel.map(lns => in(fr"layer_name", lns))
     (fr"SELECT layer_name, COALESCE(MAX(zoom), 0) as zoom FROM" ++ tableF  ++ whereAndOpt(f1) ++ fr"GROUP BY layer_name")
-      .query[LayerAttribute].list.map {
-        _.map(l => l.layerName -> l.zoom)
-      }
+      .query[(String, Int)]
+      .list
   }
 
-  def availableAttributes(layerId: LayerId)(implicit xa: Transactor[IO]): ConnectionIO[Iterable[String]] = {
+  def availableAttributes(layerId: LayerId)(implicit xa: Transactor[IO]): ConnectionIO[List[String]] = {
     val f1 = fr"layer_name = ${layerId.name}"
     val f2 = fr"zoom = ${layerId.zoom}"
-    (fr"SELECT name FROM" ++ tableF ++ whereAnd(f1, f2)).query[LayerAttribute].list.map(_.map(_.name))
+    (fr"SELECT name FROM" ++ tableF ++ whereAnd(f1, f2)).query[String].list
   }
 }
 

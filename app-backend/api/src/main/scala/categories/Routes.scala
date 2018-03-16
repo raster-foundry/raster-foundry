@@ -27,7 +27,7 @@ trait ToolCategoryRoutes extends Authentication
     with PaginationDirectives
     with ToolCategoryQueryParametersDirective
     with UserErrorHandler {
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   // Not implementing an update function, since it's an emergency operation and should probably be done
   // in the database directly to avoid orphaning categorized tools. Eventually, we should remove the ability

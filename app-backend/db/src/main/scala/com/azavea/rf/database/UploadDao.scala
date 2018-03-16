@@ -20,8 +20,8 @@ object UploadDao extends Dao[Upload] {
   val selectF = sql"""
     SELECT
        id, created_at, created_by, modified_at, modified_by,
-       organization_id, upload_status, file_type, upload_type,
-       files, datasource, metadata, visibility, owner, project_id,
+       owner, organization_id, upload_status, file_type, upload_type,
+       files, datasource, metadata, visibility, project_id,
        source
     FROM
   """ ++ tableF

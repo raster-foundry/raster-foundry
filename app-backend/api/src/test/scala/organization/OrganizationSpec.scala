@@ -12,6 +12,7 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.Router
 import com.azavea.rf.common._
+import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.api.AuthUtils
 
 import io.circe._
@@ -22,10 +23,9 @@ class OrganizationSpec extends WordSpec
     with Matchers
     with ScalatestRouteTest
     with Config
-    with Router
-    with DBSpec {
+    with Router {
+  implicit val xa = RFTransactor.xa
   implicit val ec = system.dispatcher
-  implicit def database = db
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(5).second)
 
   // Alias to baseRoutes to be explicit

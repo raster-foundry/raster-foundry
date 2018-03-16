@@ -32,7 +32,9 @@ class DatasourceDaoSpec extends FunSuite with Matchers with IOChecker with DBTes
       dsIn <- {
         val ds = Datasource(
           UUID.randomUUID(), now, usr.id, now, usr.id, usr.id,
-          org.id, testName, Visibility.Public, dummyJson, dummyJson, dummyJson)
+          org.id, testName, Visibility.Public, dummyJson, dummyJson, dummyJson,
+          Some("0BSD")
+        )
         DatasourceDao.create(ds, usr)
       }
       dsOut <- DatasourceDao.query.filter(fr"id = ${dsIn.id}").selectQ.unique

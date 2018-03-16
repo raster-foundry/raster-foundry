@@ -35,7 +35,7 @@ trait ToolRunRoutes extends Authentication
     with UserErrorHandler
     with InterpreterExceptionHandling {
 
-  implicit def xa: Transactor[IO]
+  val xa: Transactor[IO]
 
   val toolRunRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
