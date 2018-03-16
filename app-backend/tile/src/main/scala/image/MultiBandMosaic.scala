@@ -216,41 +216,8 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
         colorCorrectTiles(
           renderForBbox(md, polygonBbox, zoom, None)
         )
-      ).map(_.some)
+      )
     )
-    // val mt: Future[Option[MultibandTile]] = md.flatMap { mosaic =>
-    //   val futureTiles: Future[Seq[MultibandTile]] = {
-    //     implicit val sceneIds = mosaic.map {
-    //       case MosaicDefinition(sceneId, _) => sceneId
-    //     }.toSet
-
-    //     val tiles = mosaic.map {
-    //       case MosaicDefinition(sceneId, colorCorrectParams) => {
-    //         MultiBandMosaic
-    //           .fetchRenderedExtent(sceneId, zoom, bboxPolygon)
-    //           .flatMap { tile =>
-    //             if (colorCorrect) {
-    //               LayerCache.layerHistogram(sceneId, zoom).map { hist =>
-    //                 colorCorrectParams.colorCorrect(tile, hist)
-    //               }
-    //             } else {
-    //               OptionT[Future, MultibandTile](Future(Some(tile)))
-    //             }
-    //           }
-    //       }
-    //     }
-    //     Future.sequence(tiles).map(_.flatten)
-    //   }
-
-    //   val futureMergeTile =
-    //     for {
-    //       doColorCorrect <- hasColorCorrection(projectId, md)
-    //       tiles <- futureTiles
-    //     } yield colorCorrectAndMergeTiles(tiles, doColorCorrect)
-
-    //   futureMergeTile
-    // }
-    // OptionT(mt)
   }
 
   /** MultiBandMosaic tiles from TMS pyramids given that they are in the same projection.
@@ -274,38 +241,8 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
         colorCorrectTiles(
           renderForBbox(md, Some(polygonBbox), zoom, Some(s"${zoom}-${col}-${row}"))
         )
-      ).map(_.some)
+      )
     )
-
-    // md.flatMap { (mosaic: Seq[MosaicDefinition]) =>
-    //   val futureTiles: Future[Seq[MultibandTile]] = {
-    //     implicit val sceneIds = mosaic.map {
-    //       case MosaicDefinition(sceneId, _) => sceneId
-    //     }.toSet
-
-    //     val tiles = mosaic.flatMap { case MosaicDefinition(sceneId, colorCorrectParams) =>
-    //       logger.debug(s"Getting Tile (project: $projectId, scene: $sceneId, col: $col, row: $row, zoom: $zoom)")
-    //       val tile = rfCache.cachingOptionT(s"tile-${sceneId}-${zoom}-${col}-${row}")(
-    //         MultiBandMosaic.fetch(sceneId, zoom, col, row)
-    //       )
-    //       val layerHistogram = LayerCache.layerHistogram(sceneId, zoom)
-    //       tile.flatMap { tile =>
-    //         layerHistogram.map { hist =>
-    //           colorCorrectParams.colorCorrect(tile, hist)
-    //         }
-    //       }
-    //     }
-    //     Future.sequence(tiles).map(_.flatten)
-    //   }
-
-    //   val futureMergeTile = timedFuture("color-correct-merge-tiles")(
-    //     for {
-    //       doColorCorrect <- hasColorCorrection(projectId, md)
-    //       tiles <- futureTiles
-    //     } yield colorCorrectAndMergeTiles(tiles, doColorCorrect)
-    //   )
-    //   futureMergeTile
-    // }
   }
 
   def renderForBbox(
@@ -350,18 +287,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     tiles.map(ts => WhiteBalance(ts.toList))
   }
 
-  def mergeTiles(tiles: Future[Seq[MultibandTile]]): Future[MultibandTile] = {
-    tiles.map(_.reduce(_ merge _))
+  def mergeTiles(tiles: Future[Seq[MultibandTile]]): Future[Option[MultibandTile]] = {
+    tiles.map(_.reduceOption(_ merge _))
   }
-
-  /** Check to see if a project has color correction; if this isn't specified, default to false */
-  // def hasColorCorrection(
-  //   projectId: UUID,
-  //   md: Future[Seq[MosaicDefinition]]
-  // )(implicit xa: Transactor[IO]): Future[Option[Boolean]] =
-  //   md.flatMap { _.collectFirst {
-  //     case MosaicDefinition(projectId, colorCorrectParams) =>
-  //       colorCorrectParams.autoBalance.enabled
-  //     }
-  //   }
 }

@@ -56,12 +56,12 @@ object SceneToProjectDao extends Dao[SceneToProject] {
   def getMosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]]): ConnectionIO[Seq[MosaicDefinition]] = {
 
     val filters = List(
-      polygonOption.map(polygon => fr"ST_Intersects(scenes.tile_footprint, ${polygon}"),
+      polygonOption.map(polygon => fr"ST_Intersects(scenes.tile_footprint, ${polygon})"),
       Some(fr"scenes_to_projects.project_id = ${projectId}")
     )
     val select = fr"""
     SELECT
-      scene_id, project_id, accepted, scene_order, mosaic_definition
+      scene_id, project_id,accepted, scene_order, mosaic_definition
     FROM
       scenes_to_projects
     LEFT JOIN

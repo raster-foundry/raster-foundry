@@ -54,7 +54,7 @@ trait DatasourceRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          DatasourceDao.query.filter(fr"owner = ${user.id} or owner = 'default'").filter(fr"id = ${datasourceId}").selectOption.transact(xa).unsafeToFuture
+          DatasourceDao.getDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
         }
       }
     }
