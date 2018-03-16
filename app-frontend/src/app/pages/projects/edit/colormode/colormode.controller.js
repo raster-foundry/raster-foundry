@@ -35,10 +35,11 @@ export default class ProjectsEditColormode {
     initSceneLayers() {
         const sceneListQuery = this.$parent.sceneListQuery || this.$parent.getSceneList();
         return sceneListQuery.then(() => {
-            let layers = Array.from(this.$parent.sceneLayers).map(([id, layer]) => ({id, layer}));
-            this.fetchAllColorCorrections(layers);
+            let sceneLayers = Array.from(this.$parent.sceneLayers)
+                .map(([id, layer]) => ({id, layer}));
+            this.fetchAllColorCorrections(sceneLayers);
 
-            let firstLayer = _.first(layers);
+            let firstLayer = _.first(sceneLayers);
             if (firstLayer && firstLayer.layer) {
                 firstLayer.layer.getColorCorrection().then((correction) => {
                     this.currentBands = {
