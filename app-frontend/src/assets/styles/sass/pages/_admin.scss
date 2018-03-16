@@ -1,0 +1,244 @@
+.admin-header {
+    display: flex;
+    flex-direction: row;
+    padding: 1em;
+    background: #eee;
+}
+
+.admin-logo {
+    border-radius: 3px;
+    background: #ddd; width: 3em;
+    height: 3em;
+}
+
+.admin-logo-name {
+    font-size: 3rem;
+    margin-left: 0.5em;
+}
+
+.admin-tabs {
+    display: flex;
+    flex-direction: row;
+    flex-basis: flex-start;
+    background: #eee;
+    padding: 0 1em 0 1em;
+    .admin-tab {
+        padding: 0.8em 1em;
+        cursor: pointer;
+        border-radius: 3px 3px 0 0;
+
+        &:hover {
+            background: #f5f5f5;
+        }
+        &.active {
+            cursor: default;
+            background: #fff;
+        }
+    }
+}
+
+.admin-users-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-table {
+    width: 100%;
+
+    thead {
+        border-bottom: 1px solid #ddd;
+    }
+
+    td {
+        padding: 0.75em 1.5em;
+    }
+
+    tr:not(:last-child) {
+        border-bottom: 1px solid #ddd;
+    }
+
+    .actions {
+        width: 8em;
+        .rf-dropdown-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-end;
+
+            .btn.active {
+                border-radius: 3px 3px 0 0;
+            }
+        }
+    }
+
+    .placeholder-avatar {
+        width: 2.5em;
+        height: 2.5em;
+        background: #ddd;
+        border-radius: 3px;
+        margin-right: 1em;
+    }
+}
+
+.admin-team-table {
+    .name {
+        width: 20em;
+        overflow-x: hidden;
+    }
+
+    .users {
+        text-align: right;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+        align-items: flex-end;
+
+        .users-more {
+            padding: 0 1em;
+        }
+    }
+
+    .teams {
+        width: 13em;
+    }
+
+}
+
+.admin-org-user-table {
+    .username {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .teams {
+        width: 10em;
+    }
+}
+
+.admin-platform-user-table {
+    .username {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.admin-platform-org-table {
+    .name {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .users {
+        width: 10em;
+    }
+
+    .actions {
+        width: 13em;
+        a {
+            margin-right: 1em;
+        }
+        a, rf-dropdown {
+            display: inline-block;
+        }
+    }
+}
+
+.admin-users-actions {
+    display: flex;
+    flex-direction: row;
+    padding: 1em;
+}
+
+.admin-search {
+    width: 20em;
+    margin-right: 0.5em;
+}
+
+.admin-choices-container {
+    max-width: 1000px;
+    margin: auto;
+}
+
+.admin-choices {
+    width: 45em;
+    padding: 5em;
+    margin: 10em auto;
+    background: $gray-lightest;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border-radius: 3px;
+
+    .admin-choice {
+        width: 15em;
+        height: 15em;
+        color: white;
+        background: $brand-primary;
+        border-radius: 3px;
+        cursor: pointer;
+        text-align: center;
+        vertical-align: middle;
+        line-height: 15em;
+        font-weight: 700;
+    }
+}
+
+.admin-detail-header {
+    display: flex;
+    border-bottom: 1px solid $gray-lightest;
+    flex-direction: row;
+}
+
+.admin-breadcrumb {
+    padding: 0.5em 1em;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+
+    &>* {
+      margin-right: 0.5em;
+    }
+}
+
+.admin-detail-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+
+  flex-direction: row;
+}
+
+.admin-detail-sidebar {
+  padding: 2em 2em;
+  width: 15em;
+
+}
+
+.admin-detail-content {
+  flex: 1;
+}
+
+.admin-features-header {
+}
+
+.admin-feature-list {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.admin-feature-item {
+  margin: 1em;
+  background: #f8f8f8;
+  padding: 1em;
+}
+

@@ -10,6 +10,11 @@ export default angular.module('index.components', [
     require('./components/scenes/sceneFilterPane/sceneFilterPane.module.js').name,
     require('./components/scenes/planetSceneDetailModal/planetSceneDetailModal.module.js').name,
 
+    // vector components
+    require('./components/vectors/vectorImportModal/vectorImportModal.module.js').name,
+    require('./components/vectors/shapeItem/shapeItem.module.js').name,
+    require('./components/vectors/vectorNameModal/vectorNameModal.module.js').name,
+
     // project components
     require('./components/projects/projectItem/projectItem.module.js').name,
     require('./components/projects/projectPublishModal/projectPublishModal.module.js').name,
@@ -53,10 +58,21 @@ export default angular.module('index.components', [
     require('./components/settings/enterTokenModal/enterTokenModal.module.js').name,
     require('./components/settings/featureFlagOverrides/featureFlagOverrides.module.js').name,
     require('./components/settings/tokenItem/tokenItem.module.js').name,
+    require('./components/settings/userModal/userModal.module.js').name,
+    require('./components/settings/teamModal/teamModal.module.js').name,
+    require('./components/settings/organizationModal/organizationModal.module.js').name,
 
     // export components
     require('./components/exports/exportItem/exportItem.module.js').name,
     require('./components/exports/exportDownloadModal/exportDownloadModal.module.js').name,
+
+    // filter components
+    require('./components/filters/daterangeFilter/daterangeFilter.module.js').name,
+    require('./components/filters/searchSelectFilter/searchSelectFilter.module.js').name,
+    require('./components/filters/shapeFilter/shapeFilter.module.js').name,
+    require('./components/filters/sliderFilter/sliderFilter.module.js').name,
+    require('./components/filters/tagFilter/tagFilter.module.js').name,
+
 
     // common components (no domain)
     require('./components/common/navBar/navBar.module.js').name,
@@ -70,6 +86,7 @@ export default angular.module('index.components', [
     require('./components/common/statusTag/statusTag.module.js').name,
     require('./components/common/search/search.js').name,
     require('./components/common/sortingHeader/sortingHeader.js').name,
+    require('./components/common/dropdown/dropdown.module.js').name,
 
 
     // Single components for new domains

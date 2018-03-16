@@ -1,0 +1,87 @@
+<div class="container dashboard">
+  <div class="row content stack-sm">
+    <div class="column-8">
+      <!-- Dashboard Header -->
+      <div class="dashboard-header">
+        <h1 class="h3">Shapes</h1>
+        <div class="flex-fill"></div>
+        <button type="button" class="btn btn-primary" ng-click="$ctrl.importModal()">
+          Import shape
+        </button>
+      </div>
+      <!-- Dashboard Header -->
+      <!-- Imports list -->
+      <div class="list-group">
+        <rf-shape-item shape="shape" ng-repeat="shape in $ctrl.shapeList track by shape.id">
+          <div class="btn-group">
+            <!-- <button type="button" -->
+            <!-- class="btn btn-square btn-outline" -->
+            <!-- > -->
+            <!-- <i class="icon-pencil"></i> -->
+            <!-- </button> -->
+            <button type="button"
+                    class="btn btn-square btn-danger"
+                    ng-click="$ctrl.deleteShape(shape)"
+            >
+              <i class="icon-trash"></i>
+            </button>
+          </div>
+        </rf-shape-item>
+      </div>
+      <div class="list-group text-center"
+           ng-if="$ctrl.shouldShowShapeList()">
+        <ul uib-pagination
+            items-per-page="$ctrl.lastShapeResult.pageSize"
+            total-items="$ctrl.lastShapeResult.count"
+            ng-model="$ctrl.currentPage"
+            max-size="4"
+            rotate="true"
+            boundary-link-numbers="true"
+            force-ellipses="true"
+            ng-change="$ctrl.getShapes($ctrl.currentPage)">
+        </ul>
+      </div>
+      <!-- Imports list -->
+      <!-- No shapes placeholder -->
+      <div ng-if="$ctrl.shouldShowImportBox()">
+        <rf-call-to-action-item
+            title="You haven't imported any shapes"
+            class="panel panel-off-white">
+          <p class="pb-25">
+            Every shape that you import or create will be listed here.
+            After you have imported one or more shapes, you can return to this page to view them.
+          </p>
+
+          <a class="btn btn-primary" ng-click="$ctrl.importModal()">Import Shape</a>
+          <p>
+            <a>Getting started with Shapes</a>
+          </p>
+        </rf-call-to-action-item>
+      </div>
+      <!-- No shapes placeholder -->
+    </div>
+    <div class="column spacer"></div>
+    <div class="column">
+      <div class="aside">
+        <section>
+          <h5>What are Shapes?</h5>
+          <p class="font-size-small">
+            Shapes are polygons, either drawn directly on the map or uploaded as a shapefile.
+          </p>
+          <h5>What restrictions are there?</h5>
+          <p class="font-size-small">
+            Currently we can import files that are up to 20mb in size.
+            This number may change in the future as we examine usage scenarios.
+          </p>
+        </section>
+        <section class="aside-footer">
+          <h5>Have other questions?</h5>
+          <ul class="list-unstyled">
+            <li><a>How to create a Shape</a></li>
+            <li><a>How to use Shapes</a></li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>

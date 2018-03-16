@@ -86,45 +86,70 @@ case class CreateExportDef(exportId: UUID, region: Option[String] = None)(implic
 
     val startEmr = (ed: ExportDefinition, edu: String) => Future { startExportEmrJob(ed, edu) }
 
+    // Replacing this (superior) EitherT code for some OptionT to assuage the compiler after bumping versions
+    //val createExportDef = for {
+    //  user <- fromOptionF(Users.getUserById(systemUser), "DB: Failed to fetch User.")
+    //  export <- fromOptionF(
+    //    database.db.run(Exports.getExport(exportId, user)), "DB: Failed to fetch Export."
+    //  )
+    //  exportDef <- EitherT.fromOptionF(
+    //    Exports.getExportDefinition(export, user), "DB: Failed to fetch ExportDefinition."
+    //  )
+    //  exportDefUri <- EitherT.fromOptionF[Future, String, String](
+    //    writeExportDefToS3(exportDef), s"Failed to write ExportDefinition to S3:\n${exportDef.asJson.spaces2}"
+    //  )
+    //  exportStatus <- EitherT.right(
+    //    database.db.run(Exports.updateExport(updateExportStatus(export, ExportStatus.Exporting), exportId, user))
+    //  )
+    //  emrJobStatus <- EitherT.right(
+    //    startEmr(exportDef, exportDefUri).map({ result =>
+    //      result.getStepIds.asScala.headOption.foreach(stepId => println(s"StepId: $stepId"))
+    //      export
+    //    })
+    //      .recover({
+    //        case e: Throwable => {
+    //          logger.error(s"An error occurred during export ${export.id}. Skipping...")
+    //          logger.error(e.stackTraceString)
+    //          sendError(e)
+    //          updateExportStatus(export, ExportStatus.Failed)
+    //        }
+    //      })
+    //      .flatMap({ result =>
+    //        database.db.run(Exports.updateExport(result, exportId, user)).map(_ => ())
+    //      })
+    //  )
+    //} yield emrJobStatus
+
+    // This code should be replaced in favor of code in the above style as soon as it compiles again
     val createExportDef = for {
-      user <- fromOptionF[Future, String, User](Users.getUserById(systemUser), "DB: Failed to fetch User.")
-      export <- fromOptionF[Future, String, Export](
-        database.db.run(Exports.getExport(exportId, user)), "DB: Failed to fetch Export."
+      user <- OptionT(Users.getUserById(systemUser))
+      export <- OptionT(database.db.run(Exports.getExport(exportId, user)))
+      exportDef <- OptionT(Exports.getExportDefinition(export, user))
+      exportDefUri <- OptionT(writeExportDefToS3(exportDef))
+      exportStatus <- OptionT.liftF(
+        database.db.run(Exports.updateExport(updateExportStatus(export, ExportStatus.Exporting), exportId, user))
       )
-      exportDef <- fromOptionF[Future, String, ExportDefinition](
-        Exports.getExportDefinition(export, user), "DB: Failed to fetch ExportDefinition."
-      )
-      exportDefUri <- fromOptionF[Future, String, String](
-        writeExportDefToS3(exportDef), s"Failed to write ExportDefinition to S3:\n${exportDef.asJson.spaces2}"
-      )
-      exportStatus <- EitherT.right[Future, String, Int](database.db.run(Exports.updateExport(
-        updateExportStatus(export, ExportStatus.Exporting),
-        exportId,
-        user
-      )))
-      emrJobStatus <- EitherT.right[Future, String, Unit](
+      emrJobStatus <- OptionT.liftF(
         startEmr(exportDef, exportDefUri).map({ result =>
           result.getStepIds.asScala.headOption.foreach(stepId => println(s"StepId: $stepId"))
           export
+        }).recover({
+          case e: Throwable => {
+          logger.error(s"An error occurred during export ${export.id}. Skipping...")
+          logger.error(e.stackTraceString)
+          sendError(e)
+          updateExportStatus(export, ExportStatus.Failed)
+          }
+        }).flatMap({ result =>
+          database.db.run(Exports.updateExport(result, exportId, user)).map(_ => ())
         })
-          .recover({
-            case e: Throwable => {
-              logger.error(s"An error occurred during export ${export.id}. Skipping...")
-              logger.error(e.stackTraceString)
-              sendError(e)
-              updateExportStatus(export, ExportStatus.Failed)
-            }
-          })
-          .flatMap({ result =>
-            database.db.run(Exports.updateExport(result, exportId, user)).map(_ => ())
-          })
       )
     } yield emrJobStatus
 
     createExportDef.value.onComplete {
-      case Success(Left(e)) => {
-        logger.error(e)
-        sendError(e)
+      case Success(None) => {
+        logger.error("Export job failed to send to cluster; status not updated")
+        sendError("Export job failed to send to cluster; status not updated")
         stop
         sys.exit(1)
       }

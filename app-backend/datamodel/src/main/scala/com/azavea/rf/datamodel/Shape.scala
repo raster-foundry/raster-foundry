@@ -66,7 +66,7 @@ case class ShapePropertiesCreate(
 object Shape {
 
     implicit val config: Configuration = Configuration.default.copy(
-      transformKeys = {
+      transformMemberNames = {
         case "_type" => "type"
         case other => other
       }

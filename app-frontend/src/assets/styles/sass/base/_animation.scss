@@ -31,4 +31,8 @@
   -webkit-animation: spin 2s infinite linear;
   animation: spin 2s infinite linear;
   display: inline-block;
+
+  &.stop {
+      display: none;
+  }
 }

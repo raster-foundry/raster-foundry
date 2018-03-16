@@ -1,4 +1,5 @@
 <div class="form-group search-form">
+  <i class="icon-search input-icon"></i>
   <input id="search-input"
          class="form-control"
          ng-attr-placeholder="{{$ctrl.placeholder || 'Search'}}"
@@ -8,5 +9,7 @@
          }"
          ng-disabled="$ctrl.disabled"
          ng-change="$ctrl.onSearch({value: $ctrl.searchText})"/>
-  <i class="icon-search input-icon"></i>
+  <button type="button" class="btn btn-link" ng-click="$ctrl.clearSearch()">
+    <i class="icon-cross"></i>
+  </button>
 </div>

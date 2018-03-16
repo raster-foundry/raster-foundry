@@ -17,7 +17,7 @@ import io.circe.generic.extras._
 object GeoJsonCodec {
 
   implicit val config: Configuration = Configuration.default.copy(
-    transformKeys = {
+    transformMemberNames = {
       case "_type" => "type"
       case other => other
     }

@@ -19,8 +19,35 @@
   border: 1px solid $border-color-default;
 }
 
+.item-img-container {
+    width: 75px;
+    height: 75px;
+    border: 1px solid $border-color-default;
+    display: flex;
+    justify-content: center;
+
+    &.previewable {
+        cursor: zoom-in;
+
+        &:hover:before {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+
+            content: "Details";
+
+            color: $white;
+            background: $brand-primary;
+
+            padding: 0.5em;
+            border-radius: 3px;
+        }
+    }
+}
+
 .item-img {
-  height: 75px;
-  width: 75px;
-  border: 1px solid $border-color-default;
+  max-height: 75px;
+  max-width: 75px;
+  width: auto;
+  height: auto;
 }

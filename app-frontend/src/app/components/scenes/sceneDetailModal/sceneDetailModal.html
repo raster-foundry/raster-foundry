@@ -5,19 +5,37 @@
         <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
           <span aria-hidden="true">&times;</span>
         </button>
-        <p>
-        <strong class="color-dark">{{$ctrl.scene.name}}</strong><br>
-          {{$ctrl.datasourceLoaded ? $ctrl.datasource.name : 'Loading datasource'}}
-        </p>
-        <button class="btn btn-default"
-                ng-click="$ctrl.toggleMetadataEdit()"
-                ng-if="$ctrl.scene.owner === $ctrl.authService.getProfile().sub">
-                {{$ctrl.isEditMetadata ? 'Save ' : 'Edit '}}metadata
-        </button>
+        <dl>
+          <input type="text" class="form-control"
+                 ng-attr-title="{{$ctrl.scene.name}}" ng-model="$ctrl.scene.name" readonly>
+        </dl>
       </div>
       <div class="scene-metadata-scrollable">
+        <dl>
+          <button class="btn btn-default"
+                  ng-click="$ctrl.startEditing()"
+                  ng-if="!$ctrl.editingMetadata && $ctrl.isOwner">
+            Edit metadata
+          </button>
+          <button class="btn btn-light"
+                  ng-click="$ctrl.cancelEditing()"
+                  ng-if="$ctrl.editingMetadata">
+            Cancel
+          </button>
+          <button class="btn btn-default"
+                  ng-click="$ctrl.finishEditing()"
+                  ng-if="$ctrl.editingMetadata">
+            Save changes
+          </button>
+        </dl>
         <h5 class="color-dark">Scene properties</h5>
-        <dl class="meta-list" ng-if="!$ctrl.isEditMetadata && $ctrl.isUploadDone">
+        <dl class="meta-list" ng-if="!$ctrl.editingMetadata && $ctrl.isUploadDone">
+          <dt>
+            Datasource:
+          </dt>
+          <dd>
+            {{$ctrl.datasource ? $ctrl.datasource.name : 'Loading datasource'}}
+          </dd>
           <dt ng-repeat-start="(field, value) in $ctrl.scene.filterFields">
             {{field}}
           </dt>
@@ -35,7 +53,23 @@
           </dt>
           <dd ng-repeat-end>{{value}}</dd>
         </dl>
-        <dl class="meta-list" ng-if="$ctrl.isEditMetadata">
+        <dl class="meta-list" ng-if="$ctrl.editingMetadata">
+          <dt>Datasource</dt>
+          <dd>
+            <ui-select ng-model="$ctrl.selectedDatasource"
+                       theme="selectize"
+                       title="All datasources"
+                       on-select="$ctrl.selectDatasource($item, $model)">
+              <ui-select-match
+                  placeholder="Search datasources"
+                  allow-clear="true">{{$select.selected.name}}</ui-select-match>
+              <ui-select-choices
+                  repeat="source in $ctrl.sources | filter: $select.search"
+              >
+                {{source.label || source.name || source.id}}
+              </ui-select-choices>
+            </ui-select>
+          </dd>
           <dt ng-repeat-start="(field, value) in $ctrl.scene.filterFields">
             {{field}}
           </dt>
@@ -60,13 +94,13 @@
           </dd>
         </dl>
         <h5 class="color-dark">Scene metadata</h5>
-        <dl class="meta-list"  ng-if="!$ctrl.isEditMetadata && $ctrl.isUploadDone">
+        <dl class="meta-list"  ng-if="!$ctrl.editingMetadata && $ctrl.isUploadDone">
           <dt ng-repeat-start="(metaKey, metaVal) in $ctrl.scene.sceneMetadata">
             {{metaKey}}
           </dt>
           <dd ng-repeat-end>{{metaVal}}</dd>
         </dl>
-        <dl class="meta-list"  ng-if="$ctrl.isEditMetadata">
+        <dl class="meta-list"  ng-if="$ctrl.editingMetadata">
           <dt ng-repeat-start="(metaKey, metaVal) in $ctrl.scene.sceneMetadata">
             {{metaKey}}
           </dt>
@@ -80,9 +114,11 @@
         </dl>
       </div>
     </div>
-    <div class="scene-preview-container">
-      <rf-map-container map-id="scene-preview-map">
+    <div class="scene-preview-container" ng-class="{'image-preview': !$ctrl.repository.service.previewOnMap && $ctrl.thumbnail}">
+      <rf-map-container map-id="scene-preview-map" ng-if="$ctrl.repository.service.previewOnMap">
       </rf-map-container>
+      <img ng-if="!$ctrl.repository.service.previewOnMap && $ctrl.thumbnail"
+           ng-src="{{$ctrl.thumbnail}}">
     </div>
   </div>
 

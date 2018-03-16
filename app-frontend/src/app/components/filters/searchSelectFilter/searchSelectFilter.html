@@ -1,0 +1,21 @@
+<div class="filter">
+  <label>{{$ctrl.filter.label}}</label>
+
+  <ui-select ng-model="$ctrl.selectedOption"
+             theme="selectize"
+             title="All datasources"
+             on-select="$ctrl.selectOption($item, $model)">
+    <ui-select-match
+        placeholder="Search datasources"
+        allow-clear="true">{{$select.selected.name}}</ui-select-match>
+    <ui-select-choices
+        repeat="source in $ctrl.sources | filter: $select.search"
+    >
+      {{source.label || source.name || source.id}}
+    </ui-select-choices>
+  </ui-select>
+  <div class="searchselect-clear"
+       ng-click="$ctrl.clearOption()">
+    <i class="icon-cross"></i>
+  </div>
+</div>

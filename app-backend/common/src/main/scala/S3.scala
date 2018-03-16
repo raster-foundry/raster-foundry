@@ -152,10 +152,12 @@ package object S3 {
   def listObjects(listObjectsRequest: ListObjectsRequest): ObjectListing =
     client.listObjects(listObjectsRequest)
 
-  def putObject(bucket: String, key: String, contents: String): String = {
+  def putObjectString(bucket: String, key: String, contents: String): String = {
     client.putObject(bucket, key, contents)
     contents
   }
+
+  def putObject(bucket: String, key: String, file: File) = client.putObject(bucket, key, file)
 
   def doesObjectExist(bucket: String, key: String): Boolean =
     client.doesObjectExist(bucket, key)

@@ -45,7 +45,6 @@
 }
 
 .selectize-control {
-  position: relative;
   width: 100%;
   font-weight: 600;
 }
@@ -63,6 +62,7 @@
   cursor: text;
   display: inline-block;
 }
+
 .selectize-input {
   padding: 8px 8px;
   display: inline-block;
@@ -72,9 +72,19 @@
   z-index: 1;
   box-sizing: border-box;
   border-radius: 3px;
-  border-color: $shade-dark;
-  background-color: $shade-dark;
-  color: $gray-lightest;
+  border-color: $shade-light;
+  color: $brand-primary;
+}
+
+.filter {
+    .selectize-input {
+        border-color: $shade-dark;
+        background-color: $shade-dark;
+        color: $gray-lightest;
+        & > input {
+            color: $gray-lightest;
+        }
+    }
 }
 .selectize-input.dropdown-active {
   border-radius: 3px 3px 0 0;
@@ -95,8 +105,9 @@
   background: none !important;
   line-height: inherit !important;
   box-shadow: none !important;
-  color: $gray-lightest;
+  color: $shade-dark;
 }
+
 .selectize-input > input:focus {
   outline: none !important;
 }
@@ -125,8 +136,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border-radius: 0 0 $border-radius-base $border-radius-base;
   border: 1px solid $shade-dark;
-  background-color: $shade-dark;
-  color: $gray-lightest;
 }
 .selectize-dropdown [data-selectable] {
   cursor: pointer;
@@ -149,8 +158,8 @@
   cursor: default;
 }
 .selectize-dropdown .active {
-  background-color: $gray-light;
-  color: $gray-lighter;
+  background-color: $shade-light;
+  color: $white;
 }
 .selectize-dropdown .active.create {
   color: #495c68;

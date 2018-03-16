@@ -9,6 +9,8 @@ require('./labMap.scss');
 require('leaflet-draw/dist/leaflet.draw.css');
 require('leaflet-draw/dist/leaflet.draw.js');
 
+const GREEN = '#81C784';
+
 const LabMapComponent = {
     templateUrl: labMapTpl,
     controller: 'LabMapController',
@@ -104,12 +106,16 @@ class LabMapController {
             allowIntersection: false,
             shapeOptions: {
                 weight: 2,
-                fillOpacity: 0.2
+                fillOpacity: 0.2,
+                color: GREEN,
+                fillColor: GREEN
             }
         });
         this.drawPolylineHandler = new L.Draw.Polyline(this.mapWrapper.map, {
             shapeOptions: {
-                weight: 2
+                weight: 2,
+                color: GREEN,
+                fillColor: GREEN
             },
             metric: true,
             feet: false,

@@ -250,7 +250,7 @@ export default (app) => {
                 }
             });
 
-            this.setReauthentication(authResult.accessToken);
+            this.setReauthentication(authResult.idToken);
 
             this.featureFlagOverrides.setUser(this.profile);
             // Flags set in the `/config` endpoint; default.
@@ -309,17 +309,17 @@ export default (app) => {
 
         getProfile() {
             if (!this.profile) {
-                let idToken = this.localStorage.get('idToken');
+                let idToken = this.token();
                 this.profile = idToken && this.jwtHelper.decodeToken(idToken);
             }
             return this.profile;
         }
 
         token() {
-            if (!this.accessToken) {
-                this.accessToken = this.localStorage.get('accessToken');
+            if (!this.idToken) {
+                this.idToken = this.localStorage.get('idToken');
             }
-            return this.accessToken;
+            return this.idToken;
         }
 
         logout() {
@@ -384,9 +384,11 @@ export default (app) => {
                 try {
                     const expDate = this.jwtHelper.getTokenExpirationDate(accessToken);
                     const nowDate = new Date();
-                    const timeoutMillis = expDate.getTime() - nowDate.getTime() - 5 * 60 * 1000;
+                    const timeoutMillis = expDate.getTime() - nowDate.getTime();
                     // Store in case we need to cancel for some reason
-                    this.pendingReauth = this.$timeout(() => this.login(null), timeoutMillis);
+                    this.pendingReauth = this.$timeout(() => {
+                        this.logout();
+                    }, timeoutMillis);
                 } catch (e) {
                     this.$state.go('login');
                 }

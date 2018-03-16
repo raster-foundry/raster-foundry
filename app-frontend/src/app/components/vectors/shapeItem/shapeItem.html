@@ -1,0 +1,27 @@
+<div class="list-group-item"
+     ng-class="{'disabled': $ctrl.isDisabled,
+                'clickable': $ctrl.isClickable}">
+  <div class="list-group-overflow">
+    <div>
+      <span title="{{$ctrl.shape.properties.name}}">
+        <strong class="color-dark">
+          {{$ctrl.shape.properties.name}}
+        </strong>
+      </span>
+    </div>
+    <div>
+      <span title="{{$ctrl.shape.properties.modifiedAt}}">
+        {{$ctrl.shape.properties.modifiedAt | date}}
+      </span>
+    </div>
+    <div>
+      <span ng-attr-title="{{$ctrl.shape.properties.description}}">
+        {{$ctrl.shape.properties.description}}
+      </span>
+    </div>
+  </div>
+  <div class="list-group-right">
+    <ng-transclude>
+    </ng-transclude>
+  </div>
+</div>

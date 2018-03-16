@@ -2,16 +2,18 @@ import {Map, Set} from 'immutable';
 
 /* eslint no-unused-vars: 0 */
 /* eslint spaced-comment: 0 */
-/* globals BUILDCONFIG _ console */
+/* globals BUILDCONFIG _ console setTimeout*/
 
 class MapWrapper {
     // MapWrapper is a bare es6 class, so does not use angular injections
     constructor( // eslint-disable-next-line
-        leafletMap, mapId, imageOverlayService, datasourceService, options, thumbnailService
+        $q, leafletMap, mapId, imageOverlayService, datasourceService, options, thumbnailService
     ) {
+        this.$q = $q;
         this.thumbnailService = thumbnailService;
         this.map = leafletMap;
         this.mapId = mapId;
+
         this.imageOverlayService = imageOverlayService;
         this.datasourceService = datasourceService;
         this.options = options;
@@ -66,6 +68,7 @@ class MapWrapper {
             this.map.scrollWheelZoom,
             this.map.doubleClickZoom,
             this.map.dragging,
+
             this.map.touchZoom,
             this.map.boxZoom,
             this.map.keyboard
@@ -454,70 +457,52 @@ class MapWrapper {
 
     /** Display a thumbnail of the scene
      * @param {object} scene Scene with footprint to display on the map
+     * @param {object} repository {label, service} repository object
      * @param {object} thumbnailOptions options for displaying the thumbnail
      *                                  valid properties: persist, useSmall, dataRepo, url
      * @returns {this} this
      */
-    setThumbnail(scene, thumbnailOptions) {
+    setThumbnail(scene, repository, thumbnailOptions) {
         if (this.persistedThumbnails.has(scene.id)) {
             return this;
         }
 
-        let options = Object.assign({dataRepo: 'Raster Foundry'}, thumbnailOptions);
+        let options = Object.assign({}, thumbnailOptions);
 
-        let footprintGeojson = Object.assign({
-            properties: {
-                options: {
-                    fillOpacity: 0,
-                    weight: 0,
-                    interactive: false
+        let footprintGeojson = Object.assign(
+            {},
+            scene.dataFootprint,
+            {
+                properties: {
+                    options: {
+                        stroke: 1,
+                        fillOpacity: 0,
+                        weight: 2,
+                        interactive: false
+                    }
                 }
             }
-        }, scene.dataFootprint);
+        );
         if (scene.tileFootprint && scene.thumbnails && scene.thumbnails.length) {
             // get smallest thumbnail - it's a small map
+
             let boundsGeoJson = L.geoJSON();
             boundsGeoJson.addData(scene.tileFootprint);
             let imageBounds = boundsGeoJson.getBounds();
 
-            if (options.dataRepo === 'Raster Foundry') {
-                let thumbUrl = this.thumbnailService.getBestFitUrl(
-                    scene.thumbnails, options.useSmall ? 100 : 1000
-                );
-                this.datasourceService.get(scene.datasource).then(d => {
-                    let overlay = this.imageOverlayService.createNewImageOverlay(
-                        thumbUrl,
-                        imageBounds, {
-                            opacity: 1,
-                            dataMask: scene.dataFootprint,
-                            thumbnail: thumbUrl,
-                            attribution: `©${d.name} `
-                        }
-                    );
-                    if (!options.persist) {
-                        this.setLayer('thumbnail', overlay);
-                    } else {
-                        this.persistedThumbnails = this.persistedThumbnails.set(scene.id, overlay);
-                        this.setLayer(
-                            'Selected Scenes',
-                            this.persistedThumbnails.toArray(),
-                            true
-                        );
-                    }
-                    this.setGeojson(
-                        'thumbnail',
-                        footprintGeojson
-                    );
-                });
-            } else if (options.dataRepo === 'Planet Labs' && options.url) {
+            this.$q.all({
+                url: repository.service.getPreview(scene),
+                datasource: repository.service.getDatasource(scene)
+            }).then(({url, datasource}) => {
                 let overlay = this.imageOverlayService.createNewImageOverlay(
-                    options.url,
+                    url,
                     imageBounds,
                     {
                         opacity: 1,
-                        dataMask: scene.dataFootprint,
-                        thumbnail: options.url,
-                        attribution: `©${scene.datasource} `
+                        dataMask: repository.service.skipThumbnailClipping ?
+                            scene.tileFootprint : scene.dataFootprint,
+                        thumbnail: url,
+                        attribution: `${datasource.name} `
                     }
                 );
                 if (!options.persist) {
@@ -534,7 +519,7 @@ class MapWrapper {
                     'thumbnail',
                     footprintGeojson
                 );
-            }
+            });
         } else if (scene.dataFootprint) {
             this.deleteLayers('thumbnail');
             this.setGeojson(
@@ -560,13 +545,42 @@ class MapWrapper {
         return this;
     }
 
-    /** Hold the state of the map in case it's needed later
-      * @param {state} state to hold, e.g. specifying latlng center and zoom
-      * @returns {this} this
-      */
-    holdState(state) {
-        this.heldState = state;
-        return this;
+    toggleFullscreen(force) {
+        // eslint-disable-next-line
+        let parent = this.map._mapPane.parentElement.parentElement;
+        const setMaxStyle = () => {
+            let style = `
+                position: fixed;
+                width: 100vw;
+                height: calc(100vh - 4.3em);
+                z-index: 1002;
+                top: 4.3em;
+                left: 0;
+            `.replace(/\s+/g, ' ');
+            parent.style.cssText = style;
+        };
+
+        const setNormalStyle = () => {
+            parent.style.cssText = 'position: relative;';
+        };
+
+        if (typeof force !== 'undefined') {
+            if (force) {
+                this.maximized = true;
+                setMaxStyle();
+            } else {
+                this.maximized = false;
+                setNormalStyle();
+            }
+        } else if (this.maximized) {
+            this.maximized = false;
+            setNormalStyle();
+        } else {
+            this.maximized = true;
+            setMaxStyle();
+        }
+
+        setTimeout(() => this.map.invalidateSize(), 150);
     }
 }
 
@@ -588,7 +602,7 @@ export default (app) => {
         registerMap(map, id, options) {
             let mapWrapper =
                 new MapWrapper(
-                    map, id, this.imageOverlayService, this.datasourceService,
+                    this.$q, map, id, this.imageOverlayService, this.datasourceService,
                     options, this.thumbnailService);
             this.maps = this.maps.set(id, mapWrapper);
             // if any promises , resolve them

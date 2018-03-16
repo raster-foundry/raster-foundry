@@ -1,8 +1,82 @@
 # Change Log
 
-## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/HEAD)
+## [0.33.2](https://github.com/raster-foundry/raster-foundry/tree/0.33.2) (2018-03-16)
 
-[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.30.0...HEAD)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.33.1...0.33.2)
+
+**Merged pull requests:**
+
+- Change acquisition date display to UTC [\#3060](https://github.com/raster-foundry/raster-foundry/pull/3060)
+- Fix scene delete and scene display after being added issues [\#3057](https://github.com/raster-foundry/raster-foundry/pull/3057)
+
+## [0.33.1](https://github.com/raster-foundry/raster-foundry/tree/0.33.1) (2018-03-13)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.33.0...0.33.1)
+
+**Merged pull requests:**
+
+- Fix share page bug. [\#3051](https://github.com/raster-foundry/raster-foundry/pull/3051)
+
+## [0.33.0](https://github.com/raster-foundry/raster-foundry/tree/0.33.0) (2018-03-13)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.32.0...0.33.0)
+
+**Merged pull requests:**
+
+- Use BUILDCONFIG logo on share page [\#3050](https://github.com/raster-foundry/raster-foundry/pull/3050)
+- Fix broken planet thumbnails. [\#3046](https://github.com/raster-foundry/raster-foundry/pull/3046)
+- Fix node ordering in lab [\#3030](https://github.com/raster-foundry/raster-foundry/pull/3030)
+- Preview scenes by clicking the thumbnail, select by clicking [\#3026](https://github.com/raster-foundry/raster-foundry/pull/3026)
+- Enable scene re-ordering in the UI [\#3010](https://github.com/raster-foundry/raster-foundry/pull/3010)
+- Add platform routes and skeleton [\#3005](https://github.com/raster-foundry/raster-foundry/pull/3005)
+
+## [0.32.0](https://github.com/raster-foundry/raster-foundry/tree/0.32.0) (2018-03-06)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.31.0...0.32.0)
+
+**Merged pull requests:**
+
+- Add swagger spec for raw analyses render endpoint [\#3003](https://github.com/raster-foundry/raster-foundry/pull/3003)
+- Fix dropdown filter styling [\#3001](https://github.com/raster-foundry/raster-foundry/pull/3001)
+- Annotation shapefile export [\#3000](https://github.com/raster-foundry/raster-foundry/pull/3000)
+- Overzooming for Multiband Export [\#2997](https://github.com/raster-foundry/raster-foundry/pull/2997)
+- Double planet thumbnail resolution [\#2995](https://github.com/raster-foundry/raster-foundry/pull/2995)
+- Set a default raster size for export [\#2993](https://github.com/raster-foundry/raster-foundry/pull/2993)
+- Resolve dependency NPE error [\#2991](https://github.com/raster-foundry/raster-foundry/pull/2991)
+- Regriding and Logic Fix for GeoTiff Exporting [\#2988](https://github.com/raster-foundry/raster-foundry/pull/2988)
+- fixed several browser issues for both themes [\#2987](https://github.com/raster-foundry/raster-foundry/pull/2987)
+- Docker cron-task should run daily [\#2986](https://github.com/raster-foundry/raster-foundry/pull/2986)
+- Create a JSON interface for datasource licenses. [\#2984](https://github.com/raster-foundry/raster-foundry/pull/2984)
+- Extend upload credential timeout to an hour [\#2983](https://github.com/raster-foundry/raster-foundry/pull/2983)
+- Create admin routes, with user management and team tabs roughed out [\#2982](https://github.com/raster-foundry/raster-foundry/pull/2982)
+- Seed licenses data to the licenses table [\#2979](https://github.com/raster-foundry/raster-foundry/pull/2979)
+- Use built-in Docker subcommands for cleanup [\#2978](https://github.com/raster-foundry/raster-foundry/pull/2978)
+- Improve image overlay clipping [\#2977](https://github.com/raster-foundry/raster-foundry/pull/2977)
+- Update geotiff tile-footprint generation to handle multiple NODATA areas [\#2976](https://github.com/raster-foundry/raster-foundry/pull/2976)
+- Create modals for adding users, teams, and organizations [\#2974](https://github.com/raster-foundry/raster-foundry/pull/2974)
+- Allow changing datasource in scene detail modal [\#2973](https://github.com/raster-foundry/raster-foundry/pull/2973)
+- Create a licenses table and a license column in datasources table [\#2968](https://github.com/raster-foundry/raster-foundry/pull/2968)
+- Fix scene modal [\#2960](https://github.com/raster-foundry/raster-foundry/pull/2960)
+- \[WIP\] ADR - Permissions and Architecture for Organizations [\#2958](https://github.com/raster-foundry/raster-foundry/pull/2958)
+- Add shape browse filter [\#2953](https://github.com/raster-foundry/raster-foundry/pull/2953)
+- Indicate Scene Permissions on Results in Browser [\#2952](https://github.com/raster-foundry/raster-foundry/pull/2952)
+- Bump cats ecosystem to the 1.0 release [\#2948](https://github.com/raster-foundry/raster-foundry/pull/2948)
+- Add browsing of select CMR collections [\#2947](https://github.com/raster-foundry/raster-foundry/pull/2947)
+- Explicitly Order resolvers for Dependencies in `build.sbt` [\#2945](https://github.com/raster-foundry/raster-foundry/pull/2945)
+- Feature/lk/fix planet thumbnail scaling [\#2941](https://github.com/raster-foundry/raster-foundry/pull/2941)
+- Add shared/consistent sorting for scene ordering in projects [\#2939](https://github.com/raster-foundry/raster-foundry/pull/2939)
+- Add Vector view and upload modal [\#2937](https://github.com/raster-foundry/raster-foundry/pull/2937)
+- UI revisions for the project list page [\#2935](https://github.com/raster-foundry/raster-foundry/pull/2935)
+- Adjust logout timer [\#2934](https://github.com/raster-foundry/raster-foundry/pull/2934)
+- styling fix for high-contrast theme datasources filter dropdown [\#2929](https://github.com/raster-foundry/raster-foundry/pull/2929)
+- Update jquery [\#2926](https://github.com/raster-foundry/raster-foundry/pull/2926)
+- Add notification stub to project AOI updates [\#2925](https://github.com/raster-foundry/raster-foundry/pull/2925)
+- Finish supporting Planet browsing [\#2921](https://github.com/raster-foundry/raster-foundry/pull/2921)
+- Add Shapefile Upload Processing Route for Shapes API [\#2919](https://github.com/raster-foundry/raster-foundry/pull/2919)
+
+## [0.31.0](https://github.com/raster-foundry/raster-foundry/tree/0.31.0) (2018-01-19)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.30.0...0.31.0)
 
 **Merged pull requests:**
 
@@ -304,18 +378,25 @@
 
 ## [0.20.0](https://github.com/raster-foundry/raster-foundry/tree/0.20.0) (2017-08-22)
 
-[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.19.0...0.20.0)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.20.0-test-do-not-merge...0.20.0)
 
 **Merged pull requests:**
 
 - Don't cache None tiles forever [\#2430](https://github.com/raster-foundry/raster-foundry/pull/2430)
 - Add page titles for routes to make navigation easier [\#2429](https://github.com/raster-foundry/raster-foundry/pull/2429)
+- Implement new histogram breakpoints and use for min/max [\#2422](https://github.com/raster-foundry/raster-foundry/pull/2422)
+- Add hotkeys for annotation-related actions. Enable shape rotate/rescale. [\#2420](https://github.com/raster-foundry/raster-foundry/pull/2420)
+
+## [0.20.0-test-do-not-merge](https://github.com/raster-foundry/raster-foundry/tree/0.20.0-test-do-not-merge) (2017-08-22)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.19.0...0.20.0-test-do-not-merge)
+
+**Merged pull requests:**
+
 - Fix thumbnails on import page [\#2428](https://github.com/raster-foundry/raster-foundry/pull/2428)
 - Parse bucket more delicately from upload s3 source [\#2427](https://github.com/raster-foundry/raster-foundry/pull/2427)
 - Parse s3 prefixes more delicately [\#2426](https://github.com/raster-foundry/raster-foundry/pull/2426)
 - Add issue template [\#2424](https://github.com/raster-foundry/raster-foundry/pull/2424)
-- Implement new histogram breakpoints and use for min/max [\#2422](https://github.com/raster-foundry/raster-foundry/pull/2422)
-- Add hotkeys for annotation-related actions. Enable shape rotate/rescale. [\#2420](https://github.com/raster-foundry/raster-foundry/pull/2420)
 - Update Airflow configuration file after 1.8.x upgrade [\#2419](https://github.com/raster-foundry/raster-foundry/pull/2419)
 - Set catchup to false for scheduled DAGs [\#2418](https://github.com/raster-foundry/raster-foundry/pull/2418)
 - Upgrade airflow to 1.8.1 and decrease boto logging verbosity [\#2413](https://github.com/raster-foundry/raster-foundry/pull/2413)

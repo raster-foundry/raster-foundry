@@ -25,7 +25,7 @@
       </a>
       <a href
          ng-class="{'active': $ctrl.$state.includes('imports') }"
-         ui-sref="imports.list">
+         ui-sref="imports.rasters">
         <i class="icon-imports"></i>
         <span ng-if="!$ctrl.hideLabels()">Data</span>
       </a>
@@ -43,6 +43,7 @@
   <!-- Nav Right -->
   <div class="navbar-section secondary">
     <nav>
+      <div class="admin-logo" ui-sref="admin" feature-flag="profile-org-edit"></div>
       <div ng-if="$ctrl.authService.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
           <img ng-if="$ctrl.authService.getProfile().picture" class="avatar" ng-src="{{$ctrl.authService.getProfile().picture}}">

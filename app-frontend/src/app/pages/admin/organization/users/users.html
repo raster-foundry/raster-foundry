@@ -1,0 +1,35 @@
+<div class="admin-users-content container column-stretch dashboard">
+  <div class="admin-users-actions">
+    <input type="text" class="form-control admin-search" placeholder="Search for users">
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.newUserModal()">
+      New User
+    </button>
+  </div>
+  <table class="admin-table admin-org-user-table">
+    <tbody>
+      <tr ng-repeat="user in $ctrl.users track by $index">
+        <td class="username">
+          <div class="user-avatar"></div>
+          <div>
+            {{user.name}}
+          </div>
+        </td>
+        <td class="emails">
+          {{user.email}}
+        </td>
+        <td class="roles">
+          {{user.role}}
+        </td>
+        <td class="teams">
+          {{user.teams.length}} Teams
+        </td>
+        <td class="actions">
+          <rf-dropdown data-options="user.options">
+            <span class="icon-caret-down"></span>
+          </rf-dropdown>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

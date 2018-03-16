@@ -2,10 +2,11 @@ import angular from 'angular';
 import {Map, Set} from 'immutable';
 import ProjectActions from '_redux/actions/project-actions';
 import AnnotationActions from '_redux/actions/annotation-actions';
+import _ from 'lodash';
 
 class ProjectsEditController {
     constructor( // eslint-disable-line max-params
-        $log, $q, $state, $scope, modalService, $timeout, $ngRedux,
+        $log, $q, $state, $scope, modalService, $timeout, $ngRedux, $location,
         authService, projectService, projectEditService,
         mapService, mapUtilsService, layerService,
         datasourceService, imageOverlayService, thumbnailService
@@ -15,6 +16,7 @@ class ProjectsEditController {
         this.$q = $q;
         this.$state = $state;
         this.$scope = $scope;
+        this.$location = $location;
         this.modalService = modalService;
         this.authService = authService;
         this.projectService = projectService;
@@ -47,14 +49,14 @@ class ProjectsEditController {
                 this.projectEditService.setCurrentProject(this.projectId, true).then(
                     (project) => {
                         this.project = project;
-                        this.fitProjectExtent();
+                        if (!this.$location.search().bbox) {
+                            this.fitProjectExtent();
+                        }
                         this.loadingProject = false;
                         this.projectUpdateListeners.forEach((wait) => {
                             wait.resolve(project);
                         });
-                        this.getSceneList().then(() => {
-                            this.getDatasources();
-                        });
+                        this.getAndReorderSceneList();
                         if (this.project.isAOIProject) {
                             this.getPendingSceneList();
                         }
@@ -77,8 +79,25 @@ class ProjectsEditController {
 
     $postLink() {
         if (this.project) {
-            this.fitProjectExtent();
+            if (!this.$location.search().bbox) {
+                this.fitProjectExtent();
+            }
         }
+    }
+
+    getAndReorderSceneList() {
+        this.projectService.getSceneOrder(this.projectId).then(
+            (res) => {
+                this.orderedSceneId = res.results;
+            },
+            () => {
+                this.$log.log('error getting ordered scene IDs');
+            }
+        ).finally(() => {
+            this.getSceneList().then(() => {
+                this.getDatasources();
+            });
+        });
     }
 
     waitForProject() {
@@ -108,14 +127,29 @@ class ProjectsEditController {
                 this.addUningestedScenesToMap(allScenes.filter(
                     (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
                 ));
+                this.projectService.getSceneOrder(this.projectId).then(
+                    (res) => {
+                        this.orderedSceneId = res.results;
+                        this.sceneList = _.uniqBy(this.orderedSceneId.map((id) => {
+                            // eslint-disable-next-line
+                            return _.find(allScenes, {id});
+                        }), 'id');
 
-                this.sceneList = allScenes;
-                for (const scene of this.sceneList) {
-                    let scenelayer = this.layerService.layerFromScene(scene, this.projectId);
-                    this.sceneLayers = this.sceneLayers.set(scene.id, scenelayer);
-                }
-                this.layerFromProject();
-                this.initColorComposites();
+                        this.sceneLayers = this.sceneList.map(scene => ({
+                            id: scene.id,
+                            layer: this.layerService.layerFromScene(scene, this.projectId)
+                        })).reduce((sceneLayers, {id, layer}) => {
+                            sceneLayers.set(id, layer);
+                            return sceneLayers;
+                        }, new Map());
+
+                        this.layerFromProject();
+                        this.initColorComposites();
+                    },
+                    (err) => {
+                        this.$log.error('Error while adding scenes to projects', err);
+                    }
+                );
             },
             (error) => {
                 this.sceneRequestState.errorMsg = error;

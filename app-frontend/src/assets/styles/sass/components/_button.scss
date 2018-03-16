@@ -316,6 +316,10 @@
  */
 .btn-group {
   display: flex !important;
+  &.no-grow {
+      display: block !important;
+  }
+
 
   .btn {
     margin: 0 !important;

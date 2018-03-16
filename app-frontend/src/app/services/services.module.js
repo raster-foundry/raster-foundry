@@ -43,6 +43,9 @@ require('./projects/aoi.service')(shared);
 require('./scenes/scene.service')(shared);
 require('./scenes/upload.service')(shared);
 require('./scenes/datasource.service')(shared);
+require('./scenes/rasterFoundryRepository.service')(shared);
+require('./scenes/planetRepository.service')(shared);
+require('./scenes/cmrRepository.service')(shared);
 
 // map
 require('./map/map.service')(shared);
@@ -51,6 +54,9 @@ require('./map/gridLayer.service')(shared);
 require('./map/imageOverlay.service')(shared);
 require('./map/layer.service')(shared);
 require('./map/geocode.service')(shared);
+
+// vectors
+require('./vectors/shapes.service.js')(shared);
 
 // common
 require('./common/mousetip.service')(shared);

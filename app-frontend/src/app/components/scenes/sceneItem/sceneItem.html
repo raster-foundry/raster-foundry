@@ -1,44 +1,55 @@
-<div class="list-group-item has-action {{$ctrl.isDisabled ? 'is-disabled' : ''}}">
-  <div ng-if="$ctrl.isDraggable" ui-tree-handle>
+<div class="list-group-item"
+     ng-class="{'disabled': $ctrl.isDisabled,
+                'clickable': $ctrl.isClickable}">
+  <div title="Drag to reorder this scene"
+       ng-if="$ctrl.isDraggable"
+       ui-tree-handle>
     <i class="icon-gripper"></i>
   </div>
-  <div ng-if="!$ctrl.apiSource || $ctrl.apiSource === 'Raster Foundry'">
+  <div class="item-img-container"
+       ng-class="{'previewable': $ctrl.isPreviewable}"
+       ng-click="$ctrl.isPreviewable && $ctrl.openSceneDetailModal($event)"
+  >
     <rf-status-tag entity-type="scene"
-                   status="$ctrl.scene.statusFields.ingestStatus"></rf-status-tag>
-    <img ng-if="$ctrl.scene.thumbnails[0]"
-         ng-attr-src="{{$ctrl.thumbnailService.getBestFitUrl($ctrl.scene.thumbnails, 75)}}"
+                   ng-if="$ctrl.scene.statusFields.ingestStatus"
+                   status="$ctrl.scene.statusFields.ingestStatus"
+                   ng-class="{'on-drag': $ctrl.isDraggable}"></rf-status-tag>
+    <img ng-attr-src="{{$ctrl.thumbnail}}"
+         ng-if="$ctrl.thumbnail"
          class="rounded-img item-img">
-    <div ng-if="!$ctrl.scene.thumbnails.length"
-         class="rounded-img item-img image-placeholder"></div>
-  </div>
-  <div ng-if="$ctrl.apiSource === 'Planet Labs'">
-    <img ng-if="$ctrl.planetThumbnail"
-         ng-attr-src="{{'data:image/png;base64,' + $ctrl.planetThumbnail}}"
-         class="rounded-img item-img">
-    <div ng-if="!$ctrl.planetThumbnail"
-        class="rounded-img item-img image-placeholder"></div>
+    <div ng-if="!$ctrl.thumbnail"
+        class="rounded-img item-img image-placeholder">
+        <div>No preview available</div>
+    </div>
   </div>
   <div class="list-group-overflow">
     <div>
       <span title="{{$ctrl.scene.name}}">
         <strong class="color-dark">
-          {{$ctrl.getReferenceDate() | date}}
+          {{($ctrl.getReferenceDate() | date : 'mediumDate' : '+0000') + ' (UTC)'}}
         </strong>
       </span>
     </div>
     <div>
-      <span ng-attr-title="{{$ctrl.datasource.name}}"
-            ng-if="$ctrl.apiSource === 'Raster Foundry'">{{$ctrl.datasourceLoaded ? $ctrl.datasource.name : 'Loading datasource'}}</span>
-      <span ng-attr-title="{{$ctrl.scene.name}}"
-            ng-if="$ctrl.apiSource === 'Planet Labs'">{{$ctrl.scene.name}}</span>
+      <span ng-attr-title="{{$ctrl.datasource}}">
+            {{$ctrl.datasource ? $ctrl.datasource.name : 'Loading datasource'}}</span>
     </div>
   </div>
   <div class="list-group-right">
     <rf-toggle-old
-      ng-if="$ctrl.onSelect && !$ctrl.isDisabled"
+      ng-if="$ctrl.onSelect && !$ctrl.isDisabled && $ctrl.hasDownloadPermission()"
       model="$ctrl.selectedStatus"
       on-change="$ctrl.toggleSelected($event)">
     </rf-toggle-old>
+    <div class="scene-item-lock"
+      tooltips
+      tooltip-template="This imagery requires additional access{{$ctrl.repository.service.permissionSource}}."
+      tooltip-size="small"
+      tooltip-class="rf-tooltip"
+      tooltip-side="left"
+      ng-if="!$ctrl.hasDownloadPermission()">
+      <span class="icon-locked"></span>
+    </div>
     <ng-transclude>
     </ng-transclude>
   </div>

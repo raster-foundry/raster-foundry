@@ -1,4 +1,2 @@
-jenkins_master ansible_host=jenkins.staging.rasterfoundry.com ansible_user=ubuntu
-
 [jenkins]
-jenkins_master
+jenkins_master ansible_host=jenkins.staging.rasterfoundry.com ansible_user=ubuntu

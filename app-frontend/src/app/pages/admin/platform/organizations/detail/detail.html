@@ -1,0 +1,18 @@
+<div class="admin-detail-header">
+  <div class="admin-breadcrumb">
+    <div><a ui-sref=".^">All organizations</a></div>
+    <span class="icon-caret-right"></span>
+    <div class="admin-logo"></div>
+    <div>Organization Name</div>
+  </div>
+</div>
+<div class="admin-detail-container">
+  <div class="admin-detail-sidebar">
+    <div><a ui-sref=".features" ui-sref-active="active">Features</a></div>
+    <div><a ui-sref=".limits" ui-sref-active="active">Limits/Sharing</a></div>
+    <div><a ui-sref=".settings" ui-sref-active="active">Settings</a></div>
+  </div>
+  <div class="admin-detail-content">
+    <ui-view></ui-view>
+  </div>
+</div>

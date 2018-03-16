@@ -14,7 +14,7 @@
         state: present,
         backrefs: yes }
     - { regexp: '(.*<numExecutors>)\d+(</numExecutors>.*)',
-        line: '\g<1>1\g<2>',
+        line: '\g<1>2\g<2>',
         state: present,
         backrefs: yes }
 
@@ -50,17 +50,11 @@
   notify:
     - Restart Jenkins
 
-- name: Setup hourly docker-gc cron task
+- name: Setup hourly Docker cleanup cron task
   cron:
-    name: "docker-gc"
+    name: "docker-prune"
     user: "{{ jenkins_name }}"
-    special_time: "hourly"
-    job: >
-      /usr/bin/docker run
-      --rm
-      -e FORCE_IMAGE_REMOVAL=1
-      -v /var/run/docker.sock:/var/run/docker.sock
-      -v /etc:/etc
-      spotify/docker-gc
+    special_time: "daily"
+    job: docker system prune -af
     state: "present"
   changed_when: False

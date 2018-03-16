@@ -6,8 +6,9 @@
 </div>
 <div class="list-group">
   <rf-scene-item
+      previewable
       scene="scene"
-      ng-click="$ctrl.viewSceneDetail(scene)"
+      repository="$ctrl.repository"
       ng-repeat="scene in $ctrl.importList track by scene.id">
     <div class="btn-group" ng-if="$ctrl.sceneActions && $ctrl.sceneActions.length">
       <button type="button"

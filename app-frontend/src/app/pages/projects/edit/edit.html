@@ -4,7 +4,10 @@
     <a href
        class=""
        ui-sref="projects.edit.scenes"
-       ui-sref-active="active"
+       ng-class="{
+              active: ('projects.edit.scenes' | includedByState) ||
+                      ('projects.edit.browse' | includedByState)
+              }"
        data-title="Scenes">
       <i class="icon-project"></i>
       <span>Scenes</span>

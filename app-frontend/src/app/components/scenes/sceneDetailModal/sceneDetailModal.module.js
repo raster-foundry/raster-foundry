@@ -17,7 +17,7 @@ const SceneDetailModalComponent = {
 class SceneDetailModalController {
     constructor(
         $log, $state, modalService, $scope,
-        moment, sceneService, datasourceService, mapService,
+        moment, sceneService, mapService,
         authService
     ) {
         'ngInject';
@@ -25,11 +25,11 @@ class SceneDetailModalController {
         this.$state = $state;
         this.modalService = modalService;
         this.$scope = $scope;
-        this.Moment = moment;
+        this.moment = moment;
         this.sceneService = sceneService;
-        this.datasourceService = datasourceService;
         this.authService = authService;
         this.scene = this.resolve.scene;
+        this.repository = this.resolve.repository;
         this.getMap = () => mapService.getMap('scene-preview-map');
         $scope.$on('$destroy', () => {
             mapService.deregisterMap('scene-preview-map');
@@ -37,17 +37,26 @@ class SceneDetailModalController {
     }
 
     $postLink() {
-        this.datasourceLoaded = false;
         this.getMap().then(mapWrapper => {
-            mapWrapper.setThumbnail(this.scene, {persist: true});
+            mapWrapper.setThumbnail(
+                this.scene,
+                this.repository,
+                {
+                    persist: true
+                }
+            );
             mapWrapper.map.fitBounds(this.getSceneBounds());
         });
-        this.datasourceService.get(this.scene.dataSource).then(d => {
-            this.datasourceLoaded = true;
+        this.repository.service.getDatasource(this.scene).then(d => {
             this.datasource = d;
+        });
+        this.thumbnail = false;
+        this.repository.service.getThumbnail(this.scene).then(t => {
+            this.thumbnail = t;
         });
         this.accDateDisplay = this.setAccDateDisplay();
         this.isUploadDone = true;
+        this.isOwner = this.scene.owner === this.authService.getProfile().sub;
     }
 
     openDownloadModal() {
@@ -68,11 +77,29 @@ class SceneDetailModalController {
         this.close({$value: data});
     }
 
-    toggleMetadataEdit() {
-        this.isEditMetadata = !this.isEditMetadata;
-        if (!this.isEditMetadata) {
-            this.updateMetadata();
+    cancelEditing() {
+        this.editingMetadata = false;
+    }
+
+    startEditing() {
+        if (!this.sources) {
+            this.repository.service.getSources().then((sources) => {
+                this.sources = sources;
+                this.selectedDatasource = this.datasource;
+                this.editingMetadata = true;
+            }, (err) => {
+                this.selectedDatasource = this.datasource;
+                this.datasourceError = err;
+            });
+        } else {
+            this.selectedDatasource = this.datasource;
+            this.editingMetadata = true;
         }
+    }
+
+    finishEditing() {
+        this.editingMetadata = false;
+        this.updateMetadata();
     }
 
     setAccDateDisplay() {
@@ -82,17 +109,19 @@ class SceneDetailModalController {
     }
 
     updateMetadata() {
-        // TODO: visibility and data source should be editable eventually
+        // TODO: visibility should be editable eventually
         this.isUploadDone = false;
         if (!this.newFilterFields.acquisitionDate) {
             this.newFilterFields.acquisitionDate = this.scene.filterFields.acquisitionDate;
         }
         this.scene = Object.assign(this.scene, {
-            'modifiedAt': this.Moment().toISOString(),
+            datasource: this.selectedDatasource.id,
+            'modifiedAt': this.moment().toISOString(),
             'modifiedBy': this.scene.owner,
             'sceneMetadata': this.newSceneMetadata,
             'filterFields': this.newFilterFields
         });
+        this.datasource = this.selectedDatasource;
         this.sceneService.update(this.scene).then(
             () => {
                 this.isUploadDone = true;
@@ -104,7 +133,7 @@ class SceneDetailModalController {
     }
 
     formatAcqDate(date) {
-        return date.length ? this.Moment(date).format('MM/DD/YYYY') : 'MM/DD/YYYY';
+        return date.length ? this.moment.utc(date).format('MM/DD/YYYY') + ' (UTC)' : 'MM/DD/YYYY';
     }
 
     openDatePickerModal(date) {
@@ -114,7 +143,7 @@ class SceneDetailModalController {
                 windowClass: 'auto-width-modal',
                 resolve: {
                     config: () => Object({
-                        selectedDay: this.Moment(date)
+                        selectedDay: this.moment(date)
                     })
                 }
             }).result.then(selectedDay => {
@@ -144,6 +173,24 @@ class SceneDetailModalController {
         } else if (this.newFilterFields[field] > this.getMaxBound(field)) {
             this.newFilterFields[field] = this.getMaxBound(field);
         }
+    }
+
+    selectDatasource(item) {
+        this.selectedDatasource = item;
+    }
+
+    saveDatasourceEdit() {
+        this.scene = Object.assign(this.scene, {
+            datasource: this.selectedDatasource.id
+        });
+        this.sceneService.update(this.scene).then(
+            () => {
+                this.isUploadDone = true;
+            },
+            () => {
+                this.isUploadDone = false;
+            }
+        );
     }
 }
 const SceneDetailModalModule = angular.module('components.scenes.sceneDetailModal', []);

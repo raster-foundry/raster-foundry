@@ -28,6 +28,11 @@ class SearchController {
             }, 0);
         }
     }
+
+    clearSearch() {
+        this.searchText = '';
+        this.onSearch();
+    }
 }
 
 export default angular.module('components.common.search', [])

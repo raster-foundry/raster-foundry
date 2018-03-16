@@ -108,6 +108,9 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
       .result
       .headOption
 
+  def getExport2(exportId: UUID, user: User)(implicit database: DB): Future[Option[Export]] =
+    database.db.run(getExport(exportId, user))
+
   def getExportWithStatus(exportId: UUID, user: User, exportStatus: ExportStatus) =
     Exports
       .filterToSharedOrganizationIfNotInRoot(user)
@@ -249,7 +252,7 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
 
     for {
       tRun   <- OptionT(database.db.run(ToolRuns.getToolRun(toolRunId, user)))
-      ast    <- OptionT.pure[Future, MapAlgebraAST](tRun.executionParameters.as[MapAlgebraAST].valueOr(throw _))
+      ast    <- OptionT.pure[Future](tRun.executionParameters.as[MapAlgebraAST].valueOr(throw _))
       (scenes, projects) <- ingestLocs(ast, user)
     } yield {
       ASTInput(ast, scenes, projects)
@@ -290,7 +293,7 @@ object Exports extends TableQuery(tag => new Exports(tag)) with LazyLogging {
         OptionT(ScenesToProjects.allSceneIngestLocs(id)).map((id, _))
       }).sequence.map(_.toMap)
 
-    (scenesF |@| projectsF).map((_,_))
+    (scenesF, projectsF).mapN((_,_))
   }
 
   private def simpleInput(

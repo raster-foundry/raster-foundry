@@ -1,21 +1,16 @@
 package com.azavea.rf.api.shape
 
-import java.net.URL
 import java.util.UUID
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.Success
-
-import akka.http.scaladsl.server.{Route, PathMatcher}
-import akka.http.scaladsl.model.{StatusCodes, Uri}
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.StatusCodes
 import com.typesafe.scalalogging.LazyLogging
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
-
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.common._
 import com.azavea.rf.database.tables.{Shapes, Users}
@@ -23,11 +18,19 @@ import com.azavea.rf.database.query._
 import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.GeoJsonCodec._
+import geotrellis.shapefile.ShapeFileReader
+import better.files.{File => ScalaFile, _}
+
+import akka.http.scaladsl.server.directives.FileInfo
+import geotrellis.proj4.{CRS, LatLng, WebMercator}
+import geotrellis.slick.Projected
+import geotrellis.vector.reproject.Reproject
 
 @JsonCodec
 case class ShapeFeatureCollectionCreate (
   features: Seq[Shape.GeoJSONFeatureCreate]
 )
+
 
 trait ShapeRoutes extends Authentication
   with QueryParametersCommon
@@ -44,12 +47,64 @@ trait ShapeRoutes extends Authentication
       get { listShapes } ~
       post { createShape }
     } ~
-    pathPrefix(JavaUUID) { shapeId =>
-      pathEndOrSingleSlash {
-        get { getShape(shapeId) } ~
-        put { updateShape(shapeId) } ~
-        delete { deleteShape(shapeId) }
+      post {
+        pathPrefix("upload") {
+          pathEndOrSingleSlash {
+            authenticate { user =>
+              val tempFile = ScalaFile.newTemporaryFile()
+              tempFile.deleteOnExit()
+              val response = storeUploadedFile("name", (_) => tempFile.toJava) { (m, _) =>
+                processShapefile(user, tempFile, m)
+              }
+              tempFile.delete()
+              response
+            }
+          }
+        }
+      } ~
+      pathPrefix(JavaUUID) { shapeId =>
+        pathEndOrSingleSlash {
+          get { getShape(shapeId) } ~
+            put { updateShape(shapeId) } ~
+            delete { deleteShape(shapeId) }
+        }
       }
+  }
+
+  def processShapefile(user: User, tempFile: ScalaFile, fileMetadata: FileInfo) = {
+    val unzipped = tempFile.unzip()
+    val matches = unzipped.glob("*.shp")
+    matches.hasNext match {
+      case true => {
+        val shapeFile = matches.next()
+        val features = ShapeFileReader.readMultiPolygonFeatures(shapeFile.toString)
+
+        // Only reads first feature
+        features match {
+          case Nil => complete(StatusCodes.ClientError(400)("Bad Request", "No MultiPolygons detected in Shapefile"))
+          case feature +: _ => {
+            val geometry = feature.geom
+            val reprojectedGeometry = Projected(Reproject(geometry, LatLng, WebMercator), 3857)
+            reprojectedGeometry.isValid match {
+              case true => {
+                val shape = Shape.create(
+                  Some(user.id),
+                  user.organizationId,
+                  fileMetadata.fileName,
+                  None,
+                  Some(reprojectedGeometry)
+                )
+                complete(StatusCodes.Created, Shapes.insertShapes(Seq(shape), user))
+              }
+              case _ => {
+                val reason = "No valid MultiPolygons found, please ensure coordinates are in EPSG:4326 before uploading"
+                complete(StatusCodes.ClientError(400)("Bad Request", reason))
+              }
+            }
+          }
+        }
+      }
+      case _ => complete(StatusCodes.ClientError(400)("Bad Request", "No Shapefile Found in Archive"))
     }
   }
 

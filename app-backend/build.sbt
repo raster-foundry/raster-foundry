@@ -24,14 +24,23 @@ lazy val commonSettings = Seq(
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth", "100"
   ),
-  resolvers ++= Seq(
+  updateOptions := updateOptions.value.withGigahorse(false),
+  externalResolvers := Seq(
+    "Geotoolkit Repo" at "http://maven.geotoolkit.org",
+    "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
+    "imageio-ext Repository" at "http://maven.geo-solutions.it",
+    DefaultMavenRepository,
     Resolver.sonatypeRepo("snapshots"),
+    Resolver.bintrayRepo("azavea", "maven"),
     Resolver.bintrayRepo("lonelyplanet", "maven"),
     Resolver.bintrayRepo("guizmaii", "maven"),
     Resolver.bintrayRepo("kwark", "maven"), // Required for Slick 3.1.1.2, see https://github.com/azavea/raster-foundry/pull/1576
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
-    Resolver.bintrayRepo("naftoligug", "maven")
+    Resolver.bintrayRepo("naftoligug", "maven"),
+    Classpaths.sbtPluginReleases,
+    Opts.resolver.sonatypeReleases,
+    Resolver.bintrayIvyRepo("kamon-io", "sbt-plugins")
   ),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
@@ -129,6 +138,8 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
   Dependencies.ammoniteOps,
   Dependencies.geotrellisSlick,
   Dependencies.geotrellisS3,
+  Dependencies.geotrellisShapefile,
+  Dependencies.betterFiles,
   Dependencies.caffeine,
   Dependencies.scaffeine,
   Dependencies.findbugAnnotations,
@@ -164,7 +175,7 @@ lazy val common = Project("common", file("common"))
     Dependencies.findbugAnnotations,
     Dependencies.ammoniteOps,
     Dependencies.chill,
-    Dependencies.cats,
+    Dependencies.catsCore,
     Dependencies.awsBatchSdk,
     Dependencies.awsStsSdk
   )})
@@ -183,10 +194,13 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.geotrellisSlick % "provided",
       Dependencies.geotrellisRaster,
+      Dependencies.geotrellisGeotools,
+      Dependencies.geotools,
       Dependencies.circeCore,
       Dependencies.circeGenericExtras,
       Dependencies.akka,
-      Dependencies.akkahttp
+      Dependencies.akkahttp,
+      Dependencies.betterFiles
     )
   })
 
