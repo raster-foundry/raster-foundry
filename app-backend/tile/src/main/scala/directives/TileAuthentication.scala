@@ -65,7 +65,7 @@ trait TileAuthentication extends Authentication
     parameter('mapToken).flatMap { mapToken =>
       val mapTokenId = UUID.fromString(mapToken)
 
-      val doesTokenExist = rfCache.caching(s"project-$projectId-token-$mapToken", 300) {
+      val doesTokenExist = rfCache.caching(s"project-$projectId-token-$mapToken") {
         MapTokenDao.query
           .filter(mapTokenId)
           .filter(fr"project_id=${projectId}")
@@ -90,7 +90,7 @@ trait TileAuthentication extends Authentication
 
   def validateMapTokenParameters(toolRunId: UUID, mapToken: String): Directive1[User] = {
     val mapTokenId = UUID.fromString(mapToken)
-    val mapTokenQuery = rfCache.caching(s"mapToken-$mapTokenId-toolRunId-$toolRunId", 600) {
+    val mapTokenQuery = rfCache.caching(s"mapToken-$mapTokenId-toolRunId-$toolRunId") {
         MapTokenDao.query
           .filter(mapTokenId)
           .filter(fr"toolrun_id=${toolRunId}")
@@ -100,7 +100,7 @@ trait TileAuthentication extends Authentication
     onSuccess(mapTokenQuery).flatMap {
       case Some(token) => {
         val userId = token.owner.toString
-        val userFromId = rfCache.caching(s"user-$userId-token-$mapToken", 600) {
+        val userFromId = rfCache.caching(s"user-$userId-token-$mapToken") {
           UserDao.query.filter(fr"id=${userId}").selectOption.transact(xa).unsafeToFuture
         }
         onSuccess(userFromId).flatMap {
