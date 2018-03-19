@@ -12,7 +12,6 @@ import com.typesafe.scalalogging.LazyLogging
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
-import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 
 import com.azavea.rf.common.UserErrorHandler
 import com.azavea.rf.api.utils.queryparams._

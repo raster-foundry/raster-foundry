@@ -8,11 +8,8 @@ import cats.effect.IO
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.MapTokenDao
-import com.azavea.rf.datamodel._
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import com.azavea.rf.database.filter.Filterables._
-import doobie.util.transactor.Transactor
 
 import doobie.util.transactor.Transactor
 import com.azavea.rf.database.filter.Filterables._

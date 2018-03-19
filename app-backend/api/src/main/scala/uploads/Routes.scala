@@ -14,7 +14,6 @@ import cats.effect.IO
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import doobie.util.transactor.Transactor
-import com.azavea.rf.datamodel._
 import cats.implicits._
 import com.azavea.rf.database.UploadDao
 import doobie._

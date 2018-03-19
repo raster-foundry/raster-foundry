@@ -10,10 +10,7 @@ import akka.http.scaladsl.server.Route
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import doobie._
-import doobie.implicits._
 import cats.effect.IO
-import com.azavea.rf.database.filter.Filterables._
 
 import doobie._
 import doobie.implicits._

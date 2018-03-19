@@ -22,7 +22,6 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.generic.JsonCodec
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._

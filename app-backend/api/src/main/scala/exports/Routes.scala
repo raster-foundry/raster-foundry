@@ -17,16 +17,16 @@ import java.util.UUID
 import cats.effect.IO
 import com.azavea.rf.database.ExportDao
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.Success
-import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
 import com.azavea.rf.database.filter.Filterables._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
+
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Success
 
 trait ExportRoutes extends Authentication
   with ExportQueryParameterDirective

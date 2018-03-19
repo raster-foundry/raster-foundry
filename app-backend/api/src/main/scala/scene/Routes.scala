@@ -12,7 +12,6 @@ import io.circe.syntax._
 import io.circe.parser._
 import kamon.akka.http.KamonTraceDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import com.azavea.rf.database.filter.Filterables._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
@@ -22,10 +21,8 @@ import java.util.UUID
 import cats.effect.IO
 import com.azavea.rf.database.{SceneDao, SceneWithRelatedDao}
 import doobie.util.transactor.Transactor
-import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.datamodel._
 import cats.implicits._
 import doobie._
 import doobie.implicits._

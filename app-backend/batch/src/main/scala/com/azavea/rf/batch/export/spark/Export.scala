@@ -13,9 +13,6 @@ import com.azavea.rf.common.S3.putObjectString
 
 import com.azavea.maml.serve._
 import com.azavea.maml.eval._
-import com.dropbox.core.v2.DbxClientV2
-import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
-import com.typesafe.scalalogging.LazyLogging
 import io.circe.parser._
 import io.circe.syntax._
 import cats.data.Validated._

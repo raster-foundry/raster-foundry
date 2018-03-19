@@ -3,8 +3,6 @@ package com.azavea.rf.batch.landsat8
 import com.azavea.rf.batch.Job
 import com.azavea.rf.batch.util._
 import com.azavea.rf.database.{SceneDao, SceneWithRelatedDao, UserDao}
-import doobie.util.transactor.Transactor
-import doobie.Fragments._
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
 import io.circe._
@@ -23,10 +21,10 @@ import com.azavea.rf.database.util.RFTransactor
 import doobie.free.connection.ConnectionIO
 import doobie.util.transactor.Transactor
 import doobie._
+import doobie.Fragments._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import Fragments._
 import cats.free.Free
 import doobie.free.connection
 

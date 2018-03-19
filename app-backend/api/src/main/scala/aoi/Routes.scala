@@ -8,7 +8,6 @@ import com.azavea.rf.datamodel._
 import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import doobie._
 import cats.effect.IO
 import com.azavea.rf.database.filter.Filterables._
 import doobie._

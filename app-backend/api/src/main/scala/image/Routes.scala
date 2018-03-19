@@ -1,8 +1,5 @@
 package com.azavea.rf.api.image
 
-import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database.ImageDao
-import com.azavea.rf.datamodel._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
@@ -12,7 +9,9 @@ import java.util.UUID
 
 import cats.effect.IO
 import doobie.util.transactor.Transactor
+import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.database.ImageDao
 import com.azavea.rf.datamodel._
 import cats.implicits._
 import doobie._

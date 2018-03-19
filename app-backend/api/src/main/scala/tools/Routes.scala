@@ -17,7 +17,6 @@ import kamon.akka.http.KamonTraceDirectives
 import java.util.UUID
 
 import cats.effect.IO
-import cats.implicits._
 import com.azavea.rf.database.ToolDao
 import doobie._
 import doobie.implicits._

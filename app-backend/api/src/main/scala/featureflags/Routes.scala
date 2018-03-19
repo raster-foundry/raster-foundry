@@ -4,7 +4,6 @@ import akka.http.scaladsl.server.Route
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.FeatureFlagDao
 import com.azavea.rf.datamodel._
-import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._

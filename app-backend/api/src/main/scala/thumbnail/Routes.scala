@@ -18,7 +18,6 @@ import java.net.URI
 import cats.effect.IO
 import doobie.util.transactor.Transactor
 import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.datamodel._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
