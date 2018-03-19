@@ -23,6 +23,8 @@ package object S3 {
     .withRegion(Regions.US_EAST_1)
     .build()
 
+  // we want to ignore here, because uri.getHost returns null instead of an Option[String] -- thanks Java
+  @SuppressWarnings(Array("NullParameter"))
   def bucketAndPrefixFromURI(uri: URI): (String, String) = {
     val prefix = uri.getPath match {
       case "" => ""
@@ -60,7 +62,7 @@ package object S3 {
     client.generatePresignedUrl(generatePresignedUrlRequest)
   }
 
-  final def getSignedUrls(source: URI, duration: Duration = Duration.ofDays(1)): List[URL] = {
+  def getSignedUrls(source: URI, duration: Duration = Duration.ofDays(1)): List[URL] = {
     @tailrec
     def get(listing: ObjectListing, accumulator: List[URL]): List[URL] = {
       def getObjects: List[URL] =
@@ -89,7 +91,7 @@ package object S3 {
     get(client.listObjects(listObjectsRequest), Nil)
   }
 
-  final def getObjectKeys(source: URI): List[String] = {
+  def getObjectKeys(source: URI): List[String] = {
     @tailrec
     def get(listing: ObjectListing, accumulator: List[String]): List[String] = {
       def getObjects: List[String] =
@@ -115,7 +117,7 @@ package object S3 {
     get(client.listObjects(listObjectsRequest), Nil)
   }
 
-  final def getObjectPaths(source: URI): List[String] = {
+  def getObjectPaths(source: URI): List[String] = {
     @tailrec
     def get(listing: ObjectListing, accumulator: List[String]): List[String] = {
       def getObjects: List[String] =
