@@ -19,6 +19,7 @@ object M101 {
   ALTER TABLE scenes_to_projects ALTER COLUMN mosaic_definition SET NOT NULL;
   ALTER TABLE uploads ALTER COLUMN files SET DEFAULT '{}';
   ALTER TABLE uploads ALTER COLUMN files SET NOT NULL;
+  ALTER TABLE tool_runs RENAME COLUMN organization TO organization_id;
 """
     )
   )
