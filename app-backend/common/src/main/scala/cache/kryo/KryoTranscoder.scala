@@ -13,7 +13,6 @@ class KryoTranscoder extends Transcoder[AnyRef] {
   def getMaxSize: Int = CachedData.MAX_SIZE
 
   def encode(obj: AnyRef): CachedData = {
-    kryo.toBytesWithClass()
     val bytes = kryo.toBytesWithClass(obj)
     new CachedData(0, bytes, CachedData.MAX_SIZE)
   }

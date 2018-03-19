@@ -1,8 +1,9 @@
 package com.azavea.rf.tile.image
 
 import com.azavea.rf.tile._
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.ScenesToProjects
+import com.azavea.rf.database.{SceneToProjectDao}
+import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.{MosaicDefinition, WhiteBalance}
 import com.azavea.rf.common.cache.CacheClient
 import geotrellis.raster._
@@ -15,9 +16,17 @@ import geotrellis.slick.Projected
 import geotrellis.vector.{Extent, Point, Polygon}
 import cats.data._
 import cats.implicits._
+import cats.effect.IO
 import java.util.UUID
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
+
 
 import com.azavea.rf.common.utils.TileUtils
+import com.azavea.rf.database.util.RFTransactor
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -27,15 +36,15 @@ import com.typesafe.scalalogging.LazyLogging
 
 object MultiBandMosaic extends LazyLogging with KamonTrace {
   lazy val memcachedClient = LayerCache.memcachedClient
-  implicit val database = Database.DEFAULT
   val system = AkkaSystem.system
   implicit val blockingDispatcher =
     system.dispatchers.lookup("blocking-dispatcher")
+  implicit lazy val xa = RFTransactor.xa
 
   val store = PostgresAttributeStore()
   val rfCache = new CacheClient(memcachedClient)
 
-  def tileLayerMetadata(id: UUID, zoom: Int)(implicit database: Database,
+  def tileLayerMetadata(id: UUID, zoom: Int)(implicit xa: Transactor[IO],
     sceneIds: Set[UUID]): OptionT[Future, (Int, TileLayerMetadata[SpatialKey])] = {
 
     logger.debug(s"Requesting tile layer metadata (layer: $id, zoom: $zoom")
@@ -52,20 +61,20 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
   }
 
   def mosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]])(
-    implicit database: Database): OptionT[Future, Seq[MosaicDefinition]] = {
+    implicit xa: Transactor[IO]): Future[Seq[MosaicDefinition]] = {
 
     logger.debug(s"Reading mosaic definition (project: $projectId")
-    OptionT(timedFuture("get-mosaic-definition")(ScenesToProjects.getMosaicDefinition(projectId, polygonOption)))
+    SceneToProjectDao.getMosaicDefinition(projectId, polygonOption).transact(xa).unsafeToFuture
   }
 
   def mosaicDefinition(projectId: UUID)(
-    implicit database: Database): OptionT[Future, Seq[MosaicDefinition]] = {
+    implicit xa: Transactor[IO]): Future[Seq[MosaicDefinition]] = {
     mosaicDefinition(projectId, None)
   }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
   def fetch(id: UUID, zoom: Int, col: Int, row: Int)(
-      implicit database: Database,
+      implicit xa: Transactor[IO],
       sceneIds: Set[UUID]): OptionT[Future, MultibandTile] = {
     tileLayerMetadata(id, zoom).flatMap {
       case (sourceZoom, tlm) =>
@@ -98,7 +107,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     * If no bbox is specified, it will use the project tileLayerMetadata layoutExtent
     */
   def fetchRenderedExtent(id: UUID, zoom: Int,  bbox: Option[Projected[Polygon]])(
-    implicit database: Database, sceneIds: Set[UUID]): OptionT[Future, MultibandTile] =
+    implicit xa: Transactor[IO], sceneIds: Set[UUID]): OptionT[Future, MultibandTile] =
     tileLayerMetadata(id, zoom).flatMap {
       case (sourceZoom, tlm) =>
         val extent: Extent =
@@ -108,7 +117,6 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
                 poly.envelope.reproject(CRS.fromEpsgCode(srid), tlm.crs)
             }
             .getOrElse(tlm.layoutExtent)
-
         LayerCache.layerTileForExtent(id, sourceZoom, extent)
     }
 
@@ -116,8 +124,8 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
   def rawForExtent(projectId: UUID,
                    zoom: Int,
                    bbox: Option[Projected[Polygon]])(
-    implicit database: Database): OptionT[Future, MultibandTile] =
-    mosaicDefinition(projectId).flatMap { mosaic =>
+                   implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = {
+    OptionT(mosaicDefinition(projectId).flatMap { mosaic =>
       implicit val sceneIds = mosaic.map {
         case MosaicDefinition(sceneId, _) => sceneId
       }.toSet
@@ -135,13 +143,15 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
             Option.empty[MultibandTile]
         }
 
-      OptionT(futureMergeTile)
-    }
+      futureMergeTile
+    })
+  }
+
 
   /** Fetch all bands of a [[MultibandTile]] and return them without assuming anything of their semantics */
   def raw(projectId: UUID, zoom: Int, col: Int, row: Int)(
-    implicit database: Database): OptionT[Future, MultibandTile] =
-    mosaicDefinition(projectId).flatMap { mosaic =>
+    implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] =
+    OptionT(mosaicDefinition(projectId).flatMap { mosaic =>
       implicit val sceneIds = mosaic.map {
         case MosaicDefinition(sceneId, _) => sceneId
       }.toSet
@@ -159,8 +169,8 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
             Option.empty[MultibandTile]
         }
 
-      OptionT(futureMergeTile)
-    }
+      futureMergeTile
+    })
 
   /**   Render a multiband tile from TMS pyramids given that they are in the same projection.
     *   If a layer does not go up to requested zoom it will be up-sampled.
@@ -177,12 +187,15 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     *   @param bboxOption the bounding box for the image
     *   @param colorCorrect setting to determine if color correction should be applied
     */
-  def render(projectId: UUID,
-             zoomOption: Option[Int],
-             bboxOption: Option[String],
-             colorCorrect: Boolean = true)(
-      implicit database: Database): OptionT[Future, MultibandTile] = {
-    val bboxPolygon: Option[Projected[Polygon]] =
+  def render(
+    projectId: UUID,
+    zoomOption: Option[Int],
+    bboxOption: Option[String],
+    colorCorrect: Boolean = true
+  )(
+    implicit xa: Transactor[IO]
+  ): OptionT[Future, MultibandTile] = {
+    val polygonBbox: Option[Projected[Polygon]] =
       try {
         bboxOption map { bbox =>
           Projected(Extent.fromString(bbox).toPolygon(), 4326)
@@ -196,42 +209,15 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
       }
 
     val zoom: Int = zoomOption.getOrElse(8)
-    val md = mosaicDefinition(projectId)
-    md.flatMap { mosaic =>
-      val futureTiles: Future[Seq[MultibandTile]] = {
-        implicit val sceneIds = mosaic.map {
-          case MosaicDefinition(sceneId, _) => sceneId
-        }.toSet
+    val md: Future[Seq[MosaicDefinition]] = mosaicDefinition(projectId)
 
-        val tiles = mosaic.flatMap {
-          case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
-            maybeColorCorrectParams.map { colorCorrectParams =>
-              MultiBandMosaic
-                .fetchRenderedExtent(sceneId, zoom, bboxPolygon)
-                .flatMap { tile =>
-                  if (colorCorrect) {
-                    LayerCache.layerHistogram(sceneId, zoom).map { hist =>
-                      colorCorrectParams.colorCorrect(tile, hist)
-                    }
-                  } else {
-                    OptionT[Future, MultibandTile](Future(Some(tile)))
-                  }
-
-                }
-                .value
-            }.toSeq
-        }
-        Future.sequence(tiles).map(_.flatten)
-      }
-
-      val futureMergeTile =
-        for {
-          doColorCorrect <- hasColorCorrection(projectId, md)
-          tiles <- futureTiles
-        } yield colorCorrectAndMergeTiles(tiles, doColorCorrect)
-
-      OptionT(futureMergeTile)
-    }
+    OptionT(
+      mergeTiles(
+        colorCorrectTiles(
+          renderForBbox(md, polygonBbox, zoom, None)
+        )
+      )
+    )
   }
 
   /** MultiBandMosaic tiles from TMS pyramids given that they are in the same projection.
@@ -244,76 +230,64 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
       col: Int,
       row: Int
   )(
-      implicit database: Database
+      implicit xa: Transactor[IO]
   ): OptionT[Future, MultibandTile] = traceName(s"MultiBandMosaic.apply($projectId)") {
     logger.debug(s"Creating mosaic (project: $projectId, zoom: $zoom, col: $col, row: $row)")
+
     val polygonBbox: Projected[Polygon] = TileUtils.getTileBounds(zoom, col, row)
-    val md: OptionT[Future, Seq[MosaicDefinition]] = mosaicDefinition(projectId, Option(polygonBbox))
-    md.flatMap { (mosaic: Seq[MosaicDefinition]) =>
-      val futureTiles: Future[Seq[MultibandTile]] = {
+    val md: Future[Seq[MosaicDefinition]] = mosaicDefinition(projectId, Option(polygonBbox))
+    OptionT(
+      mergeTiles(
+        colorCorrectTiles(
+          renderForBbox(md, Some(polygonBbox), zoom, Some(s"${zoom}-${col}-${row}"))
+        )
+      )
+    )
+  }
+
+  def renderForBbox(
+    mds: Future[Seq[MosaicDefinition]],
+    bbox: Option[Projected[Polygon]],
+    zoom: Int,
+    cacheKey: Option[String],
+    colorCorrect: Boolean = true
+  ): Future[Seq[MultibandTile]] =
+    mds.flatMap { mosaic: Seq[MosaicDefinition] =>
+      {
         implicit val sceneIds = mosaic.map {
           case MosaicDefinition(sceneId, _) => sceneId
         }.toSet
 
-        val tiles = mosaic.flatMap { case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
-          maybeColorCorrectParams.map { colorCorrectParams =>
-            logger.debug(s"Getting Tile (project: $projectId, scene: $sceneId, col: $col, row: $row, zoom: $zoom)")
-            val tile = rfCache.cachingOptionT(s"tile-${sceneId}-${zoom}-${col}-${row}")(
-              MultiBandMosaic.fetch(sceneId, zoom, col, row)
-            )
-            val layerHistogram = LayerCache.layerHistogram(sceneId, zoom)
-            tile.flatMap { tile =>
-              layerHistogram.map { hist =>
-                colorCorrectParams.colorCorrect(tile, hist)
+        val tiles = mosaic.map {
+          case MosaicDefinition(sceneId, colorCorrectParams) => {
+            val tile = MultiBandMosaic
+              .fetchRenderedExtent(sceneId, zoom, bbox)
+              .flatMap { tile =>
+                if (colorCorrect) {
+                  LayerCache.layerHistogram(sceneId, zoom).map { hist =>
+                    colorCorrectParams.colorCorrect(tile, hist)
+                  }
+                } else {
+                  OptionT[Future, MultibandTile](Future(Some(tile)))
+                }
               }
-            }.value
+              cacheKey match {
+                case Some(key) =>
+                  rfCache.cachingOptionT(s"tile-${sceneId}-${key}")(tile)
+                case _ =>
+              }
+              tile
           }
         }
-        Future.sequence(tiles).map(_.flatten)
+        Future.traverse(tiles)(_.value).map(_.flatten)
       }
-
-      val futureMergeTile = timedFuture("color-correct-merge-tiles")(
-        for {
-          doColorCorrect <- hasColorCorrection(projectId, md)
-          tiles <- futureTiles
-        } yield colorCorrectAndMergeTiles(tiles, doColorCorrect)
-      )
-      OptionT(futureMergeTile)
     }
+
+  def colorCorrectTiles(tiles: Future[Seq[MultibandTile]]): Future[Seq[MultibandTile]] = {
+    tiles.map(ts => WhiteBalance(ts.toList))
   }
 
-  /** Check to see if a project has color correction; if this isn't specified, default to false */
-  def hasColorCorrection(projectId: UUID,
-                         md: OptionT[Future, Seq[MosaicDefinition]])(
-      implicit database: Database) =
-    md.map { mosaic =>
-        mosaic
-          .flatMap {
-            case MosaicDefinition(sceneId, maybeColorCorrectParams) =>
-              maybeColorCorrectParams.map(_.autoBalance.enabled)
-          }
-          .forall(identity)
-      }
-      .value
-      .map {
-        case Some(true) => true
-        case _ => false
-      }
-
-  /** Merge tiles together, optionally color correcting */
-  def colorCorrectAndMergeTiles(
-      tiles: Seq[MultibandTile],
-      doColorCorrect: Boolean): Option[MultibandTile] =
-    traceName("MultiBandMosaic.colorCorrectAndMergeTiles") {
-      val newTiles =
-        if (doColorCorrect)
-          WhiteBalance(tiles.toList)
-        else
-          tiles
-
-      if (newTiles.isEmpty)
-        None
-      else
-        Some(newTiles.reduce(_ merge _))
-    }
+  def mergeTiles(tiles: Future[Seq[MultibandTile]]): Future[Option[MultibandTile]] = {
+    tiles.map(_.reduceOption(_ merge _))
+  }
 }

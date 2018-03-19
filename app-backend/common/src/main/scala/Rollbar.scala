@@ -61,6 +61,7 @@ trait RollbarNotifier extends LazyLogging {
     )
   )
 
+  @SuppressWarnings(Array("CatchException"))
   def createTrace(throwable: Throwable): JsObject = {
     val frames = throwable.getStackTrace.map { element =>
       val lineNo = if (element.getLineNumber > 0) Seq("lineno" -> element.getLineNumber.toJson) else Nil

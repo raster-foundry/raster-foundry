@@ -13,18 +13,26 @@ import io.circe.generic.JsonCodec
 import io.circe.syntax._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.common._
-import com.azavea.rf.database.tables.{Shapes, Users}
-import com.azavea.rf.database.query._
-import com.azavea.rf.database.{ActionRunner, Database}
 import com.azavea.rf.datamodel._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.GeoJsonCodec._
 import geotrellis.shapefile.ShapeFileReader
 import better.files.{File => ScalaFile, _}
-
 import akka.http.scaladsl.server.directives.FileInfo
+import cats.effect.IO
+import com.azavea.rf.database.ShapeDao
 import geotrellis.proj4.{CRS, LatLng, WebMercator}
 import geotrellis.slick.Projected
 import geotrellis.vector.reproject.Reproject
+
+import doobie.util.transactor.Transactor
+import com.azavea.rf.datamodel._
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 @JsonCodec
 case class ShapeFeatureCollectionCreate (
@@ -37,10 +45,9 @@ trait ShapeRoutes extends Authentication
   with PaginationDirectives
   with CommonHandlers
   with UserErrorHandler
-  with LazyLogging
-  with ActionRunner {
+  with LazyLogging {
 
-  implicit def database: Database
+  val xa: Transactor[IO]
 
   val shapeRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -94,7 +101,7 @@ trait ShapeRoutes extends Authentication
                   None,
                   Some(reprojectedGeometry)
                 )
-                complete(StatusCodes.Created, Shapes.insertShapes(Seq(shape), user))
+                complete(StatusCodes.Created, ShapeDao.insertShapes(Seq(shape), user).transact(xa).unsafeToFuture)
               }
               case _ => {
                 val reason = "No valid MultiPolygons found, please ensure coordinates are in EPSG:4326 before uploading"
@@ -111,10 +118,7 @@ trait ShapeRoutes extends Authentication
   def listShapes: Route = authenticate { user =>
     (withPagination & shapeQueryParams) { (page: PageRequest, queryParams: ShapeQueryParameters) =>
       complete {
-        list[Shape](
-          Shapes.listShapes(page.offset, page.limit, queryParams, user),
-          page.offset, page.limit
-        ) map { p => {
+        ShapeDao.query.filter(queryParams).filter(user).page(page).transact(xa).unsafeToFuture().map { p => {
             fromPaginatedResponseToGeoJson[Shape, Shape.GeoJSON](p)
           }
         }
@@ -125,7 +129,9 @@ trait ShapeRoutes extends Authentication
   def getShape(shapeId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        readOne[Shape](Shapes.getShape(shapeId, user)) map { _ map { _.toGeoJSONFeature } }
+        ShapeDao.query.filter(fr"id = ${shapeId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture().map {
+          _ map { _.toGeoJSONFeature }
+        }
       }
     }
   }
@@ -134,7 +140,7 @@ trait ShapeRoutes extends Authentication
     entity(as[ShapeFeatureCollectionCreate]) { fc =>
       val shapesCreate = fc.features map { _.toShapeCreate }
       complete {
-        Shapes.insertShapes(shapesCreate, user)
+        ShapeDao.insertShapes(shapesCreate, user).transact(xa).unsafeToFuture()
       }
     }
   }
@@ -142,7 +148,7 @@ trait ShapeRoutes extends Authentication
   def updateShape(shapeId: UUID): Route = authenticate { user =>
     entity(as[Shape.GeoJSON]) { updatedShape: Shape.GeoJSON =>
       authorize(user.isInRootOrSameOrganizationAs(updatedShape.properties)) {
-        onSuccess(update(Shapes.updateShape(updatedShape, shapeId, user))) {
+        onSuccess(ShapeDao.updateShape(updatedShape, shapeId, user).transact(xa).unsafeToFuture()) {
           completeSingleOrNotFound
         }
       }
@@ -150,7 +156,7 @@ trait ShapeRoutes extends Authentication
   }
 
   def deleteShape(shapeId: UUID): Route = authenticate { user =>
-    onSuccess(drop(Shapes.deleteShape(shapeId, user))) {
+    onSuccess(ShapeDao.query.filter(fr"id = ${shapeId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }

@@ -1,13 +1,15 @@
 package com.azavea.rf.api.utils.queryparams
 
-import java.util.UUID
-import java.sql.Timestamp
-import javax.xml.bind.DatatypeConverter
+import com.azavea.rf.api._
+import com.azavea.rf.datamodel._
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 import akka.http.scaladsl.unmarshalling._
-import com.azavea.rf.database.query._
+
+import java.util.UUID
+import java.sql.Timestamp
+import javax.xml.bind.DatatypeConverter
 
 
 /** Unmarshalls query parameters to correct type */

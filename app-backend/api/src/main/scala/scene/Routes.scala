@@ -1,11 +1,8 @@
 package com.azavea.rf.api.scene
 
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.common.{AWSBatch, Authentication, UserErrorHandler, CommonHandlers, S3}
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.Scenes
+import com.azavea.rf.common.{AWSBatch, Authentication, CommonHandlers, S3, UserErrorHandler}
 import com.azavea.rf.datamodel._
-
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import com.amazonaws.services.s3.AmazonS3URI
@@ -17,10 +14,21 @@ import kamon.akka.http.KamonTraceDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Success, Failure}
+import scala.util.{Failure, Success}
 import java.net._
 import java.util.UUID
 
+import cats.effect.IO
+import com.azavea.rf.database.{SceneDao, SceneWithRelatedDao}
+import doobie.util.transactor.Transactor
+import com.azavea.rf.datamodel._
+import com.azavea.rf.database.filter.Filterables._
+import cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 trait SceneRoutes extends Authentication
     with Config
@@ -31,7 +39,7 @@ trait SceneRoutes extends Authentication
     with UserErrorHandler
     with KamonTraceDirectives {
 
-  implicit def database: Database
+  val xa: Transactor[IO]
 
   val sceneRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -72,8 +80,10 @@ trait SceneRoutes extends Authentication
 
   def listScenes: Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
+      println(page)
+      println(sceneParams)
       complete {
-        Scenes.listScenes(page, sceneParams, user)
+        SceneWithRelatedDao.listScenes(page, sceneParams, user).transact(xa).unsafeToFuture
       }
     }
   }
@@ -81,7 +91,7 @@ trait SceneRoutes extends Authentication
   def createScene: Route = authenticate { user =>
     entity(as[Scene.Create]) { newScene =>
       authorize(user.isInRootOrSameOrganizationAs(newScene)) {
-        onSuccess(Scenes.insertScene(newScene, user)) { scene =>
+        onSuccess(SceneDao.insert(newScene, user).transact(xa).unsafeToFuture) { scene =>
           if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested) kickoffSceneIngest(scene.id)
           complete((StatusCodes.Created, scene))
         }
@@ -92,7 +102,7 @@ trait SceneRoutes extends Authentication
   def getScene(sceneId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        Scenes.getScene(sceneId, user)
+        SceneWithRelatedDao.query.filter(user).filter(sceneId).selectOption.transact(xa).unsafeToFuture
       }
     }
   }
@@ -100,7 +110,7 @@ trait SceneRoutes extends Authentication
   def updateScene(sceneId: UUID): Route = authenticate { user =>
     entity(as[Scene]) { updatedScene =>
       authorize(user.isInRootOrSameOrganizationAs(updatedScene)) {
-        onSuccess(Scenes.updateScene(updatedScene, sceneId, user)) { (result, kickoffIngest) =>
+        onSuccess(SceneDao.update(updatedScene, sceneId, user).transact(xa).unsafeToFuture) { case (result, kickoffIngest) =>
           if (kickoffIngest) kickoffSceneIngest(sceneId)
           completeSingleOrNotFound(result)
         }
@@ -109,13 +119,13 @@ trait SceneRoutes extends Authentication
   }
 
   def deleteScene(sceneId: UUID): Route = authenticate { user =>
-    onSuccess(Scenes.deleteScene(sceneId, user)) {
+    onSuccess(SceneDao.query.filter(fr"id = ${sceneId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
 
   def getDownloadUrl(sceneId: UUID): Route = authenticate { user =>
-    onSuccess(Scenes.getScene(sceneId, user)) { scene =>
+    onSuccess(SceneWithRelatedDao.query.filter(user).filter(sceneId).selectOption.transact(xa).unsafeToFuture) { scene =>
       complete {
         scene.getOrElse {
           throw new Exception("Scene does not exist or is not accessible by this user")

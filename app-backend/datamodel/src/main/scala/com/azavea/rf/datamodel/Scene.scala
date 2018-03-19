@@ -9,6 +9,10 @@ import geotrellis.slick.Projected
 
 import io.circe._
 import io.circe.generic.JsonCodec
+import io.circe._
+import io.circe.syntax._
+import io.circe.parser._
+
 
 @JsonCodec
 case class SceneFilterFields(
@@ -90,8 +94,8 @@ case class Scene(
     this.tileFootprint,
     this.dataFootprint,
     this.metadataFiles,
-    images,
-    thumbnails,
+    images.toList,
+    thumbnails.toList,
     this.ingestLocation,
     this.filterFields,
     this.statusFields
@@ -100,6 +104,7 @@ case class Scene(
 
 
 object Scene {
+
   /** Case class extracted from a POST request */
   @JsonCodec
   case class Create(
@@ -120,7 +125,7 @@ object Scene {
     ingestLocation: Option[String],
     filterFields: SceneFilterFields = new SceneFilterFields(),
     statusFields: SceneStatusFields
-  ) extends OwnerCheck {
+ ) extends OwnerCheck {
     def toScene(user: User): Scene = {
       val now = new Timestamp((new java.util.Date()).getTime())
 
@@ -168,8 +173,8 @@ object Scene {
     tileFootprint: Option[Projected[MultiPolygon]],
     dataFootprint: Option[Projected[MultiPolygon]],
     metadataFiles: List[String],
-    images: Seq[Image.WithRelated],
-    thumbnails: Seq[Thumbnail],
+    images: List[Image.WithRelated],
+    thumbnails: List[Thumbnail],
     ingestLocation: Option[String],
     filterFields: SceneFilterFields = new SceneFilterFields(),
     statusFields: SceneStatusFields
@@ -196,39 +201,5 @@ object Scene {
         filterFields,
         statusFields
       )
-    }
-
-  object WithRelated {
-    /** Helper function to create Iterable[Scene.WithRelated] from join
-      *
-      * It is necessary to map over the distinct scenes because that is the only way to
-      * ensure that the sort order of the query result remains ordered after grouping
-      *
-      * @param records result of join query to return scene with related
-      * information
-      */
-    @SuppressWarnings(Array("TraversableHead"))
-    def fromRecords(records: Seq[(Scene, Option[Image], Option[Band], Option[Thumbnail])])
-      : Iterable[Scene.WithRelated] = {
-      val distinctScenes = records.map(_._1.id).distinct
-      val groupedScenes = records.map(_._1).groupBy(_.id)
-      val groupedRecords = records.groupBy(_._1.id)
-      val groupedBands = records.flatMap(_._3).distinct.groupBy(_.image)
-
-      distinctScenes.map { scene =>
-        val (seqImages, seqThumbnails) = groupedRecords(scene).map {
-          case (_, image, _, thumbnail) => (image, thumbnail)
-        }.unzip
-        val imagesWithComponents: Seq[Image.WithRelated] = seqImages.flatten.distinct.map {
-          image => image.withRelatedFromComponents(groupedBands.getOrElse(image.id, Seq[Band]()))
-        }
-        groupedScenes.get(scene) match {
-          case Some(scene) => scene.head.withRelatedFromComponents(
-            imagesWithComponents, seqThumbnails.flatten.distinct
-          )
-          case _ => throw new Exception("This is impossible")
-        }
-      }
-    }
   }
 }

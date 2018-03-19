@@ -1,29 +1,33 @@
 package com.azavea.rf.api.datasource
 
-import java.util.UUID
-
-import scala.util.{Success, Failure}
+import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
+import com.azavea.rf.database._
+import com.azavea.rf.datamodel._
+import com.azavea.rf.database.filter.Filterables._
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
-
 import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, PageRequest}
-
-import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
-import com.azavea.rf.database.tables.Datasources
-import com.azavea.rf.database.query._
-import com.azavea.rf.database.{Database, ActionRunner}
-import com.azavea.rf.datamodel._
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import cats.effect.IO
+
+import java.util.UUID
+import scala.util.{Success, Failure}
+import doobie._
+import doobie.implicits._
+import doobie.Fragments.in
+import doobie.postgres._
+import doobie.postgres.implicits._
+
+
 
 trait DatasourceRoutes extends Authentication
     with DatasourceQueryParameterDirective
     with PaginationDirectives
     with UserErrorHandler
-    with CommonHandlers
-    with ActionRunner {
-  implicit def database: Database
+    with CommonHandlers {
+  val xa: Transactor[IO]
 
   val datasourceRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -38,12 +42,9 @@ trait DatasourceRoutes extends Authentication
   }
 
   def listDatasources: Route = authenticate { user =>
-    (withPagination & datasourceQueryParams) {
-      (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
+    (withPagination & datasourceQueryParams) { (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
       complete {
-        list[Datasource](Datasources.listDatasources(page, datasourceParams, user),
-                         page.offset,
-                         page.limit)
+        DatasourceDao.query.filter(datasourceParams).filter(user).page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -52,7 +53,7 @@ trait DatasourceRoutes extends Authentication
     get {
       rejectEmptyResponse {
         complete {
-          readOne[Datasource](Datasources.getDatasource(datasourceId, user))
+          DatasourceDao.getDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
         }
       }
     }
@@ -61,7 +62,7 @@ trait DatasourceRoutes extends Authentication
   def createDatasource: Route = authenticate { user =>
     entity(as[Datasource.Create]) { newDatasource =>
       authorize(user.isInRootOrSameOrganizationAs(newDatasource)) {
-        onSuccess(write[Datasource](Datasources.insertDatasource(newDatasource, user))) { datasource =>
+        onSuccess(DatasourceDao.createDatasource(newDatasource, user).transact(xa).unsafeToFuture) { datasource =>
           complete((StatusCodes.Created, datasource))
         }
       }
@@ -71,7 +72,7 @@ trait DatasourceRoutes extends Authentication
   def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
     entity(as[Datasource]) { updateDatasource =>
       authorize(user.isInRootOrOwner(updateDatasource)) {
-        onSuccess(update(Datasources.updateDatasource(updateDatasource, datasourceId, user))) {
+        onSuccess(DatasourceDao.updateDatasource(updateDatasource, datasourceId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -79,8 +80,8 @@ trait DatasourceRoutes extends Authentication
   }
 
   def deleteDatasource(datasourceId: UUID): Route = authenticate { user =>
-    onSuccess(drop(Datasources.deleteDatasource(datasourceId, user))) {
-      completeSingleOrNotFound
+    onSuccess(DatasourceDao.query.filter(fr"owner = ${user.id}").filter(datasourceId).delete.transact(xa).unsafeToFuture) {
+       completeSingleOrNotFound
     }
   }
 }

@@ -3,22 +3,25 @@ package com.azavea.rf.api.user
 import com.azavea.rf.datamodel.User
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api.utils.{Auth0Exception, ManagementBearerToken}
-import com.azavea.rf.database.{Database => DB}
-import com.azavea.rf.database.tables.Users
-
+import com.azavea.rf.database.UserDao
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import com.azavea.rf.database.filter.Filterables._
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{Authorization, GenericHttpCredentials}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.marshalling.Marshal
+import cats.effect.IO
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.typesafe.scalalogging.LazyLogging
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.JsonCodec
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -106,13 +109,13 @@ object Auth0UserService extends Config with LazyLogging{
       }
   }
 
-  def getAuth0User(userId: String)(implicit database: DB) : Future[UserWithOAuth] = {
+  def getAuth0User(userId: String)(implicit xa: Transactor[IO]) : Future[UserWithOAuth] = {
      val query: Future[Auth0User] = for {
       bearerToken <- authBearerTokenCache.get(1)
       auth0User <- requestAuth0User(userId, bearerToken)
     } yield auth0User
     query.flatMap { auth0User =>
-      Users.getUserById(userId).map { user =>
+      UserDao.query.filter(fr"id = ${userId}").selectOption.transact(xa).unsafeToFuture().map { user =>
         user match {
           case Some(user: User) =>
             UserWithOAuth(user, auth0User)

@@ -7,8 +7,8 @@ import io.circe.generic.JsonCodec
 
 @JsonCodec
 case class License(
-  short_name: String,
+  shortName: String,
   name: String,
   url: String,
-  osi_approved: Boolean
+  osiApproved: Boolean
 )

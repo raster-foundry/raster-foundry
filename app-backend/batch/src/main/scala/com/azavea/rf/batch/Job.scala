@@ -6,6 +6,7 @@ import com.azavea.rf.batch.util.conf.Config
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 
+@SuppressWarnings(Array("ParamaterlessMethodReturnsUnit"))
 trait Job extends Config with RollbarNotifier {
   val name: String
 

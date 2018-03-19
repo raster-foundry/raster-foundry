@@ -28,6 +28,14 @@ object UserRole {
     case "ADMIN" => Admin
     case _ => throw new Exception(s"Unsupported user role string: $s")
   }
+
+  def toString(ur: UserRole): String = {
+    ur match {
+      case UserRoleRole => "USER"
+      case Viewer => "VIEWER"
+      case Admin => "ADMIN"
+    }
+  }
 }
 
 @JsonCodec

@@ -35,7 +35,7 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
 
   val cacheEnabled = Config.memcached.enabled
 
-  def delete(key: String) =
+  def delete(key: String): Unit =
     if(cacheEnabled) {
       client.delete(key)
     }
@@ -55,51 +55,56 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
     }
   }
 
-  def getOrElseUpdate[CachedType](cacheKey: String, expensiveOperation: => Future[Option[CachedType]], ttlSeconds: Int = 0, doCache: Boolean = true): Future[Option[CachedType]] = {
+  // Suppress asInstanceOf warning because we can't pattern match on the returned type since it's
+  // eliminated by type erasure
+  @SuppressWarnings(Array("AsInstanceOf"))
+  def getOrElseUpdate[CachedType](cacheKey: String, expensiveOperation: => Future[Option[CachedType]], doCache: Boolean = true): Future[Option[CachedType]] = {
 
     if (cacheEnabled && doCache) {
 
       // Note this blocks a thread in CacheClientThreadPool while waiting on the client's
       // own threadpool
       val futureCached = Future { client.asyncGet(cacheKey).get() }
-      futureCached.flatMap({ value =>
-        if (value != null) {
-          // cache hit
-          logger.debug(s"Cache Hit: ${cacheKey}")
-          Future.successful(value.asInstanceOf[Option[CachedType]])
-        } else {
-          // cache miss
-          logger.debug(s"Cache Miss: ${cacheKey}")
-          val futureCached: Future[Option[CachedType]] = expensiveOperation
-          futureCached.onComplete {
-            case Success(cachedValue) => {
-              cachedValue match {
-                case Some(v) => setValue(cacheKey, cachedValue)
-                case None => setValue(cacheKey, cachedValue, ttlSeconds = 300)
+      futureCached.flatMap(
+        {
+          case null => {
+              // cache miss
+              logger.debug(s"Cache Miss: ${cacheKey}")
+              val futureCached: Future[Option[CachedType]] = expensiveOperation
+              futureCached.onComplete {
+                case Success(cachedValue) => {
+                  cachedValue match {
+                    case Some(v) => setValue(cacheKey, cachedValue)
+                    case None => setValue(cacheKey, cachedValue, ttlSeconds = 300)
+                  }
+                }
+                case Failure(e) => {
+                  sendError(RfStackTrace(e))
+                  logger.error(s"Cache Set Error: ${RfStackTrace(e)}")
+                }
               }
+              futureCached
             }
-            case Failure(e) => {
-              sendError(RfStackTrace(e))
-              logger.error(s"Cache Set Error: ${RfStackTrace(e)}")
-            }
+          case o => {
+            logger.debug(s"Cache Hit: ${cacheKey}")
+            Future.successful(o.asInstanceOf[Option[CachedType]])
           }
-          futureCached
         }
-      })
+      )
     } else {
       expensiveOperation
     }
   }
 
-  def caching[T](cacheKey: String, ttlSeconds: Int = 0,
-    doCache: Boolean = true)(mappingFunction: => Future[Option[T]]): Future[Option[T]] = {
+  def caching[T](cacheKey: String, doCache: Boolean = true)
+             (mappingFunction: => Future[Option[T]]): Future[Option[T]] = {
 
-    getOrElseUpdate[T](cacheKey, mappingFunction, ttlSeconds, doCache)
+    getOrElseUpdate[T](cacheKey, mappingFunction, doCache)
   }
 
-  def cachingOptionT[T](cacheKey: String, ttlSeconds: Int = 0, doCache: Boolean = true)(mappingFunction: => OptionT[Future, T]): OptionT[Future, T] = {
+  def cachingOptionT[T](cacheKey: String, doCache: Boolean = true)(mappingFunction: => OptionT[Future, T]): OptionT[Future, T] = {
 
-    val futureOption = getOrElseUpdate[T](cacheKey, mappingFunction.value, ttlSeconds, doCache)
+    val futureOption = getOrElseUpdate[T](cacheKey, mappingFunction.value, doCache)
     OptionT(futureOption)
   }
 

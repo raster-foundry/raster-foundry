@@ -19,7 +19,8 @@ case class Datasource(
   visibility: Visibility,
   composites: Json,
   extras: Json,
-  bands: Json
+  bands: Json,
+  licenseName: Option[String]
 )
 
 object Datasource {
@@ -27,7 +28,6 @@ object Datasource {
   def tupled = (Datasource.apply _).tupled
 
   def create = Create.apply _
-
 
   @JsonCodec
   case class Create (
@@ -37,7 +37,8 @@ object Datasource {
     owner: Option[String],
     composites: Json,
     extras: Json,
-    bands: Json
+    bands: Json,
+    licenseName: Option[String]
   ) extends OwnerCheck  {
     def toDatasource(user: User): Datasource = {
       val id = java.util.UUID.randomUUID()
@@ -57,7 +58,8 @@ object Datasource {
         this.visibility,
         this.composites,
         this.extras,
-        this.bands
+        this.bands,
+        this.licenseName
       )
     }
   }

@@ -1,14 +1,12 @@
 package com.azavea.rf.api
 
 import akka.http.scaladsl.model.HttpMethods._
-
 import com.azavea.rf.api.aoi.AoiRoutes
 import com.azavea.rf.api.config.ConfigRoutes
 import com.azavea.rf.api.datasource.DatasourceRoutes
 import com.azavea.rf.api.exports.ExportRoutes
 import com.azavea.rf.api.featureflags.FeatureFlagRoutes
 import com.azavea.rf.api.feed.FeedRoutes
-import com.azavea.rf.api.grid.GridRoutes
 import com.azavea.rf.api.healthcheck._
 import com.azavea.rf.api.image.ImageRoutes
 import com.azavea.rf.api.maptoken.MapTokenRoutes
@@ -25,9 +23,9 @@ import com.azavea.rf.api.tooltag.ToolTagRoutes
 import com.azavea.rf.api.uploads.UploadRoutes
 import com.azavea.rf.api.user.UserRoutes
 import com.azavea.rf.api.utils.Config
-
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import ch.megard.akka.http.cors.scaladsl.settings._
+import com.azavea.rf.api.license.LicenseRoutes
 
 import scala.collection.immutable.Seq
 
@@ -51,7 +49,6 @@ trait Router extends HealthCheckRoutes
   with ConfigRoutes
   with ToolCategoryRoutes
   with ToolRunRoutes
-  with GridRoutes
   with DatasourceRoutes
   with MapTokenRoutes
   with FeedRoutes
@@ -59,7 +56,8 @@ trait Router extends HealthCheckRoutes
   with ExportRoutes
   with Config
   with FeatureFlagRoutes
-  with ShapeRoutes {
+  with ShapeRoutes
+  with LicenseRoutes {
 
   val settings = CorsSettings.defaultSettings.copy(
     allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE))
@@ -105,9 +103,6 @@ trait Router extends HealthCheckRoutes
           pathPrefix("tool-runs") {
             toolRunRoutes
           } ~
-          pathPrefix("scene-grid") {
-            gridRoutes
-          } ~
           pathPrefix("datasources") {
             datasourceRoutes
           } ~
@@ -125,6 +120,9 @@ trait Router extends HealthCheckRoutes
           } ~
           pathPrefix("shapes") {
             shapeRoutes
+          } ~
+          pathPrefix("licenses") {
+            licenseRoutes
           }
       } ~
       pathPrefix("config") {

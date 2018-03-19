@@ -2,7 +2,6 @@ package com.azavea.rf.tile.image
 
 import com.azavea.rf.tile._
 import com.azavea.rf.datamodel.MosaicDefinition
-import com.azavea.rf.database.Database
 import geotrellis.raster._
 import geotrellis.vector.io._
 import geotrellis.spark.io._
@@ -12,8 +11,11 @@ import geotrellis.vector.Extent
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
+import cats.effect.IO
 import java.util.UUID
+import doobie.util.transactor.Transactor
 
+import com.azavea.rf.database.util.RFTransactor
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 
 import scala.concurrent._
@@ -22,8 +24,8 @@ import scala.util._
 object GlobalSummary extends LazyLogging {
   val system = AkkaSystem.system
   implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
+  implicit lazy val xa = RFTransactor.xa
 
-  implicit val database = Database.DEFAULT
   val store = PostgresAttributeStore()
 
   /** Get the [[RasterExtent]] which describes the meaningful subset of a layer from metadata */
@@ -60,9 +62,9 @@ object GlobalSummary extends LazyLogging {
   def minAcceptableProjectZoom(
     projId: UUID,
     size: Int = 512
-  )(implicit database: Database, ec: ExecutionContext): OptionT[Future, (Extent, Int)] =
+  )(implicit xa: Transactor[IO], ec: ExecutionContext): Future[(Extent, Int)] =
     // TODO this should be updated to handle both multi band and single band mosaics
-    MultiBandMosaic.mosaicDefinition(projId).semiflatMap({ mosaic =>
+    MultiBandMosaic.mosaicDefinition(projId).flatMap({ mosaic =>
       Future.sequence(mosaic.map { case MosaicDefinition(sceneId, _) =>
         Future {
           minAcceptableSceneZoom(sceneId, store, 256)

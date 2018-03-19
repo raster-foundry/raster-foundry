@@ -12,6 +12,12 @@ import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
 
+import cats.effect.IO
+
+import doobie.ConnectionIO
+import doobie.implicits._
+import doobie.util.transactor.Transactor
+
 import java.sql.Timestamp
 import java.net.URI
 import java.time.{LocalDate, ZoneOffset}
@@ -22,14 +28,13 @@ import geotrellis.vector.{Geometry, Point, Polygon, MultiPolygon}
 import geotrellis.slick.Projected
 import geotrellis.proj4.CRS
 
+import com.azavea.rf.database.{UserDao, SceneDao}
+import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.stac
-import com.azavea.rf.database.{Database => DB}
-import com.azavea.rf.database.tables._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.Job
 import com.azavea.rf.batch.util.conf.Config
-import com.azavea.rf.database.{Database => DB}
 
 @JsonCodec
 case class MetadataWithStartStop(start: Timestamp, end: Timestamp)
@@ -73,8 +78,8 @@ object CommandLine {
 
 object ReadStacFeature extends Config with LazyLogging {
   val name = "read_stac_feature"
+  implicit val xa = RFTransactor.xa
   def main(args: Array[String]): Unit = {
-    implicit val db = DB.DEFAULT
     val params = CommandLine.parser.parse(args, CommandLine.Params()) match {
       case Some(params) =>
         params
@@ -92,7 +97,7 @@ object ReadStacFeature extends Config with LazyLogging {
           case true =>
             logger.info(s"Test run, so scene was not actually created:\n${scene}")
           case _ =>
-            Await.result(writeSceneToDb(scene), 5 seconds)
+            writeSceneToDb(scene)
         }
       case Left(error) =>
         logger.error(s"There was an error decoding the geojson into a stac Feature: ${error.getLocalizedMessage}")
@@ -152,15 +157,18 @@ object ReadStacFeature extends Config with LazyLogging {
     )
   }
 
-  protected def writeSceneToDb(scene : Scene.Create)(implicit db: DB) = {
-    Users.getUserById(systemUser) flatMap { _ match {
-        case Some(user) =>
-          logger.info(s"\nuser: ${user.id}\ninserting scene: \n${scene}")
-          Scenes.insertScene(scene, user)
-        case _ =>
-          throw new RuntimeException("System user not found. Make sure migrations have been run, and that batch config is correct")
+  protected def writeSceneToDb(scene : Scene.Create)(implicit xa: Transactor[IO]): Scene.WithRelated = {
+    val sceneInsertIO: ConnectionIO[Scene.WithRelated] =
+      UserDao.getUserById(systemUser) flatMap { (mbUser: Option[User]) =>
+        mbUser match {
+          case Some(user) =>
+            logger.info(s"\nuser: ${user.id}\ninserting scene: \n${scene}")
+            SceneDao.insert(scene, user)
+          case _ =>
+            throw new RuntimeException("System user not found. Make sure migrations have been run, and that batch config is correct")
+        }
       }
-    }
+    sceneInsertIO.transact(xa).unsafeRunSync
   }
 
   protected def getBandedImages(imageAssets: Seq[stac.Asset], sceneId: UUID, rootUri: URI): List[Image.Banded] = {
@@ -227,18 +235,18 @@ object ReadStacFeature extends Config with LazyLogging {
       val width = thumb.getWidth
       val height = thumb.getHeight
       Some(Thumbnail.Identified(
-        id = None,
-        organizationId = landsat8Config.organizationUUID,
-        thumbnailSize = if (width < 500) ThumbnailSize.Small else ThumbnailSize.Large,
-        widthPx = thumb.getWidth,
-        heightPx = thumb.getHeight,
-        sceneId = sceneId,
-        url = link.href
-      ))
+             id = None,
+             organizationId = landsat8Config.organizationUUID,
+             thumbnailSize = if (width < 500) ThumbnailSize.Small else ThumbnailSize.Large,
+             widthPx = thumb.getWidth,
+             heightPx = thumb.getHeight,
+             sceneId = sceneId,
+             url = link.href
+           ))
     } catch {
       case e: Exception =>
-      logger.error(s"Error fetching thumbnail with URI: ${link.href}, ${rootUri}")
-      None
+        logger.error(s"Error fetching thumbnail with URI: ${link.href}, ${rootUri}")
+        None
     }
   }
 }
