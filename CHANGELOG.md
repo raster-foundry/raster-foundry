@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.33.3](https://github.com/raster-foundry/raster-foundry/tree/0.33.3) (2018-03-19)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.33.2...0.33.3)
+
+**Merged pull requests:**
+
+- Fix colormodes [\#3075](https://github.com/raster-foundry/raster-foundry/pull/3075)
+- Fix broken logout button [\#3074](https://github.com/raster-foundry/raster-foundry/pull/3074)
+
 ## [0.33.2](https://github.com/raster-foundry/raster-foundry/tree/0.33.2) (2018-03-16)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.33.1...0.33.2)
