@@ -40,7 +40,6 @@ class ProjectsEditController {
         this.mosaicLayer = new Map();
         this.sceneLayers = new Map();
         this.projectId = this.$state.params.projectid;
-        this.layers = [];
 
         if (!this.project) {
             if (this.projectId) {
@@ -115,19 +114,17 @@ class ProjectsEditController {
     getSceneList() {
         this.sceneRequestState = {loading: true};
 
-        const sceneListQuery = this.projectService.getAllProjectScenes(
+        this.sceneListQuery = this.projectService.getAllProjectScenes(
             {
                 projectId: this.projectId,
                 pending: false
             }
-        );
-
-        sceneListQuery.then(
+        ).then(
             (allScenes) => {
                 this.addUningestedScenesToMap(allScenes.filter(
                     (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
                 ));
-                this.projectService.getSceneOrder(this.projectId).then(
+                return this.projectService.getSceneOrder(this.projectId).then(
                     (res) => {
                         this.orderedSceneId = res.results;
                         this.sceneList = _.uniqBy(this.orderedSceneId.map((id) => {
@@ -139,8 +136,7 @@ class ProjectsEditController {
                             id: scene.id,
                             layer: this.layerService.layerFromScene(scene, this.projectId)
                         })).reduce((sceneLayers, {id, layer}) => {
-                            sceneLayers.set(id, layer);
-                            return sceneLayers;
+                            return sceneLayers.set(id, layer);
                         }, new Map());
 
                         this.layerFromProject();
@@ -158,7 +154,7 @@ class ProjectsEditController {
             this.sceneRequestState.loading = false;
         });
 
-        return sceneListQuery;
+        return this.sceneListQuery;
     }
 
     getDatasources() {
