@@ -1,0 +1,93 @@
+{
+  "": [
+    {
+      "name": "Platform guide",
+      "link": "https://help.radiant.earth/getting-started",
+      "type": "doc"
+    },
+    {
+      "name": "Video walkthrough",
+      "link": "https://www.youtube.com/watch?v=f85ZMacIhnE",
+      "type": "video"
+    }
+  ],
+  "home": [
+    {
+      "name": "Set up account",
+      "link": "https://help.radiant.earth/getting-started/set-up/set-up-your-account",
+      "type": "doc"
+    }
+  ],
+  "projects": [],
+  "projects_list": [
+    {
+      "name": "Create a project with available imageries",
+      "link": "https://help.radiant.earth/basic-resource-guide/creating-projects/create-a-standard-project-and-add-available-imagery",
+      "type": "doc"
+    },
+    {
+      "name": "Create a project with your imageries",
+      "link": "https://help.radiant.earth/basic-resource-guide/creating-projects/create-a-standard-project-and-add-your-own-imagery",
+      "type": "doc"
+    }
+  ],
+  "projects_edit": [],
+  "projects_edit_colormode": [],
+  "projects_edit_color": [],
+  "projects_edit_advancedcolor": [],
+  "projects_edit_advancedcolor_adjust": [],
+  "projects_edit_scenes": [],
+  "projects_edit_browse": [],
+  "projects_edit_order": [],
+  "projects_edit_masking": [],
+  "projects_edit_masking_draw": [],
+  "projects_edit_aoi-approve": [],
+  "projects_edit_aoi-parameters": [],
+  "projects_edit_exports": [],
+  "projects_edit_exports_new": [],
+  "projects_edit_annotate": [],
+  "projects_edit_annotate_import": [],
+  "projects_edit_annotate_export": [],
+  "projects_edit_sharing": [],
+  "settings": [],
+  "settings_profile": [
+    {
+      "name": "Change profile picture",
+      "link": "https://help.radiant.earth/getting-started/set-up/change-your-profile-picture",
+      "type": "link"
+    }
+  ],
+  "settings_tokens": [],
+  "settings_tokens_api": [],
+  "settings_tokens_map": [],
+  "settings_connections": [],
+  "settings_organizations": [],
+  "lab": [],
+  "lab_template": [],
+  "lab_startAnalysis": [],
+  "lab_analysis": [],
+  "lab_browse": [],
+  "lab_browse_templates": [],
+  "lab_browse_analyses": [],
+  "share": [],
+  "imports": [],
+  "imports_rasters": [],
+  "imports_vectors": [],
+  "imports_datasources": [],
+  "imports_datasources_list": [],
+  "imports_datasources_detail": [],
+  "admin": [],
+  "admin_organization": [],
+  "admin_organization_metrics": [],
+  "admin_organization_users": [],
+  "admin_organization_teams": [],
+  "admin_organization_settings": [],
+  "admin_platform": [],
+  "admin_platform_metrics": [],
+  "admin_platform_users": [],
+  "admin_platform_organizations": [],
+  "admin_platform_organizations_detail": [],
+  "admin_platform_organizations_detail_features": [],
+  "admin_platform_organizations_detail_limits": [],
+  "admin_platform_organizations_detail_settings": []
+}

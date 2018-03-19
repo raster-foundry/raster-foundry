@@ -38,6 +38,7 @@
 
     .dropdown {
       display: inline-block;
+      margin: 0 1rem;
     }
 
     .open .dropdown-toggle {
@@ -48,7 +49,6 @@
 
   .dropdown > a {
     padding: .8rem 1rem;
-    margin: 0 1rem;
     border: 1px solid $shade-dark;
     border-radius: $border-radius-base;
 
@@ -205,4 +205,10 @@
   height: 5.9rem;
   background-color: $shade-dark;
   vertical-align: middle;
+}
+
+.dropdown-help {
+  .help-center {
+    font-size: 2rem;
+  }
 }

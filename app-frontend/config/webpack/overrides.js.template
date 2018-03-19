@@ -5,6 +5,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const HELP_DOCS = require('./help_docs.json')
 
 const NODE_ENV = process.env.NODE_ENV || 'production';
 const DEVELOPMENT = NODE_ENV === 'production' ? false : true;
@@ -61,6 +62,9 @@ module.exports = function (_path) {
                     LOGOURL: JSON.stringify(false),
                     FAVICON_DIR: JSON.stringify('/favicon'),
                     FEED_SOURCE: JSON.stringify('https://blog.rasterfoundry.com/latest?format=json')
+                },
+                'HELPCONFIG': {
+                    HELP_DOCS: JSON.stringify(HELP_DOCS)
                 }
             })
         ]

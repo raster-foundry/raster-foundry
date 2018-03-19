@@ -44,6 +44,34 @@
   <div class="navbar-section secondary">
     <nav>
       <div class="admin-logo" ui-sref="admin" feature-flag="profile-org-edit"></div>
+      <div uib-dropdown class="dropdown-help" on-toggle="$ctrl.onHelpToggled()" ng-if="$ctrl.showHelpCenter">
+        <a href uib-dropdown-toggle>
+          <i class="help-center icon-help"></i> <span ng-if="$ctrl.isHelpOpened">Help center</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dLabel">
+          <li ng-repeat="doc in $ctrl.rootDocs"
+              role="menuitem"
+              class="dropdown-list-item"
+              title="{{doc.name}}"
+              ng-if="$ctrl.rootDocs.length">
+            <a ng-attr-href="{{doc.link}}" target="_blank">
+              <i class="icon-mosaic" ng-if="doc.type.toUpperCase() === 'DOC'"></i>
+              <i class="icon-eye" ng-if="doc.type.toUpperCase() === 'VIDEO'"></i> {{doc.name}}
+            </a>
+          </li>
+          <li role="separator" class="divider" ng-if="$ctrl.pageDocs.length"></li>
+          <li ng-repeat="doc in $ctrl.pageDocs"
+              role="menuitem"
+              class="dropdown-list-item"
+              title="{{doc.name}}"
+              ng-if="$ctrl.pageDocs.length">
+            <a ng-attr-href="{{doc.link}}" target="_blank">
+              <i class="icon-mosaic" ng-if="doc.type.toUpperCase() === 'DOC'"></i>
+              <i class="icon-eye" ng-if="doc.type.toUpperCase() === 'VIDEO'"></i> {{doc.name}}
+            </a>
+          </li>
+        </ul>
+      </div>
       <div ng-if="$ctrl.authService.isLoggedIn" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
           <img ng-if="$ctrl.authService.getProfile().picture" class="avatar" ng-src="{{$ctrl.authService.getProfile().picture}}">
@@ -51,7 +79,7 @@
           <span class="username">{{$ctrl.authService.getProfile().nickname}}</span>
           <i class="icon-caret-down"></i>
         </a>
-        <ul class="dropdown-menu" aria-labelledby="dLabel">
+        <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dLabel">
           <li>
             <a href ui-sref="settings.profile">
               <i class="icon-settings"></i> Settings
