@@ -327,6 +327,7 @@ export default (app) => {
                 heap.removeEventProperty('Logged In');
             }
             delete this.accessToken;
+            delete this.idToken;
             delete this.profile;
             this.localStorage.remove('idToken');
             this.localStorage.remove('accessToken');
