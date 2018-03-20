@@ -10,8 +10,9 @@ import scala.util.Properties
 trait Config {
 //  private val config = ConfigFactory.load()
 //  private val databaseConfig = config.getConfig("db")
-  val jdbcNoDBUrl = "jdbc:postgresql://database.service.rasterfoundry.internal/"
-  val jdbcDBName = Properties.envOrElse("POSTGRES_DB", "rasterfoundry")
+  val jdbcNoDBUrl =
+    Properties.envOrElse("POSTGRES_URL", "jdbc:postgresql://database.service.rasterfoundry.internal/")
+  val jdbcDBName = Properties.envOrElse("POSTGRES_NAME", "rasterfoundry")
   val jdbcUrl = jdbcNoDBUrl + jdbcDBName
   val dbUser = Properties.envOrElse("POSTGRES_USER", "rasterfoundry")
   val dbPassword = Properties.envOrElse("POSTGRES_PASSWORD", "rasterfoundry")
