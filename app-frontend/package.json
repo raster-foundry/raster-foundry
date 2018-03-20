@@ -69,6 +69,7 @@
     "ng-rollbar": "^1.9.2",
     "nvd3": "~1.8.4",
     "ob-daterangepicker": "^0.10.3",
+    "plyr": "^3.0.2",
     "redux-promise-middleware": "^4.4.1",
     "redux-thunk": "^2.2.0",
     "type-to-reducer": "^1.0.4",

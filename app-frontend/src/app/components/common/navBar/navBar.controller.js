@@ -6,17 +6,38 @@ let assetLogo = BUILDCONFIG.LOGOFILE ?
 
 assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
 
+const Plyr = require('plyr/dist/plyr.js');
+
+const plyrStyle = {
+    'default': {
+        'position': 'fixed',
+        'right': 0,
+        'top': '6rem',
+        'width': '600px',
+        'z-index': 999
+    },
+    'fullscreen': {
+        'position': 'relative',
+        'top': '0px',
+        'width': '100%'
+    }
+};
+
 export default class NavBarController {
     constructor( // eslint-disable-line max-params
-        $rootScope, $log, $state, APP_CONFIG, authService
+        $rootScope, $scope, $log, $state, $document, $sce, $timeout, APP_CONFIG, authService
     ) {
         'ngInject';
         if (APP_CONFIG.error) {
             this.loadError = true;
         }
         this.$rootScope = $rootScope;
+        this.$scope = $scope;
         this.$log = $log;
         this.$state = $state;
+        this.$document = $document;
+        this.$sce = $sce;
+        this.$timeout = $timeout;
         this.authService = authService;
     }
 
@@ -33,6 +54,67 @@ export default class NavBarController {
             this.$rootScope.$on('$stateChangeSuccess', () => {
                 this.setPageDocs(this.$state);
             });
+        }
+    }
+
+    onHelpVideoClicked(doc) {
+        this.videoUlr = this.$sce.trustAsResourceUrl(doc.link + '?rel=0&controls=0&showinfo=0');
+        this.$timeout(() => {
+            this.initPlyr();
+        }, 100);
+    }
+
+    initPlyr() {
+        this.plyr = new Plyr('#player');
+        this.plyr.on('enterfullscreen', this.onEnterFullscreen.bind(this));
+        this.plyr.on('exitfullscreen', this.onExitFullscreen.bind(this));
+        this.showCustomBnt = true;
+        this.showVideo = true;
+    }
+
+    onEnterFullscreen() {
+        const plyrContainer = angular.element(this.$document[0].querySelector('#player'));
+        plyrContainer.css(plyrStyle.fullscreen);
+    }
+
+    onExitFullscreen() {
+        const plyrContainer = angular.element(this.$document[0].querySelector('#player'));
+        plyrContainer.css(plyrStyle.default);
+    }
+
+    onShowCustomBnts() {
+        this.showCustomBnt = true;
+        this.$scope.$evalAsync();
+    }
+
+    onHideCustomBnts() {
+        this.showCustomBnt = false;
+        this.$scope.$evalAsync();
+    }
+
+    onVideoClose(e) {
+        e.stopPropagation();
+        delete this.videoUlr;
+        this.showCustomBnt = false;
+        this.showVideo = false;
+        this.showMini = false;
+    }
+
+    onVideoCollapse() {
+        this.showVideo = false;
+        this.showMini = true;
+        this.showCustomBnt = false;
+    }
+
+    onMiniVideoHover(status) {
+        this.isMiniVideoHover = status;
+    }
+
+    onMiniVideoClick() {
+        if (this.videoUlr) {
+            this.showVideo = true;
+            this.showCustomBnt = true;
+            this.showMini = false;
         }
     }
 

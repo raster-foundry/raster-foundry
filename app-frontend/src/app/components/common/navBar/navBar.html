@@ -1,9 +1,19 @@
-<div class="navbar" ng-show="!$ctrl.loadError"  ng-if="!$ctrl.$state.$current.name.includes('share')">
+<div class="plyr-custom-btns" ng-if="$ctrl.showCustomBnt">
+  <i class="icon-cross" title="close" ng-click="$ctrl.onVideoClose($event)"></i>
+  <i class="icon-caret-up" title="collapse" ng-click="$ctrl.onVideoCollapse()"></i>
+</div>
+<div class="plyr__video-embed" id="player" ng-if="$ctrl.videoUlr" ng-show="$ctrl.showVideo">
+  <iframe
+    ng-attr-src="{{$ctrl.videoUlr}}"
+    frameborder="0"
+    allow="encrypted-media"
+    allowfullscreen
+    allowtransparency></iframe>
+</div>
+<div class="navbar" ng-show="!$ctrl.loadError" ng-if="!$ctrl.$state.$current.name.includes('share')">
   <!-- Nav Left -->
   <div class="navbar-section primary">
-    <a href
-       ui-sref="home"
-       class="brand">
+    <a href ui-sref="home" class="brand">
       <img ng-attr-src="{{$ctrl.assetLogo}}" style="max-width: 50px;">
     </a>
     <span class="navbar-vertical-divider"></span>
@@ -35,7 +45,6 @@
         <i class="icon-model"></i>
         <span ng-if="!$ctrl.hideLabels()">Lab</span>
       </a>
-
       <span ui-view="navmenu"></span>
     </nav>
   </div>
@@ -43,10 +52,20 @@
   <!-- Nav Right -->
   <div class="navbar-section secondary">
     <nav>
+      <div
+        class="video-mini-logo"
+        ng-click="$ctrl.onMiniVideoClick()"
+        ng-mouseenter="$ctrl.onMiniVideoHover(true)"
+        ng-mouseleave="$ctrl.onMiniVideoHover(false)"
+        ng-if="$ctrl.showMini">
+        <i class="icon-extent" ng-class="{'video-expand': $ctrl.isMiniVideoHover}"></i>
+        <i class="icon-cross" ng-class="{'video-expand': $ctrl.isMiniVideoHover}" ng-click="$ctrl.onVideoClose($event)"></i>
+      </div>
       <div class="admin-logo" ui-sref="admin" feature-flag="profile-org-edit"></div>
       <div uib-dropdown class="dropdown-help" on-toggle="$ctrl.onHelpToggled()" ng-if="$ctrl.showHelpCenter">
-        <a href uib-dropdown-toggle>
-          <i class="help-center icon-help"></i> <span ng-if="$ctrl.isHelpOpened">Help center</span>
+        <a href uib-dropdown-toggle class="dropdown-help-link">
+          <i class="help-center icon-help"></i>
+          <span ng-if="$ctrl.isHelpOpened">Help center</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dLabel">
           <li ng-repeat="doc in $ctrl.rootDocs"
@@ -54,9 +73,11 @@
               class="dropdown-list-item"
               title="{{doc.name}}"
               ng-if="$ctrl.rootDocs.length">
-            <a ng-attr-href="{{doc.link}}" target="_blank">
-              <i class="icon-mosaic" ng-if="doc.type.toUpperCase() === 'DOC'"></i>
-              <i class="icon-eye" ng-if="doc.type.toUpperCase() === 'VIDEO'"></i> {{doc.name}}
+            <a ng-if="doc.type.toUpperCase() === 'DOC'" ng-attr-href="{{doc.link}}" target="_blank" >
+              <i class="icon-mosaic"></i>{{doc.name}}
+            </a>
+            <a ng-if="doc.type.toUpperCase() === 'VIDEO'" ng-click="$ctrl.onHelpVideoClicked(doc)">
+              <i class="icon-eye"></i> {{doc.name}}
             </a>
           </li>
           <li role="separator" class="divider" ng-if="$ctrl.pageDocs.length"></li>
@@ -65,9 +86,11 @@
               class="dropdown-list-item"
               title="{{doc.name}}"
               ng-if="$ctrl.pageDocs.length">
-            <a ng-attr-href="{{doc.link}}" target="_blank">
-              <i class="icon-mosaic" ng-if="doc.type.toUpperCase() === 'DOC'"></i>
-              <i class="icon-eye" ng-if="doc.type.toUpperCase() === 'VIDEO'"></i> {{doc.name}}
+            <a ng-if="doc.type.toUpperCase() === 'DOC'" ng-attr-href="{{doc.link}}" target="_blank" >
+              <i class="icon-mosaic"></i>{{doc.name}}
+            </a>
+            <a ng-if="doc.type.toUpperCase() === 'VIDEO'" ng-click="$ctrl.onHelpVideoClicked(doc)">
+              <i class="icon-eye"></i> {{doc.name}}
             </a>
           </li>
         </ul>
