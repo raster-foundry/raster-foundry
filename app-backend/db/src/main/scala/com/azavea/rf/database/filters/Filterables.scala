@@ -78,7 +78,6 @@ trait Filterables extends RFMeta {
     Filters.userQP(combineSceneParams.userParams) ++
     Filters.timestampQP(combineSceneParams.timestampParams) ++
     Filters.organizationQP(combineSceneParams.orgParams) ++
-    Filters.imageQP(combineSceneParams.imageParams) ++
       List(
         sceneParams.maxCloudCover.map({ mcc => fr"cloud_cover <= $mcc" }),
         sceneParams.minCloudCover.map({ mcc => fr"cloud_cover >= $mcc" }),

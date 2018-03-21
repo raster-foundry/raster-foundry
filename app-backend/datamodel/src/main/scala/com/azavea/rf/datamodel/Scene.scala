@@ -75,8 +75,8 @@ case class Scene(
   def toScene = this
 
   def withRelatedFromComponents(
-    images: Seq[Image.WithRelated],
-    thumbnails: Seq[Thumbnail]
+    images: List[Image.WithRelated],
+    thumbnails: List[Thumbnail]
   ): Scene.WithRelated = Scene.WithRelated(
     this.id,
     this.createdAt,
