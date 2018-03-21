@@ -49,7 +49,7 @@ object ImageDao extends Dao[Image] {
 
   def insertImage(imageBanded: Image.Banded, user: User): ConnectionIO[Option[Image.WithRelated]] = {
     val image = imageBanded.toImage(user)
-    val bands: Seq[Band] = imageBanded.bands map { _.toBand(image.id) }
+    val bands: List[Band] = (imageBanded.bands map { band: Band.Create => band.toBand(image.id) }).toList
     val imageWithRelated = Image.WithRelated.fromRecords(bands.map((image, _))).headOption
     val transaction = for {
       _ <- this.create(image, user)

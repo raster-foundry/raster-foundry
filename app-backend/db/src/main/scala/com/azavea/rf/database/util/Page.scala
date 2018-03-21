@@ -20,8 +20,9 @@ object Page {
       case "organization" => Some("organization")
       case "slugLabel" => Some("slug")
       case "datasource" => Some("datasource")
-      // custom column for sorting by acquisition date for scenes
-      case "acquisitionDatetime" => Some("acquisition_date_sort")
+      // custom column for sorting by acquisition date for scenes --
+      // the COALESCE of these two columns is indexed already
+      case "acquisitionDatetime" => Some("COALESCE(acquisition_date, created_at)")
       case "sunAzimuth" => Some("sun_azimuth")
       case "sunElevation" => Some("sun_elevation")
       case "cloudCover" => Some("cloud_cover")
@@ -55,7 +56,10 @@ object Page {
             }
             case (_, _) => Fragment.empty
           }
-        }).toNel match {
+        })
+        // If we don't filter out empty fragments, we'll intercalate commas with spaces
+        .filter(_ != Fragment.empty)
+        .toNel match {
           case Some(orderStrings) => fr"ORDER BY" ++ (orderStrings ++ List(defaultOrderBy)).intercalate(fr",")
           case None => Fragment.empty
         }

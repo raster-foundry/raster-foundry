@@ -36,7 +36,7 @@ object BandDao extends Dao[Band] {
     )
   }
 
-  def createMany(bands: Seq[Band]): ConnectionIO[Int] = {
+  def createMany(bands: List[Band]): ConnectionIO[Int] = {
     (fr"INSERT INTO" ++ tableF ++ fr"(id, image_id, name, number, wavelength) VALUES" ++
        bands.foldLeft(fr"")(
          (query: Fragment, band: Band) => {
