@@ -238,9 +238,10 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     val md: Future[Seq[MosaicDefinition]] = mosaicDefinition(projectId, Option(polygonBbox))
     OptionT(
       mergeTiles(
-        colorCorrectTiles(
+        // This seems to cause issues -- disabled
+        // colorCorrectTiles(
           renderForBbox(md, Some(polygonBbox), zoom, Some(s"${zoom}-${col}-${row}"))
-        )
+        // )
       )
     )
   }
