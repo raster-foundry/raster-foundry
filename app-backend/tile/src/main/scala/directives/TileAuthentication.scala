@@ -54,7 +54,7 @@ trait TileAuthentication extends Authentication
     onSuccess(
       ProjectDao.query
         .filter(id)
-        .filter(fr"visibility=${Visibility.Public.toString}")
+        .filter(fr"visibility=${Visibility.Public.toString}::visibility")
         .selectOption.transact(xa).unsafeToFuture
     ).flatMap {
       case Some(_) => provide(true)
