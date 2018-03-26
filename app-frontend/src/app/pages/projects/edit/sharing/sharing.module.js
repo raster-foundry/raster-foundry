@@ -165,10 +165,6 @@ class SharingController {
     onCopyClick(e, url, type) {
         if (url && url.length) {
             this.copyType = type;
-            angular.element(e.currentTarget).css({
-                width: angular.element(e.currentTarget).prop('offsetWidth'),
-                height: angular.element(e.currentTarget).prop('offsetHeight')
-            });
             this.$timeout(() => {
                 delete this.copyType;
             }, 1000);
