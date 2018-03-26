@@ -1,10 +1,10 @@
-<div class="plyr-custom-btns" ng-if="$ctrl.showCustomBnt">
-  <i class="icon-cross" title="close" ng-click="$ctrl.onVideoClose($event)"></i>
-  <i class="icon-caret-up" title="collapse" ng-click="$ctrl.onVideoCollapse()"></i>
-</div>
-<div class="plyr__video-embed" id="player" ng-if="$ctrl.videoUlr" ng-show="$ctrl.showVideo">
+<div class="plyr__video-embed" id="player" ng-if="$ctrl.videoUrl" ng-show="$ctrl.showVideo">
+  <div class="plyr-custom-btns" ng-if="!$ctrl.isFullScreenMode">
+    <i class="icon-cross" title="close" ng-click="$ctrl.onVideoClose($event)"></i>
+    <i class="icon-caret-up" title="collapse" ng-click="$ctrl.onVideoCollapse()"></i>
+  </div>
   <iframe
-    ng-attr-src="{{$ctrl.videoUlr}}"
+    ng-attr-src="{{$ctrl.videoUrl}}"
     frameborder="0"
     allow="encrypted-media"
     allowfullscreen
@@ -58,8 +58,9 @@
         ng-mouseenter="$ctrl.onMiniVideoHover(true)"
         ng-mouseleave="$ctrl.onMiniVideoHover(false)"
         ng-if="$ctrl.showMini">
-        <i class="icon-extent" ng-class="{'video-expand': $ctrl.isMiniVideoHover}"></i>
-        <i class="icon-cross" ng-class="{'video-expand': $ctrl.isMiniVideoHover}" ng-click="$ctrl.onVideoClose($event)"></i>
+        <i class="icon-eye" ng-if="!$ctrl.isMiniVideoHover"></i>
+        <i class="icon-extent" ng-if="$ctrl.isMiniVideoHover"></i>
+        <i class="icon-cross" ng-if="$ctrl.isMiniVideoHover" ng-click="$ctrl.onVideoClose($event)"></i>
       </div>
       <div class="admin-logo" ui-sref="admin" feature-flag="profile-org-edit"></div>
       <div uib-dropdown class="dropdown-help" on-toggle="$ctrl.onHelpToggled()" ng-if="$ctrl.showHelpCenter">
@@ -76,7 +77,7 @@
             <a ng-if="doc.type.toUpperCase() === 'DOC'" ng-attr-href="{{doc.link}}" target="_blank" >
               <i class="icon-mosaic"></i>{{doc.name}}
             </a>
-            <a ng-if="doc.type.toUpperCase() === 'VIDEO'" ng-click="$ctrl.onHelpVideoClicked(doc)">
+            <a ng-if="doc.type.toUpperCase() === 'VIDEO'" ng-click="$ctrl.onHelpVideoClicked(true, doc)">
               <i class="icon-eye"></i> {{doc.name}}
             </a>
           </li>
@@ -89,7 +90,7 @@
             <a ng-if="doc.type.toUpperCase() === 'DOC'" ng-attr-href="{{doc.link}}" target="_blank" >
               <i class="icon-mosaic"></i>{{doc.name}}
             </a>
-            <a ng-if="doc.type.toUpperCase() === 'VIDEO'" ng-click="$ctrl.onHelpVideoClicked(doc)">
+            <a ng-if="doc.type.toUpperCase() === 'VIDEO'" ng-click="$ctrl.onHelpVideoClicked(false, doc)">
               <i class="icon-eye"></i> {{doc.name}}
             </a>
           </li>

@@ -55,6 +55,11 @@
       "name": "Change profile picture",
       "link": "https://help.radiant.earth/getting-started/set-up/change-your-profile-picture",
       "type": "link"
+    },
+    {
+      "name": "Tutorial Video",
+      "link": "https://www.youtube.com/embed/I9zk1bEVH6E",
+      "type": "video"
     }
   ],
   "settings_tokens": [],

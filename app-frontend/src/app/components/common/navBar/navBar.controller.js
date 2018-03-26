@@ -8,21 +8,6 @@ assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
 
 const Plyr = require('plyr/dist/plyr.js');
 
-const plyrStyle = {
-    'default': {
-        'position': 'fixed',
-        'right': 0,
-        'top': '6rem',
-        'width': '600px',
-        'z-index': 999
-    },
-    'fullscreen': {
-        'position': 'relative',
-        'top': '0px',
-        'width': '100%'
-    }
-};
-
 export default class NavBarController {
     constructor( // eslint-disable-line max-params
         $rootScope, $scope, $log, $state, $document, $sce, $timeout, APP_CONFIG, authService
@@ -57,56 +42,52 @@ export default class NavBarController {
         }
     }
 
-    onHelpVideoClicked(doc) {
-        this.videoUlr = this.$sce.trustAsResourceUrl(doc.link + '?rel=0&controls=0&showinfo=0');
+    onHelpVideoClicked(isRootVid, doc) {
+        this.onVideoClose();
         this.$timeout(() => {
+            this.isRootVid = isRootVid;
+            this.videoUrl = this.$sce.trustAsResourceUrl(doc.link + '?rel=0&controls=0&showinfo=0');
             this.initPlyr();
         }, 100);
     }
 
     initPlyr() {
-        this.plyr = new Plyr('#player');
-        this.plyr.on('enterfullscreen', this.onEnterFullscreen.bind(this));
-        this.plyr.on('exitfullscreen', this.onExitFullscreen.bind(this));
-        this.showCustomBnt = true;
-        this.showVideo = true;
+        this.$timeout(() => {
+            this.plyr = new Plyr('#player');
+            this.plyr.on('enterfullscreen', this.onEnterFullscreen.bind(this));
+            this.plyr.on('exitfullscreen', this.onExitFullscreen.bind(this));
+            this.showVideo = true;
+        }, 100);
     }
 
     onEnterFullscreen() {
         const plyrContainer = angular.element(this.$document[0].querySelector('#player'));
-        plyrContainer.css(plyrStyle.fullscreen);
+        plyrContainer.toggleClass('full-screen', true);
+        this.isFullScreenMode = true;
+        this.$scope.$evalAsync();
     }
 
     onExitFullscreen() {
         const plyrContainer = angular.element(this.$document[0].querySelector('#player'));
-        plyrContainer.css(plyrStyle.default);
-    }
-
-    onShowCustomBnts() {
-        this.showCustomBnt = true;
+        plyrContainer.toggleClass('full-screen', false);
+        this.isFullScreenMode = false;
         this.$scope.$evalAsync();
     }
 
-    onHideCustomBnts() {
-        this.showCustomBnt = false;
-        this.$scope.$evalAsync();
-    }
-
-    onVideoClose(e) {
-        e.stopPropagation();
-        delete this.videoUlr;
-        this.$timeout(() => {
-            this.showVideo = false;
-            this.showCustomBnt = false;
-            this.showMini = false;
-        }, 300);
+    onVideoClose(e = {}) {
+        if (!_.isEmpty(e)) {
+            e.stopPropagation();
+        }
+        delete this.videoUrl;
+        this.showVideo = false;
+        this.showMini = false;
     }
 
     onVideoCollapse() {
         this.showVideo = false;
         this.$timeout(() => {
-            this.showCustomBnt = false;
             this.showMini = true;
+            this.isMiniVideoHover = false;
         }, 300);
     }
 
@@ -115,9 +96,8 @@ export default class NavBarController {
     }
 
     onMiniVideoClick() {
-        if (this.videoUlr) {
+        if (this.videoUrl) {
             this.showVideo = true;
-            this.showCustomBnt = true;
             this.showMini = false;
         }
     }
@@ -129,6 +109,9 @@ export default class NavBarController {
     setPageDocs(state) {
         if (state.current && state.current.name && state.current.name.length) {
             this.pageDocs = this.helpDocs[state.current.name.replace('.', '_')];
+            if (!this.isRootVid) {
+                this.onVideoClose();
+            }
         }
     }
 
