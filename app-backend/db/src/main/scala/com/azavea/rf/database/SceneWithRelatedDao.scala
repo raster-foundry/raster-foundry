@@ -34,7 +34,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
       count <- countQuery
     } yield {
       val hasPrevious = pageRequest.offset > 0
-      val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
+      val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
 
       PaginatedResponse[Scene.WithRelated](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
     }
