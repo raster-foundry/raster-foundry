@@ -95,15 +95,19 @@ export default class NavBarController {
     onVideoClose(e) {
         e.stopPropagation();
         delete this.videoUlr;
-        this.showCustomBnt = false;
-        this.showVideo = false;
-        this.showMini = false;
+        this.$timeout(() => {
+            this.showVideo = false;
+            this.showCustomBnt = false;
+            this.showMini = false;
+        }, 300);
     }
 
     onVideoCollapse() {
         this.showVideo = false;
-        this.showMini = true;
-        this.showCustomBnt = false;
+        this.$timeout(() => {
+            this.showCustomBnt = false;
+            this.showMini = true;
+        }, 300);
     }
 
     onMiniVideoHover(status) {
