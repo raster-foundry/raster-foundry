@@ -119,15 +119,14 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       ).toList
   }
 
-  def getExistingScenes(date: LocalDate, datasourceIds: List[UUID]): ConnectionIO[List[SceneName]] = {
+  def getExistingScenes(date: LocalDate, datasourceUUID: UUID): ConnectionIO[List[SceneName]] = {
     val idsQuery =
-      sql" select id from scenes where date(acquisition_date) = ${date} and datasource_id in" ++
-        Fragment.const("(" ++ datasourceIds.mkString(" ") ++ ")")
+      sql" select id from scenes where date(acquisition_date) = ${date} and datasource_id = ${datasourceUUID}"
     idsQuery.query[SceneName].stream.compile.toList
   }
 
   /** Because it makes scenes -- get it? */
-  def riot(existingScenes: List[SceneName], scenePath: String, datasources: List[(String, UUID)]): Option[Scene.Create] = {
+  def riot(existingScenes: List[SceneName], scenePath: String, datasourceUUID: UUID): Option[Scene.Create] = {
       val sceneId = UUID.randomUUID()
       val images = List(10f, 20f, 60f).map(createImages(sceneId, scenePath.some, _)).reduce(_ ++ _)
       val thumbnails = createThumbnails(sceneId, scenePath)
@@ -145,10 +144,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
             .getOrElse(Json.Null)
         logger.info(s"Getting scene metadata for ${scenePath}")
         val sceneMetadata: Map[String, String] = getSceneMetadata(tileinfo)
-        val (datasourcePrefix: String, datasourceId: UUID) =
-          datasources
-            .find(d => sceneMetadata("productName").startsWith(d._1))
-            .getOrElse(throw new Exception("Unknown datasource"))
+        val datasourcePrefix = "S2"
         logger.info(s"${datasourcePrefix} - Extracting polygons for ${scenePath}")
         val tileFootprint = multiPolygonFromJson(tileinfo, "tileGeometry", sentinel2Config.targetProjCRS)
         val dataFootprint = multiPolygonFromJson(tileinfo, "tileDataGeometry", sentinel2Config.targetProjCRS)
@@ -174,7 +170,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
           ingestSizeBytes = 0,
           visibility = Visibility.Public,
           tags = List("Sentinel-2", "JPEG2000"),
-          datasource = datasourceId,
+          datasource = datasourceUUID,
           sceneMetadata = sceneMetadata.asJson,
           name = sceneName,
           owner = systemUser.some,
@@ -201,10 +197,8 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       }
   }
 
-  def findScenes(date: LocalDate, keys: List[URI], user: User, datasources: Map[String, String]): ConnectionIO[List[Scene.WithRelated]] = {
-    val datasourcesConv =
-      datasources.toList map { case (prefix: String, id: String) => (prefix, UUID.fromString(id)) }
-    val scenesIo: ConnectionIO[List[Scene.Create]] = getExistingScenes(date, datasourcesConv map { _._2  }) map {
+  def findScenes(date: LocalDate, keys: List[URI], user: User, datasourceUUID: UUID): ConnectionIO[List[Scene.WithRelated]] = {
+    val scenesIo: ConnectionIO[List[Scene.Create]] = getExistingScenes(date, datasourceUUID) map {
       case ids: List[SceneName] => {
         keys map {
           uri:URI => {
@@ -214,7 +208,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
             } yield {
               tilesJson.flatMap { tileJson =>
                 tileJson.hcursor.downField("path").as[String].toOption.map {
-                  scenePath => riot(ids, scenePath, datasourcesConv)
+                  scenePath => riot(ids, scenePath, datasourceUUID)
                 }
               }.flatten
             }
@@ -237,7 +231,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       UserDao.getUserById(systemUser) flatMap { (mbUser: Option[User]) =>
         mbUser match {
           case Some(u) =>
-            findScenes(startDate, keys, u, sentinel2Config.datasourceUUIDs)
+            findScenes(startDate, keys, u, sentinel2Config.datasourceUUID)
           case None =>
             throw new Exception(s"${systemUser} could not be found -- probably the database is borked")
         }
