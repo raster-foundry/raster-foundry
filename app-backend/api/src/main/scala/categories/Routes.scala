@@ -1,4 +1,4 @@
-package com.azavea.rf.api.toolcategory
+package com.azavea.rf.api.category
 
 import com.azavea.rf.common.{Authentication, UserErrorHandler}
 import com.azavea.rf.database._
@@ -20,63 +20,63 @@ import doobie.postgres.implicits._
 
 import scala.util.{Success, Failure}
 
-trait ToolCategoryRoutes extends Authentication
+trait CategoryRoutes extends Authentication
     with PaginationDirectives
-    with ToolCategoryQueryParametersDirective
+    with CategoryQueryParametersDirective
     with UserErrorHandler {
   val xa: Transactor[IO]
 
   // Not implementing an update function, since it's an emergency operation and should probably be done
-  // in the database directly to avoid orphaning categorized tools. Eventually, we should remove the ability
+  // in the database directly to avoid orphaning categorized analyses. Eventually, we should remove the ability
   // to add/remove categories using the API, as right now any user can do so. We will probably want to add/remove
   // categories manually in the database or through migrations
-  val toolCategoryRoutes: Route = handleExceptions(userExceptionHandler) {
+  val categoryRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
-      get { listToolCategories } ~
-      post { createToolCategory }
+      get { listCategories } ~
+      post { createCategory }
     } ~
-    pathPrefix(Segment) { toolCategorySlug =>
+    pathPrefix(Segment) { categorySlug =>
       pathEndOrSingleSlash {
-        get { getToolCategory(toolCategorySlug) } ~
-        delete { deleteToolCategory(toolCategorySlug) }
+        get { getCategory(categorySlug) } ~
+        delete { deleteCategory(categorySlug) }
       }
     }
   }
 
-  def listToolCategories: Route = authenticate { user =>
-    (withPagination & toolCategoryQueryParameters) { (page, combinedParams) =>
+  def listCategories: Route = authenticate { user =>
+    (withPagination & categoryQueryParameters) { (page, combinedParams) =>
       complete {
-        ToolCategoryDao.query.filter(combinedParams).page(page).transact(xa).unsafeToFuture
+        CategoryDao.query.filter(combinedParams).page(page).transact(xa).unsafeToFuture
       }
     }
   }
 
-  def createToolCategory: Route =
+  def createCategory: Route =
     handleExceptions(userExceptionHandler) {
       authenticate { user =>
-        entity(as[ToolCategory.Create]) { newToolCategory =>
+        entity(as[Category.Create]) { newCategory =>
           onSuccess(
-            ToolCategoryDao.insertToolCategory(
-              newToolCategory.toToolCategory(user.id), user
+            CategoryDao.insertCategory(
+              newCategory.toCategory(user.id), user
             ).transact(xa).unsafeToFuture()
-          ) { toolCategory =>
-            complete((StatusCodes.Created, toolCategory))
+          ) { category =>
+            complete((StatusCodes.Created, category))
           }
         }
     }
   }
 
-  def getToolCategory(toolCategorySlug: String): Route = authenticate { user =>
+  def getCategory(categorySlug: String): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        ToolCategoryDao.query.filter(fr"slug_label = $toolCategorySlug").selectOption.transact(xa).unsafeToFuture
+        CategoryDao.query.filter(fr"slug_label = $categorySlug").selectOption.transact(xa).unsafeToFuture
       }
     }
   }
 
-  def deleteToolCategory(toolCategorySlug: String): Route = authenticate { user =>
+  def deleteCategory(categorySlug: String): Route = authenticate { user =>
     onSuccess(
-      ToolCategoryDao.deleteToolCategory(toolCategorySlug, user)
+      CategoryDao.deleteCategory(categorySlug, user)
         .transact(xa).unsafeToFuture
     ) {
       case 1 => complete(StatusCodes.NoContent)

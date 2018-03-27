@@ -140,9 +140,16 @@ case class AoiQueryParameters(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters()
 )
 
-/** Combined tool query parameters */
+/** Query parameters specific to templates */
 @JsonCodec
-case class CombinedToolQueryParameters(
+case class TemplateQueryParameters(
+  category: Iterable[String] = Seq[String](),
+  tag: Iterable[String] = Seq[String](),
+  search: Option[String] = None
+)
+
+/** Combined template query parameters */
+case class CombinedTemplateQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
@@ -187,27 +194,25 @@ case class TimestampQueryParameters(
 )
 
 @JsonCodec
-case class ToolCategoryQueryParameters(
+case class CategoryQueryParameters(
   search: Option[String] = None
 )
 
 @JsonCodec
-case class ToolRunQueryParameters(
-  createdBy: Option[String] = None,
-  projectId: Option[UUID] = None,
-  toolId: Option[UUID] = None
+case class AnalysisQueryParameters(
+  createdBy: Option[String] = None
 )
 
 @JsonCodec
-case class CombinedToolRunQueryParameters(
-  toolRunParams: ToolRunQueryParameters = ToolRunQueryParameters(),
+case class CombinedAnalysisQueryParameters(
+  analysisParams: AnalysisQueryParameters = AnalysisQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters()
 )
 
 @JsonCodec
-case class CombinedToolCategoryQueryParams(
+case class CombinedCategoryQueryParams(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-  toolCategoryParams: ToolCategoryQueryParameters = ToolCategoryQueryParameters()
+  categoryParams: CategoryQueryParameters = CategoryQueryParameters()
 )
 
 @JsonCodec
@@ -274,4 +279,11 @@ case class FeedQueryParameters(
 @JsonCodec
 case class SearchQueryParameters(
   search: Option[String] = None
+)
+
+@JsonCodec
+case class CombinedWorkspaceQueryParameters(
+  userParams: UserQueryParameters = UserQueryParameters(),
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+  searchParams: SearchQueryParameters = SearchQueryParameters()
 )

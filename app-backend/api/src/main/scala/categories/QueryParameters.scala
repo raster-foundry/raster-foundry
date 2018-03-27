@@ -1,4 +1,4 @@
-package com.azavea.rf.api.toolcategory
+package com.azavea.rf.api.category
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
@@ -6,14 +6,14 @@ import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.queryparams._
 
-/* Trait to abstract out query parameters for tool categories */
-trait ToolCategoryQueryParametersDirective extends QueryParametersCommon {
-  val toolCategorySpecificQueryParams = parameters((
+/* Trait to abstract out query parameters for categories */
+trait CategoryQueryParametersDirective extends QueryParametersCommon {
+  val categorySpecificQueryParams = parameters((
     'search.as[String].?
-  )).as(ToolCategoryQueryParameters.apply _)
+  )).as(CategoryQueryParameters.apply _)
 
-  val toolCategoryQueryParameters = (
+  val categoryQueryParameters = (
     timestampQueryParameters &
-    toolCategorySpecificQueryParams
-  ).as(CombinedToolCategoryQueryParams.apply _)
+    categorySpecificQueryParams
+  ).as(CombinedCategoryQueryParams.apply _)
 }

@@ -77,6 +77,18 @@ object Dao {
       this.copy(filters = filters ++ filterable.toFilters(ownerFilterF2(user)))
     }
 
+    def visibilityFilterF(user: User): Option[Fragment] = {
+      if (user.isInRootOrganization) {
+        None
+      } else {
+        Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id} OR visibility = 'PUBLIC')")
+      }
+    }
+
+    def visibilityFilter[M >: Model](user: User)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+      this.copy(filters = filters ++ filterable.toFilters(visibilityFilterF(user)))
+    }
+
     /** Provide a list of responses within the PaginatedResponse wrapper */
     def page(pageRequest: PageRequest, selectF: Fragment = selectF, countF: Fragment = countF): ConnectionIO[PaginatedResponse[Model]] = {
       for {

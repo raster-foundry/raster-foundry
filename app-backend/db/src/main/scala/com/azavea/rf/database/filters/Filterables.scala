@@ -63,13 +63,6 @@ trait Filterables extends RFMeta {
       Filters.searchQP(projectParams.searchParams, List("name"))
   }
 
-  implicit val CombinedToolQueryParametersFilter = Filterable[Any, CombinedToolQueryParameters] { toolParams: CombinedToolQueryParameters =>
-    Filters.organizationQP(toolParams.orgParams) ++
-      Filters.timestampQP(toolParams.timestampParams) ++
-      Filters.userQP(toolParams.userParams) ++
-      Filters.searchQP(toolParams.searchParams, List("title", "description"))
-  }
-
   implicit val annotationQueryparamsFilter = Filterable[Any, AnnotationQueryParameters] { annotParams: AnnotationQueryParameters =>
     Filters.organizationQP(annotParams.orgParams) ++
     Filters.userQP(annotParams.userParams) ++ List(
@@ -131,18 +124,16 @@ trait Filterables extends RFMeta {
     Filters.mapTokenQP(mapTokenParams.mapTokenParams)
   }
 
-  implicit val combinedToolCategoryParamsFilter =
-    Filterable[Any, CombinedToolCategoryQueryParams] { ctcQP: CombinedToolCategoryQueryParams =>
+  implicit val combinedCategoryParamsFilter =
+    Filterable[Any, CombinedCategoryQueryParams] { ctcQP: CombinedCategoryQueryParams =>
       Filters.timestampQP(ctcQP.timestampParams) :+
-      ctcQP.toolCategoryParams.search.map({ search => fr"category ILIKE $search" })
+      ctcQP.categoryParams.search.map({ search => fr"category ILIKE $search" })
     }
 
-  implicit val combinedToolRunQueryParameters =
-    Filterable[Any, CombinedToolRunQueryParameters] { combinedToolRunParams: CombinedToolRunQueryParameters =>
-      Filters.timestampQP(combinedToolRunParams.timestampParams) ++ List(
-        combinedToolRunParams.toolRunParams.createdBy.map({createdBy => fr"created_by = ${createdBy}"}),
-        combinedToolRunParams.toolRunParams.projectId.map({projectId => fr"project_id = ${projectId}"}),
-        combinedToolRunParams.toolRunParams.toolId.map({toolId => fr"tool_id = ${toolId}"})
+  implicit val combinedAnalysisQueryParameters =
+    Filterable[Any, CombinedAnalysisQueryParameters] { combinedAnalysisParams: CombinedAnalysisQueryParameters =>
+      Filters.timestampQP(combinedAnalysisParams.timestampParams) ++ List(
+        combinedAnalysisParams.analysisParams.createdBy.map({createdBy => fr"created_by = ${createdBy}"})
       )
     }
 
@@ -194,6 +185,19 @@ trait Filterables extends RFMeta {
 
   implicit val thumbnailParamsFilter = Filterable[Any, ThumbnailQueryParameters] { params: ThumbnailQueryParameters =>
     Filters.thumbnailQP(params)
+  }
+
+  implicit val workspaceQueryParametersFilter = Filterable[Any, CombinedWorkspaceQueryParameters] { params: CombinedWorkspaceQueryParameters =>
+    Filters.userQP(params.userParams) ++
+    Filters.timestampQP(params.timestampParams) ++
+    Filters.searchQP(params.searchParams, List("name"))
+  }
+
+  implicit val templateQueryParametersFilter = Filterable[Any, CombinedTemplateQueryParameters] { params: CombinedTemplateQueryParameters =>
+    Filters.organizationQP(params.orgParams) ++
+    Filters.userQP(params.userParams) ++
+    Filters.timestampQP(params.timestampParams) ++
+    Filters.searchQP(params.searchParams, List("name", "details", "requirements"))
   }
 }
 

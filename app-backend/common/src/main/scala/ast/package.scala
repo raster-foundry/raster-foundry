@@ -1,6 +1,6 @@
 package com.azavea.rf.common
 
-import com.azavea.rf.datamodel.{Tool, ToolRun, User}
+import com.azavea.rf.datamodel.{Template, Analysis, User}
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.eval._
 
@@ -17,7 +17,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 package object ast {
 
-  /** Validate an AST, given some ToolRun. In the case of success, returns
+  /** Validate an AST, given some Analysis. In the case of success, returns
     * the zero element of some specified Monoid.
     */
   def validateTree[M: Monoid](ast: MapAlgebraAST): M =
@@ -26,7 +26,7 @@ package object ast {
       case Invalid(nel) => throw InterpreterException(nel)
     }
 
-  /** Validate an AST, given some ToolRun. In the case of success, returns
+  /** Validate an AST, given some Analysis. In the case of success, returns
     * the zero element of some specified Monoid.
     */
   def validateTreeWithSources[M: Monoid](ast: MapAlgebraAST): M =

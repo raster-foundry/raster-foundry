@@ -1,9 +1,9 @@
 package com.azavea.rf.tile
 
-import com.azavea.rf.datamodel.{Tool, ToolRun, User}
-import com.azavea.rf.database.ToolRunDao
+import com.azavea.rf.datamodel.{Template, Analysis, User}
+import com.azavea.rf.database.AnalysisDao
 import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.tile.tool._
+import com.azavea.rf.tile.analysis._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.maml._
@@ -134,18 +134,18 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
 
   /** Calculate the histogram for the least resolute zoom level to automatically render tiles */
   def modelLayerGlobalHistogram(
-                                 toolRunId: UUID,
+                                 analysisId: UUID,
                                  subNode: Option[UUID],
                                  user: User,
                                  voidCache: Boolean = false
                                ): OptionT[Future, Histogram[Double]] = {
-    val cacheKey = s"histogram-${toolRunId}-${subNode}-${user.id}"
+    val cacheKey = s"histogram-${analysisId}-${subNode}-${user.id}"
 
     if (voidCache) rfCache.delete(cacheKey)
-    rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
+    rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.analysis.enabled) {
       for {
-        toolRun <- LayerCache.toolRun(toolRunId, user, voidCache)
-        (_, ast) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
+        analysis <- LayerCache.analysis(analysisId, user, voidCache)
+        (_, ast) <- LayerCache.analysisEvalRequirements(analysisId, subNode, user, voidCache)
         (extent, zoom) <- TileSources.fullDataWindow(ast.tileSources)
         literalAst <- OptionT(
                         tileResolver.resolveForExtent(ast.asMaml._1, zoom, extent)
@@ -163,38 +163,38 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     }
   }
 
-  def toolRun(toolRunId: UUID, user: User, voidCache: Boolean = false): OptionT[Future, ToolRun] = {
-    OptionT(ToolRunDao.query.filter(toolRunId).ownerFilter(user).selectOption.transact(xa).unsafeToFuture)
+  def analysis(analysisId: UUID, user: User, voidCache: Boolean = false): OptionT[Future, Analysis] = {
+    OptionT(AnalysisDao.query.filter(analysisId).ownerFilter(user).selectOption.transact(xa).unsafeToFuture)
   }
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
-  def toolEvalRequirements(
-    toolRunId: UUID, subNode: Option[UUID], user: User, voidCache: Boolean = false
+  def analysisEvalRequirements(
+    analysisId: UUID, subNode: Option[UUID], user: User, voidCache: Boolean = false
   ): OptionT[Future, (Timestamp, MapAlgebraAST)] = {
     for {
-      toolRun <- LayerCache.toolRun(toolRunId, user)
-      ast <- OptionT.fromOption[Future](toolRun.executionParameters.as[MapAlgebraAST].toOption)
+      analysis <- LayerCache.analysis(analysisId, user)
+      ast <- OptionT.fromOption[Future](analysis.executionParameters.as[MapAlgebraAST].toOption)
       subAst <- OptionT.fromOption[Future](subNode match {
         case Some(id) => ast.find(id)
         case None => Some(ast)
       })
-    } yield (toolRun.modifiedAt, subAst)
+    } yield (analysis.modifiedAt, subAst)
   }
 
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */
-  def toolRunColorMap(
-    toolRunId: UUID,
+  def analysisColorMap(
+    analysisId: UUID,
     subNode: Option[UUID],
     user: User,
     colorRamp: ColorRamp,
     colorRampName: String
-  ): OptionT[Future, ColorMap] = traceName("LayerCache.toolRunColorMap") {
-    val cacheKey = s"colormap-$toolRunId-${subNode}-${user.id}-${colorRampName}"
-    rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
-      traceName("LayerCache.toolRunColorMap (no cache)") {
+  ): OptionT[Future, ColorMap] = traceName("LayerCache.analysisColorMap") {
+    val cacheKey = s"colormap-$analysisId-${subNode}-${user.id}-${colorRampName}"
+    rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.analysis.enabled) {
+      traceName("LayerCache.analysisColorMap (no cache)") {
         for {
-          (_, ast)    <- LayerCache.toolEvalRequirements(toolRunId, subNode, user)
+          (_, ast)    <- LayerCache.analysisEvalRequirements(analysisId, subNode, user)
           cmap   <- {
                       val metadata: Option[NodeMetadata] = ast.metadata
                       OptionT.fromOption[Future](metadata.flatMap(_.classMap).map(_.toColorMap))
@@ -210,7 +210,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
                           } yield colorRamp.toColorMap(hist)
                         }).orElse({
                           for {
-                            hist <- LayerCache.modelLayerGlobalHistogram(toolRunId, subNode, user)
+                            hist <- LayerCache.modelLayerGlobalHistogram(analysisId, subNode, user)
                           } yield colorRamp.toColorMap(hist)
                         })
                     }
