@@ -21,7 +21,7 @@ import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
 import cats.effect.IO
-import doobie.{ConnectionIO, Fragment}
+import doobie.{ConnectionIO, Fragment, Fragments}
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 

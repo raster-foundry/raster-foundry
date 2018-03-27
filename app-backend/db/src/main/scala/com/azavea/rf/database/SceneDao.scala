@@ -52,7 +52,7 @@ object SceneDao extends Dao[Scene] {
       sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
     }
 
-    val sceneInsert = fr"""
+    val sceneInsert = (Fragment.const(s"""
       INSERT INTO ${tableName} (
          id, created_at, created_by, modified_at, modified_by, owner,
          organization_id, ingest_size_bytes, visibility, tags,
@@ -60,7 +60,7 @@ object SceneDao extends Dao[Scene] {
          data_footprint, metadata_files, ingest_location, cloud_cover,
          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
          boundary_status, ingest_status
-      ) VALUES (
+      )""") ++ fr"""VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
         ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
         ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
@@ -68,7 +68,7 @@ object SceneDao extends Dao[Scene] {
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus}, ${scene.statusFields.ingestStatus}
       )
-    """.update.run
+    """).update.run
 
 
     val thumbnailInsert = ThumbnailDao.insertMany(thumbnails)
@@ -93,7 +93,7 @@ object SceneDao extends Dao[Scene] {
       sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
     }
 
-    val sceneInsert = fr"""
+    val sceneInsert = (Fragment.const(s"""
       INSERT INTO ${tableName} (
          id, created_at, created_by, modified_at, modified_by, owner,
          organization_id, ingest_size_bytes, visibility, tags,
@@ -101,7 +101,7 @@ object SceneDao extends Dao[Scene] {
          data_footprint, metadata_files, ingest_location, cloud_cover,
          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
          boundary_status, ingest_status
-      ) VALUES (
+      )""") ++ fr"""VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
         ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
          ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
@@ -109,7 +109,7 @@ object SceneDao extends Dao[Scene] {
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus}, ${scene.statusFields.ingestStatus}
       )
-    """.update.run
+    """).update.run
 
 
     val thumbnailInsert = ThumbnailDao.insertMany(thumbnails)
