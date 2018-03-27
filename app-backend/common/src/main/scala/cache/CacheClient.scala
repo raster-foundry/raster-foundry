@@ -16,6 +16,7 @@ import com.typesafe.scalalogging.LazyLogging
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 
 import scala.util.{Failure, Success}
+import scala.annotation.tailrec
 
 object CacheClientThreadPool extends RollbarNotifier {
   implicit lazy val ec: ExecutionContext =
@@ -37,10 +38,16 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
   implicit val materializer = ActorMaterializer()
 
   val cacheEnabled = Config.memcached.enabled
-  val localCacheEnabled = true
+  val localCacheEnabled = Config.memcached.localCacheEnabled
+  val localCacheSize = Config.memcached.localCacheSize
+
+  val retryMaxMillis = 30000
+  val retrySleepMillis = 25
+  val maxRetryDepth = retryMaxMillis / retrySleepMillis
+
   val localCache: Cache[String, Option[Any]] =
     Scaffeine()
-      .expireAfterWrite(30.seconds)
+      .maximumSize(localCacheSize)
       .build[String, Option[Any]]()
 
   def delete(key: String): Unit =
@@ -65,10 +72,12 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
   // Suppress asInstanceOf warning because we can't pattern match on the returned type since it's
   // eliminated by type erasure
   @SuppressWarnings(Array("AsInstanceOf"))
-  def localGetOrElse[CachedType](
+  @tailrec
+  final def localGetOrElse[CachedType](
     cacheKey: String,
     expensiveOperation: => Future[Option[CachedType]],
-    doCache: Boolean = true)(
+    doCache: Boolean = true,
+    depth: Int = 0)(
     fallbackFunction: (String, => Future[Option[CachedType]], Boolean) => Future[Option[CachedType]]
     ): Future[Option[CachedType]] = {
 
@@ -89,33 +98,29 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
       fallbackFuture
     }
 
-    if (cacheEnabled && doCache) {
-      localCache.getIfPresent(cacheKey) match {
-        // The requested key is not present in the local cache, so do the else function
-        case None => {
-          // Load the local cache with the result of the else function
-          fallback
-        }
-        // The requested key is in the local cache
-        case Some(cachedValueO) => {
-          cachedValueO match {
-            // The requested key is already being computed, try again
-            case Some("AWAIT") => {
-              Thread.sleep(25)
-              localGetOrElse(cacheKey, expensiveOperation, doCache)(fallbackFunction)
-            }
-            case Some(cachedValue) => {
-              logger.debug(s"Local Cache Hit: ${cacheKey}")
-              Future.successful(Some(cachedValue.asInstanceOf[CachedType]))
-            }
-            case None => {
-              fallback
-            }
+    localCache.getIfPresent(cacheKey) match {
+      // The requested key is in the local cache
+      case Some(cachedValueO) => {
+        cachedValueO match {
+          // The requested key is already being computed, try again
+          case Some("AWAIT") if depth < maxRetryDepth => {
+            Thread.sleep(retrySleepMillis)
+            localGetOrElse(cacheKey, expensiveOperation, doCache, depth + 1)(fallbackFunction)
+          }
+          case Some(cachedValue) if depth < maxRetryDepth => {
+            logger.debug(s"Local Cache Hit: ${cacheKey}")
+            Future.successful(Some(cachedValue.asInstanceOf[CachedType]))
+          }
+          case _ => {
+            fallback
           }
         }
       }
-    } else {
-      expensiveOperation
+      // The requested key is not present in the local cache, so do the else function
+      case _ => {
+        // Load the local cache with the result of the else function
+        fallback
+      }
     }
   }
 
@@ -127,36 +132,32 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
     expensiveOperation: => Future[Option[CachedType]],
     doCache: Boolean = true
     ): Future[Option[CachedType]] = {
-    if (cacheEnabled && doCache) {
-      val futureCached = Future { client.asyncGet(cacheKey).get() }
-      futureCached.flatMap(
-        {
-          case null => {
-              logger.debug(s"Cache Miss: ${cacheKey}")
-              val futureCached: Future[Option[CachedType]] = expensiveOperation
-              futureCached.onComplete {
-                case Success(cachedValue) => {
-                  cachedValue match {
-                    case Some(v) => setValue(cacheKey, cachedValue)
-                    case None => setValue(cacheKey, cachedValue, ttlSeconds = 300)
-                  }
-                }
-                case Failure(e) => {
-                  sendError(RfStackTrace(e))
-                  logger.error(s"Cache Set Error: ${RfStackTrace(e)}")
+    val futureCached = Future { client.asyncGet(cacheKey).get() }
+    futureCached.flatMap(
+      {
+        case null => {
+            logger.debug(s"Cache Miss: ${cacheKey}")
+            val futureCached: Future[Option[CachedType]] = expensiveOperation
+            futureCached.onComplete {
+              case Success(cachedValue) => {
+                cachedValue match {
+                  case Some(v) => setValue(cacheKey, cachedValue)
+                  case None => setValue(cacheKey, cachedValue, ttlSeconds = 300)
                 }
               }
-              futureCached
+              case Failure(e) => {
+                sendError(RfStackTrace(e))
+                logger.error(s"Cache Set Error: ${RfStackTrace(e)}")
+              }
             }
-          case o => {
-            logger.debug(s"Cache Hit: ${cacheKey}")
-            Future.successful(o.asInstanceOf[Option[CachedType]])
+            futureCached
           }
+        case o => {
+          logger.debug(s"Cache Hit: ${cacheKey}")
+          Future.successful(o.asInstanceOf[Option[CachedType]])
         }
-      )
-    } else {
-      expensiveOperation
-    }
+      }
+    )
   }
 
   def getOrElseUpdate[CachedType](
@@ -164,16 +165,10 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
     expensiveOperation: => Future[Option[CachedType]],
     doCache: Boolean = true
     ): Future[Option[CachedType]] = {
-    if (cacheEnabled && doCache) {
-      if (localCacheEnabled) {
-        localGetOrElse[CachedType](cacheKey, expensiveOperation, doCache) {
-          getOrElseUpdateMemcached[CachedType]
-        }
-      } else {
-        getOrElseUpdateMemcached[CachedType](cacheKey, expensiveOperation, doCache)
-      }
-    } else {
-      expensiveOperation
+    (doCache, cacheEnabled, localCacheEnabled) match {
+      case (true, true, true)  => localGetOrElse[CachedType](cacheKey, expensiveOperation, doCache)(getOrElseUpdateMemcached[CachedType])
+      case (true, true, false) => getOrElseUpdateMemcached[CachedType](cacheKey, expensiveOperation, doCache)
+      case _                   => expensiveOperation
     }
   }
 

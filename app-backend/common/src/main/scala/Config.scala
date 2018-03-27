@@ -46,6 +46,12 @@ object Config {
     lazy val enabled: Boolean =
       memcachedConfig.getBoolean("enabled")
 
+    lazy val localCacheEnabled: Boolean =
+      memcachedConfig.getBoolean("localCache.enabled")
+
+    lazy val localCacheSize: Int =
+      memcachedConfig.getInt("localCache.size")
+
     object layerAttributes {
       lazy val enabled: Boolean =
         memcachedConfig.getBoolean("layerAttributes.enabled")
