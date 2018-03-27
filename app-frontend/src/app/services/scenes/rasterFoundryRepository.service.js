@@ -107,15 +107,28 @@ export default (app) => {
         }
 
         getSources() {
-            return this.$q((resolve, reject) => {
-                this.datasourceService.query({
-                    sort: 'name,asc'
-                }).then(response => {
-                    resolve(response.results);
+            let deferred = this.$q.defer();
+            let datasourceService = this.datasourceService;
+
+            let getAllDatasources = function (page, sources) {
+                datasourceService.query({
+                    sort: 'name,asc',
+                    page: page,
+                    pageSize: 10
+                }).then((res) => {
+                    let results = sources.concat(res.results);
+                    if (res.hasNext) {
+                        getAllDatasources(page + 1, results);
+                    } else {
+                        deferred.resolve(results);
+                    }
                 }, (err) => {
-                    reject(err);
+                    deferred.reject(err);
                 });
-            });
+            };
+
+            getAllDatasources(0, []);
+            return deferred.promise;
         }
 
         /*
