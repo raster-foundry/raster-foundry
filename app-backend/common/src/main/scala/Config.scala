@@ -56,9 +56,9 @@ object Config {
         memcachedConfig.getBoolean("layerTile.enabled")
     }
 
-    object tool {
+    object analysis {
       lazy val enabled: Boolean =
-        memcachedConfig.getBoolean("tool.enabled")
+        memcachedConfig.getBoolean("analysis.enabled")
     }
 
   }

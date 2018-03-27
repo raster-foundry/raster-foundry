@@ -2,4 +2,4 @@ package com.azavea.rf.api
 
 import com.azavea.rf.datamodel._
 
-package object toolcategory
+package object category

@@ -138,23 +138,21 @@ case class AoiQueryParameters(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters()
 )
 
-/** Query parameters specific to tools */
+/** Query parameters specific to templates */
 @JsonCodec
-case class ToolQueryParameters(
-  minRating: Option[Double] = None,
-  maxRating: Option[Double] = None,
-  toolCategory: Iterable[String] = Seq[String](),
-  toolTag: Iterable[String] = Seq[String](),
+case class TemplateQueryParameters(
+  category: Iterable[String] = Seq[String](),
+  tag: Iterable[String] = Seq[String](),
   search: Option[String] = None
 )
 
-/** Combined tool query parameters */
+/** Combined template query parameters */
 @JsonCodec
-case class CombinedToolQueryParameters(
+case class CombinedTemplateQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-  toolParams: ToolQueryParameters = ToolQueryParameters()
+  templateParams: TemplateQueryParameters = TemplateQueryParameters()
 )
 
 @JsonCodec
@@ -195,27 +193,25 @@ case class TimestampQueryParameters(
 )
 
 @JsonCodec
-case class ToolCategoryQueryParameters(
+case class CategoryQueryParameters(
   search: Option[String] = None
 )
 
 @JsonCodec
-case class ToolRunQueryParameters(
-  createdBy: Option[String] = None,
-  projectId: Option[UUID] = None,
-  toolId: Option[UUID] = None
+case class AnalysisQueryParameters(
+  createdBy: Option[String] = None
 )
 
 @JsonCodec
-case class CombinedToolRunQueryParameters(
-  toolRunParams: ToolRunQueryParameters = ToolRunQueryParameters(),
+case class CombinedAnalysisQueryParameters(
+  analysisParams: AnalysisQueryParameters = AnalysisQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters()
 )
 
 @JsonCodec
-case class CombinedToolCategoryQueryParams(
+case class CombinedCategoryQueryParams(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-  toolCategoryParams: ToolCategoryQueryParameters = ToolCategoryQueryParameters()
+  categoryParams: CategoryQueryParameters = CategoryQueryParameters()
 )
 
 @JsonCodec
@@ -277,4 +273,16 @@ case class ShapeQueryParameters(
 @JsonCodec
 case class FeedQueryParameters(
   source: Option[String] = None
+)
+
+@JsonCodec
+case class WorkspaceQueryParameters(
+  search: Option[String] = None
+)
+
+@JsonCodec
+case class CombinedWorkspaceQueryParameters(
+  userParams: UserQueryParameters = UserQueryParameters(),
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+  workspaceParams: WorkspaceQueryParameters = WorkspaceQueryParameters()
 )

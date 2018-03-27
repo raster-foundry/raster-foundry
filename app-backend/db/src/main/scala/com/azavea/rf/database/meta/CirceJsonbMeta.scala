@@ -9,7 +9,7 @@ import cats._
 import cats.data._
 import cats.effect.IO
 import cats.syntax.either._
-import com.azavea.rf.datamodel.{Band, ColorCorrect, Image, Thumbnail}
+import com.azavea.rf.datamodel.{Band, ColorCorrect, Image, Thumbnail, Tag, Category, Analysis}
 import io.circe._
 import io.circe.syntax._
 import org.postgresql.util.PGobject
@@ -59,6 +59,50 @@ trait CirceJsonbMeta {
     )
   }
 
+  implicit val tagMeta: Meta[List[Tag]] = {
+    Meta.other[PGobject]("jsonb").xmap[List[Tag]](
+      a => io.circe.parser.parse(a.getValue).leftMap[Json](e => throw e).merge.as[List[Tag]] match {
+        case Right(p) => p
+        case Left(e) => throw e
+      }, // failure raises an exception
+      a => {
+        val o = new PGobject
+        o.setType("jsonb")
+        o.setValue(a.asJson.noSpaces)
+        o
+      }
+    )
+  }
+
+  implicit val categoryMeta: Meta[List[Category]] = {
+    Meta.other[PGobject]("jsonb").xmap[List[Category]](
+      a => io.circe.parser.parse(a.getValue).leftMap[Json](e => throw e).merge.as[List[Category]] match {
+        case Right(p) => p
+        case Left(e) => throw e
+      }, // failure raises an exception
+      a => {
+        val o = new PGobject
+        o.setType("jsonb")
+        o.setValue(a.asJson.noSpaces)
+        o
+      }
+    )
+  }
+
+  implicit val analysisMeta: Meta[List[Analysis]] = {
+    Meta.other[PGobject]("jsonb").xmap[List[Analysis]](
+      a => io.circe.parser.parse(a.getValue).leftMap[Json](e => throw e).merge.as[List[Analysis]] match {
+        case Right(p) => p
+        case Left(e) => throw e
+      }, // failure raises an exception
+      a => {
+        val o = new PGobject
+        o.setType("jsonb")
+        o.setValue(a.asJson.noSpaces)
+        o
+      }
+    )
+  }
 
   implicit val imageWithRelated: Meta[List[Image.WithRelated]] = {
     Meta.other[PGobject]("jsonb").xmap[List[Image.WithRelated]](

@@ -34,7 +34,7 @@ object ExportDao extends Dao[Export] {
     SELECT
       id, created_at, created_by, modified_at, modified_by, owner,
       organization_id, project_id, export_status, export_type,
-      visibility, toolrun_id, export_options
+      visibility, analysis_id, export_options
     FROM
   """ ++ tableF
 
@@ -44,16 +44,16 @@ object ExportDao extends Dao[Export] {
     (insertF ++fr"""
         id, created_at, created_by, modified_at, modified_by, owner,
         organization_id, project_id, export_status, export_type,
-        visibility, toolrun_id, export_options
+        visibility, analysis_id, export_options
       ) VALUES (
         ${UUID.randomUUID}, NOW(), ${user.id}, NOW(), ${user.id}, ${ownerId},
         ${export.organizationId}, ${export.projectId}, ${export.exportStatus}, ${export.exportType},
-        ${export.visibility}, ${export.toolRunId}, ${export.exportOptions}
+        ${export.visibility}, ${export.analysisId}, ${export.exportOptions}
       )
     """).update.withUniqueGeneratedKeys[Export](
       "id", "created_at", "created_by", "modified_at", "modified_by", "owner",
       "organization_id", "project_id", "export_status", "export_type",
-      "visibility", "toolrun_id", "export_options"
+      "visibility", "analysis_id", "export_options"
     )
   }
 
@@ -98,9 +98,9 @@ object ExportDao extends Dao[Export] {
       )
     }
 
-    val exportInput = (export.projectId, export.toolRunId) match {
-      // Exporting a tool-run
-      case (_, Some(toolRunId)) => Right(astInput(toolRunId, user))
+    val exportInput = (export.projectId, export.analysisId) match {
+      // Exporting an analysis
+      case (_, Some(analysisId)) => Right(astInput(analysisId, user))
       // Exporting a project
       case (Some(projectId), None) => Left(simpleInput(projectId, export, user, exportOptions))
       case (None, None) => throw new Exception(s"Export Definitions ${export.id} does not have project or ast input defined")
@@ -116,9 +116,9 @@ object ExportDao extends Dao[Export] {
   }
 
   def getExportStyle(export: Export, exportOptions: ExportOptions, user: User)(implicit xa: Transactor[IO]): ConnectionIO[Either[SimpleInput, ASTInput]] = {
-    (export.projectId, export.toolRunId) match {
-      // Exporting a tool-run
-      case (_, Some(toolRunId)) => astInput(toolRunId, user).map(Right(_))
+    (export.projectId, export.analysisId) match {
+      // Exporting an analysis
+      case (_, Some(analysisId)) => astInput(analysisId, user).map(Right(_))
       // Exporting a project
       case (Some(projectId), None) => simpleInput(projectId, export, user, exportOptions).map(Left(_))
       // Invalid
@@ -134,13 +134,13 @@ object ExportDao extends Dao[Export] {
     * need to make sure to include all the ingest locations.
     */
   private def astInput(
-    toolRunId: UUID,
+    analysisId: UUID,
     user: User
   ): ConnectionIO[ASTInput] ={
     for {
-      toolRun <- ToolRunDao.query.filter(toolRunId).ownerFilter(user).select
+      analysis <- AnalysisDao.query.filter(analysisId).ownerFilter(user).select
       ast <- {
-        toolRun.executionParameters.as[MapAlgebraAST] match {
+        analysis.executionParameters.as[MapAlgebraAST] match {
           case Left(e) => throw e
           case Right(mapAlgebraAST) => mapAlgebraAST
         }

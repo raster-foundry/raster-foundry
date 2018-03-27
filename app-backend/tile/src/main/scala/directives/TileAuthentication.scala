@@ -80,20 +80,20 @@ trait TileAuthentication extends Authentication
     }
   }
 
-  def authenticateToolTileRoutes(toolRunId: UUID): Directive1[User] = {
+  def authenticateAnalysisTileRoutes(analysisId: UUID): Directive1[User] = {
     parameters('mapToken.?, 'token.?).tflatMap {
-      case (Some(mapToken), _) => validateMapTokenParameters(toolRunId, mapToken)
+      case (Some(mapToken), _) => validateMapTokenParameters(analysisId, mapToken)
       case (_, Some(token)) => authenticateWithToken(token)
       case (_, _) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
     }
   }
 
-  def validateMapTokenParameters(toolRunId: UUID, mapToken: String): Directive1[User] = {
+  def validateMapTokenParameters(analysisId: UUID, mapToken: String): Directive1[User] = {
     val mapTokenId = UUID.fromString(mapToken)
-    val mapTokenQuery = rfCache.caching(s"mapToken-$mapTokenId-toolRunId-$toolRunId") {
+    val mapTokenQuery = rfCache.caching(s"mapToken-$mapTokenId-analysisId-$analysisId") {
         MapTokenDao.query
           .filter(mapTokenId)
-          .filter(fr"toolrun_id=${toolRunId}")
+          .filter(fr"analysis_id=${analysisId}")
           .selectOption
           .transact(xa).unsafeToFuture
     }

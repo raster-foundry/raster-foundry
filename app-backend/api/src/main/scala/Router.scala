@@ -16,16 +16,17 @@ import com.azavea.rf.api.scene.SceneRoutes
 import com.azavea.rf.api.shape.ShapeRoutes
 import com.azavea.rf.api.thumbnail.ThumbnailRoutes
 import com.azavea.rf.api.token.TokenRoutes
-import com.azavea.rf.api.tool.ToolRoutes
-import com.azavea.rf.api.toolcategory.ToolCategoryRoutes
-import com.azavea.rf.api.toolrun.ToolRunRoutes
-import com.azavea.rf.api.tooltag.ToolTagRoutes
+import com.azavea.rf.api.template.TemplateRoutes
+import com.azavea.rf.api.category.CategoryRoutes
+import com.azavea.rf.api.analysis.AnalysisRoutes
+import com.azavea.rf.api.tag.TagRoutes
 import com.azavea.rf.api.uploads.UploadRoutes
 import com.azavea.rf.api.user.UserRoutes
 import com.azavea.rf.api.utils.Config
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import ch.megard.akka.http.cors.scaladsl.settings._
 import com.azavea.rf.api.license.LicenseRoutes
+import com.azavea.rf.api.workspace.WorkspaceRoutes
 
 import scala.collection.immutable.Seq
 
@@ -44,11 +45,11 @@ trait Router extends HealthCheckRoutes
   with ImageRoutes
   with TokenRoutes
   with ThumbnailRoutes
-  with ToolRoutes
-  with ToolTagRoutes
+  with TemplateRoutes
+  with TagRoutes
   with ConfigRoutes
-  with ToolCategoryRoutes
-  with ToolRunRoutes
+  with CategoryRoutes
+  with AnalysisRoutes
   with DatasourceRoutes
   with MapTokenRoutes
   with FeedRoutes
@@ -57,7 +58,8 @@ trait Router extends HealthCheckRoutes
   with Config
   with FeatureFlagRoutes
   with ShapeRoutes
-  with LicenseRoutes {
+  with LicenseRoutes
+  with WorkspaceRoutes {
 
   val settings = CorsSettings.defaultSettings.copy(
     allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE))
@@ -91,17 +93,17 @@ trait Router extends HealthCheckRoutes
           pathPrefix("users") {
             userRoutes
           } ~
-          pathPrefix("tools") {
-            toolRoutes
+          pathPrefix("template") {
+            templateRoutes
           } ~
-          pathPrefix("tool-tags") {
-            toolTagRoutes
+          pathPrefix("tags") {
+            tagRoutes
           } ~
-          pathPrefix("tool-categories") {
-            toolCategoryRoutes
+          pathPrefix("categories") {
+            categoryRoutes
           } ~
-          pathPrefix("tool-runs") {
-            toolRunRoutes
+          pathPrefix("analysis") {
+            analysisRoutes
           } ~
           pathPrefix("datasources") {
             datasourceRoutes
@@ -123,6 +125,9 @@ trait Router extends HealthCheckRoutes
           } ~
           pathPrefix("licenses") {
             licenseRoutes
+          } ~
+          pathPrefix("workspaces") {
+            workspaceRoutes
           }
       } ~
       pathPrefix("config") {

@@ -2,7 +2,7 @@ package com.azavea.rf.tile
 
 import com.azavea.rf.common.CommonHandlers
 import com.azavea.rf.tile.routes._
-import com.azavea.rf.tile.tool._
+import com.azavea.rf.tile.analysis._
 import com.azavea.rf.database.util.RFTransactor
 
 import com.azavea.maml.serve.InterpreterExceptionHandling
@@ -31,7 +31,7 @@ class Router extends LazyLogging
   lazy val blockingSceneRoutesDispatcher =
     system.dispatchers.lookup("blocking-dispatcher")
 
-  val toolRoutes = new ToolRoutes()
+  val analysisRoutes = new AnalysisRoutes()
 
   val corsSettings = CorsSettings.defaultSettings
 
@@ -50,17 +50,17 @@ class Router extends LazyLogging
           }
         }
       } ~
-      pathPrefix("tools") {
+      pathPrefix("analysis") {
         get {
           (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
-            pathPrefix(JavaUUID) { (toolRunId) =>
-              authenticateToolTileRoutes(toolRunId) { user =>
-                toolRoutes.tms(toolRunId, user) ~
-                  toolRoutes.raw(toolRunId, user) ~
-                  toolRoutes.validate(toolRunId, user) ~
-                  toolRoutes.statistics(toolRunId, user) ~
-                  toolRoutes.histogram(toolRunId, user) ~
-                  toolRoutes.preflight(toolRunId, user)
+            pathPrefix(JavaUUID) { (analysisId) =>
+              authenticateAnalysisTileRoutes(analysisId) { user =>
+                analysisRoutes.tms(analysisId, user) ~
+                  analysisRoutes.raw(analysisId, user) ~
+                  analysisRoutes.validate(analysisId, user) ~
+                  analysisRoutes.statistics(analysisId, user) ~
+                  analysisRoutes.histogram(analysisId, user) ~
+                  analysisRoutes.preflight(analysisId, user)
               }
             }
           }

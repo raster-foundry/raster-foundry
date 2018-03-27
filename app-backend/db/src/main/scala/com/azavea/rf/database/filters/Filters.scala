@@ -52,5 +52,20 @@ object Filters {
       thumbnailParams.sceneId.map(sceneId => fr"scene_id = ${sceneId}")
     )
   }
+
+  def workspaceQP(workspaceParams: WorkspaceQueryParameters): List[Option[Fragment]] = {
+    List(
+      workspaceParams.search.map(search => fr"name LIKE %${search}%")
+    )
+  }
+
+  def templateQP(templateParams: TemplateQueryParameters): List[Option[Fragment]] = {
+    List(
+      templateParams.search.map(search => fr"name LIKE %${search} %")
+      // TODO: these filters will need to be added eventually
+      // templateParams.tag.toList.toNel.map(tags => in(fr"tag", tags)),
+      // templateParams.category.toList.toNel.map(categories => in(fr"category", categories))
+    )
+  }
 }
 

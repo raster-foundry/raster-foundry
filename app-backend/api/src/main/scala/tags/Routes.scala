@@ -1,7 +1,7 @@
-package com.azavea.rf.api.tooltag
+package com.azavea.rf.api.tag
 
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database.ToolTagDao
+import com.azavea.rf.database.TagDao
 import com.azavea.rf.datamodel._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
@@ -21,62 +21,62 @@ import doobie.postgres.implicits._
 
 
 
-trait ToolTagRoutes extends Authentication
+trait TagRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler {
   val xa: Transactor[IO]
 
-  val toolTagRoutes: Route = handleExceptions(userExceptionHandler) {
+  val tagRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
-      get { listToolTags } ~
-      post { createToolTag }
+      get { listTags } ~
+      post { createTag }
     } ~
-    pathPrefix(JavaUUID) { toolTagId =>
+    pathPrefix(JavaUUID) { tagId =>
       pathEndOrSingleSlash {
-        get { getToolTag(toolTagId) } ~
-        put { updateToolTag(toolTagId) } ~
-        delete { deleteToolTag(toolTagId) }
+        get { getTag(tagId) } ~
+        put { updateTag(tagId) } ~
+        delete { deleteTag(tagId) }
       }
     }
   }
 
-  def listToolTags: Route = authenticate { user =>
+  def listTags: Route = authenticate { user =>
     (withPagination) { (page) =>
       complete {
-        ToolTagDao.query.ownerFilter(user).page(page).transact(xa).unsafeToFuture()
+        TagDao.query.ownerFilter(user).page(page).transact(xa).unsafeToFuture()
       }
     }
   }
 
-  def createToolTag: Route = authenticate { user =>
-    entity(as[ToolTag.Create]) { newToolTag =>
-      authorize(user.isInRootOrSameOrganizationAs(newToolTag)) {
-        onSuccess(ToolTagDao.insert(newToolTag, user).transact(xa).unsafeToFuture()) { toolTag =>
-          complete(StatusCodes.Created, toolTag)
+  def createTag: Route = authenticate { user =>
+    entity(as[Tag.Create]) { newTag =>
+      authorize(user.isInRootOrSameOrganizationAs(newTag)) {
+        onSuccess(TagDao.insert(newTag, user).transact(xa).unsafeToFuture()) { tag =>
+          complete(StatusCodes.Created, tag)
         }
       }
     }
   }
 
-  def getToolTag(toolTagId: UUID): Route = authenticate { user =>
+  def getTag(tagId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(ToolTagDao.query.ownerFilter(user).filter(fr"id = ${toolTagId}").select.transact(xa).unsafeToFuture)
+      complete(TagDao.query.ownerFilter(user).filter(fr"id = ${tagId}").select.transact(xa).unsafeToFuture)
     }
   }
 
-  def updateToolTag(toolTagId: UUID): Route = authenticate { user =>
-    entity(as[ToolTag]) { updatedToolTag =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedToolTag)) {
-        onSuccess(ToolTagDao.update(updatedToolTag, toolTagId, user).transact(xa).unsafeToFuture()) {
+  def updateTag(tagId: UUID): Route = authenticate { user =>
+    entity(as[Tag]) { updatedTag =>
+      authorize(user.isInRootOrSameOrganizationAs(updatedTag)) {
+        onSuccess(TagDao.update(updatedTag, tagId, user).transact(xa).unsafeToFuture()) {
           completeSingleOrNotFound
         }
       }
     }
   }
 
-  def deleteToolTag(toolTagId: UUID): Route = authenticate { user =>
-    onSuccess(ToolTagDao.query.ownerFilter(user).filter(fr"id = ${toolTagId}").delete.transact(xa).unsafeToFuture()) {
+  def deleteTag(tagId: UUID): Route = authenticate { user =>
+    onSuccess(TagDao.query.ownerFilter(user).filter(fr"id = ${tagId}").delete.transact(xa).unsafeToFuture()) {
       completeSingleOrNotFound
     }
   }
