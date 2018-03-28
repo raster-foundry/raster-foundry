@@ -59,8 +59,9 @@
             </td>
             <td>
               <a target="_blank"
-                 ng-href="{{$ctrl.selectedLicense.url.length ? $ctrl.selectedLicense.url : '#'}}"
-                 ng-attr-title="{{$ctrl.selectedLicense.url.length ? $ctrl.selectedLicense.url : '#'}}">
+                 ng-if="$ctrl.selectedLicense.url.length"
+                 ng-href="{{$ctrl.selectedLicense.url}}"
+                 ng-attr-title="{{$ctrl.selectedLicense.url}}">
                 {{$ctrl.selectedLicense.url | shortenUrl}}
               </a>
             </td>
