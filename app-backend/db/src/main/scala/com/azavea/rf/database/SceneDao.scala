@@ -68,8 +68,7 @@ object SceneDao extends Dao[Scene] {
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus}, ${scene.statusFields.ingestStatus}
       )
-    """).update.run
-
+    """).update.withUniqueGeneratedKeys[UUID]("id")
 
     val thumbnailInsert = ThumbnailDao.insertMany(thumbnails)
     val imageInsert = ImageDao.insertManyImages(images.map(_._1))
@@ -77,12 +76,14 @@ object SceneDao extends Dao[Scene] {
     val sceneWithRelatedquery = SceneWithRelatedDao.query.filter(scene.id).select
 
     for {
-      _ <- sceneInsert
+      sceneId <- sceneInsert
       _ <- thumbnailInsert
       _ <- imageInsert
       _ <- bandInsert
-      sceneWithRelated <- sceneWithRelatedquery
-    } yield sceneWithRelated
+      sceneWithRelated <- SceneWithRelatedDao.unsafeGetScene(sceneId, user)
+    } yield {
+      sceneWithRelated
+    }
   }
 
   def insertMaybe(sceneCreate: Scene.Create, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
@@ -115,7 +116,7 @@ object SceneDao extends Dao[Scene] {
     val thumbnailInsert = ThumbnailDao.insertMany(thumbnails)
     val imageInsert = ImageDao.insertManyImages(images.map(_._1))
     val bandInsert = BandDao.createMany(bands.flatten)
-    val sceneWithRelatedquery = SceneWithRelatedDao.query.filter(scene.id).selectOption
+    val sceneWithRelatedquery = SceneWithRelatedDao.getScene(scene.id, user)
 
     for {
       _ <- sceneInsert

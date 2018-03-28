@@ -37,17 +37,12 @@ object BandDao extends Dao[Band] {
   }
 
   def createMany(bands: List[Band]): ConnectionIO[Int] = {
-    (fr"INSERT INTO" ++ tableF ++ fr"(id, image_id, name, number, wavelength) VALUES" ++
-       bands.foldLeft(fr"")(
-         (query: Fragment, band: Band) => {
-           query.toString().isEmpty() match {
-             case true =>
-               fr"(${band.id}, ${band.image}, ${band.name}, ${band.number}, ${band.wavelength})"
-             case false =>
-               query ++ fr", (${band.id}, ${band.image}, ${band.name}, ${band.number}, ${band.wavelength})"
-           }
-         })
-    ).update.run
+    val bandRowsFragment: Fragment = (bands map {
+      band: Band => fr"(${band.id}, ${band.image}, ${band.name}, ${band.number}, ${band.wavelength})"
+    }).intercalate(fr",")
+    val insertFragment:Fragment =
+      fr"INSERT INTO" ++ tableF ++ fr"(id, image_id, name, number, wavelength) VALUES" ++ bandRowsFragment
+    insertFragment.update.run
   }
 }
 
