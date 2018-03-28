@@ -27,12 +27,11 @@ class DatasourceDetailController {
     }
 
     initLicenseSettings() {
-        this.emptyLicense = [{'shortName': 'None', 'name': 'None', 'url': ''}];
+        this.emptyLicense = [{'shortName': null, 'name': null, 'url': ''}];
         this.selectedLicense = Object.assign({}, this.emptyLicense[0]);
 
-        this.getLicenses().then((resp) => {
-            this.licenses = resp;
-            this.matchedLicenses = this.setMatchedLicensesDefault(this.licenses);
+        this.datasourceLicenseService.getLicenses().then((res) => {
+            this.getAllLicenses(Math.ceil(res.count / res.pageSize) + 1);
         }, (err) => {
             this.$log.error(err);
         });
@@ -88,27 +87,17 @@ class DatasourceDetailController {
         this.showMatchedLicenses = true;
     }
 
-    getLicenses() {
-        let deferred = this.$q.defer();
-        let datasourceLicenseService = this.datasourceLicenseService;
-
-        let getAllLicenses = function (page, prevPageLicenses) {
-            datasourceLicenseService.getLicenses({
-                page: page
-            }).then((res) => {
-                let licenses = prevPageLicenses.concat(res.results);
-                if (res.hasNext) {
-                    getAllLicenses(page + 1, licenses);
-                } else {
-                    deferred.resolve(licenses);
-                }
-            }, (err) => {
-                deferred.reject(err);
-            });
-        };
-
-        getAllLicenses(0, []);
-        return deferred.promise;
+    getAllLicenses(pages) {
+        let promises = _.times(pages, (idx) => {
+            return this.datasourceLicenseService.getLicenses({page: idx})
+              .then(resp => resp, error => error);
+        });
+        this.$q.all(promises).then((response) => {
+            this.licenses = _.flatMap(response, r => r.results);
+            this.matchedLicenses = this.setMatchedLicensesDefault(this.licenses);
+        }, (err) =>{
+            this.$log.error(err);
+        });
     }
 
     onLicenseInputChange() {

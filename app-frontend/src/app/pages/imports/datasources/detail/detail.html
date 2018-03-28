@@ -32,35 +32,35 @@
                 class="btn btn-text btn-licenses"
                 ng-if="!$ctrl.isSearchLicense"
                 ng-click="$ctrl.onSelectLicenseStart()"
-                ng-attr-title="{{$ctrl.selectedLicense.name}}"
+                ng-attr-title="{{$ctrl.selectedLicense.name ? $ctrl.selectedLicense.name : 'None'}}"
                 ng-disabled="!$ctrl.isOwner">
-                {{$ctrl.selectedLicense.shortName}}
+                {{$ctrl.selectedLicense.shortName ? $ctrl.selectedLicense.shortName : 'None'}}
                 <span class="icon-caret-down"></span>
               </button>
               <input
                 class="license-input"
                 ng-if="$ctrl.isSearchLicense"
                 ng-model="$ctrl.licenseInput"
-                ng-attr-placeholder="{{$ctrl.selectedLicense.shortName}}"
+                ng-attr-placeholder="{{$ctrl.selectedLicense.shortName ? $ctrl.selectedLicense.shortName : 'None'}}"
                 ng-change="$ctrl.onLicenseInputChange()"
                 ng-blur="$ctrl.onLicenseFieldBlur()">
               </input>
               <div class="license-selections"
                    ng-if="$ctrl.showMatchedLicenses">
                    <div class="label-name-option"
-                        ng-attr-title="{{license.name}}"
+                        ng-attr-title="{{license.name ? license.name : 'None'}}"
                         ng-repeat="license in $ctrl.matchedLicenses"
                         ng-click="$ctrl.onLicenseClick(license)"
                         ng-mouseover="$ctrl.onLicenseHover(true)"
                         ng-mouseleave="$ctrl.onLicenseHover(false)">
-                        {{license.shortName}}
+                        {{license.shortName ? license.shortName : 'None'}}
                    </div>
               </div>
             </td>
             <td>
               <a target="_blank"
-                 ng-href="{{$ctrl.selectedLicense.url}}"
-                 ng-attr-title="{{$ctrl.selectedLicense.url}}">
+                 ng-href="{{$ctrl.selectedLicense.url.length ? $ctrl.selectedLicense.url : '#'}}"
+                 ng-attr-title="{{$ctrl.selectedLicense.url.length ? $ctrl.selectedLicense.url : '#'}}">
                 {{$ctrl.selectedLicense.url | shortenUrl}}
               </a>
             </td>
