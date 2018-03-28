@@ -242,7 +242,7 @@ object ProjectDao extends Dao[Project] {
       countResponse <- (countClause ++ sceneQuery).query[Int].unique
     } yield {
       val hasPrevious = page.offset > 0
-      val hasNext = (page.offset * page.limit) + 1 < countResponse
+      val hasNext = ((page.offset + 1) * page.limit) < countResponse
       PaginatedResponse[UUID](countResponse, hasPrevious, hasNext, page.offset, page.limit, pageResponse)
     }
   }
