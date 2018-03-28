@@ -31,14 +31,17 @@
               <button
                 class="btn btn-text btn-licenses"
                 ng-if="!$ctrl.isSearchLicense"
-                ng-click="$ctrl.onSelectLicense()">
-                {{$ctrl.selectedLicense}}
-                <span>|<span class="icon-caret-down"></span></span>
+                ng-click="$ctrl.onSelectLicenseStart()"
+                ng-attr-title="{{$ctrl.selectedLicense.name}}"
+                ng-disabled="!$ctrl.isOwner">
+                {{$ctrl.selectedLicense.shortName}}
+                <span class="icon-caret-down"></span>
               </button>
               <input
                 class="license-input"
                 ng-if="$ctrl.isSearchLicense"
                 ng-model="$ctrl.licenseInput"
+                ng-attr-placeholder="{{$ctrl.selectedLicense.shortName}}"
                 ng-change="$ctrl.onLicenseInputChange()"
                 ng-blur="$ctrl.onLicenseFieldBlur()">
               </input>
@@ -50,13 +53,15 @@
                         ng-click="$ctrl.onLicenseClick(license)"
                         ng-mouseover="$ctrl.onLicenseHover(true)"
                         ng-mouseleave="$ctrl.onLicenseHover(false)">
-                        {{license.short_name}}
+                        {{license.shortName}}
                    </div>
               </div>
             </td>
             <td>
-              <a target="_blank" ng-href="{{$ctrl.selectedLicenseUrl}}">
-                {{$ctrl.selectedLicenseUrlDisplay}}
+              <a target="_blank"
+                 ng-href="{{$ctrl.selectedLicense.url}}"
+                 ng-attr-title="{{$ctrl.selectedLicense.url}}">
+                {{$ctrl.selectedLicense.url | shortenUrl}}
               </a>
             </td>
           </tr>

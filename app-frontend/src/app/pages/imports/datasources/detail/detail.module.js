@@ -3,12 +3,13 @@ import _ from 'lodash';
 
 class DatasourceDetailController {
     constructor(
-        $stateParams, $log, $timeout,
+        $log, $timeout, $q, $stateParams,
         modalService, datasourceService, uuid4, authService, datasourceLicenseService
     ) {
         'ngInject';
         this.$log = $log;
         this.$timeout = $timeout;
+        this.$q = $q;
 
         this.datasourceId = $stateParams.datasourceid;
 
@@ -26,9 +27,15 @@ class DatasourceDetailController {
     }
 
     initLicenseSettings() {
-        this.selectedLicense = 'None';
-        this.selectedLicenseUrl = '';
-        this.emptyLicense = [{'short_name': 'None', 'name': 'None'}];
+        this.emptyLicense = [{'shortName': 'None', 'name': 'None', 'url': ''}];
+        this.selectedLicense = Object.assign({}, this.emptyLicense[0]);
+
+        this.getLicenses().then((resp) => {
+            this.licenses = resp;
+            this.matchedLicenses = this.setMatchedLicensesDefault(this.licenses);
+        }, (err) => {
+            this.$log.error(err);
+        });
     }
 
     loadDatasource() {
@@ -42,8 +49,6 @@ class DatasourceDetailController {
                 let id = this.authService.getProfile().sub;
                 this.isOwner = id === this.datasource.owner;
                 this.initBuffers();
-                // eslint-disable-next-line
-                this.datasource.license_name = 'MIT-CMU';
                 this.getLicense(this.datasource);
             },
             () => {
@@ -60,47 +65,50 @@ class DatasourceDetailController {
     }
 
     getLicense(datasource) {
-        if (datasource.license_name && datasource.license_name.length) {
-            // TODO: (if needed) accomodate to the real license api to get this license's info
-            this.datasourceLicenseService.get(datasource.license_name).then(
-                response => {
-                    this.license = JSON.parse(response);
-                    if (!_.isEmpty(this.license)) {
-                        // eslint-disable-next-line
-                        this.selectedLicense = this.license.short_name;
-                        this.selectedLicenseUrl = this.license.url;
-                        this.selectedLicenseUrlDisplay = this.shortenUrl(this.selectedLicenseUrl);
+        if (datasource.licenseName && datasource.licenseName.length) {
+            this.datasourceLicenseService.getLicense(datasource.licenseName).then(
+                (res) => {
+                    if (!_.isEmpty(res)) {
+                        this.selectedLicense = Object.assign({}, res);
                     }
+                },
+                (err) => {
+                    this.$log.error(err);
                 }
             );
         }
     }
 
-    shortenUrl(url) {
-        let segments = url.split('/');
-        return `${segments[0]}//${segments[2]}/.../${url.substr(url.length - 15)}`;
-    }
-
-    onSelectLicense() {
+    onSelectLicenseStart() {
         this.isSearchLicense = !this.isSearchLicense;
         this.$timeout(() => {
             const input = angular.element(document.querySelector('.license-input'));
             input.focus();
         }, 100);
-        if (!this.licenses) {
-            this.getAllLicenses();
-        }
         this.showMatchedLicenses = true;
     }
 
-    getAllLicenses() {
-        // TODO: (if needed) accomodate to the real license api to get all licenses
-        this.datasourceLicenseService.query().then(
-            response => {
-                this.licenses = JSON.parse(response);
-                this.matchedLicenses = this.setMatchedLicensesDefault(this.licenses);
-            }
-        );
+    getLicenses() {
+        let deferred = this.$q.defer();
+        let datasourceLicenseService = this.datasourceLicenseService;
+
+        let getAllLicenses = function (page, prevPageLicenses) {
+            datasourceLicenseService.getLicenses({
+                page: page
+            }).then((res) => {
+                let licenses = prevPageLicenses.concat(res.results);
+                if (res.hasNext) {
+                    getAllLicenses(page + 1, licenses);
+                } else {
+                    deferred.resolve(licenses);
+                }
+            }, (err) => {
+                deferred.reject(err);
+            });
+        };
+
+        getAllLicenses(0, []);
+        return deferred.promise;
     }
 
     onLicenseInputChange() {
@@ -115,7 +123,7 @@ class DatasourceDetailController {
     matchLicense(licenseInput) {
         if (this.licenses && this.licenses.length) {
             this.matchedLicenses = this.licenses.filter((license) => {
-                return license.short_name.toUpperCase().includes(licenseInput.toUpperCase())
+                return license.shortName.toUpperCase().includes(licenseInput.toUpperCase())
                 || license.name.toUpperCase().includes(licenseInput.toUpperCase());
             });
             this.showMatchedLicenses = this.matchedLicenses.length;
@@ -129,13 +137,16 @@ class DatasourceDetailController {
     }
 
     onLicenseClick(license) {
-        this.selectedLicense = license.short_name;
-        this.selectedLicenseUrlDisplay = license.url ? this.shortenUrl(license.url) : '';
+        this.selectedLicense = Object.assign({}, license);
         this.isMouseOnLicenseOption = false;
         this.resetLicenseSearch();
-        // TODO: datasource does not have license name json interface built
-        // will do the datasource update once ^ is done.
-        this.$log.log(license);
+        this.datasourceService.updateDatasource(Object.assign(this.datasource, {
+            licenseName: license.shortName
+        })).then((ds) => {
+            this.datasource = ds;
+        }, (err) => {
+            this.$log.error('Error saving datasource', err);
+        });
     }
 
     resetLicenseSearch() {
@@ -175,7 +186,7 @@ class DatasourceDetailController {
             this.changedBuffer = false;
             this.colorCompositesBuffer = newBuffer;
         }, (err) => {
-            this.$log.log('Error saving datasource', err);
+            this.$log.error('Error saving datasource', err);
         });
     }
 
@@ -241,7 +252,7 @@ class DatasourceDetailController {
             this.datasource = ds;
             this.resetBandsBuffer();
         }, (err) => {
-            this.$log.log('Error saving datasource', err);
+            this.$log.error('Error saving datasource', err);
         });
     }
 

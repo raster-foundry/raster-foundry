@@ -1,35 +1,36 @@
-const licenses = require('./all-licenses.json');
-const license = require('./license.json');
+/* globals BUILDCONFIG */
 
 export default (app) => {
-  // NOTE: this mocks calls to licenses endpoint - just for temporary frontend support
-  // TODO: will update once the licenses endpoint is ready
     class DatasourceLicenseService {
-        constructor($log, $q) {
+        constructor($resource, $q, $cacheFactory, authService) {
             'ngInject';
 
-            this.$log = $log;
             this.$q = $q;
+            this.authService = authService;
+            this.$cacheFactory = $cacheFactory;
+
+            this.DatasourceLicense = $resource(
+                `${BUILDCONFIG.API_HOST}/api/licenses/:id/`, {
+                    id: '@properties.id'
+                }, {
+                    query: {
+                        method: 'GET',
+                        cache: false
+                    },
+                    get: {
+                        method: 'GET',
+                        cache: true
+                    }
+                }
+            );
         }
 
-        query(params = {}) {
-            this.$log.log(params);
-
-            let deferred = this.$q.defer();
-            // eslint-disable-next-line
-            deferred.resolve(JSON.stringify(licenses));
-            return deferred.promise;
+        getLicenses(params = {}) {
+            return this.DatasourceLicense.query(params).$promise;
         }
 
-        get(id) {
-            this.$log.log(id);
-            let deferred = this.$q.defer();
-            // mock when there is a matched license
-            // eslint-disable-next-line
-            deferred.resolve(JSON.stringify(license));
-            // mock when there is no matched license
-            // deferred.resolve(JSON.stringify({}));
-            return deferred.promise;
+        getLicense(id) {
+            return this.DatasourceLicense.get({id}).$promise;
         }
     }
 

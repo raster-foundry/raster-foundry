@@ -65,6 +65,7 @@ require('./common/feed.service')(shared);
 require('./common/thumbnail.service')(shared);
 require('./common/decimal.filter')(shared);
 require('./common/modal.service')(shared);
+require('./common/url.filter')(shared);
 
 
 export default shared;
