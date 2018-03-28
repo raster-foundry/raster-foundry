@@ -116,6 +116,9 @@
     overflow: hidden;
     border-radius: $border-radius-base;
     background-color: $off-white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .analysis-description {

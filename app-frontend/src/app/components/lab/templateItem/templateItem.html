@@ -7,11 +7,11 @@
   })">
 <h5 class="analysis-title">{{$ctrl.templateData.title}}</h5>
 <small class="analysis-author">Created by: {{$ctrl.BUILDCONFIG.APP_NAME}}</small>
-<div class="analysis-preview" feature-flag="lab-workspaces">
+<div class="analysis-preview">
   <img ng-if="$ctrl.templateData.screenshots[0]"
    ng-src="{{$ctrl.templateData.screenshots[0].url}}">
-  <div ng-if="!$ctrl.templateData.screenshots.length"
-       class="image-placeholder">
+  <div ng-if="!$ctrl.templateData.screenshots.length">
+    Screenshots coming soon
   </div>
 </div>
 <p class="analysis-description">
