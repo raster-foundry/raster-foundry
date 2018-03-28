@@ -3001,3 +3001,30 @@ rf-reclassify-table {
     border-radius: 50%;
 }
 
+// imports/datasources/detail
+.license-input {
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+    line-height: 1;
+    width: 100%;
+}
+
+.license-selections {
+  border: 1px solid $gray-lighter;
+  display: block;
+  z-index: 1000;
+  position: absolute;
+  background-color: $white;
+  width: 25%;
+  height: 100%;
+  overflow-y: scroll;
+}
+
+.btn-licenses {
+  width: 100%;
+  text-align: left;
+
+  span {
+    float: right;
+  }
+}
