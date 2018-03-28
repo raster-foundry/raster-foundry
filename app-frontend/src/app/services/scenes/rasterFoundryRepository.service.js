@@ -1,3 +1,5 @@
+/* global _*/
+
 import {Map} from 'immutable';
 export default (app) => {
     class RasterFoundryRepository {
@@ -108,26 +110,20 @@ export default (app) => {
 
         getSources() {
             let deferred = this.$q.defer();
-            let datasourceService = this.datasourceService;
-
-            let getAllDatasources = function (page, sources) {
-                datasourceService.query({
-                    sort: 'name,asc',
-                    page: page,
-                    pageSize: 10
-                }).then((res) => {
-                    let results = sources.concat(res.results);
-                    if (res.hasNext) {
-                        getAllDatasources(page + 1, results);
-                    } else {
-                        deferred.resolve(results);
-                    }
-                }, (err) => {
-                    deferred.reject(err);
+            this.datasourceService.query({sort: 'name,asc'}).then((res) => {
+                let promises = _.times(Math.ceil(res.count / res.pageSize) + 1, (idx) => {
+                    return this.datasourceService
+                        .query({sort: 'name,asc', page: idx})
+                        .then(resp => resp, error => error);
                 });
-            };
-
-            getAllDatasources(0, []);
+                this.$q.all(promises).then((reps) => {
+                    deferred.resolve(_.flatMap(reps, r => r.results));
+                }, (error) => {
+                    deferred.reject(error);
+                });
+            }, (err) => {
+                deferred.reject(err);
+            });
             return deferred.promise;
         }
 
