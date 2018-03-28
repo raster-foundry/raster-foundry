@@ -30,11 +30,10 @@ export default class NavBarController {
         this.optionsOpen = false;
         this.assetLogo = assetLogo;
 
-        this.HELPCONFIG = HELPCONFIG;
-        this.helpDocs = this.HELPCONFIG ? this.HELPCONFIG.HELP_DOCS : {};
+        this.helpDocs = HELPCONFIG && HELPCONFIG.HELP_DOCS ? HELPCONFIG.HELP_DOCS : {};
         if (!_.isEmpty(this.helpDocs)) {
             this.showHelpCenter = true;
-            this.setRootDocs();
+            this.rootDocs = this.helpDocs[''];
             this.setPageDocs(this.$state);
             this.$rootScope.$on('$stateChangeSuccess', () => {
                 this.setPageDocs(this.$state);
@@ -100,10 +99,6 @@ export default class NavBarController {
             this.showVideo = true;
             this.showMini = false;
         }
-    }
-
-    setRootDocs() {
-        this.rootDocs = this.helpDocs[''];
     }
 
     setPageDocs(state) {
