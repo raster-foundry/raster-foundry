@@ -15,7 +15,10 @@
               ng-disabled="!$ctrl.template">
         Use tool
       </button>
-      <button type="button" class="btn btn-icon-last" ng-disabled="!$ctrl.template">
+      <button type="button"
+              class="btn btn-icon-last"
+              ng-disabled="!$ctrl.template"
+              feature-flag="lab-workspace">
         <span>Bookmark</span> <span class="icon-star"></span></button>
     </div>
   </div>
@@ -60,7 +63,7 @@
     <div class="sidebar-section">
       <h5>Details</h5>
       <ul class="sidebar-list">
-        <li><span>Uploaded by:</span> user</li>
+        <li feature-flag="lab-workspace"><span>Uploaded by:</span> user</li>
         <li><span>Upload date:</span> {{$ctrl.template.createdAt | date}}</li>
         <li><span>Last modified:</span> {{$ctrl.template.modifiedAt | date}}</li>
         <li><span>Privacy:</span> <span class="color-danger">{{$ctrl.template.visibility | lowercase}}</span></li>
