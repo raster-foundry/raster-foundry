@@ -110,20 +110,23 @@ export default (app) => {
 
         getSources() {
             let deferred = this.$q.defer();
-            this.datasourceService.query({sort: 'name,asc'}).then((res) => {
-                let promises = _.times(Math.ceil(res.count / res.pageSize) + 1, (idx) => {
+
+            let promise = this.datasourceService.query({sort: 'name,asc'}).then((res) => {
+                let pageCount = Math.ceil(res.count / res.pageSize);
+
+                let promises = [promise].concat(_.times(pageCount, (idx) => {
                     return this.datasourceService
-                        .query({sort: 'name,asc', page: idx})
+                        .query({sort: 'name,asc', page: idx + 1})
                         .then(resp => resp, error => error);
-                });
+                }));
+
                 this.$q.all(promises).then((reps) => {
                     deferred.resolve(_.flatMap(reps, r => r.results));
-                }, (error) => {
-                    deferred.reject(error);
-                });
-            }, (err) => {
-                deferred.reject(err);
-            });
+                }, error => deferred.reject(error));
+
+                return res;
+            }, (err) => deferred.reject(err));
+
             return deferred.promise;
         }
 
