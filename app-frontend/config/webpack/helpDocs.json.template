@@ -1,33 +1,33 @@
 {
   "": [
     {
-      "name": "Platform guide",
-      "link": "https://help.radiant.earth/getting-started",
+      "name": "App-wide Doc 1",
+      "link": "https://link-to-app-wide-doc-1",
       "type": "doc"
     },
     {
-      "name": "Video walkthrough",
-      "link": "https://www.youtube.com/embed/f85ZMacIhnE",
+      "name": "App-wide Video 1",
+      "link": "https://www.youtube.com/embed/youtube-video-id-of-app-wide-video-1",
       "type": "video"
     }
   ],
   "home": [
     {
-      "name": "Set up account",
-      "link": "https://help.radiant.earth/getting-started/set-up/set-up-your-account",
+      "name": "Home page doc 1",
+      "link": "https://link-to-home-page-doc-1",
       "type": "doc"
     }
   ],
   "projects": [],
   "projects_list": [
     {
-      "name": "Create a project with available imageries",
-      "link": "https://help.radiant.earth/basic-resource-guide/creating-projects/create-a-standard-project-and-add-available-imagery",
+      "name": "Project list page doc 1",
+      "link": "https://link-to-project-list-page-doc-1",
       "type": "doc"
     },
     {
-      "name": "Create a project with your imageries",
-      "link": "https://help.radiant.earth/basic-resource-guide/creating-projects/create-a-standard-project-and-add-your-own-imagery",
+      "name": "Project list page doc 2",
+      "link": "https://link-to-project-list-page-doc-2",
       "type": "doc"
     }
   ],
@@ -52,13 +52,13 @@
   "settings": [],
   "settings_profile": [
     {
-      "name": "Change profile picture",
-      "link": "https://help.radiant.earth/getting-started/set-up/change-your-profile-picture",
+      "name": "Setting profile page doc 1",
+      "link": "https://link-to-setting-profile-doc-1",
       "type": "link"
     },
     {
-      "name": "Tutorial Video",
-      "link": "https://www.youtube.com/embed/I9zk1bEVH6E",
+      "name": "Setting profile page video 1",
+      "link": "https://www.youtube.com/embed/youtube-video-id-of-setting-profile-video-1",
       "type": "video"
     }
   ],
