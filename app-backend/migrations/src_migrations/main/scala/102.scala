@@ -45,12 +45,20 @@ ALTER TABLE tool_categories RENAME TO categories;
 
 CREATE TABLE template_tags (
   template_id UUID REFERENCES templates(id) NOT NULL,
-  tag_id UUID REFERENCES tags(id) NOT NULL
+  tag_id UUID REFERENCES tags(id) NOT NULL,
+  PRIMARY KEY (template_id, tag_id)
 );
 
 CREATE TABLE template_categories (
   template_id UUID REFERENCES templates(id) NOT NULL,
-  category_slug VARCHAR(255) REFERENCES categories(slug_label) NOT NULL
+  category_slug VARCHAR(255) REFERENCES categories(slug_label) NOT NULL,
+  PRIMARY KEY (template_id, category_slug)
+);
+
+CREATE TABLE template_bookmarks (
+  user_id VARCHAR(255) REFERENCES users(id) NOT NULL,
+  template_id UUID REFERENCES templates(id) NOT NULL,
+  PRIMARY KEY (user_id, template_id)
 );
 
 -- create workspaces for every analysis
@@ -70,17 +78,20 @@ CREATE TABLE workspaces (
 
 CREATE TABLE workspace_tags (
   workspace_id UUID REFERENCES workspaces(id) NOT NULL,
-  tag_id UUID REFERENCES tags(id) NOT NULL
+  tag_id UUID REFERENCES tags(id) NOT NULL,
+  PRIMARY KEY (workspace_id, tag_id)
 );
 
 CREATE TABLE workspace_categories (
   workspace_id UUID REFERENCES workspaces(id) NOT NULL,
-  category_slug VARCHAR(255) REFERENCES categories(slug_label) NOT NULL
+  category_slug VARCHAR(255) REFERENCES categories(slug_label) NOT NULL,
+  PRIMARY KEY (workspace_id, category_slug)
 );
 
 CREATE TABLE workspace_analyses (
-  workspace UUID REFERENCES workspaces(id) NOT NULL,
-  analysis UUID REFERENCES analyses(id) NOT NULL
+  workspace_id UUID REFERENCES workspaces(id) NOT NULL,
+  analysis_id UUID REFERENCES analyses(id) NOT NULL,
+  PRIMARY KEY (workspace_id, analysis_id)
 );
 
 -- Create an analysis from every tool, then link it to a template as a version
