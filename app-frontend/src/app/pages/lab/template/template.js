@@ -4,12 +4,12 @@ import LabActions from '_redux/actions/lab-actions';
 class LabTemplateController {
     constructor(
         $log, $state, $scope, $ngRedux, $window,
-        analysisService, authService
+        templateService, authService
     ) {
         this.$log = $log;
         this.$state = $state;
 
-        this.analysisService = analysisService;
+        this.templateService = templateService;
         this.authService = authService;
         this.$window = $window;
 
@@ -31,26 +31,26 @@ class LabTemplateController {
             this.$state.go('lab.browse.templates');
         } else {
             this.templateDefinition = this.template.definition;
-            this.analysis = this.analysisService.generateAnalysis(this.template);
+            this.analysis = this.templateService.getAnalysis(this.template);
             this.loadAnalysis(this.analysis, {readonly: true, controls: false});
         }
     }
 
     fetchTemplate() {
         this.loadingTemplate = true;
-        this.templateRequest = this.analysisService.getTemplate(this.templateId);
+        this.templateRequest = this.templateService.getTemplate(this.templateId);
         this.templateRequest.then(template => {
             this.template = template;
             this.templateDefinition = template.definition;
             this.loadingTemplate = false;
-            this.analysis = this.analysisService.generateAnalysis(this.template);
+            this.analysis = this.templateService.getAnalysis(this.template);
             this.loadAnalysis(this.analysis, {readonly: true, controls: false});
         });
     }
 
     createAnalysis() {
         this.createInProgress = true;
-        let analysisPromise = this.analysisService.createAnalysis(
+        let analysisPromise = this.templateService.createAnalysis(
             Object.assign(this.analysis, {name: this.template.title})
         );
         analysisPromise.then(analysis => {
@@ -66,7 +66,7 @@ class LabTemplateController {
     onDelete() {
         let answer = this.$window.confirm('Are you sure you want to delete this template?');
         if (answer) {
-            this.analysisService.deleteTemplate(this.template.id).then(() => {
+            this.templateService.deleteTemplate(this.template.id).then(() => {
                 this.$state.go('lab.browse.templates');
             });
         }
@@ -78,7 +78,7 @@ class LabTemplateController {
     }
 
     onSaveClick() {
-        this.analysisService.updateTemplate(this.template).then(() => {
+        this.templateService.updateTemplate(this.template).then(() => {
             this.editing = false;
         }, (err) => {
             this.onCancelClick();

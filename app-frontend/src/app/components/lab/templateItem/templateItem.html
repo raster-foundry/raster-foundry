@@ -2,10 +2,10 @@
      for viewing template detail 
      page, we should remove the <a> -->
 <a class="TEMP-analysis-link"
-   ui-sref="lab.startAnalysis({
+   ui-sref="lab.template({
     templateid: $ctrl.templateData.id, template: $ctrl.templateData
   })">
-<h5 class="analysis-title">{{$ctrl.templateData.title}}</h5>
+<h5 class="analysis-title">{{$ctrl.templateData.name}}</h5>
 <small class="analysis-author">Created by: {{$ctrl.BUILDCONFIG.APP_NAME}}</small>
 <div class="analysis-preview">
   <img ng-if="$ctrl.templateData.screenshots[0]"
@@ -15,6 +15,6 @@
   </div>
 </div>
 <p class="analysis-description">
-  {{$ctrl.templateData.description}}
+  {{$ctrl.templateData.details}}
 </p>
 </a>

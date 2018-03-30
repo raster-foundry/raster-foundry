@@ -3,10 +3,11 @@ import customAnalysis from '../../../../assets/images/make-your-own-analysis.png
 
 class LabBrowseController {
     constructor(
-      modalService
+        modalService, $state
     ) {
         'ngInject';
         this.BUILDCONFIG = BUILDCONFIG;
+        this.$state = $state;
         this.customAnalysis = customAnalysis;
         this.modalService = modalService;
     }
@@ -14,6 +15,12 @@ class LabBrowseController {
     openTemplateCreateModal() {
         this.modalService.open({
             component: 'rfTemplateCreateModal'
+        });
+    }
+
+    openWorkspaceCreateModal() {
+        this.modalService.open({
+            component: 'rfWorkspaceCreateModal'
         });
     }
 }

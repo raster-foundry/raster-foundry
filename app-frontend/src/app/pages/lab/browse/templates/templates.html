@@ -55,9 +55,8 @@
         <div class="analysis-grid">
           <rf-template-item
               class="analysis-block"
-              ng-repeat="templateData in $ctrl.templateList | filter: {title: $ctrl.searchString}"
+              ng-repeat="templateData in $ctrl.templateList | filter: {name: $ctrl.searchString}"
               template-data="templateData"
-              ng-click=""
           ></rf-template-item>
         </div>
 

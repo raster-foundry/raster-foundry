@@ -7,13 +7,13 @@
       <h1>Loading</h1>
       <span class="icon-load animate-spin"></span>
     </div>
-    <h1 ng-if="$ctrl.template">{{$ctrl.template.title}}</h1>
+    <h1 ng-if="$ctrl.template">{{$ctrl.template.name}}</h1>
     <div class="hero-actions">
       <button type="button"
               class="btn btn-primary"
               ng-click="$ctrl.createAnalysis()"
               ng-disabled="!$ctrl.template">
-        Use tool
+        Use template
       </button>
       <button type="button" class="btn btn-icon-last" ng-disabled="!$ctrl.template">
         <span>Bookmark</span> <span class="icon-star"></span></button>
@@ -22,13 +22,13 @@
 </div>
 <div class="template-detail-tabbar">
   <div class="tabbar-content">
-    <div class="template-tab">Tool details</div>
+    <div class="template-tab">Template details</div>
     <div class="template-actions">
       <button type="button"
               class="btn btn-danger btn-icon-last"
               ng-click="$ctrl.onDelete()"
               ng-if="$ctrl.template && $ctrl.template.owner === $ctrl.user">
-        <span>Delete tool</span><span class="icon-trash"></span>
+        <span>Delete template</span><span class="icon-trash"></span>
       </button>
     </div>
   </div>
@@ -41,7 +41,7 @@
             ng-click="$ctrl.onEditClick()"
             ng-if="$ctrl.template && $ctrl.template.owner === $ctrl.user"
             ng-disabled="!$ctrl.template">
-      <span class="icon-edit"></span> Edit tool details
+      <span class="icon-edit"></span> Edit template details
     </button>
     <div class="template-details">
       <h3>{{$ctrl.template.details}}</h3>
@@ -114,7 +114,7 @@
           Name
           <input class="form-control"
                  type="text"
-                 ng-model="$ctrl.template.title"
+                 ng-model="$ctrl.template.name"
                  placeholder="Name">
         </label>
         <label>

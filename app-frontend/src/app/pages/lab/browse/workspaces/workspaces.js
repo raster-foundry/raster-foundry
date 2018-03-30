@@ -1,12 +1,12 @@
 /* global BUILDCONFIG */
 import {Set} from 'immutable';
-class LabBrowseAnalysesController {
+class LabBrowseWorkspacesController {
     constructor(
-        $state, analysisService, authService, localStorage, modalService
+        $state, workspaceService, authService, localStorage, modalService
     ) {
         'ngInject';
         this.$state = $state;
-        this.analysisService = analysisService;
+        this.workspaceService = workspaceService;
         this.authService = authService;
         this.localStorage = localStorage;
         this.modalService = modalService;
@@ -17,7 +17,7 @@ class LabBrowseAnalysesController {
         this.defaultSortingDirection = 'desc';
         this.defaultSortingField = 'modifiedAt';
         this.initSorting();
-        this.fetchAnalysesList(this.$state.params.page);
+        this.fetchWorkspaceList(this.$state.params.page);
         this.selected = new Set();
     }
 
@@ -33,9 +33,9 @@ class LabBrowseAnalysesController {
         }
     }
 
-    fetchAnalysesList(page = 1) {
-        this.loadingAnalyses = true;
-        this.analysisService.fetchAnalyses(
+    fetchWorkspaceList(page = 1) {
+        this.loadingWorkspaces = true;
+        this.workspaceService.fetchWorkspaces(
             {
                 pageSize: 10,
                 page: page - 1,
@@ -53,9 +53,9 @@ class LabBrowseAnalysesController {
                     notify: false
                 }
             );
-            this.lastAnalysisResponse = d;
-            this.analysesList = d.results;
-            this.loadingAnalyses = false;
+            this.lastWorkspaceResponse = d;
+            this.workspacesList = d.results;
+            this.loadingWorkspaces = false;
         });
     }
 
@@ -71,7 +71,7 @@ class LabBrowseAnalysesController {
         };
     }
 
-    formatAnalysisVisibility(visibility) {
+    formatWorkspaceVisibility(visibility) {
         const v = visibility.toUpperCase();
         if (v === 'PUBLIC') {
             return 'Public';
@@ -92,12 +92,12 @@ class LabBrowseAnalysesController {
     }
 
     fetchSorting() {
-        const k = `${this.authService.getProfile().nickname}-analysis-sort`;
+        const k = `${this.authService.getProfile().nickname}-workspace-sort`;
         return this.localStorage.getString(k);
     }
 
     storeSorting() {
-        const k = `${this.authService.getProfile().nickname}-analysis-sort`;
+        const k = `${this.authService.getProfile().nickname}-workspace-sort`;
         return this.localStorage.setString(k, this.serializeSort());
     }
 
@@ -111,36 +111,36 @@ class LabBrowseAnalysesController {
             this.sortingDirection = this.defaultSortingDirection;
         }
         this.storeSorting();
-        this.fetchAnalysesList(this.currentPage);
+        this.fetchWorkspaceList(this.currentPage);
     }
 
     deleteSelected() {
         const modal = this.modalService.open({
             component: 'rfConfirmationModal',
             resolve: {
-                title: () => `Delete ${this.selected.size} analyses?`,
-                content: () => 'Deleting analyses will make any ' +
+                title: () => `Delete ${this.selected.size} workspaces?`,
+                content: () => 'Deleting workspaces will make any ' +
                     'further tile requests with them fail',
-                confirmText: () => 'Delete Analyses',
+                confirmText: () => 'Delete Workspaces',
                 cancelText: () => 'Cancel'
             }
         });
 
         modal.result.then(() => {
             this.selected.forEach((id) => {
-                this.analysisService.deleteAnalysis(id).then(() => {
+                this.workspaceService.deleteWorkspace(id).then(() => {
                     this.selected = this.selected.delete(id);
                     if (this.selected.size === 0) {
-                        this.fetchAnalysesList();
+                        this.fetchWorkspaceList();
                     }
                 }, () => {
-                    this.fetchAnalysesList();
+                    this.fetchWorkspaceList();
                 });
             });
         });
     }
 
-    toggleAnalysisSelection(id) {
+    toggleWorkspaceSelection(id) {
         if (this.selected.has(id)) {
             this.selected = this.selected.delete(id);
         } else {
@@ -155,5 +155,5 @@ class LabBrowseAnalysesController {
     }
 }
 
-export default angular.module('pages.lab.browse.analyses', [])
-    .controller('LabBrowseAnalysesController', LabBrowseAnalysesController);
+export default angular.module('pages.lab.browse.workspaces', [])
+    .controller('LabBrowseWorkspacesController', LabBrowseWorkspacesController);

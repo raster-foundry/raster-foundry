@@ -43,9 +43,9 @@
   <div class="container dashboard">
     <div class="navbar-section primary">
       <nav>
-        <a ui-sref="lab.browse.analyses"
+        <a ui-sref="lab.browse.workspaces"
            ui-sref-active="active">
-          My Analyses
+          My Workspaces
         </a>
         <a ui-sref="lab.browse.templates"
            ui-sref-active="active">
@@ -54,10 +54,16 @@
       </nav>
     </div>
     <div class="navbar-section secondary">
+      <button type="button" class="btn btn-primary"
+              ng-click="$ctrl.openWorkspaceCreateModal()"
+              ng-if="$ctrl.$state.$current.name.includes('workspaces')">
+        New workspace
+      </button>
       <button type="button"
               class="btn btn-primary"
-              ng-click="$ctrl.openTemplateCreateModal()">
-        New analysis
+              ng-click="$ctrl.openTemplateCreateModal()"
+              ng-if="$ctrl.$state.$current.name.includes('templates')">
+        New template
       </button>
     </div>
   </div>

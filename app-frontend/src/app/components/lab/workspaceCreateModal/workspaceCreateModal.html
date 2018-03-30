@@ -1,0 +1,59 @@
+<div class="modal-scrollable-body modal-sidebar-header">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <h4 class="modal-title">
+      Create a Workspace
+    </h4>
+  </div>
+
+  <!-- Body for DATASOURCE_SELECT-->
+  <div class="modal-body">
+    <div class="content">
+      <p>
+
+      </p>
+      <form>
+        <div class="form-group">
+          <label for="name">Workspace Name</label>
+          <input id="name" type="text" class="form-control"
+                 placeholder="New workspace name"
+                 ng-model="$ctrl.workspaceBuffer.name"
+                 ng-disabled="$ctrl.isProcessing">
+        </div>
+        <div class="form-group">
+          <label for="name">Workspace description</label>
+          <input id="name" type="text" class="form-control"
+                placeholder="New workspace description"
+                ng-model="$ctrl.workspaceBuffer.description"
+                ng-disabled="$ctrl.isProcessing">
+        </div>
+        <div ng-if="$ctrl.currentParsingError" class="color-danger text-center form-group">
+          {{$ctrl.currentParsingError}}
+        </div>
+        <div ng-if="$ctrl.currentError" class="color-danger text-center form-group">
+          {{$ctrl.currentError}}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!--Footer for SUCCESS-->
+  <div class="modal-footer">
+    <button type="button" class="btn pull-left"
+            ng-disabled="$ctrl.isProcessing"
+            ng-click="$ctrl.dismiss()">
+      Cancel
+    </button>
+    <button type="button" class="btn btn-primary"
+            ng-if="!$ctrl.isProcessing"
+            ng-click="$ctrl.createWorkspace()"
+            ng-disabled="!$ctrl.isValid()">
+      Create Workspace
+    </button>
+    <div class="btn btn-primary disabled" ng-if="$ctrl.isProcessing">
+      Processing
+    </div>
+  </div>
+</div>
