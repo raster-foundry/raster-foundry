@@ -27,6 +27,7 @@ import doobie.postgres.implicits._
 
 
 trait TemplateRoutes extends Authentication
+    with TemplateQueryParametersDirective
     with PaginationDirectives
     with CommonHandlers
     with KamonTraceDirectives
@@ -94,9 +95,12 @@ trait TemplateRoutes extends Authentication
   }
 
   def listTemplates: Route = authenticate { user =>
-    (withPagination) { (page) =>
+    (withPagination & templateQueryParameters) { (page, combinedTemplateParams) =>
       complete {
-        TemplateDao.query.ownerFilter(user).page(page).transact(xa).unsafeToFuture
+        TemplateWithRelatedDao
+          .listTemplates(page, combinedTemplateParams, user)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
@@ -114,7 +118,8 @@ trait TemplateRoutes extends Authentication
   def getTemplate(templateId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete(
-        TemplateDao.getById(templateId, user)
+        TemplateWithRelatedDao
+          .getById(templateId, user)
           .transact(xa)
           .unsafeToFuture
       )

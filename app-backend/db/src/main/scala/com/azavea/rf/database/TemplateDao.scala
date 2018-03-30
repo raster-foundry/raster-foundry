@@ -21,7 +21,7 @@ import com.azavea.rf.datamodel.Template
 object TemplateDao extends Dao[Template] {
   val tableName = "templates"
 
-  val selectF = sql"""
+  val selectF = fr"""
     SELECT
       id, created_at, modified_at, created_by, modified_by, owner, organization_id, name,
       description, details, requirements, license, visibility, compatible_data_sources
@@ -31,7 +31,7 @@ object TemplateDao extends Dao[Template] {
     val id = UUID.randomUUID()
     val now = new Timestamp(new java.util.Date().getTime())
     val ownerId = util.Ownership.checkOwner(user, newTemplate.owner)
-    sql"""
+    fr"""
        INSERT INTO templates
          (id, created_at, modified_at, created_by, modified_by, owner, organization_id, name,
           description, details, requirements, license, visibility, compatible_data_sources)
@@ -48,7 +48,7 @@ object TemplateDao extends Dao[Template] {
   def update(template: Template, id: UUID, user: User): ConnectionIO[Int] = {
     val updateTime = new Timestamp(new java.util.Date().getTime())
     val idFilter = fr"id = ${id}"
-    (sql"""
+    (fr"""
        UPDATE templates
        SET
          modified_by = ${user.id},

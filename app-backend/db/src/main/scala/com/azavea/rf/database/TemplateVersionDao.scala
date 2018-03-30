@@ -66,9 +66,10 @@ object TemplateVersionDao extends Dao[TemplateVersion] {
   def getLatestVersion(template: Template, user: User): ConnectionIO[Option[TemplateVersion.WithRelated]] = {
     val latestQuery = sql"""
     SELECT
-    tv.*, analyses.*
-    FROM template_versions tv JOIN analyses on template_versions.analysis_id = analyses.id
-    WHERE tv.id = ${template.id}
+    tv.id, tv.created_at, tv.modified_at, tv.created_by, tv.created_by, version, description, changelog, template_id, analysis_id,
+    a.id, a.name, a.created_at, a.created_by, a.modified_at, a.modified_by, a.owner, a.visibility, a.organization_id, a.execution_parameters, a.readonly
+    FROM template_versions tv JOIN analyses a on tv.analysis_id = a.id
+    WHERE tv.template_id = ${template.id}
     ORDER BY tv.id DESC
     LIMIT 1
     """.query[(TemplateVersion, Analysis)].option

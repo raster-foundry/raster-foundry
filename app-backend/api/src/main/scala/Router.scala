@@ -126,6 +126,9 @@ trait Router extends HealthCheckRoutes
           pathPrefix("licenses") {
             licenseRoutes
           } ~
+          pathPrefix("templates") {
+            templateRoutes
+          } ~
           pathPrefix("workspaces") {
             workspaceRoutes
           }

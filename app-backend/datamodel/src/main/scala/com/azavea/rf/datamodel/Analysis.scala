@@ -9,15 +9,15 @@ import io.circe.generic.JsonCodec
 @JsonCodec
 case class Analysis(
   id: UUID,
-  name: String,
   createdAt: Timestamp,
   createdBy: String,
   modifiedAt: Timestamp,
   modifiedBy: String,
-  owner: String,
   visibility: Visibility,
   organizationId: UUID,
   executionParameters: Json,
+  owner: String,
+  name: String,
   readonly: Boolean
 )
 
@@ -39,15 +39,15 @@ object Analysis {
 
       Analysis(
         UUID.randomUUID,
-        name.getOrElse(""),
         now,
         user.id,
         now,
         user.id,
-        ownerId,
         visibility,
         organizationId,
         executionParameters,
+        ownerId,
+        name.getOrElse(""),
         readonly.getOrElse(false)
       )
     }

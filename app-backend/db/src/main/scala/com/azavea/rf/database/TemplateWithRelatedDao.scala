@@ -17,7 +17,9 @@ import java.util.UUID
 import com.azavea.rf.database.util.Page
 import com.lonelyplanet.akka.http.extensions.PageRequest
 
-object TemplateWithRelatedDao extends Dao[Template.WithRelated] {
+import com.typesafe.scalalogging.LazyLogging
+
+object TemplateWithRelatedDao extends Dao[Template.WithRelated] with LazyLogging {
   val tableName = "templates"
 
   val selectF = TemplateDao.selectF
@@ -114,9 +116,12 @@ object TemplateWithRelatedDao extends Dao[Template.WithRelated] {
   def getTemplatesTags(templateIds: NonEmptyList[UUID]): ConnectionIO[List[(UUID, Tag)]] = {
     (
       sql"""
-      SELECT tt.id, tags.*
+      SELECT
+        tt.template_id,
+        tags.*
       FROM template_tags tt
       JOIN tags ON tt.tag_id = tags.id
+      WHERE
       """ ++ Fragments.in(fr"tt.template_id", templateIds)
     ).query[(UUID, Tag)].list
   }
@@ -124,9 +129,12 @@ object TemplateWithRelatedDao extends Dao[Template.WithRelated] {
   def getTemplatesCategories(templateIds: NonEmptyList[UUID]): ConnectionIO[List[(UUID, Category)]] = {
     (
       sql"""
-      SELECT tc.id, categories.*
+      SELECT
+      tc.template_id,
+      c.created_at, c.modified_at, c.created_by, c.modified_by, c.category, c.slug_label
       FROM template_categories tc
-      JOIN categories ON tc.category_slug = categories.slug_label
+      JOIN categories c ON tc.category_slug = c.slug_label
+      WHERE
       """ ++ Fragments.in(fr"tc.template_id", templateIds)
     ).query[(UUID, Category)].list
   }
@@ -136,14 +144,15 @@ object TemplateWithRelatedDao extends Dao[Template.WithRelated] {
   ): ConnectionIO[List[(UUID, TemplateVersion.WithRelated)]] = {
     (
       sql"""
-        SELECT
-        t.id,
-        tv.id, tv.created_at, tv.modified_at, tv.created_by, tv.modified_by, tv.version,
-        tv.description, tv.changelog, tv.template_id, tv.analysis_id,
-        a.id, a.name, a.created_at, a.created_by, a.modified_at, a.modified_by,
-        a.owner, a.visibility, a.organization_id, a.execution_parameters
-        FROM template_versions tv
-        JOIN analyses a on tv.analysis_id = a.id
+      SELECT
+      tv.template_id,
+      tv.id, tv.created_at, tv.modified_at, tv.created_by, tv.modified_by, tv.version,
+      tv.description, tv.changelog, tv.template_id, tv.analysis_id,
+      a.id, a.created_at, a.created_by, a.modified_at, a.modified_by,
+      a.visibility, a.organization_id, a.execution_parameters,a.owner, a.name, a.readonly
+      FROM template_versions tv
+      JOIN analyses a on tv.analysis_id = a.id
+      WHERE
       """ ++ Fragments.in(fr"tv.template_id", templateIds)
     ).query[(UUID, TemplateVersion, Analysis)].list.map(results =>
       results.map(tup =>

@@ -21,8 +21,8 @@ object TagDao extends Dao[Tag] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, organization_id, created_by, modified_by,
-      owner, tag
+      id, created_at, modified_at, created_by, modified_by, organization_id,
+      tag, owner
     FROM
   """ ++ tableF
 

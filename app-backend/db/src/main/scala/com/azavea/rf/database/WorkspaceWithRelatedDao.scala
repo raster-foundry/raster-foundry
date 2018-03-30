@@ -89,9 +89,10 @@ object WorkspaceWithRelatedDao extends Dao[Workspace.WithRelated] {
   def getWorkspacesTags(workspaceIds: NonEmptyList[UUID]): ConnectionIO[List[(UUID, Tag)]] = {
     (
       sql"""
-      SELECT wt.id, tags.*
+      SELECT wt.workspace_id, tags.*
       FROM workspace_tags wt
       JOIN tags ON wt.tag_id = tags.id
+      WHERE
       """ ++ Fragments.in(fr"wt.workspace_id", workspaceIds)
     ).query[(UUID, Tag)].list
   }
@@ -100,9 +101,10 @@ object WorkspaceWithRelatedDao extends Dao[Workspace.WithRelated] {
       ConnectionIO[List[(UUID, Category)]] = {
       (
         sql"""
-      SELECT wc.id, categories.*
+      SELECT wc.workspace_id, categories.*
       FROM workspace_categories wc
       JOIN categories ON wc.category_slug = categories.slug_label
+      WHERE
       """ ++ Fragments.in(fr"wc.workspace_id", workspaceIds)
       ).query[(UUID, Category)].list
   }
@@ -111,9 +113,10 @@ object WorkspaceWithRelatedDao extends Dao[Workspace.WithRelated] {
       ConnectionIO[List[(UUID, Analysis)]] = {
       (
         sql"""
-      SELECT wa.id, tags.*
+      SELECT wa.workspace_id, analyses.*
       FROM workspace_analyses wa
-      JOIN tags ON wa.analysis_id = tags.id
+      JOIN analyses ON wa.analysis_id = analyses.id
+      WHERE
       """ ++ Fragments.in(fr"wa.workspace_id", workspaceIds)
       ).query[(UUID, Analysis)].list
   }

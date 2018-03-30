@@ -15,12 +15,12 @@ import io.circe.generic.JsonCodec
   */
 @JsonCodec
 case class Category(
-    slugLabel: String,
     createdAt: Timestamp,
     modifiedAt: Timestamp,
     createdBy: String,
     modifiedBy: String,
-    category: String
+    category: String,
+    slugLabel: String
 )
 
 object Category {
@@ -48,12 +48,12 @@ object Category {
 
       val now = new Timestamp((new java.util.Date()).getTime())
       Category(
-        toSlugLabel(category),
         now,
         now,
         userId,
         userId,
-        category
+        category,
+        toSlugLabel(category)
       )
     }
   }

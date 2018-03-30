@@ -22,11 +22,11 @@ case class Tag(
   id: UUID,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
-  organizationId: UUID,
   createdBy: String,
   modifiedBy: String,
-  owner: String,
-  tag: String
+  organizationId: UUID,
+  tag: String,
+  owner: String
 )
 
 object Tag {
@@ -51,11 +51,11 @@ object Tag {
         UUID.randomUUID,
         now,
         now,
+        user.id,
+        user.id,
         organizationId,
-        user.id,
-        user.id,
-        ownerId,
-        tag
+        tag,
+        ownerId
       )
     }
   }

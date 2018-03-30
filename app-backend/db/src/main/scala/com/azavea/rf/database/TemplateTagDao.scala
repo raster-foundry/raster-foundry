@@ -58,7 +58,7 @@ object TemplateTagDao extends Dao[TemplateTag] {
   def getTemplateTags(template: Template): ConnectionIO[List[Tag]] = {
     sql"""
     SELECT tags.*
-    FROM tags join template_tags
+    FROM tags JOIN template_tags on tags.id = template_tags.tag_id
     WHERE template_tags.template_id = ${template.id}
     """.query[Tag].list
   }
