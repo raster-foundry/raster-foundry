@@ -133,13 +133,13 @@ object SceneDao extends Dao[Scene] {
     val now = new Date()
 
     val lastModifiedIO: ConnectionIO[Timestamp] =
-      (sql"select modified_at from scenes" ++ Fragments.whereAndOpt(ownerEditFilter(user), idFilter))
+      (fr"select modified_at from scenes" ++ Fragments.whereAndOpt(ownerEditFilter(user), idFilter))
         .query[Timestamp]
         .unique
     val updateIO: ConnectionIO[Int] = (sql"""
     UPDATE scenes
     SET
-      modified_at = ${now}, // now
+      modified_at = ${now},
       modified_by = ${user.id},
       visibility = ${scene.visibility},
       tags = ${scene.tags},
@@ -152,7 +152,7 @@ object SceneDao extends Dao[Scene] {
       sun_elevation = ${scene.filterFields.sunElevation},
       thumbnail_status = ${scene.statusFields.thumbnailStatus},
       boundary_status = ${scene.statusFields.boundaryStatus},
-      ingest_status = ${scene.statusFields.boundaryStatus}
+      ingest_status = ${scene.statusFields.ingestStatus}
     """ ++ Fragments.whereAndOpt(ownerEditFilter(user), idFilter))
       .update
       .run

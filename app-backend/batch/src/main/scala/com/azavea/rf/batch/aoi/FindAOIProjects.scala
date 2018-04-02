@@ -40,8 +40,7 @@ case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job {
 
       (baseSelect ++ Fragments.whereAndOpt(isAoi, nowGtLastCheckedPlusCadence))
         .query[UUID]
-        .stream
-        .compile.toList
+        .to[List]
     }
 
     aoiProjectsToUpdate.transact(xa).unsafeRunSync.foreach(println)

@@ -12,6 +12,7 @@ import java.util.UUID
 
 import cats.effect.IO
 
+import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
 import doobie.util.transactor.Transactor
 import cats.implicits._
@@ -134,10 +135,23 @@ trait UploadRoutes extends Authentication
   }
 
   def getUploadCredentials(uploadId: UUID): Route = authenticate { user =>
-    extractTokenHeader { jwt =>
-      onSuccess(UploadDao.query.filter(fr"id = ${uploadId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture) {
-        case Some(_) => complete(CredentialsService.getCredentials(user, uploadId, jwt.toString))
-        case None => complete(StatusCodes.NotFound)
+    extractTokenHeader {
+      jwt => {
+        println(s"${jwt}")
+        (UploadDao.query.filter(fr"id = ${uploadId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture) onComplete {
+          case Success(Some(_)) => {
+            println("Upload result: found an upload")
+            complete(CredentialsService.getCredentials(user, uploadId, jwt.toString))
+          }
+          case Success(None) => {
+            println("Upload result: didn't find an upload")
+            complete(StatusCodes.NotFound)
+          }
+          case Failure(_) => {
+            println("Upload result: what the hell dude")
+            complete(StatusCodes.NoContent)
+          }
+        }
       }
     }
   }
