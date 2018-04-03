@@ -5,7 +5,7 @@ Brief description of what this PR does, and why it is needed.
 ### Checklist
 
 - [ ] Styleguide updated, if necessary
-- [ ] Swagger specification updated, if necessary
+- [ ] [Swagger specification](https://github.com/raster-foundry/raster-foundry-api-spec) updated
 - [ ] Symlinks from new migrations present or corrected for any new migrations
 - [ ] PR has a name that won't get you publicly shamed for vagueness
 
