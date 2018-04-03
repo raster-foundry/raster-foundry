@@ -76,9 +76,8 @@ trait PlatformRoutes extends Authentication
 
   def createPlatform: Route = authenticate { user =>
     entity(as[Platform.Create]) { platformToCreate =>
-      onComplete(PlatformDao.create(platformToCreate.toPlatform).transact(xa).unsafeToFuture) {
-        case Success(platform) => complete(platform)
-        case Failure(err) => complete((StatusCodes.InternalServerError, err.getMessage))
+      completeOrRecoverWith(PlatformDao.create(platformToCreate.toPlatform).transact(xa).unsafeToFuture) { err =>
+        failWith(err)
       }
     }
   }
@@ -95,7 +94,7 @@ trait PlatformRoutes extends Authentication
     entity(as[Platform]) { platformToUpdate =>
       onComplete(PlatformDao.update(platformToUpdate, platformId, user).transact(xa).unsafeToFuture) {
         case Success(count) => completeSingleOrNotFound(count)
-        case Failure(err) => complete((StatusCodes.InternalServerError, err.getMessage))
+        case Failure(err) => failWith(err)
       }
     }
   }
@@ -103,7 +102,7 @@ trait PlatformRoutes extends Authentication
   def deletePlatform(platformId: UUID): Route = authenticate { user =>
     onComplete(PlatformDao.query.filter(platformId).delete.transact(xa).unsafeToFuture) {
       case Success(count) => completeSingleOrNotFound(count)
-      case Failure(err) => complete((StatusCodes.InternalServerError, err.getMessage))
+      case Failure(err) => failWith(err)
     }
   }
 }
