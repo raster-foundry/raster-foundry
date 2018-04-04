@@ -181,7 +181,7 @@ lazy val common = Project("common", file("common"))
   )})
 
 lazy val db = Project("db", file("db"))
-  .dependsOn(datamodel)
+  .dependsOn(datamodel % "compile->compile;test->test")
   .settings(commonSettings:_*)
   .settings({
      libraryDependencies ++= dbDependencies ++ loggingDependencies ++ Seq(
@@ -220,7 +220,8 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
       Dependencies.circeGenericExtras,
       Dependencies.akka,
       Dependencies.akkahttp,
-      Dependencies.betterFiles
+      Dependencies.betterFiles,
+      Dependencies.scalaCheck
     )
   })
 

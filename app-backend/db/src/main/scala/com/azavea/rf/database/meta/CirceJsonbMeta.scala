@@ -14,9 +14,18 @@ import io.circe._
 import io.circe.syntax._
 import org.postgresql.util.PGobject
 import com.azavea.rf.datamodel.ColorCorrect._
+import com.azavea.rf.datamodel.Credential
 import java.net.URI
 
 trait CirceJsonbMeta {
+  implicit val credentialMeta: Meta[Credential] =
+    Meta.other[String]("text").xmap[Credential](
+      a => {
+        if (a.length == 0) Credential(None) else Credential.fromString(a)
+      },
+      a => a.token.getOrElse("").toString
+    )
+
   implicit val jsonbMeta: Meta[Json] =
   Meta.other[PGobject]("jsonb").xmap[Json](
     a => io.circe.parser.parse(a.getValue).leftMap[Json](e => throw e).merge, // failure raises an exception
