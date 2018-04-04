@@ -28,10 +28,10 @@ object Platform {
             val now = new Timestamp((new java.util.Date()).getTime())
             Platform(
                 UUID.randomUUID(),
-                now,
-                user.id,
-                now,
-                user.id,
+                now, // createdAt
+                user.id, // createdBy
+                now, // modifiedAt
+                user.id, // modifiedBy
                 name,
                 settings
             )
