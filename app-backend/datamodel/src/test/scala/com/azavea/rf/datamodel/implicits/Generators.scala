@@ -21,6 +21,9 @@ import java.util.UUID
 
 object Generators extends ArbitraryInstances {
 
+  // This is only necessary until a Platform generator is supported
+  val defaultPlatformId = UUID.fromString("31277626-968b-4e40-840b-559d9c67863c")
+
   private def stringListGen: Gen[List[String]] =
     Gen.oneOf(0, 15) flatMap { Gen.listOfN(_, nonEmptyStringGen) }
 
@@ -34,6 +37,14 @@ object Generators extends ArbitraryInstances {
     Gen.const(PageRequest(0, 20, Map("created_at" -> Order.Desc)))
 
   private def userRoleGen: Gen[UserRole] = Gen.oneOf(UserRoleRole, Viewer, Admin)
+
+  private def groupTypeGen: Gen[GroupType] = Gen.oneOf(
+    GroupType.Platform, GroupType.Organization, GroupType.Team
+  )
+
+  private def groupRoleGen: Gen[GroupRole] = Gen.oneOf(
+    GroupRole.Admin, GroupRole.Member
+  )
 
   private def annotationQualityGen: Gen[AnnotationQuality] = Gen.oneOf(
     AnnotationQuality.Yes, AnnotationQuality.No, AnnotationQuality.Miss, AnnotationQuality.Unsure
@@ -138,7 +149,7 @@ object Generators extends ArbitraryInstances {
 
   private def organizationCreateGen: Gen[Organization.Create] = for {
     name <- nonEmptyStringGen
-  } yield (Organization.Create(name))
+  } yield (Organization.Create(name, defaultPlatformId))
 
   private def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization }
 
@@ -161,7 +172,7 @@ object Generators extends ArbitraryInstances {
   }
 
   private def userCreateGen: Gen[User.Create] = for {
-    id <- nonEmptyStringGen
+    id <- uuidGen map { _.toString }
     org <- organizationGen
     role <- userRoleGen
   } yield { User.Create(id, org.id, role) }
@@ -367,6 +378,31 @@ object Generators extends ArbitraryInstances {
   private def combinedSceneQueryParamsGen: Gen[CombinedSceneQueryParams] =
     Gen.const(CombinedSceneQueryParams())
 
+  private def teamCreateGen: Gen[Team.Create] = for {
+    orgId <- uuidGen
+    name <- nonEmptyStringGen
+    settings <- Gen.const(().asJson)
+  } yield Team.Create(orgId, name, settings)
+
+  private def teamGen: Gen[Team] = for {
+    user <- userGen
+    teamCreate <- teamCreateGen
+  } yield {
+    teamCreate.toTeam(user)
+  }
+
+  private def platformCreateGen: Gen[Platform.Create] = for {
+    platformName <- nonEmptyStringGen
+    settings <- Gen.const(().asJson)
+  } yield { Platform.Create(platformName, settings) }
+
+  private def userGroupRoleCreateGen: Gen[UserGroupRole.Create] = for {
+    user <- userGen
+    groupType <- groupTypeGen
+    groupId <- uuidGen
+    groupRole <- groupRoleGen
+  } yield { UserGroupRole.Create(user, groupType, groupId, groupRole) }
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
 
@@ -423,5 +459,13 @@ object Generators extends ArbitraryInstances {
     implicit def arbListLayerAttribute: Arbitrary[List[LayerAttribute]] = Arbitrary {
       layerAttributesWithSameLayerNameGen
     }
+
+    implicit def arbTeamCreate: Arbitrary[Team.Create] = Arbitrary { teamCreateGen }
+
+    implicit def arbTeam: Arbitrary[Team] = Arbitrary { teamGen }
+
+    implicit def arbPlatformCreate: Arbitrary[Platform.Create] = Arbitrary { platformCreateGen }
+
+    implicit def arbUserGroupRoleCreate: Arbitrary[UserGroupRole.Create] = Arbitrary { userGroupRoleCreateGen }
   }
 }

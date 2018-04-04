@@ -83,7 +83,7 @@ trait MapTokenRoutes extends Authentication
   }
 
   def deleteMapToken(mapTokenId: UUID): Route = authenticate { user =>
-    onSuccess(MapTokenDao.query.ownerFilter(user).filter(fr"id = ${mapTokenId}").delete.transact(xa).unsafeToFuture) {
+    onSuccess(MapTokenDao.query.ownerFilter(user).filter(mapTokenId).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }

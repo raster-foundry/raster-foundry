@@ -41,5 +41,20 @@ trait EnumMeta {
 
   implicit val userRoleMeta: Meta[UserRole] =
     pgEnumString("user_role", UserRole.fromString, _.repr)
+
+  implicit val groupRoleMeta: Meta[GroupRole] =
+    pgEnumString("group_role", GroupRole.fromString, _.repr)
+
+  implicit val groupTypeMeta: Meta[GroupType] =
+    pgEnumString("group_type", GroupType.fromString, _.repr)
+
+  implicit val subjectTypeMeta: Meta[SubjectType] =
+    pgEnumString("subject_type", SubjectType.fromString, _.repr)
+
+  implicit val objectTypeMeta: Meta[ObjectType] =
+    pgEnumString("object_type", ObjectType.fromString, _.repr)
+
+  implicit val actionTypeMeta: Meta[ActionType] =
+    pgEnumString("action_type", ActionType.fromString, _.repr)
 }
 

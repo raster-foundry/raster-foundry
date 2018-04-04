@@ -61,7 +61,7 @@ trait ToolTagRoutes extends Authentication
 
   def getToolTag(toolTagId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(ToolTagDao.query.ownerFilter(user).filter(fr"id = ${toolTagId}").select.transact(xa).unsafeToFuture)
+      complete(ToolTagDao.query.ownerFilter(user).filter(toolTagId).select.transact(xa).unsafeToFuture)
     }
   }
 
@@ -76,7 +76,7 @@ trait ToolTagRoutes extends Authentication
   }
 
   def deleteToolTag(toolTagId: UUID): Route = authenticate { user =>
-    onSuccess(ToolTagDao.query.ownerFilter(user).filter(fr"id = ${toolTagId}").delete.transact(xa).unsafeToFuture()) {
+    onSuccess(ToolTagDao.query.ownerFilter(user).filter(toolTagId).delete.transact(xa).unsafeToFuture()) {
       completeSingleOrNotFound
     }
   }

@@ -11,6 +11,7 @@ import com.azavea.rf.api.healthcheck._
 import com.azavea.rf.api.image.ImageRoutes
 import com.azavea.rf.api.maptoken.MapTokenRoutes
 import com.azavea.rf.api.organization.OrganizationRoutes
+import com.azavea.rf.api.platform.PlatformRoutes
 import com.azavea.rf.api.project.ProjectRoutes
 import com.azavea.rf.api.scene.SceneRoutes
 import com.azavea.rf.api.shape.ShapeRoutes
@@ -23,9 +24,10 @@ import com.azavea.rf.api.tooltag.ToolTagRoutes
 import com.azavea.rf.api.uploads.UploadRoutes
 import com.azavea.rf.api.user.UserRoutes
 import com.azavea.rf.api.utils.Config
+import com.azavea.rf.api.license.LicenseRoutes
+import com.azavea.rf.api.team.TeamRoutes
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import ch.megard.akka.http.cors.scaladsl.settings._
-import com.azavea.rf.api.license.LicenseRoutes
 
 import scala.collection.immutable.Seq
 
@@ -57,7 +59,9 @@ trait Router extends HealthCheckRoutes
   with Config
   with FeatureFlagRoutes
   with ShapeRoutes
-  with LicenseRoutes {
+  with LicenseRoutes
+  with TeamRoutes
+  with PlatformRoutes {
 
   val settings = CorsSettings.defaultSettings.copy(
     allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE))
@@ -66,73 +70,76 @@ trait Router extends HealthCheckRoutes
     pathPrefix("healthcheck") {
       healthCheckRoutes
     } ~
-      pathPrefix("api") {
-        pathPrefix("projects") {
-          projectRoutes
-        } ~
-          pathPrefix("areas-of-interest") {
-            aoiRoutes
-          } ~
-          pathPrefix("images") {
-            imageRoutes
-          } ~
-          pathPrefix("organizations") {
-            organizationRoutes
-          } ~
-          pathPrefix("scenes") {
-            sceneRoutes
-          } ~
-          pathPrefix("thumbnails") {
-            thumbnailRoutes
-          } ~
-          pathPrefix("tokens") {
-            tokenRoutes
-          } ~
-          pathPrefix("users") {
-            userRoutes
-          } ~
-          pathPrefix("tools") {
-            toolRoutes
-          } ~
-          pathPrefix("tool-tags") {
-            toolTagRoutes
-          } ~
-          pathPrefix("tool-categories") {
-            toolCategoryRoutes
-          } ~
-          pathPrefix("tool-runs") {
-            toolRunRoutes
-          } ~
-          pathPrefix("datasources") {
-            datasourceRoutes
-          } ~
-          pathPrefix("map-tokens") {
-            mapTokenRoutes
-          } ~
-          pathPrefix("feed") {
-            feedRoutes
-          } ~
-          pathPrefix("uploads") {
-            uploadRoutes
-          } ~
-          pathPrefix("exports") {
-            exportRoutes
-          } ~
-          pathPrefix("shapes") {
-            shapeRoutes
-          } ~
-          pathPrefix("licenses") {
-            licenseRoutes
-          }
+    pathPrefix("api") {
+      pathPrefix("projects") {
+        projectRoutes
       } ~
-      pathPrefix("config") {
-        configRoutes
+      pathPrefix("platforms") {
+        platformRoutes
       } ~
-      pathPrefix("feature-flags") {
-        featureFlagRoutes
+      pathPrefix("areas-of-interest") {
+        aoiRoutes
+      } ~
+      pathPrefix("images") {
+        imageRoutes
+      } ~
+      pathPrefix("organizations") {
+        organizationRoutes
+      } ~
+      pathPrefix("scenes") {
+        sceneRoutes
       } ~
       pathPrefix("thumbnails") {
-        thumbnailImageRoutes
+        thumbnailRoutes
+      } ~
+      pathPrefix("tokens") {
+        tokenRoutes
+      } ~
+      pathPrefix("users") {
+        userRoutes
+      } ~
+      pathPrefix("tools") {
+        toolRoutes
+      } ~
+      pathPrefix("tool-tags") {
+        toolTagRoutes
+      } ~
+      pathPrefix("tool-categories") {
+        toolCategoryRoutes
+      } ~
+      pathPrefix("tool-runs") {
+        toolRunRoutes
+      } ~
+      pathPrefix("datasources") {
+        datasourceRoutes
+      } ~
+      pathPrefix("map-tokens") {
+        mapTokenRoutes
+      } ~
+      pathPrefix("feed") {
+        feedRoutes
+      } ~
+      pathPrefix("uploads") {
+        uploadRoutes
+      } ~
+      pathPrefix("exports") {
+        exportRoutes
+      } ~
+      pathPrefix("shapes") {
+        shapeRoutes
+      } ~
+      pathPrefix("licenses") {
+        licenseRoutes
       }
+    } ~
+    pathPrefix("config") {
+      configRoutes
+    } ~
+    pathPrefix("feature-flags") {
+      featureFlagRoutes
+    } ~
+    pathPrefix("thumbnails") {
+      thumbnailImageRoutes
+    }
   }
 }

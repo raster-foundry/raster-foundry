@@ -22,17 +22,20 @@ object OrganizationDao extends Dao[Organization] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, name
+      id, created_at, modified_at, name, platform_id
     FROM
   """ ++ tableF
 
   def create(
-    name: String
+    org: Organization
   ): ConnectionIO[Organization] = {
-    val id = UUID.randomUUID()
-    val now = new Timestamp((new java.util.Date()).getTime())
-    val newOrg = Organization.Create(name)
-    createOrganization(newOrg)
+    (fr"INSERT INTO" ++ tableF ++ fr"""
+          (id, created_at, modified_at, name, platform_id)
+        VALUES
+          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId})
+    """).update.withUniqueGeneratedKeys[Organization](
+      "id", "created_at", "modified_at", "name", "platform_id"
+    )
   }
 
   def getOrganizationById(id: UUID): ConnectionIO[Option[Organization]] =
@@ -42,30 +45,46 @@ object OrganizationDao extends Dao[Organization] {
     query.filter(id).select
 
   def createOrganization(newOrg: Organization.Create): ConnectionIO[Organization] = {
-    val id = UUID.randomUUID()
-    val now = new Timestamp((new java.util.Date()).getTime())
-
-    (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, modified_at, name)
-      VALUES
-        (${id}, ${now}, ${now}, ${newOrg.name})
-    """).update.withUniqueGeneratedKeys[Organization](
-      "id", "created_at", "modified_at", "name"
-    )
+    create(newOrg.toOrganization)
   }
 
-  def updateOrganization(org: Organization, id: UUID): ConnectionIO[Int] = {
+  def update(org: Organization, id: UUID): ConnectionIO[Int] = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
-    val idFilter = fr"id = ${id}"
 
-    (sql"""
-       UPDATE organizations
-       SET
+    (fr"UPDATE" ++ tableF ++ fr"""SET
          modified_at = ${updateTime},
          name = ${org.name}
        WHERE id = ${id}
      """).update.run
   }
 
+  def userIsAdminF(user: User, organizationId: UUID) = fr"""
+    SELECT (
+      SELECT count(id) > 0
+      FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
+      WHERE
+        user_id = ${user.id} AND
+        group_type = ${GroupType.Organization.toString}::group_type AND
+        group_role = ${GroupRole.Admin.toString}::group_role AND
+        group_id = ${organizationId} AND
+        is_active = true
+    ) OR (
+      SELECT count(ugr.id) > 0
+      FROM""" ++ PlatformDao.tableF ++ fr"""AS p
+      JOIN""" ++ tableF ++ fr"""o
+        ON o.platform_id = p.id
+      JOIN""" ++ UserGroupRoleDao.tableF ++ fr"""ugr
+        ON ugr.group_id = p.id
+      WHERE
+        o.id = ${organizationId} AND
+        ugr.user_id = ${user.id} AND
+        ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
+        ugr.group_type = ${GroupType.Platform.toString}::group_type AND
+        ugr.is_active = true
+    )
+  """
+
+  def userIsAdmin(user: User, organizationId: UUID) =
+    userIsAdminF(user, organizationId).query[Boolean].option.map(_.getOrElse(false))
 }
 

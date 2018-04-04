@@ -1,12 +1,12 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.datamodel.Organization
+import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.Generators.Implicits._
 import com.azavea.rf.database.Implicits._
 
-import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO
 import cats.syntax.either._
+import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 import doobie.scalatest.imports._
 import org.scalacheck.Prop.forAll
@@ -16,24 +16,21 @@ import org.scalatest.prop.Checkers
 
 class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig {
 
-  // create
-  test("insert an organization from a name") {
-    check {
-      forAll(
-        (name: String) => {
-          val withoutNull = name.filter( _ != '\u0000' ).mkString
-          OrganizationDao.create(withoutNull).transact(xa).unsafeRunSync.name == withoutNull
-        }
-      )
-    }
-  }
-
   // createOrganization
   test("insert an organization from an Organization.Create") {
     check {
       forAll(
-        (orgCreate: Organization.Create) => {
-          OrganizationDao.createOrganization(orgCreate).transact(xa).unsafeRunSync.name == orgCreate.name
+        (rootUserCreate: User.Create, orgCreate: Organization.Create, platformCreate: Platform.Create) => {
+          val orgInsertIO = for {
+            rootOrg <- rootOrgQ
+            insertedUser <- UserDao.create(rootUserCreate.copy(organizationId = rootOrg.id))
+            insertedPlatform <- PlatformDao.create(platformCreate.toPlatform(insertedUser))
+            newOrg <- OrganizationDao.create(orgCreate.copy(platformId = insertedPlatform.id).toOrganization)
+          } yield (newOrg, insertedPlatform)
+          val (insertedOrg, insertedPlatform) = orgInsertIO.transact(xa).unsafeRunSync
+
+          insertedOrg.platformId == insertedPlatform.id &&
+            insertedOrg.name == orgCreate.name
         }
       )
     }
@@ -66,7 +63,7 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
           val insertOrgIO = OrganizationDao.createOrganization(orgCreate)
           val insertAndUpdateIO =  insertOrgIO flatMap {
             (org: Organization) => {
-              OrganizationDao.updateOrganization(org.copy(name = withoutNull), org.id) flatMap {
+              OrganizationDao.update(org.copy(name = withoutNull), org.id) flatMap {
                 case (affectedRows: Int) => {
                   OrganizationDao.unsafeGetOrganizationById(org.id) map {
                     (retrievedOrg: Organization) => (affectedRows, retrievedOrg.name)

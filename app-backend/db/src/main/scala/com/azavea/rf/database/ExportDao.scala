@@ -78,7 +78,7 @@ object ExportDao extends Dao[Export] {
     }
 
     val dropboxToken = for {
-      user <- UserDao.query.filter(fr"id = ${export.owner}").selectOption
+      user <- UserDao.getUserById(export.owner)
     } yield {
       user.flatMap(_.dropboxCredential.token)
     }
