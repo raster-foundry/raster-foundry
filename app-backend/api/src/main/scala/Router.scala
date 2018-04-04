@@ -23,9 +23,10 @@ import com.azavea.rf.api.tooltag.ToolTagRoutes
 import com.azavea.rf.api.uploads.UploadRoutes
 import com.azavea.rf.api.user.UserRoutes
 import com.azavea.rf.api.utils.Config
+import com.azavea.rf.api.license.LicenseRoutes
+import com.azavea.rf.api.team.TeamRoutes
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import ch.megard.akka.http.cors.scaladsl.settings._
-import com.azavea.rf.api.license.LicenseRoutes
 
 import scala.collection.immutable.Seq
 
@@ -57,7 +58,8 @@ trait Router extends HealthCheckRoutes
   with Config
   with FeatureFlagRoutes
   with ShapeRoutes
-  with LicenseRoutes {
+  with LicenseRoutes
+  with TeamRoutes {
 
   val settings = CorsSettings.defaultSettings.copy(
     allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE))
@@ -123,6 +125,9 @@ trait Router extends HealthCheckRoutes
           } ~
           pathPrefix("licenses") {
             licenseRoutes
+          } ~
+          pathPrefix("teams") {
+            teamRoutes
           }
       } ~
       pathPrefix("config") {
