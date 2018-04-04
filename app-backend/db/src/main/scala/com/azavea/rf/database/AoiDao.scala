@@ -30,11 +30,11 @@ object AoiDao extends Dao[AOI] {
       FROM
     """ ++ tableF
 
-  def unsafeGetAoiById(id: UUID, user: User): ConnectionIO[AOI] =
-    query.ownerFilter(user).filter(id).select
+  def unsafeGetAoiById(id: UUID): ConnectionIO[AOI] =
+    query.filter(id).select
 
-  def getAoiById(id: UUID, user: User): ConnectionIO[Option[AOI]] =
-    query.ownerFilter(user).filter(id).selectOption
+  def getAoiById(id: UUID): ConnectionIO[Option[AOI]] =
+    query.filter(id).selectOption
 
   def updateAOI(aoi: AOI, id: UUID, user: User): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
@@ -75,7 +75,7 @@ object AoiDao extends Dao[AOI] {
 
   def deleteAOI(id: UUID, user: User): ConnectionIO[Int]= {
     (
-      fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(query.ownerFilterF(user), Some(fr"id = ${id}"))
+      fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(Some(fr"id = ${id}"))
     ).update.run
   }
 }

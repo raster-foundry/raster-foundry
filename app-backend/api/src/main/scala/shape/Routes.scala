@@ -94,9 +94,8 @@ trait ShapeRoutes extends Authentication
             val reprojectedGeometry = Projected(Reproject(geometry, LatLng, WebMercator), 3857)
             reprojectedGeometry.isValid match {
               case true => {
-                val shape = Shape.create(
+                val shape = Shape.Create(
                   Some(user.id),
-                  user.organizationId,
                   fileMetadata.fileName,
                   None,
                   Some(reprojectedGeometry)
@@ -118,7 +117,10 @@ trait ShapeRoutes extends Authentication
   def listShapes: Route = authenticate { user =>
     (withPagination & shapeQueryParams) { (page: PageRequest, queryParams: ShapeQueryParameters) =>
       complete {
-        ShapeDao.query.filter(queryParams).filter(user).page(page).transact(xa).unsafeToFuture().map { p => {
+        ShapeDao.query.filter(queryParams)
+          .authorize(user, ObjectType.Shape, ActionType.View)
+          .page(page)
+          .transact(xa).unsafeToFuture().map { p => {
             fromPaginatedResponseToGeoJson[Shape, Shape.GeoJSON](p)
           }
         }
@@ -127,10 +129,16 @@ trait ShapeRoutes extends Authentication
   }
 
   def getShape(shapeId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete {
-        ShapeDao.query.filter(fr"id = ${shapeId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture().map {
-          _ map { _.toGeoJSONFeature }
+    authorizeAsync {
+      ShapeDao.query
+        .authorized(user, ObjectType.Shape, shapeId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete {
+          ShapeDao.query.filter(shapeId).selectOption.transact(xa).unsafeToFuture().map {
+            _ map { _.toGeoJSONFeature }
+          }
         }
       }
     }
@@ -146,8 +154,12 @@ trait ShapeRoutes extends Authentication
   }
 
   def updateShape(shapeId: UUID): Route = authenticate { user =>
-    entity(as[Shape.GeoJSON]) { updatedShape: Shape.GeoJSON =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedShape.properties)) {
+    authorizeAsync {
+      ShapeDao.query
+        .authorized(user, ObjectType.Shape, shapeId, ActionType.Edit)
+        .transact(xa).unsafeToFuture
+    } {
+      entity(as[Shape.GeoJSON]) { updatedShape: Shape.GeoJSON =>
         onSuccess(ShapeDao.updateShape(updatedShape, shapeId, user).transact(xa).unsafeToFuture()) {
           completeSingleOrNotFound
         }
@@ -156,8 +168,14 @@ trait ShapeRoutes extends Authentication
   }
 
   def deleteShape(shapeId: UUID): Route = authenticate { user =>
-    onSuccess(ShapeDao.query.filter(fr"id = ${shapeId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
+    authorizeAsync {
+      ShapeDao.query
+        .authorized(user, ObjectType.Shape, shapeId, ActionType.Delete)
+        .transact(xa).unsafeToFuture
+    } {
+      onSuccess(ShapeDao.query.filter(shapeId).delete.transact(xa).unsafeToFuture) {
+        completeSingleOrNotFound
+      }
     }
   }
 }

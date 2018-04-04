@@ -24,7 +24,6 @@ case class AOI(
   id: UUID,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
-  organizationId: UUID,
   createdBy: String,
   modifiedBy: String,
   owner: String,
@@ -47,7 +46,6 @@ object AOI {
 
   @JsonCodec
   case class Create(
-    organizationId: UUID,
     area: Projected[MultiPolygon],
     filters: Json,
     owner: Option[String],

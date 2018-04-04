@@ -108,7 +108,9 @@ const App = angular.module(
         require('./pages/admin/platform/organizations/detail/detail.module.js').name,
         require('./pages/admin/platform/organizations/detail/features/features.js').name,
         require('./pages/admin/platform/organizations/detail/limits/limits.js').name,
-        require('./pages/admin/platform/organizations/detail/settings/settings.js').name
+        require('./pages/admin/platform/organizations/detail/settings/settings.js').name,
+        require('./pages/admin/team/team.js').name,
+        require('./pages/admin/team/users/users.js').name
     ]
 );
 

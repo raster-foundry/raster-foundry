@@ -17,7 +17,6 @@ case class MapToken(
   modifiedAt: Timestamp,
   modifiedBy: String,
   owner: String,
-  organizationId: UUID,
   name: String,
   project: Option[UUID],
   toolRun: Option[UUID]
@@ -31,7 +30,6 @@ object MapToken {
 
   @JsonCodec
   case class Create(
-    organizationId: UUID,
     name: String,
     project: Option[UUID],
     toolRun: Option[UUID],
@@ -50,7 +48,6 @@ object MapToken {
         now,
         user.id,
         ownerId,
-        this.organizationId,
         this.name,
         this.project,
         this.toolRun

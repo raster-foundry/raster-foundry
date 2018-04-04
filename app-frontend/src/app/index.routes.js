@@ -64,6 +64,8 @@ import platformOrganizationsDetailTpl from './pages/admin/platform/organizations
 import adminDetailFeaturesTpl from './pages/admin/platform/organizations/detail/features/features.html';
 import adminDetailLimitsTpl from './pages/admin/platform/organizations/detail/limits/limits.html';
 import adminDetailSettingsTpl from './pages/admin/platform/organizations/detail/settings/settings.html';
+import adminTeamTpl from './pages/admin/team/team.html';
+import adminTeamUsersTpl from './pages/admin/team/users/users.html';
 
 
 function projectEditStates($stateProvider) {
@@ -458,7 +460,7 @@ function adminStates($stateProvider) {
         })
         .state('admin.organization', {
             title: 'Organization',
-            url: '/organization/:id',
+            url: '/organization/:organizationId',
             templateUrl: organizationTpl,
             controller: 'OrganizationController',
             controllerAs: '$ctrl',
@@ -467,6 +469,9 @@ function adminStates($stateProvider) {
         .state('admin.organization.metrics', {
             title: 'Organization Metrics',
             url: '/metrics',
+            params: {
+                organization: null
+            },
             templateUrl: organizationMetricsTpl,
             controller: 'OrganizationMetricsController',
             controllerAs: '$ctrl'
@@ -474,6 +479,9 @@ function adminStates($stateProvider) {
         .state('admin.organization.users', {
             title: 'Organization Users',
             url: '/users',
+            params: {
+                organization: null
+            },
             templateUrl: organizationUsersTpl,
             controller: 'OrganizationUsersController',
             controllerAs: '$ctrl'
@@ -481,6 +489,9 @@ function adminStates($stateProvider) {
         .state('admin.organization.teams', {
             title: 'Organization Teams',
             url: '/teams',
+            params: {
+                organization: null
+            },
             templateUrl: organizationTeamsTpl,
             controller: 'OrganizationTeamsController',
             controllerAs: '$ctrl'
@@ -488,6 +499,9 @@ function adminStates($stateProvider) {
         .state('admin.organization.settings', {
             title: 'Organization Settings',
             url: '/settings',
+            params: {
+                organization: null
+            },
             templateUrl: organizationSettingsTpl,
             controller: 'OrganizationSettingsController',
             controllerAs: '$ctrl'
@@ -530,24 +544,39 @@ function adminStates($stateProvider) {
             abstract: true
         })
         .state('admin.platform.organizations.detail.features', {
-            title: 'Plateform: Organization Features',
+            title: 'Platform: Organization Features',
             url: '/features',
             templateUrl: adminDetailFeaturesTpl,
             controller: 'AdminDetailFeaturesController',
             controllerAs: '$ctrl'
         })
         .state('admin.platform.organizations.detail.limits', {
-            title: 'Plateform: Organization Limits',
+            title: 'Platform: Organization Limits',
             url: '/limits',
             templateUrl: adminDetailLimitsTpl,
             controller: 'AdminDetailLimitsController',
             controllerAs: '$ctrl'
         })
         .state('admin.platform.organizations.detail.settings', {
-            title: 'Plateform: Organization Settings',
+            title: 'Platform: Organization Settings',
             url: '/settings',
             templateUrl: adminDetailSettingsTpl,
             controller: 'AdminDetailSettingsController',
+            controllerAs: '$ctrl'
+        })
+        .state('admin.team', {
+            title: 'Team',
+            url: '/team/:teamId',
+            templateUrl: adminTeamTpl,
+            controller: 'AdminTeamController',
+            controllerAs: '$ctrl',
+            abstract: true
+        })
+        .state('admin.team.users', {
+            url: '/users',
+            title: 'Team Members',
+            templateUrl: adminTeamUsersTpl,
+            controller: 'AdminTeamUsersController',
             controllerAs: '$ctrl'
         });
 }

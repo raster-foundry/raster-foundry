@@ -67,7 +67,7 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
               val fixedUpUpdateAoi = fixupAoiCreate(dbUser, dbOrg, dbProject, aoiUpdate).copy(id = aoiId)
               AoiDao.updateAOI(fixedUpUpdateAoi, aoiId, dbUser) flatMap {
                 (affectedRows: Int) => {
-                  AoiDao.unsafeGetAoiById(aoiId, dbUser) map { (affectedRows, _) }
+                  AoiDao.unsafeGetAoiById(aoiId) map { (affectedRows, _) }
                 }
               }
             }

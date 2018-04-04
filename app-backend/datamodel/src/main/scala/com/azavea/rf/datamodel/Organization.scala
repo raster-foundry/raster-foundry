@@ -11,7 +11,9 @@ case class Organization(
   id: UUID,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
-  name: String
+  name: String,
+  platformId: UUID,
+  isActive: Boolean
 )
 
 object Organization {
@@ -20,11 +22,14 @@ object Organization {
   def create = Create.apply _
 
   @JsonCodec
-  case class Create(name: String) {
-    def toOrganization(): Organization = {
+  case class Create(
+    name: String,
+    platformId: UUID
+  ) {
+    def toOrganization: Organization = {
       val id = java.util.UUID.randomUUID()
       val now = new Timestamp((new java.util.Date()).getTime())
-      Organization(id, now, now, name)
+      Organization(id, now, now, name, platformId, true)
     }
   }
 }

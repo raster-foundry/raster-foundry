@@ -3,7 +3,8 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{User, UserRole, Credential}
+import com.azavea.rf.datamodel._
+import com.azavea.rf.datamodel.{User, UserRole, Credential, UserVisibility}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -23,27 +24,60 @@ object UserDao extends Dao[User] {
 
   val selectF = sql"""
     SELECT
-      id, organization_id, role, created_at, modified_at,
-      dropbox_credential, planet_credential, email_notifications
+      id, role, created_at, modified_at,
+      dropbox_credential, planet_credential, email_notifications,
+      email, name, profile_image_uri, is_superuser, is_active, visibility
     FROM
   """ ++ tableF
 
+  def filterById(id: String) = {
+    query.filter(fr"id = ${id}")
+  }
+
   def unsafeGetUserById(id: String): ConnectionIO[User] = {
-    query.filter(fr"id = ${id}").select
+    filterById(id).select
   }
 
   def getUserById(id: String): ConnectionIO[Option[User]] = {
-    query.filter(fr"id = ${id}").selectOption
+    filterById(id).selectOption
   }
 
-  def createUserWithAuthId(id: String): ConnectionIO[User] = {
+  def createUserWithJWT(creatingUser: User, jwtUser: User.JwtFields): ConnectionIO[User] = {
     for {
-      org <- OrganizationDao.query.filter(fr"name = 'Public'").select
-      user <- {
-        val newUser = User.Create(id, org.id)
-        create(newUser)
+      organization <- OrganizationDao.query.filter(jwtUser.organizationId).selectOption
+      createdUser <- {
+        organization match {
+          case Some(o) =>
+            val newUser = User.Create(
+              jwtUser.id, Viewer, jwtUser.email,
+              jwtUser.name, jwtUser.picture
+            )
+            create(newUser)
+          case None =>
+            throw new RuntimeException(
+              s"Tried to create a user using a non-existent organization ID: ${jwtUser.organizationId}"
+            )
+        }
       }
-    } yield user
+      platformRole <- UserGroupRoleDao.create(
+        UserGroupRole.Create(
+          createdUser.id,
+          GroupType.Platform,
+          jwtUser.platformId,
+          GroupRole.Member
+        ).toUserGroupRole(creatingUser)
+      )
+      organizationRole <- UserGroupRoleDao.create(
+        UserGroupRole.Create(
+          createdUser.id,
+          GroupType.Organization,
+          organization.getOrElse(
+            throw new RuntimeException("Tried to create a user role using a non-existent organization ID")
+          ).id,
+          GroupRole.Member
+        ).toUserGroupRole(creatingUser)
+      )
+    } yield createdUser
   }
 
   /* Limited update to just modifying planet credential -- users can't change their permissions*/
@@ -60,11 +94,14 @@ object UserDao extends Dao[User] {
     (sql"""
        UPDATE users
        SET
-         organization_id = ${user.organizationId},
          modified_at = ${updateTime},
          dropbox_credential = ${user.dropboxCredential.token.getOrElse("")},
          planet_credential = ${user.planetCredential.token.getOrElse("")},
-         email_notifications = ${user.emailNotifications}
+         email_notifications = ${user.emailNotifications},
+         email = ${user.email},
+         name = ${user.name},
+         profile_image_uri = ${user.profileImageUri},
+         visibility = ${user.visibility}
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
@@ -80,12 +117,26 @@ object UserDao extends Dao[User] {
 
     sql"""
        INSERT INTO users
-          (id, organization_id, role, created_at, modified_at, email_notifications)
+          (id, role, created_at, modified_at, email_notifications,
+          email, name, profile_image_uri, is_superuser, is_active, visibility)
        VALUES
-          (${newUser.id}, ${newUser.organizationId}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false)
+          (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false,
+          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, ${UserVisibility.Private.toString}::user_visibility)
        """.update.withUniqueGeneratedKeys[User](
-      "id", "organization_id", "role", "created_at", "modified_at", "dropbox_credential", "planet_credential", "email_notifications"
+      "id", "role", "created_at", "modified_at", "dropbox_credential", "planet_credential", "email_notifications",
+      "email", "name", "profile_image_uri", "is_superuser", "is_active", "visibility"
     )
   }
-}
 
+  def isSuperUserF(user: User) = fr"""
+    SELECT count(id) > 0
+      FROM """ ++ UserDao.tableF ++ fr"""
+      WHERE
+        id = ${user.id} AND
+        is_superuser = true AND
+        is_active = true
+  """
+
+  def isSuperUser(user: User): ConnectionIO[Boolean] =
+    isSuperUserF(user).query[Boolean].option.map(_.getOrElse(false))
+}

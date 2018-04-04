@@ -118,7 +118,6 @@
   },
   "createdAt": "2017-01-01T16:36:01.946Z",
   "createdBy": "rf|airflow-user",
-  "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
   "metadataFiles": [
     "http://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_MTL.txt"
   ],
@@ -133,7 +132,6 @@
       "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B8.TIF",
       "createdAt": "2017-01-01T16:36:01.946Z",
       "createdBy": "rf|airflow-user",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "metadataFiles": [],
       "bands": [
         {
@@ -161,7 +159,6 @@
       "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B1.TIF",
       "createdAt": "2017-01-01T16:36:01.946Z",
       "createdBy": "rf|airflow-user",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "metadataFiles": [],
       "bands": [
         {
@@ -189,7 +186,6 @@
       "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B2.TIF",
       "createdAt": "2017-01-01T16:36:01.946Z",
       "createdBy": "rf|airflow-user",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "metadataFiles": [],
       "bands": [
         {
@@ -217,7 +213,6 @@
       "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B3.TIF",
       "createdAt": "2017-01-01T16:36:01.946Z",
       "createdBy": "rf|airflow-user",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "metadataFiles": [],
       "bands": [
         {
@@ -245,7 +240,6 @@
       "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B4.TIF",
       "createdAt": "2017-01-01T16:36:01.946Z",
       "createdBy": "rf|airflow-user",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "metadataFiles": [],
       "bands": [
         {
@@ -273,7 +267,6 @@
       "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B5.TIF",
       "createdAt": "2017-01-01T16:36:01.946Z",
       "createdBy": "rf|airflow-user",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "metadataFiles": [],
       "bands": [
         {
@@ -301,7 +294,6 @@
       "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B6.TIF",
       "createdAt": "2017-01-01T16:36:01.946Z",
       "createdBy": "rf|airflow-user",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "metadataFiles": [],
       "bands": [
         {
@@ -329,7 +321,6 @@
       "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B7.TIF",
       "createdAt": "2017-01-01T16:36:01.946Z",
       "createdBy": "rf|airflow-user",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "metadataFiles": [],
       "bands": [
         {
@@ -357,7 +348,6 @@
       "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B9.TIF",
       "createdAt": "2017-01-01T16:36:01.946Z",
       "createdBy": "rf|airflow-user",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "metadataFiles": [],
       "bands": [
         {
@@ -385,7 +375,6 @@
       "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B10.TIF",
       "createdAt": "2017-01-01T16:36:01.946Z",
       "createdBy": "rf|airflow-user",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "metadataFiles": [],
       "bands": [
         {
@@ -413,7 +402,6 @@
       "sourceUri": "https://landsat-pds.s3.amazonaws.com/L8/008/068/LC80080682016359LGN00/LC80080682016359LGN00_B11.TIF",
       "createdAt": "2017-01-01T16:36:01.946Z",
       "createdBy": "rf|airflow-user",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "metadataFiles": [],
       "bands": [
         {
@@ -444,7 +432,6 @@
       "thumbnailSize": "SMALL",
       "id": "a6b0726d-813d-47a9-8b54-d09b7726b6d1",
       "createdAt": "2017-01-01T16:36:01.946Z",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "sceneId": "cd2bdc60-cd41-46d9-9284-dea280d61484",
       "heightPx": 233
     },
@@ -455,7 +442,6 @@
       "thumbnailSize": "LARGE",
       "id": "92269ab3-197a-43c7-8f71-cad9b08cf3b3",
       "createdAt": "2017-01-01T16:36:01.946Z",
-      "organizationId": "dfac6307-b5ef-43f7-beda-b9f208bb7726",
       "sceneId": "cd2bdc60-cd41-46d9-9284-dea280d61484",
       "heightPx": 1168
     }

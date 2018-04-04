@@ -1,16 +1,23 @@
 <div class="admin-users-content container column-stretch dashboard">
   <div class="admin-users-actions">
-    <input type="text" class="form-control admin-search" placeholder="Search for users">
-    <button type="button" class="btn btn-primary"
-            ng-click="$ctrl.newUserModal()">
-      New User
-    </button>
+    <input type="text" class="form-control admin-search" placeholder="Search for users"
+           ng-model="$ctrl.search" ng-disabled="$ctrl.fetching">
   </div>
-  <table class="admin-table admin-org-user-table">
+  <table class="admin-table admin-org-user-table" ng-if="!$ctrl.fetching">
+    <thead>
+      <tr>
+        <td>Name</td>
+        <td>Email</td>
+        <td>Role</td>
+      </tr>
+    </thead>
     <tbody>
       <tr ng-repeat="user in $ctrl.users track by $index">
         <td class="username">
-          <div class="user-avatar"></div>
+          <div class="placeholder-avatar" ng-if="!user.profileImageUri"></div>
+          <div class="user-avatar" ng-if="user.profileImageUri">
+            <img class="avatar" ng-src="{{user.profileImageUri}}">
+          </div>
           <div>
             {{user.name}}
           </div>
@@ -19,7 +26,7 @@
           {{user.email}}
         </td>
         <td class="roles">
-          {{user.role}}
+          {{user.groupRole}}
         </td>
         <td class="teams">
           {{user.teams.length}} Teams
@@ -32,4 +39,23 @@
       </tr>
     </tbody>
   </table>
+  <div class="table-loading" ng-if="$ctrl.fetching">
+    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
+  </div>
+
+  <!-- Pagination -->
+  <div class="list-group text-center"
+        ng-show="!$ctrl.loading && $ctrl.lastUserResult && $ctrl.pagination.show && !$ctrl.errorMsg">
+    <ul uib-pagination
+        items-per-page="$ctrl.lastUserResult.pageSize"
+        total-items="$ctrl.pagination.count"
+        ng-model="$ctrl.currentPage"
+        max-size="4"
+        rotate="true"
+        boundary-link-numbers="true"
+        force-ellipses="true"
+        ng-change="$ctrl.fetchUsers($ctrl.currentPage, $ctrl.search)">
+    </ul>
+  </div>
+  <!-- Pagination -->
 </div>

@@ -37,7 +37,7 @@ object ProjectDao extends Dao[Project] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, organization_id, created_by,
+      id, created_at, modified_at, created_by,
       modified_by, owner, name, slug_label, description,
       visibility, tile_visibility, is_aoi_project,
       aoi_cadence_millis, aois_last_checked, tags, extent,
@@ -49,18 +49,16 @@ object ProjectDao extends Dao[Project] {
 
   def unsafeGetProjectById(projectId: UUID, user: Option[User]): ConnectionIO[Project] = {
     val idFilter = Some(fr"id = ${projectId}")
-    val visFilter = user flatMap filterUserVisibility
 
-    (selectF ++ Fragments.whereAndOpt(idFilter, visFilter))
+    (selectF ++ Fragments.whereAndOpt(idFilter))
       .query[Project]
       .unique
   }
 
   def getProjectById(projectId: UUID, user: Option[User]): ConnectionIO[Option[Project]] = {
     val idFilter = Some(fr"id = ${projectId}")
-    val visFilter = user flatMap filterUserVisibility
 
-    (selectF ++ Fragments.whereAndOpt(idFilter, visFilter))
+    (selectF ++ Fragments.whereAndOpt(idFilter))
       .query[Project]
       .option
   }
@@ -71,31 +69,24 @@ object ProjectDao extends Dao[Project] {
     val ownerId = util.Ownership.checkOwner(user, newProject.owner)
     val slug = Project.slugify(newProject.name)
     (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, modified_at, organization_id, created_by,
+        (id, created_at, modified_at, created_by,
         modified_by, owner, name, slug_label, description,
         visibility, tile_visibility, is_aoi_project,
         aoi_cadence_millis, aois_last_checked, tags, extent,
         manual_order, is_single_band, single_band_options)
       VALUES
-        ($id, $now, $now, ${newProject.organizationId}, ${user.id},
+        ($id, $now, $now, ${user.id},
         ${user.id}, $ownerId, ${newProject.name}, $slug, ${newProject.description},
         ${newProject.visibility}, ${newProject.tileVisibility}, ${newProject.isAOIProject},
         ${newProject.aoiCadenceMillis}, $now, ${newProject.tags}, null,
         TRUE, ${newProject.isSingleBand}, ${newProject.singleBandOptions})
     """).update.withUniqueGeneratedKeys[Project](
-      "id", "created_at", "modified_at", "organization_id", "created_by",
+      "id", "created_at", "modified_at", "created_by",
       "modified_by", "owner", "name", "slug_label", "description",
       "visibility", "tile_visibility", "is_aoi_project",
       "aoi_cadence_millis", "aois_last_checked", "tags", "extent",
       "manual_order", "is_single_band", "single_band_options"
     )
-  }
-
-  def filterUserVisibility(user: User): Option[Fragment] = {
-    user.isInRootOrganization match {
-      case true => None
-      case _ => Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id} OR visibility = 'PUBLIC')")
-    }
   }
 
   def updateProjectQ(project: Project, id: UUID, user: User): Update0 = {
@@ -118,7 +109,7 @@ object ProjectDao extends Dao[Project] {
        manual_order = ${project.manualOrder},
        is_single_band = ${project.isSingleBand},
        single_band_options = ${project.singleBandOptions}
-    """ ++ Fragments.whereAndOpt(ownerEditFilter(user), Some(idFilter))).update
+    """ ++ Fragments.whereAndOpt(Some(idFilter))).update
     query
   }
 
@@ -169,7 +160,6 @@ object ProjectDao extends Dao[Project] {
                 datasources.modified_at,
                 datasources.modified_by,
                 datasources.owner,
-                datasources.organization_id,
                 datasources.name,
                 datasources.visibility,
                 datasources.composites,
@@ -233,7 +223,7 @@ object ProjectDao extends Dao[Project] {
   }
 
   def listProjectSceneOrder(projectId: UUID, page: PageRequest, user: User): ConnectionIO[PaginatedResponse[UUID]] = {
-    val projectQuery = query.filter(fr"id = ${projectId}").filter(ownerEditFilter(user)).select
+    val projectQuery = query.filter(projectId).select
     val selectClause = fr"SELECT scene_id "
     val countClause = fr"SELECT count(*) "
     val sceneQuery = fr"FROM scenes_to_projects INNER JOIN scenes ON scene_id = scenes.id WHERE project_id = ${projectId}"
@@ -282,5 +272,9 @@ object ProjectDao extends Dao[Project] {
       scenes <- SceneDao.query.filter(sceneParams).list
       scenesAdded <- addScenesToProject(scenes.map(_.id), projectId, user)
     } yield scenesAdded
+  }
+
+  def ownedBy(projectId: UUID, user: User): ConnectionIO[Boolean] = {
+    query.filter(projectId).filter(fr"owner = ${user.id}").exists
   }
 }

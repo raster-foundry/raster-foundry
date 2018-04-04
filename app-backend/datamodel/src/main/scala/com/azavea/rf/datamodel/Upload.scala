@@ -14,7 +14,6 @@ case class Upload(
   modifiedAt: Timestamp,
   modifiedBy: String,
   owner: String,
-  organizationId: UUID,
   uploadStatus: UploadStatus,
   fileType: FileType,
   uploadType: UploadType,
@@ -34,7 +33,6 @@ object Upload {
 
   @JsonCodec
   case class Create(
-    organizationId: UUID,
     uploadStatus: UploadStatus,
     fileType: FileType,
     uploadType: UploadType,
@@ -58,7 +56,6 @@ object Upload {
         now, // modifiedAt
         user.id, // modifiedBy
         ownerId, // owner
-        this.organizationId,
         this.uploadStatus,
         this.fileType,
         this.uploadType,

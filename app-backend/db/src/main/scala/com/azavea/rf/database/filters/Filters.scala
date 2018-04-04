@@ -13,14 +13,24 @@ import Fragments.{ in, whereAndOpt }
 object Filters {
 
   def userQP(userParams: UserQueryParameters): List[Option[Fragment]] = {
-    val f1 = userParams.createdBy.map(cb => fr"created_by = $cb")
-    val f2 = userParams.modifiedBy.map(mb => fr"modified_by = $mb")
-    val f3 = userParams.owner.map(owner => fr"owner = $owner")
-    List(f1, f2, f3)
+    onlyUserQP(userParams.onlyUserParams) :::
+    ownerQP(userParams.ownerParams) :::
+    activationQP(userParams.activationParams)
+  }
+
+  def onlyUserQP(onlyUserParams: UserAuditQueryParameters): List[Option[Fragment]] = {
+    List(
+      onlyUserParams.createdBy.map(cb => fr"created_by = $cb"),
+      onlyUserParams.modifiedBy.map(mb => fr"modified_by = $mb")
+    )
+  }
+
+  def ownerQP(ownerParams: OwnerQueryParameters): List[Option[Fragment]] = {
+    List(ownerParams.owner.map(owner => fr"owner = $owner"))
   }
 
   def organizationQP(orgParams: OrgQueryParameters): List[Option[Fragment]] = {
-    val f1 = orgParams.organizations.toList.toNel.map(orgs => in(fr"organizationId", orgs))
+    val f1 = orgParams.organizations.toList.toNel.map(orgs => in(fr"organization_id", orgs))
     List(f1)
   }
 
@@ -57,12 +67,20 @@ object Filters {
     List(
       searchParams.search.map(valueToMatch => {
         Fragment.const(
-          cols.map(col => {
+          "(" ++ cols.map(col => {
             val namePattern: String = "'%" + valueToMatch.toUpperCase() + "%'"
             s"UPPER($col) LIKE $namePattern"
-          }).mkString(" OR ")
+          }).mkString(" OR ") ++ ")"
         )
       })
     )
+  }
+
+  def activationQP(activationParams: ActivationQueryParameters): List[Option[Fragment]] = {
+    List(activationParams.isActive.map(isActive => fr"is_active = ${isActive}"))
+  }
+
+  def platformIdQP(platformIdParams: PlatformIdQueryParameters): List[Option[Fragment]] = {
+    List(platformIdParams.platformId.map(platformId => fr"platform_id = ${platformId}"))
   }
 }

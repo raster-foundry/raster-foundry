@@ -16,7 +16,7 @@ from .io import get_geotiff_dimensions
 logger = logging.getLogger(__name__)
 
 
-def create_thumbnails(tif_path, scene_id, organization_id):
+def create_thumbnails(tif_path, scene_id):
     """Creates thumbnails based on a geotiff path and scene
 
     Args:
@@ -148,7 +148,6 @@ def create_thumbnails(tif_path, scene_id, organization_id):
     # Return List[Thumbnail]
     return [
         Thumbnail(
-            organization_id,
             dim_small[0],
             dim_small[1],
             'SMALL',
@@ -156,7 +155,6 @@ def create_thumbnails(tif_path, scene_id, organization_id):
             sceneId=scene_id
         ),
         Thumbnail(
-            organization_id,
             dim_large[0],
             dim_large[1],
             'LARGE',

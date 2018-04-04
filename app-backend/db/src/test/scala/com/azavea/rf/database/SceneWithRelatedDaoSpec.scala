@@ -18,22 +18,6 @@ import java.sql.Timestamp
 import java.time.LocalDate
 
 class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
-  test("list scenes with related") {
-    check {
-      forAll {
-        (user: User.Create, org: Organization.Create, page: PageRequest, csq: CombinedSceneQueryParams) => {
-          val sceneListIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (dbOrg, dbUser) = orgAndUser
-            sceneList <- SceneWithRelatedDao.listScenes(page, csq, dbUser)
-          } yield sceneList
-
-          sceneListIO.transact(xa).unsafeRunSync.results.length >= 0
-        }
-      }
-    }
-  }
-
   test("list scenes for a project") {
     check {
       forAll {
@@ -43,7 +27,7 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
             orgUserProject <- insertUserOrgProject(user, org, project)
             (dbOrg, dbUser, dbProject) = orgUserProject
             datasource <- unsafeGetRandomDatasource
-            scenesInsert <- (scenes map { fixupSceneCreate(dbUser, dbOrg, datasource, _) }).traverse(
+            scenesInsert <- (scenes map { fixupSceneCreate(dbUser, datasource, _) }).traverse(
               (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
             )
           } yield (scenesInsert, dbUser, dbProject)
@@ -77,7 +61,7 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
             orgUserProject <- insertUserOrgProject(user, org, project)
             (dbOrg, dbUser, dbProject) = orgUserProject
             datasource <- unsafeGetRandomDatasource
-            scenesInsert <- (scenes map { fixupSceneCreate(dbUser, dbOrg, datasource, _) }).traverse(
+            scenesInsert <- (scenes map { fixupSceneCreate(dbUser, datasource, _) }).traverse(
               (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
             )
           } yield (scenesInsert, dbUser, dbProject)

@@ -82,7 +82,6 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       val filename = obj.split("/").last
       val imageBand = filename.split("\\.").head
       Image.Banded(
-        organizationId   = sentinel2Config.organizationUUID,
         rawDataBytes     = 0,
         visibility       = Visibility.Public,
         filename         = filename,
@@ -101,15 +100,16 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     val keyPath: String = s"$tilePath/preview.jpg"
     val thumbnailUrl = s"${sentinel2Config.baseHttpPath}$keyPath"
 
-    Thumbnail.Identified(
-      id = None,
-      organizationId = UUID.fromString(landsat8Config.organization),
-      thumbnailSize  = ThumbnailSize.Square,
-      widthPx        = 343,
-      heightPx       = 343,
-      sceneId        = sceneId,
-      url            = thumbnailUrl
-    ) :: Nil
+    if (!isUriExists(thumbnailUrl)) Nil
+    else
+      Thumbnail.Identified(
+        id = None,
+        thumbnailSize  = ThumbnailSize.Square,
+        widthPx        = 343,
+        heightPx       = 343,
+        sceneId        = sceneId,
+        url            = thumbnailUrl
+      ) :: Nil
   }
 
   def getSentinel2Products(date: LocalDate): List[URI] = {

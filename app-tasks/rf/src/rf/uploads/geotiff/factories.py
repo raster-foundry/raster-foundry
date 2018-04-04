@@ -40,7 +40,6 @@ class GeoTiffS3SceneFactory(object):
         self.isProjectUpload = upload.projectId is not None
         self.files = self._upload.files
         self.owner = upload.owner
-        self.organizationId = self._upload.organizationId
         self.visibility = Visibility.PRIVATE
         self.datasource = self._upload.datasource
         self.acquisitionDate = self._upload.metadata.get('acquisitionDate')
@@ -82,14 +81,14 @@ class GeoTiffS3SceneFactory(object):
 
                 # TODO: thumbnails aren't currently created in a way that matches serialization
                 # in the API
-                scene.thumbnails = create_thumbnails(local_tif.name, scene.id, self.organizationId)
+                scene.thumbnails = create_thumbnails(local_tif.name, scene.id)
                 scene.images = images
             finally:
                 os.remove(local_tif.name)
             yield scene
 
     def create_geotiff_image(self, tif_path, source_uri, scene, filename):
-        return create_geotiff_image(self.organizationId, tif_path, source_uri, scene=scene.id,
+        return create_geotiff_image(tif_path, source_uri, scene=scene.id,
                                     filename=filename, visibility=self.visibility, owner=self.owner)
 
     def create_geotiff_scene(self, tif_path, name):
@@ -103,7 +102,6 @@ class GeoTiffS3SceneFactory(object):
             ingestStatus = IngestStatus.NOTINGESTED
         return create_geotiff_scene(
             tif_path,
-            self.organizationId,
             self.datasource,
             visibility=self.visibility,
             tags=self.tags,

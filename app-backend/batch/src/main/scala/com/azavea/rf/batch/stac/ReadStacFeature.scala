@@ -126,7 +126,6 @@ object ReadStacFeature extends Config with LazyLogging {
 
     Scene.Create(
       id = Some(sceneId),
-      organizationId = landsat8Config.organizationUUID, // this config should be changed to a generic import config
       ingestSizeBytes = 0,
       visibility = Visibility.Public,
       tags = feature.properties.provider.split(",").map(_.trim).toList,
@@ -196,7 +195,6 @@ object ReadStacFeature extends Config with LazyLogging {
     product: stac.Product, imageAsset: stac.Asset, sceneId: UUID, rootUri: URI
   ): Image.Banded = {
     Image.Banded(
-      organizationId = landsat8Config.organizationUUID,
       rawDataBytes = 0, // sizeFromPath(params.path),
       visibility = Visibility.Public,
       filename = imageAsset.href.split("/").takeRight(1)(0),
@@ -251,7 +249,6 @@ object ReadStacFeature extends Config with LazyLogging {
       val height = thumb.getHeight
       Some(Thumbnail.Identified(
              id = None,
-             organizationId = landsat8Config.organizationUUID,
              thumbnailSize = if (width < 500) ThumbnailSize.Small else ThumbnailSize.Large,
              widthPx = thumb.getWidth,
              heightPx = thumb.getHeight,

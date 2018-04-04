@@ -16,7 +16,6 @@ case class ToolRun(
   modifiedBy: String,
   owner: String,
   visibility: Visibility,
-  organizationId: UUID,
   executionParameters: Json
 )
 
@@ -28,7 +27,6 @@ object ToolRun {
   case class Create(
     name: Option[String],
     visibility: Visibility,
-    organizationId: UUID,
     executionParameters: Json,
     owner: Option[String]
   ) extends OwnerCheck {
@@ -47,7 +45,6 @@ object ToolRun {
         user.id,
         ownerId,
         visibility,
-        organizationId,
         executionParameters
       )
     }

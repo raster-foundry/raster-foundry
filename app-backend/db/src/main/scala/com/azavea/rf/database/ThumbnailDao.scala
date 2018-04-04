@@ -16,7 +16,7 @@ object ThumbnailDao extends Dao[Thumbnail] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, organization_id, width_px, height_px,
+      id, created_at, modified_at, width_px, height_px,
       scene, url, thumbnail_size
     FROM
   """ ++ tableF
@@ -30,10 +30,10 @@ object ThumbnailDao extends Dao[Thumbnail] {
   def insertMany(thumbnails: List[Thumbnail]): ConnectionIO[Int] = {
     val insertSql = """
       INSERT INTO thumbnails (
-        id, created_at, modified_at, organization_id, width_px,
+        id, created_at, modified_at, width_px,
         height_px, scene, url, thumbnail_size
       ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?
       )
     """
     Update[Thumbnail](insertSql).updateMany(thumbnails.toList)
@@ -42,14 +42,14 @@ object ThumbnailDao extends Dao[Thumbnail] {
   def insert(thumbnail: Thumbnail): ConnectionIO[Thumbnail] = {
     fr"""
       INSERT INTO thumbnails (
-        id, created_at, modified_at, organization_id, width_px,
+        id, created_at, modified_at, width_px,
         height_px, scene, url, thumbnail_size
       ) VALUES (
-        ${thumbnail.id}, NOW(), NOW(), ${thumbnail.organizationId}, ${thumbnail.widthPx},
+        ${thumbnail.id}, NOW(), NOW(), ${thumbnail.widthPx},
         ${thumbnail.heightPx}, ${thumbnail.sceneId}, ${thumbnail.url}, ${thumbnail.thumbnailSize}
       )
     """.update.withUniqueGeneratedKeys[Thumbnail](
-      "id", "created_at", "modified_at", "organization_id", "width_px",
+      "id", "created_at", "modified_at", "width_px",
       "height_px", "scene", "url", "thumbnail_size"
     )
   }
