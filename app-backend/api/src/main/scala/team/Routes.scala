@@ -21,6 +21,8 @@ import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
 
+import kamon.akka.http.KamonTraceDirectives
+
 
 /**
   * Routes for Organizations
@@ -28,19 +30,40 @@ import doobie.postgres.implicits._
 trait TeamRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
-    with UserErrorHandler {
+    with UserErrorHandler
+    with KamonTraceDirectives {
 
   val xa: Transactor[IO]
 
   val teamRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
-      get { listTeams } ~
-      post { createTeam }
+      get {
+        traceName("teams-list") {
+          listTeams
+        }
+      } ~
+      post {
+        traceName("teams-create") {
+          createTeam
+        }
+      }
     } ~
     pathPrefix(JavaUUID) { teamId =>
-      get { getTeam(teamId) } ~
-      put { updateTeam(teamId) } ~
-      delete { deleteTeam(teamId) }
+      get {
+        traceName("team-detail") {
+          getTeam(teamId)
+        }
+      } ~
+      put {
+        traceName("team-update") {
+          updateTeam(teamId)
+        }
+      } ~
+      delete {
+        traceName("team-delete") {
+          deleteTeam(teamId)
+        }
+      }
     }
   }
 
@@ -53,11 +76,9 @@ trait TeamRoutes extends Authentication
   }
 
   def createTeam: Route = authenticate { user =>
-    entity(as[Team.Create]) { newTeam =>
-      authorize(user.isInRootOrSameOrganizationAs(newTeam)) {
-        onSuccess(TeamDao.createTeam(newTeam, user).transact(xa).unsafeToFuture()) { team =>
-          complete(StatusCodes.Created, team)
-        }
+    entity(as[Team.Create]) { newTeamCreate =>
+      onSuccess(TeamDao.create(newTeamCreate.toTeam(user)).transact(xa).unsafeToFuture()) { team =>
+        complete(StatusCodes.Created, team)
       }
     }
   }
@@ -65,23 +86,21 @@ trait TeamRoutes extends Authentication
   def getTeam(teamId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        TeamDao.getTeamById(teamId).transact(xa).unsafeToFuture
+        TeamDao.query.filter(teamId).selectOption.transact(xa).unsafeToFuture
       }
     }
   }
 
   def updateTeam(teamId: UUID): Route = authenticate { user =>
     entity(as[Team]) { updatedTeam =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedTeam)) {
-        onSuccess(TeamDao.updateTeam(updatedTeam, teamId, user).transact(xa).unsafeToFuture()) { team =>
-          complete(StatusCodes.OK, team)
-        }
+      onSuccess(TeamDao.update(updatedTeam, teamId, user).transact(xa).unsafeToFuture()) { team =>
+        complete(StatusCodes.OK, team)
       }
     }
   }
 
   def deleteTeam(teamId: UUID): Route = authenticate { user =>
-    onSuccess(TeamDao.deleteTeam(teamId, user).transact(xa).unsafeToFuture) {
+    onSuccess(TeamDao.query.filter(teamId).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }

@@ -40,19 +40,7 @@ object TeamDao extends Dao[Team] {
     )
   }
 
-  def createTeam(
-    teamCreate: Team.Create,
-    user: User
-  ): ConnectionIO[Team] = {
-    val team = teamCreate.toTeam(user)
-    this.create(team)
-  }
-
-  def getTeamById(teamID: UUID): ConnectionIO[Team] = {
-    (selectF ++ fr"WHERE id = ${teamID}").query[Team].unique
-  }
-
-  def updateTeam(
+  def update(
     team: Team,
     id: UUID,
     user: User
@@ -60,24 +48,17 @@ object TeamDao extends Dao[Team] {
     val now = new Timestamp((new java.util.Date()).getTime())
     val updateQuery =
       fr"UPDATE" ++ this.tableF ++
-      fr"SET" ++ fr"""
-      modified_at = ${now},
-      modified_by = ${user.id},
-      name = ${team.name}
-      settings = ${team.settings}
-      """ ++
-      fr"WHERE id = ${id}"
+      fr"""
+      SET modified_at = ${now},
+          modified_by = ${user.id},
+          name = ${team.name}
+          settings = ${team.settings}
+      WHERE id = ${id}"""
     updateQuery
       .update
       .withUniqueGeneratedKeys[Team](
         "id", "created_at", "created_by", "modified_at", "modified_by", "organization_id",
         "name", "settings"
       )
-  }
-
-  def deleteTeam(id: UUID, user: User): ConnectionIO[Int] = {
-    (fr"DELETE FROM " ++ this.tableF ++ fr" WHERE id = ${id}")
-      .update
-      .run
   }
 }
