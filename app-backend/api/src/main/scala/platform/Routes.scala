@@ -67,7 +67,7 @@ trait PlatformRoutes extends Authentication
   // @TODO: most platform API interactions should be highly restricted -- only 'super-users' should
   // be able to do list, create, update, delete. Non-super users can only get a platform if they belong to it.
   def listPlatforms: Route = authenticate { user =>
-    (withPagination) { page =>
+    withPagination { page =>
       complete {
         PlatformDao.query.page(page).transact(xa).unsafeToFuture
       }
@@ -76,8 +76,8 @@ trait PlatformRoutes extends Authentication
 
   def createPlatform: Route = authenticate { user =>
     entity(as[Platform.Create]) { platformToCreate =>
-      completeOrRecoverWith(PlatformDao.create(platformToCreate.toPlatform).transact(xa).unsafeToFuture) { err =>
-        failWith(err)
+      completeOrFail {
+        PlatformDao.create(platformToCreate.toPlatform).transact(xa).unsafeToFuture
       }
     }
   }
@@ -92,17 +92,16 @@ trait PlatformRoutes extends Authentication
 
   def updatePlatform(platformId: UUID): Route = authenticate { user =>
     entity(as[Platform]) { platformToUpdate =>
-      onComplete(PlatformDao.update(platformToUpdate, platformId, user).transact(xa).unsafeToFuture) {
-        case Success(count) => completeSingleOrNotFound(count)
-        case Failure(err) => failWith(err)
+      completeWithOneOrFail {
+        PlatformDao.update(platformToUpdate, platformId, user).transact(xa).unsafeToFuture
       }
     }
   }
 
+  // @TODO: We may want to remove this functionality and instead deactivate platforms
   def deletePlatform(platformId: UUID): Route = authenticate { user =>
-    onComplete(PlatformDao.query.filter(platformId).delete.transact(xa).unsafeToFuture) {
-      case Success(count) => completeSingleOrNotFound(count)
-      case Failure(err) => failWith(err)
+    completeWithOneOrFail {
+      PlatformDao.query.filter(platformId).delete.transact(xa).unsafeToFuture
     }
   }
 }
