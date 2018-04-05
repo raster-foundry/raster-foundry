@@ -189,6 +189,16 @@ inside. It makes debugging hard as you try desperately to keep track of which ob
 you're in, fail anyway, then get confused about why the behavior of the code isn't
 changing.
 
+### How should I test my Dao?
+
+_Every_ method you include on your Dao should have a test if it includes a fragment.
+To test your Dao, make sure that there is an `Arbitrary` instance available for the case
+class your Dao's rows resolve to, then write a property test for what should happen if
+someone calls your Dao's methods. We want to do this to ensure that we've written valid
+sql everywhere, since the fragments themselves are just strings that have no checking
+done on them unless we explicitly ask. See the `UserDaoSpec` for examples of property
+tests, and see `Generators.scala` in the datamodel subproject for `Arbitrary` examples.
+
 Migrations
 ---------
 
