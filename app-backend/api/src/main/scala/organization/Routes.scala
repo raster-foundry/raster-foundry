@@ -66,7 +66,7 @@ trait OrganizationRoutes extends Authentication
   def getOrganization(orgId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       if (user.isInRootOrSameOrganizationAs(new { val organizationId = orgId })) {
-        complete(OrganizationDao.query.filter(orgId).selectOption.transact(xa).unsafeToFuture())
+        complete(OrganizationDao.getOrganizationById(orgId).transact(xa).unsafeToFuture())
       } else {
         complete(StatusCodes.NotFound)
       }
