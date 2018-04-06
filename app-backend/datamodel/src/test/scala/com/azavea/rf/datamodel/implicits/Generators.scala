@@ -24,9 +24,11 @@ object Generators {
     day <- Gen.choose(1, 28) // for safety
   } yield { Timestamp.valueOf(LocalDate.of(year, month, day).atStartOfDay) }
 
-  def organizationGen: Gen[Organization] = for {
+  def organizationCreateGen: Gen[Organization.Create] = for {
     name <- arbitrary[String]
-  } yield { Organization.Create(name).toOrganization }
+  } yield (Organization.Create(name))
+
+  def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization }
 
   def userCreateGen: Gen[User.Create] = for {
     id <- arbitrary[String]
@@ -39,6 +41,8 @@ object Generators {
   def credentialGen: Gen[Credential] = nonEmptyStringGen map { Credential.fromString }
 
   object Implicits {
+    implicit def arbOrganizationCreate: Arbitrary[Organization.Create] = Arbitrary { organizationCreateGen }
+
     implicit def arbOrganization: Arbitrary[Organization] = Arbitrary { organizationGen }
 
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
