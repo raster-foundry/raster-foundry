@@ -81,5 +81,11 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
       )
     }
   }
+
+  // list organizations
+  test("list organizations") {
+    OrganizationDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
+  }
+
 }
 
