@@ -35,6 +35,12 @@ object OrganizationDao extends Dao[Organization] {
     createOrganization(newOrg)
   }
 
+  def getOrganizationById(id: UUID): ConnectionIO[Option[Organization]] =
+    query.filter(id).selectOption
+
+  def unsafeGetOrganizationById(id: UUID): ConnectionIO[Organization] =
+    query.filter(id).select
+
   def createOrganization(newOrg: Organization.Create): ConnectionIO[Organization] = {
     val id = UUID.randomUUID()
     val now = new Timestamp((new java.util.Date()).getTime())
@@ -53,7 +59,7 @@ object OrganizationDao extends Dao[Organization] {
     val idFilter = fr"id = ${id}"
 
     (sql"""
-       UPDATE map_tokens
+       UPDATE organizations
        SET
          modified_at = ${updateTime},
          name = ${org.name}
