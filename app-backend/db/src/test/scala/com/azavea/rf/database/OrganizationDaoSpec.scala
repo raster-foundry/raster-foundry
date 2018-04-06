@@ -86,6 +86,5 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
   test("list organizations") {
     OrganizationDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
-
 }
 
