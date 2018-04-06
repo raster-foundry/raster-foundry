@@ -25,17 +25,6 @@ object BandDao extends Dao[Band] {
       FROM
     """ ++ tableF
 
-  def create(band: Band): ConnectionIO[Band] = {
-    val id = UUID.randomUUID
-    (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, image_id, name, number, wavelength)
-      VALUES
-        (${band.id}, ${band.image}, ${band.name}, ${band.number}, ${band.wavelength})
-    """).update.withUniqueGeneratedKeys[Band](
-      "id", "image_id", "name", "number", "wavelength"
-    )
-  }
-
   def createMany(bands: List[Band]): ConnectionIO[Int] = {
     (fr"INSERT INTO" ++ tableF ++ fr"(id, image_id, name, number, wavelength) VALUES" ++
        bands.foldLeft(fr"")(

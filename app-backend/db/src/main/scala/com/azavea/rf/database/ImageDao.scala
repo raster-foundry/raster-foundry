@@ -24,6 +24,7 @@ object ImageDao extends Dao[Image] {
       id, created_at, modified_at, organization_id, created_by, modified_by,
       owner, raw_data_bytes, visibility, filename, sourceuri, scene,
       image_metadata, resolution_meters, metadata_files FROM """ ++ tableF 
+
   def create(
     image: Image,
     user: User
