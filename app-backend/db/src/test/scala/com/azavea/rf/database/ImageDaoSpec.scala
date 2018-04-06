@@ -34,7 +34,10 @@ class ImageDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
           val sceneInsertIO = for {
             orgAndUser <- insertUserAndOrg(user, org)
             (insertedOrg, insertedUser) = orgAndUser
-            insertedScene <- SceneDao.insert(fixupSceneCreate(insertedUser, insertedOrg, scene), insertedUser)
+            datasource <- unsafeGetRandomDatasource
+            insertedScene <- SceneDao.insert(
+              fixupSceneCreate(insertedUser, insertedOrg, datasource, scene), insertedUser
+            )
           } yield (insertedScene, insertedUser)
           val imageInsertIO = sceneInsertIO flatMap {
             case (swr: Scene.WithRelated, dbUser: User) => {

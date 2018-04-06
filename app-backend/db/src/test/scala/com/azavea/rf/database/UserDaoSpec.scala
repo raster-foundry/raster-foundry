@@ -17,8 +17,6 @@ import scala.util.Random
 
 class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig {
 
-  val randomUserFragment = UserDao.selectF ++ fr"ORDER BY RANDOM() LIMIT 1"
-
   // create
   test("inserting users") {
     check(

@@ -52,8 +52,7 @@ object SceneDao extends Dao[Scene] {
       sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
     }
 
-    val sceneInsert = fr"""
-      INSERT INTO ${tableName} (
+    val sceneInsertId = (fr"INSERT INTO" ++ tableF ++ fr"""(
          id, created_at, created_by, modified_at, modified_by, owner,
          organization_id, ingest_size_bytes, visibility, tags,
          datasource, scene_metadata, name, tile_footprint,
@@ -68,7 +67,7 @@ object SceneDao extends Dao[Scene] {
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus}, ${scene.statusFields.ingestStatus}
       )
-    """.update.run
+    """).update.withUniqueGeneratedKeys[UUID]("id")
 
 
     val thumbnailInsert = ThumbnailDao.insertMany(thumbnails)
@@ -77,12 +76,12 @@ object SceneDao extends Dao[Scene] {
     val sceneWithRelatedquery = SceneWithRelatedDao.query.filter(scene.id).select
 
     for {
-      _ <- sceneInsert
+      sceneId <- sceneInsertId
       _ <- thumbnailInsert
       _ <- imageInsert
       _ <- bandInsert
-      sceneWithRelated <- sceneWithRelatedquery
-    } yield sceneWithRelated
+      sceneWithRelated <- SceneWithRelatedDao.getScene(sceneId, user)
+    } yield sceneWithRelated.get
   }
 
   def insertMaybe(sceneCreate: Scene.Create, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
