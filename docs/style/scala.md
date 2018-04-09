@@ -199,6 +199,16 @@ sql everywhere, since the fragments themselves are just strings that have no che
 done on them unless we explicitly ask. See the `UserDaoSpec` for examples of property
 tests, and see `Generators.scala` in the datamodel subproject for `Arbitrary` examples.
 
+### What's an unsafe method?
+
+Unsafe methods are methods that make strong assumptions about the state of the world and
+fail to handle exceptional conditions. For example, if a user is looking up an item by id,
+it's normally going to be the case that they didn't make the id up out of thin air, but
+sometimes, the id won't be present in the database anyway. For this reason, a safe
+`getFooById` should always return a `ConnectionIO[Option[Foo]]`, while if you want to
+return a `ConnectionIO[Foo]`, you should name your method `unsafeGetFooById` to make it
+clear to users that it can fail in an unhandled way.
+
 Migrations
 ---------
 

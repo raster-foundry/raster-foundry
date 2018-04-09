@@ -3,6 +3,7 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.datamodel._
+import com.azavea.rf.datamodel.Generators.Implicits._
 import com.azavea.rf.database.Implicits._
 import doobie._
 import doobie.implicits._
@@ -12,38 +13,69 @@ import cats.effect.IO
 import cats.syntax.either._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import doobie.scalatest.imports._
+import org.scalacheck.Prop.forAll
 import org.scalatest._
+import org.scalatest.prop.Checkers
 import io.circe._
 import io.circe.syntax._
 import java.util.UUID
 
 
-class DatasourceDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
+class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig {
 
-  test("insertion") {
-    val testName = "some test Name"
-    val dummyJson = List(1, 2).asJson
-    val now = new Timestamp((new java.util.Date()).getTime())
-
-    val transaction = for {
-      usr <- defaultUserQ
-      org <- rootOrgQ
-      dsIn <- {
-        val ds = Datasource(
-          UUID.randomUUID(), now, usr.id, now, usr.id, usr.id,
-          org.id, testName, Visibility.Public, dummyJson, dummyJson, dummyJson,
-          Some("0BSD")
-        )
-        DatasourceDao.create(ds, usr)
+  test("inserting a datasource") {
+    check {
+      forAll {
+        (user: User, org: Organization, dsCreate: Datasource.Create) {
+          // createDatasource should work
+        }
       }
-      dsOut <- DatasourceDao.query.filter(fr"id = ${dsIn.id}").selectQ.unique
-    } yield dsOut
-
-    val result = transaction.transact(xa).unsafeRunSync
-    result.name shouldBe testName
+    }
   }
 
-  test("types") { check(DatasourceDao.selectF.query[Datasource]) }
+  test("getting a datasource by id") {
+    check {
+      forAll {
+        (user: User, org: Organization, dsCreate: Datasource.Create) {
+          // getting a datasource by id after inserting that datasource should work
+        }
+      }
+    }
+  }
+
+  test("getting a datasource by id unsafely") {
+    check {
+      forAll {
+        (user: User, org: Organization, dsCreate: Datasource.Create) {
+          // getting a datasource by id with unsafeGetDatasourceById after inserting the datasource should work
+        }
+      }
+    }
+  }
+
+  test("updating a datasource") {
+    check {
+      forAll {
+        (user: User, org: Organization, dsCreate: Datasource.Create, dsUpdate: Datasource.Create) {
+          // creating a datasource, then updating it from dsUpdate, should work
+        }
+      }
+    }
+  }
+
+  test("deleting a datasource") {
+    check {
+      forAll {
+        (user: User, org: Organization, dsCreate: Datasource.Create) {
+          // inserting a datasource then deleting it should return a 1
+        }
+      }
+    }
+  }
+
+  test("listing datasources") {
+    DatasourceDao.query.list.tranact(xa).unsafeRunSync.length should be >= 0
+  }
+
 }
 
