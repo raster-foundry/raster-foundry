@@ -79,7 +79,7 @@ object Generators extends ArbitraryInstances {
   private def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization }
 
   private def userCreateGen: Gen[User.Create] = for {
-    id <- arbitrary[String]
+    id <- nonEmptyStringGen
     org <- organizationGen
     role <- userRoleGen
   } yield { User.Create(id, org.id, role) }
@@ -141,7 +141,7 @@ object Generators extends ArbitraryInstances {
   private def imageGen: Gen[Image] = for {
     imCreate <- imageCreateGen
     user <- userGen
-  } yield (imCreate.toImage(user))
+  } yield (imCreate.copy(owner=Some(user.id)).toImage(user))
 
   private def sceneFilterFieldsGen: Gen[SceneFilterFields] = for {
     cloudCover <- Gen.frequency((1, None), (10, Gen.choose(0.0f, 1.0f) map { Some(_) }))
