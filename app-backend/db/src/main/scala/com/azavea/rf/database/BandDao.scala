@@ -25,29 +25,19 @@ object BandDao extends Dao[Band] {
       FROM
     """ ++ tableF
 
-  def create(band: Band): ConnectionIO[Band] = {
-    val id = UUID.randomUUID
-    (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, image_id, name, number, wavelength)
-      VALUES
-        (${band.id}, ${band.image}, ${band.name}, ${band.number}, ${band.wavelength})
-    """).update.withUniqueGeneratedKeys[Band](
-      "id", "image_id", "name", "number", "wavelength"
-    )
-  }
-
   def createMany(bands: List[Band]): ConnectionIO[Int] = {
-    (fr"INSERT INTO" ++ tableF ++ fr"(id, image_id, name, number, wavelength) VALUES" ++
-       bands.foldLeft(fr"")(
-         (query: Fragment, band: Band) => {
-           query.toString().isEmpty() match {
-             case true =>
-               fr"(${band.id}, ${band.image}, ${band.name}, ${band.number}, ${band.wavelength})"
-             case false =>
-               query ++ fr", (${band.id}, ${band.image}, ${band.name}, ${band.number}, ${band.wavelength})"
-           }
-         })
-    ).update.run
+    val bandFragments: List[Fragment] = bands map {
+      (band: Band) => fr"(${band.id}, ${band.image}, ${band.name}, ${band.number}, ${band.wavelength})"
+    }
+    val insertFragment = fr"INSERT INTO" ++ tableF ++ fr"(id, image_id, name, number, wavelength) VALUES" ++ {
+      bandFragments.toNel match {
+        case Some(fragments) =>
+          fragments.intercalate(fr",")
+        case None =>
+          throw new IllegalArgumentException("Can't insert bands from an empty list")
+      }
+    }
+    insertFragment.update.run
   }
 }
 
