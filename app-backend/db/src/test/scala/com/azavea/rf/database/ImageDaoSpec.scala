@@ -60,6 +60,59 @@ class ImageDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
     }
   }
 
+  test("update an image") {
+    check {
+      forAll(
+        (user: User.Create, org: Organization.Create, scene: Scene.Create, imageBanded: Image.Banded, imageUpdate: Image) => {
+          val sceneInsertIO = for {
+            orgAndUser <- insertUserAndOrg(user, org)
+            (insertedOrg, insertedUser) = orgAndUser
+            datasource <- unsafeGetRandomDatasource
+            insertedScene <- SceneDao.insert(
+              fixupSceneCreate(insertedUser, insertedOrg, datasource, scene), insertedUser
+            )
+          } yield (insertedScene, insertedUser)
+          val imageInsertIO = sceneInsertIO flatMap {
+            case (swr: Scene.WithRelated, dbUser: User) => {
+              ImageDao.insertImage(
+                fixupImageBanded(dbUser.id, swr.organizationId, swr.id, imageBanded),
+                dbUser
+              ) map { (_, dbUser) }
+            }
+          }
+          val imageUpdateWithUpdatedImageIO = imageInsertIO flatMap {
+            case (imageO: Option[Image.WithRelated], dbUser: User) => {
+              val inserted = imageO.get
+              val imageId = inserted.id
+              val organizationId = inserted.organizationId
+              val sceneId = inserted.scene
+              val origOwner = inserted.owner
+              val fixedUp = fixupImage(origOwner, organizationId, sceneId, imageUpdate)
+              ImageDao.updateImage(
+                fixedUp, imageId, dbUser
+              ) flatMap {
+                (affectedRows: Int) => {
+                  val updatedImage = ImageDao.unsafeGetImage(imageId, dbUser)
+                  updatedImage map { (affectedRows, _) }
+                }
+              }
+            }
+          }
+
+          val (affectedRows, updatedImage) = imageUpdateWithUpdatedImageIO.transact(xa).unsafeRunSync
+          affectedRows == 1 &&
+            updatedImage.rawDataBytes == imageUpdate.rawDataBytes &&
+            updatedImage.visibility == imageUpdate.visibility &&
+            updatedImage.filename == imageUpdate.filename &&
+            updatedImage.sourceUri == imageUpdate.sourceUri &&
+            updatedImage.imageMetadata == imageUpdate.imageMetadata &&
+            updatedImage.resolutionMeters == imageUpdate.resolutionMeters &&
+            updatedImage.metadataFiles == imageUpdate.metadataFiles
+        }
+      )
+    }
+  }
+
   test("list images") {
     ImageDao.query.list.transact(xa).unsafeRunSync
   }
