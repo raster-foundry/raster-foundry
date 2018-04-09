@@ -196,7 +196,6 @@ object Generators extends ArbitraryInstances {
       resolutionMeters, metadataFiles, bands
     )
   )
-
   private def imageGen: Gen[Image] = for {
     imCreate <- imageCreateGen
     user <- userGen
