@@ -213,6 +213,7 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.geotrellisSlick % "provided",
+      Dependencies.geotrellisVectorTestkit,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisGeotools,
       Dependencies.geotools,
@@ -221,7 +222,8 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
       Dependencies.akka,
       Dependencies.akkahttp,
       Dependencies.betterFiles,
-      Dependencies.scalaCheck
+      Dependencies.scalaCheck,
+      Dependencies.circeTest
     )
   })
 

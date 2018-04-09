@@ -17,6 +17,7 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 
 import java.util.UUID
 
+// TODO: query for a single scene is bad here for some reason, fix it
 object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   val tableName = "scenes"
 
