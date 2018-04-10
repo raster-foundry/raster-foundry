@@ -39,10 +39,6 @@ class PlatformDaoSpec extends FunSuite with Matchers with IOChecker with DBTestC
         result.name shouldBe "test platform"
     }
 
-    test("insertion types") {
-        createPlatform.map(p => check(PlatformDao.createF(p).query[Platform]))
-    }
-
     test("update") {
         val transaction = for {
             usr <- defaultUserQ
