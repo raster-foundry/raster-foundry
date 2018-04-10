@@ -523,6 +523,13 @@ export default (app) => {
                 sceneIds
             ).$promise;
         }
+
+        getAnnotationShapefile(projectId) {
+            return this.$http({
+                method: 'GET',
+                url: `${BUILDCONFIG.API_HOST}/api/projects/${projectId}/annotations/shapefile`
+            });
+        }
     }
 
     app.service('projectService', ProjectService);
