@@ -79,8 +79,9 @@ object SceneDao extends Dao[Scene] {
       _ <- thumbnailInsert
       _ <- imageInsert
       _ <- bandInsert
+      // It's fine to do this unsafely, since we know we the prior insert succeeded
       sceneWithRelated <- SceneWithRelatedDao.unsafeGetScene(sceneId, user)
-    } yield { sceneWithRelated }
+    } yield sceneWithRelated
   }
 
   def insertMaybe(sceneCreate: Scene.Create, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
