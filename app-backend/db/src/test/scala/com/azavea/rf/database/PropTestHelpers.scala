@@ -20,6 +20,10 @@ trait PropTestHelpers {
   def unsafeGetRandomDatasource: ConnectionIO[Datasource] =
     (DatasourceDao.selectF ++ fr"ORDER BY RANDOM() limit 1").query[Datasource].unique
 
+  def fixupProjectCreate(user: User, org: Organization, proj: Project.Create): Project.Create = {
+    proj.copy(organizationId = org.id, owner = Some(user.id))
+  }
+
   // We assume the Scene.Create has an id, since otherwise thumbnails have no idea what scene id to use
   def fixupSceneCreate(user: User, org: Organization, datasource: Datasource, sceneCreate: Scene.Create): Scene.Create = {
     sceneCreate.copy(

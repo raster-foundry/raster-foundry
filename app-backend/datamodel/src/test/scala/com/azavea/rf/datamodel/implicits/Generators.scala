@@ -13,14 +13,22 @@ import io.circe.syntax._
 import org.scalacheck._
 import org.scalacheck.Arbitrary.arbitrary
 
+import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.util.UUID
 
 object Generators extends ArbitraryInstances {
 
+  private def stringListGen: Gen[List[String]] =
+    Gen.oneOf(0, 15) flatMap { Gen.listOfN(_, nonEmptyStringGen) }
+
   private def nonEmptyStringGen: Gen[String] =
     Gen.nonEmptyListOf[Char](Gen.alphaChar).map(_.mkString)
+
+  private def pageRequestGen: Gen[PageRequest] =
+    Gen.const(PageRequest(0, 20, Map("createdAt" -> Order.Desc)))
 
   private def userRoleGen: Gen[UserRole] = Gen.oneOf(UserRoleRole, Viewer, Admin)
 
@@ -31,6 +39,10 @@ object Generators extends ArbitraryInstances {
 
   // This is fine not to test the max value --
   private def rawDataBytesGen: Gen[Long] = Gen.choose(0L, 100000L)
+
+  private def bandDataTypeGen: Gen[BandDataType] = Gen.oneOf(
+    BandDataType.Diverging, BandDataType.Sequential, BandDataType.Categorical
+  )
 
   private def uuidGen: Gen[UUID] = Gen.delay(UUID.randomUUID)
 
@@ -73,7 +85,7 @@ object Generators extends ArbitraryInstances {
     multiPolygonGen3857 map { Projected(_, 3857) }
 
   private def organizationCreateGen: Gen[Organization.Create] = for {
-    name <- arbitrary[String]
+    name <- nonEmptyStringGen
   } yield (Organization.Create(name))
 
   private def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization }
@@ -101,6 +113,14 @@ object Generators extends ArbitraryInstances {
 
   private def bandGen: Gen[Band] = bandIdentifiedGen map { _.toBand }
 
+  private def singleBandOptionsParamsGen: Gen[SingleBandOptions.Params] = for {
+    band <- Gen.choose(1, 15)
+    datatype <- bandDataTypeGen
+    colorBins <- Gen.choose(3, 17)
+    colorScheme <- Gen.const(().asJson)
+    legendOrientation <- nonEmptyStringGen
+  } yield { SingleBandOptions.Params(band, datatype, colorBins, colorScheme, legendOrientation) }
+
   private def imageCreateGen: Gen[Image.Create] = for {
     orgId <- uuidGen
     rawDataBytes <- rawDataBytesGen
@@ -111,7 +131,7 @@ object Generators extends ArbitraryInstances {
     imageMetadata <- Gen.const(().asJson)
     owner <- arbitrary[Option[String]]
     resolutionMeters <- Gen.choose(0.25f, 1000f)
-    metadataFiles <- Gen.containerOf[List, String](nonEmptyStringGen)
+    metadataFiles <- stringListGen
   } yield (
     Image.Create(
       orgId, rawDataBytes, visibility, filename, sourceUri, scene, imageMetadata,
@@ -129,8 +149,8 @@ object Generators extends ArbitraryInstances {
     imageMetadata <- Gen.const(().asJson)
     owner <- arbitrary[Option[String]]
     resolutionMeters <- Gen.choose(0.25f, 1000f)
-    metadataFiles <- Gen.containerOf[List, String](nonEmptyStringGen)
-    bands <- Gen.nonEmptyContainerOf[Seq, Band.Create](bandCreateGen)
+    metadataFiles <- stringListGen
+    bands <- Gen.listOfN(3, bandCreateGen)
   } yield (
     Image.Banded(
       orgId, rawDataBytes, visibility, filename, sourceUri, owner, scene, imageMetadata,
@@ -142,6 +162,30 @@ object Generators extends ArbitraryInstances {
     imCreate <- imageCreateGen
     user <- userGen
   } yield (imCreate.copy(owner=Some(user.id)).toImage(user))
+
+  private def projectCreateGen: Gen[Project.Create] = for {
+    orgId <- uuidGen
+    name <- nonEmptyStringGen
+    description <- nonEmptyStringGen
+    visibility <- visibilityGen
+    tileVisibility <- visibilityGen
+    isAOIProject <- arbitrary[Boolean]
+    aoiCadenceMillis <- Gen.choose(0L, 604800000L)
+    owner <- Gen.const(None)
+    tags <- stringListGen
+    isSingleBand <- arbitrary[Boolean]
+    singleBandOptions <- singleBandOptionsParamsGen map { Some(_) }
+  } yield {
+    Project.Create(
+      orgId, name, description, visibility, tileVisibility, isAOIProject, aoiCadenceMillis,
+      owner, tags, isSingleBand, singleBandOptions
+    )
+  }
+
+  private def projectGen: Gen[Project] = for {
+    projCreate <- projectCreateGen
+    user <- userGen
+  } yield { projCreate.copy(owner = Some(user.id)).toProject(user) }
 
   private def sceneFilterFieldsGen: Gen[SceneFilterFields] = for {
     cloudCover <- Gen.frequency((1, None), (10, Gen.choose(0.0f, 1.0f) map { Some(_) }))
@@ -172,17 +216,17 @@ object Generators extends ArbitraryInstances {
     organizationId <- uuidGen
     ingestSizeBytes <- Gen.const(0)
     visibility <- visibilityGen
-    tags <- Gen.containerOf[List, String](nonEmptyStringGen)
+    tags <- stringListGen
     datasource <- uuidGen
     sceneMetadata <- Gen.const(().asJson)
     name <- nonEmptyStringGen
     owner <- arbitrary[Option[String]]
     tileFootprint <- projectedMultiPolygonGen3857 map { Some(_) }
     dataFootprint <- projectedMultiPolygonGen3857 map { Some(_) }
-    metadataFiles <- Gen.containerOf[List, String](nonEmptyStringGen)
-    images <- Gen.nonEmptyContainerOf[List, Image.Banded](imageBandedGen)
-    thumbnails <- Gen.nonEmptyContainerOf[List, Thumbnail.Identified](thumbnailIdentifiedGen)
-    ingestLocation <- Gen.oneOf(nonEmptyStringGen map { Some(_) }, Gen.delay(None))
+    metadataFiles <- stringListGen
+    images <- Gen.oneOf(1, 10) flatMap { Gen.listOfN(_, imageBandedGen) }
+    thumbnails <- Gen.oneOf(0, 2) flatMap { Gen.listOfN(_, thumbnailIdentifiedGen) }
+    ingestLocation <- Gen.oneOf(nonEmptyStringGen map { Some(_) }, Gen.const(None))
     filterFields <- sceneFilterFieldsGen
     statusFields <- sceneStatusFieldsGen
   } yield {
@@ -193,6 +237,8 @@ object Generators extends ArbitraryInstances {
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
+
+    implicit def arbPageRequest: Arbitrary[PageRequest] = Arbitrary { pageRequestGen }
 
     implicit def arbOrganization: Arbitrary[Organization] = Arbitrary { organizationGen }
 
@@ -210,6 +256,12 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbImageBanded: Arbitrary[Image.Banded] = Arbitrary { imageBandedGen }
 
+    implicit def arbProjectCreate: Arbitrary[Project.Create] = Arbitrary { projectCreateGen }
+
+    implicit def arbProject: Arbitrary[Project] = Arbitrary { projectGen }
+
     implicit def arbSceneCreate: Arbitrary[Scene.Create] = Arbitrary { sceneCreateGen }
+
+    implicit def arbListSceneCreate: Arbitrary[List[Scene.Create]] = Arbitrary { Gen.listOfN(3, sceneCreateGen) }
   }
 }

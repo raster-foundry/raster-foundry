@@ -107,9 +107,25 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     }
   }
 
+  def getSceneQ(sceneId: UUID, user: User) = {
+    (selectF ++ Fragments.whereAndOpt(fr"id = ${sceneId}".some, ownerEditFilter(user)))
+      .query[Scene]
+  }
+
   def getScene(sceneId: UUID, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
-    val queryFilters = List(Some(fr"id = ${sceneId}"), ownerEditFilter(user))
-    listQuery(queryFilters, None).query[Scene.WithRelated].option
+    val scenesO: ConnectionIO[Option[Scene]] = getSceneQ(sceneId, user).option
+    scenesO map { _.toList } flatMap { scenesToScenesWithRelated(_) } map {
+      // guaranteed to be either 0 or 1 in the list based on .option above
+      _.headOption
+    }
+  }
+
+  @SuppressWarnings(Array("TraversableHead"))
+  def unsafeGetScene(sceneId: UUID, user: User): ConnectionIO[Scene.WithRelated] = {
+    val sceneIO: ConnectionIO[Scene] = getSceneQ(sceneId, user).unique
+    // head is guaranteed to to succeed if the id is present, which is appropriate for a method marked
+    // unsafe
+    sceneIO flatMap { (scene: Scene) => scenesToScenesWithRelated(List(scene)) } map { _.head }
   }
 
   def getScenesToIngest(projectId: UUID): ConnectionIO[List[Scene.WithRelated]] = {
