@@ -20,18 +20,20 @@ object PlatformDao extends Dao[Platform] {
     FROM
   """ ++ tableF
 
+  def createF(platform: Platform) = fr"INSERT INTO" ++ tableF ++ fr"""(
+        id, created_at, created_by,
+        modified_at, modified_by, name,
+        settings
+      )
+      VALUES (
+        ${platform.id}, ${platform.createdAt}, ${platform.createdBy},
+        ${platform.modifiedAt}, ${platform.modifiedBy}, ${platform.name},
+        ${platform.settings}
+      )
+  """
+
   def create(platform: Platform): ConnectionIO[Platform] = {
-    (fr"INSERT INTO" ++ tableF ++ fr"""(
-          id, created_at, created_by,
-          modified_at, modified_by, name,
-          settings
-        )
-        VALUES (
-          ${platform.id}, ${platform.createdAt}, ${platform.createdBy},
-          ${platform.modifiedAt}, ${platform.modifiedBy}, ${platform.name},
-          ${platform.settings}
-        )
-    """).update.withUniqueGeneratedKeys[Platform](
+    createF(platform).update.withUniqueGeneratedKeys[Platform](
       "id", "created_at", "created_by", "modified_at", "modified_by", "name", "settings"
     )
   }

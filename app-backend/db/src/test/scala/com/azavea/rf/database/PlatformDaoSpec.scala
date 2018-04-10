@@ -27,6 +27,8 @@ class PlatformDaoSpec extends FunSuite with Matchers with IOChecker with DBTestC
         } yield create
     }
 
+    test("read types") { check(PlatformDao.selectF.query[Platform]) }
+
     test("insertion") {
         val transaction = for {
             platformIn <- createPlatform
@@ -37,16 +39,20 @@ class PlatformDaoSpec extends FunSuite with Matchers with IOChecker with DBTestC
         result.name shouldBe "test platform"
     }
 
-    test("insertion types") { check(PlatformDao.selectF.query[Platform]) }
+    test("insertion types") {
+        createPlatform.map(p => check(PlatformDao.createF(p).query[Platform]))
+    }
 
     test("update") {
         val transaction = for {
             usr <- defaultUserQ
             platformIn <- createPlatform
-            platformUpdate <- PlatformDao.update(platformIn, platformIn.id, usr)
-        } yield platformUpdate
+            platformUpdate <- PlatformDao.update(platformIn.copy(name = "test platform update"), platformIn.id, usr)
+            platformOut <- PlatformDao.query.filter(platformIn.id).selectQ.unique
+        } yield platformOut
 
-        transaction.transact(xa).unsafeRunSync shouldBe 1
+        val result = transaction.transact(xa).unsafeRunSync
+        result.name shouldBe "test platform update"
     }
 
     test("delete") {
