@@ -133,14 +133,14 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
     val landsatPath = getLandsatPath(productId)
     val sceneName = s"L8 $landsatPath"
 
-    val x: ConnectionIO[Option[Scene.WithRelated]] = for {
-      maybeScene <- SceneDao.query.filter(fr"name = ${sceneName}").filter(fr"owner = ${user.id}").selectOption
+    val maybeInsertScene: ConnectionIO[Option[Scene.WithRelated]] = for {
+      maybeExistingScene <- SceneDao.query.filter(fr"name = ${sceneName}").filter(fr"owner = ${user.id}").selectOption
       sceneInsert <- {
-        maybeScene match {
+        maybeExistingScene match {
           case Some(scene) => {
             None.pure[ConnectionIO]
           }
-          case _ => {
+          case None => {
             createSceneFromRow(row, user, srcProj, targetProj, sceneId, productId, landsatPath) match {
               case Some(scene) => SceneDao.insertMaybe(scene, user)
               case _ => None.pure[ConnectionIO]
@@ -151,7 +151,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
     } yield {
       sceneInsert
     }
-    x
+    maybeInsertScene
   }
 
   // All of the heads here are from a locally constructed list that we know has members
@@ -181,7 +181,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
     }
 
     val s3Url = s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/index.html"
-  
+
     if (!isUriExists(s3Url)) {
       logger.warn(
         "AWS and USGS are not always in sync. Try again in several hours.\n" +

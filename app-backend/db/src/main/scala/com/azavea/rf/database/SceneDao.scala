@@ -52,7 +52,7 @@ object SceneDao extends Dao[Scene] {
       sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
     }
 
-    val sceneInsert = fr"""
+    val sceneInsert = (Fragment.const(s"""
       INSERT INTO ${tableName} (
          id, created_at, created_by, modified_at, modified_by, owner,
          organization_id, ingest_size_bytes, visibility, tags,
@@ -60,7 +60,7 @@ object SceneDao extends Dao[Scene] {
          data_footprint, metadata_files, ingest_location, cloud_cover,
          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
          boundary_status, ingest_status
-      ) VALUES (
+      )""") ++ fr"""VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
         ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
         ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
@@ -68,8 +68,7 @@ object SceneDao extends Dao[Scene] {
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus}, ${scene.statusFields.ingestStatus}
       )
-    """.update.run
-
+    """).update.withUniqueGeneratedKeys[UUID]("id")
 
     val thumbnailInsert = ThumbnailDao.insertMany(thumbnails)
     val imageInsert = ImageDao.insertManyImages(images.map(_._1))
@@ -77,12 +76,14 @@ object SceneDao extends Dao[Scene] {
     val sceneWithRelatedquery = SceneWithRelatedDao.query.filter(scene.id).select
 
     for {
-      _ <- sceneInsert
+      sceneId <- sceneInsert
       _ <- thumbnailInsert
       _ <- imageInsert
       _ <- bandInsert
-      sceneWithRelated <- sceneWithRelatedquery
-    } yield sceneWithRelated
+      sceneWithRelated <- SceneWithRelatedDao.unsafeGetScene(sceneId, user)
+    } yield {
+      sceneWithRelated
+    }
   }
 
   def insertMaybe(sceneCreate: Scene.Create, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
@@ -93,7 +94,7 @@ object SceneDao extends Dao[Scene] {
       sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
     }
 
-    val sceneInsert = fr"""
+    val sceneInsert = (Fragment.const(s"""
       INSERT INTO ${tableName} (
          id, created_at, created_by, modified_at, modified_by, owner,
          organization_id, ingest_size_bytes, visibility, tags,
@@ -101,7 +102,7 @@ object SceneDao extends Dao[Scene] {
          data_footprint, metadata_files, ingest_location, cloud_cover,
          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
          boundary_status, ingest_status
-      ) VALUES (
+      )""") ++ fr"""VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
         ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
          ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
@@ -109,13 +110,13 @@ object SceneDao extends Dao[Scene] {
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus}, ${scene.statusFields.ingestStatus}
       )
-    """.update.run
+    """).update.run
 
 
     val thumbnailInsert = ThumbnailDao.insertMany(thumbnails)
     val imageInsert = ImageDao.insertManyImages(images.map(_._1))
     val bandInsert = BandDao.createMany(bands.flatten)
-    val sceneWithRelatedquery = SceneWithRelatedDao.query.filter(scene.id).selectOption
+    val sceneWithRelatedquery = SceneWithRelatedDao.getScene(scene.id, user)
 
     for {
       _ <- sceneInsert
@@ -132,13 +133,13 @@ object SceneDao extends Dao[Scene] {
     val now = new Date()
 
     val lastModifiedIO: ConnectionIO[Timestamp] =
-      (sql"select modified_at from scenes" ++ Fragments.whereAndOpt(ownerEditFilter(user), idFilter))
+      (fr"select modified_at from scenes" ++ Fragments.whereAndOpt(ownerEditFilter(user), idFilter))
         .query[Timestamp]
         .unique
     val updateIO: ConnectionIO[Int] = (sql"""
     UPDATE scenes
     SET
-      modified_at = ${now}, // now
+      modified_at = ${now},
       modified_by = ${user.id},
       visibility = ${scene.visibility},
       tags = ${scene.tags},
@@ -151,7 +152,7 @@ object SceneDao extends Dao[Scene] {
       sun_elevation = ${scene.filterFields.sunElevation},
       thumbnail_status = ${scene.statusFields.thumbnailStatus},
       boundary_status = ${scene.statusFields.boundaryStatus},
-      ingest_status = ${scene.statusFields.boundaryStatus}
+      ingest_status = ${scene.statusFields.ingestStatus}
     """ ++ Fragments.whereAndOpt(ownerEditFilter(user), idFilter))
       .update
       .run

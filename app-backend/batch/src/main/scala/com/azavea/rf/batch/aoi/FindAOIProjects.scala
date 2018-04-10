@@ -25,7 +25,7 @@ case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job {
     val aoiProjectsToUpdate: ConnectionIO[List[UUID]] = {
 
       // get ids only
-      val baseSelect: Fragment = sql"select id from projects"
+      val baseSelect: Fragment = sql"select id from projects "
 
       //  check to make sure the project is an aoi project
       val isAoi: Option[Fragment] = fr"is_aoi_project=true".some
@@ -40,8 +40,7 @@ case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job {
 
       (baseSelect ++ Fragments.whereAndOpt(isAoi, nowGtLastCheckedPlusCadence))
         .query[UUID]
-        .stream
-        .compile.toList
+        .to[List]
     }
 
     aoiProjectsToUpdate.transact(xa).unsafeRunSync.foreach(println)

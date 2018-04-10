@@ -12,6 +12,7 @@ import java.util.UUID
 
 import cats.effect.IO
 
+import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
 import doobie.util.transactor.Transactor
 import cats.implicits._

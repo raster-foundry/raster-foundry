@@ -82,6 +82,27 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     }
   }
 
+  def sceneToSceneWithRelated(scene: Scene): ConnectionIO[Scene.WithRelated] = {
+    val componentsIO: ConnectionIO[(List[Image.WithRelated], List[Thumbnail])] = {
+      val thumbnails = getScenesThumbnails(List(scene.id))
+      val images = getScenesImages(List(scene.id))
+      (images, thumbnails).tupled
+    }
+
+    componentsIO map {
+      case (images, thumbnails) => {
+        scene.withRelatedFromComponents(images, thumbnails)
+      }
+    }
+  }
+
+  def sceneOToSceneWithRelatedO(sceneO: Option[Scene]): ConnectionIO[Option[Scene.WithRelated]] = {
+    sceneO match {
+      case Some(scene) => sceneToSceneWithRelated(scene) map { _.some }
+      case None => Option.empty[Scene.WithRelated].pure[ConnectionIO]
+    }
+  }
+
   def listScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
 
     val pageFragment: Fragment = Page(pageRequest)
@@ -107,8 +128,25 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   }
 
   def getScene(sceneId: UUID, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
-    val queryFilters = List(Some(fr"id = ${sceneId}"), ownerEditFilter(user))
-    listQuery(queryFilters, None).query[Scene.WithRelated].option
+    val ownerFragment = query.ownerFilterF(user)
+    val idFragment = fr"id = ${sceneId}".some
+    val scenesFragment = selectF ++ Fragments.whereAndOpt(ownerFragment, idFragment)
+    val scenesIO =
+      (selectF ++ Fragments.whereAndOpt(ownerFragment, idFragment))
+        .query[Scene]
+        .option
+    scenesIO flatMap { sceneOToSceneWithRelatedO }
+  }
+
+  def unsafeGetScene(sceneId: UUID, user: User): ConnectionIO[Scene.WithRelated] = {
+    val ownerFragment = query.ownerFilterF(user)
+    val idFragment = fr"id = ${sceneId}".some
+    val scenesFragment = selectF ++ Fragments.whereAndOpt(ownerFragment, idFragment)
+    val scenesIO =
+      (selectF ++ Fragments.whereAndOpt(ownerFragment, idFragment))
+        .query[Scene]
+        .unique
+    scenesIO flatMap { sceneToSceneWithRelated }
   }
 
   def getScenesToIngest(projectId: UUID): ConnectionIO[List[Scene.WithRelated]] = {

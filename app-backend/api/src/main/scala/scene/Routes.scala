@@ -102,7 +102,7 @@ trait SceneRoutes extends Authentication
   def getScene(sceneId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        SceneWithRelatedDao.query.filter(user).filter(sceneId).selectOption.transact(xa).unsafeToFuture
+        SceneWithRelatedDao.getScene(sceneId, user).transact(xa).unsafeToFuture
       }
     }
   }
