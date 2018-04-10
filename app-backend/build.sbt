@@ -148,7 +148,7 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
 )
 
 lazy val root = Project("root", file("."))
-  .aggregate(api, common, migrations, datamodel, batch, tile, tool, bridge)
+  .aggregate(api, db, common, migrations, datamodel, batch, tile, tool, bridge)
   .settings(commonSettings:_*)
 
 lazy val api = Project("api", file("api"))
@@ -223,7 +223,8 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
       Dependencies.akkahttp,
       Dependencies.betterFiles,
       Dependencies.scalaCheck,
-      Dependencies.circeTest
+      Dependencies.circeTest,
+      "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15" % "test",
     )
   })
 

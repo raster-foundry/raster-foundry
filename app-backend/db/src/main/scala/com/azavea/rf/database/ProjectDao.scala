@@ -45,13 +45,22 @@ object ProjectDao extends Dao[Project] {
     FROM
   """ ++ tableF
 
-  def getProjectById(projectId: UUID, user: Option[User]): ConnectionIO[Project] = {
-    val idFilter = Some(fr"where id = ${projectId}")
+  def unsafeGetProjectById(projectId: UUID, user: Option[User]): ConnectionIO[Project] = {
+    val idFilter = Some(fr"id = ${projectId}")
     val visFilter = user flatMap filterUserVisibility
 
     (selectF ++ Fragments.whereAndOpt(idFilter, visFilter))
       .query[Project]
       .unique
+  }
+
+  def getProjectById(projectId: UUID, user: Option[User]): ConnectionIO[Option[Project]] = {
+    val idFilter = Some(fr"id = ${projectId}")
+    val visFilter = user flatMap filterUserVisibility
+
+    (selectF ++ Fragments.whereAndOpt(idFilter, visFilter))
+      .query[Project]
+      .option
   }
 
   def insertProject(newProject: Project.Create, user: User): ConnectionIO[Project] = {
@@ -264,7 +273,8 @@ object ProjectDao extends Dao[Project] {
 
   def deleteScenesFromProject(sceneIds: List[UUID], projectId: UUID): ConnectionIO[Int] = {
     val f:Option[Fragment] = sceneIds.toNel.map(Fragments.in(fr"scene_id", _))
-    val deleteQuery = sql"DELETE FROM scenes_to_projects" ++ Fragments.whereAndOpt(f) ++ fr"project_id = ${projectId}"
+    val deleteQuery = fr"DELETE FROM scenes_to_projects" ++
+      Fragments.whereAndOpt(f, Some(fr"project_id = ${projectId}"))
     deleteQuery.update.run
   }
 
@@ -277,43 +287,4 @@ object ProjectDao extends Dao[Project] {
 
   }
 
-  def create(
-    user: User,
-    owner: Option[String],
-    organizationId: UUID,
-    name: String,
-    description: String,
-    visibility: Visibility,
-    tileVisibility: Visibility,
-    isAOIProject: Boolean = false,
-    aoiCadenceMillis: Long = Project.DEFAULT_CADENCE,
-    tags: List[String],
-    isSingleBand: Boolean = false,
-    singleBandOptions: Option[SingleBandOptions.Params]
-  ): ConnectionIO[Project] = {
-    val id = UUID.randomUUID()
-    val now = new Timestamp((new java.util.Date()).getTime())
-    val ownerId = util.Ownership.checkOwner(user, owner)
-    val slug = Project.slugify(name)
-    val userId = user.id
-    (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, modified_at, organization_id, created_by,
-        modified_by, owner, name, slug_label, description,
-        visibility, tile_visibility, is_aoi_project,
-        aoi_cadence_millis, aois_last_checked, tags, extent,
-        manual_order, is_single_band, single_band_options)
-      VALUES
-        ($id, $now, $now, $organizationId, $userId,
-        $userId, $ownerId, $name, $slug, $description,
-        $visibility, $tileVisibility, $isAOIProject,
-        $aoiCadenceMillis, $now, $tags, null,
-        TRUE, $isSingleBand, $singleBandOptions)
-    """).update.withUniqueGeneratedKeys[Project](
-      "id", "created_at", "modified_at", "organization_id", "created_by",
-      "modified_by", "owner", "name", "slug_label", "description",
-      "visibility", "tile_visibility", "is_aoi_project",
-      "aoi_cadence_millis", "aois_last_checked", "tags", "extent",
-      "manual_order", "is_single_band", "single_band_options"
-    )
-  }
 }
