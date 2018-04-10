@@ -32,6 +32,10 @@ object Generators extends ArbitraryInstances {
 
   private def userRoleGen: Gen[UserRole] = Gen.oneOf(UserRoleRole, Viewer, Admin)
 
+  private def annotationQualityGen: Gen[AnnotationQuality] = Gen.oneOf(
+    AnnotationQuality.Yes, AnnotationQuality.No, AnnotationQuality.Miss, AnnotationQuality.Unsure
+  )
+
   private def visibilityGen: Gen[Visibility] = Gen.oneOf(
     Visibility.Public, Visibility.Organization, Visibility.Private)
 
@@ -81,8 +85,30 @@ object Generators extends ArbitraryInstances {
     polygons <- Gen.listOfN[Polygon](1, polygonGen3857)
   } yield (MultiPolygon(polygons))
 
-  def projectedMultiPolygonGen3857: Gen[Projected[MultiPolygon]] =
+  private def projectedMultiPolygonGen3857: Gen[Projected[MultiPolygon]] =
     multiPolygonGen3857 map { Projected(_, 3857) }
+
+  private def annotationCreateGen: Gen[Annotation.Create] = for {
+    owner <- Gen.const(None)
+    label <- nonEmptyStringGen
+    description <- nonEmptyStringGen map { Some(_) }
+    machineGenerated <- arbitrary[Option[Boolean]]
+    confidence <- Gen.choose(0.0f, 1.0f) map { Some(_) }
+    quality <- annotationQualityGen map { Some(_) }
+    geometry <- projectedMultiPolygonGen3857 map { Some(_) }
+  } yield {
+    Annotation.Create(
+      owner, label, description, machineGenerated, confidence, quality, geometry
+    )
+  }
+
+  private def annotationGen: Gen[Annotation] = for {
+    user <- userGen
+    projectId <- uuidGen
+    annotationCreate <- annotationCreateGen
+  } yield {
+    annotationCreate.toAnnotation(projectId, user)
+  }
 
   private def organizationCreateGen: Gen[Organization.Create] = for {
     name <- nonEmptyStringGen
@@ -239,6 +265,14 @@ object Generators extends ArbitraryInstances {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
 
     implicit def arbPageRequest: Arbitrary[PageRequest] = Arbitrary { pageRequestGen }
+
+    implicit def arbAnnotationCreate: Arbitrary[Annotation.Create] = Arbitrary { annotationCreateGen }
+
+    implicit def arbListAnnotationCreate: Arbitrary[List[Annotation.Create]] = Arbitrary {
+      Gen.listOfN(10, arbitrary[Annotation.Create])
+    }
+
+    implicit def arbAnnotation: Arbitrary[Annotation] = Arbitrary { annotationGen }
 
     implicit def arbOrganization: Arbitrary[Organization] = Arbitrary { organizationGen }
 

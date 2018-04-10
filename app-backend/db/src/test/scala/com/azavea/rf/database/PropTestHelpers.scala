@@ -17,6 +17,17 @@ trait PropTestHelpers {
     } yield (orgInsert, userInsert)
   }
 
+  def insertUserOrgProject(user: User.Create, org: Organization.Create, proj: Project.Create):
+      ConnectionIO[(Organization, User, Project)] = {
+    for {
+      orgUserInsert <- insertUserAndOrg(user, org)
+      (org, user) = orgUserInsert
+      project <- ProjectDao.insertProject(
+        fixupProjectCreate(user, org, proj), user
+      )
+    } yield (org, user, project)
+  }
+
   def unsafeGetRandomDatasource: ConnectionIO[Datasource] =
     (DatasourceDao.selectF ++ fr"ORDER BY RANDOM() limit 1").query[Datasource].unique
 
