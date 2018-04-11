@@ -38,7 +38,7 @@ object UserDao extends Dao[User] {
 
   def createUserWithAuthId(id: String): ConnectionIO[User] = {
     for {
-      org <- OrganizationDao.query.filter(fr"name = 'PUBLIC'").select
+      org <- OrganizationDao.query.filter(fr"name = 'Public'").select
       user <- {
         val newUser = User.Create(id, org.id)
         create(newUser)
