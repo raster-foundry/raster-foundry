@@ -31,23 +31,5 @@ class ThumbnailDaoSpec extends FunSuite with Matchers with IOChecker with DBTest
       "https://url.com"
     ).toThumbnail
   }
-
-  test("insertion") {
-    val transaction = for {
-      org <- rootOrgQ
-      user <- defaultUserQ
-      smallThumbnail = makeThumbnail(org, ThumbnailSize.Small)
-      largeThumbnail = makeThumbnail(org, ThumbnailSize.Large)
-      squareThumbnail = makeThumbnail(org, ThumbnailSize.Square)
-      resultSmall <- ThumbnailDao.insert(smallThumbnail)
-      resultLarge <- ThumbnailDao.insert(largeThumbnail)
-      resultSquare <- ThumbnailDao.insert(squareThumbnail)
-    } yield (resultSmall, resultLarge, resultSquare)
-
-    val (small, large, square) = transaction.transact(xa).unsafeRunSync
-    small.thumbnailSize shouldBe ThumbnailSize.Small
-    large.thumbnailSize shouldBe ThumbnailSize.Large
-    square.thumbnailSize shouldBe ThumbnailSize.Square
-  }
 }
 
