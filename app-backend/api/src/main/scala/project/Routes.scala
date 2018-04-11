@@ -22,6 +22,7 @@ import com.azavea.rf.common.S3._
 import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.GeoJsonCodec._
+import com.azavea.rf.datamodel.Annotation
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
@@ -29,6 +30,7 @@ import io.circe.Json
 import io.circe.generic.JsonCodec
 import io.circe.optics.JsonPath._
 import kamon.akka.http.KamonTraceDirectives
+import better.files._
 
 import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
@@ -307,7 +309,7 @@ trait ProjectRoutes extends Authentication
   def listAnnotations(projectId: UUID): Route = authenticate { user =>
     (withPagination & annotationQueryParams) { (page: PageRequest, queryParams: AnnotationQueryParameters) =>
       complete {
-        AnnotationDao.query.filter(queryParams).filter(user).page(page).transact(xa).unsafeToFuture
+        AnnotationDao.query.filter(fr"project_id=$projectId").filter(queryParams).filter(user).page(page).transact(xa).unsafeToFuture
           .map { p => {
             fromPaginatedResponseToGeoJson[Annotation, Annotation.GeoJSON](p)
           }
@@ -327,28 +329,21 @@ trait ProjectRoutes extends Authentication
   }
 
   def exportAnnotationShapefile(projectId: UUID): Route = authenticate { user =>
-    onComplete(
-      AnnotationDao.listAnnotationsForProject(projectId, user)
-        .map { annotations =>
-          val zipfile = AnnotationShapefileService.annotationsToShapefile(annotations)
-          val key = new AmazonS3URI(user.getDefaultAnnotationShapefileSource(dataBucket))
-          val result = putObject(dataBucket, key.toString(), zipfile.toJava)
-
-          zipfile.delete(true)
-
-          val cal = Calendar.getInstance()
+    onSuccess(AnnotationDao.query.filter(fr"project_id=$projectId").ownerFilter(user).list.transact(xa).unsafeToFuture) { annotations =>
+      annotations match {
+        case annotation: List[Annotation] => {
+          val zipfile: File = AnnotationShapefileService.annotationsToShapefile(annotations)
+          val cal:Calendar = Calendar.getInstance()
           cal.add(Calendar.DAY_OF_YEAR, 1)
-          val tomorrow = cal.getTime()
-          result.setExpirationTime(tomorrow)
-          Uri(getSignedUrl(dataBucket, key.toString).toString)
-        }.transact(xa).unsafeToFuture
-    ) {
-      uri =>
-      uri match {
-        case Success(u: Uri) => redirect(u, StatusCodes.TemporaryRedirect)
-        case _ => throw new Exception("Error generating annotation download URI")
+          val key:AmazonS3URI = new AmazonS3URI(user.getDefaultAnnotationShapefileSource(dataBucket))
+          putObject(dataBucket, key.toString(), zipfile.toJava).setExpirationTime(cal.getTime())
+          zipfile.delete(true)
+          complete(getSignedUrl(dataBucket, key.toString).toString())
+        }
+        case _ => complete(throw new Exception("Annotations do not exist or are not accessible by this user"))
       }
     }
+
   }
 
   def getAnnotation(annotationId: UUID): Route = authenticate { user =>
