@@ -75,7 +75,7 @@ object SceneDao extends Dao[Scene] {
     val sceneWithRelatedquery = SceneWithRelatedDao.query.filter(scene.id).select
 
     for {
-      sceneId <- sceneInsert
+      sceneId <- sceneInsertId
       _ <- thumbnailInsert
       _ <- imageInsert
       _ <- bandInsert
