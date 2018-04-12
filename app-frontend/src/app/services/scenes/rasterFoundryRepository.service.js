@@ -39,11 +39,10 @@ export default (app) => {
                 label: 'Date Range',
                 type: 'daterange',
                 default: 'None'
-            // TODO enable this filter once the api supports it
-            // }, {
-            //     type: 'shape',
-            //     label: 'Area of Interest',
-            //     param: 'shape'
+            }, {
+                type: 'shape',
+                label: 'Area of Interest',
+                param: 'shape'
             }, {
                 params: {
                     min: 'minCloudCover',
@@ -137,10 +136,10 @@ export default (app) => {
           (filters) => (bbox) => () => Future(next page of scenes)
         */
         fetchScenes(filters) {
-            const params = Object.assign({}, filters);
-            if (filters.shape) {
+            if (filters.shape && typeof filters.shape === 'object') {
                 filters.shape = filters.shape.id;
             }
+            const params = Object.assign({}, filters);
 
             const fetchForBbox = (bbox) => {
                 let hasNext = null;

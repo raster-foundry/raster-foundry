@@ -20,7 +20,7 @@ import java.util.UUID
 object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   val tableName = "scenes"
 
-  val selectF = SceneDao.selectF 
+  val selectF = SceneDao.selectF
 
   def listProjectScenes(projectId: UUID, pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
 
