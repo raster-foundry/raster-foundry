@@ -1,35 +1,94 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.datamodel.{Organization, Thumbnail, ThumbnailSize}
+import com.azavea.rf.datamodel.Generators.Implicits._
+import com.azavea.rf.datamodel._
 import com.azavea.rf.database.Implicits._
 
 import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO
 import cats.syntax.either._
-import doobie.postgres._, doobie.postgres.implicits._
-import doobie.scalatest.imports._
+import org.scalacheck.Prop.forAll
 import org.scalatest._
+import org.scalatest.prop.Checkers
 import java.util.UUID
 
 
-class ThumbnailDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
+class ThumbnailDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
 
-  test("types") { check(ThumbnailDao.selectF.query[Thumbnail]) }
-
-  // This is a scene id from the development data. If this test starts failing for non-
-  // obvious reasons, it probably means this scene is no longer part of development
-  // data for some reason. This isn't ideal, but the notion of a "default" scene doesn't
-  // make too much sense, so it's something to get the tests to run for now.
-  val sceneId : UUID = UUID.fromString("a9ce69c2-f87e-4119-863d-d570afb53983")
-  val makeThumbnail = (org : Organization, thumbnailSize : ThumbnailSize) => {
-    Thumbnail.Create(
-      org.id,
-      thumbnailSize,
-      256,
-      256,
-      sceneId,
-      "https://url.com"
-    ).toThumbnail
+  test("list thumbnails") {
+    ThumbnailDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
+
+  test("insert a thumbnail") {
+    check {
+      forAll {
+        (org: Organization.Create, user: User.Create, scene: Scene.Create, thumbnail: Thumbnail) => {
+          val thumbnailInsertIO = insertUserOrgScene(user, org, scene) flatMap {
+            case (dbOrg: Organization, dbUser: User, dbScene: Scene.WithRelated) => {
+              ThumbnailDao.insert(fixupThumbnail(dbOrg, dbScene, thumbnail))
+            }
+          }
+          val insertedThumbnail = thumbnailInsertIO.transact(xa).unsafeRunSync
+
+          insertedThumbnail.widthPx == thumbnail.widthPx &&
+            insertedThumbnail.heightPx == thumbnail.heightPx &&
+            insertedThumbnail.url == thumbnail.url &&
+            insertedThumbnail.thumbnailSize == thumbnail.thumbnailSize
+        }
+      }
+    }
+  }
+
+  test("insert many thumbnails") {
+    check {
+      forAll {
+        (org: Organization.Create, user: User.Create, scene: Scene.Create, thumbnails: List[Thumbnail]) => {
+          val thumbnailsInsertIO = insertUserOrgScene(user, org, scene) flatMap {
+            case (dbOrg: Organization, dbUser: User, dbScene: Scene.WithRelated) => {
+              ThumbnailDao.insertMany(thumbnails map { fixupThumbnail(dbOrg, dbScene, _) })
+            }
+          }
+          thumbnailsInsertIO.transact(xa).unsafeRunSync == thumbnails.length
+        }
+      }
+    }
+  }
+
+  test("update a thumbnail") {
+    check {
+      forAll {
+        (org: Organization.Create, user: User.Create, scene: Scene.Create, insertThumbnail: Thumbnail, updateThumbnail: Thumbnail) => {
+          val thumbnailInsertIO = insertUserOrgScene(user, org, scene) flatMap {
+            case (dbOrg: Organization, dbUser: User, dbScene: Scene.WithRelated) => {
+              ThumbnailDao.insert(fixupThumbnail(dbOrg, dbScene, insertThumbnail))
+            }
+          }
+
+          val thumbnailUpdateWithThumbnailIO = thumbnailInsertIO flatMap {
+            (dbThumbnail: Thumbnail) => {
+              val withFks = updateThumbnail.copy(
+                id = dbThumbnail.id,
+                organizationId = dbThumbnail.organizationId,
+                sceneId = dbThumbnail.sceneId
+              )
+              ThumbnailDao.update(withFks, dbThumbnail.id) flatMap {
+                (affectedRows: Int) => {
+                  ThumbnailDao.unsafeGetThumbnailById(dbThumbnail.id) map { (affectedRows, _) }
+                }
+              }
+            }
+          }
+
+          val (affectedRows, updatedThumbnail) = thumbnailUpdateWithThumbnailIO.transact(xa).unsafeRunSync
+          affectedRows == 1 &&
+            updatedThumbnail.widthPx == updateThumbnail.widthPx &&
+            updatedThumbnail.heightPx == updateThumbnail.heightPx &&
+            updatedThumbnail.url == updateThumbnail.url &&
+            updatedThumbnail.thumbnailSize == updateThumbnail.thumbnailSize
+        }
+      }
+    }
+  }
+
 }
 
