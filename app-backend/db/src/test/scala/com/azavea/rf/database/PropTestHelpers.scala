@@ -59,6 +59,20 @@ trait PropTestHelpers {
     )
   }
 
+  def fixupShapeCreate(user: User, org: Organization, shapeCreate: Shape.Create): Shape.Create =
+    shapeCreate.copy(owner = Some(user.id), organizationId = org.id)
+
+  def fixupShapeGeoJSON(user: User, org: Organization, shape: Shape, shapeGeoJSON: Shape.GeoJSON): Shape.GeoJSON =
+    shapeGeoJSON.copy(
+      id = shape.id,
+      properties = shapeGeoJSON.properties.copy(
+        createdBy = user.id,
+        modifiedBy = user.id,
+        owner = user.id,
+        organizationId = org.id
+      )
+    )
+
   def fixupImageBanded(ownerId: String, orgId: UUID, sceneId: UUID, image: Image.Banded): Image.Banded = {
     image.copy(
       owner = Some(ownerId),

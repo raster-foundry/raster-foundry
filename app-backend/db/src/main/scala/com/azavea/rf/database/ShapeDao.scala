@@ -26,6 +26,12 @@ object ShapeDao extends Dao[Shape] {
     FROM
   """ ++ tableF
 
+  def unsafeGetShapeById(shapeId: UUID, user: User): ConnectionIO[Shape] =
+    query.filter(shapeId).ownerFilter(user).select
+
+  def getShapeById(shapeId: UUID, user: User): ConnectionIO[Option[Shape]] =
+    query.filter(shapeId).ownerFilter(user).selectOption
+
   def insertShapes(shapes: Seq[Shape.Create], user: User): ConnectionIO[Seq[Shape.GeoJSON]] = {
     val insertSql = """
        INSERT INTO shapes
