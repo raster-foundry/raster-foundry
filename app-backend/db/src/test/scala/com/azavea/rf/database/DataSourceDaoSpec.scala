@@ -3,7 +3,6 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.datamodel._
-// import com.azavea.rf.datamodel.{Organization, User, Datasource}
 import com.azavea.rf.datamodel.Generators.Implicits._
 import com.azavea.rf.database.Implicits._
 import doobie._
@@ -84,9 +83,15 @@ class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTest
             dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
             dsUpdated <- fixupDatasource(dsUpdate, orgInsert, userInsert)
             rowUpdated <- DatasourceDao.updateDatasource(dsUpdated, dsInsert.id, userInsert)
-          } yield rowUpdated
-          val updateDsRowCount = updateDsIO.transact(xa).unsafeRunSync
-          updateDsRowCount == 1
+          } yield (rowUpdated, dsUpdated)
+          val (rowUpdated, dsUpdated) = updateDsIO.transact(xa).unsafeRunSync
+          rowUpdated == 1 &&
+            dsUpdated.name == dsUpdate.name &&
+            dsUpdated.visibility == dsUpdate.visibility &&
+            dsUpdated.composites == dsUpdate.composites &&
+            dsUpdated.extras == dsUpdate.extras &&
+            dsUpdated.bands == dsUpdate.bands &&
+            dsUpdated.licenseName == dsUpdate.licenseName
         }
       )
     }
