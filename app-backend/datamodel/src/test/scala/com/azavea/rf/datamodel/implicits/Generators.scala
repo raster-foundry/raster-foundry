@@ -60,6 +60,16 @@ object Generators extends ArbitraryInstances {
     IngestStatus.Ingested, IngestStatus.Failed
   )
 
+  private def shapePropertiesGen: Gen[ShapeProperties] = for {
+    timeField <- timestampIn2016Gen
+    userField <- nonEmptyStringGen
+    organizationId <- uuidGen
+    name <- nonEmptyStringGen
+    description <- Gen.oneOf(Gen.const(None), nonEmptyStringGen map { Some(_) })
+  } yield {
+    ShapeProperties(timeField, userField, timeField, userField, userField, organizationId, name, description)
+  }
+
   private def thumbnailSizeGen: Gen[ThumbnailSize] = Gen.oneOf(
     ThumbnailSize.Small, ThumbnailSize.Large, ThumbnailSize.Square
   )
@@ -82,7 +92,7 @@ object Generators extends ArbitraryInstances {
   }
 
   private def multiPolygonGen3857: Gen[MultiPolygon] = for {
-    polygons <- Gen.listOfN[Polygon](1, polygonGen3857)
+    polygons <- Gen.oneOf(1, 2) flatMap { Gen.listOfN[Polygon](_, polygonGen3857) }
   } yield (MultiPolygon(polygons))
 
   private def projectedMultiPolygonGen3857: Gen[Projected[MultiPolygon]] =
@@ -115,6 +125,24 @@ object Generators extends ArbitraryInstances {
   } yield (Organization.Create(name))
 
   private def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization }
+
+  private def shapeCreateGen: Gen[Shape.Create] = for {
+    owner <- Gen.const(None)
+    organizationId <- uuidGen
+    name <- nonEmptyStringGen
+    description <- nonEmptyStringGen map { Some(_) }
+    geometry <- Gen.oneOf(Gen.const(None), projectedMultiPolygonGen3857 map { Some(_) })
+  } yield {
+    Shape.Create(owner, organizationId, name, description, geometry)
+  }
+
+  private def shapeGeoJSONGen: Gen[Shape.GeoJSON] = for {
+    id <- uuidGen
+    geometry <- Gen.oneOf(Gen.const(None), projectedMultiPolygonGen3857 map { Some(_) })
+    properties <- shapePropertiesGen
+  } yield {
+    Shape.GeoJSON(id, geometry, properties)
+  }
 
   private def userCreateGen: Gen[User.Create] = for {
     id <- nonEmptyStringGen
@@ -312,6 +340,10 @@ object Generators extends ArbitraryInstances {
     implicit def arbProject: Arbitrary[Project] = Arbitrary { projectGen }
 
     implicit def arbSceneCreate: Arbitrary[Scene.Create] = Arbitrary { sceneCreateGen }
+
+    implicit def arbShapeCreate: Arbitrary[Shape.Create] = Arbitrary { shapeCreateGen }
+
+    implicit def arbShapeGeoJSON: Arbitrary[Shape.GeoJSON] = Arbitrary { shapeGeoJSONGen }
 
     implicit def arbListSceneCreate: Arbitrary[List[Scene.Create]] = Arbitrary { Gen.listOfN(3, sceneCreateGen) }
 
