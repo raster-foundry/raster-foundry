@@ -77,7 +77,7 @@ class LabAnalysisController {
         if (this.analysisId && !analysis) {
             this.fetchAnalysis(this.analysisId);
         } else if (analysis) {
-            this.loadAnalysis(analysis);
+            this.loadAnalysis(analysis, {readonly: false, controls: true});
         } else if (!this.analysisId) {
             this.$state.go('lab.browse.analyses');
         }

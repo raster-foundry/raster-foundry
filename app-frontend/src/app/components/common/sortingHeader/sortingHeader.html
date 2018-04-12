@@ -1,6 +1,6 @@
-<a ng-click="$ctrl.onSortChange()">
-  <span ng-transclude></span>
+<a ng-click="$ctrl.onSortChange()" class="table-sort">
   <i ng-if="$ctrl.isActive"
      ng-class="$ctrl.getIconClass()"
   ></i>
+  <span ng-transclude></span>
 </a>

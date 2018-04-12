@@ -1,14 +1,13 @@
 import {Map} from 'immutable';
 import typeToReducer from 'type-to-reducer';
 import {
-    ANALYSIS_LOAD, ANALYSIS_UPDATE_NAME, ANALYSIS_FETCH
+    ANALYSIS_LOAD, ANALYSIS_UPDATE_NAME, ANALYSIS_FETCH, ANALYSIS_SET_OPTIONS
 } from '../actions/lab-actions';
 
 export const analysisReducer = typeToReducer({
     [ANALYSIS_LOAD]: (state, action) => {
         return Object.assign({}, state, {
             analysis: action.payload, lastAnalysisSave: new Date(),
-            readonly: action.readonly,
             previewNodes: [], selectedNode: null, nodes: new Map(),
             histograms: new Map()
         });
@@ -58,5 +57,13 @@ export const analysisReducer = typeToReducer({
                 analysisErrors: state.analysisErrors.delete('http')
             });
         }
+    },
+    [ANALYSIS_SET_OPTIONS]: (state, action) => {
+        let payload = action.payload;
+        let options = {
+            readonly: payload.hasOwnProperty('readonly') ? payload.readonly : false,
+            controls: payload.hasOwnProperty('controls') ? payload.controls : true
+        };
+        return Object.assign({}, state, options);
     }
 });

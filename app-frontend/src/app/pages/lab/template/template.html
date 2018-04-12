@@ -1,1 +1,185 @@
-<div>This is a placeholder for the edit template view</div>
+<div class="template-detail-hero">
+  <div class="template-detail-hero-content">
+    <button type="button" class="btn btn-link" ui-sref="lab.browse.templates">
+      <span class="icon-arrow-left"></span> Templates
+    </button>
+    <div ng-if="!$ctrl.template" class="template-title-loading">
+      <h1>Loading</h1>
+      <span class="icon-load animate-spin"></span>
+    </div>
+    <h1 ng-if="$ctrl.template">{{$ctrl.template.title}}</h1>
+    <div class="hero-actions">
+      <button type="button"
+              class="btn btn-primary"
+              ng-click="$ctrl.createAnalysis()"
+              ng-disabled="!$ctrl.template">
+        Use tool
+      </button>
+      <button type="button"
+              class="btn btn-icon-last"
+              ng-disabled="!$ctrl.template"
+              feature-flag="lab-workspace">
+        <span>Bookmark</span> <span class="icon-star"></span></button>
+    </div>
+  </div>
+</div>
+<div class="template-detail-tabbar">
+  <div class="tabbar-content">
+    <div class="template-tab">Tool details</div>
+    <div class="template-actions">
+      <button type="button"
+              class="btn btn-danger btn-icon-last"
+              ng-click="$ctrl.onDelete()"
+              ng-if="$ctrl.template && $ctrl.template.owner === $ctrl.user">
+        <span>Delete tool</span><span class="icon-trash"></span>
+      </button>
+    </div>
+  </div>
+</div>
+<!-- Detail view -->
+<div class="template-detail-container" ng-show="!$ctrl.editing">
+  <div class="template-detail-content">
+    <button type="button"
+            class="btn btn-link btn-text"
+            ng-click="$ctrl.onEditClick()"
+            ng-if="$ctrl.template && $ctrl.template.owner === $ctrl.user"
+            ng-disabled="!$ctrl.template">
+      <span class="icon-edit"></span> Edit tool details
+    </button>
+    <div class="template-details">
+      <h3>{{$ctrl.template.details}}</h3>
+    </div>
+    <div class="diagram-preview-placeholder" ng-if="!$ctrl.template"></div>
+    <div class="diagram-preview-container" ng-if="$ctrl.template">
+      <rf-diagram-container
+          class="with-position"
+      ></rf-diagram-container>
+    </div>
+    <div class="template-description">
+      {{$ctrl.template.description}}
+    </div>
+  </div>
+  <div class="template-detail-sidebar">
+    <div class="sidebar-section">
+      <h5>Details</h5>
+      <ul class="sidebar-list">
+        <li feature-flag="lab-workspace"><span>Uploaded by:</span> user</li>
+        <li><span>Upload date:</span> {{$ctrl.template.createdAt | date}}</li>
+        <li><span>Last modified:</span> {{$ctrl.template.modifiedAt | date}}</li>
+        <li><span>Privacy:</span> <span class="color-danger">{{$ctrl.template.visibility | lowercase}}</span></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h5>Requirements for use</h5>
+      <div class="sidebar-section-text">
+        {{$ctrl.template.requirements || 'None'}}
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <h5>License</h5>
+      <div class="sidebar-section-text">
+        {{$ctrl.template.license || 'None specified'}}
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <h5>Tags</h5>
+      <ul class="tag-list">
+        <li ng-repeat="tag in $ctrl.template.tags" ng-attr-title="{{tag.tag}}">{{tag.tag}}</li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <h5>Category</h5>
+      <ul class="tag-list">
+        <li ng-repeat="category in $ctrl.template.categories">{{category.category}}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<!-- Editing template details -->
+<div class="template-detail-container" ng-show="$ctrl.editing">
+  <div class="template-detail-content">
+    <div>
+      <button type="button"
+              class="btn btn-link btn-text"
+              ng-click="$ctrl.onSaveClick()">
+        <span class="icon-save"></span> Save changes
+      </button>
+      <button type="button"
+              class="btn btn-link btn-text"
+              ng-click="$ctrl.onCancelClick()">
+        <span class="icon-cancel"></span> Cancel
+      </button>
+    </div>
+    <div class="template-edit-form">
+      <form class="form-group">
+        <label>
+          Name
+          <input class="form-control"
+                 type="text"
+                 ng-model="$ctrl.template.title"
+                 placeholder="Name">
+        </label>
+        <label>
+          Details
+          <input class="form-control"
+                 type="text"
+                 ng-model="$ctrl.template.details"
+                 placeholder="Details">
+        </label>
+        <label>
+          Description
+          <textarea class="form-control"
+                    rows="4"
+                    ng-model="$ctrl.template.description"></textarea>
+        </label>
+      </form>
+    </div>
+  </div>
+  <div class="template-detail-sidebar">
+    <div class="sidebar-section">
+      <h5>Details</h5>
+      <div>
+        <label>
+          <button class="btn btn-light btn-tiny" ng-click="$ctrl.editPrivacy()">
+            <span class="icon-pencil" ></span>
+          </button>
+          Privacy: <span class="color-danger">{{$ctrl.template.visibility | lowercase}}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h5>Requirements for use</h5>
+      <div class="sidebar-section-textbox">
+        <textarea class="form-control"
+                  ng-model="$ctrl.template.requirements"></textarea>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <h5>License</h5>
+      <div class="sidebar-section-textbox">
+        <textarea class="form-control"
+                  ng-model="$ctrl.template.license"></textarea>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <h5>Tags</h5>
+      <ul class="tag-list">
+        <li ng-repeat="tag in $ctrl.template.tags" ng-attr-title="{{tag.tag}}">{{tag.tag}}</li>
+        <li class="add-item" ng-click="$ctrl.addTag()">
+          New tag <span class="icon-plus"></span>
+        </li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <h5>Category</h5>
+      <ul class="tag-list">
+        <li ng-repeat="category in $ctrl.template.categories">{{category.category}}</li>
+        <li class="add-item" ng-click="$ctrl.addCategory()">
+          Add category<span class="icon-plus"></span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

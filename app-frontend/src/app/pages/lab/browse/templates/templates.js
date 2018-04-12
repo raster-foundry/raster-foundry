@@ -37,7 +37,7 @@ class LabBrowseTemplatesController {
         this.loadingTemplates = true;
         this.analysisService.fetchTemplates(
             {
-                pageSize: 10,
+                pageSize: 12,
                 page: page - 1,
                 sort: 'createdAt,desc'
             }

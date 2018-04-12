@@ -1,7 +1,9 @@
 /* global BUILDCONFIG */
 import {Set} from 'immutable';
 class LabBrowseAnalysesController {
-    constructor($state, analysisService, authService, localStorage, modalService) {
+    constructor(
+        $state, analysisService, authService, localStorage, modalService
+    ) {
         'ngInject';
         this.$state = $state;
         this.analysisService = analysisService;
@@ -144,6 +146,12 @@ class LabBrowseAnalysesController {
         } else {
             this.selected = this.selected.add(id);
         }
+    }
+
+    openTemplateCreateModal() {
+        this.modalService.open({
+            component: 'rfTemplateCreateModal'
+        });
     }
 }
 

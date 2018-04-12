@@ -1,6 +1,7 @@
-<div class="app-width-container">
+<div class="container dashboard">
   <div class="row content stack-sm">
-    <div class="column">
+    <div class="column-3">
+        <label class="h5" for="search-input">Search analyses</label>
         <rf-search on-search="$ctrl.search(value)"
                    placeholder="Search for analyses"
                    auto-focus="true"
@@ -9,16 +10,17 @@
         <div class="aside aside-filters">
           <section>
             <h5>Create a new analysis</h5>
-            <button type="button"
-                    class="btn btn-default btn-block"
-                    ui-sref="^.templates">
+            <p>
+              Build the analysis of your dreams in the lab.
+            </p>
+            <a ng-click="$ctrl.openTemplateCreateModal()">
               New analysis
-            </button>
+            </a>
           </section>
         </div>
     </div>
-    <div class="column-spacer"></div>
-    <div class="column-9">
+    <div class="column spacer bordered"></div>
+    <div class="column-8">
       <!-- Loading indicator -->
       <div ng-show="$ctrl.loading">
         <span class="list-placeholder h3">
@@ -40,28 +42,30 @@
       </div>
 
       <!-- Temporarily removed ng-click until after demo done and detail page designed. -->
-      <table class="paginated-results-table" ng-show="!$ctrl.loading">
-        <tr class="header">
-          <th>
-            <rf-sorting-header direction="$ctrl.sortingDirection"
-                               on-sort-change="$ctrl.onSortChange('name')"
-                               is-active="$ctrl.sortingField === 'name'"
-            >Name</rf-sorting-header>
-          </th>
-          <th class="date-column">
-            <rf-sorting-header direction="$ctrl.sortingDirection"
+      <table class="table" ng-show="!$ctrl.loading">
+        <thead>
+          <tr>
+            <th>
+              <rf-sorting-header direction="$ctrl.sortingDirection"
+                                 on-sort-change="$ctrl.onSortChange('name')"
+                                 is-active="$ctrl.sortingField === 'name'"
+              >Name</rf-sorting-header>
+            </th>
+            <th width="200">
+              <rf-sorting-header direction="$ctrl.sortingDirection"
                                on-sort-change="$ctrl.onSortChange('modifiedAt')"
                                is-active="$ctrl.sortingField === 'modifiedAt'">
               Last Modified
             </rf-sorting-header>
-          </th>
-          <th class="action-column">
-            <button type="button" class="btn btn-danger"
-                    ng-click="$ctrl.deleteSelected()"
-                    ng-disabled="!$ctrl.selected.size"
-            >Delete selected</button>
-          </th>
-        </tr>
+            </th>
+            <th width="120" class="text-right">
+              <a class="link-danger font-600"
+                 ng-click="$ctrl.deleteSelected()"
+                 ng-hide="!$ctrl.selected.size">
+               <i class="icon-trash"></i> selected</a>
+            </th>
+          </tr>
+        </thead>
         <tr ng-repeat="analysis in $ctrl.analysesList | filter: {title: $ctrl.searchString}" class="row-hover-controls">
           <td><a ui-sref="lab.analysis({analysisid: analysis.id, analysis: analysis})">
             {{analysis.name || 'Untitled analysis'}}

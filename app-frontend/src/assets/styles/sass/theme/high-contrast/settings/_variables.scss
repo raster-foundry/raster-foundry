@@ -21,6 +21,12 @@ $breakpoints: (
 
 
 /* * * *
+ * Image path
+ * * * */
+ $image-path: '../../../../images/' !default;
+
+
+/* * * *
  * Columns
  * * * */
 $column-count: 12;
