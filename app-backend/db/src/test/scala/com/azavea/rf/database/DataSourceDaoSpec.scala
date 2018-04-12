@@ -3,6 +3,7 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.datamodel._
+import com.azavea.rf.datamodel.Generators.Implicits._
 import com.azavea.rf.database.Implicits._
 import doobie._
 import doobie.implicits._
@@ -12,38 +13,109 @@ import cats.effect.IO
 import cats.syntax.either._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import doobie.scalatest.imports._
+import org.scalacheck.Prop.forAll
 import org.scalatest._
+import org.scalatest.prop.Checkers
 import io.circe._
 import io.circe.syntax._
 import java.util.UUID
 
 
-class DatasourceDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
+class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
 
-  test("insertion") {
-    val testName = "some test Name"
-    val dummyJson = List(1, 2).asJson
-    val now = new Timestamp((new java.util.Date()).getTime())
-
-    val transaction = for {
-      usr <- defaultUserQ
-      org <- rootOrgQ
-      dsIn <- {
-        val ds = Datasource(
-          UUID.randomUUID(), now, usr.id, now, usr.id, usr.id,
-          org.id, testName, Visibility.Public, dummyJson, dummyJson, dummyJson,
-          Some("0BSD")
-        )
-        DatasourceDao.create(ds, usr)
-      }
-      dsOut <- DatasourceDao.query.filter(fr"id = ${dsIn.id}").selectQ.unique
-    } yield dsOut
-
-    val result = transaction.transact(xa).unsafeRunSync
-    result.name shouldBe testName
+  test("inserting a datasource") {
+    check {
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create) => {
+          val createDsIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+          } yield dsInsert
+          val createDs = createDsIO.transact(xa).unsafeRunSync
+          createDs.name == dsCreate.name
+        }
+      )
+    }
   }
 
-  test("types") { check(DatasourceDao.selectF.query[Datasource]) }
-}
+  test("getting a datasource by id") {
+    check {
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create) => {
+          val getDsIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+            dsGet <- DatasourceDao.getDatasourceById(dsInsert.id, userInsert)
+          } yield dsGet
+          val getDs = getDsIO.transact(xa).unsafeRunSync
+          getDs.get.name === dsCreate.name
+        }
+      )
+    }
+  }
 
+  test("getting a datasource by id unsafely") {
+    check {
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create) => {
+          val getDsUnsafeIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+            dsGetUnsafe <- DatasourceDao.unsafeGetDatasourceById(dsInsert.id, userInsert)
+          } yield dsGetUnsafe
+          val getDsUnsafe = getDsUnsafeIO.transact(xa).unsafeRunSync
+          getDsUnsafe.name === dsCreate.name
+        }
+      )
+    }
+  }
+
+  test("updating a datasource") {
+    check {
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create, dsUpdate: Datasource.Create) => {
+          val updateDsIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+            dsUpdated <- fixupDatasource(dsUpdate, orgInsert, userInsert)
+            rowUpdated <- DatasourceDao.updateDatasource(dsUpdated, dsInsert.id, userInsert)
+          } yield (rowUpdated, dsUpdated)
+          val (rowUpdated, dsUpdated) = updateDsIO.transact(xa).unsafeRunSync
+          rowUpdated == 1 &&
+            dsUpdated.name == dsUpdate.name &&
+            dsUpdated.visibility == dsUpdate.visibility &&
+            dsUpdated.composites == dsUpdate.composites &&
+            dsUpdated.extras == dsUpdate.extras &&
+            dsUpdated.bands == dsUpdate.bands &&
+            dsUpdated.licenseName == dsUpdate.licenseName
+        }
+      )
+    }
+  }
+
+  test("deleting a datasource") {
+    check {
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create) => {
+          val deleteDsIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+            rowDeleted <- DatasourceDao.deleteDatasource(dsInsert.id, userInsert)
+          } yield rowDeleted
+          val deleteDsRowCount = deleteDsIO.transact(xa).unsafeRunSync
+          deleteDsRowCount == 1
+        }
+      )
+    }
+  }
+
+  test("listing datasources") {
+    DatasourceDao.query.list.transact(xa).unsafeRunSync.length >= 0
+  }
+
+}

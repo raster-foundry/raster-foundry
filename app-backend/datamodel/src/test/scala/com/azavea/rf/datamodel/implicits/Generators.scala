@@ -261,6 +261,19 @@ object Generators extends ArbitraryInstances {
                  metadataFiles, images, thumbnails, ingestLocation, filterFields, statusFields)
   }
 
+  private def datasourceCreateGen: Gen[Datasource.Create] = for {
+    orgId <- uuidGen
+    name <- nonEmptyStringGen
+    visibility <- visibilityGen
+    owner <- arbitrary[Option[String]]
+    composites <- Gen.delay(().asJson)
+    extras <- Gen.delay(().asJson)
+    bands <- Gen.delay(().asJson)
+    licenseName <- Gen.oneOf(None, Some("GPL-3.0"))
+  } yield {
+    Datasource.Create(orgId, name, visibility, owner, composites, extras, bands, licenseName)
+  }
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
 
@@ -297,5 +310,7 @@ object Generators extends ArbitraryInstances {
     implicit def arbSceneCreate: Arbitrary[Scene.Create] = Arbitrary { sceneCreateGen }
 
     implicit def arbListSceneCreate: Arbitrary[List[Scene.Create]] = Arbitrary { Gen.listOfN(3, sceneCreateGen) }
+
+    implicit def arbDatasourceCreate: Arbitrary[Datasource.Create] = Arbitrary { datasourceCreateGen }
   }
 }

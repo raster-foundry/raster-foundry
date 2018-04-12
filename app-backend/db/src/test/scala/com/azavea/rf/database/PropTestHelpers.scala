@@ -67,4 +67,12 @@ trait PropTestHelpers {
     )
   }
 
+  def fixupDatasource(dsCreate: Datasource.Create, org: Organization, user: User): ConnectionIO[Datasource] = {
+    for {
+      ds <- DatasourceDao.createDatasource(
+        dsCreate.copy(organizationId = org.id, owner = Some(user.id)),
+        user)
+    } yield ds
+  }
+
 }
