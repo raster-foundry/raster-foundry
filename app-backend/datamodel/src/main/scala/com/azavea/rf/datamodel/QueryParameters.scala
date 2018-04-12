@@ -129,7 +129,8 @@ case class CombinedGridQueryParams(
 case class ProjectQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
-  timestampParams: TimestampQueryParameters = TimestampQueryParameters()
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+  searchParams: SearchQueryParameters = SearchQueryParameters()
 )
 
 @JsonCodec
@@ -278,4 +279,9 @@ case class ShapeQueryParameters(
 @JsonCodec
 case class FeedQueryParameters(
   source: Option[String] = None
+)
+
+@JsonCodec
+case class SearchQueryParameters(
+  name: Option[String] = None
 )

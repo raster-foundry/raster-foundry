@@ -59,7 +59,8 @@ trait Filterables extends RFMeta {
   implicit val projectQueryParametersFilter = Filterable[Any, ProjectQueryParameters] { projectParams: ProjectQueryParameters =>
     Filters.organizationQP(projectParams.orgParams) ++
       Filters.timestampQP(projectParams.timestampParams) ++
-      Filters.userQP(projectParams.userParams)
+      Filters.userQP(projectParams.userParams) ++
+      Filters.searchQP(projectParams.searchParams, List(s"name"))
   }
 
   implicit val annotationQueryparamsFilter = Filterable[Any, AnnotationQueryParameters] { annotParams: AnnotationQueryParameters =>

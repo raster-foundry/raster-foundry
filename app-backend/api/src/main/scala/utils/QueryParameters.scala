@@ -27,7 +27,10 @@ trait QueryParameterDeserializers {
 
 trait QueryParametersCommon extends QueryParameterDeserializers {
   def projectQueryParameters = (
-    orgQueryParams & userQueryParameters & timestampQueryParameters
+    orgQueryParams &
+    userQueryParameters &
+    timestampQueryParameters &
+    searchQueryParams
   ).as(ProjectQueryParameters.apply _)
 
   def aoiQueryParameters = (
@@ -69,4 +72,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
   def shapeQueryParams = (
     orgQueryParams & userQueryParameters & timestampQueryParameters
   ).as(ShapeQueryParameters.apply _)
+
+  def searchQueryParams = parameters(
+    'name.as[String].?
+  ).as(SearchQueryParameters.apply _)
 }
