@@ -239,7 +239,7 @@ object Generators extends ArbitraryInstances {
     orgId <- uuidGen
     name <- nonEmptyStringGen
     visibility <- visibilityGen
-    owner <- Gen.oneOf(None, nonEmptyStringGen map { Some(_) })
+    owner <- arbitrary[Option[String]]
     composites <- Gen.delay(().asJson)
     extras <- Gen.delay(().asJson)
     bands <- Gen.delay(().asJson)

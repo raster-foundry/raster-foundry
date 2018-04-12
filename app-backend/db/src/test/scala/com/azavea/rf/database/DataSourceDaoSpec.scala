@@ -3,6 +3,7 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.datamodel._
+// import com.azavea.rf.datamodel.{Organization, User, Datasource}
 import com.azavea.rf.datamodel.Generators.Implicits._
 import com.azavea.rf.database.Implicits._
 import doobie._
@@ -21,61 +22,95 @@ import io.circe.syntax._
 import java.util.UUID
 
 
-class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig {
+class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
 
   test("inserting a datasource") {
     check {
-      forAll {
-        (user: User, org: Organization, dsCreate: Datasource.Create) {
-          // createDatasource should work
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create) => {
+          val createDsIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+          } yield dsInsert
+          val createDs = createDsIO.transact(xa).unsafeRunSync
+          createDs.name == dsCreate.name
         }
-      }
+      )
     }
   }
 
   test("getting a datasource by id") {
     check {
-      forAll {
-        (user: User, org: Organization, dsCreate: Datasource.Create) {
-          // getting a datasource by id after inserting that datasource should work
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create) => {
+          val getDsIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+            dsGet <- DatasourceDao.getDatasourceById(dsInsert.id, userInsert)
+          } yield dsGet
+          val getDs = getDsIO.transact(xa).unsafeRunSync
+          getDs.get.name === dsCreate.name
         }
-      }
+      )
     }
   }
 
   test("getting a datasource by id unsafely") {
     check {
-      forAll {
-        (user: User, org: Organization, dsCreate: Datasource.Create) {
-          // getting a datasource by id with unsafeGetDatasourceById after inserting the datasource should work
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create) => {
+          val getDsUnsafeIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+            dsGetUnsafe <- DatasourceDao.unsafeGetDatasourceById(dsInsert.id, userInsert)
+          } yield dsGetUnsafe
+          val getDsUnsafe = getDsUnsafeIO.transact(xa).unsafeRunSync
+          getDsUnsafe.name === dsCreate.name
         }
-      }
+      )
     }
   }
 
   test("updating a datasource") {
     check {
-      forAll {
-        (user: User, org: Organization, dsCreate: Datasource.Create, dsUpdate: Datasource.Create) {
-          // creating a datasource, then updating it from dsUpdate, should work
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create, dsUpdate: Datasource.Create) => {
+          val updateDsIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+            dsUpdated <- fixupDatasource(dsUpdate, orgInsert, userInsert)
+            rowUpdated <- DatasourceDao.updateDatasource(dsUpdated, dsInsert.id, userInsert)
+          } yield rowUpdated
+          val updateDsRowCount = updateDsIO.transact(xa).unsafeRunSync
+          updateDsRowCount == 1
         }
-      }
+      )
     }
   }
 
   test("deleting a datasource") {
     check {
-      forAll {
-        (user: User, org: Organization, dsCreate: Datasource.Create) {
-          // inserting a datasource then deleting it should return a 1
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create) => {
+          val deleteDsIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+            rowDeleted <- DatasourceDao.deleteDatasource(dsInsert.id, userInsert)
+          } yield rowDeleted
+          val deleteDsRowCount = deleteDsIO.transact(xa).unsafeRunSync
+          deleteDsRowCount == 1
         }
-      }
+      )
     }
   }
 
   test("listing datasources") {
-    DatasourceDao.query.list.tranact(xa).unsafeRunSync.length should be >= 0
+    DatasourceDao.query.list.transact(xa).unsafeRunSync.length >= 0
   }
 
 }
-
