@@ -79,7 +79,8 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
     def listByGroup(groupType: GroupType, groupId: UUID): ConnectionIO[List[UserGroupRole]] = {
         query.filter(fr"group_type = ${groupType}").filter(fr"group_id = ${groupId}").list
     }
-
+    
+    // @TODO: ensure a user cannot demote (or promote?) themselves
     def update(ugr: UserGroupRole, id: UUID, user: User): ConnectionIO[Int] =
         updateF(ugr, id, user).update.run
 
