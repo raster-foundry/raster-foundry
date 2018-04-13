@@ -146,6 +146,10 @@ object Dao {
         .getOrElse(throw new Exception("Unsafe delete - delete requires filters"))
         .run
     }
+
+    def exists(id: UUID): ConnectionIO[Boolean] = {
+      (fr"SELECT 1 FROM" ++ tableF ++ fr"WHERE id = ${id}").query[Int].list.map(!_.isEmpty)
+    }
   }
 }
 

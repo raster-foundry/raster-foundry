@@ -47,6 +47,5 @@ object OrganizationDao extends Dao[Organization] {
        WHERE id = ${id}
      """).update.run
   }
-
 }
 
