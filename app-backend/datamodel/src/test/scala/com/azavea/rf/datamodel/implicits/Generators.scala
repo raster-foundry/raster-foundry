@@ -306,6 +306,17 @@ object Generators extends ArbitraryInstances {
                  metadataFiles, images, thumbnails, ingestLocation, filterFields, statusFields)
   }
 
+  private def aoiGen: Gen[AOI] = for {
+    id <- uuidGen
+    timeField <- timestampIn2016Gen
+    organizationId <- uuidGen
+    userField <- nonEmptyStringGen
+    area <- projectedMultiPolygonGen3857
+    filters <- Gen.const(().asJson) // maybe this should be CombinedSceneQueryParams as json
+  } yield {
+    AOI(id, timeField, timeField, organizationId, userField, userField, userField, area, filters)
+  }
+
   private def datasourceCreateGen: Gen[Datasource.Create] = for {
     orgId <- uuidGen
     name <- nonEmptyStringGen
@@ -382,5 +393,7 @@ object Generators extends ArbitraryInstances {
     implicit def arbDatasourceCreate: Arbitrary[Datasource.Create] = Arbitrary { datasourceCreateGen }
 
     implicit def arbUploadCreate: Arbitrary[Upload.Create] = Arbitrary { uploadCreateGen }
+
+    implicit def arbAOI: Arbitrary[AOI] = Arbitrary { aoiGen }
   }
 }
