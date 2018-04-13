@@ -70,21 +70,10 @@ object AoiDao extends Dao[AOI] {
       )).query[AOI].list
   }
 
-  def deleteAOI(id: UUID, user: User): ConnectionIO[Int]={
-    val deleteAoiToProject = (
-      fr"DELETE FROM" ++ AoiToProjectDao.tableF ++ fr"WHERE aoi_id = ${id}"
+  def deleteAOI(id: UUID, user: User): ConnectionIO[Int]= {
+    (
+      fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(query.ownerFilterF(user), Some(fr"id = ${id}"))
     ).update.run
-
-    val deleteAoi = (
-      fr"DELETE FROM" ++ tableF ++ fr"WHERE id = ${id}"
-    ).update.run
-
-    val transaction = for {
-      _ <- deleteAoiToProject
-      del <- deleteAoi
-    } yield del
-
-    transaction
   }
 }
 
