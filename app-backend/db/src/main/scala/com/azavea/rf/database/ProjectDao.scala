@@ -163,7 +163,7 @@ object ProjectDao extends Dao[Project] {
 
   def addScenesToProject(sceneIds: NonEmptyList[UUID], projectId: UUID, user: User): ConnectionIO[Int] = {
     val inClause = Fragments.in(fr"scenes.id", sceneIds)
-    val x = sql"""
+    val sceneIdWithDatasourceF = sql"""
          SELECT scenes.id,
                 datasources.id,
                 datasources.created_at,
@@ -182,7 +182,7 @@ object ProjectDao extends Dao[Project] {
          INNER JOIN datasources ON scenes.datasource = datasources.id
          WHERE NOT (scenes.id = ANY(ARRAY(SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})::UUID[])) AND """ ++ inClause
     for {
-      sceneQueryResult <- x.query[(UUID, Datasource)].list
+      sceneQueryResult <- sceneIdWithDatasourceF.query[(UUID, Datasource)].list
       sceneToProjectInserts <- {
         val stps: List[stp] = sceneQueryResult.map { case (sceneId, datasource) =>
             createScenesToProject(sceneId, projectId, datasource)

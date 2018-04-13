@@ -28,7 +28,7 @@ object Generators extends ArbitraryInstances {
     Gen.nonEmptyListOf[Char](Gen.alphaChar).map(_.mkString)
 
   private def pageRequestGen: Gen[PageRequest] =
-    Gen.const(PageRequest(0, 20, Map("createdAt" -> Order.Desc)))
+    Gen.const(PageRequest(0, 20, Map("created_at" -> Order.Desc)))
 
   private def userRoleGen: Gen[UserRole] = Gen.oneOf(UserRoleRole, Viewer, Admin)
 
@@ -296,7 +296,7 @@ object Generators extends ArbitraryInstances {
     dataFootprint <- projectedMultiPolygonGen3857 map { Some(_) }
     metadataFiles <- stringListGen
     images <- Gen.oneOf(1, 10) flatMap { Gen.listOfN(_, imageBandedGen) }
-    thumbnails <- Gen.oneOf(0, 2) flatMap { Gen.listOfN(_, thumbnailIdentifiedGen) }
+    thumbnails <- Gen.oneOf(1, 2) flatMap { Gen.listOfN(_, thumbnailIdentifiedGen) }
     ingestLocation <- Gen.oneOf(nonEmptyStringGen map { Some(_) }, Gen.const(None))
     filterFields <- sceneFilterFieldsGen
     statusFields <- sceneStatusFieldsGen
@@ -361,10 +361,15 @@ object Generators extends ArbitraryInstances {
     layerAttributes <- Gen.listOfN(10, layerAttributeGen)
   } yield layerAttributes map { _.copy(layerName = layerName) }
 
+  private def combinedSceneQueryParamsGen: Gen[CombinedSceneQueryParams] =
+    Gen.const(CombinedSceneQueryParams())
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
 
     implicit def arbPageRequest: Arbitrary[PageRequest] = Arbitrary { pageRequestGen }
+
+    implicit def arbCombinedSceneQueryParams: Arbitrary[CombinedSceneQueryParams] = Arbitrary { combinedSceneQueryParamsGen }
 
     implicit def arbAnnotationCreate: Arbitrary[Annotation.Create] = Arbitrary { annotationCreateGen }
 

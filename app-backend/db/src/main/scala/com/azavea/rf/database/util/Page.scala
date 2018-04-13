@@ -47,11 +47,9 @@ object Page {
           val parsedExpr = sortExprConvertor(sortExpr)
           (parsedExpr, ord) match {
             case (Some(expr), Order.Asc) => {
-              println(s"ASC: ${expr}")
               Fragment.const(s"$expr ASC")
             }
             case (Some(expr), Order.Desc) => {
-              println(s"DESC: ${expr}")
               Fragment.const(s"$expr DESC")
             }
             case (_, _) => Fragment.empty
