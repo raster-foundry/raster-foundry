@@ -59,7 +59,7 @@ object SceneDao extends Dao[Scene] {
          data_footprint, metadata_files, ingest_location, cloud_cover,
          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
          boundary_status, ingest_status
-      )""") ++ fr"""VALUES (
+      )""" ++ fr"""VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
         ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
         ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
