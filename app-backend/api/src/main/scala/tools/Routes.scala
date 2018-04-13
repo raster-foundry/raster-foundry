@@ -6,6 +6,7 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.codec._
 import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.maml.serve._
 import io.circe._
 import akka.http.scaladsl.model.StatusCodes
@@ -27,6 +28,7 @@ import doobie.postgres.implicits._
 
 
 trait ToolRoutes extends Authentication
+    with QueryParametersCommon
     with PaginationDirectives
     with CommonHandlers
     with KamonTraceDirectives
@@ -94,9 +96,9 @@ trait ToolRoutes extends Authentication
   }
 
   def listTools: Route = authenticate { user =>
-    (withPagination) { (page) =>
+    (withPagination & combinedToolQueryParams) { (page, combinedToolQueryParameters) =>
       complete {
-        ToolDao.query.ownerFilter(user).page(page).transact(xa).unsafeToFuture
+        ToolDao.query.filter(combinedToolQueryParameters).ownerFilter(user).page(page).transact(xa).unsafeToFuture
       }
     }
   }

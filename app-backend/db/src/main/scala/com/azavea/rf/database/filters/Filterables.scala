@@ -60,7 +60,14 @@ trait Filterables extends RFMeta {
     Filters.organizationQP(projectParams.orgParams) ++
       Filters.timestampQP(projectParams.timestampParams) ++
       Filters.userQP(projectParams.userParams) ++
-      Filters.searchQP(projectParams.searchParams, List(s"name"))
+      Filters.searchQP(projectParams.searchParams, List("name"))
+  }
+
+  implicit val CombinedToolQueryParametersFilter = Filterable[Any, CombinedToolQueryParameters] { projectParams: CombinedToolQueryParameters =>
+    Filters.organizationQP(projectParams.orgParams) ++
+      Filters.timestampQP(projectParams.timestampParams) ++
+      Filters.userQP(projectParams.userParams) ++
+      Filters.searchQP(projectParams.searchParams, List("title", "description"))
   }
 
   implicit val annotationQueryparamsFilter = Filterable[Any, AnnotationQueryParameters] { annotParams: AnnotationQueryParameters =>
@@ -146,7 +153,7 @@ trait Filterables extends RFMeta {
   }
 
   implicit val datasourceQueryparamsFilter = Filterable[Any, DatasourceQueryParameters] { dsParams: DatasourceQueryParameters =>
-    Filters.searchQP(dsParams.searchParams, List(s"name"))
+    Filters.searchQP(dsParams.searchParams, List("name"))
   }
 
   implicit val uploadQueryParameters = Filterable[Any, UploadQueryParameters] {uploadParams: UploadQueryParameters =>

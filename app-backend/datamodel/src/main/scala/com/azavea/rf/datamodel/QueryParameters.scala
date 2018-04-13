@@ -156,7 +156,8 @@ case class CombinedToolQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-  toolParams: ToolQueryParameters = ToolQueryParameters()
+  toolParams: ToolQueryParameters = ToolQueryParameters(),
+  searchParams: SearchQueryParameters = SearchQueryParameters()
 )
 
 @JsonCodec

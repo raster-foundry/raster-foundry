@@ -60,7 +60,7 @@ object Filters {
           cols.map(col => {
             val namePattern: String = "'%" + valueToMatch.toUpperCase() + "%'"
             s"UPPER($col) LIKE $namePattern"
-          }).mkString(s" OR ")
+          }).mkString(" OR ")
         )
       })
     )

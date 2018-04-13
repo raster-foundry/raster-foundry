@@ -74,6 +74,22 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
   ).as(ShapeQueryParameters.apply _)
 
   def searchQueryParams = parameters(
-    'search.as[String].?
+    'searchPattern.as[String].?
   ).as(SearchQueryParameters.apply _)
+
+  def toolParameters = parameters(
+    'minRating.as[Double].?,
+    'maxRating.as[Double].?,
+    'toolCategory.as[String].*,
+    'toolTag.as[String].*,
+    'search.as[String].?
+  ).as(ToolQueryParameters.apply _)
+
+  def combinedToolQueryParams = (
+    orgQueryParams &
+    userQueryParameters &
+    timestampQueryParameters &
+    toolParameters &
+    searchQueryParams
+  ).as(CombinedToolQueryParameters.apply _)
 }
