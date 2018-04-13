@@ -28,6 +28,12 @@ object AoiDao extends Dao[AOI] {
       FROM
     """ ++ tableF
 
+  def unsafeGetAoiById(id: UUID, user: User): ConnectionIO[AOI] =
+    query.ownerFilter(user).filter(id).select
+
+  def getAoiById(id: UUID, user: User): ConnectionIO[Option[AOI]] =
+    query.ownerFilter(user).filter(id).selectOption
+
   def updateAOI(aoi: AOI, id: UUID, user: User): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
         modified_at = NOW(),
@@ -40,14 +46,13 @@ object AoiDao extends Dao[AOI] {
   }
 
   def createAOI(aoi: AOI, projectId: UUID, user: User): ConnectionIO[AOI] = {
-    val id = UUID.randomUUID
     val ownerId = Ownership.checkOwner(user, Some(aoi.owner))
 
     val aoiCreate: ConnectionIO[AOI] = (fr"INSERT INTO" ++ tableF ++ fr"""
         (id, created_at, modified_at, organization_id,
         created_by, modified_by, owner, area, filters)
       VALUES
-        (${id}, NOW(), NOW(), ${user.organizationId},
+        (${aoi.id}, NOW(), NOW(), ${user.organizationId},
         ${user.id}, ${user.id}, ${ownerId}, ${aoi.area}, ${aoi.filters})
     """).update.withUniqueGeneratedKeys[AOI](
       "id", "created_at", "modified_at", "organization_id",

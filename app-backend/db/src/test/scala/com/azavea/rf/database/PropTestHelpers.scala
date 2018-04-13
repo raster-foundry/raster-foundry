@@ -98,4 +98,8 @@ trait PropTestHelpers {
       case _ => withoutProjectFixup
     }
   }
+
+  def fixupAoi(user: User, org: Organization, aoi: AOI): AOI = {
+    aoi.copy(organizationId = org.id, owner = user.id, createdBy = user.id, modifiedBy = user.id)
+  }
 }
