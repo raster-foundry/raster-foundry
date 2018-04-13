@@ -250,6 +250,11 @@ object Generators extends ArbitraryInstances {
     Thumbnail.Identified(id, organizationId, thumbnailSize, sideLength, sideLength, sceneId, url)
   }
 
+  private def thumbnailGen: Gen[Thumbnail] = for {
+    thumbnailIdentified <- thumbnailIdentifiedGen
+    userId <- nonEmptyStringGen
+  } yield { thumbnailIdentified.toThumbnail(userId) }
+
   private def sceneCreateGen: Gen[Scene.Create] = for {
     sceneId <- uuidGen map { Some(_) }
     organizationId <- uuidGen
@@ -340,6 +345,8 @@ object Generators extends ArbitraryInstances {
     implicit def arbSceneCreate: Arbitrary[Scene.Create] = Arbitrary { sceneCreateGen }
 
     implicit def arbListSceneCreate: Arbitrary[List[Scene.Create]] = Arbitrary { Gen.listOfN(3, sceneCreateGen) }
+
+    implicit def arbThumbnail: Arbitrary[Thumbnail] = Arbitrary { thumbnailGen }
 
     implicit def arbDatasourceCreate: Arbitrary[Datasource.Create] = Arbitrary { datasourceCreateGen }
 

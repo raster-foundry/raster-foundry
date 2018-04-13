@@ -28,6 +28,15 @@ trait PropTestHelpers {
     } yield (org, user, project)
   }
 
+  def insertUserOrgScene(user: User.Create, org: Organization.Create, scene: Scene.Create) = {
+    for {
+      orgUserInsert <- insertUserAndOrg(user, org)
+      (dbOrg, dbUser) = orgUserInsert
+      dbDatasource <- unsafeGetRandomDatasource
+      scene <- SceneDao.insert(fixupSceneCreate(dbUser, dbOrg, dbDatasource, scene), dbUser)
+    } yield (dbOrg, dbUser, scene)
+  }
+
   def unsafeGetRandomDatasource: ConnectionIO[Datasource] =
     (DatasourceDao.selectF ++ fr"ORDER BY RANDOM() limit 1").query[Datasource].unique
 
@@ -87,4 +96,6 @@ trait PropTestHelpers {
     }
   }
 
+  def fixupThumbnail(org: Organization, scene: Scene.WithRelated, thumbnail: Thumbnail): Thumbnail =
+    thumbnail.copy(organizationId = org.id, sceneId = scene.id)
 }
