@@ -55,10 +55,10 @@ object Filters {
 
   def searchQP(searchParams: SearchQueryParameters, cols: List[String]): List[Option[Fragment]] = {
     List(
-      searchParams.name.map(name => {
+      searchParams.search.map(valueToMatch => {
         Fragment.const(
           cols.map(col => {
-            val namePattern: String = s"'%" + name.toUpperCase() + s"%'"
+            val namePattern: String = "'%" + valueToMatch.toUpperCase() + "%'"
             s"UPPER($col) LIKE $namePattern"
           }).mkString(s" OR ")
         )

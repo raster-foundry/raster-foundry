@@ -222,7 +222,7 @@ case class CombinedToolCategoryQueryParams(
 
 @JsonCodec
 case class DatasourceQueryParameters(
-  name: Option[String] = None
+  searchParams: SearchQueryParameters = SearchQueryParameters()
 )
 
 @JsonCodec
@@ -283,5 +283,5 @@ case class FeedQueryParameters(
 
 @JsonCodec
 case class SearchQueryParameters(
-  name: Option[String] = None
+  search: Option[String] = None
 )

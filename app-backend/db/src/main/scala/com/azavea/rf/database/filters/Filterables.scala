@@ -146,7 +146,7 @@ trait Filterables extends RFMeta {
   }
 
   implicit val datasourceQueryparamsFilter = Filterable[Any, DatasourceQueryParameters] { dsParams: DatasourceQueryParameters =>
-    List(dsParams.name.map({ name => fr"name = $name" }))
+    Filters.searchQP(dsParams.searchParams, List(s"name"))
   }
 
   implicit val uploadQueryParameters = Filterable[Any, UploadQueryParameters] {uploadParams: UploadQueryParameters =>

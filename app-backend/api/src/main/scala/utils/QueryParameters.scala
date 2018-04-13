@@ -74,6 +74,6 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
   ).as(ShapeQueryParameters.apply _)
 
   def searchQueryParams = parameters(
-    'name.as[String].?
+    'search.as[String].?
   ).as(SearchQueryParameters.apply _)
 }
