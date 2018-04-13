@@ -26,6 +26,12 @@ object UploadDao extends Dao[Upload] {
     FROM
   """ ++ tableF
 
+  def getUploadById(uploadId: UUID, user: User): ConnectionIO[Option[Upload]] =
+    query.filter(uploadId).ownerFilter(user).selectOption
+
+  def unsafeGetUploadById(uploadId: UUID, user: User): ConnectionIO[Upload] =
+    query.filter(uploadId).ownerFilter(user).select
+
   def insert(newUpload: Upload.Create, user: User): ConnectionIO[Upload] = {
     val upload = newUpload.toUpload(user)
     sql"""
