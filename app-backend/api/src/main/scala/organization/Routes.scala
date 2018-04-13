@@ -21,8 +21,6 @@ import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-import scala.util.{Failure, Success}
-
 trait OrganizationRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
