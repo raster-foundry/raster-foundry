@@ -64,6 +64,19 @@ object Generators extends ArbitraryInstances {
     ThumbnailSize.Small, ThumbnailSize.Large, ThumbnailSize.Square
   )
 
+  private def uploadStatusGen: Gen[UploadStatus] = Gen.oneOf(
+    UploadStatus.Created, UploadStatus.Uploading, UploadStatus.Uploaded, UploadStatus.Queued,
+    UploadStatus.Processing, UploadStatus.Complete, UploadStatus.Failed, UploadStatus.Aborted
+  )
+
+  private def uploadTypeGen: Gen[UploadType] = Gen.oneOf(
+    UploadType.Dropbox, UploadType.S3, UploadType.Local, UploadType.Planet
+  )
+
+  private def fileTypeGen: Gen[FileType] = Gen.oneOf(
+    FileType.Geotiff, FileType.GeotiffWithMetadata
+  )
+
   private def timestampIn2016Gen: Gen[Timestamp] = for {
     year <- Gen.const(2016)
     month <- Gen.choose(1, 12)
@@ -279,6 +292,23 @@ object Generators extends ArbitraryInstances {
     Datasource.Create(orgId, name, visibility, owner, composites, extras, bands, licenseName)
   }
 
+  private def uploadCreateGen: Gen[Upload.Create] = for {
+    organizationId <- uuidGen
+    uploadStatus <- uploadStatusGen
+    fileType <- fileTypeGen
+    uploadType <- uploadTypeGen
+    files <- stringListGen
+    datasource <- uuidGen
+    metadata <- Gen.const(().asJson)
+    owner <- Gen.const(None)
+    visibility <- visibilityGen
+    projectId <- Gen.const(None)
+    source <- Gen.oneOf(nonEmptyStringGen map { Some(_) }, Gen.const(None))
+  } yield {
+    Upload.Create(organizationId, uploadStatus, fileType, uploadType, files, datasource, metadata,
+                  owner, visibility, projectId, source)
+  }
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
 
@@ -319,5 +349,7 @@ object Generators extends ArbitraryInstances {
     implicit def arbThumbnail: Arbitrary[Thumbnail] = Arbitrary { thumbnailGen }
 
     implicit def arbDatasourceCreate: Arbitrary[Datasource.Create] = Arbitrary { datasourceCreateGen }
+
+    implicit def arbUploadCreate: Arbitrary[Upload.Create] = Arbitrary { uploadCreateGen }
   }
 }
