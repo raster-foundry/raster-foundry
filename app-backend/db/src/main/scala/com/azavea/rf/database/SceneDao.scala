@@ -44,6 +44,12 @@ object SceneDao extends Dao[Scene] {
     FROM
   """ ++ tableF
 
+  def getSceneById(id: UUID, user: User): ConnectionIO[Option[Scene]] =
+    query.filter(id).ownerFilter(user).selectOption
+
+  def unsafeGetSceneById(id: UUID, user: User): ConnectionIO[Scene] =
+    query.filter(id).ownerFilter(user).select
+
   def insert(sceneCreate: Scene.Create, user: User): ConnectionIO[Scene.WithRelated] = {
     val scene = sceneCreate.toScene(user)
     val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id))
@@ -144,6 +150,9 @@ object SceneDao extends Dao[Scene] {
       datasource = ${scene.datasource},
       scene_metadata = ${scene.sceneMetadata},
       name = ${scene.name},
+      data_footprint = ${scene.dataFootprint},
+      tile_footprint = ${scene.tileFootprint},
+      ingest_location = ${scene.ingestLocation},
       cloud_cover = ${scene.filterFields.cloudCover},
       acquisition_date = ${scene.filterFields.acquisitionDate},
       sun_azimuth = ${scene.filterFields.sunAzimuth},
