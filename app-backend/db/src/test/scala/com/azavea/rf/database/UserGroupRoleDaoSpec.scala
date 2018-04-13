@@ -22,15 +22,12 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with IOChecker with DB
     def createUserGroupRole: ConnectionIO[UserGroupRole] = {
         for {
             platform <- {
-                println("About to get default platform")
                 defaultPlatformQ
             }
             usr <- {
-                println("About to get default user")
                 defaultUserQ
             }
             create <- {
-                println("About to create ugr")
                 val ugr = UserGroupRole.Create(
                     usr,
                     GroupType.Platform,
