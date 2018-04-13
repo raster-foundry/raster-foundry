@@ -86,4 +86,16 @@ trait PropTestHelpers {
 
   def fixupThumbnail(org: Organization, scene: Scene.WithRelated, thumbnail: Thumbnail): Thumbnail =
     thumbnail.copy(organizationId = org.id, sceneId = scene.id)
+
+  def fixupUploadCreate(user: User, org: Organization, project: Project, datasource: Datasource, upload: Upload.Create): Upload.Create = {
+    val withoutProjectFixup = upload.copy(
+      owner = Some(user.id),
+      organizationId = org.id,
+      datasource = datasource.id
+    )
+    upload.projectId match {
+      case Some(_) => withoutProjectFixup.copy(projectId = Some(project.id))
+      case _ => withoutProjectFixup
+    }
+  }
 }
