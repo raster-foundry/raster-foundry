@@ -148,7 +148,7 @@ object Dao {
     }
 
     def exists(id: UUID): ConnectionIO[Boolean] = {
-      (fr"SELECT 1 FROM" ++ tableF ++ fr"WHERE id = ${id}").query[Int].list.map(!_.isEmpty)
+      list(0, 1).map(!_.isEmpty)
     }
   }
 }
