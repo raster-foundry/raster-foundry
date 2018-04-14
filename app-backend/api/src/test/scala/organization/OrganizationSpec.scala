@@ -46,19 +46,7 @@ class OrganizationSpec extends WordSpec
         responseAs[PaginatedResponse[Organization]]
       }
     }
-    "require authorization for creation of new organizations" in {
-      val newOrg = Organization.Create("Test Organization")
-      Post("/api/organizations")
-        .withHeadersAndEntity(
-        List(authHeader),
-        HttpEntity(
-          ContentTypes.`application/json`,
-          newOrg.asJson.noSpaces
-        )
-      ) ~> baseRoutes ~> check {
-        rejection
-      }
-    }
+    // @TODO: add checks for project creation authorization     
   }
 
   "/api/organizations/{uuid}" should {

@@ -22,12 +22,12 @@ object OrganizationDao extends Dao[Organization] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, name
+      id, created_at, modified_at, name, platform_id
     FROM
   """ ++ tableF
 
   def create(
-    name: String
+    org: Organization
   ): ConnectionIO[Organization] = {
     val id = UUID.randomUUID()
     val now = new Timestamp((new java.util.Date()).getTime())
@@ -46,26 +46,22 @@ object OrganizationDao extends Dao[Organization] {
     val now = new Timestamp((new java.util.Date()).getTime())
 
     (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, modified_at, name)
-      VALUES
-        (${id}, ${now}, ${now}, ${newOrg.name})
+          (id, created_at, modified_at, name, platform_id)
+        VALUES
+          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId})
     """).update.withUniqueGeneratedKeys[Organization](
-      "id", "created_at", "modified_at", "name"
+      "id", "created_at", "modified_at", "name", "platform_id"
     )
   }
 
-  def updateOrganization(org: Organization, id: UUID): ConnectionIO[Int] = {
+  def update(org: Organization, id: UUID): ConnectionIO[Int] = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
-    val idFilter = fr"id = ${id}"
 
-    (sql"""
-       UPDATE organizations
-       SET
+    (fr"UPDATE" ++ tableF ++ fr"""SET
          modified_at = ${updateTime},
          name = ${org.name}
        WHERE id = ${id}
      """).update.run
   }
-
 }
 

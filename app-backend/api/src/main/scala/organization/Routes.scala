@@ -21,10 +21,6 @@ import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
-/**
-  * Routes for Organizations
-  */
 trait OrganizationRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
@@ -47,38 +43,35 @@ trait OrganizationRoutes extends Authentication
 
   def listOrganizations: Route = authenticate { user =>
     withPagination { page =>
-      if (user.isInRootOrganization) {
-        complete(OrganizationDao.query.page(page).transact(xa).unsafeToFuture)
-      } else {
-        complete(OrganizationDao.query.filter(List(user.organizationId)).page(page).transact(xa).unsafeToFuture())
+      complete {
+        OrganizationDao.query.page(page).transact(xa).unsafeToFuture
       }
     }
   }
 
   def createOrganization: Route = authenticateRootMember { root =>
-    entity(as[Organization.Create]) { newOrg =>
-      onSuccess(OrganizationDao.createOrganization(newOrg).transact(xa).unsafeToFuture()) { org =>
-        complete(StatusCodes.Created, org)
+    entity(as[Organization.Create]) { orgToCreate =>
+      completeOrFail {
+        OrganizationDao.create(orgToCreate.toOrganization).transact(xa).unsafeToFuture()
       }
     }
   }
 
   def getOrganization(orgId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      if (user.isInRootOrSameOrganizationAs(new { val organizationId = orgId })) {
-        complete(OrganizationDao.getOrganizationById(orgId).transact(xa).unsafeToFuture())
-      } else {
-        complete(StatusCodes.NotFound)
+      complete {
+        OrganizationDao.query.filter(orgId).selectOption.transact(xa).unsafeToFuture()
       }
     }
   }
 
   def updateOrganization(orgId: UUID): Route = authenticateRootMember { root =>
-    entity(as[Organization]) { updatedOrg =>
-      onSuccess(OrganizationDao.updateOrganization(updatedOrg, orgId).transact(xa).unsafeToFuture()) {
-        completeSingleOrNotFound
+    entity(as[Organization]) { orgToUpdate =>
+      completeWithOneOrFail {
+        OrganizationDao.update(orgToUpdate, orgId).transact(xa).unsafeToFuture()
       }
     }
   }
 
+  // @TODO: There is no delete functionality as we most likely will want to instead deactivate platforms
 }
