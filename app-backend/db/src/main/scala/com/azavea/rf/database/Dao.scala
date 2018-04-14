@@ -146,6 +146,10 @@ object Dao {
         .getOrElse(throw new Exception("Unsafe delete - delete requires filters"))
         .run
     }
+
+    def exists(id: UUID): ConnectionIO[Boolean] = {
+      list(0, 1).map(!_.isEmpty)
+    }
   }
 }
 
