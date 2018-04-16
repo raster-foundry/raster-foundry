@@ -30,6 +30,16 @@ object AnnotationDao extends Dao[Annotation] {
       FROM
     """ ++ tableF
 
+  def unsafeGetAnnotationById(annotationId: UUID, user: User): ConnectionIO[Annotation] = {
+    query.filter(annotationId).ownerFilter(user).select
+  }
+
+  def listAnnotationsForProject(projectId: UUID, user: User): ConnectionIO[List[Annotation]] = {
+    (selectF ++ Fragments.whereAndOpt(fr"project_id = ${projectId}".some, query.ownerFilterF(user)))
+      .query[Annotation]
+      .stream.compile.toList
+  }
+
   def insertAnnotations(
     annotations: List[Annotation.Create],
     projectId: UUID,

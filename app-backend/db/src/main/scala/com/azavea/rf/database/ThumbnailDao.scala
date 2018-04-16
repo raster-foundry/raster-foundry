@@ -21,7 +21,13 @@ object ThumbnailDao extends Dao[Thumbnail] {
     FROM
   """ ++ tableF
 
-  def insertMany(thumbnails: Seq[Thumbnail]): ConnectionIO[Int] = {
+  def unsafeGetThumbnailById(thumbnailId: UUID): ConnectionIO[Thumbnail] =
+    query.filter(thumbnailId).select
+
+  def getThumbnailById(thumbnailId: UUID): ConnectionIO[Option[Thumbnail]] =
+    query.filter(thumbnailId).selectOption
+
+  def insertMany(thumbnails: List[Thumbnail]): ConnectionIO[Int] = {
     val insertSql = """
       INSERT INTO thumbnails (
         id, created_at, modified_at, organization_id, width_px,

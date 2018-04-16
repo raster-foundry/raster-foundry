@@ -127,26 +127,26 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     }
   }
 
-  def getScene(sceneId: UUID, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
-    val ownerFragment = query.ownerFilterF(user)
-    val idFragment = fr"id = ${sceneId}".some
-    val scenesFragment = selectF ++ Fragments.whereAndOpt(ownerFragment, idFragment)
-    val scenesIO =
-      (selectF ++ Fragments.whereAndOpt(ownerFragment, idFragment))
-        .query[Scene]
-        .option
-    scenesIO flatMap { sceneOToSceneWithRelatedO }
+  def getSceneQ(sceneId: UUID, user: User) = {
+    (selectF ++ Fragments.whereAndOpt(fr"id = ${sceneId}".some, ownerEditFilter(user)))
+      .query[Scene]
   }
 
+  def getScene(sceneId: UUID, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
+    val scenesO: ConnectionIO[Option[Scene]] = getSceneQ(sceneId, user).option
+    scenesO map { _.toList } flatMap { scenesToScenesWithRelated(_) } map {
+      // guaranteed to be either 0 or 1 in the list based on .option above, so no need to worry
+      // about losing information from lists with length > 1
+      _.headOption
+    }
+  }
+
+  @SuppressWarnings(Array("TraversableHead"))
   def unsafeGetScene(sceneId: UUID, user: User): ConnectionIO[Scene.WithRelated] = {
-    val ownerFragment = query.ownerFilterF(user)
-    val idFragment = fr"id = ${sceneId}".some
-    val scenesFragment = selectF ++ Fragments.whereAndOpt(ownerFragment, idFragment)
-    val scenesIO =
-      (selectF ++ Fragments.whereAndOpt(ownerFragment, idFragment))
-        .query[Scene]
-        .unique
-    scenesIO flatMap { sceneToSceneWithRelated }
+    val sceneIO: ConnectionIO[Scene] = getSceneQ(sceneId, user).unique
+    // head is guaranteed to to succeed if the id is present, which is appropriate for a method marked
+    // unsafe
+    sceneIO flatMap { (scene: Scene) => scenesToScenesWithRelated(List(scene)) } map { _.head }
   }
 
   def getScenesToIngest(projectId: UUID): ConnectionIO[List[Scene.WithRelated]] = {

@@ -82,7 +82,7 @@ trait UserRoutes extends Authentication
 
   def updateOwnUser: Route = authenticate { user =>
     entity(as[User]) { updatedUser =>
-      onSuccess(UserDao.updateSelf(user, updatedUser).transact(xa).unsafeToFuture()) {
+      onSuccess(UserDao.storePlanetAccessToken(user, updatedUser).transact(xa).unsafeToFuture()) {
         completeSingleOrNotFound
       }
     }
@@ -124,7 +124,9 @@ trait UserRoutes extends Authentication
         dbxAuthRequest.redirectURI, session, queryParams
       )
       logger.debug("Auth finish from Dropbox successful")
-      complete(UserDao.storeDropboxAccessToken(user.id, authFinish.getAccessToken).transact(xa).unsafeToFuture())
+      complete(
+        UserDao.storeDropboxAccessToken(user.id, Credential.fromString(authFinish.getAccessToken)).transact(xa).unsafeToFuture()
+      )
     }
   }
 

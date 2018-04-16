@@ -15,23 +15,6 @@ import io.circe.syntax._
 
 class ExportDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
 
-  test("insertion") {
-    val testStatus = ExportStatus.NotExported
-
-    val transaction = for {
-      usr <- defaultUserQ
-      org <- rootOrgQ
-      proj <- changeDetectionProjQ
-      exportIn <- ExportDao.insert(
-        Export.Create(org.id, Some(proj.id), testStatus, ExportType.Dropbox, Visibility.Public, Some(usr.id), None, JsonObject.empty.asJson).toExport(usr), usr
-      )
-      exportOut <- ExportDao.query.filter(fr"id = ${exportIn.id}").selectQ.unique
-    } yield exportOut
-
-    val result = transaction.transact(xa).unsafeRunSync
-    result.exportStatus shouldBe testStatus
-  }
-
   test("types") { check(ExportDao.selectF.query[Export]) }
 }
 

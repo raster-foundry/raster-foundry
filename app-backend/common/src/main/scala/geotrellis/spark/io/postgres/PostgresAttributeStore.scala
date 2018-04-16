@@ -49,14 +49,14 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(im
 
   def read[T: JsonFormat](layerId: LayerId, attributeName: String): T = {
     logger.debug(s"read($layerId-$attributeName)")
-    Await.result(LayerAttributeDao.getAttribute(layerId, attributeName).transact(xa).unsafeToFuture
+    Await.result(LayerAttributeDao.unsafeGetAttribute(layerId, attributeName).transact(xa).unsafeToFuture
       .map(_.value.noSpaces.parseJson.convertTo[T]), awaitTimeout)
   }
 
   def readAll[T: JsonFormat](attributeName: String): Map[LayerId, T] = {
     logger.debug(s"readAll($attributeName)")
     Await.result(
-      LayerAttributeDao.getAllAttributes(attributeName).transact(xa).unsafeToFuture.map {
+      LayerAttributeDao.listAllAttributes(attributeName).transact(xa).unsafeToFuture.map {
         _.map { attribute =>
           attribute.layerId -> attribute.value.noSpaces.parseJson.convertTo[T]
         }.toMap
@@ -78,7 +78,7 @@ class PostgresAttributeStore(val attributeTable: String = "layer_attributes")(im
 
   def getHistogram[T: JsonFormat](layerId: LayerId): Future[Option[T]] = {
     logger.debug(s"getHistogram($layerId)")
-    LayerAttributeDao.getAttribute(layerId, "histogram").transact(xa).unsafeToFuture
+    LayerAttributeDao.unsafeGetAttribute(layerId, "histogram").transact(xa).unsafeToFuture
       .map { attribute =>
         Option(attribute.value.noSpaces.parseJson.convertTo[T])
       }

@@ -189,6 +189,26 @@ inside. It makes debugging hard as you try desperately to keep track of which ob
 you're in, fail anyway, then get confused about why the behavior of the code isn't
 changing.
 
+### How should I test my Dao?
+
+_Every_ method you include on your Dao should have a test if it includes a fragment.
+To test your Dao, make sure that there is an `Arbitrary` instance available for the case
+class your Dao's rows resolve to, then write a property test for what should happen if
+someone calls your Dao's methods. We want to do this to ensure that we've written valid
+sql everywhere, since the fragments themselves are just strings that have no checking
+done on them unless we explicitly ask. See the `UserDaoSpec` for examples of property
+tests, and see `Generators.scala` in the datamodel subproject for `Arbitrary` examples.
+
+### What's an unsafe method?
+
+Unsafe methods are methods that make strong assumptions about the state of the world and
+fail to handle exceptional conditions. For example, if a user is looking up an item by id,
+it's normally going to be the case that they didn't make the id up out of thin air, but
+sometimes, the id won't be present in the database anyway. For this reason, a safe
+`getFooById` should always return a `ConnectionIO[Option[Foo]]`, while if you want to
+return a `ConnectionIO[Foo]`, you should name your method `unsafeGetFooById` to make it
+clear to users that it can fail in an unhandled way.
+
 Migrations
 ---------
 

@@ -44,6 +44,12 @@ object SceneDao extends Dao[Scene] {
     FROM
   """ ++ tableF
 
+  def getSceneById(id: UUID, user: User): ConnectionIO[Option[Scene]] =
+    query.filter(id).ownerFilter(user).selectOption
+
+  def unsafeGetSceneById(id: UUID, user: User): ConnectionIO[Scene] =
+    query.filter(id).ownerFilter(user).select
+
   def insert(sceneCreate: Scene.Create, user: User): ConnectionIO[Scene.WithRelated] = {
     val scene = sceneCreate.toScene(user)
     val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id))
@@ -52,15 +58,14 @@ object SceneDao extends Dao[Scene] {
       sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
     }
 
-    val sceneInsert = (Fragment.const(s"""
-      INSERT INTO ${tableName} (
+    val sceneInsertId = (fr"INSERT INTO" ++ tableF ++ fr"""(
          id, created_at, created_by, modified_at, modified_by, owner,
          organization_id, ingest_size_bytes, visibility, tags,
          datasource, scene_metadata, name, tile_footprint,
          data_footprint, metadata_files, ingest_location, cloud_cover,
          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
          boundary_status, ingest_status
-      )""") ++ fr"""VALUES (
+      )""" ++ fr"""VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
         ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
         ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
@@ -76,14 +81,13 @@ object SceneDao extends Dao[Scene] {
     val sceneWithRelatedquery = SceneWithRelatedDao.query.filter(scene.id).select
 
     for {
-      sceneId <- sceneInsert
+      sceneId <- sceneInsertId
       _ <- thumbnailInsert
       _ <- imageInsert
       _ <- bandInsert
+      // It's fine to do this unsafely, since we know we the prior insert succeeded
       sceneWithRelated <- SceneWithRelatedDao.unsafeGetScene(sceneId, user)
-    } yield {
-      sceneWithRelated
-    }
+    } yield sceneWithRelated
   }
 
   def insertMaybe(sceneCreate: Scene.Create, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
@@ -146,6 +150,9 @@ object SceneDao extends Dao[Scene] {
       datasource = ${scene.datasource},
       scene_metadata = ${scene.sceneMetadata},
       name = ${scene.name},
+      data_footprint = ${scene.dataFootprint},
+      tile_footprint = ${scene.tileFootprint},
+      ingest_location = ${scene.ingestLocation},
       cloud_cover = ${scene.filterFields.cloudCover},
       acquisition_date = ${scene.filterFields.acquisitionDate},
       sun_azimuth = ${scene.filterFields.sunAzimuth},

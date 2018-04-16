@@ -24,6 +24,7 @@ object ImageDao extends Dao[Image] {
       id, created_at, modified_at, organization_id, created_by, modified_by,
       owner, raw_data_bytes, visibility, filename, sourceuri, scene,
       image_metadata, resolution_meters, metadata_files FROM """ ++ tableF 
+
   def create(
     image: Image,
     user: User
@@ -78,7 +79,7 @@ object ImageDao extends Dao[Image] {
         fr"""
           modified_at = ${now},
           modified_by = ${user.id},
-          rawDataBytes = ${image.rawDataBytes},
+          raw_data_bytes = ${image.rawDataBytes},
           visibility = ${image.visibility},
           filename = ${image.filename},
           sourceuri = ${image.sourceUri},
@@ -86,8 +87,7 @@ object ImageDao extends Dao[Image] {
           image_metadata = ${image.imageMetadata},
           resolution_meters = ${image.resolutionMeters},
           metadata_files = ${image.metadataFiles}
-          where id = ${id} AND owner = ${user.id}
-      """
+      """ ++ Fragments.whereAndOpt(query.ownerFilterF(user), fr"id = ${id}".some)
     updateQuery.update.run
   }
 
@@ -98,7 +98,12 @@ object ImageDao extends Dao[Image] {
 
   // get image
   def getImage(id: UUID, user: User): ConnectionIO[Option[Image]] = {
-    this.query.filter(fr"owner = ${user.id} OR owner = 'default'").selectOption
+    this.query.filter(id).ownerFilter(user).selectOption
+  }
+
+  // get an image assuming it's present
+  def unsafeGetImage(id: UUID, user: User): ConnectionIO[Image] = {
+    this.query.filter(id).ownerFilter(user).select
   }
 }
 

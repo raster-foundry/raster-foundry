@@ -148,7 +148,7 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
 )
 
 lazy val root = Project("root", file("."))
-  .aggregate(api, common, migrations, datamodel, batch, tile, tool, bridge)
+  .aggregate(api, db, common, migrations, datamodel, batch, tile, tool, bridge)
   .settings(commonSettings:_*)
 
 lazy val api = Project("api", file("api"))
@@ -181,7 +181,7 @@ lazy val common = Project("common", file("common"))
   )})
 
 lazy val db = Project("db", file("db"))
-  .dependsOn(datamodel)
+  .dependsOn(datamodel % "compile->compile;test->test")
   .settings(commonSettings:_*)
   .settings({
      libraryDependencies ++= dbDependencies ++ loggingDependencies ++ Seq(
@@ -213,6 +213,7 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
       Dependencies.geotrellisSlick % "provided",
+      Dependencies.geotrellisVectorTestkit,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisGeotools,
       Dependencies.geotools,
@@ -220,7 +221,10 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
       Dependencies.circeGenericExtras,
       Dependencies.akka,
       Dependencies.akkahttp,
-      Dependencies.betterFiles
+      Dependencies.betterFiles,
+      Dependencies.scalaCheck,
+      Dependencies.circeTest,
+      "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15" % "test",
     )
   })
 

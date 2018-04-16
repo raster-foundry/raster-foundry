@@ -3,7 +3,7 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{User, UserRole}
+import com.azavea.rf.datamodel.{User, UserRole, Credential}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -28,13 +28,17 @@ object UserDao extends Dao[User] {
     FROM
   """ ++ tableF
 
+  def unsafeGetUserById(id: String): ConnectionIO[User] = {
+    query.filter(fr"id = ${id}").select
+  }
+
   def getUserById(id: String): ConnectionIO[Option[User]] = {
     query.filter(fr"id = ${id}").selectOption
   }
 
   def createUserWithAuthId(id: String): ConnectionIO[User] = {
     for {
-      org <- OrganizationDao.query.filter(fr"name = 'PUBLIC'").select
+      org <- OrganizationDao.query.filter(fr"name = 'Public'").select
       user <- {
         val newUser = User.Create(id, org.id)
         create(newUser)
@@ -43,7 +47,7 @@ object UserDao extends Dao[User] {
   }
 
   /* Limited update to just modifying planet credential -- users can't change their permissions*/
-  def updateSelf(user: User, updatedUser: User): ConnectionIO[Int] = {
+  def storePlanetAccessToken(user: User, updatedUser: User): ConnectionIO[Int] = {
     val cleanUpdateUser = user.copy(planetCredential = updatedUser.planetCredential)
     updateUser(cleanUpdateUser, user.id)
   }
@@ -58,15 +62,17 @@ object UserDao extends Dao[User] {
        SET
          organization_id = ${user.organizationId},
          modified_at = ${updateTime},
-         modified_by = ${userId},
-         dropbox_credential = ${user.dropboxCredential},
-         planet_credential = ${user.planetCredential},
+         dropbox_credential = ${user.dropboxCredential.token.getOrElse("")},
+         planet_credential = ${user.planetCredential.token.getOrElse("")},
          email_notifications = ${user.emailNotifications}
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
-  def storeDropboxAccessToken(userId: String, accessToken: String): ConnectionIO[Int] = {
-    sql"UPDATE users SET dropbox_credential = ${accessToken} WHERE id = ${userId}".update.run
+  def storeDropboxAccessToken(userId: String, accessToken: Credential): ConnectionIO[Int] = {
+    sql"""UPDATE users
+          SET dropbox_credential = ${accessToken}
+          WHERE id = ${userId}
+    """.update.run
   }
 
   def create(newUser: User.Create): ConnectionIO[User] = {
