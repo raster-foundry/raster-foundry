@@ -140,23 +140,12 @@ case class AoiQueryParameters(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters()
 )
 
-/** Query parameters specific to tools */
-@JsonCodec
-case class ToolQueryParameters(
-  minRating: Option[Double] = None,
-  maxRating: Option[Double] = None,
-  toolCategory: Iterable[String] = Seq[String](),
-  toolTag: Iterable[String] = Seq[String](),
-  search: Option[String] = None
-)
-
 /** Combined tool query parameters */
 @JsonCodec
 case class CombinedToolQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-  toolParams: ToolQueryParameters = ToolQueryParameters(),
   searchParams: SearchQueryParameters = SearchQueryParameters()
 )
 

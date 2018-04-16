@@ -65,6 +65,4 @@ object Filters {
       })
     )
   }
-
-
 }

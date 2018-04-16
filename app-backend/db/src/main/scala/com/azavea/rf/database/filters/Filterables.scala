@@ -63,11 +63,11 @@ trait Filterables extends RFMeta {
       Filters.searchQP(projectParams.searchParams, List("name"))
   }
 
-  implicit val CombinedToolQueryParametersFilter = Filterable[Any, CombinedToolQueryParameters] { projectParams: CombinedToolQueryParameters =>
-    Filters.organizationQP(projectParams.orgParams) ++
-      Filters.timestampQP(projectParams.timestampParams) ++
-      Filters.userQP(projectParams.userParams) ++
-      Filters.searchQP(projectParams.searchParams, List("title", "description"))
+  implicit val CombinedToolQueryParametersFilter = Filterable[Any, CombinedToolQueryParameters] { toolParams: CombinedToolQueryParameters =>
+    Filters.organizationQP(toolParams.orgParams) ++
+      Filters.timestampQP(toolParams.timestampParams) ++
+      Filters.userQP(toolParams.userParams) ++
+      Filters.searchQP(toolParams.searchParams, List("title", "description"))
   }
 
   implicit val annotationQueryparamsFilter = Filterable[Any, AnnotationQueryParameters] { annotParams: AnnotationQueryParameters =>
