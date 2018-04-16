@@ -17,7 +17,6 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 
 import java.util.UUID
 
-// TODO: query for a single scene is bad here for some reason, fix it
 object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   val tableName = "scenes"
 
@@ -136,7 +135,8 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   def getScene(sceneId: UUID, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
     val scenesO: ConnectionIO[Option[Scene]] = getSceneQ(sceneId, user).option
     scenesO map { _.toList } flatMap { scenesToScenesWithRelated(_) } map {
-      // guaranteed to be either 0 or 1 in the list based on .option above
+      // guaranteed to be either 0 or 1 in the list based on .option above, so no need to worry
+      // about losing information from lists with length > 1
       _.headOption
     }
   }
