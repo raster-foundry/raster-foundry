@@ -28,39 +28,24 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       FROM
     """ ++ tableF
 
-  def getAttribute(layerId: LayerId, attributeName: String)(implicit xa: Transactor[IO]): ConnectionIO[LayerAttribute] = {
-    {
-      selectF ++ fr"""
-      WHERE
-        layer_name = ${layerId.name} AND
-        zoom = ${layerId.zoom} AND
-        name = ${attributeName}"""
-    }
-      .query[LayerAttribute]
-      .unique
+  def unsafeGetAttribute(layerId: LayerId, attributeName: String)(implicit xa: Transactor[IO]): ConnectionIO[LayerAttribute] = {
+    query
+      .filter(fr"name = ${attributeName}")
+      .filter(fr"zoom = ${layerId.zoom}")
+      .filter(fr"layer_name = ${layerId.name}")
+      .select
   }
 
-  def getAttributeOption(layerId: LayerId, attributeName: String)(implicit xa: Transactor[IO]): ConnectionIO[Option[LayerAttribute]] = {
-    {
-      selectF ++ fr"""
-      WHERE
-        layer_name = ${layerId.name} AND
-        zoom = ${layerId.zoom} AND
-        name = ${attributeName}"""
-    }
-      .query[LayerAttribute]
-      .option
+  def getAttribute(layerId: LayerId, attributeName: String)(implicit xa: Transactor[IO]): ConnectionIO[Option[LayerAttribute]] = {
+    query
+      .filter(fr"name = ${attributeName}")
+      .filter(fr"zoom = ${layerId.zoom}")
+      .filter(fr"layer_name = ${layerId.name}")
+      .selectOption
   }
 
-  def getAllAttributes(attributeName: String)(implicit xa: Transactor[IO]): ConnectionIO[List[LayerAttribute]] = {
-    {
-      selectF ++ fr"""
-        WHERE
-          name = ${attributeName}
-      """
-    }
-      .query[LayerAttribute]
-      .list
+  def listAllAttributes(attributeName: String)(implicit xa: Transactor[IO]): ConnectionIO[List[LayerAttribute]] = {
+    query.filter(fr"name = ${attributeName}").list
   }
 
   def insertLayerAttribute(layerAttribute: LayerAttribute)(implicit xa: Transactor[IO]): ConnectionIO[Int] = {
