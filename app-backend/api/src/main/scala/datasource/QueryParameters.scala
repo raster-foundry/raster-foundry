@@ -9,7 +9,7 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.queryparams._
 
 trait DatasourceQueryParameterDirective extends QueryParametersCommon {
-  val datasourceQueryParams = parameters((
-    'name.as[String].?
-  )).as(DatasourceQueryParameters.apply _)
+  def datasourceQueryParams = (
+    searchParams
+  ).as(DatasourceQueryParameters.apply _)
 }

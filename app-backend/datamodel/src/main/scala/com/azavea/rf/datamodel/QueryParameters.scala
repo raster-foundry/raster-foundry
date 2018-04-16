@@ -129,7 +129,8 @@ case class CombinedGridQueryParams(
 case class ProjectQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
-  timestampParams: TimestampQueryParameters = TimestampQueryParameters()
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+  searchParams: SearchQueryParameters = SearchQueryParameters()
 )
 
 @JsonCodec
@@ -139,23 +140,13 @@ case class AoiQueryParameters(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters()
 )
 
-/** Query parameters specific to tools */
-@JsonCodec
-case class ToolQueryParameters(
-  minRating: Option[Double] = None,
-  maxRating: Option[Double] = None,
-  toolCategory: Iterable[String] = Seq[String](),
-  toolTag: Iterable[String] = Seq[String](),
-  search: Option[String] = None
-)
-
 /** Combined tool query parameters */
 @JsonCodec
 case class CombinedToolQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-  toolParams: ToolQueryParameters = ToolQueryParameters()
+  searchParams: SearchQueryParameters = SearchQueryParameters()
 )
 
 @JsonCodec
@@ -221,7 +212,7 @@ case class CombinedToolCategoryQueryParams(
 
 @JsonCodec
 case class DatasourceQueryParameters(
-  name: Option[String] = None
+  searchParams: SearchQueryParameters = SearchQueryParameters()
 )
 
 @JsonCodec
@@ -278,4 +269,9 @@ case class ShapeQueryParameters(
 @JsonCodec
 case class FeedQueryParameters(
   source: Option[String] = None
+)
+
+@JsonCodec
+case class SearchQueryParameters(
+  search: Option[String] = None
 )

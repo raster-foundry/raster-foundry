@@ -27,6 +27,7 @@ import doobie.postgres.implicits._
 
 
 trait ToolRoutes extends Authentication
+    with ToolQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
     with KamonTraceDirectives
@@ -94,9 +95,9 @@ trait ToolRoutes extends Authentication
   }
 
   def listTools: Route = authenticate { user =>
-    (withPagination) { (page) =>
+    (withPagination & combinedToolQueryParams) { (page, combinedToolQueryParameters) =>
       complete {
-        ToolDao.query.ownerFilter(user).page(page).transact(xa).unsafeToFuture
+        ToolDao.query.filter(combinedToolQueryParameters).ownerFilter(user).page(page).transact(xa).unsafeToFuture
       }
     }
   }

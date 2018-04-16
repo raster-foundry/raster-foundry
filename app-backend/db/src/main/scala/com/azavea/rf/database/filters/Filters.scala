@@ -52,5 +52,17 @@ object Filters {
       thumbnailParams.sceneId.map(sceneId => fr"scene_id = ${sceneId}")
     )
   }
-}
 
+  def searchQP(searchParams: SearchQueryParameters, cols: List[String]): List[Option[Fragment]] = {
+    List(
+      searchParams.search.map(valueToMatch => {
+        Fragment.const(
+          cols.map(col => {
+            val namePattern: String = "'%" + valueToMatch.toUpperCase() + "%'"
+            s"UPPER($col) LIKE $namePattern"
+          }).mkString(" OR ")
+        )
+      })
+    )
+  }
+}
