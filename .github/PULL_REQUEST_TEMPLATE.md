@@ -8,6 +8,7 @@ Brief description of what this PR does, and why it is needed.
 - [ ] [Swagger specification](https://github.com/raster-foundry/raster-foundry-api-spec) updated
 - [ ] Symlinks from new migrations present or corrected for any new migrations
 - [ ] PR has a name that won't get you publicly shamed for vagueness
+- [ ] Any content changes are properly templated using `BUILDCONFIG.APP_NAME`
 
 ### Demo
 
