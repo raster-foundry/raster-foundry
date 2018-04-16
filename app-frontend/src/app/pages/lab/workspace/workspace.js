@@ -1,9 +1,8 @@
 /* global L */
-import _ from 'lodash';
 import { FrameView } from '../../../components/map/labMap/frame.module.js';
-// import AnalysisActions from '_redux/actions/analysis-actions';
 import WorkspaceActions from '_redux/actions/workspace-actions';
 import NodeActions from '_redux/actions/node-actions';
+import NodeUtils from '_redux/node-utils';
 
 class LabWorkspaceController {
     constructor(
@@ -14,6 +13,7 @@ class LabWorkspaceController {
     ) {
         'ngInject';
         this.$scope = $scope;
+
         this.$rootScope = $rootScope;
         this.$state = $state;
         this.$timeout = $timeout;
@@ -45,7 +45,10 @@ class LabWorkspaceController {
             nodes: state.lab.nodes,
             previewNodes: state.lab.previewNodes,
             user: state.api.user,
-            createNode: state.lab.createNode
+            createNode: state.lab.createNode,
+            linksByTarget: state.lab.linksByTarget,
+            linksBySource: state.lab.linksBySource,
+            analysisRoots: state.lab.analysisRoots
         };
     }
 
@@ -79,10 +82,11 @@ class LabWorkspaceController {
 
     initWorkspace() {
         let workspace = this.$state.params.workspace;
+        this.setDisplayOptions({readonly: false, controls: true});
         if (this.workspaceId && !workspace) {
             this.fetchWorkspace(this.workspaceId);
         } else if (workspace) {
-            this.loadWorkspace(workspace, {readonly: false, controls: true});
+            this.setWorkspace(workspace);
             if (!workspace.analyses.length) {
                 this.startCreatingNode();
             }
@@ -248,7 +252,6 @@ class LabWorkspaceController {
             // eslint-disable-next-line max-len
             const nodeId = node.id ? node.id : node;
             const labNode = this.nodes.get(nodeId);
-            const analysisId = labNode.analysisId;
             if (labNode.type === 'projectSrc') {
                 return this.projectService.getProjectLayerURL({
                     id: labNode.projId
@@ -256,6 +259,8 @@ class LabWorkspaceController {
                     token: token
                 });
             }
+            const rootIds = NodeUtils.getNodeRoots(this.linksBySource, nodeId);
+            let analysisId = this.analysisRoots.findKey((rootId) => rootIds.has(rootId));
             return `${this.tileServer}/analysis/${analysisId}/{z}/{x}/{y}` +
                     `?token=${token}&node=${nodeId}&tag=${new Date().getTime()}`;
         }
@@ -371,14 +376,33 @@ class LabWorkspaceController {
                     if (!this.alreadyPreviewed) {
                         this.alreadyPreviewed = true;
                         this.$timeout(() => {
-                            const analysisId = this.nodes.get(this.previewData).analysisId;
-                            let s = this.analysisService.generateSourcesFromAST(
-                                _.find(this.workspace.analyses, (a) => a.id === analysisId)
+                            let nodeId = this.previewData.constructor === Array ?
+                                this.previewData[0] : this.previewData;
+                            let leafNodeId = NodeUtils.getNodeLeafs(
+                                this.linksByTarget, nodeId
+                            ).find(
+                                (leafId) => this.nodes.get(leafId).projId
                             );
-                            let firstSourceId = Object.keys(s)[0];
-                            this.projectService.fetchProject(s[firstSourceId].projId).then(p => {
-                                this.fitProjectExtent(p);
-                            });
+                            let leafProjectId = this.nodes.get(leafNodeId).projId;
+
+                            if (leafProjectId) {
+                                this.projectService.fetchProject(leafProjectId).then(p => {
+                                    this.fitProjectExtent(p);
+                                });
+                            } else {
+                                throw new Error(
+                                    `Unable to find project for previewed node with id: ${nodeId}`
+                                );
+                            }
+
+                            // const analysisId = this.nodes.get(this.previewData).analysisId;
+                            // let s = this.analysisService.generateSourcesFromAST(
+                            //     _.find(this.workspace.analyses, (a) => a.id === analysisId)
+                            // );
+                            // let firstSourceId = Object.keys(s)[0];
+                            // this.projectService.fetchProject(s[firstSourceId].projId).then(p => {
+                            //     this.fitProjectExtent(p);
+                            // });
                         });
                     }
                 });

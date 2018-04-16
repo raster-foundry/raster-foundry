@@ -3,7 +3,7 @@ import angular from 'angular';
 import diagramNodeHeaderTpl from './diagramNodeHeader.html';
 import AnalysisActions from '_redux/actions/analysis-actions';
 import NodeActions from '_redux/actions/node-actions';
-import { getNodeDefinition } from '_redux/node-utils';
+import NodeUtils from '_redux/node-utils';
 
 const DiagramNodeHeaderComponent = {
     templateUrl: diagramNodeHeaderTpl,
@@ -32,7 +32,7 @@ class DiagramNodeHeaderController {
             readonly: state.lab.readonly,
             previewNodes: state.lab.previewNodes,
             errors: state.lab.errors,
-            node: getNodeDefinition(state, this),
+            node: NodeUtils.getNodeDefinition(state, this),
             linkNode: state.lab.linkNode
         };
     }
@@ -79,7 +79,7 @@ class DiagramNodeHeaderController {
     finishNodelabelEdit() {
         if (this.nameBuffer) {
             this.node = Object.assign(this.node, {metadata: {label: this.nameBuffer}});
-            this.updateNode({ payload: this.node, hard: true});
+            this.updateNode(this.node);
             this.isEditingNodeLabel = !this.isEditingNodeLabel;
         }
     }

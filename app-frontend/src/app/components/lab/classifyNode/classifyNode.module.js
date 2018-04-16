@@ -1,7 +1,7 @@
 import angular from 'angular';
 import classifyNodeTpl from './classifyNode.html';
 
-import { getNodeDefinition} from '_redux/node-utils';
+import NodeUtils from '_redux/node-utils';
 import NodeActions from '_redux/actions/node-actions';
 
 const ClassifyNodeComponent = {
@@ -30,7 +30,7 @@ class ClassifyNodeController {
     }
 
     mapStateToThis(state) {
-        const node = getNodeDefinition(state, this);
+        const node = NodeUtils.getNodeDefinition(state, this);
         let breaks;
         try {
             breaks = this.classmapToBreaks(node.classMap.classifications);
@@ -95,14 +95,11 @@ class ClassifyNodeController {
 
         modal.result.then(breaks => {
             const classmap = this.breaksToClassmap(breaks);
-            this.updateNode({
-                payload: Object.assign({}, this.node, {
-                    classMap: {
-                        classifications: classmap
-                    }
-                }),
-                hard: true
-            });
+            this.updateNode(Object.assign({}, this.node, {
+                classMap: {
+                    classifications: classmap
+                }
+            }));
         });
     }
 }

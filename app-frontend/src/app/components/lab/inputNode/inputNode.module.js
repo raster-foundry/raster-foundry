@@ -5,7 +5,7 @@ import angular from 'angular';
 import inputNodeTpl from './inputNode.html';
 import WorkspaceActions from '_redux/actions/workspace-actions';
 import NodeActions from '_redux/actions/node-actions';
-import { getNodeDefinition } from '_redux/node-utils';
+import NodeUtils from '_redux/node-utils';
 import { Set } from 'immutable';
 
 const InputNodeComponent = {
@@ -33,8 +33,10 @@ class InputNodeController {
             Object.assign({}, WorkspaceActions, NodeActions)
         )(this);
         $scope.$on('$destroy', unsubscribe);
+    }
 
-        $scope.$watch('$ctrl.node', (node, oldNode) => {
+    $postLink() {
+        this.$scope.$watch('$ctrl.node', (node, oldNode) => {
             let inputsEqual = node && oldNode && (
                 (a, b) => a.projId === b.projId && a.band === b.band
             )(node, oldNode);
@@ -45,23 +47,20 @@ class InputNodeController {
     }
 
     mapStateToThis(state) {
+        let node = state.lab.nodes.get(this.nodeId);
         return {
             workspace: state.lab.workspace,
             previewNodes: state.lab.previewNodes,
             errors: state.lab.errors,
-            node: getNodeDefinition(state, this)
+            node
         };
     }
 
     processUpdates() {
         if (this.node) {
             this.initialized = true;
-            if (
-                this.node.projId &&
-                !this.selectedProject ||
-                this.selectedProject &&
-                this.node.projId !== this.selectedProject.id
-            ) {
+            let selectedProjectId = _.get(this, 'selectedProject.id');
+            if (this.node.projId !== selectedProjectId) {
                 this.projectService.fetchProject(this.node.projId).then(p => {
                     this.selectedProject = p;
                     this.fetchDatasources(p.id);
@@ -140,37 +139,25 @@ class InputNodeController {
                 }
             }).result.then(project => {
                 this.checkValidity();
-                this.updateNode({
-                    payload: Object.assign({}, this.node, {
-                        projId: project.id
-                    }),
-                    hard: !this.errors.size
-                });
+                this.updateNode(Object.assign({}, this.node, {
+                    projId: project.id
+                }));
             });
     }
 
     onBandChange(index) {
         this.selectedBand = index;
         this.checkValidity();
-        this.updateNode({
-            payload: Object.assign({}, this.node, {
-                band: index
-            }),
-            hard: !this.errors.size
-        });
+        this.updateNode(Object.assign({}, this.node, {
+            band: index
+        }));
     }
 
     removeBand() {
-        const payload = Object.assign({}, this.node);
-
-        delete payload.band;
         delete this.selectedBand;
 
         this.checkValidity();
-        this.updateNode({
-            payload,
-            hard: !this.errors.size
-        });
+        this.updateNode(_.omit(this.node, ['band']));
     }
 
     allInputsDefined() {

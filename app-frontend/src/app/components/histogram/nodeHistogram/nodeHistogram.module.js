@@ -5,7 +5,7 @@ import {Map} from 'immutable';
 import nodeHistogramTpl from './nodeHistogram.html';
 import WorkspaceActions from '_redux/actions/workspace-actions';
 import HistogramActions from '_redux/actions/histogram-actions';
-import { getNodeDefinition, getNodeHistogram } from '_redux/node-utils';
+import NodeUtils from '_redux/node-utils';
 import {
     breakpointsFromRenderDefinition, renderDefinitionFromState, colorStopsToRange
 } from '_redux/histogram-utils';
@@ -56,7 +56,7 @@ class NodeHistogramController {
 
     mapStateToThis(state) {
         const workspace = state.lab.analysis;
-        const node = getNodeDefinition(state, this);
+        const node = NodeUtils.getNodeDefinition(state, this);
         const lastAnalysisRefresh = state.lab.analysisRefreshes.get(node.analysisId);
         const nodeMetadata = node && node.metadata;
         const renderDefinition = nodeMetadata && nodeMetadata.renderDefinition;
@@ -70,7 +70,7 @@ class NodeHistogramController {
             histogramOptions,
             renderDefinition,
             lastAnalysisRefresh,
-            histogram: getNodeHistogram(state, this),
+            histogram: NodeUtils.getNodeHistogram(state, this),
             isSource
         };
     }

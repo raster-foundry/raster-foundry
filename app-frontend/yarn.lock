@@ -3655,13 +3655,19 @@ imagemin-pngquant@~4.2.0:
     pngquant-bin "^3.0.0"
     through2 "^2.0.0"
 
+immutable@^3.2.1, immutable@^3.8.2:
+  version "3.8.2"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-3.8.2.tgz#c2439951455bb39913daf281376f1530e104adf3"
+
 immutable@^3.7.3:
   version "3.8.1"
   resolved "https://registry.yarnpkg.com/immutable/-/immutable-3.8.1.tgz#200807f11ab0f72710ea485542de088075f68cd2"
 
-immutable@^3.8.2:
-  version "3.8.2"
-  resolved "https://registry.yarnpkg.com/immutable/-/immutable-3.8.2.tgz#c2439951455bb39913daf281376f1530e104adf3"
+immutablediff@0.4.4:
+  version "0.4.4"
+  resolved "https://registry.yarnpkg.com/immutablediff/-/immutablediff-0.4.4.tgz#a010e6948f700fe12436433f36c6e2ad86972ab1"
+  dependencies:
+    immutable "^3.2.1"
 
 imurmurhash@^0.1.4:
   version "0.1.4"

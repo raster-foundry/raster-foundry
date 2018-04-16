@@ -71,7 +71,9 @@
     ></span>
   </div>
 </div>
-<div class="node-link" ng-show="!$ctrl.linkNode">
+<div class="node-link"
+     ng-show="!$ctrl.linkNode"
+     ng-if="!$ctrl.readonly">
   <button class="btn btn-icon invert-green"
           title="Link to the input of another node"
           ng-click="$ctrl.startLinkingNodes($ctrl.nodeId)">

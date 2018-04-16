@@ -1,4 +1,6 @@
+/* globals console */
 import _ from 'lodash';
+import {Promise} from 'es6-promise';
 import { Map } from 'immutable';
 
 import {authedRequest} from '_api/authentication';
@@ -6,19 +8,16 @@ import {authedRequest} from '_api/authentication';
 export const NODE_PREVIEWS = 'NODE_PREVIEWS';
 export const NODE_SET_ERROR = 'NODE_SET_ERROR';
 export const NODE_SET = 'NODE_SET';
-// does not affect rendering
-export const NODE_UPDATE_SOFT = 'NODE_UPDATE_SOFT';
-// force re-render of previews
-export const NODE_UPDATE_HARD = 'NODE_UPDATE_HARD';
+export const NODE_LINKS_SET = 'NODE_LINKS_SET';
+export const NODE_UPDATE = 'NODE_UPDATE';
 
 export const NODE_CREATE = 'NODE_CREATE';
 
 export const NODE_LINK = 'NODE_LINK';
 
-
 export const NODE_ACTION_PREFIX = 'NODE';
 
-import { astFromNodes, astFromRootNode, nodesFromAnalysis, nodeIsChildOf } from '../node-utils';
+import NodeUtils from '../node-utils';
 
 // Node ActionCreators
 
@@ -62,35 +61,41 @@ export function setNodeError({nodeId, error}) {
     };
 }
 
-export function updateNode({payload, hard = false}) {
+export function updateNode(updatedNode) {
     // TODO handle multiple updates close to each other better
     //      currently histograms do not reflect reality if you
     //      update a second time before the histogram finished fetching.
     //      maybe store initial request times and compare that way, instead of
     //      finish times
     return (dispatch, getState) => {
-        let state = getState();
-        let labState = getState().lab;
-        let promise;
-        let updatedNode = payload;
-        // TODO update this
-        let updatedAnalysis = astFromNodes(labState, updatedNode);
+        const state = getState();
+        const labState = getState().lab;
+        const analysisRoots = labState.analysisRoots;
+        const updatedNodes = labState.nodes.set(updatedNode.id, updatedNode);
 
-        promise = authedRequest({
+        const updatedAnalyses = NodeUtils.getNodeRoots(labState.linksBySource, updatedNode.id)
+              .map((root) => analysisRoots.findKey((rootId) => rootId === root))
+              .map((rootId, analysisId) =>
+                   labState.workspace.analyses.find((analysis) => analysisId === analysis.id))
+              .map((analysis) => Object.assign({}, analysis, {
+                  executionParameters: NodeUtils.astFromRootId(
+                      updatedNodes, analysisRoots.get(analysis.id)
+                  )}));
+
+        let analysisPromises = updatedAnalyses.map((analysis) => authedRequest({
             method: 'put',
-            url: `${state.api.apiUrl}/api/analyses/${updatedAnalysis.id}`,
-            data: updatedAnalysis
-        }, getState()).then(() => {
-            return updatedAnalysis;
-        });
+            url: `${state.api.apiUrl}/api/analyses/${analysis.id}`,
+            data: analysis
+        }, state)).toArray();
+        let updatePromise = Promise.all(analysisPromises);
 
         dispatch({
-            type: hard ? NODE_UPDATE_HARD : NODE_UPDATE_SOFT,
+            type: NODE_UPDATE,
             meta: {
-                nodes: new Map([[updatedNode.id, updatedNode]]),
-                analysis: updatedAnalysis
+                nodes: updatedNodes,
+                analyses: updatedAnalyses
             },
-            payload: promise
+            payload: updatePromise
         });
     };
 }
@@ -98,6 +103,12 @@ export function updateNode({payload, hard = false}) {
 export function setNodes(payload) {
     return {
         type: NODE_SET, payload
+    };
+}
+
+export function setLinks(linksBySource, linksByTarget) {
+    return {
+        type: NODE_LINKS_SET, payload: {linksBySource, linksByTarget}
     };
 }
 
@@ -133,16 +144,31 @@ export function finishCreatingNode(coordinates) {
         let workspace = _.clone(state.lab.workspace);
         let analysisCreate = _.clone(state.lab.createNodeSelection);
 
+        NodeUtils.setAnalysisRelativePositions(
+            analysisCreate, coordinates,
+            state.lab.onShapeMove
+        );
+        let {
+            nodes, linksBySource, linksByTarget
+        } = NodeUtils.analysisToNodesAndLinks(analysisCreate);
+
         let promise = authedRequest({
             method: 'post',
             url: `${state.api.apiUrl}/api/workspaces/${workspace.id}/analyses`,
             data: analysisCreate
         }, getState());
 
+        nodes = nodes.map(NodeUtils.createNodeShapes());
+        NodeUtils.addLinkShapes(nodes, linksByTarget);
+
         dispatch({
             type: `${NODE_CREATE}_FINISH`,
             payload: promise,
-            meta: {coordinates}
+            meta: {
+                nodes,
+                linksBySource,
+                linksByTarget
+            }
         });
     };
 }
@@ -176,15 +202,15 @@ export function splitAnalysis(childNodeId, parentNodeId) {
         parentNode.args = parentNode.args.filter((id) => id !== childNodeId);
 
         // create new analysis from the child node and its children
-        let childAst = astFromRootNode(nodes, childNode);
-        let parentAst = astFromRootNode(
+        let childAst = NodeUtils.astFromRootNode(nodes, childNode);
+        let parentAst = NodeUtils.astFromRootNode(
             nodes.set(parentNodeId, parentNode), parentAnalysisRootNode
         );
 
         let updatedAnalysis = _.clone(analysis);
         updatedAnalysis.executionParameters = parentAst;
 
-        let updatedAnalysisNodes = nodesFromAnalysis(updatedAnalysis);
+        let updatedAnalysisNodes = NodeUtils.nodesFromAnalysis(updatedAnalysis);
 
         let newAnalysis = _.omit(analysis, [
             'id', 'createdAt', 'createdBy', 'modifiedAt', 'modifiedBy'
@@ -202,7 +228,7 @@ export function splitAnalysis(childNodeId, parentNodeId) {
             data: updatedAnalysis
         }, state);
         dispatch({
-            type: NODE_UPDATE_HARD,
+            type: NODE_UPDATE,
             meta: {
                 nodes: updatedAnalysisNodes,
                 analysis: updatedAnalysis
@@ -216,8 +242,9 @@ export function splitAnalysis(childNodeId, parentNodeId) {
             url: `${state.api.apiUrl}/api/workspaces/${workspace.id}/analyses`,
             data: newAnalysis
         }, state);
-        dispatch({
-            type: NODE_UPDATE_HARD,
+        d
+ispatch({
+            type: NODE_UPDATE,
             meta: {
                 nodes: new Map([[parentNode.id, parentNode]]),
                 analysis: newAnalysis
@@ -228,99 +255,205 @@ export function splitAnalysis(childNodeId, parentNodeId) {
 }
 
 // TODO Deleting nodes does NOT work atm
-export function deleteNode(deleteNodeId) {
-    return (dispatch, getState) => {
-        let state = getState();
-        let workspace = state.lab.workspace;
-        let nodes = state.lab.nodes;
-        let nodeToDelete = nodes.get(deleteNodeId);
+export function deleteNode(
+    // deleteNodeId
+) {
+    // return (dispatch, getState) => {
+    //     let state = getState();
+    //     let workspace = state.lab.workspace;
+    //     let nodes = state.lab.nodes;
+    //     let links = state.lab.links;
+    //     let nodeToDelete = nodes.get(deleteNodeId);
 
-        let parentAnalysis = workspace.analyses.find((a) => a.id === nodeToDelete.analysisId);
+    //     let analysesToUpdate = workspace.analyses.filter((a) => nodeToDelete.analyses.has(a.id));
+    //     let linksToDelete = links.filter(
+    //         (link) => link.source === deleteNodeId || link.target === deleteNodeId
+    //     );
 
-        // let parentNodes = nodes.filter((node) => node.args.includes(deleteNodeId));
-        let childNodes = nodeToDelete.args.map((id) => nodes.get(id));
-        let updatedNodes = nodes;
+    //     // let parentAnalysis = workspace.analyses.find((a) => a.id === nodeToDelete.analysisId);
 
-        if (childNodes.length) {
-            let updatedChildNodes = childNodes
-                .map((node) => _.clone(node))
-                .map((node) => _.remove(node.args, id => id === 'deleteNodeId'));
-            updatedChildNodes.forEach(node => {
-                updatedNodes = updatedNodes.set(node.id, node);
-            });
-            updatedNodes = updatedNodes.delete(deleteNodeId);
+    //     // let parentNodes = nodes.filter((node) => node.args.includes(deleteNodeId));
+    //     let childNodes = nodeToDelete.args.map((id) => nodes.get(id));
+    //     let updatedNodes = nodes;
 
-            let childParents = updatedChildNodes
-                .map((node) => ({
-                    node,
-                    parents: updatedNodes.filter(updatedNode => updatedNode.args.includes(node.id))
-                }));
+    //     if (childNodes.length) {
+    //         let updatedChildNodes = childNodes
+    //             .map((node) => _.clone(node))
+    //             .map((node) => _.remove(node.args, id => id === 'deleteNodeId'));
+    //         updatedChildNodes.forEach(node => {
+    //             updatedNodes = updatedNodes.set(node.id, node);
+    //         });
+    //         updatedNodes = updatedNodes.delete(deleteNodeId);
 
-            let childrenNoParents = childParents
-                .filter(child => child.parents.length === 0)
-                .map(c => c.node);
-            let childAsts = childrenNoParents
-                .map(node => astFromRootNode(updatedNodes, node));
+    //         let childParents = updatedChildNodes
+    //             .map((node) => ({
+    //                 node,
+                    // parents: updatedNodes.filter(
+                    //     updatedNode => updatedNode.args.includes(node.id)
+                     // )
+    //             }));
+
+    //         let childrenNoParents = childParents
+    //             .filter(child => child.parents.length === 0)
+    //             .map(c => c.node);
+    //         let childAsts = childrenNoParents
+    //             .map(node => NodeUtils.astFromRootNode(updatedNodes, node));
 
 
-            let childAnalysisTemplate = _.omit(
-                parentAnalysis,
-                ['id', 'createdAt', 'createdBy', 'modifiedAt', 'modifiedBy', 'executionParameters']
-            );
+    //         let childAnalysisTemplate = _.omit(
+    //             parentAnalysis,
+    //             ['id', 'createdAt', 'createdBy', 'modifiedAt',
+    //              'modifiedBy', 'executionParameters']
+    //         );
 
-            // create new analyses starting at the children
-            childAsts.forEach((ast) => {
-                let newAnalysis = Object.assign({}, childAnalysisTemplate, {
-                    executionParameters: ast,
-                    name: ''
-                });
-                // create new analysis
-                const createPromise = authedRequest({
-                    method: 'post',
-                    url: `${state.api.apiUrl}/api/workspaces/${workspace.id}/analyses`,
-                    data: newAnalysis
-                }, state);
-                dispatch({
-                    type: NODE_UPDATE_HARD,
-                    meta: {
-                        nodes: new Map(),
-                        analysis: newAnalysis
-                    },
-                    payload: createPromise
-                });
-            });
-        }
+    //         // create new analyses starting at the children
+    //         childAsts.forEach((ast) => {
+    //             let newAnalysis = Object.assign({}, childAnalysisTemplate, {
+    //                 executionParameters: ast,
+    //                 name: ''
+    //             });
+    //             // create new analysis
+    //             const createPromise = authedRequest({
+    //                 method: 'post',
+    //                 url: `${state.api.apiUrl}/api/workspaces/${workspace.id}/analyses`,
+    //                 data: newAnalysis
+    //             }, state);
+    //             dispatch({
+    //                 type: NODE_UPDATE,
+    //                 meta: {
+    //                     nodes: new Map(),
+    //                     analysis: newAnalysis
+    //                 },
+    //                 payload: createPromise
+    //             });
+    //         });
+    //     }
 
-        // TODO update analysis that contained the deleted node
-        let deletedNodeRoot = nodes.find((node) => {
-            return node.analysisId === nodeToDelete.analysisId && !node.parent;
-        });
-        if (deletedNodeRoot.id === nodeToDelete.id) {
-            authedRequest({
-                method: 'delete',
-                url: `${state.api.apiUrl}/api/analyses/${nodeToDelete.analysisId}`
-            }, state);
-        } else {
-            let updatedAnalysis = Object.assign({}, parentAnalysis, {
-                executionParameters: astFromRootNode(updatedNodes, deletedNodeRoot)
-            });
-            let updatePromise = authedRequest({
-                method: 'put',
-                url: `${state.api.apiurl}/api/analyses/${updatedAnalysis.id}`
-            });
-            dispatch({
-                type: NODE_UPDATE_HARD,
-                meta: {
-                    nodes: new Map(),
-                    deleteNodes: [deleteNodeId],
-                    analysis: updatedAnalysis
-                },
-                payload: updatePromise
-            });
-        }
-    };
+    //     // TODO update analysis that contained the deleted node
+    //     let deletedNodeRoot = nodes.find((node) => {
+    //         return node.analysisId === nodeToDelete.analysisId && !node.parent;
+    //     });
+    //     if (deletedNodeRoot.id === nodeToDelete.id) {
+    //         authedRequest({
+    //             method: 'delete',
+    //             url: `${state.api.apiUrl}/api/analyses/${nodeToDelete.analysisId}`
+    //         }, state);
+    //     } else {
+    //         let updatedAnalysis = Object.assign({}, parentAnalysis, {
+    //             executionParameters: NodeUtils.astFromRootNode(updatedNodes, deletedNodeRoot)
+    //         });
+    //         let updatePromise = authedRequest({
+    //             method: 'put',
+    //             url: `${state.api.apiurl}/api/analyses/${updatedAnalysis.id}`
+    //         });
+    //         dispatch({
+    //             type: NODE_UPDATE,
+    //             meta: {
+    //                 nodes: new Map(),
+    //                 deleteNodes: [deleteNodeId],
+    //                 analysis: updatedAnalysis
+    //             },
+    //             payload: updatePromise
+    //         });
+    //     }
+    // };
 }
 
+// TODO finish this once links is a set
+export function deleteLink(link) {
+    return (dispatch, getState) => {
+        let state = getState();
+        let {nodes, linksByTarget, linksBySource} = state.lab;
+        // NOTE: source is the leaf node,
+        // target is the parent (root nodes are targets, but not sources)
+        const source = nodes.get(link.source);
+        const target = nodes.get(link.target);
+
+        let updatedLinksByTarget;
+        let targetLinks = linksByTarget.get(link.target).delete(link.source);
+        if (targetLinks.size === 0) {
+            updatedLinksByTarget = linksByTarget.set(
+                link.target,
+                targetLinks
+            );
+        } else {
+            updatedLinksByTarget = linksByTarget.delete(link.target);
+        }
+        let updatedLinksBySource;
+        let sourceLinks = linksBySource.get(link.source).delete(link.target);
+        if (sourceLinks.size === 0) {
+            updatedLinksBySource = linksBySource.set(
+                link.source,
+                sourceLinks
+            );
+        } else {
+            updatedLinksBySource = linksBySource.delete(link.source);
+        }
+
+        const updatedNodes = nodes.set(target.id, Object.assign({}, target, {
+            inputIds: _.remove(target.inputIds, (id) => id === source.id)
+        }));
+
+        let apiPromises = [];
+        // check if a new root node is created
+        let workspace = state.lab.workspace;
+
+        if (sourceLinks.size === 0) {
+            let createdAnalysis = {
+                name: source.name,
+                executionParameters: NodeUtils.astFromRootId(nodes, source.id),
+                organizationId: workspace.organizationId,
+                visibility: 'PRIVATE'
+            };
+
+            let createPromise = authedRequest({
+                method: 'post',
+                url: `${state.api.apiUrl}/api/workspaces/${state.lab.workspace.id}/analyses`,
+                data: createdAnalysis
+            }, state).then((response) => {
+                return response.data;
+            });
+            apiPromises.push(createPromise);
+        }
+
+        let updatedRoots = NodeUtils.getNodeRoots(updatedLinksBySource, link.target);
+        let updatedAnalysisIds = state.lab.analysisRoots
+            .filter((rootId) => updatedRoots.has(rootId))
+            .keySeq().toArray();
+        let updatedAnalyses = updatedAnalysisIds
+            .map((analysisId) => {
+                let oldAnalysis = workspace.analyses.find((analysis) => analysis.id === analysisId);
+                return Object.assign(
+                    {},
+                    oldAnalysis,
+                    {
+                        executionParameters: NodeUtils.astFromRootId(
+                            updatedNodes, state.lab.analysisRoots.get(analysisId)
+                        )
+                    }
+                );
+            });
+
+        apiPromises.concat(updatedAnalyses.map((analysis) => {
+            return authedRequest({
+                method: 'put',
+                url: `${state.api.apiUrl}/api/analyses/${analysis.id}`,
+                data: analysis
+            }, state).then(() => analysis);
+        }));
+
+
+        dispatch({
+            type: `${NODE_LINK}_DELETE`,
+            payload: Promise.all(apiPromises),
+            meta: {
+                linksBySource: updatedLinksBySource,
+                linksByTarget: updatedLinksByTarget,
+                nodes
+            }
+        });
+    };
+}
 
 export function startLinkingNodes(nodeId) {
     return {
@@ -335,80 +468,110 @@ export function cancelLinkingNodes() {
     };
 }
 
-export function finishLinkingNodes(linkedNodeId) {
+/*
+  Process for linking nodes:
+  Add the link.
+  update the parent node to include the linked node in its inputIds
+  If the node is an analysis root, delete the analysis and remove it from the
+  analysisRoots map
+ */
+
+export function finishLinkingNodes(targetNodeId) {
     return (dispatch, getState) => {
         let state = getState();
-        let workspace = state.lab.workspace;
-        let nodes = state.lab.nodes;
-        let inputNodeId = state.lab.linkNode;
-        if (!inputNodeId || !linkedNodeId) {
+        let labState = state.lab;
+        let sourceNodeId = labState.linkNode;
+        if (!sourceNodeId || !targetNodeId) {
             throw new Error(
-                'Tried to link nodes when one wasn\'t defined', inputNodeId, linkedNodeId
+                'Tried to link nodes when one wasn\'t defined', sourceNodeId, targetNodeId
             );
         }
-        let inputNode = _.clone(nodes.get(inputNodeId));
-        let linkedNode = _.clone(nodes.get(linkedNodeId));
+        let nodes = labState.nodes;
 
+        let targetNode = Object.assign({}, nodes.get(targetNodeId));
 
-        let linkedAnalysisId = linkedNode.analysisId;
-        let inputAnalysisId = inputNode.analysisId;
+        if (NodeUtils.nodeIsChildOf(targetNodeId, sourceNodeId, nodes)) {
+            throw new Error(`Linking ${sourceNodeId} and ${targetNodeId} would create ` +
+                            `a circular dependency because ${sourceNodeId} already ` +
+                            `depends on ${targetNodeId}. WorkspaceID = ${state.lab.workspace.id}`);
+        }
 
-        let linkedAnalysis = _.clone(workspace.analyses.find((a) => a.id === linkedAnalysisId));
-
-        // check if in the same analysis.
-        // If so, need to prevent loops in the dag. otherwise don't worry about it
-        if (linkedAnalysisId === inputAnalysisId) {
-            if (nodeIsChildOf(linkedAnalysisId, inputNodeId, nodes)) {
-                throw new Error('Tried to link node to a child of itself');
-            }
-        } else {
-            // delete child analysis
+        // see if the sourceNode is an analysis root
+        const sourceNodeAnalysis = labState.analysisRoots.findKey(
+            (rootId) => rootId === sourceNodeId
+        );
+        if (sourceNodeAnalysis) {
             authedRequest({
                 method: 'delete',
-                url: `${state.api.apiUrl}/api/analyses/${inputAnalysisId}`
+                url: `${state.api.apiUrl}/api/analyses/${sourceNodeAnalysis}`
             }, state);
         }
 
-        linkedNode.args = linkedNode.args.concat(inputNode.id);
 
-        let updatedNodes = nodes.set(linkedNode.id, linkedNode);
+        targetNode.inputIds = targetNode.inputIds.slice();
+        targetNode.inputIds.push(sourceNodeId);
+        // TODO update ports
+        let numInputs = targetNode.ports.filter((port) => port.group === 'inputs');
+        const port = {
+            id: `input-${numInputs}`,
+            label: `input-${numInputs}`,
+            group: 'inputs'
+        };
+        targetNode.ports.push(port);
+        targetNode.shape.addPort(port);
 
-        let linkedAnalysisRootNode = updatedNodes.find((node) => {
-            return node.analysisId === linkedNode.analysisId && !node.parent;
-        });
+        let sourceLinks = labState.linksBySource.get(sourceNodeId) || new Map();
+        let targetLinks = labState.linksByTarget.get(targetNode) || new Map();
+        const link = {source: sourceNodeId, target: targetNodeId};
 
-        let updatedAst = astFromRootNode(updatedNodes, linkedAnalysisRootNode);
+        let updatedNodes = nodes.set(targetNode.id, targetNode);
 
-        let updatedAnalysis = Object.assign(
-            {}, linkedAnalysis, { executionParameters: updatedAst }
-        );
+        NodeUtils.addLinkShape(updatedNodes, link);
 
-        let linkedAnalysisNodes = nodesFromAnalysis(updatedAnalysis);
+        let updatedLinksBySource = (sourceLinks || new Map())
+            .set(sourceNodeId, new Map([[targetNodeId, link]]));
+        let updatedLinksByTarget = (targetLinks || new Map())
+            .set(targetNodeId, new Map([[sourceNodeId, link]]));
 
-        // update existing analysis
-        let updatePromise = authedRequest({
-            method: 'put',
-            url: `${state.api.apiUrl}/api/analyses/${updatedAnalysis.id}`,
-            data: updatedAnalysis
-        }, state);
+        let updatedAnalyses = NodeUtils.getNodeRoots(updatedLinksBySource, targetNodeId)
+            .map((rootId) => {
+                let analysisId = labState.analysisRoots.findKey((id) => id === rootId);
+                let analysis = _.clone(
+                    labState.workspace.analyses.find((a) => a.id === analysisId)
+                );
+                analysis.executionParameters = NodeUtils.astFromRootId(updatedNodes, rootId);
+                return analysis;
+            }).toArray();
+
+
+        // update existing analyses
+        let updatePromises = Promise.all(updatedAnalyses.map((analysis) => {
+            return authedRequest({
+                method: 'put',
+                url: `${state.api.apiUrl}/api/analyses/${analysis.id}`,
+                data: analysis
+            }, state);
+        }));
         dispatch({
             type: `${NODE_LINK}_FINISH`
         });
         dispatch({
-            type: NODE_UPDATE_HARD,
-            meta: {
-                nodes: linkedAnalysisNodes,
-                analysis: updatedAnalysis,
-                deletedAnalysis: inputAnalysisId
-            },
-            payload: updatePromise
+            type: NODE_UPDATE,
+            meta: _.omitBy({
+                nodes: updatedNodes,
+                linksBySource: updatedLinksBySource,
+                linksByTarget: updatedLinksByTarget,
+                analyses: updatedAnalyses,
+                deletedAnalysis: sourceNodeAnalysis
+            }, _.isUndefined),
+            payload: updatePromises
         });
     };
 }
 
 export default {
     startNodePreview, startNodeCompare, selectNode, cancelNodeSelect, compareNodes,
-    setNodeError, updateNode, setNodes,
+    setNodeError, updateNode, setNodes, setLinks, deleteLink,
     startCreatingNode, stopCreatingNode, cancelCreatingNode, selectNodeToCreate, finishCreatingNode,
     splitAnalysis, deleteNode, startLinkingNodes, cancelLinkingNodes, finishLinkingNodes
 };

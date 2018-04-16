@@ -4,7 +4,7 @@ import _ from 'lodash';
 import labNodeTpl from './labNode.html';
 
 import NodeActions from '_redux/actions/node-actions';
-import { getNodeDefinition, nodeIsChildOf } from '_redux/node-utils';
+import NodeUtils from '_redux/node-utils';
 
 class LabNodeController {
     constructor($ngRedux, $scope, $log, $element, modalService, tokenService,
@@ -61,9 +61,7 @@ class LabNodeController {
 
     mapStateToThis(state) {
         const workspace = state.lab.workspace;
-        const node = getNodeDefinition(state, this);
-        const analysisId = node && node.analysisId;
-        const analysis = workspace.analyses.find((a) => a.id === analysisId);
+        const node = state.lab.nodes.get(this.nodeId);
 
         const selector = {
             readonly: state.lab.readonly,
@@ -73,7 +71,6 @@ class LabNodeController {
             workspace,
             node,
             nodes: state.lab.nodes,
-            analysis,
             linkNode: state.lab.linkNode
         };
         return selector;
@@ -186,9 +183,10 @@ class LabNodeController {
         const nodeType = this.model.get('cellType');
         if (this.node) {
             if (nodeType === 'projectSrc') {
+                // TODO fix this by figuring out which analysis to use
                 this.tokenService.getOrCreateAnalysisMapToken({
-                    organizationId: this.analysis.organizationId,
-                    name: this.analysis.name + ' - ' + this.analysis.id,
+                    // organizationId: this.analysis.organizationId,
+                    name: this.workspace.name + ' - ' + this.analysis.id,
                     project: this.node.projId
                 }).then((mapToken) => {
                     this.publishModal(
@@ -229,8 +227,8 @@ class LabNodeController {
     isLinkable(otherNode) {
         return otherNode !== this.nodeId &&
             this.ifCellType('function') &&
-            !this.node.args.includes(otherNode) &&
-            !nodeIsChildOf(this.nodeId, otherNode, this.nodes);
+            !this.node.inputIds.includes(otherNode) &&
+            !NodeUtils.nodeIsChildOf(this.nodeId, otherNode, this.nodes);
     }
 }
 

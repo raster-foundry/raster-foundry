@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 import reclassifyModalTpl from './reclassifyModal.html';
 
-import { getNodeDefinition, getNodeHistogram } from '_redux/node-utils';
+import NodeUtils from '_redux/node-utils';
 import HistogramActions from '_redux/actions/histogram-actions';
 
 const ReclassifyModalComponent = {
@@ -38,9 +38,9 @@ class ReclassifyModalController {
     }
 
     mapStateToThis(state) {
-        const node = getNodeDefinition(state, this);
+        const node = NodeUtils.getNodeDefinition(state, this);
         const inputNodeId = _.first(node.args);
-        const histogram = getNodeHistogram(state, {nodeId: inputNodeId});
+        const histogram = NodeUtils.getNodeHistogram(state, {nodeId: inputNodeId});
         return {
             node,
             inputNodeId,

@@ -1,23 +1,39 @@
 import {Map} from 'immutable';
 import typeToReducer from 'type-to-reducer';
 import {
-    WORKSPACE_LOAD, WORKSPACE_UPDATE_NAME, WORKSPACE_FETCH, WORKSPACE_SET_OPTIONS
+    WORKSPACE_SET, WORKSPACE_SET_DIAGRAM, WORKSPACE_UPDATE_NAME,
+    WORKSPACE_FETCH, WORKSPACE_SET_OPTIONS
 } from '../actions/workspace-actions';
 
 export const workspaceReducer = typeToReducer({
-    [WORKSPACE_LOAD]: (state, action) => {
+    [WORKSPACE_SET]: (state, action) => {
         return Object.assign({}, state, {
-            lastWorkspaceSave: new Date(),
-            analysisSaves: new Map(),
-            analysisRefreshes: new Map(),
-            workspace: action.payload,
+            workspace: action.payload
+        });
+    },
+    [WORKSPACE_SET_DIAGRAM]: (state, action) => {
+        let analysisRoots = new Map();
+        let workspace = state.workspace;
+        workspace.analyses.forEach((a) => {
+            analysisRoots = analysisRoots.set(a.id, a.executionParameters.id);
+        });
+        let createNode = null;
+        if (!workspace.analyses.length) {
+            createNode = 'select';
+        }
+        return Object.assign({}, state, {
+            analysisRoots,
 
-            nodes: new Map(),
+            nodes: action.payload.nodes,
+            linksBySource: action.payload.linksBySource,
+            linksByTarget: action.payload.linksByTarget,
             previewNodes: [],
             selectingNode: null,
             selectedNode: null,
-            createNode: null,
             linkNode: null,
+            createNode,
+            graph: action.payload.graph,
+            onShapeMove: action.payload.onShapeMove,
 
             histograms: new Map(),
             statistics: new Map()
@@ -60,18 +76,9 @@ export const workspaceReducer = typeToReducer({
             });
         },
         FULFILLED: (state, action) => {
-            const workspace = action.payload.data;
-            let createNode = null;
-            if (!workspace.analyses.length) {
-                createNode = 'select';
-            }
             return Object.assign({}, state, {
                 fetching: false,
-                workspace,
-                createNode,
-                readonly: false,
-                lastWorkspaceSave: new Date(),
-                histograms: new Map(),
+                workspace: action.payload.data,
                 errors: state.errors.delete('http')
             });
         }
@@ -79,8 +86,10 @@ export const workspaceReducer = typeToReducer({
     [WORKSPACE_SET_OPTIONS]: (state, action) => {
         let payload = action.payload;
         let options = {
-            readonly: payload.hasOwnProperty('readonly') ? payload.readonly : false,
-            controls: payload.hasOwnProperty('controls') ? payload.controls : true
+            readonly: payload.readonly,
+            controls: payload.controls,
+            cellDimensions: payload.cellDimensions,
+            nodeSeparationFactor: payload.nodeSeparationFactor
         };
         return Object.assign({}, state, options);
     }

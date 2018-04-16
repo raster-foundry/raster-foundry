@@ -48,8 +48,6 @@ const App = angular.module(
         require('./pages/error/error.module.js').name,
         require('./pages/share/share.module.js').name,
 
-        require('./pages/lab/analysis/analysis.js').name,
-        require('./pages/lab/startAnalysis/startAnalysis.js').name,
         require('./pages/lab/template/template.js').name,
 
         require('./pages/lab/navbar/navbar.module.js').name,

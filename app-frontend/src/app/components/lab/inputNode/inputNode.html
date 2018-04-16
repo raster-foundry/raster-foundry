@@ -16,9 +16,9 @@
                     bands="$ctrl.bands"
                     on-band-select="$ctrl.onBandChange(index)"
                     disabled="!$ctrl.selectedProject"
-                    ng-if="!$ctrl.selectedProject || $ctrl.bands.length">
+                    ng-if="!$ctrl.selectedProject || ($ctrl.bands && $ctrl.bands.length)">
     </rf-band-select>
-    <div ng-if="!$ctrl.bands.length && $ctrl.fetchingDatasources">
+    <div ng-if="!$ctrl.bands && !$ctrl.bands.length && $ctrl.fetchingDatasources">
       Loading band data
     </div>
     <div ng-if="$ctrl.selectedProject && !$ctrl.bands.length && !$ctrl.fetchingDatasources">

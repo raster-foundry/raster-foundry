@@ -2,7 +2,7 @@ import angular from 'angular';
 import constantNodeTpl from './constantNode.html';
 
 import NodeActions from '_redux/actions/node-actions';
-import {getNodeDefinition} from '_redux/node-utils';
+import NodeUtils from '_redux/node-utils';
 
 const ConstantNodeComponent = {
     templateUrl: constantNodeTpl,
@@ -31,7 +31,7 @@ class ConstantNodeController {
 
     mapStateToThis(state) {
         return {
-            node: getNodeDefinition(state, this)
+            node: NodeUtils.getNodeDefinition(state, this)
         };
     }
 
@@ -43,24 +43,16 @@ class ConstantNodeController {
     }
 
     onValueChange() {
-        let payload;
-        if (!this.node.metadata.default) {
-            payload = Object.assign({}, this.node, {
-                constant: this.value,
-                metadata: Object.assign({}, this.node.metadata, {
-                    default: this.node.constant
-                })
-            });
-        } else {
-            payload = Object.assign({}, this.node, {
-                constant: this.value
+        let updatedNode = Object.assign({}, this.node, {
+            constant: this.value
+        });
+        if (!updatedNode.metadata.default) {
+            updatedNode.metadata = Object.assign({}, this.node.metadata, {
+                default: this.node.constant
             });
         }
 
-        this.updateNode({
-            payload,
-            hard: true
-        });
+        this.updateNode(updatedNode);
     }
 }
 

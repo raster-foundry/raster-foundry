@@ -1,6 +1,6 @@
 import angular from 'angular';
 import operationNodeTpl from './operationNode.html';
-import { getNodeDefinition } from '_redux/node-utils';
+import NodeUtils from '_redux/node-utils';
 
 const OperationNodeComponent = {
     templateUrl: operationNodeTpl,
@@ -22,12 +22,12 @@ class OperationNodeController {
     }
 
     mapStateToThis(state) {
-        const node = getNodeDefinition(state, this);
+        const node = NodeUtils.getNodeDefinition(state, this);
         if (!node) {
             return {};
         }
-        const inputs = node.args.map((nodeId) => {
-            let inputNode = getNodeDefinition(state, {nodeId});
+        const inputs = node.inputIds.map((nodeId) => {
+            let inputNode = NodeUtils.getNodeDefinition(state, {nodeId});
             return inputNode.metadata.label;
         });
         return {

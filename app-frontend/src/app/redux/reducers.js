@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {OrderedMap, Map} from 'immutable';
+import {OrderedMap, Map, Set} from 'immutable';
 import { API_INIT } from './actions/api-actions';
 
 // import { ANALYSIS_ACTION_PREFIX } from './actions/analysis-actions';
@@ -24,9 +24,6 @@ import { shapeReducer} from './reducers/shape-reducer';
 
 const INITIAL_LAB_STATE = {
     // analysis state
-    lastWorkspaceSave: null,
-    analysisSaves: new Map(),
-    analysisRefreshes: new Map(),
     workspace: null,
     errors: new Map(),
     updating: false,
@@ -34,9 +31,19 @@ const INITIAL_LAB_STATE = {
     error: null,
     readonly: false,
     controls: true,
+    nodeSeparationFactor: 0.8,
+    cellDimensions: { width: 400, height: 200 },
+    graph: null,
+    onShapeMove: () => {
+        throw new Error('onShapeMove was called before being set');
+    },
 
     // node state
-    nodes: new Map(), previewNodes: [], selectingNode: null, selectedNode: null,
+    nodes: new Map(),
+    linksBySource: new Map(),
+    linksByTarget: new Map(),
+    analysisRoots: new Map(),
+    previewNodes: [], selectingNode: null, selectedNode: null,
     createNode: null, createNodeSelection: null, linkNode: null,
 
     // histogram & statistics state

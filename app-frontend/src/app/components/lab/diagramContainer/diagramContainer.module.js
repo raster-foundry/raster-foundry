@@ -1,12 +1,13 @@
 /* global joint */
 import angular from 'angular';
 import _ from 'lodash';
-import {Map} from 'immutable';
+import {Map, Set} from 'immutable';
+import diff from 'immutablediff';
 import diagramContainerTpl from './diagramContainer.html';
 
 import WorkspaceActions from '_redux/actions/workspace-actions';
 import NodeActions from '_redux/actions/node-actions';
-import { nodesFromAnalysis, astFromAnalysisNodes, getNodeDefinition } from '_redux/node-utils';
+import NodeUtils from '_redux/node-utils';
 
 const DiagramContainerComponent = {
     templateUrl: diagramContainerTpl,
@@ -19,9 +20,10 @@ const minZoom = 0.025;
 class DiagramContainerController {
     constructor( // eslint-disable-line max-params
         $element, $scope, $state, $timeout, $compile, $document, $window, $rootScope,
-        mousetipService, labUtils, $ngRedux
+        mousetipService, labUtils, $ngRedux, $log
     ) {
         'ngInject';
+        this.$log = $log;
         this.$element = $element;
         this.$scope = $scope;
         this.$rootScope = $rootScope;
@@ -42,26 +44,6 @@ class DiagramContainerController {
         this.debouncedUpdateNode = _.debounce(this.updateNode, 300);
     }
 
-    $postLink() {
-        this.$scope.$watch('$ctrl.workspace', (workspace) => {
-            // check if analyses have been added or deleted
-            if (workspace && this.analyses) {
-                const newAnalyses = workspace.analyses;
-                const comparator = (a1, a2) => a1.id === a2.id;
-                const added = _.differenceWith(newAnalyses, this.analyses, comparator);
-                const removed = _.differenceWith(this.analyses, newAnalyses, comparator);
-
-                if (removed.length) {
-                    this.removeAnalyses(removed);
-                }
-
-                if (added.length) {
-                    this.addAnalyses(added);
-                }
-            }
-        });
-    }
-
     mapStateToThis(state) {
         return {
             workspace: state.lab.workspace,
@@ -71,7 +53,13 @@ class DiagramContainerController {
             selectingNode: state.lab.selectingNode,
             selectedNode: state.lab.selectedNode,
             createNodeSelection: state.lab.createNodeSelection,
-            reduxState: state
+            reduxState: state,
+            nodes: state.lab.nodes,
+            links: state.lab.links,
+            linksBySource: state.lab.linksBySource,
+            linksByTarget: state.lab.linksByTarget,
+            cellDimensions: state.lab.cellDimensions,
+            nodeSeparationFactor: state.lab.nodeSeparationFactor
         };
     }
 
@@ -82,17 +70,17 @@ class DiagramContainerController {
 
         this.workspaceElement = this.$element[0].children[0];
         this.comparison = [false, false];
-        this.cellDimensions = {width: 400, height: 200 };
-        this.paddingFactor = 0.8;
-        this.nodeSeparationFactor = 0.2;
         this.panActive = false;
-        // TODO nodes determine context menu options by type and redux state
+        this.ignorePositionChanges = true;
+    }
 
-        this.contextInitialized = true;
-
+    $postLink() {
         const workspaceWatch = this.$scope.$watch('$ctrl.workspace', (workspace) => {
-            if (workspace && !this.shapes) {
+            if (workspace && !this.diagramInitialized) {
                 this.initDiagram();
+                this.$scope.$watch('$ctrl.nodes', this.onNodeUpdate.bind(this));
+                this.$scope.$watch('$ctrl.linksByTarget', this.onLinksByTargetUpdate.bind(this));
+                workspaceWatch();
             } else {
                 workspaceWatch();
             }
@@ -106,32 +94,8 @@ class DiagramContainerController {
     }
 
     initDiagram() {
-        const extract = this.workspace.analyses.map((analysis) => {
-            return this.labUtils.extractShapes(
-                analysis,
-                this.cellDimensions
-            );
-        }).reduce((a, b) => ({
-            shapes: a.shapes.concat(b.shapes),
-            nodes: a.nodes.merge(b.nodes)
-        }), {shapes: [], nodes: new Map()});
-
-        this.analyses = this.workspace.analyses.slice();
-        const labNodes = this.workspace.analyses.map((analysis) => {
-            return nodesFromAnalysis(analysis);
-        }).reduce((a, b) => a.merge(b), new Map());
-
-        this.setNodes(labNodes);
-
-        this.shapes = extract.shapes;
-        this.shapes.forEach((shape) => {
-            shape.on('change:position', (node, position) => {
-                if (this.nodePositionsSet) {
-                    this.onShapeMove(shape.id, position);
-                }
-            });
-        });
-        this.nodes = extract.nodes;
+        const {nodes, linksBySource, linksByTarget} =
+            NodeUtils.analysesToNodeLinks(this.workspace.analyses, this.cellDimensions);
 
         if (!this.graph) {
             this.graph = new joint.dia.Graph();
@@ -205,156 +169,198 @@ class DiagramContainerController {
             this.$element.on('mousemove', this.onMouseMove.bind(this));
         }
 
-        if (this.shapes) {
-            const padding = this.cellDimensions.width * this.nodeSeparationFactor;
-            this.shapes.forEach(s => this.graph.addCell(s));
-            joint.layout.DirectedGraph.layout(this.graph, {
-                setLinkVertices: false,
-                rankDir: 'LR',
-                nodeSep: padding,
-                rankSep: padding * 2,
-                marginX: padding,
-                marginY: padding
-            });
-            this.applyPositionOverrides(this.graph);
-            this.scaleToContent();
-        }
-    }
-
-    addAnalyses(analyses) {
-        if (!analyses.length) {
-            throw new Error('called addAnalyses without analyses');
-        }
-
-        const placedAnalyses = analyses.map((a) => {
-            if (a.addLocation) {
-                return this.setRelativePositions(a);
-            }
-            return a;
-        });
-
-        // TODO remove any added nodes that are already on the graph
-        const newNodes = placedAnalyses.map((analysis) => {
-            return nodesFromAnalysis(analysis);
-        }).reduce((a, b) => a.merge(b), new Map());
-        this.setNodes(newNodes.merge(this.extractNodes));
-
-        const extract = placedAnalyses.map((analysis) => {
-            return this.labUtils.extractShapes(
-                analysis,
-                this.cellDimensions
-            );
-        }).reduce((a, b) => ({
-            shapes: a.shapes.concat(b.shapes),
-            nodes: a.nodes.merge(b.nodes)
-        }), {shapes: [], nodes: new Map()});
-
-        this.nodes = extract.nodes.merge(this.nodes);
-
-        const shapes = extract.shapes;
-        shapes.forEach((shape) => {
-            shape.on('change:position', (node, position) => {
-                if (this.nodePositionsSet) {
-                    this.onShapeMove(shape.id, position);
-                }
-            });
-            this.graph.addCell(shape);
-        });
-
-        this.shapes = shapes.concat(this.shapes);
-        this.applyPositionOverrides(this.graph);
-        this.scaleToContent();
-
-        this.analyses = this.analyses.concat(placedAnalyses);
-    }
-
-    setRelativePositions(analysis) {
-        const setOrigin = analysis.addLocation;
-
-        const layoutGraph = new joint.dia.Graph();
-
-        const extract = this.labUtils.extractShapes(
-            analysis,
-            this.cellDimensions
+        this.setDiagram(
+            nodes, linksBySource, linksByTarget, this.graph, this.onShapeMove.bind(this)
         );
-
-        const shapes = extract.shapes;
-        shapes.forEach(s => layoutGraph.addCell(s));
-
-        const padding = this.cellDimensions.width * this.nodeSeparationFactor;
-
-        joint.layout.DirectedGraph.layout(layoutGraph, {
-            setLinkVertices: false,
-            rankDir: 'LR',
-            nodeSep: padding,
-            rankSep: padding * 2
-        });
-
-        let nodePositions = new Map();
-        shapes.forEach(shape => {
-            if (shape.attributes.position) {
-                const position = {
-                    x: shape.attributes.position.x + setOrigin.x,
-                    y: shape.attributes.position.y + setOrigin.y
-                };
-                nodePositions = nodePositions.set(
-                    shape.attributes.id, position
-                );
-            }
-        });
-
-        const nodes = nodesFromAnalysis(analysis).map(
-            node => _.merge(
-                node, {
-                    metadata: { positionOverride: nodePositions.get(node.id) }
-                }
-            )
-        );
-
-        return astFromAnalysisNodes(analysis, nodes);
+        this.diagramInitialized = true;
     }
 
-    removeAnalyses() {
-        throw new Error('Removing analyses is not yet supported');
-        // removeAnalyses(analyses) {
-        // analyses.forEach((analysis) => {
-        //     const analysisId = analysis.id;
-        //     let nodesToRemove = this.nodes.filter((node) => node.analysisId === analysisId);
-        //     let linksToRemove = [];
-        //     nodesToRemove.forEach((node) => {
-        //         this.graph.getCell(node.id);
-        //     });
+    applyCellPositions() {
+        this.ignorePositionChanges = true;
+        // const padding = this.cellDimensions.width * this.nodeSeparationFactor;
+        // joint.layout.DirectedGraph.layout(this.graph, {
+        //     setLinkVertices: false,
+        //     rankDir: 'LR',
+        //     nodeSep: padding,
+        //     rankSep: padding * 2,
+        //     marginX: padding,
+        //     marginY: padding
         // });
-        // get all analysis nodes
-        // get cell, t
+        this.applyPositionOverrides(this.graph);
+        this.ignorePositionChanges = false;
     }
+
+    onNodeUpdate(newNodes, oldNodes) {
+        let nodeDiff;
+        if (!this.nodesInitialized) {
+            nodeDiff = diff(new Map(), newNodes);
+        } else {
+            nodeDiff = diff(oldNodes, newNodes);
+        }
+        let nodesInGraph = new Set(this.nodesInitialized ? oldNodes.keys() : []);
+        let nodesAddedOrDeleted = false;
+        nodeDiff.forEach((change) => {
+            const op = change.get('op');
+            const nodeId = _.last(change.get('path').split('/'));
+
+            switch (op) {
+            case 'add':
+                // add node to diagram
+                const node = newNodes.get(nodeId);
+                node.shape.on('change:position', (shape, position) => {
+                    if (!this.ignorePositionChanges) {
+                        this.onShapeMove(node.id, position);
+                    }
+                });
+
+                this.graph.addCell(node.shape);
+                node.inGraph = true;
+                const targetLinks = this.linksBySource.get(nodeId) || new Map();
+                const sourceLinks = this.linksByTarget.get(nodeId) || new Map();
+
+                const validTargetLinks = targetLinks.filter(
+                    (link, targetId) => !link.inGraph && nodesInGraph.has(targetId)
+                ).valueSeq();
+                const validSourceLinks = sourceLinks.filter(
+                    (link, sourceId) => !link.inGraph && nodesInGraph.has(sourceId)
+                ).valueSeq();
+
+                const validLinks = validTargetLinks.concat(validSourceLinks);
+                validLinks.forEach((link) => {
+                    link.inGraph = true;
+                    if (!link.shape) {
+                        throw new Error('Tried to add link without shape to graph', link);
+                    }
+                    this.graph.addCell(link.shape);
+                });
+
+                nodesInGraph = nodesInGraph.add(nodeId);
+                nodesAddedOrDeleted = true;
+                break;
+            case 'delete':
+                this.$log.log('Deleting node', nodeId, node);
+                // remove node from diagram
+                // this should happen after all the other stuff (deleting links, api updated) does
+                break;
+            case 'replace':
+                this.$log.log('Ignoring node update', nodeId, change.toString());
+                // don't really care? node itself should manage
+                break;
+            default:
+                this.$log.log('Unsupported node change op was:', op, nodeId, change);
+            }
+        });
+
+        // links should be removed before the nodes are
+        // if links for nodes that are being added, add the nodes then add the links
+        // if a deleted node is a root node, check if any of its children qualify as new
+        // root nodes. If so, create a new analysis for each new root node
+
+        if (this.diagramInitialized && nodesAddedOrDeleted) {
+            this.applyCellPositions();
+        }
+        if (this.diagramInitialized && !this.initialScale && this.nodes.size) {
+            this.scaleToContent();
+            this.initialScale = true;
+        }
+        if (!this.nodesInitialized) {
+            this.nodesInitialized = true;
+        }
+        this.paper.scale(this.scale);
+    }
+
+    // both maps change simultaneously, so don't need to listen to both
+    onLinksByTargetUpdate(newLinks, oldLinks) {
+        const linkDiff = diff(oldLinks, newLinks);
+        linkDiff.map((change) => {
+            const op = change.get('op');
+            const path = change.get('path').split('/').slice(1);
+            switch (op) {
+            case 'add':
+                if (path.length === 1) {
+                    const sourceLinkMap = newLinks.get(_.first(path));
+                    // filter out links which are added by the nodes
+                    const linksNotInGraph = sourceLinkMap.filter(
+                        (link) => !link.inGraph
+                    );
+                    // filter out links which have not had their nodes added yet.
+                    // nodes will add them later.
+                    const linksWithAddedNodes = linksNotInGraph.filter((link) => {
+                        return this.nodes.get(link.source).inGraph &&
+                            this.nodes.get(link.target).inGraph;
+                    });
+                    linksWithAddedNodes.forEach((link) => {
+                        this.graph.addCell(link.shape);
+                        link.inGraph = true;
+                        this.$log.log('link added to graph in update');
+                    });
+                } else if (path.length === 2) {
+                    // single link added
+                    const link = newLinks.get(path[0]).get(path[1]);
+                    if (!link.inGraph &&
+                        this.nodes.get(link.source).inGraph &&
+                        this.nodes.get(link.target).inGraph
+                       ) {
+                        this.graph.addCell(link.shape);
+                        link.inGraph = true;
+                        this.$log.log('link added to graph in update');
+                    }
+                } else {
+                    throw new Error('Link path in diff makes no sense:', change);
+                }
+                break;
+            case 'delete':
+                if (path.length === 1) {
+                    // check the number of links deleted
+                } else if (path.length === 2) {
+                    // single link deleted
+                } else {
+                    throw new Error('Link path in diff makes no sense:', change);
+                }
+                break;
+            default:
+            }
+        });
+    }
+
 
     onCellDelete(cell) {
         const isLink = cell.attributes.type === 'link';
 
         if (isLink) {
-            const childNodeId = cell.attributes.source.id;
-            const parentNodeId = cell.attributes.target.id;
-            this.splitAnalysis(childNodeId, parentNodeId);
+            const sourceNodeId = cell.attributes.source.id;
+            const targetNodeId = cell.attributes.target.id;
+            const targetLinks = this.linksByTarget.get(targetNodeId);
+            if (!targetLinks) {
+                throw new Error(`Tried to delete missing link: ${sourceNodeId} -> ${targetNodeId}`);
+            }
+            const link = targetLinks.get(sourceNodeId);
+            if (!link) {
+                throw new Error(`Tried to delete missing link: ${sourceNodeId} -> ${targetNodeId}`);
+            }
+            this.deleteLink(link);
         } else {
-            throw new Error('Deleted cell that wasn\'t a link. This shouldn\'t be possible');
+            throw new Error('Deleted cell that wasn\'t a link.', cell);
         }
     }
 
     applyPositionOverrides(graph) {
+        const wasIgnoringPositionChanges = this.ignorePositionChanges;
+        this.ignorePositionChanges = true;
         // eslint-disable-next-line
         Object.keys(graph._nodes)
             .map((modelid) => this.paper.getModelById(modelid))
             .forEach((model) => {
-                const metadata = model.attributes.metadata;
+                const node = this.nodes.get(model.id);
+                const metadata = node.metadata;
                 if (metadata && metadata.positionOverride) {
                     model.position(
-                        model.attributes.metadata.positionOverride.x,
-                        model.attributes.metadata.positionOverride.y
+                        metadata.positionOverride.x,
+                        metadata.positionOverride.y
                     );
                 }
             });
-        this.nodePositionsSet = true;
+        this.ignorePositionChanges = wasIgnoringPositionChanges;
     }
 
     scaleToContent() {
@@ -453,20 +459,9 @@ class DiagramContainerController {
     }
 
     onShapeMove(nodeId, position) {
-        // TODO redux update node position
-        const node = getNodeDefinition(this.reduxState, {nodeId});
-        const updatedNode = Object.assign(
-            {},
-            node,
-            {
-                metadata: Object.assign(
-                    {},
-                    node.metadata,
-                    {positionOverride: position}
-                )
-            }
-        );
-        this.debouncedUpdateNode({payload: updatedNode});
+        const node = this.nodes.get(nodeId);
+        const updatedNode = _.set(node, ['metadata', 'positionOverride'], position);
+        this.debouncedUpdateNode(updatedNode);
     }
 
     onPreviewClick() {

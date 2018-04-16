@@ -27,14 +27,14 @@ class LabTemplateController {
             this.user = user.id;
         });
 
+        this.setDisplayOptions({readonly: true, controls: false});
         if (this.templateId && !this.template) {
             this.fetchTemplate();
         } else if (!this.templateId) {
             this.$state.go('lab.browse.templates');
         } else {
-            this.loadWorkspace(
-                this.workspaceService.workspaceFromTemplate(this.template),
-                {readonly: true, controls: false}
+            this.setWorkspace(
+                this.workspaceService.workspaceFromTemplate(this.template)
             );
         }
     }
@@ -46,9 +46,8 @@ class LabTemplateController {
             this.template = template;
             this.loadingTemplate = false;
 
-            this.loadWorkspace(
-                this.workspaceService.workspaceFromTemplate(this.template),
-                {readonly: true, controls: false}
+            this.setWorkspace(
+                this.workspaceService.workspaceFromTemplate(this.template)
             );
         });
     }

@@ -1,6 +1,6 @@
 import {authedRequest} from '_api/authentication';
 import {colorStopsToRange} from '_redux/histogram-utils';
-import {getNodeDefinition, astFromNodes} from '_redux/node-utils';
+import NodeUtils from '_redux/node-utils';
 import {NODE_UPDATE_HARD} from './node-actions';
 
 const { colorSchemes: colorSchemes } = require('../../services/projects/colorScheme.defaults.json');
@@ -63,7 +63,7 @@ export function fetchHistogram(node) {
                 ({value: response}) => {
                     let histogram = response.data;
                     let callbackState = getState();
-                    let nodeDefinition = getNodeDefinition(getState(), {nodeId});
+                    let nodeDefinition = NodeUtils.getNodeDefinition(getState(), {nodeId});
                     if (!nodeDefinition.metadata.renderDefinition) {
                         let {
                             renderDefinition,
@@ -78,7 +78,10 @@ export function fetchHistogram(node) {
                                 })
                             }
                         );
-                        let updatedAnalysis = astFromNodes(callbackState.lab, newNodeDefinition);
+                        // TODO: Rewrite this to work with the new structure
+                        let updatedAnalysis = NodeUtils.astFromNodes(
+                            callbackState.lab, newNodeDefinition
+                        );
                         let promise = authedRequest({
                             method: 'put',
                             url: `${callbackState.api.apiUrl}` +
@@ -122,7 +125,7 @@ export function updateRenderDefinition({nodeId, renderDefinition, histogramOptio
             })
         });
 
-        const updatedAnalysis = astFromNodes(state.lab, newNodeDefinition);
+        const updatedAnalysis = NodeUtils.astFromNodes(state.lab, newNodeDefinition);
         dispatch({
             type: NODE_UPDATE_HARD,
             payload: authedRequest({

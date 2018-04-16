@@ -279,7 +279,6 @@ export default (app) => {
         }
 
         generateSourcesFromAST(ast) {
-            // Accepts a ast or ast run since they are pretty similar objects now.
             let nodes = [];
             if (ast.definition) {
                 nodes.push(ast.definition);

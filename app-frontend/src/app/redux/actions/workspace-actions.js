@@ -1,20 +1,29 @@
+import _ from 'lodash';
 import { authedRequest } from '_api/authentication';
 
-export const WORKSPACE_LOAD = 'WORKSPACE_LOAD';
+export const WORKSPACE_SET = 'WORKSPACE_SET';
+export const WORKSPACE_SET_DIAGRAM= 'WORKSPACE_SET_DIAGRAM';
 export const WORKSPACE_UPDATE_NAME = 'WORKSPACE_UPDATE_NAME';
 export const WORKSPACE_FETCH = 'WORKSPACE_FETCH';
 export const WORKSPACE_SET_OPTIONS = 'WORKSPACE_SET_OPTIONS';
 
 export const WORKSPACE_ACTION_PREFIX = 'WORKSPACE';
 
-export function loadWorkspace(workspace, options) {
-    return (dispatch) => {
-        let loadAction = {type: WORKSPACE_LOAD, payload: workspace};
-        let optionAction = {type: WORKSPACE_SET_OPTIONS, payload: options};
-        if (options) {
-            dispatch(optionAction);
+export function setWorkspace(workspace) {
+    return {
+        type: WORKSPACE_SET,
+        payload: workspace
+    };
+}
+
+export function setDiagram(
+    nodes, linksBySource, linksByTarget, graph, onShapeMove
+) {
+    return {
+        type: WORKSPACE_SET_DIAGRAM,
+        payload: {
+            nodes, linksBySource, linksByTarget, graph, onShapeMove
         }
-        dispatch(loadAction);
     };
 }
 
@@ -56,9 +65,22 @@ export function fetchWorkspace(workspaceId) {
 }
 
 export function setDisplayOptions(options) {
-    return {type: WORKSPACE_SET_OPTIONS, options};
+    return (dispatch, getState) => {
+        let state = getState();
+        let currentOptions = {
+            readonly: state.lab.readonly,
+            controls: state.lab.controls,
+            cellDimensions: _.clone(state.lab.cellDimensions),
+            nodeSeparationFactor: state.lab.nodeSeparationFactor
+        };
+
+        dispatch({
+            type: WORKSPACE_SET_OPTIONS,
+            payload: Object.assign({}, currentOptions, options)
+        });
+    };
 }
 
 export default {
-    loadWorkspace, updateWorkspaceName, fetchWorkspace, setDisplayOptions
+    setWorkspace, setDiagram, updateWorkspaceName, fetchWorkspace, setDisplayOptions
 };

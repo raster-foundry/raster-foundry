@@ -6,9 +6,7 @@ import labBrowseTpl from './pages/lab/browse/browse.html';
 import labBrowseWorkspacesTpl from './pages/lab/browse/workspaces/workspaces.html';
 import labBrowseTemplatesTpl from './pages/lab/browse/templates/templates.html';
 import labTemplateTpl from './pages/lab/template/template.html';
-import labAnalysisTpl from './pages/lab/analysis/analysis.html';
 import labWorkspaceTpl from './pages/lab/workspace/workspace.html';
-import labStartAnalysisTpl from './pages/lab/startAnalysis/startAnalysis.html';
 import labNavbarTpl from './pages/lab/navbar/navbar.html';
 
 import projectsTpl from './pages/projects/projects.html';
@@ -314,37 +312,6 @@ function labStates($stateProvider) {
             templateUrl: labTemplateTpl,
             controller: 'LabTemplateController',
             controllerAs: '$ctrl'
-        })
-        .state('lab.startAnalysis', {
-            title: 'Start an analysis',
-            url: '/start-analysis/:templateid',
-            parent: 'lab',
-            params: {
-                'template': null
-            },
-            templateUrl: labStartAnalysisTpl,
-            controller: 'LabStartAnalysisController',
-            controllerAs: '$ctrl'
-        })
-        .state('lab.analysis', {
-            title: 'Analysis details',
-            url: '/analysis/:analysisid',
-            parent: 'lab',
-            params: {
-                'analysis': null
-            },
-            views: {
-                'navmenu@root': {
-                    templateUrl: labNavbarTpl,
-                    controller: 'LabNavbarController',
-                    controllerAs: '$ctrl'
-                },
-                '': {
-                    templateUrl: labAnalysisTpl,
-                    controller: 'LabAnalysisController',
-                    controllerAs: '$ctrl'
-                }
-            }
         })
         .state('lab.workspace', {
             title: 'Workspace',
