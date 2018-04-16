@@ -32,7 +32,7 @@ class LayerAttributeDaoSpec extends FunSuite with Matchers with Checkers with DB
         (layerAttribute: LayerAttribute) => {
           val layerId = layerAttribute.layerId
           val attributeIO = LayerAttributeDao.insertLayerAttribute(layerAttribute) flatMap {
-            _ => LayerAttributeDao.unsafeGettAttribute(layerId, layerAttribute.name)
+            _ => LayerAttributeDao.unsafeGetAttribute(layerId, layerAttribute.name)
           }
           attributeIO.transact(xa).unsafeRunSync == layerAttribute
         }
