@@ -347,6 +347,20 @@ object Generators extends ArbitraryInstances {
                   owner, visibility, projectId, source)
   }
 
+  private def layerAttributeGen: Gen[LayerAttribute] = for {
+    layerName <- nonEmptyStringGen
+    zoom <- Gen.choose(0, 30)
+    name <- nonEmptyStringGen
+    value <- Gen.const(().asJson)
+  } yield {
+    LayerAttribute(layerName, zoom, name, value)
+  }
+
+  private def layerAttributesWithSameLayerNameGen: Gen[List[LayerAttribute]] = for {
+    layerName <- nonEmptyStringGen
+    layerAttributes <- Gen.listOfN(10, layerAttributeGen)
+  } yield layerAttributes map { _.copy(layerName = layerName) }
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
 
@@ -395,5 +409,11 @@ object Generators extends ArbitraryInstances {
     implicit def arbUploadCreate: Arbitrary[Upload.Create] = Arbitrary { uploadCreateGen }
 
     implicit def arbAOI: Arbitrary[AOI] = Arbitrary { aoiGen }
+
+    implicit def arbLayerAttribute: Arbitrary[LayerAttribute] = Arbitrary { layerAttributeGen }
+
+    implicit def arbListLayerAttribute: Arbitrary[List[LayerAttribute]] = Arbitrary {
+      layerAttributesWithSameLayerNameGen
+    }
   }
 }
