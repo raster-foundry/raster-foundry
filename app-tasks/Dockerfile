@@ -1,4 +1,4 @@
-FROM openjdk:8-jre-slim
+FROM openjdk:8-jdk-slim
 
 ENV SPARK_VERSION 2.1.0
 ENV HADOOP_VERSION 2.7
