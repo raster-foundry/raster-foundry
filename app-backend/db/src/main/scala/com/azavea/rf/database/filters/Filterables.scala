@@ -28,7 +28,7 @@ trait Filterables extends RFMeta {
   implicit val permissionsFilter = Filterable[Any, User] { user: User =>
     val filter =
       if (!user.isInRootOrganization) {
-        Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id})")
+        Some(fr"owner = ${user.id}")
       } else {
         None
       }
