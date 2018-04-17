@@ -37,6 +37,7 @@ object Page {
   }
 
   /** Turn a page request into the appropriate SQL fragment */
+  @SuppressWarnings((Array("TraversableHead")))
   def apply(pageRequest: PageRequest, defaultOrderBy: Fragment = fr"id ASC"): Fragment = {
     val offset: Int = pageRequest.offset * pageRequest.limit
     val limit: Int = pageRequest.limit
