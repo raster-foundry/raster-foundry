@@ -40,6 +40,19 @@ object Page {
   def apply(pageRequest: PageRequest, defaultOrderBy: Fragment = fr"id ASC"): Fragment = {
     val offset: Int = pageRequest.offset * pageRequest.limit
     val limit: Int = pageRequest.limit
+    // Choose a default sort corresponding to the sort order in the first value in the
+    // pageRequest -- if there's a combined id + that column index, they need to be sorted
+    // the same for postgres to choose to use the index
+    val defaultSort: Fragment = pageRequest.sort.isEmpty match {
+      case true => defaultOrderBy
+      case false => {
+        val orderString = pageRequest.sort.values.head match {
+          case Order.Asc => "ASC"
+          case Order.Desc => "DESC"
+        }
+        fr"id ${orderString}"
+      }
+    }
     val orderBy =
       pageRequest.sort
         .toList
@@ -58,7 +71,7 @@ object Page {
         // If we don't filter out empty fragments, we'll intercalate commas with spaces
         .filter(_ != Fragment.empty)
         .toNel match {
-          case Some(orderStrings) => fr"ORDER BY" ++ (orderStrings ++ List(defaultOrderBy)).intercalate(fr",")
+          case Some(orderStrings) => fr"ORDER BY" ++ (orderStrings ++ List(defaultSort)).intercalate(fr",")
           case None => Fragment.empty
         }
 
