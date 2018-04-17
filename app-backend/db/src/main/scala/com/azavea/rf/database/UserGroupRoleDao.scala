@@ -46,9 +46,9 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
 
     def create(ugr: UserGroupRole): ConnectionIO[UserGroupRole] = {
         val isValidGroup = ugr.groupType match {
-            case GroupType.Platform => PlatformDao.query.exists(ugr.groupId)
-            case GroupType.Organization => OrganizationDao.query.exists(ugr.groupId)
-            case GroupType.Team => TeamDao.query.exists(ugr.groupId)
+            case GroupType.Platform => PlatformDao.query.filter(ugr.groupId).exists
+            case GroupType.Organization => OrganizationDao.query.filter(ugr.groupId).exists
+            case GroupType.Team => TeamDao.query.filter(ugr.groupId).exists
         }
 
         val create = createF(ugr).update.withUniqueGeneratedKeys[UserGroupRole](
@@ -79,7 +79,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
     def listByGroup(groupType: GroupType, groupId: UUID): ConnectionIO[List[UserGroupRole]] = {
         query.filter(fr"group_type = ${groupType}").filter(fr"group_id = ${groupId}").list
     }
-    
+
     // @TODO: ensure a user cannot demote (or promote?) themselves
     def update(ugr: UserGroupRole, id: UUID, user: User): ConnectionIO[Int] =
         updateF(ugr, id, user).update.run
