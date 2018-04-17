@@ -10,6 +10,7 @@ import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO
 import cats.implicits._
 import cats.syntax.either._
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie.postgres._, doobie.postgres.implicits._
 import doobie.scalatest.imports._
 import geotrellis.slick._
@@ -115,14 +116,14 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
 
           val aoisForProject = aoisInsertWithProjectUserIO flatMap {
             case (dbAois: List[AOI], dbProject: Project, dbUser: User) => {
-              AoiDao.listAOIs(dbProject.id, dbUser) map {
+              AoiDao.listAOIs(dbProject.id, dbUser, PageRequest(0, 1000, Map.empty)) map {
                 (dbAois, _)
               }
             }
           }
 
           val (dbAois, listedAois) = aoisForProject.transact(xa).unsafeRunSync
-          (dbAois.toSet map { (aoi: AOI) => aoi.area }) == (listedAois.toSet map { (aoi: AOI) => aoi.area })
+          (dbAois.toSet map { (aoi: AOI) => aoi.area }) == (listedAois.results.toSet map { (aoi: AOI) => aoi.area })
         }
       }
     }
