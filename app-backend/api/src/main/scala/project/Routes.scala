@@ -381,7 +381,7 @@ trait ProjectRoutes extends Authentication
   def listAOIs(projectId: UUID): Route = authenticate { user =>
     withPagination { page =>
       complete {
-        AoiDao.query.filter(fr"project_id = ${projectId}").page(page).transact(xa).unsafeToFuture
+        AoiDao.listAOIs(projectId, user, page).transact(xa).unsafeToFuture
       }
     }
   }

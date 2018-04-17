@@ -78,7 +78,7 @@ object Dao {
     }
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page(pageRequest: PageRequest): ConnectionIO[PaginatedResponse[Model]] = {
+    def page(pageRequest: PageRequest, selectF: Fragment = selectF, countF: Fragment = countF): ConnectionIO[PaginatedResponse[Model]] = {
       for {
         page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[Model].list
         count <- (countF ++ Fragments.whereAndOpt(filters: _*)).query[Int].unique

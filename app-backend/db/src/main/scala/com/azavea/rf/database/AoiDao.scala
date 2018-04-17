@@ -4,6 +4,7 @@ import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util._
 import com.azavea.rf.datamodel._
 
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 import cats._, cats.data._, cats.effect.IO, cats.implicits._
@@ -67,12 +68,14 @@ object AoiDao extends Dao[AOI] {
     transaction
   }
 
-  def listAOIs(projectId: UUID, user: User): ConnectionIO[List[AOI]] = {
-      (selectF ++
+  def listAOIs(projectId: UUID, user: User, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] = {
+    val joinF =
       fr"INNER JOIN" ++ AoiToProjectDao.tableF ++ fr"a2p" ++
       fr"ON a2p.aoi_id = id" ++ Fragments.whereAndOpt(
         Some(fr"a2p.project_id = ${projectId}")
-      )).query[AOI].list
+      )
+
+    query.page(page, selectF ++ joinF, query.countF ++ joinF)
   }
 
   def deleteAOI(id: UUID, user: User): ConnectionIO[Int]= {
