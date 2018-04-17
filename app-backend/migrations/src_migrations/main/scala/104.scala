@@ -3,6 +3,8 @@ import com.liyaos.forklift.slick.SqlMigration
 
 object M104 {
   RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(104)(List(
-    sqlu"" // your sql code goes here
+    sqlu"""
+CREATE INDEX scenes_date_id_idx ON scenes (coalesce(acquisition_date, created_at), id);
+"""
   ))
 }
