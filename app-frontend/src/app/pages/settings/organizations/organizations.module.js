@@ -37,8 +37,9 @@ class OrganizationSettingsController {
     }
 }
 
-const ProfileModule = angular.module('pages.settings.profile', []);
+const OrganizationSettingsModule = angular.module('pages.settings.organizations', []);
 
-ProfileModule.controller('OrganizationSettingsController', OrganizationSettingsController);
+OrganizationSettingsModule
+    .controller('OrganizationSettingsController', OrganizationSettingsController);
 
-export default ProfileModule;
+export default OrganizationSettingsModule;
