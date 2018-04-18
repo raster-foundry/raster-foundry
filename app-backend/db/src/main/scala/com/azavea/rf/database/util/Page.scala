@@ -47,11 +47,10 @@ object Page {
     val defaultSort: Fragment = pageRequest.sort.isEmpty match {
       case true => defaultOrderBy
       case false => {
-        val orderString = pageRequest.sort.values.head match {
-          case Order.Asc => "ASC"
-          case Order.Desc => "DESC"
+        pageRequest.sort.values.head match {
+          case Order.Asc => fr"id ASC"
+          case Order.Desc => fr"id DESC"
         }
-        fr"id ${orderString}"
       }
     }
     val orderBy =
