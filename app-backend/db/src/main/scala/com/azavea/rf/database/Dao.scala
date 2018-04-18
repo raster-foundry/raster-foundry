@@ -44,6 +44,7 @@ object Dao {
 
     val countF = fr"SELECT count(*) FROM" ++ tableF
     val deleteF = fr"DELETE FROM" ++ tableF
+    val existF = fr"SELECT 1 FROM" ++ tableF
 
     /** Add another filter to the query being constructed */
     def filter[M >: Model, T](thing: T)(implicit filterable: Filterable[M, T]): QueryBuilder[Model] =
@@ -151,8 +152,11 @@ object Dao {
         .run
     }
 
-    def exists(id: UUID): ConnectionIO[Boolean] = {
-      list(0, 1).map(!_.isEmpty)
+    def exists: ConnectionIO[Boolean] = {
+      (existF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT 1")
+        .query[Int]
+        .list
+        .map(!_.isEmpty)
     }
   }
 }
