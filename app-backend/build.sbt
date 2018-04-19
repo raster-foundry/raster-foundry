@@ -177,7 +177,8 @@ lazy val common = Project("common", file("common"))
     Dependencies.chill,
     Dependencies.catsCore,
     Dependencies.awsBatchSdk,
-    Dependencies.awsStsSdk
+    Dependencies.awsStsSdk,
+    Dependencies.rollbar
   )})
 
 lazy val db = Project("db", file("db"))

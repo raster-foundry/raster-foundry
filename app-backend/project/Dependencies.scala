@@ -79,4 +79,5 @@ object Dependencies {
   val doobiePostgres          = "org.tpolecat"                %% "doobie-postgres"                   % Version.doobie
   val doobieSpecs             = "org.tpolecat"                %% "doobie-specs2"                     % Version.doobie
   val doobieScalatest         = "org.tpolecat"                %% "doobie-scalatest"                  % Version.doobie
+  val rollbar                 = "com.rollbar"                  % "rollbar-java"                      % Version.rollbar
 }
