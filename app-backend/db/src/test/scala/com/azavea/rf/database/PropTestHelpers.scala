@@ -116,4 +116,29 @@ trait PropTestHelpers {
   def fixupAoi(user: User, org: Organization, aoi: AOI): AOI = {
     aoi.copy(organizationId = org.id, owner = user.id, createdBy = user.id, modifiedBy = user.id)
   }
+
+  def fixupWorkspace(workspaceCreate: Workspace.Create, org: Organization, user: User): ConnectionIO[Workspace] = {
+    for {
+      workspace <- WorkspaceDao.insert(
+        workspaceCreate.copy(organizationId = org.id, owner = Some(user.id)),
+        user)
+    } yield workspace
+  }
+
+  def fixupAnalysis(analysisCreate: Analysis.Create, org: Organization, user: User): ConnectionIO[Analysis] = {
+    for {
+      analysis <- AnalysisDao.insertAnalysis(
+        analysisCreate.copy(organizationId = org.id, owner = Some(user.id)),
+        user)
+    } yield analysis
+  }
+
+  def fixupAnalysisFromWorkspace(workspace: Workspace, analysisCreate: Analysis.Create, org: Organization, user: User): ConnectionIO[Option[Analysis]] = {
+    for {
+      analysis <- WorkspaceDao.addAnalysis(
+        workspace.id,
+        analysisCreate.copy(organizationId = org.id, owner = Some(user.id)),
+        user)
+    } yield analysis
+  }
 }

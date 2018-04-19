@@ -50,6 +50,8 @@ object Generators extends ArbitraryInstances {
 
   private def uuidGen: Gen[UUID] = Gen.delay(UUID.randomUUID)
 
+  private def uuidListGen: Gen[List[UUID]] = Gen.listOf[UUID](uuidGen)
+
   private def jobStatusGen: Gen[JobStatus] = Gen.oneOf(
     JobStatus.Uploading, JobStatus.Success, JobStatus.Failure, JobStatus.PartialFailure,
     JobStatus.Queued, JobStatus.Processing
@@ -364,6 +366,52 @@ object Generators extends ArbitraryInstances {
   private def combinedSceneQueryParamsGen: Gen[CombinedSceneQueryParams] =
     Gen.const(CombinedSceneQueryParams())
 
+  private def analysisCreateGen: Gen[Analysis.Create] = for {
+    name <- arbitrary[Option[String]]
+    visibility <- visibilityGen
+    organizationId <- uuidGen
+    executionParameters <- Gen.delay(().asJson)
+    owner <- Gen.const(None)
+    readonly <- arbitrary[Option[Boolean]]
+  } yield {
+    Analysis.Create(name, visibility, organizationId, executionParameters, owner, readonly)
+  }
+
+  private def analysisGen: Gen[Analysis] = for {
+    analysisCreate <- analysisCreateGen
+    user <- userGen
+  } yield (analysisCreate.toAnalysis(user))
+
+  private def workspaceCreateGen: Gen[Workspace.Create] = for {
+    organizationId <- uuidGen
+    owner <- Gen.const(None)
+    name <- nonEmptyStringGen
+    description <- nonEmptyStringGen
+    tags <- uuidListGen
+    categories <- stringListGen
+  } yield {
+    Workspace.Create(organizationId, owner, name, description, tags, categories)
+  }
+
+  private def workspaceGen: Gen[(Workspace, List[WorkspaceTag], List[WorkspaceCategory])] = for {
+    workspaceCreate <- workspaceCreateGen
+    user <- userGen
+  } yield (workspaceCreate.toWorkspace(user))
+
+  private def workspaceUpdateGen: Gen[Workspace.Update] = for {
+    id <- uuidGen
+    owner <- arbitrary[String]
+    organizationId <- uuidGen
+    name <- arbitrary[String]
+    description <- arbitrary[String]
+    activeAnalysis <- uuidGen map { Some(_) }
+    tags <- uuidListGen
+    categories <- stringListGen
+  } yield {
+    Workspace.Update(id, owner, organizationId, name, description, activeAnalysis, tags, categories)
+  }
+
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
 
@@ -420,5 +468,15 @@ object Generators extends ArbitraryInstances {
     implicit def arbListLayerAttribute: Arbitrary[List[LayerAttribute]] = Arbitrary {
       layerAttributesWithSameLayerNameGen
     }
+
+    implicit def arbAnalysisCreate: Arbitrary[Analysis.Create] = Arbitrary { analysisCreateGen }
+
+    implicit def arbAnalysis: Arbitrary[Analysis] = Arbitrary { analysisGen }
+
+    implicit def arbWorkspace: Arbitrary[(Workspace, List[WorkspaceTag], List[WorkspaceCategory])] = Arbitrary { workspaceGen}
+
+    implicit def arbWorkspaceCreate: Arbitrary[Workspace.Create] = Arbitrary { workspaceCreateGen }
+
+    implicit def arbWorkspaceUpdate: Arbitrary[Workspace.Update] = Arbitrary { workspaceUpdateGen }
   }
 }
