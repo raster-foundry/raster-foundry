@@ -49,11 +49,14 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
   }
 
   def insertLayerAttribute(layerAttribute: LayerAttribute)(implicit xa: Transactor[IO]): ConnectionIO[Int] = {
+    // This insert includes conflict handling, because if we re-ingest a scene, its layerattributes should already
+    // be in the db.
     val insertStatement = fr"INSERT into" ++ tableF ++
       fr"""
           (layer_name, zoom, name, value)
       VALUES
           (${layerAttribute.layerName}, ${layerAttribute.zoom}, ${layerAttribute.name}, ${layerAttribute.value})
+      ON CONFLICT (layer_name, zoom, name) DO UPDATE set value = ${layerAttribute.value}
       """
     insertStatement.update.run
   }
