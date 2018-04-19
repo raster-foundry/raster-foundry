@@ -78,7 +78,7 @@ object Dao {
     }
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page(pageRequest: PageRequest, selectF: Fragment = selectF, countF: Fragment = countF): ConnectionIO[PaginatedResponse[Model]] = {
+    def page(pageRequest: PageRequest, selectF: Fragment, countF: Fragment): ConnectionIO[PaginatedResponse[Model]] = {
       for {
         page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[Model].list
         count <- (countF ++ Fragments.whereAndOpt(filters: _*)).query[Int].unique
@@ -89,6 +89,10 @@ object Dao {
         PaginatedResponse[Model](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
       }
     }
+
+    /** Provide a list of responses within the PaginatedResponse wrapper */
+    def page(pageRequest: PageRequest): ConnectionIO[PaginatedResponse[Model]] =
+      page(pageRequest, selectF, countF)
 
     def listQ(pageRequest: PageRequest): Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(Some(pageRequest))).query[Model]

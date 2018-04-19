@@ -44,7 +44,7 @@ trait DatasourceRoutes extends Authentication
   def listDatasources: Route = authenticate { user =>
     (withPagination & datasourceQueryParams) { (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
       complete {
-        DatasourceDao.query.filter(datasourceParams).filter(user).page(page).transact(xa).unsafeToFuture
+        DatasourceDao.listDatasources(page, datasourceParams, user).transact(xa).unsafeToFuture
       }
     }
   }
