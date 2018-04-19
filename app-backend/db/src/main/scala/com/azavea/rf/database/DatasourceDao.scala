@@ -41,6 +41,12 @@ object DatasourceDao extends Dao[Datasource] {
       .option
   }
 
+  def listDatasources(page: PageRequest, params: DatasourceQueryParameters, user: User): ConnectionIO[PaginatedResponse[Datasource]] = {
+    DatasourceDao.query.filter(params)
+      .filter(fr"owner = ${user.id} OR visibility = ${Visibility.Public.toString.toUpperCase} :: visibility")
+      .page(page)
+  }
+
   def create(
     datasource: Datasource,
     user: User
