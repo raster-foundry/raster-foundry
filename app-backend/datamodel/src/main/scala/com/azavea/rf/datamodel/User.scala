@@ -52,7 +52,7 @@ object Credential {
     Credential.apply(Some(s))
   }
 
-  def fromStringO(s: Option[String]) =
+  def fromStringO(s: Option[String]) = {
     Credential.apply(s)
   }
 }
