@@ -31,7 +31,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
 
   def getSceneConsumers(sceneId: UUID): ConnectionIO[List[String]] = {
     for {
-      projects <- ProjectDao.query.filter(fr"id IN (SELECT project_id FROM scenes_to_projects WHERE scene_id = ${sceneId}").list
+      projects <- ProjectDao.query.filter(fr"id IN (SELECT project_id FROM scenes_to_projects WHERE scene_id = ${sceneId})").list
     } yield projects.map(_.owner)
   }
 
