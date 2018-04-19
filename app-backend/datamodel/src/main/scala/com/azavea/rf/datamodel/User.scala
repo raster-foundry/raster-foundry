@@ -49,11 +49,11 @@ object Credential {
     }
 
   def fromString(s: String) = {
-    applyWithNonEmptyString(Some(s))(Credential.apply)
+    Credential.apply(Some(s))
   }
 
-  def fromStringO(s: Option[String]) = {
-    applyWithNonEmptyString(s)(Credential.apply)
+  def fromStringO(s: Option[String]) =
+    Credential.apply(s)
   }
 }
 
