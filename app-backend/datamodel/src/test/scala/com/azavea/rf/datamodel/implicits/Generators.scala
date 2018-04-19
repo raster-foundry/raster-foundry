@@ -25,7 +25,10 @@ object Generators extends ArbitraryInstances {
     Gen.oneOf(0, 15) flatMap { Gen.listOfN(_, nonEmptyStringGen) }
 
   private def nonEmptyStringGen: Gen[String] =
-    Gen.nonEmptyListOf[Char](Gen.alphaChar).map(_.mkString)
+    Gen.nonEmptyListOf[Char](Gen.alphaChar) map { _.mkString }
+
+  private def possiblyEmptyStringGen: Gen[String] =
+    Gen.containerOf[List, Char](Gen.alphaChar) map { _.mkString }
 
   private def pageRequestGen: Gen[PageRequest] =
     Gen.const(PageRequest(0, 20, Map("created_at" -> Order.Desc)))
@@ -39,7 +42,7 @@ object Generators extends ArbitraryInstances {
   private def visibilityGen: Gen[Visibility] = Gen.oneOf(
     Visibility.Public, Visibility.Organization, Visibility.Private)
 
-  private def credentialGen: Gen[Credential] = nonEmptyStringGen map { Credential.fromString }
+  private def credentialGen: Gen[Credential] = possiblyEmptyStringGen flatMap { Credential.fromString }
 
   // This is fine not to test the max value --
   private def rawDataBytesGen: Gen[Long] = Gen.choose(0L, 100000L)

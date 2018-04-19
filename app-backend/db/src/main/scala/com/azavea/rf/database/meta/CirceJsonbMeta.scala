@@ -21,7 +21,7 @@ trait CirceJsonbMeta {
   implicit val credentialMeta: Meta[Credential] =
     Meta.other[String]("text").xmap[Credential](
       a => {
-        if (a.length == 0) Credential(None) else Credential.fromString(a)
+        Credential.fromString(a)
       },
       a => a.token.getOrElse("").toString
     )
