@@ -511,7 +511,7 @@ trait ProjectRoutes extends Authentication
             }
           }
           ingestsKickoff.transact(xa).unsafeRunAsync(
-            (result: Either[Throwable, Unit]) => {
+            (result: Either[Throwable, List[Unit]]) => {
               result match {
                 case Left(error) => sendError(error)
                 case _ => ()
