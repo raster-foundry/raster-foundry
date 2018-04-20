@@ -47,5 +47,7 @@ object Version {
   val shapeless          = "2.3.2"
   val slf4j              = "1.6.4"
   val slick              = "3.2.1"
-  val slickMigrationAPI  = "0.4.0"  
+  val slickPG            = "0.15.4"
+  val slickMigrationAPI  = "0.4.0"
+  val spark              = "2.2.0"
 }
