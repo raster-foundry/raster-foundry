@@ -29,10 +29,13 @@ object OrganizationDao extends Dao[Organization] {
   def create(
     org: Organization
   ): ConnectionIO[Organization] = {
-    val id = UUID.randomUUID()
-    val now = new Timestamp((new java.util.Date()).getTime())
-    val newOrg = Organization.Create(name)
-    createOrganization(newOrg)
+    (fr"INSERT INTO" ++ tableF ++ fr"""
+          (id, created_at, modified_at, name, platform_id)
+        VALUES
+          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId})
+    """).update.withUniqueGeneratedKeys[Organization](
+      "id", "created_at", "modified_at", "name", "platform_id"
+    )
   }
 
   def getOrganizationById(id: UUID): ConnectionIO[Option[Organization]] =
@@ -42,16 +45,7 @@ object OrganizationDao extends Dao[Organization] {
     query.filter(id).select
 
   def createOrganization(newOrg: Organization.Create): ConnectionIO[Organization] = {
-    val id = UUID.randomUUID()
-    val now = new Timestamp((new java.util.Date()).getTime())
-
-    (fr"INSERT INTO" ++ tableF ++ fr"""
-          (id, created_at, modified_at, name, platform_id)
-        VALUES
-          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId})
-    """).update.withUniqueGeneratedKeys[Organization](
-      "id", "created_at", "modified_at", "name", "platform_id"
-    )
+    create(newOrg.toOrganization)
   }
 
   def update(org: Organization, id: UUID): ConnectionIO[Int] = {

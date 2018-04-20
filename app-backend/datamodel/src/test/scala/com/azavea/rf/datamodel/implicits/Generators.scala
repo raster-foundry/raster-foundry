@@ -21,6 +21,9 @@ import java.util.UUID
 
 object Generators extends ArbitraryInstances {
 
+  // This is only necessary until a Platform generator is supported
+  val defaultPlatformId = UUID.fromString("31277626-968b-4e40-840b-559d9c67863c")
+
   private def stringListGen: Gen[List[String]] =
     Gen.oneOf(0, 15) flatMap { Gen.listOfN(_, nonEmptyStringGen) }
 
@@ -138,7 +141,7 @@ object Generators extends ArbitraryInstances {
 
   private def organizationCreateGen: Gen[Organization.Create] = for {
     name <- nonEmptyStringGen
-  } yield (Organization.Create(name))
+  } yield (Organization.Create(name, defaultPlatformId))
 
   private def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization }
 

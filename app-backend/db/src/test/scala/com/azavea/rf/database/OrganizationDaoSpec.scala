@@ -16,18 +16,6 @@ import org.scalatest.prop.Checkers
 
 class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig {
 
-  // create
-  test("insert an organization from a name") {
-    check {
-      forAll(
-        (name: String) => {
-          val withoutNull = name.filter( _ != '\u0000' ).mkString
-          OrganizationDao.create(withoutNull).transact(xa).unsafeRunSync.name == withoutNull
-        }
-      )
-    }
-  }
-
   // createOrganization
   test("insert an organization from an Organization.Create") {
     check {
@@ -66,7 +54,7 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
           val insertOrgIO = OrganizationDao.createOrganization(orgCreate)
           val insertAndUpdateIO =  insertOrgIO flatMap {
             (org: Organization) => {
-              OrganizationDao.updateOrganization(org.copy(name = withoutNull), org.id) flatMap {
+              OrganizationDao.update(org.copy(name = withoutNull), org.id) flatMap {
                 case (affectedRows: Int) => {
                   OrganizationDao.unsafeGetOrganizationById(org.id) map {
                     (retrievedOrg: Organization) => (affectedRows, retrievedOrg.name)
