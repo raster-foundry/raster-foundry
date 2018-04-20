@@ -31,7 +31,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
 
     for {
       page <- paginatedQuery
-      count <- countQuery
+      count <- query.countIO
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
@@ -114,12 +114,10 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
         .compile
         .toList
     val withRelatedsIO: ConnectionIO[List[Scene.WithRelated]] = scenesIO flatMap { scenesToScenesWithRelated }
-    val countIO: ConnectionIO[Int] =
-      (fr"SELECT count(*) FROM scenes" ++ Fragments.whereAndOpt(queryFilters: _*)).query[Int].unique
 
     for {
       page <- withRelatedsIO
-      count <- countIO
+      count <- query.countIO
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
