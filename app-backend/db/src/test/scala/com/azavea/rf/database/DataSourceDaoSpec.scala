@@ -30,7 +30,9 @@ class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTest
           val createDsIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+            dsInsert <- DatasourceDao.createDatasource(
+              fixupDatasource(dsCreate, orgInsert, userInsert),
+              userInsert)
           } yield dsInsert
           val createDs = createDsIO.transact(xa).unsafeRunSync
           createDs.name == dsCreate.name
@@ -46,7 +48,9 @@ class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTest
           val getDsIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+            dsInsert <- DatasourceDao.createDatasource(
+              fixupDatasource(dsCreate, orgInsert, userInsert),
+              userInsert)
             dsGet <- DatasourceDao.getDatasourceById(dsInsert.id, userInsert)
           } yield dsGet
           val getDs = getDsIO.transact(xa).unsafeRunSync
@@ -63,7 +67,9 @@ class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTest
           val getDsUnsafeIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+            dsInsert <- DatasourceDao.createDatasource(
+              fixupDatasource(dsCreate, orgInsert, userInsert),
+              userInsert)
             dsGetUnsafe <- DatasourceDao.unsafeGetDatasourceById(dsInsert.id, userInsert)
           } yield dsGetUnsafe
           val getDsUnsafe = getDsUnsafeIO.transact(xa).unsafeRunSync
@@ -80,8 +86,12 @@ class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTest
           val updateDsIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
-            dsUpdated <- fixupDatasource(dsUpdate, orgInsert, userInsert)
+            dsInsert <- DatasourceDao.createDatasource(
+              fixupDatasource(dsCreate, orgInsert, userInsert),
+              userInsert)
+            dsUpdated <- DatasourceDao.createDatasource(
+              fixupDatasource(dsUpdate, orgInsert, userInsert),
+              userInsert)
             rowUpdated <- DatasourceDao.updateDatasource(dsUpdated, dsInsert.id, userInsert)
           } yield (rowUpdated, dsUpdated)
           val (rowUpdated, dsUpdated) = updateDsIO.transact(xa).unsafeRunSync
@@ -104,7 +114,9 @@ class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTest
           val deleteDsIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            dsInsert <- fixupDatasource(dsCreate, orgInsert, userInsert)
+            dsInsert <- DatasourceDao.createDatasource(
+              fixupDatasource(dsCreate, orgInsert, userInsert),
+              userInsert)
             rowDeleted <- DatasourceDao.deleteDatasource(dsInsert.id, userInsert)
           } yield rowDeleted
           val deleteDsRowCount = deleteDsIO.transact(xa).unsafeRunSync

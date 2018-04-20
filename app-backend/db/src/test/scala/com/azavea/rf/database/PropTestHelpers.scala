@@ -90,12 +90,10 @@ trait PropTestHelpers {
     )
   }
 
-  def fixupDatasource(dsCreate: Datasource.Create, org: Organization, user: User): ConnectionIO[Datasource] = {
-    for {
-      ds <- DatasourceDao.createDatasource(
-        dsCreate.copy(organizationId = org.id, owner = Some(user.id)),
-        user)
-    } yield ds
+  def fixupDatasource(dsCreate: Datasource.Create, org: Organization, user: User): Datasource.Create = {
+    dsCreate.copy(
+      organizationId = org.id,
+      owner = Some(user.id))
   }
 
   def fixupThumbnail(org: Organization, scene: Scene.WithRelated, thumbnail: Thumbnail): Thumbnail =
@@ -117,28 +115,16 @@ trait PropTestHelpers {
     aoi.copy(organizationId = org.id, owner = user.id, createdBy = user.id, modifiedBy = user.id)
   }
 
-  def fixupWorkspace(workspaceCreate: Workspace.Create, org: Organization, user: User): ConnectionIO[Workspace] = {
-    for {
-      workspace <- WorkspaceDao.insert(
-        workspaceCreate.copy(organizationId = org.id, owner = Some(user.id)),
-        user)
-    } yield workspace
+  def fixupWorkspace(workspaceCreate: Workspace.Create, org: Organization, user: User): Workspace.Create = {
+    workspaceCreate.copy(
+      organizationId = org.id,
+      owner = Some(user.id))
   }
 
-  def fixupAnalysis(analysisCreate: Analysis.Create, org: Organization, user: User): ConnectionIO[Analysis] = {
-    for {
-      analysis <- AnalysisDao.insertAnalysis(
-        analysisCreate.copy(organizationId = org.id, owner = Some(user.id)),
-        user)
-    } yield analysis
+  def fixupAnalysis(analysisCreate: Analysis.Create, org: Organization, user: User): Analysis.Create = {
+    analysisCreate.copy(
+      organizationId = org.id,
+      owner = Some(user.id))
   }
 
-  def fixupAnalysisFromWorkspace(workspace: Workspace, analysisCreate: Analysis.Create, org: Organization, user: User): ConnectionIO[Option[Analysis]] = {
-    for {
-      analysis <- WorkspaceDao.addAnalysis(
-        workspace.id,
-        analysisCreate.copy(organizationId = org.id, owner = Some(user.id)),
-        user)
-    } yield analysis
-  }
 }

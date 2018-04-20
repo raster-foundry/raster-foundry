@@ -1,6 +1,7 @@
 package com.azavea.rf.database
 
 import com.azavea.rf.datamodel._
+import com.azavea.rf.datamodel.{Tag => RFTag}
 import com.azavea.rf.database.Implicits._
 
 import doobie._, doobie.implicits._
@@ -11,5 +12,7 @@ import doobie.scalatest.imports._
 import org.scalatest._
 
 class TagDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
-  // test("selection types") { check(TagDao.selectF.query[Tag]) }
+  test("selection types") {
+    TagDao.selectF.query[RFTag]
+  }
 }

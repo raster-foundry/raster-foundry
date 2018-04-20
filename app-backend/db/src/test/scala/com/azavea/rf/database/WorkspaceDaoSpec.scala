@@ -29,7 +29,8 @@ class WorkspaceDaoSpec extends FunSuite with Matchers with Checkers with DBTestC
           val insertWorkspaceIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            workspaceInsert <- fixupWorkspace(workspaceCreate, orgInsert, userInsert)
+            workspaceInsert <- WorkspaceDao.insert(
+              fixupWorkspace(workspaceCreate, orgInsert, userInsert), userInsert)
           } yield (workspaceInsert, orgInsert, userInsert)
 
           val (insertWorkspace, orgInsert, userInsert) = insertWorkspaceIO.transact(xa).unsafeRunSync
@@ -53,7 +54,8 @@ class WorkspaceDaoSpec extends FunSuite with Matchers with Checkers with DBTestC
           val getWorkspaceIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            workspaceInsert <- fixupWorkspace(workspaceCreate, orgInsert, userInsert)
+            workspaceInsert <- WorkspaceDao.insert(
+              fixupWorkspace(workspaceCreate, orgInsert, userInsert), userInsert)
             workspaceGetOp <- WorkspaceDao.getById(workspaceInsert.id, userInsert)
           } yield (workspaceGetOp, orgInsert, userInsert)
 
@@ -82,8 +84,10 @@ class WorkspaceDaoSpec extends FunSuite with Matchers with Checkers with DBTestC
           val insertWorkspaceIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            analysisInsert <- fixupAnalysis(analysisCreate, orgInsert, userInsert)
-            workspaceInsert <- fixupWorkspace(workspaceCreate, orgInsert, userInsert)
+            analysisInsert <- AnalysisDao.insertAnalysis(
+              fixupAnalysis(analysisCreate, orgInsert, userInsert), userInsert)
+            workspaceInsert <- WorkspaceDao.insert(
+              fixupWorkspace(workspaceCreate, orgInsert, userInsert), userInsert)
           } yield (workspaceInsert, analysisInsert, orgInsert, userInsert)
 
           val updateWorkspaceIO = insertWorkspaceIO flatMap {
@@ -122,7 +126,8 @@ class WorkspaceDaoSpec extends FunSuite with Matchers with Checkers with DBTestC
           val deleteWorkspaceIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            workspaceInsert <- fixupWorkspace(workspaceCreate, orgInsert, userInsert)
+            workspaceInsert <- WorkspaceDao.insert(
+              fixupWorkspace(workspaceCreate, orgInsert, userInsert), userInsert)
             deletedRowCount <- WorkspaceDao.delete(workspaceInsert.id, userInsert)
           } yield deletedRowCount
 
@@ -142,8 +147,12 @@ class WorkspaceDaoSpec extends FunSuite with Matchers with Checkers with DBTestC
           val addAnalysisInWorkspaceIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            workspaceInsert <- fixupWorkspace(workspaceCreate, orgInsert, userInsert)
-            analysisInsert <- fixupAnalysisFromWorkspace(workspaceInsert, analysisCreate, orgInsert, userInsert)
+            workspaceInsert <- WorkspaceDao.insert(
+              fixupWorkspace(workspaceCreate, orgInsert, userInsert), userInsert)
+            analysisInsert <- WorkspaceDao.addAnalysis(
+              workspaceInsert.id,
+              fixupAnalysis(analysisCreate, orgInsert, userInsert),
+              userInsert)
           } yield (workspaceInsert, analysisInsert, orgInsert, userInsert)
 
           val (workspaceInsert, analysisInsertOp, orgInsert, userInsert) = addAnalysisInWorkspaceIO.transact(xa).unsafeRunSync
@@ -166,8 +175,12 @@ class WorkspaceDaoSpec extends FunSuite with Matchers with Checkers with DBTestC
           val deleteAnalysisInWorkspaceIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            workspaceInsert <- fixupWorkspace(workspaceCreate, orgInsert, userInsert)
-            analysisInsert <- fixupAnalysisFromWorkspace(workspaceInsert, analysisCreate, orgInsert, userInsert)
+            workspaceInsert <- WorkspaceDao.insert(
+              fixupWorkspace(workspaceCreate, orgInsert, userInsert), userInsert)
+            analysisInsert <- WorkspaceDao.addAnalysis(
+              workspaceInsert.id,
+              fixupAnalysis(analysisCreate, orgInsert, userInsert),
+              userInsert)
             deletedRowCount <- WorkspaceDao.deleteAnalysis(workspaceInsert.id, analysisInsert.get.id, userInsert)
           } yield deletedRowCount
 
@@ -187,8 +200,12 @@ class WorkspaceDaoSpec extends FunSuite with Matchers with Checkers with DBTestC
           val getAnalysesInWorkspaceIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            workspaceInsert <- fixupWorkspace(workspaceCreate, orgInsert, userInsert)
-            analysisInsert <- fixupAnalysisFromWorkspace(workspaceInsert, analysisCreate, orgInsert, userInsert)
+            workspaceInsert <- WorkspaceDao.insert(
+              fixupWorkspace(workspaceCreate, orgInsert, userInsert), userInsert)
+            analysisInsert <- WorkspaceDao.addAnalysis(
+              workspaceInsert.id,
+              fixupAnalysis(analysisCreate, orgInsert, userInsert),
+              userInsert)
             analysisGet <- WorkspaceDao.getAnalyses(workspaceInsert.id, userInsert)
           } yield (analysisGet, analysisInsert)
 
