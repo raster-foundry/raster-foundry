@@ -47,6 +47,7 @@ object Version {
   val slf4j              = "1.6.4"
   val slick              = "3.2.1"
   val slickMigrationAPI  = "0.4.0"
-  val slickPG            = "0.15.4"
-  val spark              = "2.2.0"
+  val betterFiles        = "3.4.0"
+  val doobie             = "0.5.0-M14"
+  val rollbar            = "1.0.1"
 }
