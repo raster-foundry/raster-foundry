@@ -47,7 +47,9 @@ then
 
         echo "Preparing the database for testing"
         docker-compose \
-            run --rm api-server ";mg init;mg update;mg apply"
+            run --rm api-server "mg init" || true
+        docker-compose \
+            run --rm api-server ";mg update;mg apply"
 
         echo "Executing Scala test suite"
         docker-compose \
