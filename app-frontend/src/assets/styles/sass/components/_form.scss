@@ -209,6 +209,10 @@ input[type=radio] {
     background: none;
     color: $shade-dark;
     box-shadow: none;
+
+    &.darkBg {
+      color: $white;
+    }
   }
 
   .input-icon {

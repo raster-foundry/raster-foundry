@@ -74,17 +74,6 @@ class NodeCreateSidebarController {
             }
         });
 
-        $scope.$watch('$ctrl.functionSearch', (search) => {
-            if (search) {
-                const lcSearch = search.toLowerCase();
-                this.functionNodes = allowedOps.filter((ao) => {
-                    return ao.op.toLowerCase().includes(lcSearch) ||
-                        ao.label.toLowerCase().includes(lcSearch);
-                });
-            } else {
-                this.functionNodes = allowedOps;
-            }
-        });
         $scope.$watch('$ctrl.mamlExpression', (mamlExpression) => {
             if (mamlExpression) {
                 this.parseMaml(mamlExpression);
@@ -108,7 +97,7 @@ class NodeCreateSidebarController {
         this.opChars = allowedOps.map((ao) => ao.op);
     }
 
-    fetchProjectPage(page = 1) {
+    fetchProjectPage(page = 1, searchVal = null) {
         if (this.loadingList) {
             return;
         }
@@ -119,7 +108,8 @@ class NodeCreateSidebarController {
         this.projectService.query({
             sort: 'createdAt,desc',
             pageSize: pageSize,
-            page: page - 1
+            page: page - 1,
+            search: searchVal
         }).then((projectResult) => {
             this.updatePagination(projectResult);
             this.currentPage = page;
@@ -131,7 +121,7 @@ class NodeCreateSidebarController {
         });
     }
 
-    fetchTemplatePage(page = 1) {
+    fetchTemplatePage(page = 1, searchVal = null) {
         if (this.loadingList) {
             return;
         }
@@ -142,7 +132,8 @@ class NodeCreateSidebarController {
         this.templateService.fetchTemplates({
             sort: 'createdAt,desc',
             pageSize: pageSize,
-            page: page - 1
+            page: page - 1,
+            search: searchVal
         }).then((templateResult) => {
             this.updatePagination(templateResult);
             this.currentPage = page;
@@ -267,6 +258,51 @@ class NodeCreateSidebarController {
             break;
         default:
             throw new Error('called addNode when not in a project or template list view');
+        }
+    }
+
+    search(value, nodeType) {
+        switch (nodeType) {
+        case 'project':
+            this.searchProjects(value);
+            break;
+        case 'function':
+        case 'formula':
+            this.searchFunctions(value);
+            break;
+        case 'template':
+            this.searchTemplate(value);
+            break;
+        default:
+            throw new Error('not a supported search type.');
+        }
+    }
+
+    searchProjects(value) {
+        if (value) {
+            this.fetchProjectPage(1, value);
+        } else {
+            this.fetchProjectPage();
+        }
+    }
+
+    searchFunctions(value) {
+        if (value) {
+            const lcSearch = value.toLowerCase();
+            this.functionNodes = allowedOps.filter((ao) => {
+                return ao.op.toLowerCase().includes(lcSearch) ||
+                    ao.label.toLowerCase().includes(lcSearch);
+            });
+        } else {
+            this.functionNodes = allowedOps;
+        }
+    }
+
+    searchTemplate(value) {
+        if (value) {
+            this.fetchTemplatePage(1, value);
+        } else {
+            this.fetchTemplatePage();
         }
     }
 }

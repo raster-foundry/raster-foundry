@@ -4,8 +4,7 @@
         <label class="h5" for="search-input">Search workspaces</label>
         <rf-search on-search="$ctrl.search(value)"
                    placeholder="Search for workspaces"
-                   auto-focus="true"
-                   disabled="true">
+                   auto-focus="true">
         </rf-search>
         <div class="aside aside-filters">
           <section>
@@ -66,7 +65,7 @@
             </th>
           </tr>
         </thead>
-        <tr ng-repeat="workspace in $ctrl.workspacesList | filter: {title: $ctrl.searchString}" class="row-hover-controls">
+        <tr ng-repeat="workspace in $ctrl.workspacesList | filter: {name: $ctrl.searchString}" class="row-hover-controls">
           <td><a ui-sref="lab.workspace({workspaceid: workspace.id, workspace: workspace})">
             {{workspace.name || 'Untitled workspace'}}
           </a></td>

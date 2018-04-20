@@ -33,13 +33,14 @@ class LabBrowseWorkspacesController {
         }
     }
 
-    fetchWorkspaceList(page = 1) {
+    fetchWorkspaceList(page = 1, searchVal = null) {
         this.loadingWorkspaces = true;
         this.workspaceService.fetchWorkspaces(
             {
                 pageSize: 10,
                 page: page - 1,
-                sort: this.serializeSort()
+                sort: this.serializeSort(),
+                search: searchVal
             }
         ).then(d => {
             this.currentPage = page;
@@ -152,6 +153,15 @@ class LabBrowseWorkspacesController {
         this.modalService.open({
             component: 'rfTemplateCreateModal'
         });
+    }
+
+    search(value) {
+        this.searchString = value;
+        if (this.searchString) {
+            this.fetchWorkspaceList(1, this.searchString);
+        } else {
+            this.fetchWorkspaceList();
+        }
     }
 }
 

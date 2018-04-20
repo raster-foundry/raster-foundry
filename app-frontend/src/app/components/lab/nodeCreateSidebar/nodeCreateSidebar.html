@@ -59,8 +59,10 @@
   </div>
   <div ng-if-start="$ctrl.createNode === 'function'">
     <div class="lab-sidebar-search">
-      <input type="text" placeholder="Search functions and operators" class="form-control"
-             ng-model="$ctrl.functionSearch">
+      <rf-search on-search="$ctrl.search(value, $ctrl.createNode)"
+                 placeholder="Search functions and operators"
+                 auto-focus="true"
+                 dark-bg="true">
     </div>
   </div>
   <div class="sidebar-scrollable" ng-if-end>
@@ -100,8 +102,10 @@
   </div>
   <div>
     <div class="lab-sidebar-search">
-      <input type="text" placeholder="Search allowed functions/operators" class="form-control"
-             ng-model="$ctrl.functionSearch">
+      <rf-search on-search="$ctrl.search(value, $ctrl.createNode)"
+                 placeholder="Search allowed functions/operators"
+                 auto-focus="true"
+                 dark-bg="true">
     </div>
   </div>
   <div class="sidebar-scrollable fixed-height" ng-if-end>
@@ -112,8 +116,10 @@
   </div>
   <div ng-if-start="$ctrl.createNode === 'project' || $ctrl.createNode === 'template'">
     <div class="lab-sidebar-search">
-      <input type="text" ng-attr-placeholder="Search {{$ctrl.createNode}}s" class="form-control"
-             ng-model="$ctrl.searchText" ng-model-options="{debounce: 1000}">
+      <rf-search on-search="$ctrl.search(value, $ctrl.createNode)"
+                 placeholder="Search for {{$ctrl.createNode}}s"
+                 auto-focus="true"
+                 dark-bg="true">
     </div>
   </div>
   <div class="sidebar-scrollable" ng-if-end>

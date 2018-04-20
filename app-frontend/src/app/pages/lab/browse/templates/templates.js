@@ -36,13 +36,14 @@ class LabBrowseTemplatesController {
         }
     }
 
-    fetchTemplateList(page = 1) {
+    fetchTemplateList(page = 1, searchVal = null) {
         this.loadingTemplates = true;
         this.templateService.fetchTemplates(
             {
                 pageSize: 12,
                 page: page - 1,
-                sort: 'createdAt,desc'
+                sort: 'createdAt,desc',
+                search: searchVal
             }
         ).then(d => {
             this.currentPage = page;
@@ -87,9 +88,7 @@ class LabBrowseTemplatesController {
     search(value) {
         this.searchString = value;
         if (this.searchString) {
-            this.analysisService.searchQuery().then(templates => {
-                this.templateList = templates;
-            });
+            this.fetchTemplateList(1, this.searchString);
         } else {
             this.fetchTemplateList();
         }
