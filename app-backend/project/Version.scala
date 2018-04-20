@@ -34,6 +34,7 @@ object Version {
   val nimbusJose         = "0.6.0"
   val postgres           = "42.1.1"
   val rasterFoundry      = "0.1"
+  val rollbar            = "1.0.1"
   val scaffeine          = "2.0.0"
   val scala              = "2.11.11"
   val scalaCheck         = "1.13.4"
@@ -46,8 +47,5 @@ object Version {
   val shapeless          = "2.3.2"
   val slf4j              = "1.6.4"
   val slick              = "3.2.1"
-  val slickMigrationAPI  = "0.4.0"
-  val betterFiles        = "3.4.0"
-  val doobie             = "0.5.0-M14"
-  val rollbar            = "1.0.1"
+  val slickMigrationAPI  = "0.4.0"  
 }
