@@ -16,6 +16,7 @@ class LoginController {
         if (this.authService.verifyAuthCache()) {
             this.$state.go('home');
         } else {
+            this.authService.clearAuthStorage();
             this.authService.login();
         }
     }

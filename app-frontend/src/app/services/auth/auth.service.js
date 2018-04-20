@@ -337,6 +337,13 @@ export default (app) => {
             this.$state.go('login');
         }
 
+        clearAuthStorage() {
+            delete this.accessToken;
+            delete this.idToken;
+            this.localStorage.remove('idToken');
+            this.localStorage.remove('accessToken');
+        }
+
         createRefreshToken(name) {
             this.promise = this.$q.defer();
             this.lastTokenName = name;
