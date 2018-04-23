@@ -370,6 +370,19 @@ object Generators extends ArbitraryInstances {
   private def combinedSceneQueryParamsGen: Gen[CombinedSceneQueryParams] =
     Gen.const(CombinedSceneQueryParams())
 
+  private def teamCreateGen: Gen[Team.Create] = for {
+    orgId <- uuidGen
+    name <- nonEmptyStringGen
+    settings <- Gen.const(().asJson)
+  } yield Team.Create(orgId, name, settings)
+
+  private def teamGen: Gen[Team] = for {
+    user <- userGen
+    teamCreate <- teamCreateGen
+  } yield {
+    teamCreate.toTeam(user)
+  }
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
 
@@ -426,5 +439,9 @@ object Generators extends ArbitraryInstances {
     implicit def arbListLayerAttribute: Arbitrary[List[LayerAttribute]] = Arbitrary {
       layerAttributesWithSameLayerNameGen
     }
+
+    implicit def arbTeamCreate: Arbitrary[Team.Create] = Arbitrary { teamCreateGen }
+
+    implicit def arbTeam: Arbitrary[Team] = Arbitrary { teamGen }
   }
 }
