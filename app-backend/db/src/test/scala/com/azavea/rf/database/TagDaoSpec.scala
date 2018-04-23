@@ -12,7 +12,7 @@ import doobie.scalatest.imports._
 import org.scalatest._
 
 class TagDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
-  test("selection types") {
-    TagDao.selectF.query[RFTag]
-  }
+  // test("selection types") {
+  //   TagDao.selectF.query[RFTag]
+  // }
 }
