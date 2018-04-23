@@ -296,13 +296,13 @@ object ImportLandsat8 {
      case List(date, threshold) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) => ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
      case List(date) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) => ImportLandsat8C1(LocalDate.parse(date))
      case List(date, threshold) => throw new NotImplementedError(
-       "pre-May 1, 2016 import did not deserve to make the trip to the valley beyond"
+       "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
      )
      case List(date) => throw new NotImplementedError(
-       "pre-May 1, 2016 import did not deserve to make the trip to the valley beyond"
+       "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
      )
      case _ =>  throw new NotImplementedError(
-       "pre-May 1, 2016 import did not deserve to make the trip to the valley beyond"
+       "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
      )
    }
 
