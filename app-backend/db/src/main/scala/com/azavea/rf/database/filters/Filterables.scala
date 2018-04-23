@@ -113,14 +113,17 @@ trait Filterables extends RFMeta {
           statuses => Fragments.in(fr"ingest_status", statuses)
         }),
         (sceneParams.bboxPolygon, sceneParams.shape) match {
-          case (_, shape) => shape.map(id => fr"""
+          case (_, Some(shpId)) => Some(
+            fr"""
             ST_Intersects(
               data_footprint,
-              (SELECT geometry from shapes where id=${id}))""")
-          case (bboxPolygon, None) => bboxPolygon.map({ bboxes =>
-            val fragments = bboxes.map(bbox => fr"ST_Intersects(data_footprint, ${bbox})")
-            Fragments.and(fragments: _*)
-          })
+              (SELECT geometry from shapes where id=${shpId}))""")
+          case (Some(bboxPolygons), _) => {
+            val fragments = bboxPolygons.map(bbox =>
+              fr"ST_Intersects(data_footprint, ${bbox})")
+            Some(Fragments.and(fragments: _*))
+          }
+          case _ => None
         }
       )
   }
