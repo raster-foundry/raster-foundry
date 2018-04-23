@@ -27,13 +27,14 @@ def find_aoi_projects_to_update():
     """Find AOI projects to check for updates and return their IDs to process"""
     logger.info('Finding AOI projects to check for updates')
 
-    bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main find_aoi_projects'
-    cmd = subprocess.Popen(bash_cmd, shell=True, stdout=subprocess.PIPE)
-    projects = ['']
-    for line in cmd.stdout:
-        logger.info(line.strip())
-        if 'ProjectIds:' in line:
-            projects = [p.strip() for p in line.replace('ProjectIds:', '').strip().split(',')]
+    bash_cmd = ['java', '-cp', '/opt/raster-foundry/jars/rf-batch.jar',
+                'com.azavea.rf.batch.Main', 'find_aoi_projects']
+    cmd = subprocess.Popen(bash_cmd, stdout=subprocess.PIPE)
+    (stdout, stderr) = cmd.communicate()
+    projects = [
+        x.strip().lstrip('Project to update: ') for x in stdout.split('\n') if
+        x.startswith('Project to update: ')
+    ]
     return projects
 
 

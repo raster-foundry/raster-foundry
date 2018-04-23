@@ -43,7 +43,9 @@ case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job {
         .to[List]
     }
 
-    aoiProjectsToUpdate.transact(xa).unsafeRunSync.foreach(println)
+    aoiProjectsToUpdate.transact(xa).unsafeRunSync.foreach(
+      (projectId: UUID) => println(s"Project to update: ${projectId}")
+    )
   }
 }
 
