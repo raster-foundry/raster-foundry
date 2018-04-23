@@ -124,7 +124,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
   }
 
   /** Because it makes scenes -- get it? */
-  def riot(existingScenes: List[UUID], scenePath: String, datasourceUUID: UUID): Option[Scene.Create] = {
+  def riot(existingScenes: List[String], scenePath: String, datasourceUUID: UUID): Option[Scene.Create] = {
       val sceneId = UUID.randomUUID()
       val images = List(10f, 20f, 60f).map(createImages(sceneId, scenePath.some, _)).reduce(_ ++ _)
       val thumbnails = createThumbnails(sceneId, scenePath)
@@ -197,7 +197,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
 
   def findScenes(date: LocalDate, keys: List[URI], user: User, datasourceUUID: UUID): ConnectionIO[List[Scene.WithRelated]] = {
     val scenesIo: ConnectionIO[List[Scene.Create]] = getExistingScenes(date, datasourceUUID) map {
-      case (ids: List[UUID]) => {
+      case (names: List[String]) => {
         keys map {
           (uri:URI) => {
             for {
@@ -206,7 +206,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
             } yield {
               tilesJson.flatMap { tileJson =>
                 tileJson.hcursor.downField("path").as[String].toOption.map {
-                  scenePath => riot(ids, scenePath, datasourceUUID)
+                  scenePath => riot(names, scenePath, datasourceUUID)
                 }
               }.flatten
             }
