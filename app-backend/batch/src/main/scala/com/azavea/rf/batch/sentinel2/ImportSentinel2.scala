@@ -117,10 +117,10 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       ).toList
   }
 
-  def getExistingScenes(date: LocalDate, datasourceUUID: UUID): ConnectionIO[List[UUID]] = {
+  def getExistingScenes(date: LocalDate, datasourceUUID: UUID): ConnectionIO[List[String]] = {
     SceneDao.query.filter(
       Fragments.and(fr"datasource = ${datasourceUUID} :: uuid", fr"date(acquisition_date) = date(${date}) :: date")
-    ).list map { (scenes: List[Scene]) => scenes map { _.id } }
+    ).list map { (scenes: List[Scene]) => scenes map { _.name } }
   }
 
   /** Because it makes scenes -- get it? */
