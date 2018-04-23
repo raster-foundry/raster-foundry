@@ -2,6 +2,7 @@ package com.azavea.rf.batch.landsat8
 
 import com.azavea.rf.batch.Job
 import com.azavea.rf.batch.util._
+import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.datamodel._
 import io.circe._
 import io.circe.syntax._
@@ -286,19 +287,25 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
 object ImportLandsat8 {
   val name = "import_landsat8"
 
+  implicit val xa = RFTransactor.xa
+
   def main(args: Array[String]): Unit = {
-    ???
-//    implicit val db = DB.DEFAULT
-//
-//    /** Since 30/04/2017 old LC8 collection is not updated */
-//    val job = args.toList match {
-//      case List(date, threshold) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) => ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
-//      case List(date) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) => ImportLandsat8C1(LocalDate.parse(date))
-//      case List(date, threshold) => ImportLandsat8(LocalDate.parse(date), threshold.toInt)
-//      case List(date) => ImportLandsat8(LocalDate.parse(date))
-//      case _ => ImportLandsat8()
-//    }
-//
-//    job.run
+
+   /** Since 30/04/2017 old LC8 collection is not updated */
+   val job = args.toList match {
+     case List(date, threshold) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) => ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
+     case List(date) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) => ImportLandsat8C1(LocalDate.parse(date))
+     case List(date, threshold) => throw new NotImplementedError(
+       "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
+     )
+     case List(date) => throw new NotImplementedError(
+       "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
+     )
+     case _ =>  throw new NotImplementedError(
+       "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
+     )
+   }
+
+   job.run
   }
 }
