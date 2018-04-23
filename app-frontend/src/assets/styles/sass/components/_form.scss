@@ -209,10 +209,6 @@ input[type=radio] {
     background: none;
     color: $shade-dark;
     box-shadow: none;
-
-    &.darkBg {
-      color: $white;
-    }
   }
 
   .input-icon {
@@ -401,4 +397,8 @@ div.radio {
       transform: scale(1);
     }
   }
+}
+
+.search-dark-bg .form-group.search-form .clear-search{
+  color: $white;
 }

@@ -97,20 +97,23 @@ class NodeCreateSidebarController {
         this.opChars = allowedOps.map((ao) => ao.op);
     }
 
-    fetchProjectPage(page = 1, searchVal = null) {
+    fetchProjectPage(searchVal, page = 1) {
         if (this.loadingList) {
             return;
+        }
+        const params = {
+            sort: 'createdAt,desc',
+            pageSize: pageSize,
+            page: page - 1
+        };
+        if (searchVal) {
+            params.search = searchVal;
         }
         this.itemList = [];
         delete this.listLoadError;
         this.loadingList = true;
         this.currentPageLoader = this.fetchTemplatePage;
-        this.projectService.query({
-            sort: 'createdAt,desc',
-            pageSize: pageSize,
-            page: page - 1,
-            search: searchVal
-        }).then((projectResult) => {
+        this.projectService.query(params).then((projectResult) => {
             this.updatePagination(projectResult);
             this.currentPage = page;
             this.itemList = projectResult.results;
@@ -121,20 +124,23 @@ class NodeCreateSidebarController {
         });
     }
 
-    fetchTemplatePage(page = 1, searchVal = null) {
+    fetchTemplatePage(searchVal, page = 1) {
         if (this.loadingList) {
             return;
+        }
+        const params = {
+            sort: 'createdAt,desc',
+            pageSize: pageSize,
+            page: page - 1
+        };
+        if (searchVal) {
+            params.search = searchVal;
         }
         this.itemList = [];
         delete this.listLoadError;
         this.loadingList = true;
         this.currentPageLoader = this.fetchTemplatePage;
-        this.templateService.fetchTemplates({
-            sort: 'createdAt,desc',
-            pageSize: pageSize,
-            page: page - 1,
-            search: searchVal
-        }).then((templateResult) => {
+        this.templateService.fetchTemplates(params).then((templateResult) => {
             this.updatePagination(templateResult);
             this.currentPage = page;
             this.itemList = templateResult.results;
@@ -280,7 +286,7 @@ class NodeCreateSidebarController {
 
     searchProjects(value) {
         if (value) {
-            this.fetchProjectPage(1, value);
+            this.fetchProjectPage(value);
         } else {
             this.fetchProjectPage();
         }
@@ -300,7 +306,7 @@ class NodeCreateSidebarController {
 
     searchTemplate(value) {
         if (value) {
-            this.fetchTemplatePage(1, value);
+            this.fetchTemplatePage(value);
         } else {
             this.fetchTemplatePage();
         }

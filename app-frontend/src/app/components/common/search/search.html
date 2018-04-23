@@ -2,7 +2,7 @@
   <i class="icon-search input-icon"></i>
   <input id="search-input"
          class="form-control"
-         ng-attr-placeholder="{{$ctrl.searchText || $ctrl.placeholder || 'Search'}}"
+         ng-attr-placeholder="{{$ctrl.placeholder || 'Search'}}"
          ng-model="$ctrl.searchText"
          ng-model-options="{
            debounce: 500
@@ -11,8 +11,7 @@
          ng-change="$ctrl.onSearch({value: $ctrl.searchText})"/>
   <button type="button"
           class="btn btn-tiny clear-search"
-          ng-click="$ctrl.clearSearch()"
-          ng-class="{'darkBg': $ctrl.darkBg}">
+          ng-click="$ctrl.clearSearch()">
     <span class="sr-only">Clear search</span>
     <i class="icon-cross"></i>
   </button>

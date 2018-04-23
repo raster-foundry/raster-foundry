@@ -7,8 +7,7 @@ const searchComponent = {
         autoFocus: '<',
         disabled: '<',
         placeholder: '@',
-        onSearch: '&',
-        darkBg: '<?'
+        onSearch: '&'
     }
 };
 

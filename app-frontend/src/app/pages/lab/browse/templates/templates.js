@@ -18,7 +18,8 @@ class LabBrowseTemplatesController {
     $onInit() {
         this.initFilters();
         this.initSearchTerms();
-        this.fetchTemplateList(this.$state.params.page);
+        // eslint-disable-next-line
+        this.fetchTemplateList(undefined, this.$state.params.page);
         this.searchString = '';
     }
 
@@ -36,7 +37,7 @@ class LabBrowseTemplatesController {
         }
     }
 
-    fetchTemplateList(page = 1, searchVal = null) {
+    fetchTemplateList(searchVal, page = 1) {
         this.loadingTemplates = true;
         this.templateService.fetchTemplates(
             {
@@ -88,7 +89,7 @@ class LabBrowseTemplatesController {
     search(value) {
         this.searchString = value;
         if (this.searchString) {
-            this.fetchTemplateList(1, this.searchString);
+            this.fetchTemplateList(this.searchString);
         } else {
             this.fetchTemplateList();
         }
