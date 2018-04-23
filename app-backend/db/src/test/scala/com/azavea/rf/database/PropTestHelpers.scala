@@ -90,12 +90,10 @@ trait PropTestHelpers {
     )
   }
 
-  def fixupDatasource(dsCreate: Datasource.Create, org: Organization, user: User): ConnectionIO[Datasource] = {
-    for {
-      ds <- DatasourceDao.createDatasource(
-        dsCreate.copy(organizationId = org.id, owner = Some(user.id)),
-        user)
-    } yield ds
+  def fixupDatasource(dsCreate: Datasource.Create, org: Organization, user: User): Datasource.Create = {
+    dsCreate.copy(
+      organizationId = org.id,
+      owner = Some(user.id))
   }
 
   def fixupThumbnail(org: Organization, scene: Scene.WithRelated, thumbnail: Thumbnail): Thumbnail =
@@ -116,4 +114,17 @@ trait PropTestHelpers {
   def fixupAoi(user: User, org: Organization, aoi: AOI): AOI = {
     aoi.copy(organizationId = org.id, owner = user.id, createdBy = user.id, modifiedBy = user.id)
   }
+
+  def fixupWorkspace(workspaceCreate: Workspace.Create, org: Organization, user: User): Workspace.Create = {
+    workspaceCreate.copy(
+      organizationId = org.id,
+      owner = Some(user.id))
+  }
+
+  def fixupAnalysis(analysisCreate: Analysis.Create, org: Organization, user: User): Analysis.Create = {
+    analysisCreate.copy(
+      organizationId = org.id,
+      owner = Some(user.id))
+  }
+
 }
