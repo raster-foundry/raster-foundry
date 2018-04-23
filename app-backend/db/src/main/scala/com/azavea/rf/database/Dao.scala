@@ -102,6 +102,23 @@ object Dao {
       listQ(pageRequest).list
     }
 
+    def countIO: ConnectionIO[Int] = {
+      // obviously I _wanted_ to call this over9000io, but alas
+      val countQuery = countF ++ Fragments.whereAndOpt(filters: _*)
+      val over10000IO: ConnectionIO[Boolean] =
+        (fr"SELECT EXISTS(" ++ (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"offset 1000") ++ fr")")
+          .query[Boolean]
+          .unique
+      over10000IO flatMap {
+        (exists: Boolean) => {
+          exists match {
+            case true => 10000.pure[ConnectionIO]
+            case false => countQuery.query[Int].unique
+          }
+        }
+      }
+    }
+
     def listQ(limit: Int): Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT $limit").query[Model]
 

@@ -166,7 +166,8 @@ export default (app) => {
                             resolve({
                                 scenes: response.results,
                                 hasNext,
-                                count: this.$filter('number')(response.count)
+                                count: response.count >= 10000 ?
+                                    'At least 10,000' : this.$filter('number')(response.count)
                             });
                         }, (error) => {
                             reject({
