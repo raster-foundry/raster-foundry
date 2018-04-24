@@ -1,6 +1,6 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.datamodel.Organization
+import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.Generators.Implicits._
 import com.azavea.rf.database.Implicits._
 
@@ -20,8 +20,17 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
   test("insert an organization from an Organization.Create") {
     check {
       forAll(
-        (orgCreate: Organization.Create) => {
-          OrganizationDao.createOrganization(orgCreate).transact(xa).unsafeRunSync.name == orgCreate.name
+        (rootUserCreate: User.Create, orgCreate: Organization.Create, platformCreate: Platform.Create) => {
+          val orgInsertIO = for {
+            rootOrg <- rootOrgQ
+            insertedUser <- UserDao.create(rootUserCreate.copy(organizationId = rootOrg.id))
+            insertedPlatform <- PlatformDao.create(platformCreate.toPlatform(insertedUser))
+            newOrg <- OrganizationDao.create(orgCreate.copy(platformId = insertedPlatform.id).toOrganization)
+          } yield (newOrg, insertedPlatform)
+          val (insertedOrg, insertedPlatform) = orgInsertIO.transact(xa).unsafeRunSync
+
+          insertedOrg.platformId == insertedPlatform.id &&
+            insertedOrg.name == orgCreate.name
         }
       )
     }
