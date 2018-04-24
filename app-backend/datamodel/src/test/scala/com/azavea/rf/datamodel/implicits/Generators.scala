@@ -383,6 +383,11 @@ object Generators extends ArbitraryInstances {
     teamCreate.toTeam(user)
   }
 
+  private def platformCreateGen: Gen[Platform.Create] = for {
+    platformName <- nonEmptyStringGen
+    settings <- Gen.const(().asJson)
+  } yield { Platform.Create(platformName, settings) }
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
 
@@ -443,5 +448,7 @@ object Generators extends ArbitraryInstances {
     implicit def arbTeamCreate: Arbitrary[Team.Create] = Arbitrary { teamCreateGen }
 
     implicit def arbTeam: Arbitrary[Team] = Arbitrary { teamGen }
+
+    implicit def arbPlatformCreate: Arbitrary[Platform.Create] = Arbitrary { platformCreateGen }
   }
 }
