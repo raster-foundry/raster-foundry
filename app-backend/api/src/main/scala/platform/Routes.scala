@@ -69,7 +69,7 @@ trait PlatformRoutes extends Authentication
   def listPlatforms: Route = authenticate { user =>
     withPagination { page =>
       complete {
-        PlatformDao.query.page(page).transact(xa).unsafeToFuture
+        PlatformDao.listPlatforms(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -85,7 +85,7 @@ trait PlatformRoutes extends Authentication
   def getPlatform(platformId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        PlatformDao.query.filter(platformId).selectOption.transact(xa).unsafeToFuture
+        PlatformDao.getPlatformById(platformId).transact(xa).unsafeToFuture
       }
     }
   }
@@ -101,7 +101,7 @@ trait PlatformRoutes extends Authentication
   // @TODO: We may want to remove this functionality and instead deactivate platforms
   def deletePlatform(platformId: UUID): Route = authenticate { user =>
     completeWithOneOrFail {
-      PlatformDao.query.filter(platformId).delete.transact(xa).unsafeToFuture
+      PlatformDao.delete(platformId).transact(xa).unsafeToFuture
     }
   }
 }
