@@ -64,6 +64,11 @@ case class S3(
   def putObject(s3bucket: String, s3Key: String, content: String): PutObjectResult =
     client.putObject(s3bucket, s3Key, content)
 
+  def putObject(uri: URI, content: String): PutObjectResult = {
+    val s3uri = new AmazonS3URI(uri)
+    client.putObject(s3uri.getBucket, s3uri.getKey, content)
+  }
+
   /** List the keys to files found within a given bucket */
   def listKeys(url: String, ext: String, recursive: Boolean): Array[URI] = {
     val S3InputFormat.S3UrlRx(_, _, bucket, prefix) = url

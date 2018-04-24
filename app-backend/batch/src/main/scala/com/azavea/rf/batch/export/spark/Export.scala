@@ -9,8 +9,6 @@ import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.common.S3.putObjectString
-
 import com.azavea.maml.serve._
 import com.azavea.maml.eval._
 import io.circe.parser._
@@ -38,8 +36,9 @@ import org.apache.hadoop.fs.Path
 import spray.json.DefaultJsonProtocol._
 import org.apache.spark.rdd.RDD
 import org.apache.spark._
-
 import java.util.UUID
+
+import com.amazonaws.services.s3.AmazonS3URI
 
 
 object Export extends SparkJob with Config with LazyLogging {
@@ -269,6 +268,8 @@ object Export extends SparkJob with Config with LazyLogging {
         throw new Exception("Unable to parse command line arguments")
     }
 
+    def s3Client = S3()
+
     val exportDef =
       decode[ExportDefinition](readString(params.jobDefinition)) match {
         case Right(r) => r
@@ -291,21 +292,14 @@ object Export extends SparkJob with Config with LazyLogging {
           astExport(exportDef, ast, sceneLocs, projLocs, conf)
       }
 
-      logger.info(s"Writing status into the ${params.statusBucket}/${exportDef.id}")
-      putObjectString(
-        params.statusBucket,
-        exportDef.id.toString,
-        ExportStatus.Exported
-      )
+      logger.info(s"Writing status into the ${params.statusURI}")
+      s3Client.putObject(params.statusURI, ExportStatus.Exported)
+
     } catch {
       case t: Throwable =>
-        logger.info(s"Writing status into the ${params.statusBucket}/${exportDef.id}")
+        logger.info(s"Writing status into the ${params.statusURI}")
         logger.error(t.stackTraceString)
-        putObjectString(
-          params.statusBucket,
-          exportDef.id.toString,
-          ExportStatus.Failed
-        )
+        s3Client.putObject(params.statusURI, ExportStatus.Exported)
     } finally {
       sc.stop
     }
