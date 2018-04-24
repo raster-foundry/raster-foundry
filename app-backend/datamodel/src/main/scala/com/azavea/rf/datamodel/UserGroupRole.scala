@@ -30,17 +30,16 @@ object UserGroupRole {
         userToAdd: User,
         groupType: GroupType,
         groupId: UUID,
-        groupRole: GroupRole,
-        creator: User
+        groupRole: GroupRole
     ) {
-        def toUserGroupRole: UserGroupRole = {
+        def toUserGroupRole(user: User): UserGroupRole = {
             val now = new Timestamp((new java.util.Date()).getTime())
             UserGroupRole(
                 UUID.randomUUID(),
                 now, // createdAt
-                creator.id, // createdBy
+                user.id, // createdBy
                 now, // modifiedAt
-                creator.id, // modifiedBy
+                user.id, // modifiedBy
                 true, // always default isActive to true
                 userToAdd.id, // user that is being given the group role
                 groupType,
