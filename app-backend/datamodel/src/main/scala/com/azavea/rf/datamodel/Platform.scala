@@ -23,8 +23,8 @@ object Platform {
   def tupled = (Platform.apply _).tupled
 
   @JsonCodec
-  case class Create(name: String, user: User, settings: Json = "{}".asJson) {
-    def toPlatform: Platform = {
+  case class Create(name: String, settings: Json = "{}".asJson) {
+    def toPlatform(user: User): Platform = {
       val now = new Timestamp((new java.util.Date()).getTime())
       Platform(
         UUID.randomUUID(),
