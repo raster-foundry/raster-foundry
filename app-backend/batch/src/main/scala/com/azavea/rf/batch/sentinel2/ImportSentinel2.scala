@@ -36,8 +36,6 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
 
   val name = ImportSentinel2.name
 
-  type SceneName = String
-
   /** Get S3 client per each call */
   def s3Client = S3(region = sentinel2Config.awsRegion)
 
@@ -119,14 +117,14 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       ).toList
   }
 
-  def getExistingScenes(date: LocalDate, datasourceUUID: UUID): ConnectionIO[List[SceneName]] = {
-    val idsQuery =
-      sql" select id from scenes where date(acquisition_date) = ${date} and datasource_id = ${datasourceUUID}"
-    idsQuery.query[SceneName].stream.compile.toList
+  def getExistingScenes(date: LocalDate, datasourceUUID: UUID): ConnectionIO[List[String]] = {
+    SceneDao.query.filter(
+      Fragments.and(fr"datasource = ${datasourceUUID} :: uuid", fr"date(acquisition_date) = date(${date}) :: date")
+    ).list map { (scenes: List[Scene]) => scenes map { _.name } }
   }
 
   /** Because it makes scenes -- get it? */
-  def riot(existingScenes: List[SceneName], scenePath: String, datasourceUUID: UUID): Option[Scene.Create] = {
+  def riot(existingScenes: List[String], scenePath: String, datasourceUUID: UUID): Option[Scene.Create] = {
       val sceneId = UUID.randomUUID()
       val images = List(10f, 20f, 60f).map(createImages(sceneId, scenePath.some, _)).reduce(_ ++ _)
       val thumbnails = createThumbnails(sceneId, scenePath)
@@ -199,16 +197,16 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
 
   def findScenes(date: LocalDate, keys: List[URI], user: User, datasourceUUID: UUID): ConnectionIO[List[Scene.WithRelated]] = {
     val scenesIo: ConnectionIO[List[Scene.Create]] = getExistingScenes(date, datasourceUUID) map {
-      case ids: List[SceneName] => {
+      case (names: List[String]) => {
         keys map {
-          uri:URI => {
+          (uri:URI) => {
             for {
               json <- s3Client.getObject(uri.getHost, uri.getPath.tail).getObjectContent.toJson
               tilesJson <- json.hcursor.downField("tiles").as[List[Json]].toOption
             } yield {
               tilesJson.flatMap { tileJson =>
                 tileJson.hcursor.downField("path").as[String].toOption.map {
-                  scenePath => riot(ids, scenePath, datasourceUUID)
+                  scenePath => riot(names, scenePath, datasourceUUID)
                 }
               }.flatten
             }
@@ -219,8 +217,10 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
 
     logger.info(s"Inserting scenes for ${date}")
 
-    scenesIo flatMap { sceneList: List[Scene.Create] =>
-      sceneList.traverse({ SceneDao.insert(_, user) })
+    scenesIo flatMap {
+      (sceneList: List[Scene.Create]) => {
+        sceneList.traverse({ SceneDao.insert(_, user) })
+      }
     }
   }
 
@@ -236,8 +236,16 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
             throw new Exception(s"${systemUser} could not be found -- probably the database is borked")
         }
       }
-    scenesIO.transact(xa).unsafeRunSync
-    logger.info("Scenes imported successfully")
+    try {
+      scenesIO.transact(xa).unsafeRunSync
+      logger.info("Scenes imported successfully")
+      stop
+    } catch {
+      case (e: Throwable) => {
+        sendError(e)
+        stop
+      }
+    }
   }
 }
 
