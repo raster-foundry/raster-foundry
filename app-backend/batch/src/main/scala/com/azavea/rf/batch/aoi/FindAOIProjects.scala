@@ -43,6 +43,7 @@ case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job {
         .to[List]
     }
 
+    // TODO: this stdout-based process communication _extremely_ brittle. See #3263
     aoiProjectsToUpdate.transact(xa).unsafeRunSync.foreach(
       (projectId: UUID) => println(s"Project to update: ${projectId}")
     )
