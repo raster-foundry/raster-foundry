@@ -30,11 +30,12 @@ import scala.util.{Failure, Success}
 import geotrellis.slick.Projected
 import geotrellis.vector._
 
+import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.database.{ProjectDao, SceneWithRelatedDao, UserDao}
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util.RFTransactor
 
-case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) extends Job {
+case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) extends Job with AWSBatch {
   val name = FindAOIProjects.name
 
 
@@ -86,7 +87,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
         .compile.toList
     }
 
-    def addScenesToProject: ConnectionIO[Int] = {
+    def addScenesToProjectWithProjectIO: ConnectionIO[UUID] = {
       val user: ConnectionIO[Option[User]] = fetchBaseData flatMap {
         case (p: Project, _, _) => UserDao.getUserById(p.owner)
       }
@@ -104,7 +105,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
         case sceneIds: List[UUID] => {
           logger.info(s"Adding the following scenes to project ${projectId}: ${sceneIds}")
           user flatMap {
-            case Some(u) => ProjectDao.addScenesToProject(sceneIds, projectId, u)
+            case Some(u) => ProjectDao.addScenesToProject(sceneIds, projectId, u) map { _ => projectId }
             case None =>
               throw new Exception(
                 "User not found. Should be impossible given foreign key relationship on project")
@@ -113,7 +114,14 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
       }
     }
 
-    addScenesToProject.transact(xa).unsafeRunSync
+    def kickoffIngestsIO: ConnectionIO[Unit] = for {
+      projId <- addScenesToProjectWithProjectIO
+      sceneIds <- SceneWithRelatedDao.getScenesToIngest(projId) map {
+        (scenes: List[Scene.WithRelated]) => scenes map { _.id }
+      }
+    } yield { sceneIds map { kickoffSceneIngest } }
+
+    kickoffIngestsIO.transact(xa).unsafeRunSync
   }
 }
 

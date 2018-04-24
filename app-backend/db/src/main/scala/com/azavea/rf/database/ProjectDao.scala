@@ -284,7 +284,5 @@ object ProjectDao extends Dao[Project] {
       scenes <- SceneDao.query.filter(sceneParams).list
       scenesAdded <- addScenesToProject(scenes.map(_.id), projectId, user)
     } yield scenesAdded
-
   }
-
 }

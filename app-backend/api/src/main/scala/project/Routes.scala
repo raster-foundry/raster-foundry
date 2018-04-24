@@ -16,7 +16,7 @@ import cats.implicits._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.common.{Authentication, CommonHandlers, RollbarNotifier, UserErrorHandler}
 import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.common.S3._
 import com.azavea.rf.database._
@@ -57,6 +57,7 @@ trait ProjectRoutes extends Authentication
     with CommonHandlers
     with AWSBatch
     with UserErrorHandler
+    with RollbarNotifier
     with KamonTraceDirectives
     with LazyLogging {
 
@@ -502,7 +503,23 @@ trait ProjectRoutes extends Authentication
   def addProjectScenesFromQueryParams(projectId: UUID): Route = authenticate { user =>
     entity(as[CombinedSceneQueryParams]) { combinedSceneQueryParams =>
       onSuccess(ProjectDao.addScenesToProjectFromQuery(combinedSceneQueryParams, projectId, user).transact(xa).unsafeToFuture()) {
-        scenesAdded => complete((StatusCodes.Created, scenesAdded))
+        scenesAdded => {
+          val ingestsKickoff = SceneWithRelatedDao.getScenesToIngest(projectId) map {
+            (toIngest: List[Scene.WithRelated]) => {
+              logger.info(s"Kicking off ${toIngest.length} scene ingests from query parameter add")
+              toIngest map { (scene: Scene.WithRelated) => kickoffSceneIngest(scene.id) }
+            }
+          }
+          ingestsKickoff.transact(xa).unsafeRunAsync(
+            (result: Either[Throwable, List[Unit]]) => {
+              result match {
+                case Left(error) => sendError(error)
+                case _ => ()
+              }
+            }
+          )
+          complete((StatusCodes.Created, scenesAdded))
+        }
       }
     }
   }
