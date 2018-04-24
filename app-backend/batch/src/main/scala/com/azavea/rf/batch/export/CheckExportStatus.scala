@@ -1,5 +1,6 @@
 package com.azavea.rf.batch.export
 
+import java.net.URI
 import java.util.UUID
 
 import cats.data._
@@ -10,13 +11,11 @@ import com.azavea.rf.batch.export.json.S3ExportStatus
 import com.azavea.rf.batch.util._
 import com.azavea.rf.datamodel._
 import io.circe.parser.decode
-
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util.RFTransactor
 
@@ -24,7 +23,7 @@ import scala.concurrent.duration._
 import scala.io.Source
 import scala.util._
 
-case class CheckExportStatus(exportId: UUID, statusBucket: String = "rasterfoundry-dataproc-export-status-us-east-1", time: Duration = 60.minutes, region: Option[String] = None)(implicit val xa: Transactor[IO]) extends Job {
+case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60.minutes, region: Option[String] = None)(implicit val xa: Transactor[IO]) extends Job {
   val name = CreateExportDef.name
 
   /** Get S3 client per each call */
@@ -39,7 +38,7 @@ case class CheckExportStatus(exportId: UUID, statusBucket: String = "rasterfound
       try {
         retry(time, 30.seconds) {
           Source
-            .fromInputStream(s3Client.getObject(statusBucket, exportId.toString).getObjectContent)
+            .fromInputStream(s3Client.getObject(statusURI).getObjectContent)
             .getLines
             .mkString(" ")
         }
@@ -88,10 +87,9 @@ object CheckExportStatus {
   def main(args: Array[String]): Unit = {
 
     val job = args.toList match {
-      case List(exportId, statusBucket, duration, region) => CheckExportStatus(UUID.fromString(exportId), statusBucket, Duration(duration), Some(region))
-      case List(exportId, statusBucket, duration) => CheckExportStatus(UUID.fromString(exportId), statusBucket, Duration(duration))
-      case List(exportId, statusBucket) => CheckExportStatus(UUID.fromString(exportId), statusBucket)
-      case List(exportId) => CheckExportStatus(UUID.fromString(exportId))
+      case List(exportId, statusURI, duration, region) => CheckExportStatus(UUID.fromString(exportId), new URI(statusURI), Duration(duration), Some(region))
+      case List(exportId, statusURI, duration) => CheckExportStatus(UUID.fromString(exportId), new URI(statusURI), Duration(duration))
+      case List(exportId, statusURI) => CheckExportStatus(UUID.fromString(exportId), new URI(statusURI))
       case _ =>
         throw new IllegalArgumentException("Argument could not be parsed to UUID")
     }
