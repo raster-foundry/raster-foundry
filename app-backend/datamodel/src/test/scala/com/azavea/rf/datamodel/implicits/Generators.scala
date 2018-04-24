@@ -38,6 +38,14 @@ object Generators extends ArbitraryInstances {
 
   private def userRoleGen: Gen[UserRole] = Gen.oneOf(UserRoleRole, Viewer, Admin)
 
+  private def groupTypeGen: Gen[GroupType] = Gen.oneOf(
+    GroupType.Platform, GroupType.Organization, GroupType.Team
+  )
+
+  private def groupRoleGen: Gen[GroupRole] = Gen.oneOf(
+    GroupRole.Admin, GroupRole.Member
+  )
+
   private def annotationQualityGen: Gen[AnnotationQuality] = Gen.oneOf(
     AnnotationQuality.Yes, AnnotationQuality.No, AnnotationQuality.Miss, AnnotationQuality.Unsure
   )
@@ -388,6 +396,13 @@ object Generators extends ArbitraryInstances {
     settings <- Gen.const(().asJson)
   } yield { Platform.Create(platformName, settings) }
 
+  private def userGroupRoleCreateGen: Gen[UserGroupRole.Create] = for {
+    user <- userGen
+    groupType <- groupTypeGen
+    groupId <- uuidGen
+    groupRole <- groupRoleGen
+  } yield { UserGroupRole.Create(user, groupType, groupId, groupRole) }
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
 
@@ -450,5 +465,7 @@ object Generators extends ArbitraryInstances {
     implicit def arbTeam: Arbitrary[Team] = Arbitrary { teamGen }
 
     implicit def arbPlatformCreate: Arbitrary[Platform.Create] = Arbitrary { platformCreateGen }
+
+    implicit def arbUserGroupRoleCreate: Arbitrary[UserGroupRole.Create] = Arbitrary { userGroupRoleCreateGen }
   }
 }
