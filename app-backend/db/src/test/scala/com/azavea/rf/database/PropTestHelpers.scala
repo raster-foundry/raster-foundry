@@ -116,4 +116,7 @@ trait PropTestHelpers {
   def fixupAoi(user: User, org: Organization, aoi: AOI): AOI = {
     aoi.copy(organizationId = org.id, owner = user.id, createdBy = user.id, modifiedBy = user.id)
   }
+
+  def fixupTeam(teamCreate: Team.Create, org: Organization, user: User): Team =
+    teamCreate.copy(organizationId = org.id).toTeam(user)
 }
