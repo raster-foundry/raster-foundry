@@ -77,6 +77,9 @@ trait Router extends HealthCheckRoutes
       pathPrefix("platforms") {
         platformRoutes
       } ~
+      pathPrefix("teams") {
+        teamRoutes
+      } ~
       pathPrefix("areas-of-interest") {
         aoiRoutes
       } ~

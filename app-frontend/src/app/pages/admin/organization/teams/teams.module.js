@@ -1,8 +1,14 @@
 import angular from 'angular';
 
 class OrganizationTeamsController {
-    constructor(modalService) {
+    constructor(
+      $log,
+      modalService, teamService
+    ) {
+        this.$log = $log;
+
         this.modalService = modalService;
+        this.teamService = teamService;
 
         this.teams = [
             {
@@ -26,11 +32,61 @@ class OrganizationTeamsController {
                 users: [1, 2, 3, 4, 5]
             }
         ];
+
         this.teams.forEach((team) => Object.assign(team, {
             options: {
                 items: this.itemsForTeam(team)
             }
         }));
+    }
+
+    $onInit() {
+        this.teamService.createTeam('test team 1').then((resp) => {
+            this.$log.log('create team', resp);
+            this.listTeams();
+        }, (err) => {
+            this.$log.log(err);
+        });
+    }
+
+    listTeams() {
+        this.teamService.query().then((resp) => {
+            this.$log.log('list teams', resp);
+            this.getTeamById(resp.results[0].id);
+        }, (err) => {
+            this.$log.log(err);
+        });
+    }
+
+    getTeamById(id) {
+        this.teamService.get(id).then((res) => {
+            this.$log.log('get a team by id', res);
+            this.updateTeam(res);
+        }, (err) => {
+            this.$log.log(err);
+        });
+    }
+
+    updateTeam(res) {
+        this.teamService.updateTeam(Object.assign({}, res, {
+            name: 'updated team name',
+            settings: {
+                test: 'temp'
+            }
+        })).then((resp) => {
+            this.$log.log('updated team', resp);
+            this.deleteTeam(resp);
+        }, (error) => {
+            this.$log.log(error);
+        });
+    }
+
+    deleteTeam(res) {
+        this.teamService.deleteTeam(res).then((resp) => {
+            this.$log.log('delete team', resp);
+        }, (error) => {
+            this.$log.log(error);
+        });
     }
 
     itemsForTeam(team) {

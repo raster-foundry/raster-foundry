@@ -67,5 +67,8 @@ require('./common/decimal.filter')(shared);
 require('./common/modal.service')(shared);
 require('./common/url.filter')(shared);
 
+// groups
+require('./groups/team.service')(shared);
+
 
 export default shared;
