@@ -104,7 +104,6 @@ object Dao {
 
     def countIO: ConnectionIO[Int] = {
       val countQuery = countF ++ Fragments.whereAndOpt(filters: _*)
-      println(countQuery)
       val over10000IO: ConnectionIO[Boolean] =
         (fr"SELECT EXISTS(" ++ (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"offset 10000") ++ fr")")
           .query[Boolean]
