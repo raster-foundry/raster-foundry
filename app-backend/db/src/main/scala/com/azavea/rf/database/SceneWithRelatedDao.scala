@@ -30,7 +30,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
 
     for {
       page <- paginatedQuery
-      count <- query.filter(Fragments.and(queryFilters.flatten.toSeq: _*)).countIO
+      count <- query.filter(projectFilterFragment).countIO
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
@@ -116,7 +116,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
 
     for {
       page <- withRelatedsIO
-      count <- query.countIO
+      count <- query.filter(Fragments.and((query.ownerVisibilityFilterF(user) :: queryFilters).flatten.toSeq: _*)).countIO
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
