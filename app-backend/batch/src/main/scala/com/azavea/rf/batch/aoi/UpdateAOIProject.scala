@@ -42,40 +42,37 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
   def run: Unit = {
     logger.info(s"Updating project ${projectId}")
     /** Fetch the project, AOI area, and AOI scene query parameters */
-    def fetchBaseData: ConnectionIO[(Project, Projected[MultiPolygon], Result[CombinedSceneQueryParams])] = {
-      val base = sql"""
+    def fetchBaseData: ConnectionIO[(String, Projected[MultiPolygon], Result[CombinedSceneQueryParams])] = {
+      val base = fr"""
       SELECT
-        p.id, p.created_at, p.modified_at, p.organization_id, p.created_by,
-        p.modified_by, p.owner, p.name, p.slug_label, p.description,
-        p.visibility, p.tile_visibility, p.is_aoi_project,
-        p.aoi_cadence_millis, p.aois_last_checked, p.tags, p.extent,
-        p.manual_order, p.is_single_band, p.single_band_options, aois.area, aois.filters
+        owner, area, filters
       FROM
-        (projects p inner join aois_to_projects atp
+        ((select id proj_table_id, owner from projects) projects_filt
+        inner join aois_to_projects atp
         on
-          p.id = atp.project_id) patp
-        inner join aois a on
-          patp.aoi_id = aois.id
-      WHERE
+          projects_filt.proj_table_id = atp.project_id) patp
+        inner join (select id aoi_id, area, filters from aois) aois_filt on
+          patp.aoi_id = aois_filt.aoi_id
       """
-      val projectIdFilter: Option[Fragment] = Some(Fragment.const("id = ${projectId}"))
+      val projectIdFilter: Option[Fragment] = Some(fr"proj_table_id = ${projectId}")
 
       // This could return a list probably if we ever support > 1 AOI per project
       (base ++ Fragments.whereAndOpt(projectIdFilter))
-        .query[(Project, Projected[MultiPolygon], Json)]
+        .query[(String, Projected[MultiPolygon], Json)]
         .unique
-        .map({ case (p: Project, g: Projected[MultiPolygon], f:Json) => (p, g, f.as[CombinedSceneQueryParams]) })
+        .map({ case (projOwner: String, g: Projected[MultiPolygon], f:Json) => (projOwner, g, f.as[CombinedSceneQueryParams]) })
     }
 
     /** Find all the scenes that can be added to a project */
     def fetchProjectScenes(user: User, geom: Projected[MultiPolygon], queryParams: Option[CombinedSceneQueryParams]): ConnectionIO[List[UUID]] = {
-      val base: Fragment = sql"SELECT id FROM scenes"
+      val base: Fragment = fr"SELECT id FROM scenes"
       val qpFilters: Option[Fragment] = queryParams map {
-        (csp: CombinedSceneQueryParams) => SceneWithRelatedDao.makeFilters(List(csp))
-          .map { _.flatten.foldLeft(Fragment.empty)(_ ++ _) }
-          .foldLeft(Fragment.empty)(_ ++ _)
+        (csp: CombinedSceneQueryParams) => {
+          val queryFilters = SceneWithRelatedDao.makeFilters(List(csp)).flatten
+          Fragments.and(queryFilters.flatten.toSeq: _*)
+        }
       }
-      val areaFilter: Option[Fragment] = Some(fr"st_intersects(data_footprint, ${geom}")
+      val areaFilter: Option[Fragment] = Some(fr"st_intersects(data_footprint, ${geom})")
       val ownerFilter: Option[Fragment] = if (user.isInRootOrganization) {
           None
         } else {
@@ -89,7 +86,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
 
     def addScenesToProjectWithProjectIO: ConnectionIO[UUID] = {
       val user: ConnectionIO[Option[User]] = fetchBaseData flatMap {
-        case (p: Project, _, _) => UserDao.getUserById(p.owner)
+        case (projOwner: String, _, _) => UserDao.getUserById(projOwner)
       }
       val sceneIds: ConnectionIO[List[UUID]] =
         fetchBaseData flatMap {
