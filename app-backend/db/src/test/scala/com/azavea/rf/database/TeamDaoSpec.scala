@@ -36,7 +36,8 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
 
           createdTeam.name == teamCreate.name &&
             createdTeam.organizationId == org.id &&
-            createdTeam.settings == teamCreate.settings
+            createdTeam.settings == teamCreate.settings &&
+            createdTeam.isActive == teamCreate.isActive
         }
       )
     }
@@ -68,7 +69,8 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
 
           updatedTeam.name == teamUpdate.name &&
             updatedTeam.settings == teamUpdate.settings &&
-            updatedTeam.organizationId == org.id
+            updatedTeam.organizationId == org.id &&
+            updatedTeam.isActive == teamUpdate.isActive
         }
       )
     }

@@ -149,7 +149,8 @@ object Generators extends ArbitraryInstances {
 
   private def organizationCreateGen: Gen[Organization.Create] = for {
     name <- nonEmptyStringGen
-  } yield (Organization.Create(name, defaultPlatformId))
+    isActive <- arbitrary[Boolean]
+  } yield (Organization.Create(name, defaultPlatformId, isActive))
 
   private def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization }
 
@@ -175,7 +176,11 @@ object Generators extends ArbitraryInstances {
     id <- nonEmptyStringGen
     org <- organizationGen
     role <- userRoleGen
-  } yield { User.Create(id, org.id, role) }
+    email <- nonEmptyStringGen
+    name <- nonEmptyStringGen
+    profileImageUri <- nonEmptyStringGen
+    isActive <- arbitrary[Boolean]
+  } yield { User.Create(id, org.id, role, email, name, profileImageUri, isActive) }
 
   private def userGen: Gen[User] = userCreateGen map { _.toUser }
 
@@ -382,7 +387,8 @@ object Generators extends ArbitraryInstances {
     orgId <- uuidGen
     name <- nonEmptyStringGen
     settings <- Gen.const(().asJson)
-  } yield Team.Create(orgId, name, settings)
+    isActive <- arbitrary[Boolean]
+  } yield Team.Create(orgId, name, settings, isActive)
 
   private def teamGen: Gen[Team] = for {
     user <- userGen
@@ -394,7 +400,8 @@ object Generators extends ArbitraryInstances {
   private def platformCreateGen: Gen[Platform.Create] = for {
     platformName <- nonEmptyStringGen
     settings <- Gen.const(().asJson)
-  } yield { Platform.Create(platformName, settings) }
+    isActive <- arbitrary[Boolean]
+  } yield { Platform.Create(platformName, settings, isActive) }
 
   private def userGroupRoleCreateGen: Gen[UserGroupRole.Create] = for {
     user <- userGen

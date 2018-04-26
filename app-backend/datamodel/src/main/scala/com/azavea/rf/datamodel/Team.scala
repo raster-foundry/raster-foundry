@@ -16,7 +16,8 @@ case class Team(
   modifiedBy: String,
   organizationId: UUID,
   name: String,
-  settings: Json
+  settings: Json,
+  isActive: Boolean
 )
 
 object Team {
@@ -28,7 +29,8 @@ object Team {
   case class Create (
     organizationId: UUID,
     name: String,
-    settings: Json = "{}".asJson
+    settings: Json = "{}".asJson,
+    isActive: Boolean = true
   ) {
     def toTeam(user: User): Team = {
       val id = java.util.UUID.randomUUID()
@@ -42,7 +44,8 @@ object Team {
         user.id, // modifiedBy
         this.organizationId,
         this.name,
-        this.settings
+        this.settings,
+        this.isActive
       )
     }
   }
