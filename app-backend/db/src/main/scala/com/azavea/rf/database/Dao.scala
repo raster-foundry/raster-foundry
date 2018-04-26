@@ -61,6 +61,14 @@ object Dao {
       }
     }
 
+    def ownerVisibilityFilterF(user: User): Option[Fragment] = {
+      if (user.isInRootOrganization) {
+        None
+      } else {
+        Some(fr"((organization_id = ${user.organizationId} AND visibility = 'ORGANIZATION' :: visibility) OR owner = ${user.id} OR visibility = 'PUBLIC' :: visibility)")
+      }
+    }
+
     def ownerFilter[M >: Model](user: User)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
       this.copy(filters = filters ++ filterable.toFilters(ownerFilterF(user)))
     }

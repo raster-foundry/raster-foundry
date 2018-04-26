@@ -27,11 +27,10 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     val projectFilterFragment = fr"id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})"
     val queryFilters = makeFilters(List(sceneParams)).flatten ++ List(Some(projectFilterFragment))
     val paginatedQuery = listQuery(queryFilters, Some(pageRequest)).query[Scene.WithRelated].list
-    val countQuery = (fr"SELECT count(*) FROM scenes" ++ Fragments.whereAndOpt(queryFilters: _*)).query[Int].unique
 
     for {
       page <- paginatedQuery
-      count <- query.filter(Fragments.and(queryFilters.flatten.toSeq: _*)).countIO
+      count <- query.filter(projectFilterFragment).countIO
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
@@ -108,7 +107,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     val pageFragment: Fragment = Page(pageRequest)
     val queryFilters: List[Option[Fragment]] = makeFilters(List(sceneParams)).flatten
     val scenesIO: ConnectionIO[List[Scene]] =
-      (selectF ++ Fragments.whereAndOpt(queryFilters: _*) ++ pageFragment)
+      (selectF ++ Fragments.whereAndOpt((query.ownerVisibilityFilterF(user) :: queryFilters): _*) ++ pageFragment)
         .query[Scene]
         .stream
         .compile
@@ -117,7 +116,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
 
     for {
       page <- withRelatedsIO
-      count <- query.countIO
+      count <- query.filter(Fragments.and((query.ownerVisibilityFilterF(user) :: queryFilters).flatten.toSeq: _*)).countIO
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
