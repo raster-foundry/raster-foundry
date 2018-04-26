@@ -175,7 +175,10 @@ object Generators extends ArbitraryInstances {
     id <- uuidGen map { _.toString }
     org <- organizationGen
     role <- userRoleGen
-  } yield { User.Create(id, org.id, role) }
+    email <- nonEmptyStringGen
+    name <- nonEmptyStringGen
+    profileImageUri <- nonEmptyStringGen
+  } yield { User.Create(id, org.id, role, email, name, profileImageUri) }
 
   private def userGen: Gen[User] = userCreateGen map { _.toUser }
 

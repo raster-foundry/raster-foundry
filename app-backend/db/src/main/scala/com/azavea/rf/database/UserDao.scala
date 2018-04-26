@@ -24,7 +24,8 @@ object UserDao extends Dao[User] {
   val selectF = sql"""
     SELECT
       id, organization_id, role, created_at, modified_at,
-      dropbox_credential, planet_credential, email_notifications
+      dropbox_credential, planet_credential, email_notifications,
+      email, name, profile_image_uri, is_superuser, is_active
     FROM
   """ ++ tableF
 
@@ -68,7 +69,10 @@ object UserDao extends Dao[User] {
          modified_at = ${updateTime},
          dropbox_credential = ${user.dropboxCredential.token.getOrElse("")},
          planet_credential = ${user.planetCredential.token.getOrElse("")},
-         email_notifications = ${user.emailNotifications}
+         email_notifications = ${user.emailNotifications},
+         email = ${user.email},
+         name = ${user.name},
+         profile_image_uri = ${user.profileImageUri}
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
@@ -84,12 +88,14 @@ object UserDao extends Dao[User] {
 
     sql"""
        INSERT INTO users
-          (id, organization_id, role, created_at, modified_at, email_notifications)
+          (id, organization_id, role, created_at, modified_at, email_notifications,
+          email, name, profile_image_uri, is_superuser, is_active)
        VALUES
-          (${newUser.id}, ${newUser.organizationId}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false)
+          (${newUser.id}, ${newUser.organizationId}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false,
+          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true)
        """.update.withUniqueGeneratedKeys[User](
-      "id", "organization_id", "role", "created_at", "modified_at", "dropbox_credential", "planet_credential", "email_notifications"
+      "id", "organization_id", "role", "created_at", "modified_at", "dropbox_credential", "planet_credential", "email_notifications",
+      "email", "name", "profile_image_uri", "is_superuser", "is_active"
     )
   }
 }
-

@@ -15,7 +15,8 @@ case class Platform(
   modifiedAt: Timestamp,
   modifiedBy: String,
   name: String,
-  settings: Json
+  settings: Json,
+  isActive: Boolean
 )
 
 object Platform {
@@ -23,9 +24,13 @@ object Platform {
   def tupled = (Platform.apply _).tupled
 
   @JsonCodec
-  case class Create(name: String, settings: Json = "{}".asJson) {
+  case class Create(
+    name: String,
+    settings: Json = "{}".asJson
+  ) {
     def toPlatform(user: User): Platform = {
       val now = new Timestamp((new java.util.Date()).getTime())
+
       Platform(
         UUID.randomUUID(),
         now, // createdAt
@@ -33,7 +38,8 @@ object Platform {
         now, // modifiedAt
         user.id, // modifiedBy
         name,
-        settings
+        settings,
+        true //isActive
       )
     }
   }
