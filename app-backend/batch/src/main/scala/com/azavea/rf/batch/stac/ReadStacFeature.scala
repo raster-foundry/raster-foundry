@@ -141,7 +141,7 @@ object ReadStacFeature extends Config with LazyLogging {
       thumbnails = thumbnailLinks.map(thumbnailFromLink(_, sceneId, rootUri)).flatten.toList,
       ingestLocation = None,
       filterFields = SceneFilterFields(
-        cloudCover = None,
+        cloudCover = Some(0), // required for search in the frontend
         sunAzimuth = None,
         sunElevation = None,
         acquisitionDate = Some(feature.properties.start)
