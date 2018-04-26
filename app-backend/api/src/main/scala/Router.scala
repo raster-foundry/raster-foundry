@@ -130,6 +130,9 @@ trait Router extends HealthCheckRoutes
       } ~
       pathPrefix("licenses") {
         licenseRoutes
+      } ~
+      pathPrefix("teams") {
+        teamRoutes
       }
     } ~
     pathPrefix("config") {

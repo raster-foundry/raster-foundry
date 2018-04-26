@@ -31,7 +31,8 @@ trait TeamRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler
-    with KamonTraceDirectives {
+    with KamonTraceDirectives
+    with TeamQueryParameterDirective {
 
   val xa: Transactor[IO]
 
@@ -68,9 +69,9 @@ trait TeamRoutes extends Authentication
   }
 
   def listTeams: Route = authenticate { user =>
-    withPagination { page =>
+    (withPagination & teamQueryParameters) { (page, teamQueryParameters) =>
       complete {
-        TeamDao.query.page(page).transact(xa).unsafeToFuture
+        TeamDao.query.filter(teamQueryParameters).page(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -86,7 +87,7 @@ trait TeamRoutes extends Authentication
   def getTeam(teamId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        TeamDao.query.filter(teamId).selectOption.transact(xa).unsafeToFuture
+        TeamDao.getById(teamId).transact(xa).unsafeToFuture
       }
     }
   }
@@ -100,7 +101,7 @@ trait TeamRoutes extends Authentication
   }
 
   def deleteTeam(teamId: UUID): Route = authenticate { user =>
-    onSuccess(TeamDao.query.filter(teamId).delete.transact(xa).unsafeToFuture) {
+    onSuccess(TeamDao.delete(teamId).transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }

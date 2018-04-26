@@ -66,7 +66,12 @@ case class User(
   modifiedAt: Timestamp,
   dropboxCredential: Credential,
   planetCredential: Credential,
-  emailNotifications: Boolean
+  emailNotifications: Boolean,
+  email: String,
+  name: String,
+  profileImageUri: String,
+  isSuperuser: Boolean,
+  isActive: Boolean
 ) {
   private val rootOrganizationId = UUID.fromString("9e2bef18-3f46-426b-a5bd-9913ee1ff840")
 
@@ -98,11 +103,29 @@ object User {
   case class Create(
     id: String,
     organizationId: UUID,
-    role: UserRole = Viewer
+    role: UserRole = Viewer,
+    email: String = "",
+    name: String = "",
+    profileImageUri: String = "",
+    isActive: Boolean = true
   ) {
     def toUser: User = {
       val now = new Timestamp((new java.util.Date()).getTime())
-      User(id, organizationId, role, now, now, Credential(None), Credential(None), false)
+      User(
+        id,
+        organizationId,
+        role,
+        now,
+        now,
+        Credential(None),
+        Credential(None),
+        false,
+        email,
+        name,
+        profileImageUri,
+        false, //isSuperuser
+        isActive
+      )
     }
   }
 }
