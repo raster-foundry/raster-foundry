@@ -17,7 +17,8 @@ class LabBrowseWorkspacesController {
         this.defaultSortingDirection = 'desc';
         this.defaultSortingField = 'modifiedAt';
         this.initSorting();
-        this.fetchWorkspaceList(this.$state.params.page);
+        // eslint-disable-next-line
+        this.fetchWorkspaceList(undefined, this.$state.params.page);
         this.selected = new Set();
     }
 
@@ -33,15 +34,17 @@ class LabBrowseWorkspacesController {
         }
     }
 
-    fetchWorkspaceList(page = 1) {
+    fetchWorkspaceList(searchVal, page = 1) {
         this.loadingWorkspaces = true;
-        this.workspaceService.fetchWorkspaces(
-            {
-                pageSize: 10,
-                page: page - 1,
-                sort: this.serializeSort()
-            }
-        ).then(d => {
+        const params = {
+            pageSize: 10,
+            page: page - 1,
+            sort: this.serializeSort()
+        };
+        if (searchVal) {
+            params.search = searchVal;
+        }
+        this.workspaceService.fetchWorkspaces(params).then(d => {
             this.currentPage = page;
             this.updatePagination(d);
             let replace = !this.$state.params.page;
@@ -111,7 +114,8 @@ class LabBrowseWorkspacesController {
             this.sortingDirection = this.defaultSortingDirection;
         }
         this.storeSorting();
-        this.fetchWorkspaceList(this.currentPage);
+        // eslint-disable-next-line
+        this.fetchWorkspaceList(undefined, this.currentPage);
     }
 
     deleteSelected() {
@@ -152,6 +156,15 @@ class LabBrowseWorkspacesController {
         this.modalService.open({
             component: 'rfTemplateCreateModal'
         });
+    }
+
+    search(value) {
+        this.searchString = value;
+        if (this.searchString) {
+            this.fetchWorkspaceList(this.searchString);
+        } else {
+            this.fetchWorkspaceList();
+        }
     }
 }
 

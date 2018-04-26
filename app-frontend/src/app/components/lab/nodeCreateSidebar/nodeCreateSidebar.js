@@ -74,17 +74,6 @@ class NodeCreateSidebarController {
             }
         });
 
-        $scope.$watch('$ctrl.functionSearch', (search) => {
-            if (search) {
-                const lcSearch = search.toLowerCase();
-                this.functionNodes = allowedOps.filter((ao) => {
-                    return ao.op.toLowerCase().includes(lcSearch) ||
-                        ao.label.toLowerCase().includes(lcSearch);
-                });
-            } else {
-                this.functionNodes = allowedOps;
-            }
-        });
         $scope.$watch('$ctrl.mamlExpression', (mamlExpression) => {
             if (mamlExpression) {
                 this.parseMaml(mamlExpression);
@@ -108,19 +97,28 @@ class NodeCreateSidebarController {
         this.opChars = allowedOps.map((ao) => ao.op);
     }
 
-    fetchProjectPage(page = 1) {
+    createSearchParams(searchVal, page) {
+        let params = {
+            sort: 'createdAt,desc',
+            pageSize: pageSize,
+            page: page - 1
+        };
+        if (searchVal) {
+            params.search = searchVal;
+        }
+        return params;
+    }
+
+    fetchProjectPage(searchVal, page = 1) {
         if (this.loadingList) {
             return;
         }
+        const params = this.createSearchParams(searchVal, page);
         this.itemList = [];
         delete this.listLoadError;
         this.loadingList = true;
         this.currentPageLoader = this.fetchTemplatePage;
-        this.projectService.query({
-            sort: 'createdAt,desc',
-            pageSize: pageSize,
-            page: page - 1
-        }).then((projectResult) => {
+        this.projectService.query(params).then((projectResult) => {
             this.updatePagination(projectResult);
             this.currentPage = page;
             this.itemList = projectResult.results;
@@ -131,19 +129,16 @@ class NodeCreateSidebarController {
         });
     }
 
-    fetchTemplatePage(page = 1) {
+    fetchTemplatePage(searchVal, page = 1) {
         if (this.loadingList) {
             return;
         }
+        const params = this.createSearchParams(searchVal, page);
         this.itemList = [];
         delete this.listLoadError;
         this.loadingList = true;
         this.currentPageLoader = this.fetchTemplatePage;
-        this.templateService.fetchTemplates({
-            sort: 'createdAt,desc',
-            pageSize: pageSize,
-            page: page - 1
-        }).then((templateResult) => {
+        this.templateService.fetchTemplates(params).then((templateResult) => {
             this.updatePagination(templateResult);
             this.currentPage = page;
             this.itemList = templateResult.results;
@@ -267,6 +262,51 @@ class NodeCreateSidebarController {
             break;
         default:
             throw new Error('called addNode when not in a project or template list view');
+        }
+    }
+
+    search(value, nodeType) {
+        switch (nodeType) {
+        case 'project':
+            this.searchProjects(value);
+            break;
+        case 'function':
+        case 'formula':
+            this.searchFunctions(value);
+            break;
+        case 'template':
+            this.searchTemplate(value);
+            break;
+        default:
+            throw new Error('not a supported search type.');
+        }
+    }
+
+    searchProjects(value) {
+        if (value) {
+            this.fetchProjectPage(value);
+        } else {
+            this.fetchProjectPage();
+        }
+    }
+
+    searchFunctions(value) {
+        if (value) {
+            const lcSearch = value.toLowerCase();
+            this.functionNodes = allowedOps.filter((ao) => {
+                return ao.op.toLowerCase().includes(lcSearch) ||
+                    ao.label.toLowerCase().includes(lcSearch);
+            });
+        } else {
+            this.functionNodes = allowedOps;
+        }
+    }
+
+    searchTemplate(value) {
+        if (value) {
+            this.fetchTemplatePage(value);
+        } else {
+            this.fetchTemplatePage();
         }
     }
 }

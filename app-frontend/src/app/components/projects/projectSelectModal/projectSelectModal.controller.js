@@ -1,24 +1,26 @@
 export default class ProjectSelectModalController {
-    constructor($log, $state, projectService) {
+    constructor($state, projectService) {
         'ngInject';
         this.$state = $state;
         this.projectService = projectService;
-        this.populateProjectList(1);
+        this.populateProjectList();
     }
 
-    populateProjectList(page = 1) {
+    populateProjectList(searchVal, page = 1) {
         if (this.loading) {
             return;
         }
+        const params = {
+            sort: 'createdAt,desc',
+            pageSize: 5,
+            page: page - 1
+        };
+        if (searchVal) {
+            params.search = searchVal;
+        }
         delete this.errorMsg;
         this.loading = true;
-        this.projectService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 5,
-                page: page - 1
-            }
-        ).then((projectResult) => {
+        this.projectService.query(params).then((projectResult) => {
             this.updatePagination(projectResult);
             this.lastProjectResult = projectResult;
             this.currentPage = page;
@@ -45,9 +47,7 @@ export default class ProjectSelectModalController {
     search(value) {
         this.searchString = value;
         if (this.searchString) {
-            this.projectService.searchQuery().then(projects => {
-                this.projectList = projects;
-            });
+            this.populateProjectList(this.searchString);
         } else {
             this.populateProjectList();
         }
