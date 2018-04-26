@@ -227,6 +227,14 @@ object ReadStacFeature extends Config with LazyLogging {
     Projected(poly, 3857)
   }
 
+  // PNGs for stac features must be referenced at radiant-nasa-iserv.s3.amazonaws.com/... instead of
+  // at s3.amazonaws.com/bucket/...
+  private def createThumbnailUrl(thumbnailPath: URI, rootUri: URI): URI = {
+    val base = new URI(s"https://${rootUri.getHost}.s3.amazonaws.com")
+    val path = combineUris(thumbnailPath, new URI(rootUri.getPath.dropWhile(_ == '/')))
+    combineUris(path, base)
+  }
+
   protected def thumbnailFromLink(link: stac.Link, sceneId: UUID, rootUri: URI): Option[Thumbnail.Identified] = {
     // fetch thumbnail, get width/height
     try {
@@ -241,7 +249,7 @@ object ReadStacFeature extends Config with LazyLogging {
              widthPx = thumb.getWidth,
              heightPx = thumb.getHeight,
              sceneId = sceneId,
-             url = link.href
+             url = createThumbnailUrl(new URI(link.href), rootUri).toString
            ))
     } catch {
       case e: Exception =>
