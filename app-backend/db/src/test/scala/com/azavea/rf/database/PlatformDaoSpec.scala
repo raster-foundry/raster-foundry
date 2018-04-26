@@ -46,7 +46,8 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
           dbPlatform.createdBy == userCreate.id &&
             dbPlatform.modifiedBy == userCreate.id &&
             dbPlatform.name == platformCreate.name &&
-            dbPlatform.settings == platformCreate.settings
+            dbPlatform.settings == platformCreate.settings &&
+            dbPlatform.isActive == platformCreate.isActive
         }
       }
     }
@@ -76,7 +77,8 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
           affectedRows == 1 &&
             updatedPlatform.name == platformUpdate.name &&
             updatedPlatform.modifiedBy == userCreate.id &&
-            updatedPlatform.settings == platformUpdate.settings
+            updatedPlatform.settings == platformUpdate.settings &&
+            updatedPlatform.isActive == platformUpdate.isActive
         }
       }
     }
