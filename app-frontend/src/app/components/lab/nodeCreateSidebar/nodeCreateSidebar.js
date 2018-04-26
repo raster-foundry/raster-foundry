@@ -97,11 +97,8 @@ class NodeCreateSidebarController {
         this.opChars = allowedOps.map((ao) => ao.op);
     }
 
-    fetchProjectPage(searchVal, page = 1) {
-        if (this.loadingList) {
-            return;
-        }
-        const params = {
+    createSearchParams(searchVal, page) {
+        let params = {
             sort: 'createdAt,desc',
             pageSize: pageSize,
             page: page - 1
@@ -109,6 +106,14 @@ class NodeCreateSidebarController {
         if (searchVal) {
             params.search = searchVal;
         }
+        return params;
+    }
+
+    fetchProjectPage(searchVal, page = 1) {
+        if (this.loadingList) {
+            return;
+        }
+        const params = this.createSearchParams(searchVal, page);
         this.itemList = [];
         delete this.listLoadError;
         this.loadingList = true;
@@ -128,14 +133,7 @@ class NodeCreateSidebarController {
         if (this.loadingList) {
             return;
         }
-        const params = {
-            sort: 'createdAt,desc',
-            pageSize: pageSize,
-            page: page - 1
-        };
-        if (searchVal) {
-            params.search = searchVal;
-        }
+        const params = this.createSearchParams(searchVal, page);
         this.itemList = [];
         delete this.listLoadError;
         this.loadingList = true;
