@@ -27,7 +27,7 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
     check {
       forAll (
         (page: PageRequest) => {
-          TeamDao.list(page).transact(xa).unsafeRunSync.results == List()
+          TeamDao.query.page(page).transact(xa).unsafeRunSync.results == List()
         }
       )
     }
