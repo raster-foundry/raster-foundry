@@ -54,7 +54,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
 
   def userQueryParameters = (
     onlyUserQueryParameters &
-    ownerQueryParameters
+    ownerQueryParameters &
+    activationParams
   ).as(UserQueryParameters.apply _)
 
   def timestampQueryParameters = parameters(

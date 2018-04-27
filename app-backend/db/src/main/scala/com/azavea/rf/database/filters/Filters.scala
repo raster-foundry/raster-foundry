@@ -13,7 +13,9 @@ import Fragments.{ in, whereAndOpt }
 object Filters {
 
   def userQP(userParams: UserQueryParameters): List[Option[Fragment]] = {
-    onlyUserQP(userParams.onlyUserParams) ::: ownerQP(userParams.ownerParams)
+    onlyUserQP(userParams.onlyUserParams) :::
+    ownerQP(userParams.ownerParams) :::
+    activationQP(userParams.activationParams)
   }
 
   def onlyUserQP(onlyUserParams: OnlyUserQueryParameters): List[Option[Fragment]] = {

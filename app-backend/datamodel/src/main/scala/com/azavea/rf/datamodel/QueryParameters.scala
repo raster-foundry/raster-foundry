@@ -186,7 +186,8 @@ case class OwnerQueryParameters(
 @JsonCodec
 case class UserQueryParameters(
   onlyUserParams: OnlyUserQueryParameters = OnlyUserQueryParameters(),
-  ownerParams: OwnerQueryParameters = OwnerQueryParameters()
+  ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
+  activationParams: ActivationQueryParameters = ActivationQueryParameters()
 )
 
 /** Query parameters to filter by modified/created times */
