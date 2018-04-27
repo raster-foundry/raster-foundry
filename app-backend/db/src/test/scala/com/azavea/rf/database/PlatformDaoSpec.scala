@@ -73,7 +73,7 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
             }
           }
 
-          val (affectedRows, updatedPlatform) = updatePlatformWithPlatformAndAffectedRowsIO.transact(xa).unsafeRunSync
+        val (affectedRows, updatedPlatform) = updatePlatformWithPlatformAndAffectedRowsIO.transact(xa).unsafeRunSync
           affectedRows == 1 &&
             updatedPlatform.name == platformUpdate.name &&
             updatedPlatform.modifiedBy == userCreate.id &&

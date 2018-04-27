@@ -19,8 +19,74 @@ import org.scalatest.prop.Checkers
 import io.circe._
 import io.circe.syntax._
 import java.util.UUID
+import com.lonelyplanet.akka.http.extensions.PageRequest
 
 class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
+
+  test("listing teams") {
+    check {
+      forAll (
+        (page: PageRequest) => {
+          TeamDao.list(page).transact(xa).unsafeRunSync.results == List()
+        }
+      )
+    }
+  }
+
+  test("getting a team by ID") {
+    check {
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create) => {
+          val createTeamIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            teamInsert <- TeamDao.create(fixupTeam(teamCreate, orgInsert, userInsert))
+          } yield (teamInsert, orgInsert)
+
+          val getTeamAndOrgIO = createTeamIO flatMap {
+            case (team: Team, org: Organization) => {
+              TeamDao.getById(team.id) map { (_, org) }
+            }
+          }
+
+          val (getTeamOp, org) = getTeamAndOrgIO.transact(xa).unsafeRunSync
+          val getTeam = getTeamOp.get
+
+          getTeam.name == teamCreate.name &&
+            getTeam.organizationId == org.id &&
+            getTeam.settings == teamCreate.settings &&
+            getTeam.isActive == teamCreate.isActive
+        }
+      )
+    }
+  }
+
+  test("getting a team by ID unsafely") {
+    check {
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create) => {
+          val createTeamIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            teamInsert <- TeamDao.create(fixupTeam(teamCreate, orgInsert, userInsert))
+          } yield (teamInsert, orgInsert)
+
+          val getTeamAndOrgIO = createTeamIO flatMap {
+            case (team: Team, org: Organization) => {
+              TeamDao.unsafeGetById(team.id) map { (_, org) }
+            }
+          }
+
+          val (getTeam, org) = getTeamAndOrgIO.transact(xa).unsafeRunSync
+
+          getTeam.name == teamCreate.name &&
+            getTeam.organizationId == org.id &&
+            getTeam.settings == teamCreate.settings &&
+            getTeam.isActive == teamCreate.isActive
+        }
+      )
+    }
+  }
 
   test("creating a team") {
     check {
@@ -71,6 +137,26 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
             updatedTeam.settings == teamUpdate.settings &&
             updatedTeam.organizationId == org.id &&
             updatedTeam.isActive == teamUpdate.isActive
+        }
+      )
+    }
+  }
+
+  test("deleting a team by ID") {
+    check {
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create) => {
+          val createTeamIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            teamInsert <- TeamDao.create(fixupTeam(teamCreate, orgInsert, userInsert))
+          } yield teamInsert
+
+          val deleteTeamIO = createTeamIO flatMap {
+            case (team: Team) => TeamDao.delete(team.id)
+          }
+
+          deleteTeamIO.transact(xa).unsafeRunSync == 1
         }
       )
     }

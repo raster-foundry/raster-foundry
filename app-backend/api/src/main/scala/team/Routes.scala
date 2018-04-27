@@ -70,7 +70,7 @@ trait TeamRoutes extends Authentication
   def listTeams: Route = authenticate { user =>
     withPagination { page =>
       complete {
-        TeamDao.query.page(page).transact(xa).unsafeToFuture
+        TeamDao.list(page).transact(xa).unsafeToFuture
       }
     }
   }
@@ -86,7 +86,7 @@ trait TeamRoutes extends Authentication
   def getTeam(teamId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        TeamDao.query.filter(teamId).selectOption.transact(xa).unsafeToFuture
+        TeamDao.getById(teamId).transact(xa).unsafeToFuture
       }
     }
   }
@@ -100,7 +100,7 @@ trait TeamRoutes extends Authentication
   }
 
   def deleteTeam(teamId: UUID): Route = authenticate { user =>
-    onSuccess(TeamDao.query.filter(teamId).delete.transact(xa).unsafeToFuture) {
+    onSuccess(TeamDao.delete(platformId).transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
