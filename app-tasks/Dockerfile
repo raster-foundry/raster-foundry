@@ -12,6 +12,7 @@ RUN set -ex \
        python-pip \
        python-setuptools \
        python-dev \
+       python-requests \
        build-essential \
        imagemagick \
     ' \
