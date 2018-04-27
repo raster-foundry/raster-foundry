@@ -230,7 +230,13 @@ object ReadStacFeature extends Config with LazyLogging {
   // PNGs for stac features must be referenced at radiant-nasa-iserv.s3.amazonaws.com/... instead of
   // at s3.amazonaws.com/bucket/...
   private def createThumbnailUrl(thumbnailPath: URI, rootUri: URI): URI = {
-    val base = new URI(s"https://${rootUri.getHost}.s3.amazonaws.com")
+    val base = new URI(
+      rootUri.getScheme match {
+        case "s3" => s"https://${rootUri.getHost}.s3.amazonaws.com"
+        case "http" | "https" => s"https://${rootUri.getHost}"
+        case _ => ""
+      }
+    )
     val path = combineUris(thumbnailPath, new URI(rootUri.getPath.dropWhile(_ == '/')))
     combineUris(path, base)
   }
