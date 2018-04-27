@@ -24,9 +24,6 @@ object TeamDao extends Dao[Team] {
     FROM
   """ ++ tableF
 
-  def list(page: PageRequest): ConnectionIO[PaginatedResponse[Team]] =
-    TeamDao.query.page(page)
-
   def getById(teamId: UUID): ConnectionIO[Option[Team]] =
     TeamDao.query.filter(teamId).selectOption
 

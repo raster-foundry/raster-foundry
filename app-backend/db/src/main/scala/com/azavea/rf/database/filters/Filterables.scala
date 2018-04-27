@@ -195,6 +195,14 @@ trait Filterables extends RFMeta {
   implicit val thumbnailParamsFilter = Filterable[Any, ThumbnailQueryParameters] { params: ThumbnailQueryParameters =>
     Filters.thumbnailQP(params)
   }
+
+  implicit val teamQueryparamsFilter = Filterable[Any, TeamQueryParameters] { params: TeamQueryParameters =>
+    Filters.timestampQP(params.timestampParams) ++
+    Filters.organizationQP(params.orgParams) ++
+    Filters.onlyUserQP(params.onlyUserParams) ++
+    Filters.searchQP(params.searchParams, List("name")) ++
+    Filters.activationQP(params.activationParams)
+  }
 }
 
 object Filterables extends Filterables

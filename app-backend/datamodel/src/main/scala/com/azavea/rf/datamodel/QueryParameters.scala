@@ -169,12 +169,24 @@ case class OrgQueryParameters(
   organizations: Iterable[UUID] = Seq[UUID]()
 )
 
+/** Query parameters to filter by only users */
+@JsonCodec
+case class OnlyUserQueryParameters(
+  createdBy: Option[String] = None,
+  modifiedBy: Option[String] = None
+)
+
+/** Query parameters to filter by owners */
+@JsonCodec
+case class OwnerQueryParameters(
+  owner: Option[String] = None
+)
+
 /** Query parameters to filter by users */
 @JsonCodec
 case class UserQueryParameters(
-  createdBy: Option[String] = None,
-  modifiedBy: Option[String] = None,
-  owner: Option[String] = None
+  onlyUserParams: OnlyUserQueryParameters = OnlyUserQueryParameters(),
+  ownerParams: OwnerQueryParameters = OwnerQueryParameters()
 )
 
 /** Query parameters to filter by modified/created times */
@@ -274,4 +286,18 @@ case class FeedQueryParameters(
 @JsonCodec
 case class SearchQueryParameters(
   search: Option[String] = None
+)
+
+@JsonCodec
+case class ActivationQueryParameters(
+  isActive: Option[Boolean] = None
+)
+
+@JsonCodec
+case class TeamQueryParameters(
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+  orgParams: OrgQueryParameters = OrgQueryParameters(),
+  onlyUserParams: OnlyUserQueryParameters = OnlyUserQueryParameters(),
+  searchParams: SearchQueryParameters = SearchQueryParameters(),
+  activationParams: ActivationQueryParameters = ActivationQueryParameters()
 )
