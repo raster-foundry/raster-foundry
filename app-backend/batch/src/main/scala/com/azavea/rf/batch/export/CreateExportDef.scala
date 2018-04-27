@@ -46,7 +46,10 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
       exportDef <- ExportDao.getExportDefinition(export, user)
       x <- {
         writeExportDefToS3(exportDef, bucket, key)
-        val updatedExport = export.copy(exportStatus = ExportStatus.Exporting)
+        val updatedExport = export.copy(
+          exportStatus = ExportStatus.Exporting,
+          exportOptions = exportDef.asJson
+        )
         ExportDao.update(updatedExport, exportId, user)
       }
     } yield {
