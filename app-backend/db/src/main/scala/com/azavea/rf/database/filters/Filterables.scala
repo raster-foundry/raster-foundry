@@ -210,6 +210,14 @@ trait Filterables extends RFMeta {
     Filters.searchQP(params.searchParams, List("name")) ++
     Filters.activationQP(params.activationParams)
   }
+
+  implicit val organizationQueryparamsFilter = Filterable[Any, OrganizationQueryParameters] { params: OrganizationQueryParameters =>
+    Filters.timestampQP(params.timestampParams) ++
+    Filters.searchQP(params.searchParams, List("name")) ++
+    Filters.activationQP(params.activationParams) ++
+    Filters.platformIdQP(params.platformIdParams)
+  }
+
 }
 
 object Filterables extends Filterables

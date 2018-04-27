@@ -89,4 +89,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
   def activationParams = parameters(
     'isActive.as[Boolean].?
   ).as(ActivationQueryParameters.apply _)
+
+  def platformIdParams = parameters(
+    'platformId.as[UUID].?
+  ).as(PlatformIdQueryParameters.apply _)
 }

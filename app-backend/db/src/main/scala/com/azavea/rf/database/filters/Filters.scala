@@ -79,4 +79,8 @@ object Filters {
   def activationQP(activationParams: ActivationQueryParameters): List[Option[Fragment]] = {
     List(activationParams.isActive.map(isActive => fr"is_active = ${isActive}"))
   }
+
+  def platformIdQP(platformIdParams: PlatformIdQueryParameters): List[Option[Fragment]] = {
+    List(platformIdParams.platformId.map(platformId => fr"platform_id = ${platformId}"))
+  }
 }

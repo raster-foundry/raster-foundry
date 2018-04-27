@@ -303,9 +303,23 @@ case class TeamQueryParameters(
   activationParams: ActivationQueryParameters = ActivationQueryParameters()
 )
 
+@JsonCodec
 case class PlatformQueryParameters(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
   onlyUserParams: OnlyUserQueryParameters = OnlyUserQueryParameters(),
   searchParams: SearchQueryParameters = SearchQueryParameters(),
   activationParams: ActivationQueryParameters = ActivationQueryParameters()
+)
+
+@JsonCodec
+case class PlatformIdQueryParameters(
+  platformId: Option[UUID] = None
+)
+
+@JsonCodec
+case class OrganizationQueryParameters(
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+  searchParams: SearchQueryParameters = SearchQueryParameters(),
+  activationParams: ActivationQueryParameters = ActivationQueryParameters(),
+  platformIdParams: PlatformIdQueryParameters = PlatformIdQueryParameters()
 )
