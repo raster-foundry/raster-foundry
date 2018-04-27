@@ -114,7 +114,7 @@ object ReadStacFeature extends Config with LazyLogging {
 
 
     // if datasource is defined, use bands from datasource
-    val (imageAssets, metadataFiles) = feature.assets.partition(asset => asset.format.getOrElse("none") == "tif")
+    val (imageAssets, metadataFiles) = feature.assets.partition(asset => asset.format.getOrElse("none") == "cog")
 
     val sceneId = UUID.randomUUID()
     val images = getBandedImages(imageAssets, sceneId, rootUri) // get bands from the image products
@@ -141,7 +141,7 @@ object ReadStacFeature extends Config with LazyLogging {
       thumbnails = thumbnailLinks.map(thumbnailFromLink(_, sceneId, rootUri)).flatten.toList,
       ingestLocation = None,
       filterFields = SceneFilterFields(
-        cloudCover = None,
+        cloudCover = Some(0), // required for search in the frontend
         sunAzimuth = None,
         sunElevation = None,
         acquisitionDate = Some(feature.properties.start)
@@ -162,7 +162,7 @@ object ReadStacFeature extends Config with LazyLogging {
       UserDao.getUserById(systemUser) flatMap { (mbUser: Option[User]) =>
         mbUser match {
           case Some(user) =>
-            logger.info(s"\nuser: ${user.id}\ninserting scene: \n${scene}")
+            logger.info(s"\nuser: ${user.id}\ninserting scene: \n${scene.name}")
             SceneDao.insert(scene, user)
           case _ =>
             throw new RuntimeException("System user not found. Make sure migrations have been run, and that batch config is correct")
@@ -181,7 +181,7 @@ object ReadStacFeature extends Config with LazyLogging {
           val decoded = decode[stac.Product](productJson)
           decoded match {
             case Right(stacProduct) =>
-              Some(createImage(stacProduct, imageAsset, sceneId))
+              Some(createImage(stacProduct, imageAsset, sceneId, rootUri))
             case Left(error) =>
               logger.error(s"There was an error decoding json into a stac Product: ${error.getLocalizedMessage}")
               None
@@ -192,14 +192,14 @@ object ReadStacFeature extends Config with LazyLogging {
   }
 
   protected def createImage(
-    product: stac.Product, imageAsset: stac.Asset, sceneId: UUID
+    product: stac.Product, imageAsset: stac.Asset, sceneId: UUID, rootUri: URI
   ): Image.Banded = {
     Image.Banded(
       organizationId = landsat8Config.organizationUUID,
       rawDataBytes = 0, // sizeFromPath(params.path),
       visibility = Visibility.Public,
       filename = imageAsset.href.split("/").takeRight(1)(0),
-      sourceUri = imageAsset.href,
+      sourceUri = combineUris(new URI(imageAsset.href), rootUri).toString,
       owner = Some(systemUser),
       scene = sceneId,
       imageMetadata = product.properties,
@@ -227,6 +227,20 @@ object ReadStacFeature extends Config with LazyLogging {
     Projected(poly, 3857)
   }
 
+  // PNGs for stac features must be referenced at radiant-nasa-iserv.s3.amazonaws.com/... instead of
+  // at s3.amazonaws.com/bucket/...
+  private def createThumbnailUrl(thumbnailPath: URI, rootUri: URI): URI = {
+    val base = new URI(
+      rootUri.getScheme match {
+        case "s3" => s"https://${rootUri.getHost}.s3.amazonaws.com"
+        case "http" | "https" => s"https://${rootUri.getHost}"
+        case _ => ""
+      }
+    )
+    val path = combineUris(thumbnailPath, new URI(rootUri.getPath.dropWhile(_ == '/')))
+    combineUris(path, base)
+  }
+
   protected def thumbnailFromLink(link: stac.Link, sceneId: UUID, rootUri: URI): Option[Thumbnail.Identified] = {
     // fetch thumbnail, get width/height
     try {
@@ -241,7 +255,7 @@ object ReadStacFeature extends Config with LazyLogging {
              widthPx = thumb.getWidth,
              heightPx = thumb.getHeight,
              sceneId = sceneId,
-             url = link.href
+             url = createThumbnailUrl(new URI(link.href), rootUri).toString
            ))
     } catch {
       case e: Exception =>
