@@ -301,3 +301,10 @@ case class TeamQueryParameters(
   searchParams: SearchQueryParameters = SearchQueryParameters(),
   activationParams: ActivationQueryParameters = ActivationQueryParameters()
 )
+
+case class PlatformQueryParameters(
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+  onlyUserParams: OnlyUserQueryParameters = OnlyUserQueryParameters(),
+  searchParams: SearchQueryParameters = SearchQueryParameters(),
+  activationParams: ActivationQueryParameters = ActivationQueryParameters()
+)

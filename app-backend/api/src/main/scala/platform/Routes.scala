@@ -26,7 +26,8 @@ trait PlatformRoutes extends Authentication
   with PaginationDirectives
   with CommonHandlers
   with KamonTraceDirectives
-  with UserErrorHandler {
+  with UserErrorHandler
+  with PlatformQueryParameterDirective {
 
   val xa: Transactor[IO]
 
@@ -67,9 +68,9 @@ trait PlatformRoutes extends Authentication
   // @TODO: most platform API interactions should be highly restricted -- only 'super-users' should
   // be able to do list, create, update, delete. Non-super users can only get a platform if they belong to it.
   def listPlatforms: Route = authenticate { user =>
-    withPagination { page =>
+    (withPagination & platformQueryParameters) { (page, platformQueryParameters) =>
       complete {
-        PlatformDao.listPlatforms(page).transact(xa).unsafeToFuture
+        PlatformDao.query.filter(platformQueryParameters).page(page).transact(xa).unsafeToFuture
       }
     }
   }
