@@ -3,6 +3,8 @@ package com.azavea.rf.database
 import com.azavea.rf.database.filter.Filterables
 import com.azavea.rf.database.util._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.database.Implicits._
+
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
@@ -52,6 +54,86 @@ object Dao {
 
     def filter[M >: Model](id: UUID)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
       this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
+    }
+
+    // Filter to validate access on an object type
+    def authorize[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+      this.copy(filters = filters ++ filterable.toFilters(Some(
+        fr"""id IN (
+          -- Collect objects owned by the user
+          SELECT A.id
+          FROM""" ++ tableF ++ fr"""AS A
+          WHERE A.owner = ${user.id}
+
+          UNION ALL
+
+          -- Collect objects the user has access to for non-group permissions
+          SELECT A.id
+          FROM""" ++ tableF ++ fr"""AS A
+          JOIN access_control_rules acr ON
+            acr.object_id::text = A.id::text AND
+            acr.object_type = ${objectType} AND
+            acr.action_type = ${actionType} AND
+            -- Match if the ACR is an ALL
+            acr.subject_type = 'ALL' OR
+            -- Match if the ACR is per user
+            (acr.subject_type = 'USER' AND acr.subject_id = ${user.id})
+
+          UNION ALL
+
+          -- Collect objects the user has access to for group permissions
+          SELECT A.id
+          FROM""" ++ tableF ++ fr"""AS A
+          JOIN access_control_rules acr ON
+            acr.object_id::text = A.id::text AND
+            acr.object_type = ${objectType} AND
+            acr.action_type = ${actionType}
+          JOIN user_group_roles ugr ON
+            ugr.user_id = ${user.id} AND
+            acr.subject_type::text = ugr.group_type::text AND
+            acr.subject_id::text = ugr.group_id::text
+        )"""
+      )))
+    }
+
+    // Filter to validate access to a specific object
+    def authorize[M >: Model](user: User, objectType: ObjectType, objectId: UUID, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+      this.copy(filters = filters ++ filterable.toFilters(Some(
+        fr"""(
+          -- Match if the user owns the object
+          owner = ${user.id} OR
+          -- Match if the user is granted access via ALL or explicitly granted access
+          (
+            SELECT count(acr.id) > 0
+            FROM access_control_rules AS acr
+            WHERE
+              (
+                acr.subject_type = ${SubjectType.All.toString}::subject_type OR
+                (
+                  acr.subject_type = ${SubjectType.User.toString}::subject_type AND
+                  acr.subject_id = ${user.id}
+                )
+              ) AND
+              acr.object_id = ${objectId} AND
+              acr.object_type = ${objectType} AND
+              acr.action_type = ${actionType}
+            LIMIT 1
+          ) OR
+          -- Match if the user is granted permission via group membership
+          (
+            SELECT count(acr.id) > 0
+            FROM access_control_rules AS acr
+            JOIN user_group_roles ugr ON
+              acr.subject_type::text = ugr.group_type::text AND
+              acr.subject_id::text = ugr.group_id::text
+            WHERE
+              acr.object_id = ${objectId} AND
+              ugr.user_id = ${user.id} AND
+              acr.action_type = ${actionType}
+            LIMIT 1
+          )
+        )"""
+      )))
     }
 
     def ownerFilterF(user: User): Option[Fragment] = {
@@ -157,6 +239,13 @@ object Dao {
         .query[Int]
         .list
         .map(!_.isEmpty)
+    }
+
+    def authorized(user: User, objectType: ObjectType, objectId: UUID, actionType: ActionType): ConnectionIO[Boolean] = {
+      this
+        .filter(objectId)
+        .authorize(user, objectType, objectId, actionType)
+        .exists
     }
   }
 }
