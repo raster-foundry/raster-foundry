@@ -75,7 +75,7 @@ trait ToolRunRoutes extends Authentication
 
   def getToolRun(runId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(ToolRunDao.query.filter(fr"id = ${runId}").selectOption.transact(xa).unsafeToFuture)
+      complete(ToolRunDao.query.filter(runId).selectOption.transact(xa).unsafeToFuture)
     }
   }
 
@@ -90,7 +90,7 @@ trait ToolRunRoutes extends Authentication
   }
 
   def deleteToolRun(runId: UUID): Route = authenticate { user =>
-    onSuccess(ToolRunDao.query.filter(fr"id = ${runId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
+    onSuccess(ToolRunDao.query.filter(runId).ownerFilter(user).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }

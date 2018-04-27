@@ -91,8 +91,8 @@ case class CreateExportDef(exportId: UUID, region: Option[String] = None)(implic
     logger.info("Starting export process...")
 
     val processingExport = for {
-      user <- UserDao.query.filter(fr"id = ${systemUser}").select
-      export <- ExportDao.query.filter(fr"id = ${exportId}").select
+      user <- UserDao.filterById(systemUser).select
+      export <- ExportDao.query.filter(exportId).select
       exportDef <- ExportDao.getExportDefinition(export, user)
       _ <- {
         writeExportDefToS3(exportDef)

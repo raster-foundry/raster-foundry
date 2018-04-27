@@ -23,7 +23,7 @@ object ImageDao extends Dao[Image] {
     SELECT
       id, created_at, modified_at, organization_id, created_by, modified_by,
       owner, raw_data_bytes, visibility, filename, sourceuri, scene,
-      image_metadata, resolution_meters, metadata_files FROM """ ++ tableF 
+      image_metadata, resolution_meters, metadata_files FROM """ ++ tableF
 
   def create(
     image: Image,
@@ -93,7 +93,7 @@ object ImageDao extends Dao[Image] {
 
   // delete images
   def deleteImage(id: UUID, user: User): ConnectionIO[Int] = {
-    this.query.filter(fr"owner = ${user.id}").filter(fr"id = ${id}").delete
+    this.query.filter(fr"owner = ${user.id}").filter(id).delete
   }
 
   // get image

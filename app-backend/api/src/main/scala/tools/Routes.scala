@@ -87,7 +87,7 @@ trait ToolRoutes extends Authentication
 
   def getToolSources(toolId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      onSuccess(ToolDao.query.filter(fr"id = ${toolId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture) { maybeTool =>
+      onSuccess(ToolDao.query.filter(toolId).ownerFilter(user).selectOption.transact(xa).unsafeToFuture) { maybeTool =>
         val sources = maybeTool.map(_.definition.as[MapAlgebraAST].valueOr(throw _).sources)
         complete(sources)
       }
@@ -114,7 +114,7 @@ trait ToolRoutes extends Authentication
 
   def getTool(toolId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(ToolDao.query.filter(fr"id = ${toolId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture)
+      complete(ToolDao.query.filter(toolId).ownerFilter(user).selectOption.transact(xa).unsafeToFuture)
     }
   }
 
@@ -129,7 +129,7 @@ trait ToolRoutes extends Authentication
   }
 
   def deleteTool(toolId: UUID): Route = authenticate { user =>
-    onSuccess(ToolDao.query.filter(fr"id = ${toolId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
+    onSuccess(ToolDao.query.filter(toolId).ownerFilter(user).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }

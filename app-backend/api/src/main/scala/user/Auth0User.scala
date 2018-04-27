@@ -115,7 +115,7 @@ object Auth0UserService extends Config with LazyLogging{
       auth0User <- requestAuth0User(userId, bearerToken)
     } yield auth0User
     query.flatMap { auth0User =>
-      UserDao.query.filter(fr"id = ${userId}").selectOption.transact(xa).unsafeToFuture().map { user =>
+      UserDao.filterById(userId).selectOption.transact(xa).unsafeToFuture().map { user =>
         user match {
           case Some(user: User) =>
             UserWithOAuth(user, auth0User)

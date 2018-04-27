@@ -72,7 +72,7 @@ trait UserRoutes extends Authentication
   def createUser: Route = authenticateRootMember { root =>
     entity(as[User.Create]) { newUser =>
       onSuccess(UserDao.create(newUser).transact(xa).unsafeToFuture()) { createdUser =>
-        onSuccess(UserDao.query.filter(fr"id = ${createdUser.id}").selectOption.transact(xa).unsafeToFuture()) {
+        onSuccess(UserDao.filterById(createdUser.id).selectOption.transact(xa).unsafeToFuture()) {
           case Some(user) => complete((StatusCodes.Created, user))
           case None => throw new IllegalStateException("Unable to create user")
         }
@@ -134,7 +134,7 @@ trait UserRoutes extends Authentication
     rejectEmptyResponse {
       val authId = URLDecoder.decode(authIdEncoded, "US_ASCII")
       if (user.isInRootOrganization || user.id == authId) {
-        complete(UserDao.query.filter(fr"id = ${authId}").select.transact(xa).unsafeToFuture())
+        complete(UserDao.filterById(authId).select.transact(xa).unsafeToFuture())
       } else {
         complete(StatusCodes.NotFound)
       }

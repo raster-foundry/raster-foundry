@@ -28,12 +28,16 @@ object UserDao extends Dao[User] {
     FROM
   """ ++ tableF
 
+  def filterById(id: String) = {
+    query.filter(fr"id = ${id}")
+  }
+
   def unsafeGetUserById(id: String): ConnectionIO[User] = {
-    query.filter(fr"id = ${id}").select
+    filterById(id).select
   }
 
   def getUserById(id: String): ConnectionIO[Option[User]] = {
-    query.filter(fr"id = ${id}").selectOption
+    filterById(id).selectOption
   }
 
   def createUserWithAuthId(id: String): ConnectionIO[User] = {

@@ -119,7 +119,7 @@ trait SceneRoutes extends Authentication
   }
 
   def deleteScene(sceneId: UUID): Route = authenticate { user =>
-    onSuccess(SceneDao.query.filter(fr"id = ${sceneId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
+    onSuccess(SceneDao.query.filter(sceneId).ownerFilter(user).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }

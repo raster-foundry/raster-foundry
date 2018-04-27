@@ -101,7 +101,7 @@ trait TileAuthentication extends Authentication
       case Some(token) => {
         val userId = token.owner.toString
         val userFromId = rfCache.caching(s"user-$userId-token-$mapToken") {
-          UserDao.query.filter(fr"id=${userId}").selectOption.transact(xa).unsafeToFuture
+          UserDao.filterById(userId).selectOption.transact(xa).unsafeToFuture
         }
         onSuccess(userFromId).flatMap {
           case Some(user) => provide(user)
