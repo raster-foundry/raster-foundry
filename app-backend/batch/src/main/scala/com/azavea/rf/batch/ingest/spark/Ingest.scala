@@ -41,6 +41,8 @@ import org.apache.spark.rdd._
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
+import scala.util.Properties
+
 import java.io.File
 import java.net.URI
 import java.util.UUID
@@ -313,6 +315,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
 
     val sceneId = UUID.fromString(params.sceneId)
 
+
     /* Warn about ignored flags */
     if (params.windowSize.isDefined) logger.warn("windowSize parameter was explicitely set, but will be ignored.")
     if (params.partitionsPerFile.isDefined) logger.warn("partitionsPerFile parameter was explicitely set, but will be ignored.")
@@ -323,6 +326,13 @@ object Ingest extends SparkJob with LazyLogging with Config {
     implicit def asS3Payload(status: IngestStatus): String = S3IngestStatus(sceneId, status).asJson.noSpaces
 
     try {
+      Integer.valueOf(Properties.envOrElse("AWS_BATCH_JOB_ATTEMPT", "0")) match {
+        case 3 => {
+          logger.error("Failing early due to previous failures. See prior attempts' logs")
+          throw new Exception("Suspicious repeated failures. Exiting.")
+        }
+        case _ => ()
+      }
       ingestDefinition.layers.foreach(ingestLayer(params, _))
       if (params.testRun) ingestDefinition.layers.foreach(Validation.validateCatalogEntry)
       putObjectString(
