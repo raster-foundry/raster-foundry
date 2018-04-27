@@ -63,7 +63,7 @@ class LabNodeController {
         const workspace = state.lab.workspace;
         const node = getNodeDefinition(state, this);
         const analysisId = node && node.analysisId;
-        const analysis = _.find(workspace.analyses, (a) => a.id === analysisId);
+        const analysis = workspace.analyses.find((a) => a.id === analysisId);
 
         const selector = {
             readonly: state.lab.readonly,

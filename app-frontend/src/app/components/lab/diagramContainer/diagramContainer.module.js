@@ -33,7 +33,7 @@ class DiagramContainerController {
         this.mousetipService = mousetipService;
         this.labUtils = labUtils;
 
-        let unsubscribe = $ngRedux.connect(
+        const unsubscribe = $ngRedux.connect(
             this.mapStateToThis,
             Object.assign({}, WorkspaceActions, NodeActions)
         )(this);
@@ -106,7 +106,7 @@ class DiagramContainerController {
     }
 
     initDiagram() {
-        let extract = this.workspace.analyses.map((analysis) => {
+        const extract = this.workspace.analyses.map((analysis) => {
             return this.labUtils.extractShapes(
                 analysis,
                 this.cellDimensions
@@ -117,7 +117,7 @@ class DiagramContainerController {
         }), {shapes: [], nodes: new Map()});
 
         this.analyses = this.workspace.analyses.slice();
-        let labNodes = this.workspace.analyses.map((analysis) => {
+        const labNodes = this.workspace.analyses.map((analysis) => {
             return nodesFromAnalysis(analysis);
         }).reduce((a, b) => a.merge(b), new Map());
 
@@ -141,11 +141,11 @@ class DiagramContainerController {
         }
 
         if (!this.paper) {
-            let el = $(this.$element);
-            let height = el.height();
+            const el = $(this.$element);
+            const height = el.height();
             if (height === 0) {
-                let resetDimensions = () => {
-                    let elHeight = el.height();
+                const resetDimensions = () => {
+                    const elHeight = el.height();
                     if (elHeight !== 0) {
                         this.paper.setDimensions(el.width(), elHeight);
                         this.scaleToContent();
@@ -192,8 +192,8 @@ class DiagramContainerController {
             this.paper.$el.on('wheel', this.onMouseWheel.bind(this));
 
             this.onWindowResize = () => {
-                let owidth = this.$element[0].offsetWidth;
-                let oheight = this.$element[0].offsetHeight;
+                const owidth = this.$element[0].offsetWidth;
+                const oheight = this.$element[0].offsetHeight;
                 this.paper.setDimensions(
                     owidth, oheight
                 );
@@ -206,7 +206,7 @@ class DiagramContainerController {
         }
 
         if (this.shapes) {
-            let padding = this.cellDimensions.width * this.nodeSeparationFactor;
+            const padding = this.cellDimensions.width * this.nodeSeparationFactor;
             this.shapes.forEach(s => this.graph.addCell(s));
             joint.layout.DirectedGraph.layout(this.graph, {
                 setLinkVertices: false,
@@ -226,7 +226,7 @@ class DiagramContainerController {
             throw new Error('called addAnalyses without analyses');
         }
 
-        let placedAnalyses = analyses.map((a) => {
+        const placedAnalyses = analyses.map((a) => {
             if (a.addLocation) {
                 return this.setRelativePositions(a);
             }
@@ -234,12 +234,12 @@ class DiagramContainerController {
         });
 
         // TODO remove any added nodes that are already on the graph
-        let newNodes = placedAnalyses.map((analysis) => {
+        const newNodes = placedAnalyses.map((analysis) => {
             return nodesFromAnalysis(analysis);
         }).reduce((a, b) => a.merge(b), new Map());
         this.setNodes(newNodes.merge(this.extractNodes));
 
-        let extract = placedAnalyses.map((analysis) => {
+        const extract = placedAnalyses.map((analysis) => {
             return this.labUtils.extractShapes(
                 analysis,
                 this.cellDimensions
@@ -258,10 +258,7 @@ class DiagramContainerController {
                     this.onShapeMove(shape.id, position);
                 }
             });
-        });
-
-        shapes.forEach(s => {
-            this.graph.addCell(s);
+            this.graph.addCell(shape);
         });
 
         this.shapes = shapes.concat(this.shapes);
@@ -284,7 +281,7 @@ class DiagramContainerController {
         const shapes = extract.shapes;
         shapes.forEach(s => layoutGraph.addCell(s));
 
-        let padding = this.cellDimensions.width * this.nodeSeparationFactor;
+        const padding = this.cellDimensions.width * this.nodeSeparationFactor;
 
         joint.layout.DirectedGraph.layout(layoutGraph, {
             setLinkVertices: false,
@@ -349,7 +346,7 @@ class DiagramContainerController {
         Object.keys(graph._nodes)
             .map((modelid) => this.paper.getModelById(modelid))
             .forEach((model) => {
-                let metadata = model.attributes.metadata;
+                const metadata = model.attributes.metadata;
                 if (metadata && metadata.positionOverride) {
                     model.position(
                         model.attributes.metadata.positionOverride.x,
@@ -364,35 +361,35 @@ class DiagramContainerController {
         this.paper.translate(0, 0);
         this.paper.scale(1);
 
-        let preZoomBBox = this.paper.getContentBBox();
-        let xratio =
+        const preZoomBBox = this.paper.getContentBBox();
+        const xratio =
             this.paper.options.width / (preZoomBBox.x * 2 + preZoomBBox.width);
-        let yratio =
+        const yratio =
             this.paper.options.height / (preZoomBBox.y * 2 + preZoomBBox.height);
-        let ratio = xratio > yratio ? yratio : xratio;
+        const ratio = xratio > yratio ? yratio : xratio;
         this.setZoom(ratio > 1 ? 1 : ratio, {
             x: 0,
             y: 0
         });
 
-        let postZoomBBox = this.paper.getContentBBox();
-        let contentWidth = postZoomBBox.x * 2 + postZoomBBox.width;
-        let contentHeight = postZoomBBox.y * 2 + postZoomBBox.height;
-        let xoffset = this.paper.options.width / 2 - contentWidth / 2;
-        let yoffset = this.paper.options.height / 2 - contentHeight / 2;
+        const postZoomBBox = this.paper.getContentBBox();
+        const contentWidth = postZoomBBox.x * 2 + postZoomBBox.width;
+        const contentHeight = postZoomBBox.y * 2 + postZoomBBox.height;
+        const xoffset = this.paper.options.width / 2 - contentWidth / 2;
+        const yoffset = this.paper.options.height / 2 - contentHeight / 2;
         this.paper.translate(xoffset, yoffset);
     }
 
     onMouseWheel(mouseEvent) {
-        let localpoint = this.paper.clientToLocalPoint(
+        const localpoint = this.paper.clientToLocalPoint(
             mouseEvent.originalEvent.x, mouseEvent.originalEvent.y
         );
 
         if (mouseEvent.originalEvent.deltaY < 0) {
-            let newZoom = this.scale * (1 + mouseEvent.originalEvent.deltaY * -0.002);
+            const newZoom = this.scale * (1 + mouseEvent.originalEvent.deltaY * -0.002);
             this.setZoom(newZoom, localpoint);
         } else {
-            let newZoom = this.scale / (1 + mouseEvent.originalEvent.deltaY * 0.002);
+            const newZoom = this.scale / (1 + mouseEvent.originalEvent.deltaY * 0.002);
             this.setZoom(newZoom, localpoint);
         }
     }
@@ -408,7 +405,7 @@ class DiagramContainerController {
     setZoom(zoom, coords) {
         let zoomCoords = coords;
 
-        let oldScale = this.scale;
+        const oldScale = this.scale;
         this.scale = zoom;
         if (zoom > maxZoom) {
             this.scale = maxZoom;
@@ -417,12 +414,12 @@ class DiagramContainerController {
             this.scale = minZoom;
         }
 
-        let scaleDelta = this.scale - oldScale;
-        let origin = this.paper.options.origin;
+        const scaleDelta = this.scale - oldScale;
+        const origin = this.paper.options.origin;
 
         if (!coords) {
-            let offset = this.$element.offset();
-            let middle = {
+            const offset = this.$element.offset();
+            const middle = {
                 x: this.$element[0].offsetWidth / 2,
                 y: this.$element[0].offsetHeight / 2
             };
@@ -431,8 +428,8 @@ class DiagramContainerController {
             );
         }
 
-        let offsetX = -(zoomCoords.x * scaleDelta) + origin.x;
-        let offsetY = -(zoomCoords.y * scaleDelta) + origin.y;
+        const offsetX = -(zoomCoords.x * scaleDelta) + origin.x;
+        const offsetY = -(zoomCoords.y * scaleDelta) + origin.y;
 
         this.paper.scale(this.scale);
         this.paper.translate(offsetX, offsetY);
@@ -441,7 +438,7 @@ class DiagramContainerController {
 
     onMouseMove(mouseEvent) {
         if (this.panActive) {
-            let translate = {
+            const translate = {
                 x: this.lastMousePos ? this.lastMousePos.x - mouseEvent.offsetX : 0,
                 y: this.lastMousePos ? this.lastMousePos.y - mouseEvent.offsetY : 0
             };
@@ -449,7 +446,7 @@ class DiagramContainerController {
                 x: mouseEvent.offsetX,
                 y: mouseEvent.offsetY
             };
-            let origin = this.paper.options.origin;
+            const origin = this.paper.options.origin;
             this.paper.translate(origin.x - translate.x, origin.y - translate.y);
             this.$scope.$evalAsync();
         }
@@ -457,8 +454,8 @@ class DiagramContainerController {
 
     onShapeMove(nodeId, position) {
         // TODO redux update node position
-        let node = getNodeDefinition(this.reduxState, {nodeId});
-        let updatedNode = Object.assign(
+        const node = getNodeDefinition(this.reduxState, {nodeId});
+        const updatedNode = Object.assign(
             {},
             node,
             {
@@ -490,8 +487,8 @@ class DiagramContainerController {
 
     onMouseClick(event) {
         if (this.createNodeSelection) {
-            let origin = this.paper.options.origin;
-            let clickLocation = {
+            const origin = this.paper.options.origin;
+            const clickLocation = {
                 x: (event.offsetX - origin.x) / this.scale,
                 y: (event.offsetY - origin.y) / this.scale
             };

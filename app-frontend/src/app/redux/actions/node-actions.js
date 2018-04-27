@@ -173,7 +173,7 @@ export function splitAnalysis(childNodeId, parentNodeId) {
         let analysis = _.clone(workspace.analyses.find((a) => a.id === analysisId));
 
         // remove child node as argument of parent
-        _.remove(parentNode.args, (id) => id === childNodeId);
+        parentNode.args = parentNode.args.filter((id) => id !== childNodeId);
 
         // create new analysis from the child node and its children
         let childAst = astFromRootNode(nodes, childNode);
