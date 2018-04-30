@@ -342,13 +342,15 @@ object Ingest extends SparkJob with RollbarNotifier with Config {
         IngestStatus.Ingested
       )
     } catch {
-      case t: Throwable =>
+      case t: Throwable => {
         sendError(t)
         putObjectString(
           params.statusBucket,
           ingestDefinition.id.toString,
           IngestStatus.Failed
         )
+        throw t
+      }
     } finally {
       sc.stop
     }
