@@ -24,11 +24,19 @@ case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job {
     def timeToEpoch(timeFunc: String): Fragment = Fragment.const(s"extract(epoch from ${timeFunc})")
     val aoiProjectsToUpdate: ConnectionIO[List[UUID]] = {
 
+
       // get ids only
-      val baseSelect: Fragment = sql"select id from projects "
+      val baseSelect: Fragment =
+        fr"""
+        select proj_table.id from (
+          (projects proj_table inner join aois_to_projects on proj_table.id = aois_to_projects.project_id)
+          inner join aois on aoi_id = aois.id
+        )"""
 
       //  check to make sure the project is an aoi project
       val isAoi: Option[Fragment] = fr"is_aoi_project=true".some
+
+      val aoiActive: Option[Fragment] = fr"aois.is_active=true".some
 
       // Check to make sure now is later than last checked + cadence
       val nowGtLastCheckedPlusCadence: Option[Fragment] = {
@@ -38,7 +46,7 @@ case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job {
           fr"+ aoi_cadence_millis / 1000"
       }.some
 
-      (baseSelect ++ Fragments.whereAndOpt(isAoi, nowGtLastCheckedPlusCadence))
+      (baseSelect ++ Fragments.whereAndOpt(isAoi, nowGtLastCheckedPlusCadence, aoiActive))
         .query[UUID]
         .to[List]
     }
