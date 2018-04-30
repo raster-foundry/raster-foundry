@@ -316,8 +316,9 @@ object Generators extends ArbitraryInstances {
     userField <- nonEmptyStringGen
     area <- projectedMultiPolygonGen3857
     filters <- Gen.const(().asJson) // maybe this should be CombinedSceneQueryParams as json
+    isActive <- arbitrary[Boolean]
   } yield {
-    AOI(id, timeField, timeField, organizationId, userField, userField, userField, area, filters)
+    AOI(id, timeField, timeField, organizationId, userField, userField, userField, area, filters, isActive)
   }
 
   private def datasourceCreateGen: Gen[Datasource.Create] = for {
