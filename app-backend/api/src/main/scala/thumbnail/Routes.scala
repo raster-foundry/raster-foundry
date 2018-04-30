@@ -122,7 +122,7 @@ trait ThumbnailRoutes extends Authentication
   }
 
   def deleteThumbnail(thumbnailId: UUID): Route = authenticate { user =>
-    onSuccess(ThumbnailDao.query.ownerFilter(user).filter(fr"id = ${thumbnailId}").delete.transact(xa).unsafeToFuture) {
+    onSuccess(ThumbnailDao.query.ownerFilter(user).filter(thumbnailId).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }

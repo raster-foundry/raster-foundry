@@ -1,7 +1,7 @@
 package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{UserGroupRole, GroupType, User}
+import com.azavea.rf.datamodel.{UserGroupRole, GroupType, User, GroupRole}
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
@@ -14,7 +14,9 @@ import java.util.UUID
 object UserGroupRoleDao extends Dao[UserGroupRole] {
   val tableName = "user_group_roles"
 
-  val selectF = fr"""
+
+  val selectF =
+    fr"""
       SELECT
         id, created_at, created_by,
         modified_at, modified_by, is_active,
@@ -24,15 +26,15 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
 
   def createF(ugr: UserGroupRole) =
     fr"INSERT INTO" ++ tableF ++ fr"""(
-            id, created_at, created_by,
-            modified_at, modified_by, is_active,
-            user_id, group_type, group_id, group_role
-        ) VALUES (
-            ${ugr.id}, ${ugr.createdAt}, ${ugr.createdBy},
-            ${ugr.modifiedAt}, ${ugr.modifiedBy}, ${ugr.isActive},
-            ${ugr.userId}, ${ugr.groupType}, ${ugr.groupId}, ${ugr.groupRole}
-        )
-        """
+        id, created_at, created_by,
+        modified_at, modified_by, is_active,
+        user_id, group_type, group_id, group_role
+      ) VALUES (
+          ${ugr.id}, ${ugr.createdAt}, ${ugr.createdBy},
+          ${ugr.modifiedAt}, ${ugr.modifiedBy}, ${ugr.isActive},
+          ${ugr.userId}, ${ugr.groupType}, ${ugr.groupId}, ${ugr.groupRole}
+      )
+    """
 
   // We don't want to support changes to roles beyond deactivation and promotion
   def updateF(ugr: UserGroupRole, id: UUID, user: User) =

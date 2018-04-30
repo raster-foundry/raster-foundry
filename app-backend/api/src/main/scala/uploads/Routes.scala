@@ -64,7 +64,7 @@ trait UploadRoutes extends Authentication
   def getUpload(uploadId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        UploadDao.query.filter(fr"id = ${uploadId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture
+        UploadDao.query.filter(uploadId).ownerFilter(user).selectOption.transact(xa).unsafeToFuture
       }
     }
   }
@@ -108,7 +108,7 @@ trait UploadRoutes extends Authentication
       authorize(user.isInRootOrSameOrganizationAs(updateUpload)) {
         onSuccess {
           val x = for {
-            u <- UploadDao.query.filter(fr"id = ${uploadId}").ownerFilter(user).selectOption
+            u <- UploadDao.query.filter(uploadId).ownerFilter(user).selectOption
             c <- UploadDao.update(updateUpload, uploadId, user)
           } yield {
             (u, c) match {
@@ -129,14 +129,14 @@ trait UploadRoutes extends Authentication
   }
 
   def deleteUpload(uploadId: UUID): Route = authenticate { user =>
-    onSuccess(UploadDao.query.filter(fr"id = ${uploadId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
+    onSuccess(UploadDao.query.filter(uploadId).ownerFilter(user).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }
 
   def getUploadCredentials(uploadId: UUID): Route = authenticate { user =>
     extractTokenHeader { jwt =>
-      onSuccess(UploadDao.query.filter(fr"id = ${uploadId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture) {
+      onSuccess(UploadDao.query.filter(uploadId).ownerFilter(user).selectOption.transact(xa).unsafeToFuture) {
         case Some(_) => complete(CredentialsService.getCredentials(user, uploadId, jwt.toString))
         case None => complete(StatusCodes.NotFound)
       }

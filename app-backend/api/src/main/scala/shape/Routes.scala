@@ -129,7 +129,7 @@ trait ShapeRoutes extends Authentication
   def getShape(shapeId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        ShapeDao.query.filter(fr"id = ${shapeId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture().map {
+        ShapeDao.query.filter(shapeId).ownerFilter(user).selectOption.transact(xa).unsafeToFuture().map {
           _ map { _.toGeoJSONFeature }
         }
       }
@@ -156,7 +156,7 @@ trait ShapeRoutes extends Authentication
   }
 
   def deleteShape(shapeId: UUID): Route = authenticate { user =>
-    onSuccess(ShapeDao.query.filter(fr"id = ${shapeId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
+    onSuccess(ShapeDao.query.filter(shapeId).ownerFilter(user).delete.transact(xa).unsafeToFuture) {
       completeSingleOrNotFound
     }
   }

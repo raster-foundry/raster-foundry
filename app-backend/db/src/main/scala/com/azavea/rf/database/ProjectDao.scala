@@ -131,7 +131,7 @@ object ProjectDao extends Dao[Project] {
     for {
       _ <- aoiDeleteQuery.update.run
       _ <- aoiToProjectDelete.update.run
-      projectDeleteCount <- query.filter(fr"id = ${id}").delete
+      projectDeleteCount <- query.filter(id).delete
     } yield projectDeleteCount
   }
 
@@ -235,7 +235,7 @@ object ProjectDao extends Dao[Project] {
   }
 
   def listProjectSceneOrder(projectId: UUID, page: PageRequest, user: User): ConnectionIO[PaginatedResponse[UUID]] = {
-    val projectQuery = query.filter(fr"id = ${projectId}").filter(ownerEditFilter(user)).select
+    val projectQuery = query.filter(projectId).filter(ownerEditFilter(user)).select
     val selectClause = fr"SELECT scene_id "
     val countClause = fr"SELECT count(*) "
     val sceneQuery = fr"FROM scenes_to_projects INNER JOIN scenes ON scene_id = scenes.id WHERE project_id = ${projectId}"
