@@ -9,6 +9,8 @@ import doobie.util.transactor.Transactor
 import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import io.circe._
 
+import com.lonelyplanet.akka.http.extensions.PageRequest
+
 import java.util.UUID
 
 object PlatformDao extends Dao[Platform] {
@@ -32,6 +34,15 @@ object PlatformDao extends Dao[Platform] {
       )
   """
 
+  def getPlatformById(platformId: UUID) =
+    query.filter(platformId).selectOption
+
+  def unsafeGetPlatformById(platformId: UUID) =
+    query.filter(platformId).select
+
+  def listPlatforms(page: PageRequest) =
+    query.page(page)
+
   def create(platform: Platform): ConnectionIO[Platform] = {
     createF(platform).update.withUniqueGeneratedKeys[Platform](
       "id", "created_at", "created_by", "modified_at", "modified_by", "name", "settings"
@@ -48,6 +59,7 @@ object PlatformDao extends Dao[Platform] {
       """).update.run
   }
 
+
   def userIsAdminF(user: User, platformId: UUID) = fr"""
       SELECT (
         SELECT count(id) > 0
@@ -63,4 +75,8 @@ object PlatformDao extends Dao[Platform] {
 
   def userIsAdmin(user: User, platformId: UUID) =
     userIsAdminF(user, platformId).query[Boolean].option.map(_.getOrElse(false))
+
+  def delete(platformId: UUID): ConnectionIO[Int] =
+    PlatformDao.query.filter(platformId).delete
+
 }

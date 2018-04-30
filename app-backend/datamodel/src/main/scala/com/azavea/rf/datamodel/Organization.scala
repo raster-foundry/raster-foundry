@@ -25,7 +25,7 @@ object Organization {
     name: String,
     platformId: UUID
   ) {
-    def toOrganization(): Organization = {
+    def toOrganization: Organization = {
       val id = java.util.UUID.randomUUID()
       val now = new Timestamp((new java.util.Date()).getTime())
       Organization(id, now, now, name, platformId)

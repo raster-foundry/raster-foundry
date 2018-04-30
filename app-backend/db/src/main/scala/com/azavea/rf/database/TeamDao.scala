@@ -51,7 +51,7 @@ object TeamDao extends Dao[Team] {
       fr"""
       SET modified_at = ${now},
           modified_by = ${user.id},
-          name = ${team.name}
+          name = ${team.name},
           settings = ${team.settings}
       WHERE id = ${id}"""
     updateQuery

@@ -14,6 +14,7 @@ import java.util.UUID
 object UserGroupRoleDao extends Dao[UserGroupRole] {
   val tableName = "user_group_roles"
 
+
   val selectF =
     fr"""
       SELECT
@@ -38,41 +39,37 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   // We don't want to support changes to roles beyond deactivation and promotion
   def updateF(ugr: UserGroupRole, id: UUID, user: User) =
     fr"UPDATE" ++ tableF ++ fr"""SET
-      modified_at = NOW(),
-      modified_by = ${user.id},
-      is_active = ${ugr.isActive},
-      group_role = ${ugr.groupRole}
-      where id = ${id}
-    """
+          modified_at = NOW(),
+          modified_by = ${user.id},
+          is_active = ${ugr.isActive},
+          group_role = ${ugr.groupRole}
+          where id = ${id}
+        """
+
+  def getUserGroupRoleById(ugrId: UUID, user: User): ConnectionIO[Option[UserGroupRole]] =
+    query.filter(ugrId).filter(fr"user_id = ${user.id}").selectOption
+
+  def unsafeGetUserGroupRoleById(ugrId: UUID, user: User): ConnectionIO[UserGroupRole] =
+    query.filter(ugrId).filter(fr"user_id = ${user.id}").select
 
   def create(ugr: UserGroupRole): ConnectionIO[UserGroupRole] = {
-    val isValidGroup = ugr.groupType match {
+    val isValidGroupIO = ugr.groupType match {
       case GroupType.Platform => PlatformDao.query.filter(ugr.groupId).exists
-      case GroupType.Organization =>
-        OrganizationDao.query.filter(ugr.groupId).exists
+      case GroupType.Organization => OrganizationDao.query.filter(ugr.groupId).exists
       case GroupType.Team => TeamDao.query.filter(ugr.groupId).exists
     }
 
     val create = createF(ugr).update.withUniqueGeneratedKeys[UserGroupRole](
-      "id",
-      "created_at",
-      "created_by",
-      "modified_at",
-      "modified_by",
-      "is_active",
-      "user_id",
-      "group_type",
-      "group_id",
-      "group_role"
+      "id", "created_at", "created_by",
+      "modified_at", "modified_by", "is_active",
+      "user_id", "group_type", "group_id", "group_role"
     )
 
     for {
-      isValid <- isValidGroup
+      isValid <- isValidGroupIO
       createUGR <- {
         if (isValid) create
-        else
-          throw new Exception(
-            s"Invalid group: ${ugr.groupType}(${ugr.groupId})")
+        else throw new Exception(s"Invalid group: ${ugr.groupType}(${ugr.groupId})")
       }
     } yield createUGR
   }
@@ -87,12 +84,8 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   }
 
   // List roles that have been given to users for a group
-  def listByGroup(groupType: GroupType,
-                  groupId: UUID): ConnectionIO[List[UserGroupRole]] = {
-    query
-      .filter(fr"group_type = ${groupType}")
-      .filter(fr"group_id = ${groupId}")
-      .list
+  def listByGroup(groupType: GroupType, groupId: UUID): ConnectionIO[List[UserGroupRole]] = {
+    query.filter(fr"group_type = ${groupType}").filter(fr"group_id = ${groupId}").list
   }
 
   // @TODO: ensure a user cannot demote (or promote?) themselves
@@ -101,10 +94,10 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
 
   def deactivate(id: UUID, user: User): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr""" SET
-        is_active = false,
-        modified_at = NOW(),
-        modified_by = ${user.id}
-      WHERE id = ${id}
-    """).update.run
+          is_active = false,
+          modified_at = NOW(),
+          modified_by = ${user.id}
+            WHERE id = ${id}
+        """).update.run
   }
 }
