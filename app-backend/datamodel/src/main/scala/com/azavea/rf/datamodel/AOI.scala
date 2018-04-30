@@ -30,7 +30,9 @@ case class AOI(
 
   /* Unique fields */
   area: Projected[MultiPolygon],
-  filters: Json
+  filters: Json,
+
+  isActive: Boolean = true
 )
 
 object AOI {
@@ -44,7 +46,8 @@ object AOI {
     organizationId: UUID,
     area: Projected[MultiPolygon],
     filters: Json,
-    owner: Option[String]) extends OwnerCheck {
+    owner: Option[String],
+    isActive: Boolean = true) extends OwnerCheck {
     def toAOI(user: User): AOI = {
       val now = new Timestamp((new Date()).getTime)
 
@@ -52,7 +55,7 @@ object AOI {
 
       AOI(
         UUID.randomUUID, now, now, organizationId,
-        user.id, user.id, ownerId, area, filters
+        user.id, user.id, ownerId, area, filters, isActive
       )
     }
   }
