@@ -85,7 +85,7 @@ object TeamDao extends Dao[Team] {
           t.id = ${teamId} AND
           ugr.user_id = ${user.id} AND
           ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
-          ugr.group_type = ${GroupType.Platform.toString}::group_type AND
+          ugr.group_type = ${GroupType.Organization.toString}::group_type AND
           ugr.is_active = true
       ) OR (
         SELECT count(ugr.id) > 0
