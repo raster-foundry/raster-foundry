@@ -1,7 +1,7 @@
 package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{Platform, User}
+import com.azavea.rf.datamodel._
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
@@ -47,4 +47,20 @@ object PlatformDao extends Dao[Platform] {
         where id = ${id}
       """).update.run
   }
+
+  def userIsAdminF(user: User, platformId: UUID) = fr"""
+      SELECT (
+        SELECT count(id) > 0
+        FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
+        WHERE
+          user_id = ${user.id} AND
+          group_type = ${GroupType.Platform.toString}::group_type AND
+          group_role = ${GroupRole.Admin.toString}::group_role AND
+          group_id = ${platformId} AND
+          is_active = true
+      )
+  """
+
+  def userIsAdmin(user: User, platformId: UUID) =
+    userIsAdminF(user, platformId).query[Boolean].option.map(_.getOrElse(false))
 }
