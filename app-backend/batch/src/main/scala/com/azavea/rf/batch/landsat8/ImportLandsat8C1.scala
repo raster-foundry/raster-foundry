@@ -268,7 +268,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
   def run: Unit = {
     logger.info("Importing scenes...")
 
-    val userQuery = UserDao.filterById(systemUser).select
+    val userQuery = UserDao.unsafeGetUserById(systemUser)
     val insertedScenes = for {
       user <- userQuery
       scenes <- scenesFromCsv(user)
