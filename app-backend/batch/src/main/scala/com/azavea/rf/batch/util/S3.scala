@@ -64,6 +64,9 @@ case class S3(
   def putObject(s3bucket: String, s3Key: String, content: String): PutObjectResult =
     client.putObject(s3bucket, s3Key, content)
 
+  def putObject(putObjectRequest: PutObjectRequest): PutObjectResult =
+    client.putObject(putObjectRequest)
+
   def putObject(uri: URI, content: String): PutObjectResult = {
     val s3uri = new AmazonS3URI(uri)
     client.putObject(s3uri.getBucket, s3uri.getKey, content)

@@ -1,5 +1,7 @@
 package com.azavea.rf.batch.export.spark
 
+import java.io.ByteArrayInputStream
+
 import com.azavea.rf.batch.export.json.S3ExportStatus
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.ast._
@@ -39,6 +41,7 @@ import org.apache.spark._
 import java.util.UUID
 
 import com.amazonaws.services.s3.AmazonS3URI
+import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 
 
 object Export extends SparkJob with Config with LazyLogging {
@@ -46,6 +49,8 @@ object Export extends SparkJob with Config with LazyLogging {
   val jobName = "Export"
 
   val defaultRasterSize = 4000
+
+  def s3Client = S3()
 
   def astExport(
     ed: ExportDefinition,
@@ -77,7 +82,7 @@ object Export extends SparkJob with Config with LazyLogging {
           /* Stitch the Layer into a single GeoTiff and output it */
           val single: SinglebandGeoTiff = GeoTiff(rdd.stitch, crs)
 
-          writeGeoTiff[Tile, SinglebandGeoTiff](single, ed, conf, singlePath)
+          writeGeoTiff[Tile, SinglebandGeoTiff](single, ed, singlePath)
         }
       }
     }
@@ -201,18 +206,33 @@ object Export extends SparkJob with Config with LazyLogging {
         if(ed.output.crop) mask.fold(raster)(mp => raster.crop(mp.envelope.reproject(LatLng, md.crs)))
         else raster
 
-      writeGeoTiff[MultibandTile, MultibandGeoTiff](GeoTiff(craster, md.crs), ed, conf, singlePath)
+      writeGeoTiff[MultibandTile, MultibandGeoTiff](GeoTiff(craster, md.crs), ed, singlePath)
     }
   }
 
   private def singlePath(ed: ExportDefinition): String =
     s"/${ed.output.getURLDecodedSource}/${ed.input.resolution}-${ed.id}-${UUID.randomUUID()}.tiff"
 
+  def writeGeoTiffS3[T <: CellGrid, G <: GeoTiff[T]](tiff: G, path: String) = {
+    val s3Uri = new AmazonS3URI(path)
+    val bucket = s3Uri.getBucket
+    val key = s3Uri.getKey
+    val tiffBytes = tiff.toByteArray
+    val inputStream = new ByteArrayInputStream(tiffBytes)
+    val metadata = new ObjectMetadata()
+    metadata.setContentLength(tiffBytes.length)
+    metadata.setContentType("image/tiff")
+    val putObjectRequest = new PutObjectRequest(bucket, key, inputStream, metadata)
+
+    logger.info(s"Writing Geotiff to S3 s3://${bucket}/${key}")
+
+    s3Client.putObject(putObjectRequest)
+  }
+
   /** Write a single GeoTiff to some target. */
   private def writeGeoTiff[T <: CellGrid, G <: GeoTiff[T]](
     tiff: G,
     ed: ExportDefinition,
-    conf: HadoopConfiguration,
     path: ExportDefinition => String
   ): Unit = ed.output.source.getScheme match {
     case "dropbox" if ed.output.dropboxCredential.isDefined => {
@@ -237,7 +257,16 @@ object Export extends SparkJob with Config with LazyLogging {
         } finally is.close()
       }
     }
-    case _ => tiff.write(new Path(path(ed)), conf.get)
+    case "s3" => {
+      val s3uri = new AmazonS3URI(ed.output.source)
+      val key = s3uri.getKey
+      val bucket = s3uri.getBucket
+      writeGeoTiffS3[T, G](tiff, path(ed))
+    }
+    case "file" => {
+      tiff.write(ed.output.source.getPath)
+    }
+    case _ => throw new Exception(s"Unknown schema for output location ${ed.output.source}")
   }
 
   /** Write a layer of GeoTiffs. */
@@ -251,7 +280,7 @@ object Export extends SparkJob with Config with LazyLogging {
     }
 
     rdd.foreachPartition({ iter =>
-      iter.foreach({ case (key, tile) => writeGeoTiff[T, G](tile, ed, conf, path(key)) })
+      iter.foreach({ case (key, tile) => writeGeoTiff[T, G](tile, ed, path(key)) })
     })
   }
 
@@ -268,8 +297,6 @@ object Export extends SparkJob with Config with LazyLogging {
         throw new Exception("Unable to parse command line arguments")
     }
 
-    def s3Client = S3()
-
     val exportDef =
       decode[ExportDefinition](readString(params.jobDefinition)) match {
         case Right(r) => r
@@ -278,12 +305,12 @@ object Export extends SparkJob with Config with LazyLogging {
 
     implicit val sc = new SparkContext(conf)
 
+
     implicit def asS3Payload(status: ExportStatus): String =
       S3ExportStatus(exportDef.id, status).asJson.noSpaces
 
     try {
-      val conf: HadoopConfiguration =
-        HadoopConfiguration(S3.setCredentials(sc.hadoopConfiguration))
+      val conf: HadoopConfiguration = HadoopConfiguration(S3.setCredentials(sc.hadoopConfiguration))
 
       exportDef.input.style match {
         case Left(SimpleInput(layers, mask)) =>
