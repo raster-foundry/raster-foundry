@@ -72,8 +72,8 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
 
           affectedRows == 1 &&
             updatedAoi.area == aoiUpdate.area &&
-            updatedAoi.filters == aoiUpdate.filters
-
+            updatedAoi.filters == aoiUpdate.filters &&
+            updatedAoi.isActive == aoiUpdate.isActive
         }
       }
     }
