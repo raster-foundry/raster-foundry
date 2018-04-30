@@ -7,6 +7,7 @@ import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 
 import cats._, cats.data._, cats.effect.IO, cats.implicits._
+import com.lonelyplanet.akka.http.extensions.PageRequest
 
 import java.util.{Date, UUID}
 import java.sql.Timestamp
@@ -19,24 +20,31 @@ object TeamDao extends Dao[Team] {
   val selectF = sql"""
     SELECT
       id, created_at, created_by, modified_at, modified_by, organization_id,
-      name, settings
+      name, settings, is_active
     FROM
   """ ++ tableF
+
+  def getById(teamId: UUID): ConnectionIO[Option[Team]] =
+    TeamDao.query.filter(teamId).selectOption
+
+  def unsafeGetById(teamId: UUID): ConnectionIO[Team] =
+    TeamDao.query.filter(teamId).select
 
   def create(
     team: Team
   ): ConnectionIO[Team] = {
     (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, created_at, created_by, modified_at, modified_by, organization_id,
-      name, settings)
+      name, settings, is_active)
     VALUES
       (${team.id}, ${team.createdAt}, ${team.createdBy}, ${team.modifiedAt},
-      ${team.modifiedBy}, ${team.organizationId}, ${team.name}, ${team.settings})
+      ${team.modifiedBy}, ${team.organizationId}, ${team.name}, ${team.settings},
+      ${team.isActive})
     """)
     .update
     .withUniqueGeneratedKeys[Team](
       "id", "created_at", "created_by", "modified_at", "modified_by", "organization_id",
-      "name", "settings"
+      "name", "settings", "is_active"
     )
   }
 
@@ -52,13 +60,14 @@ object TeamDao extends Dao[Team] {
       SET modified_at = ${now},
           modified_by = ${user.id},
           name = ${team.name},
-          settings = ${team.settings}
+          settings = ${team.settings},
+          is_active = ${team.isActive}
       WHERE id = ${id}"""
     updateQuery
       .update
       .withUniqueGeneratedKeys[Team](
         "id", "created_at", "created_by", "modified_at", "modified_by", "organization_id",
-        "name", "settings"
+        "name", "settings", "is_active"
       )
   }
 
@@ -108,4 +117,8 @@ object TeamDao extends Dao[Team] {
 
   def userIsAdmin(user: User, teamId: UUID) =
     userIsAdminF(user, teamId).query[Boolean].option.map(_.getOrElse(false))
+
+  def delete(teamId: UUID): ConnectionIO[Int] =
+    TeamDao.query.filter(teamId).delete
+
 }

@@ -41,12 +41,21 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     'organization.as(deserializerUUID).*
   ).as(OrgQueryParameters.apply _)
 
-  def userQueryParameters = parameters(
+  def ownerQueryParameters = parameters(
+    'owner.as[String].?
+  ).as(OwnerQueryParameters.apply _)
+
+  def onlyUserQueryParameters = parameters(
     (
     'createdBy.as[String].?,
-    'modifiedBy.as[String].?,
-    'owner.as[String].?
+    'modifiedBy.as[String].?
     )
+  ).as(OnlyUserQueryParameters.apply _)
+
+  def userQueryParameters = (
+    onlyUserQueryParameters &
+    ownerQueryParameters &
+    activationParams
   ).as(UserQueryParameters.apply _)
 
   def timestampQueryParameters = parameters(
@@ -76,4 +85,12 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
   def searchParams = parameters(
     'search.as[String].?
   ).as(SearchQueryParameters.apply _)
+
+  def activationParams = parameters(
+    'isActive.as[Boolean].?
+  ).as(ActivationQueryParameters.apply _)
+
+  def platformIdParams = parameters(
+    'platformId.as[UUID].?
+  ).as(PlatformIdQueryParameters.apply _)
 }

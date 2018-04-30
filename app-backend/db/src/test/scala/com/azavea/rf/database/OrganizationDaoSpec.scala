@@ -30,7 +30,8 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
           val (insertedOrg, insertedPlatform) = orgInsertIO.transact(xa).unsafeRunSync
 
           insertedOrg.platformId == insertedPlatform.id &&
-            insertedOrg.name == orgCreate.name
+            insertedOrg.name == orgCreate.name &&
+            insertedOrg.isActive == orgCreate.isActive
         }
       )
     }
@@ -58,22 +59,22 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
   test("update an organization") {
     check {
       forAll(
-        (orgCreate: Organization.Create, newName: String) => {
+        (orgCreate: Organization.Create, newName: String, isActive: Boolean) => {
           val withoutNull = newName.filter( _ != '\u0000' ).mkString
           val insertOrgIO = OrganizationDao.createOrganization(orgCreate)
           val insertAndUpdateIO =  insertOrgIO flatMap {
             (org: Organization) => {
-              OrganizationDao.update(org.copy(name = withoutNull), org.id) flatMap {
+              OrganizationDao.update(org.copy(name = withoutNull, isActive = isActive), org.id) flatMap {
                 case (affectedRows: Int) => {
                   OrganizationDao.unsafeGetOrganizationById(org.id) map {
-                    (retrievedOrg: Organization) => (affectedRows, retrievedOrg.name)
+                    (retrievedOrg: Organization) => (affectedRows, retrievedOrg.name, retrievedOrg.isActive)
                   }
                 }
               }
             }
           }
-          val (affectedRows, updatedName) = insertAndUpdateIO.transact(xa).unsafeRunSync
-          (affectedRows == 1) && (updatedName == withoutNull)
+          val (affectedRows, updatedName, updatedActive) = insertAndUpdateIO.transact(xa).unsafeRunSync
+          (affectedRows == 1) && (updatedName == withoutNull) && (updatedActive == isActive)
         }
       )
     }
@@ -84,4 +85,3 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
     OrganizationDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 }
-
