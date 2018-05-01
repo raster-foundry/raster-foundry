@@ -46,6 +46,7 @@ require('./scenes/datasource.service')(shared);
 require('./scenes/rasterFoundryRepository.service')(shared);
 require('./scenes/planetRepository.service')(shared);
 require('./scenes/cmrRepository.service')(shared);
+require('./scenes/datasourceLicense.service')(shared);
 
 // map
 require('./map/map.service')(shared);
@@ -64,6 +65,7 @@ require('./common/feed.service')(shared);
 require('./common/thumbnail.service')(shared);
 require('./common/decimal.filter')(shared);
 require('./common/modal.service')(shared);
+require('./common/url.filter')(shared);
 
 
 export default shared;

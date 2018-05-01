@@ -97,7 +97,7 @@ export const annotationReducer = typeToReducer({
             return state;
         },
         FULFILLED: (state, action) => {
-            let newAnnotations = action.payload.data;
+            let newAnnotations = action.payload.data.features;
             let annotations = state.annotations;
             let labels = new OrderedSet(state.labels);
             newAnnotations.forEach((annotation) => {

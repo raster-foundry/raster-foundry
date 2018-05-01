@@ -146,7 +146,7 @@ class SceneDetailModalController {
                         selectedDay: this.moment(date)
                     })
                 }
-            }).result.then(selectedDay => {
+            }, false).result.then(selectedDay => {
                 this.updateAcquisitionDate(selectedDay);
             });
     }

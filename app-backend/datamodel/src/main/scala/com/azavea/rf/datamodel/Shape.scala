@@ -82,7 +82,22 @@ object Shape {
         geometry: Option[Projected[Geometry]],
         properties: ShapeProperties,
         _type: String = "Feature"
-    ) extends GeoJSONFeature
+    ) extends GeoJSONFeature {
+        def toShape: Shape = {
+            Shape(
+                id,
+                properties.createdAt,
+                properties.createdBy,
+                properties.modifiedAt,
+                properties.modifiedBy,
+                properties.owner,
+                properties.organizationId,
+                properties.name,
+                properties.description,
+                geometry
+            )
+        }
+    }
 
     @JsonCodec
     case class Create(

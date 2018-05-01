@@ -11,7 +11,6 @@ import cats.syntax.either._
 import spray.json._
 import DefaultJsonProtocol._
 import io.circe._
-import io.circe.generic.semiauto._
 import io.circe.syntax._
 import io.circe.generic.semiauto._
 import io.circe.parser._

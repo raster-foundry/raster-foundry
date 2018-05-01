@@ -22,9 +22,11 @@
     <div class="list-group-item sidebar-actions-group">
       <label>Share Page</label>
       <div class="list-group-right btn-group">
-        <button class="btn btn-default"
-                clipboard text="$ctrl.shareUrl">
-          Copy
+        <button class="btn btn-default btn-copy-page"
+                clipboard text="$ctrl.shareUrl"
+                ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')">
+          <span ng-show="$ctrl.copyType !== 'page'">Copy</span>
+          <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'page'"></span>
         </button>
         <button class="btn btn-default"
                 ng-click="$ctrl.onSharePageOpen()">
@@ -35,24 +37,33 @@
     <div class="list-group-item sidebar-actions-group">
       <label>ZXY Tile Layer URL</label>
       <div class="list-group-right btn-group">
-        <button clipboard text="$ctrl.tileLayerUrls.standard" class="btn btn-default">
-          Copy
+        <button class="btn btn-default btn-copy-page"
+                clipboard text="$ctrl.tileLayerUrls.standard"
+                ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.standard, 'zxy')">
+          <span ng-show="$ctrl.copyType !== 'zxy'">Copy</span>
+          <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'zxy'"></span>
         </button>
       </div>
     </div>
     <div class="list-group-item sidebar-actions-group">
       <label>ArcGIS Tile Layer URL</label>
       <div class="list-group-right btn-group">
-        <button clipboard text="$ctrl.tileLayerUrls.arcGIS" class="btn btn-default">
-          Copy
+        <button class="btn btn-default btn-copy-page"
+                clipboard text="$ctrl.tileLayerUrls.arcGIS"
+                ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.arcGIS, 'arcGIS')">
+          <span ng-show="$ctrl.copyType !== 'arcGIS'">Copy</span>
+          <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'arcGIS'"></span>
         </button>
       </div>
     </div>
     <div class="list-group-item sidebar-actions-group">
       <label>Map Token</label>
       <div class="list-group-right btn-group">
-        <button clipboard text="$ctrl.mapToken.id" class="btn btn-default">
-          Copy
+        <button class="btn btn-default btn-copy-page"
+                clipboard text="$ctrl.mapToken.id"
+                ng-click="$ctrl.onCopyClick($event, $ctrl.mapToken.id, 'token')">
+          <span ng-show="$ctrl.copyType !== 'token'">Copy</span>
+          <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'token'"></span>
         </button>
       </div>
     </div>

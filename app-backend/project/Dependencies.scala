@@ -16,6 +16,7 @@ object Dependencies {
   val geotrellisRasterTestkit = "org.locationtech.geotrellis" %% "geotrellis-raster-testkit"         % Version.geotrellis
   val geotrellisSlick         = "org.locationtech.geotrellis" %% "geotrellis-slick"                  % Version.geotrellis
   val geotrellisVector        = "org.locationtech.geotrellis" %% "geotrellis-vector"                 % Version.geotrellis
+  val geotrellisVectorTestkit = "org.locationtech.geotrellis" %% "geotrellis-vector-testkit"         % Version.geotrellis % "test"
   val geotrellisUtil          = "org.locationtech.geotrellis" %% "geotrellis-util"                   % Version.geotrellis
   val geotrellisShapefile     = "org.locationtech.geotrellis" %% "geotrellis-shapefile"              % Version.geotrellis
   val geotrellisGeotools      = "org.locationtech.geotrellis" %% "geotrellis-geotools"               % Version.geotrellis
@@ -50,6 +51,7 @@ object Dependencies {
   val circeGenericExtras      = "io.circe"                    %% "circe-generic-extras"              % Version.circe
   val circeParser             = "io.circe"                    %% "circe-parser"                      % Version.circe
   val circeOptics             = "io.circe"                    %% "circe-optics"                      % Version.circe
+  val circeTest               = "io.circe"                    %% "circe-testing"                        % Version.circe % "test"
   val akkaCirceJson           = "de.heikoseeberger"           %% "akka-http-circe"                   % Version.akkaCirceJson
   val catsCore                = "org.typelevel"               %% "cats-core"                         % Version.cats
   val gatlingHighcharts       = "io.gatling.highcharts"        % "gatling-charts-highcharts"         % Version.gatling
@@ -72,4 +74,10 @@ object Dependencies {
   val auth0                   = "com.auth0"                    % "auth0"                             % Version.auth0
   val slickMigrationAPI       = "io.github.nafg"              %% "slick-migration-api"               % Version.slickMigrationAPI
   val betterFiles             = "com.github.pathikrit"        %% "better-files"                      % Version.betterFiles
+  val doobieCore              = "org.tpolecat"                %% "doobie-core"                       % Version.doobie
+  val doobieHikari            = "org.tpolecat"                %% "doobie-hikari"                     % Version.doobie
+  val doobiePostgres          = "org.tpolecat"                %% "doobie-postgres"                   % Version.doobie
+  val doobieSpecs             = "org.tpolecat"                %% "doobie-specs2"                     % Version.doobie
+  val doobieScalatest         = "org.tpolecat"                %% "doobie-scalatest"                  % Version.doobie
+  val rollbar                 = "com.rollbar"                  % "rollbar-java"                      % Version.rollbar
 }

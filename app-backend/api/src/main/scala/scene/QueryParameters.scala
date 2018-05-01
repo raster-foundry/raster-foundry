@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 
-import com.azavea.rf.database.query._
+import com.azavea.rf.datamodel._
 import com.azavea.rf.api.image.ImageQueryParametersDirective
 import com.azavea.rf.api.utils.queryparams._
 
@@ -31,13 +31,13 @@ trait SceneQueryParameterDirective extends QueryParametersCommon
     'project.as[UUID].?,
     'ingested.as[Boolean].?,
     'ingestStatus.as[String].*,
-    'pending.as[Boolean].?
+    'pending.as[Boolean].?,
+    'shape.as[UUID].?
   )).as(SceneQueryParameters.apply _)
 
   val sceneQueryParameters = (orgQueryParams &
     userQueryParameters &
     timestampQueryParameters &
-    sceneSpecificQueryParams &
-    imageSpecificQueryParams
+    sceneSpecificQueryParams
   ).as(CombinedSceneQueryParams.apply _)
 }

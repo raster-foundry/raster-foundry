@@ -19,7 +19,7 @@ case class SceneToProject(
   accepted: Boolean,
 
   sceneOrder: Option[Int] = None,
-  colorCorrectParams: Option[ColorCorrect.Params] = None
+  colorCorrectParams: ColorCorrect.Params
 )
 
 @JsonCodec

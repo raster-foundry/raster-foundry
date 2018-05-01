@@ -1,15 +1,19 @@
 package com.azavea.rf.tile.routes
 
+import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
+import com.azavea.rf.database.{UserDao}
+import com.azavea.rf.database.util.RFTransactor
+
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe.syntax._
-
-import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.Users
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
@@ -18,7 +22,8 @@ import scala.util.{Try, Random, Success, Failure}
 
 object HealthCheckRoute extends LazyLogging {
   lazy val memcachedClient = KryoMemcachedClient.DEFAULT
-  lazy val database = Database.DEFAULT
+  implicit val xa = RFTransactor.xa
+
   def root: Route =
     complete {
       Seq(checkCacheReadHealth, checkCacheWriteHealth, checkDatabaseConn).flatten match {
@@ -85,14 +90,12 @@ object HealthCheckRoute extends LazyLogging {
     * play more nicely with memcached's Future type in checkCacheHealth
     */
   def checkDatabaseConn: Option[String] = {
-    import database.driver.api._
-    val countAction = Users.take(1).length.result
     Try {
       Await.result(
-        database.db.run { countAction }, 3 seconds
+        UserDao.query.list(1).transact(xa).unsafeToFuture, 3 seconds
       )
     } match {
-      case Success(x) if x > 0 => None
+      case Success(List(_)) => None
       case Success(_) =>
         val message = "No records found for users for some reason"
         logger.error(message)

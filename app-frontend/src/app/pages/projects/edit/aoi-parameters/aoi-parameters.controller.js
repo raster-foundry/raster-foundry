@@ -168,7 +168,7 @@ export default class AOIParametersController {
         return promise;
     }
 
-    updateProjectAOIs(multipolygon, aoiFilters) {
+    updateProjectAOIs(multipolygon, aoiFilters, isActive) {
         if (this.projectAois && this.projectAois.length === 1) {
             let aoiToUpdate = this.projectAois[0];
             aoiToUpdate.area = {
@@ -177,6 +177,7 @@ export default class AOIParametersController {
                 'srid': multipolygon.geom.srid
             };
             aoiToUpdate.filters = aoiFilters;
+            aoiToUpdate.isActive = isActive;
             this.aoiService.updateAOI(aoiToUpdate).then(() => {
                 this.fetchProjectAOIs();
             });
@@ -188,7 +189,8 @@ export default class AOIParametersController {
                     'coordinates': multipolygon.geom.coordinates,
                     'srid': multipolygon.geom.srid
                 },
-                filters: aoiFilters
+                filters: aoiFilters,
+                isActive: isActive
             };
             this.projectService.createAOI(this.project.id, newAOI).then(() => {
                 this.fetchProjectAOIs();
@@ -253,7 +255,7 @@ export default class AOIParametersController {
         this.projectEditService.fetchCurrentProject().then(srcProject => {
             const projectToSave = Object.assign(srcProject, this.aoiProjectParameters);
             this.projectService.updateProject(projectToSave).then(() => {
-                this.updateProjectAOIs(this.aoiPolygons, this.aoiParameters);
+                this.updateProjectAOIs(this.aoiPolygons, this.aoiParameters, true);
                 this.$state.go('projects.edit');
             });
         });

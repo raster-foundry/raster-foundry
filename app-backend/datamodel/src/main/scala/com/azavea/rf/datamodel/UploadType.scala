@@ -12,6 +12,7 @@ object UploadType {
   case object S3 extends UploadType("S3")
   case object Local extends UploadType("LOCAL")
   case object Planet extends UploadType("PLANET")
+  case object Modis extends UploadType("MODIS_USGS")
 
   def fromString(s: String): UploadType = s.toUpperCase match {
     case "DROPBOX" => Dropbox

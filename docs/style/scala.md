@@ -178,73 +178,36 @@ val routes = cors() {
 }
 ```
 
-Slick
----------
+Doobie
+------
 
-#### Wide Tables
+### Where should my Dao live?
 
-Any table with > 22 fields cannot use the handy
+If you're making a new Dao, it goes in its own file, and the file should have the name
+of the Dao you're creating. No more `SceneDao.scala` that also has `SceneWithRelatedDao`
+inside. It makes debugging hard as you try desperately to keep track of which object
+you're in, fail anyway, then get confused about why the behavior of the code isn't
+changing.
 
-```scala
-def * = (...) <> (T.tupled, T.apply)
-```
+### How should I test my Dao?
 
-default projection that we make use of in so many places because the number of fields
-is too many for `TupledXX`. For tables like these, the best solution so far is using
-nested case classes to group related fields. See the `Scenes` table for an example
-or this [StackOverflow question and answer](http://stackoverflow.com/questions/28305023/custom-mapping-to-nested-case-class-structure-in-slick-more-than-22-columns).
+_Every_ method you include on your Dao should have a test if it includes a fragment.
+To test your Dao, make sure that there is an `Arbitrary` instance available for the case
+class your Dao's rows resolve to, then write a property test for what should happen if
+someone calls your Dao's methods. We want to do this to ensure that we've written valid
+sql everywhere, since the fragments themselves are just strings that have no checking
+done on them unless we explicitly ask. See the `UserDaoSpec` for examples of property
+tests, and see `Generators.scala` in the datamodel subproject for `Arbitrary` examples.
 
-#### Queries with several actions
+### What's an unsafe method?
 
-Slick gives us several options for combining DBIO actions. Use for-comprehensions anywhere
-the two actions depend on each other (e.g., the value `a` below is necessary for `b`).
-
-```scala
-for {
-  a <- db.someAction()
-  b <- db.someActionUsing(a.id)
-} yield (a, b)
-```
-
-In addition to making `a` available for the second action, for-comprehensions fail fast. If
-`a` were to fail, the operation to attain `b` wouldn't even be attempted. We'd get back an
-empty (failed) future.
-
-For general, possibly unrelated sequences of actions, also use for-comprehensions and ensure
-to mark them transactional
-
-```scala
-for {
-  a <- db.someAction()
-  b <- db.someAction()
-  c <- db.someAction()
-} yield (a, b, c) .transactionally
-```
-
-We _could_ use `DBIO.seq` and mark the sequence transactional, but using for-comprehensions
-will:
-
-- ensure style consistency for all sequences of actions, related or not
-- ensure atomic success or failure with the presence of `.transactionally`
-- yield futures that we can then use instead of yielding `Unit`
-
-#### Complicated joins
-
-If you're chaining several join operations, use pattern matching to make code explicit:
-
-```scala
-// good
-for {
-  (((scene, image), band), thumbnail) <-
-  (scenes
-    joinLeft Images on { case (s, i) => s.id === i.scene }
-    joinLeft Bands on { case ((s, i), b) => i.id === b.imageId})
-    joinLeft Thumbnails on { case (((s, i), b), t) => s.id === t.scene})
-}
-```
-
-This is much more readable than relying on future readers to grasp quickly what each
-underscore refers to.
+Unsafe methods are methods that make strong assumptions about the state of the world and
+fail to handle exceptional conditions. For example, if a user is looking up an item by id,
+it's normally going to be the case that they didn't make the id up out of thin air, but
+sometimes, the id won't be present in the database anyway. For this reason, a safe
+`getFooById` should always return a `ConnectionIO[Option[Foo]]`, while if you want to
+return a `ConnectionIO[Foo]`, you should name your method `unsafeGetFooById` to make it
+clear to users that it can fail in an unhandled way.
 
 Migrations
 ---------

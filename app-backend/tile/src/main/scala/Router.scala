@@ -1,15 +1,20 @@
 package com.azavea.rf.tile
 
 import com.azavea.rf.common.CommonHandlers
-import com.azavea.rf.database.Database
 import com.azavea.rf.tile.routes._
 import com.azavea.rf.tile.tool._
+import com.azavea.rf.database.util.RFTransactor
 
 import com.azavea.maml.serve.InterpreterExceptionHandling
 import akka.http.scaladsl.server._
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import ch.megard.akka.http.cors.scaladsl.settings._
 import com.typesafe.scalalogging.LazyLogging
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import cats.effect.IO
 
 
 class Router extends LazyLogging
@@ -18,7 +23,8 @@ class Router extends LazyLogging
     with InterpreterExceptionHandling
     with TileErrorHandler {
 
-  implicit lazy val database = Database.DEFAULT
+  implicit lazy val xa = RFTransactor.xa
+
   val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
 
@@ -33,7 +39,7 @@ class Router extends LazyLogging
     handleExceptions(tileExceptionHandler) {
       pathPrefix(JavaUUID) { projectId =>
         projectTileAccessAuthorized(projectId) {
-          case true => MosaicRoutes.mosaicProject(projectId)(database)
+          case true => MosaicRoutes.mosaicProject(projectId)(xa)
           case _ => reject(AuthorizationFailedRejection)
         }
       } ~

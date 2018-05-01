@@ -14,6 +14,7 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api._
 import com.azavea.rf.common._
+import com.azavea.rf.database.util.RFTransactor
 
 import io.circe._
 import io.circe.syntax._
@@ -23,11 +24,10 @@ class ToolTagSpec extends WordSpec
     with Matchers
     with ScalatestRouteTest
     with Config
-    with Router
-    with DBSpec {
+    with Router {
 
+  implicit val xa = RFTransactor.xa
   implicit val ec = system.dispatcher
-  implicit def database = db
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(5).second)
 
   val authHeader = AuthUtils.generateAuthHeader("Default")

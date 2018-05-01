@@ -1,4 +1,4 @@
-FROM openjdk:8-jre-slim
+FROM openjdk:8-jdk-slim
 
 ENV SPARK_VERSION 2.1.0
 ENV HADOOP_VERSION 2.7
@@ -12,6 +12,7 @@ RUN set -ex \
        python-pip \
        python-setuptools \
        python-dev \
+       python-requests \
        build-essential \
        imagemagick \
     ' \

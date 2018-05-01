@@ -28,7 +28,7 @@ package object bridge {
 
   implicit val extentEncoder: Encoder[Extent] =
     new Encoder[Extent] {
-      final def apply(extent: Extent): Json =
+      def apply(extent: Extent): Json =
         List(extent.xmin, extent.ymin, extent.xmax, extent.ymax).asJson
     }
   implicit val extentDecoder: Decoder[Extent] =
@@ -40,7 +40,7 @@ package object bridge {
 
   implicit val multipolygonEncoder: Encoder[MultiPolygon] =
     new Encoder[MultiPolygon] {
-      final def apply(mp: MultiPolygon): Json = {
+      def apply(mp: MultiPolygon): Json = {
         parse(mp.toGeoJson) match {
           case Right(js: Json) => js
           case Left(e) => throw e

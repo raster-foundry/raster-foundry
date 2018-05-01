@@ -31,7 +31,7 @@
   @include button-states($shade-light, $white);
 }
 
-/* 
+/*
  * Makes three main buttons
  * types look the identical
  */
@@ -132,4 +132,21 @@
 
 .btn-square {
   padding: 1rem;
+}
+
+/*
+Copy button on project share modal
+*/
+.btn-copy-modal,
+.btn-copy-modal-first {
+  width: 99.47px;
+  height: 39px;
+}
+
+/*
+Copy button on project share page
+*/
+.btn-copy-page {
+  width: 77.47px;
+  height: 29px;
 }

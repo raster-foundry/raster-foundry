@@ -24,7 +24,7 @@ case class Image(
   resolutionMeters: Float,
   metadataFiles: List[String]
 ) {
-  def withRelatedFromComponents(bands: Seq[Band]): Image.WithRelated = Image.WithRelated(
+  def withRelatedFromComponents(bands: List[Band]): Image.WithRelated = Image.WithRelated(
     this.id,
     this.createdAt,
     this.modifiedAt,
@@ -136,7 +136,7 @@ object Image {
     imageMetadata: Json,
     resolutionMeters: Float,
     metadataFiles: List[String],
-    bands: Seq[Band]
+    bands: List[Band]
   ) {
     /** Helper method to extract the image component only for post requests */
     def toImage: Image = Image(
@@ -184,7 +184,7 @@ object Image {
       *
       * @param records result of join query to return image with related information
       */
-    def fromRecords(records: Seq[(Image, Band)]): Iterable[Image.WithRelated] = {
+    def fromRecords(records: List[(Image, Band)]): Iterable[Image.WithRelated] = {
       val distinctImages = records.map(_._1)
       val bands = records.map(_._2)
       distinctImages map { image =>
@@ -210,7 +210,7 @@ object Image {
     imageMetadata: Json,
     resolutionMeters: Float,
     metadataFiles: List[String],
-    bands: Seq[Band],
+    bands: List[Band],
     downloadUri: String
   )
 }

@@ -1,0 +1,98 @@
+{
+  "": [
+    {
+      "name": "App-wide Doc 1",
+      "link": "https://link-to-app-wide-doc-1",
+      "type": "doc"
+    },
+    {
+      "name": "App-wide Video 1",
+      "link": "https://www.youtube.com/embed/youtube-video-id-of-app-wide-video-1",
+      "type": "video"
+    }
+  ],
+  "home": [
+    {
+      "name": "Home page doc 1",
+      "link": "https://link-to-home-page-doc-1",
+      "type": "doc"
+    }
+  ],
+  "projects": [],
+  "projects_list": [
+    {
+      "name": "Project list page doc 1",
+      "link": "https://link-to-project-list-page-doc-1",
+      "type": "doc"
+    },
+    {
+      "name": "Project list page doc 2",
+      "link": "https://link-to-project-list-page-doc-2",
+      "type": "doc"
+    }
+  ],
+  "projects_edit": [],
+  "projects_edit_colormode": [],
+  "projects_edit_color": [],
+  "projects_edit_advancedcolor": [],
+  "projects_edit_advancedcolor_adjust": [],
+  "projects_edit_scenes": [],
+  "projects_edit_browse": [],
+  "projects_edit_order": [],
+  "projects_edit_masking": [],
+  "projects_edit_masking_draw": [],
+  "projects_edit_aoi-approve": [],
+  "projects_edit_aoi-parameters": [],
+  "projects_edit_exports": [],
+  "projects_edit_exports_new": [],
+  "projects_edit_annotate": [],
+  "projects_edit_annotate_import": [],
+  "projects_edit_annotate_export": [],
+  "projects_edit_sharing": [],
+  "settings": [],
+  "settings_profile": [
+    {
+      "name": "Setting profile page doc 1",
+      "link": "https://link-to-setting-profile-doc-1",
+      "type": "link"
+    },
+    {
+      "name": "Setting profile page video 1",
+      "link": "https://www.youtube.com/embed/youtube-video-id-of-setting-profile-video-1",
+      "type": "video"
+    }
+  ],
+  "settings_tokens": [],
+  "settings_tokens_api": [],
+  "settings_tokens_map": [],
+  "settings_connections": [],
+  "settings_organizations": [],
+  "lab": [],
+  "lab_template": [],
+  "lab_startAnalysis": [],
+  "lab_analysis": [],
+  "lab_browse": [],
+  "lab_browse_templates": [],
+  "lab_browse_analyses": [],
+  "share": [],
+  "imports": [],
+  "imports_rasters": [],
+  "imports_vectors": [],
+  "imports_datasources": [],
+  "imports_datasources_list": [],
+  "imports_datasources_detail": [],
+  "admin": [],
+  "admin_organization": [],
+  "admin_organization_metrics": [],
+  "admin_organization_users": [],
+  "admin_organization_teams": [],
+  "admin_organization_settings": [],
+  "admin_platform": [],
+  "admin_platform_metrics": [],
+  "admin_platform_users": [],
+  "admin_platform_organizations": [],
+  "admin_platform_organizations_detail": [],
+  "admin_platform_organizations_detail_features": [],
+  "admin_platform_organizations_detail_limits": [],
+  "admin_platform_organizations_detail_settings": []
+}

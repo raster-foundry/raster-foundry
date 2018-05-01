@@ -38,6 +38,7 @@
 
     .dropdown {
       display: inline-block;
+      margin: 0 1rem;
     }
 
     .open .dropdown-toggle {
@@ -48,9 +49,12 @@
 
   .dropdown > a {
     padding: .8rem 1rem;
-    margin: 0 1rem;
     border: 1px solid $shade-dark;
     border-radius: $border-radius-base;
+
+    &.dropdown-help-link{
+      border: 0;
+    }
 
     i {
       vertical-align: middle;
@@ -205,4 +209,73 @@
   height: 5.9rem;
   background-color: $shade-dark;
   vertical-align: middle;
+}
+
+.dropdown-help {
+  .help-center {
+    font-size: 2rem;
+  }
+}
+
+#player {
+  position: fixed;
+  right: 0rem;
+  top: 6rem;
+  width: 600px;
+  z-index: 999;
+
+  &.full-screen {
+    position: relative;
+    top: 0px;
+    width: 100%;
+  }
+}
+
+.plyr-custom-btns {
+  position: absolute;
+  top: 1rem;
+  z-index: 1000;
+
+  i.icon-cross,
+  i.icon-caret-up {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    margin-left: 1.5rem;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 2rem;
+    z-index: 1000;
+    color: $white;
+    background-color: $brand-tertiary;
+    cursor: pointer;
+  }
+}
+
+.video-mini-logo {
+  position: relative;
+  width: 6em;
+  height: 3em;
+  line-height: 3rem;
+  border-radius: 3px;
+  margin: 0 2rem;
+  text-align: center;
+  padding: 1rem 0;
+  cursor: pointer;
+  background: $gray-darker;
+
+  i {
+    display: inline-block;
+    font-weight: bold;
+    font-size: 2rem;
+    color: $white;
+
+    &.icon-cross {
+      position: absolute;
+      top: 0;
+      left: 0;
+      margin: 0;
+    }
+
+  }
 }

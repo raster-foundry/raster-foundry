@@ -1,6 +1,5 @@
 package com.azavea.rf.tile
 
-import com.azavea.rf.database.Database
 import com.azavea.rf.common.cache._
 import geotrellis.proj4._
 import geotrellis.raster._
@@ -14,6 +13,7 @@ import cats.data._
 import cats.implicits._
 import java.util.UUID
 
+import com.azavea.rf.database.util.RFTransactor
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 
 import scala.concurrent._
@@ -21,7 +21,7 @@ import scala.util.{Failure, Success, Try}
 
 object StitchLayer extends LazyLogging with Config {
   implicit lazy val memcachedClient = LayerCache.memcachedClient
-  implicit val database = Database.DEFAULT
+  implicit val xa = RFTransactor.xa
 
   val system = AkkaSystem.system
   implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
@@ -40,7 +40,7 @@ object StitchLayer extends LazyLogging with Config {
     * Because this is an expensive operation the stitched tile is cached.
     * For non-cached version use [[stitch]] function.
     */
-  def apply(id: UUID, size: Int)(implicit sceneIds: Set[UUID]): OptionT[Future, MultibandTile] =
+  def apply(id: UUID, size: Int): OptionT[Future, MultibandTile] =
     OptionT(rfCache.caching(s"stitch-${id}-${size}")(
       stitch(store, id.toString, size)
     ))

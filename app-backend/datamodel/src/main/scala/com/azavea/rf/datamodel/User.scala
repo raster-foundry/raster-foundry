@@ -28,6 +28,33 @@ object UserRole {
     case "ADMIN" => Admin
     case _ => throw new Exception(s"Unsupported user role string: $s")
   }
+
+  def toString(ur: UserRole): String = {
+    ur match {
+      case UserRoleRole => "USER"
+      case Viewer => "VIEWER"
+      case Admin => "ADMIN"
+    }
+  }
+}
+
+case class Credential(token: Option[String])
+
+object Credential {
+  implicit val credentialEncoder: Encoder[Credential] =
+    Encoder.encodeString.contramap[Credential] { _.token.getOrElse("") }
+  implicit val credentialDecoder: Decoder[Credential] =
+    Decoder.decodeString.emap[Credential] { str =>
+      Either.catchNonFatal(Credential.fromString(str)).leftMap(_ => "Credential")
+    }
+
+  def fromString(s: String) = {
+    Credential.apply(Some(s))
+  }
+
+  def fromStringO(s: Option[String]) = {
+    Credential.apply(s)
+  }
 }
 
 @JsonCodec
@@ -37,8 +64,8 @@ case class User(
   role: UserRole,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
-  dropboxCredential: Option[String],
-  planetCredential: Option[String],
+  dropboxCredential: Credential,
+  planetCredential: Credential,
   emailNotifications: Boolean
 ) {
   private val rootOrganizationId = UUID.fromString("9e2bef18-3f46-426b-a5bd-9913ee1ff840")
@@ -75,7 +102,7 @@ object User {
   ) {
     def toUser: User = {
       val now = new Timestamp((new java.util.Date()).getTime())
-      User(id, organizationId, role, now, now, None, None, false)
+      User(id, organizationId, role, now, now, Credential(None), Credential(None), false)
     }
   }
 }

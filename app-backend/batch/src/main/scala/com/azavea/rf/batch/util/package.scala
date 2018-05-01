@@ -73,16 +73,17 @@ package object util extends LazyLogging {
       throw new IllegalArgumentException(s"Resource at $uri is not valid")
   }
 
+  def combineUris(targetName: URI, prefix: URI): URI = {
+    targetName.getScheme match {
+      case "file" | "http" | "https" | "s3" => targetName
+      case _ => if (prefix.toString.endsWith("/")) new URI(prefix.toString + targetName.toString)
+                else new URI(prefix.toString + "/" + targetName.toString)
+    }
+  }
+
   /** Converts URI's into input streams, branching on URI type. Handles relative URIs given a root URI */
   def getStream(uri: URI, rootUri: URI): InputStream = {
-    uri.getScheme match {
-      case "file" | "http" | "https" | "s3" =>
-        getStream(uri)
-      case _ =>
-        // relative routes with a root uri
-        val prefix = if (rootUri.toString.last != '/') rootUri.toString + '/' else rootUri.toString
-        getStream((new URI(prefix + uri)).normalize)
-    }
+    getStream(combineUris(uri, rootUri).normalize)
   }
 
   /** Use a provided URI to get an array of bytes */

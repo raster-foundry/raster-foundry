@@ -201,6 +201,11 @@
   // Added to handle non-float navbar
   .navbar-section .dropdown-menu {
     right: auto; left: 1rem;
+
+    &.dropdown-menu-right {
+      right: 0;
+      left: auto;
+    }
   }
 }
 

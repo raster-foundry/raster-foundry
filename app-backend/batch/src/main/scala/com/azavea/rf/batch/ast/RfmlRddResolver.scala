@@ -1,6 +1,5 @@
 package com.azavea.rf.batch.ast
 
-import com.azavea.rf.database.Database
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.maml._
 

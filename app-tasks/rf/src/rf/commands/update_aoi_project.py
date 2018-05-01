@@ -18,9 +18,12 @@ def update_aoi_project(project_id):
         project_id (str): ID of project to check for new scenes to add
     """
 
-    bash_cmd = 'java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main update_aoi_project {0}'.format(project_id)
+    bash_cmd = [
+        'java', '-cp', '/opt/raster-foundry/jars/rf-batch.jar',
+        'com.azavea.rf.batch.Main', 'update_aoi_project', project_id
+    ]
 
-    exit_code = subprocess.call([bash_cmd], shell=True)
+    exit_code = subprocess.call(bash_cmd)
     logger.info('Checking whether %s has updated scenes available', project_id)
     is_success = exit_code == 0
 

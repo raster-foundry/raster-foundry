@@ -1,9 +1,13 @@
 package com.azavea.rf.tile.image
 
 import com.azavea.rf.tile._
-import com.azavea.rf.database.Database
-import com.azavea.rf.database.tables.Projects
+import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.database.{ProjectDao}
 import com.azavea.rf.datamodel.Project
+import com.azavea.rf.database.util.RFTransactor
+import com.azavea.rf.common.cache.CacheClient
+import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
+
 import geotrellis.raster._
 import geotrellis.raster.render.Png
 import geotrellis.slick.Projected
@@ -11,11 +15,14 @@ import geotrellis.proj4._
 import geotrellis.vector.{Extent, Polygon}
 import cats.data._
 import cats.implicits._
+import cats.effect.IO
 import java.util.UUID
 
-import com.azavea.rf.common.cache.CacheClient
-import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
-import com.azavea.rf.database.ExtendedPostgresDriver.api._
+import doobie.util.transactor.Transactor
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -25,7 +32,7 @@ import com.typesafe.scalalogging.LazyLogging
 case class TagWithTTL(tag: String, ttl: Duration)
 
 object Mosaic extends LazyLogging with KamonTrace {
-  implicit val database = Database.DEFAULT
+  implicit lazy val xa = RFTransactor.xa
 
   lazy val memcachedClient = KryoMemcachedClient.DEFAULT
   val rfCache = new CacheClient(memcachedClient)
@@ -35,9 +42,8 @@ object Mosaic extends LazyLogging with KamonTrace {
       zoom: Int,
       col: Int,
       row: Int
-  )(implicit database: Database)
-      : OptionT[Future, MultibandTile] = traceName(s"Mosaic.apply($projectId)") {
-    OptionT(Projects.getProjectPreauthorized(projectId)) flatMap { project =>
+  )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = traceName(s"Mosaic.apply($projectId)") {
+    OptionT(ProjectDao.query.filter(projectId).selectOption.transact(xa).unsafeToFuture) flatMap { project =>
       project.isSingleBand match {
         case true =>
           SingleBandMosaic(project, zoom, col, row)
@@ -52,8 +58,8 @@ object Mosaic extends LazyLogging with KamonTrace {
     zoomOption: Option[Int],
     bboxOption: Option[String],
     colorCorrect: Boolean
-  )(implicit database: Database): OptionT[Future, MultibandTile] = {
-    OptionT(Projects.getProjectPreauthorized(projectId)) flatMap { project =>
+  )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = {
+    OptionT(ProjectDao.query.filter(projectId).selectOption.transact(xa).unsafeToFuture) flatMap { project =>
       if (colorCorrect) {
         if (project.isSingleBand) {
             SingleBandMosaic.render(project, zoomOption, bboxOption, true)
@@ -83,7 +89,7 @@ object Mosaic extends LazyLogging with KamonTrace {
     zoom: Int,
     col: Int,
     row: Int
-  )(implicit database: Database): OptionT[Future, MultibandTile] = {
+  )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = {
     rfCache.cachingOptionT(s"mosaic-raw-$projectId-$zoom-$col-$row") {
       MultiBandMosaic.raw(projectId, zoom, col, row)
     }
@@ -93,7 +99,7 @@ object Mosaic extends LazyLogging with KamonTrace {
     projectId: UUID,
     zoom: Int,
     bbox: Option[Projected[Polygon]]
-  )(implicit database: Database) : OptionT[Future, MultibandTile] = {
+  )(implicit xa: Transactor[IO]) : OptionT[Future, MultibandTile] = {
     bbox match {
       case Some(polygon) => {
         val key = s"mosaic-extent-raw-$projectId-$zoom-${polygon.geom.envelope.xmax}-" +

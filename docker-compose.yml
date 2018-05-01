@@ -87,7 +87,7 @@ services:
     image: raster-foundry-batch
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
-      - ./app-backend/batch/target/scala-2.11/rf-batch.jar:/opt/raster-foundry/jars/rf-batch.jar
+      - ./app-backend/batch/target/scala-2.11/:/opt/raster-foundry/jars/
       - $HOME/.aws:/root/.aws:ro
     build:
       context: ./app-tasks
@@ -101,6 +101,8 @@ services:
       - LOCAL_INGEST_CORES=2
       - LOCAL_INGEST_MEM_GB=4
     command: rf
+    links:
+      - postgres:database.service.rasterfoundry.internal
 
   tile-server:
     image: openjdk:8-jre

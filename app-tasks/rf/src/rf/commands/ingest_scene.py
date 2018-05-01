@@ -226,9 +226,11 @@ def metadata_to_postgres(uri, scene_id):
         scene_id
     ]
     logger.debug('Bash command to store metadata: %s', ' '.join(bash_cmd))
-    subprocess.check_call(bash_cmd, stdout=subprocess.PIPE)
+    running_cmd = subprocess.Popen(bash_cmd)
+    running_cmd.communicate()
     logger.info('Successfully completed metadata postgres write for scene %s', scene_id)
     return True
+
 
 def notify_for_scene_ingest_status(scene_id):
     """Notify users that are using this scene as well as the scene owner that
@@ -245,5 +247,6 @@ def notify_for_scene_ingest_status(scene_id):
         'notify_ingest_status',
         scene_id
     ]
-    subprocess.check_call(bash_cmd, stdout=subprocess.PIPE)
+    running_process = subprocess.Popen(bash_cmd)
+    running_process.communicate()
     return True

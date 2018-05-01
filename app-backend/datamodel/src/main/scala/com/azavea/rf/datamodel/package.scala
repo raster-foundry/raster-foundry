@@ -103,6 +103,22 @@ trait JsonCodecs {
 }
 
 package object datamodel extends JsonCodecs{
+
+  def applyWithNonEmptyString[T](s: String)(f: String => T): T = {
+    s.filter( _ != '\u0000' ).mkString match {
+      case "" => throw new IllegalArgumentException("Cannot instantiate with empty string")
+      case s => f(s)
+    }
+  }
+
+  def applyWithNonEmptyString[T](s: Option[String])(f: Option[String] => T): T = {
+    s map { _.filter(_ != '\u0000') } match {
+      case Some("") => throw new IllegalArgumentException(
+        "Cannot instantiate with empty string or string with only null bytes")
+      case o => f(s)
+    }
+  }
+
   trait OwnerCheck {
     def checkOwner(createUser: User, ownerUserId: Option[String]): String = {
       (createUser, ownerUserId) match {

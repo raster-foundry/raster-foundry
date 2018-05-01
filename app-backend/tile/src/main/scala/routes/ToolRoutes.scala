@@ -2,7 +2,6 @@ package com.azavea.rf.tile.routes
 
 import com.azavea.rf.common._
 import com.azavea.rf.common.ast._
-import com.azavea.rf.database.Database
 import com.azavea.rf.datamodel.User
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image._
@@ -10,6 +9,7 @@ import com.azavea.rf.tile.tool._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.maml._
+import com.azavea.rf.database.util.RFTransactor
 
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
@@ -31,6 +31,11 @@ import akka.http.scaladsl.server._
 import cats.data.Validated._
 import cats.data.{NonEmptyList => NEL, _}
 import cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import cats.effect.IO
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
@@ -40,11 +45,13 @@ import com.azavea.rf.common.cache.CacheClient
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 
 
-class ToolRoutes(implicit val database: Database) extends Authentication
+class ToolRoutes extends Authentication
   with LazyLogging
   with InterpreterExceptionHandling
   with CommonHandlers
   with KamonTraceDirectives {
+
+  implicit lazy val xa = RFTransactor.xa
 
   lazy val memcachedClient = KryoMemcachedClient.DEFAULT
   val rfCache = new CacheClient(memcachedClient)
@@ -136,7 +143,7 @@ class ToolRoutes(implicit val database: Database) extends Authentication
     }
   }
 
-  val tileResolver = new TileResolver(implicitly[Database], implicitly[ExecutionContext])
+  val tileResolver = new TileResolver(implicitly[Transactor[IO]], implicitly[ExecutionContext])
   val tmsInterpreter = BufferingInterpreter.DEFAULT
   val emptyPng = IntConstantNoDataArrayTile(Array(0), 1, 1).renderPng(RgbaPngEncoding)
   val emptyTile = IntConstantNoDataArrayTile(Array(0), 1, 1)

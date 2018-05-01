@@ -6,7 +6,7 @@ import io.circe._
 import io.circe.generic.JsonCodec
 
 @JsonCodec
-case class MosaicDefinition(sceneId: UUID, colorCorrections: Option[ColorCorrect.Params])
+case class MosaicDefinition(sceneId: UUID, colorCorrections: ColorCorrect.Params)
 
 object MosaicDefinition {
   def fromScenesToProjects(scenesToProjects: Seq[SceneToProject]): Seq[MosaicDefinition] = {

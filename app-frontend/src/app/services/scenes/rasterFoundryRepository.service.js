@@ -1,3 +1,5 @@
+/* global _*/
+
 import {Map} from 'immutable';
 export default (app) => {
     class RasterFoundryRepository {
@@ -37,11 +39,10 @@ export default (app) => {
                 label: 'Date Range',
                 type: 'daterange',
                 default: 'None'
-            // TODO enable this filter once the api supports it
-            // }, {
-            //     type: 'shape',
-            //     label: 'Area of Interest',
-            //     param: 'shape'
+            }, {
+                type: 'shape',
+                label: 'Area of Interest',
+                param: 'shape'
             }, {
                 params: {
                     min: 'minCloudCover',
@@ -107,15 +108,25 @@ export default (app) => {
         }
 
         getSources() {
-            return this.$q((resolve, reject) => {
-                this.datasourceService.query({
-                    sort: 'name,asc'
-                }).then(response => {
-                    resolve(response.results);
-                }, (err) => {
-                    reject(err);
-                });
-            });
+            let deferred = this.$q.defer();
+
+            let promise = this.datasourceService.query({sort: 'name,asc'}).then((res) => {
+                let pageCount = Math.ceil(res.count / res.pageSize);
+
+                let promises = [promise].concat(_.times(pageCount, (idx) => {
+                    return this.datasourceService
+                        .query({sort: 'name,asc', page: idx + 1})
+                        .then(resp => resp, error => error);
+                }));
+
+                this.$q.all(promises).then((reps) => {
+                    deferred.resolve(_.flatMap(reps, r => r.results));
+                }, error => deferred.reject(error));
+
+                return res;
+            }, (err) => deferred.reject(err));
+
+            return deferred.promise;
         }
 
         /*
@@ -125,10 +136,10 @@ export default (app) => {
           (filters) => (bbox) => () => Future(next page of scenes)
         */
         fetchScenes(filters) {
-            const params = Object.assign({}, filters);
-            if (filters.shape) {
+            if (filters.shape && typeof filters.shape === 'object') {
                 filters.shape = filters.shape.id;
             }
+            const params = Object.assign({}, filters);
 
             const fetchForBbox = (bbox) => {
                 let hasNext = null;
@@ -155,7 +166,8 @@ export default (app) => {
                             resolve({
                                 scenes: response.results,
                                 hasNext,
-                                count: this.$filter('number')(response.count)
+                                count: response.count >= 10000 ?
+                                    'At least 10,000' : this.$filter('number')(response.count)
                             });
                         }, (error) => {
                             reject({

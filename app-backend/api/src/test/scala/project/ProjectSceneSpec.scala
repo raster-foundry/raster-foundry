@@ -4,7 +4,6 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.{HttpEntity, ContentTypes}
 import akka.http.scaladsl.testkit.{ScalatestRouteTest, RouteTestTimeout}
-import com.azavea.rf.database.query._
 import concurrent.duration._
 import org.scalatest.{Matchers, WordSpec}
 
@@ -14,6 +13,7 @@ import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.api._
 import com.azavea.rf.common._
+import com.azavea.rf.database.util.RFTransactor
 
 import io.circe._
 import io.circe.parser._
@@ -28,11 +28,10 @@ class ProjectSceneSpec extends WordSpec
     with Matchers
     with ScalatestRouteTest
     with Config
-    with Router
-    with DBSpec {
+    with Router {
+  implicit val xa = RFTransactor.xa
   implicit val ec = system.dispatcher
 
-  implicit def database = db
   implicit def default(implicit system: ActorSystem) = RouteTestTimeout(DurationInt(5).second)
 
   // Alias to baseRoutes to be explicit
