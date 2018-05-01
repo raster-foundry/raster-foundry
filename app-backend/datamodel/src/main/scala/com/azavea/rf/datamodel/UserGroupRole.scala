@@ -25,6 +25,12 @@ object UserGroupRole {
     def create = Create.apply _
     def tupled = (UserGroupRole.apply _).tupled
 
+    case class UserGroup(
+      userId: String,
+      groupType: GroupType,
+      groupId: UUID
+    )
+
     @JsonCodec
     case class Create(
         userToAdd: User,

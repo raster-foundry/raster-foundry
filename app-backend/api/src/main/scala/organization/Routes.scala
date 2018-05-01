@@ -74,5 +74,5 @@ trait OrganizationRoutes extends Authentication
     }
   }
 
-  // @TODO: There is no delete functionality as we most likely will want to instead deactivate platforms
+  // @TODO: There is no delete functionality as we most likely will want to instead deactivate organizations
 }

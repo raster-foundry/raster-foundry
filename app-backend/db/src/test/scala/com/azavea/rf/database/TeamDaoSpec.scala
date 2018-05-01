@@ -162,4 +162,92 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
     }
   }
 
+  test("add a user role") {
+    check {
+      forAll{
+        (
+          userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
+          userRole: GroupRole
+        ) => {
+          val addUserTeamRoleIO = for {
+            orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
+                                          (org, dbUser) = orgAndUser
+            insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
+            insertedUserGroupRole <- TeamDao.addUserRole(dbUser, dbUser, insertedTeam.id, userRole)
+            byIdUserGroupRole <- UserGroupRoleDao.getOption(insertedUserGroupRole.id)
+          } yield { (insertedTeam, byIdUserGroupRole) }
+
+          val (dbTeam, dbUserGroupRole) = addUserTeamRoleIO.transact(xa).unsafeRunSync
+          dbUserGroupRole match {
+            case Some(ugr) =>
+              assert(ugr.isActive, "; Added role should be active")
+              assert(ugr.groupType == GroupType.Team, "; Added role should be for a Team")
+              assert(ugr.groupId == dbTeam.id, "; Added role should be for the correct Team")
+              assert(ugr.groupRole == userRole, "; Added role should have the correct role")
+              true
+            case _ => false
+          }
+        }
+      }
+    }
+  }
+
+  test("replace a user's roles") {
+    check {
+      forAll{
+        (
+          userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
+          userRole: GroupRole
+        ) => {
+          val setPlatformRoleIO = for {
+            orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
+            (org, dbUser) = orgAndUser
+            insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
+            originalUserGroupRole <- TeamDao.addUserRole(dbUser, dbUser, insertedTeam.id, userRole)
+            updatedUserGroupRoles <- TeamDao.setUserRole(dbUser, dbUser, insertedTeam.id, userRole)
+          } yield { (originalUserGroupRole, updatedUserGroupRoles ) }
+
+          val (dbOldUGR, dbNewUGRs) = setPlatformRoleIO.transact(xa).unsafeRunSync
+
+          assert(dbNewUGRs.filter((ugr) => ugr.isActive == true).size == 1,
+                 "; Updated UGRs should have one set to active")
+          assert(dbNewUGRs.filter((ugr) => ugr.isActive == false).size == 1,
+                 "; Updated UGRs should have one set to inactive")
+          assert(dbNewUGRs.filter((ugr) => ugr.id == dbOldUGR.id && ugr.isActive == false).size == 1,
+                 "; Old UGR should be set to inactive")
+          assert(dbNewUGRs.filter((ugr) => ugr.id != dbOldUGR.id && ugr.isActive == true).size == 1,
+                 "; New UGR should be set to active")
+          assert(dbNewUGRs.size == 2, "; Update should have old and new UGRs")
+          true
+        }
+      }
+    }
+  }
+
+  test("deactivate a user's roles") {
+    check {
+      forAll{
+        (
+          userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
+          userRole: GroupRole
+        ) => {
+          val setTeamRoleIO = for {
+            orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
+            (org, dbUser) = orgAndUser
+            insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
+            originalUserGroupRole <- TeamDao.addUserRole(dbUser, dbUser, insertedTeam.id, userRole)
+            updatedUserGroupRoles <- TeamDao.deactivateUserRoles(dbUser, dbUser, insertedTeam.id)
+          } yield { (originalUserGroupRole, updatedUserGroupRoles ) }
+
+          val (dbOldUGR, dbNewUGRs) = setTeamRoleIO.transact(xa).unsafeRunSync
+
+          assert(dbNewUGRs.filter((ugr) => ugr.isActive == false).size == 1,
+                 "; The updated UGR should be inactive")
+          assert(dbNewUGRs.size == 1, "; There should only be a single UGR updated")
+          true
+        }
+      }
+    }
+  }
+
 }

@@ -470,5 +470,7 @@ object Generators extends ArbitraryInstances {
     implicit def arbPlatformCreate: Arbitrary[Platform.Create] = Arbitrary { platformCreateGen }
 
     implicit def arbUserGroupRoleCreate: Arbitrary[UserGroupRole.Create] = Arbitrary { userGroupRoleCreateGen }
+
+    implicit def arbGroupRoleCreate: Arbitrary[GroupRole] = Arbitrary { groupRoleGen }
   }
 }

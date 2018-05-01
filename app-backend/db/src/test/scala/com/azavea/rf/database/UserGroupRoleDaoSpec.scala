@@ -140,4 +140,44 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
       }
     }
   }
+
+  test("deactivate a user's group roles using UserGroupRole.UserGroup") {
+    check {
+      forAll {
+        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create, platformCreate: Platform.Create, ugrCreate: UserGroupRole.Create) => {
+          val insertUgrWithUserIO = for {
+            orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
+            (insertedOrg, insertedUser) = orgAndUser
+            teamAndPlatform <- (
+              TeamDao.create(teamCreate.copy(organizationId = insertedOrg.id).toTeam(insertedUser)),
+              PlatformDao.create(platformCreate.toPlatform(insertedUser))
+            ).tupled
+            (insertedTeam, insertedPlatform) = teamAndPlatform
+            insertedUgr <- UserGroupRoleDao.create(
+              fixupUserGroupRole(insertedUser, insertedOrg, insertedTeam, insertedPlatform, ugrCreate)
+                .toUserGroupRole(insertedUser)
+            )
+          } yield (insertedUgr, insertedUser)
+
+          val deactivateWithDeactivatedUgrIO = insertUgrWithUserIO flatMap {
+            case (dbUgr: UserGroupRole, dbUser: User) => {
+              UserGroupRoleDao.deactivateUserGroupRoles(
+                UserGroupRole.UserGroup(dbUser.id, dbUgr.groupType, dbUgr.groupId),
+                dbUser
+              )
+            }
+          }
+
+          val updatedUGRs = deactivateWithDeactivatedUgrIO.transact(xa).unsafeRunSync
+          updatedUGRs.size == 1 &&
+            updatedUGRs.filter(
+              (ugr) => ugr.isActive == false &&
+                ugr.modifiedBy == userCreate.id &&
+                ugr.groupType == ugrCreate.groupType &&
+                ugr.groupRole == ugrCreate.groupRole
+            ).size == 1
+        }
+      }
+    }
+  }
 }
