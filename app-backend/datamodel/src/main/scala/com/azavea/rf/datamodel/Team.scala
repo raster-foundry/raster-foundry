@@ -16,7 +16,8 @@ case class Team(
   modifiedBy: String,
   organizationId: UUID,
   name: String,
-  settings: Json
+  settings: Json,
+  isActive: Boolean
 )
 
 object Team {
@@ -42,7 +43,8 @@ object Team {
         user.id, // modifiedBy
         this.organizationId,
         this.name,
-        this.settings
+        this.settings,
+        true //isActive
       )
     }
   }

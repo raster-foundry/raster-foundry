@@ -12,7 +12,8 @@ case class Organization(
   createdAt: Timestamp,
   modifiedAt: Timestamp,
   name: String,
-  platformId: UUID
+  platformId: UUID,
+  isActive: Boolean
 )
 
 object Organization {
@@ -28,7 +29,7 @@ object Organization {
     def toOrganization: Organization = {
       val id = java.util.UUID.randomUUID()
       val now = new Timestamp((new java.util.Date()).getTime())
-      Organization(id, now, now, name, platformId)
+      Organization(id, now, now, name, platformId, true)
     }
   }
 }

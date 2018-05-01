@@ -22,7 +22,7 @@ object OrganizationDao extends Dao[Organization] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, name, platform_id
+      id, created_at, modified_at, name, platform_id, is_active
     FROM
   """ ++ tableF
 
@@ -30,11 +30,11 @@ object OrganizationDao extends Dao[Organization] {
     org: Organization
   ): ConnectionIO[Organization] = {
     (fr"INSERT INTO" ++ tableF ++ fr"""
-          (id, created_at, modified_at, name, platform_id)
+          (id, created_at, modified_at, name, platform_id, is_active)
         VALUES
-          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId})
+          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId}, true)
     """).update.withUniqueGeneratedKeys[Organization](
-      "id", "created_at", "modified_at", "name", "platform_id"
+      "id", "created_at", "modified_at", "name", "platform_id", "is_active"
     )
   }
 
@@ -87,4 +87,3 @@ object OrganizationDao extends Dao[Organization] {
   def userIsAdmin(user: User, organizationId: UUID) =
     userIsAdminF(user, organizationId).query[Boolean].option.map(_.getOrElse(false))
 }
-

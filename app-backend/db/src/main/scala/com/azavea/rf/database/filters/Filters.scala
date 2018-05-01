@@ -13,10 +13,20 @@ import Fragments.{ in, whereAndOpt }
 object Filters {
 
   def userQP(userParams: UserQueryParameters): List[Option[Fragment]] = {
-    val f1 = userParams.createdBy.map(cb => fr"created_by = $cb")
-    val f2 = userParams.modifiedBy.map(mb => fr"modified_by = $mb")
-    val f3 = userParams.owner.map(owner => fr"owner = $owner")
-    List(f1, f2, f3)
+    onlyUserQP(userParams.onlyUserParams) :::
+    ownerQP(userParams.ownerParams) :::
+    activationQP(userParams.activationParams)
+  }
+
+  def onlyUserQP(onlyUserParams: UserAuditQueryParameters): List[Option[Fragment]] = {
+    List(
+      onlyUserParams.createdBy.map(cb => fr"created_by = $cb"),
+      onlyUserParams.modifiedBy.map(mb => fr"modified_by = $mb")
+    )
+  }
+
+  def ownerQP(ownerParams: OwnerQueryParameters): List[Option[Fragment]] = {
+    List(ownerParams.owner.map(owner => fr"owner = $owner"))
   }
 
   def organizationQP(orgParams: OrgQueryParameters): List[Option[Fragment]] = {
@@ -64,5 +74,13 @@ object Filters {
         )
       })
     )
+  }
+
+  def activationQP(activationParams: ActivationQueryParameters): List[Option[Fragment]] = {
+    List(activationParams.isActive.map(isActive => fr"is_active = ${isActive}"))
+  }
+
+  def platformIdQP(platformIdParams: PlatformIdQueryParameters): List[Option[Fragment]] = {
+    List(platformIdParams.platformId.map(platformId => fr"platform_id = ${platformId}"))
   }
 }

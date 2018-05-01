@@ -24,7 +24,8 @@ import doobie.postgres.implicits._
 trait OrganizationRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
-    with UserErrorHandler {
+    with UserErrorHandler
+    with OrganizationQueryParameterDirective {
 
   val xa: Transactor[IO]
 
@@ -42,9 +43,9 @@ trait OrganizationRoutes extends Authentication
   }
 
   def listOrganizations: Route = authenticate { user =>
-    withPagination { page =>
+    (withPagination & organizationQueryParameters) { (page, organizationQueryParameters) =>
       complete {
-        OrganizationDao.query.page(page).transact(xa).unsafeToFuture
+        OrganizationDao.query.filter(organizationQueryParameters).page(page).transact(xa).unsafeToFuture
       }
     }
   }

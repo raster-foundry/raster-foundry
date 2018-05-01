@@ -30,7 +30,8 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
           val (insertedOrg, insertedPlatform) = orgInsertIO.transact(xa).unsafeRunSync
 
           insertedOrg.platformId == insertedPlatform.id &&
-            insertedOrg.name == orgCreate.name
+            insertedOrg.name == orgCreate.name &&
+            insertedOrg.isActive == true
         }
       )
     }
@@ -66,14 +67,14 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
               OrganizationDao.update(org.copy(name = withoutNull), org.id) flatMap {
                 case (affectedRows: Int) => {
                   OrganizationDao.unsafeGetOrganizationById(org.id) map {
-                    (retrievedOrg: Organization) => (affectedRows, retrievedOrg.name)
+                    (retrievedOrg: Organization) => (affectedRows, retrievedOrg.name, retrievedOrg.isActive)
                   }
                 }
               }
             }
           }
-          val (affectedRows, updatedName) = insertAndUpdateIO.transact(xa).unsafeRunSync
-          (affectedRows == 1) && (updatedName == withoutNull)
+          val (affectedRows, updatedName, updatedActive) = insertAndUpdateIO.transact(xa).unsafeRunSync
+          (affectedRows == 1) && (updatedName == withoutNull) && (updatedActive == true)
         }
       )
     }
@@ -84,4 +85,3 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
     OrganizationDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 }
-
