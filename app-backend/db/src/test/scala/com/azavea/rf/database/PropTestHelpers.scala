@@ -10,6 +10,13 @@ import java.util.UUID
 
 trait PropTestHelpers {
 
+  def insertUserOrgPlatform(user: User.Create, org: Organization.Create, platform: Platform):
+      ConnectionIO[(User, Organization, Platform)] = for {
+      dbPlatform <- PlatformDao.create(platform)
+      orgAndUser <- insertUserAndOrg(user, org.copy(platformId=dbPlatform.id))
+      (dbOrg, dbUser) = orgAndUser
+    } yield { (dbUser, dbOrg, dbPlatform) }
+
   def insertUserAndOrg(user: User.Create, org: Organization.Create): ConnectionIO[(Organization, User)] = {
     for {
       orgInsert <- OrganizationDao.createOrganization(org)
