@@ -30,13 +30,13 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
     check {
       forAll {
         (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
-         platformCreate: Platform.Create, ugrCreate: UserGroupRole.Create) => {
+         platform: Platform, ugrCreate: UserGroupRole.Create) => {
           val insertUgrIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (insertedOrg, insertedUser) = orgAndUser
             teamAndPlatform <- (
               TeamDao.create(teamCreate.copy(organizationId = insertedOrg.id).toTeam(insertedUser)),
-              PlatformDao.create(platformCreate.toPlatform(insertedUser))
+              PlatformDao.create(platform)
             ).tupled
             (insertedTeam, insertedPlatform) = teamAndPlatform
             insertedUgr <- UserGroupRoleDao.create(
@@ -61,14 +61,14 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
     check {
       forAll {
         (userCreate: User.Create, manager: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
-         platformCreate: Platform.Create, ugrCreate: UserGroupRole.Create, ugrUpdate: UserGroupRole.Create) => {
+         platform: Platform, ugrCreate: UserGroupRole.Create, ugrUpdate: UserGroupRole.Create) => {
           val insertUgrWithRelationsIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (insertedOrg, insertedUser) = orgAndUser
             managerUser <- UserDao.create(manager.copy(organizationId = insertedOrg.id))
             teamAndPlatform <- (
               TeamDao.create(teamCreate.copy(organizationId = insertedOrg.id).toTeam(managerUser)),
-              PlatformDao.create(platformCreate.toPlatform(managerUser))
+              PlatformDao.create(platform)
             ).tupled
             (insertedTeam, insertedPlatform) = teamAndPlatform
             insertedUgr <- UserGroupRoleDao.create(
@@ -105,13 +105,13 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
   test("deactivate a user group role") {
     check {
       forAll {
-        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create, platformCreate: Platform.Create, ugrCreate: UserGroupRole.Create) => {
+        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create, platform: Platform, ugrCreate: UserGroupRole.Create) => {
           val insertUgrWithUserIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (insertedOrg, insertedUser) = orgAndUser
             teamAndPlatform <- (
               TeamDao.create(teamCreate.copy(organizationId = insertedOrg.id).toTeam(insertedUser)),
-              PlatformDao.create(platformCreate.toPlatform(insertedUser))
+              PlatformDao.create(platform)
             ).tupled
             (insertedTeam, insertedPlatform) = teamAndPlatform
             insertedUgr <- UserGroupRoleDao.create(

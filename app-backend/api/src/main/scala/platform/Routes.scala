@@ -76,9 +76,9 @@ trait PlatformRoutes extends Authentication
   }
 
   def createPlatform: Route = authenticate { user =>
-    entity(as[Platform.Create]) { platformToCreate =>
+    entity(as[Platform]) { platformToCreate =>
       completeOrFail {
-        PlatformDao.create(platformToCreate.toPlatform(user)).transact(xa).unsafeToFuture
+        PlatformDao.create(platformToCreate).transact(xa).unsafeToFuture
       }
     }
   }

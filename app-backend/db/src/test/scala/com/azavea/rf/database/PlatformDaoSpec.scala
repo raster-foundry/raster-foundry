@@ -34,19 +34,17 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
   test("insert a platform") {
     check {
       forAll {
-        (userCreate: User.Create, orgCreate: Organization.Create, platformCreate: Platform.Create) => {
+        (userCreate: User.Create, orgCreate: Organization.Create, platform: Platform) => {
           val insertPlatformIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (_, dbUser) = orgAndUser
-            insertedPlatform <- PlatformDao.create(platformCreate.toPlatform(dbUser))
+            insertedPlatform <- PlatformDao.create(platform)
           } yield { insertedPlatform }
 
           val dbPlatform = insertPlatformIO.transact(xa).unsafeRunSync
 
-          dbPlatform.createdBy == userCreate.id &&
-            dbPlatform.modifiedBy == userCreate.id &&
-            dbPlatform.name == platformCreate.name &&
-            dbPlatform.settings == platformCreate.settings
+          dbPlatform.name == platform.name &&
+            dbPlatform.settings == platform.settings
         }
       }
     }
@@ -55,16 +53,16 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
   test("update a platform") {
     check {
       forAll {
-        (userCreate: User.Create, orgCreate: Organization.Create, platformCreate: Platform.Create, platformUpdate: Platform.Create) => {
+        (userCreate: User.Create, orgCreate: Organization.Create, platform: Platform, platformUpdate: Platform) => {
           val insertPlatformWithUserIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (_, dbUser) = orgAndUser
-            insertedPlatform <- PlatformDao.create(platformCreate.toPlatform(dbUser))
+            insertedPlatform <- PlatformDao.create(platform)
           } yield { (insertedPlatform, dbUser) }
 
           val updatePlatformWithPlatformAndAffectedRowsIO = insertPlatformWithUserIO flatMap {
             case (dbPlatform: Platform, dbUser: User) => {
-              PlatformDao.update(platformUpdate.toPlatform(dbUser), dbPlatform.id, dbUser) flatMap {
+              PlatformDao.update(platformUpdate, dbPlatform.id, dbUser) flatMap {
                 (affectedRows: Int) => {
                   PlatformDao.unsafeGetPlatformById(dbPlatform.id) map { (affectedRows, _) }
                 }
@@ -75,9 +73,7 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
         val (affectedRows, updatedPlatform) = updatePlatformWithPlatformAndAffectedRowsIO.transact(xa).unsafeRunSync
           affectedRows == 1 &&
             updatedPlatform.name == platformUpdate.name &&
-            updatedPlatform.modifiedBy == userCreate.id &&
-            updatedPlatform.settings == platformUpdate.settings &&
-            updatedPlatform.isActive == true
+            updatedPlatform.settings == platformUpdate.settings
         }
       }
     }
@@ -86,11 +82,11 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
   test("delete a platform") {
     check {
       forAll {
-        (userCreate: User.Create, orgCreate: Organization.Create, platformCreate: Platform.Create) => {
+        (userCreate: User.Create, orgCreate: Organization.Create, platform: Platform) => {
           val deletePlatformWithPlatformIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (_, dbUser) = orgAndUser
-            insertedPlatform <- PlatformDao.create(platformCreate.toPlatform(dbUser))
+            insertedPlatform <- PlatformDao.create(platform)
             deletePlatform <- PlatformDao.delete(insertedPlatform.id)
             byIdPlatform <- PlatformDao.getPlatformById(insertedPlatform.id)
           } yield { (deletePlatform, byIdPlatform) }
