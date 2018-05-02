@@ -70,8 +70,20 @@ trait Authentication extends Directives {
       case Left(e) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
       case Right((_, jwtClaims)) => {
         val userId = jwtClaims.getStringClaim("sub")
+        val email = jwtClaims.getStringClaim("email")
+        val name = jwtClaims.getStringClaim("name")
+        val picture = jwtClaims.getStringClaim("picture")
         onSuccess(UserDao.getUserById(userId).transact(xa).unsafeToFuture).flatMap {
-          case Some(user) => provide(user)
+          case Some(user) =>
+            val updatedUser = user.copy(email = email, name = name, profileImageUri = picture)
+            (updatedUser != user) match {
+              case true =>
+                onSuccess(UserDao.updateUser(updatedUser, updatedUser.id).transact(xa).unsafeToFuture).flatMap {
+                  _ => provide(updatedUser)
+                }
+              case _ =>
+                provide(user)
+            }
           case None => onSuccess(UserDao.createUserWithAuthId(userId).transact(xa).unsafeToFuture).flatMap {
             user => provide(user)
           }
