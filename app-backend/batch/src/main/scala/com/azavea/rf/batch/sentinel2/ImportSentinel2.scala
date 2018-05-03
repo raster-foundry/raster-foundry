@@ -190,7 +190,8 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
             thumbnailStatus = JobStatus.Success,
             boundaryStatus = JobStatus.Success,
             ingestStatus = IngestStatus.NotIngested
-          )
+          ),
+          sceneType = SceneType.Avro.some
         ).some
       }
   }

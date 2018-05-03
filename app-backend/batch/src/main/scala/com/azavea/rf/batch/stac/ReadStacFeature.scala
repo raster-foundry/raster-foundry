@@ -153,7 +153,8 @@ object ReadStacFeature extends Config with LazyLogging {
         },
         boundaryStatus = JobStatus.Success, // tile and data footprints are required fields
         ingestStatus = IngestStatus.NotIngested
-      )
+      ),
+      sceneType = Some(SceneType.Avro)
     )
   }
 
