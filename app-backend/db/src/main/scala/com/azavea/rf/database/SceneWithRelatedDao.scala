@@ -194,7 +194,8 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
              scenes_q.sun_elevation,
              scenes_q.thumbnail_status,
              scenes_q.boundary_status,
-             scenes_q.ingest_status
+             scenes_q.ingest_status,
+             scenes_q.scene_type
       FROM scenes_q
       LEFT JOIN (
         SELECT
