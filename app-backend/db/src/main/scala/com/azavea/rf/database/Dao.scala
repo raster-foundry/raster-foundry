@@ -52,6 +52,12 @@ object Dao {
     def filter[M >: Model, T](thing: T)(implicit filterable: Filterable[M, T]): QueryBuilder[Model] =
       this.copy(filters = filters ++ filterable.toFilters(thing))
 
+    def filter[M >: Model](thing: Fragment)(implicit filterable: Filterable[M, Fragment]): QueryBuilder[Model] =
+      thing match {
+        case Fragment.empty => this
+        case _ => this.copy(filters = filters ++ filterable.toFilters(thing))
+      }
+
     def filter[M >: Model](id: UUID)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
       this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
     }
