@@ -45,10 +45,10 @@ object SceneDao extends Dao[Scene] {
   """ ++ tableF
 
   def getSceneById(id: UUID, user: User): ConnectionIO[Option[Scene]] =
-    query.filter(id).ownerFilter(user).selectOption
+    query.filter(id).selectOption
 
   def unsafeGetSceneById(id: UUID, user: User): ConnectionIO[Scene] =
-    query.filter(id).ownerFilter(user).select
+    query.filter(id).select
 
   def insert(sceneCreate: Scene.Create, user: User): ConnectionIO[Scene.WithRelated] = {
     val scene = sceneCreate.toScene(user)
@@ -137,7 +137,7 @@ object SceneDao extends Dao[Scene] {
     val now = new Date()
 
     val lastModifiedIO: ConnectionIO[Timestamp] =
-      (fr"select modified_at from scenes" ++ Fragments.whereAndOpt(ownerEditFilter(user), idFilter))
+      (fr"select modified_at from scenes" ++ Fragments.whereAndOpt(idFilter))
         .query[Timestamp]
         .unique
     val updateIO: ConnectionIO[Int] = (sql"""
@@ -160,7 +160,7 @@ object SceneDao extends Dao[Scene] {
       thumbnail_status = ${scene.statusFields.thumbnailStatus},
       boundary_status = ${scene.statusFields.boundaryStatus},
       ingest_status = ${scene.statusFields.ingestStatus}
-    """ ++ Fragments.whereAndOpt(ownerEditFilter(user), idFilter))
+    """ ++ Fragments.whereAndOpt(idFilter))
       .update
       .run
 
