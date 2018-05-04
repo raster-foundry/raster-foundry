@@ -12,12 +12,14 @@ object ActionType {
     case object Edit extends ActionType("EDIT")
     case object Deactivate extends ActionType("DEACTIVATE")
     case object Delete extends ActionType("DELETE")
+    case object Annotate extends ActionType("ANNOTATE")
 
     def fromString(s: String): ActionType = s.toUpperCase match {
         case "VIEW" => View
         case "EDIT" => Edit
         case "DEACTIVATE" => Deactivate
         case "DELETE" => Delete
+        case "ANNOTATE" => Annotate
         case _ => throw new Exception(s"Invalid ActionType: ${s}")
     }
 

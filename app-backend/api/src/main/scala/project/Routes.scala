@@ -352,7 +352,7 @@ trait ProjectRoutes extends Authentication
   def createAnnotation(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
         .transact(xa).unsafeToFuture
     } {
       entity(as[AnnotationFeatureCollectionCreate]) { fc =>
@@ -407,7 +407,7 @@ trait ProjectRoutes extends Authentication
   def updateAnnotation(projectId: UUID, annotationId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
         .transact(xa).unsafeToFuture
     } {
       entity(as[Annotation.GeoJSON]) { updatedAnnotation: Annotation.GeoJSON =>
@@ -423,7 +423,7 @@ trait ProjectRoutes extends Authentication
   def deleteAnnotation(projectId: UUID, annotationId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
         .transact(xa).unsafeToFuture
     } {
       onSuccess(AnnotationDao.query.filter(annotationId).delete.transact(xa).unsafeToFuture) {
@@ -435,7 +435,7 @@ trait ProjectRoutes extends Authentication
   def deleteProjectAnnotations(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
         .transact(xa).unsafeToFuture
     } {
       onSuccess(AnnotationDao.query.filter(fr"project_id = ${projectId}").delete.transact(xa).unsafeToFuture) {
