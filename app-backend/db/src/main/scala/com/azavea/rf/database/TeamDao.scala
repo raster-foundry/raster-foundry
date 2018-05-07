@@ -151,4 +151,22 @@ object TeamDao extends Dao[Team] {
   def delete(teamId: UUID): ConnectionIO[Int] =
     TeamDao.query.filter(teamId).delete
 
+  def addUserRole(user: User, subject: User, teamId: UUID, userRole: GroupRole): ConnectionIO[UserGroupRole] = {
+    val userGroupRoleCreate = UserGroupRole.Create(
+      subject, GroupType.Team, teamId, userRole
+    )
+    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(user))
+  }
+
+  def setUserRole(user: User, subject: User, teamId: UUID, userRole: GroupRole): ConnectionIO[List[UserGroupRole]] = {
+    deactivateUserRoles(user, subject, teamId).flatMap(
+      deactivatedUserRoles => addUserRole(user, subject, teamId, userRole)
+        .map(deactivatedUserRoles ++ List(_))
+    )
+  }
+
+  def deactivateUserRoles(user: User, subject: User, teamId: UUID): ConnectionIO[List[UserGroupRole]] = {
+    val userGroup = UserGroupRole.UserGroup(subject.id, GroupType.Team, teamId)
+    UserGroupRoleDao.deactivateUserGroupRoles(userGroup, user)
+  }
 }

@@ -95,4 +95,23 @@ object PlatformDao extends Dao[Platform] {
   def delete(platformId: UUID): ConnectionIO[Int] =
     PlatformDao.query.filter(platformId).delete
 
+  def addUserRole(user: User, subject: User, platformId: UUID, userRole: GroupRole): ConnectionIO[UserGroupRole] = {
+    val userGroupRoleCreate = UserGroupRole.Create(
+      subject, GroupType.Platform, platformId, userRole
+    )
+    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(user))
+  }
+
+  def setUserRole(user: User, subject: User, platformId: UUID, userRole: GroupRole):
+      ConnectionIO[List[UserGroupRole]] = {
+    deactivateUserRoles(user, subject, platformId)
+      .flatMap(updatedRoles =>
+        addUserRole(user, subject, platformId, userRole).map((ugr: UserGroupRole) => updatedRoles ++ List(ugr))
+      )
+  }
+
+  def deactivateUserRoles(user: User, subject: User, platformId: UUID): ConnectionIO[List[UserGroupRole]] = {
+    val userGroup = UserGroupRole.UserGroup(subject.id, GroupType.Platform, platformId)
+    UserGroupRoleDao.deactivateUserGroupRoles(userGroup, user)
+  }
 }

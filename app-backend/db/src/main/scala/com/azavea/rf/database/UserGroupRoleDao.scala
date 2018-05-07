@@ -81,12 +81,28 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
 
   // List roles that a given user has been granted
   def listByUser(user: User): ConnectionIO[List[UserGroupRole]] = {
-    query.filter(fr"user_id = ${user.id}").list
+    query
+      .filter(fr"user_id = ${user.id}")
+      .filter(fr"is_active = true")
+      .list
   }
 
   // List roles that have been given to users for a group
   def listByGroup(groupType: GroupType, groupId: UUID): ConnectionIO[List[UserGroupRole]] = {
-    query.filter(fr"group_type = ${groupType}").filter(fr"group_id = ${groupId}").list
+    query
+      .filter(fr"group_type = ${groupType}")
+      .filter(fr"group_id = ${groupId}")
+      .filter(fr"is_active = true")
+      .list
+  }
+
+  // List a user's roles in a group
+  def listUserGroupRoles(groupType: GroupType, groupId: UUID, user: User): ConnectionIO[List[UserGroupRole]] = {
+    query.filter(fr"group_type = ${groupType}")
+      .filter(fr"group_id = ${groupId}")
+      .filter(fr"user_id = ${user.id}")
+      .filter(fr"is_active = true")
+      .list
   }
 
   def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
@@ -123,5 +139,30 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           modified_by = ${user.id}
             WHERE id = ${id}
         """).update.run
+  }
+
+  def deactivateUserGroupRoles(ugr: UserGroupRole.UserGroup, user: User): ConnectionIO[List[UserGroupRole]] = {
+    (fr"UPDATE" ++ tableF ++ fr"""SET
+        modified_at = NOW(),
+        modified_by = ${user.id},
+        is_active = false
+        """ ++ Fragments.whereAnd(
+      fr"user_id = ${ugr.userId}",
+      fr"group_type = ${ugr.groupType}",
+      fr"group_id = ${ugr.groupId}",
+      fr"is_active = true"
+     )
+    ).update.withGeneratedKeys[UserGroupRole](
+      "id",
+      "created_at",
+      "created_by",
+      "modified_at",
+      "modified_by",
+      "is_active",
+      "user_id",
+      "group_type",
+      "group_id",
+      "group_role"
+    ).compile.toList
   }
 }

@@ -30,20 +30,19 @@ object DatasourceDao extends Dao[Datasource] {
     """ ++ tableF
 
   def unsafeGetDatasourceById(datasourceId: UUID, user: User): ConnectionIO[Datasource] = {
-    (selectF ++ Fragments.whereAndOpt(ownerEditFilter(user), fr"id = ${datasourceId}".some))
+    (selectF ++ Fragments.whereAnd(fr"id = ${datasourceId}"))
       .query[Datasource]
       .unique
   }
 
   def getDatasourceById(datasourceId: UUID, user: User): ConnectionIO[Option[Datasource]] = {
-    (selectF ++ Fragments.whereAndOpt(ownerEditFilter(user), fr"id = ${datasourceId}".some))
+    (selectF ++ Fragments.whereAnd(fr"id = ${datasourceId}"))
       .query[Datasource]
       .option
   }
 
   def listDatasources(page: PageRequest, params: DatasourceQueryParameters, user: User): ConnectionIO[PaginatedResponse[Datasource]] = {
     DatasourceDao.query.filter(params)
-      .filter(fr"owner = ${user.id} OR visibility = ${Visibility.Public.toString.toUpperCase} :: visibility")
       .page(page)
   }
 
@@ -80,13 +79,13 @@ object DatasourceDao extends Dao[Datasource] {
       extras = ${datasource.extras},
       bands = ${datasource.bands},
       license_name = ${datasource.licenseName}
-      where id = ${id} AND owner = ${user.id}
+      where id = ${id}
       """
     updateQuery.update.run
   }
 
   def deleteDatasource(id: UUID, user: User): ConnectionIO[Int] = {
-    (fr"DELETE FROM " ++ this.tableF ++ fr" WHERE owner = ${user.id} AND id = ${id}")
+    (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE id = ${id}")
       .update
       .run
   }
@@ -96,4 +95,3 @@ object DatasourceDao extends Dao[Datasource] {
     this.create(datasource, user)
   }
 }
-

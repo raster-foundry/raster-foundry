@@ -44,13 +44,20 @@ trait DatasourceRoutes extends Authentication
   def listDatasources: Route = authenticate { user =>
     (withPagination & datasourceQueryParams) { (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
       complete {
-        DatasourceDao.listDatasources(page, datasourceParams, user).transact(xa).unsafeToFuture
+        DatasourceDao.query.filter(datasourceParams)
+          .authorize(user, ObjectType.Datasource, ActionType.View)
+          .page(page)
+          .transact(xa).unsafeToFuture
       }
     }
   }
 
   def getDatasource(datasourceId: UUID): Route = authenticate { user =>
-    get {
+    authorizeAsync {
+      DatasourceDao.query
+        .authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } {
       rejectEmptyResponse {
         complete {
           DatasourceDao.getDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
@@ -70,8 +77,12 @@ trait DatasourceRoutes extends Authentication
   }
 
   def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
-    entity(as[Datasource]) { updateDatasource =>
-      authorize(user.isInRootOrOwner(updateDatasource)) {
+    authorizeAsync (
+      DatasourceDao.query
+        .authorized(user, ObjectType.Datasource, datasourceId, ActionType.Edit)
+        .transact(xa).unsafeToFuture
+    ) {
+      entity(as[Datasource]) { updateDatasource =>
         onSuccess(DatasourceDao.updateDatasource(updateDatasource, datasourceId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
@@ -80,8 +91,14 @@ trait DatasourceRoutes extends Authentication
   }
 
   def deleteDatasource(datasourceId: UUID): Route = authenticate { user =>
-    onSuccess(DatasourceDao.query.filter(fr"owner = ${user.id}").filter(datasourceId).delete.transact(xa).unsafeToFuture) {
-       completeSingleOrNotFound
+    authorizeAsync {
+      DatasourceDao.query
+        .authorized(user, ObjectType.Datasource, datasourceId, ActionType.Delete)
+        .transact(xa).unsafeToFuture
+    } {
+      onSuccess(DatasourceDao.query.filter(datasourceId).delete.transact(xa).unsafeToFuture) {
+         completeSingleOrNotFound
+      }
     }
   }
 }
