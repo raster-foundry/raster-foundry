@@ -102,13 +102,13 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
     check {
       forAll{
         (
-          userCreate: User.Create, orgCreate: Organization.Create, platformCreate: Platform.Create,
+          userCreate: User.Create, orgCreate: Organization.Create, platform: Platform,
           userRole: GroupRole
         ) => {
           val addPlatformRoleWithPlatformIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
                                           (org, dbUser) = orgAndUser
-            insertedPlatform <- PlatformDao.create(platformCreate.toPlatform(dbUser))
+            insertedPlatform <- PlatformDao.create(platform)
             insertedUserGroupRole <- PlatformDao.addUserRole(dbUser, dbUser, insertedPlatform.id, userRole)
             byIdUserGroupRole <- UserGroupRoleDao.getOption(insertedUserGroupRole.id)
           } yield { (insertedPlatform, byIdUserGroupRole) }
@@ -132,13 +132,13 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
     check {
       forAll{
         (
-          userCreate: User.Create, orgCreate: Organization.Create, platformCreate: Platform.Create,
+          userCreate: User.Create, orgCreate: Organization.Create, platform: Platform,
           userRole: GroupRole
         ) => {
           val setPlatformRoleIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (org, dbUser) = orgAndUser
-            insertedPlatform <- PlatformDao.create(platformCreate.toPlatform(dbUser))
+            insertedPlatform <- PlatformDao.create(platform)
             originalUserGroupRole <- PlatformDao.addUserRole(dbUser, dbUser, insertedPlatform.id, userRole)
             updatedUserGroupRoles <- PlatformDao.setUserRole(dbUser, dbUser, insertedPlatform.id, userRole)
           } yield { (insertedPlatform, originalUserGroupRole, updatedUserGroupRoles ) }
@@ -164,13 +164,13 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
     check {
       forAll{
         (
-          userCreate: User.Create, orgCreate: Organization.Create, platformCreate: Platform.Create,
+          userCreate: User.Create, orgCreate: Organization.Create, platform: Platform,
           userRole: GroupRole
         ) => {
           val setPlatformRoleIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (org, dbUser) = orgAndUser
-            insertedPlatform <- PlatformDao.create(platformCreate.toPlatform(dbUser))
+            insertedPlatform <- PlatformDao.create(platform)
             originalUserGroupRole <- PlatformDao.addUserRole(dbUser, dbUser, insertedPlatform.id, userRole)
             updatedUserGroupRoles <- PlatformDao.deactivateUserRoles(dbUser, dbUser, insertedPlatform.id)
           } yield { (insertedPlatform, originalUserGroupRole, updatedUserGroupRoles ) }
