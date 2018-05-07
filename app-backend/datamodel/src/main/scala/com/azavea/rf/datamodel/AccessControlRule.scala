@@ -31,10 +31,9 @@ object AccessControlRule {
         objectId: UUID,
         subjectType: SubjectType,
         subjectId: Option[String],
-        actionType: ActionType,
-        user: User
+        actionType: ActionType
     ) {
-        def toAccessControlRule: AccessControlRule = {
+        def toAccessControlRule(user: User): AccessControlRule = {
             val now = new Timestamp((new java.util.Date()).getTime())
             AccessControlRule(
                 UUID.randomUUID(),

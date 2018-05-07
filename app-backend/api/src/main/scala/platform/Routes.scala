@@ -223,9 +223,9 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       UserDao.isSuperUser(user).transact(xa).unsafeToFuture
     } {
-      entity(as[Platform.Create]) { platformToCreate =>
+      entity(as[Platform]) { platformToCreate =>
         completeOrFail {
-          PlatformDao.create(platformToCreate.toPlatform(user)).transact(xa).unsafeToFuture
+          PlatformDao.create(platformToCreate).transact(xa).unsafeToFuture
         }
       }
     }
