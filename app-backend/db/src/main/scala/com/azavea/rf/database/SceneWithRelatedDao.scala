@@ -107,7 +107,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     val pageFragment: Fragment = Page(pageRequest)
     val queryFilters: List[Option[Fragment]] = makeFilters(List(sceneParams)).flatten
     val scenesIO: ConnectionIO[List[Scene]] =
-      (selectF ++ Fragments.whereAndOpt((query.ownerVisibilityFilterF(user) :: queryFilters): _*) ++ pageFragment)
+      (selectF ++ Fragments.whereAndOpt(queryFilters: _*) ++ pageFragment)
         .query[Scene]
         .stream
         .compile
@@ -116,7 +116,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
 
     for {
       page <- withRelatedsIO
-      count <- query.filter(Fragments.and((query.ownerVisibilityFilterF(user) :: queryFilters).flatten.toSeq: _*)).countIO
+      count <- query.filter(Fragments.andOpt(queryFilters.toSeq: _*)).countIO
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
@@ -125,7 +125,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   }
 
   def getSceneQ(sceneId: UUID, user: User) = {
-    (selectF ++ Fragments.whereAndOpt(fr"id = ${sceneId}".some, ownerEditFilter(user)))
+    (selectF ++ Fragments.whereAnd(fr"id = ${sceneId}"))
       .query[Scene]
   }
 

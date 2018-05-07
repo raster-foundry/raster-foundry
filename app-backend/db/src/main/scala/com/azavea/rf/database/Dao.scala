@@ -52,48 +52,59 @@ object Dao {
     def filter[M >: Model, T](thing: T)(implicit filterable: Filterable[M, T]): QueryBuilder[Model] =
       this.copy(filters = filters ++ filterable.toFilters(thing))
 
+    def filter[M >: Model](thing: Fragment)(implicit filterable: Filterable[M, Fragment]): QueryBuilder[Model] =
+      thing match {
+        case Fragment.empty => this
+        case _ => this.copy(filters = filters ++ filterable.toFilters(thing))
+      }
+
     def filter[M >: Model](id: UUID)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
       this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
     }
 
-    // Filter to validate access on an object type
-    def authorize[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
-      this.copy(filters = filters ++ filterable.toFilters(Some(
-        fr"""id IN (
-          -- Collect objects owned by the user
-          SELECT A.id
-          FROM""" ++ tableF ++ fr"""AS A
-          WHERE A.owner = ${user.id}
+    def authorizeFragment(user: User, objectType: ObjectType, actionType: ActionType): Option[Fragment] = Some(
+      fr"""id IN (
+        -- Collect objects owned by the user
+        SELECT A.id
+        FROM""" ++ tableF ++ fr"""AS A
+        WHERE A.owner = ${user.id}
 
-          UNION ALL
+        UNION ALL
 
-          -- Collect objects the user has access to for non-group permissions
-          SELECT A.id
-          FROM""" ++ tableF ++ fr"""AS A
-          JOIN access_control_rules acr ON
-            acr.object_id::text = A.id::text AND
+        -- Collect objects the user has access to for non-group permissions
+        SELECT A.id
+        FROM""" ++ tableF ++ fr"""AS A
+        JOIN access_control_rules acr ON
+          acr.object_id::text = A.id::text
+          WHERE
             acr.object_type = ${objectType} AND
             acr.action_type = ${actionType} AND
-            -- Match if the ACR is an ALL
-            acr.subject_type = 'ALL' OR
-            -- Match if the ACR is per user
-            (acr.subject_type = 'USER' AND acr.subject_id = ${user.id})
+            -- Match if the ACR is an ALL or per user
+            (
+              acr.subject_type = 'ALL' OR
+              (acr.subject_type = 'USER' AND acr.subject_id = ${user.id})
+            )
 
-          UNION ALL
+        UNION ALL
 
-          -- Collect objects the user has access to for group permissions
-          SELECT A.id
-          FROM""" ++ tableF ++ fr"""AS A
-          JOIN access_control_rules acr ON
-            acr.object_id::text = A.id::text AND
-            acr.object_type = ${objectType} AND
-            acr.action_type = ${actionType}
-          JOIN user_group_roles ugr ON
-            ugr.user_id = ${user.id} AND
-            acr.subject_type::text = ugr.group_type::text AND
-            acr.subject_id::text = ugr.group_id::text
-        )"""
-      )))
+        -- Collect objects the user has access to for group permissions
+        SELECT A.id
+        FROM""" ++ tableF ++ fr"""AS A
+        JOIN access_control_rules acr ON
+          acr.object_id::text = A.id::text
+        JOIN user_group_roles ugr ON
+          acr.subject_type::text = ugr.group_type::text AND
+          acr.subject_id::text = ugr.group_id::text
+        WHERE
+          ugr.user_id = ${user.id} AND
+          acr.object_type = ${objectType} AND
+          acr.action_type = ${actionType}
+      )"""
+    )
+
+    // Filter to validate access on an object type
+    def authorize[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+      this.copy(filters = filters ++ filterable.toFilters(authorizeFragment(user, objectType, actionType)))
     }
 
     // Filter to validate access to a specific object
