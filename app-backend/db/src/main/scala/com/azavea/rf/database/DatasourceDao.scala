@@ -30,13 +30,13 @@ object DatasourceDao extends Dao[Datasource] {
     """ ++ tableF
 
   def unsafeGetDatasourceById(datasourceId: UUID, user: User): ConnectionIO[Datasource] = {
-    (selectF ++ Fragments.whereAndOpt(fr"id = ${datasourceId}".some))
+    (selectF ++ Fragments.whereAnd(fr"id = ${datasourceId}"))
       .query[Datasource]
       .unique
   }
 
   def getDatasourceById(datasourceId: UUID, user: User): ConnectionIO[Option[Datasource]] = {
-    (selectF ++ Fragments.whereAndOpt(fr"id = ${datasourceId}".some))
+    (selectF ++ Fragments.whereAnd(fr"id = ${datasourceId}"))
       .query[Datasource]
       .option
   }
