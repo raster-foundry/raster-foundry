@@ -125,7 +125,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   }
 
   def getSceneQ(sceneId: UUID, user: User) = {
-    (selectF ++ Fragments.whereAndOpt(fr"id = ${sceneId}".some))
+    (selectF ++ Fragments.whereAnd(fr"id = ${sceneId}"))
       .query[Scene]
   }
 

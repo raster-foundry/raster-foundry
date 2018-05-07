@@ -118,11 +118,9 @@ trait SceneRoutes extends Authentication
 
   def createScene: Route = authenticate { user =>
     entity(as[Scene.Create]) { newScene =>
-      authorize(user.isInRootOrSameOrganizationAs(newScene)) {
-        onSuccess(SceneDao.insert(newScene, user).transact(xa).unsafeToFuture) { scene =>
-          if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested) kickoffSceneIngest(scene.id)
-          complete((StatusCodes.Created, scene))
-        }
+      onSuccess(SceneDao.insert(newScene, user).transact(xa).unsafeToFuture) { scene =>
+        if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested) kickoffSceneIngest(scene.id)
+        complete((StatusCodes.Created, scene))
       }
     }
   }
