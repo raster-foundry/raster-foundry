@@ -406,7 +406,8 @@ object Generators extends ArbitraryInstances {
       platformId <- uuidGen
       platformName <- uuidGen map { _.toString }
       settings <- Gen.const(().asJson)
-    } yield { Platform(platformId, platformName, settings) }
+      isActive <- arbitrary[Boolean]
+    } yield { Platform(platformId, platformName, settings, isActive) }
 
   private def userOrgPlatformGen: Gen[(User.Create, Organization.Create, Platform)] =
     for {

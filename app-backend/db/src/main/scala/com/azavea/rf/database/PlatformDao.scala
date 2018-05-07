@@ -18,15 +18,15 @@ object PlatformDao extends Dao[Platform] {
 
   val selectF = sql"""
     SELECT
-      id, name, settings
+      id, name, settings, is_active
     FROM
   """ ++ tableF
 
   def createF(platform: Platform) = fr"INSERT INTO" ++ tableF ++ fr"""(
-        id, name, settings
+        id, name, settings, is_active
       )
       VALUES (
-        ${platform.id}, ${platform.name}, ${platform.settings}
+        ${platform.id}, ${platform.name}, ${platform.settings}, ${platform.isActive}
       )
   """
 
@@ -41,7 +41,7 @@ object PlatformDao extends Dao[Platform] {
 
   def create(platform: Platform): ConnectionIO[Platform] = {
     createF(platform).update.withUniqueGeneratedKeys[Platform](
-      "id", "name", "settings"
+      "id", "name", "settings", "is_active"
     )
   }
 
