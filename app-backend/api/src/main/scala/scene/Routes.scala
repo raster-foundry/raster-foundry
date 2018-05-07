@@ -88,7 +88,6 @@ trait SceneRoutes extends Authentication
       (SceneWithRelatedDao.selectF ++
         Fragments.whereAndOpt(
           (SceneWithRelatedDao.query.authorizeFragment(user, ObjectType.Scene, ActionType.View) :: queryFilters): _*) ++
-          // queryFilters: _*) ++
           pageFragment)
         .query[Scene]
         .stream
@@ -111,8 +110,6 @@ trait SceneRoutes extends Authentication
 
   def listScenes: Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
-      println(page)
-      println(sceneParams)
       complete {
         listAuthorizedScenes(page, sceneParams, user).transact(xa).unsafeToFuture
       }
