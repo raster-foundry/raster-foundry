@@ -10,6 +10,7 @@ import cats.data._
 import cats.effect.IO
 import cats.implicits._
 import cats.syntax.either._
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie.postgres._
 import doobie.postgres.implicits._
 import org.scalacheck.Prop.forAll
@@ -52,6 +53,35 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
             insertedUgr.groupRole == ugrCreate.groupRole &&
             insertedUgr.modifiedBy == userCreate.id &&
             insertedUgr.createdBy == userCreate.id
+        }
+      }
+    }
+  }
+
+  test("list users by group") {
+    check {
+      forAll {
+        (userCreate: User.Create, manager: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
+         platformCreate: Platform.Create, ugrCreate: UserGroupRole.Create, ugrUpdate: UserGroupRole.Create, page: PageRequest) => {
+          val insertUgrWithRelationsIO = for {
+            orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
+            (insertedOrg, insertedUser) = orgAndUser
+            managerUser <- UserDao.create(manager.copy(organizationId = insertedOrg.id))
+            teamAndPlatform <- (
+              TeamDao.create(teamCreate.copy(organizationId = insertedOrg.id).toTeam(managerUser)),
+              PlatformDao.create(platformCreate.toPlatform(managerUser))
+            ).tupled
+            (insertedTeam, insertedPlatform) = teamAndPlatform
+            insertedUgr <- UserGroupRoleDao.create(
+              fixupUserGroupRole(insertedUser, insertedOrg, insertedTeam, insertedPlatform, ugrCreate)
+                .toUserGroupRole(managerUser)
+            )
+            usersInGroup <- UserGroupRoleDao.listUsersByGroup(insertedUgr.groupType, insertedUgr.groupId, page)
+          } yield (usersInGroup)
+
+          val usersInGroup = insertUgrWithRelationsIO.transact(xa).unsafeRunSync
+
+          usersInGroup.count == 1
         }
       }
     }
