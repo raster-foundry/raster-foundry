@@ -43,6 +43,9 @@ object PlatformDao extends Dao[Platform] {
   def listPlatforms(page: PageRequest) =
     query.page(page)
 
+  def listMembers(platformId: UUID, page: PageRequest): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
+    UserGroupRoleDao.listUsersByGroup(GroupType.Platform, platformId, page)
+
   def create(platform: Platform): ConnectionIO[Platform] = {
     createF(platform).update.withUniqueGeneratedKeys[Platform](
       "id", "created_at", "created_by", "modified_at", "modified_by", "name", "settings", "is_active"
@@ -58,6 +61,19 @@ object PlatformDao extends Dao[Platform] {
         where id = ${id}
       """).update.run
   }
+
+  def userIsMemberF(user: User, platformId: UUID ) = fr"""
+    SELECT count(id) > 0
+      FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
+      WHERE
+        user_id = ${user.id} AND
+        group_type = ${GroupType.Platform.toString}::group_type AND
+        group_id = ${platformId} AND
+        is_active = true
+  """
+
+  def userIsMember(user: User, platformId: UUID): ConnectionIO[Boolean] =
+    userIsMemberF(user, platformId).query[Boolean].option.map(_.getOrElse(false))
 
 
   def userIsAdminF(user: User, platformId: UUID) = fr"""

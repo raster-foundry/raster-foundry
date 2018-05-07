@@ -169,15 +169,15 @@ object Dao {
     }
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page(pageRequest: PageRequest, selectF: Fragment, countF: Fragment): ConnectionIO[PaginatedResponse[Model]] = {
+    def page[T: Composite](pageRequest: PageRequest, selectF: Fragment, countF: Fragment): ConnectionIO[PaginatedResponse[T]] = {
       for {
-        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[Model].list
+        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[T].list
         count <- (countF ++ Fragments.whereAndOpt(filters: _*)).query[Int].unique
       } yield {
         val hasPrevious = pageRequest.offset > 0
         val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
 
-        PaginatedResponse[Model](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
+        PaginatedResponse[T](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
       }
     }
 

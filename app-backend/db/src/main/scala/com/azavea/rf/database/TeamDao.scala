@@ -69,6 +69,38 @@ object TeamDao extends Dao[Team] {
       )
   }
 
+  def userIsMemberF(user: User, teamId: UUID ) = fr"""
+    SELECT count(id) > 0
+      FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
+      WHERE
+        user_id = ${user.id} AND
+        group_type = ${GroupType.Team.toString}::group_type AND
+        group_id = ${teamId} AND
+        is_active = true
+  """
+
+  def listMembers(teamId: UUID, page: PageRequest): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
+    UserGroupRoleDao.listUsersByGroup(GroupType.Team, teamId, page)
+
+  def validatePath(platformId: UUID,
+                   organizationId: UUID,
+                   teamId: UUID): ConnectionIO[Boolean] =
+    (fr"""
+      SELECT count(t.id) > 0
+      FROM """ ++ tableF ++ fr""" t
+      JOIN """ ++ OrganizationDao.tableF ++ fr""" o
+        ON o.id = t.organization_id
+      JOIN """ ++ PlatformDao.tableF ++ fr""" p
+        ON p.id = o.platform_id
+      WHERE
+        p.id = ${platformId} AND
+        o.id = ${organizationId} AND
+        t.id = ${teamId}
+    """).query[Boolean].option.map(_.getOrElse(false))
+
+  def userIsMember(user: User, teamId: UUID): ConnectionIO[Boolean] =
+    userIsMemberF(user, teamId).query[Boolean].option.map(_.getOrElse(false))
+
   def userIsAdminF(user: User, teamId: UUID) = {
     fr"""
       SELECT (

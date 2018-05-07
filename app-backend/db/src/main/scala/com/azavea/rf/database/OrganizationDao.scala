@@ -2,6 +2,7 @@ package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
+
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -10,6 +11,8 @@ import cats._
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
+import com.lonelyplanet.akka.http.extensions.PageRequest
+
 import java.util.UUID
 import java.sql.Timestamp
 
@@ -58,6 +61,36 @@ object OrganizationDao extends Dao[Organization] {
      """).update.run
   }
 
+  def listMembers(organizationId: UUID, page: PageRequest): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
+    UserGroupRoleDao.listUsersByGroup(GroupType.Organization, organizationId, page)
+
+
+  def validatePath(platformId: UUID,
+                   organizationId: UUID): ConnectionIO[Boolean] =
+    (fr"""
+      SELECT count(o.id) > 0
+      FROM """ ++ tableF ++ fr""" o
+      JOIN """ ++ PlatformDao.tableF ++ fr""" p
+        ON p.id = o.platform_id
+      WHERE
+        p.id = ${platformId} AND
+        o.id = ${organizationId}
+    """).query[Boolean].option.map(_.getOrElse(false))
+
+
+  def userIsMemberF(user: User, organizationId: UUID ) = fr"""
+    SELECT count(id) > 0
+      FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
+      WHERE
+        user_id = ${user.id} AND
+        group_type = ${GroupType.Organization.toString}::group_type AND
+        group_id = ${organizationId} AND
+        is_active = true
+  """
+
+  def userIsMember(user: User, organizationId: UUID): ConnectionIO[Boolean] =
+    userIsMemberF(user, organizationId).query[Boolean].option.map(_.getOrElse(false))
+
   def userIsAdminF(user: User, organizationId: UUID) = fr"""
     SELECT (
       SELECT count(id) > 0
@@ -84,6 +117,6 @@ object OrganizationDao extends Dao[Organization] {
     )
   """
 
-  def userIsAdmin(user: User, organizationId: UUID) =
+  def userIsAdmin(user: User, organizationId: UUID): ConnectionIO[Boolean] =
     userIsAdminF(user, organizationId).query[Boolean].option.map(_.getOrElse(false))
 }
