@@ -9,6 +9,7 @@ import com.azavea.rf.batch.ingest.json._
 import com.azavea.rf.batch.ingest.model._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf.Config
+import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.common.S3.putObjectString
 import com.azavea.rf.datamodel.IngestStatus
 
@@ -45,7 +46,7 @@ import java.io.File
 import java.net.URI
 import java.util.UUID
 
-object Ingest extends SparkJob with LazyLogging with Config {
+object Ingest extends SparkJob with RollbarNotifier with Config {
   val jobName = "Ingest"
 
   type RfLayerWriter = Writer[LayerId, RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]
@@ -313,6 +314,7 @@ object Ingest extends SparkJob with LazyLogging with Config {
 
     val sceneId = UUID.fromString(params.sceneId)
 
+
     /* Warn about ignored flags */
     if (params.windowSize.isDefined) logger.warn("windowSize parameter was explicitely set, but will be ignored.")
     if (params.partitionsPerFile.isDefined) logger.warn("partitionsPerFile parameter was explicitely set, but will be ignored.")
@@ -331,13 +333,15 @@ object Ingest extends SparkJob with LazyLogging with Config {
         IngestStatus.Ingested
       )
     } catch {
-      case t: Throwable =>
-        logger.error(t.stackTraceString)
+      case t: Throwable => {
+        sendError(t)
         putObjectString(
           params.statusBucket,
           ingestDefinition.id.toString,
           IngestStatus.Failed
         )
+        throw t
+      }
     } finally {
       sc.stop
     }

@@ -3,6 +3,7 @@
 """Console script for Raster Foundry"""
 
 import logging
+import os
 
 import click
 
@@ -17,6 +18,10 @@ from .commands import (
 logger = logging.getLogger('rf')
 
 
+if os.getenv('AWS_BATCH_JOB_ATTEMPT', '') == '3':
+    raise Exception('Failing async task early after suspicious repeated failures')
+
+
 @click.group()
 @click.option('--verbose/--quiet')
 def run(verbose):
@@ -26,6 +31,7 @@ def run(verbose):
         logger.debug('VERBOSE logging enabled')
     else:
         logger.setLevel(logging.INFO)
+
 
 run.add_command(export)
 run.add_command(process_upload)
