@@ -87,7 +87,7 @@ trait SceneRoutes extends Authentication
     val scenesIO: ConnectionIO[List[Scene]] =
       (SceneWithRelatedDao.selectF ++
         Fragments.whereAndOpt(
-          (SceneWithRelatedDao.query.authorizeFragment(user, ObjectType.Scene, ActionType.View) :: queryFilters): _*) ++
+          (SceneWithRelatedDao.query.authorizeF(user, ObjectType.Scene, ActionType.View) :: queryFilters): _*) ++
           pageFragment)
         .query[Scene]
         .stream

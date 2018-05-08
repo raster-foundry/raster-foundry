@@ -129,42 +129,45 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     (fr"SELECT platform_id FROM " ++ tableF ++ fr"WHERE id = ${organizationId}").query[UUID].unique
   }
 
-  def addUserRole(user: User, subject: User, organizationId: UUID, userRole: GroupRole): ConnectionIO[UserGroupRole] = {
+  def addUserRole(actingUser: User, subjectId: String, organizationId: UUID, groupRole: GroupRole): ConnectionIO[UserGroupRole] = {
     val userGroupRoleCreate = UserGroupRole.Create(
-      subject, GroupType.Organization, organizationId, userRole
+      subjectId, GroupType.Organization, organizationId, groupRole
     )
-    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(user))
+    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser))
   }
 
-  def setUserRole(user: User, subject: User, organizationId: UUID, userRole: GroupRole):
+  def setUserRole(actingUser: User, subjectId: String, organizationId: UUID, groupRole: GroupRole):
       ConnectionIO[List[UserGroupRole]] = {
     for {
-      orgRoles <- OrganizationDao.deactivateUserRoles(
-        user, subject, organizationId
-      ).flatMap(
-        (deactivatedRoles) => {
-          OrganizationDao.addUserRole(user, subject, organizationId, userRole)
-            .map((role) => deactivatedRoles ++ List(role))
-        }
-      )
+      orgRoles <-
+        OrganizationDao
+          .deactivateUserRoles(
+            actingUser, subjectId, organizationId
+          ).flatMap(
+            (deactivatedRoles) => {
+              OrganizationDao.addUserRole(actingUser, subjectId, organizationId, groupRole)
+                .map((role) => deactivatedRoles ++ List(role))
+            }
+          )
       platformId <- getOrgPlatformId(organizationId)
-      platformRoles <- UserGroupRoleDao
-      .listUserGroupRoles(GroupType.Platform, platformId, subject)
-      .flatMap(
-        (roles: List[UserGroupRole]) => roles match {
-          case Nil =>
-            PlatformDao.setUserRole(user, subject, platformId, GroupRole.Member)
-          case roles =>
-            List.empty[UserGroupRole].pure[ConnectionIO]
-        }
-      )
+      platformRoles <-
+        UserGroupRoleDao
+          .listUserGroupRoles(GroupType.Platform, platformId, subjectId)
+          .flatMap(
+            (roles: List[UserGroupRole]) => roles match {
+              case Nil =>
+                PlatformDao.setUserRole(actingUser, subjectId, platformId, GroupRole.Member)
+              case roles =>
+                List.empty[UserGroupRole].pure[ConnectionIO]
+            }
+          )
     } yield (platformRoles ++ orgRoles)
   }
 
-  def deactivateUserRoles(user: User, removedUser: User, organizationId: UUID): ConnectionIO[List[UserGroupRole]] = {
+  def deactivateUserRoles(actingUser: User, subjectId: String, organizationId: UUID): ConnectionIO[List[UserGroupRole]] = {
     val userGroup = UserGroupRole.UserGroup(
-      removedUser.id, GroupType.Organization, organizationId
+      subjectId, GroupType.Organization, organizationId
     )
-    UserGroupRoleDao.deactivateUserGroupRoles(userGroup, user)
+    UserGroupRoleDao.deactivateUserGroupRoles(userGroup, actingUser)
   }
 }

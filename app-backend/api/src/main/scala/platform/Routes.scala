@@ -223,9 +223,9 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       UserDao.isSuperUser(user).transact(xa).unsafeToFuture
     } {
-      entity(as[Platform]) { platformToCreate =>
+      entity(as[Platform.Create]) { platformToCreate =>
         completeOrFail {
-          PlatformDao.create(platformToCreate).transact(xa).unsafeToFuture
+          PlatformDao.create(platformToCreate.toPlatform(user)).transact(xa).unsafeToFuture
         }
       }
     }
@@ -282,8 +282,11 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
     } {
-      // @TODO: implement this once #3306 is merged
-      ???
+      entity(as[UserGroupRole.UserRole]) { ur =>
+        complete {
+          PlatformDao.setUserRole(user, ur.userId, platformId, ur.groupRole)
+        }
+      }
     }
   }
 
@@ -363,7 +366,11 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
     } {
-      ???
+      entity(as[UserGroupRole.UserRole]) { ur =>
+        complete {
+          OrganizationDao.setUserRole(user, ur.userId, orgId, ur.groupRole)
+        }
+      }
     }
   }
 
@@ -443,8 +450,11 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       TeamDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
     } {
-      // @TODO: implement this once #3306 is merged
-      ???
+      entity(as[UserGroupRole.UserRole]) { ur =>
+        complete {
+          TeamDao.setUserRole(user, ur.userId, teamId, ur.groupRole)
+        }
+      }
     }
   }
 
@@ -452,8 +462,9 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       TeamDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
     } {
-      // @TODO: implement this once #3306 is merged
-      ???
+      complete {
+        TeamDao.deactivateUserRoles(user, userId, teamId)
+      }
     }
   }
 }

@@ -109,7 +109,7 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
                                           (org, dbUser) = orgAndUser
             insertedPlatform <- PlatformDao.create(platform)
-            insertedUserGroupRole <- PlatformDao.addUserRole(dbUser, dbUser, insertedPlatform.id, userRole)
+            insertedUserGroupRole <- PlatformDao.addUserRole(dbUser, dbUser.id, insertedPlatform.id, userRole)
             byIdUserGroupRole <- UserGroupRoleDao.getOption(insertedUserGroupRole.id)
           } yield { (insertedPlatform, byIdUserGroupRole) }
 
@@ -139,8 +139,8 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (org, dbUser) = orgAndUser
             insertedPlatform <- PlatformDao.create(platform)
-            originalUserGroupRole <- PlatformDao.addUserRole(dbUser, dbUser, insertedPlatform.id, userRole)
-            updatedUserGroupRoles <- PlatformDao.setUserRole(dbUser, dbUser, insertedPlatform.id, userRole)
+            originalUserGroupRole <- PlatformDao.addUserRole(dbUser, dbUser.id, insertedPlatform.id, userRole)
+            updatedUserGroupRoles <- PlatformDao.setUserRole(dbUser, dbUser.id, insertedPlatform.id, userRole)
           } yield { (insertedPlatform, originalUserGroupRole, updatedUserGroupRoles ) }
 
           val (dbPlatform, dbOldUGR, dbNewUGRs) = setPlatformRoleIO.transact(xa).unsafeRunSync
@@ -171,8 +171,8 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (org, dbUser) = orgAndUser
             insertedPlatform <- PlatformDao.create(platform)
-            originalUserGroupRole <- PlatformDao.addUserRole(dbUser, dbUser, insertedPlatform.id, userRole)
-            updatedUserGroupRoles <- PlatformDao.deactivateUserRoles(dbUser, dbUser, insertedPlatform.id)
+            originalUserGroupRole <- PlatformDao.addUserRole(dbUser, dbUser.id, insertedPlatform.id, userRole)
+            updatedUserGroupRoles <- PlatformDao.deactivateUserRoles(dbUser, dbUser.id, insertedPlatform.id)
           } yield { (insertedPlatform, originalUserGroupRole, updatedUserGroupRoles ) }
 
           val (dbPlatform, dbOldUGR, dbNewUGRs) = setPlatformRoleIO.transact(xa).unsafeRunSync

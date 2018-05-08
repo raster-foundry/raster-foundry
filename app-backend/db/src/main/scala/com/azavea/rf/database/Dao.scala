@@ -63,7 +63,7 @@ object Dao {
     }
 
     // Filter to validate access on an object type
-    def authorizeFragment[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+    def authorizeF[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): Option[Fragment] = {
       if (user.isSuperuser) {
         Some(fr"true")
       } else {
@@ -73,34 +73,33 @@ object Dao {
             SELECT A.id
             FROM""" ++ tableF ++ fr"""AS A
             WHERE A.owner = ${user.id}
-
             UNION ALL
-
             -- Collect objects the user has access to for non-group permissions
             SELECT A.id
             FROM""" ++ tableF ++ fr"""AS A
             JOIN access_control_rules acr ON
-              acr.object_id::text = A.id::text AND
+              acr.object_id::text = A.id::text
+            WHERE
               acr.object_type = ${objectType} AND
               acr.action_type = ${actionType} AND
-              -- Match if the ACR is an ALL
-              acr.subject_type = 'ALL' OR
-              -- Match if the ACR is per user
-              (acr.subject_type = 'USER' AND acr.subject_id = ${user.id})
-
+              -- Match if the ACR is an ALL or per user
+              (
+                acr.subject_type = 'ALL' OR
+                (acr.subject_type = 'USER' AND acr.subject_id = ${user.id})
+              )
             UNION ALL
-
             -- Collect objects the user has access to for group permissions
             SELECT A.id
             FROM""" ++ tableF ++ fr"""AS A
             JOIN access_control_rules acr ON
-              acr.object_id::text = A.id::text AND
-              acr.object_type = ${objectType} AND
-              acr.action_type = ${actionType}
+              acr.object_id::text = A.id::text
             JOIN user_group_roles ugr ON
-              ugr.user_id = ${user.id} AND
               acr.subject_type::text = ugr.group_type::text AND
               acr.subject_id::text = ugr.group_id::text
+            WHERE
+              ugr.user_id = ${user.id} AND
+              acr.object_type = ${objectType} AND
+              acr.action_type = ${actionType}
           )"""
         )
       }
@@ -108,7 +107,7 @@ object Dao {
 
     // Filter to validate access on an object type
     def authorize[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
-      this.copy(filters = filters ++ filterable.toFilters(authorizeFragment(user, objectType, actionType)))
+      this.copy(filters = filters ++ filterable.toFilters(authorizeF(user, objectType, actionType)))
     }
 
     // Filter to validate access to a specific object

@@ -32,22 +32,28 @@ object UserGroupRole {
   )
 
   @JsonCodec
+  case class UserRole(
+    userId: String,
+    groupRole: GroupRole
+  )
+
+  @JsonCodec
   case class Create(
-    userToAdd: User,
+    userId: String,
     groupType: GroupType,
     groupId: UUID,
     groupRole: GroupRole
   ) {
-    def toUserGroupRole(user: User): UserGroupRole = {
+    def toUserGroupRole(creator: User): UserGroupRole = {
       val now = new Timestamp((new java.util.Date()).getTime())
       UserGroupRole(
         UUID.randomUUID(),
         now, // createdAt
-        user.id, // createdBy
+        creator.id, // createdBy
         now, // modifiedAt
-        user.id, // modifiedBy
+        creator.id, // modifiedBy
         true, // always default isActive to true
-        userToAdd.id, // user that is being given the group role
+        userId, // user that is being given the group role
         groupType,
         groupId,
         groupRole

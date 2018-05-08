@@ -167,7 +167,7 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
                                           (org, dbUser) = orgAndUser
             insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
-            insertedUserGroupRole <- TeamDao.addUserRole(dbUser, dbUser, insertedTeam.id, userRole)
+            insertedUserGroupRole <- TeamDao.addUserRole(dbUser, dbUser.id, insertedTeam.id, userRole)
             byIdUserGroupRole <- UserGroupRoleDao.getOption(insertedUserGroupRole.id)
           } yield { (insertedTeam, byIdUserGroupRole) }
 
@@ -197,8 +197,8 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (org, dbUser) = orgAndUser
             insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
-            originalUserGroupRole <- TeamDao.addUserRole(dbUser, dbUser, insertedTeam.id, userRole)
-            updatedUserGroupRoles <- TeamDao.setUserRole(dbUser, dbUser, insertedTeam.id, userRole)
+            originalUserGroupRole <- TeamDao.addUserRole(dbUser, dbUser.id, insertedTeam.id, userRole)
+            updatedUserGroupRoles <- TeamDao.setUserRole(dbUser, dbUser.id, insertedTeam.id, userRole)
           } yield { (originalUserGroupRole, updatedUserGroupRoles ) }
 
           val (dbOldUGR, dbNewUGRs) = setPlatformRoleIO.transact(xa).unsafeRunSync
@@ -229,8 +229,8 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (org, dbUser) = orgAndUser
             insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
-            originalUserGroupRole <- TeamDao.addUserRole(dbUser, dbUser, insertedTeam.id, userRole)
-            updatedUserGroupRoles <- TeamDao.deactivateUserRoles(dbUser, dbUser, insertedTeam.id)
+            originalUserGroupRole <- TeamDao.addUserRole(dbUser, dbUser.id, insertedTeam.id, userRole)
+            updatedUserGroupRoles <- TeamDao.deactivateUserRoles(dbUser, dbUser.id, insertedTeam.id)
           } yield { (originalUserGroupRole, updatedUserGroupRoles ) }
 
           val (dbOldUGR, dbNewUGRs) = setTeamRoleIO.transact(xa).unsafeRunSync
