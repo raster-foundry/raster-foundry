@@ -52,16 +52,22 @@ object Dao {
     def filter[M >: Model, T](thing: T)(implicit filterable: Filterable[M, T]): QueryBuilder[Model] =
       this.copy(filters = filters ++ filterable.toFilters(thing))
 
+    def filter[M >: Model](thing: Fragment)(implicit filterable: Filterable[M, Fragment]): QueryBuilder[Model] =
+      thing match {
+        case Fragment.empty => this
+        case _ => this.copy(filters = filters ++ filterable.toFilters(thing))
+      }
+
     def filter[M >: Model](id: UUID)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
       this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
     }
 
     // Filter to validate access on an object type
-    def authorize[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+    def authorizeFragment[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
       if (user.isSuperuser) {
-        this.copy(filters = filters ++ filterable.toFilters(Some(fr"true")))
+        Some(fr"true")
       } else {
-        this.copy(filters = filters ++ filterable.toFilters(Some(
+        Some(
           fr"""id IN (
             -- Collect objects owned by the user
             SELECT A.id
@@ -96,8 +102,13 @@ object Dao {
               acr.subject_type::text = ugr.group_type::text AND
               acr.subject_id::text = ugr.group_id::text
           )"""
-        )))
+        )
       }
+    }
+
+    // Filter to validate access on an object type
+    def authorize[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+      this.copy(filters = filters ++ filterable.toFilters(authorizeFragment(user, objectType, actionType)))
     }
 
     // Filter to validate access to a specific object

@@ -30,6 +30,9 @@ import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
 
+import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.azavea.rf.database.util.Page
+
 trait SceneRoutes extends Authentication
     with Config
     with SceneQueryParameterDirective
@@ -78,38 +81,73 @@ trait SceneRoutes extends Authentication
     }
   }
 
+  def listAuthorizedScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
+    val pageFragment: Fragment = Page(pageRequest)
+    val queryFilters: List[Option[Fragment]] = SceneWithRelatedDao.makeFilters(List(sceneParams)).flatten
+    val scenesIO: ConnectionIO[List[Scene]] =
+      (SceneWithRelatedDao.selectF ++
+        Fragments.whereAndOpt(
+          (SceneWithRelatedDao.query.authorizeFragment(user, ObjectType.Scene, ActionType.View) :: queryFilters): _*) ++
+          pageFragment)
+        .query[Scene]
+        .stream
+        .compile
+        .toList
+    val withRelatedsIO: ConnectionIO[List[Scene.WithRelated]] = scenesIO flatMap { SceneWithRelatedDao.scenesToScenesWithRelated }
+
+    for {
+      page <- withRelatedsIO
+      count <- SceneWithRelatedDao.query
+        .filter(Fragments.andOpt(queryFilters.toSeq: _*))
+        .authorize(user, ObjectType.Scene, ActionType.View)
+        .countIO
+    } yield {
+      val hasPrevious = pageRequest.offset > 0
+      val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
+      PaginatedResponse[Scene.WithRelated](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
+    }
+  }
+
   def listScenes: Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
-      println(page)
-      println(sceneParams)
       complete {
-        SceneWithRelatedDao.listScenes(page, sceneParams, user).transact(xa).unsafeToFuture
+        listAuthorizedScenes(page, sceneParams, user).transact(xa).unsafeToFuture
       }
     }
   }
 
   def createScene: Route = authenticate { user =>
     entity(as[Scene.Create]) { newScene =>
-      authorize(user.isInRootOrSameOrganizationAs(newScene)) {
-        onSuccess(SceneDao.insert(newScene, user).transact(xa).unsafeToFuture) { scene =>
-          if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested) kickoffSceneIngest(scene.id)
-          complete((StatusCodes.Created, scene))
-        }
+      onSuccess(SceneDao.insert(newScene, user).transact(xa).unsafeToFuture) { scene =>
+        if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested) kickoffSceneIngest(scene.id)
+        complete((StatusCodes.Created, scene))
       }
     }
   }
 
   def getScene(sceneId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete {
-        SceneWithRelatedDao.getScene(sceneId, user).transact(xa).unsafeToFuture
+    authorizeAsync {
+      SceneWithRelatedDao.query
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete {
+          SceneWithRelatedDao.getScene(sceneId, user).transact(xa).unsafeToFuture
+        }
       }
     }
   }
 
   def updateScene(sceneId: UUID): Route = authenticate { user =>
-    entity(as[Scene]) { updatedScene =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedScene)) {
+    authorizeAsync {
+      SceneDao.query
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      entity(as[Scene]) { updatedScene =>
         onSuccess(SceneDao.update(updatedScene, sceneId, user).transact(xa).unsafeToFuture) { case (result, kickoffIngest) =>
           if (kickoffIngest) kickoffSceneIngest(sceneId)
           completeSingleOrNotFound(result)
@@ -119,31 +157,45 @@ trait SceneRoutes extends Authentication
   }
 
   def deleteScene(sceneId: UUID): Route = authenticate { user =>
-    onSuccess(SceneDao.query.filter(sceneId).ownerFilter(user).delete.transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
+    authorizeAsync {
+      SceneDao.query
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.Delete)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      onSuccess(SceneDao.query.filter(sceneId).delete.transact(xa).unsafeToFuture) {
+        completeSingleOrNotFound
+      }
     }
   }
 
   def getDownloadUrl(sceneId: UUID): Route = authenticate { user =>
-    onSuccess(SceneWithRelatedDao.getScene(sceneId, user).transact(xa).unsafeToFuture) { scene =>
-      complete {
-        scene.getOrElse {
-          throw new Exception("Scene does not exist or is not accessible by this user")
-        }.images map { image =>
-          val downloadUri: String = {
-            image.sourceUri match {
-              case uri if uri.startsWith(s"s3://$dataBucket") => {
-                val s3Uri = new AmazonS3URI(image.sourceUri)
-                S3.getSignedUrl(s3Uri.getBucket, s3Uri.getKey).toString
+    authorizeAsync {
+      SceneWithRelatedDao.query
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      onSuccess(SceneWithRelatedDao.getScene(sceneId, user).transact(xa).unsafeToFuture) { scene =>
+        complete {
+          scene.getOrElse {
+            throw new Exception("Scene does not exist or is not accessible by this user")
+          }.images map { image =>
+            val downloadUri: String = {
+              image.sourceUri match {
+                case uri if uri.startsWith(s"s3://$dataBucket") => {
+                  val s3Uri = new AmazonS3URI(image.sourceUri)
+                  S3.getSignedUrl(s3Uri.getBucket, s3Uri.getKey).toString
+                }
+                case uri if uri.startsWith("s3://") => {
+                  val s3Uri = new AmazonS3URI(image.sourceUri)
+                  s"https://${s3Uri.getBucket}.s3.amazonaws.com/${s3Uri.getKey}"
+                }
+                case _ => image.sourceUri
               }
-              case uri if uri.startsWith("s3://") => {
-                val s3Uri = new AmazonS3URI(image.sourceUri)
-                s"https://${s3Uri.getBucket}.s3.amazonaws.com/${s3Uri.getKey}"
-              }
-              case _ => image.sourceUri
             }
+            image.toDownloadable(downloadUri)
           }
-          image.toDownloadable(downloadUri)
         }
       }
     }
