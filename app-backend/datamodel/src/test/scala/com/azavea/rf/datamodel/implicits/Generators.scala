@@ -53,6 +53,10 @@ object Generators extends ArbitraryInstances {
   private def visibilityGen: Gen[Visibility] = Gen.oneOf(
     Visibility.Public, Visibility.Organization, Visibility.Private)
 
+  private def sceneTypeGen: Gen[SceneType] = Gen.oneOf(
+    SceneType.Avro, SceneType.COG
+  )
+
   private def credentialGen: Gen[Credential] = possiblyEmptyStringGen flatMap { Credential.fromString }
 
   // This is fine not to test the max value --
@@ -317,10 +321,12 @@ object Generators extends ArbitraryInstances {
     ingestLocation <- Gen.oneOf(nonEmptyStringGen map { Some(_) }, Gen.const(None))
     filterFields <- sceneFilterFieldsGen
     statusFields <- sceneStatusFieldsGen
+    sceneType <- Gen.option(sceneTypeGen)
   } yield {
     Scene.Create(sceneId, organizationId, ingestSizeBytes, visibility, tags,
                  datasource, sceneMetadata, name, owner, tileFootprint, dataFootprint,
-                 metadataFiles, images, thumbnails, ingestLocation, filterFields, statusFields)
+                 metadataFiles, images, thumbnails, ingestLocation, filterFields, statusFields,
+                 sceneType)
   }
 
   private def aoiGen: Gen[AOI] = for {
@@ -330,8 +336,9 @@ object Generators extends ArbitraryInstances {
     userField <- nonEmptyStringGen
     area <- projectedMultiPolygonGen3857
     filters <- Gen.const(().asJson) // maybe this should be CombinedSceneQueryParams as json
+    isActive <- arbitrary[Boolean]
   } yield {
-    AOI(id, timeField, timeField, organizationId, userField, userField, userField, area, filters)
+    AOI(id, timeField, timeField, organizationId, userField, userField, userField, area, filters, isActive)
   }
 
   private def datasourceCreateGen: Gen[Datasource.Create] = for {

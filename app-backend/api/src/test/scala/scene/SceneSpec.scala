@@ -97,7 +97,7 @@ class SceneSpec extends WordSpec
                         Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
                         None,
                         None),
-      SceneStatusFields(JobStatus.Processing, JobStatus.Processing, IngestStatus.NotIngested)
+      SceneStatusFields(JobStatus.Processing, JobStatus.Processing, IngestStatus.NotIngested), Some(SceneType.Avro)
     )
 
     val newSceneDatasource2 = Scene.Create(
@@ -106,7 +106,7 @@ class SceneSpec extends WordSpec
       "test scene datasource 2", None, None, None, List.empty[String], List.empty[Image.Banded],
       List.empty[Thumbnail.Identified], Some("an_s3_bucket_location"),
       SceneFilterFields(None, None, None, None),
-      SceneStatusFields(JobStatus.Processing, JobStatus.Processing, IngestStatus.Ingested)
+      SceneStatusFields(JobStatus.Processing, JobStatus.Processing, IngestStatus.Ingested), Some(SceneType.Avro)
     )
 
     "require authentication for creation" in {

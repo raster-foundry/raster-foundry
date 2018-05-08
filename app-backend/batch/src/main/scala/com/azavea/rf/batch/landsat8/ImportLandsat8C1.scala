@@ -259,7 +259,8 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
           thumbnailStatus = JobStatus.Success,
           boundaryStatus = JobStatus.Success,
           ingestStatus = IngestStatus.NotIngested
-        )
+        ),
+        sceneType = Some(SceneType.Avro)
       )
       Some(scene)
     }

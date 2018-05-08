@@ -1,4 +1,4 @@
-/* globals BUILDCONFIG Auth0Lock heap */
+/* globals BUILDCONFIG Auth0Lock heap $ window Uint8Array*/
 import ApiActions from '_redux/actions/api-actions';
 
 let assetLogo = BUILDCONFIG.LOGOFILE ?
@@ -13,10 +13,12 @@ export default (app) => {
             jwtHelper, $q, $timeout, featureFlagOverrides, featureFlags,
             perUserFeatureFlags, $state, APP_CONFIG, localStorage,
             rollbarWrapperService, intercomService, $resource, $ngRedux, $location
+
         ) {
             this.localStorage = localStorage;
             this.jwtHelper = jwtHelper;
             this.$q = $q;
+
             this.$timeout = $timeout;
             this.$state = $state;
             this.featureFlags = featureFlags;
@@ -25,6 +27,7 @@ export default (app) => {
             this.intercomService = intercomService;
             this.rollbarWrapperService = rollbarWrapperService;
             this.APP_CONFIG = APP_CONFIG;
+            this.redirectConnection = BUILDCONFIG.REDIRECT_CONNECTION;
             this._redux = {};
             $ngRedux.connect((state) => {
                 return {
@@ -86,7 +89,8 @@ export default (app) => {
                 }, {
                     name: 'phoneNumber',
                     placeholder: 'Phone Number'
-                }]
+                }],
+                allowedConnections: ['Username-Password-Authentication', 'google-oauth2']
             };
 
             let passResetOptions = {
@@ -144,19 +148,7 @@ export default (app) => {
                     logo: assetLogo,
                     primaryColor: BUILDCONFIG.AUTH0_PRIMARY_COLOR
                 },
-                additionalSignUpFields: [{
-                    name: 'companyName',
-                    placeholder: 'Company name'
-                }, {
-                    name: 'companySize',
-                    placeholder: 'How large is your company?'
-                }, {
-                    name: 'reference',
-                    placeholder: 'How\'d you find out about us?'
-                }, {
-                    name: 'phoneNumber',
-                    placeholder: 'Phone Number'
-                }]
+                allowedConnections: ['Username-Password-Authentication', 'google-oauth2']
             };
 
             this.tokenCreateLock = new Auth0Lock(
@@ -178,10 +170,36 @@ export default (app) => {
             return `${protocol}://${host}${formattedPort}`;
         }
 
+        redirectToConnection() {
+            const clientId = this.redirectConnection.clientId;
+            const connection = this.redirectConnection.connection;
+
+            const nonce = this.randomString(35);
+            this.localStorage.set('nonce', nonce);
+            // eslint-disable-next-line
+            const tentantUrl = `https://${this.APP_CONFIG.auth0Domain}/authorize/?client_id=${clientId}&response_type=token id_token&scope=openid profile email&redirect_uri=${this.getBaseURL()}/login&connection=${connection}&nonce=${nonce}`;
+            window.location = tentantUrl;
+        }
+
+        createConnectionToken(name) {
+            const clientId = this.redirectConnection.clientId;
+            const connection = this.redirectConnection.connection;
+
+            const nonce = this.randomString(35);
+            this.localStorage.set('nonce', nonce);
+            // eslint-disable-next-line
+            const tentantUrl = `https://${this.APP_CONFIG.auth0Domain}/authorize/?client_id=${clientId}&response_type=code&scope=openid offline_access&redirect_uri=${this.getBaseURL()}/settings/tokens/api&connection=${connection}&nonce=${nonce}&audience=https://${this.APP_CONFIG.auth0Domain}/api/v2/&device=${name}`;
+            window.location = tentantUrl;
+        }
+
         login(accessToken, idToken) {
             try {
                 if (!accessToken) {
-                    this.loginLock.show();
+                    if (this.redirectConnection) {
+                        this.redirectToConnection();
+                    } else {
+                        this.loginLock.show();
+                    }
                 } else if (!this.jwtHelper.isTokenExpired(accessToken)) {
                     this.onLogin({accessToken, idToken});
                 } else if (this.jwtHelper.isTokenExpired(accessToken)) {
@@ -347,14 +365,19 @@ export default (app) => {
         createRefreshToken(name) {
             this.promise = this.$q.defer();
             this.lastTokenName = name;
-            this.tokenCreateLock.show({
-                auth: {
-                    params: {
-                        scope: 'openid offline_access',
-                        device: name
+
+            if (this.redirectConnection) {
+                this.createConnectionToken(name);
+            } else {
+                this.tokenCreateLock.show({
+                    auth: {
+                        params: {
+                            scope: 'openid offline_access',
+                            device: name
+                        }
                     }
-                }
-            });
+                });
+            }
             return this.promise.promise;
         }
 
@@ -403,6 +426,16 @@ export default (app) => {
             }
         }
 
+        randomString(length) {
+            const bytes = new Uint8Array(length);
+            const random = window.crypto.getRandomValues(bytes);
+            const result = [];
+            const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._~';
+            random.forEach(function (c) {
+                result.push(charset[c % charset.length]);
+            });
+            return result.join('');
+        }
     }
 
     app.service('authService', AuthService);

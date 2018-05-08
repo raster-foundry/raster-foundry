@@ -30,6 +30,9 @@ trait EnumMeta {
   implicit val fileTypeMeta: Meta[FileType] =
     pgEnumString("file_type", FileType.fromString, _.repr)
 
+  implicit val sceneTypeMeta: Meta[SceneType] =
+    pgEnumString("scene_type", SceneType.fromString, _.repr)
+
   implicit val thumbnailSizeMeta: Meta[ThumbnailSize] =
     pgEnumString("thumbnailsize", ThumbnailSize.fromString, _.repr)
 

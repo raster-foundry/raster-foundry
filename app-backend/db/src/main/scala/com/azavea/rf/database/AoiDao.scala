@@ -25,7 +25,7 @@ object AoiDao extends Dao[AOI] {
     sql"""
       SELECT
         id, created_at, modified_at, organization_id,
-        created_by, modified_by, owner, area, filters
+        created_by, modified_by, owner, area, filters, is_active
       FROM
     """ ++ tableF
 
@@ -40,7 +40,8 @@ object AoiDao extends Dao[AOI] {
         modified_at = NOW(),
         modified_by = ${user.id},
         area = ${aoi.area},
-        filters = ${aoi.filters}
+        filters = ${aoi.filters},
+        is_active = ${aoi.isActive}
       WHERE
         id = ${aoi.id}
     """).update.run
@@ -51,13 +52,13 @@ object AoiDao extends Dao[AOI] {
 
     val aoiCreate: ConnectionIO[AOI] = (fr"INSERT INTO" ++ tableF ++ fr"""
         (id, created_at, modified_at, organization_id,
-        created_by, modified_by, owner, area, filters)
+        created_by, modified_by, owner, area, filters, is_active)
       VALUES
         (${aoi.id}, NOW(), NOW(), ${user.organizationId},
-        ${user.id}, ${user.id}, ${ownerId}, ${aoi.area}, ${aoi.filters})
+        ${user.id}, ${user.id}, ${ownerId}, ${aoi.area}, ${aoi.filters}, ${aoi.isActive})
     """).update.withUniqueGeneratedKeys[AOI](
       "id", "created_at", "modified_at", "organization_id",
-      "created_by", "modified_by", "owner", "area", "filters"
+      "created_by", "modified_by", "owner", "area", "filters", "is_active"
     )
 
     val transaction = for {

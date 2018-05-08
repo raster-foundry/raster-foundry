@@ -58,7 +58,7 @@ def get_planet_thumbnail(organization_id, thumbnail_uri, planet_key, scene_id):
 
 def create_planet_scene(planet_feature, datasource, organization_id, planet_key,
                         ingest_status=IngestStatus.TOBEINGESTED,
-                        visibility=Visibility.PRIVATE, tags=[], owner=None):
+                        visibility=Visibility.PRIVATE, tags=[], owner=None, sceneType="AVRO"):
     """Create a Raster Foundry scene from Planet scenes
 
     Args:
@@ -123,6 +123,7 @@ def create_planet_scene(planet_feature, datasource, organization_id, planet_key,
         [],
         owner=owner,
         images=images,
+        sceneType=sceneType,
         **scene_kwargs
     )
 
