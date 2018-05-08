@@ -4,6 +4,7 @@ import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.{PlatformDao, OrganizationDao, TeamDao, UserDao, UserGroupRoleDao}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
@@ -27,7 +28,7 @@ trait PlatformRoutes extends Authentication
   with CommonHandlers
   with KamonTraceDirectives
   with UserErrorHandler
-  with PlatformQueryParameterDirective {
+  with QueryParametersCommon {
 
   val xa: Transactor[IO]
 
@@ -270,9 +271,9 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
     } {
-      withPagination { page =>
+      (withPagination & searchParams) { (page, searchParams) =>
         complete {
-          PlatformDao.listMembers(platformId, page).transact(xa).unsafeToFuture
+          PlatformDao.listMembers(platformId, page, searchParams).transact(xa).unsafeToFuture
         }
       }
     }
@@ -354,9 +355,9 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
     } {
-      withPagination { page =>
+      (withPagination & searchParams) { (page, searchParams) =>
         complete {
-          OrganizationDao.listMembers(orgId, page).transact(xa).unsafeToFuture
+          OrganizationDao.listMembers(orgId, page, searchParams).transact(xa).unsafeToFuture
         }
       }
     }
@@ -438,9 +439,9 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
     } {
-      withPagination { page =>
+      (withPagination & searchParams) { (page, searchParams) =>
         complete {
-          TeamDao.listMembers(teamId, page).transact(xa).unsafeToFuture
+          TeamDao.listMembers(teamId, page, searchParams).transact(xa).unsafeToFuture
         }
       }
     }

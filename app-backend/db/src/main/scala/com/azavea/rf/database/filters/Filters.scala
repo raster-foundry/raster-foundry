@@ -67,10 +67,10 @@ object Filters {
     List(
       searchParams.search.map(valueToMatch => {
         Fragment.const(
-          cols.map(col => {
+          "(" ++ cols.map(col => {
             val namePattern: String = "'%" + valueToMatch.toUpperCase() + "%'"
             s"UPPER($col) LIKE $namePattern"
-          }).mkString(" OR ")
+          }).mkString(" OR ") ++ ")"
         )
       })
     )

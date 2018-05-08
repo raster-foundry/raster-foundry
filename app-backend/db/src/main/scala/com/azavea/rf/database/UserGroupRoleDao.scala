@@ -1,7 +1,8 @@
   package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{UserGroupRole, GroupType, User, GroupRole, PaginatedResponse}
+import com.azavea.rf.database.filter.Filters._
+import com.azavea.rf.datamodel.{UserGroupRole, GroupType, User, GroupRole, PaginatedResponse, SearchQueryParameters}
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
@@ -105,7 +106,12 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       .list
   }
 
-  def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
+  def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest, searchParams: SearchQueryParameters): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
+    val queryFilters: List[Option[Fragment]] = List(
+      Some(fr"ugr.group_type = ${groupType}"),
+      Some(fr"ugr.group_id = ${groupId}"),
+      Some(fr"ugr.is_active = true")) ::: searchQP(searchParams, List("u.name", "u.email"))
+
     val sf =
       fr"""SELECT u.id, u.organization_id, u.role, u.created_at, u.modified_at,
         u.dropbox_credential, u.planet_credential, u.email_notifications,
@@ -113,19 +119,16 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
         FROM """ ++ tableF ++ fr""" ugr
         JOIN """ ++ UserDao.tableF ++ fr""" u
           ON u.id = ugr.user_id
-        WHERE
-          ugr.group_type = ${groupType} AND
-          ugr.group_id = ${groupId}
       """
+
     val cf =
       fr"""SELECT count(ugr.id)
         FROM """ ++ tableF ++ fr""" ugr
-        WHERE
-          ugr.group_type = ${groupType} AND
-          ugr.group_id = ${groupId}
+        JOIN """ ++ UserDao.tableF ++ fr""" u
+          ON u.id = ugr.user_id
       """
 
-      query.page[User.WithGroupRole](page, sf, cf)
+      query.page[User.WithGroupRole](page, sf ++ Fragments.whereAndOpt(queryFilters: _*), cf ++ Fragments.whereAndOpt(queryFilters: _*))
   }
 
   // @TODO: ensure a user cannot demote (or promote?) themselves
