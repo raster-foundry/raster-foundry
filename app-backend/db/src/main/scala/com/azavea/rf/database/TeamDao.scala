@@ -69,9 +69,45 @@ object TeamDao extends Dao[Team] {
       )
   }
 
+  def userIsMemberF(user: User, teamId: UUID ) = fr"""
+    SELECT count(id) > 0
+      FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
+      WHERE
+        user_id = ${user.id} AND
+        group_type = ${GroupType.Team.toString}::group_type AND
+        group_id = ${teamId} AND
+        is_active = true
+  """
+
+  def listMembers(teamId: UUID, page: PageRequest): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
+    UserGroupRoleDao.listUsersByGroup(GroupType.Team, teamId, page)
+
+  def validatePath(platformId: UUID,
+                   organizationId: UUID,
+                   teamId: UUID): ConnectionIO[Boolean] =
+    (fr"""
+      SELECT count(t.id) > 0
+      FROM """ ++ tableF ++ fr""" t
+      JOIN """ ++ OrganizationDao.tableF ++ fr""" o
+        ON o.id = t.organization_id
+      JOIN """ ++ PlatformDao.tableF ++ fr""" p
+        ON p.id = o.platform_id
+      WHERE
+        p.id = ${platformId} AND
+        o.id = ${organizationId} AND
+        t.id = ${teamId}
+    """).query[Boolean].option.map(_.getOrElse(false))
+
+  def userIsMember(user: User, teamId: UUID): ConnectionIO[Boolean] =
+    userIsMemberF(user, teamId).query[Boolean].option.map(_.getOrElse(false))
+
   def userIsAdminF(user: User, teamId: UUID) = {
     fr"""
       SELECT (
+        SELECT is_superuser
+        FROM """ ++ UserDao.tableF ++ fr"""
+        WHERE id = ${user.id}
+      ) OR (
         SELECT count(id) > 0
         FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
         WHERE
@@ -119,22 +155,22 @@ object TeamDao extends Dao[Team] {
   def delete(teamId: UUID): ConnectionIO[Int] =
     TeamDao.query.filter(teamId).delete
 
-  def addUserRole(user: User, subject: User, teamId: UUID, userRole: GroupRole): ConnectionIO[UserGroupRole] = {
+  def addUserRole(actingUser: User, subjectId: String, teamId: UUID, groupRole: GroupRole): ConnectionIO[UserGroupRole] = {
     val userGroupRoleCreate = UserGroupRole.Create(
-      subject, GroupType.Team, teamId, userRole
+      subjectId, GroupType.Team, teamId, groupRole
     )
-    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(user))
+    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser))
   }
 
-  def setUserRole(user: User, subject: User, teamId: UUID, userRole: GroupRole): ConnectionIO[List[UserGroupRole]] = {
-    deactivateUserRoles(user, subject, teamId).flatMap(
-      deactivatedUserRoles => addUserRole(user, subject, teamId, userRole)
+  def setUserRole(actingUser: User, subjectId: String, teamId: UUID, groupRole: GroupRole): ConnectionIO[List[UserGroupRole]] = {
+    deactivateUserRoles(actingUser, subjectId, teamId).flatMap(
+      deactivatedUserRoles => addUserRole(actingUser, subjectId, teamId, groupRole)
         .map(deactivatedUserRoles ++ List(_))
     )
   }
 
-  def deactivateUserRoles(user: User, subject: User, teamId: UUID): ConnectionIO[List[UserGroupRole]] = {
-    val userGroup = UserGroupRole.UserGroup(subject.id, GroupType.Team, teamId)
-    UserGroupRoleDao.deactivateUserGroupRoles(userGroup, user)
+  def deactivateUserRoles(actingUser: User, subjectId: String, teamId: UUID): ConnectionIO[List[UserGroupRole]] = {
+    val userGroup = UserGroupRole.UserGroup(subjectId, GroupType.Team, teamId)
+    UserGroupRoleDao.deactivateUserGroupRoles(userGroup, actingUser)
   }
 }

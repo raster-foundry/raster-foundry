@@ -98,4 +98,16 @@ object UserDao extends Dao[User] {
       "email", "name", "profile_image_uri", "is_superuser", "is_active"
     )
   }
+
+  def isSuperUserF(user: User) = fr"""
+    SELECT count(id) > 0
+      FROM """ ++ UserDao.tableF ++ fr"""
+      WHERE
+        id = ${user.id} AND
+        is_superuser = true AND
+        is_active = true
+  """
+
+  def isSuperUser(user: User): ConnectionIO[Boolean] =
+    isSuperUserF(user).query[Boolean].option.map(_.getOrElse(false))
 }

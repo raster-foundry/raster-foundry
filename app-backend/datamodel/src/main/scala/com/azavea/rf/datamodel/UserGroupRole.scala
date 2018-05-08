@@ -9,49 +9,55 @@ import io.circe.syntax._
 
 @JsonCodec
 case class UserGroupRole(
-    id: UUID,
-    createdAt: Timestamp,
-    createdBy: String,
-    modifiedAt: Timestamp,
-    modifiedBy: String,
-    isActive: Boolean,
+  id: UUID,
+  createdAt: Timestamp,
+  createdBy: String,
+  modifiedAt: Timestamp,
+  modifiedBy: String,
+  isActive: Boolean,
+  userId: String,
+  groupType: GroupType,
+  groupId: UUID,
+  groupRole: GroupRole
+)
+
+object UserGroupRole {
+  def create = Create.apply _
+  def tupled = (UserGroupRole.apply _).tupled
+
+  case class UserGroup(
+    userId: String,
+    groupType: GroupType,
+    groupId: UUID
+  )
+
+  @JsonCodec
+  case class UserRole(
+    userId: String,
+    groupRole: GroupRole
+  )
+
+  @JsonCodec
+  case class Create(
     userId: String,
     groupType: GroupType,
     groupId: UUID,
     groupRole: GroupRole
-)
-
-object UserGroupRole {
-    def create = Create.apply _
-    def tupled = (UserGroupRole.apply _).tupled
-
-    case class UserGroup(
-      userId: String,
-      groupType: GroupType,
-      groupId: UUID
-    )
-
-    @JsonCodec
-    case class Create(
-        userToAdd: User,
-        groupType: GroupType,
-        groupId: UUID,
-        groupRole: GroupRole
-    ) {
-        def toUserGroupRole(user: User): UserGroupRole = {
-            val now = new Timestamp((new java.util.Date()).getTime())
-            UserGroupRole(
-                UUID.randomUUID(),
-                now, // createdAt
-                user.id, // createdBy
-                now, // modifiedAt
-                user.id, // modifiedBy
-                true, // always default isActive to true
-                userToAdd.id, // user that is being given the group role
-                groupType,
-                groupId,
-                groupRole
-            )
-        }
+  ) {
+    def toUserGroupRole(creator: User): UserGroupRole = {
+      val now = new Timestamp((new java.util.Date()).getTime())
+      UserGroupRole(
+        UUID.randomUUID(),
+        now, // createdAt
+        creator.id, // createdBy
+        now, // modifiedAt
+        creator.id, // modifiedBy
+        true, // always default isActive to true
+        userId, // user that is being given the group role
+        groupType,
+        groupId,
+        groupRole
+      )
     }
+  }
 }

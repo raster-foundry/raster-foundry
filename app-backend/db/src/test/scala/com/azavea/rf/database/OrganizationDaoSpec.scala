@@ -92,7 +92,7 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
           val addPlatformRoleWithPlatformIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
                                           (org, dbUser) = orgAndUser
-            insertedUserGroupRole <- OrganizationDao.addUserRole(dbUser, dbUser, org.id, userRole)
+            insertedUserGroupRole <- OrganizationDao.addUserRole(dbUser, dbUser.id, org.id, userRole)
             byIdUserGroupRole <- UserGroupRoleDao.getOption(insertedUserGroupRole.id)
           } yield { (org, byIdUserGroupRole) }
 
@@ -128,8 +128,8 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
           val setPlatformRoleIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (org, dbUser) = orgAndUser
-            originalUserGroupRole <- OrganizationDao.addUserRole(dbUser, dbUser, org.id, userRole)
-            updatedUserGroupRoles <- OrganizationDao.deactivateUserRoles(dbUser, dbUser, org.id)
+            originalUserGroupRole <- OrganizationDao.addUserRole(dbUser, dbUser.id, org.id, userRole)
+            updatedUserGroupRoles <- OrganizationDao.deactivateUserRoles(dbUser, dbUser.id, org.id)
           } yield { (originalUserGroupRole, updatedUserGroupRoles ) }
 
           val (dbOldUGR, dbUpdatedUGRs) = setPlatformRoleIO.transact(xa).unsafeRunSync
@@ -156,8 +156,8 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
           val setPlatformRoleIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (org, dbUser) = orgAndUser
-            originalUserGroupRole <- OrganizationDao.addUserRole(dbUser, dbUser, org.id, userRole)
-            updatedUserGroupRoles <- OrganizationDao.setUserRole(dbUser, dbUser, org.id, userRole)
+            originalUserGroupRole <- OrganizationDao.addUserRole(dbUser, dbUser.id, org.id, userRole)
+            updatedUserGroupRoles <- OrganizationDao.setUserRole(dbUser, dbUser.id, org.id, userRole)
             allUserGroupRoles <- UserGroupRoleDao.query.filter(fr"user_id = ${dbUser.id}").list
           } yield { (org, originalUserGroupRole, updatedUserGroupRoles, allUserGroupRoles ) }
 

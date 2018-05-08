@@ -129,9 +129,9 @@ trait PropTestHelpers {
 
   def fixupUserGroupRole(user: User, organization: Organization, team: Team, platform: Platform, ugrCreate: UserGroupRole.Create): UserGroupRole.Create = {
     ugrCreate.groupType match {
-      case GroupType.Platform => ugrCreate.copy(groupId = platform.id, userToAdd = user)
-      case GroupType.Organization => ugrCreate.copy(groupId = organization.id, userToAdd = user)
-      case GroupType.Team => ugrCreate.copy(groupId = team.id, userToAdd = user)
+      case GroupType.Platform => ugrCreate.copy(groupId = platform.id, userId = user.id)
+      case GroupType.Organization => ugrCreate.copy(groupId = organization.id, userId = user.id)
+      case GroupType.Team => ugrCreate.copy(groupId = team.id, userId = user.id)
     }
   }
 }

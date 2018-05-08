@@ -1,12 +1,13 @@
-package com.azavea.rf.database
+  package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{UserGroupRole, GroupType, User, GroupRole}
+import com.azavea.rf.datamodel.{UserGroupRole, GroupType, User, GroupRole, PaginatedResponse}
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import cats._, cats.data._, cats.effect.IO, cats.implicits._
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import io.circe._
 
 import java.util.UUID
@@ -96,12 +97,35 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   }
 
   // List a user's roles in a group
-  def listUserGroupRoles(groupType: GroupType, groupId: UUID, user: User): ConnectionIO[List[UserGroupRole]] = {
+  def listUserGroupRoles(groupType: GroupType, groupId: UUID, userId: String): ConnectionIO[List[UserGroupRole]] = {
     query.filter(fr"group_type = ${groupType}")
       .filter(fr"group_id = ${groupId}")
-      .filter(fr"user_id = ${user.id}")
+      .filter(fr"user_id = ${userId}")
       .filter(fr"is_active = true")
       .list
+  }
+
+  def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
+    val sf =
+      fr"""SELECT u.id, u.organization_id, u.role, u.created_at, u.modified_at,
+        u.dropbox_credential, u.planet_credential, u.email_notifications,
+        u.email, u.name, u.profile_image_uri, u.is_superuser, u.is_active, ugr.group_role
+        FROM """ ++ tableF ++ fr""" ugr
+        JOIN """ ++ UserDao.tableF ++ fr""" u
+          ON u.id = ugr.user_id
+        WHERE
+          ugr.group_type = ${groupType} AND
+          ugr.group_id = ${groupId}
+      """
+    val cf =
+      fr"""SELECT count(ugr.id)
+        FROM """ ++ tableF ++ fr""" ugr
+        WHERE
+          ugr.group_type = ${groupType} AND
+          ugr.group_id = ${groupId}
+      """
+
+      query.page[User.WithGroupRole](page, sf, cf)
   }
 
   // @TODO: ensure a user cannot demote (or promote?) themselves

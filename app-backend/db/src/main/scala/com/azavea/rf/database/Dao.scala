@@ -62,49 +62,52 @@ object Dao {
       this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
     }
 
-    def authorizeFragment(user: User, objectType: ObjectType, actionType: ActionType): Option[Fragment] = Some(
-      fr"""id IN (
-        -- Collect objects owned by the user
-        SELECT A.id
-        FROM""" ++ tableF ++ fr"""AS A
-        WHERE A.owner = ${user.id}
-
-        UNION ALL
-
-        -- Collect objects the user has access to for non-group permissions
-        SELECT A.id
-        FROM""" ++ tableF ++ fr"""AS A
-        JOIN access_control_rules acr ON
-          acr.object_id::text = A.id::text
-          WHERE
-            acr.object_type = ${objectType} AND
-            acr.action_type = ${actionType} AND
-            -- Match if the ACR is an ALL or per user
-            (
-              acr.subject_type = 'ALL' OR
-              (acr.subject_type = 'USER' AND acr.subject_id = ${user.id})
-            )
-
-        UNION ALL
-
-        -- Collect objects the user has access to for group permissions
-        SELECT A.id
-        FROM""" ++ tableF ++ fr"""AS A
-        JOIN access_control_rules acr ON
-          acr.object_id::text = A.id::text
-        JOIN user_group_roles ugr ON
-          acr.subject_type::text = ugr.group_type::text AND
-          acr.subject_id::text = ugr.group_id::text
-        WHERE
-          ugr.user_id = ${user.id} AND
-          acr.object_type = ${objectType} AND
-          acr.action_type = ${actionType}
-      )"""
-    )
+    // Filter to validate access on an object type
+    def authorizeF[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): Option[Fragment] = {
+      if (user.isSuperuser) {
+        Some(fr"true")
+      } else {
+        Some(
+          fr"""id IN (
+            -- Collect objects owned by the user
+            SELECT A.id
+            FROM""" ++ tableF ++ fr"""AS A
+            WHERE A.owner = ${user.id}
+            UNION ALL
+            -- Collect objects the user has access to for non-group permissions
+            SELECT A.id
+            FROM""" ++ tableF ++ fr"""AS A
+            JOIN access_control_rules acr ON
+              acr.object_id::text = A.id::text
+            WHERE
+              acr.object_type = ${objectType} AND
+              acr.action_type = ${actionType} AND
+              -- Match if the ACR is an ALL or per user
+              (
+                acr.subject_type = 'ALL' OR
+                (acr.subject_type = 'USER' AND acr.subject_id = ${user.id})
+              )
+            UNION ALL
+            -- Collect objects the user has access to for group permissions
+            SELECT A.id
+            FROM""" ++ tableF ++ fr"""AS A
+            JOIN access_control_rules acr ON
+              acr.object_id::text = A.id::text
+            JOIN user_group_roles ugr ON
+              acr.subject_type::text = ugr.group_type::text AND
+              acr.subject_id::text = ugr.group_id::text
+            WHERE
+              ugr.user_id = ${user.id} AND
+              acr.object_type = ${objectType} AND
+              acr.action_type = ${actionType}
+          )"""
+        )
+      }
+    }
 
     // Filter to validate access on an object type
     def authorize[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
-      this.copy(filters = filters ++ filterable.toFilters(authorizeFragment(user, objectType, actionType)))
+      this.copy(filters = filters ++ filterable.toFilters(authorizeF(user, objectType, actionType)))
     }
 
     // Filter to validate access to a specific object
@@ -113,6 +116,12 @@ object Dao {
         fr"""(
           -- Match if the user owns the object
           owner = ${user.id} OR
+          -- Match if the user is a super user
+          (
+            SELECT is_superuser
+            FROM """ ++ UserDao.tableF ++ fr"""
+            WHERE id = ${user.id}
+          ) OR
           -- Match if the user is granted access via ALL or explicitly granted access
           (
             SELECT count(acr.id) > 0
@@ -180,15 +189,15 @@ object Dao {
     }
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page(pageRequest: PageRequest, selectF: Fragment, countF: Fragment): ConnectionIO[PaginatedResponse[Model]] = {
+    def page[T: Composite](pageRequest: PageRequest, selectF: Fragment, countF: Fragment): ConnectionIO[PaginatedResponse[T]] = {
       for {
-        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[Model].list
+        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[T].list
         count <- (countF ++ Fragments.whereAndOpt(filters: _*)).query[Int].unique
       } yield {
         val hasPrevious = pageRequest.offset > 0
         val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
 
-        PaginatedResponse[Model](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
+        PaginatedResponse[T](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
       }
     }
 

@@ -399,7 +399,7 @@ object Generators extends ArbitraryInstances {
     groupType <- groupTypeGen
     groupId <- uuidGen
     groupRole <- groupRoleGen
-  } yield { UserGroupRole.Create(user, groupType, groupId, groupRole) }
+  } yield { UserGroupRole.Create(user.id, groupType, groupId, groupRole) }
 
   private def platformGen: Gen[Platform] =
     for {

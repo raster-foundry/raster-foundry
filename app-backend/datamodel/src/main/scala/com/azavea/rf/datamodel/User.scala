@@ -100,6 +100,24 @@ object User {
   def create = Create.apply _
 
   @JsonCodec
+  case class WithGroupRole (
+    id: String,
+    organizationId: UUID,
+    role: UserRole,
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    dropboxCredential: Credential,
+    planetCredential: Credential,
+    emailNotifications: Boolean,
+    email: String,
+    name: String,
+    profileImageUri: String,
+    isSuperuser: Boolean,
+    isActive: Boolean,
+    groupRole: GroupRole
+  )
+
+  @JsonCodec
   case class Create(
     id: String,
     organizationId: UUID,
