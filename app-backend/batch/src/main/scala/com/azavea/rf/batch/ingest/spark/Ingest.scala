@@ -42,8 +42,6 @@ import org.apache.spark.rdd._
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
-import scala.util.Properties
-
 import java.io.File
 import java.net.URI
 import java.util.UUID
@@ -327,13 +325,6 @@ object Ingest extends SparkJob with RollbarNotifier with Config {
     implicit def asS3Payload(status: IngestStatus): String = S3IngestStatus(sceneId, status).asJson.noSpaces
 
     try {
-      Properties.envOrElse("AWS_BATCH_JOB_ATTEMPT", "1") match {
-        case "3" => {
-          logger.error("Failing early due to previous failures. See prior attempts' logs")
-          throw new Exception("Suspicious repeated ingest failures")
-        }
-        case _ => ()
-      }
       ingestDefinition.layers.foreach(ingestLayer(params, _))
       if (params.testRun) ingestDefinition.layers.foreach(Validation.validateCatalogEntry)
       putObjectString(
