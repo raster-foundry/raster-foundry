@@ -7,8 +7,8 @@ ENV PATH=${PATH}:/usr/lib/spark/sbin:/usr/lib/spark/bin
 COPY rf/requirements.txt /tmp/
 RUN set -ex \
     && gdalDeps=' \
-       gdal-bin \
-       python-gdal \
+       gdal-bin/sid \
+       python-gdal/sid \
        python-pip \
        python-setuptools \
        python-dev \
@@ -16,6 +16,7 @@ RUN set -ex \
        build-essential \
        imagemagick \
     ' \
+    && echo 'deb http://http.us.debian.org/debian sid main non-free contrib' > /etc/apt/sources.list.d/sid.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends ${gdalDeps} wget \
     && pip install --no-cache-dir \
