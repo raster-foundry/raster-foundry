@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
 import os
+import re
 import tempfile
 from urlparse import urlparse
 
 import boto3
 import requests
-import jwt
 
 
 s3 = boto3.resource('s3', region_name='eu-central-1')
@@ -66,6 +65,23 @@ def s3_obj_exists(url):
     """
     resp = requests.head(url)
     return resp.status_code != 404
+
+
+def gcs_path_for_landsat_id(landsat_id):
+    """Create a Google Cloud Storage path from a Landsat ID
+    """
+    pattern = re.compile(r'L(?P<sensor_id>.)(?P<landsat_number>\d)(?P<path>\d{3})(?P<row>\d{3}).*')
+    match = pattern.match(landsat_id)
+    tmpl = (
+        'https://storage.googleapis.com/gcp-public-data-landsat/'
+        'L{sensor_id}0{landsat_number}/PRE/{path}/{row}/{landsat_id}'
+    )
+    if not match:
+        raise Exception('Could not parse Landsat ID. Make sure you entered it correctly.')
+    if match.group('landsat_number') in ['4', '5', '7']:
+        return tmpl.format(**dict(landsat_id=landsat_id, **match.groupdict()))
+    else:
+        raise Exception('Landsat number was something other than 4, 5, or 7. Aborting.')
 
 
 def get_jwt():
