@@ -78,6 +78,10 @@ object PlatformDao extends Dao[Platform] {
 
   def userIsAdminF(user: User, platformId: UUID) = fr"""
       SELECT (
+        SELECT is_superuser
+        FROM """ ++ UserDao.tableF ++ fr"""
+        WHERE id = ${user.id}
+      ) OR (
         SELECT count(id) > 0
         FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
         WHERE

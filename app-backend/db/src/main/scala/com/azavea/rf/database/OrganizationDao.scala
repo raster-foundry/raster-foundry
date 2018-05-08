@@ -94,6 +94,10 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
 
   def userIsAdminF(user: User, organizationId: UUID) = fr"""
     SELECT (
+        SELECT is_superuser
+        FROM """ ++ UserDao.tableF ++ fr"""
+        WHERE id = ${user.id}
+      ) OR (
       SELECT count(id) > 0
       FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
       WHERE
