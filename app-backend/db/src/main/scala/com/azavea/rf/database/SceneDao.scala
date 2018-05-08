@@ -173,8 +173,6 @@ object SceneDao extends Dao[Scene] {
             scene.statusFields.ingestStatus match {
               case IngestStatus.ToBeIngested =>
                 (n, true)
-              case IngestStatus.Failed =>
-                (n, true)
               case IngestStatus.Ingesting =>
                 (n, ts.getTime < now.getTime - (24 hours).toMillis)
               case _ =>
