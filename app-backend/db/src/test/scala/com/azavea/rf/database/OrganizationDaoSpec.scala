@@ -20,11 +20,11 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
   test("insert an organization from an Organization.Create") {
     check {
       forAll(
-        (rootUserCreate: User.Create, orgCreate: Organization.Create, platformCreate: Platform.Create) => {
+        (rootUserCreate: User.Create, orgCreate: Organization.Create, platform: Platform) => {
           val orgInsertIO = for {
             rootOrg <- rootOrgQ
             insertedUser <- UserDao.create(rootUserCreate.copy(organizationId = rootOrg.id))
-            insertedPlatform <- PlatformDao.create(platformCreate.toPlatform(insertedUser))
+            insertedPlatform <- PlatformDao.create(platform)
             newOrg <- OrganizationDao.create(orgCreate.copy(platformId = insertedPlatform.id).toOrganization)
           } yield (newOrg, insertedPlatform)
           val (insertedOrg, insertedPlatform) = orgInsertIO.transact(xa).unsafeRunSync

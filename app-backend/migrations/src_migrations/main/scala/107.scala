@@ -6,21 +6,13 @@ object M107 {
     sqlu"""
     CREATE TABLE platforms (
         id UUID PRIMARY KEY NOT NULL,
-        created_at TIMESTAMP NOT NULL,
-        created_by VARCHAR(255) REFERENCES users(id) NOT NULL,
-        modified_at TIMESTAMP NOT NULL,
-        modified_by VARCHAR(255) REFERENCES users(id) NOT NULL,
         name TEXT NOT NULL,
         settings JSONB NOT NULL default '{}'
     );
 
-    INSERT INTO platforms (id, created_at, created_by, modified_at, modified_by, name)
+    INSERT INTO platforms (id, name)
     VALUES (
         '31277626-968b-4e40-840b-559d9c67863c',
-        NOW(),
-        'default',
-        NOW(),
-        'default',
         'Raster Foundry'
     );
 

@@ -394,17 +394,27 @@ object Generators extends ArbitraryInstances {
     teamCreate.toTeam(user)
   }
 
-  private def platformCreateGen: Gen[Platform.Create] = for {
-    platformName <- nonEmptyStringGen
-    settings <- Gen.const(().asJson)
-  } yield { Platform.Create(platformName, settings) }
-
   private def userGroupRoleCreateGen: Gen[UserGroupRole.Create] = for {
     user <- userGen
     groupType <- groupTypeGen
     groupId <- uuidGen
     groupRole <- groupRoleGen
   } yield { UserGroupRole.Create(user, groupType, groupId, groupRole) }
+
+  private def platformGen: Gen[Platform] =
+    for {
+      platformId <- uuidGen
+      platformName <- uuidGen map { _.toString }
+      settings <- Gen.const(().asJson)
+      isActive <- arbitrary[Boolean]
+    } yield { Platform(platformId, platformName, settings, isActive) }
+
+  private def userOrgPlatformGen: Gen[(User.Create, Organization.Create, Platform)] =
+    for {
+      platform <- platformGen
+      orgCreate <- organizationCreateGen map { _.copy(platformId = platform.id) }
+      userCreate <- userCreateGen
+    } yield { (userCreate, orgCreate, platform) }
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
@@ -467,10 +477,14 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbTeam: Arbitrary[Team] = Arbitrary { teamGen }
 
-    implicit def arbPlatformCreate: Arbitrary[Platform.Create] = Arbitrary { platformCreateGen }
-
     implicit def arbUserGroupRoleCreate: Arbitrary[UserGroupRole.Create] = Arbitrary { userGroupRoleCreateGen }
 
     implicit def arbGroupRoleCreate: Arbitrary[GroupRole] = Arbitrary { groupRoleGen }
+
+    implicit def arbPlatform: Arbitrary[Platform] = Arbitrary { platformGen }
+
+    implicit def arbUserOrgPlatform: Arbitrary[(User.Create, Organization.Create, Platform)] = Arbitrary {
+      userOrgPlatformGen
+    }
   }
 }
