@@ -1,60 +1,67 @@
 import angular from 'angular';
+import _ from 'lodash';
 
 class PlatformOrganizationsController {
-    constructor($state, modalService) {
+    constructor(
+        $state, modalService, $stateParams, $scope, $log,
+        platformService, organizationService
+    ) {
         this.$state = $state;
+        this.$scope = $scope;
+        this.$stateParams = $stateParams;
+        this.$log = $log;
         this.modalService = modalService;
-        this.fetchUsers();
+        this.platformService = platformService;
+        this.organizationService = organizationService;
+        if (this.$stateParams.platformId) {
+            this.fetchOrganizations();
+        } else {
+            this.$state.go('admin');
+        }
+
+        let debouncedSearch = _.debounce(
+            this.onSearch.bind(this),
+            500,
+            {leading: false, trailing: true}
+        );
+        this.$scope.$watch('$ctrl.search', debouncedSearch);
     }
 
-    fetchUsers() {
-        this.organizations = [
-            {
-                id: '1',
-                name: 'organization one',
-                email: 'admin@organization.com',
-                subscription: {
-                    name: '30 day trial'
-                },
-                userCount: 1
-            },
-            {
-                id: '2',
-                name: 'organization two',
-                email: 'admin@organization.com',
-                subscription: {
-                    name: 'Pro Package'
-                },
-                userCount: 10
-            },
-            {
-                id: '3',
-                name: 'organization three',
-                email: 'admin@organization.com',
-                subscription: {
-                    name: 'Pro Package'
-                },
-                userCount: 12
-            },
-            {
-                id: '4',
-                name: 'organization four',
-                email: 'admin@organization.com',
-                subscription: {
-                    name: 'Super Pro Plus Delux Package'
-                },
-                userCount: 500
-            }
-        ];
+    onSearch(search) {
+        // eslint-disable-next-line
+        this.fetchOrganizations(undefined, search);
+    }
 
-        this.organizations.forEach(
-            (org) => Object.assign(
-                org, {
-                    options: {
-                        items: this.itemsForOrg(org)
-                    }
-                }
-            ));
+    updatePagination(data) {
+        this.pagination = {
+            show: data.count > data.pageSize,
+            count: data.count,
+            currentPage: data.page + 1,
+            startingItem: data.page * data.pageSize + 1,
+            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
+            hasNext: data.hasNext,
+            hasPrevious: data.hasPrevious
+        };
+    }
+
+    fetchOrganizations(page = 1, search) {
+        this.platformService
+            .getOrganizations(this.$stateParams.platformId, page - 1, search)
+            .then((response) => {
+                // TODO: add pagination support
+                this.updatePagination(response);
+                this.lastOrgResult = response;
+                this.organizations = response.results;
+
+                this.organizations.forEach(
+                    (org) => Object.assign(
+                        org, {
+                            options: {
+                                items: this.itemsForOrg(org)
+                            }
+                        }
+                    ));
+            });
     }
 
     itemsForOrg(organization) {
@@ -67,14 +74,40 @@ class PlatformOrganizationsController {
                 }
             },
             {
-                label: 'Delete',
+                label: 'Deactivate',
                 callback: () => {
-                    console.log('delete callback for organization:', organization);
+                    this.deactivateOrganization(organization);
                 },
                 classes: ['color-danger']
             }
         ];
         /* eslint-enable */
+    }
+
+    deactivateOrganization(organization) {
+        const modal = this.modalService.open({
+            component: 'rfConfirmationModal',
+            resolve: {
+                title: () => 'Deactivate organization ?',
+                content: () => 'The organization can be reactivated at any time',
+                confirmText: () => 'Deactivate',
+                cancelText: () => 'Cancel'
+            }
+        });
+
+        modal.result.then(() => {
+            this.organizationService.deactivate(
+                this.$stateParams.platformId, organization.id
+            ).then(
+                () => {
+                    this.fetchOrganizations(this.pagination.currentPage);
+                },
+                (err) => {
+                    this.$log.debug('error deactivating organization', err);
+                    this.fetchOrganizations(this.pagination.currentPage);
+                }
+            );
+        });
     }
 
     newOrgModal() {
@@ -83,8 +116,11 @@ class PlatformOrganizationsController {
             resolve: { },
             size: 'sm'
         }).result.then((result) => {
-            // eslint-disable-next-line
-            console.log('organization modal closed with value:', result);
+            this.platformService
+                .createOrganization(this.$stateParams.platformId, result.name)
+                .then(() => {
+                    this.fetchOrganizations();
+                });
         });
     }
 }

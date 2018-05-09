@@ -1,12 +1,49 @@
 <ui-view>
-  <div class="admin-choices-container">
-    <div class="admin-choices">
-      <div class="admin-choice" ui-sref="admin.platform.metrics">
-        Manage platform
-      </div>
-      <div class="admin-choice" ui-sref="admin.organization.metrics">
-        Manage organization
-      </div>
-    </div>
+  <div class="admin-type-list">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <td>Platform</td>
+          <td>Role</td>
+          <td></td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="platform in $ctrl.platforms track by $index">
+          <td>{{platform.item.name }}</td>
+          <td>{{platform.role.groupRole}}</td>
+          <td>
+            <button class="btn btn-primary "
+                    ui-sref="admin.platform.users({platformId: platform.item.id})">
+              Manage
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="admin-type-list">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <td>Organization</td>
+          <td>Role</td>
+          <td></td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="organization in $ctrl.organizations track by $index">
+          <td>{{organization.item.name}}</td>
+          <td>{{organization.role.groupRole}}</td>
+          <td>
+            <button class="btn btn-primary"
+                    ui-sref="admin.organization.users({organizationId: organization.item.id})">
+              Manage
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <tbody>
   </div>
 </ui-view>
