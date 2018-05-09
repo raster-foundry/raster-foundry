@@ -106,12 +106,27 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
 
     val pageFragment: Fragment = Page(pageRequest)
     val queryFilters: List[Option[Fragment]] = makeFilters(List(sceneParams)).flatten
+
+    val shapeIO: ConnectionIO[Option[Shape]] =
+      sceneParams.sceneParams.shape match {
+        case Some(shapeId) => ShapeDao.getShapeById(shapeId, user)
+        case _ => (None : Option[Shape]).pure[ConnectionIO]
+      }
+
     val scenesIO: ConnectionIO[List[Scene]] =
-      (selectF ++ Fragments.whereAndOpt((query.ownerVisibilityFilterF(user) :: queryFilters): _*) ++ pageFragment)
-        .query[Scene]
-        .stream
-        .compile
-        .toList
+      shapeIO flatMap {
+        (shpO: Option[Shape]) => {
+          (selectF ++ Fragments.whereAndOpt(
+             ((shpO map { (shp: Shape) => fr"ST_Intersects(data_footprint, ${shp.geometry})" })
+                :: query.ownerVisibilityFilterF(user)
+                :: queryFilters): _*) ++ pageFragment)
+            .query[Scene]
+            .stream
+            .compile
+            .toList
+        }
+      }
+
     val withRelatedsIO: ConnectionIO[List[Scene.WithRelated]] = scenesIO flatMap { scenesToScenesWithRelated }
 
     for {
@@ -194,7 +209,8 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
              scenes_q.sun_elevation,
              scenes_q.thumbnail_status,
              scenes_q.boundary_status,
-             scenes_q.ingest_status
+             scenes_q.ingest_status,
+             scenes_q.scene_type
       FROM scenes_q
       LEFT JOIN (
         SELECT

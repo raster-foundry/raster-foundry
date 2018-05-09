@@ -93,14 +93,14 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
                 .toScene(dbUser)
                 .copy(id = dbScene.id)
               SceneDao.update(fixedUpUpdateScene, sceneId, dbUser) flatMap {
-                case (affectedRows: Int, _) => {
-                  SceneDao.unsafeGetSceneById(sceneId, dbUser) map { (affectedRows, _) }
+                case (affectedRows: Int, shouldKickoffIngest: Boolean) => {
+                  SceneDao.unsafeGetSceneById(sceneId, dbUser) map { (affectedRows, _, shouldKickoffIngest) }
                 }
               }
             }
           }
 
-          val (affectedRows, updatedScene) = sceneUpdateWithSceneIO.transact(xa).unsafeRunSync
+          val (affectedRows, updatedScene, shouldKickoffIngest) = sceneUpdateWithSceneIO.transact(xa).unsafeRunSync
 
           affectedRows == 1 &&
             updatedScene.visibility == updateScene.visibility &&
@@ -111,7 +111,8 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             updatedScene.dataFootprint == updateScene.dataFootprint &&
             updatedScene.ingestLocation == updateScene.ingestLocation &&
             updatedScene.filterFields == updateScene.filterFields &&
-            updatedScene.statusFields == updateScene.statusFields
+            updatedScene.statusFields == updateScene.statusFields &&
+            (updatedScene.statusFields.ingestStatus == IngestStatus.ToBeIngested) == shouldKickoffIngest
         }
       }
     }

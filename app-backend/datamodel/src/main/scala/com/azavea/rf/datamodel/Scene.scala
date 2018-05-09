@@ -70,7 +70,8 @@ case class Scene(
   metadataFiles: List[String],
   ingestLocation: Option[String] = None,
   filterFields: SceneFilterFields = new SceneFilterFields(),
-  statusFields: SceneStatusFields
+  statusFields: SceneStatusFields,
+  sceneType: Option[SceneType] = None
 ) {
   def toScene = this
 
@@ -98,7 +99,8 @@ case class Scene(
     thumbnails.toList,
     this.ingestLocation,
     this.filterFields,
-    this.statusFields
+    this.statusFields,
+    this.sceneType
   )
 }
 
@@ -124,7 +126,8 @@ object Scene {
     thumbnails: List[Thumbnail.Identified],
     ingestLocation: Option[String],
     filterFields: SceneFilterFields = new SceneFilterFields(),
-    statusFields: SceneStatusFields
+    statusFields: SceneStatusFields,
+    sceneType: Option[SceneType] = None
  ) extends OwnerCheck {
     def toScene(user: User): Scene = {
       val now = new Timestamp((new java.util.Date()).getTime())
@@ -150,7 +153,8 @@ object Scene {
         metadataFiles,
         ingestLocation,
         filterFields,
-        statusFields
+        statusFields,
+        sceneType
       )
     }
   }
@@ -177,7 +181,8 @@ object Scene {
     thumbnails: List[Thumbnail],
     ingestLocation: Option[String],
     filterFields: SceneFilterFields = new SceneFilterFields(),
-    statusFields: SceneStatusFields
+    statusFields: SceneStatusFields,
+    sceneType: Option[SceneType] = None
   ) {
     def toScene: Scene =
       Scene(
@@ -199,7 +204,8 @@ object Scene {
         metadataFiles,
         ingestLocation,
         filterFields,
-        statusFields
+        statusFields,
+        sceneType
       )
   }
 }
