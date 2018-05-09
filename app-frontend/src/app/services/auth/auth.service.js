@@ -21,6 +21,7 @@ export default (app) => {
 
             this.$timeout = $timeout;
             this.$state = $state;
+            this.userRoles = [];
             this.featureFlags = featureFlags;
             this.perUserFeatureFlags = perUserFeatureFlags;
             this.featureFlagOverrides = featureFlagOverrides;
@@ -54,6 +55,12 @@ export default (app) => {
                 get: {
                     method: 'GET',
                     cache: false
+                },
+                roles: {
+                    method: 'GET',
+                    cache: false,
+                    url: `${BUILDCONFIG.API_HOST}/api/users/me/roles`,
+                    isArray: true
                 }
             });
         }
@@ -236,6 +243,10 @@ export default (app) => {
             return this.User.get({id: id}).$promise;
         }
 
+        getUserRoles() {
+            return this.userRoles;
+        }
+
         onLogin(authResult) {
             this.localStorage.set('accessToken', authResult.accessToken);
             this.localStorage.set('idToken', authResult.idToken);
@@ -266,6 +277,10 @@ export default (app) => {
                     });
                     heap.addEventProperties({'Logged In': 'true'});
                 }
+            });
+
+            this.fetchUserRoles().then((response) => {
+                this.userRoles = response;
             });
 
             this.setReauthentication(authResult.idToken);
@@ -397,6 +412,10 @@ export default (app) => {
                                 user: user
                             });
                         });
+
+                        this.fetchUserRoles().then((response) => {
+                            this.userRoles = response;
+                        });
                     }
 
                     this.setReauthentication(token);
@@ -435,6 +454,10 @@ export default (app) => {
                 result.push(charset[c % charset.length]);
             });
             return result.join('');
+        }
+
+        fetchUserRoles() {
+            return this.User.roles().$promise;
         }
     }
 

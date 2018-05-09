@@ -11,6 +11,9 @@ require('./tools/toolTag.service')(shared);
 require('./auth/auth.service')(shared);
 require('./auth/token.service')(shared);
 require('./auth/user.service')(shared);
+require('./auth/platform.service.js')(shared);
+require('./auth/organization.service.js')(shared);
+require('./auth/team.service.js')(shared);
 
 // settings
 require('./settings/config.provider')(shared);

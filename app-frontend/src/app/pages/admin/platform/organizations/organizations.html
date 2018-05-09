@@ -1,7 +1,11 @@
 <ui-view>
   <div class="admin-users-content container column-stretch dashboard">
     <div class="admin-users-actions">
-      <input type="text" class="form-control admin-search" placeholder="Search for organizations">
+      <input type="text"
+             class="form-control admin-search"
+             placeholder="Search for organizations"
+             ng-model="$ctrl.search"
+      >
       <button type="button" class="btn btn-primary"
               ng-click="$ctrl.newOrgModal()">
         New Organization
@@ -32,6 +36,7 @@
               ></ng-pluralize>
             </a>
           </td>
+          <td>{{ organization.isActive ? "Active" : "Deactivated"}}</td>
           <td class="actions">
             <a ui-sref="admin.organization.metrics({id: organization.id})">View page</a>
             <rf-dropdown data-options="organization.options">
@@ -41,5 +46,21 @@
         </tr>
       </tbody>
     </table>
+
+      <!-- Pagination -->
+      <div class="list-group text-center"
+           ng-show="!$ctrl.loading && $ctrl.lastOrgResult && $ctrl.pagination.show && !$ctrl.errorMsg">
+        <ul uib-pagination
+            items-per-page="$ctrl.lastOrgResult.pageSize"
+            total-items="$ctrl.pagination.count"
+            ng-model="$ctrl.currentPage"
+            max-size="4"
+            rotate="true"
+            boundary-link-numbers="true"
+            force-ellipses="true"
+            ng-change="$ctrl.fetchOrganizations($ctrl.currentPage, $ctrl.search)">
+        </ul>
+      </div>
+      <!-- Pagination -->
   </div>
 </ui-view>
