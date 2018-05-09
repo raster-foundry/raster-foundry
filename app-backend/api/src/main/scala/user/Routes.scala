@@ -8,7 +8,7 @@ import cats.effect.IO
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database.UserDao
+import com.azavea.rf.database._
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
 import io.circe._
@@ -44,9 +44,14 @@ trait UserRoutes extends Authentication
       post { createUser }
     } ~
     pathPrefix("me") {
-      get { getAuth0User } ~
-      patch { updateAuth0User } ~
-      put { updateOwnUser }
+      pathPrefix("roles") {
+        get { getUserRoles }
+      } ~
+      pathEndOrSingleSlash {
+        get { getAuth0User } ~
+          patch { updateAuth0User } ~
+          put { updateOwnUser }
+      }
     }  ~
     pathPrefix("dropbox-setup") {
       pathEndOrSingleSlash {
@@ -146,6 +151,12 @@ trait UserRoutes extends Authentication
       onSuccess(UserDao.updateUser(updatedUser, authIdEncoded).transact(xa).unsafeToFuture()) {
         completeSingleOrNotFound
       }
+    }
+  }
+
+  def getUserRoles: Route = authenticate { user =>
+    complete {
+      UserGroupRoleDao.listByUser(user).transact(xa).unsafeToFuture()
     }
   }
 }
