@@ -2,22 +2,26 @@ package com.azavea.rf.tile.image
 
 import com.azavea.rf.tile._
 import com.azavea.rf.datamodel.MosaicDefinition
+import com.azavea.rf.database.util.RFTransactor
 import geotrellis.raster._
 import geotrellis.vector.io._
 import geotrellis.spark.io._
 import geotrellis.spark._
 import geotrellis.proj4._
 import geotrellis.vector.Extent
+import geotrellis.raster.io.geotiff._
+import geotrellis.raster.io.geotiff.reader.GeoTiffReader
+import geotrellis.spark.io.postgres.PostgresAttributeStore
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
 import cats.effect.IO
-import java.util.UUID
 import doobie.util.transactor.Transactor
 
-import com.azavea.rf.database.util.RFTransactor
-import geotrellis.spark.io.postgres.PostgresAttributeStore
 
+import java.net.URI
+import java.util.UUID
+import scala.math
 import scala.concurrent._
 import scala.util._
 
@@ -41,7 +45,7 @@ object GlobalSummary extends LazyLogging {
   /** Get the minimum zoom level for a single scene from which a histogram can be constructed without
     *  losing too much information (too much being defined by the 'size' threshold)
     */
-  def minAcceptableSceneZoom(sceneId: UUID, store: AttributeStore, size: Int = 512): Option[(Extent, Int)] = {
+  def minAcceptableSceneZoom(sceneId: UUID, store: AttributeStore, size: Int): Option[(Extent, Int)] = {
     def startZoom(zoom: Int): Option[(Extent, Int)] = {
       val currentId = LayerId(sceneId.toString, zoom)
       val metadata = Try { store.readMetadata[TileLayerMetadata[SpatialKey]](currentId) }.toOption
@@ -54,6 +58,25 @@ object GlobalSummary extends LazyLogging {
       }
     }
     startZoom(1)
+  }
+  /** Get the minimum zoom level for a single scene from which a histogram can be constructed without
+    *  losing too much information (too much being defined by the 'size' threshold)
+    */
+  def minAcceptableCogOverview(uri: URI, size: Int): Option[(Extent, Int)] = {
+    // This is currently somewhat hacky because Tiffs are quite different than fleshed out layers
+    // In particular, the `int` here is not a zoom but an index to this Cog's least resolute overview
+    for {
+      rr <- CogLayer.getRangeReader(uri)
+      overviews: List[(GeoTiff[MultibandTile], Int)] = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true).overviews.zipWithIndex
+      head <- overviews.headOption
+      minOverview = overviews.foldLeft(head) { (currentMin, view) =>
+        // We are looking for the maximum cell size
+        if (currentMin._1.cellSize.resolution <= view._1.cellSize.resolution)
+          view
+        else
+          currentMin
+      }
+    } yield (minOverview._1.extent, minOverview._2)
   }
 
   /** Get the minimum zoom level for a project from which a histogram can be constructed without
@@ -82,4 +105,5 @@ object GlobalSummary extends LazyLogging {
         ), agg._2 max next._2)
       })
     })
+
 }

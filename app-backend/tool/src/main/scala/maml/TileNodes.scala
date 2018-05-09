@@ -15,3 +15,4 @@ case class ProjectRaster(projId: UUID, band: Option[Int], celltype: Option[CellT
     extends Source {
   val kind = MamlKind.Tile
 }
+

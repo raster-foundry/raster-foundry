@@ -12,7 +12,9 @@ import cats._
 import cats.data.Validated._
 import cats.data.{NonEmptyList => NEL, _}
 import cats.implicits._
+import cats.effect.IO
 import com.typesafe.scalalogging.LazyLogging
+import doobie.util.transactor.Transactor
 import geotrellis.proj4.WebMercator
 import geotrellis.raster._
 import geotrellis.spark._
@@ -25,10 +27,7 @@ import geotrellis.spark.io.postgres.PostgresAttributeStore
 
 import scala.util.{Failure, Success, Try}
 import java.util.UUID
-
-import cats.effect.IO
-import com.azavea.rf.database.util.RFTransactor
-import doobie.util.transactor.Transactor
+import java.net.URI
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -98,6 +97,7 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
               case None => Invalid(NEL.of(UnknownTileResolutionError(exp, Some((z, x, y)))))
             }
           })
+
         case sr@SceneRaster(sceneId, None, celltype) =>
           Future.successful(Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
         case sr@SceneRaster(sceneId, Some(band), celltype) =>
