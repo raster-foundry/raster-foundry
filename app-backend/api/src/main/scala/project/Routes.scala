@@ -268,6 +268,11 @@ trait ProjectRoutes extends Authentication
                 traceName("add-project-permission") {
                   addPermission(projectId)
                 }
+              } ~
+              get {
+                traceName("list-project-permissions") {
+                  listPermissions(projectId)
+                }
               }
           }
       }
