@@ -148,6 +148,40 @@ class ToolRoutes extends Authentication
   val emptyPng = IntConstantNoDataArrayTile(Array(0), 1, 1).renderPng(RgbaPngEncoding)
   val emptyTile = IntConstantNoDataArrayTile(Array(0), 1, 1)
 
+  def relabelCogScenes(ast: MapAlgebraAST): Future[Option[MapAlgebraAST]] = {
+    val sources: List[Future[Option[(UUID, MapAlgebraAST)]]] = 
+      ast.tileSources.toList.map { 
+        case MapAlgebraAST.SceneRaster(id, sceneId, band, celltype, metadata) =>
+          import com.azavea.rf.database._
+          import com.azavea.rf.database.Implicits._
+          import com.azavea.rf.datamodel._
+          import cats.implicits._          
+
+          SceneDao
+            .query
+            .filter(sceneId)
+            .selectOption.transact(xa)
+            .unsafeToFuture
+            .map { maybeScene: Option[Scene] =>
+                maybeScene match {
+                  case Some(scene) if scene.sceneType == SceneType.COG =>
+                    // TODO: find a place for this validation, COG scene should always have a location          
+                    val location: String = scene.ingestLocation.get
+                    Some(id -> MapAlgebraAST.CogRaster(id, sceneId, band, celltype, metadata, location))
+                  case _ =>
+                    None
+                }
+              }
+        case _ =>
+          Future.successful(None)
+      }
+
+    sources.sequence.map { maybeSources =>
+      val subsitutions = maybeSources.flatten.toMap
+      ast.substitute(subsitutions)
+    } 
+  }
+
   /** The central endpoint for ModelLab; serves TMS tiles given a [[ToolRun]] specification */
   def tms(
     toolRunId: UUID, user: User
@@ -163,7 +197,8 @@ class ToolRoutes extends Authentication
             val colorRamp = providedRamps.getOrElse(colorRampName, providedRamps("viridis"))
             val components = for {
               (lastUpdateTime, ast) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
-              (expression, metadata) <- OptionT.pure[Future](ast.asMaml)
+              (updatedAst) <- OptionT(relabelCogScenes(ast))
+              (expression, metadata) <- OptionT.pure[Future](updatedAst.asMaml)              
               cMap  <- LayerCache.toolRunColorMap(toolRunId, nodeId, user, colorRamp, colorRampName)
             } yield (expression, metadata, cMap, lastUpdateTime)
 

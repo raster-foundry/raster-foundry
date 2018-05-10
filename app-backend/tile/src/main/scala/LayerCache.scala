@@ -1,10 +1,8 @@
 package com.azavea.rf.tile
 
 import com.azavea.rf.datamodel.{Tool, ToolRun, User}
-import com.azavea.rf.database.{ToolRunDao, SceneDao}
+import com.azavea.rf.database.ToolRunDao
 import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.tile.image._
 import com.azavea.rf.tile.tool._
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.ast._
@@ -16,7 +14,6 @@ import com.azavea.maml.eval._
 import com.azavea.maml.ast.Expression
 import com.azavea.maml.eval.directive.SourceDirectives._
 import com.azavea.maml.eval.directive.OpDirectives._
-
 import io.circe.syntax._
 import geotrellis.raster._
 import geotrellis.raster.render._
@@ -33,17 +30,18 @@ import cats.data._
 import cats.data.Validated._
 import cats.implicits._
 import cats.effect.IO
+import java.util.UUID
+import java.sql.Timestamp
+
+import com.azavea.rf.database.util.RFTransactor
 import doobie.util.transactor.Transactor
+
 import doobie._
 import doobie.implicits._
 import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-import java.util.UUID
-import java.net.URI
-import java.sql.Timestamp
-import java.security.MessageDigest
 import scala.concurrent._
 import scala.util._
 
@@ -90,26 +88,15 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     val cacheKey = s"tile-$layerId-$zoom-${key.col}-${key.row}"
     OptionT(rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(
       timedFuture("s3-tile-request")({
-        var tifLocation: Future[Option[String]] = (for {
-          scene <- OptionT(SceneDao.query.filter(layerId).selectOption.transact(xa).unsafeToFuture)
-          location <- OptionT.fromOption[Future](scene.ingestLocation)
-        } yield location).value
-
-        tifLocation.map { maybeLoc: Option[String] =>
-          maybeLoc match {
-            case Some(location) if location.endsWith(".tif") || location.endsWith(".tiff") =>
-              CogLayer.fetch(new URI(location), zoom, key.col, key.row)
-            case None =>
-              val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(layerId.toString, zoom))
-              Try(reader.read(key)) match {
-                case Success(tile) =>
-                  Some(tile)
-                case Failure(e) =>
-                  logger.debug(s"Unable to retrieve layer $layerId at zoom $zoom for key $key; ${e.getMessage}")
-                  None
-              }
-          }
-        }
+        val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(layerId.toString, zoom))
+        Future(reader.read(key)).map({
+          case tile => Some(tile)
+        }).recover({
+          case e: ValueNotFoundError => None
+          case e: Throwable =>
+            logger.debug(s"Unable to retrieve layer $layerId at zoom $zoom for key $key; ${e.getMessage}")
+            None
+        })
       })
     ))
   }

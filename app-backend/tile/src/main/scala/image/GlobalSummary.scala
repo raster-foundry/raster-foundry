@@ -10,8 +10,10 @@ import geotrellis.spark._
 import geotrellis.proj4._
 import geotrellis.vector.Extent
 import geotrellis.raster.io.geotiff._
+import geotrellis.raster.reproject._
 import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 import geotrellis.spark.io.postgres.PostgresAttributeStore
+import geotrellis.spark.tiling._
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
@@ -62,21 +64,21 @@ object GlobalSummary extends LazyLogging {
   /** Get the minimum zoom level for a single scene from which a histogram can be constructed without
     *  losing too much information (too much being defined by the 'size' threshold)
     */
-  def minAcceptableCogOverview(uri: URI, size: Int): Option[(Extent, Int)] = {
+  def minAcceptableCogOverview(uri: String, size: Int): Option[(Extent, Int)] = {
     // This is currently somewhat hacky because Tiffs are quite different than fleshed out layers
     // In particular, the `int` here is not a zoom but an index to this Cog's least resolute overview
     for {
       rr <- CogLayer.getRangeReader(uri)
-      overviews: List[(GeoTiff[MultibandTile], Int)] = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true).overviews.zipWithIndex
-      head <- overviews.headOption
-      minOverview = overviews.foldLeft(head) { (currentMin, view) =>
-        // We are looking for the maximum cell size
-        if (currentMin._1.cellSize.resolution <= view._1.cellSize.resolution)
-          view
-        else
-          currentMin
+      overviews = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true).overviews
+      minOverview <- Try(overviews.minBy(_.cellSize.resolution)).toOption
+    } yield { 
+        // TODO: make use of size
+        val extent = minOverview.extent
+        val wmRE = ReprojectRasterExtent(minOverview.rasterExtent, minOverview.crs, WebMercator)
+        val scheme = ZoomedLayoutScheme(WebMercator, 256)
+        val zoom = scheme.levelFor(wmRE.extent, wmRE.cellSize).zoom
+        (wmRE.extent, zoom)        
       }
-    } yield (minOverview._1.extent, minOverview._2)
   }
 
   /** Get the minimum zoom level for a project from which a histogram can be constructed without

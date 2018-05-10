@@ -76,20 +76,10 @@ object TileSources extends LazyLogging {
     */
   def dataWindow(r: RFMLRaster)(implicit xa: Transactor[IO]): OptionT[Future, (Extent, Int)] = r match {
     case MapAlgebraAST.SceneRaster(id, sceneId, Some(_), _, _) => {
-      var tifLocation: Future[Option[String]] = (for {
-        scene <- OptionT(SceneDao.query.filter(sceneId).selectOption.transact(xa).unsafeToFuture)
-        location <- OptionT.fromOption[Future](scene.ingestLocation)
-      } yield location).value
-
-      OptionT(tifLocation.map { location =>
-        location match {
-          case Some(loc) if (loc.endsWith(".tif") || loc.endsWith(".tiff")) =>
-            val uri = new URI(loc)
-            GlobalSummary.minAcceptableCogZoom(uri, 256)
-          case None =>
-            GlobalSummary.minAcceptableSceneZoom(sceneId, store, 256)
-        }
-      })
+      OptionT(Future { GlobalSummary.minAcceptableSceneZoom(sceneId, store, 256) })
+    }
+    case MapAlgebraAST.CogRaster(id, sceneId, Some(_), _, _, location) => {
+      OptionT(Future { GlobalSummary.minAcceptableCogOverview(location, 256) })
     }
     case MapAlgebraAST.ProjectRaster(id, projId, Some(_), _, _) => {
       OptionT[Future, (Extent, Int)](GlobalSummary.minAcceptableProjectZoom(projId, 256).map(Some(_)))
