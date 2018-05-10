@@ -25,6 +25,7 @@ import scala.util.Properties
 import scala.math
 import scala.util.Try
 import java.net.URI
+import java.net.URL
 
 
 object CogLayer {
@@ -65,6 +66,9 @@ object CogLayer {
     javaUri.getScheme match {
       case "file" | null =>
         Some(FileRangeReader(Paths.get(javaUri).toFile))
+
+      case "http" | "https" =>
+        Some(HttpRangeReader(new URL(uri)))
 
       case "s3" =>
         val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri, "UTF-8"))
