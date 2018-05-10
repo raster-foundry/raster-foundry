@@ -164,16 +164,18 @@ class ToolRoutes extends Authentication
             .unsafeToFuture
             .map { maybeScene: Option[Scene] =>
                 maybeScene match {
-                  case Some(scene) if scene.sceneType == SceneType.COG =>
-                    // TODO: find a place for this validation, COG scene should always have a location          
-                    val location: String = scene.ingestLocation.get
-                    Some(id -> MapAlgebraAST.CogRaster(id, sceneId, band, celltype, metadata, location))
-                  case _ =>
-                    None
+                  case Some(scene) =>
+                    scene.sceneType match {
+                      case Some(SceneType.COG) => 
+                        scene.ingestLocation.map { location => 
+                          id -> MapAlgebraAST.CogRaster(id, sceneId, band, celltype, metadata, location)
+                        }                        
+                      case _ => None
+                    }                  
+                  case _ => None
                 }
               }
-        case _ =>
-          Future.successful(None)
+        case _ => Future.successful(None)
       }
 
     sources.sequence.map { maybeSources =>
