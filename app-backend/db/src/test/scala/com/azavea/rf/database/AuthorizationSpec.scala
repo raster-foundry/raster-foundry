@@ -139,4 +139,31 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
       }
     }
   }
+
+  test("several access control rules should be insertable at the same time") {
+    check {
+      forAll {
+        (platform: Platform, userCreate: User.Create, orgCreate: Organization.Create, projectCreate: Project.Create) => {
+          val insertManyAcrsIO = for {
+            dbPlatform <- PlatformDao.create(platform)
+            orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
+            (org, user) = orgUser
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, org, projectCreate), user)
+            acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
+              AccessControlRule.Create(true, SubjectType.All, None, _).toAccessControlRule(
+                user, ObjectType.Project, project.id
+              )
+            }
+            _ <- AccessControlRuleDao.createMany(acrs)
+            dbAcrs <- AccessControlRuleDao.listByObject(ObjectType.Project, project.id)
+          } yield { (acrs, dbAcrs) }
+
+          val (acrs, dbAcrs) = insertManyAcrsIO.transact(xa).unsafeRunSync
+
+          assert(acrs.toSet == dbAcrs.toSet, "Inserting many ACRs should make those ACRs available to list")
+          true
+        }
+      }
+    }
+  }
 }
