@@ -42,8 +42,8 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             )
             _ <- AccessControlRuleDao.create(
               AccessControlRule.Create(
-                ObjectType.Project, project.id, SubjectType.All, None, ActionType.View
-              ).toAccessControlRule(user1)
+                true, SubjectType.All, None, ActionType.View
+              ).toAccessControlRule(user1, ObjectType.Project, project.id)
             )
             user1Authorized <- ProjectDao.query.authorized(user1, ObjectType.Project, project.id, ActionType.View)
             user2Authorized <- ProjectDao.query.authorized(user2, ObjectType.Project, project.id, ActionType.View)
@@ -84,8 +84,8 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             project <- ProjectDao.insertProject(fixupProjectCreate(user1, org1, projectCreate), user1)
             _ <- AccessControlRuleDao.create(
               AccessControlRule.Create(
-                ObjectType.Project, project.id, SubjectType.Platform, Some(platform1.id.toString), ActionType.View
-              ).toAccessControlRule(user1)
+                true, SubjectType.Platform, Some(platform1.id.toString), ActionType.View
+              ).toAccessControlRule(user1, ObjectType.Project, project.id)
             )
             user1Authorized <- ProjectDao.query.authorized(user1, ObjectType.Project, project.id, ActionType.View)
             user2Authorized <- ProjectDao.query.authorized(user2, ObjectType.Project, project.id, ActionType.View)
@@ -116,8 +116,8 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             project <- ProjectDao.insertProject(fixupProjectCreate(user1, org1, projectCreate), user1)
             _ <- AccessControlRuleDao.create(
               AccessControlRule.Create(
-                ObjectType.Project, project.id, SubjectType.Organization, Some(org1.id.toString), ActionType.View
-              ).toAccessControlRule(user1)
+                true, SubjectType.Organization, Some(org1.id.toString), ActionType.View
+              ).toAccessControlRule(user1, ObjectType.Project, project.id)
             )
             user1Authorized <- ProjectDao.query.authorized(user1, ObjectType.Project, project.id, ActionType.View)
             user2Authorized <- ProjectDao.query.authorized(user2, ObjectType.Project, project.id, ActionType.View)

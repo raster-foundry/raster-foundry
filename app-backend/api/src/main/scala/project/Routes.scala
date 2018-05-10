@@ -749,4 +749,14 @@ trait ProjectRoutes extends Authentication
       }
     }
   }
+
+  def listPermissions(projectId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.ownedBy(projectId, user).transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Project, projectId).transact(xa).unsafeToFuture
+      }
+    }
+  }
 }
