@@ -3,6 +3,7 @@ package com.azavea.rf.tile.image
 import com.azavea.rf.tile._
 import com.azavea.rf.datamodel.MosaicDefinition
 import com.azavea.rf.database.util.RFTransactor
+import com.azavea.rf.common.utils.RangeReaderUtils
 import geotrellis.raster._
 import geotrellis.vector.io._
 import geotrellis.spark.io._
@@ -68,7 +69,7 @@ object GlobalSummary extends LazyLogging {
     // This is currently somewhat hacky because Tiffs are quite different than fleshed out layers
     // In particular, the `int` here is not a zoom but an index to this Cog's least resolute overview
     for {
-      rr <- CogLayer.getRangeReader(uri)
+      rr <- RangeReaderUtils.fromUri(uri)
       overviews = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true).overviews
       minOverview <- Try(overviews.minBy(_.cellSize.resolution)).toOption
     } yield { 
