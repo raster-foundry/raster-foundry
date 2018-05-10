@@ -7,6 +7,7 @@ import geotrellis.raster._
 import geotrellis.raster.crop._
 import geotrellis.raster.histogram._
 import geotrellis.raster.resample._
+import geotrellis.raster.reproject._
 import geotrellis.raster.render._
 import geotrellis.raster.render.ColorRamps.Viridis
 import geotrellis.raster.io.geotiff._
@@ -29,35 +30,11 @@ import java.net.URL
 
 
 object CogLayer {
-  def tileLatLng(z: Int, x: Int, y: Int): Point = {
-    // Reference https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-    val coordinateX = x.toDouble / (1 << z) * 360.0 - 180.0
-    val coordinateY = math.toDegrees(math.atan(math.sinh(math.Pi * (1.0 - 2.0 * y.toDouble / (1 << z)))))
-    Point(coordinateX, coordinateY)
-  }
-
-  def tileExtent(z: Int, x: Int, y: Int, crs: CRS): Extent = {
-    val nw = tileLatLng(z, x, y)
-    val se = tileLatLng(z, x + 1, y + 1)
-    val extent = Extent(nw.x, se.y, se.x, nw.y)
-    crs match {
-      case LatLng => extent
-      case _ => extent.reproject(LatLng, crs)
-    }
-  }
-
-  def cellSizeForZoom(tiff: MultibandGeoTiff, zoom: Int): CellSize = {
-    val layoutScheme = ZoomedLayoutScheme(tiff.crs, 256)
-    val naturalLevel = layoutScheme.levelFor(tiff.extent, tiff.cellSize)
-    zoom match {
-      case z if z >= naturalLevel.zoom => tiff.cellSize
-      case z if z > 0 => new CellSize(
-        tiff.cellSize.width * (scala.math.pow(2, naturalLevel.zoom - z)),
-        tiff.cellSize.height * (scala.math.pow(2, (naturalLevel.zoom - z))))
-      case _ => CellSize(0, 0)
-    }
-  }
-
+  private val TmsLevels: Array[LayoutDefinition] = {
+    val scheme = ZoomedLayoutScheme(WebMercator, 256)
+    for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
+  }.toArray
+  
   def getRangeReader(uri: String): Option[RangeReader] = {
     import java.nio.file._
 
@@ -83,11 +60,13 @@ object CogLayer {
     for {
       rr <- getRangeReader(uri)
       tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)
-      extent = tileExtent(z, x, y, tiff.crs)
-      cellSize = cellSizeForZoom(tiff, z)
-      cropped <- Try(tiff.crop(extent, cellSize, ResampleMethod.DEFAULT, AutoHigherResolution)).toOption
-      raster = cropped.reproject(tiff.crs, WebMercator)
-    } yield raster.tile
+      transform = Proj4Transform(tiff.crs, WebMercator)
+      inverseTransform = Proj4Transform(WebMercator, tiff.crs)
+      tmsTileExtent = TmsLevels(z).mapTransform.keyToExtent(x, y)
+      tmsTileRE = RasterExtent(tmsTileExtent, TmsLevels(z).cellSize)
+      tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
+      raster <- Try(tiff.crop(tiffTileRE.extent, tiffTileRE.cellSize, ResampleMethod.DEFAULT, AutoHigherResolution)).toOption      
+    } yield raster.reproject(tmsTileRE, transform, inverseTransform).tile
   }
 
 }
