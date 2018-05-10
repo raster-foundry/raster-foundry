@@ -29,7 +29,6 @@ import java.net.URL
 
 
 object CogLayer {
-
   def tileLatLng(z: Int, x: Int, y: Int): Point = {
     // Reference https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
     val coordinateX = x.toDouble / (1 << z) * 360.0 - 180.0
@@ -80,7 +79,7 @@ object CogLayer {
     }
   }
 
-  def fetch(uri: String, z: Int, x: Int, y: Int, band: Int = 0): Option[MultibandTile] = {
+  def fetch(uri: String, z: Int, x: Int, y: Int): Option[MultibandTile] = {
     for {
       rr <- getRangeReader(uri)
       tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)

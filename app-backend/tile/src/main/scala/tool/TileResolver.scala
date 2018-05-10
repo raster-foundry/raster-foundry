@@ -100,6 +100,56 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
 
         case sr@SceneRaster(sceneId, None, celltype) =>
           Future.successful(Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
+
+        case sr@CogRaster(_, Some(band), celltype, location) =>
+          lazy val ndtile = celltype match {
+            case Some(ct) => intNdTile.convert(ct)
+            case None => intNdTile
+          }
+
+          val futureSource = if (buffer > 0)
+            (for {
+              tl <- LayerCache.cogTile(location, z, SpatialKey(x - 1, y - 1))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              tm <- LayerCache.cogTile(location, z, SpatialKey(x, y - 1))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              tr <- LayerCache.cogTile(location, z, SpatialKey(x + 1 , y - 1))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              ml <- LayerCache.cogTile(location, z, SpatialKey(x - 1, y))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              mm <- LayerCache.cogTile(location, z, SpatialKey(x, y))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+              mr <- LayerCache.cogTile(location, z, SpatialKey(x + 1, y))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              bl <- LayerCache.cogTile(location, z, SpatialKey(x - 1, y + 1))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              bm <- LayerCache.cogTile(location, z, SpatialKey(x, y + 1))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              br <- LayerCache.cogTile(location, z, SpatialKey(x + 1, y + 1))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+            } yield {
+              TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
+                .withBuffer(buffer)
+            })
+          else
+            LayerCache.cogTile(location, z, SpatialKey(x, y)).map({ tile =>
+              tile.band(band).interpretAs(celltype.getOrElse(tile.cellType))
+            })
+          futureSource.value.map({ maybeTile =>
+            maybeTile match {
+              case Some(tile) => Valid(TileLiteral(tile, RasterExtent(tile, extent)))
+              case None => Invalid(NEL.of(UnknownTileResolutionError(exp, Some((z, x, y)))))
+            }
+          })
+          
         case sr@SceneRaster(sceneId, Some(band), celltype) =>
           lazy val ndtile = celltype match {
             case Some(ct) => intNdTile.convert(ct)

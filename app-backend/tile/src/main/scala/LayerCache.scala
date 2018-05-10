@@ -4,6 +4,7 @@ import com.azavea.rf.datamodel.{Tool, ToolRun, User}
 import com.azavea.rf.database.ToolRunDao
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.tile.tool._
+import com.azavea.rf.tile.image.CogLayer
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.maml._
@@ -95,6 +96,20 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
           case e: ValueNotFoundError => None
           case e: Throwable =>
             logger.debug(s"Unable to retrieve layer $layerId at zoom $zoom for key $key; ${e.getMessage}")
+            None
+        })
+      })
+    ))
+  }
+
+  def cogTile(location: String, zoom: Int, key: SpatialKey, buffer: Int = 0): OptionT[Future, MultibandTile] = {
+    val cacheKey = s"tile-$location-$zoom-${key.col}-${key.row}"
+    OptionT(rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(
+      timedFuture("cog-tile-request")({        
+        Future(CogLayer.fetch(location, zoom, key.col, key.row))
+        .recover({          
+          case e: Throwable =>
+            logger.debug(s"Unable to read COG at $location for zoom $zoom for key $key; ${e.getMessage}")
             None
         })
       })
