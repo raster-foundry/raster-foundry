@@ -201,7 +201,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
              scenes_q.data_footprint,
              scenes_q.metadata_files,
              images_with_bands.j :: jsonb AS images,
-             tnails.thumbnails :: jsonb,
+             coalesce(tnails.thumbnails, '[]') :: jsonb,
              scenes_q.ingest_location,
              scenes_q.cloud_cover,
              scenes_q.acquisition_date,
