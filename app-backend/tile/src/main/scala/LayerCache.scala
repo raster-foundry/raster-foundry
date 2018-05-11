@@ -166,16 +166,23 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
         toolRun <- LayerCache.toolRun(toolRunId, user, voidCache)
         (_, ast) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
         updatedAst <- OptionT(RelabelAst.cogScenes(ast))
-        (extent, zoom) <- TileSources.fullDataWindow(updatedAst.tileSources) // this is hacky and upsetting, we need to do it anyway
+        (extent, zoom) <- TileSources.fullDataWindow(updatedAst.tileSources)
+        _ <- {OptionT.pure[Future](println(s"FOR EXTENT ZOOM: ${extent} ${zoom}"))}
+
         literalAst <- OptionT(
                         tileResolver.resolveForExtent(updatedAst.asMaml._1, zoom, extent)
                           .map({ validatedAst => validatedAst.toOption })
+
                       )
         tile <- OptionT.fromOption[Future](
                   NaiveInterpreter.DEFAULT(literalAst).andThen({ _.as[Tile] }) match {
                   case Valid(tile) => Some(tile)
-                  case Invalid(e) => None
-                })
+                  case Invalid(e) => e.map { s =>
+                    println(s"ERROR: ${s.repr}")
+
+                  }
+                      None
+                  })
       } yield {
         val hist = StreamingHistogram.fromTile(tile)
         hist

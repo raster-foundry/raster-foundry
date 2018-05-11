@@ -74,12 +74,22 @@ object GlobalSummary extends LazyLogging {
       minOverview <- Try(overviews.minBy(_.cellSize.resolution)).toOption
     } yield {
         // TODO: make use of size
-        val extent = minOverview.extent
-        val wmRE = ReprojectRasterExtent(minOverview.rasterExtent, minOverview.crs, WebMercator)
-        val scheme = ZoomedLayoutScheme(WebMercator, 256)
-        val zoom = scheme.levelFor(wmRE.extent, wmRE.cellSize).zoom
-        (wmRE.extent, zoom)
-      }
+      println(s"Min Overviews: ${minOverview}")
+      val extent = minOverview.extent
+
+      val poly = extent.toPolygon().reproject(minOverview.crs, WebMercator)
+      println(s"POLY WM: ${poly}")
+
+      val latlngpoly = extent.toPolygon().reproject(minOverview.crs, LatLng)
+      println(s"POLY LATLNG ${latlngpoly}")
+
+      val wmRE = ReprojectRasterExtent(minOverview.rasterExtent, minOverview.crs, WebMercator)
+      val scheme = ZoomedLayoutScheme(WebMercator, 256)
+      println(s"WMRE: ${wmRE.extent}")
+      val zoom = scheme.levelFor(wmRE.extent, wmRE.cellSize).zoom
+      println(s"ZOOM: ${zoom}")
+      (wmRE.extent, zoom)
+    }
   }
 
   /** Get the minimum zoom level for a project from which a histogram can be constructed without
@@ -102,6 +112,7 @@ object GlobalSummary extends LazyLogging {
         }
       })
     }).map({ zoomsAndExtents =>
+      println(s"ZOOMANDEXTENTS: ${zoomsAndExtents}")
       zoomsAndExtents.flatten.reduce({ (agg, next) =>
         val e1 = agg._1
         val e2 = next._1
