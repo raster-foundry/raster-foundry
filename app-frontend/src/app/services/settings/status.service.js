@@ -1,4 +1,5 @@
 /* eslint-disable quotes */
+/* global _ */
 
 const statusMapping = {
     "export": {
@@ -70,6 +71,10 @@ const statusMapping = {
             "label": "Successfully ingested",
             "color": "green"
         },
+        "COG": {
+            "label": "Cloud Optimized",
+            "color": "blue"
+        },
         "FAILED": {
             "label": "Ingest failed",
             "color": "red"
@@ -106,10 +111,7 @@ export default (app) => {
         }
 
         getStatusFields(entityType, status) {
-            if (statusMapping[entityType] && statusMapping[entityType][status]) {
-                return statusMapping[entityType][status];
-            }
-            return false;
+            return _.get(statusMapping, [entityType, status]) || false;
         }
     }
 
