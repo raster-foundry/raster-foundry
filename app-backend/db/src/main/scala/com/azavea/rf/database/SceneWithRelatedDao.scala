@@ -102,13 +102,11 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     }
   }
 
-  def listScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
-
+  def listScenes(pageRequest: PageRequest, queryFilters: List[Option[Fragment]], user: User, shape: Option[UUID]): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
     val pageFragment: Fragment = Page(pageRequest)
-    val queryFilters: List[Option[Fragment]] = makeFilters(List(sceneParams)).flatten
 
     val shapeIO: ConnectionIO[Option[Shape]] =
-      sceneParams.sceneParams.shape match {
+      shape match {
         case Some(shapeId) => ShapeDao.getShapeById(shapeId, user)
         case _ => (None : Option[Shape]).pure[ConnectionIO]
       }
@@ -117,9 +115,9 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
       shapeIO flatMap {
         (shpO: Option[Shape]) => {
           (selectF ++ Fragments.whereAndOpt(
-             ((shpO map { (shp: Shape) => fr"ST_Intersects(data_footprint, ${shp.geometry})" })
-                :: query.ownerVisibilityFilterF(user)
-                :: queryFilters): _*) ++ pageFragment)
+            ((shpO map { (shp: Shape) => fr"ST_Intersects(data_footprint, ${shp.geometry})" })
+              :: query.ownerVisibilityFilterF(user)
+              :: queryFilters): _*) ++ pageFragment)
             .query[Scene]
             .stream
             .compile
@@ -137,6 +135,11 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
       PaginatedResponse[Scene.WithRelated](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
     }
+  }
+
+  def listScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
+    val queryFilters: List[Option[Fragment]] = makeFilters(List(sceneParams)).flatten
+    listScenes(pageRequest, queryFilters, user, sceneParams.sceneParams.shape)
   }
 
   def getSceneQ(sceneId: UUID, user: User) = {

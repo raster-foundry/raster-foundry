@@ -76,26 +76,30 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     )
   }
 
-  def layerHistogram(layerId: UUID, zoom: Int): OptionT[Future, Array[Histogram[Double]]] = {
-    val key = s"layer-histogram-${layerId}-${zoom}"
+  def layerHistogram(sceneId: UUID, zoom: Int): OptionT[Future, Array[Histogram[Double]]] = {
+    val key = s"layer-histogram-${sceneId}-${zoom}"
     rfCache.cachingOptionT(key, doCache = cacheConfig.layerAttributes.enabled)(
       OptionT(
-        timedFuture("layer-histogram-source")(store.getHistogram[Array[Histogram[Double]]](LayerId(layerId.toString, 0)))
+        timedFuture("layer-histogram-source")(store.getHistogram[Array[Histogram[Double]]](LayerId(sceneId.toString, 0)))
       )
     )
   }
 
-  def layerTile(layerId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] = {
-    val cacheKey = s"tile-$layerId-$zoom-${key.col}-${key.row}"
+  def layerTile(sceneId: UUID, zoom: Int, x: Int, y: Int): OptionT[Future, MultibandTile] = {
+    layerTile(sceneId, zoom, SpatialKey(x, y))
+  }
+
+  def layerTile(sceneId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] = {
+    val cacheKey = s"tile-$sceneId-$zoom-${key.col}-${key.row}"
     OptionT(rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(
       timedFuture("s3-tile-request")({
-        val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(layerId.toString, zoom))
+        val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(sceneId.toString, zoom))
         Future(reader.read(key)).map({
           case tile => Some(tile)
         }).recover({
           case e: ValueNotFoundError => None
           case e: Throwable =>
-            logger.debug(s"Unable to retrieve layer $layerId at zoom $zoom for key $key; ${e.getMessage}")
+            logger.debug(s"Unable to retrieve layer $sceneId at zoom $zoom for key $key; ${e.getMessage}")
             None
         })
       })

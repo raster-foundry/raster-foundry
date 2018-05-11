@@ -37,13 +37,16 @@ object CogUtils {
       } else None
     }
 
-  def fetchForExtent(uri: String, zoom: Int, extent: Extent): Option[MultibandTile] =
+
+  def fetchForExtent(uri: String, zoom: Int, extent: Option[Extent]): Option[MultibandTile] =
     RangeReaderUtils.fromUri(uri).flatMap { rr =>
       val tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)
       val transform = Proj4Transform(tiff.crs, WebMercator)
       val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
+      val actualExtent = extent.getOrElse(tiff.extent.reproject(tiff.crs, WebMercator))
+
       val tmsTileRE = RasterExtent(
-        extent = extent,
+        extent = actualExtent,
         cellSize = TmsLevels(zoom).cellSize
       )
       val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)

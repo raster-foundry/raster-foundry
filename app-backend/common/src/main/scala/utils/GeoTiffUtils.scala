@@ -24,12 +24,13 @@ object GeoTiffUtils {
   }
 
   def geoTiffHistogram(tiff: GeoTiff[MultibandTile], buckets: Int = 80, size: Int = 128): Array[StreamingHistogram] = {
-    def diagonal(tiff: GeoTiff[MultibandTile]): Int =
+    def diagonal(tiff:
+                 GeoTiff[MultibandTile]): Int =
       math.sqrt(tiff.cols*tiff.cols + tiff.rows*tiff.rows).toInt
 
     val goldyLocksOverviews = tiff.overviews.filter{ tiff =>
       val d = diagonal(tiff)
-      (d == size && d <= size*4)
+      (d >= size && d <= size*4)
     }
 
     if (goldyLocksOverviews.nonEmpty){
