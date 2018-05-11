@@ -259,8 +259,9 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
           }
         })
 
-      case cr@CogRaster(_, Some(band), celltype, location) =>
+      case cr@CogRaster(_, None, celltype, location) =>
         Future.successful(Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
+
       case cr@CogRaster(_, Some(band), celltype, location) =>
         Future { CogUtils.fetchForExtent(location, zoom, Some(extent)) }.map({ maybeTile =>
           maybeTile match {
