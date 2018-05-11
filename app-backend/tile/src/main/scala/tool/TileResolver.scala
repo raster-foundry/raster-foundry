@@ -1,5 +1,7 @@
 package com.azavea.rf.tile.tool
 
+import com.azavea.rf.common.utils._
+import com.azavea.rf.tile.image._
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image.Mosaic
 import com.azavea.rf.tool.ast._
@@ -98,15 +100,13 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
             }
           })
 
-        case sr@SceneRaster(sceneId, None, celltype) =>
+        case cr@CogRaster(_, None, celltype, location) =>
           Future.successful(Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
-
-        case sr@CogRaster(_, Some(band), celltype, location) =>
+        case cr@CogRaster(_, Some(band), celltype, location) =>
           lazy val ndtile = celltype match {
             case Some(ct) => intNdTile.convert(ct)
             case None => intNdTile
           }
-
           val futureSource = if (buffer > 0)
             (for {
               tl <- LayerCache.cogTile(location, z, SpatialKey(x - 1, y - 1))
@@ -149,7 +149,9 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
               case None => Invalid(NEL.of(UnknownTileResolutionError(exp, Some((z, x, y)))))
             }
           })
-          
+
+        case sr@SceneRaster(sceneId, None, celltype) =>
+          Future.successful(Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
         case sr@SceneRaster(sceneId, Some(band), celltype) =>
           lazy val ndtile = celltype match {
             case Some(ct) => intNdTile.convert(ct)
@@ -224,8 +226,6 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
     fullExp match {
       case sr@SceneRaster(sceneId, None, celltype) =>
         Future.successful(Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
-      case pr@ProjectRaster(projId, None, celltype) =>
-        Future.successful(Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
       case sr@SceneRaster(sceneId, Some(band), celltype) =>
         Future.successful({
           Try {
@@ -245,6 +245,9 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
               Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
           }
         })
+
+      case pr@ProjectRaster(projId, None, celltype) =>
+        Future.successful(Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
       case pr@ProjectRaster(projId, Some(band), celltype) =>
         Mosaic.rawForExtent(projId, zoom, Some(Projected(extent.toPolygon, 3857))).value.map({ maybeTile =>
           maybeTile match {
@@ -255,6 +258,20 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
               Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
           }
         })
+
+      case cr@CogRaster(_, Some(band), celltype, location) =>
+        Future.successful(Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
+      case cr@CogRaster(_, Some(band), celltype, location) =>
+        Future { CogUtils.fetchForExtent(location, zoom, extent) }.map({ maybeTile =>
+          maybeTile match {
+            case Some(tile) =>
+              val t = tile.band(band).interpretAs(celltype.getOrElse(tile.cellType))
+              Valid(TileLiteral(t, RasterExtent(t, extent)))
+            case None =>
+              Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
+          }
+        })
+
       case _ =>
         fullExp.children
           .map({ child => resolveForExtent(child, zoom, extent) })
