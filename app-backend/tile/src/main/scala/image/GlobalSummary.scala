@@ -71,7 +71,7 @@ object GlobalSummary extends LazyLogging {
     for {
       rr <- RangeReaderUtils.fromUri(uri)
       overviews = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true).overviews
-      minOverview <- Try(overviews.minBy(_.cellSize.resolution)).toOption
+      minOverview <- Try(overviews.maxBy(_.cellSize.resolution)).toOption
     } yield {
         // TODO: make use of size
       println(s"Min Overviews: ${minOverview}")
