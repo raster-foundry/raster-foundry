@@ -258,7 +258,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
             val tile = sceneType match {
               case (Some(SceneType.COG)) => {
                 val extent: Option[Extent] = bbox.map{ poly =>
-                  poly.geom.reproject(LatLng, WebMercator).envelope
+                  poly.geom.envelope
                 }
                 logger.info(s"EXTENT: ${extent}")
                 val x: Option[MultibandTile] = CogUtils.fetchForExtent(ingestLocation, zoom, extent).flatMap { tile: MultibandTile =>
