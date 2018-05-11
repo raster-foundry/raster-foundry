@@ -4,13 +4,13 @@ import com.azavea.rf.datamodel.{Tool, ToolRun, User}
 import com.azavea.rf.database.ToolRunDao
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.tile.tool._
-import com.azavea.rf.tile.image.CogLayer
 import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.maml._
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.common.{Config => CommonConfig}
+import com.azavea.rf.common.utils.CogUtils
 import com.azavea.maml.eval._
 import com.azavea.maml.ast.Expression
 import com.azavea.maml.eval.directive.SourceDirectives._
@@ -105,9 +105,9 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   def cogTile(location: String, zoom: Int, key: SpatialKey, buffer: Int = 0): OptionT[Future, MultibandTile] = {
     val cacheKey = s"tile-$location-$zoom-${key.col}-${key.row}"
     OptionT(rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(
-      timedFuture("cog-tile-request")({        
-        Future(CogLayer.fetch(location, zoom, key.col, key.row))
-        .recover({          
+      timedFuture("cog-tile-request")({
+        Future(CogUtils.fetch(location, zoom, key.col, key.row))
+        .recover({
           case e: Throwable =>
             logger.debug(s"Unable to read COG at $location for zoom $zoom for key $key; ${e.getMessage}")
             None
