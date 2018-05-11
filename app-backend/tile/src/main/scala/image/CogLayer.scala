@@ -1,6 +1,6 @@
 package com.azavea.rf.tile.image
 
-import com.azavea.rf.common.utils.RangeReaderUtils
+import com.azavea.rf.common.utils._
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.crop._
@@ -19,19 +19,23 @@ object CogLayer {
     val scheme = ZoomedLayoutScheme(WebMercator, 256)
     for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
   }.toArray
-  
-  def fetch(uri: String, z: Int, x: Int, y: Int): Option[MultibandTile] = {
-    for {
-      rr <- RangeReaderUtils.fromUri(uri)
-      tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)
-      transform = Proj4Transform(tiff.crs, WebMercator)
-      inverseTransform = Proj4Transform(WebMercator, tiff.crs)
-      tmsTileExtent = TmsLevels(z).mapTransform.keyToExtent(x, y)
-      tmsTileRE = RasterExtent(tmsTileExtent, TmsLevels(z).cellSize)
-      tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
-      raster <- Try(tiff.crop(tiffTileRE.extent, tiffTileRE.cellSize, ResampleMethod.DEFAULT, AutoHigherResolution)).toOption      
-    } yield raster.reproject(tmsTileRE, transform, inverseTransform).tile
-  }
 
+  def fetch(uri: String, z: Int, x: Int, y: Int): Option[MultibandTile] = {
+    RangeReaderUtils.fromUri(uri).flatMap { rr =>
+      val tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)
+      val transform = Proj4Transform(tiff.crs, WebMercator)
+      val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
+      val tmsTileRE = RasterExtent(
+        extent = TmsLevels(z).mapTransform.keyToExtent(x, y),
+        cols = 256, rows = 256)
+      val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
+
+      if (tiffTileRE.extent.intersects(tiff.extent)) {
+        val overview = GeoTiffUtils.closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(0))
+        val raster = GeoTiffUtils.cropGeoTiff(overview, tiffTileRE.extent)
+        Some(raster.tile)
+      } else None
+    }
+  }
 }
 
