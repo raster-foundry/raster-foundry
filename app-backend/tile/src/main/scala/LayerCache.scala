@@ -161,9 +161,10 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
       for {
         toolRun <- LayerCache.toolRun(toolRunId, user, voidCache)
         (_, ast) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
-        (extent, zoom) <- TileSources.fullDataWindow(ast.tileSources)
+        updatedAst <- OptionT(ToolRoutes.relabelCogScenes(ast))
+        (extent, zoomOrElseOverview) <- TileSources.fullDataWindow(updatedAst.tileSources) // this is hacky and upsetting, we need to do it anyway
         literalAst <- OptionT(
-                        tileResolver.resolveForExtent(ast.asMaml._1, zoom, extent)
+                        tileResolver.resolveForExtent(updatedAst.asMaml._1, zoom, extent)
                           .map({ validatedAst => validatedAst.toOption })
                       )
         tile <- OptionT.fromOption[Future](
