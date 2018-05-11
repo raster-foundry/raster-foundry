@@ -97,7 +97,11 @@ trait ToolRoutes extends Authentication
   def listTools: Route = authenticate { user =>
     (withPagination & combinedToolQueryParams) { (page, combinedToolQueryParameters) =>
       complete {
-        ToolDao.query.filter(combinedToolQueryParameters).ownerFilter(user).page(page).transact(xa).unsafeToFuture
+        ToolDao.query
+          .filter(combinedToolQueryParameters)
+          .authorize(user, ObjectType.Template, ActionType.View)
+          .page(page)
+          .transact(xa).unsafeToFuture
       }
     }
   }
@@ -113,24 +117,39 @@ trait ToolRoutes extends Authentication
   }
 
   def getTool(toolId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete(ToolDao.query.filter(toolId).ownerFilter(user).selectOption.transact(xa).unsafeToFuture)
+    authorizeAsync {
+      ToolDao.query.authorized(user, ObjectType.Template, toolId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete(ToolDao.query.filter(toolId).ownerFilter(user).selectOption.transact(xa).unsafeToFuture)
+      }
     }
   }
 
   def updateTool(toolId: UUID): Route = authenticate { user =>
-    entity(as[Tool]) { updatedTool =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedTool)) {
-        onSuccess(ToolDao.update(updatedTool, toolId, user).transact(xa).unsafeToFuture) {
-          completeSingleOrNotFound
+    authorizeAsync {
+      ToolDao.query.authorized(user, ObjectType.Template, toolId, ActionType.Edit)
+        .transact(xa).unsafeToFuture
+    } {
+      entity(as[Tool]) { updatedTool =>
+        authorize(user.isInRootOrSameOrganizationAs(updatedTool)) {
+          onSuccess(ToolDao.update(updatedTool, toolId, user).transact(xa).unsafeToFuture) {
+            completeSingleOrNotFound
+          }
         }
       }
     }
   }
 
   def deleteTool(toolId: UUID): Route = authenticate { user =>
-    onSuccess(ToolDao.query.filter(toolId).ownerFilter(user).delete.transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
+    authorizeAsync {
+      ToolDao.query.authorized(user, ObjectType.Template, toolId, ActionType.Delete)
+        .transact(xa).unsafeToFuture
+    } {
+      onSuccess(ToolDao.query.filter(toolId).ownerFilter(user).delete.transact(xa).unsafeToFuture) {
+        completeSingleOrNotFound
+      }
     }
   }
 
@@ -149,5 +168,4 @@ trait ToolRoutes extends Authentication
       }
     }
   }
-
 }
