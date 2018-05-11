@@ -16,8 +16,8 @@ import java.util.UUID
 object RelabelAst {
 
   def cogScenes(ast: MapAlgebraAST)(implicit xa: Transactor[IO], ec: ExecutionContext): Future[Option[MapAlgebraAST]] = {
-    val sources: List[Future[Option[(UUID, MapAlgebraAST)]]] = 
-      ast.tileSources.toList.map { 
+    val sources: List[Future[Option[(UUID, MapAlgebraAST)]]] =
+      ast.tileSources.toList.map {
         case MapAlgebraAST.SceneRaster(id, sceneId, band, celltype, metadata) =>
           import com.azavea.rf.database._
           import com.azavea.rf.database.Implicits._
@@ -33,8 +33,8 @@ object RelabelAst {
                 maybeScene match {
                   case Some(scene) =>
                     scene.sceneType match {
-                      case Some(SceneType.COG) => 
-                        scene.ingestLocation.map { location => 
+                      case Some(SceneType.COG) =>
+                        scene.ingestLocation.map { location =>
                           id -> MapAlgebraAST.CogRaster(id, sceneId, band, celltype, metadata, location)
                         }
                       case _ => None

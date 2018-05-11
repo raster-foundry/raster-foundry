@@ -164,7 +164,7 @@ class ToolRoutes extends Authentication
             val components = for {
               (lastUpdateTime, ast) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
               (updatedAst) <- OptionT(RelabelAst.cogScenes(ast))
-              (expression, metadata) <- OptionT.pure[Future](updatedAst.asMaml)              
+              (expression, metadata) <- OptionT.pure[Future](updatedAst.asMaml)
               cMap  <- LayerCache.toolRunColorMap(toolRunId, nodeId, user, colorRamp, colorRampName)
             } yield (expression, metadata, cMap, lastUpdateTime)
 
