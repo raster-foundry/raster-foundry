@@ -119,7 +119,9 @@ class ToolRoutes extends Authentication
         ) { (node, void) =>
           complete {
             val nodeId = node.map(UUID.fromString(_))
-            LayerCache.modelLayerGlobalHistogram(toolRunId, nodeId, user, void).value
+            val h = LayerCache.modelLayerGlobalHistogram(toolRunId, nodeId, user, void).value
+            h.map{ x => println(s"RESULT HIST: ${x}")}
+            h
           }
         }
       }
