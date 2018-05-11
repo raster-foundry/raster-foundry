@@ -91,13 +91,13 @@ object GlobalSummary extends LazyLogging {
   )(implicit xa: Transactor[IO], ec: ExecutionContext): Future[(Extent, Int)] =
     // TODO this should be updated to handle both multi band and single band mosaics
     MultiBandMosaic.mosaicDefinition(projId).flatMap({ mosaic =>
-      Future.sequence(mosaic.map { case MosaicDefinition(sceneId, _, maybeSceneType, _) =>
+      Future.sequence(mosaic.map { case MosaicDefinition(sceneId, _, maybeSceneType, Some(ingestLocation)) =>
         Future {
           maybeSceneType match {
             case Some(SceneType.COG) =>
-              minAcceptableCogZoom(sceneId, store, 256)
+              minAcceptableCogZoom(ingestLocation, 256)
             case _ =>
-              minAcceptableSceneZoom(sceneId, 256)
+              minAcceptableSceneZoom(sceneId, store, 256)
           }
         }
       })

@@ -12,6 +12,7 @@ import geotrellis.spark.tiling._
 import scala.util.Properties
 import scala.math
 import scala.util.Try
+import scala.concurrent.blocking
 
 object CogUtils {
   private val TmsLevels: Array[LayoutDefinition] = {
@@ -38,7 +39,7 @@ object CogUtils {
     }
 
 
-  def fetchForExtent(uri: String, zoom: Int, extent: Option[Extent]): Option[MultibandTile] =
+  def fetchForExtent(uri: String, zoom: Int, extent: Option[Extent]): Option[MultibandTile] = blocking {
     RangeReaderUtils.fromUri(uri).flatMap { rr =>
       val tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)
       val transform = Proj4Transform(tiff.crs, WebMercator)
@@ -57,5 +58,6 @@ object CogUtils {
         Some(raster.tile)
       } else None
     }
+  }
 }
 

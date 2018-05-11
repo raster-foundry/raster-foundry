@@ -261,18 +261,17 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
                   poly.geom.envelope
                 }
                 logger.info(s"EXTENT: ${extent}")
-                val x: Option[MultibandTile] = CogUtils.fetchForExtent(ingestLocation, zoom, extent).flatMap { tile: MultibandTile =>
+                OptionT.fromOption[Future](CogUtils.fetchForExtent(ingestLocation, zoom, extent)).flatMap { tile: MultibandTile =>
                   if (colorCorrect) {
-                    val y = RangeReaderUtils.fromUri(ingestLocation).map { rr =>
+                    val histogram = RangeReaderUtils.fromUri(ingestLocation).map { rr =>
                       val tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)
-                      val histogram = GeoTiffUtils.geoTiffHistogram(tiff)
-                      val z = colorCorrectParams.colorCorrect(tile, histogram)
-                      z
+                      GeoTiffUtils.geoTiffHistogram(tiff)
                     }
-                    y
-                  } else Some(tile)
+                    val cachedHistogram = rfCache.cachingOptionT(s"hist-tiff-${sceneId}")(OptionT.fromOption[Future](histogram))
+                    val a = cachedHistogram.map{ h => colorCorrectParams.colorCorrect(tile, h)}
+                    a
+                  } else OptionT.pure[Future](tile)
                 }
-                OptionT.fromOption[Future](x)
               }
               case _ => {
                 MultiBandMosaic
