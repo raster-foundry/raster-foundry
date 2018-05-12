@@ -3,7 +3,7 @@ package com.azavea.rf.tile.image
 import com.azavea.rf.tile._
 import com.azavea.rf.datamodel.{MosaicDefinition, SceneType}
 import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.common.utils.RangeReaderUtils
+import com.azavea.rf.common.utils.{RangeReaderUtils, CogUtils}
 import geotrellis.raster._
 import geotrellis.vector.io._
 import geotrellis.spark.io._
@@ -65,15 +65,18 @@ object GlobalSummary extends LazyLogging {
   /** Get the minimum zoom level for a single scene from which a histogram can be constructed without
     *  losing too much information (too much being defined by the 'size' threshold)
     */
-  def minAcceptableCogZoom(uri: String, size: Int): Option[(Extent, Int)] = {
+  def minAcceptableCogZoom(uri: String, size: Int): OptionT[Future, (Extent, Int)] = {
     // This is currently somewhat hacky because Tiffs are quite different than fleshed out layers
     // In particular, the `int` here is not a zoom but an index to this Cog's least resolute overview
     for {
-      rr <- RangeReaderUtils.fromUri(uri)
-      overviews = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true).overviews
-      minOverview <- Try(overviews.maxBy(_.cellSize.resolution)).toOption
+      tiff <- CogUtils.fromUri(uri)
+      minOverview <- OptionT.fromOption[Future]{
+        tiff.overviews.headOption.map { _ =>
+          tiff.overviews.maxBy(_.cellSize.resolution)
+        }
+      }
     } yield {
-        // TODO: make use of size
+      // TODO: make use of size
       println(s"Min Overviews: ${minOverview}")
       val extent = minOverview.extent
 
@@ -102,13 +105,11 @@ object GlobalSummary extends LazyLogging {
     // TODO this should be updated to handle both multi band and single band mosaics
     MultiBandMosaic.mosaicDefinition(projId).flatMap({ mosaic =>
       Future.sequence(mosaic.map { case MosaicDefinition(sceneId, _, maybeSceneType, Some(ingestLocation)) =>
-        Future {
-          maybeSceneType match {
-            case Some(SceneType.COG) =>
-              minAcceptableCogZoom(ingestLocation, 256)
-            case _ =>
-              minAcceptableSceneZoom(sceneId, store, 256)
-          }
+        maybeSceneType match {
+          case Some(SceneType.COG) =>
+            minAcceptableCogZoom(ingestLocation, 256).value
+          case _ =>
+            Future { minAcceptableSceneZoom(sceneId, store, 256) }
         }
       })
     }).map({ zoomsAndExtents =>

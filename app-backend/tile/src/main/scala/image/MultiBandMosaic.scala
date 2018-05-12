@@ -24,7 +24,7 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-import com.azavea.rf.common.utils.{CogUtils, GeoTiffUtils, RangeReaderUtils, TileUtils}
+import com.azavea.rf.common.utils.{CogUtils, RangeReaderUtils, TileUtils}
 import com.azavea.rf.database.util.RFTransactor
 
 import scala.concurrent._
@@ -258,16 +258,16 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
                   poly.geom.envelope
                 }
                 logger.info(s"EXTENT: ${extent}")
-                OptionT.fromOption[Future](CogUtils.fetchForExtent(ingestLocation, zoom, extent)).flatMap { tile: MultibandTile =>
-                  if (colorCorrect) {
-                    val histogram = RangeReaderUtils.fromUri(ingestLocation).map { rr =>
-                      val tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)
-                      GeoTiffUtils.geoTiffHistogram(tiff)
-                    }
-                    val cachedHistogram = rfCache.cachingOptionT(s"hist-tiff-${sceneId}")(OptionT.fromOption[Future](histogram))
-                    val a = cachedHistogram.map{ h => colorCorrectParams.colorCorrect(tile, h)}
-                    a
-                  } else OptionT.pure[Future](tile)
+                CogUtils.fromUri(ingestLocation).flatMap { tiff =>
+                  CogUtils.cropForZoomExtent(tiff, zoom, extent).flatMap { cropped: MultibandTile =>
+                    if (colorCorrect) {
+                      rfCache.cachingOptionT(s"hist-tiff-${sceneId}"){
+                        OptionT.liftF(Future(CogUtils.geoTiffHistogram(tiff)))
+                      }.semiflatMap { histogram =>
+                        Future(colorCorrectParams.colorCorrect(cropped, histogram))
+                      }
+                    } else OptionT.pure[Future](cropped)
+                  }
                 }
               }
               case _ => {

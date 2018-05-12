@@ -263,11 +263,14 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
         Future.successful(Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
 
       case cr@CogRaster(_, Some(band), celltype, location) =>
-        Future { CogUtils.fetchForExtent(location, zoom, Some(extent)) }.map({ maybeTile =>
+        CogUtils.fromUri(location).flatMap { tiff =>
+          CogUtils.cropForZoomExtent(tiff, zoom, Some(extent)).map { tile: MultibandTile =>
+            tile.band(band).interpretAs(celltype.getOrElse(tile.cellType))
+          }
+        }.value.map({ maybeTile =>
           maybeTile match {
             case Some(tile) =>
-              val t = tile.band(band).interpretAs(celltype.getOrElse(tile.cellType))
-              Valid(TileLiteral(t, RasterExtent(t, extent)))
+              Valid(TileLiteral(tile, RasterExtent(tile, extent)))
             case None =>
               Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
           }
@@ -284,4 +287,3 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
     }
   }
 }
-

@@ -107,19 +107,18 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   }
 
   def cogTile(location: String, zoom: Int, key: SpatialKey, buffer: Int = 0): OptionT[Future, MultibandTile] = {
-    val cacheKey = s"tile-$location-$zoom-${key.col}-${key.row}"
+    val cacheKey = s"cog-$location-$zoom-${key.col}-${key.row}"
     OptionT(rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(
       timedFuture("cog-tile-request")({
-        Future(CogUtils.fetch(location, zoom, key.col, key.row))
-        .recover({
-          case e: Throwable =>
-            logger.debug(s"Unable to read COG at $location for zoom $zoom for key $key; ${e.getMessage}")
-            None
-        })
+        CogUtils.fetch(location, zoom, key.col, key.row)
+          .value.recover({
+            case e: Throwable =>
+              logger.debug(s"Unable to read COG at $location for zoom $zoom for key $key; ${e.getMessage}")
+              None
+          })
       })
     ))
   }
-
 
   def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent): OptionT[Future, MultibandTile] = {
     val cacheKey = s"extent-tile-$layerId-$zoom-${extent.xmin}-${extent.ymin}-${extent.xmax}-${extent.ymax}"
