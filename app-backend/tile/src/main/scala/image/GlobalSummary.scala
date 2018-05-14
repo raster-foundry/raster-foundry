@@ -77,20 +77,12 @@ object GlobalSummary extends LazyLogging {
       }
     } yield {
       // TODO: make use of size
-      println(s"Min Overviews: ${minOverview}")
       val extent = minOverview.extent
-
       val poly = extent.toPolygon().reproject(minOverview.crs, WebMercator)
-      println(s"POLY WM: ${poly}")
-
       val latlngpoly = extent.toPolygon().reproject(minOverview.crs, LatLng)
-      println(s"POLY LATLNG ${latlngpoly}")
-
       val wmRE = ReprojectRasterExtent(minOverview.rasterExtent, minOverview.crs, WebMercator)
       val scheme = ZoomedLayoutScheme(WebMercator, 256)
-      println(s"WMRE: ${wmRE.extent}")
       val zoom = scheme.levelFor(wmRE.extent, wmRE.cellSize).zoom
-      println(s"ZOOM: ${zoom}")
       (wmRE.extent, zoom)
     }
   }

@@ -166,7 +166,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
         (_, ast) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
         updatedAst <- OptionT(RelabelAst.cogScenes(ast))
         (extent, zoom) <- TileSources.fullDataWindow(updatedAst.tileSources)
-        _ <- {OptionT.pure[Future](println(s"FOR EXTENT ZOOM: ${extent} ${zoom}"))}
+        _ <- {OptionT.pure[Future](logger.debug(s"FOR EXTENT ZOOM: ${extent} ${zoom}"))}
 
         literalAst <- OptionT(
                         tileResolver.resolveForExtent(updatedAst.asMaml._1, zoom, extent)
@@ -177,7 +177,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
                   NaiveInterpreter.DEFAULT(literalAst).andThen({ _.as[Tile] }) match {
                   case Valid(tile) => Some(tile)
                   case Invalid(e) => e.map { s =>
-                    println(s"ERROR: ${s.repr}")
+                    logger.error(s"ERROR: ${s.repr}")
 
                   }
                       None

@@ -64,7 +64,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
   def mosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]] = None)(
     implicit xa: Transactor[IO]): Future[Seq[MosaicDefinition]] = {
 
-    logger.info(s"Reading mosaic definition (project: $projectId")
+    logger.debug(s"Reading mosaic definition (project: $projectId")
     SceneToProjectDao.getMosaicDefinition(projectId, polygonOption).transact(xa).unsafeToFuture
   }
 
@@ -232,7 +232,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
   )(
       implicit xa: Transactor[IO]
   ): OptionT[Future, MultibandTile] = traceName(s"MultiBandMosaic.apply($projectId)") {
-    logger.info(s"Creating mosaic (project: $projectId, zoom: $zoom, col: $col, row: $row)")
+    logger.debug(s"Creating mosaic (project: $projectId, zoom: $zoom, col: $col, row: $row)")
 
     val polygonBbox: Projected[Polygon] = TileUtils.getTileBounds(zoom, col, row)
     val md: Future[Seq[MosaicDefinition]] = mosaicDefinition(projectId, Option(polygonBbox))

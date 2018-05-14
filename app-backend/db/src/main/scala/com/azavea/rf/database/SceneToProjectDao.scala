@@ -70,12 +70,12 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       """
     for {
       stps <- {
-        (select ++ whereAndOpt(filters: _*)).queryWithLogHandler[SceneToProjectwithSceneType](LogHandler.jdkLogHandler).list
+        (select ++ whereAndOpt(filters: _*)).query[SceneToProjectwithSceneType].list
       }
     } yield {
-      logger.info(s"Found ${stps.length} scenes in projects")
+      logger.debug(s"Found ${stps.length} scenes in projects")
       val md = MosaicDefinition.fromScenesToProjects(stps)
-      logger.info(s"MOSAIC DEFINITION: ${md}")
+      logger.debug(s"Mosaic Definition: ${md}")
       md
     }
   }

@@ -71,7 +71,7 @@ object RangeReaderUtils extends LazyLogging {
 
 }
 
-object SceneDao extends Dao[Scene] {
+object SceneDao extends Dao[Scene] with LazyLogging {
 
   type KickoffIngest = Boolean
 
@@ -114,25 +114,21 @@ object SceneDao extends Dao[Scene] {
       }
     }
 
-    def getTiffHistogram(uri: String) = {
-      for {
-        rr <- fromUri(uri)
-        tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)
-      } yield {
-        tiff.tile.histogram
-      }
-    }
-
-    val tileFootprint = (scene.sceneType, scene.ingestLocation) match {
-      case (Some(SceneType.COG), Some(ingestLocation)) => {
+    val tileFootprint = (scene.sceneType, scene.ingestLocation, scene.tileFootprint) match {
+      case (Some(SceneType.COG), Some(ingestLocation), None) => {
+        logger.info(s"Generating Footprint for Newly Added COG")
         val e = getTiffExtent(ingestLocation)
-        println(s"GOT IT ${e}")
         e
       }
       case _ => {
-        println("NOT A COG")
+        logger.info("Not generating footprint")
         None
       }
+    }
+
+    val dataFootprint = (tileFootprint, scene.dataFootprint) match {
+      case (Some(tf), None) => tileFootprint
+      case _ => scene.dataFootprint
     }
 
     val sceneInsertId = (fr"INSERT INTO" ++ tableF ++ fr"""(
@@ -146,7 +142,7 @@ object SceneDao extends Dao[Scene] {
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
         ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
         ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${tileFootprint},
-        ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
+        ${dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
         ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(SceneType.Avro)}

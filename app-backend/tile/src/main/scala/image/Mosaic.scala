@@ -46,10 +46,10 @@ object Mosaic extends LazyLogging with KamonTrace {
     OptionT(ProjectDao.query.filter(projectId).selectOption.transact(xa).unsafeToFuture) flatMap { project =>
       project.isSingleBand match {
         case true =>
-          logger.info(s"Constructing Single Band Mosaic ${project}")
+          logger.debug(s"Constructing Single Band Mosaic ${project}")
           SingleBandMosaic(project, zoom, col, row)
         case false =>
-          logger.info(s"Constructing MultiBand Mosaic ${project}")
+          logger.debug(s"Constructing MultiBand Mosaic ${project}")
           MultiBandMosaic(projectId, zoom, col, row)
       }
     }
