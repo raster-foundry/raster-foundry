@@ -13,38 +13,12 @@ import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
 
-import com.azavea.rf.database.util.Page
-import com.lonelyplanet.akka.http.extensions.PageRequest
-import io.circe._
-import io.circe.syntax._
-import io.circe.parser._
-import geotrellis.slick.Projected
-import geotrellis.vector.{Extent, MultiPolygon, Polygon}
-import io.circe.{Decoder, Encoder, Json}
-
 import scala.concurrent.duration._
 import java.sql.Timestamp
 import java.util.Date
 
-import geotrellis.proj4.LatLng
-import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.slick.Projected
-import geotrellis.vector.{Extent, Point, Polygon}
-import geotrellis.util.{ FileRangeReader, RangeReader }
-import geotrellis.spark.io.s3.util.S3RangeReader
-import geotrellis.spark.io.s3.AmazonS3Client
-import geotrellis.spark.io.http.util.HttpRangeReader
-
-import com.amazonaws.services.s3.AmazonS3URI
-import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3Client => AWSAmazonS3Client}
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-
-import scala.util.Try
-import java.net.URI
-import java.net.URL
 
 
 object SceneDao extends Dao[Scene] with LazyLogging {
@@ -53,7 +27,6 @@ object SceneDao extends Dao[Scene] with LazyLogging {
 
   val tableName = "scenes"
 
-  import RangeReaderUtils._
 
   val selectF = sql"""
     SELECT
