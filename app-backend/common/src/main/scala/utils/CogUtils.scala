@@ -74,11 +74,10 @@ object CogUtils {
     val tmsTileRE = RasterExtent(extent = actualExtent, cellSize = TmsLevels(zoom).cellSize)
     val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
     val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(0))
-    OptionT(
-      Future(
-        cropGeoTiff(overview, tiffTileRE.extent).map(_.tile)
-      )
-    )
+
+    OptionT(Future(cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
+      raster.reproject(tmsTileRE, transform, inverseTransform).tile
+    }))
   }
 
     /** Work around GeoTiff.closestTiffOverview being private to geotrellis */
