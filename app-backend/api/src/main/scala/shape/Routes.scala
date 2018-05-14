@@ -94,9 +94,8 @@ trait ShapeRoutes extends Authentication
             val reprojectedGeometry = Projected(Reproject(geometry, LatLng, WebMercator), 3857)
             reprojectedGeometry.isValid match {
               case true => {
-                val shape = Shape.create(
+                val shape = Shape.Create(
                   Some(user.id),
-                  user.organizationId,
                   fileMetadata.fileName,
                   None,
                   Some(reprojectedGeometry)
@@ -137,7 +136,7 @@ trait ShapeRoutes extends Authentication
     } {
       rejectEmptyResponse {
         complete {
-          ShapeDao.query.filter(shapeId).ownerFilter(user).selectOption.transact(xa).unsafeToFuture().map {
+          ShapeDao.query.filter(shapeId).selectOption.transact(xa).unsafeToFuture().map {
             _ map { _.toGeoJSONFeature }
           }
         }
@@ -161,10 +160,8 @@ trait ShapeRoutes extends Authentication
         .transact(xa).unsafeToFuture
     } {
       entity(as[Shape.GeoJSON]) { updatedShape: Shape.GeoJSON =>
-        authorize(user.isInRootOrSameOrganizationAs(updatedShape.properties)) {
-          onSuccess(ShapeDao.updateShape(updatedShape, shapeId, user).transact(xa).unsafeToFuture()) {
-            completeSingleOrNotFound
-          }
+        onSuccess(ShapeDao.updateShape(updatedShape, shapeId, user).transact(xa).unsafeToFuture()) {
+          completeSingleOrNotFound
         }
       }
     }
@@ -176,7 +173,7 @@ trait ShapeRoutes extends Authentication
         .authorized(user, ObjectType.Shape, shapeId, ActionType.Delete)
         .transact(xa).unsafeToFuture
     } {
-      onSuccess(ShapeDao.query.filter(shapeId).ownerFilter(user).delete.transact(xa).unsafeToFuture) {
+      onSuccess(ShapeDao.query.filter(shapeId).delete.transact(xa).unsafeToFuture) {
         completeSingleOrNotFound
       }
     }
