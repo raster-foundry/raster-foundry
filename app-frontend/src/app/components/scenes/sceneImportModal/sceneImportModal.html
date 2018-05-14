@@ -67,10 +67,15 @@
           <a ng-click="$ctrl.isCog = true"
              ng-class="{active: $ctrl.isCog}"
           >
-            Cloud Optimized GeoTIFF
+            Cloud Optimized GeoTIFF <span class="beta-tag">Beta</span>
           </a>
         </li>
       </ul>
+      <p ng-if="$ctrl.isCog">
+        <strong>This feature is currently in beta.</strong>
+        <br/>
+      </p>
+
       <p>Select the source you'd like to import your imagery from.</p>
       <p ng-if="$ctrl.resolve.project">Any scenes created from this import will automatically
         be added to the <strong>{{$ctrl.resolve.project.name}}</strong> project.
@@ -298,6 +303,8 @@
               <input id="acquisitionDate" type="date"
                      class="form-control" ng-model="$ctrl.sceneData.acquisitionDate">
             </div>
+          </div>
+          <div class="form-group">
             <div>
               <label for="cloudCover">Cloud Cover</label>
               <input id="cloudCover" type="number" placeholder=""
@@ -363,6 +370,15 @@
   <div class="modal-body" ng-if="$ctrl.currentStepIs('S3_UPLOAD')">
     <div class="content">
       <h3 class="no-margin text-center">Processing your S3 import</h3>
+    </div>
+  </div>
+
+  <!--Body for Planet IMPORT_SUCCESS-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT_COG_PROGRESS')">
+    <div class="content">
+      <h3 class="no-margin text-center">Your COG import is being processed</h3>
+      <br/>
+      <div class="text-center"><i class="icon-load animate-spin"></i></div>
     </div>
   </div>
 

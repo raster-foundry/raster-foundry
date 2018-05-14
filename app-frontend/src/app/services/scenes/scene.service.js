@@ -91,7 +91,7 @@ export default (app) => {
                             boundaryStatus: 'SUCCESS',
                             ingestStatus: 'INGESTED'
                         },
-                        filterFields: {},
+                        filterFields: scene.metadata || {},
                         sceneType: 'COG'
                     }).$promise;
                 });

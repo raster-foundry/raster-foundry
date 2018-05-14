@@ -54,7 +54,10 @@ export default class SceneImportModalController {
         this.planetSceneIds = '';
         this.selectedFileDatasets = [];
         this.selectedFiles = [];
-        this.sceneData = {};
+        this.sceneData = {
+            acquisitionDate: new Date(),
+            cloudCover: 0
+        };
         this.uploadProgressPct = {};
         this.uploadProgressFlexString = {};
         this.abortedUploadCount = 0;
@@ -179,6 +182,12 @@ export default class SceneImportModalController {
             previous: () => 'IMPORT',
             allowPrevious: () => false,
             onEnter: () => this.startCogImport(),
+            next: () => 'IMPORT_COG_PROGRESS'
+        }, {
+            name: 'IMPORT_COG_PROGRESS',
+            previous: () => 'IMPORT_COG',
+            allowPrevious: () => false,
+            allowNext: () => false,
             next: () => 'IMPORT_SUCCESS'
         }, {
             name: 'IMPORT_ERROR',
@@ -340,6 +349,7 @@ export default class SceneImportModalController {
 
     startCogImport() {
         this.preventInterruptions();
+        this.handleNext();
         this.sceneService.createCogScene({
             metadata: this.sceneData,
             location: this.cogConfig.url,
@@ -511,6 +521,7 @@ export default class SceneImportModalController {
         if (!this.abortedUploadCount) {
             if (this.isCog) {
                 this.$q.all(this.upload.files.map(f => {
+                    this.handleNext();
                     return this.sceneService.createCogScene({
                         metadata: this.sceneData,
                         location: f,
