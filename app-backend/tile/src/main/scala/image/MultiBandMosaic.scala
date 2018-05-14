@@ -268,8 +268,8 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
                 }
 
                 val cacheKey = extent match {
-                  case Some(e) => s"scene-bbox-${sceneId}-${zoom}-${e.xmin}-${e.ymin}-${e.xmax}-${e.ymax}"
-                  case _ => s"scene-bbox-${sceneId}-${zoom}-no-extent"
+                  case Some(e) => s"scene-bbox-${sceneId}-${zoom}-${e.xmin}-${e.ymin}-${e.xmax}-${e.ymax}-${colorCorrectParams.hashCode()}"
+                  case _ => s"scene-bbox-${sceneId}-${zoom}-no-extent-${colorCorrectParams.hashCode()}"
                 }
 
 
