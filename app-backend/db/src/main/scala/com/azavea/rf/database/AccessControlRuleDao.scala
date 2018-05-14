@@ -23,7 +23,7 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
   val selectF = fr"""
         SELECT
             id, created_at, created_by,
-            modified_at, modified_by, is_active,
+            is_active,
             object_type, object_id, subject_type,
             subject_id, action_type
         FROM
@@ -32,16 +32,19 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
   def createF(ac: AccessControlRule) =
     fr"INSERT INTO" ++ tableF ++ fr"""(
             id, created_at, created_by,
-            modified_at, modified_by, is_active,
+            is_active,
             object_type, object_id, subject_type,
             subject_id, action_type
         ) VALUES (
             ${ac.id}, ${ac.createdAt}, ${ac.createdBy},
-            ${ac.modifiedAt}, ${ac.modifiedBy}, ${ac.isActive},
+            ${ac.isActive},
             ${ac.objectType}, ${ac.objectId}, ${ac.subjectType},
             ${ac.subjectId}, ${ac.actionType}
         )
         """
+
+  def listedByObject(objectType: ObjectType, objectId: UUID): Dao.QueryBuilder[AccessControlRule] =
+    query.filter(fr"object_type = ${objectType}").filter(fr"object_id = ${objectId}")
 
   def create(ac: AccessControlRule): ConnectionIO[AccessControlRule] = {
     val objectDao = ac.objectType match {
@@ -78,8 +81,6 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
       "id",
       "created_at",
       "created_by",
-      "modified_at",
-      "modified_by",
       "is_active",
       "object_type",
       "object_id",
@@ -103,8 +104,45 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
     } yield createAC
   }
 
-  def getOption(id: UUID): ConnectionIO[Option[AccessControlRule]] = {
-    query.filter(id).selectOption
+  def createMany(acrs: List[AccessControlRule]): ConnectionIO[Int] = {
+    val acrFragments = acrs map {
+      (acr: AccessControlRule) => fr"""
+      (${acr.id}, ${acr.createdAt}, ${acr.createdBy}, ${acr.isActive},
+      ${acr.objectType}, ${acr.objectId}, ${acr.subjectType}, ${acr.subjectId},
+      ${acr.actionType})
+      """
+    }
+
+    val acrValues = acrFragments.toNel match {
+      case Some(fragments) => fragments.intercalate(fr",")
+      case _ =>
+        throw new IllegalArgumentException("Can't replace ACRs from an empty list")
+    }
+
+    val insertManyFragment = {
+      fr"INSERT INTO" ++ tableF ++
+        fr"(id, created_at, created_by, is_active, object_type, object_id, subject_type, subject_id, action_type) VALUES" ++
+       acrValues
+    }
+
+    insertManyFragment.update.run
+  }
+
+  def createWithResults(acr: AccessControlRule): ConnectionIO[List[AccessControlRule]] = {
+    create(acr) >>= {
+      (dbAcr: AccessControlRule) => {
+        listByObject(dbAcr.objectType, dbAcr.objectId)
+      }
+    }
+  }
+
+  // Delay materializing the list of ACR creates to guarantee that everything inserted has
+  // the same object type and id
+  def replaceWithResults(user: User, objectType: ObjectType, objectId: UUID, acrs: List[AccessControlRule.Create]):
+      ConnectionIO[List[AccessControlRule]] = {
+    val materialized = acrs map { _.toAccessControlRule(user, objectType, objectId) }
+
+    listedByObject(objectType, objectId).delete >> createMany(materialized) >> listByObject(objectType, objectId)
   }
 
   // List rules that a given subject has applied to it
@@ -117,12 +155,6 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
       .list
   }
 
-  def deactivate(id: UUID, user: User): ConnectionIO[Int] = {
-    (fr"UPDATE" ++ tableF ++ fr""" SET
-        is_active = false,
-        modified_at = NOW(),
-        modified_by = ${user.id}
-      WHERE id = ${id}
-    """).update.run
-  }
+  def listByObject(objectType: ObjectType, objectId: UUID): ConnectionIO[List[AccessControlRule]] =
+    listedByObject(objectType, objectId).list
 }

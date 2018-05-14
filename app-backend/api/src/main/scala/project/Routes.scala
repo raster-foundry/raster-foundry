@@ -72,191 +72,210 @@ trait ProjectRoutes extends Authentication
           listProjects
         }
       } ~
-      post {
-        traceName("projects-create") {
-          createProject
+        post {
+          traceName("projects-create") {
+            createProject
+          }
         }
-      }
     } ~
-    pathPrefix(JavaUUID) { projectId =>
-      pathEndOrSingleSlash {
-        get {
-          traceName("projects-detail") {
-            getProject(projectId)
-          }
-        } ~
-        put {
-          traceName("projects-update") {
-            updateProject(projectId)
-          }
-        } ~
-        delete {
-          traceName("projects-delete") {
-            deleteProject(projectId) }
-        }
-      } ~
-      pathPrefix("labels") {
+      pathPrefix(JavaUUID) { projectId =>
         pathEndOrSingleSlash {
           get {
-            traceName("project-list-labels") {
-              listLabels(projectId)
-            }
-          }
-        }
-      } ~
-      pathPrefix("annotations") {
-        pathEndOrSingleSlash {
-          get {
-            traceName("projects-list-annotations") {
-              listAnnotations(projectId)
+            traceName("projects-detail") {
+              getProject(projectId)
             }
           } ~
-          post {
-            traceName("projects-create-annotations") {
-              createAnnotation(projectId)
-            }
-          } ~
-            delete {
-              traceName("projects-delete-annotations") {
-                deleteProjectAnnotations(projectId)
-              }
-            }
-        } ~
-        pathPrefix("shapefile") {
-          get {
-            traceName("project-annotations-shapefile") {
-              exportAnnotationShapefile(projectId)
-            }
-          }
-        } ~
-        pathPrefix(JavaUUID) { annotationId =>
-          pathEndOrSingleSlash {
-            get {
-              traceName("projects-get-annotation") {
-                getAnnotation(projectId, annotationId)
-              }
-            } ~
             put {
-              traceName("projects-update-annotation") {
-                updateAnnotation(projectId, annotationId)
+              traceName("projects-update") {
+                updateProject(projectId)
               }
             } ~
             delete {
-              traceName("projects-delete-annotation") {
-                deleteAnnotation(projectId, annotationId)
+              traceName("projects-delete") {
+                deleteProject(projectId) }
+            }
+        } ~
+          pathPrefix("labels") {
+            pathEndOrSingleSlash {
+              get {
+                traceName("project-list-labels") {
+                  listLabels(projectId)
+                }
               }
             }
-          }
-        }
-      } ~
-      pathPrefix("areas-of-interest") {
-        pathEndOrSingleSlash {
-          get {
-            traceName("projects-list-areas-of-interest") {
-              listAOIs(projectId)
-            }
           } ~
-          post {
-            traceName("projects-create-areas-of-interest") {
-              createAOI(projectId)
-            }
-          }
-        }
-      } ~
-      pathPrefix("scenes") {
-        pathEndOrSingleSlash {
-          get {
-            traceName("project-list-scenes") {
-              listProjectScenes(projectId)
-            }
-          } ~
-          post {
-            traceName("project-add-scenes-list") {
-              addProjectScenes(projectId)
-            }
-          } ~
-          put {
-            traceName("project-update-scenes-list") {
-              updateProjectScenes(projectId)
-            }
-          } ~
-          delete {
-            traceName("project-delete-scenes-list") {
-              deleteProjectScenes(projectId)
-            }
-          }
-        } ~
-        pathPrefix("bulk-add-from-query") {
-          pathEndOrSingleSlash {
-            post {
-              traceName("project-add-scenes-from-query") {
-                addProjectScenesFromQueryParams(projectId)
+          pathPrefix("annotations") {
+            pathEndOrSingleSlash {
+              get {
+                traceName("projects-list-annotations") {
+                  listAnnotations(projectId)
+                }
+              } ~
+                post {
+                  traceName("projects-create-annotations") {
+                    createAnnotation(projectId)
+                  }
+                } ~
+                delete {
+                  traceName("projects-delete-annotations") {
+                    deleteProjectAnnotations(projectId)
+                  }
+                }
+            } ~
+              pathPrefix("shapefile") {
+                get {
+                  traceName("project-annotations-shapefile") {
+                    exportAnnotationShapefile(projectId)
+                  }
+                }
+              } ~
+              pathPrefix(JavaUUID) { annotationId =>
+                pathEndOrSingleSlash {
+                  get {
+                    traceName("projects-get-annotation") {
+                      getAnnotation(projectId, annotationId)
+                    }
+                  } ~
+                    put {
+                      traceName("projects-update-annotation") {
+                        updateAnnotation(projectId, annotationId)
+                      }
+                    } ~
+                    delete {
+                      traceName("projects-delete-annotation") {
+                        deleteAnnotation(projectId, annotationId)
+                      }
+                    }
+                }
               }
-            }
-          }
-        } ~
-        pathPrefix("accept") {
-          post {
-            traceName("project-accept-scenes-list") {
-              acceptScenes(projectId)
-            }
-          }
-        } ~
-        pathPrefix(JavaUUID) { sceneId =>
-          pathPrefix("accept") {
-            post {
-              traceName("project-accept-scene") {
-                acceptScene(projectId, sceneId)
-              }
-            }
-          }
-        }
-      } ~
-      pathPrefix("mosaic") {
-        pathEndOrSingleSlash {
-          get {
-            traceName("project-get-mosaic-definition") {
-              getProjectMosaicDefinition(projectId)
-            }
-          }
-        } ~
-        pathPrefix(JavaUUID) { sceneId =>
-          get {
-            traceName("project-get-scene-color-corrections") {
-              getProjectSceneColorCorrectParams(projectId, sceneId)
+          } ~
+          pathPrefix("areas-of-interest") {
+            pathEndOrSingleSlash {
+              get {
+                traceName("projects-list-areas-of-interest") {
+                  listAOIs(projectId)
+                }
+              } ~
+                post {
+                  traceName("projects-create-areas-of-interest") {
+                    createAOI(projectId)
+                  }
+                }
             }
           } ~
-          put {
-            traceName("project-set-scene-color-corrections") {
-              setProjectSceneColorCorrectParams(projectId, sceneId)
-            }
-          }
-        } ~
-        pathPrefix("bulk-update-color-corrections") {
-          pathEndOrSingleSlash {
-            post {
-              traceName("project-bulk-update-color-corrections") {
-                setProjectScenesColorCorrectParams(projectId)
+          pathPrefix("scenes") {
+            pathEndOrSingleSlash {
+              get {
+                traceName("project-list-scenes") {
+                  listProjectScenes(projectId)
+                }
+              } ~
+                post {
+                  traceName("project-add-scenes-list") {
+                    addProjectScenes(projectId)
+                  }
+                } ~
+                put {
+                  traceName("project-update-scenes-list") {
+                    updateProjectScenes(projectId)
+                  }
+                } ~
+                delete {
+                  traceName("project-delete-scenes-list") {
+                    deleteProjectScenes(projectId)
+                  }
+                }
+            } ~
+              pathPrefix("bulk-add-from-query") {
+                pathEndOrSingleSlash {
+                  post {
+                    traceName("project-add-scenes-from-query") {
+                      addProjectScenesFromQueryParams(projectId)
+                    }
+                  }
+                }
+              } ~
+              pathPrefix("accept") {
+                post {
+                  traceName("project-accept-scenes-list") {
+                    acceptScenes(projectId)
+                  }
+                }
+              } ~
+              pathPrefix(JavaUUID) { sceneId =>
+                pathPrefix("accept") {
+                  post {
+                    traceName("project-accept-scene") {
+                      acceptScene(projectId, sceneId)
+                    }
+                  }
+                }
               }
-            }
-          }
-        }
-      } ~
-      pathPrefix("order") {
-        pathEndOrSingleSlash {
-          get {
-            traceName("projects-get-scene-order") {
-              listProjectSceneOrder(projectId)
+          } ~
+          pathPrefix("mosaic") {
+            pathEndOrSingleSlash {
+              get {
+                traceName("project-get-mosaic-definition") {
+                  getProjectMosaicDefinition(projectId)
+                }
+              }
+            } ~
+              pathPrefix(JavaUUID) { sceneId =>
+                get {
+                  traceName("project-get-scene-color-corrections") {
+                    getProjectSceneColorCorrectParams(projectId, sceneId)
+                  }
+                } ~
+                  put {
+                    traceName("project-set-scene-color-corrections") {
+                      setProjectSceneColorCorrectParams(projectId, sceneId)
+                    }
+                  }
+              } ~
+              pathPrefix("bulk-update-color-corrections") {
+                pathEndOrSingleSlash {
+                  post {
+                    traceName("project-bulk-update-color-corrections") {
+                      setProjectScenesColorCorrectParams(projectId)
+                    }
+                  }
+                }
+              }
+          } ~
+          pathPrefix("order") {
+            pathEndOrSingleSlash {
+              get {
+                traceName("projects-get-scene-order") {
+                  listProjectSceneOrder(projectId)
+                }
+              } ~
+                put {
+                  traceName("projects-set-scene-order") {
+                    setProjectSceneOrder(projectId)
+                  }
+                }
             }
           } ~
-          put {
-            traceName("projects-set-scene-order") {
-              setProjectSceneOrder(projectId)
-            }
+          pathPrefix("permissions") {
+            pathEndOrSingleSlash {
+              put {
+                traceName("replace-project-permissions") {
+                  replacePermissions(projectId)
+                }
+              }
+            } ~
+              post {
+                traceName("add-project-permission") {
+                  addPermission(projectId)
+                }
+              } ~
+              get {
+                traceName("list-project-permissions") {
+                  listPermissions(projectId)
+                }
+              }
           }
-        }
       }
-    }
   }
 
   def listProjects: Route = authenticate { user =>
@@ -704,6 +723,44 @@ trait ProjectRoutes extends Authentication
         onSuccess(ProjectDao.deleteScenesFromProject(sceneIds.toList, projectId).transact(xa).unsafeToFuture()) {
           _ => complete(StatusCodes.NoContent)
         }
+      }
+    }
+  }
+
+  def addPermission(projectId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.ownedBy(projectId, user).transact(xa).unsafeToFuture
+    } {
+      entity(as[AccessControlRule.Create]) { acrCreate =>
+        complete {
+          AccessControlRuleDao.createWithResults(
+            acrCreate.toAccessControlRule(user, ObjectType.Project, projectId)
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def replacePermissions(projectId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.ownedBy(projectId, user).transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Project, projectId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def listPermissions(projectId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.ownedBy(projectId, user).transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Project, projectId).transact(xa).unsafeToFuture
       }
     }
   }

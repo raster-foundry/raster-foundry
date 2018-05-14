@@ -53,8 +53,6 @@ object M207 {
         id UUID PRIMARY KEY NOT NULL,
         created_at TIMESTAMP NOT NULL,
         created_by VARCHAR(255) REFERENCES users(id) NOT NULL,
-        modified_at TIMESTAMP NOT NULL,
-        modified_by VARCHAR(255) REFERENCES users(id) NOT NULL,
         is_active BOOLEAN DEFAULT true NOT NULL,
         object_type object_type NOT NULL,
         object_id UUID NOT NULL,

@@ -42,8 +42,8 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             )
             _ <- AccessControlRuleDao.create(
               AccessControlRule.Create(
-                ObjectType.Project, project.id, SubjectType.All, None, ActionType.View
-              ).toAccessControlRule(user1)
+                true, SubjectType.All, None, ActionType.View
+              ).toAccessControlRule(user1, ObjectType.Project, project.id)
             )
             user1Authorized <- ProjectDao.query.authorized(user1, ObjectType.Project, project.id, ActionType.View)
             user2Authorized <- ProjectDao.query.authorized(user2, ObjectType.Project, project.id, ActionType.View)
@@ -84,8 +84,8 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             project <- ProjectDao.insertProject(fixupProjectCreate(user1, org1, projectCreate), user1)
             _ <- AccessControlRuleDao.create(
               AccessControlRule.Create(
-                ObjectType.Project, project.id, SubjectType.Platform, Some(platform1.id.toString), ActionType.View
-              ).toAccessControlRule(user1)
+                true, SubjectType.Platform, Some(platform1.id.toString), ActionType.View
+              ).toAccessControlRule(user1, ObjectType.Project, project.id)
             )
             user1Authorized <- ProjectDao.query.authorized(user1, ObjectType.Project, project.id, ActionType.View)
             user2Authorized <- ProjectDao.query.authorized(user2, ObjectType.Project, project.id, ActionType.View)
@@ -116,8 +116,8 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             project <- ProjectDao.insertProject(fixupProjectCreate(user1, org1, projectCreate), user1)
             _ <- AccessControlRuleDao.create(
               AccessControlRule.Create(
-                ObjectType.Project, project.id, SubjectType.Organization, Some(org1.id.toString), ActionType.View
-              ).toAccessControlRule(user1)
+                true, SubjectType.Organization, Some(org1.id.toString), ActionType.View
+              ).toAccessControlRule(user1, ObjectType.Project, project.id)
             )
             user1Authorized <- ProjectDao.query.authorized(user1, ObjectType.Project, project.id, ActionType.View)
             user2Authorized <- ProjectDao.query.authorized(user2, ObjectType.Project, project.id, ActionType.View)
@@ -136,6 +136,33 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
     check {
       forAll {
         (u: Unit) => true
+      }
+    }
+  }
+
+  test("several access control rules should be insertable at the same time") {
+    check {
+      forAll {
+        (platform: Platform, userCreate: User.Create, orgCreate: Organization.Create, projectCreate: Project.Create) => {
+          val insertManyAcrsIO = for {
+            dbPlatform <- PlatformDao.create(platform)
+            orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
+            (org, user) = orgUser
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, org, projectCreate), user)
+            acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
+              AccessControlRule.Create(true, SubjectType.All, None, _).toAccessControlRule(
+                user, ObjectType.Project, project.id
+              )
+            }
+            _ <- AccessControlRuleDao.createMany(acrs)
+            dbAcrs <- AccessControlRuleDao.listByObject(ObjectType.Project, project.id)
+          } yield { (acrs, dbAcrs) }
+
+          val (acrs, dbAcrs) = insertManyAcrsIO.transact(xa).unsafeRunSync
+
+          assert(acrs.toSet == dbAcrs.toSet, "Inserting many ACRs should make those ACRs available to list")
+          true
+        }
       }
     }
   }
