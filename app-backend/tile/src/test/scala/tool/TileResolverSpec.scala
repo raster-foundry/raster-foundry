@@ -4,7 +4,6 @@ import com.azavea.rf.tile.image.Mosaic
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.maml._
 import com.azavea.rf.datamodel._
-
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
 import com.azavea.maml.eval.tile._
@@ -38,6 +37,8 @@ import java.net.URI
 import java.sql.Timestamp
 import java.time.Instant
 
+import com.azavea.rf.common.utils.CogUtils
+
 import scala.concurrent.{ExecutionContext, Future}
 
 
@@ -58,14 +59,16 @@ class TileResolverSpec extends WordSpec with Matchers {
           cogUri
         )
 
+        val cogExtent = CogUtils.getTiffExtent(cogUri)
         val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
         val landsatId = UUID.fromString("697a0b91-b7a8-446e-842c-97cda155554d")
 
-        val cogScene = Scene.Create(
+        val cogScene = Scene.
+          Create(
           None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
           Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
           "test scene datasource 1", None,
-          None, None, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified],
+            cogExtent, cogExtent, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified],
           Some(cogUri),
           SceneFilterFields(None,
                             Some(Timestamp.from(Instant.parse("2016-09-19T14:41:58.408544Z"))),
@@ -75,7 +78,8 @@ class TileResolverSpec extends WordSpec with Matchers {
           Some(SceneType.COG)
         )
 
-        Await.result(resolver.resolveBuffered(ast)(10, 10, 12), 5.seconds) shouldBe (None)
+        val response = Await.result(resolver.resolveBuffered(ast)(12, 1155, 2108), 10.seconds)
+        response.isValid shouldBe true
       }
     }
   }
