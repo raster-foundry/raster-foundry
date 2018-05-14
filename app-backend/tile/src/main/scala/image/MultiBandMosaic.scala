@@ -69,7 +69,14 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
   }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
-  def fetch(id: UUID, zoom: Int, col: Int, row: Int)(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = {
+  def fetch(id: UUID, zoom: Int, col: Int, row: Int, sceneType: Option[SceneType], ingestLocation: Option[String])(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = {
+    (sceneType, ingestLocation) match {
+      case (Some(SceneType.COG), Some(cogUri)) => CogUtils.fetch(cogUri, zoom, col, row)
+      case (_, _) => fetchAvroTile(id, zoom, col: Int, row: Int)
+    }
+  }
+
+  private def fetchAvroTile(id: UUID, zoom: Int, col: Int, row: Int)(implicit xa: Transactor[IO]) = {
     tileLayerMetadata(id, zoom).flatMap {
       case (sourceZoom, tlm) =>
         val zoomDiff = zoom - sourceZoom
@@ -148,8 +155,8 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
       }.toSet
 
       val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
-        for (MosaicDefinition(sceneId, _, _, _) <- mosaic)
-          yield MultiBandMosaic.fetch(sceneId, zoom, col, row)
+        for (MosaicDefinition(sceneId, _, sceneType,ingestLocation) <- mosaic)
+          yield MultiBandMosaic.fetch(sceneId, zoom, col, row, sceneType, ingestLocation)
 
       val futureMergeTile: Future[Option[MultibandTile]] =
         Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>
@@ -257,18 +264,26 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
                 val extent: Option[Extent] = bbox.map{ poly =>
                   poly.geom.envelope
                 }
-                logger.info(s"EXTENT: ${extent}")
-                CogUtils.fromUri(ingestLocation).flatMap { tiff =>
-                  CogUtils.cropForZoomExtent(tiff, zoom, extent).flatMap { cropped: MultibandTile =>
-                    if (colorCorrect) {
-                      rfCache.cachingOptionT(s"hist-tiff-${sceneId}"){
-                        OptionT.liftF(Future(CogUtils.geoTiffHistogram(tiff)))
-                      }.semiflatMap { histogram =>
-                        Future(colorCorrectParams.colorCorrect(cropped, histogram))
-                      }
-                    } else OptionT.pure[Future](cropped)
-                  }
+
+                val cacheKey = extent match {
+                  case Some(e) => s"scene-bbox-${sceneId}-${zoom}-${e.xmin}-${e.ymin}-${e.xmax}-${e.ymax}"
+                  case _ => s"scene-bbox-${sceneId}-${zoom}-no-extent"
                 }
+
+
+                rfCache.cachingOptionT(cacheKey)(
+                  CogUtils.fromUri(ingestLocation).flatMap { tiff =>
+                    CogUtils.cropForZoomExtent(tiff, zoom, extent).flatMap { cropped: MultibandTile =>
+                      if (colorCorrect) {
+                        rfCache.cachingOptionT(s"hist-tiff-${sceneId}"){
+                          OptionT.liftF(Future(CogUtils.geoTiffHistogram(tiff)))
+                        }.semiflatMap { histogram =>
+                          Future(colorCorrectParams.colorCorrect(cropped, histogram))
+                        }
+                      } else OptionT.pure[Future](cropped)
+                    }
+                  }
+                )
               }
               case _ => {
                 MultiBandMosaic
