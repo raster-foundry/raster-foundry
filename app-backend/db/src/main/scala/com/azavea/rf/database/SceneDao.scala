@@ -47,30 +47,6 @@ import java.net.URI
 import java.net.URL
 
 
-object RangeReaderUtils extends LazyLogging {
-  def fromUri(uri: String): Option[RangeReader] = {
-    import java.nio.file._
-
-    val javaUri = new URI(uri)
-    javaUri.getScheme match {
-      case "file" | null =>
-        Some(FileRangeReader(Paths.get(javaUri).toFile))
-
-      case "http" | "https" =>
-        Some(HttpRangeReader(new URL(uri)))
-
-      case "s3" =>
-        val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri, "UTF-8"))
-        val s3Client = new AmazonS3Client(new AWSAmazonS3Client(new DefaultAWSCredentialsProviderChain))
-        Some(S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client))
-
-      case scheme =>
-        None
-    }
-  }
-
-}
-
 object SceneDao extends Dao[Scene] with LazyLogging {
 
   type KickoffIngest = Boolean
@@ -104,33 +80,6 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
     }
 
-    def getTiffExtent(uri: String): Option[Projected[MultiPolygon]] = {
-      for {
-        rr <- fromUri(uri)
-        tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)
-      } yield {
-        val crs = tiff.crs
-        Projected(MultiPolygon(tiff.extent.reproject(crs, WebMercator).toPolygon()), 3857)
-      }
-    }
-
-    val tileFootprint = (scene.sceneType, scene.ingestLocation, scene.tileFootprint) match {
-      case (Some(SceneType.COG), Some(ingestLocation), None) => {
-        logger.info(s"Generating Footprint for Newly Added COG")
-        val e = getTiffExtent(ingestLocation)
-        e
-      }
-      case _ => {
-        logger.info("Not generating footprint")
-        None
-      }
-    }
-
-    val dataFootprint = (tileFootprint, scene.dataFootprint) match {
-      case (Some(tf), None) => tileFootprint
-      case _ => scene.dataFootprint
-    }
-
     val sceneInsertId = (fr"INSERT INTO" ++ tableF ++ fr"""(
          id, created_at, created_by, modified_at, modified_by, owner,
          organization_id, ingest_size_bytes, visibility, tags,
@@ -141,8 +90,8 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       )""" ++ fr"""VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
         ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
-        ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${tileFootprint},
-        ${dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
+        ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
+        ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
         ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(SceneType.Avro)}

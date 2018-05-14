@@ -14,12 +14,14 @@ import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 import geotrellis.util._
 import geotrellis.proj4._
 import geotrellis.spark.tiling._
+
 import scala.util.Properties
 import scala.math
 import scala.util.Try
 import scala.concurrent._
 import cats.data._
 import cats.implicits._
+import geotrellis.slick.Projected
 
 object CogUtils {
   lazy val cacheConfig = CommonConfig.memcached
@@ -83,6 +85,17 @@ object CogUtils {
     /** Work around GeoTiff.closestTiffOverview being private to geotrellis */
   def closestTiffOverview[T <: CellGrid](tiff: GeoTiff[T], cs: CellSize, strategy: OverviewStrategy): GeoTiff[T] = {
     geotrellis.hack.GTHack.closestTiffOverview(tiff, cs, strategy)
+  }
+
+
+  def getTiffExtent(uri: String): Option[Projected[MultiPolygon]] = {
+    for {
+      rr <- RangeReaderUtils.fromUri(uri)
+      tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)
+    } yield {
+      val crs = tiff.crs
+      Projected(MultiPolygon(tiff.extent.reproject(crs, WebMercator).toPolygon()), 3857)
+    }
   }
 
   /** Work around bug in GeoTiff.crop(extent) method */
