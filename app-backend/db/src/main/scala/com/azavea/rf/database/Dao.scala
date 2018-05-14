@@ -30,14 +30,6 @@ abstract class Dao[Model: Composite] extends Filterables {
   /** Begin construction of a complex, filtered query */
   def query: Dao.QueryBuilder[Model] = Dao.QueryBuilder[Model](selectF, tableF, List.empty)
 
-
-  def ownerEditFilter(user: User): Option[Fragment] = {
-    user.isInRootOrganization match {
-      case true => None
-      case _ => Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id})")
-    }
-  }
-
 }
 
 object Dao {
@@ -158,42 +150,6 @@ object Dao {
           )
         )"""
       )))
-    }
-
-    def ownerFilterF(user: User): Option[Fragment] = {
-      if (user.isInRootOrganization) {
-        None
-      } else {
-        Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id})")
-      }
-    }
-
-    def ownerVisibilityFilterF(user: User): Option[Fragment] = {
-      if (user.isInRootOrganization) {
-        None
-      } else {
-        Some(fr"((organization_id = ${user.organizationId} AND visibility = 'ORGANIZATION' :: visibility) OR owner = ${user.id} OR visibility = 'PUBLIC' :: visibility)")
-      }
-    }
-
-    def ownerFilter[M >: Model](user: User)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
-      this.copy(filters = filters ++ filterable.toFilters(ownerFilterF(user)))
-    }
-
-    def ownerVisibilityFilter[M >: Model](user: User)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
-      this.copy(filters = filters ++ filterable.toFilters(ownerVisibilityFilterF(user)))
-    }
-
-    def ownerFilterF2(user: User): Option[Fragment] = {
-      if (user.isInRootOrganization) {
-        None
-      } else {
-        Some(fr"(organization = ${user.organizationId} OR owner = ${user.id})")
-      }
-    }
-
-    def ownerFilter2[M >: Model](user: User)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
-      this.copy(filters = filters ++ filterable.toFilters(ownerFilterF2(user)))
     }
 
     /** Provide a list of responses within the PaginatedResponse wrapper */

@@ -108,7 +108,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
 
   def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest, searchParams: SearchQueryParameters): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
     val sf =
-      fr"""SELECT u.id, u.organization_id, u.role, u.created_at, u.modified_at,
+      fr"""SELECT u.id, u.role, u.created_at, u.modified_at,
         u.dropbox_credential, u.planet_credential, u.email_notifications,
         u.email, u.name, u.profile_image_uri, u.is_superuser, u.is_active, ugr.group_role
         FROM """ ++ tableF ++ fr""" ugr
