@@ -11,7 +11,6 @@ case class Image(
   id: UUID,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
-  organizationId: UUID,
   createdBy: String,
   modifiedBy: String,
   owner: String,
@@ -28,7 +27,6 @@ case class Image(
     this.id,
     this.createdAt,
     this.modifiedAt,
-    this.organizationId,
     this.createdBy,
     this.modifiedBy,
     this.owner,
@@ -52,7 +50,6 @@ object Image {
 
   @JsonCodec
   case class Create(
-    organizationId: UUID,
     rawDataBytes: Long,
     visibility: Visibility,
     filename: String,
@@ -72,7 +69,6 @@ object Image {
         UUID.randomUUID, // primary key
         now, // createdAt
         now, // modifiedAt
-        organizationId,
         user.id, // createdBy: String,
         user.id, // modifiedBy: String,
         ownerId, // owner: String
@@ -91,7 +87,6 @@ object Image {
   /** Image class when posted with bands */
   @JsonCodec
   case class Banded(
-    organizationId: UUID,
     rawDataBytes: Long,
     visibility: Visibility,
     filename: String,
@@ -105,7 +100,6 @@ object Image {
   ) {
     def toImage(user: User): Image = {
       Image.Create(
-        organizationId,
         rawDataBytes,
         visibility,
         filename,
@@ -124,7 +118,6 @@ object Image {
     id: UUID,
     createdAt: Timestamp,
     modifiedAt: Timestamp,
-    organizationId: UUID,
     createdBy: String,
     modifiedBy: String,
     owner: String,
@@ -143,7 +136,6 @@ object Image {
       id,
       createdAt,
       modifiedAt,
-      organizationId,
       createdBy,
       modifiedBy,
       owner,
@@ -161,7 +153,6 @@ object Image {
       this.id,
       this.createdAt,
       this.modifiedAt,
-      this.organizationId,
       this.createdBy,
       this.modifiedBy,
       this.owner,
@@ -198,7 +189,6 @@ object Image {
     id: UUID,
     createdAt: Timestamp,
     modifiedAt: Timestamp,
-    organizationId: UUID,
     createdBy: String,
     modifiedBy: String,
     owner: String,
