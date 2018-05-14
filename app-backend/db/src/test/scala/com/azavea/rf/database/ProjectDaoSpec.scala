@@ -32,7 +32,7 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
         (user: User.Create, org: Organization.Create, project: Project.Create) => {
           val projInsertIO = insertUserAndOrg(user, org) flatMap {
             case (org: Organization, user: User) => {
-              ProjectDao.insertProject(fixupProjectCreate(user, org, project), user)
+              ProjectDao.insertProject(fixupProjectCreate(user, project), user)
             }
           }
           val insertedProject = projInsertIO.transact(xa).unsafeRunSync
@@ -57,14 +57,14 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
         (user: User.Create, org: Organization.Create, insertProject: Project.Create, updateProject: Project.Create) => {
           val projInsertWithUserAndOrgIO = insertUserAndOrg(user, org) flatMap {
             case (dbOrg: Organization, dbUser: User) => {
-              ProjectDao.insertProject(fixupProjectCreate(dbUser, dbOrg, insertProject), dbUser) map {
+              ProjectDao.insertProject(fixupProjectCreate(dbUser, insertProject), dbUser) map {
                 (_, dbUser, dbOrg)
               }
             }
           }
           val updateProjectWithUpdatedIO = projInsertWithUserAndOrgIO flatMap {
             case (dbProject: Project, dbUser: User, dbOrg: Organization) => {
-              val fixedUpUpdateProject = fixupProjectCreate(dbUser, dbOrg, updateProject).toProject(dbUser)
+              val fixedUpUpdateProject = fixupProjectCreate(dbUser, updateProject).toProject(dbUser)
               ProjectDao.updateProject(fixedUpUpdateProject, dbProject.id, dbUser) flatMap {
                 (affectedRows: Int) => {
                   ProjectDao.unsafeGetProjectById(dbProject.id, Some(dbUser)) map {
@@ -100,7 +100,7 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
         (user: User.Create, org: Organization.Create, project: Project.Create) => {
           val projInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
             case (dbOrg: Organization, dbUser: User) => {
-              ProjectDao.insertProject(fixupProjectCreate(dbUser, dbOrg, project), dbUser) map {
+              ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser) map {
                 (_, dbUser)
               }
             }
@@ -137,12 +137,12 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
                 (dbDatasource: Datasource) => {
                   scenes.traverse(
                     (scene: Scene.Create) => {
-                      SceneDao.insert(fixupSceneCreate(dbUser, dbOrg, dbDatasource, scene), dbUser)
+                      SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene), dbUser)
                     }
                   )
                 }
               }
-              val projectInsertIO = ProjectDao.insertProject(fixupProjectCreate(dbUser, dbOrg, project), dbUser)
+              val projectInsertIO = ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser)
               (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
             }
           }
@@ -174,12 +174,12 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
                 (dbDatasource: Datasource) => {
                   scenes.traverse(
                     (scene: Scene.Create) => {
-                      SceneDao.insert(fixupSceneCreate(dbUser, dbOrg, dbDatasource, scene), dbUser)
+                      SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene), dbUser)
                     }
                   )
                 }
               }
-              val projectInsertIO = ProjectDao.insertProject(fixupProjectCreate(dbUser, dbOrg, project), dbUser)
+              val projectInsertIO = ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser)
               (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
             }
           }
@@ -217,12 +217,12 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
                 (dbDatasource: Datasource) => {
                   scenes.traverse(
                     (scene: Scene.Create) => {
-                      SceneDao.insert(fixupSceneCreate(dbUser, dbOrg, dbDatasource, scene), dbUser)
+                      SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene), dbUser)
                     }
                   )
                 }
               }
-              val projectInsertIO = ProjectDao.insertProject(fixupProjectCreate(dbUser, dbOrg, project), dbUser)
+              val projectInsertIO = ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser)
               (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
             }
           }

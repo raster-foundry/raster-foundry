@@ -25,7 +25,7 @@ class UploadDaoSpec extends FunSuite with Matchers with Checkers with DBTestConf
             orgUserProject <- insertUserOrgProject(user, org, project)
             (dbOrg, dbUser, dbProject) = orgUserProject
             datasource <- unsafeGetRandomDatasource
-            insertedUpload <- UploadDao.insert(fixupUploadCreate(dbUser, dbOrg, dbProject, datasource, upload), dbUser)
+            insertedUpload <- UploadDao.insert(fixupUploadCreate(dbUser, dbProject, datasource, upload), dbUser)
           } yield insertedUpload
 
           val dbUpload = uploadInsertIO.transact(xa).unsafeRunSync
@@ -49,17 +49,17 @@ class UploadDaoSpec extends FunSuite with Matchers with Checkers with DBTestConf
             orgUserProject <- insertUserOrgProject(user, org, project)
             (dbOrg, dbUser, dbProject) = orgUserProject
             datasource <- unsafeGetRandomDatasource
-            insertedUpload <- UploadDao.insert(fixupUploadCreate(dbUser, dbOrg, dbProject, datasource, insertUpload), dbUser)
+            insertedUpload <- UploadDao.insert(fixupUploadCreate(dbUser, dbProject, datasource, insertUpload), dbUser)
           } yield (insertedUpload, dbUser, dbOrg, dbProject, datasource)
 
           val uploadUpdateWithUploadIO = uploadInsertWithUserOrgProjectDatasourceIO flatMap {
             case (dbUpload: Upload, dbUser: User, dbOrg: Organization, dbProject: Project, dbDatasource: Datasource) => {
               val uploadId = dbUpload.id
               val fixedUpUpdateUpload =
-                fixupUploadCreate(dbUser, dbOrg, dbProject, dbDatasource, updateUpload).toUpload(dbUser)
+                fixupUploadCreate(dbUser, dbProject, dbDatasource, updateUpload).toUpload(dbUser)
               UploadDao.update(fixedUpUpdateUpload, uploadId, dbUser) flatMap {
                 (affectedRows: Int) => {
-                  UploadDao.unsafeGetUploadById(uploadId, dbUser) map { (affectedRows, _) }
+                  UploadDao.unsafeGetUploadById(uploadId) map { (affectedRows, _) }
                 }
               }
             }

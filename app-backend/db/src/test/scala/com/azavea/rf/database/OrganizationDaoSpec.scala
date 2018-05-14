@@ -23,7 +23,7 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
         (rootUserCreate: User.Create, orgCreate: Organization.Create, platform: Platform) => {
           val orgInsertIO = for {
             rootOrg <- rootOrgQ
-            insertedUser <- UserDao.create(rootUserCreate.copy(organizationId = rootOrg.id))
+            insertedUser <- UserDao.create(rootUserCreate)
             insertedPlatform <- PlatformDao.create(platform)
             newOrg <- OrganizationDao.create(orgCreate.copy(platformId = insertedPlatform.id).toOrganization)
           } yield (newOrg, insertedPlatform)

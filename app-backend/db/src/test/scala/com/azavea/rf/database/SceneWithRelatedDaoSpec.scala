@@ -43,7 +43,7 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
             orgUserProject <- insertUserOrgProject(user, org, project)
             (dbOrg, dbUser, dbProject) = orgUserProject
             datasource <- unsafeGetRandomDatasource
-            scenesInsert <- (scenes map { fixupSceneCreate(dbUser, dbOrg, datasource, _) }).traverse(
+            scenesInsert <- (scenes map { fixupSceneCreate(dbUser, datasource, _) }).traverse(
               (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
             )
           } yield (scenesInsert, dbUser, dbProject)
@@ -77,7 +77,7 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
             orgUserProject <- insertUserOrgProject(user, org, project)
             (dbOrg, dbUser, dbProject) = orgUserProject
             datasource <- unsafeGetRandomDatasource
-            scenesInsert <- (scenes map { fixupSceneCreate(dbUser, dbOrg, datasource, _) }).traverse(
+            scenesInsert <- (scenes map { fixupSceneCreate(dbUser, datasource, _) }).traverse(
               (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
             )
           } yield (scenesInsert, dbUser, dbProject)

@@ -38,7 +38,7 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             users <- usersWithOrgOneIO
             (user1, user2, dbOrg1) = users
             project <- ProjectDao.insertProject(
-              fixupProjectCreate(user1, dbOrg1, projectCreate), user1
+              fixupProjectCreate(user1, projectCreate), user1
             )
             _ <- AccessControlRuleDao.create(
               AccessControlRule.Create(
@@ -81,7 +81,7 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
           val usersAuthedIO: ConnectionIO[(Boolean, Boolean)] = for {
             usersOrgPlatform <- usersAndOrgOnePlatformOneIO
             (user1, user2, org1, platform1) = usersOrgPlatform
-            project <- ProjectDao.insertProject(fixupProjectCreate(user1, org1, projectCreate), user1)
+            project <- ProjectDao.insertProject(fixupProjectCreate(user1, projectCreate), user1)
             _ <- AccessControlRuleDao.create(
               AccessControlRule.Create(
                 true, SubjectType.Platform, Some(platform1.id.toString), ActionType.View
@@ -113,7 +113,7 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             (org1, user1) = orgUser1
             orgUser2 <- insertUserAndOrg(userCreate2, orgCreate2.copy(platformId=dbPlatform.id))
             (_, user2) = orgUser2
-            project <- ProjectDao.insertProject(fixupProjectCreate(user1, org1, projectCreate), user1)
+            project <- ProjectDao.insertProject(fixupProjectCreate(user1, projectCreate), user1)
             _ <- AccessControlRuleDao.create(
               AccessControlRule.Create(
                 true, SubjectType.Organization, Some(org1.id.toString), ActionType.View
@@ -148,7 +148,7 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             dbPlatform <- PlatformDao.create(platform)
             orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
             (org, user) = orgUser
-            project <- ProjectDao.insertProject(fixupProjectCreate(user, org, projectCreate), user)
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
             acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
               AccessControlRule.Create(true, SubjectType.All, None, _).toAccessControlRule(
                 user, ObjectType.Project, project.id
