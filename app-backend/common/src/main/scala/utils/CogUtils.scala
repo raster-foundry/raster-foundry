@@ -51,19 +51,21 @@ object CogUtils {
   }
 
   def fetch(uri: String, zoom: Int, x: Int, y: Int)(implicit ec: ExecutionContext): OptionT[Future, MultibandTile] =
-    CogUtils.fromUri(uri).mapFilter { tiff =>
-      val transform = Proj4Transform(tiff.crs, WebMercator)
-      val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
-      val tmsTileRE = RasterExtent(
-        extent = TmsLevels(zoom).mapTransform.keyToExtent(x, y),
-        cols = 256, rows = 256
-      )
-      val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
-      val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(0))
-      cropGeoTiff(overview, tiffTileRE.extent).map{ raster =>
-        raster.reproject(tmsTileRE, transform, inverseTransform).tile
+    rfCache.cachingOptionT(s"cog-tile-${zoom}-${x}-${y}-${uri}")(
+      CogUtils.fromUri(uri).mapFilter { tiff =>
+        val transform = Proj4Transform(tiff.crs, WebMercator)
+        val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
+        val tmsTileRE = RasterExtent(
+          extent = TmsLevels(zoom).mapTransform.keyToExtent(x, y),
+          cols = 256, rows = 256
+        )
+        val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
+        val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(0))
+        cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
+          raster.reproject(tmsTileRE, transform, inverseTransform).tile
+        }
       }
-    }
+    )
 
   def cropForZoomExtent(tiff: GeoTiff[MultibandTile], zoom: Int, extent: Option[Extent])(implicit ec: ExecutionContext): OptionT[Future, MultibandTile] = {
     val transform = Proj4Transform(tiff.crs, WebMercator)
