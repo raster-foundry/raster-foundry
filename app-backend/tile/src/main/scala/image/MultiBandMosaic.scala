@@ -124,14 +124,16 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
   /** Fetch all bands of a [[MultibandTile]] for the given extent and return them without assuming anything of their semantics */
   def rawForExtent(projectId: UUID,
                    zoom: Int,
-                   bbox: Option[Projected[Polygon]])(
+                   bbox: Option[Projected[Polygon]],
+                   doColorCorrect: Boolean
+                  )(
                    implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = {
     OptionT(mosaicDefinition(projectId).flatMap { mosaic =>
       val sceneIds = mosaic.map {
         case MosaicDefinition(sceneId, _, _, _) => sceneId
       }.toSet
 
-      val mayhapTiles: Future[Seq[MultibandTile]] = MultiBandMosaic.renderForBbox(Future{mosaic}, bbox, zoom, None)
+      val mayhapTiles: Future[Seq[MultibandTile]] = MultiBandMosaic.renderForBbox(Future{mosaic}, bbox, zoom, None, doColorCorrect)
 
       val futureMergeTile: Future[Option[MultibandTile]] =
         mayhapTiles.map { tiles =>
