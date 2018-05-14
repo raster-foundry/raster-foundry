@@ -54,7 +54,11 @@ trait ToolRunRoutes extends Authentication
   def listToolRuns: Route = authenticate { user =>
     (withPagination & toolRunQueryParameters) { (page, runParams) =>
       complete {
-        ToolRunDao.query.filter(runParams).ownerFilter(user).page(page).transact(xa).unsafeToFuture
+        ToolRunDao.query
+          .filter(runParams)
+          .authorize(user, ObjectType.Analysis, ActionType.View)
+          .page(page)
+          .transact(xa).unsafeToFuture
       }
     }
   }
@@ -74,24 +78,42 @@ trait ToolRunRoutes extends Authentication
   }
 
   def getToolRun(runId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete(ToolRunDao.query.filter(runId).selectOption.transact(xa).unsafeToFuture)
+    authorizeAsync {
+      ToolRunDao.query
+        .authorized(user, ObjectType.Analysis, runId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete(ToolRunDao.query.filter(runId).selectOption.transact(xa).unsafeToFuture)
+      }
     }
   }
 
   def updateToolRun(runId: UUID): Route = authenticate { user =>
-    entity(as[ToolRun]) { updatedRun =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedRun)) {
-        onSuccess(ToolRunDao.updateToolRun(updatedRun, runId, user).transact(xa).unsafeToFuture) {
-          completeSingleOrNotFound
+    authorizeAsync {
+      ToolRunDao.query
+        .authorized(user, ObjectType.Analysis, runId, ActionType.Edit)
+        .transact(xa).unsafeToFuture
+    } {
+      entity(as[ToolRun]) { updatedRun =>
+        authorize(user.isInRootOrSameOrganizationAs(updatedRun)) {
+          onSuccess(ToolRunDao.updateToolRun(updatedRun, runId, user).transact(xa).unsafeToFuture) {
+            completeSingleOrNotFound
+          }
         }
       }
     }
   }
 
   def deleteToolRun(runId: UUID): Route = authenticate { user =>
-    onSuccess(ToolRunDao.query.filter(runId).ownerFilter(user).delete.transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
+    authorizeAsync {
+      ToolRunDao.query
+        .authorized(user, ObjectType.Analysis, runId, ActionType.Delete)
+        .transact(xa).unsafeToFuture
+    } {
+      onSuccess(ToolRunDao.query.filter(runId).ownerFilter(user).delete.transact(xa).unsafeToFuture) {
+        completeSingleOrNotFound
+      }
     }
   }
 }
