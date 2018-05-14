@@ -9,6 +9,7 @@ Brief description of what this PR does, and why it is needed.
 - [ ] Symlinks from new migrations present or corrected for any new migrations
 - [ ] PR has a name that won't get you publicly shamed for vagueness
 - [ ] Any content changes are properly templated using `BUILDCONFIG.APP_NAME`
+- [ ] If not merging to an anchor PR, any new DAO functions have tests
 
 ### Demo
 
