@@ -107,11 +107,6 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   }
 
   def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest, searchParams: SearchQueryParameters): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
-    val queryFilters: List[Option[Fragment]] = List(
-      Some(fr"ugr.group_type = ${groupType}"),
-      Some(fr"ugr.group_id = ${groupId}"),
-      Some(fr"ugr.is_active = true")) ::: searchQP(searchParams, List("u.name", "u.email"))
-
     val sf =
       fr"""SELECT u.id, u.organization_id, u.role, u.created_at, u.modified_at,
         u.dropbox_credential, u.planet_credential, u.email_notifications,
@@ -128,7 +123,12 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           ON u.id = ugr.user_id
       """
 
-      query.page[User.WithGroupRole](page, sf ++ Fragments.whereAndOpt(queryFilters: _*), cf ++ Fragments.whereAndOpt(queryFilters: _*))
+      query
+        .filter(fr"ugr.group_type = ${groupType}")
+        .filter(fr"ugr.group_id = ${groupId}")
+        .filter(fr"ugr.is_active = true")
+        .filter(searchQP(searchParams, List("u.name", "u.email")))
+        .page[User.WithGroupRole](page, sf, cf)
   }
 
   // @TODO: ensure a user cannot demote (or promote?) themselves

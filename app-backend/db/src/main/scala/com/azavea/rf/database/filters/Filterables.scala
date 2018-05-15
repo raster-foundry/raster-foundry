@@ -155,6 +155,10 @@ trait Filterables extends RFMeta {
     List(maybeFragment)
   }
 
+  implicit def listTFilter[T] (implicit filterable: Filterable[Any, T]) = Filterable[Any, List[T]] { someFilterables: List[T] => {
+    someFilterables.map(filterable.toFilters).foldLeft(List.empty[Option[Fragment]])(_ ++ _)
+  }}
+
   implicit val datasourceQueryparamsFilter = Filterable[Any, DatasourceQueryParameters] { dsParams: DatasourceQueryParameters =>
     Filters.searchQP(dsParams.searchParams, List("name"))
   }

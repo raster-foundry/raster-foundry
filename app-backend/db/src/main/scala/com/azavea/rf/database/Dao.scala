@@ -62,6 +62,10 @@ object Dao {
       this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
     }
 
+    def filter[M >: Model](fragments: List[Option[Fragment]])(implicit filterable: Filterable[M, List[Option[Fragment]]]): QueryBuilder[Model] = {
+      this.copy(filters = filters ::: fragments)
+    }
+
     // Filter to validate access on an object type
     def authorizeF[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): Option[Fragment] = {
       if (user.isSuperuser) {
