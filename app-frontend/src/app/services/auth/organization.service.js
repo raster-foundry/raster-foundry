@@ -5,9 +5,9 @@ export default (app) => {
         constructor(
             $resource
         ) {
-            this.platform = $resource(
+            this.PlatformOrganization = $resource(
                 `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
-                    'members/:organizationId',
+                    'organizations/:organizationId',
                 {
                     platformId: '@platformId',
                     organizationId: '@organizationId'
@@ -35,10 +35,45 @@ export default (app) => {
                     }
                 }
             );
+
+            this.Organization = $resource(
+                `${BUILDCONFIG.API_HOST}/api/organizations/:organizationId`,
+                {
+                    organizationId: '@organizationId'
+                }
+            );
+        }
+
+        getOrganization(organizationId) {
+            return this.Organization.get({organizationId}).$promise;
+        }
+
+        getMembers(platformId, organizationId, page, searchText) {
+            let search = null;
+            if (searchText && searchText.length) {
+                search = searchText;
+            }
+
+            return this.PlatformOrganization
+                .members({platformId, organizationId, page, search, pageSize: 10})
+                .$promise;
+        }
+
+        getTeams(platformId, organizationId, page, searchText) {
+            let search = null;
+            if (searchText && searchText.length) {
+                search = searchText;
+            }
+
+            return this.PlatformOrganization
+                .teams({platformId, organizationId, page, search, pageSize: 10})
+                .$promise;
         }
 
         deactivate(platformId, organizationId) {
-            return this.platform.deactivateOrganization({platformId, organizationId}).$promise;
+            return this.PlatformOrganization
+                .deactivateOrganization({platformId, organizationId})
+                .$promise;
         }
     }
 

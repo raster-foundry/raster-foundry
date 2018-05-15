@@ -2,6 +2,10 @@
   <div class="admin-users-actions">
     <input type="text" class="form-control admin-search" placeholder="Search for users"
            ng-model="$ctrl.search" ng-disabled="$ctrl.fetching">
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.addUser()" ng-disabled="$ctrl.fetching">
+      Add users
+    </button>
   </div>
   <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching">
     <thead>

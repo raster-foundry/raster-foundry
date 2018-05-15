@@ -3,32 +3,35 @@
   </div>
   <div class="admin-logo-text" ng-if="!$ctrl.fetching">
     <div class="admin-logo-name">
-      {{$ctrl.platform.name}}
+      {{$ctrl.team.name}}
     </div>
     <div>
-      Platform Management
+      Team Management
     </div>
   </div>
   <div class="admin-logo-text" ng-if="$ctrl.fetching">
     <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
   </div>
 </div>
+
 <div class="admin-tabs">
   <!-- <div class="admin-tab" -->
-  <!-- ui-sref="admin.platform.metrics" -->
-  <!-- ui-sref-active="active"> -->
+  <!-- ui-sref="admin.team.metrics" -->
+  <!-- ui-sref-active="active" -->
+  <!-- > -->
   <!-- Metrics -->
   <!-- </div> -->
   <div class="admin-tab"
-       ui-sref="admin.platform.users"
-       ui-sref-active="active">
-    Users
+       ui-sref="admin.team.users"
+       ui-sref-active="active"
+  >
+    User Management
   </div>
-  <div class="admin-tab"
-       ui-sref="admin.platform.organizations"
-       ui-sref-active="active">
-    Organizations
-  </div>
+  <!-- <div class="admin-tab" -->
+  <!-- ui-sref="admin.team.settings" -->
+  <!-- ui-sref-active="active" -->
+  <!-- > -->
+  <!-- Team Settings -->
+  <!-- </div> -->
 </div>
-
 <ui-view></ui-view>

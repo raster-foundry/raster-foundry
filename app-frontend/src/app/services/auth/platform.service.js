@@ -6,7 +6,7 @@ export default (app) => {
             $resource
         ) {
             'ngInject';
-            this.platform = $resource(
+            this.Platform = $resource(
                 `${BUILDCONFIG.API_HOST}/api/platforms/:id`,
                 {id: '@id'}, {
                     members: {
@@ -26,20 +26,28 @@ export default (app) => {
         }
 
         getPlatform(platformId) {
-            return this.platform.get({id: platformId}).$promise;
+            return this.Platform
+                .get({id: platformId})
+                .$promise;
         }
 
         getMembers(platformId, page, search) {
-            return this.platform.members({id: platformId, page, search}).$promise;
+            return this.Platform
+                .members({id: platformId, page, search, pageSize: 10})
+                .$promise;
         }
 
         getOrganizations(platformId, page, search) {
-            return this.platform.organizations({id: platformId, page, search}).$promise;
+            return this.Platform
+                .organizations({id: platformId, page, search, pageSize: 10})
+                .$promise;
         }
 
 
         createOrganization(platformId, name) {
-            return this.platform.createOrganization({id: platformId}, {platformId, name}).$promise;
+            return this.Platform
+                .createOrganization({id: platformId}, {platformId, name})
+                .$promise;
         }
     }
 

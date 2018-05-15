@@ -9,7 +9,7 @@ export default (app) => {
             'ngInject';
             this.authService = authService;
             this.$q = $q;
-            this.Team = $resource(
+            this.PlatformTeam = $resource(
                 `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                     'organizations/:organizationId/teams/:teamId',
                 {
@@ -21,15 +21,66 @@ export default (app) => {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                             'organizations/:organizationId/teams/:teamId/members',
                         method: 'GET'
+                    },
+                    create: {
+                        url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
+                            'organizations/:organizationId/teams/',
+                        method: 'POST'
+                    }
+                }
+            );
+            this.Team = $resource(
+                `${BUILDCONFIG.API_HOST}/api/teams/:teamId/`,
+                {
+                    teamId: '@teamId'
+                }, {
+                    addUser: {
+                        url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
+                            'organizations/:organizationId/teams/:teamId/members',
+                        method: 'POST',
+                        isArray: true
+                    },
+                    removeUser: {
+                        url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
+                            'organizations/:organizationId/teams/:teamId/members/:userId',
+                        method: 'DELETE',
+                        params: {
+                            userId: '@userId'
+                        },
+                        isArray: true
                     }
                 }
             );
         }
 
+        addUser(platformId, organizationId, teamId, userId) {
+            return this.Team.addUser({platformId, organizationId, teamId}, {
+                userId,
+                groupRole: 'MEMBER'
+            }).$promise;
+        }
+
+        removeUser(platformId, organizationId, teamId, userId) {
+            return this.Team.removeUser({platformId, organizationId, teamId, userId}).$promise;
+        }
+
+        getTeam(teamId) {
+            return this.Team.get({teamId}).$promise;
+        }
+
         getMembers(platformId, organizationId, teamId, page, search) {
-            return this.Team.members(
-                {platformId, organizationId, teamId, page, search}
+            return this.PlatformTeam.members(
+                {platformId, organizationId, teamId, page, search, pageSize: 10}
             ).$promise;
+        }
+
+        createTeam(platformId, organizationId, teamName) {
+            return this.PlatformTeam
+                .create(
+                    {platformId, organizationId},
+                    {organizationId, name: teamName, settings: {}}
+                )
+                .$promise;
         }
     }
 

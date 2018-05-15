@@ -1,51 +1,70 @@
 import angular from 'angular';
+import _ from 'lodash';
 
 class OrganizationUsersController {
-    constructor(modalService) {
+    constructor(
+        $scope, $stateParams,
+        modalService, organizationService
+    ) {
+        this.$scope = $scope;
+        this.$stateParams = $stateParams;
         this.modalService = modalService;
-        this.fetchUsers();
+        this.organizationService = organizationService;
+        this.fetching = true;
+
+        let debouncedSearch = _.debounce(
+            this.onSearch.bind(this),
+            500,
+            {leading: false, trailing: true}
+        );
+
+        this.orgWatch = this.$scope.$parent.$watch('$ctrl.organization', (organization) => {
+            if (organization && this.orgWatch) {
+                this.orgWatch();
+                delete this.orgWatch;
+                this.organization = organization;
+                this.$scope.$watch('$ctrl.search', debouncedSearch);
+            }
+        });
     }
 
-    fetchUsers() {
-        this.users = [
-            {
-                id: '1',
-                name: 'user one',
-                email: 'user@example.com',
-                role: 'Manager',
-                teams: [1]
-            },
-            {
-                id: '2',
-                name: 'user two',
-                email: 'user@example.com',
-                role: 'Viewer',
-                teams: []
-            },
-            {
-                id: '3',
-                name: 'user three',
-                email: 'user@example.com',
-                role: 'Uploader',
-                teams: [1, 2, 3]
-            },
-            {
-                id: '4',
-                name: 'user four',
-                email: 'user@example.com',
-                role: 'Uploader',
-                teams: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-            }
-        ];
+    onSearch(search) {
+        this.fetchUsers(1, search);
+    }
 
-        this.users.forEach(
-            (user) => Object.assign(
-                user, {
-                    options: {
-                        items: this.itemsForUser(user)
-                    }
-                }
-            ));
+    updatePagination(data) {
+        this.pagination = {
+            show: data.count > data.pageSize,
+            count: data.count,
+            currentPage: data.page + 1,
+            startingItem: data.page * data.pageSize + 1,
+            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
+            hasNext: data.hasNext,
+            hasPrevious: data.hasPrevious
+        };
+    }
+
+    fetchUsers(page = 1, search) {
+        const platformId = this.organization.platformId;
+        const organizationId = this.organization.id;
+        this.fetching = true;
+        this.organizationService
+            .getMembers(platformId, organizationId, page - 1, search)
+            .then((response) => {
+                this.fetching = false;
+                this.updatePagination(response);
+                this.lastUserResult = response;
+                this.users = response.results;
+
+                this.users.forEach(
+                    (user) => Object.assign(
+                        user, {
+                            options: {
+                                items: this.itemsForUser(user)
+                            }
+                        }
+                    ));
+            });
     }
 
     itemsForUser(user) {
@@ -56,14 +75,14 @@ class OrganizationUsersController {
                 callback: () => {
                     console.log('edit callback for user:', user);
                 }
-            },
-            {
-                label: 'Delete',
-                callback: () => {
-                    console.log('delete callback for user:', user);
-                },
-                classes: ['color-danger']
             }
+            // {
+            //     label: 'Delete',
+            //     callback: () => {
+            //         console.log('delete callback for user:', user);
+            //     },
+            //     classes: ['color-danger']
+            // }
         ];
         /* eslint-enable */
     }
