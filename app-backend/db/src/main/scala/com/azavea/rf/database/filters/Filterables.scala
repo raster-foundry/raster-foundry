@@ -15,7 +15,8 @@ import doobie.postgres.implicits._
 import cats._
 import cats.data._
 import cats.effect.IO
-
+import geotrellis.slick.Projected
+import geotrellis.vector._
 
 trait Filterables extends RFMeta {
 
@@ -209,6 +210,9 @@ trait Filterables extends RFMeta {
     Filters.platformIdQP(params.platformIdParams)
   }
 
+  implicit def projectedGeometryFilter = Filterable[Any, Projected[MultiPolygon]] {
+    geom => List(Some(fr"ST_Intersects(data_footprint, ${geom})"))
+  }
 }
 
 object Filterables extends Filterables
