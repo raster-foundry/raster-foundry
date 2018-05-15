@@ -1,37 +1,84 @@
 import angular from 'angular';
+import _ from 'lodash';
 
 class OrganizationTeamsController {
-    constructor(modalService) {
+    constructor(
+        $scope, $stateParams,
+        modalService, organizationService, teamService
+    ) {
+        this.$scope = $scope;
+        this.$stateParams = $stateParams;
         this.modalService = modalService;
+        this.organizationService = organizationService;
+        this.teamService = teamService;
 
-        this.teams = [
-            {
-                id: '1',
-                name: 'Team one',
-                users: [1, 2, 3, 4, 5]
-            },
-            {
-                id: '2',
-                name: 'Team two',
-                users: [1, 2, 3, 4, 5]
-            },
-            {
-                id: '3',
-                name: 'Team three',
-                users: [1, 2, 3, 4, 5]
-            },
-            {
-                id: '4',
-                name: 'Team four',
-                users: [1, 2, 3, 4, 5]
+        let debouncedSearch = _.debounce(
+            this.onSearch.bind(this),
+            500,
+            {leading: false, trailing: true}
+        );
+        this.fetching = true;
+        this.orgWatch = this.$scope.$parent.$watch('$ctrl.organization', (organization) => {
+            if (organization && this.orgWatch) {
+                this.orgWatch();
+                delete this.orgWatch;
+                this.organization = organization;
+                this.$scope.$watch('$ctrl.search', debouncedSearch);
             }
-        ];
-        this.teams.forEach((team) => Object.assign(team, {
-            options: {
-                items: this.itemsForTeam(team)
-            }
-        }));
+        });
     }
+
+    onSearch(search) {
+        this.fetchTeams(1, search);
+    }
+
+    updatePagination(data) {
+        this.pagination = {
+            show: data.count > data.pageSize,
+            count: data.count,
+            currentPage: data.page + 1,
+            startingItem: data.page * data.pageSize + 1,
+            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
+            hasNext: data.hasNext,
+            hasPrevious: data.hasPrevious
+        };
+    }
+
+
+    fetchTeams(page = 1, search) {
+        const platformId = this.organization.platformId;
+        const organizationId = this.organization.id;
+        this.fetching = true;
+        this.organizationService
+            .getTeams(platformId, organizationId, page - 1, search)
+            .then((response) => {
+                this.fetching = false;
+                this.updatePagination(response);
+                this.lastTeamResult = response;
+                this.teams = response.results;
+
+                this.teams.forEach(
+                    (team) => Object.assign(
+                        team, {
+                            options: {
+                                items: this.itemsForTeam(team)
+                            }
+                        }
+                    ));
+
+                // fetch team users
+                this.teams.forEach(
+                    (team) => {
+                        this.teamService
+                            .getMembers(platformId, organizationId, team.id)
+                            .then((paginatedUsers) => {
+                                team.fetchedUsers = paginatedUsers;
+                            });
+                    }
+                );
+            });
+    }
+
 
     itemsForTeam(team) {
         /* eslint-disable */
@@ -68,7 +115,9 @@ class OrganizationTeamsController {
             size: 'sm'
         }).result.then((result) => {
             // eslint-disable-next-line
-            console.log('team modal closed with value:', result);
+            this.teamService.createTeam(this.organization.platformId, this.organization.id, result.name).then(() => {
+                this.fetchTeams(this.pagination.currentPage, this.search);
+            });
         });
     }
 }

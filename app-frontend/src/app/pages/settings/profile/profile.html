@@ -7,13 +7,13 @@
       <label for="upload-profile-picture">Profile picture</label>
       <div class="picture-section">
         <div class="form-group picture">
-          <img ng-if="$ctrl.profile.picture" class="avatar md" ng-src="{{$ctrl.profile.picture}}">
-          <div ng-if="!$ctrl.profile.picture" class="avatar md image-placeholder"></div>
+          <img ng-if="$ctrl.authService.user.profileImageUri" class="avatar md" ng-src="{{$ctrl.authService.user.profileImageUri}}">
+          <div ng-if="!$ctrl.authService.user.profileImageUri" class="avatar md image-placeholder"></div>
         </div>
         <div class="picture-description">
           <div class="panel panel-info">
             <div class="panel-body">
-              To change your profile picture, upload a new one to your {{$ctrl.providerName}} account
+              To change your profile picture, upload a new one to your linked {{$ctrl.providerName}} account
             </div>
           </div>
         </div>
@@ -26,7 +26,7 @@
                  type="text"
                  class="form-control"
                  placeholder="Name"
-                 ng-attr-value="{{$ctrl.profile.name}}"
+                 ng-attr-value="{{$ctrl.authService.user.name}}"
                  disabled
           >
         </div>
@@ -35,7 +35,7 @@
           <input id="username"
                  type="text"
                  class="form-control"
-                 ng-attr-value="{{$ctrl.profile.email}}"
+                 ng-attr-value="{{$ctrl.authService.user.email}}"
                  disabled
           >
           <p class="help-block">Contact support to change your ID</p>
@@ -52,7 +52,7 @@
           <label for="name">Name</label>
           <input id="name" type="text"
                  class="form-control"
-                 ng-attr-value="{{$ctrl.profile.nickname}}"
+                 ng-attr-value="{{$ctrl.authService.user.nickname}}"
                  disabled
           >
         </div>
@@ -61,7 +61,7 @@
           <input id="username" type="text"
                  class="form-control"
                  placeholder="Email"
-                 ng-attr-value="{{$ctrl.profile.email}}"
+                 ng-attr-value="{{$ctrl.authService.user.email}}"
           disabled
           >
           <p class="help-block">Contact support to change your username</p>
@@ -73,8 +73,8 @@
           Change Password
         </button>
       </div>
-      <div ng-if="$ctrl.profile.user_metadata">
-        <div class="form-group" ng-repeat="(id, field) in $ctrl.profile.user_metadata track by id">
+      <div ng-if="$ctrl.authService.user.user_metadata">
+        <div class="form-group" ng-repeat="(id, field) in $ctrl.authService.user.user_metadata track by id">
           <label>{{field.label}}</label>
           <input type="text" class="form-control" ng-model="field.value">
         </div>

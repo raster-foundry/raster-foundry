@@ -11,6 +11,7 @@ class PlatformUsersController {
         this.$stateParams = $stateParams;
         this.$scope = $scope;
         // check if has permissions for platform page
+        this.fetching = true;
 
         let debouncedSearch = _.debounce(
             this.onSearch.bind(this),
@@ -40,7 +41,13 @@ class PlatformUsersController {
 
     fetchUsers(page = 1, search) {
         let platformId = this.$stateParams.platformId;
-        this.platformService.getMembers(platformId, page - 1, search).then((response) => {
+        this.fetching = true;
+        this.platformService.getMembers(
+            platformId,
+            page - 1,
+            search && search.length ? search : null
+        ).then((response) => {
+            this.fetching = false;
             this.updatePagination(response);
             this.lastUserResult = response;
             this.users = response.results;
