@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.35.0](https://github.com/raster-foundry/raster-foundry/tree/X.Y.Z) (2018-05-15)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.34.2...0.35.0)
+
+**Merged pull requests:**
+
+- Support COG-based Projects [\#3349](https://github.com/raster-foundry/raster-foundry/pull/3349)
+
 ## [0.34.2](https://github.com/raster-foundry/raster-foundry/tree/0.34.2) (2018-05-09)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.34.1...0.34.2)
