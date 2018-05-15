@@ -26,10 +26,9 @@ class PlanetSceneFactory(object):
     ```
     """
 
-    def __init__(self, planet_ids, datasource, organization_id, upload_id,
+    def __init__(self, planet_ids, datasource, id, upload_id,
                  project_id=None, visibility=Visibility.PRIVATE, tags=[],
                  owner=None, client=None):
-        self.organizationId = organization_id
         self.upload_id = upload_id
         self.isProjectUpload = project_id is not None
         self.datasource = datasource
@@ -52,7 +51,7 @@ class PlanetSceneFactory(object):
             planet_feature, temp_tif_file = self.copy_asset_to_s3(planet_id)
             planet_key = self.client.auth.value
             planet_scene = create_planet_scene(
-                planet_feature, self.datasource, self.organizationId, planet_key,
+                planet_feature, self.datasource, planet_key,
                 ingest_status, self.visibility, self.tags, self.owner
             )
             delete_file(temp_tif_file)
