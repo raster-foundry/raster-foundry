@@ -1,4 +1,4 @@
-/* global AWS, document, window, BUILDCONFIG */
+/* global AWS, document, window, BUILDCONFIG, _ */
 import { initialize as loamInitialize, open as loamOpen } from 'loam';
 /* eslint-disable no-unused-vars */
 import loamWorker from 'loamLib/loam-worker.js';
@@ -11,13 +11,14 @@ import planetLogo from '../../../../assets/images/planet-logo-light.png';
 import awsS3Logo from '../../../../assets/images/aws-s3.png';
 import dropboxIcon from '../../../../assets/images/dropbox-icon.svg';
 
-const availableImportTypes = ['local', 'S3', 'Planet'];
+const availableImportTypes = ['local', 'S3', 'Planet', 'COG'];
 
 export default class SceneImportModalController {
     constructor(
         $scope, $state, $q,
         projectService, Upload, uploadService, authService,
-        rollbarWrapperService, datasourceService, userService
+        rollbarWrapperService, datasourceService, userService,
+        sceneService
     ) {
         'ngInject';
         this.BUILDCONFIG = BUILDCONFIG;
@@ -32,6 +33,7 @@ export default class SceneImportModalController {
         this.datasourceService = datasourceService;
         this.availableImportTypes = availableImportTypes;
         this.userService = userService;
+        this.sceneService = sceneService;
 
         this.planetLogo = planetLogo;
         this.awsS3Logo = awsS3Logo;
@@ -45,10 +47,17 @@ export default class SceneImportModalController {
             bucket: '',
             prefix: ''
         };
+        this.cogConfig = {
+            url: ''
+        };
+        this.isCog = false;
         this.planetSceneIds = '';
         this.selectedFileDatasets = [];
         this.selectedFiles = [];
-        this.sceneData = {};
+        this.sceneData = {
+            acquisitionDate: new Date(),
+            cloudCover: 0
+        };
         this.uploadProgressPct = {};
         this.uploadProgressFlexString = {};
         this.abortedUploadCount = 0;
@@ -91,7 +100,9 @@ export default class SceneImportModalController {
             previous: () => this.resolve.datasource ? false : 'DATASOURCE_SELECT',
             allowPrevious: () => true,
             next: () => {
-                if (this.importType === 'S3') {
+                if (this.importType === 'COG') {
+                    return 'METADATA';
+                } else if (this.importType === 'S3') {
                     return 'METADATA';
                 } else if (this.importType === 'Planet') {
                     return 'IMPORT_PLANET';
@@ -131,7 +142,9 @@ export default class SceneImportModalController {
                 });
             },
             next: () => {
-                if (this.importType === 'S3') {
+                if (this.importType === 'COG') {
+                    return 'IMPORT_COG';
+                } else if (this.importType === 'S3') {
                     return 'S3_UPLOAD';
                 }
                 return 'UPLOAD_PROGRESS';
@@ -165,11 +178,27 @@ export default class SceneImportModalController {
             onExit: () => this.finishUpload(),
             next: () => 'IMPORT_SUCCESS'
         }, {
+            name: 'IMPORT_COG',
+            previous: () => 'IMPORT',
+            allowPrevious: () => false,
+            onEnter: () => this.startCogImport(),
+            next: () => 'IMPORT_COG_PROGRESS'
+        }, {
+            name: 'IMPORT_COG_PROGRESS',
+            previous: () => 'IMPORT_COG',
+            allowPrevious: () => false,
+            allowNext: () => false,
+            next: () => 'IMPORT_SUCCESS'
+        }, {
             name: 'IMPORT_ERROR',
             allowDone: () => true
         }]);
 
         this.setCurrentStep(this.steps[0]);
+    }
+
+    onCogChange(value) {
+        this.isCog = value;
     }
 
     getStep(stepName) {
@@ -318,6 +347,23 @@ export default class SceneImportModalController {
             });
     }
 
+    startCogImport() {
+        this.preventInterruptions();
+        this.handleNext();
+        this.sceneService.createCogScene({
+            metadata: this.sceneData,
+            location: this.cogConfig.url,
+            projectId: _.get(this, 'resolve.project.id') || false
+        }, this.datasource).then(() => {
+            this.handleNext();
+        }, err => {
+            this.uploadError(err);
+            this.handlePrevious();
+        }).finally(() => {
+            this.allowInterruptions();
+        });
+    }
+
     finishUpload() {
         this.upload.uploadStatus = 'UPLOADED';
         this.uploadService.update(this.upload).then(() => {
@@ -405,6 +451,7 @@ export default class SceneImportModalController {
             },
             service: s3
         });
+
         let upload = {
             file: file,
             api: managedUpload,
@@ -472,7 +519,20 @@ export default class SceneImportModalController {
 
     uploadsDone() {
         if (!this.abortedUploadCount) {
-            this.handleNext();
+            if (this.isCog) {
+                this.$q.all(this.upload.files.map(f => {
+                    this.handleNext();
+                    return this.sceneService.createCogScene({
+                        metadata: this.sceneData,
+                        location: f,
+                        projectId: _.get(this, 'resolve.project.id') || false
+                    }, this.datasource);
+                })).then(() => {
+                    this.handleNext();
+                });
+            } else {
+                this.handleNext();
+            }
         }
     }
 

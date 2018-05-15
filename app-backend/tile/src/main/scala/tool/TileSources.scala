@@ -7,6 +7,10 @@ import com.azavea.rf.tool.eval._
 import com.azavea.rf.tool.maml._
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
+import com.azavea.rf.database.SceneDao
+import com.azavea.rf.database.filter.Filterables._
+import doobie._
+import doobie.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import cats.data.{NonEmptyList => NEL, _}
 import cats.data.Validated._
@@ -21,6 +25,7 @@ import geotrellis.spark.io.postgres.PostgresAttributeStore
 
 import scala.util._
 import scala.concurrent._
+import java.net.URI
 import java.util.UUID
 
 import cats.effect.IO
@@ -72,6 +77,9 @@ object TileSources extends LazyLogging {
   def dataWindow(r: RFMLRaster)(implicit xa: Transactor[IO]): OptionT[Future, (Extent, Int)] = r match {
     case MapAlgebraAST.SceneRaster(id, sceneId, Some(_), _, _) => {
       OptionT(Future { GlobalSummary.minAcceptableSceneZoom(sceneId, store, 256) })
+    }
+    case MapAlgebraAST.CogRaster(id, sceneId, Some(_), _, _, location) => {
+      GlobalSummary.minAcceptableCogZoom(location, 256)
     }
     case MapAlgebraAST.ProjectRaster(id, projId, Some(_), _, _) => {
       OptionT[Future, (Extent, Int)](GlobalSummary.minAcceptableProjectZoom(projId, 256).map(Some(_)))

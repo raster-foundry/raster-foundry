@@ -2,8 +2,11 @@
 
 export default (app) => {
     class SceneService {
-        constructor($resource) {
+        constructor($resource, authService, projectService, uuid4) {
             'ngInject';
+            this.authService = authService;
+            this.projectService = projectService;
+            this.uuid4 = uuid4;
 
             this.Scene = $resource(
                 `${BUILDCONFIG.API_HOST}/api/scenes/:id/`, {
@@ -16,6 +19,11 @@ export default (app) => {
                     get: {
                         method: 'GET',
                         cache: false
+                    },
+                    create: {
+                        method: 'POST',
+                        url: `${BUILDCONFIG.API_HOST}/api/scenes`,
+                        params: {}
                     },
                     update: {
                         method: 'PUT',
@@ -34,11 +42,67 @@ export default (app) => {
         }
 
         query(params = {}) {
-            let validParams = Object.assign(
-                params,
-                {minCloudCover: params.minCloudCover ? params.minCloudCover : 0}
-            );
-            return this.Scene.query(validParams).$promise;
+            return this.Scene.query(params).$promise;
+        }
+
+        createCogScene(scene, datasource) {
+            if (scene.location) {
+                const sceneId = this.uuid4.generate();
+                const sceneName = (() => {
+                    const els = scene.location.split('/');
+                    const els2 = els[els.length - 1].split('.');
+                    return els2[0];
+                })();
+                const userP = this.authService.getCurrentUser();
+                const sceneP = userP.then(user => {
+                    return this.Scene.create({
+                        id: sceneId,
+                        organizationId: user.organizationId,
+                        ingestSizeBytes: 0,
+                        visibility: 'PRIVATE',
+                        tags: scene.tags || [],
+                        datasource: datasource.id,
+                        sceneMetadata: scene.metadata || {},
+                        name: sceneName,
+                        owner: user.id,
+                        metadataFiles: scene.metadataFiles || [],
+                        images: [{
+                            organizationId: user.organizationId,
+                            rawDataBytes: 0,
+                            visibility: 'PRIVATE',
+                            filename: scene.location,
+                            sourceUri: scene.location,
+                            scene: sceneId,
+                            imageMetadata: {},
+                            owner: user.id,
+                            resolutionMeters: 0,
+                            metadataFiles: [],
+                            bands: datasource.bands.map(b => {
+                                const w = '' + Math.trunc(b.wavelength);
+                                return Object.assign({}, b, {
+                                    wavelength: [w, w]
+                                });
+                            })
+                        }],
+                        thumbnails: [],
+                        ingestLocation: scene.location,
+                        statusFields: {
+                            thumbnailStatus: 'SUCCESS',
+                            boundaryStatus: 'SUCCESS',
+                            ingestStatus: 'INGESTED'
+                        },
+                        filterFields: scene.metadata || {},
+                        sceneType: 'COG'
+                    }).$promise;
+                });
+                if (scene.projectId) {
+                    sceneP.then(newScene => {
+                        this.projectService.addScenes(scene.projectId, [newScene.id]);
+                    });
+                }
+                return sceneP;
+            }
+            return false;
         }
 
         deleteScene(scene) {

@@ -48,7 +48,7 @@ object StitchLayer extends LazyLogging with Config {
   def stitch(store: AttributeStore, layerName: String, size: Int): Future[Option[MultibandTile]] = Future {
     require(size < 4096, s"$size is too large to stitch")
     minZoomLevel(store, layerName, size).map { case (layerId, re) =>
-      logger.info(s"Stitching from $layerId, ${re.extent.reproject(WebMercator, LatLng).toGeoJson}")
+      logger.debug(s"Stitching from $layerId, ${re.extent.reproject(WebMercator, LatLng).toGeoJson}")
       S3CollectionLayerReader(store)
         .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
         .where(Intersects(re.extent))
@@ -68,7 +68,7 @@ object StitchLayer extends LazyLogging with Config {
       val meta = Try { store.readMetadata[TileLayerMetadata[SpatialKey]](currentId) }
       val rasterExtent = meta.map { tlm => (tlm, dataRasterExtent(tlm)) }
       rasterExtent.map { case(tlm, re) =>
-        logger.info(s"Data Extent: ${tlm.extent.reproject(WebMercator, LatLng).toGeoJson()}")
+        logger.debug(s"Data Extent: ${tlm.extent.reproject(WebMercator, LatLng).toGeoJson()}")
         logger.debug(s"$currentId has (${re.cols},${re.rows}) pixels")
         if (re.cols >= size || re.rows >= size) (currentId, re)
         else forZoom(zoom + 1).getOrElse((currentId, re))

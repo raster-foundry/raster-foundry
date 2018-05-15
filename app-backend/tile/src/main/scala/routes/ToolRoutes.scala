@@ -163,7 +163,8 @@ class ToolRoutes extends Authentication
             val colorRamp = providedRamps.getOrElse(colorRampName, providedRamps("viridis"))
             val components = for {
               (lastUpdateTime, ast) <- LayerCache.toolEvalRequirements(toolRunId, nodeId, user)
-              (expression, metadata) <- OptionT.pure[Future](ast.asMaml)
+              (updatedAst) <- OptionT(RelabelAst.cogScenes(ast))
+              (expression, metadata) <- OptionT.pure[Future](updatedAst.asMaml)
               cMap  <- LayerCache.toolRunColorMap(toolRunId, nodeId, user, colorRamp, colorRampName)
             } yield (expression, metadata, cMap, lastUpdateTime)
 

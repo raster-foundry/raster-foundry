@@ -1,5 +1,7 @@
 package com.azavea.rf.tile.tool
 
+import com.azavea.rf.common.utils._
+import com.azavea.rf.tile.image._
 import com.azavea.rf.tile._
 import com.azavea.rf.tile.image.Mosaic
 import com.azavea.rf.tool.ast._
@@ -12,7 +14,9 @@ import cats._
 import cats.data.Validated._
 import cats.data.{NonEmptyList => NEL, _}
 import cats.implicits._
+import cats.effect.IO
 import com.typesafe.scalalogging.LazyLogging
+import doobie.util.transactor.Transactor
 import geotrellis.proj4.WebMercator
 import geotrellis.raster._
 import geotrellis.spark._
@@ -25,10 +29,7 @@ import geotrellis.spark.io.postgres.PostgresAttributeStore
 
 import scala.util.{Failure, Success, Try}
 import java.util.UUID
-
-import cats.effect.IO
-import com.azavea.rf.database.util.RFTransactor
-import doobie.util.transactor.Transactor
+import java.net.URI
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -98,6 +99,57 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
               case None => Invalid(NEL.of(UnknownTileResolutionError(exp, Some((z, x, y)))))
             }
           })
+
+        case cr@CogRaster(_, None, celltype, location) =>
+          Future.successful(Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
+        case cr@CogRaster(_, Some(band), celltype, location) =>
+          lazy val ndtile = celltype match {
+            case Some(ct) => intNdTile.convert(ct)
+            case None => intNdTile
+          }
+          val futureSource = if (buffer > 0)
+            (for {
+              tl <- LayerCache.cogTile(location, z, SpatialKey(x - 1, y - 1))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              tm <- LayerCache.cogTile(location, z, SpatialKey(x, y - 1))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              tr <- LayerCache.cogTile(location, z, SpatialKey(x + 1 , y - 1))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              ml <- LayerCache.cogTile(location, z, SpatialKey(x - 1, y))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              mm <- LayerCache.cogTile(location, z, SpatialKey(x, y))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+              mr <- LayerCache.cogTile(location, z, SpatialKey(x + 1, y))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              bl <- LayerCache.cogTile(location, z, SpatialKey(x - 1, y + 1))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              bm <- LayerCache.cogTile(location, z, SpatialKey(x, y + 1))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+              br <- LayerCache.cogTile(location, z, SpatialKey(x + 1, y + 1))
+                      .map({ tile => tile.band(band).interpretAs(celltype.getOrElse(tile.cellType)) })
+                      .orElse(OptionT.pure[Future](ndtile))
+            } yield {
+              TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br)))
+                .withBuffer(buffer)
+            })
+          else
+            LayerCache.cogTile(location, z, SpatialKey(x, y)).map({ tile =>
+              tile.band(band).interpretAs(celltype.getOrElse(tile.cellType))
+            })
+          futureSource.value.map({ maybeTile =>
+            maybeTile match {
+              case Some(tile) => Valid(TileLiteral(tile, RasterExtent(tile, extent)))
+              case None => Invalid(NEL.of(UnknownTileResolutionError(exp, Some((z, x, y)))))
+            }
+          })
+
         case sr@SceneRaster(sceneId, None, celltype) =>
           Future.successful(Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
         case sr@SceneRaster(sceneId, Some(band), celltype) =>
@@ -174,8 +226,6 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
     fullExp match {
       case sr@SceneRaster(sceneId, None, celltype) =>
         Future.successful(Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
-      case pr@ProjectRaster(projId, None, celltype) =>
-        Future.successful(Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
       case sr@SceneRaster(sceneId, Some(band), celltype) =>
         Future.successful({
           Try {
@@ -195,6 +245,9 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
               Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
           }
         })
+
+      case pr@ProjectRaster(projId, None, celltype) =>
+        Future.successful(Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
       case pr@ProjectRaster(projId, Some(band), celltype) =>
         Mosaic.rawForExtent(projId, zoom, Some(Projected(extent.toPolygon, 3857))).value.map({ maybeTile =>
           maybeTile match {
@@ -205,6 +258,24 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
               Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
           }
         })
+
+      case cr@CogRaster(_, None, celltype, location) =>
+        Future.successful(Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
+
+      case cr@CogRaster(_, Some(band), celltype, location) =>
+        CogUtils.fromUri(location).flatMap { tiff =>
+          CogUtils.cropForZoomExtent(tiff, zoom, Some(extent)).map { tile: MultibandTile =>
+            tile.band(band).interpretAs(celltype.getOrElse(tile.cellType))
+          }
+        }.value.map({ maybeTile =>
+          maybeTile match {
+            case Some(tile) =>
+              Valid(TileLiteral(tile, RasterExtent(tile, extent)))
+            case None =>
+              Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
+          }
+        })
+
       case _ =>
         fullExp.children
           .map({ child => resolveForExtent(child, zoom, extent) })
@@ -216,4 +287,3 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
     }
   }
 }
-
