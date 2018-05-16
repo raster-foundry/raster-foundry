@@ -277,7 +277,7 @@ trait PlatformRoutes extends Authentication
       UserDao.isSuperUser(user).transact(xa).unsafeToFuture
     } {
       completeWithOneOrFail {
-        PlatformDao.delete(platformId).transact(xa).unsafeToFuture
+        ???
       }
     }
   }
@@ -359,10 +359,8 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
     } {
-      rejectEmptyResponse {
-        complete {
-          ???
-        }
+      completeWithOneOrFail {
+        ???
       }
     }
   }
@@ -448,7 +446,7 @@ trait PlatformRoutes extends Authentication
       TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
     } {
       completeWithOneOrFail {
-        TeamDao.query.filter(teamId).delete.transact(xa).unsafeToFuture
+        ???
       }
     }
   }
