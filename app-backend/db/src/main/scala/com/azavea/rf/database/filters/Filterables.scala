@@ -151,8 +151,11 @@ trait Filterables extends RFMeta {
 
   implicit val fragmentFilter = Filterable[Any, Fragment] { fragment: Fragment => List(Some(fragment)) }
 
-  implicit val maybeFragmentFilter = Filterable[Any, Option[Fragment]] { maybeFragment: Option[Fragment] =>
-    List(maybeFragment)
+  implicit def maybeTFilter[T] (implicit filterable: Filterable[Any, T]) = Filterable[Any, Option[T]] { maybeT: Option[T] =>
+    maybeT match {
+      case None => List.empty[Option[Fragment]]
+      case Some(thing) => filterable.toFilters(thing)
+    }
   }
 
   implicit def listTFilter[T] (implicit filterable: Filterable[Any, T]) = Filterable[Any, List[T]] { someFilterables: List[T] => {

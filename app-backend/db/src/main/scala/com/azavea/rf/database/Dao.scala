@@ -110,8 +110,8 @@ object Dao {
     }
 
     // Filter to validate access on an object type
-    def authorize[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
-      this.copy(filters = filters ++ filterable.toFilters(authorizeF(user, objectType, actionType)))
+    def authorize[M >: Model](user: User, objectType: ObjectType, actionType: ActionType): QueryBuilder[Model] = {
+      this.filter(authorizeF(user, objectType, actionType))
     }
 
     // Filter to validate access to a specific object
