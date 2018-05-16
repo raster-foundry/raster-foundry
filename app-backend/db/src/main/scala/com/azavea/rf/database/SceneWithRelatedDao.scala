@@ -115,7 +115,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
       shapeIO flatMap {
         (shpO: Option[Shape]) => {
           SceneDao.query
-            .filter(shpO flatMap { _.geometry })
+            .filter(shpO map { _.geometry }) // this is an Option[Option[Projected[Geometry]]] and it's still fine
             .filter(queryFilters)
             .authorize(user, ObjectType.Scene, ActionType.View)
             .pageOffset(pageRequest)
