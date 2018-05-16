@@ -47,24 +47,19 @@ trait PlatformRoutes extends Authentication
     } ~
     pathPrefix(JavaUUID) { platformId =>
       pathEndOrSingleSlash {
-        validate (
-          PlatformDao.validatePath(platformId).transact(xa).unsafeRunSync,
-          "Resource path invalid"
-        ) {
-          get {
-            traceName("platforms-get") {
-              getPlatform(platformId)
-            }
-          } ~
-          put {
-            traceName("platforms-update") {
-              updatePlatform(platformId)
-            }
-          } ~
-          delete {
-            traceName("platforms-delete") {
-              deletePlatform(platformId)
-            }
+        get {
+          traceName("platforms-get") {
+            getPlatform(platformId)
+          }
+        } ~
+        put {
+          traceName("platforms-update") {
+            updatePlatform(platformId)
+          }
+        } ~
+        delete {
+          traceName("platforms-delete") {
+            deletePlatform(platformId)
           }
         }
       } ~
