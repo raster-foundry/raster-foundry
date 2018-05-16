@@ -10,22 +10,6 @@ export default (app) => {
 
         initDatasources() {
             this.datasources = [{
-                name: 'Landsat 1-5 MSS',
-                uuid: '02e8ffdb-d20d-4a50-9a12-23a9b3cf7f0d',
-                id: 'Landsat_MSS'
-            }, {
-                name: 'Landsat 4-5 TM',
-                uuid: '5ea52134-ab8e-4dd4-93bb-461bdac9dcaa',
-                id: 'Landsat4-5_TM_C1'
-            }, {
-                name: 'Landsat 7 ETM',
-                uuid: 'fa364cbb-c742-401e-8815-d69d0f042382',
-                id: 'Landsat7_ETM_Plus_C1'
-            }, {
-                name: 'Landsat 8 OLI TIRS',
-                uuid: '697a0b91-b7a8-446e-842c-97cda155554d',
-                id: 'Landsat_8_OLI_TIRS_C1'
-            }, {
                 name: 'MODIS/Aqua',
                 uuid: '73b24c83-1da9-4118-ae3f-ac601d1b701b',
                 id: 'MYD09A1',
@@ -55,7 +39,7 @@ export default (app) => {
             return [{
                 param: 'datasource',
                 label: 'Imagery Collection',
-                type: 'searchSelect',
+                type: 'search-select',
                 getSources: this.getSources.bind(this)
             }, {
                 params: {
