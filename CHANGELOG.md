@@ -1,5 +1,33 @@
 # Change Log
 
+## [0.35.0](https://github.com/raster-foundry/raster-foundry/tree/X.Y.Z) (2018-05-15)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.34.2...0.35.0)
+
+**Merged pull requests:**
+
+- Support COG-based Projects [\#3349](https://github.com/raster-foundry/raster-foundry/pull/3349)
+
+## [0.34.2](https://github.com/raster-foundry/raster-foundry/tree/0.34.2) (2018-05-09)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.34.1...0.34.2)
+
+**Merged pull requests:**
+
+- Use parent scope's project when opening scene import modal [\#3347](https://github.com/raster-foundry/raster-foundry/pull/3347)
+- Add Landsat 4, 5, and 7 gcs path construction util [\#3342](https://github.com/raster-foundry/raster-foundry/pull/3342)
+- Use Sid repositories for installing GDAL [\#3341](https://github.com/raster-foundry/raster-foundry/pull/3341)
+- Handle shape filters separately from other scene query params [\#3340](https://github.com/raster-foundry/raster-foundry/pull/3340)
+- Disable Failed Retries for Ingests from API [\#3338](https://github.com/raster-foundry/raster-foundry/pull/3338)
+- Add redirect to a connection specified in BUILDCONFIG [\#3332](https://github.com/raster-foundry/raster-foundry/pull/3332)
+- Add scene type to scenes [\#3322](https://github.com/raster-foundry/raster-foundry/pull/3322)
+- Remove PRs from CHANGELOG not targeting release branch [\#3320](https://github.com/raster-foundry/raster-foundry/pull/3320)
+- Use AWS batch job attempt to fail early after retries [\#3290](https://github.com/raster-foundry/raster-foundry/pull/3290)
+
+## [0.34.1](https://github.com/raster-foundry/raster-foundry/tree/0.34.1) (2018-05-01)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.34.0...0.34.1)
+
 ## [0.34.0](https://github.com/raster-foundry/raster-foundry/tree/0.34.0) (2018-05-01)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.33.3...0.34.0)

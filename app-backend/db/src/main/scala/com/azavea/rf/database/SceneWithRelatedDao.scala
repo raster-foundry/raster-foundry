@@ -102,16 +102,29 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     }
   }
 
-  def listScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
-
+  def listScenes(pageRequest: PageRequest, queryFilters: List[Option[Fragment]], user: User, shape: Option[UUID]): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
     val pageFragment: Fragment = Page(pageRequest)
-    val queryFilters: List[Option[Fragment]] = makeFilters(List(sceneParams)).flatten
+
+    val shapeIO: ConnectionIO[Option[Shape]] =
+      shape match {
+        case Some(shapeId) => ShapeDao.getShapeById(shapeId, user)
+        case _ => (None : Option[Shape]).pure[ConnectionIO]
+      }
+
     val scenesIO: ConnectionIO[List[Scene]] =
-      (selectF ++ Fragments.whereAndOpt(queryFilters: _*) ++ pageFragment)
-        .query[Scene]
-        .stream
-        .compile
-        .toList
+      shapeIO flatMap {
+        (shpO: Option[Shape]) => {
+          (selectF ++ Fragments.whereAndOpt(
+            ((shpO map { (shp: Shape) => fr"ST_Intersects(data_footprint, ${shp.geometry})" })
+              :: query.ownerVisibilityFilterF(user)
+              :: queryFilters): _*) ++ pageFragment)
+            .query[Scene]
+            .stream
+            .compile
+            .toList
+        }
+      }
+    
     val withRelatedsIO: ConnectionIO[List[Scene.WithRelated]] = scenesIO flatMap { scenesToScenesWithRelated }
 
     for {
@@ -122,6 +135,11 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
       PaginatedResponse[Scene.WithRelated](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
     }
+  }
+
+  def listScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
+    val queryFilters: List[Option[Fragment]] = makeFilters(List(sceneParams)).flatten
+    listScenes(pageRequest, queryFilters, user, sceneParams.sceneParams.shape)
   }
 
   def getSceneQ(sceneId: UUID, user: User) = {
@@ -186,7 +204,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
              scenes_q.data_footprint,
              scenes_q.metadata_files,
              images_with_bands.j :: jsonb AS images,
-             tnails.thumbnails :: jsonb,
+             coalesce(tnails.thumbnails, '[]') :: jsonb,
              scenes_q.ingest_location,
              scenes_q.cloud_cover,
              scenes_q.acquisition_date,

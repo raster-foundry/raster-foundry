@@ -13,25 +13,20 @@ import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
 
-import com.azavea.rf.database.util.Page
-import com.lonelyplanet.akka.http.extensions.PageRequest
-import io.circe._
-import io.circe.syntax._
-import io.circe.parser._
-import geotrellis.slick.Projected
-import geotrellis.vector.MultiPolygon
-import io.circe.{Decoder, Encoder, Json}
-
 import scala.concurrent.duration._
-
 import java.sql.Timestamp
 import java.util.Date
 
-object SceneDao extends Dao[Scene] {
+
+import com.typesafe.scalalogging.LazyLogging
+
+
+object SceneDao extends Dao[Scene] with LazyLogging {
 
   type KickoffIngest = Boolean
 
   val tableName = "scenes"
+
 
   val selectF = sql"""
     SELECT

@@ -617,6 +617,7 @@ rf-box-select-item{
     flex: 1;
     display: flex;
     flex-direction: column;
+    justify-content: center;
   }
   &:focus {
     outline: none;
@@ -3031,4 +3032,11 @@ rf-reclassify-table {
 
 .copy-confirmation {
   font-size: 2rem;
+}
+
+.beta-tag {
+  margin-left: 0.5rem;
+  font-weight: normal;
+  text-transform: uppercase;
+  font-size: 1rem;
 }

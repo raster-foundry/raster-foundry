@@ -46,8 +46,10 @@ object Mosaic extends LazyLogging with KamonTrace {
     OptionT(ProjectDao.query.filter(projectId).selectOption.transact(xa).unsafeToFuture) flatMap { project =>
       project.isSingleBand match {
         case true =>
+          logger.debug(s"Constructing Single Band Mosaic ${project}")
           SingleBandMosaic(project, zoom, col, row)
         case false =>
+          logger.debug(s"Constructing MultiBand Mosaic ${project}")
           MultiBandMosaic(projectId, zoom, col, row)
       }
     }
@@ -105,13 +107,13 @@ object Mosaic extends LazyLogging with KamonTrace {
         val key = s"mosaic-extent-raw-$projectId-$zoom-${polygon.geom.envelope.xmax}-" +
           s"${polygon.geom.envelope.ymax}-${polygon.geom.envelope.xmin}-${polygon.geom.envelope.ymin}"
         rfCache.cachingOptionT(key) {
-          MultiBandMosaic.rawForExtent(projectId, zoom, bbox)
+          MultiBandMosaic.rawForExtent(projectId, zoom, bbox, false)
         }
       }
       case _ => {
         val key = s"mosaic-extent-raw-$projectId-$zoom-nobbox"
         rfCache.cachingOptionT(key) {
-          MultiBandMosaic.rawForExtent(projectId, zoom, bbox)
+          MultiBandMosaic.rawForExtent(projectId, zoom, bbox, false)
         }
       }
     }
