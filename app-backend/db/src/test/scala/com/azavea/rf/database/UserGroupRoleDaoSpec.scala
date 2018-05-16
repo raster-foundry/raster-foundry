@@ -75,7 +75,9 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
               fixupUserGroupRole(insertedUser, insertedOrg, insertedTeam, insertedPlatform, ugrCreate)
                 .toUserGroupRole(managerUser)
             )
-            usersInGroup <- UserGroupRoleDao.listUsersByGroup(insertedUgr.groupType, insertedUgr.groupId, page)
+            usersInGroup <- UserGroupRoleDao.listUsersByGroup(
+              insertedUgr.groupType, insertedUgr.groupId, page, SearchQueryParameters()
+            )
           } yield (usersInGroup, managerUser.id, insertedUser.id, insertedUgr.groupType)
 
           val (usersInGroup, managerId, userId, groupType) =
