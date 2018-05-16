@@ -391,7 +391,7 @@ trait PlatformRoutes extends Authentication
     } {
       withPagination { page =>
         complete {
-          TeamDao.query.page(page).transact(xa).unsafeToFuture
+          TeamDao.query.filter(fr"organization_id = ${orgId}").page(page).transact(xa).unsafeToFuture
         }
       }
     }
@@ -467,7 +467,7 @@ trait PlatformRoutes extends Authentication
 
   def addUserToTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      TeamDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
+      TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
     } {
       entity(as[UserGroupRole.UserRole]) { ur =>
         complete {
@@ -479,7 +479,7 @@ trait PlatformRoutes extends Authentication
 
   def removeUserFromTeam(platformId: UUID, orgId: UUID, teamId: UUID, userId: String): Route = authenticate { user =>
     authorizeAsync {
-      TeamDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
+      TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
     } {
       complete {
         TeamDao.deactivateUserRoles(user, userId, teamId).transact(xa).unsafeToFuture
