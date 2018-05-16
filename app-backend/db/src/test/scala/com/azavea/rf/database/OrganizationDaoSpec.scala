@@ -126,11 +126,11 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
           userCreate: User.Create, orgCreate: Organization.Create, userRole: GroupRole
         ) => {
           val setPlatformRoleIO = for {
-            orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
+            orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
             (org, dbUser) = orgAndUser
             originalUserGroupRole <- OrganizationDao.addUserRole(dbUser, dbUser.id, org.id, userRole)
             updatedUserGroupRoles <- OrganizationDao.deactivateUserRoles(dbUser, dbUser.id, org.id)
-          } yield { (originalUserGroupRole, updatedUserGroupRoles ) }
+          } yield { (originalUserGroupRole, updatedUserGroupRoles) }
 
           val (dbOldUGR, dbUpdatedUGRs) = setPlatformRoleIO.transact(xa).unsafeRunSync
 
@@ -154,7 +154,7 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
           userCreate: User.Create, orgCreate: Organization.Create, userRole: GroupRole
         ) => {
           val setPlatformRoleIO = for {
-            orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
+            orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
             (org, dbUser) = orgAndUser
             originalUserGroupRole <- OrganizationDao.addUserRole(dbUser, dbUser.id, org.id, userRole)
             updatedUserGroupRoles <- OrganizationDao.setUserRole(dbUser, dbUser.id, org.id, userRole)

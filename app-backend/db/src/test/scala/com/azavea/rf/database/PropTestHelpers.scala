@@ -3,6 +3,8 @@ package com.azavea.rf.database
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
 
+import cats.implicits._
+
 import doobie._
 import doobie.implicits._
 
@@ -13,22 +15,22 @@ trait PropTestHelpers {
   def insertUserOrgPlatform(user: User.Create, org: Organization.Create, platform: Platform):
       ConnectionIO[(User, Organization, Platform)] = for {
       dbPlatform <- PlatformDao.create(platform)
-      orgAndUser <- insertUserAndOrg(user, org.copy(platformId=dbPlatform.id))
+      orgAndUser <- insertUserAndOrg(user, org.copy(platformId=dbPlatform.id), false)
       (dbOrg, dbUser) = orgAndUser
     } yield { (dbUser, dbOrg, dbPlatform) }
 
-  def insertUserAndOrg(user: User.Create, org: Organization.Create): ConnectionIO[(Organization, User)] = {
+  def insertUserAndOrg(user: User.Create, org: Organization.Create, doUserGroupRole: Boolean = true):
+      ConnectionIO[(Organization, User)] = {
     for {
       orgInsert <- OrganizationDao.createOrganization(org)
       userInsert <- UserDao.create(user)
-      _ <- UserGroupRoleDao.create(
+      _ <- if (doUserGroupRole) UserGroupRoleDao.create(
         UserGroupRole.Create(
           userInsert.id,
           GroupType.Organization,
           orgInsert.id,
           GroupRole.Member
-        ).toUserGroupRole(userInsert)
-      )
+        ).toUserGroupRole(userInsert)) else ().pure[ConnectionIO]
     } yield (orgInsert, userInsert)
   }
 
