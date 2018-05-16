@@ -47,46 +47,61 @@ trait PlatformRoutes extends Authentication
     } ~
     pathPrefix(JavaUUID) { platformId =>
       pathEndOrSingleSlash {
-        get {
-          traceName("platforms-get") {
-            getPlatform(platformId)
-          }
-        } ~
-        put {
-          traceName("platforms-update") {
-            updatePlatform(platformId)
-          }
-        } ~
-        delete {
-          traceName("platforms-delete") {
-            deletePlatform(platformId)
+        validate (
+          PlatformDao.validatePath(platformId).transact(xa).unsafeRunSync,
+          "Resource path invalid"
+        ) {
+          get {
+            traceName("platforms-get") {
+              getPlatform(platformId)
+            }
+          } ~
+          put {
+            traceName("platforms-update") {
+              updatePlatform(platformId)
+            }
+          } ~
+          delete {
+            traceName("platforms-delete") {
+              deletePlatform(platformId)
+            }
           }
         }
       } ~
       pathPrefix("members") {
-        pathEndOrSingleSlash {
-          get {
-            traceName("platforms-members-list") {
-              listPlatformMembers(platformId)
+        validate (
+          PlatformDao.validatePath(platformId).transact(xa).unsafeRunSync,
+          "Resource path invalid"
+        ) {
+          pathEndOrSingleSlash {
+            get {
+              traceName("platforms-members-list") {
+                listPlatformMembers(platformId)
+              }
             }
-          }
-        } ~
-        post {
-          traceName("platforms-member-add") {
-            addUserToPlatform(platformId)
+          } ~
+          post {
+            traceName("platforms-member-add") {
+              addUserToPlatform(platformId)
+            }
           }
         }
       } ~
       pathPrefix("organizations") {
         pathEndOrSingleSlash {
-          get {
-            traceName("platforms-organizations-list") {
-              listOrganizations(platformId)
-            }
-          } ~
-          post {
-            traceName("platforms-organizations-create") {
-              createOrganization(platformId)
+          validate (
+            PlatformDao.validatePath(platformId).transact(xa).unsafeRunSync,
+            "Resource path invalid"
+          ) {
+            get {
+              traceName("platforms-organizations-list") {
+                listOrganizations(platformId)
+              }
+            } ~
+            post {
+              traceName("platforms-organizations-create") {
+                createOrganization(platformId)
+              }
             }
           }
         } ~
@@ -246,7 +261,7 @@ trait PlatformRoutes extends Authentication
 
   def updatePlatform(platformId: UUID): Route = authenticate { user =>
    authorizeAsync {
-      UserDao.isSuperUser(user).transact(xa).unsafeToFuture
+      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
     } {
       entity(as[Platform]) { platformToUpdate =>
         completeWithOneOrFail {
@@ -269,6 +284,7 @@ trait PlatformRoutes extends Authentication
 
   def listPlatformMembers(platformId: UUID): Route = authenticate { user =>
     authorizeAsync {
+      // QUESTION: should this be open to members of the same platform?
       PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
     } {
       (withPagination & searchParams) { (page, searchParams) =>
@@ -353,6 +369,7 @@ trait PlatformRoutes extends Authentication
 
   def listOrganizationMembers(platformId: UUID, orgId: UUID): Route = authenticate { user =>
     authorizeAsync {
+      // QUESTION: should this be open to members of the same platform?
       OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
     } {
       (withPagination & searchParams) { (page, searchParams) =>
@@ -389,6 +406,7 @@ trait PlatformRoutes extends Authentication
 
   def createTeam(platformId: UUID, orgId: UUID): Route = authenticate { user =>
     authorizeAsync {
+      // QUESTION: do we want to allow any user to create a team rather than only admins?
       OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
     } {
       entity(as[Team.Create]) { newTeamCreate =>
@@ -437,7 +455,14 @@ trait PlatformRoutes extends Authentication
 
   def listTeamMembers(platformId: UUID, orgId: UUID, teamId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
+      // The authorization here is necessary to allow users within cross-organizational teams to view
+      // the members within those teams
+      val decisionIO = for {
+        isTeamMember <- TeamDao.userIsMember(user, teamId)
+        isOrganizationMember <- OrganizationDao.userIsMember(user, orgId)
+      } yield { isTeamMember || isOrganizationMember }
+
+      decisionIO.transact(xa).unsafeToFuture
     } {
       (withPagination & searchParams) { (page, searchParams) =>
         complete {

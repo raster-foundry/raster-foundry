@@ -56,14 +56,27 @@ object PlatformDao extends Dao[Platform] {
       """).update.run
   }
 
+  def validatePath(platformId: UUID): ConnectionIO[Boolean] =
+  (fr"""
+    SELECT count(p.id) > 0
+    FROM """ ++ tableF ++ fr""" p
+    WHERE p.id = ${platformId}
+  """).query[Boolean].option.map(_.getOrElse(false))
+
   def userIsMemberF(user: User, platformId: UUID ) = fr"""
-    SELECT count(id) > 0
-      FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
-      WHERE
-        user_id = ${user.id} AND
-        group_type = ${GroupType.Platform.toString}::group_type AND
-        group_id = ${platformId} AND
-        is_active = true
+    SELECT (
+        SELECT is_superuser
+        FROM """ ++ UserDao.tableF ++ fr"""
+        WHERE id = ${user.id}
+      ) OR (
+        SELECT count(id) > 0
+        FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
+        WHERE
+          user_id = ${user.id} AND
+          group_type = ${GroupType.Platform.toString}::group_type AND
+          group_id = ${platformId} AND
+          is_active = true
+      )
   """
 
   def userIsMember(user: User, platformId: UUID): ConnectionIO[Boolean] =
