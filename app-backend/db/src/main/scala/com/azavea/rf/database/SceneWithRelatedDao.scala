@@ -102,34 +102,31 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     }
   }
 
-  def listScenes(pageRequest: PageRequest, queryFilters: List[Option[Fragment]], user: User, shape: Option[UUID]): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
+  def listScenes(pageRequest: PageRequest, queryFilters: CombinedSceneQueryParams, user: User, shape: Option[UUID]): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
     val pageFragment: Fragment = Page(pageRequest)
 
     val shapeIO: ConnectionIO[Option[Shape]] =
       shape match {
-        case Some(shapeId) => ShapeDao.getShapeById(shapeId, user)
+        case Some(shapeId) => ShapeDao.getShapeById(shapeId)
         case _ => (None : Option[Shape]).pure[ConnectionIO]
       }
 
     val scenesIO: ConnectionIO[List[Scene]] =
       shapeIO flatMap {
         (shpO: Option[Shape]) => {
-          (selectF ++ Fragments.whereAndOpt(
-            ((shpO map { (shp: Shape) => fr"ST_Intersects(data_footprint, ${shp.geometry})" })
-              :: query.ownerVisibilityFilterF(user)
-              :: queryFilters): _*) ++ pageFragment)
-            .query[Scene]
-            .stream
-            .compile
-            .toList
+          SceneDao.query
+            .filter(shpO flatMap { _.geometry })
+            .filter(queryFilters)
+            .authorize(user, ObjectType.Scene, ActionType.View)
+            .pageOffset(pageRequest)
         }
       }
-    
+
     val withRelatedsIO: ConnectionIO[List[Scene.WithRelated]] = scenesIO flatMap { scenesToScenesWithRelated }
 
     for {
       page <- withRelatedsIO
-      count <- query.filter(Fragments.andOpt(queryFilters.toSeq: _*)).countIO
+      count <- query.filter(queryFilters).countIO
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
@@ -138,8 +135,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   }
 
   def listScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
-    val queryFilters: List[Option[Fragment]] = makeFilters(List(sceneParams)).flatten
-    listScenes(pageRequest, queryFilters, user, sceneParams.sceneParams.shape)
+    listScenes(pageRequest, sceneParams, user, sceneParams.sceneParams.shape)
   }
 
   def getSceneQ(sceneId: UUID, user: User) = {

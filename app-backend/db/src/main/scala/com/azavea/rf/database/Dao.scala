@@ -157,6 +157,9 @@ object Dao {
       )))
     }
 
+    def pageOffset[T: Composite](pageRequest: PageRequest): ConnectionIO[List[T]] =
+      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[T].list
+
     /** Provide a list of responses within the PaginatedResponse wrapper */
     def page[T: Composite](pageRequest: PageRequest, selectF: Fragment, countF: Fragment): ConnectionIO[PaginatedResponse[T]] = {
       for {
