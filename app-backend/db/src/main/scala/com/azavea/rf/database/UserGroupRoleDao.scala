@@ -114,13 +114,19 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
         FROM """ ++ tableF ++ fr""" ugr
         JOIN """ ++ UserDao.tableF ++ fr""" u
           ON u.id = ugr.user_id
+        WHERE
+          ugr.group_type = ${groupType} AND
+          ugr.group_id = ${groupId} AND
+          ugr.is_active
       """
 
     val cf =
       fr"""SELECT count(ugr.id)
         FROM """ ++ tableF ++ fr""" ugr
-        JOIN """ ++ UserDao.tableF ++ fr""" u
-          ON u.id = ugr.user_id
+        WHERE
+          ugr.group_type = ${groupType} AND
+          ugr.group_id = ${groupId} AND
+          ugr.is_active
       """
 
       query
