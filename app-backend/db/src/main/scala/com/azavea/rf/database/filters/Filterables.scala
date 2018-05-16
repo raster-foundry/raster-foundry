@@ -214,6 +214,10 @@ trait Filterables extends RFMeta {
     geom => List(Some(fr"ST_Intersects(data_footprint, ${geom})"))
   }
 
+  implicit def projectedMultiPolygonFilter = Filterable[Any, Projected[MultiPolygon]] {
+    geom => List(Some(fr"ST_Intersects(data_footprint, ${geom})"))
+  }
+
   // temporary, until rebase including `Option[T]` filterable
   implicit def projectGeometryOFilter = Filterable[Any, Option[Projected[Geometry]]] {
     (geomO: Option[Projected[Geometry]]) => geomO match {
