@@ -80,6 +80,16 @@ class SceneItemController {
         return acqDate ? acqDate : this.scene.createdAt;
     }
 
+    getSceneIngestStatus() {
+        if (this.scene) {
+            if (this.scene.sceneType === 'COG') {
+                return 'COG';
+            }
+            return this.scene.statusFields.ingestStatus;
+        }
+        return false;
+    }
+
     hasDownloadPermission() {
         if (this.repository.service.getScenePermissions(this.scene).includes('download')) {
             return true;

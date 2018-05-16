@@ -3,7 +3,7 @@ package com.azavea.rf.database
 import java.util.UUID
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{BatchParams, ColorCorrect, MosaicDefinition, SceneToProject}
+import com.azavea.rf.datamodel.{BatchParams, ColorCorrect, MosaicDefinition, SceneToProject, SceneToProjectwithSceneType}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -12,17 +12,17 @@ import cats._
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
+import com.typesafe.scalalogging.LazyLogging
 import geotrellis.slick.Projected
 import geotrellis.vector.Polygon
-
 import geotrellis.raster.histogram._
 import doobie.Fragments._
-
 import doobie.Fragments._
+
 import scala.concurrent.Future
 
 
-object SceneToProjectDao extends Dao[SceneToProject] {
+object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
 
   val tableName = "scenes_to_projects"
 
@@ -61,7 +61,7 @@ object SceneToProjectDao extends Dao[SceneToProject] {
     )
     val select = fr"""
     SELECT
-      scene_id, project_id,accepted, scene_order, mosaic_definition
+      scene_id, project_id,accepted, scene_order, mosaic_definition, scene_type, ingest_location
     FROM
       scenes_to_projects
     LEFT JOIN
@@ -69,9 +69,14 @@ object SceneToProjectDao extends Dao[SceneToProject] {
     ON scenes.id = scenes_to_projects.scene_id
       """
     for {
-      stps <- (select ++ whereAndOpt(filters: _*)).query[SceneToProject].list
+      stps <- {
+        (select ++ whereAndOpt(filters: _*)).query[SceneToProjectwithSceneType].list
+      }
     } yield {
-      MosaicDefinition.fromScenesToProjects(stps)
+      logger.debug(s"Found ${stps.length} scenes in projects")
+      val md = MosaicDefinition.fromScenesToProjects(stps)
+      logger.debug(s"Mosaic Definition: ${md}")
+      md
     }
   }
 

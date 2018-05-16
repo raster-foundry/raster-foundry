@@ -22,6 +22,11 @@ case class SceneToProject(
   colorCorrectParams: ColorCorrect.Params
 )
 
+case class SceneToProjectwithSceneType(sceneId: UUID, projectId: UUID,
+                                       accepted: Boolean, sceneOrder: Option[Int] = None,
+                                       colorCorrectParams: ColorCorrect.Params,
+                                       sceneType: Option[SceneType] = None, ingestLocation: Option[String])
+
 @JsonCodec
 case class SceneCorrectionParams(sceneId: UUID, params: ColorCorrect.Params)
 @JsonCodec

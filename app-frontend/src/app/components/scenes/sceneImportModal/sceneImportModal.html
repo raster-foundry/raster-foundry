@@ -54,17 +54,42 @@
   <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT')">
     <div class="content">
       <h3 class="no-margin">Import your Imagery</h3>
+      <br/>
+      <ul class="tabbed-list-header app-width-container">
+        <li>
+          <a ng-click="$ctrl.isCog = false"
+             ng-class="{active: !$ctrl.isCog}"
+          >
+            GeoTIFF
+          </a>
+        </li>
+        <li>
+          <a ng-click="$ctrl.isCog = true"
+             ng-class="{active: $ctrl.isCog}"
+          >
+            Cloud Optimized GeoTIFF <span class="beta-tag">Beta</span>
+          </a>
+        </li>
+      </ul>
+      <p ng-if="$ctrl.isCog">
+        <strong>This feature is currently in beta.</strong>
+        <br/>
+      </p>
+
       <p>Select the source you'd like to import your imagery from.</p>
       <p ng-if="$ctrl.resolve.project">Any scenes created from this import will automatically
         be added to the <strong>{{$ctrl.resolve.project.name}}</strong> project.
       </p>
-      <div class="box-select-row">
+
+      <div class="box-select-row" ng-if="!$ctrl.isCog">
           <rf-box-select-item
-          class="small"
-          ng-class="{selected: $ctrl.importType === 'local'}"
-          ng-click="$ctrl.setImportType('local')"
-        >
-          <div class="text-center"><strong>Local System</strong></div>
+            class="small"
+            ng-class="{selected: $ctrl.importType === 'local'}"
+            ng-click="$ctrl.setImportType('local')"
+          >
+          <div class="text-center"><i class="icon-database h3"></i></div>
+          <br/>
+          <div class="text-center"><strong>Local File Upload</strong></div>
         </rf-box-select-item>
         <rf-box-select-item
                 class="small"
@@ -80,35 +105,66 @@
         >
           <img width="100%" ng-attr-src="{{$ctrl.planetLogo}}">
         </rf-box-select-item>
+      </div>
+
+
+      <div class="box-select-row" ng-if="$ctrl.isCog">
+          <rf-box-select-item
+            class="small"
+            ng-class="{selected: $ctrl.importType === 'local'}"
+            ng-click="$ctrl.setImportType('local')"
+          >
+          <div class="text-center"><i class="icon-database h3"></i></div>
+          <br/>
+          <div class="text-center"><strong>Local File Upload</strong></div>
+        </rf-box-select-item>
         <rf-box-select-item
-          class="small disabled"
+          class="small"
+          ng-class="{selected: $ctrl.importType === 'COG'}"
+          ng-click="$ctrl.setImportType('COG')"
         >
-          <img width="100%" ng-attr-src="{{$ctrl.dropboxIcon}}">
+          <div class="text-center"><i class="icon-link h3"></i></div>
+          <br/>
+          <div class="text-center"><strong>Remote File Link</strong></div>
         </rf-box-select-item>
       </div>
+
+      <!-- Import config for S3 -->
       <div ng-if="$ctrl.importType === 'S3'">
+          <p>
+            Enter the the S3 URI that points to where imagery is located.
+            The import process will import any imagery found in that location into {{$ctrl.BUILDCONFIG.APP_NAME}}.
+          </p>
+          <form>
+            <div class="form-group">
+              <label for="name">S3 Bucket</label>
+              <input id="name" type="url" class="form-control"
+                     placeholder="s3://<bucket>/<prefix>/" ng-model="$ctrl.s3Config.bucket">
+            </div>
+            <div class="form-group color-danger"
+                 ng-if="$ctrl.showProjectCreateError && $ctrl.projectCreateErrorText"
+            >
+              {{$ctrl.projectCreateErrorText}}
+            </div>
+          </form>
+        </div>
+      <div ng-if="$ctrl.importType === 'COG'">
         <p>
-          Enter the the S3 URI that points to where imagery is located.
-          The import process will import any imagery found in that location into {{$ctrl.BUILDCONFIG.APP_NAME}}.
+          Enter the the HTTP or S3 URI that points to where COG imagery is located.
         </p>
         <form>
           <div class="form-group">
-            <label for="name">S3 Bucket</label>
+            <label for="name">COG HTTP URI</label>
             <input id="name" type="url" class="form-control"
-                   placeholder="s3://<bucket>/<prefix>/" ng-model="$ctrl.s3Config.bucket">
-          </div>
-          <div class="form-group color-danger"
-               ng-if="$ctrl.showProjectCreateError && $ctrl.projectCreateErrorText"
-          >
-            {{$ctrl.projectCreateErrorText}}
+                   placeholder="The HTTP or S3 URI of imagery to be imported" ng-model="$ctrl.cogConfig.url">
           </div>
         </form>
       </div>
 
       <div ng-if="$ctrl.importType === 'Planet'">
         <p>
-          Enter a list of comma-separated Planet Scene IDs into the text box for import. Note these should match the datasource selected in the previous screen.
-
+          Enter a list of comma-separated Planet Scene IDs into the text box for import.
+          Note these should match the datasource selected in the previous screen.
         </p>
         <form>
           <div class="form-group">
@@ -247,6 +303,8 @@
               <input id="acquisitionDate" type="date"
                      class="form-control" ng-model="$ctrl.sceneData.acquisitionDate">
             </div>
+          </div>
+          <div class="form-group">
             <div>
               <label for="cloudCover">Cloud Cover</label>
               <input id="cloudCover" type="number" placeholder=""
@@ -312,6 +370,15 @@
   <div class="modal-body" ng-if="$ctrl.currentStepIs('S3_UPLOAD')">
     <div class="content">
       <h3 class="no-margin text-center">Processing your S3 import</h3>
+    </div>
+  </div>
+
+  <!--Body for Planet IMPORT_SUCCESS-->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT_COG_PROGRESS')">
+    <div class="content">
+      <h3 class="no-margin text-center">Your COG import is being processed</h3>
+      <br/>
+      <div class="text-center"><i class="icon-load animate-spin"></i></div>
     </div>
   </div>
 

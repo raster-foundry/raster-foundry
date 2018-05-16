@@ -312,7 +312,7 @@ export default (app) => {
             // A template run is quite similar to a template except that the definition lives under
             // 'executionParameters' instead.
             return {
-                visibility: 'PUBLIC',
+                visibility: 'PRIVATE',
                 template: template.id,
                 executionParameters: angular.copy(template.definition)
             };
