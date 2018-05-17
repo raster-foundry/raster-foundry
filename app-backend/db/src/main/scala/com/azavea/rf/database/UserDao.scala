@@ -3,7 +3,7 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{User, UserRole, Credential}
+import com.azavea.rf.datamodel._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -50,6 +50,36 @@ object UserDao extends Dao[User] {
         create(newUser)
       }
     } yield user
+  }
+
+  def createUserWithJWT(creatingUser: User, jwtUser: User.JwtFields) = {
+    for {
+      platform <- PlatformDao.query.filter(jwtUser.platformId).select
+      organization <- OrganizationDao.query.filter(jwtUser.organizationId).select
+      createdUser <- {
+        val newUser = User.Create(
+          jwtUser.id, Viewer, jwtUser.email,
+          jwtUser.name, jwtUser.picture
+        )
+        create(newUser)
+      }
+      platformRole <- UserGroupRoleDao.create(
+        UserGroupRole.Create(
+          jwtUser.id,
+          GroupType.Platform,
+          platform.id,
+          GroupRole.Member
+        ).toUserGroupRole(creatingUser)
+      )
+      organizationRole <- UserGroupRoleDao.create(
+        UserGroupRole.Create(
+          jwtUser.id,
+          GroupType.Organization,
+          organization.id,
+          GroupRole.Member
+        ).toUserGroupRole(creatingUser)
+      )
+    } yield creatingUser
   }
 
   /* Limited update to just modifying planet credential -- users can't change their permissions*/

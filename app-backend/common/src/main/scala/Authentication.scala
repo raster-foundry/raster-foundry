@@ -14,6 +14,7 @@ import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.Future
 import java.net.URL
+import java.util.UUID
 
 import cats.effect.IO
 import com.azavea.rf.database.UserDao
@@ -78,15 +79,48 @@ trait Authentication extends Directives {
             val updatedUser = user.copy(email = email, name = name, profileImageUri = picture)
             (updatedUser != user) match {
               case true =>
-                onSuccess(UserDao.updateUser(updatedUser, updatedUser.id).transact(xa).unsafeToFuture).flatMap {
+                onSuccess(
+                  UserDao.updateUser(updatedUser, updatedUser.id)
+                    .transact(xa)
+                    .unsafeToFuture
+                ).flatMap {
                   _ => provide(updatedUser)
                 }
               case _ =>
                 provide(user)
             }
-          case None => onSuccess(UserDao.createUserWithAuthId(userId).transact(xa).unsafeToFuture).flatMap {
-            user => provide(user)
-          }
+          case None =>
+
+            // use default platform / org if fields are not filled
+            val auth0DefaultPlatformId = auth0Config.getString("defaultPlatformId")
+            val auth0DefaultOrganizationId = auth0Config.getString("defaultOrganizationId")
+            val auth0SystemUser = auth0Config.getString("systemUser")
+
+            val platformId = jwtClaims.getStringClaim(
+              "https://app.rasterfoundry.com;platform"
+            ) match {
+              case platform: String => platform
+              case _ => auth0DefaultPlatformId
+            }
+            val organizationId = jwtClaims.getStringClaim(
+              "https://app.rasterfoundry.com;organization"
+            ) match {
+              case organization: String => organization
+              case _ => auth0DefaultOrganizationId
+            }
+
+            val jwtUser = User.JwtFields(
+              userId, email, name, picture,
+              UUID.fromString(platformId), UUID.fromString(organizationId)
+            )
+
+            onSuccess(
+              UserDao.unsafeGetUserById(auth0SystemUser).flatMap( user =>
+                UserDao.createUserWithJWT(user, jwtUser)
+              ).transact(xa).unsafeToFuture
+            ).flatMap {
+              user => provide(user)
+            }
         }
       }
     }

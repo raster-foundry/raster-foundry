@@ -141,4 +141,31 @@ object User {
       )
     }
   }
+
+  case class JwtFields(
+    id: String,
+    email: String,
+    name: String,
+    picture: String,
+    platformId: UUID,
+    organizationId: UUID
+  ) {
+    def toUser: User = {
+      val now = new Timestamp((new java.util.Date()).getTime())
+      User(
+        id,
+        Viewer,
+        now,
+        now,
+        Credential(None),
+        Credential(None),
+        false,
+        email,
+        name,
+        picture,
+        false, //isSuperuser
+        true //isActive
+      )
+    }
+  }
 }
