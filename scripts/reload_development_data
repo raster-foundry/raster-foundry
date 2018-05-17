@@ -1,0 +1,54 @@
+#!/bin/bash
+set -e
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
+
+source "scripts/update"
+
+DIR="$(dirname "$0")"
+
+function usage() {
+
+    echo -n \
+"Usage: $(basename "$0")
+
+Load an existing backup (data/database.pgdump)
+"
+}
+
+function load_database_backup() {
+
+    echo "Drop rasterfoundry database"
+    docker-compose \
+        exec -T postgres gosu postgres dropdb rasterfoundry
+
+    echo "Create rasterfoundry database"
+    docker-compose \
+        exec -T postgres gosu postgres createdb rasterfoundry
+
+    echo "Restore database from backup"
+    # Command to create database backup
+    # gosu postgres pg_dump -Fc rasterfoundry > database.pgdump
+    docker-compose \
+        exec -T postgres gosu postgres pg_restore -Fc -d rasterfoundry /tmp/data/database.pgdump &>/dev/null
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+        if [ -f data/database.pgdump ]; then
+            # API server won't start until Postgres is passing Health Checks
+            docker-compose up -d api-server
+            load_database_backup
+            docker-compose rm -sf api-server
+        else
+            echo "No backup file found. You may instead want the script 'load_development_data'"
+        fi
+    fi
+    exit
+fi

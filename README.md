@@ -111,7 +111,7 @@ To run tests you can do one of the following (in order of speed):
 
 #### Frontend Theming
 
-Frontend theming should only be used if you intend on forking and white labeling the application. Theming of the frontend application can be done easily with a few tweaks to the `scss`. To get theming working correctly, follow these instructions: 
+Frontend theming should only be used if you intend on forking and white labeling the application. Theming of the frontend application can be done easily with a few tweaks to the `scss`. To get theming working correctly, follow these instructions:
 
  - Edit `app-frontend/src/assets/styles/sass/app.scss` and uncomment the two blocks of code which reference theme files. This will turn the theme files _on_.
  - All theme overrides will then be written inside of `app-frontend/src/assets/styles/sass/theme`
@@ -121,7 +121,7 @@ Frontend theming should only be used if you intend on forking and white labeling
      - **Tip:** You can mimic the main application `scss` structure inside of `/theme/` and `@import` the files into `_core.scss`
  - WIP: we are still working out the kinks for icon fonts and branding assets.
 
-Due to active development to Raster Foundry, some aspects of theming might break and will need active maintenance. 
+Due to active development to Raster Foundry, some aspects of theming might break and will need active maintenance.
 
 ## Ports
 
@@ -139,20 +139,21 @@ The Vagrant configuration maps the following host ports to services running in t
 
 Helper and development scripts are located in the `./scripts` directory at the root of this project. These scripts are designed to encapsulate and perform commonly used actions such as starting a development server, accessing a development console, or running tests.
 
-| Script Name             | Purpose                                                      |
-|-------------------------|--------------------------------------------------------------|
-| `bootstrap`             | Pulls/builds necessary containers                            |
-| `setup`             	  | Provision development VM 									 |
-| `update`                | Runs migrations, installs dependencies, etc.                 |
-| `server`                | Starts a development server                                  |
-| `console`               | Gives access to a running container via `docker-compose run` |
-| `psql`                  | Drops you into a `psql` console.                             |
-| `test`                  | Runs tests and linters for project                           |
-| `cibuild`               | Invoked by CI server and makes use of `test`.                |
-| `cipublish`             | Publish container images to container image repositories.    |
-| `load_development_data` | Load data for development purposes                           |
-| `publish-jars`          | Publish JAR artifacts to S3                                  |
-| `rsync-back`            | Perform a one-way `rsync` from the VM to the host.		 	 |
+| Script Name               | Purpose                                                      |
+|---------------------------|--------------------------------------------------------------|
+| `bootstrap`               | Pulls/builds necessary containers                            |
+| `setup`                   | Provision development VM                                     |
+| `update`                  | Runs migrations, installs dependencies, etc.                 |
+| `server`                  | Starts a development server                                  |
+| `console`                 | Gives access to a running container via `docker-compose run` |
+| `psql`                    | Drops you into a `psql` console.                             |
+| `test`                    | Runs tests and linters for project                           |
+| `cibuild`                 | Invoked by CI server and makes use of `test`.                |
+| `cipublish`               | Publish container images to container image repositories.    |
+| `load_development_data`   | Load data for development purposes from S3                   |
+| `reload_development_data` | Load data for development purposes from a local backup       |
+| `publish-jars`            | Publish JAR artifacts to S3                                  |
+| `rsync-back`              | Perform a one-way `rsync` from the VM to the host.           |
 
 ## Testing
 
