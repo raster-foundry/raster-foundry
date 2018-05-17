@@ -3,20 +3,22 @@ import axios from 'axios';
 
 export default (app) => {
     class CMRRepository {
-        constructor($q) {
+        constructor($q, authService, uploadService) {
             this.$q = $q;
             this.previewOnMap = false;
+            this.authService = authService;
+            this.uploadService = uploadService;
         }
 
         initDatasources() {
             this.datasources = [{
-                name: 'MODIS/Aqua',
-                uuid: '73b24c83-1da9-4118-ae3f-ac601d1b701b',
+                name: 'MYD09A1: MODIS/Aqua ',
+                uuid: '755735945-9da5-47c3-8ae4-572b5e11205b',
                 id: 'MYD09A1',
                 default: true
             }, {
-                name: 'MODIS/Terra',
-                uuid: '73b24c83-1da9-4118-ae3f-ac601d1b701b',
+                name: 'MOD09A1: MODIS/Terra',
+                uuid: 'a11b768b-d869-476e-a1ed-0ac3205ed761',
                 id: 'MOD09A1'
             }];
         }
@@ -80,7 +82,7 @@ export default (app) => {
         }
 
         getScenePermissions() {
-            return [];
+            return ['download'];
         }
 
         /*
@@ -113,8 +115,8 @@ export default (app) => {
                         }).then(response => {
                             page += 1;
                             resolve({
-                                scenes: response.data.feed.entry.map(
-                                    this.incomingSceneAdapter.bind(this)
+                                scenes: response.data.feed.entry.map(s =>
+                                    this.incomingSceneAdapter(s, filters.datasource)
                                 ),
                                 hasNext: true,
                                 count: 'Unknown'
@@ -159,7 +161,7 @@ export default (app) => {
         }
 
         // Transform a single scene
-        incomingSceneAdapter(scene) {
+        incomingSceneAdapter(scene, datasource) {
             return {
                 id: scene.id,
                 createdAt: scene.time_start,
@@ -167,7 +169,7 @@ export default (app) => {
                 modifiedAt: scene.time_start,
                 modifiedBy: 'nasa',
                 owner: 'nasa',
-                datasource: scene.dataset_id,
+                datasource: datasource,
                 sceneMetadata: scene,
                 name: scene.title,
                 tileFootprint: {
@@ -185,13 +187,33 @@ export default (app) => {
             };
         }
 
+        sceneToUploadObject(scene, projectId, user) {
+            const dataRel = 'http://esipfed.org/ns/fedsearch/1.1/data#';
+            const dataHref = scene.sceneMetadata.links.find(l => l.rel === dataRel).href;
+            return {
+                files: [dataHref],
+                fileType: 'GEOTIFF',
+                uploadType: 'MODIS_USGS',
+                datasource: this.datasources.find(d => d.id === scene.datasource).uuid,
+                uploadStatus: 'UPLOADED',
+                visibility: 'PRIVATE',
+                organizationId: user.organizationId,
+                projectId,
+                metadata: {}
+            };
+        }
+
         /*
           Returns a function which creates an import using the given scenes
           returns: (scenes) => Future(success, failure)
         */
-        addToProject() {
-            // @TODO: Implement
-            throw Error('Not implemented');
+        addToProject(projectId, scenes) {
+            return this.authService.getCurrentUser().then(user => {
+                const uploads = scenes.map(s => this.sceneToUploadObject(s, projectId, user));
+                return this.$q.all(
+                    uploads.map(u => this.uploadService.create(u))
+                );
+            });
         }
     }
 

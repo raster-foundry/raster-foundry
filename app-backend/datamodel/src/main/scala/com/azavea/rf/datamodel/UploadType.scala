@@ -19,6 +19,7 @@ object UploadType {
     case "S3" => S3
     case "LOCAL" => Local
     case "PLANET" => Planet
+    case "MODIS_USGS" => Modis
   }
 
   implicit val uploadTypeEncoder: Encoder[UploadType] =
