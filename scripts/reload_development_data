@@ -7,8 +7,6 @@ fi
 
 source "scripts/update"
 
-DIR="$(dirname "$0")"
-
 function usage() {
 
     echo -n \
