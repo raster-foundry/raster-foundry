@@ -69,15 +69,7 @@ object TeamDao extends Dao[Team] {
       )
   }
 
-  def userIsMemberF(user: User, teamId: UUID ) = fr"""
-    SELECT count(id) > 0
-      FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
-      WHERE
-        user_id = ${user.id} AND
-        group_type = ${GroupType.Team.toString}::group_type AND
-        group_id = ${teamId} AND
-        is_active = true
-  """
+
 
   def listMembers(teamId: UUID, page: PageRequest, searchParams: SearchQueryParameters): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
     UserGroupRoleDao.listUsersByGroup(GroupType.Team, teamId, page, searchParams)
@@ -97,6 +89,50 @@ object TeamDao extends Dao[Team] {
         o.id = ${organizationId} AND
         t.id = ${teamId}
     """).query[Boolean].option.map(_.getOrElse(false))
+
+  def userIsMemberF(user: User, teamId: UUID ) = fr"""
+    SELECT (
+        SELECT is_superuser
+        FROM """ ++ UserDao.tableF ++ fr"""
+        WHERE id = ${user.id}
+      ) OR (
+        SELECT count(id) > 0
+        FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
+        WHERE
+          user_id = ${user.id} AND
+          group_type = ${GroupType.Team.toString}::group_type AND
+          group_id = ${teamId} AND
+          is_active = true
+      ) OR (
+        SELECT count(ugr.id) > 0
+        FROM""" ++ OrganizationDao.tableF ++ fr"""o
+        JOIN""" ++ tableF ++ fr"""t
+          ON t.organization_id = o.id
+        JOIN""" ++ UserGroupRoleDao.tableF ++ fr"""ugr
+          ON ugr.group_id = o.id
+        WHERE
+          t.id = ${teamId} AND
+          ugr.user_id = ${user.id} AND
+          ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
+          ugr.group_type = ${GroupType.Organization.toString}::group_type AND
+          ugr.is_active = true
+      ) OR (
+        SELECT count(ugr.id) > 0
+        FROM""" ++ PlatformDao.tableF ++ fr"""AS p
+        JOIN""" ++ OrganizationDao.tableF ++ fr"""o
+          ON o.platform_id = p.id
+        JOIN""" ++ tableF ++ fr"""t
+          ON t.organization_id = o.id
+        JOIN""" ++ UserGroupRoleDao.tableF ++ fr"""ugr
+          ON ugr.group_id = p.id
+        WHERE
+          t.id = ${teamId} AND
+          ugr.user_id = ${user.id} AND
+          ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
+          ugr.group_type = ${GroupType.Platform.toString}::group_type AND
+          ugr.is_active = true
+      )
+  """
 
   def userIsMember(user: User, teamId: UUID): ConnectionIO[Boolean] =
     userIsMemberF(user, teamId).query[Boolean].option.map(_.getOrElse(false))

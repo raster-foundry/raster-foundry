@@ -118,7 +118,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
 
     val cf =
       fr"""SELECT count(ugr.id)
-        FROM """ ++ tableF ++ fr""" ugr
+        FROM """ ++ tableF ++ fr"""AS ugr
         JOIN """ ++ UserDao.tableF ++ fr""" u
           ON u.id = ugr.user_id
       """

@@ -80,13 +80,32 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
 
 
   def userIsMemberF(user: User, organizationId: UUID ) = fr"""
-    SELECT count(id) > 0
-      FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
+    SELECT (
+        SELECT is_superuser
+        FROM """ ++ UserDao.tableF ++ fr"""
+        WHERE id = ${user.id}
+      ) OR (
+        SELECT count(id) > 0
+        FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
+        WHERE
+          user_id = ${user.id} AND
+          group_type = ${GroupType.Organization.toString}::group_type AND
+          group_id = ${organizationId} AND
+          is_active = true
+      ) OR (
+      SELECT count(ugr.id) > 0
+      FROM""" ++ PlatformDao.tableF ++ fr"""AS p
+      JOIN""" ++ tableF ++ fr"""o
+        ON o.platform_id = p.id
+      JOIN""" ++ UserGroupRoleDao.tableF ++ fr"""ugr
+        ON ugr.group_id = p.id
       WHERE
-        user_id = ${user.id} AND
-        group_type = ${GroupType.Organization.toString}::group_type AND
-        group_id = ${organizationId} AND
-        is_active = true
+        o.id = ${organizationId} AND
+        ugr.user_id = ${user.id} AND
+        ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
+        ugr.group_type = ${GroupType.Platform.toString}::group_type AND
+        ugr.is_active = true
+    )
   """
 
   def userIsMember(user: User, organizationId: UUID): ConnectionIO[Boolean] =
