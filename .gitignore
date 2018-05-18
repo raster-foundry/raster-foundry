@@ -93,6 +93,7 @@ api-server/.ensime_cache/*
 .sbt/
 
 /.env
+/.envrc
 
 .node_modules
 dist/
