@@ -12,5 +12,6 @@ case class Platform(
   id: UUID,
   name: String,
   settings: Json,
-  isActive: Boolean
+  isActive: Boolean,
+  defaultOrganizationId: Option[UUID]
 )
