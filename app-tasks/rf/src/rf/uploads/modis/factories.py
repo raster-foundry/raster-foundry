@@ -87,7 +87,7 @@ class MODISSceneFactory(object):
     def generate_scenes(self):
         scenes = []
         for hdf_url in self.hdf_urls:
-            with get_tempdir(False) as temp_dir:
+            with get_tempdir() as temp_dir:
                 scene = create_scene(hdf_url, temp_dir, self.owner, self.organization_id, self.datasource)
                 scenes.append(scene)
         return scenes
