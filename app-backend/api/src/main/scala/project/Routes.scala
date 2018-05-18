@@ -281,17 +281,18 @@ trait ProjectRoutes extends Authentication
   def listProjects: Route = authenticate { user =>
     (withPagination & projectQueryParameters) { (page, projectQueryParameters) =>
       complete {
-        ProjectDao.query.filter(projectQueryParameters).authorize(user, ObjectType.Project, ActionType.View).page(page).transact(xa).unsafeToFuture
+        ProjectDao.query.filter(projectQueryParameters)
+          .authorize(user, ObjectType.Project, ActionType.View)
+          .page(page)
+          .transact(xa).unsafeToFuture
       }
     }
   }
 
   def createProject: Route = authenticate { user =>
     entity(as[Project.Create]) { newProject =>
-      authorize(user.isInRootOrSameOrganizationAs(newProject)) {
-        onSuccess(ProjectDao.insertProject(newProject, user).transact(xa).unsafeToFuture) { project =>
-          complete(StatusCodes.Created, project)
-        }
+      onSuccess(ProjectDao.insertProject(newProject, user).transact(xa).unsafeToFuture) { project =>
+        complete(StatusCodes.Created, project)
       }
     }
   }
@@ -317,10 +318,8 @@ trait ProjectRoutes extends Authentication
         .transact(xa).unsafeToFuture
     } {
       entity(as[Project]) { updatedProject =>
-        authorize(user.isInRootOrSameOrganizationAs(updatedProject)) {
-          onSuccess(ProjectDao.updateProject(updatedProject, projectId, user).transact(xa).unsafeToFuture) {
-            completeSingleOrNotFound
-          }
+        onSuccess(ProjectDao.updateProject(updatedProject, projectId, user).transact(xa).unsafeToFuture) {
+          completeSingleOrNotFound
         }
       }
     }
@@ -390,7 +389,7 @@ trait ProjectRoutes extends Authentication
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa).unsafeToFuture
     } {
-      onSuccess(AnnotationDao.query.filter(fr"project_id=$projectId").ownerFilter(user).list.transact(xa).unsafeToFuture) { annotations =>
+      onSuccess(AnnotationDao.query.filter(fr"project_id=$projectId").list.transact(xa).unsafeToFuture) { annotations =>
         annotations match {
           case annotation: List[Annotation] => {
             val zipfile: File = AnnotationShapefileService.annotationsToShapefile(annotations)
@@ -430,10 +429,8 @@ trait ProjectRoutes extends Authentication
         .transact(xa).unsafeToFuture
     } {
       entity(as[Annotation.GeoJSON]) { updatedAnnotation: Annotation.GeoJSON =>
-        authorize(user.isInRootOrSameOrganizationAs(updatedAnnotation.properties)) {
-          onSuccess(AnnotationDao.updateAnnotation(updatedAnnotation.toAnnotation, annotationId, user).transact(xa).unsafeToFuture) { count =>
-            completeSingleOrNotFound(count)
-          }
+        onSuccess(AnnotationDao.updateAnnotation(updatedAnnotation.toAnnotation, annotationId, user).transact(xa).unsafeToFuture) { count =>
+          completeSingleOrNotFound(count)
         }
       }
     }
@@ -484,10 +481,8 @@ trait ProjectRoutes extends Authentication
         .transact(xa).unsafeToFuture
     } {
       entity(as[AOI.Create]) { aoi =>
-        authorize(user.isInRootOrSameOrganizationAs(aoi)) {
-          onSuccess(AoiDao.createAOI(aoi.toAOI(user), projectId, user: User).transact(xa).unsafeToFuture()) { a =>
-            complete(StatusCodes.Created, a)
-          }
+        onSuccess(AoiDao.createAOI(aoi.toAOI(user), projectId, user: User).transact(xa).unsafeToFuture()) { a =>
+          complete(StatusCodes.Created, a)
         }
       }
     }

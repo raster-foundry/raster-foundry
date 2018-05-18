@@ -38,7 +38,6 @@ case class Annotation(
   modifiedAt: Timestamp,
   modifiedBy: String,
   owner: String,
-  organizationId: UUID,
   label: String,
   description: Option[String],
   machineGenerated: Option[Boolean],
@@ -57,7 +56,6 @@ case class Annotation(
                 this.modifiedAt,
                 this.modifiedBy,
                 this.owner,
-                this.organizationId,
                 this.label,
                 this.description,
                 this.machineGenerated,
@@ -77,7 +75,6 @@ case class AnnotationProperties(
     modifiedAt: Timestamp,
     modifiedBy: String,
     owner: String,
-    organizationId: UUID,
     label: String,
     description: Option[String],
     machineGenerated: Option[Boolean],
@@ -125,7 +122,6 @@ object Annotation {
                 properties.modifiedAt,
                 properties.modifiedBy,
                 properties.owner,
-                properties.organizationId,
                 properties.label,
                 properties.description,
                 properties.machineGenerated,
@@ -158,7 +154,6 @@ object Annotation {
                 now, // modifiedAt
                 user.id, // modifiedBy
                 ownerId, // owner
-                user.organizationId,
                 label,
                 description,
                 machineGenerated,

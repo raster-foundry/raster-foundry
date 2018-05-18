@@ -73,15 +73,12 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
         }
       }
       val areaFilter: Option[Fragment] = Some(fr"st_intersects(data_footprint, ${geom})")
-      val ownerFilter: Option[Fragment] = if (user.isInRootOrganization) {
-          None
-        } else {
-          Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id})")
-        }
-      (base ++ Fragments.whereAndOpt(qpFilters, areaFilter, ownerFilter))
-        .query[UUID]
-        .stream
-        .compile.toList
+      SceneWithRelatedDao.query
+        .filter(geom)
+        .filter(queryParams.getOrElse(CombinedSceneQueryParams()))
+        .authorize(user, ObjectType.Scene, ActionType.View)
+        .list
+        .map { (scenes: List[Scene.WithRelated]) => scenes map { _.id } }
     }
 
     def addScenesToProjectWithProjectIO: ConnectionIO[UUID] = {

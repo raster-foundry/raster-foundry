@@ -32,7 +32,7 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
         (user: User.Create, org: Organization.Create, project: Project.Create, aoi: AOI) => {
           val aoiInsertIO = insertUserOrgProject(user, org, project) flatMap {
             case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-              AoiDao.createAOI(fixupAoi(dbUser, dbOrg, aoi), dbProject.id, dbUser)
+              AoiDao.createAOI(fixupAoi(dbUser, aoi), dbProject.id, dbUser)
             }
           }
           val insertedAoi = aoiInsertIO.transact(xa).unsafeRunSync
@@ -50,7 +50,7 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
         (user: User.Create, org: Organization.Create, project: Project.Create, aoiInsert: AOI, aoiUpdate: AOI) => {
           val aoiInsertWithOrgUserIO = insertUserOrgProject(user, org, project) flatMap {
             case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-              AoiDao.createAOI(fixupAoi(dbUser, dbOrg, aoiInsert), dbProject.id, dbUser) map {
+              AoiDao.createAOI(fixupAoi(dbUser, aoiInsert), dbProject.id, dbUser) map {
                 (_, dbOrg, dbUser)
               }
             }
@@ -59,10 +59,10 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
           val aoiUpdateWithAoi = aoiInsertWithOrgUserIO flatMap {
             case (dbAoi: AOI, dbOrg: Organization, dbUser: User) => {
               val aoiId = dbAoi.id
-              val fixedUpUpdateAoi = fixupAoi(dbUser, dbOrg, aoiUpdate).copy(id = aoiId)
+              val fixedUpUpdateAoi = fixupAoi(dbUser, aoiUpdate).copy(id = aoiId)
               AoiDao.updateAOI(fixedUpUpdateAoi, aoiId, dbUser) flatMap {
                 (affectedRows: Int) => {
-                  AoiDao.unsafeGetAoiById(aoiId, dbUser) map { (affectedRows, _) }
+                  AoiDao.unsafeGetAoiById(aoiId) map { (affectedRows, _) }
                 }
               }
             }
@@ -85,7 +85,7 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
         (user: User.Create, org: Organization.Create, project: Project.Create, aoi: AOI) => {
           val aoiDeleteIO = insertUserOrgProject(user, org, project) flatMap {
             case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-              AoiDao.createAOI(fixupAoi(dbUser, dbOrg, aoi), dbProject.id, dbUser) map {
+              AoiDao.createAOI(fixupAoi(dbUser, aoi), dbProject.id, dbUser) map {
                 (_, dbUser)
               }
             }
@@ -108,7 +108,7 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
         (user: User.Create, org: Organization.Create, project: Project.Create, aois: List[AOI]) => {
           val aoisInsertWithProjectUserIO = insertUserOrgProject(user, org, project) flatMap {
             case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-              aois.traverse((aoi: AOI) => AoiDao.createAOI(fixupAoi(dbUser, dbOrg, aoi), dbProject.id, dbUser)) map {
+              aois.traverse((aoi: AOI) => AoiDao.createAOI(fixupAoi(dbUser, aoi), dbProject.id, dbUser)) map {
                 (_, dbProject, dbUser)
               }
             }

@@ -25,17 +25,17 @@ object AnnotationDao extends Dao[Annotation] {
     fr"""
       SELECT
         id, project_id, created_at, created_by, modified_at, modified_by, owner,
-        organization_id, label, description, machine_generated, confidence,
+        label, description, machine_generated, confidence,
         quality, geometry
       FROM
     """ ++ tableF
 
   def unsafeGetAnnotationById(annotationId: UUID, user: User): ConnectionIO[Annotation] = {
-    query.filter(annotationId).ownerFilter(user).select
+    query.filter(annotationId).select
   }
 
   def listAnnotationsForProject(projectId: UUID, user: User): ConnectionIO[List[Annotation]] = {
-    (selectF ++ Fragments.whereAndOpt(fr"project_id = ${projectId}".some, query.ownerFilterF(user)))
+    (selectF ++ Fragments.whereAndOpt(fr"project_id = ${projectId}".some))
       .query[Annotation]
       .stream.compile.toList
   }
@@ -48,14 +48,14 @@ object AnnotationDao extends Dao[Annotation] {
 
     val updateSql = "INSERT INTO " ++ tableName ++ """
         (id, project_id, created_at, created_by, modified_at, modified_by, owner,
-        organization_id, label, description, machine_generated, confidence,
+        label, description, machine_generated, confidence,
         quality, geometry)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     Update[Annotation](updateSql).updateManyWithGeneratedKeys[Annotation](
       "id", "project_id", "created_at", "created_by", "modified_at", "modified_by", "owner",
-      "organization_id", "label", "description", "machine_generated", "confidence",
+      "label", "description", "machine_generated", "confidence",
       "quality", "geometry"
     )(annotations map { _.toAnnotation(projectId, user) }).compile.toList
   }
@@ -77,8 +77,7 @@ object AnnotationDao extends Dao[Annotation] {
 
   def listProjectLabels(projectId: UUID, user: User): ConnectionIO[List[String]] = {
     (fr"SELECT DISTINCT ON (label) label FROM" ++ tableF ++ Fragments.whereAndOpt(
-      Some(fr"project_id = ${projectId}"),
-      query.ownerFilterF(user)
+      Some(fr"project_id = ${projectId}")
     )).query[String].list
   }
 

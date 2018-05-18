@@ -24,7 +24,7 @@ object MapTokenDao extends Dao[MapToken] {
     sql"""
       SELECT
         id, created_at, created_by, modified_at, modified_by,
-        owner, organization_id, name, project_id, toolrun_id
+        owner, name, project_id, toolrun_id
       FROM
     """ ++ tableF
 
@@ -35,13 +35,13 @@ object MapTokenDao extends Dao[MapToken] {
 
     sql"""
        INSERT INTO map_tokens
-          (id, created_at, created_by, modified_at, modified_by, owner, organization_id, name, project_id, toolrun_id)
+          (id, created_at, created_by, modified_at, modified_by, owner, name, project_id, toolrun_id)
        VALUES
-          (${id}, ${now}, ${user.id}, ${now}, ${user.id}, ${ownerId}, ${newMapToken.organizationId}, ${newMapToken.name},
+          (${id}, ${now}, ${user.id}, ${now}, ${user.id}, ${ownerId}, ${newMapToken.name},
            ${newMapToken.project}, ${newMapToken.toolRun})
        """.update.withUniqueGeneratedKeys[MapToken](
       "id", "created_at", "created_by", "modified_at", "modified_by",
-      "owner", "organization_id", "name", "project_id", "toolrun_id"
+      "owner", "name", "project_id", "toolrun_id"
     )
   }
 
@@ -58,13 +58,12 @@ object MapTokenDao extends Dao[MapToken] {
          name = ${mapToken.name},
          project_id = ${mapToken.project},
          toolrun_id = ${mapToken.project}
-       """ ++ Fragments.whereAndOpt(ownerEditFilter(user), Some(idFilter))).update.run
+       """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
   def create(
     user: User,
     owner: Option[String],
-    organizationId: UUID,
     name: String,
     project: Option[UUID],
     toolRun: Option[UUID]
@@ -72,7 +71,7 @@ object MapTokenDao extends Dao[MapToken] {
     val id = UUID.randomUUID
     val now = new Timestamp((new java.util.Date()).getTime())
     val ownerId = util.Ownership.checkOwner(user, owner)
-    val newMapToken = MapToken.Create(organizationId, name, project, toolRun, Some(ownerId))
+    val newMapToken = MapToken.Create(name, project, toolRun, Some(ownerId))
     insert(newMapToken, user)
   }
 }

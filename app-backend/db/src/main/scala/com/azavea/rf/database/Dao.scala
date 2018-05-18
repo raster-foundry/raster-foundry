@@ -30,14 +30,6 @@ abstract class Dao[Model: Composite] extends Filterables {
   /** Begin construction of a complex, filtered query */
   def query: Dao.QueryBuilder[Model] = Dao.QueryBuilder[Model](selectF, tableF, List.empty)
 
-
-  def ownerEditFilter(user: User): Option[Fragment] = {
-    user.isInRootOrganization match {
-      case true => None
-      case _ => Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id})")
-    }
-  }
-
 }
 
 object Dao {
@@ -65,6 +57,11 @@ object Dao {
     def filter[M >: Model](fragments: List[Option[Fragment]])(implicit filterable: Filterable[M, List[Option[Fragment]]]): QueryBuilder[Model] = {
       this.copy(filters = filters ::: fragments)
     }
+
+    // This method exists temporarily to stand in for second-tier object authorization
+    def ownedBy[M >: Model](user: User, objectId: UUID)(implicit filterable: Filterable[M, Option[Fragment]]):
+        QueryBuilder[Model] =
+      this.filter(fr"id = ${objectId}").filter(fr"owner = ${user.id}")
 
     // Filter to validate access on an object type
     def authorizeF[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): Option[Fragment] = {
@@ -160,41 +157,8 @@ object Dao {
       )))
     }
 
-    def ownerFilterF(user: User): Option[Fragment] = {
-      if (user.isInRootOrganization) {
-        None
-      } else {
-        Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id})")
-      }
-    }
-
-    def ownerVisibilityFilterF(user: User): Option[Fragment] = {
-      if (user.isInRootOrganization) {
-        None
-      } else {
-        Some(fr"((organization_id = ${user.organizationId} AND visibility = 'ORGANIZATION' :: visibility) OR owner = ${user.id} OR visibility = 'PUBLIC' :: visibility)")
-      }
-    }
-
-    def ownerFilter[M >: Model](user: User)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
-      this.copy(filters = filters ++ filterable.toFilters(ownerFilterF(user)))
-    }
-
-    def ownerVisibilityFilter[M >: Model](user: User)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
-      this.copy(filters = filters ++ filterable.toFilters(ownerVisibilityFilterF(user)))
-    }
-
-    def ownerFilterF2(user: User): Option[Fragment] = {
-      if (user.isInRootOrganization) {
-        None
-      } else {
-        Some(fr"(organization = ${user.organizationId} OR owner = ${user.id})")
-      }
-    }
-
-    def ownerFilter2[M >: Model](user: User)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
-      this.copy(filters = filters ++ filterable.toFilters(ownerFilterF2(user)))
-    }
+    def pageOffset[T: Composite](pageRequest: PageRequest): ConnectionIO[List[T]] =
+      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[T].list
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
     def page[T: Composite](pageRequest: PageRequest, selectF: Fragment, countF: Fragment): ConnectionIO[PaginatedResponse[T]] = {

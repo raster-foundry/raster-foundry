@@ -4,7 +4,7 @@ from rf.utils.io import get_session
 class Upload(BaseModel):
     URL_PATH = '/api/uploads/'
 
-    def __init__(self, organizationId, uploadStatus, fileType, uploadType, files,
+    def __init__(self, uploadStatus, fileType, uploadType, files,
                  datasource, metadata, visibility, id=None, createdAt=None,
                  createdBy=None, modifiedAt=None, modifiedBy=None, owner=None,
                  projectId=None):
@@ -14,7 +14,6 @@ class Upload(BaseModel):
         self.modifiedAt = modifiedAt
         self.modifiedBy = modifiedBy
         self.owner = owner
-        self.organizationId = organizationId
         self.uploadStatus = uploadStatus
         self.fileType = fileType
         self.uploadType = uploadType
@@ -31,7 +30,6 @@ class Upload(BaseModel):
             createdBy=self.createdBy,
             modifiedAt=self.modifiedAt,
             modifiedBy=self.modifiedBy,
-            organizationId=self.organizationId,
             uploadStatus=self.uploadStatus,
             fileType=self.fileType,
             uploadType=self.uploadType,
@@ -50,7 +48,6 @@ class Upload(BaseModel):
     @classmethod
     def from_dict(cls, d):
         return cls(
-            d.get('organizationId'),
             d.get('uploadStatus'),
             d.get('fileType'),
             d.get('uploadType'),

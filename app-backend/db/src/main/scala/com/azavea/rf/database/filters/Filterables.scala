@@ -15,23 +15,18 @@ import doobie.postgres.implicits._
 import cats._
 import cats.data._
 import cats.effect.IO
-
+import geotrellis.slick.Projected
+import geotrellis.vector._
 
 trait Filterables extends RFMeta {
 
   implicit val aoiQueryParamsFilter = Filterable[Any, AoiQueryParameters] { qp: AoiQueryParameters =>
-      Filters.organizationQP(qp.orgParams) ++
       Filters.userQP(qp.userParams) ++
       Filters.timestampQP(qp.timestampParams)
   }
 
   implicit val permissionsFilter = Filterable[Any, User] { user: User =>
-    val filter =
-      if (!user.isInRootOrganization) {
-        Some(fr"owner = ${user.id}")
-      } else {
-        None
-      }
+    val filter = Some(fr"owner = ${user.id}")
     List(filter)
   }
 
@@ -57,21 +52,18 @@ trait Filterables extends RFMeta {
   }
 
   implicit val projectQueryParametersFilter = Filterable[Any, ProjectQueryParameters] { projectParams: ProjectQueryParameters =>
-    Filters.organizationQP(projectParams.orgParams) ++
-      Filters.timestampQP(projectParams.timestampParams) ++
+    Filters.timestampQP(projectParams.timestampParams) ++
       Filters.userQP(projectParams.userParams) ++
       Filters.searchQP(projectParams.searchParams, List("name"))
   }
 
   implicit val CombinedToolQueryParametersFilter = Filterable[Any, CombinedToolQueryParameters] { toolParams: CombinedToolQueryParameters =>
-    Filters.organizationQP(toolParams.orgParams) ++
-      Filters.timestampQP(toolParams.timestampParams) ++
+    Filters.timestampQP(toolParams.timestampParams) ++
       Filters.userQP(toolParams.userParams) ++
       Filters.searchQP(toolParams.searchParams, List("title", "description"))
   }
 
   implicit val annotationQueryparamsFilter = Filterable[Any, AnnotationQueryParameters] { annotParams: AnnotationQueryParameters =>
-    Filters.organizationQP(annotParams.orgParams) ++
     Filters.userQP(annotParams.userParams) ++ List(
       annotParams.label.map({ label => fr"label = $label" }),
       annotParams.machineGenerated.map({ mg => fr"machine_generated = $mg" }),
@@ -85,7 +77,6 @@ trait Filterables extends RFMeta {
     val sceneParams = combineSceneParams.sceneParams
     Filters.userQP(combineSceneParams.userParams) ++
     Filters.timestampQP(combineSceneParams.timestampParams) ++
-    Filters.organizationQP(combineSceneParams.orgParams) ++
       List(
         sceneParams.maxCloudCover.map({ mcc => fr"cloud_cover <= $mcc" }),
         sceneParams.minCloudCover.map({ mcc => fr"cloud_cover >= $mcc" }),
@@ -125,7 +116,6 @@ trait Filterables extends RFMeta {
   }
 
   implicit val mapTokenQueryParametersFilter = Filterable[Any, CombinedMapTokenQueryParameters] { mapTokenParams: CombinedMapTokenQueryParameters =>
-    Filters.organizationQP(mapTokenParams.orgParams) ++
     Filters.userQP(mapTokenParams.userParams) ++
     Filters.mapTokenQP(mapTokenParams.mapTokenParams)
   }
@@ -187,15 +177,12 @@ trait Filterables extends RFMeta {
   }
 
   implicit val shapeQueryparamsFilter = Filterable[Any, ShapeQueryParameters] { shapeParams: ShapeQueryParameters =>
-    Filters.organizationQP(shapeParams.orgParams) ++
     Filters.timestampQP(shapeParams.timestampParams) ++
-    Filters.userQP(shapeParams.userParams)
+      Filters.userQP(shapeParams.userParams)
   }
 
   implicit val combinedImageQueryparamsFilter = Filterable[Any, CombinedImageQueryParams] { cips: CombinedImageQueryParams =>
-    Filters.organizationQP(cips.orgParams) ++
-    Filters.timestampQP(cips.timestampParams) ++
-    Filters.imageQP(cips.imageParams)
+    Filters.timestampQP(cips.timestampParams) ++ Filters.imageQP(cips.imageParams)
   }
 
   implicit val thumbnailParamsFilter = Filterable[Any, ThumbnailQueryParameters] { params: ThumbnailQueryParameters =>
@@ -204,10 +191,9 @@ trait Filterables extends RFMeta {
 
   implicit val teamQueryparamsFilter = Filterable[Any, TeamQueryParameters] { params: TeamQueryParameters =>
     Filters.timestampQP(params.timestampParams) ++
-    Filters.organizationQP(params.orgParams) ++
-    Filters.onlyUserQP(params.onlyUserParams) ++
-    Filters.searchQP(params.searchParams, List("name")) ++
-    Filters.activationQP(params.activationParams)
+      Filters.onlyUserQP(params.onlyUserParams) ++
+      Filters.searchQP(params.searchParams, List("name")) ++
+      Filters.activationQP(params.activationParams)
   }
 
   implicit val platformQueryparamsFilter = Filterable[Any, PlatformQueryParameters] { params: PlatformQueryParameters =>
@@ -222,6 +208,14 @@ trait Filterables extends RFMeta {
     Filters.searchQP(params.searchParams, List("name")) ++
     Filters.activationQP(params.activationParams) ++
     Filters.platformIdQP(params.platformIdParams)
+  }
+
+  implicit def projectedGeometryFilter = Filterable[Any, Projected[Geometry]] {
+    geom => List(Some(fr"ST_Intersects(data_footprint, ${geom})"))
+  }
+
+  implicit def projectedMultiPolygonFilter = Filterable[Any, Projected[MultiPolygon]] {
+    geom => List(Some(fr"ST_Intersects(data_footprint, ${geom})"))
   }
 
 }

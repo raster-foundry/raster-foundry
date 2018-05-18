@@ -16,7 +16,6 @@ case class Tool(
   createdBy: String,
   modifiedBy: String,
   owner: String,
-  organizationId: UUID,
   title: String,
   description: String,
   requirements: String,
@@ -55,7 +54,6 @@ case class Tool(
     this.createdBy,
     this.modifiedBy,
     this.owner,
-    this.organizationId,
     this.title,
     this.description,
     this.requirements,
@@ -77,7 +75,6 @@ object Tool {
 
   @JsonCodec
   case class Create(
-    organizationId: UUID,
     title: String,
     description: String,
     requirements: String,
@@ -102,7 +99,6 @@ object Tool {
         user.id, // createdBy
         user.id, // modifiedBy
         ownerId, // owner
-        organizationId,
         title,
         description,
         requirements,
@@ -178,7 +174,6 @@ object Tool {
     createdBy: String,
     modifiedBy: String,
     owner: String,
-    organizationId: UUID,
     title: String,
     description: String,
     requirements: String,
