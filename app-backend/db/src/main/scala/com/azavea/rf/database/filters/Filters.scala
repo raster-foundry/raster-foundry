@@ -30,7 +30,7 @@ object Filters {
   }
 
   def organizationQP(orgParams: OrgQueryParameters): List[Option[Fragment]] = {
-    val f1 = orgParams.organizations.toList.toNel.map(orgs => in(fr"organizationId", orgs))
+    val f1 = orgParams.organizations.toList.toNel.map(orgs => in(fr"organization_id", orgs))
     List(f1)
   }
 

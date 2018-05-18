@@ -23,7 +23,6 @@ case class AOI(
   id: UUID,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
-  organizationId: UUID,
   createdBy: String,
   modifiedBy: String,
   owner: String,
@@ -43,7 +42,6 @@ object AOI {
 
   @JsonCodec
   case class Create(
-    organizationId: UUID,
     area: Projected[MultiPolygon],
     filters: Json,
     owner: Option[String],
@@ -54,7 +52,7 @@ object AOI {
       val ownerId = checkOwner(user, this.owner)
 
       AOI(
-        UUID.randomUUID, now, now, organizationId,
+        UUID.randomUUID, now, now,
         user.id, user.id, ownerId, area, filters, isActive
       )
     }

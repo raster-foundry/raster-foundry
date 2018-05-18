@@ -65,12 +65,10 @@ trait ToolRunRoutes extends Authentication
 
   def createToolRun: Route = authenticate { user =>
     entity(as[ToolRun.Create]) { newRun =>
-      authorize(user.isInRootOrSameOrganizationAs(newRun)) {
-        onSuccess(ToolRunDao.insertToolRun(newRun, user).transact(xa).unsafeToFuture) { toolRun =>
-          handleExceptions(interpreterExceptionHandler) {
-            complete {
-              (StatusCodes.Created, toolRun)
-            }
+      onSuccess(ToolRunDao.insertToolRun(newRun, user).transact(xa).unsafeToFuture) { toolRun =>
+        handleExceptions(interpreterExceptionHandler) {
+          complete {
+            (StatusCodes.Created, toolRun)
           }
         }
       }
@@ -96,10 +94,8 @@ trait ToolRunRoutes extends Authentication
         .transact(xa).unsafeToFuture
     } {
       entity(as[ToolRun]) { updatedRun =>
-        authorize(user.isInRootOrSameOrganizationAs(updatedRun)) {
-          onSuccess(ToolRunDao.updateToolRun(updatedRun, runId, user).transact(xa).unsafeToFuture) {
-            completeSingleOrNotFound
-          }
+        onSuccess(ToolRunDao.updateToolRun(updatedRun, runId, user).transact(xa).unsafeToFuture) {
+          completeSingleOrNotFound
         }
       }
     }
@@ -111,7 +107,7 @@ trait ToolRunRoutes extends Authentication
         .authorized(user, ObjectType.Analysis, runId, ActionType.Delete)
         .transact(xa).unsafeToFuture
     } {
-      onSuccess(ToolRunDao.query.filter(runId).ownerFilter(user).delete.transact(xa).unsafeToFuture) {
+      onSuccess(ToolRunDao.query.filter(runId).delete.transact(xa).unsafeToFuture) {
         completeSingleOrNotFound
       }
     }

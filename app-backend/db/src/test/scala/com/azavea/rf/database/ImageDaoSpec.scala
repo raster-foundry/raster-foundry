@@ -36,13 +36,13 @@ class ImageDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             (insertedOrg, insertedUser) = orgAndUser
             datasource <- unsafeGetRandomDatasource
             insertedScene <- SceneDao.insert(
-              fixupSceneCreate(insertedUser, insertedOrg, datasource, scene), insertedUser
+              fixupSceneCreate(insertedUser, datasource, scene), insertedUser
             )
           } yield (insertedScene, insertedUser)
           val imageInsertIO = sceneInsertIO flatMap {
             case (swr: Scene.WithRelated, dbUser: User) => {
               ImageDao.insertImage(
-                image.copy(scene = swr.id, organizationId = swr.organizationId, owner = Some(swr.owner)),
+                image.copy(scene = swr.id, owner = Some(swr.owner)),
                 dbUser
               )
             }
@@ -69,13 +69,13 @@ class ImageDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             (insertedOrg, insertedUser) = orgAndUser
             datasource <- unsafeGetRandomDatasource
             insertedScene <- SceneDao.insert(
-              fixupSceneCreate(insertedUser, insertedOrg, datasource, scene), insertedUser
+              fixupSceneCreate(insertedUser, datasource, scene), insertedUser
             )
           } yield (insertedScene, insertedUser)
           val imageInsertIO = sceneInsertIO flatMap {
             case (swr: Scene.WithRelated, dbUser: User) => {
               ImageDao.insertImage(
-                fixupImageBanded(dbUser.id, swr.organizationId, swr.id, imageBanded),
+                fixupImageBanded(dbUser.id, swr.id, imageBanded),
                 dbUser
               ) map { (_, dbUser) }
             }
@@ -84,15 +84,14 @@ class ImageDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             case (imageO: Option[Image.WithRelated], dbUser: User) => {
               val inserted = imageO.get
               val imageId = inserted.id
-              val organizationId = inserted.organizationId
               val sceneId = inserted.scene
               val origOwner = inserted.owner
-              val fixedUp = fixupImage(origOwner, organizationId, sceneId, imageUpdate)
+              val fixedUp = fixupImage(origOwner, sceneId, imageUpdate)
               ImageDao.updateImage(
                 fixedUp, imageId, dbUser
               ) flatMap {
                 (affectedRows: Int) => {
-                  val updatedImage = ImageDao.unsafeGetImage(imageId, dbUser)
+                  val updatedImage = ImageDao.unsafeGetImage(imageId)
                   updatedImage map { (affectedRows, _) }
                 }
               }

@@ -24,16 +24,16 @@ object AoiDao extends Dao[AOI] {
   val selectF =
     sql"""
       SELECT
-        id, created_at, modified_at, organization_id,
+        id, created_at, modified_at,
         created_by, modified_by, owner, area, filters, is_active
       FROM
     """ ++ tableF
 
-  def unsafeGetAoiById(id: UUID, user: User): ConnectionIO[AOI] =
-    query.ownerFilter(user).filter(id).select
+  def unsafeGetAoiById(id: UUID): ConnectionIO[AOI] =
+    query.filter(id).select
 
-  def getAoiById(id: UUID, user: User): ConnectionIO[Option[AOI]] =
-    query.ownerFilter(user).filter(id).selectOption
+  def getAoiById(id: UUID): ConnectionIO[Option[AOI]] =
+    query.filter(id).selectOption
 
   def updateAOI(aoi: AOI, id: UUID, user: User): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
@@ -51,13 +51,13 @@ object AoiDao extends Dao[AOI] {
     val ownerId = Ownership.checkOwner(user, Some(aoi.owner))
 
     val aoiCreate: ConnectionIO[AOI] = (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, modified_at, organization_id,
+        (id, created_at, modified_at,
         created_by, modified_by, owner, area, filters, is_active)
       VALUES
-        (${aoi.id}, NOW(), NOW(), ${user.organizationId},
+        (${aoi.id}, NOW(), NOW(),
         ${user.id}, ${user.id}, ${ownerId}, ${aoi.area}, ${aoi.filters}, ${aoi.isActive})
     """).update.withUniqueGeneratedKeys[AOI](
-      "id", "created_at", "modified_at", "organization_id",
+      "id", "created_at", "modified_at",
       "created_by", "modified_by", "owner", "area", "filters", "is_active"
     )
 
@@ -81,7 +81,7 @@ object AoiDao extends Dao[AOI] {
 
   def deleteAOI(id: UUID, user: User): ConnectionIO[Int]= {
     (
-      fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(query.ownerFilterF(user), Some(fr"id = ${id}"))
+      fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(Some(fr"id = ${id}"))
     ).update.run
   }
 }

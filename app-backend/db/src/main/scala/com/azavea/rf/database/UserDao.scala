@@ -23,7 +23,7 @@ object UserDao extends Dao[User] {
 
   val selectF = sql"""
     SELECT
-      id, organization_id, role, created_at, modified_at,
+      id, role, created_at, modified_at,
       dropbox_credential, planet_credential, email_notifications,
       email, name, profile_image_uri, is_superuser, is_active
     FROM
@@ -43,9 +43,10 @@ object UserDao extends Dao[User] {
 
   def createUserWithAuthId(id: String): ConnectionIO[User] = {
     for {
+      // TODO: create UGR here instead
       org <- OrganizationDao.query.filter(fr"name = 'Public'").select
       user <- {
-        val newUser = User.Create(id, org.id)
+        val newUser = User.Create(id)
         create(newUser)
       }
     } yield user
@@ -65,7 +66,6 @@ object UserDao extends Dao[User] {
     (sql"""
        UPDATE users
        SET
-         organization_id = ${user.organizationId},
          modified_at = ${updateTime},
          dropbox_credential = ${user.dropboxCredential.token.getOrElse("")},
          planet_credential = ${user.planetCredential.token.getOrElse("")},
@@ -88,13 +88,13 @@ object UserDao extends Dao[User] {
 
     sql"""
        INSERT INTO users
-          (id, organization_id, role, created_at, modified_at, email_notifications,
+          (id, role, created_at, modified_at, email_notifications,
           email, name, profile_image_uri, is_superuser, is_active)
        VALUES
-          (${newUser.id}, ${newUser.organizationId}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false,
+          (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false,
           ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true)
        """.update.withUniqueGeneratedKeys[User](
-      "id", "organization_id", "role", "created_at", "modified_at", "dropbox_credential", "planet_credential", "email_notifications",
+      "id", "role", "created_at", "modified_at", "dropbox_credential", "planet_credential", "email_notifications",
       "email", "name", "profile_image_uri", "is_superuser", "is_active"
     )
   }

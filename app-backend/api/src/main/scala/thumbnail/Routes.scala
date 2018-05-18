@@ -69,29 +69,33 @@ trait ThumbnailRoutes extends Authentication
     }
   }
 
+  // TODO
+  // I'm pretty sure we can actually delete all of the thumbnail routes -- but this auth
+  // is known to be broken, so anyone could list all the thumbnails.
+  // it will be fixed when we work out authorization for second-tier objects
   def listThumbnails: Route = authenticate { user =>
     (withPagination & thumbnailSpecificQueryParameters) { (page, thumbnailParams) =>
       complete {
-        ThumbnailDao.query.ownerFilter(user).filter(thumbnailParams).page(page).transact(xa).unsafeToFuture
+        ThumbnailDao.query.filter(thumbnailParams).page(page).transact(xa).unsafeToFuture
       }
     }
   }
 
   def createThumbnail: Route = authenticate { user =>
     entity(as[Thumbnail.Create]) { newThumbnail =>
-      authorize(user.isInRootOrSameOrganizationAs(newThumbnail)) {
-        onSuccess(ThumbnailDao.insert(newThumbnail.toThumbnail).transact(xa).unsafeToFuture) { thumbnail =>
-          complete(StatusCodes.Created, thumbnail)
-        }
+      onSuccess(ThumbnailDao.insert(newThumbnail.toThumbnail).transact(xa).unsafeToFuture) { thumbnail =>
+        complete(StatusCodes.Created, thumbnail)
       }
     }
   }
 
   def getThumbnail(thumbnailId: UUID): Route = authenticate { user =>
-    withPagination { page =>
+    authorizeAsync {
+      ThumbnailDao.query.ownedBy(user, thumbnailId).exists.transact(xa).unsafeToFuture
+    } {
       rejectEmptyResponse {
         complete {
-          ThumbnailDao.query.ownerFilter(user).filter(thumbnailId).selectOption.transact(xa).unsafeToFuture
+          ThumbnailDao.query.filter(thumbnailId).selectOption.transact(xa).unsafeToFuture
         }
       }
     }
@@ -112,8 +116,10 @@ trait ThumbnailRoutes extends Authentication
   }
 
   def updateThumbnail(thumbnailId: UUID): Route = authenticate { user =>
-    entity(as[Thumbnail]) { updatedThumbnail =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedThumbnail)) {
+    authorizeAsync {
+      ThumbnailDao.query.ownedBy(user, thumbnailId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[Thumbnail]) { updatedThumbnail =>
         onSuccess(ThumbnailDao.update(updatedThumbnail, thumbnailId).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
@@ -122,8 +128,12 @@ trait ThumbnailRoutes extends Authentication
   }
 
   def deleteThumbnail(thumbnailId: UUID): Route = authenticate { user =>
-    onSuccess(ThumbnailDao.query.ownerFilter(user).filter(thumbnailId).delete.transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
+    authorizeAsync {
+      ThumbnailDao.query.ownedBy(user, thumbnailId).exists.transact(xa).unsafeToFuture
+    } {
+      onSuccess(ThumbnailDao.query.filter(thumbnailId).delete.transact(xa).unsafeToFuture) {
+        completeSingleOrNotFound
+      }
     }
   }
 }

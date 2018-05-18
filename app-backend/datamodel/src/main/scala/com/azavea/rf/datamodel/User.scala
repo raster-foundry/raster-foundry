@@ -60,7 +60,6 @@ object Credential {
 @JsonCodec
 case class User(
   id: String,
-  organizationId: UUID,
   role: UserRole,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
@@ -76,11 +75,11 @@ case class User(
   private val rootOrganizationId = UUID.fromString("9e2bef18-3f46-426b-a5bd-9913ee1ff840")
 
   def isInRootOrganization: Boolean = {
-    this.organizationId == rootOrganizationId
+    ???
   }
 
   def isInRootOrSameOrganizationAs(target: { def organizationId: UUID }): Boolean = {
-    this.isInRootOrganization || this.organizationId == target.organizationId
+    ???
   }
 
   def isInRootOrOwner(target: { def owner: String }): Boolean = {
@@ -102,7 +101,6 @@ object User {
   @JsonCodec
   case class WithGroupRole (
     id: String,
-    organizationId: UUID,
     role: UserRole,
     createdAt: Timestamp,
     modifiedAt: Timestamp,
@@ -120,7 +118,6 @@ object User {
   @JsonCodec
   case class Create(
     id: String,
-    organizationId: UUID,
     role: UserRole = Viewer,
     email: String = "",
     name: String = "",
@@ -130,7 +127,6 @@ object User {
       val now = new Timestamp((new java.util.Date()).getTime())
       User(
         id,
-        organizationId,
         role,
         now,
         now,

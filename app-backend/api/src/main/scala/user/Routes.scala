@@ -138,7 +138,7 @@ trait UserRoutes extends Authentication
   def getUserByEncodedAuthId(authIdEncoded: String): Route = authenticate { user =>
     rejectEmptyResponse {
       val authId = URLDecoder.decode(authIdEncoded, "US_ASCII")
-      if (user.isInRootOrganization || user.id == authId) {
+      if (user.id == authId) {
         complete(UserDao.unsafeGetUserById(authId).transact(xa).unsafeToFuture())
       } else {
         complete(StatusCodes.NotFound)

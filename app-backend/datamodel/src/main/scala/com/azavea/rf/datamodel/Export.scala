@@ -15,7 +15,6 @@ case class Export(
   modifiedAt: Timestamp,
   modifiedBy: String,
   owner: String,
-  organizationId: UUID,
   projectId: Option[UUID],
   exportStatus: ExportStatus,
   exportType: ExportType,
@@ -34,7 +33,6 @@ object Export {
 
   @JsonCodec
   case class Create(
-    organizationId: UUID,
     projectId: Option[UUID],
     exportStatus: ExportStatus,
     exportType: ExportType,
@@ -58,7 +56,6 @@ object Export {
         modifiedBy = user.id,
         owner = ownerId,
         projectId = this.projectId,
-        organizationId = this.organizationId,
         exportStatus = this.exportStatus,
         exportType = this.exportType,
         visibility = this.visibility,

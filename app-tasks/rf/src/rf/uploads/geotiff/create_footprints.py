@@ -12,11 +12,10 @@ from rf.uploads.landsat8.io import get_tempdir
 logger = logging.getLogger(__name__)
 
 
-def extract_footprints(organization_id, tif_path):
+def extract_footprints(tif_path):
     """Performs all actions to extract polygon from a kayak scene
 
     Args:
-        organization_id (str): organization footprints belong to
         tif_path (str): path to tif to extract polygons from
 
     Returns:
@@ -70,5 +69,5 @@ def extract_footprints(organization_id, tif_path):
             [xmin, ymin]
         ]]]
 
-        return (Footprint(organization_id, tile_footprint),
-                Footprint(organization_id, data_footprint))
+        return (Footprint(tile_footprint),
+                Footprint(data_footprint))

@@ -75,7 +75,6 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       val imageBand = filename.split("\\.").head
       val objMetadata = s3Client.client.getObjectMetadata(sentinel2Config.bucketName, obj)
       Image.Banded(
-        organizationId   = sentinel2Config.organizationUUID,
         rawDataBytes     = objMetadata.getContentLength.toInt,
         visibility       = Visibility.Public,
         filename         = filename,
@@ -98,7 +97,6 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     else
       Thumbnail.Identified(
         id = None,
-        organizationId = UUID.fromString(landsat8Config.organization),
         thumbnailSize  = ThumbnailSize.Square,
         widthPx        = 343,
         heightPx       = 343,
@@ -164,7 +162,6 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
         logger.info(s"${datasourcePrefix} - Creating scene case class ${scenePath}")
         Scene.Create(
           id = sceneId.some,
-          organizationId = sentinel2Config.organizationUUID,
           ingestSizeBytes = 0,
           visibility = Visibility.Public,
           tags = List("Sentinel-2", "JPEG2000"),

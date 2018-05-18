@@ -41,7 +41,6 @@ def process_upload(upload_id):
             factory = PlanetSceneFactory(
                 upload.files,
                 upload.datasource,
-                upload.organizationId,
                 upload.id,
                 upload.projectId,
                 upload.visibility,

@@ -11,7 +11,6 @@ import io.circe.generic.JsonCodec
   * @param id UUID Unique identifier for Tool Tag
   * @param createdAt Timestamp Creation time for tag
   * @param modifiedAt Timestamp Modification time for tag
-  * @param organizationId Timestamp Organization that owns tag
   * @param createdBy String User ID that owns/created tag
   * @param modifiedBy String User ID that last modified tag
   * @param tag String Tag that is displayed to user
@@ -21,7 +20,6 @@ case class ToolTag(
   id: UUID,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
-  organizationId: UUID,
   createdBy: String,
   modifiedBy: String,
   owner: String,
@@ -35,12 +33,10 @@ object ToolTag {
 
   /** Case class to handle creating a new tool tag
     *
-    * @param organizationId UUID organization to create tag for
     * @param tag String user supplied string to use for tag
     */
   @JsonCodec
   case class Create(
-    organizationId: UUID,
     tag: String,
     owner: Option[String]
   ) extends OwnerCheck {
@@ -54,7 +50,6 @@ object ToolTag {
         UUID.randomUUID,
         now,
         now,
-        organizationId,
         user.id,
         user.id,
         ownerId,

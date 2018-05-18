@@ -65,7 +65,7 @@ class TileResolverSpec extends WordSpec with Matchers {
 
         val cogScene = Scene.
           Create(
-          None, publicOrgId, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
+          None, 0, Visibility.Public, List("Test", "Public", "Low Resolution"), landsatId,
           Map("instrument type" -> "satellite", "splines reticulated" -> "0").asJson,
           "test scene datasource 1", None,
             cogExtent, cogExtent, List.empty[String], List.empty[Image.Banded], List.empty[Thumbnail.Identified],

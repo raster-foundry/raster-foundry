@@ -190,7 +190,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   }
 
   def toolRun(toolRunId: UUID, user: User, voidCache: Boolean = false): OptionT[Future, ToolRun] = {
-    OptionT(ToolRunDao.query.filter(toolRunId).ownerFilter(user).selectOption.transact(xa).unsafeToFuture)
+    OptionT(ToolRunDao.query.filter(toolRunId).filter(user).selectOption.transact(xa).unsafeToFuture)
   }
 
   /** Calculate all of the prerequisites to evaluation of an AST over a set of tile sources */

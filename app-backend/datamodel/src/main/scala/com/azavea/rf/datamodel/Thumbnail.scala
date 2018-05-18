@@ -11,7 +11,6 @@ case class Thumbnail(
   id: UUID,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
-  organizationId: UUID,
   widthPx: Int,
   heightPx: Int,
   sceneId: UUID,
@@ -31,7 +30,6 @@ object Thumbnail {
   /** Thumbnail class prior to ID assignment */
   @JsonCodec
   case class Create(
-    organizationId: UUID,
     thumbnailSize: ThumbnailSize,
     widthPx: Int,
     heightPx: Int,
@@ -44,7 +42,6 @@ object Thumbnail {
         UUID.randomUUID, // primary key
         now, // created at,
         now, // modified at,
-        organizationId,
         widthPx, // width in pixels
         heightPx, // height in pixels
         sceneId,
@@ -58,7 +55,6 @@ object Thumbnail {
   @JsonCodec
   case class Identified(
     id: Option[UUID],
-    organizationId: UUID,
     thumbnailSize: ThumbnailSize,
     widthPx: Int,
     heightPx: Int,
@@ -71,7 +67,6 @@ object Thumbnail {
         this.id.getOrElse(UUID.randomUUID), // primary key
         now, // createdAt
         now, // modifiedAt
-        this.organizationId,
         this.widthPx,
         this.heightPx,
         this.sceneId,

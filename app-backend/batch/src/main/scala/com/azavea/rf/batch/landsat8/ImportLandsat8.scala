@@ -95,7 +95,6 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
 
     Thumbnail.Identified(
       id = None,
-      organizationId = UUID.fromString(landsat8Config.organization),
       thumbnailSize = ThumbnailSize.Small,
       widthPx = 228,
       heightPx = 233,
@@ -103,7 +102,6 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
       url = smallUrl
     ) :: Thumbnail.Identified(
       id = None,
-      organizationId = UUID.fromString(landsat8Config.organization),
       thumbnailSize = ThumbnailSize.Large,
       widthPx = 1143,
       heightPx = 1168,
