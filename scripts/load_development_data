@@ -18,13 +18,15 @@ Load a database dump from S3
 "
 }
 
-function load_database_backup() {
+function download_database_backup() {
 
     pushd "${DIR}/.."
     echo "Downloading database from s3"
     aws s3 cp "s3://${RF_SETTINGS_BUCKET}/database.pgdump" "data/database.pgdump"
     popd
+}
 
+function load_database_backup() {
     echo "Drop rasterfoundry database"
     docker-compose \
         exec -T postgres gosu postgres dropdb rasterfoundry
@@ -46,9 +48,11 @@ then
     then
         usage
     else
-
         # API server won't start until Postgres is passing Health Checks
         docker-compose up -d api-server
+        if [ "${1:-}" = "--download" ] || [ ! -f data/database.pgdump ]; then
+            download_database_backup
+        fi
         load_database_backup
         docker-compose rm -sf api-server
     fi
