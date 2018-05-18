@@ -12,9 +12,11 @@ DIR="$(dirname "$0")"
 function usage() {
 
     echo -n \
-"Usage: $(basename "$0")
+"Usage: $(basename "$0") [--download]
 
-Load a database dump from S3
+Load the database dump located at data/database.pgdump if present.
+Otherwise, downloads the dump from S3. If the download flag is used, ignores
+and overwrites the existing dump.
 "
 }
 
@@ -54,7 +56,7 @@ then
             download_database_backup
         fi
         load_database_backup
-        docker-compose rm -sf api-server
+        docker-compose rm -sf api-server˝
     fi
     exit
 fi
