@@ -35,19 +35,24 @@ import com.azavea.rf.database.{ProjectDao, SceneWithRelatedDao, UserDao}
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util.RFTransactor
 
+import java.sql.Timestamp
+
 case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) extends Job with AWSBatch {
   val name = FindAOIProjects.name
 
+  type LastChecked = Timestamp
+  type StartTime = Timestamp
 
   def run: Unit = {
     logger.info(s"Updating project ${projectId}")
-    /** Fetch the project, AOI area, and AOI scene query parameters */
-    def fetchBaseData: ConnectionIO[(String, Projected[MultiPolygon], Result[CombinedSceneQueryParams])] = {
+    /** Fetch the project, AOI area, last checked time, start time, and AOI scene query parameters */
+    def fetchBaseData: ConnectionIO[
+      (String, Projected[MultiPolygon], StartTime, LastChecked, Result[CombinedSceneQueryParams])] = {
       val base = fr"""
       SELECT
-        owner, area, filters
+        owner, area, start_time, aois_last_checked, filters
       FROM
-        ((select id proj_table_id, owner from projects) projects_filt
+        ((select id proj_table_id, owner, aois_last_checked from projects) projects_filt
         inner join aois_to_projects atp
         on
           projects_filt.proj_table_id = atp.project_id) patp
@@ -58,13 +63,18 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
 
       // This could return a list probably if we ever support > 1 AOI per project
       (base ++ Fragments.whereAndOpt(projectIdFilter))
-        .query[(String, Projected[MultiPolygon], Json)]
+        .query[(String, Projected[MultiPolygon], StartTime, LastChecked, Json)]
         .unique
-        .map({ case (projOwner: String, g: Projected[MultiPolygon], f:Json) => (projOwner, g, f.as[CombinedSceneQueryParams]) })
+        .map(
+          { case (projOwner: String, g: Projected[MultiPolygon], startTime: StartTime, lastChecked: LastChecked, f:Json) => (projOwner, g, startTime, lastChecked, f.as[CombinedSceneQueryParams])
+          }
+        )
     }
 
     /** Find all the scenes that can be added to a project */
-    def fetchProjectScenes(user: User, geom: Projected[MultiPolygon], queryParams: Option[CombinedSceneQueryParams]): ConnectionIO[List[UUID]] = {
+    def fetchProjectScenes(
+      user: User, geom: Projected[MultiPolygon], startTime: StartTime,
+      lastChecked: LastChecked, queryParams: Option[CombinedSceneQueryParams]): ConnectionIO[List[UUID]] = {
       val base: Fragment = fr"SELECT id FROM scenes"
       val qpFilters: Option[Fragment] = queryParams map {
         (csp: CombinedSceneQueryParams) => {
@@ -72,13 +82,15 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
           Fragments.and(queryFilters.flatten.toSeq: _*)
         }
       }
+      val alreadyCheckedFilter: Option[Fragment] = Some(fr"created_at > ${lastChecked}")
+      val acquisitionFilter: Option[Fragment] = Some(fr"acquisition_date > ${startTime}")
       val areaFilter: Option[Fragment] = Some(fr"st_intersects(data_footprint, ${geom})")
       val ownerFilter: Option[Fragment] = if (user.isInRootOrganization) {
           None
         } else {
           Some(fr"(organization_id = ${user.organizationId} OR owner = ${user.id})")
         }
-      (base ++ Fragments.whereAndOpt(qpFilters, areaFilter, ownerFilter))
+      (base ++ Fragments.whereAndOpt(qpFilters, alreadyCheckedFilter, acquisitionFilter, areaFilter, ownerFilter))
         .query[UUID]
         .stream
         .compile.toList
@@ -86,13 +98,13 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
 
     def addScenesToProjectWithProjectIO: ConnectionIO[UUID] = {
       val user: ConnectionIO[Option[User]] = fetchBaseData flatMap {
-        case (projOwner: String, _, _) => UserDao.getUserById(projOwner)
+        case (projOwner: String, _, _, _, _) => UserDao.getUserById(projOwner)
       }
       val sceneIds: ConnectionIO[List[UUID]] =
         fetchBaseData flatMap {
-          case (_, g: Projected[MultiPolygon], qp: Result[CombinedSceneQueryParams]) =>
+          case (_, g: Projected[MultiPolygon], startTime: StartTime, lastChecked: LastChecked, qp: Result[CombinedSceneQueryParams]) =>
             user flatMap {
-              case Some(u) => fetchProjectScenes(u, g, qp.toOption)
+              case Some(u) => fetchProjectScenes(u, g, startTime, lastChecked, qp.toOption)
               case None =>
                 throw new Exception(
                   "User not found. Should be impossible given foreign key relationship on project")
