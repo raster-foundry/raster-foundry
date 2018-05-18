@@ -21,7 +21,7 @@ object ImageDao extends Dao[Image] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, organization_id, created_by, modified_by,
+      id, created_at, modified_at, created_by, modified_by,
       owner, raw_data_bytes, visibility, filename, sourceuri, scene,
       image_metadata, resolution_meters, metadata_files FROM """ ++ tableF
 
@@ -33,16 +33,16 @@ object ImageDao extends Dao[Image] {
     val now = new Timestamp((new java.util.Date()).getTime())
     val ownerId = util.Ownership.checkOwner(user, Some(image.owner))
     (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, modified_at, organization_id, created_by, modified_by,
+        (id, created_at, modified_at, created_by, modified_by,
         owner, raw_data_bytes, visibility, filename, sourceuri, scene,
         image_metadata, resolution_meters, metadata_files)
       VALUES
-        (${image.id}, ${image.createdAt}, ${image.modifiedAt}, ${image.organizationId},
+        (${image.id}, ${image.createdAt}, ${image.modifiedAt},
          ${user.id}, ${user.id}, ${ownerId}, ${image.rawDataBytes}, ${image.visibility},
          ${image.filename}, ${image.sourceUri}, ${image.scene},
          ${image.imageMetadata}, ${image.resolutionMeters}, ${image.metadataFiles})
     """).update.withUniqueGeneratedKeys[Image](
-        "id", "created_at", "modified_at", "organization_id", "created_by", "modified_by",
+        "id", "created_at", "modified_at", "created_by", "modified_by",
         "owner", "raw_data_bytes", "visibility", "filename", "sourceuri", "scene",
         "image_metadata", "resolution_meters", "metadata_files"
     )
@@ -61,11 +61,11 @@ object ImageDao extends Dao[Image] {
 
   def insertManyImages(images: List[Image]): ConnectionIO[Int] = {
     val insertSql = s"""INSERT INTO ${tableName}
-        (id, created_at, modified_at, organization_id, created_by, modified_by,
+        (id, created_at, modified_at, created_by, modified_by,
         owner, raw_data_bytes, visibility, filename, sourceuri, scene,
         image_metadata, resolution_meters, metadata_files)
       VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     Update[Image](insertSql).updateMany(images)
@@ -87,23 +87,23 @@ object ImageDao extends Dao[Image] {
           image_metadata = ${image.imageMetadata},
           resolution_meters = ${image.resolutionMeters},
           metadata_files = ${image.metadataFiles}
-      """ ++ Fragments.whereAndOpt(query.ownerFilterF(user), fr"id = ${id}".some)
+      """ ++ Fragments.whereAndOpt(fr"id = ${id}".some)
     updateQuery.update.run
   }
 
   // delete images
   def deleteImage(id: UUID, user: User): ConnectionIO[Int] = {
-    this.query.filter(fr"owner = ${user.id}").filter(id).delete
+    this.query.filter(id).delete
   }
 
   // get image
-  def getImage(id: UUID, user: User): ConnectionIO[Option[Image]] = {
-    this.query.filter(id).ownerFilter(user).selectOption
+  def getImage(id: UUID): ConnectionIO[Option[Image]] = {
+    this.query.filter(id).selectOption
   }
 
   // get an image assuming it's present
-  def unsafeGetImage(id: UUID, user: User): ConnectionIO[Image] = {
-    this.query.filter(id).ownerFilter(user).select
+  def unsafeGetImage(id: UUID): ConnectionIO[Image] = {
+    this.query.filter(id).select
   }
 }
 

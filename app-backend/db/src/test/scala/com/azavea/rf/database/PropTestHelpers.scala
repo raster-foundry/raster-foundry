@@ -3,6 +3,8 @@ package com.azavea.rf.database
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
 
+import cats.implicits._
+
 import doobie._
 import doobie.implicits._
 
@@ -13,14 +15,22 @@ trait PropTestHelpers {
   def insertUserOrgPlatform(user: User.Create, org: Organization.Create, platform: Platform):
       ConnectionIO[(User, Organization, Platform)] = for {
       dbPlatform <- PlatformDao.create(platform)
-      orgAndUser <- insertUserAndOrg(user, org.copy(platformId=dbPlatform.id))
+      orgAndUser <- insertUserAndOrg(user, org.copy(platformId=dbPlatform.id), false)
       (dbOrg, dbUser) = orgAndUser
     } yield { (dbUser, dbOrg, dbPlatform) }
 
-  def insertUserAndOrg(user: User.Create, org: Organization.Create): ConnectionIO[(Organization, User)] = {
+  def insertUserAndOrg(user: User.Create, org: Organization.Create, doUserGroupRole: Boolean = true):
+      ConnectionIO[(Organization, User)] = {
     for {
       orgInsert <- OrganizationDao.createOrganization(org)
-      userInsert <- UserDao.create(user.copy(organizationId = orgInsert.id))
+      userInsert <- UserDao.create(user)
+      _ <- if (doUserGroupRole) UserGroupRoleDao.create(
+        UserGroupRole.Create(
+          userInsert.id,
+          GroupType.Organization,
+          orgInsert.id,
+          GroupRole.Member
+        ).toUserGroupRole(userInsert)) else ().pure[ConnectionIO]
     } yield (orgInsert, userInsert)
   }
 
@@ -30,7 +40,7 @@ trait PropTestHelpers {
       orgUserInsert <- insertUserAndOrg(user, org)
       (org, user) = orgUserInsert
       project <- ProjectDao.insertProject(
-        fixupProjectCreate(user, org, proj), user
+        fixupProjectCreate(user, proj), user
       )
     } yield (org, user, project)
   }
@@ -40,88 +50,68 @@ trait PropTestHelpers {
       orgUserInsert <- insertUserAndOrg(user, org)
       (dbOrg, dbUser) = orgUserInsert
       dbDatasource <- unsafeGetRandomDatasource
-      scene <- SceneDao.insert(fixupSceneCreate(dbUser, dbOrg, dbDatasource, scene), dbUser)
+      scene <- SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene), dbUser)
     } yield (dbOrg, dbUser, scene)
   }
 
   def unsafeGetRandomDatasource: ConnectionIO[Datasource] =
     (DatasourceDao.selectF ++ fr"ORDER BY RANDOM() limit 1").query[Datasource].unique
 
-  def fixupProjectCreate(user: User, org: Organization, proj: Project.Create): Project.Create = {
-    proj.copy(organizationId = org.id, owner = Some(user.id))
-  }
+  def fixupProjectCreate(user: User, proj: Project.Create): Project.Create =
+    proj.copy(owner = Some(user.id))
 
   // We assume the Scene.Create has an id, since otherwise thumbnails have no idea what scene id to use
-  def fixupSceneCreate(user: User, org: Organization, datasource: Datasource, sceneCreate: Scene.Create): Scene.Create = {
+  def fixupSceneCreate(user: User, datasource: Datasource, sceneCreate: Scene.Create): Scene.Create = {
     sceneCreate.copy(
-      organizationId = org.id,
       owner = None,
       datasource = datasource.id,
       images = sceneCreate.images map {
-        _.copy(organizationId = org.id, scene = sceneCreate.id.get, owner = None)
+        _.copy(scene = sceneCreate.id.get, owner = None)
       },
       thumbnails = sceneCreate.thumbnails map {
-        _.copy(organizationId = org.id, sceneId = sceneCreate.id.get)
+        _.copy(sceneId = sceneCreate.id.get)
       }
     )
   }
 
-  def fixupShapeCreate(user: User, org: Organization, shapeCreate: Shape.Create): Shape.Create =
-    shapeCreate.copy(owner = Some(user.id), organizationId = org.id)
+  def fixupShapeCreate(user: User, shapeCreate: Shape.Create): Shape.Create =
+    shapeCreate.copy(owner = Some(user.id))
 
-  def fixupShapeGeoJSON(user: User, org: Organization, shape: Shape, shapeGeoJSON: Shape.GeoJSON): Shape.GeoJSON =
+  def fixupShapeGeoJSON(user: User, shape: Shape, shapeGeoJSON: Shape.GeoJSON): Shape.GeoJSON =
     shapeGeoJSON.copy(
       id = shape.id,
       properties = shapeGeoJSON.properties.copy(
         createdBy = user.id,
         modifiedBy = user.id,
-        owner = user.id,
-        organizationId = org.id
+        owner = user.id
       )
     )
 
-  def fixupImageBanded(ownerId: String, orgId: UUID, sceneId: UUID, image: Image.Banded): Image.Banded = {
-    image.copy(
-      owner = Some(ownerId),
-      organizationId = orgId,
-      scene = sceneId
-    )
-  }
+  def fixupImageBanded(ownerId: String, sceneId: UUID, image: Image.Banded): Image.Banded =
+    image.copy(owner = Some(ownerId), scene = sceneId)
 
-  def fixupImage(ownerId: String, orgId: UUID, sceneId: UUID, image: Image): Image = {
-    image.copy(
-      createdBy = ownerId,
-      owner = ownerId,
-      organizationId = orgId,
-      scene = sceneId
-    )
-  }
+  def fixupImage(ownerId: String, sceneId: UUID, image: Image): Image =
+    image.copy(createdBy = ownerId, owner = ownerId, scene = sceneId)
 
-  def fixupDatasource(dsCreate: Datasource.Create, org: Organization, user: User): ConnectionIO[Datasource] = {
+  def fixupDatasource(dsCreate: Datasource.Create, user: User): ConnectionIO[Datasource] = {
     for {
-      ds <- DatasourceDao.createDatasource(
-        dsCreate.copy(organizationId = org.id, owner = Some(user.id)),
-        user)
+      ds <- DatasourceDao.createDatasource(dsCreate.copy(owner = Some(user.id)), user)
     } yield ds
   }
 
-  def fixupThumbnail(org: Organization, scene: Scene.WithRelated, thumbnail: Thumbnail): Thumbnail =
-    thumbnail.copy(organizationId = org.id, sceneId = scene.id)
+  def fixupThumbnail(scene: Scene.WithRelated, thumbnail: Thumbnail): Thumbnail =
+    thumbnail.copy(sceneId = scene.id)
 
-  def fixupUploadCreate(user: User, org: Organization, project: Project, datasource: Datasource, upload: Upload.Create): Upload.Create = {
-    val withoutProjectFixup = upload.copy(
-      owner = Some(user.id),
-      organizationId = org.id,
-      datasource = datasource.id
-    )
+  def fixupUploadCreate(user: User, project: Project, datasource: Datasource, upload: Upload.Create): Upload.Create = {
+    val withoutProjectFixup = upload.copy(owner = Some(user.id), datasource = datasource.id)
     upload.projectId match {
       case Some(_) => withoutProjectFixup.copy(projectId = Some(project.id))
       case _ => withoutProjectFixup
     }
   }
 
-  def fixupAoi(user: User, org: Organization, aoi: AOI): AOI = {
-    aoi.copy(organizationId = org.id, owner = user.id, createdBy = user.id, modifiedBy = user.id)
+  def fixupAoi(user: User, aoi: AOI): AOI = {
+    aoi.copy(owner = user.id, createdBy = user.id, modifiedBy = user.id)
   }
 
   def fixupTeam(teamCreate: Team.Create, org: Organization, user: User): Team =

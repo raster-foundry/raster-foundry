@@ -13,11 +13,10 @@ class PlatformOrganizationsController {
         this.modalService = modalService;
         this.platformService = platformService;
         this.organizationService = organizationService;
-        if (this.$stateParams.platformId) {
-            this.fetchOrganizations();
-        } else {
+        if (!this.$stateParams.platformId) {
             this.$state.go('admin');
         }
+        this.fetching = true;
 
         let debouncedSearch = _.debounce(
             this.onSearch.bind(this),
@@ -28,8 +27,7 @@ class PlatformOrganizationsController {
     }
 
     onSearch(search) {
-        // eslint-disable-next-line
-        this.fetchOrganizations(undefined, search);
+        this.fetchOrganizations(1, search);
     }
 
     updatePagination(data) {
@@ -45,10 +43,11 @@ class PlatformOrganizationsController {
     }
 
     fetchOrganizations(page = 1, search) {
+        this.fetching = true;
         this.platformService
             .getOrganizations(this.$stateParams.platformId, page - 1, search)
             .then((response) => {
-                // TODO: add pagination support
+                this.fetching = false;
                 this.updatePagination(response);
                 this.lastOrgResult = response;
                 this.organizations = response.results;
@@ -61,6 +60,16 @@ class PlatformOrganizationsController {
                             }
                         }
                     ));
+
+                this.organizations.forEach(
+                    (organization) => {
+                        this.organizationService
+                            .getMembers(this.$stateParams.platformId, organization.id)
+                            .then((paginatedUsers) => {
+                                organization.fetchedUsers = paginatedUsers;
+                            });
+                    }
+                );
             });
     }
 

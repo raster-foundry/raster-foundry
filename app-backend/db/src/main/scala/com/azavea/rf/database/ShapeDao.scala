@@ -22,28 +22,28 @@ object ShapeDao extends Dao[Shape] {
   val selectF = sql"""
     SELECT
       id, created_at, created_by, modified_at, modified_by, owner,
-      organization_id, name, description, geometry
+      name, description, geometry
     FROM
   """ ++ tableF
 
-  def unsafeGetShapeById(shapeId: UUID, user: User): ConnectionIO[Shape] =
-    query.filter(shapeId).ownerFilter(user).select
+  def unsafeGetShapeById(shapeId: UUID): ConnectionIO[Shape] =
+    query.filter(shapeId).select
 
-  def getShapeById(shapeId: UUID, user: User): ConnectionIO[Option[Shape]] =
-    query.filter(shapeId).ownerFilter(user).selectOption
+  def getShapeById(shapeId: UUID): ConnectionIO[Option[Shape]] =
+    query.filter(shapeId).selectOption
 
   def insertShapes(shapes: Seq[Shape.Create], user: User): ConnectionIO[Seq[Shape.GeoJSON]] = {
     val insertSql = """
        INSERT INTO shapes
          (id, created_at, created_by, modified_at, modified_by, owner,
-         organization_id, name, description, geometry)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+         name, description, geometry)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"""
 
     val insertValues = shapes.map(_.toShape(user))
 
     Update[Shape](insertSql).updateManyWithGeneratedKeys[Shape](
       "id", "created_at", "created_by", "modified_at", "modified_by",
-      "owner", "organization_id", "name", "description", "geometry"
+      "owner", "name", "description", "geometry"
     )(insertValues.toList).compile.toList.map(_.map(_.toGeoJSONFeature))
 
   }
@@ -61,7 +61,7 @@ object ShapeDao extends Dao[Shape] {
          name = ${shape.name},
          description = ${shape.description},
          geometry = ${shape.geometry}
-       """ ++ Fragments.whereAndOpt(ownerEditFilter(user), Some(idFilter))).update.run
+       """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
 }

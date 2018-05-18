@@ -21,7 +21,7 @@ object ToolTagDao extends Dao[ToolTag] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, organization_id, created_by, modified_by,
+      id, created_at, modified_at, created_by, modified_by,
       owner, tag
     FROM
   """ ++ tableF
@@ -33,11 +33,11 @@ object ToolTagDao extends Dao[ToolTag] {
 
     (fr"INSERT INTO" ++ tableF ++
      fr"""
-          (id, created_at, modified_at, created_by, modified_by, organization_id, tag, owner)
+          (id, created_at, modified_at, created_by, modified_by, tag, owner)
         VALUES
-          (${id}, ${now}, ${now}, ${user.id}, ${user.id}, ${newTag.organizationId}, ${newTag.tag}, ${ownerId})
+          (${id}, ${now}, ${now}, ${user.id}, ${user.id}, ${newTag.tag}, ${ownerId})
      """).update.withUniqueGeneratedKeys[ToolTag](
-      "id", "created_at", "modified_at", "organization_id", "created_by", "modified_by", "owner", "tag")
+      "id", "created_at", "modified_at", "created_by", "modified_by", "owner", "tag")
   }
 
   def update(toolTag: ToolTag, id: UUID, user: User): ConnectionIO[Int] = {
@@ -49,9 +49,8 @@ object ToolTagDao extends Dao[ToolTag] {
        modified_at = ${updateTime},
        modified_by = ${user.id},
        owner = ${toolTag.owner},
-       organization_id = ${toolTag.organizationId},
        tag = ${toolTag.tag}
-     """ ++ Fragments.whereAndOpt(ownerEditFilter(user), Some(idFilter))).update.run
+     """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
 
   }
 }

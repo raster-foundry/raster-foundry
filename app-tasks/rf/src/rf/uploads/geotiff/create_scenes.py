@@ -10,7 +10,7 @@ from .create_footprints import extract_footprints
 logger = logging.getLogger(__name__)
 
 
-def create_geotiff_scene(tif_path, organizationId, datasource, acquisitionDate=None, cloudCover=0,
+def create_geotiff_scene(tif_path, datasource, acquisitionDate=None, cloudCover=0,
                          ingestSizeBytes=0, visibility=Visibility.PRIVATE, tags=[],
                          sceneMetadata=None, name=None, thumbnailStatus=JobStatus.QUEUED,
                          boundaryStatus=JobStatus.QUEUED, ingestStatus=IngestStatus.TOBEINGESTED,
@@ -29,7 +29,6 @@ def create_geotiff_scene(tif_path, organizationId, datasource, acquisitionDate=N
 
     Args:
         tif_path (str): Local path to GeoTIFF file to use.
-        organizationId (str): UUID of Organization that should own Scene
         datasource (str): Name describing the source of the data
         **kwargs: Any remaining keyword arguments will override the values being passed to the Scene
             constructor. If
@@ -43,9 +42,7 @@ def create_geotiff_scene(tif_path, organizationId, datasource, acquisitionDate=N
     sceneMetadata = sceneMetadata if sceneMetadata else get_geotiff_metadata(tif_path)
     name = name if name else get_geotiff_name(tif_path)
 
-    tile_footprint, data_footprint = extract_footprints(
-        organizationId, tif_path
-    )
+    tile_footprint, data_footprint = extract_footprints(tif_path)
 
     sceneKwargs = {
         'sunAzimuth': None,  # TODO: Calculate from acquisitionDate and tif center.
@@ -62,7 +59,6 @@ def create_geotiff_scene(tif_path, organizationId, datasource, acquisitionDate=N
 
     # Construct Scene
     scene = Scene(
-        organizationId,
         ingestSizeBytes,
         visibility,
         tags,

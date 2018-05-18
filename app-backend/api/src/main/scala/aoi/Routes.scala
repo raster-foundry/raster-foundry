@@ -49,16 +49,22 @@ trait AoiRoutes extends Authentication
   }
 
   def getAOI(id: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete {
-        AoiDao.query.filter(user).filter(id).selectOption.transact(xa).unsafeToFuture
+    authorizeAsync {
+      AoiDao.query.ownedBy(user, id).exists.transact(xa).unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete {
+          AoiDao.query.filter(user).filter(id).selectOption.transact(xa).unsafeToFuture
+        }
       }
     }
   }
 
   def updateAOI(id: UUID): Route = authenticate { user =>
-    entity(as[AOI]) { aoi =>
-      authorize(user.isInRootOrSameOrganizationAs(aoi)) {
+    authorizeAsync {
+      AoiDao.query.ownedBy(user, id).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[AOI]) { aoi =>
         onSuccess(AoiDao.updateAOI(aoi, id, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
@@ -67,8 +73,12 @@ trait AoiRoutes extends Authentication
   }
 
   def deleteAOI(id: UUID): Route = authenticate { user =>
-    onSuccess(AoiDao.deleteAOI(id, user).transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
+    authorizeAsync {
+      AoiDao.query.ownedBy(user, id).exists.transact(xa).unsafeToFuture
+    } {
+      onSuccess(AoiDao.deleteAOI(id, user).transact(xa).unsafeToFuture) {
+        completeSingleOrNotFound
+      }
     }
   }
 }

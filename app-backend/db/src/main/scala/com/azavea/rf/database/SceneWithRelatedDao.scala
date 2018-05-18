@@ -102,34 +102,31 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     }
   }
 
-  def listScenes(pageRequest: PageRequest, queryFilters: List[Option[Fragment]], user: User, shape: Option[UUID]): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
+  def listScenes(pageRequest: PageRequest, queryFilters: CombinedSceneQueryParams, user: User, shape: Option[UUID]): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
     val pageFragment: Fragment = Page(pageRequest)
 
     val shapeIO: ConnectionIO[Option[Shape]] =
       shape match {
-        case Some(shapeId) => ShapeDao.getShapeById(shapeId, user)
+        case Some(shapeId) => ShapeDao.getShapeById(shapeId)
         case _ => (None : Option[Shape]).pure[ConnectionIO]
       }
 
     val scenesIO: ConnectionIO[List[Scene]] =
       shapeIO flatMap {
         (shpO: Option[Shape]) => {
-          (selectF ++ Fragments.whereAndOpt(
-            ((shpO map { (shp: Shape) => fr"ST_Intersects(data_footprint, ${shp.geometry})" })
-              :: query.ownerVisibilityFilterF(user)
-              :: queryFilters): _*) ++ pageFragment)
-            .query[Scene]
-            .stream
-            .compile
-            .toList
+          SceneDao.query
+            .filter(shpO map { _.geometry }) // this is an Option[Option[Projected[Geometry]]] and it's still fine
+            .filter(queryFilters)
+            .authorize(user, ObjectType.Scene, ActionType.View)
+            .pageOffset(pageRequest)
         }
       }
-    
+
     val withRelatedsIO: ConnectionIO[List[Scene.WithRelated]] = scenesIO flatMap { scenesToScenesWithRelated }
 
     for {
       page <- withRelatedsIO
-      count <- query.filter(Fragments.andOpt(queryFilters.toSeq: _*)).countIO
+      count <- query.filter(queryFilters).countIO
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
@@ -138,8 +135,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   }
 
   def listScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
-    val queryFilters: List[Option[Fragment]] = makeFilters(List(sceneParams)).flatten
-    listScenes(pageRequest, queryFilters, user, sceneParams.sceneParams.shape)
+    listScenes(pageRequest, sceneParams, user, sceneParams.sceneParams.shape)
   }
 
   def getSceneQ(sceneId: UUID, user: User) = {
@@ -193,7 +189,6 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
              scenes_q.modified_at,
              scenes_q.modified_by,
              scenes_q.owner,
-             scenes_q.organization_id,
              scenes_q.ingest_size_bytes,
              scenes_q.visibility,
              scenes_q.tags,
@@ -223,7 +218,6 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
               'id', i.id,
               'createdAt', to_char(i.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
               'modifiedAt', to_char(i.modified_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
-              'organizationId', i.organization_id,
               'createdBy', i.created_by,
               'modifiedBy', i.modified_by,
               'owner', i.owner,
@@ -264,7 +258,6 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
               'id', t.id,
               'createdAt', to_char(t.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
               'modifiedAt', to_char(t.modified_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
-              'organizationId', t.organization_id,
               'widthPx', t.width_px,
               'heightPx', t.height_px,
               'sceneId', t.scene,

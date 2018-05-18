@@ -240,7 +240,11 @@ export default (app) => {
 
         getCurrentUser() {
             let id = this.getProfile().sub;
-            return this.User.get({id: id}).$promise;
+            let promise = this.User.get({id: id}).$promise;
+            promise.then((user) => {
+                this.user = user;
+            });
+            return promise;
         }
 
         getUserRoles() {

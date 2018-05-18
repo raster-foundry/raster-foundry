@@ -144,9 +144,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
   def userIsAdmin(user: User, organizationId: UUID): ConnectionIO[Boolean] =
     userIsAdminF(user, organizationId).query[Boolean].option.map(_.getOrElse(false))
 
-  def getOrgPlatformId(organizationId: UUID): ConnectionIO[UUID] = {
-    (fr"SELECT platform_id FROM " ++ tableF ++ fr"WHERE id = ${organizationId}").query[UUID].unique
-  }
+  def getOrgPlatformId(organizationId: UUID): ConnectionIO[UUID] =
+    unsafeGetOrganizationById(organizationId) map { _.platformId }
 
   def addUserRole(actingUser: User, subjectId: String, organizationId: UUID, groupRole: GroupRole): ConnectionIO[UserGroupRole] = {
     val userGroupRoleCreate = UserGroupRole.Create(

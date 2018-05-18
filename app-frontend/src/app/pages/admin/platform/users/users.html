@@ -1,21 +1,23 @@
 <div class="admin-users-content container column-stretch dashboard">
   <div class="admin-users-actions">
     <input type="text" class="form-control admin-search" placeholder="Search for users"
-           ng-model="$ctrl.search">
+           ng-model="$ctrl.search" ng-disabled="$ctrl.fetching">
   </div>
-  <table class="admin-table admin-platform-user-table">
+  <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching">
     <thead>
       <tr>
         <td>Name</td>
         <td>Email</td>
-        <td>Organization</td>
         <td>Role</td>
       </tr>
     </thead>
     <tbody>
       <tr ng-repeat="user in $ctrl.users track by $index">
         <td class="username">
-          <div class="placeholder-avatar"></div>
+          <div class="placeholder-avatar" ng-if="!user.profileImageUri"></div>
+          <div class="user-avatar" ng-if="user.profileImageUri">
+            <img class="avatar" ng-src="{{user.profileImageUri}}">
+          </div>
           <div>
             {{user.name}}
           </div>
@@ -23,11 +25,8 @@
         <td class="emails">
           {{user.email}}
         </td>
-        <td class="organization">
-          {{user.organization}}
-        </td>
         <td class="roles">
-          {{user.role}}
+          {{user.groupRole}}
         </td>
         <td class="actions">
           <rf-dropdown data-options="user.options">
@@ -37,6 +36,9 @@
       </tr>
     </tbody>
   </table>
+  <div class="table-loading" ng-if="$ctrl.fetching">
+    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
+  </div>
 
   <!-- Pagination -->
   <div class="list-group text-center"

@@ -33,7 +33,7 @@ object ExportDao extends Dao[Export] {
   val selectF = fr"""
     SELECT
       id, created_at, created_by, modified_at, modified_by, owner,
-      organization_id, project_id, export_status, export_type,
+      project_id, export_status, export_type,
       visibility, toolrun_id, export_options
     FROM
   """ ++ tableF
@@ -43,16 +43,16 @@ object ExportDao extends Dao[Export] {
     val ownerId = util.Ownership.checkOwner(user, Some(export.owner))
     (insertF ++fr"""
         id, created_at, created_by, modified_at, modified_by, owner,
-        organization_id, project_id, export_status, export_type,
+        project_id, export_status, export_type,
         visibility, toolrun_id, export_options
       ) VALUES (
         ${UUID.randomUUID}, NOW(), ${user.id}, NOW(), ${user.id}, ${ownerId},
-        ${export.organizationId}, ${export.projectId}, ${export.exportStatus}, ${export.exportType},
+        ${export.projectId}, ${export.exportStatus}, ${export.exportType},
         ${export.visibility}, ${export.toolRunId}, ${export.exportOptions}
       )
     """).update.withUniqueGeneratedKeys[Export](
       "id", "created_at", "created_by", "modified_at", "modified_by", "owner",
-      "organization_id", "project_id", "export_status", "export_type",
+      "project_id", "export_status", "export_type",
       "visibility", "toolrun_id", "export_options"
     )
   }
@@ -137,7 +137,7 @@ object ExportDao extends Dao[Export] {
     user: User
   ): ConnectionIO[ASTInput] ={
     for {
-      toolRun <- ToolRunDao.query.filter(toolRunId).ownerFilter(user).select
+      toolRun <- ToolRunDao.query.filter(toolRunId).select
       ast <- {
         toolRun.executionParameters.as[MapAlgebraAST] match {
           case Left(e) => throw e

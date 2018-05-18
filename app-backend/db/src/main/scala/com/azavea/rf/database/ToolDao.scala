@@ -23,7 +23,7 @@ object ToolDao extends Dao[Tool] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, created_by, modified_by, owner, organization_id, title,
+      id, created_at, modified_at, created_by, modified_by, owner, title,
       description, requirements, license, visibility, compatible_data_sources, stars, definition
     FROM """ ++ tableF
 
@@ -34,14 +34,14 @@ object ToolDao extends Dao[Tool] {
 
     sql"""
        INSERT INTO tools
-         (id, created_at, modified_at, created_by, modified_by, owner, organization_id, title,
+         (id, created_at, modified_at, created_by, modified_by, owner, title,
           description, requirements, license, visibility, compatible_data_sources, stars, definition)
        VALUES
-         (${id}, ${now}, ${now}, ${user.id}, ${user.id}, ${ownerId}, ${newTool.organizationId}, ${newTool.title},
+         (${id}, ${now}, ${now}, ${user.id}, ${user.id}, ${ownerId}, ${newTool.title},
           ${newTool.description}, ${newTool.requirements}, ${newTool.license}, ${newTool.visibility},
           ${newTool.compatibleDataSources}, ${newTool.stars}, ${newTool.definition})
        """.update.withUniqueGeneratedKeys[Tool](
-      "id", "created_at", "modified_at", "created_by", "modified_by", "owner", "organization_id", "title",
+      "id", "created_at", "modified_at", "created_by", "modified_by", "owner", "title",
       "description", "requirements", "license", "visibility", "compatible_data_sources", "stars", "definition"
     )
   }
@@ -62,6 +62,6 @@ object ToolDao extends Dao[Tool] {
          compatible_data_sources = ${tool.compatibleDataSources},
          stars = ${tool.stars},
          definition = ${tool.definition}
-     """ ++ Fragments.whereAndOpt(ownerEditFilter(user), Some(idFilter))).update.run
+     """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 }

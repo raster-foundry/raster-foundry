@@ -24,8 +24,7 @@ class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
         (user: User.Create) => {
           val insertedUserIO = for {
             org <- rootOrgQ
-            userWithOrg = user.copy(organizationId=org.id)
-            created <- UserDao.create(userWithOrg)
+            created <- UserDao.create(user)
           } yield (created)
           val insertedUser = insertedUserIO.transact(xa).unsafeRunSync
           insertedUser.id == user.id
@@ -53,7 +52,7 @@ class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
         (userCreate: User.Create) => {
           val createdIdIO = for {
             org <- rootOrgQ
-            userWithOrg = userCreate.copy(organizationId=org.id)
+            userWithOrg = userCreate.copy()
             inserted <- UserDao.create(userWithOrg)
             byId <- UserDao.getUserById(inserted.id)
           } yield (byId)
@@ -70,8 +69,7 @@ class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
         (user: User.Create, emailNotifications: Boolean, dropboxCredential: Credential, planetCredential: Credential) => {
           val insertedUserIO = for {
             org <- rootOrgQ
-            userWithOrg = user.copy(organizationId=org.id)
-            created <- UserDao.create(userWithOrg)
+            created <- UserDao.create(user)
           } yield (created)
           val (affectedRows, updatedEmailNotifications, updatedDropboxToken, updatedPlanetToken) = (insertedUserIO flatMap {
             case (insertUser: User) => {
@@ -107,8 +105,7 @@ class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
         (user: User.Create, planetCredential: Credential) => {
           val insertedUserIO = for {
             org <- rootOrgQ
-            userWithOrg = user.copy(organizationId=org.id)
-            created <- UserDao.create(userWithOrg)
+            created <- UserDao.create(user)
           } yield (created)
           val (affectedRows, updatedToken) = (insertedUserIO flatMap {
             case (insertUser: User) => {
@@ -133,8 +130,7 @@ class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
         (user: User.Create, dropboxCredential: Credential) => {
           val insertedUserIO = for {
             org <- rootOrgQ
-            userWithOrg = user.copy(organizationId=org.id)
-            created <- UserDao.create(userWithOrg)
+            created <- UserDao.create(user)
           } yield (created)
           val (affectedRows, updatedToken) = (insertedUserIO flatMap {
             case (insertUser: User) => {
