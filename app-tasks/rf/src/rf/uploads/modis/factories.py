@@ -154,7 +154,8 @@ def upload_tifs(tifs, user_id, scene_id):
     s3_client = boto3.client('s3')
     s3_uris = []
     for tif in tifs:
-        key = os.path.join(s3_directory, tif[1:])
+        filename = os.path.basename(tif)
+        key = os.path.join(s3_directory, filename)
         logger.info('Uploading %s => bucket: %s, key: %s', tif, bucket, key)
 
         s3_uris.append('s3://{}/{}'.format(bucket, urllib.quote(key)))
