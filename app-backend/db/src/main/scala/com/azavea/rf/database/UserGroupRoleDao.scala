@@ -2,7 +2,7 @@
 
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.filter.Filters._
-import com.azavea.rf.datamodel.{UserGroupRole, GroupType, User, GroupRole, PaginatedResponse, SearchQueryParameters}
+import com.azavea.rf.datamodel._
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
@@ -107,28 +107,68 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   }
 
   def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
+    // PUBLIC users can be seen by anyone within the same platform
+    // PRIVATE users can be seen by anyone within the same organization
+    // PRIVATE users can be seen by anyone within the same team (even if orgs are different)
     val sf =
-      fr"""SELECT u.id, u.role, u.created_at, u.modified_at,
-        u.dropbox_credential, u.planet_credential, u.email_notifications,
-        u.email, u.name, u.profile_image_uri, u.is_superuser, u.is_active, ugr.group_role
+      fr"""
+        SELECT u.id, u.role, u.created_at, u.modified_at,
+          u.dropbox_credential, u.planet_credential, u.email_notifications,
+          u.email, u.name, u.profile_image_uri, u.is_superuser, u.is_active, u.visibility,
+          ugr.group_role
         FROM """ ++ tableF ++ fr""" ugr
         JOIN """ ++ UserDao.tableF ++ fr""" u
           ON u.id = ugr.user_id
       """
 
     val cf =
-      fr"""SELECT count(ugr.id)
+      fr"""
+        SELECT count(ugr.id)
         FROM """ ++ tableF ++ fr"""AS ugr
         JOIN """ ++ UserDao.tableF ++ fr""" u
           ON u.id = ugr.user_id
       """
 
+    // Filter that applies the following rules:
+    // 1) A user is always allowed to list themselves
+    // 2) A public user is always visible
+    // 3) A private user is only visible to those within the same organization or team
+
+    val ff =
+      fr"""(
+        u.id = ${actingUser.id} OR
+        u.visibility = ${UserVisibility.Public.toString}::user_visibility OR
+        u.id IN (
+          SELECT A.user_id
+          FROM """ ++ tableF ++ fr""" A
+          JOIN """ ++ tableF ++ fr""" B
+            ON A.group_type = B.group_type AND
+              A.group_id = B.group_id
+          WHERE
+            B.user_id = ${actingUser.id} AND
+            (
+              B.group_type = ${GroupType.Organization.toString}::group_type OR
+              B.group_type = ${GroupType.Team.toString}::group_type
+            )
+        )
+      )"""
+
+    if (actingUser.isSuperuser) {
       query
         .filter(fr"ugr.group_type = ${groupType}")
         .filter(fr"ugr.group_id = ${groupId}")
         .filter(fr"ugr.is_active = true")
         .filter(searchQP(searchParams, List("u.name", "u.email")))
         .page[User.WithGroupRole](page, sf, cf)
+    } else {
+      query
+        .filter(fr"ugr.group_type = ${groupType}")
+        .filter(fr"ugr.group_id = ${groupId}")
+        .filter(fr"ugr.is_active = true")
+        .filter(ff)
+        .filter(searchQP(searchParams, List("u.name", "u.email")))
+        .page[User.WithGroupRole](page, sf, cf)
+    }
   }
 
   // @TODO: ensure a user cannot demote (or promote?) themselves

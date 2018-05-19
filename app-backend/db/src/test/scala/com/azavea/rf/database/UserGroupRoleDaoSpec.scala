@@ -55,46 +55,342 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
     }
   }
 
-  test("list users by group") {
+  test("list users by group: private users are not viewable by those outside of their organization") {
     check {
       forAll {
-        (userCreate: User.Create, manager: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
-         platform: Platform, ugrCreate: UserGroupRole.Create, ugrUpdate: UserGroupRole.Create, page: PageRequest) => {
-          val insertUgrWithRelationsIO = for {
-            orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
-            (insertedOrg, insertedUser) = orgAndUser
-            managerUser <- UserDao.create(manager)
-            _ <- UserGroupRoleDao.create(
+        (
+          platform: Platform,
+          mainOrg: Organization.Create,
+          altOrg: Organization.Create,
+          testingUser: User.Create,
+          privateUser: User.Create,
+          publicUser: User.Create,
+          page: PageRequest
+        ) => {
+          val usersInPlatformIO = for {
+            // Create necessary groups
+            dbPlatform <- PlatformDao.create(platform)
+            dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization)
+            dbAltOrg <- OrganizationDao.create(altOrg.copy(platformId = dbPlatform.id).toOrganization)
+
+            // Create necessary users
+            dbTestingUser <- UserDao.create(testingUser)
+            dbPublicUser <- UserDao.create(publicUser)
+            dbPublicUserUpdate <- UserDao.updateUser(dbPublicUser.copy(
+              visibility = UserVisibility.Public
+            ), dbPublicUser.id)
+            dbPrivateUser <- UserDao.create(privateUser)
+
+            // Create user group roles
+            ugr1 <- UserGroupRoleDao.create(
               UserGroupRole.Create(
-                managerUser.id, GroupType.Organization, insertedOrg.id, GroupRole.Admin
-              ).toUserGroupRole(managerUser)
+                dbPublicUser.id,
+                GroupType.Platform,
+                dbPlatform.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
             )
-            insertedTeam <- TeamDao.create(teamCreate.copy(organizationId = insertedOrg.id).toTeam(insertedUser))
-            insertedPlatform <- PlatformDao.create(platform)
-            insertedUgr <- UserGroupRoleDao.create(
-              fixupUserGroupRole(insertedUser, insertedOrg, insertedTeam, insertedPlatform, ugrCreate)
-                .toUserGroupRole(managerUser)
+
+            ugr2 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPrivateUser.id,
+                GroupType.Platform,
+                dbPlatform.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
             )
-            usersInGroup <- UserGroupRoleDao.listUsersByGroup(
-              insertedUgr.groupType, insertedUgr.groupId, page, SearchQueryParameters(), managerUser
+
+            ugr3 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPublicUser.id,
+                GroupType.Organization,
+                dbMainOrg.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
             )
-          } yield (usersInGroup, managerUser.id, insertedUser.id, insertedUgr.groupType)
 
-          val (usersInGroup, managerId, userId, groupType) =
-            insertUgrWithRelationsIO.transact(xa).unsafeRunSync
+            ugr4 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPrivateUser.id,
+                GroupType.Organization,
+                dbAltOrg.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
 
-          // If the group type is organization, we should get the manager and the user back, otherwise,
-          // just the user
-          val expectedIds = if (groupType == GroupType.Organization) Set(managerId, userId) else Set(userId)
+            usersInPlatform <- UserGroupRoleDao.listUsersByGroup(
+              GroupType.Platform,
+              dbPlatform.id,
+              page,
+              SearchQueryParameters(Some("")),
+              dbPublicUser
+            )
+          } yield { usersInPlatform }
 
-          // If the group type is organization, we should get the manager and the user back, otherwise,
-          // just the user
-          val expectedCount = if (groupType == GroupType.Organization) 2 else 1
+          val usersInPlatform = usersInPlatformIO.transact(xa).unsafeRunSync
 
-          assert(usersInGroup.count == expectedCount,
-                 "there should be one user in the group unless the group type was organization, then two")
-          assert((usersInGroup.results map { _.id } toSet) == expectedIds,
-                 "the ids of the users in the group should be the expected ids")
+          assert(
+            usersInPlatform.count == 1,
+            "The private user should not be visible outside of the organization"
+          )
+
+          true
+        }
+      }
+    }
+  }
+
+  test("list users by group: private users are viewable by those within their organization") {
+    check {
+      forAll {
+        (
+          platform: Platform,
+          mainOrg: Organization.Create,
+          altOrg: Organization.Create,
+          testingUser: User.Create,
+          privateUser: User.Create,
+          publicUser: User.Create,
+          page: PageRequest
+        ) => {
+          val usersInPlatformIO = for {
+            // Create necessary groups
+            dbPlatform <- PlatformDao.create(platform)
+            dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization)
+
+            // Create necessary users
+            dbTestingUser <- UserDao.create(testingUser)
+            dbPublicUser <- UserDao.create(publicUser)
+            dbPublicUserUpdate <- UserDao.updateUser(dbPublicUser.copy(
+              visibility = UserVisibility.Public
+            ), dbPublicUser.id)
+            dbPrivateUser <- UserDao.create(privateUser)
+
+            // Create user group roles
+            ugr1 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPublicUser.id,
+                GroupType.Platform,
+                dbPlatform.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            ugr2 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPrivateUser.id,
+                GroupType.Platform,
+                dbPlatform.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            ugr3 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPublicUser.id,
+                GroupType.Organization,
+                dbMainOrg.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            ugr4 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPrivateUser.id,
+                GroupType.Organization,
+                dbMainOrg.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            usersInPlatform <- UserGroupRoleDao.listUsersByGroup(
+              GroupType.Platform,
+              dbPlatform.id,
+              page,
+              SearchQueryParameters(Some("")),
+              dbPublicUser
+            )
+          } yield { usersInPlatform }
+
+          val usersInPlatform = usersInPlatformIO.transact(xa).unsafeRunSync
+
+          assert(
+            usersInPlatform.count == 2,
+            "The private user should be visible to those within their organization"
+          )
+
+          true
+        }
+      }
+    }
+  }
+
+  test("list users by group: public users are viewable by those outside of their organization") {
+    check {
+      forAll {
+        (
+          platform: Platform,
+          mainOrg: Organization.Create,
+          altOrg: Organization.Create,
+          testingUser: User.Create,
+          privateUser: User.Create,
+          publicUser: User.Create,
+          page: PageRequest
+        ) => {
+          val usersInPlatformIO = for {
+            // Create necessary groups
+            dbPlatform <- PlatformDao.create(platform)
+            dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization)
+            dbAltOrg <- OrganizationDao.create(altOrg.copy(platformId = dbPlatform.id).toOrganization)
+
+            // Create necessary users
+            dbTestingUser <- UserDao.create(testingUser)
+            dbPublicUser <- UserDao.create(publicUser)
+            dbPublicUserUpdate <- UserDao.updateUser(dbPublicUser.copy(
+              visibility = UserVisibility.Public
+            ), dbPublicUser.id)
+            dbPrivateUser <- UserDao.create(privateUser)
+
+            // Create user group roles
+            ugr1 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPublicUser.id,
+                GroupType.Platform,
+                dbPlatform.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            ugr2 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPrivateUser.id,
+                GroupType.Platform,
+                dbPlatform.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            ugr3 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPublicUser.id,
+                GroupType.Organization,
+                dbMainOrg.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            ugr4 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPrivateUser.id,
+                GroupType.Organization,
+                dbAltOrg.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            usersInPlatform <- UserGroupRoleDao.listUsersByGroup(
+              GroupType.Platform,
+              dbPlatform.id,
+              page,
+              SearchQueryParameters(Some("")),
+              dbPrivateUser
+            )
+          } yield { usersInPlatform }
+
+          val usersInPlatform = usersInPlatformIO.transact(xa).unsafeRunSync
+
+          assert(
+            usersInPlatform.count == 2,
+            "The private user should not be visible outside of the organization"
+          )
+
+          true
+        }
+      }
+    }
+  }
+
+  test("list users by group: private users are viewable by those on the same team") {
+    check {
+      forAll {
+        (
+          platform: Platform,
+          mainOrg: Organization.Create,
+          altOrg: Organization.Create,
+          team: Team.Create,
+          testingUser: User.Create,
+          privateUser: User.Create,
+          publicUser: User.Create,
+          page: PageRequest
+        ) => {
+          val usersInPlatformIO = for {
+            dbTestingUser <- UserDao.create(testingUser)
+
+            // Create necessary groups
+            dbPlatform <- PlatformDao.create(platform)
+            dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization)
+            dbAltOrg <- OrganizationDao.create(altOrg.copy(platformId = dbPlatform.id).toOrganization)
+            dbTeam <- TeamDao.create(team.copy(organizationId = dbMainOrg.id).toTeam(dbTestingUser))
+
+            // Create necessary users
+            dbPublicUser <- UserDao.create(publicUser)
+            dbPublicUserUpdate <- UserDao.updateUser(dbPublicUser.copy(
+              visibility = UserVisibility.Public
+            ), dbPublicUser.id)
+            dbPrivateUser <- UserDao.create(privateUser)
+
+            // Create user group roles
+            ugr1 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPublicUser.id,
+                GroupType.Platform,
+                dbPlatform.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            ugr2 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPrivateUser.id,
+                GroupType.Platform,
+                dbPlatform.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            ugr3 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPublicUser.id,
+                GroupType.Organization,
+                dbMainOrg.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            ugr4 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPrivateUser.id,
+                GroupType.Organization,
+                dbAltOrg.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            ugr5 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPublicUser.id,
+                GroupType.Team,
+                dbTeam.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            ugr6 <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbPrivateUser.id,
+                GroupType.Team,
+                dbTeam.id,
+                GroupRole.Member).toUserGroupRole(dbTestingUser)
+            )
+
+            usersInPlatform <- UserGroupRoleDao.listUsersByGroup(
+              GroupType.Platform,
+              dbPlatform.id,
+              page,
+              SearchQueryParameters(Some("")),
+              dbPublicUser
+            )
+          } yield { usersInPlatform }
+
+          val usersInPlatform = usersInPlatformIO.transact(xa).unsafeRunSync
+
+          assert(
+            usersInPlatform.count == 2,
+            "The private user should be visible by those sharing team membership with them"
+          )
+
           true
         }
       }
