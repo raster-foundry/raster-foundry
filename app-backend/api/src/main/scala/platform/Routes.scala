@@ -284,7 +284,7 @@ trait PlatformRoutes extends Authentication
     } {
       (withPagination & searchParams) { (page, searchParams) =>
         complete {
-          PlatformDao.listMembers(platformId, page, searchParams).transact(xa).unsafeToFuture
+          PlatformDao.listMembers(platformId, page, searchParams, user).transact(xa).unsafeToFuture
         }
       }
     }
@@ -367,7 +367,7 @@ trait PlatformRoutes extends Authentication
     } {
       (withPagination & searchParams) { (page, searchParams) =>
         complete {
-          OrganizationDao.listMembers(orgId, page, searchParams).transact(xa).unsafeToFuture
+          OrganizationDao.listMembers(orgId, page, searchParams, user).transact(xa).unsafeToFuture
         }
       }
     }
@@ -459,7 +459,7 @@ trait PlatformRoutes extends Authentication
     } {
       (withPagination & searchParams) { (page, searchParams) =>
         complete {
-          TeamDao.listMembers(teamId, page, searchParams).transact(xa).unsafeToFuture
+          TeamDao.listMembers(teamId, page, searchParams, user).transact(xa).unsafeToFuture
         }
       }
     }

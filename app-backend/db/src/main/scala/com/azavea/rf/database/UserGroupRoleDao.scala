@@ -106,7 +106,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       .list
   }
 
-  def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest, searchParams: SearchQueryParameters): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
+  def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
     val sf =
       fr"""SELECT u.id, u.role, u.created_at, u.modified_at,
         u.dropbox_credential, u.planet_credential, u.email_notifications,
