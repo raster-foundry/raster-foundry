@@ -70,7 +70,8 @@ case class User(
   name: String,
   profileImageUri: String,
   isSuperuser: Boolean,
-  isActive: Boolean
+  isActive: Boolean,
+  visibility: UserVisibility
 ) {
   private val rootOrganizationId = UUID.fromString("9e2bef18-3f46-426b-a5bd-9913ee1ff840")
 
@@ -112,6 +113,7 @@ object User {
     profileImageUri: String,
     isSuperuser: Boolean,
     isActive: Boolean,
+    visibility: UserVisibility,
     groupRole: GroupRole
   )
 
@@ -137,7 +139,8 @@ object User {
         name,
         profileImageUri,
         false, //isSuperuser
-        true //isActive
+        true, //isActive
+        UserVisibility.Private
       )
     }
   }

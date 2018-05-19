@@ -4,6 +4,7 @@ import java.sql.Timestamp
 
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.datamodel.{User, UserRole, Credential, UserVisibility}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -25,7 +26,7 @@ object UserDao extends Dao[User] {
     SELECT
       id, role, created_at, modified_at,
       dropbox_credential, planet_credential, email_notifications,
-      email, name, profile_image_uri, is_superuser, is_active
+      email, name, profile_image_uri, is_superuser, is_active, visibility
     FROM
   """ ++ tableF
 
@@ -99,7 +100,8 @@ object UserDao extends Dao[User] {
          email_notifications = ${user.emailNotifications},
          email = ${user.email},
          name = ${user.name},
-         profile_image_uri = ${user.profileImageUri}
+         profile_image_uri = ${user.profileImageUri},
+         visibility = ${user.visibility}
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
@@ -116,13 +118,13 @@ object UserDao extends Dao[User] {
     sql"""
        INSERT INTO users
           (id, role, created_at, modified_at, email_notifications,
-          email, name, profile_image_uri, is_superuser, is_active)
+          email, name, profile_image_uri, is_superuser, is_active, visibility)
        VALUES
           (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false,
-          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true)
+          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, ${UserVisibility.Private.toString}::user_visibility)
        """.update.withUniqueGeneratedKeys[User](
       "id", "role", "created_at", "modified_at", "dropbox_credential", "planet_credential", "email_notifications",
-      "email", "name", "profile_image_uri", "is_superuser", "is_active"
+      "email", "name", "profile_image_uri", "is_superuser", "is_active", "visibility"
     )
   }
 

@@ -104,6 +104,10 @@ object Generators extends ArbitraryInstances {
     FileType.Geotiff, FileType.GeotiffWithMetadata
   )
 
+  private def userVisibility: Gen[UserVisibility] = Gen.oneOf(
+    UserVisibility.Public, UserVisibility.Private
+  )
+
   private def timestampIn2016Gen: Gen[Timestamp] = for {
     year <- Gen.const(2016)
     month <- Gen.choose(1, 12)
