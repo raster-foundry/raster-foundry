@@ -56,7 +56,7 @@ then
             download_database_backup
         fi
         load_database_backup
-        docker-compose rm -sf api-server˝
+        docker-compose rm -sf api-server
     fi
     exit
 fi
