@@ -32,6 +32,7 @@ object Version {
   val circe              = "0.9.1"
   val akkaCirceJson      = "1.20.0-RC1"
   val cats               = "1.0.1"
+  val catsEffect         = "0.10"
   val gatling            = "2.2.4"
   val scalajHttp         = "2.3.0"
   val ficus              = "1.4.0"
