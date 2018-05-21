@@ -21,6 +21,7 @@ import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
 import cats.effect.IO
+import com.azavea.rf.common.RollbarNotifier
 import doobie.{ConnectionIO, Fragment, Fragments}
 import doobie.implicits._
 import doobie.util.transactor.Transactor
@@ -73,10 +74,9 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     keys.map { obj =>
       val filename = obj.split("/").last
       val imageBand = filename.split("\\.").head
-      val objMetadata = s3Client.client.getObjectMetadata(sentinel2Config.bucketName, obj)
       Image.Banded(
         organizationId   = sentinel2Config.organizationUUID,
-        rawDataBytes     = objMetadata.getContentLength.toInt,
+        rawDataBytes     = 0,
         visibility       = Visibility.Public,
         filename         = filename,
         sourceUri        = s"${sentinel2Config.baseHttpPath}${obj}",
@@ -251,12 +251,20 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
 }
 
 
-object ImportSentinel2 {
+object ImportSentinel2 extends RollbarNotifier {
   val name = "import_sentinel2"
 
   def multiPolygonFromJson(tileinfo: Json, key: String, targetCrs: CRS = CRS.fromName("EPSG:3857")): Option[MultiPolygon] = {
     val geom = tileinfo.hcursor.downField(key)
-    val polygon = geom.focus.map(_.noSpaces.parseGeoJson[Polygon])
+    val polygon = try {
+      geom.focus.map(_.noSpaces.parseGeoJson[Polygon])
+    } catch {
+      case (e: Throwable) => {
+        sendError(e)
+        logger.warn(s"Error parsing geometry for Sentinel Scene: ${key}")
+        None
+      }
+    }
     val srcProj =
       geom
         .downField("crs")
