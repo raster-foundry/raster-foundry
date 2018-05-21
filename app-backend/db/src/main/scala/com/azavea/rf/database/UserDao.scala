@@ -41,44 +41,28 @@ object UserDao extends Dao[User] {
     filterById(id).selectOption
   }
 
-  def createUserWithAuthId(id: String): ConnectionIO[User] = {
-    for {
-      // TODO: create UGR here instead
-      org <- OrganizationDao.query.filter(fr"name = 'Public'").select
-      user <- {
-        val newUser = User.Create(id)
-        create(newUser)
-      }
-    } yield user
-  }
-
   def createUserWithJWT(creatingUser: User, jwtUser: User.JwtFields): ConnectionIO[User] = {
     for {
-      platform <- PlatformDao.query.filter(jwtUser.platformId).selectOption
       organization <- OrganizationDao.query.filter(jwtUser.organizationId).selectOption
       createdUser <- {
-        (platform, organization) match {
-          case (Some(p), Some(o)) =>
+        organization match {
+          case Some(o) =>
             val newUser = User.Create(
               jwtUser.id, Viewer, jwtUser.email,
               jwtUser.name, jwtUser.picture
             )
             create(newUser)
-          case (None, None) =>
-            throw new RuntimeException("Tried to create a user using a non-existent platform and organization ID")
-          case (_, None) =>
-            throw new RuntimeException("Tried to create a user using a non-existent organization ID")
-          case (None, _) =>
-            throw new RuntimeException("Tried to create a user using a non-existent platform ID")
+          case None =>
+            throw new RuntimeException(
+              s"Tried to create a user using a non-existent organization ID: ${jwtUser.organizationId}"
+            )
         }
       }
       platformRole <- UserGroupRoleDao.create(
         UserGroupRole.Create(
           createdUser.id,
           GroupType.Platform,
-          platform.getOrElse(
-            throw new RuntimeException("Tried to create a user role using a non-existent platform ID")
-          ).id,
+          jwtUser.platformId,
           GroupRole.Member
         ).toUserGroupRole(creatingUser)
       )
@@ -92,7 +76,7 @@ object UserDao extends Dao[User] {
           GroupRole.Member
         ).toUserGroupRole(creatingUser)
       )
-    } yield creatingUser
+    } yield createdUser
   }
 
   /* Limited update to just modifying planet credential -- users can't change their permissions*/

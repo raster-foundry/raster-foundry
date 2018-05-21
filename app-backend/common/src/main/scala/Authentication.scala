@@ -17,7 +17,7 @@ import java.net.URL
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.database.UserDao
+import com.azavea.rf.database._
 import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
@@ -96,28 +96,44 @@ trait Authentication extends Directives {
             val auth0DefaultOrganizationId = auth0Config.getString("defaultOrganizationId")
             val auth0SystemUser = auth0Config.getString("systemUser")
 
-            val platformId = jwtClaims.getStringClaim(
-              "https://app.rasterfoundry.com;platform"
-            ) match {
-              case platform: String => platform
-              case _ => auth0DefaultPlatformId
-            }
-            val organizationId = jwtClaims.getStringClaim(
-              "https://app.rasterfoundry.com;organization"
-            ) match {
-              case organization: String => organization
-              case _ => auth0DefaultOrganizationId
-            }
-
-            val jwtUser = User.JwtFields(
-              userId, email, name, picture,
-              UUID.fromString(platformId), UUID.fromString(organizationId)
+            val platformId = UUID.fromString(
+              jwtClaims.getStringClaim(
+                "https://app.rasterfoundry.com;platform"
+              ) match {
+                case platform: String => platform
+                case _ => auth0DefaultPlatformId
+              }
             )
 
+            val organizationId = UUID.fromString(
+              jwtClaims.getStringClaim(
+                "https://app.rasterfoundry.com;organization"
+              ) match {
+                case organization: String => organization
+                case _ => auth0DefaultOrganizationId
+              }
+            )
+
+            val createUserQuery = for {
+              platform <- PlatformDao.getPlatformById(platformId)
+              systemUser <- UserDao.unsafeGetUserById(auth0SystemUser)
+              newUser <- {
+                val orgID = platform match {
+                  case Some(p) => p.defaultOrganizationId.getOrElse(organizationId)
+                  case _ => throw new RuntimeException(
+                    s"Tried to create a user using a non-existent platformId: ${platformId}"
+                  )
+                }
+                val jwtUser = User.JwtFields(
+                  userId, email, name, picture,
+                  platformId, orgID
+                )
+                UserDao.createUserWithJWT(systemUser, jwtUser)
+              }
+            } yield newUser
+
             onSuccess(
-              UserDao.unsafeGetUserById(auth0SystemUser).flatMap( user =>
-                UserDao.createUserWithJWT(user, jwtUser)
-              ).transact(xa).unsafeToFuture
+              createUserQuery.transact(xa).unsafeToFuture
             ).flatMap {
               user => provide(user)
             }
