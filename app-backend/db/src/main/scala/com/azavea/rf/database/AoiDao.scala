@@ -25,7 +25,8 @@ object AoiDao extends Dao[AOI] {
     sql"""
       SELECT
         id, created_at, modified_at, organization_id,
-        created_by, modified_by, owner, area, filters, is_active
+        created_by, modified_by, owner, area, filters, is_active, start_time,
+        approval_required, project_id
       FROM
     """ ++ tableF
 
@@ -41,7 +42,9 @@ object AoiDao extends Dao[AOI] {
         modified_by = ${user.id},
         area = ${aoi.area},
         filters = ${aoi.filters},
-        is_active = ${aoi.isActive}
+        is_active = ${aoi.isActive},
+        start_time = ${aoi.startTime},
+        approval_required = ${aoi.approvalRequired}
       WHERE
         id = ${aoi.id}
     """).update.run
@@ -52,31 +55,23 @@ object AoiDao extends Dao[AOI] {
 
     val aoiCreate: ConnectionIO[AOI] = (fr"INSERT INTO" ++ tableF ++ fr"""
         (id, created_at, modified_at, organization_id,
-        created_by, modified_by, owner, area, filters, is_active)
+        created_by, modified_by, owner, area, filters, is_active,
+        approval_required, start_time, project_id)
       VALUES
         (${aoi.id}, NOW(), NOW(), ${user.organizationId},
-        ${user.id}, ${user.id}, ${ownerId}, ${aoi.area}, ${aoi.filters}, ${aoi.isActive})
+        ${user.id}, ${user.id}, ${ownerId}, ${aoi.area}, ${aoi.filters}, ${aoi.isActive},
+        ${aoi.approvalRequired}, ${aoi.startTime}, ${aoi.projectId})
     """).update.withUniqueGeneratedKeys[AOI](
       "id", "created_at", "modified_at", "organization_id",
-      "created_by", "modified_by", "owner", "area", "filters", "is_active"
+      "created_by", "modified_by", "owner", "area", "filters", "is_active",
+      "start_time", "approval_required", "project_id"
     )
 
-    val transaction = for {
-      createdAoi <- aoiCreate
-      _ <- AoiToProjectDao.create(createdAoi, projectId)
-    } yield aoi
-
-    transaction
+    aoiCreate
   }
 
   def listAOIs(projectId: UUID, user: User, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] = {
-    val joinF =
-      fr"INNER JOIN" ++ AoiToProjectDao.tableF ++ fr"a2p" ++
-      fr"ON a2p.aoi_id = id" ++ Fragments.whereAndOpt(
-        Some(fr"a2p.project_id = ${projectId}")
-      )
-
-    query.page(page, selectF ++ joinF, query.countF ++ joinF)
+    query.page(page, selectF, query.countF)
   }
 
   def deleteAOI(id: UUID, user: User): ConnectionIO[Int]= {

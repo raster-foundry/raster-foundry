@@ -35,7 +35,8 @@ case class AOI(
 
   isActive: Boolean = true,
   startTime: Timestamp,
-  approvalRequired: Boolean
+  approvalRequired: Boolean,
+  projectId: UUID
 )
 
 object AOI {
@@ -51,9 +52,9 @@ object AOI {
     filters: Json,
     owner: Option[String],
     isActive: Boolean = true,
-    startTime: Timestamp = TimeStamp.from(Instant.now),
+    startTime: Timestamp = Timestamp.from(Instant.now),
     approvalRequired: Boolean = true) extends OwnerCheck {
-    def toAOI(user: User): AOI = {
+    def toAOI(projectId: UUID, user: User): AOI = {
       val now = new Timestamp((new Date()).getTime)
 
       val ownerId = checkOwner(user, this.owner)
@@ -61,7 +62,7 @@ object AOI {
       AOI(
         UUID.randomUUID, now, now, organizationId,
         user.id, user.id, ownerId, area, filters, isActive,
-        startTime, approvalRequired
+        startTime, approvalRequired, projectId
       )
     }
   }

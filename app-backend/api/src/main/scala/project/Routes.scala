@@ -390,7 +390,7 @@ trait ProjectRoutes extends Authentication
   def createAOI(projectId: UUID): Route = authenticate { user =>
     entity(as[AOI.Create]) { aoi =>
       authorize(user.isInRootOrSameOrganizationAs(aoi)) {
-        onSuccess(AoiDao.createAOI(aoi.toAOI(user), projectId, user: User).transact(xa).unsafeToFuture()) { a =>
+        onSuccess(AoiDao.createAOI(aoi.toAOI(projectId, user), projectId, user: User).transact(xa).unsafeToFuture()) { a =>
           complete(StatusCodes.Created, a)
         }
       }
