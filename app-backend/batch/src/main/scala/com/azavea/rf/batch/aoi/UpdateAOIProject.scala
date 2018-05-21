@@ -75,10 +75,12 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
       user: User, geom: Projected[MultiPolygon], startTime: StartTime,
       lastChecked: LastChecked, queryParams: Option[CombinedSceneQueryParams]): ConnectionIO[List[UUID]] = {
       val base: Fragment = fr"SELECT id FROM scenes"
-      val qpFilters: Option[Fragment] = queryParams map {
+      val qpFilters: Option[Fragment] = queryParams flatMap {
         (csp: CombinedSceneQueryParams) => {
-          val queryFilters = SceneWithRelatedDao.makeFilters(List(csp)).flatten
-          Fragments.and(queryFilters.flatten.toSeq: _*)
+          Fragments.andOpt(SceneWithRelatedDao.makeFilters(List(csp)).flatten: _*) match {
+            case Fragment.empty => None
+            case fragment => Some(fragment)
+          }
         }
       }
       val alreadyCheckedFilter: Option[Fragment] = Some(fr"created_at > ${lastChecked}")
