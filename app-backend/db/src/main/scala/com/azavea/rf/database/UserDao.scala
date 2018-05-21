@@ -52,30 +52,43 @@ object UserDao extends Dao[User] {
     } yield user
   }
 
-  def createUserWithJWT(creatingUser: User, jwtUser: User.JwtFields) = {
+  def createUserWithJWT(creatingUser: User, jwtUser: User.JwtFields): ConnectionIO[User] = {
     for {
-      platform <- PlatformDao.query.filter(jwtUser.platformId).select
-      organization <- OrganizationDao.query.filter(jwtUser.organizationId).select
+      platform <- PlatformDao.query.filter(jwtUser.platformId).selectOption
+      organization <- OrganizationDao.query.filter(jwtUser.organizationId).selectOption
       createdUser <- {
-        val newUser = User.Create(
-          jwtUser.id, Viewer, jwtUser.email,
-          jwtUser.name, jwtUser.picture
-        )
-        create(newUser)
+        (platform, organization) match {
+          case (Some(p), Some(o)) =>
+            val newUser = User.Create(
+              jwtUser.id, Viewer, jwtUser.email,
+              jwtUser.name, jwtUser.picture
+            )
+            create(newUser)
+          case (None, None) =>
+            throw new RuntimeException("Tried to create a user using a non-existent platform and organization ID")
+          case (_, None) =>
+            throw new RuntimeException("Tried to create a user using a non-existent organization ID")
+          case (None, _) =>
+            throw new RuntimeException("Tried to create a user using a non-existent platform ID")
+        }
       }
       platformRole <- UserGroupRoleDao.create(
         UserGroupRole.Create(
-          jwtUser.id,
+          createdUser.id,
           GroupType.Platform,
-          platform.id,
+          platform.getOrElse(
+            throw new RuntimeException("Tried to create a user role using a non-existent platform ID")
+          ).id,
           GroupRole.Member
         ).toUserGroupRole(creatingUser)
       )
       organizationRole <- UserGroupRoleDao.create(
         UserGroupRole.Create(
-          jwtUser.id,
+          createdUser.id,
           GroupType.Organization,
-          organization.id,
+          organization.getOrElse(
+            throw new RuntimeException("Tried to create a user role using a non-existent organization ID")
+          ).id,
           GroupRole.Member
         ).toUserGroupRole(creatingUser)
       )
