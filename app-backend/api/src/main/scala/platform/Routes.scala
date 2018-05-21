@@ -375,11 +375,12 @@ trait PlatformRoutes extends Authentication
 
   def addUserToOrganization(platformId: UUID, orgId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
+      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
     } {
       entity(as[UserGroupRole.UserRole]) { ur =>
         complete {
-          OrganizationDao.setUserRole(user, ur.userId, orgId, ur.groupRole).transact(xa).unsafeToFuture
+          OrganizationDao.setUserOrganization(user, ur.userId, orgId, ur.groupRole)
+            .transact(xa).unsafeToFuture
         }
       }
     }
