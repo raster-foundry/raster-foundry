@@ -71,7 +71,7 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
       case (SubjectType.Organization, Some(sid)) =>
         OrganizationDao.query.filter(UUID.fromString(sid)).exists
       case (SubjectType.Team, Some(sid)) =>
-        OrganizationDao.query.filter(UUID.fromString(sid)).exists
+        TeamDao.query.filter(UUID.fromString(sid)).exists
       case (SubjectType.User, Some(sid)) =>
         UserDao.filterById(sid).exists
       case _ => throw new Exception("Subject id required and but not provided")
