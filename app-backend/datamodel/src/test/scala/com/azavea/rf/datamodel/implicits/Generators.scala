@@ -181,6 +181,12 @@ object Generators extends ArbitraryInstances {
     profileImageUri <- nonEmptyStringGen
   } yield { User.Create(id, role, email, name, profileImageUri) }
 
+  private def userJwtFieldsGen: Gen[User.JwtFields] =
+    for {
+      userCreate <- userCreateGen
+      placeholderUUID <- uuidGen
+    } yield { User.JwtFields(userCreate.id, userCreate.email, userCreate.name, userCreate.profileImageUri, placeholderUUID, placeholderUUID) }
+
   private def userGen: Gen[User] = userCreateGen map { _.toUser }
 
   private def bandIdentifiedGen: Gen[Band.Identified] = for {
@@ -413,6 +419,7 @@ object Generators extends ArbitraryInstances {
       userCreate <- userCreateGen
     } yield { (userCreate, orgCreate, platform) }
 
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
 
@@ -482,6 +489,10 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbUserOrgPlatform: Arbitrary[(User.Create, Organization.Create, Platform)] = Arbitrary {
       userOrgPlatformGen
+    }
+
+    implicit def arbUserJwtFields: Arbitrary[User.JwtFields] = Arbitrary {
+      userJwtFieldsGen
     }
   }
 }

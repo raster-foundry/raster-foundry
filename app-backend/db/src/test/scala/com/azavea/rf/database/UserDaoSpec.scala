@@ -1,6 +1,6 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.datamodel.{Organization, User, UserRole, UserRoleRole, Viewer, Admin, Credential}
+import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.Generators.Implicits._
 import com.azavea.rf.database.Implicits._
 
@@ -14,8 +14,9 @@ import org.scalatest.prop.Checkers
 
 import scala.util.Random
 
+import com.typesafe.scalalogging.LazyLogging
 
-class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig {
+class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with LazyLogging {
 
   // create
   test("inserting users") {
@@ -33,13 +34,29 @@ class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
     )
   }
 
-  // createUserWithAuthId
-  test("inserting a user with only an auth id") {
+  // createUserWithJWT
+  test("inserting a user using a User.JWTFields") {
     check(
       forAll(
-        (authId: String) => {
-          val withoutNull = authId.replace('\u0000', 'b')
-          UserDao.createUserWithAuthId(withoutNull).transact(xa).unsafeRunSync.id == withoutNull
+        (
+          creatingUser: User.Create, jwtFields: User.JwtFields,
+          orgCreate: Organization.Create, platform: Platform
+        ) => {
+          val insertedUserIO = for {
+            creatingUser <- UserDao.create(creatingUser)
+            insertedPlatform <- PlatformDao.create(platform)
+            insertedOrg <- OrganizationDao.create(orgCreate.copy(platformId = insertedPlatform.id).toOrganization)
+            newUser <- {
+              val newUserFields = jwtFields.copy(platformId = insertedPlatform.id, organizationId = insertedOrg.id)
+              UserDao.createUserWithJWT(creatingUser, newUserFields)
+            }
+            userRoles <- UserGroupRoleDao.listByUser(newUser)
+          } yield (newUser, userRoles)
+
+          val (insertedUser, insertedUserRoles) = insertedUserIO.transact(xa).unsafeRunSync
+          assert(insertedUser.id == jwtFields.id, "Inserted user should have the same ID as the jwt fields")
+          assert(insertedUserRoles.length == 2, "Inserted user should have a role for the org and platform")
+          true
         }
       )
     )
