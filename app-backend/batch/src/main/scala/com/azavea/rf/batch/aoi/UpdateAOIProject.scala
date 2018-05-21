@@ -51,14 +51,12 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
       (String, Projected[MultiPolygon], StartTime, LastChecked, Result[CombinedSceneQueryParams])] = {
       val base = fr"""
       SELECT
-        owner, area, start_time, aois_last_checked, filters
+        proj_owner, area, start_time, aois_last_checked, filters
       FROM
-        ((select id proj_table_id, owner, aois_last_checked from projects) projects_filt
-        inner join aois_to_projects atp
+        ((select id proj_table_id, owner proj_owner, aois_last_checked from projects) projects_filt
+        inner join aois
         on
-          projects_filt.proj_table_id = atp.project_id) patp
-        inner join (select id aoi_id, area, filters from aois) aois_filt on
-          patp.aoi_id = aois_filt.aoi_id
+          projects_filt.proj_table_id = aois.project_id)
       """
       val projectIdFilter: Option[Fragment] = Some(fr"proj_table_id = ${projectId}")
 
