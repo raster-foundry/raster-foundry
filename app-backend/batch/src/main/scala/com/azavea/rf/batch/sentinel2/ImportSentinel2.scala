@@ -245,6 +245,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       case (e: Throwable) => {
         sendError(e)
         stop
+        sys.exit(1)
       }
     }
   }
