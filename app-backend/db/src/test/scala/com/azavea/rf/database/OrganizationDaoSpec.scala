@@ -180,4 +180,39 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
     }
   }
 
+  test("change a user's organization") {
+    check {
+      forAll{
+        (userCreate: User.Create, oldUserOrg: Organization.Create, oldUserGroupRole: GroupRole,
+         newUserOrg: Organization.Create, newUserGroupRole: GroupRole, platform: Platform) => {
+          val changeOrgIO = for {
+            insertedPlatform <- PlatformDao.create(platform)
+            dbNewOrg <- OrganizationDao.create(
+              newUserOrg.copy(platformId = insertedPlatform.id).toOrganization
+            )
+            orgAndUser <- insertUserAndOrg(
+              userCreate, oldUserOrg.copy(platformId = insertedPlatform.id), false
+            )
+            (dbOldOrg, dbUser) = orgAndUser
+            originalUserGroupRoles <- OrganizationDao.addUserRole(dbUser, dbUser.id, dbOldOrg.id, oldUserGroupRole)
+            updatedUserGroupRoles <- OrganizationDao.setUserOrganization(
+              dbUser, dbUser.id, dbNewOrg.id, newUserGroupRole
+            )
+            allUserGroupRoles <- UserGroupRoleDao.query.filter(fr"user_id = ${dbUser.id}").list
+          } yield { (dbOldOrg, dbNewOrg, originalUserGroupRoles, allUserGroupRoles) }
+          val (oldOrg, newOrg, oldRoles, newRoles) = changeOrgIO.transact(xa).unsafeRunSync
+          assert(newRoles.filter((ugr) => ugr.isActive == true).size == 2,
+                 "; There should be two active roles after changing orgs - platform and the new org"
+                 )
+          assert(newRoles.filter((ugr) => ugr.isActive == false).size == 1,
+                 "; There should be 1 inactive role after changing orgs - the old org"
+          )
+          assert(newRoles.size == 3, "; The user should have a total of 3 roles, one inactive and 2 active")
+          true
+        }
+
+      }
+    }
+  }
+
 }
