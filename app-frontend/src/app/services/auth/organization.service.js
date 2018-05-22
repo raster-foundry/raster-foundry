@@ -17,6 +17,17 @@ export default (app) => {
                             'organizations/:organizationId/members',
                         method: 'GET'
                     },
+                    addUser: {
+                        url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
+                            'organizations/:organizationId/members',
+                        method: 'POST',
+                        isArray: true
+                    },
+                    deactivateUser: {
+                        url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
+                            'organizations/:organizationId/members/:userId',
+                        method: 'DELETE'
+                    },
                     teams: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                             'organizations/:organizationId/teams',
@@ -42,6 +53,13 @@ export default (app) => {
                     organizationId: '@organizationId'
                 }
             );
+        }
+
+        addUser(platformId, organizationId, userId) {
+            return this.PlatformOrganization.addUser({platformId, organizationId}, {
+                userId,
+                groupRole: 'MEMBER'
+            }).$promise;
         }
 
         getOrganization(organizationId) {

@@ -87,14 +87,16 @@ class OrganizationUsersController {
         /* eslint-enable */
     }
 
-    newUserModal() {
+    addUserModal() {
         this.modalService.open({
-            component: 'rfUserModal',
-            resolve: { },
-            size: 'sm'
-        }).result.then((result) => {
-            // eslint-disable-next-line
-            console.log('user modal closed with value:', result);
+            component: 'rfAddUserModal',
+            resolve: {
+                platformId: () => this.organization.platformId,
+                organizationId: () => this.organization.id,
+                adminView: () => 'organization'
+            }
+        }).result.then(() => {
+            this.fetchUsers(1, this.search);
         });
     }
 }

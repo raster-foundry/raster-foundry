@@ -1,7 +1,12 @@
 <div class="admin-users-content container column-stretch dashboard">
   <div class="admin-users-actions">
     <input type="text" class="form-control admin-search" placeholder="Search for users"
-           ng-model="$ctrl.search" ng-disabled="$ctrl.fetching">
+           ng-model="$ctrl.search">
+      <button type="button" class="btn btn-primary"
+              ng-click="$ctrl.addUserModal()"
+              ng-disabled="$ctrl.fetching">
+        Add User
+      </button>
   </div>
   <table class="admin-table admin-org-user-table" ng-if="!$ctrl.fetching">
     <thead>
@@ -19,7 +24,7 @@
             <img class="avatar" ng-src="{{user.profileImageUri}}">
           </div>
           <div>
-            {{user.name}}
+            {{user.name || user.id}}
           </div>
         </td>
         <td class="emails">
