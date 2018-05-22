@@ -28,6 +28,7 @@ import doobie.{ConnectionIO, Fragment, Fragments}
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 
+import scala.collection.parallel.immutable.ParSeq
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
@@ -128,7 +129,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
   }
 
   /** Because it makes scenes -- get it? */
-  def riot(scenePath: String, datasourceUUID: UUID, user: User): IO[Fiber[IO, Scene.WithRelated]] = {
+  def riot(scenePath: String, datasourceUUID: UUID, user: User): IO[Option[Scene.WithRelated]] = {
     logger.info(s"Attempting to import ${scenePath}")
     val sceneId = UUID.randomUUID()
     val images = List(10f, 20f, 60f).map(createImages(sceneId, scenePath.some, _)).reduce(_ ++ _)
@@ -196,10 +197,10 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       sceneType = SceneType.Avro.some
     )
 
-    IO.shift(SceneCreationIOContext) *> SceneDao.insert(sceneCreate, user).transact(xa).start
+    IO.shift(SceneCreationIOContext) *> SceneDao.insertMaybe(sceneCreate, user).transact(xa)
   }
 
-  def insertSceneFromURI(uri: URI, existingSceneNames: List[String], datasourceUUID: UUID, user: User): List[IO[Fiber[IO, Scene.WithRelated]]] = {
+  def insertSceneFromURI(uri: URI, existingSceneNames: List[String], datasourceUUID: UUID, user: User): List[IO[Option[Scene.WithRelated]]] = {
     val json: Option[Json] = s3Client.getObject(uri.getHost, uri.getPath.tail).getObjectContent.toJson
     val tilesJson: Option[List[Json]] = json flatMap { _.hcursor.downField("tiles").as[List[Json]].toOption }
     val paths: List[String] = tilesJson match {
@@ -211,53 +212,32 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     logger.info(s"Found ${paths.length} tiles for ${uri}")
     paths.filter( (path: String) => !(existingSceneNames contains s"S2 ${path}") ) map {
       (path: String) => {
-        riot(path, datasourceUUID, user)
-      }
-    }
-  }
-
-  def findScenes(date: LocalDate, keys: List[URI], user: User, datasourceUUID: UUID): List[IO[List[Fiber[IO, Scene.WithRelated]]]] = {
-    logger.info(s"Found ${keys.length} keys to attempt to import")
-    val sceneNames = getExistingScenes(date, datasourceUUID)
-    keys map {
-      (uri: URI) => {
-        IO.shift(SceneCreationIOContext) *>
-          (insertSceneFromURI(uri, sceneNames, datasourceUUID, user).sequence)
+        IO.shift(SceneCreationIOContext) *> riot(path, datasourceUUID, user)
       }
     }
   }
 
   def run: Unit = {
     logger.info(s"Importing Sentinel 2 scenes for ${startDate}")
-    val keys = getSentinel2Products(startDate)
-    val scenesIO:IO[List[List[Fiber[IO, Scene.WithRelated]]]] = {
-      UserDao.getUserById(systemUser).transact(xa) flatMap {
-        (mbUser: Option[User]) => {
-          mbUser match {
-            case Some(u) => {
-              val sceneIOs = findScenes(startDate, keys.take(300), u, sentinel2Config.datasourceUUID)
-              sceneIOs.sequence
+    val keys = getSentinel2Products(startDate).par
+    val sceneNames = getExistingScenes(startDate, sentinel2Config.datasourceUUID)
+    val user = UserDao.getUserById(systemUser).transact(xa).unsafeRunSync.getOrElse(
+      throw new Exception(s"${systemUser} could not be found -- probably the database is borked")
+    )
+    val insertedScenes: ParSeq[Option[Scene.WithRelated]] = keys flatMap {
+      (key: URI) => {
+        insertSceneFromURI(key, sceneNames, sentinel2Config.datasourceUUID, user) map {
+          (sceneIO: IO[Option[Scene.WithRelated]]) => sceneIO.handleErrorWith(
+            (error: Throwable) => {
+              sendError(error)
+              IO.pure(None)
             }
-            case None => {
-              throw new Exception(s"${systemUser} could not be found -- probably the database is borked")
-            }
-          }
+          ).unsafeRunSync
         }
       }
     }
-    val withReporting = scenesIO flatMap {
-      (fiberLists: List[List[Fiber[IO, Scene.WithRelated]]]) => {
-        val fibers = fiberLists.flatten
-        (fibers map { _.join }).sequence
-      }
-    }
-
-    val insertedScenes: List[Scene.WithRelated] = withReporting.unsafeRunSync
-    logger.info(s"Inserted ${insertedScenes.length} scenes")
-    stop
     cachedThreadPool.shutdown()
-    // (IO.shift(SceneCreationIOContext) *> withReporting).unsafeRunSync
-
+    stop
   }
 }
 
