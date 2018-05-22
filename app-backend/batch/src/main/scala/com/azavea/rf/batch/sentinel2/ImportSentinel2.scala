@@ -36,7 +36,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
   // To resolve an ambiguous implicit
   import doobie.free.connection.AsyncConnectionIO
   import ImportSentinel2._
-  val cachedThreadPool = Executors.newCachedThreadPool()
+  val cachedThreadPool = Executors.newFixedThreadPool(30)
   val SceneCreationIOContext = ExecutionContext.fromExecutor(cachedThreadPool)
 
   val name = ImportSentinel2.name
@@ -199,7 +199,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     SceneDao.insert(sceneCreate, user).transact(xa)
   }
 
-  def insertSceneFromURI(uri: URI, existingSceneNames: List[String], datasourceUUID: UUID, user: User): List[IO[Scene.WithRelated]] = {
+  def insertSceneFromURI(uri: URI, existingSceneNames: List[String], datasourceUUID: UUID, user: User): List[IO[Either[Throwable, Scene.WithRelated]]] = {
     val json: Option[Json] = s3Client.getObject(uri.getHost, uri.getPath.tail).getObjectContent.toJson
     val tilesJson: Option[List[Json]] = json flatMap { _.hcursor.downField("tiles").as[List[Json]].toOption }
     val paths: List[String] = tilesJson match {
@@ -209,53 +209,70 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       }
     }
     logger.info(s"Found ${paths.length} tiles for ${uri}")
-    paths.filter( (path: String) => !(existingSceneNames contains path) ) map { riot(_, datasourceUUID, user) }
-  }
-
-  def findScenes(date: LocalDate, keys: List[URI], user: User, datasourceUUID: UUID): IO[List[Scene.WithRelated]] = {
-    logger.info("Finding scenes to import")
-    val sceneNames = getExistingScenes(date, datasourceUUID)
-    val ios = keys flatMap{
-      (uri: URI) => {
-        insertSceneFromURI(uri, sceneNames, datasourceUUID, user) map {
-          IO.shift(SceneCreationIOContext) *> _
+    paths.filter( (path: String) => !(existingSceneNames contains s"S2 ${path}") ) map {
+      (path: String) => {
+        try {
+          val swrIO: IO[Scene.WithRelated] = riot(path, datasourceUUID, user)
+          swrIO map { Right(_) }
+        } catch {
+          case e: Throwable => IO.pure(Left(e))
         }
       }
     }
-    ios.sequence
+  }
+
+  def findScenes(date: LocalDate, keys: List[URI], user: User, datasourceUUID: UUID): List[IO[List[Either[Throwable, Scene.WithRelated]]]] = {
+    logger.info(s"Found ${keys.length} keys to attempt to import")
+    val sceneNames = getExistingScenes(date, datasourceUUID)
+    keys map {
+      (uri: URI) => {
+        IO.shift(SceneCreationIOContext) *> (insertSceneFromURI(uri, sceneNames, datasourceUUID, user).sequence)
+      }
+    }
   }
 
   def run: Unit = {
     logger.info(s"Importing Sentinel 2 scenes for ${startDate}")
     val keys = getSentinel2Products(startDate)
-    val scenesIO:IO[List[Scene.WithRelated]] =
-      UserDao.getUserById(systemUser).transact(xa) flatMap { (mbUser: Option[User]) =>
-        mbUser match {
-          case Some(u) => {
-            findScenes(startDate, keys, u, sentinel2Config.datasourceUUID)
-          }
-          case None => {
-            logger.error("yup the database was borked")
-            throw new Exception(s"${systemUser} could not be found -- probably the database is borked")
+    val scenesIO:IO[List[List[Either[Throwable, Scene.WithRelated]]]] = {
+      UserDao.getUserById(systemUser).transact(xa) flatMap {
+        (mbUser: Option[User]) => {
+          mbUser match {
+            case Some(u) => {
+              val sceneIOs = findScenes(startDate, keys.take(300), u, sentinel2Config.datasourceUUID)
+              sceneIOs.sequence
+            }
+            case None => {
+              throw new Exception(s"${systemUser} could not be found -- probably the database is borked")
+            }
           }
         }
       }
-    try {
-      val withLength = scenesIO map {
-        (scenes: List[Scene.WithRelated]) => logger.info(s"Inserted ${scenes.length} scenes")
-      }
-      withLength.unsafeRunSync
-      logger.info("Scenes imported successfully")
-      stop
-      cachedThreadPool.shutdown()
-    } catch {
-      case (e: Throwable) => {
-        sendError(e)
-        stop
-        cachedThreadPool.shutdown()
-        sys.exit(1)
+    }
+    val withReporting = scenesIO map {
+      (sceneLists: List[List[Either[Throwable, Scene.WithRelated]]]) => {
+        val scenes = sceneLists.flatten
+        logger.info(s"Inserted ${scenes.filter(_.isRight).length} scenes")
+        logger.info(s"Failed to insert ${scenes.filter(_.isLeft).length} scenes")
+        scenes.filter(_.isLeft).length match {
+          case 0 => {
+            stop
+            cachedThreadPool.shutdown()
+          }
+          case n => {
+            stop
+            cachedThreadPool.shutdown()
+            scenes.filter(_.isLeft) map {
+              case Right(_) => ()
+              case Left(e) => sendError(e)
+            }
+            sys.exit(1)
+          }
+        }
       }
     }
+    (IO.shift(SceneCreationIOContext) *> withReporting).unsafeRunSync
+
   }
 }
 
