@@ -151,7 +151,6 @@ Helper and development scripts are located in the `./scripts` directory at the r
 | `cibuild`                 | Invoked by CI server and makes use of `test`.                |
 | `cipublish`               | Publish container images to container image repositories.    |
 | `load_development_data`   | Load data for development purposes from S3                   |
-| `reload_development_data` | Load data for development purposes from a local backup       |
 | `publish-jars`            | Publish JAR artifacts to S3                                  |
 | `rsync-back`              | Perform a one-way `rsync` from the VM to the host.           |
 
