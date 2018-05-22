@@ -15,7 +15,7 @@
           <td>
             <button class="btn btn-primary "
                     ui-sref="admin.platform.users({platformId: platform.item.id})">
-              Manage
+              {{platform.role.groupRole === 'ADMIN' ? 'Manage' : 'View'}}
             </button>
           </td>
         </tr>
@@ -38,7 +38,7 @@
           <td>
             <button class="btn btn-primary"
                     ui-sref="admin.organization.users({organizationId: organization.item.id})">
-              Manage
+              {{organization.role.groupRole === 'ADMIN' ? 'Manage' : 'View'}}
             </button>
           </td>
         </tr>
@@ -62,7 +62,7 @@
           <td>
             <button class="btn btn-primary"
                     ui-sref="admin.team.users({teamId: team.item.id})">
-              Manage
+              {{team.role.groupRole === 'ADMIN' ? 'Manage' : 'View'}}
             </button>
           </td>
         </tr>

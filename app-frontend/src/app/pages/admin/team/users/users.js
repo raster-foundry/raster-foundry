@@ -94,7 +94,8 @@ class TeamUsersController {
             resolve: {
                 platformId: () => this.platformId,
                 organizationId: () => this.organization.id,
-                teamId: () => this.team.id
+                teamId: () => this.team.id,
+                adminView: () => 'team'
             }
         }).result.then(() => {
             this.fetchUsers(1, this.search);

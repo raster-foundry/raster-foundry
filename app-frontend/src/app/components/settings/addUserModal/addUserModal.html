@@ -7,7 +7,8 @@
     <h4 class="modal-title">
       Add users to team
     </h4>
-    <p>Select a users to add to the team.</p>
+    <p ng-if="!$ctrl.resolve.modalText">Select a users to add to the team.</p>
+    <p ng-if="$ctrl.resolve.modalText">{{$ctrl.resolve.modalText}}</p>
   </div>
   <div class="modal-body">
     <div class="text-right">
