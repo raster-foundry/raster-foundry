@@ -315,6 +315,18 @@ object Generators extends ArbitraryInstances {
                  sceneType)
   }
 
+  private def aoiCreateGen: Gen[AOI.Create] = for {
+    organizationId <- uuidGen
+    area <- projectedMultiPolygonGen3857
+    filters <- Gen.const(().asJson) // maybe this should be CombinedSceneQueryParams as json
+    owner <- Gen.const(None)
+    isActive <- arbitrary[Boolean]
+    startTime <- timestampIn2016Gen
+    approvalRequired <- arbitrary[Boolean]
+  } yield {
+    AOI.Create(organizationId, area, filters, owner, isActive, startTime, approvalRequired)
+  }
+
   private def aoiGen: Gen[AOI] = for {
     id <- uuidGen
     timeField <- timestampIn2016Gen
@@ -323,8 +335,12 @@ object Generators extends ArbitraryInstances {
     area <- projectedMultiPolygonGen3857
     filters <- Gen.const(().asJson) // maybe this should be CombinedSceneQueryParams as json
     isActive <- arbitrary[Boolean]
+    startTime <- timestampIn2016Gen
+    approvalRequired <- arbitrary[Boolean]
+    projectId <- uuidGen
   } yield {
-    AOI(id, timeField, timeField, organizationId, userField, userField, userField, area, filters, isActive)
+    AOI(id, timeField, timeField, organizationId, userField, userField, userField, area,
+        filters, isActive, startTime, approvalRequired, projectId)
   }
 
   private def datasourceCreateGen: Gen[Datasource.Create] = for {
@@ -422,6 +438,8 @@ object Generators extends ArbitraryInstances {
     implicit def arbDatasourceCreate: Arbitrary[Datasource.Create] = Arbitrary { datasourceCreateGen }
 
     implicit def arbUploadCreate: Arbitrary[Upload.Create] = Arbitrary { uploadCreateGen }
+
+    implicit def arbAOICreate: Arbitrary[AOI.Create] = Arbitrary { aoiCreateGen }
 
     implicit def arbAOI: Arbitrary[AOI] = Arbitrary { aoiGen }
 
