@@ -427,6 +427,13 @@ object MapAlgebraAST {
     def withMetadata(newMd: NodeMetadata): MapAlgebraAST = copy(metadata = Some(newMd))
   }
 
+  case class CogRaster(id: UUID, sceneId: UUID, band: Option[Int], celltype: Option[CellType], metadata: Option[NodeMetadata], location: String) extends MapAlgebraLeaf with RFMLRaster {
+    val `type` = "cogSrc"
+    def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List(this)
+    def substitute(substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST] = Some(this)
+    def withMetadata(newMd: NodeMetadata): MapAlgebraAST = copy(metadata = Some(newMd))
+  }
+
   case class ProjectRaster(id: UUID, projId: UUID, band: Option[Int], celltype: Option[CellType], metadata: Option[NodeMetadata]) extends MapAlgebraLeaf with RFMLRaster {
     val `type` = "projectSrc"
     def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List(this)

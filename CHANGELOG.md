@@ -1,5 +1,30 @@
 # Change Log
 
+## [0.36.0](https://github.com/raster-foundry/raster-foundry/tree/0.36.0) (2018-05-23)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.35.0...0.36.0)
+
+**Merged pull requests:**
+
+- Fix AOI list filter and other aoi bugs [\#3418](https://github.com/raster-foundry/raster-foundry/pull/3418)
+- Better parallelize sentinel2 import [\#3415](https://github.com/raster-foundry/raster-foundry/pull/3415)
+- Respect time and space filters to find scenes to update aoi projects [\#3412](https://github.com/raster-foundry/raster-foundry/pull/3412)
+- Catch geometry parsing errors when reading Sentinel 2 scenes [\#3404](https://github.com/raster-foundry/raster-foundry/pull/3404)
+- Update .gitignore to handle .envrc files [\#3401](https://github.com/raster-foundry/raster-foundry/pull/3401)
+- Remove errant debugging argument for get\_tempdir [\#3400](https://github.com/raster-foundry/raster-foundry/pull/3400)
+- Add MODIS Scene Creation from Browsing [\#3397](https://github.com/raster-foundry/raster-foundry/pull/3397)
+- Update STRTA: `load\_development\_data` and `fix-migration` [\#3396](https://github.com/raster-foundry/raster-foundry/pull/3396)
+- Allow adding MODIS scenes to projects [\#3393](https://github.com/raster-foundry/raster-foundry/pull/3393)
+- Add requirement for DAO tests [\#3362](https://github.com/raster-foundry/raster-foundry/pull/3362)
+
+## [0.35.0](https://github.com/raster-foundry/raster-foundry/tree/0.35.0) (2018-05-16)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.34.2...0.35.0)
+
+**Merged pull requests:**
+
+- Support COG-based Projects [\#3349](https://github.com/raster-foundry/raster-foundry/pull/3349)
+
 ## [0.34.2](https://github.com/raster-foundry/raster-foundry/tree/0.34.2) (2018-05-09)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.34.1...0.34.2)

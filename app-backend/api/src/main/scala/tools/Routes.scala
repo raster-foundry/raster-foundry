@@ -97,7 +97,7 @@ trait ToolRoutes extends Authentication
   def listTools: Route = authenticate { user =>
     (withPagination & combinedToolQueryParams) { (page, combinedToolQueryParameters) =>
       complete {
-        ToolDao.query.filter(combinedToolQueryParameters).ownerFilter(user).page(page).transact(xa).unsafeToFuture
+        ToolDao.query.filter(combinedToolQueryParameters).ownerVisibilityFilter(user).page(page).transact(xa).unsafeToFuture
       }
     }
   }

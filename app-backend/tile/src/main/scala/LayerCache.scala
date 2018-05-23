@@ -10,6 +10,7 @@ import com.azavea.rf.tool.maml._
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.common.{Config => CommonConfig}
+import com.azavea.rf.common.utils.CogUtils
 import com.azavea.maml.eval._
 import com.azavea.maml.ast.Expression
 import com.azavea.maml.eval.directive.SourceDirectives._
@@ -75,32 +76,49 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     )
   }
 
-  def layerHistogram(layerId: UUID, zoom: Int): OptionT[Future, Array[Histogram[Double]]] = {
-    val key = s"layer-histogram-${layerId}-${zoom}"
+  def layerHistogram(sceneId: UUID, zoom: Int): OptionT[Future, Array[Histogram[Double]]] = {
+    val key = s"layer-histogram-${sceneId}-${zoom}"
     rfCache.cachingOptionT(key, doCache = cacheConfig.layerAttributes.enabled)(
       OptionT(
-        timedFuture("layer-histogram-source")(store.getHistogram[Array[Histogram[Double]]](LayerId(layerId.toString, 0)))
+        timedFuture("layer-histogram-source")(store.getHistogram[Array[Histogram[Double]]](LayerId(sceneId.toString, 0)))
       )
     )
   }
 
-  def layerTile(layerId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] = {
-    val cacheKey = s"tile-$layerId-$zoom-${key.col}-${key.row}"
+  def layerTile(sceneId: UUID, zoom: Int, x: Int, y: Int): OptionT[Future, MultibandTile] = {
+    layerTile(sceneId, zoom, SpatialKey(x, y))
+  }
+
+  def layerTile(sceneId: UUID, zoom: Int, key: SpatialKey): OptionT[Future, MultibandTile] = {
+    val cacheKey = s"tile-$sceneId-$zoom-${key.col}-${key.row}"
     OptionT(rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(
       timedFuture("s3-tile-request")({
-        val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(layerId.toString, zoom))
+        val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(sceneId.toString, zoom))
         Future(reader.read(key)).map({
           case tile => Some(tile)
         }).recover({
           case e: ValueNotFoundError => None
           case e: Throwable =>
-            logger.debug(s"Unable to retrieve layer $layerId at zoom $zoom for key $key; ${e.getMessage}")
+            logger.debug(s"Unable to retrieve layer $sceneId at zoom $zoom for key $key; ${e.getMessage}")
             None
         })
       })
     ))
   }
 
+  def cogTile(location: String, zoom: Int, key: SpatialKey, buffer: Int = 0): OptionT[Future, MultibandTile] = {
+    val cacheKey = s"cog-$location-$zoom-${key.col}-${key.row}"
+    OptionT(rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(
+      timedFuture("cog-tile-request")({
+        CogUtils.fetch(location, zoom, key.col, key.row)
+          .value.recover({
+            case e: Throwable =>
+              logger.debug(s"Unable to read COG at $location for zoom $zoom for key $key; ${e.getMessage}")
+              None
+          })
+      })
+    ))
+  }
 
   def layerTileForExtent(layerId: UUID, zoom: Int, extent: Extent): OptionT[Future, MultibandTile] = {
     val cacheKey = s"extent-tile-$layerId-$zoom-${extent.xmin}-${extent.ymin}-${extent.xmax}-${extent.ymax}"
@@ -146,16 +164,24 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
       for {
         toolRun <- LayerCache.toolRun(toolRunId, user, voidCache)
         (_, ast) <- LayerCache.toolEvalRequirements(toolRunId, subNode, user, voidCache)
-        (extent, zoom) <- TileSources.fullDataWindow(ast.tileSources)
+        updatedAst <- OptionT(RelabelAst.cogScenes(ast))
+        (extent, zoom) <- TileSources.fullDataWindow(updatedAst.tileSources)
+        _ <- {OptionT.pure[Future](logger.debug(s"FOR EXTENT ZOOM: ${extent} ${zoom}"))}
+
         literalAst <- OptionT(
-                        tileResolver.resolveForExtent(ast.asMaml._1, zoom, extent)
+                        tileResolver.resolveForExtent(updatedAst.asMaml._1, zoom, extent)
                           .map({ validatedAst => validatedAst.toOption })
+
                       )
         tile <- OptionT.fromOption[Future](
                   NaiveInterpreter.DEFAULT(literalAst).andThen({ _.as[Tile] }) match {
                   case Valid(tile) => Some(tile)
-                  case Invalid(e) => None
-                })
+                  case Invalid(e) => e.map { s =>
+                    logger.error(s"ERROR: ${s.repr}")
+
+                  }
+                      None
+                  })
       } yield {
         val hist = StreamingHistogram.fromTile(tile)
         hist

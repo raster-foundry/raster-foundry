@@ -45,6 +45,8 @@ object ProjectDao extends Dao[Project] {
     FROM
   """ ++ tableF
 
+  type SceneToProject = (UUID, UUID, Boolean, Option[Int], Option[Json])
+
   def unsafeGetProjectById(projectId: UUID, user: Option[User]): ConnectionIO[Project] = {
     val idFilter = Some(fr"id = ${projectId}")
     val visFilter = user flatMap filterUserVisibility
@@ -126,16 +128,12 @@ object ProjectDao extends Dao[Project] {
 
   def deleteProject(id: UUID, user: User): ConnectionIO[Int] = {
 
-    val aoiDeleteQuery = sql"DELETE FROM aois USING aois_to_projects WHERE aois.id = aois_to_projects.aoi_id AND aois_to_projects.project_id = ${id}"
-    val aoiToProjectDelete = sql"DELETE FROM aois_to_projects WHERE project_id = ${id}"
+    val aoiDeleteQuery = sql"DELETE FROM aois where aois.project_id = ${id}"
     for {
       _ <- aoiDeleteQuery.update.run
-      _ <- aoiToProjectDelete.update.run
       projectDeleteCount <- query.filter(fr"id = ${id}").delete
     } yield projectDeleteCount
   }
-
-  type stp = (UUID, UUID, Boolean, Option[Int], Option[Json])
 
   def updateSceneIngestStatus(projectId: UUID): ConnectionIO[Int] = {
     val updateStatusQuery =
@@ -184,11 +182,11 @@ object ProjectDao extends Dao[Project] {
     for {
       sceneQueryResult <- sceneIdWithDatasourceF.query[(UUID, Datasource)].list
       sceneToProjectInserts <- {
-        val stps: List[stp] = sceneQueryResult.map { case (sceneId, datasource) =>
+        val scenesToProject: List[SceneToProject] = sceneQueryResult.map { case (sceneId, datasource) =>
             createScenesToProject(sceneId, projectId, datasource)
         }
         val inserts = "INSERT INTO scenes_to_projects (scene_id, project_id, accepted, scene_order, mosaic_definition) VALUES (?, ?, ?, ?, ?)"
-        Update[stp](inserts).updateMany(stps)
+        Update[SceneToProject](inserts).updateMany(scenesToProject)
       }
       _ <- {sql"""
                UPDATE projects
@@ -206,7 +204,7 @@ object ProjectDao extends Dao[Project] {
     } yield sceneToProjectInserts
   }
 
-  def createScenesToProject(sceneId: UUID, projectId: UUID, datasource: Datasource): stp = {
+  def createScenesToProject(sceneId: UUID, projectId: UUID, datasource: Datasource): SceneToProject = {
     val composites = datasource.composites
     val redBandPath = root.natural.selectDynamic("value").redBand.int
     val greenBandPath = root.natural.selectDynamic("value").greenBand.int

@@ -29,16 +29,20 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
   test("insert an AOI") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, project: Project.Create, aoi: AOI) => {
+        (user: User.Create, org: Organization.Create, project: Project.Create, aoi: AOI.Create) => {
           val aoiInsertIO = insertUserOrgProject(user, org, project) flatMap {
             case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-              AoiDao.createAOI(fixupAoi(dbUser, dbOrg, aoi), dbProject.id, dbUser)
+              AoiDao.createAOI(fixupAoiCreate(dbUser, dbOrg, dbProject, aoi), dbUser)
             }
           }
           val insertedAoi = aoiInsertIO.transact(xa).unsafeRunSync
 
-          insertedAoi.area == aoi.area &&
-            insertedAoi.filters == aoi.filters
+          assert(insertedAoi.area == aoi.area, "Area should round trip with equality")
+          assert(insertedAoi.filters == aoi.filters, "Filters should round trip with equality")
+          assert(insertedAoi.startTime == aoi.startTime, "Start time should round trip with equality")
+          assert(insertedAoi.approvalRequired == aoi.approvalRequired,
+                 "Approval required should round trip with equality")
+          true
         }
       }
     }
@@ -47,19 +51,20 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
   test("update an AOI") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, project: Project.Create, aoiInsert: AOI, aoiUpdate: AOI) => {
-          val aoiInsertWithOrgUserIO = insertUserOrgProject(user, org, project) flatMap {
+        (user: User.Create, org: Organization.Create, project: Project.Create,
+         aoiInsert: AOI.Create, aoiUpdate: AOI.Create) => {
+          val aoiInsertWithOrgUserProjectIO = insertUserOrgProject(user, org, project) flatMap {
             case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-              AoiDao.createAOI(fixupAoi(dbUser, dbOrg, aoiInsert), dbProject.id, dbUser) map {
-                (_, dbOrg, dbUser)
+              AoiDao.createAOI(fixupAoiCreate(dbUser, dbOrg, dbProject, aoiInsert), dbUser) map {
+                (_, dbOrg, dbUser, dbProject)
               }
             }
           }
 
-          val aoiUpdateWithAoi = aoiInsertWithOrgUserIO flatMap {
-            case (dbAoi: AOI, dbOrg: Organization, dbUser: User) => {
+          val aoiUpdateWithAoi = aoiInsertWithOrgUserProjectIO flatMap {
+            case (dbAoi: AOI, dbOrg: Organization, dbUser: User, dbProject: Project) => {
               val aoiId = dbAoi.id
-              val fixedUpUpdateAoi = fixupAoi(dbUser, dbOrg, aoiUpdate).copy(id = aoiId)
+              val fixedUpUpdateAoi = fixupAoiCreate(dbUser, dbOrg, dbProject, aoiUpdate).copy(id = aoiId)
               AoiDao.updateAOI(fixedUpUpdateAoi, aoiId, dbUser) flatMap {
                 (affectedRows: Int) => {
                   AoiDao.unsafeGetAoiById(aoiId, dbUser) map { (affectedRows, _) }
@@ -70,10 +75,13 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
 
           val (affectedRows, updatedAoi) = aoiUpdateWithAoi.transact(xa).unsafeRunSync
 
-          affectedRows == 1 &&
-            updatedAoi.area == aoiUpdate.area &&
-            updatedAoi.filters == aoiUpdate.filters &&
-            updatedAoi.isActive == aoiUpdate.isActive
+          assert(affectedRows == 1, "Only one row should be updated")
+          assert(updatedAoi.area == aoiUpdate.area, "Area should be updated")
+          assert(updatedAoi.filters == aoiUpdate.filters, "Filters should be updated")
+          assert(updatedAoi.isActive == aoiUpdate.isActive, "Active status should be updated")
+          assert(updatedAoi.approvalRequired == aoiUpdate.approvalRequired, "Approval should be updated")
+          assert(updatedAoi.startTime == aoiUpdate.startTime, "Start time should be updated")
+          true
         }
       }
     }
@@ -82,10 +90,10 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
   test("delete an AOI") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, project: Project.Create, aoi: AOI) => {
+        (user: User.Create, org: Organization.Create, project: Project.Create, aoi: AOI.Create) => {
           val aoiDeleteIO = insertUserOrgProject(user, org, project) flatMap {
             case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-              AoiDao.createAOI(fixupAoi(dbUser, dbOrg, aoi), dbProject.id, dbUser) map {
+              AoiDao.createAOI(fixupAoiCreate(dbUser, dbOrg, dbProject, aoi), dbUser) map {
                 (_, dbUser)
               }
             }
@@ -105,14 +113,24 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
   test("list AOIs for a project") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, project: Project.Create, aois: List[AOI]) => {
-          val aoisInsertWithProjectUserIO = insertUserOrgProject(user, org, project) flatMap {
-            case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-              aois.traverse((aoi: AOI) => AoiDao.createAOI(fixupAoi(dbUser, dbOrg, aoi), dbProject.id, dbUser)) map {
-                (_, dbProject, dbUser)
+        (user: User.Create, org: Organization.Create,
+         project1: Project.Create, aois1: List[AOI.Create],
+         project2: Project.Create, aois2: List[AOI.Create]) => {
+          val aoisInsertWithProjectUserIO = for {
+            userOrgProj1 <- insertUserOrgProject(user, org, project1)
+            (dbOrg, dbUser, dbProject1) = userOrgProj1
+            dbProject2 <- ProjectDao.insertProject(fixupProjectCreate(dbUser, dbOrg, project2), dbUser)
+            dbAois1 <- aois1.traverse {
+              (aoi: AOI.Create) => {
+                AoiDao.createAOI(fixupAoiCreate(dbUser, dbOrg, dbProject1, aoi), dbUser)
               }
             }
-          }
+            _ <- aois2.traverse {
+              (aoi: AOI.Create) => {
+                AoiDao.createAOI(fixupAoiCreate(dbUser, dbOrg, dbProject2, aoi), dbUser)
+              }
+            }
+          } yield { (dbAois1, dbProject1, dbUser) }
 
           val aoisForProject = aoisInsertWithProjectUserIO flatMap {
             case (dbAois: List[AOI], dbProject: Project, dbUser: User) => {

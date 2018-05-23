@@ -12,7 +12,7 @@
   >
     <rf-status-tag entity-type="scene"
                    ng-if="$ctrl.scene.statusFields.ingestStatus"
-                   status="$ctrl.scene.statusFields.ingestStatus"
+                   status="$ctrl.getSceneIngestStatus()"
                    ng-class="{'on-drag': $ctrl.isDraggable}"></rf-status-tag>
     <img ng-attr-src="{{$ctrl.thumbnail}}"
          ng-if="$ctrl.thumbnail"

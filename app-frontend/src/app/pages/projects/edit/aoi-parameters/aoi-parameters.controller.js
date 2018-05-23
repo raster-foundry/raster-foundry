@@ -190,7 +190,9 @@ export default class AOIParametersController {
                     'srid': multipolygon.geom.srid
                 },
                 filters: aoiFilters,
-                isActive: isActive
+                isActive: isActive,
+                startTime: this.aoiProjectParameters.aoisLastChecked,
+                approvalRequired: false
             };
             this.projectService.createAOI(this.project.id, newAOI).then(() => {
                 this.fetchProjectAOIs();

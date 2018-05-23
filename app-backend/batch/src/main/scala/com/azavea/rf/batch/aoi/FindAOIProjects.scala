@@ -29,8 +29,7 @@ case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job {
       val baseSelect: Fragment =
         fr"""
         select proj_table.id from (
-          (projects proj_table inner join aois_to_projects on proj_table.id = aois_to_projects.project_id)
-          inner join aois on aoi_id = aois.id
+          (projects proj_table inner join aois on proj_table.id = aois.project_id)
         )"""
 
       //  check to make sure the project is an aoi project

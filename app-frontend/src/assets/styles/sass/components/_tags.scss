@@ -54,6 +54,14 @@
   background: $green;
 }
 
+.blue-tag {
+  background: $node-blue;
+  color: #fff;
+  &:hover {
+    color: #fff;
+  }
+}
+
 .red-tag {
   background: $red;
   color: #fff;

@@ -7,11 +7,13 @@ from planet import api
 from ..models import Upload
 from ..uploads.geotiff import GeoTiffS3SceneFactory
 from ..uploads.planet.factories import PlanetSceneFactory
+from ..uploads.modis.factories import MODISSceneFactory
 from ..utils.exception_reporting import wrap_rollbar
 from ..utils.io import get_session
 
 logger = logging.getLogger(__name__)
 HOST = os.getenv('RF_HOST')
+
 
 @click.command(name='process-upload')
 @click.argument('upload_id')
@@ -48,6 +50,17 @@ def process_upload(upload_id):
                 [],
                 upload.owner,
                 api.ClientV1(upload.metadata.get('planetKey'))
+            )
+        elif upload.uploadType.lower() == 'modis_usgs':
+            logger.info('Processing MODIS upload from USGS')
+            factory = MODISSceneFactory(
+                upload.files,
+                upload.datasource,
+                upload.organizationId,
+                upload.id,
+                upload.projectId,
+                upload.visibility,
+                upload.owner
             )
         else:
             raise Exception('upload type ({}) didn\'t make any sense'.format(upload.uploadType))

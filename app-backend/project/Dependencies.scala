@@ -54,6 +54,7 @@ object Dependencies {
   val circeTest               = "io.circe"                    %% "circe-testing"                        % Version.circe % "test"
   val akkaCirceJson           = "de.heikoseeberger"           %% "akka-http-circe"                   % Version.akkaCirceJson
   val catsCore                = "org.typelevel"               %% "cats-core"                         % Version.cats
+  val catsEffect              = "org.typelevel"               %% "cats-effect"                       % Version.catsEffect
   val gatlingHighcharts       = "io.gatling.highcharts"        % "gatling-charts-highcharts"         % Version.gatling
   val gatlingTest             = "io.gatling"                   % "gatling-test-framework"            % Version.gatling % "test,it"
   val gatlingApp              = "io.gatling"                   % "gatling-app"                       % Version.gatling % "test,it"

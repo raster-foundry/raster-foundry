@@ -73,6 +73,10 @@ object Dao {
       this.copy(filters = filters ++ filterable.toFilters(ownerFilterF(user)))
     }
 
+    def ownerVisibilityFilter[M >: Model](user: User)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+      this.copy(filters = filters ++ filterable.toFilters(ownerVisibilityFilterF(user)))
+    }
+
     def ownerFilterF2(user: User): Option[Fragment] = {
       if (user.isInRootOrganization) {
         None
