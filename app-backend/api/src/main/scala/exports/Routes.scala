@@ -77,9 +77,13 @@ trait ExportRoutes extends Authentication
   }
 
   def getExport(exportId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete {
-        ExportDao.query.filter(user).filter(exportId).selectOption.transact(xa).unsafeToFuture()
+    authorizeAsync {
+      ExportDao.query.ownedBy(user, exportId).exists.transact(xa).unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete {
+          ExportDao.query.filter(exportId).selectOption.transact(xa).unsafeToFuture
+        }
       }
     }
   }

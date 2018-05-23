@@ -43,7 +43,6 @@ trait Router extends HealthCheckRoutes
   with SceneRoutes
   with ProjectRoutes
   with AoiRoutes
-  with ImageRoutes
   with TokenRoutes
   with ThumbnailRoutes
   with ToolRoutes
@@ -80,17 +79,11 @@ trait Router extends HealthCheckRoutes
       pathPrefix("areas-of-interest") {
         aoiRoutes
       } ~
-      pathPrefix("images") {
-        imageRoutes
-      } ~
       pathPrefix("organizations") {
         organizationRoutes
       } ~
       pathPrefix("scenes") {
         sceneRoutes
-      } ~
-      pathPrefix("thumbnails") {
-        thumbnailRoutes
       } ~
       pathPrefix("tokens") {
         tokenRoutes

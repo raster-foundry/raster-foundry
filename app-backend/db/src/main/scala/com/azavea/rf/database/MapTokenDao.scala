@@ -45,6 +45,25 @@ object MapTokenDao extends Dao[MapToken] {
     )
   }
 
+  def authorize(mapTokenId: UUID, user: User, actionType: ActionType): ConnectionIO[Boolean] = for {
+    mapTokenO <- MapTokenDao.query.filter(mapTokenId).selectOption
+    projAuthed = (
+      mapTokenO flatMap { _.project } map {
+        (projectId: UUID) => {
+          ProjectDao.query.authorize(user, ObjectType.Project, projectId, actionType).exists
+        }
+      }
+    ).getOrElse(false.pure[ConnectionIO])
+    toolRunAuthed = (
+      mapTokenO flatMap { _.toolRun } map {
+        (toolRunId: UUID) => {
+          ToolRunDao.query.authorize(user, ObjectType.Analysis, toolRunId, actionType).exists
+        }
+      }
+    ).getOrElse(false.pure[ConnectionIO])
+    authTuple <- (projAuthed, toolRunAuthed).tupled
+  } yield { authTuple._1 || authTuple._2 }
+
   def update(mapToken: MapToken, id: UUID, user: User): ConnectionIO[Int] = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
     val idFilter = fr"id = ${id}"
@@ -57,7 +76,7 @@ object MapTokenDao extends Dao[MapToken] {
          owner = ${mapToken.owner},
          name = ${mapToken.name},
          project_id = ${mapToken.project},
-         toolrun_id = ${mapToken.project}
+         toolrun_id = ${mapToken.toolRun}
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
