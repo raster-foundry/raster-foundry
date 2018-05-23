@@ -1,6 +1,7 @@
 package com.azavea.rf.datamodel
 
 import java.sql.Timestamp
+import java.time.Instant
 import java.util.{Date, UUID}
 
 import com.azavea.rf.bridge._
@@ -32,7 +33,10 @@ case class AOI(
   area: Projected[MultiPolygon],
   filters: Json,
 
-  isActive: Boolean = true
+  isActive: Boolean = true,
+  startTime: Timestamp,
+  approvalRequired: Boolean,
+  projectId: UUID
 )
 
 object AOI {
@@ -47,15 +51,18 @@ object AOI {
     area: Projected[MultiPolygon],
     filters: Json,
     owner: Option[String],
-    isActive: Boolean = true) extends OwnerCheck {
-    def toAOI(user: User): AOI = {
+    isActive: Boolean = true,
+    startTime: Timestamp = Timestamp.from(Instant.now),
+    approvalRequired: Boolean = true) extends OwnerCheck {
+    def toAOI(projectId: UUID, user: User): AOI = {
       val now = new Timestamp((new Date()).getTime)
 
       val ownerId = checkOwner(user, this.owner)
 
       AOI(
         UUID.randomUUID, now, now, organizationId,
-        user.id, user.id, ownerId, area, filters, isActive
+        user.id, user.id, ownerId, area, filters, isActive,
+        startTime, approvalRequired, projectId
       )
     }
   }
