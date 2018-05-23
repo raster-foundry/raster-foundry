@@ -82,6 +82,10 @@ export default (app) => {
                 )
                 .$promise;
         }
+
+        deactivateTeam(platformId, organizationId, teamId) {
+            return this.PlatformTeam.delete({platformId, organizationId, teamId}).$promise;
+        }
     }
 
     app.service('teamService', TeamService);

@@ -69,7 +69,12 @@ object TeamDao extends Dao[Team] {
       )
   }
 
-
+  def listOrgTeams(organizationId: UUID, page: PageRequest): ConnectionIO[PaginatedResponse[Team]] = {
+    TeamDao.query
+      .filter(fr"organization_id = ${organizationId}")
+      .filter(fr"is_active = true")
+      .page(page)
+  }
 
   def listMembers(teamId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
     UserGroupRoleDao.listUsersByGroup(GroupType.Team, teamId, page, searchParams, actingUser)
@@ -190,6 +195,16 @@ object TeamDao extends Dao[Team] {
 
   def delete(teamId: UUID): ConnectionIO[Int] =
     TeamDao.query.filter(teamId).delete
+
+  def deactivate(teamId: UUID): ConnectionIO[Int] = {
+    for {
+      acrs <- AccessControlRuleDao.deactivateBySubject(SubjectType.Team, teamId.toString())
+      roles <- UserGroupRoleDao.deactivateByGroup(GroupType.Team, teamId)
+      teamUpdate <- (fr"UPDATE" ++ tableF ++ fr"""SET
+                      is_active = false
+                      WHERE id = ${teamId}""").update.run
+    } yield teamUpdate
+  }
 
   def addUserRole(actingUser: User, subjectId: String, teamId: UUID, groupRole: GroupRole): ConnectionIO[UserGroupRole] = {
     val userGroupRoleCreate = UserGroupRole.Create(

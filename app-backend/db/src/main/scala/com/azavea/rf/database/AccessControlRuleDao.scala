@@ -157,4 +157,16 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
 
   def listByObject(objectType: ObjectType, objectId: UUID): ConnectionIO[List[AccessControlRule]] =
     listedByObject(objectType, objectId).list
+
+  def deactivateBySubject(subjectType: SubjectType, subjectId: String): ConnectionIO[Int] = {
+    (fr"UPDATE" ++ tableF ++ fr"""SET
+      is_active = false
+    """ ++ Fragments.whereAnd(fr"subject_type = ${subjectType}", fr"subject_id = ${subjectId}")).update.run
+  }
+
+  def deactivateByObject(objectType: ObjectType, objectId: UUID): ConnectionIO[Int] = {
+    (fr"UPDATE" ++ tableF ++ fr"""SET
+      is_active = false
+    """ ++ Fragments.whereAnd(fr"object_type = ${objectType}", fr"object_id = ${objectId}")).update.run
+  }
 }
