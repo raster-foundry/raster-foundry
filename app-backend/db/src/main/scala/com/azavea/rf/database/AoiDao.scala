@@ -50,7 +50,7 @@ object AoiDao extends Dao[AOI] {
     """).update.run
   }
 
-  def createAOI(aoi: AOI, projectId: UUID, user: User): ConnectionIO[AOI] = {
+  def createAOI(aoi: AOI, user: User): ConnectionIO[AOI] = {
     val ownerId = Ownership.checkOwner(user, Some(aoi.owner))
 
     val aoiCreate: ConnectionIO[AOI] = (fr"INSERT INTO" ++ tableF ++ fr"""
