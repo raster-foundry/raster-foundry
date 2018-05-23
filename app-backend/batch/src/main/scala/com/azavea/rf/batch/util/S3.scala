@@ -83,6 +83,7 @@ case class S3(
     val objectRequest = (new ListObjectsRequest)
       .withBucketName(s3bucket)
       .withPrefix(s3prefix)
+      .withMaxKeys(1000)
 
     // Avoid digging into a deeper directory
     if (!recursive) objectRequest.withDelimiter("/")

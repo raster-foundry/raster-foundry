@@ -19,14 +19,19 @@ import org.postgresql.util.PSQLException
 import java.security.InvalidParameterException
 import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
 import java.util.UUID
+import java.util.concurrent.Executors
 
-import cats.effect.IO
+import cats.effect.{IO, Fiber}
+import cats.implicits._
 import com.azavea.rf.common.RollbarNotifier
 import doobie.{ConnectionIO, Fragment, Fragments}
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 
-import scala.concurrent.Future
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.immutable.ParSeq
+import scala.concurrent.ExecutionContext
+import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.{Failure, Success, Try}
 
 case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))(implicit val xa: Transactor[IO]) extends Job {
@@ -34,6 +39,8 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
   // To resolve an ambiguous implicit
   import doobie.free.connection.AsyncConnectionIO
   import ImportSentinel2._
+  val cachedThreadPool = Executors.newFixedThreadPool(5)
+  val SceneCreationIOContext = ExecutionContext.fromExecutor(cachedThreadPool)
 
   val name = ImportSentinel2.name
 
@@ -94,17 +101,15 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     val keyPath: String = s"$tilePath/preview.jpg"
     val thumbnailUrl = s"${sentinel2Config.baseHttpPath}$keyPath"
 
-    if (!isUriExists(thumbnailUrl)) Nil
-    else
-      Thumbnail.Identified(
-        id = None,
-        organizationId = UUID.fromString(landsat8Config.organization),
-        thumbnailSize  = ThumbnailSize.Square,
-        widthPx        = 343,
-        heightPx       = 343,
-        sceneId        = sceneId,
-        url            = thumbnailUrl
-      ) :: Nil
+    Thumbnail.Identified(
+      id = None,
+      organizationId = UUID.fromString(landsat8Config.organization),
+      thumbnailSize  = ThumbnailSize.Square,
+      widthPx        = 343,
+      heightPx       = 343,
+      sceneId        = sceneId,
+      url            = thumbnailUrl
+    ) :: Nil
   }
 
   def getSentinel2Products(date: LocalDate): List[URI] = {
@@ -117,137 +122,125 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       ).toList
   }
 
-  def getExistingScenes(date: LocalDate, datasourceUUID: UUID): ConnectionIO[List[String]] = {
-    SceneDao.query.filter(
+  def getExistingScenes(date: LocalDate, datasourceUUID: UUID): List[String] = {
+    logger.info("Getting scenes that already exist in the database")
+    val scenesConnIO = SceneDao.query.filter(
       Fragments.and(fr"datasource = ${datasourceUUID} :: uuid", fr"date(acquisition_date) = date(${date}) :: date")
     ).list map { (scenes: List[Scene]) => scenes map { _.name } }
+    scenesConnIO.transact(xa).unsafeRunSync
   }
 
   /** Because it makes scenes -- get it? */
-  def riot(existingScenes: List[String], scenePath: String, datasourceUUID: UUID): Option[Scene.Create] = {
-      val sceneId = UUID.randomUUID()
-      val images = List(10f, 20f, 60f).map(createImages(sceneId, scenePath.some, _)).reduce(_ ++ _)
-      val thumbnails = createThumbnails(sceneId, scenePath)
-      val sceneName = s"S2 ${scenePath}"
-      if (existingScenes.contains(sceneName)) {
-        logger.info(s"Skipping scene creation. Scene already exists: ${scenePath} - ${sceneName}")
-        None
-      } else {
-        logger.info(s"Starting scene creation: ${scenePath}- ${sceneName}")
-        val tileinfo =
-          s3Client
-            .getObject(sentinel2Config.bucketName, s"${scenePath}/tileInfo.json")
-            .getObjectContent
-            .toJson
-            .getOrElse(Json.Null)
-        logger.info(s"Getting scene metadata for ${scenePath}")
-        val sceneMetadata: Map[String, String] = getSceneMetadata(tileinfo)
-        val datasourcePrefix = "S2"
-        logger.info(s"${datasourcePrefix} - Extracting polygons for ${scenePath}")
-        val tileFootprint = multiPolygonFromJson(tileinfo, "tileGeometry", sentinel2Config.targetProjCRS)
-        val dataFootprint = multiPolygonFromJson(tileinfo, "tileDataGeometry", sentinel2Config.targetProjCRS)
-        val awsBase = s"https://${sentinel2Config.bucketName}.s3.amazonaws.com"
-        val metadataFiles = List(
-          s"$awsBase/$scenePath/tileInfo.json",
-          s"$awsBase/$scenePath/metadata.xml",
-          s"$awsBase/$scenePath/productInfo.json"
-        )
-        val cloudCover = sceneMetadata.get("dataCoveragePercentage").map(_.toFloat)
-        val acquisitionDate = sceneMetadata.get("timeStamp").map { dt =>
-          new java.sql.Timestamp(
-            ZonedDateTime
-              .parse(dt)
-              .toInstant
-              .getEpochSecond * 1000l
-          )
-        }
-        logger.info(s"${datasourcePrefix} - Creating scene case class ${scenePath}")
-        Scene.Create(
-          id = sceneId.some,
-          organizationId = sentinel2Config.organizationUUID,
-          ingestSizeBytes = 0,
-          visibility = Visibility.Public,
-          tags = List("Sentinel-2", "JPEG2000"),
-          datasource = datasourceUUID,
-          sceneMetadata = sceneMetadata.asJson,
-          name = sceneName,
-          owner = systemUser.some,
-          tileFootprint = (sentinel2Config.targetProjCRS.epsgCode |@| tileFootprint).map {
-            case (code, mp) => Projected(mp, code)
-          },
-          dataFootprint = (sentinel2Config.targetProjCRS.epsgCode |@| dataFootprint).map {
-            case (code, mp) => Projected(mp, code)
-          },
-          metadataFiles = metadataFiles,
-          images = images,
-          thumbnails = createThumbnails(sceneId, scenePath),
-          ingestLocation = None,
-          filterFields = SceneFilterFields(
-            cloudCover = cloudCover,
-            acquisitionDate = acquisitionDate
-          ),
-          statusFields = SceneStatusFields(
-            thumbnailStatus = JobStatus.Success,
-            boundaryStatus = JobStatus.Success,
-            ingestStatus = IngestStatus.NotIngested
-          ),
-          sceneType = SceneType.Avro.some
-        ).some
-      }
+  def riot(scenePath: String, datasourceUUID: UUID, user: User): IO[Option[Scene.WithRelated]] = {
+    logger.info(s"Attempting to import ${scenePath}")
+    val sceneId = UUID.randomUUID()
+    val images = List(10f, 20f, 60f).map(createImages(sceneId, scenePath.some, _)).reduce(_ ++ _)
+    val thumbnails = createThumbnails(sceneId, scenePath)
+    val sceneName = s"S2 ${scenePath}"
+    logger.info(s"Starting scene creation: ${scenePath}- ${sceneName}")
+    logger.info(s"Getting tile info for ${scenePath}")
+    val tileinfo =
+      s3Client
+        .getObject(sentinel2Config.bucketName, s"${scenePath}/tileInfo.json")
+        .getObjectContent
+        .toJson
+        .getOrElse(Json.Null)
+    logger.info(s"Getting scene metadata for ${scenePath}")
+    val sceneMetadata: Map[String, String] = getSceneMetadata(tileinfo)
+    val datasourcePrefix = "S2"
+    logger.info(s"${datasourcePrefix} - Extracting polygons for ${scenePath}")
+    val tileFootprint = multiPolygonFromJson(tileinfo, "tileGeometry", sentinel2Config.targetProjCRS)
+    val dataFootprint = multiPolygonFromJson(tileinfo, "tileDataGeometry", sentinel2Config.targetProjCRS)
+    val awsBase = s"https://${sentinel2Config.bucketName}.s3.amazonaws.com"
+    val metadataFiles = List(
+      s"$awsBase/$scenePath/tileInfo.json",
+      s"$awsBase/$scenePath/metadata.xml",
+      s"$awsBase/$scenePath/productInfo.json"
+    )
+    val cloudCover = sceneMetadata.get("dataCoveragePercentage").map(_.toFloat)
+    val acquisitionDate = sceneMetadata.get("timeStamp").map { dt =>
+      new java.sql.Timestamp(
+        ZonedDateTime
+          .parse(dt)
+          .toInstant
+          .getEpochSecond * 1000l
+      )
+    }
+    logger.info(s"${datasourcePrefix} - Creating scene case class ${scenePath}")
+    val sceneCreate = Scene.Create(
+      id = sceneId.some,
+      organizationId = sentinel2Config.organizationUUID,
+      ingestSizeBytes = 0,
+      visibility = Visibility.Public,
+      tags = List("Sentinel-2", "JPEG2000"),
+      datasource = datasourceUUID,
+      sceneMetadata = sceneMetadata.asJson,
+      name = sceneName,
+      owner = systemUser.some,
+      tileFootprint = (sentinel2Config.targetProjCRS.epsgCode |@| tileFootprint).map {
+        case (code, mp) => Projected(mp, code)
+      },
+      dataFootprint = (sentinel2Config.targetProjCRS.epsgCode |@| dataFootprint).map {
+        case (code, mp) => Projected(mp, code)
+      },
+      metadataFiles = metadataFiles,
+      images = images,
+      thumbnails = createThumbnails(sceneId, scenePath),
+      ingestLocation = None,
+      filterFields = SceneFilterFields(
+        cloudCover = cloudCover,
+        acquisitionDate = acquisitionDate
+      ),
+      statusFields = SceneStatusFields(
+        thumbnailStatus = JobStatus.Success,
+        boundaryStatus = JobStatus.Success,
+        ingestStatus = IngestStatus.NotIngested
+      ),
+      sceneType = SceneType.Avro.some
+    )
+
+    IO.shift(SceneCreationIOContext) *> SceneDao.insertMaybe(sceneCreate, user).transact(xa)
   }
 
-  def findScenes(date: LocalDate, keys: List[URI], user: User, datasourceUUID: UUID): ConnectionIO[List[Scene.WithRelated]] = {
-    val scenesIo: ConnectionIO[List[Scene.Create]] = getExistingScenes(date, datasourceUUID) map {
-      case (names: List[String]) => {
-        keys map {
-          (uri:URI) => {
-            for {
-              json <- s3Client.getObject(uri.getHost, uri.getPath.tail).getObjectContent.toJson
-              tilesJson <- json.hcursor.downField("tiles").as[List[Json]].toOption
-            } yield {
-              tilesJson.flatMap { tileJson =>
-                tileJson.hcursor.downField("path").as[String].toOption.map {
-                  scenePath => riot(names, scenePath, datasourceUUID)
-                }
-              }.flatten
-            }
-          }.foldLeft(List.empty[Scene.Create])(_ combine _)
-        }
-      }.flatten
+  def insertSceneFromURI(uri: URI, existingSceneNames: List[String], datasourceUUID: UUID, user: User): List[IO[Option[Scene.WithRelated]]] = {
+    val json: Option[Json] = s3Client.getObject(uri.getHost, uri.getPath.tail).getObjectContent.toJson
+    val tilesJson: Option[List[Json]] = json flatMap { _.hcursor.downField("tiles").as[List[Json]].toOption }
+    val paths: List[String] = tilesJson match {
+      case None => List.empty[String]
+      case Some(jsons) => {
+        jsons flatMap { _.hcursor.downField("path").as[String].toOption }
+      }
     }
-
-    logger.info(s"Inserting scenes for ${date}")
-
-    scenesIo flatMap {
-      (sceneList: List[Scene.Create]) => {
-        sceneList.traverse({ SceneDao.insert(_, user) })
+    logger.info(s"Found ${paths.length} tiles for ${uri}")
+    paths.filter( (path: String) => !(existingSceneNames contains s"S2 ${path}") ) map {
+      (path: String) => {
+        IO.shift(SceneCreationIOContext) *> riot(path, datasourceUUID, user)
       }
     }
   }
 
   def run: Unit = {
     logger.info(s"Importing Sentinel 2 scenes for ${startDate}")
-    val keys = getSentinel2Products(startDate)
-    val scenesIO:ConnectionIO[List[Scene.WithRelated]] =
-      UserDao.getUserById(systemUser) flatMap { (mbUser: Option[User]) =>
-        mbUser match {
-          case Some(u) =>
-            findScenes(startDate, keys, u, sentinel2Config.datasourceUUID)
-          case None =>
-            throw new Exception(s"${systemUser} could not be found -- probably the database is borked")
+    val keys = getSentinel2Products(startDate).par
+    keys.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(16))
+    val sceneNames = getExistingScenes(startDate, sentinel2Config.datasourceUUID)
+    val user = UserDao.getUserById(systemUser).transact(xa).unsafeRunSync.getOrElse(
+      throw new Exception(s"${systemUser} could not be found -- probably the database is borked")
+    )
+    val insertedScenes: ParSeq[Option[Scene.WithRelated]] = keys flatMap {
+      (key: URI) => {
+        insertSceneFromURI(key, sceneNames, sentinel2Config.datasourceUUID, user) map {
+          (sceneIO: IO[Option[Scene.WithRelated]]) => sceneIO.handleErrorWith(
+            (error: Throwable) => {
+              sendError(error)
+              IO.pure(None)
+            }
+          ).unsafeRunSync
         }
       }
-    try {
-      scenesIO.transact(xa).unsafeRunSync
-      logger.info("Scenes imported successfully")
-      stop
-    } catch {
-      case (e: Throwable) => {
-        sendError(e)
-        stop
-        sys.exit(1)
-      }
     }
+    cachedThreadPool.shutdown()
+    stop
   }
 }
 
