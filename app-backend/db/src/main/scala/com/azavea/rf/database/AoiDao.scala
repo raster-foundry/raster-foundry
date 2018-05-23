@@ -70,12 +70,8 @@ object AoiDao extends Dao[AOI] {
     aoiCreate
   }
 
-  def listAOIs(projectId: UUID, user: User, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] = {
-    val whereClause = Fragments.whereAndOpt(fr"project_id = ${projectId}".some)
-    val selectQuery = query.selectF ++ whereClause
-    val countQuery = query.countF ++ whereClause
-    query.page(page, selectQuery, countQuery)
-  }
+  def listAOIs(projectId: UUID, user: User, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] =
+    query.filter(fr"project_id = ${projectId}").page(page)
 
   def deleteAOI(id: UUID, user: User): ConnectionIO[Int]= {
     (
