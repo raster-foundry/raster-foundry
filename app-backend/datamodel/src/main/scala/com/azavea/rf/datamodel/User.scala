@@ -167,7 +167,8 @@ object User {
         name,
         picture,
         false, //isSuperuser
-        true //isActive
+        true, //isActive
+        UserVisibility.Private
       )
     }
   }
