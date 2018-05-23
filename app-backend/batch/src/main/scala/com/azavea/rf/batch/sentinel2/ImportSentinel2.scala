@@ -28,8 +28,10 @@ import doobie.{ConnectionIO, Fragment, Fragments}
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 
+import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.immutable.ParSeq
 import scala.concurrent.ExecutionContext
+import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.{Failure, Success, Try}
 
 case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))(implicit val xa: Transactor[IO]) extends Job {
@@ -37,7 +39,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
   // To resolve an ambiguous implicit
   import doobie.free.connection.AsyncConnectionIO
   import ImportSentinel2._
-  val cachedThreadPool = Executors.newFixedThreadPool(30)
+  val cachedThreadPool = Executors.newFixedThreadPool(5)
   val SceneCreationIOContext = ExecutionContext.fromExecutor(cachedThreadPool)
 
   val name = ImportSentinel2.name
@@ -220,6 +222,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
   def run: Unit = {
     logger.info(s"Importing Sentinel 2 scenes for ${startDate}")
     val keys = getSentinel2Products(startDate).par
+    keys.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(16))
     val sceneNames = getExistingScenes(startDate, sentinel2Config.datasourceUUID)
     val user = UserDao.getUserById(systemUser).transact(xa).unsafeRunSync.getOrElse(
       throw new Exception(s"${systemUser} could not be found -- probably the database is borked")
