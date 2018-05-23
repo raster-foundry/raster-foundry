@@ -59,5 +59,8 @@ trait EnumMeta {
 
   implicit val actionTypeMeta: Meta[ActionType] =
     pgEnumString("action_type", ActionType.fromString, _.repr)
+
+  implicit val userVisibilityMeta: Meta[UserVisibility] =
+    pgEnumString("user_visibility", UserVisibility.fromString, _.repr)
 }
 

@@ -12,11 +12,19 @@ import java.util.UUID
 
 trait PropTestHelpers {
 
-  def insertUserOrgPlatform(user: User.Create, org: Organization.Create, platform: Platform):
+  def insertUserOrgPlatform(user: User.Create, org: Organization.Create, platform: Platform, doUserGroupRole: Boolean = true):
       ConnectionIO[(User, Organization, Platform)] = for {
       dbPlatform <- PlatformDao.create(platform)
       orgAndUser <- insertUserAndOrg(user, org.copy(platformId=dbPlatform.id), false)
       (dbOrg, dbUser) = orgAndUser
+      _ <- if (doUserGroupRole) UserGroupRoleDao.create(
+        UserGroupRole.Create(
+          dbUser.id,
+          GroupType.Platform,
+          dbPlatform.id,
+          GroupRole.Member
+        ).toUserGroupRole(dbUser)
+      ) else ().pure[ConnectionIO]
     } yield { (dbUser, dbOrg, dbPlatform) }
 
   def insertUserAndOrg(user: User.Create, org: Organization.Create, doUserGroupRole: Boolean = true):
