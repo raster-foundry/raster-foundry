@@ -40,7 +40,6 @@ trait UserRoutes extends Authentication
 
   val userRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
-      get { listUsers } ~
       post { createUser }
     } ~
     pathPrefix("me") {
@@ -62,14 +61,6 @@ trait UserRoutes extends Authentication
       pathEndOrSingleSlash {
         get { getUserByEncodedAuthId(authIdEncoded) } ~
         put { updateUserByEncodedAuthId(authIdEncoded) }
-      }
-    }
-  }
-
-  def listUsers: Route = authenticateRootMember { user =>
-    withPagination { page =>
-      complete {
-        UserDao.query.page(page).transact(xa).unsafeToFuture
       }
     }
   }
