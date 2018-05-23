@@ -23,7 +23,7 @@ trait PropTestHelpers {
           GroupType.Platform,
           dbPlatform.id,
           GroupRole.Member
-        )
+        ).toUserGroupRole(dbUser)
       ) else ().pure[ConnectionIO]
     } yield { (dbUser, dbOrg, dbPlatform) }
 
