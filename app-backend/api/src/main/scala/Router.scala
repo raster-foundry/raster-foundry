@@ -85,9 +85,6 @@ trait Router extends HealthCheckRoutes
       pathPrefix("scenes") {
         sceneRoutes
       } ~
-      pathPrefix("thumbnails") {
-        thumbnailRoutes
-      } ~
       pathPrefix("tokens") {
         tokenRoutes
       } ~
