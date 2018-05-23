@@ -229,6 +229,11 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
           page: PageRequest
         ) => {
           val usersInPlatformIO = for {
+            // TODO: this could technically be cleaned up by at least starting with the
+            // insertUserOrgPlatform and insertUserOrg helpers in PropTestHelpers, but we're
+            // a bit under the gun. Future reader from the lands beyond June 2018, if you
+            // find this, please consider opening an issue for improving test readability
+
             // Create necessary groups
             dbPlatform <- PlatformDao.create(platform)
             dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization)
