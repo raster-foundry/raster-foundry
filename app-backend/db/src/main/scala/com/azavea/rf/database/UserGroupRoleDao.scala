@@ -215,4 +215,10 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       "group_role"
     ).compile.toList
   }
+
+  def deactivateByGroup(groupType: GroupType, groupId: UUID) = {
+    (fr"UPDATE" ++ tableF ++ fr"""SET
+        is_active = false
+        """ ++ Fragments.whereAnd(fr"group_type = ${groupType}", fr"group_id = ${groupId}")).update.run
+  }
 }

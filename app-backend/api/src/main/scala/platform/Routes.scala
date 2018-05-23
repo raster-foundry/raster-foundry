@@ -386,13 +386,13 @@ trait PlatformRoutes extends Authentication
     }
   }
 
-  def listTeams(platformId: UUID, orgId: UUID): Route = authenticate { user =>
+  def listTeams(platformId: UUID, organizationId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
+      OrganizationDao.userIsMember(user, organizationId).transact(xa).unsafeToFuture
     } {
       withPagination { page =>
         complete {
-          TeamDao.query.filter(fr"organization_id = ${orgId}").page(page).transact(xa).unsafeToFuture
+          TeamDao.listOrgTeams(organizationId, page).transact(xa).unsafeToFuture
         }
       }
     }
@@ -442,7 +442,7 @@ trait PlatformRoutes extends Authentication
       TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
     } {
       completeWithOneOrFail {
-        ???
+        TeamDao.deactivate(teamId).transact(xa).unsafeToFuture
       }
     }
   }
