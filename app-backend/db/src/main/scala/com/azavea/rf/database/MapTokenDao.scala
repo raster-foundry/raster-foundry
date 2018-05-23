@@ -57,7 +57,7 @@ object MapTokenDao extends Dao[MapToken] {
          owner = ${mapToken.owner},
          name = ${mapToken.name},
          project_id = ${mapToken.project},
-         toolrun_id = ${mapToken.project}
+         toolrun_id = ${mapToken.toolRun}
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
