@@ -21,6 +21,7 @@ lazy val commonSettings = Seq(
     "-language:postfixOps",
     "-language:existentials",
     "-language:experimental.macros",
+    "-Xmax-classfile-name", "100",
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth", "100"
   ),
