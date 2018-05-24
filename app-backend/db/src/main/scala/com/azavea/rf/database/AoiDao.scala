@@ -78,5 +78,13 @@ object AoiDao extends Dao[AOI] {
       fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(Some(fr"id = ${id}"))
     ).update.run
   }
+
+  def authorize(aoiId: UUID, user: User, actionType: ActionType): ConnectionIO[Boolean] = for {
+    aoiO <- AoiDao.query.filter(aoiId).selectOption
+    projectAuthed <- aoiO map { _.projectId } match {
+      case Some(projectId) => ProjectDao.query.authorized(user, ObjectType.Project, projectId, actionType)
+      case _ => false.pure[ConnectionIO]
+    }
+  } yield { projectAuthed }
 }
 
