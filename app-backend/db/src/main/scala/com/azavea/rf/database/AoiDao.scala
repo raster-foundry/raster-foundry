@@ -24,7 +24,7 @@ object AoiDao extends Dao[AOI] {
   val selectF =
     sql"""
       SELECT
-        id, created_at, modified_at, organization_id,
+        id, created_at, modified_at,
         created_by, modified_by, owner, area, filters, is_active, start_time,
         approval_required, project_id
       FROM
@@ -54,7 +54,7 @@ object AoiDao extends Dao[AOI] {
     val ownerId = Ownership.checkOwner(user, Some(aoi.owner))
 
     val aoiCreate: ConnectionIO[AOI] = (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, modified_at, organization_id,
+        (id, created_at, modified_at,
         created_by, modified_by, owner, area, filters, is_active,
         approval_required, start_time, project_id)
       VALUES
@@ -62,7 +62,7 @@ object AoiDao extends Dao[AOI] {
         ${user.id}, ${user.id}, ${ownerId}, ${aoi.area}, ${aoi.filters}, ${aoi.isActive},
         ${aoi.approvalRequired}, ${aoi.startTime}, ${aoi.projectId})
     """).update.withUniqueGeneratedKeys[AOI](
-      "id", "created_at", "modified_at", "organization_id",
+      "id", "created_at", "modified_at",
       "created_by", "modified_by", "owner", "area", "filters", "is_active",
       "start_time", "approval_required", "project_id"
     )
