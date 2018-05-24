@@ -69,7 +69,7 @@ trait AoiRoutes extends Authentication
     } {
       rejectEmptyResponse {
         complete {
-          AoiDao.query.filter(user).filter(id).selectOption.transact(xa).unsafeToFuture
+          AoiDao.query.filter(id).selectOption.transact(xa).unsafeToFuture
         }
       }
     }

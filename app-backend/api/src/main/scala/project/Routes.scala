@@ -357,7 +357,7 @@ trait ProjectRoutes extends Authentication
     } {
       (withPagination & annotationQueryParams) { (page: PageRequest, queryParams: AnnotationQueryParameters) =>
         complete {
-          AnnotationDao.query.filter(fr"project_id=$projectId").filter(queryParams).filter(user).page(page).transact(xa).unsafeToFuture
+          AnnotationDao.query.filter(fr"project_id=$projectId").filter(queryParams).page(page).transact(xa).unsafeToFuture
             .map { p => {
               fromPaginatedResponseToGeoJson[Annotation, Annotation.GeoJSON](p)
             }
@@ -414,7 +414,7 @@ trait ProjectRoutes extends Authentication
     } {
       rejectEmptyResponse {
         complete {
-          AnnotationDao.query.filter(user).filter(annotationId).selectOption.transact(xa).unsafeToFuture.map {
+          AnnotationDao.query.filter(annotationId).selectOption.transact(xa).unsafeToFuture.map {
             _ map { _.toGeoJSONFeature }
           }
         }
