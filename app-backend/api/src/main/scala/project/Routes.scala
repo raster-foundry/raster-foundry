@@ -481,7 +481,7 @@ trait ProjectRoutes extends Authentication
         .transact(xa).unsafeToFuture
     } {
       entity(as[AOI.Create]) { aoi =>
-        onSuccess(AoiDao.createAOI(aoi.toAOI(user), projectId, user: User).transact(xa).unsafeToFuture()) { a =>
+        onSuccess(AoiDao.createAOI(aoi.toAOI(projectId, user), user: User).transact(xa).unsafeToFuture()) { a =>
           complete(StatusCodes.Created, a)
         }
       }
