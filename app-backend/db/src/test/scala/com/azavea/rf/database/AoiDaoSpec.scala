@@ -147,5 +147,41 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
     }
   }
 
+  test("list authorized AOIs") {
+    check {
+      forAll {
+        (user1: User.Create, user2: User.Create,
+         project1: Project.Create, aois1: List[AOI.Create],
+         project2: Project.Create, aois2: List[AOI.Create],
+         page: PageRequest) => {
+          val aoisInsertAndListIO = for {
+            dbUser1 <- UserDao.create(user1)
+            dbUser2 <- UserDao.create(user2)
+            dbProject1 <- ProjectDao.insertProject(fixupProjectCreate(dbUser1, project1), dbUser1)
+            dbProject2 <- ProjectDao.insertProject(fixupProjectCreate(dbUser2, project2), dbUser2)
+            dbAois1 <- aois1 traverse {
+              (aoi: AOI.Create) => {
+                AoiDao.createAOI(fixupAoiCreate(dbUser1, dbProject1, aoi), dbUser1)
+              }
+            }
+            _ <- aois2 traverse {
+              (aoi: AOI.Create) => {
+                AoiDao.createAOI(fixupAoiCreate(dbUser2, dbProject2, aoi), dbUser2)
+              }
+            }
+            listedAois <- AoiDao.listAuthorizedAois(dbUser1, AoiQueryParameters(), page)
+          } yield (dbAois1, listedAois)
+          val (insertedAois, listedAois) = aoisInsertAndListIO.transact(xa).unsafeRunSync
+          val insertedAoiAreaSet = insertedAois map { _.area } toSet
+          val listedAoisAreaSet = listedAois.results map { _.area } toSet
+
+          assert(listedAoisAreaSet.intersect(insertedAoiAreaSet) == listedAoisAreaSet,
+                 "Listed AOI areas are a strict subset of inserted AOI areas")
+          true
+        }
+      }
+    }
+  }
+
 }
 

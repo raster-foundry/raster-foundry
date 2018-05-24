@@ -44,21 +44,7 @@ trait AoiRoutes extends Authentication
   def listAOIs: Route = authenticate { user =>
     (withPagination & aoiQueryParameters) { (page, aoiQueryParams) =>
       complete {
-        val authedProjectsIO = ProjectDao.query.authorize(user, ObjectType.Project, ActionType.View).list
-        val aoisIO = for {
-          authedProjects <- authedProjectsIO
-          authedProjectIdsF = (authedProjects map { _.id }).toNel map {
-            Fragments.in(fr"project_id", _)
-          }
-          authFilterF = Fragments.orOpt(authedProjectIdsF, Some(fr"owner = ${user.id}"))
-          aois <- {
-            AoiDao.query
-              .filter(aoiQueryParams)
-              .filter(authFilterF)
-              .page(page)
-          }
-        } yield { aois }
-        aoisIO.transact(xa).unsafeToFuture
+        AoiDao.listAuthorizedAois(user, aoiQueryParams, page).transact(xa).unsafeToFuture
       }
     }
   }

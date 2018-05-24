@@ -12,6 +12,8 @@ import io.circe._
 import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
 
+import com.lonelyplanet.akka.http.extensions.PageRequest
+
 import scala.concurrent.Future
 import java.sql.Timestamp
 import java.util.{Date, UUID}
@@ -72,6 +74,23 @@ object AoiDao extends Dao[AOI] {
 
   def listAOIs(projectId: UUID, user: User, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] =
     query.filter(fr"project_id = ${projectId}").page(page)
+
+  def listAuthorizedAois(user: User, aoiQueryParams: AoiQueryParameters, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] = {
+    val authedProjectsIO = ProjectDao.query.authorize(user, ObjectType.Project, ActionType.View).list
+    for {
+      authedProjects <- authedProjectsIO
+      authedProjectIdsF = (authedProjects map { _.id }).toNel map {
+        Fragments.in(fr"project_id", _)
+      }
+      authFilterF = Fragments.orOpt(authedProjectIdsF, Some(fr"owner = ${user.id}"))
+      aois <- {
+        AoiDao.query
+          .filter(aoiQueryParams)
+          .filter(authFilterF)
+          .page(page)
+      }
+    } yield { aois }
+  }
 
   def deleteAOI(id: UUID, user: User): ConnectionIO[Int]= {
     (
