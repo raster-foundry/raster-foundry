@@ -329,9 +329,9 @@ object Generators extends ArbitraryInstances {
                  datasource, sceneMetadata, name, owner, tileFootprint, dataFootprint,
                  metadataFiles, images, thumbnails, ingestLocation, filterFields, statusFields,
                  sceneType)
+  }
 
   private def aoiCreateGen: Gen[AOI.Create] = for {
-    organizationId <- uuidGen
     area <- projectedMultiPolygonGen3857
     filters <- Gen.const(().asJson) // maybe this should be CombinedSceneQueryParams as json
     owner <- Gen.const(None)
@@ -339,7 +339,7 @@ object Generators extends ArbitraryInstances {
     startTime <- timestampIn2016Gen
     approvalRequired <- arbitrary[Boolean]
   } yield {
-    AOI.Create(organizationId, area, filters, owner, isActive, startTime, approvalRequired)
+    AOI.Create(area, filters, owner, isActive, startTime, approvalRequired)
   }
 
   private def aoiGen: Gen[AOI] = for {
@@ -353,7 +353,7 @@ object Generators extends ArbitraryInstances {
     approvalRequired <- arbitrary[Boolean]
     projectId <- uuidGen
   } yield {
-    AOI(id, timeField, timeField, organizationId, userField, userField, userField, area,
+    AOI(id, timeField, timeField, userField, userField, userField, area,
         filters, isActive, startTime, approvalRequired, projectId)
   }
 

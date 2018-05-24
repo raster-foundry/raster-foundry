@@ -58,7 +58,7 @@ object AOI {
       val ownerId = checkOwner(user, this.owner)
 
       AOI(
-        UUID.randomUUID, now, now, organizationId,
+        UUID.randomUUID, now, now,
         user.id, user.id, ownerId, area, filters, isActive,
         startTime, approvalRequired, projectId
       )

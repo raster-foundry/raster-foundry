@@ -58,7 +58,7 @@ object AoiDao extends Dao[AOI] {
         created_by, modified_by, owner, area, filters, is_active,
         approval_required, start_time, project_id)
       VALUES
-        (${aoi.id}, NOW(), NOW(), ${user.organizationId},
+        (${aoi.id}, NOW(), NOW(),
         ${user.id}, ${user.id}, ${ownerId}, ${aoi.area}, ${aoi.filters}, ${aoi.isActive},
         ${aoi.approvalRequired}, ${aoi.startTime}, ${aoi.projectId})
     """).update.withUniqueGeneratedKeys[AOI](
