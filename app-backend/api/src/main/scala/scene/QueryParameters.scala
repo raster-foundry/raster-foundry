@@ -6,12 +6,10 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 
 import com.azavea.rf.datamodel._
-import com.azavea.rf.api.image.ImageQueryParametersDirective
 import com.azavea.rf.api.utils.queryparams._
 
 ///** Trait to abstract out query parameters for scenes */
-trait SceneQueryParameterDirective extends QueryParametersCommon
-    with ImageQueryParametersDirective {
+trait SceneQueryParameterDirective extends QueryParametersCommon {
 
   val sceneSpecificQueryParams = parameters((
     'maxCloudCover.as[Float].?,

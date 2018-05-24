@@ -8,7 +8,6 @@ import com.azavea.rf.api.exports.ExportRoutes
 import com.azavea.rf.api.featureflags.FeatureFlagRoutes
 import com.azavea.rf.api.feed.FeedRoutes
 import com.azavea.rf.api.healthcheck._
-import com.azavea.rf.api.image.ImageRoutes
 import com.azavea.rf.api.maptoken.MapTokenRoutes
 import com.azavea.rf.api.organization.OrganizationRoutes
 import com.azavea.rf.api.platform.PlatformRoutes
