@@ -54,19 +54,21 @@ trait ToolRunRoutes extends Authentication
   def listToolRuns: Route = authenticate { user =>
     (withPagination & toolRunQueryParameters) { (page, runParams) =>
       complete {
-        ToolRunDao.query.filter(runParams).ownerVisibilityFilter(user).page(page).transact(xa).unsafeToFuture
+        ToolRunDao.query
+          .filter(runParams)
+          .authorize(user, ObjectType.Analysis, ActionType.View)
+          .page(page)
+          .transact(xa).unsafeToFuture
       }
     }
   }
 
   def createToolRun: Route = authenticate { user =>
     entity(as[ToolRun.Create]) { newRun =>
-      authorize(user.isInRootOrSameOrganizationAs(newRun)) {
-        onSuccess(ToolRunDao.insertToolRun(newRun, user).transact(xa).unsafeToFuture) { toolRun =>
-          handleExceptions(interpreterExceptionHandler) {
-            complete {
-              (StatusCodes.Created, toolRun)
-            }
+      onSuccess(ToolRunDao.insertToolRun(newRun, user).transact(xa).unsafeToFuture) { toolRun =>
+        handleExceptions(interpreterExceptionHandler) {
+          complete {
+            (StatusCodes.Created, toolRun)
           }
         }
       }
@@ -74,14 +76,24 @@ trait ToolRunRoutes extends Authentication
   }
 
   def getToolRun(runId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete(ToolRunDao.query.filter(fr"id = ${runId}").selectOption.transact(xa).unsafeToFuture)
+    authorizeAsync {
+      ToolRunDao.query
+        .authorized(user, ObjectType.Analysis, runId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete(ToolRunDao.query.filter(runId).selectOption.transact(xa).unsafeToFuture)
+      }
     }
   }
 
   def updateToolRun(runId: UUID): Route = authenticate { user =>
-    entity(as[ToolRun]) { updatedRun =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedRun)) {
+    authorizeAsync {
+      ToolRunDao.query
+        .authorized(user, ObjectType.Analysis, runId, ActionType.Edit)
+        .transact(xa).unsafeToFuture
+    } {
+      entity(as[ToolRun]) { updatedRun =>
         onSuccess(ToolRunDao.updateToolRun(updatedRun, runId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
@@ -90,8 +102,14 @@ trait ToolRunRoutes extends Authentication
   }
 
   def deleteToolRun(runId: UUID): Route = authenticate { user =>
-    onSuccess(ToolRunDao.query.filter(fr"id = ${runId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
+    authorizeAsync {
+      ToolRunDao.query
+        .authorized(user, ObjectType.Analysis, runId, ActionType.Delete)
+        .transact(xa).unsafeToFuture
+    } {
+      onSuccess(ToolRunDao.query.filter(runId).delete.transact(xa).unsafeToFuture) {
+        completeSingleOrNotFound
+      }
     }
   }
 }

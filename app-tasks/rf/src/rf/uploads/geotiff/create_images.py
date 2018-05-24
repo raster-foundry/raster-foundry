@@ -7,13 +7,12 @@ from .io import get_geotiff_size_bytes, get_geotiff_resolution
 from .create_bands import create_geotiff_bands
 
 
-def create_geotiff_image(organizationId, tif_path, sourceuri, filename=None,
+def create_geotiff_image(tif_path, sourceuri, filename=None,
                          visibility=Visibility.PRIVATE, imageMetadata={}, scene=None,
                          owner=None, band_create_function=create_geotiff_bands):
     """Create an Image object from a GeoTIFF.
 
     Args:
-        orgnizationId (str): UUID of organization that this image belongs to
         tif_path (str): Local path to tif file
         sourceuri (str): remote source of image
         visibility (str): accessibility level for object
@@ -24,7 +23,6 @@ def create_geotiff_image(organizationId, tif_path, sourceuri, filename=None,
     """
     filename = filename if filename else os.path.basename(tif_path)
     return Image(
-        organizationId,
         get_geotiff_size_bytes(tif_path),
         visibility,
         filename,

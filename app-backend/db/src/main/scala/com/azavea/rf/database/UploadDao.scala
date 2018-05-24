@@ -20,35 +20,35 @@ object UploadDao extends Dao[Upload] {
   val selectF = sql"""
     SELECT
        id, created_at, created_by, modified_at, modified_by,
-       owner, organization_id, upload_status, file_type, upload_type,
+       owner, upload_status, file_type, upload_type,
        files, datasource, metadata, visibility, project_id,
        source
     FROM
   """ ++ tableF
 
-  def getUploadById(uploadId: UUID, user: User): ConnectionIO[Option[Upload]] =
-    query.filter(uploadId).ownerFilter(user).selectOption
+  def getUploadById(uploadId: UUID): ConnectionIO[Option[Upload]] =
+    query.filter(uploadId).selectOption
 
-  def unsafeGetUploadById(uploadId: UUID, user: User): ConnectionIO[Upload] =
-    query.filter(uploadId).ownerFilter(user).select
+  def unsafeGetUploadById(uploadId: UUID): ConnectionIO[Upload] =
+    query.filter(uploadId).select
 
   def insert(newUpload: Upload.Create, user: User): ConnectionIO[Upload] = {
     val upload = newUpload.toUpload(user)
     sql"""
        INSERT INTO uploads
          (id, created_at, created_by, modified_at, modified_by,
-          owner, organization_id, upload_status, file_type, upload_type,
+          owner, upload_status, file_type, upload_type,
           files, datasource, metadata, visibility, project_id,
           source)
        VALUES (
          ${upload.id}, ${upload.createdAt}, ${upload.createdBy}, ${upload.modifiedAt}, ${upload.modifiedBy},
-         ${upload.owner}, ${upload.organizationId}, ${upload.uploadStatus}, ${upload.fileType}, ${upload.uploadType},
+         ${upload.owner}, ${upload.uploadStatus}, ${upload.fileType}, ${upload.uploadType},
          ${upload.files}, ${upload.datasource}, ${upload.metadata}, ${upload.visibility}, ${upload.projectId},
          ${upload.source}
        )
       """.update.withUniqueGeneratedKeys[Upload](
       "id", "created_at", "created_by", "modified_at", "modified_by",
-      "owner", "organization_id", "upload_status", "file_type", "upload_type",
+      "owner", "upload_status", "file_type", "upload_type",
       "files", "datasource", "metadata", "visibility", "project_id",
       "source"
     )
@@ -70,7 +70,7 @@ object UploadDao extends Dao[Upload] {
           visibility = ${upload.visibility},
           project_id = ${upload.projectId},
           source = ${upload.source}
-     """ ++ Fragments.whereAndOpt(ownerEditFilter(user), Some(idFilter))).update.run
+     """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 }
 

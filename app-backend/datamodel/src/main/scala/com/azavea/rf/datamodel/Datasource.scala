@@ -14,7 +14,6 @@ case class Datasource(
   modifiedAt: java.sql.Timestamp,
   modifiedBy: String,
   owner: String,
-  organizationId: UUID,
   name: String,
   visibility: Visibility,
   composites: Json,
@@ -31,7 +30,6 @@ object Datasource {
 
   @JsonCodec
   case class Create (
-    organizationId: UUID,
     name: String,
     visibility: Visibility,
     owner: Option[String],
@@ -53,7 +51,6 @@ object Datasource {
         now, // modifiedAt
         user.id, // modifiedBy
         ownerId, // owner
-        this.organizationId,
         this.name,
         this.visibility,
         this.composites,

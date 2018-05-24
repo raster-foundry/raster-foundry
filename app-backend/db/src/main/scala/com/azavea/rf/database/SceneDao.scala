@@ -31,7 +31,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
   val selectF = sql"""
     SELECT
       id, created_at, created_by, modified_at, modified_by, owner,
-      organization_id, ingest_size_bytes, visibility, tags,
+      ingest_size_bytes, visibility, tags,
       datasource, scene_metadata, name, tile_footprint,
       data_footprint, metadata_files, ingest_location, cloud_cover,
       acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
@@ -40,10 +40,10 @@ object SceneDao extends Dao[Scene] with LazyLogging {
   """ ++ tableF
 
   def getSceneById(id: UUID, user: User): ConnectionIO[Option[Scene]] =
-    query.filter(id).ownerFilter(user).selectOption
+    query.filter(id).selectOption
 
   def unsafeGetSceneById(id: UUID, user: User): ConnectionIO[Scene] =
-    query.filter(id).ownerFilter(user).select
+    query.filter(id).select
 
   def insert(sceneCreate: Scene.Create, user: User): ConnectionIO[Scene.WithRelated] = {
     val scene = sceneCreate.toScene(user)
@@ -55,14 +55,14 @@ object SceneDao extends Dao[Scene] with LazyLogging {
 
     val sceneInsertId = (fr"INSERT INTO" ++ tableF ++ fr"""(
          id, created_at, created_by, modified_at, modified_by, owner,
-         organization_id, ingest_size_bytes, visibility, tags,
+         ingest_size_bytes, visibility, tags,
          datasource, scene_metadata, name, tile_footprint,
          data_footprint, metadata_files, ingest_location, cloud_cover,
          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
          boundary_status, ingest_status, scene_type
       )""" ++ fr"""VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
-        ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
+        ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
         ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
         ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
@@ -97,14 +97,14 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     val sceneInsert = (Fragment.const(s"""
       INSERT INTO ${tableName} (
          id, created_at, created_by, modified_at, modified_by, owner,
-         organization_id, ingest_size_bytes, visibility, tags,
+         ingest_size_bytes, visibility, tags,
          datasource, scene_metadata, name, tile_footprint,
          data_footprint, metadata_files, ingest_location, cloud_cover,
          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
          boundary_status, ingest_status, scene_type
       )""") ++ fr"""VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
-        ${scene.organizationId}, ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
+        ${scene.ingestSizeBytes}, ${scene.visibility}, ${scene.tags},
          ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
         ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
@@ -134,7 +134,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     val now = new Date()
 
     val lastModifiedIO: ConnectionIO[Timestamp] =
-      (fr"select modified_at from scenes" ++ Fragments.whereAndOpt(ownerEditFilter(user), idFilter))
+      (fr"select modified_at from scenes" ++ Fragments.whereAndOpt(idFilter))
         .query[Timestamp]
         .unique
     val updateIO: ConnectionIO[Int] = (sql"""
@@ -157,7 +157,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       thumbnail_status = ${scene.statusFields.thumbnailStatus},
       boundary_status = ${scene.statusFields.boundaryStatus},
       ingest_status = ${scene.statusFields.ingestStatus}
-    """ ++ Fragments.whereAndOpt(ownerEditFilter(user), idFilter))
+    """ ++ Fragments.whereAndOpt(idFilter))
       .update
       .run
 

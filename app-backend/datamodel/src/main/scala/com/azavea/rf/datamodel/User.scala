@@ -60,22 +60,27 @@ object Credential {
 @JsonCodec
 case class User(
   id: String,
-  organizationId: UUID,
   role: UserRole,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
   dropboxCredential: Credential,
   planetCredential: Credential,
-  emailNotifications: Boolean
+  emailNotifications: Boolean,
+  email: String,
+  name: String,
+  profileImageUri: String,
+  isSuperuser: Boolean,
+  isActive: Boolean,
+  visibility: UserVisibility
 ) {
   private val rootOrganizationId = UUID.fromString("9e2bef18-3f46-426b-a5bd-9913ee1ff840")
 
   def isInRootOrganization: Boolean = {
-    this.organizationId == rootOrganizationId
+    ???
   }
 
   def isInRootOrSameOrganizationAs(target: { def organizationId: UUID }): Boolean = {
-    this.isInRootOrganization || this.organizationId == target.organizationId
+    ???
   }
 
   def isInRootOrOwner(target: { def owner: String }): Boolean = {
@@ -95,14 +100,76 @@ object User {
   def create = Create.apply _
 
   @JsonCodec
+  case class WithGroupRole (
+    id: String,
+    role: UserRole,
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    dropboxCredential: Credential,
+    planetCredential: Credential,
+    emailNotifications: Boolean,
+    email: String,
+    name: String,
+    profileImageUri: String,
+    isSuperuser: Boolean,
+    isActive: Boolean,
+    visibility: UserVisibility,
+    groupRole: GroupRole
+  )
+
+  @JsonCodec
   case class Create(
     id: String,
-    organizationId: UUID,
-    role: UserRole = Viewer
+    role: UserRole = Viewer,
+    email: String = "",
+    name: String = "",
+    profileImageUri: String = ""
   ) {
     def toUser: User = {
       val now = new Timestamp((new java.util.Date()).getTime())
-      User(id, organizationId, role, now, now, Credential(None), Credential(None), false)
+      User(
+        id,
+        role,
+        now,
+        now,
+        Credential(None),
+        Credential(None),
+        false,
+        email,
+        name,
+        profileImageUri,
+        false, //isSuperuser
+        true, //isActive
+        UserVisibility.Private
+      )
+    }
+  }
+
+  case class JwtFields(
+    id: String,
+    email: String,
+    name: String,
+    picture: String,
+    platformId: UUID,
+    organizationId: UUID
+  ) {
+    def toUser: User = {
+      val now = new Timestamp((new java.util.Date()).getTime())
+      User(
+        id,
+        Viewer,
+        now,
+        now,
+        Credential(None),
+        Credential(None),
+        false,
+        email,
+        name,
+        picture,
+        false, //isSuperuser
+        true, //isActive
+        UserVisibility.Private
+      )
     }
   }
 }

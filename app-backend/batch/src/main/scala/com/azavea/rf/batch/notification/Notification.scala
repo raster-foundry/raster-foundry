@@ -37,7 +37,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
 
   def getSceneOwner(sceneId: UUID): ConnectionIO[String] = {
     for {
-      scene <- SceneDao.query.filter(fr"id = ${sceneId}").select
+      scene <- SceneDao.query.filter(sceneId).select
     } yield scene.owner
   }
 

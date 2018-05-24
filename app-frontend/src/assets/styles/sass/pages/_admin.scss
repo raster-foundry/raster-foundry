@@ -3,6 +3,7 @@
     flex-direction: row;
     padding: 1em;
     background: #eee;
+    align-items: center;
 }
 
 .admin-logo {
@@ -11,9 +12,12 @@
     height: 3em;
 }
 
+.admin-logo-text {
+    margin-left: 0.5em;
+}
+
 .admin-logo-name {
     font-size: 3rem;
-    margin-left: 0.5em;
 }
 
 .admin-tabs {
@@ -107,6 +111,17 @@
 
 }
 
+.admin-select-table {
+    max-width: 40em;
+    margin: 3em auto;
+    .role {
+        width: 10em;
+    }
+    .action {
+        width: 10em;
+    }
+}
+
 .admin-org-user-table {
     .username {
         display: flex;
@@ -135,7 +150,10 @@
     }
 
     .users {
-        width: 10em;
+        width: 20em;
+        * {
+            display: inline-block;
+        }
     }
 
     .actions {

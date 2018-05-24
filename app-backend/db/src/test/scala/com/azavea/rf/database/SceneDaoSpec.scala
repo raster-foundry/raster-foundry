@@ -26,7 +26,7 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             orgAndUser <- insertUserAndOrg(user, org)
             (dbOrg, dbUser) = orgAndUser
             datasource <- unsafeGetRandomDatasource
-            sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, dbOrg, datasource, scene), dbUser)
+            sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, datasource, scene), dbUser)
           } yield sceneInsert
           val insertedScene = sceneInsertIO.transact(xa).unsafeRunSync
 
@@ -53,7 +53,7 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             orgAndUser <- insertUserAndOrg(user, org)
             (dbOrg, dbUser) = orgAndUser
             datasource <- unsafeGetRandomDatasource
-            sceneInsert <- SceneDao.insertMaybe(fixupSceneCreate(dbUser, dbOrg, datasource, scene), dbUser)
+            sceneInsert <- SceneDao.insertMaybe(fixupSceneCreate(dbUser, datasource, scene), dbUser)
           } yield sceneInsert
           val insertedSceneO = sceneInsertIO.transact(xa).unsafeRunSync
           // our expectation is that this should succeed so this should be safe -- if it fails that indicates
@@ -83,13 +83,13 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             orgAndUser <- insertUserAndOrg(user, org)
             (dbOrg, dbUser) = orgAndUser
             datasource <- unsafeGetRandomDatasource
-            sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, dbOrg, datasource, insertScene), dbUser)
+            sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, datasource, insertScene), dbUser)
           } yield (sceneInsert, dbUser, dbOrg, datasource)
 
           val sceneUpdateWithSceneIO = sceneInsertWithUserOrgDatasourceIO flatMap {
             case (dbScene: Scene.WithRelated, dbUser: User, dbOrg: Organization, dbDatasource: Datasource) => {
               val sceneId = dbScene.id
-              val fixedUpUpdateScene = fixupSceneCreate(dbUser, dbOrg, dbDatasource, updateScene)
+              val fixedUpUpdateScene = fixupSceneCreate(dbUser, dbDatasource, updateScene)
                 .toScene(dbUser)
                 .copy(id = dbScene.id)
               SceneDao.update(fixedUpUpdateScene, sceneId, dbUser) flatMap {

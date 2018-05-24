@@ -54,27 +54,31 @@ trait MapTokenRoutes extends Authentication
 
   def createMapToken: Route = authenticate { user =>
     entity(as[MapToken.Create]) { newMapToken =>
-      authorize(user.isInRootOrSameOrganizationAs(newMapToken)) {
-        onSuccess(MapTokenDao.insert(newMapToken, user).transact(xa).unsafeToFuture) { mapToken =>
-          complete((StatusCodes.Created, mapToken))
-        }
+      onSuccess(MapTokenDao.insert(newMapToken, user).transact(xa).unsafeToFuture) { mapToken =>
+        complete((StatusCodes.Created, mapToken))
       }
     }
   }
 
   def getMapToken(mapTokenId: UUID): Route = authenticate { user =>
-    get {
-      rejectEmptyResponse {
-        complete {
-          MapTokenDao.query.filter(user).filter(mapTokenId).selectOption.transact(xa).unsafeToFuture
+    authorizeAsync {
+      MapTokenDao.query.ownedBy(user, mapTokenId).exists.transact(xa).unsafeToFuture
+    } {
+      get {
+        rejectEmptyResponse {
+          complete {
+            MapTokenDao.query.filter(user).filter(mapTokenId).selectOption.transact(xa).unsafeToFuture
+          }
         }
       }
     }
   }
 
   def updateMapToken(mapTokenId: UUID): Route = authenticate { user =>
-    entity(as[MapToken]) { updatedMapToken =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedMapToken)) {
+    authorizeAsync {
+      MapTokenDao.query.ownedBy(user, mapTokenId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[MapToken]) { updatedMapToken =>
         onSuccess(MapTokenDao.update(updatedMapToken, mapTokenId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
@@ -83,8 +87,12 @@ trait MapTokenRoutes extends Authentication
   }
 
   def deleteMapToken(mapTokenId: UUID): Route = authenticate { user =>
-    onSuccess(MapTokenDao.query.ownerFilter(user).filter(fr"id = ${mapTokenId}").delete.transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
+    authorizeAsync {
+      MapTokenDao.query.ownedBy(user, mapTokenId).exists.transact(xa).unsafeToFuture
+    } {
+      onSuccess(MapTokenDao.query.filter(mapTokenId).delete.transact(xa).unsafeToFuture) {
+        completeSingleOrNotFound
+      }
     }
   }
 }

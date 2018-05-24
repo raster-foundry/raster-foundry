@@ -15,11 +15,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_planet_thumbnail(organization_id, thumbnail_uri, planet_key, scene_id):
+def get_planet_thumbnail(thumbnail_uri, planet_key, scene_id):
     """Download planet thumbnail, push to S3, create RF thumbnail
 
     Args:
-        organization_id (str): organization requiring thumbnail
         thumbnail_uri (str): source thumbnail
         planet_key (str): planet API key for authentication
         scene_id (str): scene to attach thumbnail to
@@ -47,7 +46,6 @@ def get_planet_thumbnail(organization_id, thumbnail_uri, planet_key, scene_id):
     delete_file(local_filepath)
 
     return Thumbnail(
-        organization_id,
         256,
         256,
         'SMALL',
@@ -56,7 +54,7 @@ def get_planet_thumbnail(organization_id, thumbnail_uri, planet_key, scene_id):
     )
 
 
-def create_planet_scene(planet_feature, datasource, organization_id, planet_key,
+def create_planet_scene(planet_feature, datasource, planet_key,
                         ingest_status=IngestStatus.TOBEINGESTED,
                         visibility=Visibility.PRIVATE, tags=[], owner=None, sceneType="AVRO"):
     """Create a Raster Foundry scene from Planet scenes
@@ -65,7 +63,6 @@ def create_planet_scene(planet_feature, datasource, organization_id, planet_key,
         planet_key (str): API auth key for planet API
         planet_feature (dict): json response from planet API client
         datasource (str): UUID of the datasource this scene belongs to
-        organization_id (str): UUID of the organization that owns the scene
         visibility (Visibility): visibility for created scene
         tags (str[]): list of tags to attach to the created scene
         owner (str): user ID of the user who owns the scene
@@ -92,16 +89,14 @@ def create_planet_scene(planet_feature, datasource, organization_id, planet_key,
         'id': str(uuid.uuid4()),
         'thumbnails': None,
         'tileFootprint': Footprint(
-            organization_id, bbox_from_planet_feature(planet_feature)
+            bbox_from_planet_feature(planet_feature)
         ),
         'dataFootprint': Footprint(
-            organization_id,
             [planet_feature['geometry']['coordinates']]
         )
     }
 
     images = [create_geotiff_image(
-        organization_id,
         planet_feature['added_props']['localPath'],
         planet_feature['added_props']['s3Location'],
         scene=scene_kwargs['id'],
@@ -110,7 +105,6 @@ def create_planet_scene(planet_feature, datasource, organization_id, planet_key,
     )]
 
     scene = Scene(
-        organization_id,
         ingestSizeBytes,
         visibility,
         tags,
@@ -128,6 +122,6 @@ def create_planet_scene(planet_feature, datasource, organization_id, planet_key,
     )
 
     thumbnail_url = planet_feature['_links']['thumbnail']
-    scene.thumbnails = [get_planet_thumbnail(organization_id, thumbnail_url, planet_key, scene.id)]
+    scene.thumbnails = [get_planet_thumbnail(thumbnail_url, planet_key, scene.id)]
 
     return scene

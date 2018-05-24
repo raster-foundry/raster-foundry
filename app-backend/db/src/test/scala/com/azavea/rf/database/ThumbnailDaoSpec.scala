@@ -25,7 +25,7 @@ class ThumbnailDaoSpec extends FunSuite with Matchers with Checkers with DBTestC
         (org: Organization.Create, user: User.Create, scene: Scene.Create, thumbnail: Thumbnail) => {
           val thumbnailInsertIO = insertUserOrgScene(user, org, scene) flatMap {
             case (dbOrg: Organization, dbUser: User, dbScene: Scene.WithRelated) => {
-              ThumbnailDao.insert(fixupThumbnail(dbOrg, dbScene, thumbnail))
+              ThumbnailDao.insert(fixupThumbnail(dbScene, thumbnail))
             }
           }
           val insertedThumbnail = thumbnailInsertIO.transact(xa).unsafeRunSync
@@ -45,7 +45,7 @@ class ThumbnailDaoSpec extends FunSuite with Matchers with Checkers with DBTestC
         (org: Organization.Create, user: User.Create, scene: Scene.Create, thumbnails: List[Thumbnail]) => {
           val thumbnailsInsertIO = insertUserOrgScene(user, org, scene) flatMap {
             case (dbOrg: Organization, dbUser: User, dbScene: Scene.WithRelated) => {
-              ThumbnailDao.insertMany(thumbnails map { fixupThumbnail(dbOrg, dbScene, _) })
+              ThumbnailDao.insertMany(thumbnails map { fixupThumbnail(dbScene, _) })
             }
           }
           thumbnailsInsertIO.transact(xa).unsafeRunSync == thumbnails.length
@@ -60,7 +60,7 @@ class ThumbnailDaoSpec extends FunSuite with Matchers with Checkers with DBTestC
         (org: Organization.Create, user: User.Create, scene: Scene.Create, insertThumbnail: Thumbnail, updateThumbnail: Thumbnail) => {
           val thumbnailInsertIO = insertUserOrgScene(user, org, scene) flatMap {
             case (dbOrg: Organization, dbUser: User, dbScene: Scene.WithRelated) => {
-              ThumbnailDao.insert(fixupThumbnail(dbOrg, dbScene, insertThumbnail))
+              ThumbnailDao.insert(fixupThumbnail(dbScene, insertThumbnail))
             }
           }
 
@@ -68,7 +68,6 @@ class ThumbnailDaoSpec extends FunSuite with Matchers with Checkers with DBTestC
             (dbThumbnail: Thumbnail) => {
               val withFks = updateThumbnail.copy(
                 id = dbThumbnail.id,
-                organizationId = dbThumbnail.organizationId,
                 sceneId = dbThumbnail.sceneId
               )
               ThumbnailDao.update(withFks, dbThumbnail.id) flatMap {

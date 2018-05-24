@@ -105,7 +105,6 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
 
     Thumbnail.Identified(
       id = None,
-      organizationId = UUID.fromString(landsat8Config.organization),
       thumbnailSize = ThumbnailSize.Small,
       widthPx = 228,
       heightPx = 233,
@@ -113,7 +112,6 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
       url = smallUrl
     ) :: Thumbnail.Identified(
       id = None,
-      organizationId = UUID.fromString(landsat8Config.organization),
       thumbnailSize = ThumbnailSize.Large,
       widthPx = 1143,
       heightPx = 1168,
@@ -219,7 +217,6 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
         ).map {
         case (resolution, tiffPath, band) =>
           Image.Banded(
-            organizationId = landsat8Config.organizationUUID,
             rawDataBytes = sizeFromPath(tiffPath, productId),
             visibility = Visibility.Public,
             filename = tiffPath,
@@ -235,7 +232,6 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
 
       val scene = Scene.Create(
         id = Some(sceneId),
-        organizationId = landsat8Config.organizationUUID,
         ingestSizeBytes = 0,
         visibility = Visibility.Public,
         tags = tags,
@@ -269,7 +265,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
   def run: Unit = {
     logger.info("Importing scenes...")
 
-    val userQuery = UserDao.query.filter(fr"id = ${systemUser}").select
+    val userQuery = UserDao.unsafeGetUserById(systemUser)
     val insertedScenes = for {
       user <- userQuery
       scenes <- scenesFromCsv(user)

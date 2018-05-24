@@ -1,9 +1,20 @@
 import angular from 'angular';
 
 class OrganizationController {
-    constructor() {
-        //eslint-disable-next-line
-        console.log('Organization Controller');
+    constructor($stateParams, organizationService) {
+        'ngInject';
+        this.$stateParams = $stateParams;
+        this.organizationService = organizationService;
+        this.fetching = true;
+    }
+
+    $onInit() {
+        this.organizationService
+            .getOrganization(this.$stateParams.organizationId)
+            .then((organization) => {
+                this.organization = organization;
+                this.fetching = false;
+            });
     }
 }
 

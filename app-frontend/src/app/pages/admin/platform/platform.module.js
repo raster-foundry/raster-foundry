@@ -1,9 +1,20 @@
 import angular from 'angular';
 
 class PlatformController {
-    constructor() {
-        // eslint-disable-next-line
-        console.log('Platform Controller');
+    constructor($stateParams, platformService) {
+        'ngInject';
+        this.$stateParams = $stateParams;
+        this.platformService = platformService;
+        this.fetching = true;
+    }
+
+    $onInit() {
+        this.platformService
+            .getPlatform(this.$stateParams.platformId)
+            .then((platform) => {
+                this.platform = platform;
+                this.fetching = false;
+            });
     }
 }
 

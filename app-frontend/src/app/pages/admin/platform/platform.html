@@ -1,16 +1,24 @@
 <div class="admin-header">
   <div class="admin-logo">
   </div>
-  <div class="admin-logo-name">
-    Platform Management
+  <div class="admin-logo-text" ng-if="!$ctrl.fetching">
+    <div class="admin-logo-name">
+      {{$ctrl.platform.name}}
+    </div>
+    <div>
+      Platform Management
+    </div>
+  </div>
+  <div class="admin-logo-text" ng-if="$ctrl.fetching">
+    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
   </div>
 </div>
 <div class="admin-tabs">
-  <div class="admin-tab"
-       ui-sref="admin.platform.metrics"
-       ui-sref-active="active">
-    Metrics
-  </div>
+  <!-- <div class="admin-tab" -->
+  <!-- ui-sref="admin.platform.metrics" -->
+  <!-- ui-sref-active="active"> -->
+  <!-- Metrics -->
+  <!-- </div> -->
   <div class="admin-tab"
        ui-sref="admin.platform.users"
        ui-sref-active="active">
