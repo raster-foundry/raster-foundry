@@ -13,6 +13,7 @@ object Version {
   val betterFiles        = "3.4.0"
   val caffeine           = "2.3.5"
   val cats               = "1.0.1"
+  val catsEffect         = "0.10.0"
   val chill              = "0.9.2"
   val circe              = "0.9.1"
   val commonsIO          = "2.5"
