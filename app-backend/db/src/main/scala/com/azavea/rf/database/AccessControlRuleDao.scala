@@ -1,14 +1,7 @@
 package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{
-  AccessControlRule,
-  ActionType,
-  ObjectType,
-  SubjectType,
-  User
-}
-
+import com.azavea.rf.datamodel._
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 import doobie.util.transactor.Transactor

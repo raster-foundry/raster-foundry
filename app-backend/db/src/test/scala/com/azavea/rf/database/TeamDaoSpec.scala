@@ -5,6 +5,7 @@ import java.sql.Timestamp
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.Generators.Implicits._
 import com.azavea.rf.database.Implicits._
+import com.azavea.rf.database._
 import doobie._
 import doobie.implicits._
 import cats._
@@ -151,6 +152,35 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
           }
 
           deleteTeamIO.transact(xa).unsafeRunSync == 1
+        }
+      )
+    }
+  }
+
+  test("Deactivated teams are not listed") {
+    check {
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
+         acc: AccessControlRule.Create, project: Project.Create) => {
+          val createTeamIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            teamInsert <- TeamDao.create(fixupTeam(teamCreate, orgInsert, userInsert))
+            insertedProject <- ProjectDao.insertProject(project, userInsert)
+            acr = acc.toAccessControlRule(userInsert, ObjectType.Project, insertedProject.id)
+                     .copy(subjectType = SubjectType.Team, subjectId = Some(teamInsert.id.toString()))
+            accessControlRule <- AccessControlRuleDao.create(acr)
+            deactivateTeam <- TeamDao.deactivate(teamInsert.id)
+            deactivatedTeams <- TeamDao.query.filter(fr"is_active = false").list
+            deactivatedACRs <- AccessControlRuleDao.query.filter(fr"is_active = false").list
+            activatedTeams <- TeamDao.listOrgTeams(orgInsert.id, PageRequest(0, 30, Map.empty))
+          } yield (deactivatedTeams, deactivatedACRs, activatedTeams)
+          val (deactivatedTeams, deactivatedACRs, activatedTeams) = createTeamIO.transact(xa).unsafeRunSync
+
+          assert(deactivatedTeams.size == 1, "Deactivated team should exist")
+          assert(deactivatedACRs.size == 1, "Deactivated access control rules should exist")
+          assert(activatedTeams.results.size == 0, "No team is active")
+          true
         }
       )
     }
