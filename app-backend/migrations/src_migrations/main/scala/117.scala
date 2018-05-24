@@ -1,8 +1,8 @@
 import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
-object M213 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(213)(List(
+object M117 {
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(117)(List(
     sqlu"""
       CREATE TYPE user_visibility AS ENUM ('PUBLIC', 'PRIVATE');
 

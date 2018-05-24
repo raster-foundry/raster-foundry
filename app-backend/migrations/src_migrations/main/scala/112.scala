@@ -1,8 +1,8 @@
 import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
-object M208 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(208)(List(
+object M112 {
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(112)(List(
     sqlu"""
       ALTER TABLE platforms
         ADD COLUMN is_active BOOLEAN DEFAULT true NOT NULL;

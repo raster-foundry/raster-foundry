@@ -1,8 +1,8 @@
 import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
-object M207 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(207)(List(
+object M111 {
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(111)(List(
     sqlu"""
     CREATE TABLE platforms (
         id UUID PRIMARY KEY NOT NULL,

@@ -1,8 +1,8 @@
 import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
-object M210 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(210)(List(
+object M114 {
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(114)(List(
     sqlu"""
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

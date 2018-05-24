@@ -1,8 +1,8 @@
 import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
-object M212 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(212)(List(
+object M116 {
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(116)(List(
     sqlu"""
       ALTER TABLE access_control_rules ALTER COLUMN action_type TYPE varchar(255);
 
