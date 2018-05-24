@@ -19,7 +19,7 @@ import java.net._
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.database.{SceneDao, SceneWithRelatedDao}
+import com.azavea.rf.database._
 import doobie.util.transactor.Transactor
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.filter.Filterables._
@@ -82,31 +82,26 @@ trait SceneRoutes extends Authentication
     }
   }
 
-  def listAuthorizedScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
-    val pageFragment: Fragment = Page(pageRequest)
-    val queryFilters: List[Option[Fragment]] = SceneWithRelatedDao.makeFilters(List(sceneParams)).flatten
-    val scenesIO: ConnectionIO[List[Scene]] =
-      (SceneWithRelatedDao.selectF ++
-        Fragments.whereAndOpt(
-          (SceneWithRelatedDao.query.authorizeF(user, ObjectType.Scene, ActionType.View) :: queryFilters): _*) ++
-          pageFragment)
-        .query[Scene]
-        .stream
-        .compile
-        .toList
-    val withRelatedsIO: ConnectionIO[List[Scene.WithRelated]] = scenesIO flatMap { SceneWithRelatedDao.scenesToScenesWithRelated }
-
-    for {
-      page <- withRelatedsIO
-      count <- SceneWithRelatedDao.query
-        .filter(Fragments.andOpt(queryFilters.toSeq: _*))
-        .authorize(user, ObjectType.Scene, ActionType.View)
-        .countIO
-    } yield {
-      val hasPrevious = pageRequest.offset > 0
-      val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
-      PaginatedResponse[Scene.WithRelated](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
+  def listAuthorizedScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = for {
+    shapeO <- sceneParams.sceneParams.shape match {
+      case Some(shpId) => ShapeDao.getShapeById(shpId)
+      case _ => None.pure[ConnectionIO]
     }
+    sceneSearchBuilder = {
+      SceneDao.query
+        .filter(shapeO map { _.geometry })
+        .filter(sceneParams)
+        .authorize(user, ObjectType.Scene, ActionType.View)
+    }
+    scenes <- sceneSearchBuilder.list(pageRequest.offset, pageRequest.limit)
+    withRelateds <- SceneWithRelatedDao.scenesToScenesWithRelated(scenes)
+    count <- sceneSearchBuilder.countIO
+  } yield {
+    val hasPrevious = pageRequest.offset > 0
+    val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
+    PaginatedResponse[Scene.WithRelated](
+      count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, withRelateds
+    )
   }
 
   def listScenes: Route = authenticate { user =>
