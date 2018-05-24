@@ -46,6 +46,16 @@ object Generators extends ArbitraryInstances {
     GroupRole.Admin, GroupRole.Member
   )
 
+  private def subjectTypeGen: Gen[SubjectType] = Gen.oneOf(
+    SubjectType.All, SubjectType.Platform, SubjectType.Organization, SubjectType.Team, SubjectType.User
+  )
+
+  private def actionTypeGen: Gen[ActionType] = Gen.oneOf(
+    ActionType.View, ActionType.Edit, ActionType.Deactivate, ActionType.Delete, ActionType.Annotate,
+    ActionType.Export, ActionType.Download
+  )
+
+
   private def annotationQualityGen: Gen[AnnotationQuality] = Gen.oneOf(
     AnnotationQuality.Yes, AnnotationQuality.No, AnnotationQuality.Miss, AnnotationQuality.Unsure
   )
@@ -415,6 +425,12 @@ object Generators extends ArbitraryInstances {
     teamCreate.toTeam(user)
   }
 
+  private def accessControlRuleCreateGen: Gen[AccessControlRule.Create] = for {
+    subjectType <- subjectTypeGen
+    subjectId <- uuidGen
+    actionType <- actionTypeGen
+  } yield { AccessControlRule.Create(true, subjectType, Some(subjectId.toString()), actionType) }
+
   private def userGroupRoleCreateGen: Gen[UserGroupRole.Create] = for {
     user <- userGen
     groupType <- groupTypeGen
@@ -514,6 +530,10 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbUserJwtFields: Arbitrary[User.JwtFields] = Arbitrary {
       userJwtFieldsGen
+    }
+
+    implicit def arbAccessControlRule : Arbitrary[AccessControlRule.Create] = Arbitrary {
+      accessControlRuleCreateGen
     }
   }
 }
