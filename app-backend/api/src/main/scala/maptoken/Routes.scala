@@ -49,26 +49,7 @@ trait MapTokenRoutes extends Authentication
   def listMapTokens: Route = authenticate { user =>
     (withPagination & mapTokenQueryParams) { (page, mapTokenParams) =>
       complete {
-        val authedProjectsIO = ProjectDao.query.authorize(user, ObjectType.Project, ActionType.View).list
-        val authedAnalysesIO = ToolRunDao.query.authorize(user, ObjectType.Analysis, ActionType.View).list
-        val mapTokensIO = for {
-          projAndAnalyses <- (authedProjectsIO, authedAnalysesIO).tupled
-          (authedProjects, authedAnalyses) = projAndAnalyses
-          projIdsF: Option[Fragment] = (authedProjects map { _.id }).toNel map {
-            Fragments.in(fr"project_id", _)
-          }
-          analysesIdsF: Option[Fragment] = (authedAnalyses map { _.id  }).toNel map {
-            Fragments.in(fr"toolrun_id", _)
-          }
-          authFilterF: Fragment = Fragments.orOpt(projIdsF, analysesIdsF, Some(fr"owner = ${user.id}"))
-          mapTokens <- {
-            MapTokenDao.query
-              .filter(mapTokenParams)
-              .filter(authFilterF)
-              .page(page)
-          }
-        } yield { mapTokens }
-        mapTokensIO.transact(xa).unsafeToFuture
+        MapTokenDao.listAuthorizedMapTokens(user).transact(xa).unsafeToFuture
       }
     }
   }

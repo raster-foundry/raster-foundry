@@ -64,6 +64,28 @@ object MapTokenDao extends Dao[MapToken] {
     authTuple <- (projAuthed, toolRunAuthed).tupled
   } yield { authTuple._1 || authTuple._2 }
 
+  def listAuthorizedMapTokens(user: User, mapTokenQueryParams: MapTokenQueryParameters): PaginatedResponse[MapToken] = {
+    val authedProjectsIO = ProjectDao.query.authorize(user, ObjectType.Project, ActionType.View).list
+    val authedAnalysesIO = ToolRunDao.query.authorize(user, ObjectType.Analysis, ActionType.View).list
+    for {
+      projAndAnalyses <- (authedProjectsIO, authedAnalysesIO).tupled
+      (authedProjects, authedAnalyses) = projAndAnalyses
+      projIdsF: Option[Fragment] = (authedProjects map { _.id }).toNel map {
+        Fragments.in(fr"project_id", _)
+      }
+      analysesIdsF: Option[Fragment] = (authedAnalyses map { _.id  }).toNel map {
+        Fragments.in(fr"toolrun_id", _)
+      }
+      authFilterF: Fragment = Fragments.orOpt(projIdsF, analysesIdsF, Some(fr"owner = ${user.id}"))
+      mapTokens <- {
+        MapTokenDao.query
+          .filter(mapTokenParams)
+          .filter(authFilterF)
+          .page(page)
+      }
+    } yield { mapTokens }
+  }
+
   def update(mapToken: MapToken, id: UUID, user: User): ConnectionIO[Int] = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
     val idFilter = fr"id = ${id}"
