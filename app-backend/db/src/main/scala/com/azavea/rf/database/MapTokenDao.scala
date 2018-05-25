@@ -65,7 +65,7 @@ object MapTokenDao extends Dao[MapToken] {
     authTuple <- (projAuthed, toolRunAuthed).tupled
   } yield { authTuple._1 || authTuple._2 }
 
-  def listAuthorizedMapTokens(user: User, mapTokenParams: MapTokenQueryParameters, page: PageRequest): PaginatedResponse[MapToken] = {
+  def listAuthorizedMapTokens(user: User, mapTokenParams: MapTokenQueryParameters, page: PageRequest): ConnectionIO[PaginatedResponse[MapToken]] = {
     val authedProjectsIO = ProjectDao.query.authorize(user, ObjectType.Project, ActionType.View).list
     val authedAnalysesIO = ToolRunDao.query.authorize(user, ObjectType.Analysis, ActionType.View).list
     for {
