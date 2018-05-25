@@ -53,6 +53,39 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
     }
   }
 
+  test("list authorized scenes") {
+    check {
+      forAll {
+        (user1: User.Create, user2: User.Create, org: Organization.Create, pageRequest: PageRequest,
+         scenes1: List[Scene.Create], scenes2: List[Scene.Create]) => {
+          val scenesIO = for {
+            dbUser1 <- UserDao.create(user1)
+            dbUser2 <- UserDao.create(user2)
+            datasource <- unsafeGetRandomDatasource
+            dbScenes1 <- (scenes1 map {
+              (scene: Scene.Create) => fixupSceneCreate(dbUser1, datasource, scene)
+            }).traverse(
+              (scene: Scene.Create) => SceneDao.insert(scene, dbUser1)
+            )
+            _ <- (scenes2 map {
+              (scene: Scene.Create) => fixupSceneCreate(dbUser2, datasource, scene)
+            }).traverse(
+              (scene: Scene.Create) => SceneDao.insert(scene, dbUser2)
+            )
+            listedScenes <- SceneWithRelatedDao.listAuthorizedScenes(pageRequest, CombinedSceneQueryParams(), dbUser1)
+          } yield { (dbScenes1, listedScenes) }
+
+          val (insertedScenes, listedScenes) = scenesIO.transact(xa).unsafeRunSync
+          val insertedNamesSet = insertedScenes.toSet map { (scene: Scene.WithRelated) => scene.name }
+          val listedNamesSet = listedScenes.results.toSet map { (scene: Scene.WithRelated) => scene.name }
+          assert(listedNamesSet.intersect(insertedNamesSet) == listedNamesSet,
+                 "listed scenes should be a strict subset of inserted scenes by user 1")
+          true
+        }
+      }
+    }
+  }
+
   test("get scenes to ingest") {
     check {
       forAll {

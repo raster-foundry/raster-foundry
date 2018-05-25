@@ -59,9 +59,8 @@ object Dao {
     }
 
     // This method exists temporarily to stand in for second-tier object authorization
-    def ownedBy[M >: Model](user: User, objectId: UUID)(implicit filterable: Filterable[M, Option[Fragment]]):
-        QueryBuilder[Model] =
-      this.filter(fr"id = ${objectId}").filter(fr"owner = ${user.id}")
+    def ownedBy[M >: Model](user: User, objectId: UUID): QueryBuilder[Model] =
+      this.filter(objectId).filter(user)
 
     // Filter to validate access on an object type
     def authorizeF[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): Option[Fragment] = {

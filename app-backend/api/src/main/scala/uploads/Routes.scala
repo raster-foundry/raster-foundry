@@ -56,7 +56,7 @@ trait UploadRoutes extends Authentication
     (withPagination & uploadQueryParams) {
       (page: PageRequest, queryParams: UploadQueryParameters) =>
       complete {
-        UploadDao.query.filter(queryParams).page(page).transact(xa).unsafeToFuture
+        UploadDao.query.filter(user).filter(queryParams).page(page).transact(xa).unsafeToFuture
       }
     }
   }

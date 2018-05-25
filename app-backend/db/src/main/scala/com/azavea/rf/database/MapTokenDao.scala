@@ -2,6 +2,7 @@ package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -45,6 +46,47 @@ object MapTokenDao extends Dao[MapToken] {
     )
   }
 
+  def authorize(mapTokenId: UUID, user: User, actionType: ActionType): ConnectionIO[Boolean] = for {
+    mapTokenO <- MapTokenDao.query.filter(mapTokenId).selectOption
+    projAuthed = (
+      mapTokenO flatMap { _.project } map {
+        (projectId: UUID) => {
+          ProjectDao.query.authorized(user, ObjectType.Project, projectId, actionType)
+        }
+      }
+    ).getOrElse(false.pure[ConnectionIO])
+    toolRunAuthed = (
+      mapTokenO flatMap { _.toolRun } map {
+        (toolRunId: UUID) => {
+          ToolRunDao.query.authorized(user, ObjectType.Analysis, toolRunId, actionType)
+        }
+      }
+    ).getOrElse(false.pure[ConnectionIO])
+    authTuple <- (projAuthed, toolRunAuthed).tupled
+  } yield { authTuple._1 || authTuple._2 }
+
+  def listAuthorizedMapTokens(user: User, mapTokenParams: CombinedMapTokenQueryParameters, page: PageRequest): ConnectionIO[PaginatedResponse[MapToken]] = {
+    val authedProjectsIO = ProjectDao.query.authorize(user, ObjectType.Project, ActionType.View).list
+    val authedAnalysesIO = ToolRunDao.query.authorize(user, ObjectType.Analysis, ActionType.View).list
+    for {
+      projAndAnalyses <- (authedProjectsIO, authedAnalysesIO).tupled
+      (authedProjects, authedAnalyses) = projAndAnalyses
+      projIdsF: Option[Fragment] = (authedProjects map { _.id }).toNel map {
+        Fragments.in(fr"project_id", _)
+      }
+      analysesIdsF: Option[Fragment] = (authedAnalyses map { _.id  }).toNel map {
+        Fragments.in(fr"toolrun_id", _)
+      }
+      authFilterF: Fragment = Fragments.orOpt(projIdsF, analysesIdsF, Some(fr"owner = ${user.id}"))
+      mapTokens <- {
+        MapTokenDao.query
+          .filter(mapTokenParams)
+          .filter(authFilterF)
+          .page(page)
+      }
+    } yield { mapTokens }
+  }
+
   def update(mapToken: MapToken, id: UUID, user: User): ConnectionIO[Int] = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
     val idFilter = fr"id = ${id}"
@@ -57,7 +99,7 @@ object MapTokenDao extends Dao[MapToken] {
          owner = ${mapToken.owner},
          name = ${mapToken.name},
          project_id = ${mapToken.project},
-         toolrun_id = ${mapToken.project}
+         toolrun_id = ${mapToken.toolRun}
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 

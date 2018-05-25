@@ -39,10 +39,6 @@ trait UserRoutes extends Authentication
   implicit val xa: Transactor[IO]
 
   val userRoutes: Route = handleExceptions(userExceptionHandler) {
-    pathEndOrSingleSlash {
-      get { listUsers } ~
-      post { createUser }
-    } ~
     pathPrefix("me") {
       pathPrefix("roles") {
         get { getUserRoles }
@@ -62,25 +58,6 @@ trait UserRoutes extends Authentication
       pathEndOrSingleSlash {
         get { getUserByEncodedAuthId(authIdEncoded) } ~
         put { updateUserByEncodedAuthId(authIdEncoded) }
-      }
-    }
-  }
-
-  def listUsers: Route = authenticateRootMember { user =>
-    withPagination { page =>
-      complete {
-        UserDao.query.page(page).transact(xa).unsafeToFuture
-      }
-    }
-  }
-
-  def createUser: Route = authenticateRootMember { root =>
-    entity(as[User.Create]) { newUser =>
-      onSuccess(UserDao.create(newUser).transact(xa).unsafeToFuture()) { createdUser =>
-        onSuccess(UserDao.getUserById(createdUser.id).transact(xa).unsafeToFuture()) {
-          case Some(user) => complete((StatusCodes.Created, user))
-          case None => throw new IllegalStateException("Unable to create user")
-        }
       }
     }
   }

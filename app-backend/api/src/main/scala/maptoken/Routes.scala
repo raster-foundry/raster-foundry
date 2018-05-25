@@ -7,7 +7,7 @@ import akka.http.scaladsl.model.StatusCodes
 import cats.effect.IO
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database.MapTokenDao
+import com.azavea.rf.database._
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
@@ -17,10 +17,12 @@ import com.azavea.rf.datamodel._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.Fragments.in
+import doobie.Fragments
 import doobie.postgres._
 import doobie.postgres.implicits._
 
+
+import scala.concurrent.Future
 
 
 trait MapTokenRoutes extends Authentication
@@ -47,27 +49,37 @@ trait MapTokenRoutes extends Authentication
   def listMapTokens: Route = authenticate { user =>
     (withPagination & mapTokenQueryParams) { (page, mapTokenParams) =>
       complete {
-        MapTokenDao.query.filter(mapTokenParams).filter(user).page(page).transact(xa).unsafeToFuture
+        MapTokenDao.listAuthorizedMapTokens(user, mapTokenParams, page).transact(xa).unsafeToFuture
       }
     }
   }
 
   def createMapToken: Route = authenticate { user =>
     entity(as[MapToken.Create]) { newMapToken =>
-      onSuccess(MapTokenDao.insert(newMapToken, user).transact(xa).unsafeToFuture) { mapToken =>
-        complete((StatusCodes.Created, mapToken))
+      authorizeAsync {
+        val authIO = (newMapToken.project, newMapToken.toolRun) match {
+          case (None, None) => false.pure[ConnectionIO]
+          case (Some(projectId), None) => ProjectDao.query.authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          case (None, Some(toolRunId)) => ToolRunDao.query.authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
+          case _ => false.pure[ConnectionIO]
+        }
+        authIO.transact(xa).unsafeToFuture
+      } {
+        onSuccess(MapTokenDao.insert(newMapToken, user).transact(xa).unsafeToFuture) { mapToken =>
+          complete((StatusCodes.Created, mapToken))
+        }
       }
     }
   }
 
   def getMapToken(mapTokenId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      MapTokenDao.query.ownedBy(user, mapTokenId).exists.transact(xa).unsafeToFuture
+      MapTokenDao.authorize(mapTokenId, user, ActionType.View).transact(xa).unsafeToFuture
     } {
       get {
         rejectEmptyResponse {
           complete {
-            MapTokenDao.query.filter(user).filter(mapTokenId).selectOption.transact(xa).unsafeToFuture
+            MapTokenDao.query.filter(mapTokenId).selectOption.transact(xa).unsafeToFuture
           }
         }
       }
@@ -76,7 +88,7 @@ trait MapTokenRoutes extends Authentication
 
   def updateMapToken(mapTokenId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      MapTokenDao.query.ownedBy(user, mapTokenId).exists.transact(xa).unsafeToFuture
+      MapTokenDao.authorize(mapTokenId, user, ActionType.Edit).transact(xa).unsafeToFuture
     } {
       entity(as[MapToken]) { updatedMapToken =>
         onSuccess(MapTokenDao.update(updatedMapToken, mapTokenId, user).transact(xa).unsafeToFuture) {
@@ -88,7 +100,7 @@ trait MapTokenRoutes extends Authentication
 
   def deleteMapToken(mapTokenId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      MapTokenDao.query.ownedBy(user, mapTokenId).exists.transact(xa).unsafeToFuture
+      MapTokenDao.authorize(mapTokenId, user, ActionType.Edit).transact(xa).unsafeToFuture
     } {
       onSuccess(MapTokenDao.query.filter(mapTokenId).delete.transact(xa).unsafeToFuture) {
         completeSingleOrNotFound

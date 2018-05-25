@@ -9,6 +9,7 @@ import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.effect.IO
+import cats.implicits._
 import com.azavea.rf.database.filter.Filterables._
 import doobie._
 import doobie.implicits._
@@ -43,18 +44,18 @@ trait AoiRoutes extends Authentication
   def listAOIs: Route = authenticate { user =>
     (withPagination & aoiQueryParameters) { (page, aoiQueryParams) =>
       complete {
-        AoiDao.query.filter(aoiQueryParams).filter(user).page(page).transact(xa).unsafeToFuture
+        AoiDao.listAuthorizedAois(user, aoiQueryParams, page).transact(xa).unsafeToFuture
       }
     }
   }
 
   def getAOI(id: UUID): Route = authenticate { user =>
     authorizeAsync {
-      AoiDao.query.ownedBy(user, id).exists.transact(xa).unsafeToFuture
+      AoiDao.authorize(id, user, ActionType.View).transact(xa).unsafeToFuture
     } {
       rejectEmptyResponse {
         complete {
-          AoiDao.query.filter(user).filter(id).selectOption.transact(xa).unsafeToFuture
+          AoiDao.query.filter(id).selectOption.transact(xa).unsafeToFuture
         }
       }
     }
@@ -62,7 +63,7 @@ trait AoiRoutes extends Authentication
 
   def updateAOI(id: UUID): Route = authenticate { user =>
     authorizeAsync {
-      AoiDao.query.ownedBy(user, id).exists.transact(xa).unsafeToFuture
+      AoiDao.authorize(id, user, ActionType.Edit).transact(xa).unsafeToFuture
     } {
       entity(as[AOI]) { aoi =>
         onSuccess(AoiDao.updateAOI(aoi, id, user).transact(xa).unsafeToFuture) {
@@ -74,7 +75,7 @@ trait AoiRoutes extends Authentication
 
   def deleteAOI(id: UUID): Route = authenticate { user =>
     authorizeAsync {
-      AoiDao.query.ownedBy(user, id).exists.transact(xa).unsafeToFuture
+      AoiDao.authorize(id, user, ActionType.Edit).transact(xa).unsafeToFuture
     } {
       onSuccess(AoiDao.deleteAOI(id, user).transact(xa).unsafeToFuture) {
         completeSingleOrNotFound

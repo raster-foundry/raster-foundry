@@ -82,32 +82,10 @@ trait SceneRoutes extends Authentication
     }
   }
 
-  def listAuthorizedScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = for {
-    shapeO <- sceneParams.sceneParams.shape match {
-      case Some(shpId) => ShapeDao.getShapeById(shpId)
-      case _ => None.pure[ConnectionIO]
-    }
-    sceneSearchBuilder = {
-      SceneDao.query
-        .filter(shapeO map { _.geometry })
-        .filter(sceneParams)
-        .authorize(user, ObjectType.Scene, ActionType.View)
-    }
-    scenes <- sceneSearchBuilder.list(pageRequest.offset, pageRequest.limit)
-    withRelateds <- SceneWithRelatedDao.scenesToScenesWithRelated(scenes)
-    count <- sceneSearchBuilder.countIO
-  } yield {
-    val hasPrevious = pageRequest.offset > 0
-    val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
-    PaginatedResponse[Scene.WithRelated](
-      count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, withRelateds
-    )
-  }
-
   def listScenes: Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
-        listAuthorizedScenes(page, sceneParams, user).transact(xa).unsafeToFuture
+        SceneWithRelatedDao.listAuthorizedScenes(page, sceneParams, user).transact(xa).unsafeToFuture
       }
     }
   }
