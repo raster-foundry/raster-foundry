@@ -87,7 +87,7 @@ trait DatasourceRoutes extends Authentication
     } {
       rejectEmptyResponse {
         complete {
-          DatasourceDao.getDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
+          DatasourceDao.getDatasourceById(datasourceId).transact(xa).unsafeToFuture
         }
       }
     }

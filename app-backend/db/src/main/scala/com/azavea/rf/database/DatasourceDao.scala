@@ -29,17 +29,11 @@ object DatasourceDao extends Dao[Datasource] {
       FROM
     """ ++ tableF
 
-  def unsafeGetDatasourceById(datasourceId: UUID, user: User): ConnectionIO[Datasource] = {
-    (selectF ++ Fragments.whereAnd(fr"id = ${datasourceId}"))
-      .query[Datasource]
-      .unique
-  }
+  def unsafeGetDatasourceById(datasourceId: UUID): ConnectionIO[Datasource] =
+    query.filter(datasourceId).select
 
-  def getDatasourceById(datasourceId: UUID, user: User): ConnectionIO[Option[Datasource]] = {
-    (selectF ++ Fragments.whereAnd(fr"id = ${datasourceId}"))
-      .query[Datasource]
-      .option
-  }
+  def getDatasourceById(datasourceId: UUID): ConnectionIO[Option[Datasource]] =
+    query.filter(datasourceId).selectOption
 
   def listDatasources(page: PageRequest, params: DatasourceQueryParameters, user: User): ConnectionIO[PaginatedResponse[Datasource]] = {
     DatasourceDao.query.filter(params)

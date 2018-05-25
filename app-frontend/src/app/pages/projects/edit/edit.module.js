@@ -1,5 +1,5 @@
 import angular from 'angular';
-import {Map, Set} from 'immutable';
+import {Map} from 'immutable';
 import ProjectActions from '_redux/actions/project-actions';
 import AnnotationActions from '_redux/actions/annotation-actions';
 import _ from 'lodash';
@@ -9,7 +9,7 @@ class ProjectsEditController {
         $log, $q, $state, $scope, modalService, $timeout, $ngRedux, $location,
         authService, projectService, projectEditService,
         mapService, mapUtilsService, layerService,
-        datasourceService, imageOverlayService, thumbnailService
+        datasourceService, imageOverlayService, thumbnailService, sceneService
     ) {
         'ngInject';
         this.$log = $log;
@@ -25,6 +25,7 @@ class ProjectsEditController {
         this.layerService = layerService;
         this.datasourceService = datasourceService;
         this.imageOverlayService = imageOverlayService;
+        this.sceneService = sceneService;
         this.thumbnailService = thumbnailService;
         this.getMap = () => mapService.getMap('edit');
 
@@ -93,9 +94,7 @@ class ProjectsEditController {
                 this.$log.log('error getting ordered scene IDs');
             }
         ).finally(() => {
-            this.getSceneList().then(() => {
-                this.getDatasources();
-            });
+            this.getSceneList();
         });
     }
 
@@ -157,20 +156,6 @@ class ProjectsEditController {
         return this.sceneListQuery;
     }
 
-    getDatasources() {
-        if (this.sceneList) {
-            const datasourceIds = [
-                ...new Set(
-                    this.sceneList.map(s => s.datasource)
-                )
-            ];
-            this.datasourceService.get(datasourceIds).then(datasources => {
-                this.datasources = datasources;
-                this.bands = this.datasourceService.getUnifiedBands(this.datasources);
-            });
-        }
-    }
-
     addUningestedScenesToMap(scenes) {
         this.getMap().then((mapWrapper) => {
             mapWrapper.deleteLayers('Uningested Scenes');
@@ -182,7 +167,7 @@ class ProjectsEditController {
                 boundsGeoJson.addData(scene.tileFootprint);
                 let imageBounds = boundsGeoJson.getBounds();
 
-                this.datasourceService.get(scene.datasource).then(d => {
+                this.sceneService.datasource(scene).then(d => {
                     let overlay = this.imageOverlayService.createNewImageOverlay(
                         thumbUrl,
                         imageBounds, {
@@ -266,7 +251,7 @@ class ProjectsEditController {
     fetchDatasources(force = false) {
         if (!this.datasourceRequest || force) {
             this.datasourceRequest = this.$q.all(
-                this.sceneList.map(s => this.datasourceService.get(s.datasource))
+                this.sceneList.map(s => this.sceneService.datasource(s))
             );
         }
         return this.datasourceRequest;

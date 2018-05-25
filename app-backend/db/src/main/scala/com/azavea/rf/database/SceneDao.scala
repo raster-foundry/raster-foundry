@@ -39,11 +39,16 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     FROM
   """ ++ tableF
 
-  def getSceneById(id: UUID, user: User): ConnectionIO[Option[Scene]] =
+  def getSceneById(id: UUID): ConnectionIO[Option[Scene]] =
     query.filter(id).selectOption
 
-  def unsafeGetSceneById(id: UUID, user: User): ConnectionIO[Scene] =
+  def unsafeGetSceneById(id: UUID): ConnectionIO[Scene] =
     query.filter(id).select
+
+  def getSceneDatasource(sceneId: UUID): ConnectionIO[Datasource] =
+    unsafeGetSceneById(sceneId) flatMap {
+      (scene: Scene) => DatasourceDao.unsafeGetDatasourceById(scene.datasource)
+    }
 
   def insert(sceneCreate: Scene.Create, user: User): ConnectionIO[Scene.WithRelated] = {
     val scene = sceneCreate.toScene(user)

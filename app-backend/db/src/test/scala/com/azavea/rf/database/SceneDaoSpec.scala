@@ -94,7 +94,7 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
                 .copy(id = dbScene.id)
               SceneDao.update(fixedUpUpdateScene, sceneId, dbUser) flatMap {
                 case (affectedRows: Int, shouldKickoffIngest: Boolean) => {
-                  SceneDao.unsafeGetSceneById(sceneId, dbUser) map { (affectedRows, _, shouldKickoffIngest) }
+                  SceneDao.unsafeGetSceneById(sceneId) map { (affectedRows, _, shouldKickoffIngest) }
                 }
               }
             }

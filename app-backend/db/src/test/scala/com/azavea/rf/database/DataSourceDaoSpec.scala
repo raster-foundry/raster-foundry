@@ -47,7 +47,7 @@ class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTest
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
             dsInsert <- fixupDatasource(dsCreate, userInsert)
-            dsGet <- DatasourceDao.getDatasourceById(dsInsert.id, userInsert)
+            dsGet <- DatasourceDao.getDatasourceById(dsInsert.id)
           } yield dsGet
           val getDs = getDsIO.transact(xa).unsafeRunSync
           getDs.get.name === dsCreate.name
@@ -64,7 +64,7 @@ class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTest
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
             dsInsert <- fixupDatasource(dsCreate, userInsert)
-            dsGetUnsafe <- DatasourceDao.unsafeGetDatasourceById(dsInsert.id, userInsert)
+            dsGetUnsafe <- DatasourceDao.unsafeGetDatasourceById(dsInsert.id)
           } yield dsGetUnsafe
           val getDsUnsafe = getDsUnsafeIO.transact(xa).unsafeRunSync
           getDsUnsafe.name === dsCreate.name

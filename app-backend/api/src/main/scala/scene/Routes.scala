@@ -108,7 +108,10 @@ trait SceneRoutes extends Authentication
           delete {
             deleteScenePermissions(sceneId)
           }
-        }
+        } ~
+          pathPrefix("datasource") {
+            pathEndOrSingleSlash { getSceneDatasource(sceneId) }
+          }
       }
     }
   }
@@ -272,6 +275,19 @@ trait SceneRoutes extends Authentication
     } {
       complete {
         AccessControlRuleDao.deleteByObject(ObjectType.Scene, sceneId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def getSceneDatasource(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      onSuccess(SceneDao.getSceneDatasource(sceneId).transact(xa).unsafeToFuture) { datasourceO =>
+        complete { datasourceO }
       }
     }
   }
