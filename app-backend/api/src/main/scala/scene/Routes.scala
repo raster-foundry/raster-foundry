@@ -1,6 +1,6 @@
 package com.azavea.rf.api.scene
 
-import com.azavea.rf.api.utils.Config
+import com.azavea.rf.api.utils.{Config, PermissionRouter}
 import com.azavea.rf.common.{AWSBatch, Authentication, CommonHandlers, S3, UserErrorHandler}
 import com.azavea.rf.datamodel._
 import akka.http.scaladsl.model.StatusCodes
@@ -45,6 +45,8 @@ trait SceneRoutes extends Authentication
 
   val xa: Transactor[IO]
 
+  private val scenePermissionRouter = PermissionRouter(xa, SceneDao, ObjectType.Scene)
+
   val sceneRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {
@@ -78,7 +80,26 @@ trait SceneRoutes extends Authentication
             }
           }
         }
-      }
+      } ~
+      pathPrefix("permissions") {
+        pathEndOrSingleSlash {
+          put {
+            traceName("replace-scene-permissions") {
+              scenePermissionRouter.replacePermissions(sceneId)
+            }
+          }
+        } ~
+          post {
+            traceName("add-scene-permission") {
+              scenePermissionRouter.addPermission(sceneId)
+            }
+          } ~
+          get {
+            traceName("list-scene-permissions") {
+              scenePermissionRouter.listPermissions(sceneId)
+            }
+          }
+        }
     }
   }
 

@@ -11,6 +11,7 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
+import com.azavea.rf.api.utils.PermissionRouter
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.common._
 import com.azavea.rf.datamodel._
@@ -49,6 +50,8 @@ trait ShapeRoutes extends Authentication
 
   val xa: Transactor[IO]
 
+  private val shapePermissionRouter = PermissionRouter[Shape](xa, ShapeDao, ObjectType.Shape)
+
   val shapeRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get { listShapes } ~
@@ -74,7 +77,20 @@ trait ShapeRoutes extends Authentication
           get { getShape(shapeId) } ~
             put { updateShape(shapeId) } ~
             delete { deleteShape(shapeId) }
-        }
+        } ~
+          pathPrefix("permissions") {
+            pathEndOrSingleSlash {
+              put {
+                shapePermissionRouter.replacePermissions(shapeId)
+              }
+            } ~
+              post {
+                shapePermissionRouter.addPermission(shapeId)
+              } ~
+              get {
+                shapePermissionRouter.listPermissions(shapeId)
+              }
+          }
       }
   }
 

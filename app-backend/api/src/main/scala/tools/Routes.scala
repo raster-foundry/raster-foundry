@@ -1,5 +1,6 @@
 package com.azavea.rf.api.tool
 
+import com.azavea.rf.api.utils.PermissionRouter
 import com.azavea.rf.common._
 import com.azavea.rf.common.ast._
 import com.azavea.rf.datamodel._
@@ -35,6 +36,8 @@ trait ToolRoutes extends Authentication
     with UserErrorHandler {
 
   val xa: Transactor[IO]
+
+  private val toolPermissionRouter = PermissionRouter(xa, ToolDao, ObjectType.Template)
 
   val toolRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -81,7 +84,26 @@ trait ToolRoutes extends Authentication
             }
           }
         }
-      }
+      } ~
+        pathPrefix("permissions") {
+          pathEndOrSingleSlash {
+            put {
+              traceName("replace-tool-permissions") {
+                toolPermissionRouter.replacePermissions(toolId)
+              }
+            }
+          } ~
+            post {
+              traceName("add-tool-permission") {
+                toolPermissionRouter.addPermission(toolId)
+              }
+            } ~
+            get {
+              traceName("list-tool-permissions") {
+                toolPermissionRouter.listPermissions(toolId)
+              }
+            }
+        }
     }
   }
 

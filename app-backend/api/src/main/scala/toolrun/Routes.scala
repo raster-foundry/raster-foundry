@@ -1,5 +1,6 @@
 package com.azavea.rf.api.toolrun
 
+import com.azavea.rf.api.utils.PermissionRouter
 import com.azavea.rf.common._
 import com.azavea.rf.common.ast._
 import com.azavea.rf.datamodel._
@@ -37,6 +38,8 @@ trait ToolRunRoutes extends Authentication
 
   val xa: Transactor[IO]
 
+  private val toolRunPermissionRouter = PermissionRouter(xa, ToolRunDao, ObjectType.Analysis)
+
   val toolRunRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get { listToolRuns } ~
@@ -47,7 +50,20 @@ trait ToolRunRoutes extends Authentication
         get { getToolRun(runId) } ~
         put { updateToolRun(runId) } ~
         delete { deleteToolRun(runId) }
-      }
+      } ~
+        pathPrefix("permissions") {
+          pathEndOrSingleSlash {
+            put {
+              toolRunPermissionRouter.replacePermissions(runId)
+            }
+          } ~
+            post {
+              toolRunPermissionRouter.addPermission(runId)
+            } ~
+            get {
+              toolRunPermissionRouter.listPermissions(runId)
+            }
+        }
     }
   }
 

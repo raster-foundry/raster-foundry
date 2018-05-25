@@ -1,5 +1,6 @@
 package com.azavea.rf.api.datasource
 
+import com.azavea.rf.api.utils.PermissionRouter
 import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
@@ -11,6 +12,7 @@ import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, PageRequest}
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.effect.IO
+import kamon.akka.http.KamonTraceDirectives
 
 import java.util.UUID
 import scala.util.{Success, Failure}
@@ -29,6 +31,8 @@ trait DatasourceRoutes extends Authentication
     with CommonHandlers {
   val xa: Transactor[IO]
 
+  private val datasourcePermissionRouter = PermissionRouter[Datasource](xa, DatasourceDao, ObjectType.Datasource)
+
   val datasourceRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get { listDatasources } ~
@@ -37,7 +41,20 @@ trait DatasourceRoutes extends Authentication
     pathPrefix(JavaUUID) { datasourceId =>
       get { getDatasource(datasourceId) } ~
       put { updateDatasource(datasourceId) } ~
-      delete { deleteDatasource(datasourceId) }
+      delete { deleteDatasource(datasourceId) } ~
+        pathPrefix("permissions") {
+          pathEndOrSingleSlash {
+            put {
+              datasourcePermissionRouter.replacePermissions(datasourceId)
+            }
+          } ~
+            post {
+              datasourcePermissionRouter.addPermission(datasourceId)
+            } ~
+            get {
+              datasourcePermissionRouter.listPermissions(datasourceId)
+            }
+        }
     }
   }
 
