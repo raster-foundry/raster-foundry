@@ -2,6 +2,7 @@ package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -64,7 +65,7 @@ object MapTokenDao extends Dao[MapToken] {
     authTuple <- (projAuthed, toolRunAuthed).tupled
   } yield { authTuple._1 || authTuple._2 }
 
-  def listAuthorizedMapTokens(user: User, mapTokenQueryParams: MapTokenQueryParameters): PaginatedResponse[MapToken] = {
+  def listAuthorizedMapTokens(user: User, mapTokenParams: MapTokenQueryParameters, page: PageRequest): PaginatedResponse[MapToken] = {
     val authedProjectsIO = ProjectDao.query.authorize(user, ObjectType.Project, ActionType.View).list
     val authedAnalysesIO = ToolRunDao.query.authorize(user, ObjectType.Analysis, ActionType.View).list
     for {
