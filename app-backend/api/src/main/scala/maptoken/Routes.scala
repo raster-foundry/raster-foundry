@@ -49,7 +49,7 @@ trait MapTokenRoutes extends Authentication
   def listMapTokens: Route = authenticate { user =>
     (withPagination & mapTokenQueryParams) { (page, mapTokenParams) =>
       complete {
-        MapTokenDao.listAuthorizedMapTokens(user).transact(xa).unsafeToFuture
+        MapTokenDao.listAuthorizedMapTokens(user, mapTokenParams, page).transact(xa).unsafeToFuture
       }
     }
   }
