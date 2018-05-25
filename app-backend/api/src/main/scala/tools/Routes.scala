@@ -1,6 +1,5 @@
 package com.azavea.rf.api.tool
 
-import com.azavea.rf.api.utils.PermissionRouter
 import com.azavea.rf.common._
 import com.azavea.rf.common.ast._
 import com.azavea.rf.datamodel._
@@ -18,7 +17,7 @@ import kamon.akka.http.KamonTraceDirectives
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.database.ToolDao
+import com.azavea.rf.database.{AccessControlRuleDao, ToolDao}
 import doobie._
 import doobie.implicits._
 import doobie.Fragments.in
@@ -36,8 +35,6 @@ trait ToolRoutes extends Authentication
     with UserErrorHandler {
 
   val xa: Transactor[IO]
-
-  private val toolPermissionRouter = PermissionRouter(xa, ToolDao, ObjectType.Template)
 
   val toolRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -89,18 +86,18 @@ trait ToolRoutes extends Authentication
           pathEndOrSingleSlash {
             put {
               traceName("replace-tool-permissions") {
-                toolPermissionRouter.replacePermissions(toolId)
+                replaceToolPermissions(toolId)
               }
             }
           } ~
             post {
               traceName("add-tool-permission") {
-                toolPermissionRouter.addPermission(toolId)
+                addToolPermission(toolId)
               }
             } ~
             get {
               traceName("list-tool-permissions") {
-                toolPermissionRouter.listPermissions(toolId)
+                listToolPermissions(toolId)
               }
             }
         }
@@ -187,6 +184,44 @@ trait ToolRoutes extends Authentication
             case Left(msg) =>
               (StatusCodes.BadRequest, "Unable to parse json as MapAlgebra AST")
           }
+        }
+      }
+    }
+  }
+
+  def listToolPermissions(toolId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Template, toolId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def replaceToolPermissions(toolId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Template, toolId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def addToolPermission(toolId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[AccessControlRule.Create]) { acrCreate =>
+        complete {
+          AccessControlRuleDao.createWithResults(
+            acrCreate.toAccessControlRule(user, ObjectType.Template, toolId)
+          ).transact(xa).unsafeToFuture
         }
       }
     }

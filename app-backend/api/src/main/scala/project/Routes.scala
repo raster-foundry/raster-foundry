@@ -63,8 +63,6 @@ trait ProjectRoutes extends Authentication
 
   val xa: Transactor[IO]
 
-  private val projectPermissionRouter = PermissionRouter[Project](xa, ProjectDao, ObjectType.Project)
-
   val BULK_OPERATION_MAX_LIMIT = 100
 
   val projectRoutes: Route = handleExceptions(userExceptionHandler) {
@@ -262,18 +260,18 @@ trait ProjectRoutes extends Authentication
             pathEndOrSingleSlash {
               put {
                 traceName("replace-project-permissions") {
-                  projectPermissionRouter.replacePermissions(projectId)
+                  replaceProjectPermissions(projectId)
                 }
               }
             } ~
               post {
                 traceName("add-project-permission") {
-                  projectPermissionRouter.addPermission(projectId)
+                  addProjectPermission(projectId)
                 }
               } ~
               get {
                 traceName("list-project-permissions") {
-                  projectPermissionRouter.listPermissions(projectId)
+                  listProjectPermissions(projectId)
                 }
               }
           }
@@ -723,5 +721,44 @@ trait ProjectRoutes extends Authentication
       }
     }
   }
+
+  def listProjectPermissions(projectId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Project, projectId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def replaceProjectPermissions(projectId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Project, projectId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def addProjectPermission(projectId: UUID): Route = authenticate { user =>
+      authorizeAsync {
+        ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
+      } {
+        entity(as[AccessControlRule.Create]) { acrCreate =>
+          complete {
+            AccessControlRuleDao.createWithResults(
+              acrCreate.toAccessControlRule(user, ObjectType.Project, projectId)
+            ).transact(xa).unsafeToFuture
+          }
+        }
+      }
+    }
+
 
 }

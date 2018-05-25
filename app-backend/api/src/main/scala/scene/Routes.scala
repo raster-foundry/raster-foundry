@@ -1,6 +1,6 @@
 package com.azavea.rf.api.scene
 
-import com.azavea.rf.api.utils.{Config, PermissionRouter}
+import com.azavea.rf.api.utils.Config
 import com.azavea.rf.common.{AWSBatch, Authentication, CommonHandlers, S3, UserErrorHandler}
 import com.azavea.rf.datamodel._
 import akka.http.scaladsl.model.StatusCodes
@@ -45,8 +45,6 @@ trait SceneRoutes extends Authentication
 
   val xa: Transactor[IO]
 
-  private val scenePermissionRouter = PermissionRouter(xa, SceneDao, ObjectType.Scene)
-
   val sceneRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {
@@ -85,18 +83,18 @@ trait SceneRoutes extends Authentication
         pathEndOrSingleSlash {
           put {
             traceName("replace-scene-permissions") {
-              scenePermissionRouter.replacePermissions(sceneId)
+              replaceScenePermissions(sceneId)
             }
           }
         } ~
           post {
             traceName("add-scene-permission") {
-              scenePermissionRouter.addPermission(sceneId)
+              addScenePermission(sceneId)
             }
           } ~
           get {
             traceName("list-scene-permissions") {
-              scenePermissionRouter.listPermissions(sceneId)
+              listScenePermissions(sceneId)
             }
           }
         }
@@ -217,4 +215,43 @@ trait SceneRoutes extends Authentication
       }
     }
   }
+
+  def listScenePermissions(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Scene, sceneId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def replaceScenePermissions(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Scene, sceneId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def addScenePermission(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[AccessControlRule.Create]) { acrCreate =>
+        complete {
+          AccessControlRuleDao.createWithResults(
+            acrCreate.toAccessControlRule(user, ObjectType.Scene, sceneId)
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
 }

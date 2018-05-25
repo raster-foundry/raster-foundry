@@ -1,6 +1,5 @@
 package com.azavea.rf.api.datasource
 
-import com.azavea.rf.api.utils.PermissionRouter
 import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
@@ -31,28 +30,28 @@ trait DatasourceRoutes extends Authentication
     with CommonHandlers {
   val xa: Transactor[IO]
 
-  private val datasourcePermissionRouter = PermissionRouter[Datasource](xa, DatasourceDao, ObjectType.Datasource)
-
   val datasourceRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get { listDatasources } ~
       post { createDatasource }
     } ~
     pathPrefix(JavaUUID) { datasourceId =>
-      get { getDatasource(datasourceId) } ~
-      put { updateDatasource(datasourceId) } ~
-      delete { deleteDatasource(datasourceId) } ~
+      pathEndOrSingleSlash {
+        get { getDatasource(datasourceId) } ~
+          put { updateDatasource(datasourceId) } ~
+          delete { deleteDatasource(datasourceId) }
+      } ~
         pathPrefix("permissions") {
           pathEndOrSingleSlash {
             put {
-              datasourcePermissionRouter.replacePermissions(datasourceId)
+              replaceDatasourcePermissions(datasourceId)
             }
           } ~
             post {
-              datasourcePermissionRouter.addPermission(datasourceId)
+              addDatasourcePermission(datasourceId)
             } ~
             get {
-              datasourcePermissionRouter.listPermissions(datasourceId)
+              listDatasourcePermissions(datasourceId)
             }
         }
     }
@@ -116,4 +115,42 @@ trait DatasourceRoutes extends Authentication
       }
     }
   }
+
+  def listDatasourcePermissions(datasourceId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      DatasourceDao.query.ownedBy(user, datasourceId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Datasource, datasourceId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def replaceDatasourcePermissions(datasourceId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      DatasourceDao.query.ownedBy(user, datasourceId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Datasource, datasourceId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def addDatasourcePermission(datasourceId: UUID): Route = authenticate { user =>
+      authorizeAsync {
+        DatasourceDao.query.ownedBy(user, datasourceId).exists.transact(xa).unsafeToFuture
+      } {
+        entity(as[AccessControlRule.Create]) { acrCreate =>
+          complete {
+            AccessControlRuleDao.createWithResults(
+              acrCreate.toAccessControlRule(user, ObjectType.Datasource, datasourceId)
+            ).transact(xa).unsafeToFuture
+          }
+        }
+      }
+    }
 }

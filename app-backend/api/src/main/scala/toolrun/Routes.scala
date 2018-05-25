@@ -1,6 +1,5 @@
 package com.azavea.rf.api.toolrun
 
-import com.azavea.rf.api.utils.PermissionRouter
 import com.azavea.rf.common._
 import com.azavea.rf.common.ast._
 import com.azavea.rf.datamodel._
@@ -16,7 +15,7 @@ import cats.implicits._
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.database.ToolRunDao
+import com.azavea.rf.database.{AccessControlRuleDao, ToolRunDao}
 import doobie.util.transactor.Transactor
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -38,8 +37,6 @@ trait ToolRunRoutes extends Authentication
 
   val xa: Transactor[IO]
 
-  private val toolRunPermissionRouter = PermissionRouter(xa, ToolRunDao, ObjectType.Analysis)
-
   val toolRunRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get { listToolRuns } ~
@@ -54,14 +51,14 @@ trait ToolRunRoutes extends Authentication
         pathPrefix("permissions") {
           pathEndOrSingleSlash {
             put {
-              toolRunPermissionRouter.replacePermissions(runId)
+              replaceToolRunPermissions(runId)
             }
           } ~
             post {
-              toolRunPermissionRouter.addPermission(runId)
+              addToolRunPermission(runId)
             } ~
             get {
-              toolRunPermissionRouter.listPermissions(runId)
+              listToolRunPermissions(runId)
             }
         }
     }
@@ -125,6 +122,44 @@ trait ToolRunRoutes extends Authentication
     } {
       onSuccess(ToolRunDao.query.filter(runId).delete.transact(xa).unsafeToFuture) {
         completeSingleOrNotFound
+      }
+    }
+  }
+
+  def listToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolRunDao.query.ownedBy(user, toolRunId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Template, toolRunId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def replaceToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolRunDao.query.ownedBy(user, toolRunId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Template, toolRunId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def addToolRunPermission(toolRunId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolRunDao.query.ownedBy(user, toolRunId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[AccessControlRule.Create]) { acrCreate =>
+        complete {
+          AccessControlRuleDao.createWithResults(
+            acrCreate.toAccessControlRule(user, ObjectType.Template, toolRunId)
+          ).transact(xa).unsafeToFuture
+        }
       }
     }
   }
