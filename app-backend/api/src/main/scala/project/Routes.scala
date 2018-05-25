@@ -15,7 +15,7 @@ import cats.effect.IO
 import cats.implicits._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
-import com.azavea.rf.api.utils.{Config, PermissionRouter}
+import com.azavea.rf.api.utils.Config
 import com.azavea.rf.common.{Authentication, CommonHandlers, RollbarNotifier, UserErrorHandler}
 import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.common.S3._
