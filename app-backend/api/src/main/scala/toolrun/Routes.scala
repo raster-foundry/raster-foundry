@@ -131,7 +131,7 @@ trait ToolRunRoutes extends Authentication
       ToolRunDao.query.ownedBy(user, toolRunId).exists.transact(xa).unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao.listByObject(ObjectType.Template, toolRunId).transact(xa).unsafeToFuture
+        AccessControlRuleDao.listByObject(ObjectType.Analysis, toolRunId).transact(xa).unsafeToFuture
       }
     }
   }
@@ -143,7 +143,7 @@ trait ToolRunRoutes extends Authentication
       entity(as[List[AccessControlRule.Create]]) { acrCreates =>
         complete {
           AccessControlRuleDao.replaceWithResults(
-            user, ObjectType.Template, toolRunId, acrCreates
+            user, ObjectType.Analysis, toolRunId, acrCreates
           ).transact(xa).unsafeToFuture
         }
       }
@@ -157,7 +157,7 @@ trait ToolRunRoutes extends Authentication
       entity(as[AccessControlRule.Create]) { acrCreate =>
         complete {
           AccessControlRuleDao.createWithResults(
-            acrCreate.toAccessControlRule(user, ObjectType.Template, toolRunId)
+            acrCreate.toAccessControlRule(user, ObjectType.Analysis, toolRunId)
           ).transact(xa).unsafeToFuture
         }
       }
