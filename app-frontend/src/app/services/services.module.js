@@ -14,6 +14,7 @@ require('./auth/user.service')(shared);
 require('./auth/platform.service.js')(shared);
 require('./auth/organization.service.js')(shared);
 require('./auth/team.service.js')(shared);
+require('./auth/permissions.service.js')(shared);
 
 // settings
 require('./settings/config.provider')(shared);

@@ -224,4 +224,15 @@ object TeamDao extends Dao[Team] {
     val userGroup = UserGroupRole.UserGroup(subjectId, GroupType.Team, teamId)
     UserGroupRoleDao.deactivateUserGroupRoles(userGroup, actingUser)
   }
+
+  def teamsForUser(user: User): ConnectionIO[List[Team]] = {
+    for {
+      userTeamRoles <- UserGroupRoleDao.listByUserAndGroupType(user, GroupType.Team)
+      teamIdsO = userTeamRoles.map( _.groupId ).toNel
+      teams <- teamIdsO match {
+        case Some(ids) => query.filter(Fragments.in(fr"id", ids)).list
+        case None => List.empty[Team].pure[ConnectionIO]
+      }
+    } yield { teams }
+  }
 }

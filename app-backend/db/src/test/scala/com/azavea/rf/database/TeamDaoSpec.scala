@@ -274,4 +274,36 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
     }
   }
 
+  test("listing teams for a user") {
+    check {
+      forAll {
+        (platform: Platform, userCreate: User.Create, orgCreate: Organization.Create,
+         teamCreate1: Team.Create, teamCreate2: Team.Create) => {
+          val groupRole = GroupRole.Member
+          val teamsForUserIO = for {
+            userOrgPlatform <- insertUserOrgPlatform(userCreate, orgCreate, platform)
+            (dbUser, dbOrg, dbPlatform) = userOrgPlatform
+            team1 <- TeamDao.create(fixupTeam(teamCreate1, dbOrg, dbUser))
+            team2 <- TeamDao.create(fixupTeam(teamCreate2, dbOrg, dbUser))
+            _ <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbUser.id, GroupType.Team, team1.id, groupRole
+              ).toUserGroupRole(dbUser)
+            )
+            _ <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                dbUser.id, GroupType.Team, team2.id, groupRole
+              ).toUserGroupRole(dbUser)
+            )
+            listedTeams <- TeamDao.teamsForUser(dbUser)
+          } yield { (List(team1, team2), listedTeams) }
+          val (insertedTeams, listedTeams) = teamsForUserIO.transact(xa).unsafeRunSync
+          assert(insertedTeams.map( _.name ).toSet == listedTeams.map( _.name ).toSet,
+                 "Inserted and listed teams for this user should be the same")
+          true
+        }
+      }
+    }
+  }
+
 }

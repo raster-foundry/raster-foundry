@@ -1,5 +1,8 @@
 /* eslint-disable */
 export default angular.module('index.components', [
+    // permission components
+    require('./components/permissions/permissionsModal.module.js').name,
+
     // scene components
     require('./components/scenes/importList/importList.module.js').name,
     require('./components/scenes/sceneItem/sceneItem.module.js').name,

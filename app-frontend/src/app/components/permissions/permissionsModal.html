@@ -1,0 +1,78 @@
+<div class="modal-header">
+  <span> Edit permissions for {{ $ctrl.objectName }} </span>
+  <button type="button" class="close" aria-label="Close"
+          ng-click="$ctrl.dismiss()">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+<div class="modal-content" ng-if="$ctrl.state === $ctrl.states.existing">
+  <div ng-repeat="(key, row) in $ctrl.accessControlRuleRows">
+    <span class="permissions-object-key">
+      {{ key }}
+    </span>
+    <span class="permissions-object-marker" ng-repeat="actionType in $ctrl.actionTypes">
+      <input type="checkbox" name="{{ actionType }}" value="{{ actionType }}" ng-if="!row.includes(actionType)"
+             ng-click="$ctrl.togglePermission(actionType, key)">
+      <input type="checkbox" name="{{ actionType }}" value="{{ actionType }}" checked ng-if="row.includes(actionType)"
+             ng-click="$ctrl.togglePermission(actionType, key)">
+    </span>
+  </div>
+  <div class="new-permission-row">
+    <button class="btn btn-block" ng-click="$ctrl.setState('newPermission')">
+      Add a new permission
+    </button>
+  </div>
+</div>
+
+<div class="modal-content" ng-if="$ctrl.state === $ctrl.states.newPermission"
+     ng-if="$ctrl.state === $ctrl.states.newPermission">
+  <div>Who would you like to grant permissions to?</div>
+  <select ng-model="$ctrl.newPermissionSubject"
+          ng-options="subjectType.name for subjectType in $ctrl.subjectTypes track by subjectType.id"></select>
+  <button class="btn btn-block" disabled ng-if="$ctrl.newPermissionSubject === null">Next </button>
+  <button class="btn btn-block"
+          ng-if="$ctrl.newPermissionSubject !== null"
+          ng-click="$ctrl.handleNewPermissionSubjectSelection()">Next</button>
+</div>
+
+<div class="modal-content" ng-if="$ctrl.state === $ctrl.states.organizationSelect">
+</div>
+
+<div class="modal-content" ng-if="$ctrl.state === $ctrl.states.teamSelect">
+  <div class="selectable-list-item" ng-repeat="team in $ctrl.teams"
+       ng-click="$ctrl.selectTeam(team)">
+    {{ team.name }}
+  </div>
+</div>
+
+<div class="modal-content" ng-if="$ctrl.state === $ctrl.states.userSelect">
+  <rf-search on-search="$ctrl.searchUsers(value)" placeholder="Search for users" auto-focus="true"></rf-searcH>
+  <div class="selectable-list-item" ng-repeat="member in $ctrl.availableUsers"
+       ng-click="$ctrl.selectUser(user)">
+    {{ member.email }}
+  </div>
+</div>
+
+<div class="modal-content" ng-if="$ctrl.state === $ctrl.states.createNewACR">
+  <div class="new-acr-confirmation"
+       ng-if="!['USER', 'EVERYONE'].includes($ctrl.newPermissionSubject.target)">
+    You are about to add <code>VIEW</code> permissions to the {{$ctrl.newPermissionSubject.target | lowercase }}
+    {{ $ctrl.selectedPermissionsTarget.name }}.
+    {{ $ctrl.affectedUsers }} user(s) will receive <code>VIEW</code> permissions. To add additional permissions,
+    toggle them on or off in the list of permissions grants.
+  </div>
+  <div class="new-acr-confirmation" ng-if="'USER' === $ctrl.newPermissionSubject">
+    You are about to give {{ $ctrl.selectedPermissionsTarget.name }} <code>VIEW</code> permissions. To add
+    additional permissions, toggle them on or off in the list of permissions grants.
+  </div>
+</div>
+
+<div class="modal-footer" ng-if="$ctrl.state === $ctrl.states.createNewACR">
+  <button class="btn pull-right" ng-click="$ctrl.createNewACR()">Confirm</button>
+</div>
+
+<div class="modal-footer" ng-if="$ctrl.state === $ctrl.states.existing">
+  <button class="btn pull-right" ng-click="$ctrl.updatePermissions()">Save</button>
+  <button class="btn pull-left" ng-click="$ctrl.close()">Cancel</button>
+</div>
