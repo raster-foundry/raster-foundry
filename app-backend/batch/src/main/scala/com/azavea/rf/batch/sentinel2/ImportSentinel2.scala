@@ -4,7 +4,7 @@ import java.net.URI
 
 import com.azavea.rf.batch.Job
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.{SceneDao, UserDao}
+import com.azavea.rf.database._
 import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.datamodel._
 import com.azavea.rf.batch.util._
@@ -130,6 +130,13 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     scenesConnIO.transact(xa).unsafeRunSync
   }
 
+  protected def insertAcrForScene(swr: Scene.WithRelated, user: User): ConnectionIO[AccessControlRule] =
+    AccessControlRuleDao.create(
+      AccessControlRule.Create(
+        true, SubjectType.All, None, ActionType.View
+      ).toAccessControlRule(user, ObjectType.Scene, swr.id)
+    )
+
   /** Because it makes scenes -- get it? */
   def riot(scenePath: String, datasourceUUID: UUID, user: User): IO[Option[Scene.WithRelated]] = {
     logger.info(s"Attempting to import ${scenePath}")
@@ -198,7 +205,15 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       sceneType = SceneType.Avro.some
     )
 
-    IO.shift(SceneCreationIOContext) *> SceneDao.insertMaybe(sceneCreate, user).transact(xa)
+    val sceneInsertIO = for {
+      sceneInsert <- SceneDao.insertMaybe(sceneCreate, user).transact(xa)
+      _ <- sceneInsert match {
+        case Some(swr) => insertAcrForScene(swr, user).transact(xa)
+        case _ => ().pure[IO]
+      }
+    } yield { sceneInsert }
+
+    IO.shift(SceneCreationIOContext) *> sceneInsertIO
   }
 
   def insertSceneFromURI(uri: URI, existingSceneNames: List[String], datasourceUUID: UUID, user: User): List[IO[Option[Scene.WithRelated]]] = {
