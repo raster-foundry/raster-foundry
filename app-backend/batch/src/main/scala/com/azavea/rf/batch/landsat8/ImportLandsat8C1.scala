@@ -2,7 +2,7 @@ package com.azavea.rf.batch.landsat8
 
 import com.azavea.rf.batch.Job
 import com.azavea.rf.batch.util._
-import com.azavea.rf.database.{SceneDao, SceneWithRelatedDao, UserDao}
+import com.azavea.rf.database._
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
 import io.circe._
@@ -120,6 +120,13 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
     ) :: Nil
   }
 
+  protected def insertAcrForScene(swr: Scene.WithRelated, user: User): ConnectionIO[AccessControlRule] =
+    AccessControlRuleDao.create(
+      AccessControlRule.Create(
+        true, SubjectType.All, None, ActionType.View
+      ).toAccessControlRule(user, ObjectType.Scene, swr.id)
+    )
+
 
   @SuppressWarnings(Array("TraversableHead"))
   protected def csvRowToScene(
@@ -140,7 +147,13 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
           }
           case None => {
             createSceneFromRow(row, user, srcProj, targetProj, sceneId, productId, landsatPath) match {
-              case Some(scene) => SceneDao.insertMaybe(scene, user)
+              case Some(scene) => for {
+                sceneInsert <- SceneDao.insertMaybe(scene, user)
+                _ <- sceneInsert match {
+                  case Some(inserted) => insertAcrForScene(inserted, user)
+                  case _ => ().pure[ConnectionIO]
+                }
+              } yield { sceneInsert }
               case _ => None.pure[ConnectionIO]
             }
           }
