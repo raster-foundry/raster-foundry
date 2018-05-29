@@ -68,9 +68,16 @@ trait Authentication extends Directives {
   def getOrgCredentials(user: User): (Credential, Credential) = {
     val orgIO = for {
       ugrs <- UserGroupRoleDao.listByUserAndGroupType(user, GroupType.Organization)
-      org <- OrganizationDao.getOrganizationById(ugrs.head.groupId)
-    } yield (org.get.dropboxCredential, org.get.planetCredential)
-    orgIO.transact(xa).unsafeRunSync
+      org <- OrganizationDao.getOrganizationById(ugrs.headOption match {
+        case Some(ugr) => ugr.groupId
+        case _ => throw new RuntimeException(
+          s"No matching organization for user with id: ${user.id}")
+      })
+    } yield org
+    orgIO.transact(xa).unsafeRunSync match {
+      case Some(org) => (org.dropboxCredential, org.planetCredential)
+      case _ => (Credential(Some("")), Credential(Some("")))
+    }
   }
 
   def authenticateWithToken(tokenString: String): Directive1[User] = {
