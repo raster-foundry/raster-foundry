@@ -15,7 +15,7 @@ import cats.implicits._
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.database.ToolRunDao
+import com.azavea.rf.database.{AccessControlRuleDao, ToolRunDao}
 import doobie.util.transactor.Transactor
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -47,7 +47,20 @@ trait ToolRunRoutes extends Authentication
         get { getToolRun(runId) } ~
         put { updateToolRun(runId) } ~
         delete { deleteToolRun(runId) }
-      }
+      } ~
+        pathPrefix("permissions") {
+          pathEndOrSingleSlash {
+            put {
+              replaceToolRunPermissions(runId)
+            }
+          } ~
+            post {
+              addToolRunPermission(runId)
+            } ~
+            get {
+              listToolRunPermissions(runId)
+            }
+        }
     }
   }
 
@@ -109,6 +122,44 @@ trait ToolRunRoutes extends Authentication
     } {
       onSuccess(ToolRunDao.query.filter(runId).delete.transact(xa).unsafeToFuture) {
         completeSingleOrNotFound
+      }
+    }
+  }
+
+  def listToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolRunDao.query.ownedBy(user, toolRunId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Analysis, toolRunId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def replaceToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolRunDao.query.ownedBy(user, toolRunId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Analysis, toolRunId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def addToolRunPermission(toolRunId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolRunDao.query.ownedBy(user, toolRunId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[AccessControlRule.Create]) { acrCreate =>
+        complete {
+          AccessControlRuleDao.createWithResults(
+            acrCreate.toAccessControlRule(user, ObjectType.Analysis, toolRunId)
+          ).transact(xa).unsafeToFuture
+        }
       }
     }
   }

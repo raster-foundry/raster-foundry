@@ -20,13 +20,12 @@ import geotrellis.shapefile.ShapeFileReader
 import better.files.{File => ScalaFile, _}
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.effect.IO
-import com.azavea.rf.database.ShapeDao
+import com.azavea.rf.database.{AccessControlRuleDao, ShapeDao}
 import geotrellis.proj4.{CRS, LatLng, WebMercator}
 import geotrellis.slick.Projected
 import geotrellis.vector.reproject.Reproject
 
 import doobie.util.transactor.Transactor
-import com.azavea.rf.datamodel._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -74,7 +73,20 @@ trait ShapeRoutes extends Authentication
           get { getShape(shapeId) } ~
             put { updateShape(shapeId) } ~
             delete { deleteShape(shapeId) }
-        }
+        } ~
+          pathPrefix("permissions") {
+            pathEndOrSingleSlash {
+              put {
+                replaceShapePermissions(shapeId)
+              }
+            } ~
+              post {
+                addShapePermission(shapeId)
+              } ~
+              get {
+                listShapePermissions(shapeId)
+              }
+          }
       }
   }
 
@@ -178,4 +190,42 @@ trait ShapeRoutes extends Authentication
       }
     }
   }
+
+  def listShapePermissions(shapeId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Shape, shapeId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def replaceShapePermissions(shapeId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Shape, shapeId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def addShapePermission(shapeId: UUID): Route = authenticate { user =>
+      authorizeAsync {
+        ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
+      } {
+        entity(as[AccessControlRule.Create]) { acrCreate =>
+          complete {
+            AccessControlRuleDao.createWithResults(
+              acrCreate.toAccessControlRule(user, ObjectType.Shape, shapeId)
+            ).transact(xa).unsafeToFuture
+          }
+        }
+      }
+    }
 }

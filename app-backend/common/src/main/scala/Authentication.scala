@@ -75,7 +75,8 @@ trait Authentication extends Directives {
         val name = jwtClaims.getStringClaim("name")
         val picture = jwtClaims.getStringClaim("picture")
         onSuccess(UserDao.getUserById(userId).transact(xa).unsafeToFuture).flatMap {
-          case Some(user) =>
+          case Some(user) => {
+
             val updatedUser = user.copy(email = email, name = name, profileImageUri = picture)
             (updatedUser != user) match {
               case true =>
@@ -89,8 +90,8 @@ trait Authentication extends Directives {
               case _ =>
                 provide(user)
             }
-          case None =>
-
+          }
+          case None => {
             // use default platform / org if fields are not filled
             val auth0DefaultPlatformId = auth0Config.getString("defaultPlatformId")
             val auth0DefaultOrganizationId = auth0Config.getString("defaultOrganizationId")
@@ -137,6 +138,7 @@ trait Authentication extends Directives {
             ).flatMap {
               user => provide(user)
             }
+          }
         }
       }
     }

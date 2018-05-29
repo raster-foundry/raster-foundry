@@ -273,8 +273,4 @@ object ProjectDao extends Dao[Project] {
       scenesAdded <- addScenesToProject(scenes.map(_.id), projectId, user)
     } yield scenesAdded
   }
-
-  def ownedBy(projectId: UUID, user: User): ConnectionIO[Boolean] = {
-    query.filter(projectId).filter(fr"owner = ${user.id}").exists
-  }
 }

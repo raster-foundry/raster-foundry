@@ -78,7 +78,26 @@ trait SceneRoutes extends Authentication
             }
           }
         }
-      }
+      } ~
+      pathPrefix("permissions") {
+        pathEndOrSingleSlash {
+          put {
+            traceName("replace-scene-permissions") {
+              replaceScenePermissions(sceneId)
+            }
+          }
+        } ~
+          post {
+            traceName("add-scene-permission") {
+              addScenePermission(sceneId)
+            }
+          } ~
+          get {
+            traceName("list-scene-permissions") {
+              listScenePermissions(sceneId)
+            }
+          }
+        }
     }
   }
 
@@ -174,4 +193,43 @@ trait SceneRoutes extends Authentication
       }
     }
   }
+
+  def listScenePermissions(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Scene, sceneId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def replaceScenePermissions(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Scene, sceneId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def addScenePermission(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[AccessControlRule.Create]) { acrCreate =>
+        complete {
+          AccessControlRuleDao.createWithResults(
+            acrCreate.toAccessControlRule(user, ObjectType.Scene, sceneId)
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
 }

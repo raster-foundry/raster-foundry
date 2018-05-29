@@ -260,18 +260,18 @@ trait ProjectRoutes extends Authentication
             pathEndOrSingleSlash {
               put {
                 traceName("replace-project-permissions") {
-                  replacePermissions(projectId)
+                  replaceProjectPermissions(projectId)
                 }
               }
             } ~
               post {
                 traceName("add-project-permission") {
-                  addPermission(projectId)
+                  addProjectPermission(projectId)
                 }
               } ~
               get {
                 traceName("list-project-permissions") {
-                  listPermissions(projectId)
+                  listProjectPermissions(projectId)
                 }
               }
           }
@@ -722,23 +722,19 @@ trait ProjectRoutes extends Authentication
     }
   }
 
-  def addPermission(projectId: UUID): Route = authenticate { user =>
+  def listProjectPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.ownedBy(projectId, user).transact(xa).unsafeToFuture
+      ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
     } {
-      entity(as[AccessControlRule.Create]) { acrCreate =>
-        complete {
-          AccessControlRuleDao.createWithResults(
-            acrCreate.toAccessControlRule(user, ObjectType.Project, projectId)
-          ).transact(xa).unsafeToFuture
-        }
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Project, projectId).transact(xa).unsafeToFuture
       }
     }
   }
 
-  def replacePermissions(projectId: UUID): Route = authenticate { user =>
+  def replaceProjectPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.ownedBy(projectId, user).transact(xa).unsafeToFuture
+      ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
     } {
       entity(as[List[AccessControlRule.Create]]) { acrCreates =>
         complete {
@@ -750,13 +746,19 @@ trait ProjectRoutes extends Authentication
     }
   }
 
-  def listPermissions(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.ownedBy(projectId, user).transact(xa).unsafeToFuture
-    } {
-      complete {
-        AccessControlRuleDao.listByObject(ObjectType.Project, projectId).transact(xa).unsafeToFuture
+  def addProjectPermission(projectId: UUID): Route = authenticate { user =>
+      authorizeAsync {
+        ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
+      } {
+        entity(as[AccessControlRule.Create]) { acrCreate =>
+          complete {
+            AccessControlRuleDao.createWithResults(
+              acrCreate.toAccessControlRule(user, ObjectType.Project, projectId)
+            ).transact(xa).unsafeToFuture
+          }
+        }
       }
     }
-  }
+
+
 }
