@@ -88,7 +88,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       .list
   }
 
-  def listByUserAndGroupType(user: User, groupType: GroupType) = {
+  def listByUserAndGroupType(user: User, groupType: GroupType): ConnectionIO[List[UserGroupRole]] = {
     query
       .filter(fr"user_id = ${user.id}")
       .filter(fr"group_type = ${groupType}")

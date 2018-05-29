@@ -65,6 +65,14 @@ trait Authentication extends Directives {
     ConfigurableJwtValidator(jwkSet).validate(token)
   }
 
+  def getOrgCredentials(user: User): (Credential, Credential) = {
+    val orgIO = for {
+      ugrs <- UserGroupRoleDao.listByUserAndGroupType(user, GroupType.Organization)
+      org <- OrganizationDao.getOrganizationById(ugrs.head.groupId)
+    } yield (org.get.dropboxCredential, org.get.planetCredential)
+    orgIO.transact(xa).unsafeRunSync
+  }
+
   def authenticateWithToken(tokenString: String): Directive1[User] = {
     val result = verifyJWT(tokenString)
     result match {
@@ -76,8 +84,14 @@ trait Authentication extends Directives {
         val picture = jwtClaims.getStringClaim("picture")
         onSuccess(UserDao.getUserById(userId).transact(xa).unsafeToFuture).flatMap {
           case Some(user) => {
-
-            val updatedUser = user.copy(email = email, name = name, profileImageUri = picture)
+            val (orgDropboxCredential, orgPlanetCredential) = getOrgCredentials(user)
+            val updatedUser = (user.dropboxCredential, user.planetCredential) match {
+              case (Credential(Some(d)), Credential(Some(p))) if d.length() == 0 =>
+                user.copy(email = email, name = name, profileImageUri = picture, dropboxCredential = orgDropboxCredential)
+              case (Credential(Some(d)), Credential(Some(p))) if p.length() == 0 =>
+                user.copy(email = email, name = name, profileImageUri = picture, planetCredential = orgPlanetCredential)
+              case _ => user.copy(email = email, name = name, profileImageUri = picture)
+            }
             (updatedUser != user) match {
               case true =>
                 onSuccess(
