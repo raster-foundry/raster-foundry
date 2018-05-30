@@ -2,6 +2,10 @@ package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
+import geotrellis.spark.io.s3.AmazonS3Client
+import com.amazonaws.services.s3.{AmazonS3Client => AWSAmazonS3Client}
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+import com.amazonaws.services.s3.model.{ObjectMetadata, CannedAccessControlList}
 
 import doobie._
 import doobie.implicits._
@@ -15,9 +19,13 @@ import com.lonelyplanet.akka.http.extensions.PageRequest
 
 import java.util.UUID
 import java.sql.Timestamp
+import org.apache.commons.codec.binary.{Base64 => ApacheBase64}
+import java.io.ByteArrayInputStream
+import java.nio.charset.StandardCharsets
 
 import scala.concurrent.Future
 import com.typesafe.scalalogging.LazyLogging
+import scala.util.Properties
 
 
 object OrganizationDao extends Dao[Organization] with LazyLogging {
@@ -26,7 +34,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, name, platform_id, is_active, dropbox_credential, planet_credential
+      id, created_at, modified_at, name, platform_id, is_active,
+      dropbox_credential, planet_credential, logo_uri
     FROM
   """ ++ tableF
 
@@ -36,9 +45,10 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     (fr"INSERT INTO" ++ tableF ++ fr"""
           (id, created_at, modified_at, name, platform_id, is_active)
         VALUES
-          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId}, true)
+          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId}, true, '')
     """).update.withUniqueGeneratedKeys[Organization](
-      "id", "created_at", "modified_at", "name", "platform_id", "is_active", "dropbox_credential", "planet_credential"
+      "id", "created_at", "modified_at", "name", "platform_id", "is_active",
+      "dropbox_credential", "planet_credential", "logo_uri"
     )
   }
 
@@ -205,5 +215,37 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
         } yield (newOrgRoles ++ deactivatedOrgRoles.flatten)
       case None => throw new IllegalArgumentException(s"User not in database: ${subjectId}")
     }
+  }
+
+  def addLogo(logoBase64: Organization.LogoBase64, orgID: UUID): ConnectionIO[Organization] = {
+    val bucketName = Properties.envOrElse("DATA_BUCKET", "rasterfoundry-staging-data-us-east-1")
+    val prefix = "org-logos"
+    val key = s"${orgID.toString()}.png"
+    val logoByte = ApacheBase64.decodeBase64(logoBase64.logo)
+    val logoStream = new ByteArrayInputStream(logoByte)
+    val md = new ObjectMetadata()
+    val s3 = new AWSAmazonS3Client(new DefaultAWSCredentialsProviderChain)
+    val s3Client = new AmazonS3Client(s3)
+
+    md.setContentType("image/png")
+    md.setContentLength(logoByte.length)
+
+    if (s3Client.listKeys(bucketName, prefix).contains(s"${prefix}/${key}")) {
+      s3Client.deleteObject(bucketName, s"${prefix}/${key}")
+    }
+
+    s3Client.putObject(bucketName, s"${prefix}/${key}", logoStream, md)
+    s3.setObjectAcl(bucketName, s"${prefix}/${key}", CannedAccessControlList.PublicRead)
+
+    val uri = s"https://${bucketName}.s3.amazonaws.com/${prefix}/${key}"
+    val updateTime = new Timestamp((new java.util.Date()).getTime)
+    (fr"UPDATE" ++ tableF ++ fr"""SET
+         modified_at = ${updateTime},
+         logo_uri = ${uri}
+       WHERE id = ${orgID}
+     """).update.withUniqueGeneratedKeys[Organization](
+       "id", "created_at", "modified_at", "name", "platform_id", "is_active",
+       "dropbox_credential", "planet_credential", "logo_uri"
+     )
   }
 }

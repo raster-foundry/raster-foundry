@@ -38,7 +38,12 @@ trait OrganizationRoutes extends Authentication
       pathEndOrSingleSlash {
         get { getOrganization(orgId) } ~
         put { updateOrganization(orgId) }
-      }
+      } ~
+        pathPrefix("logo") {
+          pathEndOrSingleSlash {
+            post { addOrganizationLogo(orgId) }
+          }
+        }
     }
   }
 
@@ -70,6 +75,14 @@ trait OrganizationRoutes extends Authentication
     entity(as[Organization]) { orgToUpdate =>
       completeWithOneOrFail {
         OrganizationDao.update(orgToUpdate, orgId).transact(xa).unsafeToFuture()
+      }
+    }
+  }
+
+  def addOrganizationLogo(orgID: UUID): Route = authenticate { user =>
+    entity(as[Organization.LogoBase64]) { logoBase64 =>
+      onSuccess(OrganizationDao.addLogo(logoBase64, orgID).transact(xa).unsafeToFuture()) { organization =>
+        complete((StatusCodes.Created, organization))
       }
     }
   }

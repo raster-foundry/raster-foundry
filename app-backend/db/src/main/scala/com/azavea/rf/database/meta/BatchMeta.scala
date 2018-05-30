@@ -2,6 +2,7 @@ package com.azavea.rf.database.meta
 
 import java.time.LocalDate
 import java.util.UUID
+import java.util.Base64
 
 import doobie._, doobie.implicits._
 

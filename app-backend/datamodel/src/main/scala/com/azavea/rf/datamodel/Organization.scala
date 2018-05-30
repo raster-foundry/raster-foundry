@@ -15,7 +15,8 @@ case class Organization(
   platformId: UUID,
   isActive: Boolean,
   dropboxCredential: Credential,
-  planetCredential: Credential
+  planetCredential: Credential,
+  logoUri: String
 )
 
 object Organization {
@@ -31,7 +32,10 @@ object Organization {
     def toOrganization: Organization = {
       val id = java.util.UUID.randomUUID()
       val now = new Timestamp((new java.util.Date()).getTime())
-      Organization(id, now, now, name, platformId, true, Credential(None), Credential(None))
+      Organization(id, now, now, name, platformId, true, Credential(None), Credential(None), "")
     }
   }
+
+  @JsonCodec
+  case class LogoBase64(logo: String)
 }
