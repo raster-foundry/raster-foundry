@@ -21,7 +21,6 @@ import java.util.UUID
 import java.sql.Timestamp
 import org.apache.commons.codec.binary.{Base64 => ApacheBase64}
 import java.io.ByteArrayInputStream
-import java.nio.charset.StandardCharsets
 
 import scala.concurrent.Future
 import com.typesafe.scalalogging.LazyLogging

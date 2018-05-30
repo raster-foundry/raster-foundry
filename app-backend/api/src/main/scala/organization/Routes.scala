@@ -80,9 +80,13 @@ trait OrganizationRoutes extends Authentication
   }
 
   def addOrganizationLogo(orgID: UUID): Route = authenticate { user =>
-    entity(as[Organization.LogoBase64]) { logoBase64 =>
-      onSuccess(OrganizationDao.addLogo(logoBase64, orgID).transact(xa).unsafeToFuture()) { organization =>
-        complete((StatusCodes.Created, organization))
+    authorizeAsync (
+      OrganizationDao.userIsAdmin(user, orgID).transact(xa).unsafeToFuture()
+    ) {
+      entity(as[Organization.LogoBase64]) { logoBase64 =>
+        onSuccess(OrganizationDao.addLogo(logoBase64, orgID).transact(xa).unsafeToFuture()) { organization =>
+          complete((StatusCodes.Created, organization))
+        }
       }
     }
   }
