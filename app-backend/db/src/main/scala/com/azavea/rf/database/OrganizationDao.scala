@@ -26,7 +26,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, name, platform_id, is_active
+      id, created_at, modified_at, name, platform_id, is_active, dropbox_credential, planet_credential
     FROM
   """ ++ tableF
 
@@ -38,7 +38,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
         VALUES
           (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId}, true)
     """).update.withUniqueGeneratedKeys[Organization](
-      "id", "created_at", "modified_at", "name", "platform_id", "is_active"
+      "id", "created_at", "modified_at", "name", "platform_id", "is_active", "dropbox_credential", "planet_credential"
     )
   }
 
@@ -57,7 +57,9 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
 
     (fr"UPDATE" ++ tableF ++ fr"""SET
          modified_at = ${updateTime},
-         name = ${org.name}
+         name = ${org.name},
+         dropbox_credential = ${org.dropboxCredential.token.getOrElse("")},
+         planet_credential = ${org.planetCredential.token.getOrElse("")}
        WHERE id = ${id}
      """).update.run
   }
