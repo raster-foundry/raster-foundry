@@ -93,10 +93,12 @@ trait Authentication extends Directives {
           case Some(user) => {
             val (orgDropboxCredential, orgPlanetCredential) = getOrgCredentials(user)
             val updatedUser = (user.dropboxCredential, user.planetCredential) match {
-              case (Credential(Some(d)), Credential(Some(p))) if d.length() == 0 =>
-                user.copy(email = email, name = name, profileImageUri = picture, dropboxCredential = orgDropboxCredential)
-              case (Credential(Some(d)), Credential(Some(p))) if p.length() == 0 =>
-                user.copy(email = email, name = name, profileImageUri = picture, planetCredential = orgPlanetCredential)
+              case (Credential(Some(d)), Credential(Some(p))) if d.length == 0 =>
+                user.copy(email = email, name = name, profileImageUri = picture)
+                  .copy(dropboxCredential = orgDropboxCredential)
+              case (Credential(Some(d)), Credential(Some(p))) if p.length == 0 =>
+                user.copy(email = email, name = name, profileImageUri = picture)
+                  .copy(planetCredential = orgPlanetCredential)
               case _ => user.copy(email = email, name = name, profileImageUri = picture)
             }
             (updatedUser != user) match {
