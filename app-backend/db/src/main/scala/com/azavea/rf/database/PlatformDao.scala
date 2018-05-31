@@ -90,14 +90,16 @@ object PlatformDao extends Dao[Platform] {
         FROM """ ++ UserDao.tableF ++ fr"""
         WHERE id = ${user.id}
       ) OR (
-        SELECT count(id) > 0
-        FROM """ ++ UserGroupRoleDao.tableF ++ fr"""
+        SELECT count(ugr.id) > 0
+        FROM """ ++ UserGroupRoleDao.tableF ++ fr""" ugr
+        JOIN """ ++ tableF ++ fr""" p ON ugr.group_id = p.id
         WHERE
-          user_id = ${user.id} AND
-          group_type = ${GroupType.Platform.toString}::group_type AND
-          group_role = ${GroupRole.Admin.toString}::group_role AND
-          group_id = ${platformId} AND
-          is_active = true
+          ugr.user_id = ${user.id} AND
+          ugr.group_type = ${GroupType.Platform.toString}::group_type AND
+          ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
+          ugr.group_id = ${platformId} AND
+          ugr.is_active = true AND
+          p.is_active = true
       )
   """
 
@@ -125,5 +127,19 @@ object PlatformDao extends Dao[Platform] {
   def deactivateUserRoles(actingUser: User, subjectId: String, platformId: UUID): ConnectionIO[List[UserGroupRole]] = {
     val userGroup = UserGroupRole.UserGroup(subjectId, GroupType.Platform, platformId)
     UserGroupRoleDao.deactivateUserGroupRoles(userGroup, actingUser)
+  }
+
+  def activatePlatform(platformId: UUID) = {
+    (fr"UPDATE" ++ tableF ++ fr"""SET
+       is_active = true,
+       where id = ${platformId}
+      """).update.run
+  }
+
+  def deactivatePlatform(platformId: UUID) = {
+    (fr"UPDATE" ++ tableF ++ fr"""SET
+       is_active = false,
+       where id = ${platformId}
+      """).update.run
   }
 }

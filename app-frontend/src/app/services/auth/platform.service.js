@@ -20,6 +20,10 @@ export default (app) => {
                     createOrganization: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:id/organizations`,
                         method: 'POST'
+                    },
+                    setPlatformStatus: {
+                        url: `${BUILDCONFIG.API_HOST}/api/platforms/:id/`,
+                        method: 'POST'
                     }
                 }
             );
@@ -48,6 +52,10 @@ export default (app) => {
             return this.Platform
                 .createOrganization({id: platformId}, {platformId, name})
                 .$promise;
+        }
+
+        deactivatePlatform(platformId) {
+            return this.Platform.setPlatformStatus({id: platformId}, {isActive: false});
         }
     }
 

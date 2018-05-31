@@ -40,7 +40,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
 
   def create(
     org: Organization
-  ): ConnectionIO[Organization] = {
+  ): ConnectionIO[Organization] =
     (fr"INSERT INTO" ++ tableF ++ fr"""
           (id, created_at, modified_at, name, platform_id, is_active)
         VALUES
@@ -49,7 +49,6 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
       "id", "created_at", "modified_at", "name", "platform_id", "is_active",
       "dropbox_credential", "planet_credential", "logo_uri"
     )
-  }
 
   def getOrganizationById(id: UUID): ConnectionIO[Option[Organization]] =
     query.filter(id).selectOption
@@ -57,9 +56,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
   def unsafeGetOrganizationById(id: UUID): ConnectionIO[Organization] =
     query.filter(id).select
 
-  def createOrganization(newOrg: Organization.Create): ConnectionIO[Organization] = {
+  def createOrganization(newOrg: Organization.Create): ConnectionIO[Organization] =
     create(newOrg.toOrganization)
-  }
 
   def update(org: Organization, id: UUID): ConnectionIO[Int] = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
@@ -241,5 +239,21 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
        "id", "created_at", "modified_at", "name", "platform_id", "is_active",
        "dropbox_credential", "planet_credential", "logo_uri"
      )
+  }
+
+  def activateOrganization(actingUser: User, organizationId: UUID) = {
+    (fr"UPDATE" ++ tableF ++ fr"""SET
+       is_active = true,
+       modified_at = now()
+       where id = ${organizationId}
+      """).update.run
+  }
+
+  def deactivateOrganization(actingUser: User, organizationId: UUID) = {
+    (fr"UPDATE" ++ tableF ++ fr"""SET
+       is_active = false,
+       modified_at = now()
+       where id = ${organizationId}
+      """).update.run
   }
 }

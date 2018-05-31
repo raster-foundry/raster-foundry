@@ -37,11 +37,11 @@ export default (app) => {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/organizations`,
                         method: 'POST'
                     },
-                    deactivateOrganization: {
+                    setOrganizationStatus: {
                         url:
                         `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                             'organizations/:organizationId',
-                        method: 'DELETE',
+                        method: 'POST',
                         params: {platformId: '@platformId', organizationId: '@organizationId'}
                     }
                 }
@@ -102,8 +102,12 @@ export default (app) => {
 
         deactivate(platformId, organizationId) {
             return this.PlatformOrganization
-                .deactivateOrganization({platformId, organizationId})
-                .$promise;
+                .setOrganizationStatus({platformId, organizationId}, {isActive: false}).$promise;
+        }
+
+        activate(platformId, organizationId) {
+            return this.PlatformOrganization
+                .setOrganizationStatus({platformId, organizationId}, {isActive: true}).$promise;
         }
 
         addOrganizationLogo(organizationId, logoBase64) {

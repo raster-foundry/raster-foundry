@@ -38,6 +38,8 @@ object UserRole {
   }
 }
 
+case class UserOptionAndRoles(user: Option[User], roles: List[UserGroupRole])
+
 case class Credential(token: Option[String])
 
 object Credential {
