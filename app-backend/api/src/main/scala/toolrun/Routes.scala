@@ -60,6 +60,13 @@ trait ToolRunRoutes extends Authentication
             get {
               listToolRunPermissions(runId)
             }
+        } ~
+        pathPrefix("actions") {
+          pathEndOrSingleSlash {
+            get {
+              listUserAnalysisActions(runId)
+            }
+          }
         }
     }
   }
@@ -160,6 +167,24 @@ trait ToolRunRoutes extends Authentication
             acrCreate.toAccessControlRule(user, ObjectType.Analysis, toolRunId)
           ).transact(xa).unsafeToFuture
         }
+      }
+    }
+  }
+
+  def listUserAnalysisActions(analysisId: UUID): Route = authenticate { user =>
+    onSuccess(
+      ToolRunDao.query.filter(analysisId).selectOption.transact(xa).unsafeToFuture
+    ) { analysisO =>
+      analysisO match {
+        case Some(analysis) =>
+          if (user.isSuperuser || analysis.owner == user.id) {
+            complete(List("*"))
+          } else {
+            complete {
+              AccessControlRuleDao.listUserActions(user, ObjectType.Analysis, analysisId).transact(xa).unsafeToFuture
+            }
+          }
+        case _ => complete(StatusCodes.NoContent)
       }
     }
   }
