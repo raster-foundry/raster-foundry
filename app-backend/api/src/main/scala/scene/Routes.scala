@@ -165,7 +165,7 @@ trait SceneRoutes extends Authentication
   def getDownloadUrl(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
       SceneWithRelatedDao.query
-        .authorized(user, ObjectType.Scene, sceneId, ActionType.View)
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.Download)
         .transact(xa)
         .unsafeToFuture
     } {
