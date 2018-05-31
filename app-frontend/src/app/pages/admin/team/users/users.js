@@ -106,7 +106,7 @@ class TeamUsersController {
         const modal = this.modalService.open({
             component: 'rfConfirmationModal',
             resolve: {
-                title: () => `Remove ${user.name} from this team?`,
+                title: () => `Remove ${user.name || user.email || user.id} from this team?`,
                 confirmText: () => 'Remove User',
                 cancelText: () => 'Cancel'
             }
