@@ -44,7 +44,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     (fr"INSERT INTO" ++ tableF ++ fr"""
           (id, created_at, modified_at, name, platform_id, is_active)
         VALUES
-          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId}, true, '')
+          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId}, true)
     """).update.withUniqueGeneratedKeys[Organization](
       "id", "created_at", "modified_at", "name", "platform_id", "is_active",
       "dropbox_credential", "planet_credential", "logo_uri"
