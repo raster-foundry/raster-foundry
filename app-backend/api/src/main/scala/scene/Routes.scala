@@ -101,7 +101,7 @@ trait SceneRoutes extends Authentication
       pathPrefix("actions") {
         pathEndOrSingleSlash {
           get {
-            traceName("list-user-allowed actions") {
+            traceName("list-user-allowed-actions") {
               listUserSceneActions(sceneId)
             }
           }
