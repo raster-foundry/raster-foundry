@@ -100,6 +100,15 @@ trait ToolRoutes extends Authentication
                 listToolPermissions(toolId)
               }
             }
+        } ~
+        pathPrefix("actions") {
+          pathEndOrSingleSlash {
+            get {
+              traceName("list-user-allowed-actions") {
+                listUserTemplateActions(toolId)
+              }
+            }
+          }
         }
     }
   }
@@ -223,6 +232,24 @@ trait ToolRoutes extends Authentication
             acrCreate.toAccessControlRule(user, ObjectType.Template, toolId)
           ).transact(xa).unsafeToFuture
         }
+      }
+    }
+  }
+
+  def listUserTemplateActions(templateId: UUID): Route = authenticate { user =>
+    onSuccess(
+      ToolDao.query.filter(templateId).selectOption.transact(xa).unsafeToFuture
+    ) { templateO =>
+      templateO match {
+        case Some(template) =>
+          if (user.isSuperuser || template.owner == user.id) {
+            complete(List("*"))
+          } else {
+            complete {
+              AccessControlRuleDao.listUserActions(user, ObjectType.Template, templateId).transact(xa).unsafeToFuture
+            }
+          }
+        case _ => complete(StatusCodes.NoContent)
       }
     }
   }
