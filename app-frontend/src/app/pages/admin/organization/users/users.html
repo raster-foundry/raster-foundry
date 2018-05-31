@@ -24,17 +24,17 @@
             <img class="avatar" ng-src="{{user.profileImageUri}}">
           </div>
           <div>
-            {{user.name || user.id}}
+            {{user.name || user.email || user.id}}
           </div>
         </td>
-        <td class="emails">
-          {{user.email}}
+        <td class="emails" ng-class="{'color-light': !user.email}">
+          {{user.email || 'None'}}
         </td>
         <td class="roles">
           {{user.groupRole}}
         </td>
         <td class="teams">
-          {{user.teams.length}} Teams
+          In {{user.teams.length || 0}} teams
         </td>
         <td class="actions">
           <rf-dropdown data-options="user.options">

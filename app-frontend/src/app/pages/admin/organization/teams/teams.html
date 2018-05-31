@@ -22,7 +22,7 @@
         <td class="users">
           <div class="user-avatar"
                ng-repeat="user in team.fetchedUsers.results track by $index | limitTo : 5"
-               ng-attr-title="{{user.name}}"
+               ng-attr-title="{{user.name || user.email || user.id}}"
           >
             <img class="avatar" ng-src="{{user.profileImageUri}}">
           </div>

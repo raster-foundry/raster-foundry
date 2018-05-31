@@ -5,9 +5,9 @@
       <span aria-hidden="true">&times;</span>
     </button>
     <h4 class="modal-title">
-      Add users to team
+      Add users
     </h4>
-    <p ng-if="!$ctrl.resolve.modalText">Select a users to add to the team.</p>
+    <p ng-if="!$ctrl.resolve.modalText">Select users to add to this {{$ctrl.resolve.adminView}}.</p>
     <p ng-if="$ctrl.resolve.modalText">{{$ctrl.resolve.modalText}}</p>
   </div>
   <div class="modal-body">
@@ -36,11 +36,11 @@
               <img class="avatar" ng-src="{{user.profileImageUri}}">
             </div>
             <div>
-              {{user.name}}
+              {{user.name || user.email || user.id}}
             </div>
           </td>
-          <td class="emails">
-            {{user.email}}
+          <td class="emails" ng-class="{'color-light': !user.email}">
+            {{user.email || 'None'}}
           </td>
           <td class="actions">
             <rf-toggle value="$ctrl.selected.has(user.id)" on-change="$ctrl.toggleUserSelect(user)">

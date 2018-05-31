@@ -23,7 +23,7 @@
             <img class="avatar" ng-src="{{user.profileImageUri}}">
           </div>
           <div>
-            {{user.name}}
+            {{user.name || user.email || user.id}}
           </div>
         </td>
         <td class="emails">
