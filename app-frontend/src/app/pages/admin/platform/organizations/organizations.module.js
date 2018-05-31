@@ -99,21 +99,30 @@ class PlatformOrganizationsController {
 
     itemsForOrg(organization) {
         /* eslint-disable */
-        return [
-            {
-                label: 'Manage',
-                callback: () => {
-                    this.$state.go('.detail.features', {orgId: organization.id});
-                }
-            },
-            {
+        let actions = [{
+            label: 'Manage',
+            callback: () => {
+                this.$state.go('.detail.features', {orgId: organization.id});
+            }
+        }];
+        if (organization.isActive) {
+            actions.push({
                 label: 'Deactivate',
                 callback: () => {
                     this.deactivateOrganization(organization);
                 },
                 classes: ['color-danger']
-            }
-        ];
+            });
+        } else {
+            actions.push({
+                label: 'Activate',
+                callback: () => {
+                    this.activateOrganization(organization);
+                },
+                classes: ['color-secondary']
+            });
+        };
+        return actions;
         /* eslint-enable */
     }
 
@@ -141,6 +150,20 @@ class PlatformOrganizationsController {
                 }
             );
         });
+    }
+
+    activateOrganization(organization) {
+        this.organizationService.activate(
+            this.$stateParams.platformId, organization.id
+        ).then(
+            () => {
+                this.fetchOrganizations(this.pagination.currentPage);
+            },
+            (err) => {
+                this.$log.debug('error activating organization', err);
+                this.fetchOrganizations(this.pagination.currentPage);
+            }
+        );
     }
 
     newOrgModal() {

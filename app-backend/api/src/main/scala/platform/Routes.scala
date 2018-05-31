@@ -61,6 +61,11 @@ trait PlatformRoutes extends Authentication
           traceName("platforms-delete") {
             deletePlatform(platformId)
           }
+        } ~
+        post {
+          traceName("platforms-set-active-status") {
+            setPlatformStatus(platformId)
+          }
         }
       } ~
       pathPrefix("members") {
@@ -116,9 +121,9 @@ trait PlatformRoutes extends Authentication
                   updateOrganization(platformId, orgId)
                 }
               } ~
-              delete {
-                traceName("platforms-organizations-delete") {
-                  deleteOrganization(platformId, orgId)
+              post {
+                traceName("platform-organization-set-active-status") {
+                  setOrganizationStatus(platformId, orgId)
                 }
               }
             }
@@ -484,6 +489,60 @@ trait PlatformRoutes extends Authentication
       complete {
         TeamDao.deactivateUserRoles(user, userId, teamId).transact(xa).unsafeToFuture
       }
+    }
+  }
+
+  def setPlatformStatus(platformId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
+    } {
+      entity(as[ActiveStatus]) {
+        case ActiveStatus(true) =>
+          activatePlatform(platformId, user)
+        case ActiveStatus(false) =>
+          deactivatePlatform(platformId)
+      }
+    }
+  }
+
+  def activatePlatform(platformId: UUID, user: User): Route = authorizeAsync {
+    UserDao.isSuperUser(user).transact(xa).unsafeToFuture
+  } {
+    complete {
+      PlatformDao.activatePlatform(platformId).transact(xa).unsafeToFuture
+    }
+  }
+
+  def deactivatePlatform(platformId: UUID): Route = complete {
+    PlatformDao.deactivatePlatform(platformId).transact(xa).unsafeToFuture
+  }
+
+  def setOrganizationStatus(platformId: UUID, organizationId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      OrganizationDao.userIsAdmin(user, organizationId).transact(xa).unsafeToFuture
+    } {
+      entity(as[ActiveStatus]) {
+        case ActiveStatus(true) =>
+          activateOrganization(platformId, organizationId, user)
+        case ActiveStatus(false) =>
+          deactivateOrganization(platformId, organizationId, user)
+      }
+    }
+  }
+
+  def activateOrganization(platformId: UUID, organizationId: UUID, user: User): Route = authorizeAsync {
+    PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
+  } {
+    complete {
+      OrganizationDao.activateOrganization(user, organizationId).transact(xa).unsafeToFuture
+    }
+  }
+
+  def deactivateOrganization(platformId: UUID, organizationId: UUID, user: User): Route = authorizeAsync {
+    OrganizationDao.userIsAdmin(user, organizationId).transact(xa).unsafeToFuture
+  } {
+    complete {
+      OrganizationDao.deactivateOrganization(user, organizationId).transact(xa).unsafeToFuture
     }
   }
 }

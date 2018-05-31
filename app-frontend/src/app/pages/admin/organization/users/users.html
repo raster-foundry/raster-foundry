@@ -9,6 +9,13 @@
     <div class="admin-users-actions">
       <input type="text" class="form-control admin-search" placeholder="Search for users"
              ng-model="$ctrl.search">
+      <div class="actions-right">
+        <button type="button" class="btn btn-primary"
+                ng-click="$ctrl.addUserModal()"
+                ng-disabled="$ctrl.fetching">
+          Add User
+        </button>
+      </div>
     </div>
   </div>
   <table class="admin-table admin-org-user-table" ng-if="!$ctrl.fetching">

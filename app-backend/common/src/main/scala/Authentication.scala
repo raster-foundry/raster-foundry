@@ -17,13 +17,13 @@ import java.net.URL
 import java.util.UUID
 
 import cats.effect.IO
+import cats.implicits._
 import com.azavea.rf.database._
 import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
-
 
 trait Authentication extends Directives {
 
@@ -65,7 +65,7 @@ trait Authentication extends Directives {
     ConfigurableJwtValidator(jwkSet).validate(token)
   }
 
-  def getOrgCredentials(user: User): (Credential, Credential) = {
+  def getOrgCredentials(user: User): ConnectionIO[(Credential, Credential)] = {
     val orgIO = for {
       ugrs <- UserGroupRoleDao.listByUserAndGroupType(user, GroupType.Organization)
       org <- OrganizationDao.getOrganizationById(ugrs.headOption match {
@@ -74,7 +74,7 @@ trait Authentication extends Directives {
           s"No matching organization for user with id: ${user.id}")
       })
     } yield org
-    orgIO.transact(xa).unsafeRunSync match {
+    orgIO.map {
       case Some(org) => (org.dropboxCredential, org.planetCredential)
       case _ => (Credential(Some("")), Credential(Some("")))
     }
@@ -83,6 +83,7 @@ trait Authentication extends Directives {
   def getStringClaimOrBlank(claims: JWTClaimsSet, key: String): String =
     Option(claims.getStringClaim(key)).getOrElse("")
 
+  @SuppressWarnings(Array("TraversableHead"))
   def authenticateWithToken(tokenString: String): Directive1[User] = {
     val result = verifyJWT(tokenString)
     result match {
@@ -92,82 +93,100 @@ trait Authentication extends Directives {
         val email = getStringClaimOrBlank(jwtClaims, "email")
         val name = getStringClaimOrBlank(jwtClaims, "name")
         val picture = getStringClaimOrBlank(jwtClaims, "picture")
-        onSuccess(UserDao.getUserById(userId).transact(xa).unsafeToFuture).flatMap {
-          case Some(user) => {
-            val (orgDropboxCredential, orgPlanetCredential) = getOrgCredentials(user)
-            val updatedUser = (user.dropboxCredential, user.planetCredential) match {
-              case (Credential(Some(d)), Credential(Some(p))) if d.length == 0 =>
-                user.copy(email = email, name = name, profileImageUri = picture)
-                  .copy(dropboxCredential = orgDropboxCredential)
-              case (Credential(Some(d)), Credential(Some(p))) if p.length == 0 =>
-                user.copy(email = email, name = name, profileImageUri = picture)
-                  .copy(planetCredential = orgPlanetCredential)
-              case _ => user.copy(email = email, name = name, profileImageUri = picture)
-            }
+        case class MembershipAndUser(platform: Platform, organization: Organization, user: User)
+        // All users will have an org role, either added by a migration or created with the user if they are new
+        // All users will have a platform role, either added by a migration or created with the user if they are new
+        val query = for {
+          userAndRoles <- UserDao.getUserAndActiveRolesById(userId).flatMap {
+            case UserOptionAndRoles(Some(user), roles) => (user, roles).pure[ConnectionIO]
+            case UserOptionAndRoles(None, _) => createUserWithRoles(userId, email, name, picture, jwtClaims)
+          }
+          (user, roles) = userAndRoles
+          orgRole = roles.filter(role => role.groupType == GroupType.Organization).head
+          org <- OrganizationDao.unsafeGetOrganizationById(orgRole.groupId)
+          platformRole = roles.filter(role => role.groupType == GroupType.Platform).head
+          plat <- PlatformDao.unsafeGetPlatformById(platformRole.groupId)
+          orgCredentials <- getOrgCredentials(user)
+          (orgDropboxCredential, orgPlanetCredential) = orgCredentials
+          updatedUser = (user.dropboxCredential, user.planetCredential) match {
+            case (Credential(Some(d)), Credential(Some(p))) if d.length == 0 =>
+              user.copy(email = email, name = name, profileImageUri = picture)
+                .copy(dropboxCredential = orgDropboxCredential)
+            case (Credential(Some(d)), Credential(Some(p))) if p.length == 0 =>
+              user.copy(email = email, name = name, profileImageUri = picture)
+                .copy(planetCredential = orgPlanetCredential)
+            case _ => user.copy(email = email, name = name, profileImageUri = picture)
+          }
+          userUpdate <- {
             (updatedUser != user) match {
-              case true =>
-                onSuccess(
-                  UserDao.updateUser(updatedUser, updatedUser.id)
-                    .transact(xa)
-                    .unsafeToFuture
-                ).flatMap {
-                  _ => provide(updatedUser)
-                }
+              case true => UserDao.updateUser(updatedUser, updatedUser.id).map(_ => updatedUser)
+              case _ => user.pure[ConnectionIO]
+            }
+          }
+        } yield MembershipAndUser(plat, org, userUpdate)
+        onSuccess(query.transact(xa).unsafeToFuture).flatMap {
+          case MembershipAndUser(plat, org, userUpdate) =>
+            (plat, org) match {
+              case (Platform(_, _, _, true, _), Organization(_, _, _, _, _, true, _, _, _)) =>
+                provide(userUpdate)
               case _ =>
-                provide(user)
+                reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
             }
-          }
-          case None => {
-            // use default platform / org if fields are not filled
-            val auth0DefaultPlatformId = auth0Config.getString("defaultPlatformId")
-            val auth0DefaultOrganizationId = auth0Config.getString("defaultOrganizationId")
-            val auth0SystemUser = auth0Config.getString("systemUser")
-
-            val platformId = UUID.fromString(
-              jwtClaims.getStringClaim(
-                "https://app.rasterfoundry.com;platform"
-              ) match {
-                case platform: String => platform
-                case _ => auth0DefaultPlatformId
-              }
-            )
-
-            val organizationId = UUID.fromString(
-              jwtClaims.getStringClaim(
-                "https://app.rasterfoundry.com;organization"
-              ) match {
-                case organization: String => organization
-                case _ => auth0DefaultOrganizationId
-              }
-            )
-
-            val createUserQuery = for {
-              platform <- PlatformDao.getPlatformById(platformId)
-              systemUser <- UserDao.unsafeGetUserById(auth0SystemUser)
-              newUser <- {
-                val orgID = platform match {
-                  case Some(p) => p.defaultOrganizationId.getOrElse(organizationId)
-                  case _ => throw new RuntimeException(
-                    s"Tried to create a user using a non-existent platformId: ${platformId}"
-                  )
-                }
-                val jwtUser = User.JwtFields(
-                  userId, email, name, picture,
-                  platformId, orgID
-                )
-                UserDao.createUserWithJWT(systemUser, jwtUser)
-              }
-            } yield newUser
-
-            onSuccess(
-              createUserQuery.transact(xa).unsafeToFuture
-            ).flatMap {
-              user => provide(user)
-            }
-          }
+          case _ =>
+            reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
         }
       }
     }
+  }
+
+  def createUserWithRoles(userId: String, email: String, name: String, picture: String, jwtClaims: JWTClaimsSet): ConnectionIO[(User, List[UserGroupRole])] = {
+    // use default platform / org if fields are not filled
+    val auth0DefaultPlatformId = auth0Config.getString("defaultPlatformId")
+    val auth0DefaultOrganizationId = auth0Config.getString("defaultOrganizationId")
+    val auth0SystemUser = auth0Config.getString("systemUser")
+
+    val platformId = UUID.fromString(
+      jwtClaims.getStringClaim(
+        "https://app.rasterfoundry.com;platform"
+      ) match {
+        case platform: String => platform
+        case _ => auth0DefaultPlatformId
+      }
+    )
+
+    val organizationId = UUID.fromString(
+      jwtClaims.getStringClaim(
+        "https://app.rasterfoundry.com;organization"
+      ) match {
+        case organization: String => organization
+        case _ => auth0DefaultOrganizationId
+      }
+    )
+
+    for {
+      platform <- PlatformDao.getPlatformById(platformId)
+      systemUserO <- UserDao.getUserById(auth0SystemUser)
+      systemUser = systemUserO match {
+        case Some(su) => su
+        case _ => throw new RuntimeException(
+          s"Tried to create a user using a non-existent system user: ${auth0SystemUser}"
+        )
+      }
+      orgID = platform match {
+        case Some(p) => p.defaultOrganizationId.getOrElse(organizationId)
+        case _ => throw new RuntimeException(
+          s"Tried to create a user using a non-existent platformId: ${platformId}"
+        )
+      }
+      jwtUser = User.JwtFields(
+        userId, email, name, picture,
+        platformId, orgID
+      )
+      newUserWithRoles <- {
+        UserDao.createUserWithJWT(systemUser, jwtUser)
+      }
+      (newUser, roles) = newUserWithRoles
+    } yield (newUser, roles)
   }
 
   /**

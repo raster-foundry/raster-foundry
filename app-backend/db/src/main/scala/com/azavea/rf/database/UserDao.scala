@@ -17,7 +17,6 @@ import java.util.UUID
 
 import scala.concurrent.Future
 
-
 object UserDao extends Dao[User] {
 
   val tableName = "users"
@@ -42,7 +41,21 @@ object UserDao extends Dao[User] {
     filterById(id).selectOption
   }
 
-  def createUserWithJWT(creatingUser: User, jwtUser: User.JwtFields): ConnectionIO[User] = {
+  def getUserAndActiveRolesById(id: String): ConnectionIO[UserOptionAndRoles] = {
+    for {
+      user <- getUserById(id)
+      roles <- {
+        user match {
+          case Some(u) =>
+            UserGroupRoleDao.listByUser(u)
+          case _ =>
+            List.empty[UserGroupRole].pure[ConnectionIO]
+        }
+      }
+    } yield UserOptionAndRoles(user, roles)
+  }
+
+  def createUserWithJWT(creatingUser: User, jwtUser: User.JwtFields): ConnectionIO[(User, List[UserGroupRole])] = {
     for {
       organization <- OrganizationDao.query.filter(jwtUser.organizationId).selectOption
       createdUser <- {
@@ -77,7 +90,7 @@ object UserDao extends Dao[User] {
           GroupRole.Member
         ).toUserGroupRole(creatingUser)
       )
-    } yield createdUser
+    } yield (createdUser, List(platformRole, organizationRole))
   }
 
   /* Limited update to just modifying planet credential -- users can't change their permissions*/
