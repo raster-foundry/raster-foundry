@@ -279,7 +279,7 @@ trait ProjectRoutes extends Authentication
             pathEndOrSingleSlash {
               get {
                 traceName("list-user-allowed actions") {
-                  listUserActions(projectId)
+                  listUserProjectActions(projectId)
                 }
               }
             }
@@ -769,14 +769,20 @@ trait ProjectRoutes extends Authentication
       }
     }
 
-    def listUserActions(projectId: UUID): Route = authenticate { user =>
-      onSuccess(ProjectDao.unsafeGetProjectById(projectId, Some(user)).transact(xa).unsafeToFuture) { project =>
-        if (user.isSuperuser || project.owner == user.id) {
-          complete(List("*"))
-        } else {
-          complete {
-            AccessControlRuleDao.listUserActions(user, ObjectType.Project, projectId).transact(xa).unsafeToFuture
-          }
+    def listUserProjectActions(projectId: UUID): Route = authenticate { user =>
+      onSuccess(
+        ProjectDao.getProjectById(projectId, Some(user)).transact(xa).unsafeToFuture
+      ) { projectO =>
+        projectO match {
+          case Some(project) =>
+            if (user.isSuperuser || project.owner == user.id) {
+              complete(List("*"))
+            } else {
+              complete {
+                AccessControlRuleDao.listUserActions(user, ObjectType.Project, projectId).transact(xa).unsafeToFuture
+              }
+            }
+          case _ => complete(StatusCodes.NoContent)
         }
       }
     }

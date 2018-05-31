@@ -87,17 +87,26 @@ trait SceneRoutes extends Authentication
             }
           }
         } ~
-          post {
-            traceName("add-scene-permission") {
-              addScenePermission(sceneId)
-            }
-          } ~
+        post {
+          traceName("add-scene-permission") {
+            addScenePermission(sceneId)
+          }
+        } ~
+        get {
+          traceName("list-scene-permissions") {
+            listScenePermissions(sceneId)
+          }
+        }
+      } ~
+      pathPrefix("actions") {
+        pathEndOrSingleSlash {
           get {
-            traceName("list-scene-permissions") {
-              listScenePermissions(sceneId)
+            traceName("list-user-allowed actions") {
+              listUserSceneActions(sceneId)
             }
           }
         }
+      }
     }
   }
 
@@ -228,6 +237,24 @@ trait SceneRoutes extends Authentication
             acrCreate.toAccessControlRule(user, ObjectType.Scene, sceneId)
           ).transact(xa).unsafeToFuture
         }
+      }
+    }
+  }
+
+  def listUserSceneActions(sceneId: UUID): Route = authenticate { user =>
+    onSuccess(
+      SceneWithRelatedDao.getScene(sceneId, user).transact(xa).unsafeToFuture
+    ) { sceneO =>
+      sceneO match {
+        case Some(sceneWithRelated) =>
+          if (user.isSuperuser || sceneWithRelated.owner == user.id) {
+            complete(List("*"))
+          } else {
+            complete {
+              AccessControlRuleDao.listUserActions(user, ObjectType.Scene, sceneId).transact(xa).unsafeToFuture
+            }
+          }
+        case _ => complete(StatusCodes.NoContent)
       }
     }
   }
