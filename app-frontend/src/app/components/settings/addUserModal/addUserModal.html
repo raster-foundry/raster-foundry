@@ -11,67 +11,76 @@
     <p ng-if="$ctrl.resolve.modalText">{{$ctrl.resolve.modalText}}</p>
   </div>
   <div class="modal-body">
-    <div class="text-right">
-      <input type="text" class="form-control admin-search" placeholder="Search for users"
-             ng-model="$ctrl.search" ng-disabled="$ctrl.fetching && !$ctrl.search.length">
+    <div ng-if="$ctrl.hasPermission">
+      <div class="text-right">
+        <input type="text" class="form-control admin-search" placeholder="Search for users"
+               ng-model="$ctrl.search" ng-disabled="$ctrl.fetching && !$ctrl.search.length">
+        <p class="font-size-small"
+          ng-if="!$ctrl.searchString"
+        >
+         Showing {{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}} of {{$ctrl.pagination.count}} users
+        </p>
+      </div>
+      <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching">
+        <thead>
+          <tr>
+            <td>Name</td>
+            <td>Email</td>
+            <td>Select</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="user in $ctrl.users track by $index">
+            <td class="username">
+              <div class="placeholder-avatar" ng-if="!user.profileImageUri"></div>
+              <div class="user-avatar" ng-if="user.profileImageUri">
+                <img class="avatar" ng-src="{{user.profileImageUri}}">
+              </div>
+              <div>
+                {{user.name || user.email || user.id}}
+              </div>
+            </td>
+            <td class="emails" ng-class="{'color-light': !user.email}">
+              {{user.email || 'None'}}
+            </td>
+            <td class="actions">
+              <rf-toggle value="$ctrl.selected.has(user.id)" on-change="$ctrl.toggleUserSelect(user)">
+              </rf-toggle>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="table-loading" ng-if="$ctrl.fetching">
+        <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
+      </div>
+      <!-- Pagination -->
+      <div class="list-group text-center"
+           ng-show="!$ctrl.loading && $ctrl.lastUserResult && $ctrl.pagination.show && !$ctrl.errorMsg">
+        <ul uib-pagination
+            items-per-page="$ctrl.lastUserResult.pageSize"
+            total-items="$ctrl.pagination.count"
+            ng-model="$ctrl.currentPage"
+            max-size="4"
+            rotate="true"
+            boundary-link-numbers="true"
+            force-ellipses="true"
+            ng-change="$ctrl.fetchUsers($ctrl.currentPage, $ctrl.search)">
+        </ul>
+      </div>
     </div>
-    <p class="font-size-small"
-       ng-if="!$ctrl.searchString"
-    >
-      Showing {{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}} of {{$ctrl.pagination.count}} users
-    </p>
-    <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching">
-      <thead>
-        <tr>
-          <td>Name</td>
-          <td>Email</td>
-          <td>Select</td>
-        </tr>
-      </thead>
-      <tbody>
-        <tr ng-repeat="user in $ctrl.users track by $index">
-          <td class="username">
-            <div class="placeholder-avatar" ng-if="!user.profileImageUri"></div>
-            <div class="user-avatar" ng-if="user.profileImageUri">
-              <img class="avatar" ng-src="{{user.profileImageUri}}">
-            </div>
-            <div>
-              {{user.name || user.email || user.id}}
-            </div>
-          </td>
-          <td class="emails" ng-class="{'color-light': !user.email}">
-            {{user.email || 'None'}}
-          </td>
-          <td class="actions">
-            <rf-toggle value="$ctrl.selected.has(user.id)" on-change="$ctrl.toggleUserSelect(user)">
-            </rf-toggle>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="table-loading" ng-if="$ctrl.fetching">
-      <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
-    </div>
-
-    <!-- Pagination -->
-    <div class="list-group text-center"
-         ng-show="!$ctrl.loading && $ctrl.lastUserResult && $ctrl.pagination.show && !$ctrl.errorMsg">
-      <ul uib-pagination
-          items-per-page="$ctrl.lastUserResult.pageSize"
-          total-items="$ctrl.pagination.count"
-          ng-model="$ctrl.currentPage"
-          max-size="4"
-          rotate="true"
-          boundary-link-numbers="true"
-          force-ellipses="true"
-          ng-change="$ctrl.fetchUsers($ctrl.currentPage, $ctrl.search)">
-      </ul>
+    <div ng-if="!$ctrl.hasPermission">
+      <p>
+        {{$ctrl.permisionDeniedMsg}}
+        <a href="mailto:{{$ctrl.adminEmail}}">{{$ctrl.subject}} admin</a>.
+      </p>
     </div>
   </div>
   <div class="modal-footer">
     <span class="color-danger">{{$ctrl.error}}</span>
-    <button type="button" class="btn"
-            ng-click="$ctrl.addUsers()">
+    <button type="button"
+            class="btn"
+            ng-click="$ctrl.addUsers()"
+            ng-disabled="!$ctrl.hasPermission">
       Add users
     </button>
   </div>

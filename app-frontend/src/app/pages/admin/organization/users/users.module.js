@@ -4,12 +4,13 @@ import _ from 'lodash';
 class OrganizationUsersController {
     constructor(
         $scope, $stateParams,
-        modalService, organizationService
+        modalService, organizationService, authService
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
         this.modalService = modalService;
         this.organizationService = organizationService;
+        this.authService = authService;
         this.fetching = true;
 
         let debouncedSearch = _.debounce(
@@ -25,6 +26,12 @@ class OrganizationUsersController {
                 this.organization = organization;
                 this.$scope.$watch('$ctrl.search', debouncedSearch);
             }
+        });
+    }
+
+    $onInit() {
+        this.authService.getCurrentUser().then(resp => {
+            this.currentUser = resp;
         });
     }
 
@@ -56,14 +63,15 @@ class OrganizationUsersController {
                 this.lastUserResult = response;
                 this.users = response.results;
 
-                this.users.forEach(
-                    (user) => Object.assign(
-                        user, {
-                            options: {
-                                items: this.itemsForUser(user)
-                            }
-                        }
-                    ));
+                this.users.forEach((user) => {
+                    Object.assign(user, {
+                        options: {
+                            items: this.itemsForUser(user)
+                        },
+                        showOptions: user.isActive && (user.id === this.currentUser.id ||
+                            user.isSuperuser || user.groupRole === 'ADMIN')
+                    });
+                });
             });
     }
 

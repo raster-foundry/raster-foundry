@@ -14,6 +14,8 @@
         <td>Name</td>
         <td>Email</td>
         <td>Role</td>
+        <td>Teams</td>
+        <td>Options</td>
       </tr>
     </thead>
     <tbody>
@@ -37,7 +39,7 @@
           In {{user.teams.length || 0}} teams
         </td>
         <td class="actions">
-          <rf-dropdown data-options="user.options">
+          <rf-dropdown data-options="user.options" ng-if="user.showOptions">
             <span class="icon-caret-down"></span>
           </rf-dropdown>
         </td>
