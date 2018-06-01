@@ -38,16 +38,13 @@
           </a>
         </td>
         <td class="teams" ng-if="!team.fetchedUsers">
-
           <a class="users-more" title="View team details"
              ui-sref="admin.team.users({teamId: team.id})">
             Counting members...
           </a>
         </td>
         <td class="actions">
-          <rf-dropdown
-              data-options="team.options"
-          >
+          <rf-dropdown data-options="team.options" ng-if="team.showOptions">
             <span class="icon-caret-down"></span>
           </rf-dropdown>
         </td>

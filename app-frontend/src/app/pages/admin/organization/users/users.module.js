@@ -4,14 +4,13 @@ import _ from 'lodash';
 class OrganizationUsersController {
     constructor(
         $scope, $stateParams, $log,
-        modalService, organizationService, authService
+        modalService, organizationService
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
         this.$log = $log;
         this.modalService = modalService;
         this.organizationService = organizationService;
-        this.authService = authService;
         this.fetching = true;
 
         let debouncedSearch = _.debounce(
@@ -26,19 +25,25 @@ class OrganizationUsersController {
                 delete this.orgWatch;
                 this.organization = organization;
                 this.organizationId = this.organization.id;
+                this.currentUserPromise = this.$scope.$parent.$ctrl.currentUserPromise;
+                this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
+                this.getUserAndUgrs();
                 this.$scope.$watch('$ctrl.search', debouncedSearch);
             }
         });
     }
 
-    $onInit() {
-        this.authService.getCurrentUser().then(resp => {
+    getUserAndUgrs() {
+        this.currentUserPromise.then(resp => {
             this.currentUser = resp;
         });
-        this.authService.fetchUserRoles().then((resp) => {
-            this.currentUgr = resp.filter(ugr => ugr.groupId === this.organizationId)[0];
-        }, (err) => {
-            this.$log.error(err);
+        this.currentUgrPromise.then((resp) => {
+            this.currentOrgUgr = resp.filter((ugr) => {
+                return ugr.groupId === this.organizationId;
+            })[0];
+            this.currentPlatUgr = resp.filter((ugr) => {
+                return ugr.groupId === this.organization.platformId;
+            })[0];
         });
     }
 
@@ -70,13 +75,16 @@ class OrganizationUsersController {
                 this.lastUserResult = response;
                 this.users = response.results;
 
+                let isAdmin = this.currentPlatUgr && this.currentPlatUgr.groupRole === 'ADMIN' ||
+                    this.currentOrgUgr && this.currentOrgUgr.groupRole === 'ADMIN';
+
                 this.users.forEach((user) => {
                     Object.assign(user, {
                         options: {
                             items: this.itemsForUser(user)
                         },
                         showOptions: user.isActive && (user.id === this.currentUser.id ||
-                            user.isSuperuser || this.currentUgr.groupRole === 'ADMIN')
+                            user.isSuperuser || isAdmin)
                     });
                 });
             });

@@ -1,10 +1,14 @@
 import angular from 'angular';
 
 class OrganizationController {
-    constructor($stateParams, organizationService) {
+    constructor(
+      $stateParams,
+      organizationService, authService) {
         'ngInject';
         this.$stateParams = $stateParams;
+
         this.organizationService = organizationService;
+        this.authService = authService;
         this.fetching = true;
     }
 
@@ -14,6 +18,8 @@ class OrganizationController {
             .then((organization) => {
                 this.organization = organization;
                 this.fetching = false;
+                this.currentUserPromise = this.authService.getCurrentUser().then();
+                this.currentUgrPromise = this.authService.fetchUserRoles().then();
             });
     }
 }

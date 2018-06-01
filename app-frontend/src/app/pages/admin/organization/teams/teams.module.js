@@ -27,19 +27,30 @@ class OrganizationTeamsController {
                 this.organization = organization;
                 this.organizationId = this.organization.id;
                 this.platformId = this.organization.platformId;
+                this.currentUserPromise = this.$scope.$parent.$ctrl.currentUserPromise;
+                this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
+                this.getUserAndUgrs();
                 this.$scope.$watch('$ctrl.search', debouncedSearch);
             }
         });
     }
 
-    $onInit() {
-        this.authService.getCurrentUser().then(resp => {
+    getUserAndUgrs() {
+        this.currentUserPromise.then(resp => {
             this.currentUser = resp;
         });
-        this.authService.fetchUserRoles().then((resp) => {
-            this.currentUgr = resp.filter(ugr => ugr.groupId === this.organizationId)[0];
-        }, (err) => {
-            this.$log.error(err);
+        this.currentUgrPromise.then((resp) => {
+            this.currentUgrs = resp;
+            this.currentOrgUgr = resp.filter((ugr) => {
+                return ugr.groupId === this.organizationId;
+            })[0];
+            this.currentPlatUgr = resp.filter((ugr) => {
+                return ugr.groupId === this.organization.platformId;
+            })[0];
+
+            this.isPlatOrOrgAdmin = this.currentPlatUgr &&
+                this.currentPlatUgr.groupRole === 'ADMIN' ||
+                this.currentOrgUgr && this.currentOrgUgr.groupRole === 'ADMIN';
         });
     }
 
@@ -70,14 +81,16 @@ class OrganizationTeamsController {
                 this.lastTeamResult = response;
                 this.teams = response.results;
 
-                this.teams.forEach(
-                    (team) => Object.assign(
-                        team, {
-                            options: {
-                                items: this.itemsForTeam(team)
-                            }
-                        }
-                    ));
+                this.teams.forEach((team) => {
+                    let teamUgr = this.currentUgrs.filter(ugr => ugr.groupId === team.id)[0];
+                    let isAdmin = this.isPlatOrOrgAdmin || teamUgr && teamUgr.groupRole === 'ADMIN';
+                    Object.assign(team, {
+                        options: {
+                            items: this.itemsForTeam(team)
+                        },
+                        showOptions: this.currentUser.isSuperuser || isAdmin
+                    });
+                });
 
                 // fetch team users
                 this.teams.forEach(
@@ -157,10 +170,8 @@ class OrganizationTeamsController {
 
     newTeamModal() {
         let permissionDenied = {};
-        this.$log.log(!(this.currentUser.isActive &&
-            (this.currentUser.isSuperuser || this.currentUgr.groupRole === 'ADMIN')));
         if (!(this.currentUser.isActive &&
-            (this.currentUser.isSuperuser || this.currentUgr.groupRole === 'ADMIN'))) {
+            (this.currentUser.isSuperuser || this.isPlatOrOrgAdmin))) {
             permissionDenied = {
                 isDenied: true,
                 adminEmail: 'example@email.com',
