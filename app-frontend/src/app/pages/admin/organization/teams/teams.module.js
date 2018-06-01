@@ -38,7 +38,6 @@ class OrganizationTeamsController {
         });
         this.authService.fetchUserRoles().then((resp) => {
             this.currentUgr = resp.filter(ugr => ugr.groupId === this.organizationId)[0];
-            this.$log.log(this.currentUgr);
         }, (err) => {
             this.$log.error(err);
         });
@@ -163,8 +162,10 @@ class OrganizationTeamsController {
         if (!(this.currentUser.isActive &&
             (this.currentUser.isSuperuser || this.currentUgr.groupRole === 'ADMIN'))) {
             permissionDenied = {
+                isDenied: true,
                 adminEmail: 'example@email.com',
-                message: 'You do not have access to this operation. Please contact '
+                message: 'You do not have access to this operation. Please contact ',
+                subject: 'organization admin'
             };
         }
         this.modalService.open({

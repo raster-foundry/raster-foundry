@@ -9,13 +9,13 @@
     ></span>
   </div>
   <div class="modal-body">
-    <div ng-if="$ctrl.permissionDenied">
+    <div ng-if="$ctrl.permissionDenied.isDenied">
       <p>
         {{$ctrl.permissionDenied.message}}
-        <a href="mailto:{{$ctrl.permissionDenied.adminEmail}}">organization admin</a>.
+        <a href="mailto:{{$ctrl.permissionDenied.adminEmail}}">{{$ctrl.permissionDenied.subject}}</a>.
       </p>
     </div>
-    <div ng-if="!$ctrl.permissionDenied">
+    <div ng-if="!$ctrl.permissionDenied.isDenied">
       <form name="$ctrl.form" class="form-group">
         <label>
           Team name
@@ -31,6 +31,6 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-light" ng-click="$ctrl.dismiss()">Cancel</button>
-    <button type="button" class="btn btn-primary" ng-click="$ctrl.onAdd()" ng-if="!$ctrl.permissionDenied">Add</button>
+    <button type="button" class="btn btn-primary" ng-click="$ctrl.onAdd()" ng-if="!$ctrl.permissionDenied.isDenied">Add</button>
   </div>
 </div>

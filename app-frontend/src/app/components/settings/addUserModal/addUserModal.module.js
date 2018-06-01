@@ -68,7 +68,8 @@ class AddUserModalController {
                 this.lastUserResult = response;
                 this.users = response.results;
             }, (error) => {
-                this.permissionDenied(error, 'organization');
+                // platform admins or super users are allowed to list platform users
+                this.permissionDenied(error, 'platform admin');
             });
         } else if (this.resolve.adminView === 'team') {
             this.organizationService.getMembers(

@@ -3,11 +3,12 @@ import _ from 'lodash';
 
 class OrganizationUsersController {
     constructor(
-        $scope, $stateParams,
+        $scope, $stateParams, $log,
         modalService, organizationService, authService
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
+        this.$log = $log;
         this.modalService = modalService;
         this.organizationService = organizationService;
         this.authService = authService;
@@ -24,6 +25,7 @@ class OrganizationUsersController {
                 this.orgWatch();
                 delete this.orgWatch;
                 this.organization = organization;
+                this.organizationId = this.organization.id;
                 this.$scope.$watch('$ctrl.search', debouncedSearch);
             }
         });
@@ -32,6 +34,11 @@ class OrganizationUsersController {
     $onInit() {
         this.authService.getCurrentUser().then(resp => {
             this.currentUser = resp;
+        });
+        this.authService.fetchUserRoles().then((resp) => {
+            this.currentUgr = resp.filter(ugr => ugr.groupId === this.organizationId)[0];
+        }, (err) => {
+            this.$log.error(err);
         });
     }
 
@@ -69,7 +76,7 @@ class OrganizationUsersController {
                             items: this.itemsForUser(user)
                         },
                         showOptions: user.isActive && (user.id === this.currentUser.id ||
-                            user.isSuperuser || user.groupRole === 'ADMIN')
+                            user.isSuperuser || this.currentUgr.groupRole === 'ADMIN')
                     });
                 });
             });
