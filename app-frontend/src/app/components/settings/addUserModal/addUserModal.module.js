@@ -68,7 +68,7 @@ class AddUserModalController {
                 this.lastUserResult = response;
                 this.users = response.results;
             }, (error) => {
-                this.permisionDenied(error, 'organization');
+                this.permissionDenied(error, 'organization');
             });
         } else if (this.resolve.adminView === 'team') {
             this.organizationService.getMembers(
@@ -121,12 +121,12 @@ class AddUserModalController {
         });
     }
 
-    permisionDenied(err, subject) {
+    permissionDenied(err, subject) {
         this.fetching = false;
         this.hasPermission = false;
         this.subject = subject;
         this.adminEmail = 'example@email.com';
-        this.permisionDeniedMsg = `${err.data}. Please contact `;
+        this.permissionDeniedMsg = `${err.data}. Please contact `;
     }
 }
 

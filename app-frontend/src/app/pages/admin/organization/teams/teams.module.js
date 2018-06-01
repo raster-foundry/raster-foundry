@@ -3,14 +3,16 @@ import _ from 'lodash';
 
 class OrganizationTeamsController {
     constructor(
-        $scope, $stateParams,
-        modalService, organizationService, teamService
+        $scope, $stateParams, $log,
+        modalService, organizationService, teamService, authService
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
+        this.$log = $log;
         this.modalService = modalService;
         this.organizationService = organizationService;
         this.teamService = teamService;
+        this.authService = authService;
 
         let debouncedSearch = _.debounce(
             this.onSearch.bind(this),
@@ -27,6 +29,18 @@ class OrganizationTeamsController {
                 this.platformId = this.organization.platformId;
                 this.$scope.$watch('$ctrl.search', debouncedSearch);
             }
+        });
+    }
+
+    $onInit() {
+        this.authService.getCurrentUser().then(resp => {
+            this.currentUser = resp;
+        });
+        this.authService.fetchUserRoles().then((resp) => {
+            this.currentUgr = resp.filter(ugr => ugr.groupId === this.organizationId)[0];
+            this.$log.log(this.currentUgr);
+        }, (err) => {
+            this.$log.error(err);
         });
     }
 
@@ -143,9 +157,21 @@ class OrganizationTeamsController {
     }
 
     newTeamModal() {
+        let permissionDenied = {};
+        this.$log.log(!(this.currentUser.isActive &&
+            (this.currentUser.isSuperuser || this.currentUgr.groupRole === 'ADMIN')));
+        if (!(this.currentUser.isActive &&
+            (this.currentUser.isSuperuser || this.currentUgr.groupRole === 'ADMIN'))) {
+            permissionDenied = {
+                adminEmail: 'example@email.com',
+                message: 'You do not have access to this operation. Please contact '
+            };
+        }
         this.modalService.open({
             component: 'rfTeamModal',
-            resolve: { },
+            resolve: {
+                permissionDenied: permissionDenied
+            },
             size: 'sm'
         }).result.then((result) => {
             // eslint-disable-next-line
