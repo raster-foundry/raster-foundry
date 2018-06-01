@@ -3,12 +3,11 @@ import _ from 'lodash';
 
 class OrganizationUsersController {
     constructor(
-        $scope, $stateParams, $log,
+        $scope, $stateParams,
         modalService, organizationService
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
-        this.$log = $log;
         this.modalService = modalService;
         this.organizationService = organizationService;
         this.fetching = true;
@@ -78,15 +77,13 @@ class OrganizationUsersController {
                 let isAdmin = this.currentPlatUgr && this.currentPlatUgr.groupRole === 'ADMIN' ||
                     this.currentOrgUgr && this.currentOrgUgr.groupRole === 'ADMIN';
 
-                this.users.forEach((user) => {
-                    Object.assign(user, {
-                        options: {
-                            items: this.itemsForUser(user)
-                        },
-                        showOptions: user.isActive && (user.id === this.currentUser.id ||
-                            user.isSuperuser || isAdmin)
-                    });
-                });
+                this.users.forEach(user => Object.assign(user, {
+                    options: {
+                        items: this.itemsForUser(user)
+                    },
+                    showOptions: user.isActive && (user.id === this.currentUser.id ||
+                        user.isSuperuser || isAdmin)
+                }));
             });
     }
 
