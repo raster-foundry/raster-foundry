@@ -228,10 +228,6 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     md.setContentType("image/png")
     md.setContentLength(logoByte.length)
 
-    if (s3Client.listKeys(dataBucket, prefix).contains(s"${prefix}/${key}")) {
-      s3Client.deleteObject(dataBucket, s"${prefix}/${key}")
-    }
-
     s3Client.putObject(dataBucket, s"${prefix}/${key}", logoStream, md)
     s3.setObjectAcl(dataBucket, s"${prefix}/${key}", CannedAccessControlList.PublicRead)
 
