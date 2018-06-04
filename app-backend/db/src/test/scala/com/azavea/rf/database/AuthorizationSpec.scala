@@ -166,4 +166,104 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
       }
     }
   }
+
+  test("listing user actions granted by 'ALL' should return a list of permitted actions") {
+    check {
+      forAll {
+        (platform: Platform, userCreate: User.Create, orgCreate: Organization.Create, projectCreate: Project.Create) => {
+          val listUserActionsIO = for {
+            dbPlatform <- PlatformDao.create(platform)
+            orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
+            (org, user) = orgUser
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
+            acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
+              AccessControlRule.Create(true, SubjectType.All, None, _).toAccessControlRule(
+                user, ObjectType.Project, project.id)
+            }
+            _ <- AccessControlRuleDao.createMany(acrs)
+            listOfActions <- AccessControlRuleDao.listUserActions(user, ObjectType.Project, project.id)
+          } yield listOfActions
+
+          val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
+          listUserActions.length == 3 &&
+            listUserActions.intersect(List("VIEW", "EDIT", "DELETE")).nonEmpty
+        }
+      }
+    }
+  }
+
+  test("listing user actions granted by organization membership should return an empty list") {
+    check {
+      forAll {
+        (platform: Platform, userCreate: User.Create, orgCreate: Organization.Create, projectCreate: Project.Create) => {
+          val listUserActionsIO = for {
+            dbPlatform <- PlatformDao.create(platform)
+            orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
+            (org, user) = orgUser
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
+            acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
+              AccessControlRule.Create(true, SubjectType.Platform, Some(dbPlatform.id.toString()), _).toAccessControlRule(
+                user, ObjectType.Project, project.id)
+            }
+            _ <- AccessControlRuleDao.createMany(acrs)
+            listOfActions <- AccessControlRuleDao.listUserActions(user, ObjectType.Project, project.id)
+          } yield listOfActions
+
+          val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
+          listUserActions.length == 0
+        }
+      }
+    }
+  }
+
+  test("listing user actions granted by organization membership should return a list of permitted actions") {
+    check {
+      forAll {
+        (platform: Platform, userCreate: User.Create, orgCreate: Organization.Create, projectCreate: Project.Create) => {
+          val listUserActionsIO = for {
+            dbPlatform <- PlatformDao.create(platform)
+            orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
+            (org, user) = orgUser
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
+            acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
+              AccessControlRule.Create(true, SubjectType.Organization, Some(org.id.toString()), _).toAccessControlRule(
+                user, ObjectType.Project, project.id)
+            }
+            _ <- AccessControlRuleDao.createMany(acrs)
+            listOfActions <- AccessControlRuleDao.listUserActions(user, ObjectType.Project, project.id)
+          } yield listOfActions
+
+          val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
+          listUserActions.length == 3 &&
+            listUserActions.intersect(List("VIEW", "EDIT", "DELETE")).nonEmpty
+        }
+      }
+    }
+  }
+
+  test("listing user actions granted to a specific user should return a list of permitted actions") {
+    check {
+      forAll {
+        (platform: Platform, userCreate: User.Create, orgCreate: Organization.Create, projectCreate: Project.Create) => {
+          val listUserActionsIO = for {
+            dbPlatform <- PlatformDao.create(platform)
+            orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
+            (org, user) = orgUser
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
+            acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
+              AccessControlRule.Create(true, SubjectType.User, Some(user.id.toString()), _).toAccessControlRule(
+                user, ObjectType.Project, project.id)
+            }
+            _ <- AccessControlRuleDao.createMany(acrs)
+            listOfActions <- AccessControlRuleDao.listUserActions(user, ObjectType.Project, project.id)
+          } yield listOfActions
+
+          val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
+          listUserActions.length == 3 &&
+            listUserActions.intersect(List("VIEW", "EDIT", "DELETE")).nonEmpty
+        }
+      }
+    }
+  }
+
 }
