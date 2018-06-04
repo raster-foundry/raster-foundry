@@ -4,6 +4,7 @@ import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.OrganizationDao
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.api.utils.Config
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
@@ -22,6 +23,7 @@ import doobie.postgres._
 import doobie.postgres.implicits._
 
 trait OrganizationRoutes extends Authentication
+    with Config
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler
@@ -38,7 +40,12 @@ trait OrganizationRoutes extends Authentication
       pathEndOrSingleSlash {
         get { getOrganization(orgId) } ~
         put { updateOrganization(orgId) }
-      }
+      } ~
+        pathPrefix("logo") {
+          pathEndOrSingleSlash {
+            post { addOrganizationLogo(orgId) }
+          }
+        }
     }
   }
 
@@ -70,6 +77,18 @@ trait OrganizationRoutes extends Authentication
     entity(as[Organization]) { orgToUpdate =>
       completeWithOneOrFail {
         OrganizationDao.update(orgToUpdate, orgId).transact(xa).unsafeToFuture()
+      }
+    }
+  }
+
+  def addOrganizationLogo(orgID: UUID): Route = authenticate { user =>
+    authorizeAsync (
+      OrganizationDao.userIsAdmin(user, orgID).transact(xa).unsafeToFuture()
+    ) {
+      entity(as[String]) { logoBase64 =>
+        onSuccess(OrganizationDao.addLogo(logoBase64, orgID, dataBucket).transact(xa).unsafeToFuture()) { organization =>
+          complete((StatusCodes.Created, organization))
+        }
       }
     }
   }
