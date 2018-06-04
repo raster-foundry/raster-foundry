@@ -18,9 +18,9 @@ class OrganizationController {
             .then((organization) => {
                 this.organization = organization;
                 this.fetching = false;
-                this.currentUserPromise = this.authService.getCurrentUser().then();
-                this.currentUgrPromise = this.authService.fetchUserRoles().then();
             });
+        this.currentUserPromise = this.authService.getCurrentUser().then();
+        this.currentUgrPromise = this.authService.fetchUserRoles().then();
     }
 }
 

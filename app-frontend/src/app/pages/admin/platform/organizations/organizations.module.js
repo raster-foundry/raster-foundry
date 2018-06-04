@@ -23,7 +23,22 @@ class PlatformOrganizationsController {
             500,
             {leading: false, trailing: true}
         );
+
+        this.$scope.$parent.$ctrl.currentUserPromise.then(resp => {
+            this.currentUser = resp;
+        });
+        this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
+        this.getPlatUgrs();
         this.$scope.$watch('$ctrl.search', debouncedSearch);
+    }
+
+    getPlatUgrs() {
+        this.currentUgrPromise.then((resp) => {
+            this.currentPlatUgr = resp.filter((ugr) => {
+                return ugr.groupId === this.$stateParams.platformId;
+            })[0];
+            this.isPlatAdmin = this.currentPlatUgr && this.currentPlatUgr.groupRole === 'ADMIN';
+        });
     }
 
     onSearch(search) {
@@ -52,14 +67,23 @@ class PlatformOrganizationsController {
                 this.lastOrgResult = response;
                 this.organizations = response.results;
 
-                this.organizations.forEach(
-                    (org) => Object.assign(
-                        org, {
+                this.organizations.forEach((org) => {
+                    this.currentUgrPromise.then((resp) => {
+                        // eslint-disable-next-line
+                        this.currentOrgUgr = resp.filter((ugr) => {
+                            return ugr.groupId === org.id;
+                        })[0];
+                        this.isPlatOrOrgAdmin =
+                            this.currentOrgUgr && this.currentOrgUgr.groupRole === 'ADMIN' ||
+                            this.isPlatAdmin;
+                        Object.assign(org, {
                             options: {
                                 items: this.itemsForOrg(org)
-                            }
-                        }
-                    ));
+                            },
+                            showOptions: this.currentUser.isSuperuser || this.isPlatOrOrgAdmin
+                        });
+                    });
+                });
 
                 this.organizations.forEach(
                     (organization) => {
@@ -120,9 +144,21 @@ class PlatformOrganizationsController {
     }
 
     newOrgModal() {
+        let permissionDenied = {};
+        if (!(this.currentUser.isActive &&
+            (this.currentUser.isSuperuser || this.isPlatAdmin))) {
+            permissionDenied = {
+                isDenied: true,
+                adminEmail: 'example@email.com',
+                message: 'You do not have access to this operation. Please contact ',
+                subject: 'platform admin'
+            };
+        }
         this.modalService.open({
             component: 'rfOrganizationModal',
-            resolve: { },
+            resolve: {
+                permissionDenied: permissionDenied
+            },
             size: 'sm'
         }).result.then((result) => {
             this.platformService

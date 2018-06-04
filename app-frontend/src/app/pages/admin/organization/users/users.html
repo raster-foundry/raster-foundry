@@ -1,68 +1,75 @@
 <div class="admin-users-content container column-stretch dashboard">
-  <div class="admin-users-actions">
-    <input type="text" class="form-control admin-search" placeholder="Search for users"
-           ng-model="$ctrl.search">
+  <div ng-if="$ctrl.errorMsg">
+    <p>
+      {{$ctrl.errorMsg}}
+      <a ng-href="mailto:{{$ctrl.platAdminEmail}}">platform admin</a>.
+    </p>
+  </div>
+  <div ng-if="!$ctrl.errorMsg">
+    <div class="admin-users-actions">
+      <input type="text" class="form-control admin-search" placeholder="Search for users"
+             ng-model="$ctrl.search">
       <button type="button" class="btn btn-primary"
               ng-click="$ctrl.addUserModal()"
               ng-disabled="$ctrl.fetching">
         Add User
       </button>
+    </div>
+    <table class="admin-table admin-org-user-table" ng-if="!$ctrl.fetching">
+      <thead>
+        <tr>
+          <td>Name</td>
+          <td>Email</td>
+          <td>Role</td>
+          <td>Teams</td>
+          <td>Options</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="user in $ctrl.users track by $index">
+          <td class="username">
+            <div class="placeholder-avatar" ng-if="!user.profileImageUri"></div>
+            <div class="user-avatar" ng-if="user.profileImageUri">
+              <img class="avatar" ng-src="{{user.profileImageUri}}">
+            </div>
+            <div>
+              {{user.name || user.email || user.id}}
+            </div>
+          </td>
+          <td class="emails" ng-class="{'color-light': !user.email}">
+            {{user.email || 'None'}}
+          </td>
+          <td class="roles">
+            {{user.groupRole}}
+          </td>
+          <td class="teams">
+            In {{user.teams.length || 0}} teams
+          </td>
+          <td class="actions">
+            <rf-dropdown data-options="user.options" ng-if="user.showOptions">
+              <span class="icon-caret-down"></span>
+            </rf-dropdown>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="table-loading" ng-if="$ctrl.fetching">
+      <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
+    </div>
+    <!-- Pagination -->
+    <div class="list-group text-center"
+          ng-show="!$ctrl.loading && $ctrl.lastUserResult && $ctrl.pagination.show && !$ctrl.errorMsg">
+      <ul uib-pagination
+          items-per-page="$ctrl.lastUserResult.pageSize"
+          total-items="$ctrl.pagination.count"
+          ng-model="$ctrl.currentPage"
+          max-size="4"
+          rotate="true"
+          boundary-link-numbers="true"
+          force-ellipses="true"
+          ng-change="$ctrl.fetchUsers($ctrl.currentPage, $ctrl.search)">
+      </ul>
+    </div>
+    <!-- Pagination -->
   </div>
-  <table class="admin-table admin-org-user-table" ng-if="!$ctrl.fetching">
-    <thead>
-      <tr>
-        <td>Name</td>
-        <td>Email</td>
-        <td>Role</td>
-        <td>Teams</td>
-        <td>Options</td>
-      </tr>
-    </thead>
-    <tbody>
-      <tr ng-repeat="user in $ctrl.users track by $index">
-        <td class="username">
-          <div class="placeholder-avatar" ng-if="!user.profileImageUri"></div>
-          <div class="user-avatar" ng-if="user.profileImageUri">
-            <img class="avatar" ng-src="{{user.profileImageUri}}">
-          </div>
-          <div>
-            {{user.name || user.email || user.id}}
-          </div>
-        </td>
-        <td class="emails" ng-class="{'color-light': !user.email}">
-          {{user.email || 'None'}}
-        </td>
-        <td class="roles">
-          {{user.groupRole}}
-        </td>
-        <td class="teams">
-          In {{user.teams.length || 0}} teams
-        </td>
-        <td class="actions">
-          <rf-dropdown data-options="user.options" ng-if="user.showOptions">
-            <span class="icon-caret-down"></span>
-          </rf-dropdown>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  <div class="table-loading" ng-if="$ctrl.fetching">
-    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
-  </div>
-
-  <!-- Pagination -->
-  <div class="list-group text-center"
-        ng-show="!$ctrl.loading && $ctrl.lastUserResult && $ctrl.pagination.show && !$ctrl.errorMsg">
-    <ul uib-pagination
-        items-per-page="$ctrl.lastUserResult.pageSize"
-        total-items="$ctrl.pagination.count"
-        ng-model="$ctrl.currentPage"
-        max-size="4"
-        rotate="true"
-        boundary-link-numbers="true"
-        force-ellipses="true"
-        ng-change="$ctrl.fetchUsers($ctrl.currentPage, $ctrl.search)">
-    </ul>
-  </div>
-  <!-- Pagination -->
 </div>

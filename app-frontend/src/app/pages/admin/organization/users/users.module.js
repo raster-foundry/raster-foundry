@@ -12,6 +12,8 @@ class OrganizationUsersController {
         this.organizationService = organizationService;
         this.fetching = true;
 
+        this.platAdminEmail = 'example@email.com';
+
         let debouncedSearch = _.debounce(
             this.onSearch.bind(this),
             500,
@@ -84,6 +86,9 @@ class OrganizationUsersController {
                     showOptions: user.isActive && (user.id === this.currentUser.id ||
                         user.isSuperuser || isAdmin)
                 }));
+            }, (error) => {
+                this.fetching = false;
+                this.errorMsg = `${error.data}. Please contact `;
             });
     }
 

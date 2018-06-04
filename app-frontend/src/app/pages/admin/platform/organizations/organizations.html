@@ -36,8 +36,8 @@
           </td>
           <td class="users">
             <div class="user-avatar"
-                 ng-repeat="user in organization.fetchedUsers.results track by user.id | limitTo : 5"
-                 ng-attr-title="{{user.name || user.email || user.id}}"
+                 ng-repeat="user in organization.fetchedUsers.results track by $index | limitTo : 5"
+                 ng-attr-title="{{user.name}}"
             >
               <img class="avatar" ng-src="{{user.profileImageUri}}">
             </div>
@@ -56,10 +56,12 @@
           </td>
           <td>{{ organization.isActive ? "Active" : "Deactivated"}}</td>
           <td class="actions">
-            <a ui-sref="admin.organization.users({organizationId: organization.id})">View page</a>
-            <rf-dropdown data-options="organization.options">
-              <span class="icon-caret-down"></span>
-            </rf-dropdown>
+            <div ng-if="organization.showOptions">
+              <a ui-sref="admin.organization.users({organizationId: organization.id})">View page</a>
+              <rf-dropdown data-options="organization.options">
+                <span class="icon-caret-down"></span>
+              </rf-dropdown>
+            </div>
           </td>
         </tr>
       </tbody>

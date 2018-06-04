@@ -14,6 +14,8 @@ class OrganizationTeamsController {
         this.teamService = teamService;
         this.authService = authService;
 
+        this.orgAdminEmail = 'example@email.com';
+
         let debouncedSearch = _.debounce(
             this.onSearch.bind(this),
             500,
@@ -102,6 +104,9 @@ class OrganizationTeamsController {
                             });
                     }
                 );
+            }, (error) => {
+                this.fetching = false;
+                this.errorMsg = `${error.data}. Please contact `;
             });
     }
 
