@@ -160,22 +160,31 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
         )
       )"""
 
-    if (actingUser.isSuperuser) {
-      query
-        .filter(fr"ugr.group_type = ${groupType}")
-        .filter(fr"ugr.group_id = ${groupId}")
-        .filter(fr"ugr.is_active = true")
-        .filter(searchQP(searchParams, List("u.name", "u.email")))
-        .page[User.WithGroupRole](page, sf, cf)
-    } else {
-      query
-        .filter(fr"ugr.group_type = ${groupType}")
-        .filter(fr"ugr.group_id = ${groupId}")
-        .filter(fr"ugr.is_active = true")
-        .filter(ff)
-        .filter(searchQP(searchParams, List("u.name", "u.email")))
-        .page[User.WithGroupRole](page, sf, cf)
-    }
+    for {
+      userIsPlatformAdmin <- {
+        UserGroupRoleDao.query
+          .filter(fr"user_id = ${actingUser.id}")
+          .filter(fr"group_type = ${GroupType.Platform.toString}::group_type")
+          .filter(fr"group_role = ${GroupRole.Admin.toString}::group_role")
+          .filter(fr"is_active = true")
+          .exists
+      }
+      isSuperUser <- actingUser.isSuperuser.pure[ConnectionIO]
+      result <- {
+        query
+          .filter(fr"ugr.group_type = ${groupType}")
+          .filter(fr"ugr.group_id = ${groupId}")
+          .filter(fr"ugr.is_active = true")
+          .filter(searchQP(searchParams, List("u.name", "u.email")))
+          .filter(
+            ( userIsPlatformAdmin || isSuperUser) match {
+              case true => None
+              case false => Some(ff)
+            }
+          )
+          .page[User.WithGroupRole](page, sf, cf)
+      }
+    } yield { result }
   }
 
   // @TODO: ensure a user cannot demote (or promote?) themselves
