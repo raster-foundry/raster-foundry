@@ -36,6 +36,4 @@ object Organization {
     }
   }
 
-  @JsonCodec
-  case class LogoBase64(logo: String)
 }

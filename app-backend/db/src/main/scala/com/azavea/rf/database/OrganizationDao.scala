@@ -216,11 +216,10 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     }
   }
 
-  def addLogo(logoBase64: Organization.LogoBase64, orgID: UUID): ConnectionIO[Organization] = {
-    val bucketName = Properties.envOrElse("DATA_BUCKET", "rasterfoundry-staging-data-us-east-1")
+  def addLogo(logoBase64: String, orgID: UUID, dataBucket: String): ConnectionIO[Organization] = {
     val prefix = "org-logos"
     val key = s"${orgID.toString()}.png"
-    val logoByte = ApacheBase64.decodeBase64(logoBase64.logo)
+    val logoByte = ApacheBase64.decodeBase64(logoBase64)
     val logoStream = new ByteArrayInputStream(logoByte)
     val md = new ObjectMetadata()
     val s3 = new AWSAmazonS3Client(new DefaultAWSCredentialsProviderChain)
@@ -229,14 +228,14 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     md.setContentType("image/png")
     md.setContentLength(logoByte.length)
 
-    if (s3Client.listKeys(bucketName, prefix).contains(s"${prefix}/${key}")) {
-      s3Client.deleteObject(bucketName, s"${prefix}/${key}")
+    if (s3Client.listKeys(dataBucket, prefix).contains(s"${prefix}/${key}")) {
+      s3Client.deleteObject(dataBucket, s"${prefix}/${key}")
     }
 
-    s3Client.putObject(bucketName, s"${prefix}/${key}", logoStream, md)
-    s3.setObjectAcl(bucketName, s"${prefix}/${key}", CannedAccessControlList.PublicRead)
+    s3Client.putObject(dataBucket, s"${prefix}/${key}", logoStream, md)
+    s3.setObjectAcl(dataBucket, s"${prefix}/${key}", CannedAccessControlList.PublicRead)
 
-    val uri = s"https://${bucketName}.s3.amazonaws.com/${prefix}/${key}"
+    val uri = s"https://${dataBucket}.s3.amazonaws.com/${prefix}/${key}"
     val updateTime = new Timestamp((new java.util.Date()).getTime)
     (fr"UPDATE" ++ tableF ++ fr"""SET
          modified_at = ${updateTime},
