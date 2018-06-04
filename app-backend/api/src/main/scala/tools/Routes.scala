@@ -237,19 +237,23 @@ trait ToolRoutes extends Authentication
   }
 
   def listUserTemplateActions(templateId: UUID): Route = authenticate { user =>
-    onSuccess(
-      ToolDao.query.filter(templateId).selectOption.transact(xa).unsafeToFuture
-    ) { templateO =>
-      templateO match {
-        case Some(template) =>
-          if (user.isSuperuser || template.owner == user.id) {
-            complete(List("*"))
-          } else {
-            complete {
-              AccessControlRuleDao.listUserActions(user, ObjectType.Template, templateId).transact(xa).unsafeToFuture
+    authorizeAsync {
+      ToolDao.query.authorized(user, ObjectType.Template, templateId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } { onSuccess(
+        ToolDao.query.filter(templateId).selectOption.transact(xa).unsafeToFuture
+      ) { templateO =>
+        templateO match {
+          case Some(template) =>
+            if (user.isSuperuser || template.owner == user.id) {
+              complete(List("*"))
+            } else {
+              complete {
+                AccessControlRuleDao.listUserActions(user, ObjectType.Template, templateId).transact(xa).unsafeToFuture
+              }
             }
-          }
-        case _ => complete(StatusCodes.NoContent)
+          case _ => complete(StatusCodes.NoContent)
+        }
       }
     }
   }

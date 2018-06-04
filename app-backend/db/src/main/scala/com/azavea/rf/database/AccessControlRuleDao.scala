@@ -157,7 +157,7 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
     """ ++ Fragments.whereAnd(fr"subject_type = ${subjectType}", fr"subject_id = ${subjectId}")).update.run
   }
 
-  def listUserActionsF(user: User, objectType: ObjectType, objectId: UUID): Fragment = {
+  def listUserActions(user: User, objectType: ObjectType, objectId: UUID): ConnectionIO[List[String]] =
     fr"""
     SELECT DISTINCT action_type
     FROM access_control_rules
@@ -179,10 +179,7 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
         subject_id = ${user.id}
       )
     """
-
-  }
-
-  def listUserActions(user: User, objectType: ObjectType, objectId: UUID): ConnectionIO[List[String]] =
-    listUserActionsF(user, objectType, objectId).query[String].list
+    .query[String]
+    .list
 
 }

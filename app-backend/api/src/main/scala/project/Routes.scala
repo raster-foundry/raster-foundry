@@ -769,8 +769,11 @@ trait ProjectRoutes extends Authentication
       }
     }
 
-    def listUserProjectActions(projectId: UUID): Route = authenticate { user =>
-      onSuccess(
+  def listUserProjectActions(projectId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.query.authorized(user, ObjectType.Project, projectId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } { onSuccess(
         ProjectDao.getProjectById(projectId, Some(user)).transact(xa).unsafeToFuture
       ) { projectO =>
         projectO match {
@@ -786,5 +789,6 @@ trait ProjectRoutes extends Authentication
         }
       }
     }
+  }
 
 }

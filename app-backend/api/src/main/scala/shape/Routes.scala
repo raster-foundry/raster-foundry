@@ -237,19 +237,23 @@ trait ShapeRoutes extends Authentication
     }
 
   def listUserShapeActions(shapeId: UUID): Route = authenticate { user =>
-    onSuccess(
-      ShapeDao.getShapeById(shapeId).transact(xa).unsafeToFuture
-    ) { shapeO =>
-      shapeO match {
-        case Some(shape) =>
-          if (user.isSuperuser || shape.owner == user.id) {
-            complete(List("*"))
-          } else {
-            complete {
-              AccessControlRuleDao.listUserActions(user, ObjectType.Shape, shapeId).transact(xa).unsafeToFuture
+    authorizeAsync {
+      ShapeDao.query.authorized(user, ObjectType.Shape, shapeId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } { onSuccess(
+        ShapeDao.getShapeById(shapeId).transact(xa).unsafeToFuture
+      ) { shapeO =>
+        shapeO match {
+          case Some(shape) =>
+            if (user.isSuperuser || shape.owner == user.id) {
+              complete(List("*"))
+            } else {
+              complete {
+                AccessControlRuleDao.listUserActions(user, ObjectType.Shape, shapeId).transact(xa).unsafeToFuture
+              }
             }
-          }
-        case _ => complete(StatusCodes.NoContent)
+          case _ => complete(StatusCodes.NoContent)
+        }
       }
     }
   }

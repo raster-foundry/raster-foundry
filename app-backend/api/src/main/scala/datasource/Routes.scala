@@ -162,19 +162,23 @@ trait DatasourceRoutes extends Authentication
     }
 
   def listUserDatasourceActions(datasourceId: UUID): Route = authenticate { user =>
-    onSuccess(
-      DatasourceDao.getDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
-    ) { datasourceO =>
-      datasourceO match {
-        case Some(datasource) =>
-          if (user.isSuperuser || datasource.owner == user.id) {
-            complete(List("*"))
-          } else {
-            complete {
-              AccessControlRuleDao.listUserActions(user, ObjectType.Datasource, datasourceId).transact(xa).unsafeToFuture
+    authorizeAsync {
+      DatasourceDao.query.authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } { onSuccess(
+        DatasourceDao.getDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
+      ) { datasourceO =>
+        datasourceO match {
+          case Some(datasource) =>
+            if (user.isSuperuser || datasource.owner == user.id) {
+              complete(List("*"))
+            } else {
+              complete {
+                AccessControlRuleDao.listUserActions(user, ObjectType.Datasource, datasourceId).transact(xa).unsafeToFuture
+              }
             }
-          }
-        case _ => complete(StatusCodes.NoContent)
+          case _ => complete(StatusCodes.NoContent)
+        }
       }
     }
   }

@@ -172,19 +172,23 @@ trait ToolRunRoutes extends Authentication
   }
 
   def listUserAnalysisActions(analysisId: UUID): Route = authenticate { user =>
-    onSuccess(
-      ToolRunDao.query.filter(analysisId).selectOption.transact(xa).unsafeToFuture
-    ) { analysisO =>
-      analysisO match {
-        case Some(analysis) =>
-          if (user.isSuperuser || analysis.owner == user.id) {
-            complete(List("*"))
-          } else {
-            complete {
-              AccessControlRuleDao.listUserActions(user, ObjectType.Analysis, analysisId).transact(xa).unsafeToFuture
+    authorizeAsync {
+      ToolRunDao.query.authorized(user, ObjectType.Analysis, analysisId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } { onSuccess(
+        ToolRunDao.query.filter(analysisId).selectOption.transact(xa).unsafeToFuture
+      ) { analysisO =>
+        analysisO match {
+          case Some(analysis) =>
+            if (user.isSuperuser || analysis.owner == user.id) {
+              complete(List("*"))
+            } else {
+              complete {
+                AccessControlRuleDao.listUserActions(user, ObjectType.Analysis, analysisId).transact(xa).unsafeToFuture
+              }
             }
-          }
-        case _ => complete(StatusCodes.NoContent)
+          case _ => complete(StatusCodes.NoContent)
+        }
       }
     }
   }
