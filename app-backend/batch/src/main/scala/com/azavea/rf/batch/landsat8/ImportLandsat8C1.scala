@@ -29,7 +29,10 @@ import cats.free.Free
 import doobie.free.connection
 
 import scala.collection.mutable.ListBuffer
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.immutable.ParSeq
 import scala.concurrent.Future
+import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.{Failure, Success, Try}
 import scala.util.control.Breaks._
 
@@ -40,15 +43,15 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
   /** Get S3 client per each call */
   def s3Client = S3(region = landsat8Config.awsRegion)
 
-  protected def scenesFromCsv(user: User, srcProj: CRS = CRS.fromName("EPSG:4326"), targetProj: CRS = CRS.fromName("EPSG:3857")): ConnectionIO[List[Option[Scene.WithRelated]]] = {
+  protected def rowsFromCsv: List[Map[String, String]] = {
     val reader = CSV.parse(landsat8Config.usgsLandsatUrlC1)
     val iterator = reader.iterator()
 
     val endDate = startDate + 1.day
-    val buffer = ListBuffer[ConnectionIO[Option[Scene.WithRelated]]]()
     val (_, indexToId) = CSV.getBiFunctions(iterator.next())
 
     var counter = 0
+    var rows = List.empty[Map[String, String]]
     breakable {
       while(iterator.hasNext) {
         val line = reader.readNext()
@@ -59,15 +62,18 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
             .map { case (v, i) => indexToId(i) -> v }
             .toMap
 
-        row.get("acquisitionDate") foreach { dateStr =>
-          val date = LocalDate.parse(dateStr)
-          if (startDate <= date && endDate > date) buffer += csvRowToScene(row, user, srcProj, targetProj)
-          else if (date < startDate) counter += 1
+        row.get("acquisitionDate") foreach {
+          dateStr => {
+            val date = LocalDate.parse(dateStr)
+            if (startDate <= date && endDate > date) rows :+= row
+            else if (date > endDate) counter += 1
+          }
         }
         if (counter > threshold) break
       }
     }
-    buffer.toList.sequence
+    logger.info(s"Number of scenes to attempt: ${rows.length}")
+    rows
   }
 
   protected def getLandsatPath(productId: String): String = {
@@ -131,7 +137,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
   @SuppressWarnings(Array("TraversableHead"))
   protected def csvRowToScene(
     row: Map[String, String], user: User, srcProj: CRS = CRS.fromName("EPSG:4326"),
-    targetProj: CRS = CRS.fromName("EPSG:3857")): ConnectionIO[Option[Scene.WithRelated]] = {
+    targetProj: CRS = CRS.fromName("EPSG:3857"))(implicit xa: Transactor[IO]): IO[Option[Scene.WithRelated]] = {
 
     val sceneId = UUID.randomUUID()
     val productId = row("LANDSAT_PRODUCT_ID")
@@ -162,7 +168,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
     } yield {
       sceneInsert
     }
-    maybeInsertScene
+    maybeInsertScene.transact(xa)
   }
 
   // All of the heads here are from a locally constructed list that we know has members
@@ -278,35 +284,20 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
   def run: Unit = {
     logger.info("Importing scenes...")
 
-    val userQuery = UserDao.unsafeGetUserById(systemUser)
-    val insertedScenes = for {
-      user <- userQuery
-      scenes <- scenesFromCsv(user)
-    } yield {
-      scenes.flatten
-    }
-
-    insertedScenes.transact(xa).unsafeToFuture onComplete {
-      case Success(unskippedScenes) => {
-        if (unskippedScenes.nonEmpty) logger.info(s"Successfully imported scenes: ${unskippedScenes.map(_.id.toString).mkString(", ")}.")
-        else if (unskippedScenes.nonEmpty) logger.info("All scenes were already imported")
-        else {
-          val e = new Exception(s"No scenes available for the ${startDate}")
-          logger.error(e.stackTraceString)
-          sendError(e)
-          stop
-          sys.exit(1)
-        }
-        stop
-      }
-
-      case Failure(e) => {
-        logger.error(e.stackTraceString)
-        sendError(e)
-        stop
-        sys.exit(1)
+    val user = UserDao.unsafeGetUserById(systemUser).transact(xa).unsafeRunSync
+    val rows = rowsFromCsv.par
+    rows.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(16))
+    val insertedScenes: ParSeq[Option[Scene.WithRelated]] = rows map {
+      (row: Map[String, String]) => {
+        csvRowToScene(row, user).handleErrorWith(
+          (error: Throwable) => {
+            sendError(error)
+            IO.pure(None)
+          }
+        ).unsafeRunSync
       }
     }
+    stop
   }
 }
 
