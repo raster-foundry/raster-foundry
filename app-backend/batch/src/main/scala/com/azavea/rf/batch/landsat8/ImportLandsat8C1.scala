@@ -93,17 +93,6 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
   // Getting the image size is the only place where the s3 object
   // is required to exist -- so handle the missing object by returning
   // a -1 for the image's size
-  protected def sizeFromPath(tifPath: String, productId: String): Int = {
-    val path = s"c1/${getLandsatPath(productId)}/$tifPath"
-    logger.info(s"Getting object size for path: $path")
-    Try(
-      s3Client.getObject(landsat8Config.bucketName, path).getObjectMetadata.getContentLength.toInt
-    ) match {
-      case Success(size) => size
-      case Failure(_) => -1
-    }
-  }
-
   protected def createThumbnails(sceneId: UUID, productId: String): List[Thumbnail.Identified] = {
     val path = getLandsatUrl(productId)
     val smallUrl = s"$path/${productId}_thumb_small.jpg"
@@ -236,7 +225,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
         ).map {
         case (resolution, tiffPath, band) =>
           Image.Banded(
-            rawDataBytes = sizeFromPath(tiffPath, productId),
+            rawDataBytes = 0,
             visibility = Visibility.Public,
             filename = tiffPath,
             sourceUri = s"${getLandsatUrl(productId)}/${tiffPath}",
