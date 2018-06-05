@@ -176,18 +176,14 @@ trait ToolRunRoutes extends Authentication
       ToolRunDao.query.authorized(user, ObjectType.Analysis, analysisId, ActionType.View)
         .transact(xa).unsafeToFuture
     } { onSuccess(
-        ToolRunDao.query.filter(analysisId).selectOption.transact(xa).unsafeToFuture
-      ) { analysisO =>
-        analysisO match {
-          case Some(analysis) =>
-            if (user.isSuperuser || analysis.owner == user.id) {
-              complete(List("*"))
-            } else {
-              complete {
-                AccessControlRuleDao.listUserActions(user, ObjectType.Analysis, analysisId).transact(xa).unsafeToFuture
-              }
-            }
-          case _ => complete(StatusCodes.NoContent)
+        ToolRunDao.query.filter(analysisId).select.transact(xa).unsafeToFuture
+      ) { analysis =>
+        if (user.isSuperuser || analysis.owner == user.id) {
+          complete(List("*"))
+        } else {
+          complete {
+            AccessControlRuleDao.listUserActions(user, ObjectType.Analysis, analysisId).transact(xa).unsafeToFuture
+          }
         }
       }
     }

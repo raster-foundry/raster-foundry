@@ -192,7 +192,7 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
     }
   }
 
-  test("listing user actions granted by organization membership should return an empty list") {
+  test("listing user actions granted by platform membership should return an empty list") {
     check {
       forAll {
         (platform: Platform, userCreate: User.Create, orgCreate: Organization.Create, projectCreate: Project.Create) => {
@@ -261,6 +261,35 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
           val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
           listUserActions.length == 3 &&
             listUserActions.intersect(List("VIEW", "EDIT", "DELETE")).nonEmpty
+        }
+      }
+    }
+  }
+
+  test("listing user actions with deactivated ACR should return an empty list") {
+    check {
+      forAll {
+        (platform: Platform, userCreate: User.Create, orgCreate: Organization.Create, projectCreate: Project.Create) => {
+          val listUserActionsIO = for {
+            dbPlatform <- PlatformDao.create(platform)
+            orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
+            (org, user) = orgUser
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
+            acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
+              AccessControlRule.Create(true, SubjectType.User, Some(user.id.toString()), _).toAccessControlRule(
+                user, ObjectType.Project, project.id)
+            }
+            numCreatedAcrs <- AccessControlRuleDao.createMany(acrs)
+            numDetactivatedAcrs <- AccessControlRuleDao.deactivateBySubject(SubjectType.User, user.id.toString())
+            listOfActions <- AccessControlRuleDao.listUserActions(user, ObjectType.Project, project.id)
+          } yield (numCreatedAcrs, numDetactivatedAcrs, listOfActions)
+
+          val (numCreatedAcrs, numDetactivatedAcrs, listOfActions) = listUserActionsIO.transact(xa).unsafeRunSync
+          listOfActions.isEmpty
+          assert(listOfActions.isEmpty, "; List of permitted actions should be empty when an ACR is deactivated.")
+          assert(numCreatedAcrs == 3, "; Number of created ACRs should be 3.")
+          assert(numDetactivatedAcrs == 3, "; Number of deactivated ACRs should be 3.")
+          true
         }
       }
     }

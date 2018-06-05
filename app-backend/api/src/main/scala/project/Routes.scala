@@ -774,18 +774,14 @@ trait ProjectRoutes extends Authentication
       ProjectDao.query.authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa).unsafeToFuture
     } { onSuccess(
-        ProjectDao.getProjectById(projectId, Some(user)).transact(xa).unsafeToFuture
-      ) { projectO =>
-        projectO match {
-          case Some(project) =>
-            if (user.isSuperuser || project.owner == user.id) {
-              complete(List("*"))
-            } else {
-              complete {
-                AccessControlRuleDao.listUserActions(user, ObjectType.Project, projectId).transact(xa).unsafeToFuture
-              }
-            }
-          case _ => complete(StatusCodes.NoContent)
+        ProjectDao.unsafeGetProjectById(projectId, Some(user)).transact(xa).unsafeToFuture
+      ) { project =>
+        if (user.isSuperuser || project.owner == user.id) {
+          complete(List("*"))
+        } else {
+          complete {
+            AccessControlRuleDao.listUserActions(user, ObjectType.Project, projectId).transact(xa).unsafeToFuture
+          }
         }
       }
     }

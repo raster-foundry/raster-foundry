@@ -166,18 +166,14 @@ trait DatasourceRoutes extends Authentication
       DatasourceDao.query.authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
         .transact(xa).unsafeToFuture
     } { onSuccess(
-        DatasourceDao.getDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
-      ) { datasourceO =>
-        datasourceO match {
-          case Some(datasource) =>
-            if (user.isSuperuser || datasource.owner == user.id) {
-              complete(List("*"))
-            } else {
-              complete {
-                AccessControlRuleDao.listUserActions(user, ObjectType.Datasource, datasourceId).transact(xa).unsafeToFuture
-              }
-            }
-          case _ => complete(StatusCodes.NoContent)
+        DatasourceDao.unsafeGetDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
+      ) { datasource =>
+        if (user.isSuperuser || datasource.owner == user.id) {
+          complete(List("*"))
+        } else {
+          complete {
+            AccessControlRuleDao.listUserActions(user, ObjectType.Datasource, datasourceId).transact(xa).unsafeToFuture
+          }
         }
       }
     }

@@ -241,18 +241,14 @@ trait ToolRoutes extends Authentication
       ToolDao.query.authorized(user, ObjectType.Template, templateId, ActionType.View)
         .transact(xa).unsafeToFuture
     } { onSuccess(
-        ToolDao.query.filter(templateId).selectOption.transact(xa).unsafeToFuture
-      ) { templateO =>
-        templateO match {
-          case Some(template) =>
-            if (user.isSuperuser || template.owner == user.id) {
-              complete(List("*"))
-            } else {
-              complete {
-                AccessControlRuleDao.listUserActions(user, ObjectType.Template, templateId).transact(xa).unsafeToFuture
-              }
-            }
-          case _ => complete(StatusCodes.NoContent)
+        ToolDao.query.filter(templateId).select.transact(xa).unsafeToFuture
+      ) { template =>
+        if (user.isSuperuser || template.owner == user.id) {
+          complete(List("*"))
+        } else {
+          complete {
+            AccessControlRuleDao.listUserActions(user, ObjectType.Template, templateId).transact(xa).unsafeToFuture
+          }
         }
       }
     }

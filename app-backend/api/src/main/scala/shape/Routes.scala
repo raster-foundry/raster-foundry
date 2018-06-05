@@ -241,18 +241,14 @@ trait ShapeRoutes extends Authentication
       ShapeDao.query.authorized(user, ObjectType.Shape, shapeId, ActionType.View)
         .transact(xa).unsafeToFuture
     } { onSuccess(
-        ShapeDao.getShapeById(shapeId).transact(xa).unsafeToFuture
-      ) { shapeO =>
-        shapeO match {
-          case Some(shape) =>
-            if (user.isSuperuser || shape.owner == user.id) {
-              complete(List("*"))
-            } else {
-              complete {
-                AccessControlRuleDao.listUserActions(user, ObjectType.Shape, shapeId).transact(xa).unsafeToFuture
-              }
-            }
-          case _ => complete(StatusCodes.NoContent)
+        ShapeDao.unsafeGetShapeById(shapeId).transact(xa).unsafeToFuture
+      ) { shape =>
+        if (user.isSuperuser || shape.owner == user.id) {
+          complete(List("*"))
+        } else {
+          complete {
+            AccessControlRuleDao.listUserActions(user, ObjectType.Shape, shapeId).transact(xa).unsafeToFuture
+          }
         }
       }
     }
