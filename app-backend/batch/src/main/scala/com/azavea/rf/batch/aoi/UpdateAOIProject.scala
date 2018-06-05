@@ -86,10 +86,10 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
       val alreadyCheckedFilter: Option[Fragment] = Some(fr"created_at > ${lastChecked}")
       val acquisitionFilter: Option[Fragment] = Some(fr"acquisition_date > ${startTime}")
       val areaFilter: Option[Fragment] = Some(fr"st_intersects(data_footprint, ${geom})")
-      SceneWithRelatedDao.query
+      SceneWithRelatedDao
+        .authQuery(user, ObjectType.Scene)
         .filter(geom)
         .filter(queryParams.getOrElse(CombinedSceneQueryParams()))
-        .authorize(user, ObjectType.Scene, ActionType.View)
         .list
         .map { (scenes: List[Scene.WithRelated]) => scenes map { _.id } }
     }

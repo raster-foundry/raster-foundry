@@ -71,10 +71,10 @@ trait PropTestHelpers {
   // We assume the Scene.Create has an id, since otherwise thumbnails have no idea what scene id to use
   def fixupSceneCreate(user: User, datasource: Datasource, sceneCreate: Scene.Create): Scene.Create = {
     sceneCreate.copy(
-      owner = None,
+      owner = Some(user.id),
       datasource = datasource.id,
       images = sceneCreate.images map {
-        _.copy(scene = sceneCreate.id.get, owner = None)
+        _.copy(scene = sceneCreate.id.get, owner = Some(user.id))
       },
       thumbnails = sceneCreate.thumbnails map {
         _.copy(sceneId = sceneCreate.id.get)

@@ -76,7 +76,7 @@ object AoiDao extends Dao[AOI] {
     query.filter(fr"project_id = ${projectId}").page(page)
 
   def listAuthorizedAois(user: User, aoiQueryParams: AoiQueryParameters, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] = {
-    val authedProjectsIO = ProjectDao.query.authorize(user, ObjectType.Project, ActionType.View).list
+    val authedProjectsIO = ProjectDao.authQuery(user, ObjectType.Project).list
     for {
       authedProjects <- authedProjectsIO
       authedProjectIdsF = (authedProjects map { _.id }).toNel map {

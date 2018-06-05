@@ -129,8 +129,9 @@ trait ShapeRoutes extends Authentication
   def listShapes: Route = authenticate { user =>
     (withPagination & shapeQueryParams) { (page: PageRequest, queryParams: ShapeQueryParameters) =>
       complete {
-        ShapeDao.query.filter(queryParams)
-          .authorize(user, ObjectType.Shape, ActionType.View)
+        ShapeDao
+          .authQuery(user, ObjectType.Shape)
+          .filter(queryParams)
           .page(page)
           .transact(xa).unsafeToFuture().map { p => {
             fromPaginatedResponseToGeoJson[Shape, Shape.GeoJSON](p)
