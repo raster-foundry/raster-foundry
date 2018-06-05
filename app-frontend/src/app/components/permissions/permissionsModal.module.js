@@ -179,6 +179,7 @@ class PermissionsModalController {
         default:
             this.handleUserSubjectSelection();
         }
+        this.newPermissionSubject = null;
     }
 
     searchUsers(value) {
