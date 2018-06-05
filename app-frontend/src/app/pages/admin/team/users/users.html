@@ -13,6 +13,7 @@
         <td>Name</td>
         <td>Email</td>
         <td>Role</td>
+        <td>Actions</td>
       </tr>
     </thead>
     <tbody>
@@ -33,7 +34,7 @@
           {{user.groupRole}}
         </td>
         <td class="actions">
-          <rf-dropdown data-options="user.options">
+          <rf-dropdown data-options="user.options" ng-if="user.showOptions">
             <span class="icon-caret-down"></span>
           </rf-dropdown>
         </td>

@@ -6,12 +6,14 @@ class PlatformUsersController {
         $scope, $stateParams,
         modalService, platformService
     ) {
+        this.$scope = $scope;
+        this.$stateParams = $stateParams;
+
         this.modalService = modalService;
         this.platformService = platformService;
-        this.$stateParams = $stateParams;
-        this.$scope = $scope;
         // check if has permissions for platform page
         this.fetching = true;
+        this.platAdminEmail = 'example@email.com';
 
         let debouncedSearch = _.debounce(
             this.onSearch.bind(this),
@@ -52,14 +54,16 @@ class PlatformUsersController {
             this.lastUserResult = response;
             this.users = response.results;
 
-            this.users.forEach(
-                (user) => Object.assign(
-                    user, {
-                        options: {
-                            items: this.itemsForUser(user)
-                        }
+            this.users.forEach(user => {
+                Object.assign(user, {
+                    options: {
+                        items: this.itemsForUser(user)
                     }
-                ));
+                });
+            });
+        }, (error) => {
+            this.fetching = false;
+            this.errrorMsg = `${error.data}. Please contact `;
         });
     }
 

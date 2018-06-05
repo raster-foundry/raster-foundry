@@ -62,10 +62,14 @@ class AddUserModalController {
                 page - 1,
                 search && search.length ? search : null
             ).then((response) => {
+                this.hasPermission = true;
                 this.fetching = false;
                 this.updatePagination(response);
                 this.lastUserResult = response;
                 this.users = response.results;
+            }, (error) => {
+                // platform admins or super users are allowed to list platform users
+                this.permissionDenied(error, 'platform admin', 'example@email.com');
             });
         } else if (this.resolve.adminView === 'team') {
             this.organizationService.getMembers(
@@ -74,10 +78,13 @@ class AddUserModalController {
                 page - 1,
                 search && search.length ? search : null
             ).then((response) => {
+                this.hasPermission = true;
                 this.fetching = false;
                 this.updatePagination(response);
                 this.lastUserResult = response;
                 this.users = response.results;
+            }, (error) => {
+                this.permissionDenied(error, 'organization admin', 'example@email.com');
             });
         }
     }
@@ -116,6 +123,14 @@ class AddUserModalController {
             this.error = err.data;
             this.$log.error('Error adding users to team:', err);
         });
+    }
+
+    permissionDenied(err, subject, adminEmail) {
+        this.fetching = false;
+        this.hasPermission = false;
+        this.subject = subject;
+        this.adminEmail = adminEmail;
+        this.permissionDeniedMsg = `${err.data}. Please contact `;
     }
 }
 

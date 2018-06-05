@@ -14,6 +14,7 @@ const TeamModalComponent = {
 
 class TeamModalController {
     constructor() {
+        this.permissionDenied = this.resolve.permissionDenied;
     }
 
     onAdd() {

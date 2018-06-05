@@ -12,6 +12,8 @@ class OrganizationUsersController {
         this.organizationService = organizationService;
         this.fetching = true;
 
+        this.platAdminEmail = 'example@email.com';
+
         let debouncedSearch = _.debounce(
             this.onSearch.bind(this),
             500,
@@ -23,8 +25,26 @@ class OrganizationUsersController {
                 this.orgWatch();
                 delete this.orgWatch;
                 this.organization = organization;
+                this.organizationId = this.organization.id;
+                this.currentUserPromise = this.$scope.$parent.$ctrl.currentUserPromise;
+                this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
+                this.getUserAndUgrs();
                 this.$scope.$watch('$ctrl.search', debouncedSearch);
             }
+        });
+    }
+
+    getUserAndUgrs() {
+        this.currentUserPromise.then(resp => {
+            this.currentUser = resp;
+        });
+        this.currentUgrPromise.then((resp) => {
+            this.currentOrgUgr = resp.filter((ugr) => {
+                return ugr.groupId === this.organizationId;
+            })[0];
+            this.currentPlatUgr = resp.filter((ugr) => {
+                return ugr.groupId === this.organization.platformId;
+            })[0];
         });
     }
 
@@ -56,14 +76,19 @@ class OrganizationUsersController {
                 this.lastUserResult = response;
                 this.users = response.results;
 
-                this.users.forEach(
-                    (user) => Object.assign(
-                        user, {
-                            options: {
-                                items: this.itemsForUser(user)
-                            }
-                        }
-                    ));
+                let isAdmin = this.currentPlatUgr && this.currentPlatUgr.groupRole === 'ADMIN' ||
+                    this.currentOrgUgr && this.currentOrgUgr.groupRole === 'ADMIN';
+
+                this.users.forEach(user => Object.assign(user, {
+                    options: {
+                        items: this.itemsForUser(user)
+                    },
+                    showOptions: user.isActive && (user.id === this.currentUser.id ||
+                        user.isSuperuser || isAdmin)
+                }));
+            }, (error) => {
+                this.fetching = false;
+                this.errorMsg = `${error.data}. Please contact `;
             });
     }
 

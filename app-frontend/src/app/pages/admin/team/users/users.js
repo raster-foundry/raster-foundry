@@ -2,11 +2,16 @@ import angular from 'angular';
 import _ from 'lodash';
 
 class TeamUsersController {
-    constructor($scope, $stateParams, teamService, modalService) {
+    constructor(
+      $scope,
+      teamService, modalService, authService
+    ) {
         'ngInject';
         this.$scope = $scope;
+
         this.teamService = teamService;
         this.modalService = modalService;
+        this.authService = authService;
 
         this.fetching = true;
     }
@@ -23,8 +28,28 @@ class TeamUsersController {
                 {leading: false, trailing: true}
             );
 
+            this.getUserAndUgrs();
+
             this.$scope.$watch('$ctrl.search', debouncedSearch);
         });
+    }
+
+    getUserAndUgrs() {
+        this.authService.getCurrentUser().then(resp => {
+            this.currentUser = resp;
+        });
+        this.authService.fetchUserRoles().then(resp => {
+            this.currentTeamUgr = resp.filter(ugr => ugr.groupId === this.team.id)[0];
+            this.currentOrgUgr = resp.filter(ugr => ugr.groupId === this.organization.id)[0];
+            this.currentPlatUgr = resp.filter(ugr => ugr.groupId === this.platformId)[0];
+            this.isAdmin = this.matchUrgRole(this.currentPlatUgr) ||
+                this.matchUrgRole(this.currentOrgUgr) ||
+                this.matchUrgRole(this.currentTeamUgr);
+        });
+    }
+
+    matchUrgRole(urg, role = 'ADMIN') {
+        return urg && urg.groupRole === role;
     }
 
     onSearch(search) {
@@ -58,14 +83,12 @@ class TeamUsersController {
             this.lastUserResult = response;
             this.users = response.results;
 
-            this.users.forEach(
-                (user) => Object.assign(
-                    user, {
-                        options: {
-                            items: this.itemsForUser(user)
-                        }
-                    }
-                ));
+            this.users.forEach(user => Object.assign(user, {
+                options: {
+                    items: this.itemsForUser(user)
+                },
+                showOptions: user.isActive && (user.isSuperuser || this.isAdmin)
+            }));
         });
     }
 

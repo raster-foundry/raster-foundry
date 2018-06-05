@@ -14,6 +14,7 @@ const OrganizationModalComponent = {
 
 class OrganizationModalController {
     constructor() {
+        this.permissionDenied = this.resolve.permissionDenied;
     }
 
     onAdd() {

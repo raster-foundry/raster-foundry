@@ -3,14 +3,18 @@ import _ from 'lodash';
 
 class OrganizationTeamsController {
     constructor(
-        $scope, $stateParams,
-        modalService, organizationService, teamService
+        $scope, $stateParams, $log,
+        modalService, organizationService, teamService, authService
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
+        this.$log = $log;
         this.modalService = modalService;
         this.organizationService = organizationService;
         this.teamService = teamService;
+        this.authService = authService;
+
+        this.orgAdminEmail = 'example@email.com';
 
         let debouncedSearch = _.debounce(
             this.onSearch.bind(this),
@@ -25,8 +29,30 @@ class OrganizationTeamsController {
                 this.organization = organization;
                 this.organizationId = this.organization.id;
                 this.platformId = this.organization.platformId;
+                this.currentUserPromise = this.$scope.$parent.$ctrl.currentUserPromise;
+                this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
+                this.getUserAndUgrs();
                 this.$scope.$watch('$ctrl.search', debouncedSearch);
             }
+        });
+    }
+
+    getUserAndUgrs() {
+        this.currentUserPromise.then(resp => {
+            this.currentUser = resp;
+        });
+        this.currentUgrPromise.then((resp) => {
+            this.currentUgrs = resp;
+            this.currentOrgUgr = resp.filter((ugr) => {
+                return ugr.groupId === this.organizationId;
+            })[0];
+            this.currentPlatUgr = resp.filter((ugr) => {
+                return ugr.groupId === this.organization.platformId;
+            })[0];
+
+            this.isPlatOrOrgAdmin = this.currentPlatUgr &&
+                this.currentPlatUgr.groupRole === 'ADMIN' ||
+                this.currentOrgUgr && this.currentOrgUgr.groupRole === 'ADMIN';
         });
     }
 
@@ -57,14 +83,16 @@ class OrganizationTeamsController {
                 this.lastTeamResult = response;
                 this.teams = response.results;
 
-                this.teams.forEach(
-                    (team) => Object.assign(
-                        team, {
-                            options: {
-                                items: this.itemsForTeam(team)
-                            }
-                        }
-                    ));
+                this.teams.forEach((team) => {
+                    let teamUgr = this.currentUgrs.filter(ugr => ugr.groupId === team.id)[0];
+                    let isAdmin = this.isPlatOrOrgAdmin || teamUgr && teamUgr.groupRole === 'ADMIN';
+                    Object.assign(team, {
+                        options: {
+                            items: this.itemsForTeam(team)
+                        },
+                        showOptions: this.currentUser.isSuperuser || isAdmin
+                    });
+                });
 
                 // fetch team users
                 this.teams.forEach(
@@ -76,6 +104,9 @@ class OrganizationTeamsController {
                             });
                     }
                 );
+            }, (error) => {
+                this.fetching = false;
+                this.errorMsg = `${error.data}. Please contact `;
             });
     }
 
@@ -143,9 +174,21 @@ class OrganizationTeamsController {
     }
 
     newTeamModal() {
+        let permissionDenied = {};
+        if (!(this.currentUser.isActive &&
+            (this.currentUser.isSuperuser || this.isPlatOrOrgAdmin))) {
+            permissionDenied = {
+                isDenied: true,
+                adminEmail: 'example@email.com',
+                message: 'You do not have access to this operation. Please contact ',
+                subject: 'organization admin'
+            };
+        }
         this.modalService.open({
             component: 'rfTeamModal',
-            resolve: { },
+            resolve: {
+                permissionDenied: permissionDenied
+            },
             size: 'sm'
         }).result.then((result) => {
             // eslint-disable-next-line

@@ -1,10 +1,11 @@
 import angular from 'angular';
 
 class PlatformController {
-    constructor($stateParams, platformService) {
+    constructor($stateParams, platformService, authService) {
         'ngInject';
         this.$stateParams = $stateParams;
         this.platformService = platformService;
+        this.authService = authService;
         this.fetching = true;
     }
 
@@ -15,6 +16,8 @@ class PlatformController {
                 this.platform = platform;
                 this.fetching = false;
             });
+        this.currentUserPromise = this.authService.getCurrentUser().then();
+        this.currentUgrPromise = this.authService.fetchUserRoles().then();
     }
 }
 
