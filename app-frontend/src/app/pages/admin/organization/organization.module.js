@@ -3,12 +3,13 @@ import angular from 'angular';
 class OrganizationController {
     constructor(
       $stateParams,
-      organizationService, authService) {
+      organizationService, authService, modalService) {
         'ngInject';
         this.$stateParams = $stateParams;
 
         this.organizationService = organizationService;
         this.authService = authService;
+        this.modalService = modalService;
         this.fetching = true;
     }
 
@@ -21,6 +22,21 @@ class OrganizationController {
             });
         this.currentUserPromise = this.authService.getCurrentUser().then();
         this.currentUgrPromise = this.authService.fetchUserRoles().then();
+    }
+
+    onLogoHovered(isHovered) {
+        this.onLogoHover = isHovered;
+    }
+
+    addLogoModal() {
+        this.modalService.open({
+            component: 'rfAddPhotoModal',
+            resolve: {
+                organizationId: () => this.organization.id
+            }
+        }).result.then(() => {
+            // TODO
+        });
     }
 }
 

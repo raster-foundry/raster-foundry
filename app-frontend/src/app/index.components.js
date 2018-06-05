@@ -65,6 +65,7 @@ export default angular.module('index.components', [
     require('./components/settings/teamModal/teamModal.module.js').name,
     require('./components/settings/organizationModal/organizationModal.module.js').name,
     require('./components/settings/addUserModal/addUserModal.module.js').name,
+    require('./components/settings/addPhotoModal/addPhotoModal.module.js').name,
 
     // export components
     require('./components/exports/exportItem/exportItem.module.js').name,
