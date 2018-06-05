@@ -185,8 +185,10 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
           } yield listOfActions
 
           val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
-          listUserActions.length == 3 &&
-            listUserActions.intersect(List("VIEW", "EDIT", "DELETE")).nonEmpty
+
+          assert(listUserActions.length == 3, "; List of permitted actions should be 3")
+          assert(listUserActions.intersect(List("VIEW", "EDIT", "DELETE")).nonEmpty, "; List of permitted actions should intersect with what was provided")
+          true
         }
       }
     }
@@ -234,8 +236,10 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
           } yield listOfActions
 
           val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
-          listUserActions.length == 3 &&
-            listUserActions.intersect(List("VIEW", "EDIT", "DELETE")).nonEmpty
+
+          assert(listUserActions.length == 3, "; List of permitted actions should be 3")
+          assert(listUserActions.intersect(List("VIEW", "EDIT", "DELETE")).nonEmpty, "; List of permitted actions should intersect with what was provided")
+          true
         }
       }
     }
@@ -259,8 +263,10 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
           } yield listOfActions
 
           val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
-          listUserActions.length == 3 &&
-            listUserActions.intersect(List("VIEW", "EDIT", "DELETE")).nonEmpty
+
+          assert(listUserActions.length == 3, "; List of permitted actions should be 3")
+          assert(listUserActions.intersect(List("VIEW", "EDIT", "DELETE")).nonEmpty, "; List of permitted actions should intersect with what was provided")
+          true
         }
       }
     }
