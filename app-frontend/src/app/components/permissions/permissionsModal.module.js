@@ -156,6 +156,7 @@ class PermissionsModalController {
     }
 
     handleUserSubjectSelection() {
+        this.subjectType = 'USER';
         this.setState('userSelect');
     }
 
@@ -179,10 +180,12 @@ class PermissionsModalController {
     searchUsers(value) {
         if (value && value.length >= 4) {
             this.platformService.getMembers(
-                this.platformId, 1, value
+                this.platformId, 0, value
             ).then(
                 (resp) => {
-                    this.availableUsers = resp.results;
+                    this.availableUsers = _.uniqBy(resp.results, (user) => {
+                        return user.email;
+                    });
                 }
             );
         } else {
@@ -199,6 +202,7 @@ class PermissionsModalController {
     selectUser(user) {
         this.selectedPermissionsTarget = Object.assign(user, {name: user.email});
         this.setState('createNewACR');
+        this.availableUsers = [];
     }
 
     setAccessControlRuleRows(accessControlRules) {

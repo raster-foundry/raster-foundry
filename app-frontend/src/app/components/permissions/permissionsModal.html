@@ -44,9 +44,6 @@
           ng-click="$ctrl.handleNewPermissionSubjectSelection()">Next</button>
 </div>
 
-<div class="modal-content" ng-if="$ctrl.state === $ctrl.states.organizationSelect">
-</div>
-
 <div class="modal-content" ng-if="$ctrl.state === $ctrl.states.teamSelect">
   <div class="selectable-list-item" ng-repeat="team in $ctrl.teams"
        ng-click="$ctrl.selectTeam(team)">
@@ -56,9 +53,9 @@
 
 <div class="modal-content" ng-if="$ctrl.state === $ctrl.states.userSelect">
   <rf-search on-search="$ctrl.searchUsers(value)" placeholder="Search for users" auto-focus="true"></rf-searcH>
-  <div class="selectable-list-item" ng-repeat="member in $ctrl.availableUsers"
+  <div class="selectable-list-item" ng-repeat="user in $ctrl.availableUsers track by user.email"
        ng-click="$ctrl.selectUser(user)">
-    {{ member.email }}
+    {{ user.email }}
   </div>
 </div>
 
@@ -70,7 +67,7 @@
     {{ $ctrl.affectedUsers }} user(s) will receive <code>VIEW</code> permissions. To add additional permissions,
     toggle them on or off in the list of permissions grants.
   </div>
-  <div class="new-acr-confirmation" ng-if="'USER' === $ctrl.newPermissionSubject">
+  <div class="new-acr-confirmation" ng-if="'USER' === $ctrl.newPermissionSubject.target">
     You are about to give {{ $ctrl.selectedPermissionsTarget.name }} <code>VIEW</code> permissions. To add
     additional permissions, toggle them on or off in the list of permissions grants.
   </div>
