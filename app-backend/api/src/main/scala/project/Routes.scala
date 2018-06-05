@@ -773,18 +773,21 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query.authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa).unsafeToFuture
-    } { onSuccess(
-        ProjectDao.unsafeGetProjectById(projectId, Some(user)).transact(xa).unsafeToFuture
-      ) { project =>
-        if (user.isSuperuser || project.owner == user.id) {
-          complete(List("*"))
-        } else {
-          complete {
-            AccessControlRuleDao.listUserActions(user, ObjectType.Project, projectId).transact(xa).unsafeToFuture
+    } { user.isSuperuser match {
+      case true => complete(List("*"))
+      case false =>
+        onSuccess(
+          ProjectDao.unsafeGetProjectById(projectId, Some(user)).transact(xa).unsafeToFuture
+        ) { project =>
+          project.owner == user.id match {
+            case true => complete(List("*"))
+            case false => complete {
+              AccessControlRuleDao.listUserActions(user, ObjectType.Project, projectId)
+                .transact(xa).unsafeToFuture
+            }
           }
         }
       }
     }
   }
-
 }

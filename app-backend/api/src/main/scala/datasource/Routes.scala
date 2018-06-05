@@ -165,14 +165,18 @@ trait DatasourceRoutes extends Authentication
     authorizeAsync {
       DatasourceDao.query.authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
         .transact(xa).unsafeToFuture
-    } { onSuccess(
-        DatasourceDao.unsafeGetDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
-      ) { datasource =>
-        if (user.isSuperuser || datasource.owner == user.id) {
-          complete(List("*"))
-        } else {
-          complete {
-            AccessControlRuleDao.listUserActions(user, ObjectType.Datasource, datasourceId).transact(xa).unsafeToFuture
+    } { user.isSuperuser match {
+      case true => complete(List("*"))
+      case false =>
+        onSuccess(
+          DatasourceDao.unsafeGetDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
+        ) { datasource =>
+          datasource.owner == user.id match {
+            case true => complete(List("*"))
+            case false => complete {
+                AccessControlRuleDao.listUserActions(user, ObjectType.Datasource, datasourceId)
+                  .transact(xa).unsafeToFuture
+            }
           }
         }
       }

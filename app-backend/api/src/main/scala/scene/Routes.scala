@@ -245,18 +245,21 @@ trait SceneRoutes extends Authentication
     authorizeAsync {
       SceneWithRelatedDao.query.authorized(user, ObjectType.Scene, sceneId, ActionType.View)
         .transact(xa).unsafeToFuture
-    } { onSuccess(
-        SceneWithRelatedDao.unsafeGetScene(sceneId, user).transact(xa).unsafeToFuture
+    } { user.isSuperuser match {
+      case true => complete(List("*"))
+      case false =>
+        onSuccess(
+          SceneWithRelatedDao.unsafeGetScene(sceneId, user).transact(xa).unsafeToFuture
       ) { scene =>
-        if (user.isSuperuser || scene.owner == user.id) {
-          complete(List("*"))
-        } else {
-          complete {
-            AccessControlRuleDao.listUserActions(user, ObjectType.Scene, sceneId).transact(xa).unsafeToFuture
+        scene.owner == user.id match {
+          case true => complete(List("*"))
+          case false => complete {
+            AccessControlRuleDao.listUserActions(user, ObjectType.Scene, sceneId)
+              .transact(xa).unsafeToFuture
+            }
           }
         }
       }
     }
   }
-
 }

@@ -240,14 +240,18 @@ trait ShapeRoutes extends Authentication
     authorizeAsync {
       ShapeDao.query.authorized(user, ObjectType.Shape, shapeId, ActionType.View)
         .transact(xa).unsafeToFuture
-    } { onSuccess(
-        ShapeDao.unsafeGetShapeById(shapeId).transact(xa).unsafeToFuture
-      ) { shape =>
-        if (user.isSuperuser || shape.owner == user.id) {
-          complete(List("*"))
-        } else {
-          complete {
-            AccessControlRuleDao.listUserActions(user, ObjectType.Shape, shapeId).transact(xa).unsafeToFuture
+    } { user.isSuperuser match {
+      case true => complete(List("*"))
+      case false =>
+        onSuccess(
+          ShapeDao.unsafeGetShapeById(shapeId).transact(xa).unsafeToFuture
+        ) { shape =>
+          shape.owner == user.id match {
+            case true => complete(List("*"))
+            case false => complete {
+              AccessControlRuleDao.listUserActions(user, ObjectType.Shape, shapeId)
+                .transact(xa).unsafeToFuture
+            }
           }
         }
       }

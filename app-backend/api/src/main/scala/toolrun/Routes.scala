@@ -175,15 +175,19 @@ trait ToolRunRoutes extends Authentication
     authorizeAsync {
       ToolRunDao.query.authorized(user, ObjectType.Analysis, analysisId, ActionType.View)
         .transact(xa).unsafeToFuture
-    } { onSuccess(
-        ToolRunDao.query.filter(analysisId).select.transact(xa).unsafeToFuture
-      ) { analysis =>
-        if (user.isSuperuser || analysis.owner == user.id) {
-          complete(List("*"))
-        } else {
-          complete {
-            AccessControlRuleDao.listUserActions(user, ObjectType.Analysis, analysisId).transact(xa).unsafeToFuture
-          }
+    } { user.isSuperuser match {
+      case true => complete(List("*"))
+      case false =>
+        onSuccess(
+          ToolRunDao.query.filter(analysisId).select.transact(xa).unsafeToFuture
+        ) { analysis =>
+          analysis.owner == user.id match {
+            case true => complete(List("*"))
+            case false => complete {
+              AccessControlRuleDao.listUserActions(user, ObjectType.Analysis, analysisId)
+                .transact(xa).unsafeToFuture
+            }
+          }        
         }
       }
     }

@@ -240,14 +240,18 @@ trait ToolRoutes extends Authentication
     authorizeAsync {
       ToolDao.query.authorized(user, ObjectType.Template, templateId, ActionType.View)
         .transact(xa).unsafeToFuture
-    } { onSuccess(
-        ToolDao.query.filter(templateId).select.transact(xa).unsafeToFuture
-      ) { template =>
-        if (user.isSuperuser || template.owner == user.id) {
-          complete(List("*"))
-        } else {
-          complete {
-            AccessControlRuleDao.listUserActions(user, ObjectType.Template, templateId).transact(xa).unsafeToFuture
+    } { user.isSuperuser match {
+      case true => complete(List("*"))
+      case false =>
+        onSuccess(
+          ToolDao.query.filter(templateId).select.transact(xa).unsafeToFuture
+        ) { template =>
+          template.owner == user.id match {
+            case true => complete(List("*"))
+            case false => complete {
+              AccessControlRuleDao.listUserActions(user, ObjectType.Template, templateId)
+                .transact(xa).unsafeToFuture
+            }
           }
         }
       }
