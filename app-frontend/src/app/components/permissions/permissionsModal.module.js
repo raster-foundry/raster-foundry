@@ -54,8 +54,6 @@ class PermissionsModalController {
         this.states = {
             existing: 'EXISTINGPERMISSIONS',
             newPermission: 'NEWPERMISSION',
-            choosePermissions: 'CHOOSEPERMISSIONS',
-            organizationSelect: 'ORGANIZATIONSELECT',
             teamSelect: 'TEAMSELECT',
             userSelect: 'USERSELECT',
             createNewACR: 'CREATENEWACR'
@@ -103,7 +101,9 @@ class PermissionsModalController {
                 {
                     isActive: true,
                     subjectType: this.subjectType,
-                    subjectId: this.selectedPermissionsTarget.id,
+                    subjectId: this.selectedPermissionsTarget ?
+                        this.selectedPermissionsTarget.id :
+                        null,
                     actionType: 'VIEW'
                 }
             ).then(
@@ -160,11 +160,15 @@ class PermissionsModalController {
         this.setState('userSelect');
     }
 
+    handleEveryoneSubjectSelection() {
+        this.subjectType = 'ALL';
+        this.setState('createNewACR');
+    }
+
     handleNewPermissionSubjectSelection() {
         switch (this.newPermissionSubject.target) {
         case 'EVERYONE':
-            this.setState('choosePermissions');
-            this.subjectType = 'ALL';
+            this.handleEveryoneSubjectSelection();
             break;
         case 'ORGANIZATION':
             this.handleOrganizationSubjectSelection();
@@ -242,8 +246,8 @@ class PermissionsModalController {
                     (actionType) => {
                         return {
                             isActive: true,
-                            subjectType: key.split(' ')[0],
-                            subjectId: key.split(' ')[1],
+                            subjectType: key === 'Everyone' ? 'ALL' : key.split(' ')[0],
+                            subjectId: key === 'Everyone' ? null : key.split(' ')[1],
                             actionType: actionType
                         };
                     }
