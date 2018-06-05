@@ -156,4 +156,30 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
       is_active = false
     """ ++ Fragments.whereAnd(fr"subject_type = ${subjectType}", fr"subject_id = ${subjectId}")).update.run
   }
+
+  def listUserActions(user: User, objectType: ObjectType, objectId: UUID): ConnectionIO[List[String]] =
+    fr"""
+    SELECT DISTINCT action_type
+    FROM access_control_rules
+    WHERE
+      is_active = true
+      AND
+      object_type = ${objectType}
+      AND
+      UUID(object_id) = ${objectId}
+      AND (
+        subject_type = 'ALL'
+        OR
+        subject_id IN (
+          SELECT text(group_id)
+          FROM user_group_roles
+          WHERE user_id = ${user.id}
+        )
+        OR
+        subject_id = ${user.id}
+      )
+    """
+    .query[String]
+    .list
+
 }

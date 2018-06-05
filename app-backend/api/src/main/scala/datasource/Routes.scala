@@ -53,6 +53,13 @@ trait DatasourceRoutes extends Authentication
             get {
               listDatasourcePermissions(datasourceId)
             }
+        } ~
+        pathPrefix("actions") {
+          pathEndOrSingleSlash {
+            get {
+              listUserDatasourceActions(datasourceId)
+            }
+          }
         }
     }
   }
@@ -153,4 +160,26 @@ trait DatasourceRoutes extends Authentication
         }
       }
     }
+
+  def listUserDatasourceActions(datasourceId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      DatasourceDao.query.authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } { user.isSuperuser match {
+      case true => complete(List("*"))
+      case false =>
+        onSuccess(
+          DatasourceDao.unsafeGetDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
+        ) { datasource =>
+          datasource.owner == user.id match {
+            case true => complete(List("*"))
+            case false => complete {
+                AccessControlRuleDao.listUserActions(user, ObjectType.Datasource, datasourceId)
+                  .transact(xa).unsafeToFuture
+            }
+          }
+        }
+      }
+    }
+  }
 }

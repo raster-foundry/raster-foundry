@@ -87,17 +87,26 @@ trait SceneRoutes extends Authentication
             }
           }
         } ~
-          post {
-            traceName("add-scene-permission") {
-              addScenePermission(sceneId)
-            }
-          } ~
+        post {
+          traceName("add-scene-permission") {
+            addScenePermission(sceneId)
+          }
+        } ~
+        get {
+          traceName("list-scene-permissions") {
+            listScenePermissions(sceneId)
+          }
+        }
+      } ~
+      pathPrefix("actions") {
+        pathEndOrSingleSlash {
           get {
-            traceName("list-scene-permissions") {
-              listScenePermissions(sceneId)
+            traceName("list-user-allowed-actions") {
+              listUserSceneActions(sceneId)
             }
           }
         }
+      }
     }
   }
 
@@ -165,7 +174,7 @@ trait SceneRoutes extends Authentication
   def getDownloadUrl(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
       SceneWithRelatedDao.query
-        .authorized(user, ObjectType.Scene, sceneId, ActionType.View)
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.Download)
         .transact(xa)
         .unsafeToFuture
     } {
@@ -232,4 +241,25 @@ trait SceneRoutes extends Authentication
     }
   }
 
+  def listUserSceneActions(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneWithRelatedDao.query.authorized(user, ObjectType.Scene, sceneId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } { user.isSuperuser match {
+      case true => complete(List("*"))
+      case false =>
+        onSuccess(
+          SceneWithRelatedDao.unsafeGetScene(sceneId, user).transact(xa).unsafeToFuture
+      ) { scene =>
+        scene.owner == user.id match {
+          case true => complete(List("*"))
+          case false => complete {
+            AccessControlRuleDao.listUserActions(user, ObjectType.Scene, sceneId)
+              .transact(xa).unsafeToFuture
+            }
+          }
+        }
+      }
+    }
+  }
 }
