@@ -7,6 +7,14 @@
 </div>
 
 <div class="modal-content" ng-if="$ctrl.state === $ctrl.states.existing">
+  <div class="permissions-table-header">
+    <span class="permission-target">
+      Grantee
+    </span>
+    <span class="permission-grant-col" ng-repeat="actionType in $ctrl.actionTypes">
+      {{ actionType }}
+    </span>
+  </div>
   <div ng-repeat="(key, row) in $ctrl.accessControlRuleRows">
     <span class="permissions-object-key">
       {{ key }}
