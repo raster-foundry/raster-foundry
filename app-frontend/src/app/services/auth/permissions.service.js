@@ -6,8 +6,8 @@ export default (app) => {
     class PermissionsService {
         constructor($resource) {
             this.Permissions = $resource(
-                `${BUILDCONFIG.API_HOST}/api/:objectType/:objectId/permissions`, {
-                    objectType: '@objectType',
+                `${BUILDCONFIG.API_HOST}/api/:permissionsBase/:objectId/permissions`, {
+                    permissionsBase: '@permissionsBase',
                     objectId: '@objectId'
                 }, {
                     query: {
@@ -32,29 +32,29 @@ export default (app) => {
             );
         }
 
-        query({objectType, objectId}) {
-            return this.Permissions.query({objectType: objectType, objectId: objectId});
+        query({permissionsBase, objectId}) {
+            return this.Permissions.query({permissionsBase, objectId});
         }
 
-        create({objectType, objectId}, accessControlRuleCreate) {
+        create({permissionsBase, objectId}, accessControlRuleCreate) {
             return this.Permissions.create(
-                Object.assign(accessControlRuleCreate, {objectType: objectType, objectId: objectId})
+                Object.assign(accessControlRuleCreate, {permissionsBase, objectId})
             ).$promise;
         }
 
-        update({objectType, objectId}, accessControlRuleCreates) {
+        update({permissionsBase, objectId}, accessControlRuleCreates) {
             return this.Permissions.update(
                 Object.assign(
                     {rules: accessControlRuleCreates},
-                    {objectType: objectType, objectId: objectId}
+                    {permissionsBase, objectId}
                 )
             ).$promise;
         }
 
-        delete({objectType, objectId}) {
+        delete({permissionsBase, objectId}) {
             return this.Permissions.delete(
                 Object.assign(
-                    { objectType, objectId }
+                    { permissionsBase, objectId }
                 )
             ).$promise;
         }
