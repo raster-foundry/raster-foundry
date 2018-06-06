@@ -58,6 +58,7 @@ class AddPhotoModalController {
         if (file) {
             this.selectedPhoto = file;
             delete this.selectedPhotoErrorMsg;
+            this.handleNext();
         } else if (invalidFile) {
             this.selectedPhotoErrorMsg = 'Picture size should be less than 512 x 512 pixels.';
         }
