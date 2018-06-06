@@ -130,9 +130,9 @@ trait ToolRoutes extends Authentication
   def listTools: Route = authenticate { user =>
     (withPagination & combinedToolQueryParams) { (page, combinedToolQueryParameters) =>
       complete {
-        ToolDao.query
+        ToolDao
+          .authQuery(user, ObjectType.Template)
           .filter(combinedToolQueryParameters)
-          .authorize(user, ObjectType.Template, ActionType.View)
           .page(page)
           .transact(xa).unsafeToFuture
       }

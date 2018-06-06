@@ -45,10 +45,10 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
       case _ => None.pure[ConnectionIO]
     }
     sceneSearchBuilder = {
-      SceneDao.query
+      SceneDao
+        .authQuery(user, ObjectType.Scene)
         .filter(shapeO map { _.geometry })
         .filter(sceneParams)
-        .authorize(user, ObjectType.Scene, ActionType.View)
     }
     scenes <- sceneSearchBuilder.list(pageRequest.offset, pageRequest.limit)
     withRelateds <- scenesToScenesWithRelated(scenes)

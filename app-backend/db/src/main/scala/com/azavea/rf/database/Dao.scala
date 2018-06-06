@@ -30,6 +30,32 @@ abstract class Dao[Model: Composite] extends Filterables {
   /** Begin construction of a complex, filtered query */
   def query: Dao.QueryBuilder[Model] = Dao.QueryBuilder[Model](selectF, tableF, List.empty)
 
+  def authQuery(user: User, objectType: ObjectType): Dao.QueryBuilder[Model] =
+    Dao.QueryBuilder[Model](selectF ++ authTableF(user, objectType), tableF ++ authTableF(user, objectType), List.empty)
+
+  def authTableF(user: User, objectType: ObjectType): Fragment =
+    fr"""INNER JOIN (
+      SELECT id as object_id FROM""" ++ tableF ++ fr"""WHERE owner = ${user.id}
+
+      UNION ALL
+
+      SELECT acr.object_id
+      FROM access_control_rules acr
+      WHERE acr.object_type = ${objectType}
+        AND acr.action_type = ${ActionType.View.toString}::action_type
+        AND -- Match if the ACR is an ALL or per user
+        (acr.subject_type = 'ALL' OR (acr.subject_type = 'USER' AND acr.subject_id = ${user.id}))
+
+      UNION ALL -- Collect objects the user has access to for group permissions
+
+      SELECT acr.object_id
+      FROM access_control_rules acr
+      JOIN user_group_roles ugr ON acr.subject_type::text = ugr.group_type::text
+      AND acr.subject_id::text = ugr.group_id::text
+      WHERE ugr.user_id = ${user.id}
+       AND acr.object_type = ${objectType}
+       AND acr.action_type = ${ActionType.View.toString}::action_type) as object_ids ON""" ++
+      Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id"
 }
 
 object Dao {

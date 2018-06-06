@@ -290,8 +290,9 @@ trait ProjectRoutes extends Authentication
   def listProjects: Route = authenticate { user =>
     (withPagination & projectQueryParameters) { (page, projectQueryParameters) =>
       complete {
-        ProjectDao.query.filter(projectQueryParameters)
-          .authorize(user, ObjectType.Project, ActionType.View)
+        ProjectDao
+          .authQuery(user, ObjectType.Project)
+          .filter(projectQueryParameters)
           .page(page)
           .transact(xa).unsafeToFuture
       }
