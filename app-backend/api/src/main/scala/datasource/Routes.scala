@@ -87,7 +87,7 @@ trait DatasourceRoutes extends Authentication
     } {
       rejectEmptyResponse {
         complete {
-          DatasourceDao.getDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
+          DatasourceDao.getDatasourceById(datasourceId).transact(xa).unsafeToFuture
         }
       }
     }
@@ -173,7 +173,7 @@ trait DatasourceRoutes extends Authentication
          case true => complete(List("*"))
          case false =>
            onSuccess(
-             DatasourceDao.unsafeGetDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
+             DatasourceDao.unsafeGetDatasourceById(datasourceId).transact(xa).unsafeToFuture
            ) { datasource =>
              datasource.owner == user.id match {
                case true => complete(List("*"))

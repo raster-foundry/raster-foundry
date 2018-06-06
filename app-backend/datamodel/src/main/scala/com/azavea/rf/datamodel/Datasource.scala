@@ -20,13 +20,21 @@ case class Datasource(
   extras: Json,
   bands: Json,
   licenseName: Option[String]
-)
+) {
+  def toThin: Datasource.Thin = Datasource.Thin(this.name, this.id)
+}
 
 object Datasource {
 
   def tupled = (Datasource.apply _).tupled
 
   def create = Create.apply _
+
+  @JsonCodec
+  case class Thin (
+    name: String,
+    id: UUID
+  )
 
   @JsonCodec
   case class Create (

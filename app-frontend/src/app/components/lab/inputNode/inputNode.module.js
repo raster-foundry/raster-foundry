@@ -6,7 +6,6 @@ import inputNodeTpl from './inputNode.html';
 import LabActions from '_redux/actions/lab-actions';
 import NodeActions from '_redux/actions/node-actions';
 import { getNodeDefinition } from '_redux/node-utils';
-import { Set } from 'immutable';
 
 const InputNodeComponent = {
     templateUrl: inputNodeTpl,
@@ -18,15 +17,17 @@ const InputNodeComponent = {
 
 class InputNodeController {
     constructor(
-        modalService, datasourceService, projectService,
-        $scope, $ngRedux, $log
+        modalService, datasourceService, projectService, sceneService,
+        $q, $scope, $ngRedux, $log
     ) {
         'ngInject';
         this.modalService = modalService;
         this.datasourceService = datasourceService;
         this.projectService = projectService;
+        this.sceneService = sceneService;
         this.$scope = $scope;
         this.$log = $log;
+        this.$q = $q;
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis.bind(this),
@@ -85,12 +86,13 @@ class InputNodeController {
                     pending: false
                 }
             ).then(scenes => {
-                const datasourceIds = [
-                    ...new Set(
-                        scenes.map(s => s.datasource)
+                const datasourcesP = this.$q.all(
+                    _.map(
+                        _.uniqBy(scenes, scene => scene.datasource.id),
+                        scene => this.sceneService.datasource(scene)
                     )
-                ];
-                this.datasourceService.get(datasourceIds).then(datasources => {
+                );
+                datasourcesP.then(datasources => {
                     const previousBands = this.bands ? this.bands.slice(0) : false;
                     this.datasources = datasources;
                     this.bands = this.datasourceService.getUnifiedBands(this.datasources);

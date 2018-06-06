@@ -17,8 +17,7 @@ const SceneItemComponent = {
 
 class SceneItemController {
     constructor(
-        $scope, $attrs,
-        thumbnailService, mapService, datasourceService, modalService
+        $scope, $attrs, thumbnailService, mapService, modalService
     ) {
         'ngInject';
 
@@ -32,19 +31,9 @@ class SceneItemController {
         this.isDraggable = $attrs.hasOwnProperty('draggable');
         this.isPreviewable = $attrs.hasOwnProperty('previewable');
         this.isClickable = $attrs.hasOwnProperty('clickable');
-        this.datasourceService = datasourceService;
         this.modalService = modalService;
         this.$scope = $scope;
-    }
-
-    $onInit() {
-        this.$scope.$watch('$ctrl.scene.datasource', () => {
-            if (this.repository) {
-                this.repository.service.getDatasource(this.scene).then((datasource) => {
-                    this.datasource = datasource;
-                });
-            }
-        });
+        this.datasource = this.scene.datasource;
     }
 
     $onChanges(changes) {
@@ -53,9 +42,6 @@ class SceneItemController {
         }
         if (changes.repository && changes.repository.currentValue) {
             this.repository = changes.repository.currentValue;
-            this.repository.service.getDatasource(this.scene).then((datasource) => {
-                this.datasource = datasource;
-            });
             this.repository.service.getThumbnail(this.scene).then((thumbnail) => {
                 this.thumbnail = thumbnail;
             });

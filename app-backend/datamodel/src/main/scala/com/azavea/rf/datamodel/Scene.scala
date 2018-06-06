@@ -76,7 +76,8 @@ case class Scene(
 
   def withRelatedFromComponents(
     images: List[Image.WithRelated],
-    thumbnails: List[Thumbnail]
+    thumbnails: List[Thumbnail],
+    datasource: Datasource
   ): Scene.WithRelated = Scene.WithRelated(
     this.id,
     this.createdAt,
@@ -87,7 +88,7 @@ case class Scene(
     this.ingestSizeBytes,
     this.visibility,
     this.tags,
-    this.datasource,
+    datasource.toThin,
     this.sceneMetadata,
     this.name,
     this.tileFootprint,
@@ -166,7 +167,7 @@ object Scene {
     ingestSizeBytes: Int,
     visibility: Visibility,
     tags: List[String],
-    datasource: UUID,
+    datasource: Datasource.Thin,
     sceneMetadata: Json,
     name: String,
     tileFootprint: Option[Projected[MultiPolygon]],
@@ -190,7 +191,7 @@ object Scene {
         ingestSizeBytes,
         visibility,
         tags,
-        datasource,
+        datasource.id,
         sceneMetadata,
         name,
         tileFootprint,
