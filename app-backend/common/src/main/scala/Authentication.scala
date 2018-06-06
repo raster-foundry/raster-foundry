@@ -80,15 +80,18 @@ trait Authentication extends Directives {
     }
   }
 
+  def getStringClaimOrBlank(claims: JWTClaimsSet, key: String): String =
+    Option(claims.getStringClaim(key)).getOrElse("")
+
   def authenticateWithToken(tokenString: String): Directive1[User] = {
     val result = verifyJWT(tokenString)
     result match {
       case Left(e) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
       case Right((_, jwtClaims)) => {
         val userId = jwtClaims.getStringClaim("sub")
-        val email = jwtClaims.getStringClaim("email")
-        val name = jwtClaims.getStringClaim("name")
-        val picture = jwtClaims.getStringClaim("picture")
+        val email = getStringClaimOrBlank(jwtClaims, "email")
+        val name = getStringClaimOrBlank(jwtClaims, "name")
+        val picture = getStringClaimOrBlank(jwtClaims, "picture")
         onSuccess(UserDao.getUserById(userId).transact(xa).unsafeToFuture).flatMap {
           case Some(user) => {
             val (orgDropboxCredential, orgPlanetCredential) = getOrgCredentials(user)
