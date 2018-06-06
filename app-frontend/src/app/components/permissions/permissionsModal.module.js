@@ -65,7 +65,7 @@ class PermissionsModalController {
         this.accessControlRules = [];
         this.actionTypes = [...this.defaultActions, ...this.resolve.extraActions];
         this.authTarget = {
-            objectType: this.resolve.objectType,
+            permissionsBase: this.resolve.permissionsBase,
             objectId: this.resolve.object.id
         };
 
@@ -84,29 +84,22 @@ class PermissionsModalController {
     }
 
     createNewACR() {
-        switch (this.authTarget.objectType) {
-        case 'scenes':
-            this.permissionsService.create(
-                this.authTarget,
-                {
-                    isActive: true,
-                    subjectType: this.subjectType,
-                    subjectId: this.selectedPermissionsTarget ?
-                        this.selectedPermissionsTarget.id :
-                        null,
-                    actionType: 'VIEW'
-                }
-            ).then(
-                (accessControlRules) => {
-                    this.setAccessControlRuleRows(accessControlRules);
-                    this.setState('existing');
-                }
-            );
-            break;
-        default:
-            break;
-        }
-        return;
+        return this.permissionsService.create(
+            this.authTarget,
+            {
+                isActive: true,
+                subjectType: this.subjectType,
+                subjectId: this.subjectType === 'PLATFORM' ?
+                    this.platformId :
+                    this.selectedPermissionsTarget.id,
+                actionType: 'VIEW'
+            }
+        ).then(
+            (accessControlRules) => {
+                this.setAccessControlRuleRows(accessControlRules);
+                this.setState('existing');
+            }
+        );
     }
 
     fetchPermissions() {
@@ -143,7 +136,7 @@ class PermissionsModalController {
     }
 
     handleEveryoneSubjectSelection() {
-        this.subjectType = 'EVERYONE';
+        this.subjectType = 'PLATFORM';
         this.setState('createNewACR');
     }
 

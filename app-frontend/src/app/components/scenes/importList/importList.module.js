@@ -110,7 +110,7 @@ class ImportListController {
             component: 'permissionsModal',
             resolve: {
                 object: () => scene,
-                objectType: () => 'scenes',
+                permissionsBase: () => 'scenes',
                 objectName: () => scene.name,
                 extraActions: () => []
             }
