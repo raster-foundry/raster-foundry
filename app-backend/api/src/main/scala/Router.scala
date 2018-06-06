@@ -105,6 +105,9 @@ trait Router extends HealthCheckRoutes
       pathPrefix("datasources") {
         datasourceRoutes
       } ~
+      pathPrefix("thumbnails") {
+        thumbnailImageRoutes
+      } ~
       pathPrefix("map-tokens") {
         mapTokenRoutes
       } ~
