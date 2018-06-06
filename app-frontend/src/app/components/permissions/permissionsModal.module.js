@@ -83,16 +83,6 @@ class PermissionsModalController {
         )[0].groupId;
     }
 
-    countTeamMembers(team) {
-        return this.teamService.getMembers(
-            this.platformId, this.organizationId, team.id, 1, null
-        ).then(
-            (firstPage) => {
-                this.affectedUsers = firstPage.count;
-            }
-        );
-    }
-
     createNewACR() {
         switch (this.authTarget.objectType) {
         case 'scenes':
@@ -129,19 +119,11 @@ class PermissionsModalController {
 
     handleOrganizationSubjectSelection() {
         this.subjectType = 'ORGANIZATION';
-        this.organizationService.getMembers(
-            this.platformId, this.organizationId, 1, null
-        ).then(
-            (resp) => {
-                this.affectedUsers = resp.count;
+        this.organizationService.getOrganization(this.organizationId).then(
+            (organization) => {
+                this.selectedPermissionsTarget = organization;
+                this.setState('createNewACR');
             }
-        ).then(
-            this.organizationService.getOrganization(this.organizationId).then(
-                (organization) => {
-                    this.selectedPermissionsTarget = organization;
-                    this.setState('createNewACR');
-                }
-            )
         );
     }
 
@@ -161,7 +143,7 @@ class PermissionsModalController {
     }
 
     handleEveryoneSubjectSelection() {
-        this.subjectType = 'ALL';
+        this.subjectType = 'EVERYONE';
         this.setState('createNewACR');
     }
 
@@ -247,8 +229,8 @@ class PermissionsModalController {
                     (actionType) => {
                         return {
                             isActive: true,
-                            subjectType: key === 'Everyone' ? 'ALL' : key.split(' ')[0],
-                            subjectId: key === 'Everyone' ? null : key.split(' ')[1],
+                            subjectType: key === 'Everyone' ? 'PLATFORM' : key.split(' ')[0],
+                            subjectId: key === 'Everyone' ? this.platformId : key.split(' ')[1],
                             actionType: actionType
                         };
                     }

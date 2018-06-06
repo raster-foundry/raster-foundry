@@ -71,18 +71,12 @@
 
   <div class="modal-body" ng-if="$ctrl.state === $ctrl.states.createNewACR">
     <div class="content">
-      <div class="new-acr-confirmation"
-           ng-if="!['USER', 'EVERYONE'].includes($ctrl.newPermissionSubject.target)">
-        You are about to add <code>VIEW</code> permissions to the {{$ctrl.newPermissionSubject.target | lowercase }}
-        {{ $ctrl.selectedPermissionsTarget.name }}.
-        {{ $ctrl.affectedUsers }} user(s) will receive <code>VIEW</code> permissions. To add additional permissions,
-        toggle them on or off in the list of permissions grants.
+      <div class="new-acr-confirmation" ng-if="!$ctrl.subjectType === 'EVERYONE'">
+        You are about to give <code>VIEW</code> permissions to {{$ctrl.newPermissionSubject.target | lowercase }}
+        {{ $ctrl.selectedPermissionsTarget.name }}. To add additional permissions, toggle them on or off in
+        the list of permissions grants.
       </div>
-      <div class="new-acr-confirmation" ng-if="'USER' === $ctrl.newPermissionSubject.target">
-        You are about to give {{ $ctrl.selectedPermissionsTarget.name }} <code>VIEW</code> permissions. To add
-        additional permissions, toggle them on or off in the list of permissions grants.
-      </div>
-      <div class="new-acr-confirmation" ng-if="'EVERYONE' === $ctrl.newPermissionSubject.target">
+      <div class="new-acr-confirmation" ng-if="'EVERYONE' === $ctrl.subjectType">
         You are about to give <em>everyone</em> <code>VIEW</code> permissions. To add
         additional permissions, toggle them on or off in the list of permissions grants.
       </div>
