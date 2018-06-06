@@ -1,4 +1,4 @@
-<div class="admin-users-content container column-stretch dashboard">
+<div class="admin-users-content container column-stretch">
   <div class="admin-users-actions">
     <input type="text" class="form-control admin-search" placeholder="Search for users"
            ng-model="$ctrl.search" ng-disabled="$ctrl.fetching">
@@ -8,14 +8,6 @@
     </button>
   </div>
   <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching">
-    <thead>
-      <tr>
-        <td>Name</td>
-        <td>Email</td>
-        <td>Role</td>
-        <td>Actions</td>
-      </tr>
-    </thead>
     <tbody>
       <tr ng-repeat="user in $ctrl.users track by $index">
         <td class="username">

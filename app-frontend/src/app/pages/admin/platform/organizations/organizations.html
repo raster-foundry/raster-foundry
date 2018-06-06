@@ -1,5 +1,5 @@
 <ui-view>
-  <div class="admin-users-content container column-stretch dashboard">
+  <div class="admin-users-content container column-stretch">
     <div class="admin-users-actions">
       <input type="text"
              class="form-control admin-search"
@@ -7,22 +7,15 @@
              ng-model="$ctrl.search"
              ng-disabled="$ctrl.fetching"
       >
-      <button type="button" class="btn btn-primary"
-              ng-click="$ctrl.newOrgModal()"
-              ng-disabled="$ctrl.fetching">
-        New Organization
-      </button>
+      <div class="actions-right">
+        <button type="button" class="btn btn-primary"
+                ng-click="$ctrl.newOrgModal()"
+                ng-disabled="$ctrl.fetching">
+          New Organization
+        </button>
+      </div>
     </div>
     <table class="admin-table admin-platform-org-table" ng-if="!$ctrl.fetching">
-      <thead>
-        <tr>
-          <td>Name</td>
-          <td>Email</td>
-          <td class="users">Users</td>
-          <td>Status</td>
-          <td>Actions</td>
-        </tr>
-      </thead>
       <tbody>
         <tr ng-repeat="organization in $ctrl.organizations track by $index">
           <td class="name">

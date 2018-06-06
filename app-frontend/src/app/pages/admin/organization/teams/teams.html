@@ -1,9 +1,16 @@
-<div class="admin-users-content container column-stretch dashboard">
+<div class="admin-users-content container column-stretch">
   <div ng-if="$ctrl.errorMsg">
     <p>
       {{$ctrl.errorMsg}}
       <a ng-href="mailto:{{$ctrl.orgAdminEmail}}">organization admin</a>.
     </p>
+  </div>
+  <div class="admin-users-actions">
+    <input type="text" class="form-control admin-search" placeholder="Search for teams" ng-disabled="$ctrl.fetching">
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.newTeamModal()" ng-disabled="$ctrl.fetching">
+      New Team
+    </button>
   </div>
   <div ng-if="!$ctrl.errorMsg">
     <div class="admin-users-actions">
