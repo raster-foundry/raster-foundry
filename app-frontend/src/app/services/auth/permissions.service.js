@@ -24,6 +24,9 @@ export default (app) => {
                         cache: false,
                         isArray: true,
                         transformRequest: (reqBody) => angular.toJson(reqBody.rules)
+                    },
+                    delete: {
+                        method: 'DELETE'
                     }
                 }
             );
@@ -44,6 +47,14 @@ export default (app) => {
                 Object.assign(
                     {rules: accessControlRuleCreates},
                     {objectType: objectType, objectId: objectId}
+                )
+            ).$promise;
+        }
+
+        delete({objectType, objectId}) {
+            return this.Permissions.delete(
+                Object.assign(
+                    { objectType, objectId }
                 )
             ).$promise;
         }

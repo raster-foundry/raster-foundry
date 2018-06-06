@@ -3040,3 +3040,21 @@ rf-reclassify-table {
   text-transform: uppercase;
   font-size: 1rem;
 }
+
+.permission-grant-item {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  background: #fff;
+  display: flex;
+}
+
+.permissions-object-key {
+  margin-right: 1rem;
+  flex: 1;
+}
+
+.selectable-list-item {
+  margin-bottom: 0.5rem;
+  text-align: left;
+}

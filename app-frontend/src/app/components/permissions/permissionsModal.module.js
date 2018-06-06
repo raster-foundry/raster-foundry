@@ -256,12 +256,20 @@ class PermissionsModalController {
                 rules = [...rules, ...transformed];
             }
         }
-        this.permissionsService.update(
-            this.authTarget,
-            rules
-        ).then(
-            () => this.close()
-        );
+        if (rules.length) {
+            this.permissionsService.update(
+                this.authTarget,
+                rules
+            ).then(
+                () => this.close()
+            );
+        } else {
+            this.permissionsService.delete(
+                this.authTarget
+            ).then(
+                () => this.close()
+            );
+        }
     }
 }
 
