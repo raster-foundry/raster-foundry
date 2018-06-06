@@ -279,8 +279,7 @@ trait PlatformRoutes extends Authentication
 
   def listPlatformMembers(platformId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      // QUESTION: should this be open to members of the same platform?
-      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
+      PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
     } {
       (withPagination & searchParams) { (page, searchParams) =>
         complete {
