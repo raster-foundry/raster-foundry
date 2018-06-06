@@ -93,6 +93,7 @@ trait UploadRoutes extends Authentication
           else throw new IllegalStateException("Planet upload must specify some ids")
         }
         case (UploadType.Local, _) => newUpload
+        case (UploadType.Modis, _) => newUpload
         case _ => throw new IllegalStateException("Unsupported import type")
       }
 
