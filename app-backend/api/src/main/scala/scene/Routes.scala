@@ -120,7 +120,26 @@ trait SceneRoutes extends Authentication
 
   def createScene: Route = authenticate { user =>
     entity(as[Scene.Create]) { newScene =>
-      onSuccess(SceneDao.insert(newScene, user).transact(xa).unsafeToFuture) { scene =>
+
+      val tileFootprint = (newScene.sceneType, newScene.ingestLocation, newScene.tileFootprint) match {
+        case (Some(SceneType.COG), Some(ingestLocation), None) => {
+          logger.info(s"Generating Footprint for Newly Added COG")
+          CogUtils.getTiffExtent(ingestLocation)
+        }
+        case _ => {
+          logger.info("Not generating footprint, already exists")
+          None
+        }
+      }
+
+      val dataFootprint = (tileFootprint, newScene.dataFootprint) match {
+        case (Some(tf), None) => tileFootprint
+        case _ => newScene.dataFootprint
+      }
+
+      val updatedScene = newScene.copy(dataFootprint = dataFootprint, tileFootprint = tileFootprint)
+
+      onSuccess(SceneDao.insert(updatedScene, user).transact(xa).unsafeToFuture) { scene =>
         if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested) kickoffSceneIngest(scene.id)
         complete((StatusCodes.Created, scene))
       }
