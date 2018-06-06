@@ -104,6 +104,9 @@ trait SceneRoutes extends Authentication
             traceName("list-user-allowed-actions") {
               listUserSceneActions(sceneId)
             }
+          } ~
+          delete {
+            deleteScenePermissions(sceneId)
           }
         }
       }
@@ -259,6 +262,16 @@ trait SceneRoutes extends Authentication
             }
           }
         }
+      }
+    }
+  }
+
+  def deleteScenePermissions(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.deleteByObject(ObjectType.Scene, sceneId).transact(xa).unsafeToFuture
       }
     }
   }

@@ -99,6 +99,9 @@ trait ToolRoutes extends Authentication
               traceName("list-tool-permissions") {
                 listToolPermissions(toolId)
               }
+            } ~
+            delete {
+              deleteToolPermissions(toolId)
             }
         } ~
         pathPrefix("actions") {
@@ -241,19 +244,29 @@ trait ToolRoutes extends Authentication
       ToolDao.query.authorized(user, ObjectType.Template, templateId, ActionType.View)
         .transact(xa).unsafeToFuture
     } { user.isSuperuser match {
-      case true => complete(List("*"))
-      case false =>
-        onSuccess(
-          ToolDao.query.filter(templateId).select.transact(xa).unsafeToFuture
-        ) { template =>
-          template.owner == user.id match {
-            case true => complete(List("*"))
-            case false => complete {
-              AccessControlRuleDao.listUserActions(user, ObjectType.Template, templateId)
-                .transact(xa).unsafeToFuture
-            }
-          }
-        }
+         case true => complete(List("*"))
+         case false =>
+           onSuccess(
+             ToolDao.query.filter(templateId).select.transact(xa).unsafeToFuture
+           ) { template =>
+             template.owner == user.id match {
+               case true => complete(List("*"))
+               case false => complete {
+                 AccessControlRuleDao.listUserActions(user, ObjectType.Template, templateId)
+                   .transact(xa).unsafeToFuture
+               }
+             }
+           }
+       }
+    }
+  }
+
+  def deleteToolPermissions(toolId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.deleteByObject(ObjectType.Template, toolId).transact(xa).unsafeToFuture
       }
     }
   }

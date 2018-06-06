@@ -52,6 +52,9 @@ trait DatasourceRoutes extends Authentication
             } ~
             get {
               listDatasourcePermissions(datasourceId)
+            } ~
+            delete {
+              deleteDatasourcePermissions(datasourceId)
             }
         } ~
         pathPrefix("actions") {
@@ -166,19 +169,29 @@ trait DatasourceRoutes extends Authentication
       DatasourceDao.query.authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
         .transact(xa).unsafeToFuture
     } { user.isSuperuser match {
-      case true => complete(List("*"))
-      case false =>
-        onSuccess(
-          DatasourceDao.unsafeGetDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
-        ) { datasource =>
-          datasource.owner == user.id match {
-            case true => complete(List("*"))
-            case false => complete {
-                AccessControlRuleDao.listUserActions(user, ObjectType.Datasource, datasourceId)
-                  .transact(xa).unsafeToFuture
-            }
-          }
-        }
+         case true => complete(List("*"))
+         case false =>
+           onSuccess(
+             DatasourceDao.unsafeGetDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
+           ) { datasource =>
+             datasource.owner == user.id match {
+               case true => complete(List("*"))
+               case false => complete {
+                 AccessControlRuleDao.listUserActions(user, ObjectType.Datasource, datasourceId)
+                   .transact(xa).unsafeToFuture
+               }
+             }
+           }
+       }
+    }
+  }
+
+  def deleteDatasourcePermissions(datasourceId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      DatasourceDao.query.ownedBy(user, datasourceId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.deleteByObject(ObjectType.Analysis, datasourceId).transact(xa).unsafeToFuture
       }
     }
   }

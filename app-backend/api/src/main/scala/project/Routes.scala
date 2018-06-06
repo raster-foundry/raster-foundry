@@ -273,6 +273,9 @@ trait ProjectRoutes extends Authentication
                 traceName("list-project-permissions") {
                   listProjectPermissions(projectId)
                 }
+              } ~
+              delete {
+                deleteProjectPermissions(projectId)
               }
           } ~
           pathPrefix("actions") {
@@ -787,6 +790,16 @@ trait ProjectRoutes extends Authentication
             }
           }
         }
+      }
+    }
+  }
+
+  def deleteProjectPermissions(projectId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.deleteByObject(ObjectType.Project, projectId).transact(xa).unsafeToFuture
       }
     }
   }
