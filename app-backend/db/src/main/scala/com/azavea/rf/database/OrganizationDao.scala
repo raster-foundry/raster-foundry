@@ -231,7 +231,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     s3Client.putObject(dataBucket, s"${prefix}/${key}", logoStream, md)
     s3.setObjectAcl(dataBucket, s"${prefix}/${key}", CannedAccessControlList.PublicRead)
 
-    val uri = s"https://${dataBucket}.s3.amazonaws.com/${prefix}/${key}"
+    val uri = s"https://s3.amazonaws.com/${dataBucket}/${prefix}/${key}"
     val updateTime = new Timestamp((new java.util.Date()).getTime)
     (fr"UPDATE" ++ tableF ++ fr"""SET
          modified_at = ${updateTime},

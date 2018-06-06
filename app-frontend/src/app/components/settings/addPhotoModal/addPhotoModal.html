@@ -6,7 +6,7 @@
     <h4 class="modal-title">
       Upload a logo
     </h4>
-    <p>Upload a logo</p>
+    <p>Upload a picture as the organization logo.</p>
   </div>
   <div class="modal-body"
        ng-if="$ctrl.currentStepIs('UPLOAD')"
@@ -14,7 +14,7 @@
        ng-model="$ctrl.selectedPhoto"
        accept="image/png"
        ngf-max-height="512"
-       ngf-change="$ctrl.photoSelected($file)"
+       ngf-change="$ctrl.photoSelected($file, $invalidFiles)"
        ngf-drop>
     <!--Local picture import -->
     <div class="content">
@@ -28,7 +28,7 @@
                   ng-model="$ctrl.selectedPhoto"
                   accept="image/png"
                   ngf-max-height="512"
-                  ngf-change="$ctrl.photoSelected($file)"
+                  ngf-change="$ctrl.photoSelected($file, $invalidFiles)"
                   ngf-select>
             Select Files
           </button>
@@ -36,16 +36,25 @@
           <br/>
           or drag and drop a picture here
         </div>
+        <p ng-if="$ctrl.selectedPhotoErrorMsg" style="color: red;">{{$ctrl.selectedPhotoErrorMsg}}</p>
       </ng-container>
     </div>
   </div>
-  <!--Picture preview and crop -->
+  <!--Picture preview -->
   <div class="modal-body" ng-if="$ctrl.currentStepIs('PREVIEW')">
     <div class="content">
       <h3 class="no-margin">Preview</h3>
       <div class="text-center">
         <img ngf-thumbnail="$ctrl.selectedPhoto">
       </div>
+    </div>
+  </div>
+  <!-- Upload Progress -->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('UPLOAD_PROGRESS')">
+    <div class="content">
+      <h3 class="no-margin">Progress</h3>
+      {{$ctrl.uploadInProgress ? 'In progress' :
+        $ctrl.uploadDone ? 'Finished' : 'Failed: ' + $ctrl.currentError}}
     </div>
   </div>
 </div>

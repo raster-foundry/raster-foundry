@@ -14,17 +14,18 @@ const AddPhotoModalComponent = {
 };
 
 class AddPhotoModalController {
-    constructor($log, Upload, organizationService) {
+    constructor($scope, Upload, organizationService) {
         'ngInject';
 
-        this.$log = $log;
+        this.$scope = $scope;
+
         this.organizationService = organizationService;
         this.Upload = Upload;
-        this.organizationId = this.resolve.organizationId;
     }
 
     $onInit() {
         this.initSteps();
+        this.organizationId = this.resolve.organizationId;
     }
 
     initSteps() {
@@ -35,10 +36,7 @@ class AddPhotoModalController {
             allowPrevious: () => false,
             next: () => 'PREVIEW',
             allowNext: () => this.selectedPhoto,
-            allowClose: () => true,
-            onExit: () => {
-                this.currentError = null;
-            }
+            allowClose: () => true
         }, {
             name: 'PREVIEW',
             previous: () => 'UPLOAD',
@@ -49,35 +47,40 @@ class AddPhotoModalController {
         }, {
             name: 'UPLOAD_PROGRESS',
             onEnter: () => this.startLogoUpload(),
-            next: () => {},
-            allowNext: () => {
-            },
+            allowDone: () => !this.uploadInProgress && this.uploadDone,
             onExit: () => this.finishUpload()
-        }, {
-            name: 'IMPORT_SUCCESS',
-            allowDone: () => true
-        }, {
-            name: 'IMPORT_ERROR',
-            allowDone: () => true
         }]);
 
         this.setCurrentStep(this.steps[0]);
     }
 
-    photoSelected(file) {
-        this.selectedPhoto = file;
+    photoSelected(file, invalidFile) {
+        if (file) {
+            this.selectedPhoto = file;
+            delete this.selectedPhotoErrorMsg;
+        } else if (invalidFile) {
+            this.selectedPhotoErrorMsg = 'Picture size should be less than 512 x 512 pixels.';
+        }
     }
 
     startLogoUpload() {
+        this.preventInterruptions();
+        this.uploadInProgress = true;
+
         let self = this;
-        let orgId = this.organizationId;
         this.Upload.base64DataUrl(this.selectedPhoto).then((base64) => {
-            self.logoBase64 = base64.replace('data:image/png;base64,', '');
             self.organizationService.addOrganizationLogo(
-                orgId, self.logoBase64)
-                .then(resp => {
-                    self.$log.log(resp);
-                });
+                self.organizationId,
+                base64.replace('data:image/png;base64,', '')
+            ).then(resp => {
+                self.uploadDone = true;
+                self.uploadInProgress = false;
+                self.uploadedOrganization = resp;
+            }, (err) => {
+                self.uploadDone = false;
+                self.uploadInProgress = false;
+                self.currentError = err.data;
+            });
         });
     }
 
@@ -109,7 +112,11 @@ class AddPhotoModalController {
     }
 
     handleClose() {
-        this.dismiss();
+        if (this.uploadDone) {
+            this.finishUpload();
+        } else {
+            this.dismiss();
+        }
     }
 
     hasPrevious() {
@@ -141,7 +148,39 @@ class AddPhotoModalController {
     }
 
     handleDone() {
-        this.close();
+        this.allowInterruptions();
+        this.closeWithData(this.uploadedOrganization);
+    }
+
+    preventInterruptions() {
+        if (!this.closeCanceller) {
+            this.closeCanceller = this.$scope.$on('modal.closing', (e) => {
+                e.preventDefault();
+            });
+            this.locationChangeCanceller = this.$scope.$on('$locationChangeStart', (event) => {
+                event.preventDefault();
+            });
+        }
+    }
+
+    allowInterruptions() {
+        if (this.closeCanceller) {
+            this.closeCanceller();
+            delete this.closeCanceller;
+        }
+        if (this.locationChangeCanceller) {
+            this.locationChangeCanceller();
+            delete this.locationChangeCanceller;
+        }
+    }
+
+    finishUpload() {
+        this.allowInterruptions();
+        this.closeWithData(this.uploadedOrganization);
+    }
+
+    closeWithData(data) {
+        this.close({$value: data});
     }
 }
 
