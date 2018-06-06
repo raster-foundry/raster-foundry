@@ -85,6 +85,9 @@ trait ShapeRoutes extends Authentication
               } ~
               get {
                 listShapePermissions(shapeId)
+              } ~
+              delete {
+                deleteShapePermissions(shapeId)
               }
           } ~
           pathPrefix("actions") {
@@ -259,4 +262,13 @@ trait ShapeRoutes extends Authentication
     }
   }
 
+  def deleteShapePermissions(shapeId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.deleteByObject(ObjectType.Shape, shapeId).transact(xa).unsafeToFuture
+      }
+    }
+  }
 }

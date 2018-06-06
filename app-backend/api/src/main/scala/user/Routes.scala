@@ -40,6 +40,11 @@ trait UserRoutes extends Authentication
 
   val userRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix("me") {
+      pathPrefix("teams") {
+        pathEndOrSingleSlash {
+          get { getUserTeams }
+        }
+      } ~
       pathPrefix("roles") {
         get { getUserRoles }
       } ~
@@ -123,6 +128,10 @@ trait UserRoutes extends Authentication
     }
   }
 
+
+  def getUserTeams: Route = authenticate { user =>
+    complete { TeamDao.teamsForUser(user).transact(xa).unsafeToFuture }
+  }
   def updateUserByEncodedAuthId(authIdEncoded: String): Route = authenticateRootMember { root =>
     entity(as[User]) { updatedUser =>
       onSuccess(UserDao.updateUser(updatedUser, authIdEncoded).transact(xa).unsafeToFuture()) {
