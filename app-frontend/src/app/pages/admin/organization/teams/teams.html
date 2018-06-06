@@ -1,4 +1,4 @@
-<div class="admin-users-content container column-stretch dashboard">
+<div class="admin-users-content container column-stretch">
   <div ng-if="$ctrl.errorMsg">
     <p>
       {{$ctrl.errorMsg}}
@@ -13,68 +13,68 @@
         New Team
       </button>
     </div>
-    <table class="admin-table admin-team-table" ng-if="!$ctrl.fetching">
-      <thead>
-        <tr>
-          <td>Name</td>
-          <td class="users">Users</td>
-          <td>Actions</td>
-        </tr>
-      </thead>
-      <tbody>
-        <tr ng-repeat="team in $ctrl.teams track by team.id">
-          <td class="name">
-            {{team.name}}
-          </td>
-          <td class="users">
-            <div class="user-avatar"
-                 ng-repeat="user in team.fetchedUsers.results track by $index | limitTo : 5"
-                 ng-attr-title="{{user.name || user.email || user.id}}"
-            >
-              <img class="avatar" ng-src="{{user.profileImageUri}}">
-            </div>
-            <a class="users-more" title="View team details"
-               ui-sref="admin.team.users({teamId: team.id})">
-              <ng-pluralize count="team.fetchedUsers.count"
-                            when="{'0': ' No team members',
-                                   '1': ' View 1 team member',
-                                   'other': ' View {} team members'}"
-
-              >
-              </ng-pluralize>
-            </a>
-          </td>
-          <td class="teams" ng-if="!team.fetchedUsers">
-            <a class="users-more" title="View team details"
-               ui-sref="admin.team.users({teamId: team.id})">
-              Counting members...
-            </a>
-          </td>
-          <td class="actions">
-            <rf-dropdown data-options="team.options" ng-if="team.showOptions">
-              <span class="icon-caret-down"></span>
-            </rf-dropdown>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="table-loading" ng-if="$ctrl.fetching">
-      <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
-    </div>
-    <!-- Pagination -->
-    <div class="list-group text-center"
-          ng-show="!$ctrl.loading && $ctrl.lastTeamResult && $ctrl.pagination.show && !$ctrl.errorMsg">
-      <ul uib-pagination
-          items-per-page="$ctrl.lastTeamResult.pageSize"
-          total-items="$ctrl.pagination.count"
-          ng-model="$ctrl.currentPage"
-          max-size="4"
-          rotate="true"
-          boundary-link-numbers="true"
-          force-ellipses="true"
-          ng-change="$ctrl.fetchTeams($ctrl.currentPage, $ctrl.search)">
-      </ul>
-    </div>
-    <!-- Pagination -->
   </div>
+  <table class="admin-table admin-team-table" ng-if="!$ctrl.fetching">
+    <thead>
+      <tr>
+        <td>Name</td>
+        <td class="users">Users</td>
+        <td>Actions</td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="team in $ctrl.teams track by team.id">
+        <td class="name">
+          {{team.name}}
+        </td>
+        <td class="users">
+          <div class="user-avatar"
+               ng-repeat="user in team.fetchedUsers.results track by $index | limitTo : 5"
+               ng-attr-title="{{user.name || user.email || user.id}}"
+          >
+            <img class="avatar" ng-src="{{user.profileImageUri}}">
+          </div>
+          <a class="users-more" title="View team details"
+             ui-sref="admin.team.users({teamId: team.id})">
+            <ng-pluralize count="team.fetchedUsers.count"
+                          when="{'0': ' No team members',
+                                 '1': ' View 1 team member',
+                                 'other': ' View {} team members'}"
+
+            >
+            </ng-pluralize>
+          </a>
+        </td>
+        <td class="teams" ng-if="!team.fetchedUsers">
+          <a class="users-more" title="View team details"
+             ui-sref="admin.team.users({teamId: team.id})">
+            Counting members...
+          </a>
+        </td>
+        <td class="actions">
+          <rf-dropdown data-options="team.options" ng-if="team.showOptions">
+            <span class="icon-caret-down"></span>
+          </rf-dropdown>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="table-loading" ng-if="$ctrl.fetching">
+    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
+  </div>
+  <!-- Pagination -->
+  <div class="list-group text-center"
+        ng-show="!$ctrl.loading && $ctrl.lastTeamResult && $ctrl.pagination.show && !$ctrl.errorMsg">
+    <ul uib-pagination
+        items-per-page="$ctrl.lastTeamResult.pageSize"
+        total-items="$ctrl.pagination.count"
+        ng-model="$ctrl.currentPage"
+        max-size="4"
+        rotate="true"
+        boundary-link-numbers="true"
+        force-ellipses="true"
+        ng-change="$ctrl.fetchTeams($ctrl.currentPage, $ctrl.search)">
+    </ul>
+  </div>
+  <!-- Pagination -->
 </div>

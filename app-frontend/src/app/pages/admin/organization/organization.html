@@ -1,43 +1,45 @@
-<div class="admin-header">
-  <div class="admin-logo">
-  </div>
-  <div class="admin-logo-text" ng-if="!$ctrl.fetching">
-    <div class="admin-logo-name">
-      {{$ctrl.organization.name}}
+<div class="container-admin-header">
+  <div class="admin-header">
+    <div class="admin-logo">
     </div>
-    <div>
-      Organization Management
+    <div class="admin-logo-text" ng-if="!$ctrl.fetching">
+      <h1 class="admin-logo-name h3">
+        {{$ctrl.organization.name}}
+      </h1>
+      <div>
+        Organization Management
+      </div>
+    </div>
+    <div class="admin-logo-text" ng-if="$ctrl.fetching">
+      <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
     </div>
   </div>
-  <div class="admin-logo-text" ng-if="$ctrl.fetching">
-    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
-  </div>
-</div>
 
-<div class="admin-tabs">
-  <!-- <div class="admin-tab" -->
-  <!-- ui-sref="admin.organization.metrics" -->
-  <!-- ui-sref-active="active" -->
-  <!-- > -->
-  <!-- Metrics -->
-  <!-- </div> -->
-  <div class="admin-tab"
-       ui-sref="admin.organization.users"
-       ui-sref-active="active"
-  >
-    User Management
+  <div class="admin-tabs">
+    <!-- <div class="admin-tab" -->
+    <!-- ui-sref="admin.organization.metrics" -->
+    <!-- ui-sref-active="active" -->
+    <!-- > -->
+    <!-- Metrics -->
+    <!-- </div> -->
+    <div class="admin-tab"
+         ui-sref="admin.organization.users"
+         ui-sref-active="active"
+    >
+      User Management
+    </div>
+    <div class="admin-tab"
+         ui-sref="admin.organization.teams"
+         ui-sref-active="active"
+    >
+      Teams
+    </div>
+    <!-- <div class="admin-tab" -->
+    <!-- ui-sref="admin.organization.settings" -->
+    <!-- ui-sref-active="active" -->
+    <!-- > -->
+    <!-- Organization Settings -->
+    <!-- </div> -->
   </div>
-  <div class="admin-tab"
-       ui-sref="admin.organization.teams"
-       ui-sref-active="active"
-  >
-    Teams
-  </div>
-  <!-- <div class="admin-tab" -->
-  <!-- ui-sref="admin.organization.settings" -->
-  <!-- ui-sref-active="active" -->
-  <!-- > -->
-  <!-- Organization Settings -->
-  <!-- </div> -->
 </div>
 <ui-view></ui-view>

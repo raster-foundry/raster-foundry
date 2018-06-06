@@ -1,4 +1,4 @@
-<div class="admin-users-content container column-stretch dashboard">
+<div class="admin-users-content container column-stretch">
   <div ng-if="$ctrl.errrorMsg">
     <p>
       {{$ctrl.errrorMsg}}
@@ -11,13 +11,6 @@
              ng-model="$ctrl.search" ng-disabled="$ctrl.fetching">
     </div>
     <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching">
-      <thead>
-        <tr>
-          <td>Name</td>
-          <td>Email</td>
-          <td>Role</td>
-        </tr>
-      </thead>
       <tbody>
         <tr ng-repeat="user in $ctrl.users track by $index">
           <td class="username">
@@ -60,6 +53,5 @@
           ng-change="$ctrl.fetchUsers($ctrl.currentPage, $ctrl.search)">
       </ul>
     </div>
-    <!-- Pagination -->
   </div>
 </div>

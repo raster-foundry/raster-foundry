@@ -1,8 +1,7 @@
 .admin-header {
     display: flex;
     flex-direction: row;
-    padding: 1em;
-    background: #eee;
+    background: $white;
     align-items: center;
 }
 
@@ -10,6 +9,7 @@
     border-radius: 3px;
     background: #ddd; width: 3em;
     height: 3em;
+    margin-right: 1.4rem;
 }
 
 .admin-logo-text {
@@ -17,26 +17,28 @@
 }
 
 .admin-logo-name {
-    font-size: 3rem;
+  margin: 0;
 }
 
 .admin-tabs {
     display: flex;
     flex-direction: row;
     flex-basis: flex-start;
-    background: #eee;
-    padding: 0 1em 0 1em;
+    background: $white;
+    border-bottom: 1px solid $gray-lightest;
+    margin-top: 1.4rem;
     .admin-tab {
-        padding: 0.8em 1em;
+        padding: 0.8em 0;
         cursor: pointer;
         border-radius: 3px 3px 0 0;
+        position: relative;
+        top: 1px;
+        margin-right: 2rem;
 
-        &:hover {
-            background: #f5f5f5;
-        }
         &.active {
             cursor: default;
-            background: #fff;
+            color: $brand-primary;
+            border-bottom: 4px solid $brand-primary;
         }
     }
 }
@@ -44,6 +46,10 @@
 .admin-users-content {
     display: flex;
     flex-direction: column;
+    width: 1200px;
+    max-width: 100%;
+    padding-left: 3rem;
+    padding-right: 3rem;
 }
 
 .admin-table {
@@ -55,6 +61,14 @@
 
     td {
         padding: 0.75em 1.5em;
+
+        &:first-child {
+            padding-left: 0;
+        }
+
+        &:last-child {
+            padding-right: 0;
+        }
     }
 
     tr:not(:last-child) {
@@ -111,17 +125,6 @@
 
 }
 
-.admin-select-table {
-    max-width: 40em;
-    margin: 3em auto;
-    .role {
-        width: 10em;
-    }
-    .action {
-        width: 10em;
-    }
-}
-
 .admin-org-user-table {
     .username {
         display: flex;
@@ -170,7 +173,11 @@
 .admin-users-actions {
     display: flex;
     flex-direction: row;
-    padding: 1em;
+    margin-bottom: 2.6rem;
+}
+
+.actions-right {
+  margin-left: auto;
 }
 
 .admin-search {
@@ -260,3 +267,14 @@
   padding: 1em;
 }
 
+.container-admin-header {
+  width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  margin-top: 4rem;
+  margin-bottom: 3rem;
+  max-width: 100%;
+  padding-left: 3rem;
+  padding-right: 3rem;
+}
