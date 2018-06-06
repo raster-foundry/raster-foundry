@@ -51,6 +51,18 @@ export default (app) => {
                 `${BUILDCONFIG.API_HOST}/api/organizations/:organizationId`,
                 {
                     organizationId: '@organizationId'
+                }, {
+                    addOrganizationLogo: {
+                        url: `${BUILDCONFIG.API_HOST}/api/organizations/:organizationId/logo`,
+                        method: 'POST',
+                        /* eslint-disable */
+                        transformRequest: (data, headers) => {
+                            headers = angular.extend(
+                                {}, headers, {'Content-Type': 'application/json'});
+                            return angular.toJson(data);
+                        /* eslint-enable */
+                        }
+                    }
                 }
             );
         }
@@ -91,6 +103,12 @@ export default (app) => {
         deactivate(platformId, organizationId) {
             return this.PlatformOrganization
                 .deactivateOrganization({platformId, organizationId})
+                .$promise;
+        }
+
+        addOrganizationLogo(organizationId, logoBase64) {
+            return this.Organization
+                .addOrganizationLogo({organizationId}, logoBase64)
                 .$promise;
         }
     }

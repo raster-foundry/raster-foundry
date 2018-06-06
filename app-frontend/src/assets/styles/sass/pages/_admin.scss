@@ -7,9 +7,40 @@
 
 .admin-logo {
     border-radius: 3px;
-    background: #ddd; width: 3em;
-    height: 3em;
+    background: $gray-lightest;
+    width: 4em;
+    height: 4em;
     margin-right: 1.4rem;
+    position: relative;
+
+    & img {
+      max-width:100%;
+      max-height:100%;
+      border-radius: 3px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+}
+
+.admin-logo-overlay {
+  border-radius: 3px;
+  width: 4em;
+  height: 4em;
+  margin-right: 1.4rem;
+  background-color: $gray-lightest;
+  cursor: pointer;
+  position: relative;
+
+  & p {
+    color: $shade-normal;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, -50%);
+  }
 }
 
 .admin-logo-text {
