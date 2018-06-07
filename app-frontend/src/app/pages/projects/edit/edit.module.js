@@ -282,7 +282,7 @@ class ProjectsEditController {
             component: 'permissionsModal',
             resolve: {
                 object: () => this.project,
-                objectType: () => 'projects',
+                permissionsBase: () => 'projects',
                 objectName: () => this.project.name,
                 extraActions: () => ['ANNOTATE']
             }

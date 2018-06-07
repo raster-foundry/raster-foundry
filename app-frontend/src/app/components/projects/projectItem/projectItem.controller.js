@@ -89,7 +89,7 @@ export default class ProjectItemController {
             component: 'permissionsModal',
             resolve: {
                 object: () => project,
-                objectType: () => 'projects',
+                permissionsBase: () => 'projects',
                 objectName: () => project.name,
                 extraActions: () => ['ANNOTATE']
             }
