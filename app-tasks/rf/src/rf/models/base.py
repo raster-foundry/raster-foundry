@@ -60,6 +60,6 @@ class BaseModel(object):
         try:
             response.raise_for_status()
         except:
-            logger.exception('Unable to update: %s', response.text)
+            logger.exception('Unable to update: %s with %s', response.text, self.to_dict())
             raise
         return response
