@@ -19,12 +19,12 @@
       </div>
       <div class="dropdown btn-group selectable-list-item" uib-dropdown uib-dropdown-toggle ng-repeat="(key, row) in $ctrl.accessControlRuleRows">
         <a class="btn dropdown-label" ng-show="$ctrl.matchKeys.description !== null">
-          <span class="permissions-object-key font-600">
+          <span class="permissions-object-key font-600 text-none">
             {{ $ctrl.subjectNameObj[key]  || 'Loading' }}
           </span>
-          <span ng-if="row.length">Can</span>
-          <span ng-if="!row.length">Will no longer have access</span>
-          <span class="permissions-object-marker" ng-repeat="actionType in $ctrl.actionTypes">
+          <span class="text-none" ng-if="row.length">Can</span>
+          <span class="text-none" ng-if="!row.length">Will no longer have access</span>
+          <span class="permissions-object-marker text-lowercase" ng-repeat="actionType in $ctrl.actionTypes">
             <span ng-if="row.includes(actionType)">&nbsp;{{actionType}}</span>
           </span>
         </a>
@@ -35,8 +35,10 @@
           <i class="icon-edit"></i>
         </button>
         <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-          <li role="menuitem" ng-repeat="actionType in $ctrl.actionTypes">
-            <rf-toggle value="row.includes(actionType)" on-change="$ctrl.togglePermission(actionType, key)">&nbsp;{{ actionType }}</rf-toggle>
+          <li role="menuitem" ng-repeat="actionType in $ctrl.actionTypes" class="dropdown-list-item">
+            <rf-toggle value="row.includes(actionType)" on-change="$ctrl.togglePermission(actionType, key)">
+              <span class="titlecase">&nbsp;{{ actionType }}</span>
+            </rf-toggle>
           </li>
         </ul>
       </div>

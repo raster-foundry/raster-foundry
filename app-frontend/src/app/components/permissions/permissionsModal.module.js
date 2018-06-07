@@ -194,30 +194,28 @@ class PermissionsModalController {
 
     setSubjectNames(keysArr) {
         keysArr.forEach((key) => {
-            if (key === 'Everyone') {
+            let type = key.split(' ')[0];
+            let id = key.split(' ')[1];
+            if (key === 'Everyone' || type === 'PLATFORM') {
                 this.subjectNameObj[key] = 'Everyone';
-            } else {
-                let type = key.split(' ')[0];
-                let id = key.split(' ')[1];
-                if (type === 'ORGANIZATION' && id) {
-                    this.organizationService.getOrganization(id).then(resp => {
-                        this.subjectNameObj[key] = resp.name;
-                    }, () => {
-                        this.subjectNameObj[key] = 'NULL';
-                    });
-                } else if (type === 'USER' && id) {
-                    this.userService.getUserById(id).then(resp => {
-                        this.subjectNameObj[key] = resp.name;
-                    }, () => {
-                        this.subjectNameObj[key] = 'NULL';
-                    });
-                } else if (type === 'TEAM' && id) {
-                    this.teamService.getTeam(id).then(resp => {
-                        this.subjectNameObj[key] = resp.name;
-                    }, () => {
-                        this.subjectNameObj[key] = 'NULL';
-                    });
-                }
+            } else if (type === 'ORGANIZATION' && id) {
+                this.organizationService.getOrganization(id).then(resp => {
+                    this.subjectNameObj[key] = `${type} - ${resp.name}`;
+                }, () => {
+                    this.subjectNameObj[key] = type;
+                });
+            } else if (type === 'USER' && id) {
+                this.userService.getUserById(id).then(resp => {
+                    this.subjectNameObj[key] = `${type} - ${resp.name}`;
+                }, () => {
+                    this.subjectNameObj[key] = type;
+                });
+            } else if (type === 'TEAM' && id) {
+                this.teamService.getTeam(id).then(resp => {
+                    this.subjectNameObj[key] = `${type} - ${resp.name}`;
+                }, () => {
+                    this.subjectNameObj[key] = type;
+                });
             }
         });
     }
