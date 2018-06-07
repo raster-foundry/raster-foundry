@@ -84,7 +84,10 @@ class PermissionsModalController {
     }
 
     showShowNonIdealState() {
-        return !Object.keys(this.accessControlRuleRows).length || true;
+        if (this.accessControlRuleRows) {
+            return !Object.keys(this.accessControlRuleRows).length;
+        }
+        return true;
     }
 
     createNewACR() {

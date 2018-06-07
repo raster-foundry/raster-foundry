@@ -96,6 +96,9 @@ trait SceneRoutes extends Authentication
           traceName("list-scene-permissions") {
             listScenePermissions(sceneId)
           }
+        } ~
+        delete {
+          deleteScenePermissions(sceneId)
         }
       } ~
       pathPrefix("actions") {
@@ -104,9 +107,6 @@ trait SceneRoutes extends Authentication
             traceName("list-user-allowed-actions") {
               listUserSceneActions(sceneId)
             }
-          } ~
-          delete {
-            deleteScenePermissions(sceneId)
           }
         } ~
           pathPrefix("datasource") {
