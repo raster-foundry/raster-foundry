@@ -42,7 +42,7 @@ abstract class Dao[Model: Composite] extends Filterables {
     fr"""INNER JOIN (
       SELECT id as object_id FROM""" ++ tableF ++ fr"""WHERE owner = ${user.id}
 
-      UNION ALL
+      UNION
 
       SELECT acr.object_id
       FROM access_control_rules acr
@@ -51,7 +51,7 @@ abstract class Dao[Model: Composite] extends Filterables {
         AND -- Match if the ACR is an ALL or per user
         (acr.subject_type = 'ALL' OR (acr.subject_type = 'USER' AND acr.subject_id = ${user.id}))
 
-      UNION ALL -- Collect objects the user has access to for group permissions
+      UNION -- Collect objects the user has access to for group permissions
 
       SELECT acr.object_id
       FROM access_control_rules acr
