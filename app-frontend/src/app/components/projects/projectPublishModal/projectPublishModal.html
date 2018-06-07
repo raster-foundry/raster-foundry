@@ -4,13 +4,12 @@
       <span aria-hidden="true">&times;</span>
     </button>
     <h4 class="modal-title">
-      Publish {{$ctrl.resolve.templateTitle ? 'Analysis - ' + $ctrl.resolve.templateTitle : 'Project - ' + $ctrl.resolve.project.name}}
+      Publishing
     </h4>
-    <p>Publish or export your {{$ctrl.resolve.templateTitle ? 'analysis' : 'project'}}</p>
+    <h6 class="modal-title" ng-attr-title="{{$ctrl.resolve.templateTitle ? $ctrl.resolve.templateTitle : $ctrl.resolve.project.name}}">{{$ctrl.resolve.templateTitle ? $ctrl.resolve.templateTitle : $ctrl.resolve.project.name}}</h6>
   </div>
   <div class="modal-body">
     <div class="content" ng-show="$ctrl.shareUrl">
-      <h4>Sharing</h4>
       <div class="form-group">
         <label>Map Visibility</label>
         <div class="form-group">
@@ -27,7 +26,7 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Share Page</label>
+        <label>Published Page</label>
         <div class="form-group all-in-one">
           <label for="tile-link" class="sr-only">URL</label>
           <input id="tile-link" type="text" class="form-control"

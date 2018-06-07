@@ -277,6 +277,18 @@ class ProjectsEditController {
         });
     }
 
+    openShareModal() {
+        this.modalService.open({
+            component: 'permissionsModal',
+            resolve: {
+                object: () => this.project,
+                objectType: () => 'projects',
+                objectName: () => this.project.name,
+                extraActions: () => ['ANNOTATE']
+            }
+        });
+    }
+
     openExportModal() {
         this.getMap().then(m => {
             return m.map.getZoom();
