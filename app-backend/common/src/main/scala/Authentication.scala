@@ -25,7 +25,9 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-trait Authentication extends Directives {
+import com.typesafe.scalalogging.LazyLogging
+
+trait Authentication extends Directives with LazyLogging {
 
   implicit def xa: Transactor[IO]
 
@@ -93,7 +95,7 @@ trait Authentication extends Directives {
         val email = getStringClaimOrBlank(jwtClaims, "email")
         val name = getStringClaimOrBlank(jwtClaims, "name")
         val picture = getStringClaimOrBlank(jwtClaims, "picture")
-        case class MembershipAndUser(platform: Platform, organization: Organization, user: User)
+        case class MembershipAndUser(platform: Option[Platform], organization: Option[Organization], user: User)
         // All users will have an org role, either added by a migration or created with the user if they are new
         // All users will have a platform role, either added by a migration or created with the user if they are new
         val query = for {
@@ -102,11 +104,24 @@ trait Authentication extends Directives {
             case UserOptionAndRoles(None, _) => createUserWithRoles(userId, email, name, picture, jwtClaims)
           }
           (user, roles) = userAndRoles
-          orgRole = roles.filter(role => role.groupType == GroupType.Organization).head
-          org <- OrganizationDao.unsafeGetOrganizationById(orgRole.groupId)
-          platformRole = roles.filter(role => role.groupType == GroupType.Platform).head
-          plat <- PlatformDao.unsafeGetPlatformById(platformRole.groupId)
-          orgCredentials <- getOrgCredentials(user)
+          orgRole = roles.filter(role => role.groupType == GroupType.Organization).headOption
+          org <- orgRole match {
+            case Some(role ) => OrganizationDao.getOrganizationById(role.groupId)
+            case _ =>
+              logger.error(s"User without an organization tried to log in: ${userId}")
+              None.pure[ConnectionIO]
+          }
+          platformRole = roles.filter(role => role.groupType == GroupType.Platform).headOption
+          plat <- platformRole match {
+            case Some(role) => PlatformDao.getPlatformById(role.groupId)
+            case _ =>
+              logger.error(s"User without a platform tried to log in: ${userId}")
+              None.pure[ConnectionIO]
+          }
+          orgCredentials <- (plat, org) match {
+            case (Some(_), Some(_)) => getOrgCredentials(user)
+            case _ => (Credential(None), Credential(None)).pure[ConnectionIO]
+          }
           (orgDropboxCredential, orgPlanetCredential) = orgCredentials
           updatedUser = (user.dropboxCredential, user.planetCredential) match {
             case (Credential(Some(d)), Credential(Some(p))) if d.length == 0 =>
@@ -126,8 +141,8 @@ trait Authentication extends Directives {
         } yield MembershipAndUser(plat, org, userUpdate)
         onSuccess(query.transact(xa).unsafeToFuture).flatMap {
           case MembershipAndUser(plat, org, userUpdate) =>
-            (plat, org) match {
-              case (Platform(_, _, _, true, _), Organization(_, _, _, _, _, true, _, _, _)) =>
+            (plat map { _.isActive }, org map { _.isActive }) match {
+              case (Some(true), Some(true)) =>
                 provide(userUpdate)
               case _ =>
                 reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
