@@ -312,7 +312,7 @@ trait PlatformRoutes extends Authentication
     } {
       withPagination { page =>
         complete {
-          OrganizationDao.query.page(page).transact(xa).unsafeToFuture
+          OrganizationDao.query.filter(fr"platform_id = ${platformId}").page(page).transact(xa).unsafeToFuture
         }
       }
     }
