@@ -65,6 +65,10 @@ export default (app) => {
         getTeams() {
             return this.User.getTeams().$promise;
         }
+
+        getUserById(id) {
+            return this.UserMetadata.get({userid: id}).$promise;
+        }
     }
 
     app.service('userService', UserService);
