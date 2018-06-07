@@ -108,10 +108,10 @@ trait SceneRoutes extends Authentication
               listUserSceneActions(sceneId)
             }
           }
-        } ~
-          pathPrefix("datasource") {
-            pathEndOrSingleSlash { getSceneDatasource(sceneId) }
-          }
+        }
+      } ~
+      pathPrefix("datasource") {
+        pathEndOrSingleSlash { getSceneDatasource(sceneId) }
       }
     }
   }
