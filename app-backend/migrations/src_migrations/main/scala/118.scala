@@ -78,7 +78,7 @@ INSERT INTO access_control_rules (
   id, created_at, created_by, is_active, object_type, object_id, subject_type, subject_id, action_type
 ) (
   SELECT
-    uuid_generate_v4(), now(), 'default', true, 'TEMPLATE', id, 'ALL', null, 'VIEW' from datasources
+    uuid_generate_v4(), now(), 'default', true, 'TEMPLATE', id, 'ALL', null, 'VIEW' from tools
   WHERE
    visibility = 'PUBLIC'
 );
