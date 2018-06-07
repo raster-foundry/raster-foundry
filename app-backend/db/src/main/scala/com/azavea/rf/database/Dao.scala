@@ -31,7 +31,12 @@ abstract class Dao[Model: Composite] extends Filterables {
   def query: Dao.QueryBuilder[Model] = Dao.QueryBuilder[Model](selectF, tableF, List.empty)
 
   def authQuery(user: User, objectType: ObjectType): Dao.QueryBuilder[Model] =
-    Dao.QueryBuilder[Model](selectF ++ authTableF(user, objectType), tableF ++ authTableF(user, objectType), List.empty)
+    if (user.isSuperuser) {
+      Dao.QueryBuilder[Model](selectF, tableF, List.empty)
+    } else {
+      Dao.QueryBuilder[Model](selectF ++ authTableF(user, objectType), tableF ++ authTableF(user, objectType), List.empty)
+    }
+
 
   def authTableF(user: User, objectType: ObjectType): Fragment =
     fr"""INNER JOIN (
