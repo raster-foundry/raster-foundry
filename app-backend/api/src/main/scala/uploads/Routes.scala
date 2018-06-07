@@ -63,7 +63,7 @@ trait UploadRoutes extends Authentication
 
   def getUpload(uploadId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      UploadDao.query.ownedBy(user, uploadId).exists.transact(xa).unsafeToFuture
+      UploadDao.query.ownedByOrSuperUser(user, uploadId).exists.transact(xa).unsafeToFuture
     } {
       rejectEmptyResponse {
         complete {
@@ -108,7 +108,7 @@ trait UploadRoutes extends Authentication
 
   def updateUpload(uploadId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      UploadDao.query.ownedBy(user, uploadId).exists.transact(xa).unsafeToFuture
+      UploadDao.query.ownedByOrSuperUser(user, uploadId).exists.transact(xa).unsafeToFuture
     } {
       entity(as[Upload]) { updateUpload =>
         onSuccess {
@@ -136,7 +136,7 @@ trait UploadRoutes extends Authentication
 
   def deleteUpload(uploadId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      UploadDao.query.ownedBy(user, uploadId).exists.transact(xa).unsafeToFuture
+      UploadDao.query.ownedByOrSuperUser(user, uploadId).exists.transact(xa).unsafeToFuture
     } {
       onSuccess(UploadDao.query.filter(uploadId).delete.transact(xa).unsafeToFuture) {
         completeSingleOrNotFound

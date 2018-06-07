@@ -132,7 +132,7 @@ trait UserRoutes extends Authentication
   def getUserTeams: Route = authenticate { user =>
     complete { TeamDao.teamsForUser(user).transact(xa).unsafeToFuture }
   }
-  def updateUserByEncodedAuthId(authIdEncoded: String): Route = authenticateRootMember { root =>
+  def updateUserByEncodedAuthId(authIdEncoded: String): Route = authenticateSuperUser { root =>
     entity(as[User]) { updatedUser =>
       onSuccess(UserDao.updateUser(updatedUser, authIdEncoded).transact(xa).unsafeToFuture()) {
         completeSingleOrNotFound

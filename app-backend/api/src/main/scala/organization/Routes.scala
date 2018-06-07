@@ -32,14 +32,9 @@ trait OrganizationRoutes extends Authentication
   val xa: Transactor[IO]
 
   val organizationRoutes: Route = handleExceptions(userExceptionHandler) {
-    pathEndOrSingleSlash {
-      get { listOrganizations } ~
-      post { createOrganization }
-    } ~
     pathPrefix(JavaUUID) { orgId =>
       pathEndOrSingleSlash {
-        get { getOrganization(orgId) } ~
-        put { updateOrganization(orgId) }
+        get { getOrganization(orgId) }
       } ~
         pathPrefix("logo") {
           pathEndOrSingleSlash {
@@ -49,34 +44,10 @@ trait OrganizationRoutes extends Authentication
     }
   }
 
-  def listOrganizations: Route = authenticate { user =>
-    (withPagination & organizationQueryParameters) { (page, organizationQueryParameters) =>
-      complete {
-        OrganizationDao.query.filter(organizationQueryParameters).page(page).transact(xa).unsafeToFuture
-      }
-    }
-  }
-
-  def createOrganization: Route = authenticateRootMember { root =>
-    entity(as[Organization.Create]) { orgToCreate =>
-      completeOrFail {
-        OrganizationDao.create(orgToCreate.toOrganization).transact(xa).unsafeToFuture()
-      }
-    }
-  }
-
   def getOrganization(orgId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
         OrganizationDao.query.filter(orgId).selectOption.transact(xa).unsafeToFuture()
-      }
-    }
-  }
-
-  def updateOrganization(orgId: UUID): Route = authenticateRootMember { root =>
-    entity(as[Organization]) { orgToUpdate =>
-      completeWithOneOrFail {
-        OrganizationDao.update(orgToUpdate, orgId).transact(xa).unsafeToFuture()
       }
     }
   }

@@ -93,6 +93,14 @@ object Dao {
     def ownedBy[M >: Model](user: User, objectId: UUID): QueryBuilder[Model] =
       this.filter(objectId).filter(user)
 
+    def ownedByOrSuperUser[M >: Model](user: User, objectId: UUID): QueryBuilder[Model] = {
+      if (user.isSuperuser) {
+        this.filter(objectId)
+      } else {
+        this.filter(objectId).filter(user)
+      }
+    }
+
     // Filter to validate access on an object type
     def authorizeF[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): Option[Fragment] = {
       if (user.isSuperuser) {

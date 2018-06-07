@@ -77,18 +77,6 @@ case class User(
 ) {
   private val rootOrganizationId = UUID.fromString("9e2bef18-3f46-426b-a5bd-9913ee1ff840")
 
-  def isInRootOrganization: Boolean = {
-    ???
-  }
-
-  def isInRootOrSameOrganizationAs(target: { def organizationId: UUID }): Boolean = {
-    ???
-  }
-
-  def isInRootOrOwner(target: { def owner: String }): Boolean = {
-    this.isInRootOrganization || this.id == target.owner
-  }
-
   def getDefaultExportSource(export: Export, dataBucket: String): URI =
     new URI(s"s3://$dataBucket/user-exports/${URLEncoder.encode(id, "UTF-8")}/${export.id}")
 
