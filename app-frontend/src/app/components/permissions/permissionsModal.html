@@ -20,7 +20,7 @@
       <div class="dropdown btn-group selectable-list-item" uib-dropdown uib-dropdown-toggle ng-repeat="(key, row) in $ctrl.accessControlRuleRows">
         <a class="btn dropdown-label" ng-show="$ctrl.matchKeys.description !== null">
           <span class="permissions-object-key font-600">
-            {{ key | limitTo:12}}
+            {{ $ctrl.subjectNameObj[key]  || 'Loading' }}
           </span>
           <span ng-if="row.length">Can</span>
           <span ng-if="!row.length">Will no longer have access</span>
