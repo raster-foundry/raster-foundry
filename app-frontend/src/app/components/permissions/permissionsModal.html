@@ -1,7 +1,8 @@
 
 <div class="modal-scrollable-body modal-sidebar-header">
   <div class="modal-header">
-    <h4 class="modal-title">Permissions and Sharing</h4>
+    <h4 class="modal-title">Permissions</h4>
+    <h6 class="modal-title" ng-attr-title="{{$ctrl.objectName}}">{{$ctrl.objectName}}</h6>
     <button type="button" class="close" aria-label="Close"
             ng-click="$ctrl.dismiss()">
       <span aria-hidden="true">&times;</span>
@@ -10,7 +11,6 @@
 
   <div class="modal-body" ng-if="$ctrl.state === $ctrl.states.existing">
     <div class="content">
-      <h4>{{$ctrl.objectName}}</h4>
       <div class="dropdown btn-group selectable-list-item" uib-dropdown uib-dropdown-toggle ng-repeat="(key, row) in $ctrl.accessControlRuleRows">
         <a class="btn dropdown-label" ng-show="$ctrl.matchKeys.description !== null">
           <span class="permissions-object-key font-600">
@@ -34,11 +34,21 @@
           </li>
         </ul>
       </div>
-      <div class="new-permission-row">
+      <div class="new-permission-row" ng-if="!$ctrl.showShowNonIdealState()">
         <button class="btn btn-block btn-secondary" ng-click="$ctrl.setState('newPermission')">
           Add a new permission
         </button>
       </div>
+      <rf-call-to-action-item
+        title="No permissions are currently configured"
+        class="panel panel-off-white"
+        ng-if="$ctrl.showShowNonIdealState()">
+        <p class="pb-25">
+          Without any permissions, only you will be able to see or interact with <span class="font-600">{{ $ctrl.objectName }}</span>.
+        </p>
+
+        <a class="btn btn-primary" ng-click="$ctrl.setState('newPermission')">Add a new permission</a>
+      </rf-call-to-action-item>
     </div>
   </div>
 

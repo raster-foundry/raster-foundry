@@ -83,6 +83,10 @@ class PermissionsModalController {
         )[0].groupId;
     }
 
+    showShowNonIdealState() {
+        return !Object.keys(this.accessControlRuleRows).length || true;
+    }
+
     createNewACR() {
         return this.permissionsService.create(
             this.authTarget,
@@ -175,7 +179,6 @@ class PermissionsModalController {
 
     selectTeam(team) {
         this.selectedPermissionsTarget = team;
-        this.countTeamMembers(this.selectedPermissionsTarget);
         this.setState('createNewACR');
     }
 

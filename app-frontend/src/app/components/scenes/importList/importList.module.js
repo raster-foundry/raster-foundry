@@ -33,8 +33,7 @@ class ImportListController {
             {
                 label: 'Modify permissions',
                 onClick: this.shareModal.bind(this),
-                buttonClass: 'btn-danger',
-                iconClass: 'icon-download'
+                iconClass: 'icon-key'
             },
             {
                 label: 'Download',

@@ -3058,3 +3058,10 @@ rf-reclassify-table {
   margin-bottom: 0.5rem;
   text-align: left;
 }
+
+.titlecase {
+  text-transform: lowercase;
+  &:first-letter {
+    text-transform: uppercase;
+  }
+}

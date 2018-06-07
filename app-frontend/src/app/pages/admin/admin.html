@@ -15,7 +15,7 @@
             <tbody>
               <tr ng-repeat="platform in $ctrl.platforms track by $index">
                 <td>{{platform.item.name }}</td>
-                <td>{{platform.role.groupRole}}</td>
+                <td class="titlecase">{{platform.role.groupRole}}</td>
                 <td>
                   <button class="btn btn-primary "
                           ui-sref="admin.platform.users({platformId: platform.item.id})">
@@ -44,7 +44,7 @@
             <tbody>
               <tr ng-repeat="organization in $ctrl.organizations track by $index">
                 <td>{{organization.item.name}}</td>
-                <td>{{organization.role.groupRole}}</td>
+                <td class="titlecase">{{organization.role.groupRole}}</td>
                 <td>
                   <button class="btn btn-primary"
                           ui-sref="admin.organization.users({organizationId: organization.item.id})">
@@ -73,7 +73,7 @@
             <tbody>
               <tr ng-repeat="team in $ctrl.teams track by $index">
                 <td>{{team.item.name}}</td>
-                <td>{{team.role.groupRole}}</td>
+                <td class="titlecase">{{team.role.groupRole}}</td>
                 <td>
                   <button class="btn btn-primary"
                           ui-sref="admin.team.users({teamId: team.item.id})">

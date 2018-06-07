@@ -99,12 +99,14 @@ class PlatformOrganizationsController {
 
     itemsForOrg(organization) {
         /* eslint-disable */
-        let actions = [{
-            label: 'Manage',
-            callback: () => {
-                this.$state.go('.detail.features', {orgId: organization.id});
-            }
-        }];
+        let actions = [
+            // {
+            //     label: 'Manage',
+            //     callback: () => {
+            //         this.$state.go('.detail.features', {orgId: organization.id});
+            //     }
+            // }
+        ];
         if (organization.isActive) {
             actions.push({
                 label: 'Deactivate',

@@ -83,6 +83,19 @@ export default class ProjectItemController {
             }
         });
     }
+
+    shareModal(project) {
+        this.modalService.open({
+            component: 'permissionsModal',
+            resolve: {
+                object: () => project,
+                objectType: () => 'projects',
+                objectName: () => project.name,
+                extraActions: () => ['ANNOTATE']
+            }
+        });
+    }
+
     deleteModal() {
         const modal = this.modalService.open({
             component: 'rfConfirmationModal',

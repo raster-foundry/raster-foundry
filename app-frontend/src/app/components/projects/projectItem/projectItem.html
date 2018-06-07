@@ -7,7 +7,11 @@
     <div class="project-actions">
       <a href ng-click="$ctrl.publishModal()">
         <i class="icon-share"></i>
-        <span class="sr-only">Share</span>
+        <span class="sr-only">Publish</span>
+      </a>
+      <a href ng-click="$ctrl.shareModal($ctrl.project)">
+        <i class="icon-key"></i>
+        <span class="sr-only">Permissions</span>
       </a>
       <a href class="color-danger" ng-click="$ctrl.deleteModal()">
         <i class="icon-trash"></i>
