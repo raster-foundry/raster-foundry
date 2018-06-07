@@ -100,7 +100,7 @@ class Scene(BaseModel):
 
         return cls(
             d.get('ingestSizeBytes'), d.get('visibility'),
-            d.get('tags'), d.get('datasource'), d.get('sceneMetadata'), d.get('name'), statuses.get('thumbnailStatus'),
+            d.get('tags'), d.get('datasource')['id'], d.get('sceneMetadata'), d.get('name'), statuses.get('thumbnailStatus'),
             statuses.get('boundaryStatus'), statuses.get('ingestStatus'), d.get('metadataFiles'),
             filter_fields.get('sunAzimuth'), filter_fields.get('sunElevation'), filter_fields.get('cloudCover'),
             filter_fields.get('acquisitionDate'), d.get('id'), thumbnails, tile_footprint, data_footprint,
