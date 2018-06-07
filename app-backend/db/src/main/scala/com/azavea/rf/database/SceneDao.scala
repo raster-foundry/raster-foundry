@@ -30,7 +30,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
 
   val selectF = sql"""
     SELECT
-      id, created_at, created_by, modified_at, modified_by, owner,
+      distinct(id), created_at, created_by, modified_at, modified_by, owner,
       ingest_size_bytes, visibility, tags,
       datasource, scene_metadata, name, tile_footprint,
       data_footprint, metadata_files, ingest_location, cloud_cover,
