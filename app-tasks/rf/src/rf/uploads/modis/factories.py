@@ -62,15 +62,12 @@ modis_configs = {
 
 
 class MODISSceneFactory(object):
-    def __init__(self, hdf_urls, datasource,
-                 organization_id, upload,
-                 project_id=None, visibility=Visibility.PRIVATE, owner=None):
+    def __init__(self, hdf_urls, datasource, upload, project_id=None, visibility=Visibility.PRIVATE, owner=None):
         """Create factory for generating MODIS scenes
 
         Args:
             hdf_urls (list[str]): list of URLs for MODIS scenes to create
             datasource (str): ID of MODIS datasource
-            organization_id (str): organization to create for
             upload (str): ID of upload scene creation is associated with
             project_id (str): optional project to associate with uploads
             visibility (str): level of visibility for new scene
@@ -78,7 +75,6 @@ class MODISSceneFactory(object):
         """
         self.hdf_urls = hdf_urls
         self.datasource = datasource
-        self.organization_id = organization_id
         self.upload = upload
         self.project_id = project_id
         self.visibility = visibility
@@ -88,18 +84,17 @@ class MODISSceneFactory(object):
         scenes = []
         for hdf_url in self.hdf_urls:
             with get_tempdir() as temp_dir:
-                scene = create_scene(hdf_url, temp_dir, self.owner, self.organization_id, self.datasource)
+                scene = create_scene(hdf_url, temp_dir, self.owner, self.datasource)
                 scenes.append(scene)
         return scenes
 
 
-def create_scene(hdf_url, temp_directory, user_id, organization_id, datasource):
+def create_scene(hdf_url, temp_directory, user_id, datasource):
     """Create a MODIS scene
 
     Args:
         hdf_url (str): URL for MODIS scene to download
         temp_directory (str): directory to use as scratch space when creating scene
-        organization_id (str): organization to use for created scene
         user_id (str): ID of owner for new MODIS scene
         datasource (str): ID of datasource for new MODIS scene
     """
@@ -110,7 +105,7 @@ def create_scene(hdf_url, temp_directory, user_id, organization_id, datasource):
     name = '.'.join(granule_parts[:-1])
     id = str(uuid.uuid4())
 
-    scene = Scene(organization_id, 0, Visibility.PRIVATE, [], datasource, {}, name,
+    scene = Scene(0, Visibility.PRIVATE, [], datasource, {}, name,
                   JobStatus.SUCCESS, JobStatus.SUCCESS, IngestStatus.INGESTED, [], owner=user_id, id=id,
                   acquisitionDate=acquisition_datetime.isoformat() + 'Z', cloudCover=0)
 
@@ -128,7 +123,7 @@ def create_scene(hdf_url, temp_directory, user_id, organization_id, datasource):
     get_band_func = partial(get_image_band, modis_config=config)
     for local_path, remote_path in zip(tifs, s3_uris):
 
-        image = create_geotiff_image(organization_id, local_path, remote_path, scene=scene.id, owner=user_id,
+        image = create_geotiff_image(local_path, remote_path, scene=scene.id, owner=user_id,
                                      band_create_function=get_band_func)
         images.append(image)
     scene.images = images
