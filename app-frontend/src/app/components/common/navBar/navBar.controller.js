@@ -39,6 +39,23 @@ export default class NavBarController {
                 this.setPageDocs(this.$state);
             });
         }
+
+        // this is a temp solution to hide admin option in the dropdown
+        // from roles except platform admin, org admin, super user
+        this.authService.getCurrentUser().then(resp => {
+            let isSuperuser = resp.isSuperuser;
+            this.currentUgrPromise = this.authService.fetchUserRoles().then(res => {
+                let isPlatOrgAdmin = res.filter((ugr) => {
+                    return ugr.groupType === 'PLATFORM' &&
+                           ugr.groupRole === 'ADMIN' &&
+                           ugr.isActive ||
+                              ugr.groupType === 'ORGANIZATION' &&
+                              ugr.groupRole === 'ADMIN' &&
+                              ugr.isActive;
+                }).length;
+                this.showAdmin = isPlatOrgAdmin || isSuperuser;
+            });
+        });
     }
 
     onHelpVideoClicked(isRootVid, doc) {
