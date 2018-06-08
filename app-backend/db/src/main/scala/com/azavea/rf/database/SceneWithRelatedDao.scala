@@ -52,7 +52,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
         .filter(shapeO map { _.geometry })
         .filter(sceneParams)
     }
-    scenes <- sceneSearchBuilder.list(pageRequest.offset, pageRequest.limit)
+    scenes <- sceneSearchBuilder.list((pageRequest.offset * pageRequest.limit), pageRequest.limit)
     withRelateds <- scenesToScenesWithRelated(scenes)
     count <- sceneSearchBuilder.countIO
   } yield {
