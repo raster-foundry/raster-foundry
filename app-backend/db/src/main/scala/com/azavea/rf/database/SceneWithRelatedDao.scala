@@ -42,21 +42,13 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   }
 
   def listAuthorizedScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = for {
-    authedDatasources <- sceneParams.sceneParams.datasource match {
-      case Nil => DatasourceDao.authQuery(user, ObjectType.Datasource).list
-      case datasources => DatasourceDao.authQuery(user, ObjectType.Datasource).filter(
-        datasources.toList.toNel map { Fragments.in(fr"id", _) }
-      ).list
-    }
     shapeO <- sceneParams.sceneParams.shape match {
       case Some(shpId) => ShapeDao.getShapeById(shpId)
       case _ => None.pure[ConnectionIO]
     }
-    datasourcesO = authedDatasources.map( _.id ).toNel map { Fragments.in(fr"datasource", _)}
     sceneSearchBuilder = {
       SceneDao
-        .query
-        .filter(datasourcesO)
+        .authQuery(user, ObjectType.Scene)
         .filter(shapeO map { _.geometry })
         .filter(sceneParams)
     }
