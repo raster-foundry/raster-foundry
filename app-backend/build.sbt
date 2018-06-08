@@ -41,7 +41,8 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("naftoligug", "maven"),
     Classpaths.sbtPluginReleases,
     Opts.resolver.sonatypeReleases,
-    Resolver.bintrayIvyRepo("kamon-io", "sbt-plugins")
+    Resolver.bintrayIvyRepo("kamon-io", "sbt-plugins"),
+    Resolver.file("local", file(Path.userHome.absolutePath + "/.ivy2/local"))(Resolver.ivyStylePatterns) // important to pull deps from the local repo
   ),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
