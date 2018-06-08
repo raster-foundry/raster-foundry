@@ -22,11 +22,11 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
     check {
       forAll {
         (user: User.Create, org: Organization.Create, project: Project.Create, scenes: List[Scene.Create],
-         page: PageRequest, csq: CombinedSceneQueryParams) => {
+         dsCreate: Datasource.Create, page: PageRequest, csq: CombinedSceneQueryParams) => {
           val scenesInsertWithUserProjectIO = for {
             orgUserProject <- insertUserOrgProject(user, org, project)
             (dbOrg, dbUser, dbProject) = orgUserProject
-            datasource <- unsafeGetRandomDatasource
+            datasource <- DatasourceDao.create(dsCreate.toDatasource(dbUser), dbUser)
             scenesInsert <- (scenes map { fixupSceneCreate(dbUser, datasource, _) }).traverse(
               (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
             )
@@ -57,18 +57,20 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
     check {
       forAll {
         (user1: User.Create, user2: User.Create, org: Organization.Create, pageRequest: PageRequest,
-         scenes1: List[Scene.Create], scenes2: List[Scene.Create]) => {
+         scenes1: List[Scene.Create], scenes2: List[Scene.Create],
+         dsCreate1: Datasource.Create, dsCreate2: Datasource.Create) => {
           val scenesIO = for {
             dbUser1 <- UserDao.create(user1)
             dbUser2 <- UserDao.create(user2)
-            datasource <- unsafeGetRandomDatasource
+            datasource1 <- DatasourceDao.create(dsCreate1.toDatasource(dbUser1), dbUser1)
+            datasource2 <- DatasourceDao.create(dsCreate2.toDatasource(dbUser2), dbUser2)
             dbScenes1 <- (scenes1 map {
-              (scene: Scene.Create) => fixupSceneCreate(dbUser1, datasource, scene)
+              (scene: Scene.Create) => fixupSceneCreate(dbUser1, datasource1, scene)
             }).traverse(
               (scene: Scene.Create) => SceneDao.insert(scene, dbUser1)
             )
             _ <- (scenes2 map {
-              (scene: Scene.Create) => fixupSceneCreate(dbUser2, datasource, scene)
+              (scene: Scene.Create) => fixupSceneCreate(dbUser2, datasource2, scene)
             }).traverse(
               (scene: Scene.Create) => SceneDao.insert(scene, dbUser2)
             )

@@ -370,7 +370,7 @@ object Generators extends ArbitraryInstances {
   private def datasourceCreateGen: Gen[Datasource.Create] = for {
     name <- nonEmptyStringGen
     visibility <- visibilityGen
-    owner <- arbitrary[Option[String]]
+    owner <- Gen.const(None)
     composites <- Gen.delay(().asJson)
     extras <- Gen.delay(().asJson)
     bands <- Gen.delay(().asJson)

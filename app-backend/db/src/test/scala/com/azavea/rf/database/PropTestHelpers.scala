@@ -63,7 +63,7 @@ trait PropTestHelpers {
   }
 
   def unsafeGetRandomDatasource: ConnectionIO[Datasource] =
-    (DatasourceDao.selectF ++ fr"ORDER BY RANDOM() limit 1").query[Datasource].unique
+    (DatasourceDao.selectF ++ fr"limit 1").query[Datasource].unique
 
   def fixupProjectCreate(user: User, proj: Project.Create): Project.Create =
     proj.copy(owner = Some(user.id))

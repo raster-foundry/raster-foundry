@@ -82,7 +82,6 @@ trait Filterables extends RFMeta {
         sceneParams.minCloudCover.map({ mcc => fr"cloud_cover >= $mcc" }),
         sceneParams.minAcquisitionDatetime.map({ mac => fr"acquisition_date >= $mac" }),
         sceneParams.maxAcquisitionDatetime.map({ mac => fr"acquisition_date <= $mac" }),
-        sceneParams.datasource.toList.toNel.map({ds => Fragments.in(fr"datasource", ds) }),
         sceneParams.month.toList.toNel.map(
           { months => Fragments.in(fr"date_part('month', acquisition_date)", months) }
         ),

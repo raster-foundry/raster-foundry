@@ -23,7 +23,7 @@ object ToolRunDao extends Dao[ToolRun] {
 
   val selectF = sql"""
     SELECT
-      id, name, created_at, created_by, modified_at, modified_by, owner, visibility,
+      distinct(id), name, created_at, created_by, modified_at, modified_by, owner, visibility,
       execution_parameters
     FROM
   """ ++ tableF

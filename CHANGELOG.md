@@ -1,5 +1,41 @@
 # Change Log
 
+## [](https://github.com/raster-foundry/raster-foundry/tree/) (2018-06-07)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.36.0...)
+
+**Merged pull requests:**
+
+- Get subject name in sharing modal. [\#3477](https://github.com/raster-foundry/raster-foundry/pull/3477)
+- Make tool permissions from tools instead of datasources [\#3476](https://github.com/raster-foundry/raster-foundry/pull/3476)
+- Handle case where user tries to log in without a platform or an org [\#3475](https://github.com/raster-foundry/raster-foundry/pull/3475)
+- Fix creating EVERYONE permissions [\#3474](https://github.com/raster-foundry/raster-foundry/pull/3474)
+- Various Auth/Ingest Fixes [\#3473](https://github.com/raster-foundry/raster-foundry/pull/3473)
+- Place all users in the RF platform [\#3470](https://github.com/raster-foundry/raster-foundry/pull/3470)
+- Apply visual design to admin views [\#3468](https://github.com/raster-foundry/raster-foundry/pull/3468)
+- Add COG/MODIS upload handling [\#3467](https://github.com/raster-foundry/raster-foundry/pull/3467)
+- Frontend support for admin adding org logo [\#3463](https://github.com/raster-foundry/raster-foundry/pull/3463)
+- Move authorization query to inner join [\#3462](https://github.com/raster-foundry/raster-foundry/pull/3462)
+- Add first cut permissions modal [\#3458](https://github.com/raster-foundry/raster-foundry/pull/3458)
+- Eagerly insert scenes and flip csv date order [\#3454](https://github.com/raster-foundry/raster-foundry/pull/3454)
+- Fix platform admin user search [\#3452](https://github.com/raster-foundry/raster-foundry/pull/3452)
+- Update admin UI permission and failure messages  [\#3450](https://github.com/raster-foundry/raster-foundry/pull/3450)
+- Fix text in the organization add user modal [\#3449](https://github.com/raster-foundry/raster-foundry/pull/3449)
+- Endpoints for listing user-specific actions on objects [\#3448](https://github.com/raster-foundry/raster-foundry/pull/3448)
+- Add organization and platform enabling/disabling endpoints [\#3447](https://github.com/raster-foundry/raster-foundry/pull/3447)
+- Enable admins posting org logo and storing it on S3 [\#3446](https://github.com/raster-foundry/raster-foundry/pull/3446)
+- Parameterize app name on raster and datasource pages. [\#3440](https://github.com/raster-foundry/raster-foundry/pull/3440)
+- Add third party credentials to organizations [\#3439](https://github.com/raster-foundry/raster-foundry/pull/3439)
+- Create AccessControlRules on public scene import [\#3438](https://github.com/raster-foundry/raster-foundry/pull/3438)
+- Get more datasource information from scenes [\#3437](https://github.com/raster-foundry/raster-foundry/pull/3437)
+- Add permission routes to remaining first class auth objects [\#3432](https://github.com/raster-foundry/raster-foundry/pull/3432)
+- Add access control rules for public objects [\#3427](https://github.com/raster-foundry/raster-foundry/pull/3427)
+- Add secondary data model authorization [\#3426](https://github.com/raster-foundry/raster-foundry/pull/3426)
+- Set max classfile name length [\#3425](https://github.com/raster-foundry/raster-foundry/pull/3425)
+- Allow deactivating teams [\#3424](https://github.com/raster-foundry/raster-foundry/pull/3424)
+- Allow platform admins to change a user's organization [\#3413](https://github.com/raster-foundry/raster-foundry/pull/3413)
+- Add platforms and organizations management and refactor authorization [\#3130](https://github.com/raster-foundry/raster-foundry/pull/3130)
+
 ## [0.36.0](https://github.com/raster-foundry/raster-foundry/tree/0.36.0) (2018-05-23)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.35.0...0.36.0)

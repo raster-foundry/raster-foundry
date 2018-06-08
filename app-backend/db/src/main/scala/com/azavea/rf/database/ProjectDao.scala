@@ -37,7 +37,7 @@ object ProjectDao extends Dao[Project] {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, created_by,
+      distinct(id), created_at, modified_at, created_by,
       modified_by, owner, name, slug_label, description,
       visibility, tile_visibility, is_aoi_project,
       aoi_cadence_millis, aois_last_checked, tags, extent,
