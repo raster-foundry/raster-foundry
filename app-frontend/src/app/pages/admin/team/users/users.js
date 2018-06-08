@@ -48,6 +48,17 @@ class TeamUsersController {
         });
     }
 
+    updateUserGroupRole(user) {
+        this.teamService.setUserRole(
+            this.organization.platformId,
+            this.organization.id,
+            this.team.id,
+            user
+        ).catch(() => {
+            this.fetchUsers(this.pagination.currentPage, this.search);
+        });
+    }
+
     matchUrgRole(urg, role = 'ADMIN') {
         return urg && urg.groupRole === role;
     }
@@ -95,12 +106,12 @@ class TeamUsersController {
     itemsForUser(user) {
         /* eslint-disable */
         return [
-            {
-                label: 'Edit',
-                callback: () => {
-                    console.log('edit callback for user:', user);
-                }
-            },
+            // {
+            //     label: 'Edit',
+            //     callback: () => {
+            //         console.log('edit callback for user:', user);
+            //     }
+            // },
             {
                 label: 'Remove',
                 callback: () => {

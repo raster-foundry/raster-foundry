@@ -64,6 +64,16 @@ class OrganizationUsersController {
         };
     }
 
+    updateUserGroupRole(user) {
+        this.organizationService.setUserRole(
+            this.organization.platformId,
+            this.organization.id,
+            user
+        ).catch(() => {
+            this.fetchUsers(this.pagination.currentPage, this.search);
+        });
+    }
+
     fetchUsers(page = 1, search) {
         const platformId = this.organization.platformId;
         const organizationId = this.organization.id;
@@ -95,12 +105,12 @@ class OrganizationUsersController {
     itemsForUser(user) {
         /* eslint-disable */
         return [
-            {
-                label: 'Edit',
-                callback: () => {
-                    console.log('edit callback for user:', user);
-                }
-            }
+            // {
+            //     label: 'Edit',
+            //     callback: () => {
+            //         console.log('edit callback for user:', user);
+            //     }
+            // }
             // {
             //     label: 'Delete',
             //     callback: () => {

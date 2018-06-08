@@ -60,6 +60,17 @@ export default (app) => {
             }).$promise;
         }
 
+        setUserRole(platformId, organizationId, teamId, user) {
+            return this.Team.addUser({
+                platformId,
+                organizationId,
+                teamId
+            }, {
+                userId: user.id,
+                groupRole: user.groupRole
+            }).$promise;
+        }
+
         removeUser(platformId, organizationId, teamId, userId) {
             return this.Team.removeUser({platformId, organizationId, teamId, userId}).$promise;
         }

@@ -25,7 +25,6 @@
         <td>Email</td>
         <td>Role</td>
         <td>Teams</td>
-        <td>Options</td>
       </tr>
     </thead>
     <tbody>
@@ -43,15 +42,17 @@
           {{user.email || 'None'}}
         </td>
         <td class="roles titlecase">
-          {{user.groupRole}}
+            <select class="form-control"
+                    ng-model="user.groupRole"
+                    ng-disabled="$ctrl.disabled"
+                    ng-change="$ctrl.updateUserGroupRole(user)"
+            >
+              <option value="ADMIN">Admin</option>
+              <option value="MEMBER">Member</option>
+            </select>
         </td>
         <td class="teams">
           In {{user.teams.length || 0}} teams
-        </td>
-        <td class="actions">
-          <rf-dropdown data-options="user.options" ng-if="user.showOptions">
-            <span class="icon-caret-down"></span>
-          </rf-dropdown>
         </td>
       </tr>
     </tbody>

@@ -74,6 +74,16 @@ export default (app) => {
             }).$promise;
         }
 
+        setUserRole(platformId, organizationId, user) {
+            return this.PlatformOrganization.addUser({
+                platformId,
+                organizationId
+            }, {
+                userId: user.id,
+                groupRole: user.groupRole
+            }).$promise;
+        }
+
         getOrganization(organizationId) {
             return this.Organization.get({organizationId}).$promise;
         }
