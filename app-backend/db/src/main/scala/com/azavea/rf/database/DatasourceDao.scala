@@ -24,7 +24,7 @@ object DatasourceDao extends Dao[Datasource] {
 
   val selectF = sql"""
       SELECT
-        id, created_at, created_by, modified_at, modified_by, owner,
+        distinct(id), created_at, created_by, modified_at, modified_by, owner,
         name, visibility, composites, extras, bands, license_name
       FROM
     """ ++ tableF
