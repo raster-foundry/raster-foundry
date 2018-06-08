@@ -18,7 +18,6 @@ case class Shape(
   modifiedAt: Timestamp,
   modifiedBy: String,
   owner: String,
-  organizationId: UUID,
   name: String,
   description: Option[String],
   geometry: Option[Projected[Geometry]]
@@ -33,7 +32,6 @@ case class Shape(
                 this.modifiedAt,
                 this.modifiedBy,
                 this.owner,
-                this.organizationId,
                 this.name,
                 this.description
             ),
@@ -49,7 +47,6 @@ case class ShapeProperties(
     modifiedAt: Timestamp,
     modifiedBy: String,
     owner: String,
-    organizationId: UUID,
     name: String,
     description: Option[String]
 )
@@ -57,7 +54,6 @@ case class ShapeProperties(
 @JsonCodec
 case class ShapePropertiesCreate(
     owner: Option[String],
-    organizationId: UUID,
     name: String,
     description: Option[String]
 )
@@ -91,7 +87,6 @@ object Shape {
                 properties.modifiedAt,
                 properties.modifiedBy,
                 properties.owner,
-                properties.organizationId,
                 properties.name,
                 properties.description,
                 geometry
@@ -102,7 +97,6 @@ object Shape {
     @JsonCodec
     case class Create(
         owner: Option[String],
-        organizationId: UUID,
         name: String,
         description: Option[String],
         geometry: Option[Projected[Geometry]]
@@ -118,7 +112,6 @@ object Shape {
                 now, // modifiedAt
                 user.id, // modifiedBy
                 ownerId, // owner
-                organizationId,
                 name,
                 description,
                 geometry
@@ -134,7 +127,6 @@ object Shape {
         def toShapeCreate(): Shape.Create = {
             Shape.Create(
                 properties.owner,
-                properties.organizationId,
                 properties.name,
                 properties.description,
                 geometry

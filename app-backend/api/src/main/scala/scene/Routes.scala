@@ -19,7 +19,7 @@ import java.net._
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.database.{SceneDao, SceneWithRelatedDao}
+import com.azavea.rf.database._
 import doobie.util.transactor.Transactor
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.filter.Filterables._
@@ -30,6 +30,9 @@ import doobie.implicits._
 import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
+
+import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.azavea.rf.database.util.Page
 
 trait SceneRoutes extends Authentication
     with Config
@@ -75,61 +78,103 @@ trait SceneRoutes extends Authentication
             }
           }
         }
+      } ~
+      pathPrefix("permissions") {
+        pathEndOrSingleSlash {
+          put {
+            traceName("replace-scene-permissions") {
+              replaceScenePermissions(sceneId)
+            }
+          }
+        } ~
+        post {
+          traceName("add-scene-permission") {
+            addScenePermission(sceneId)
+          }
+        } ~
+        get {
+          traceName("list-scene-permissions") {
+            listScenePermissions(sceneId)
+          }
+        } ~
+        delete {
+          deleteScenePermissions(sceneId)
+        }
+      } ~
+      pathPrefix("actions") {
+        pathEndOrSingleSlash {
+          get {
+            traceName("list-user-allowed-actions") {
+              listUserSceneActions(sceneId)
+            }
+          }
+        }
+      } ~
+      pathPrefix("datasource") {
+        pathEndOrSingleSlash { getSceneDatasource(sceneId) }
       }
     }
   }
 
   def listScenes: Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
-      println(page)
-      println(sceneParams)
       complete {
-        SceneWithRelatedDao.listScenes(page, sceneParams, user).transact(xa).unsafeToFuture
+        SceneWithRelatedDao.listAuthorizedScenes(page, sceneParams, user).transact(xa).unsafeToFuture
       }
     }
   }
 
   def createScene: Route = authenticate { user =>
     entity(as[Scene.Create]) { newScene =>
-      authorize(user.isInRootOrSameOrganizationAs(newScene)) {
 
-        val tileFootprint = (newScene.sceneType, newScene.ingestLocation, newScene.tileFootprint) match {
-          case (Some(SceneType.COG), Some(ingestLocation), None) => {
-            logger.info(s"Generating Footprint for Newly Added COG")
-            CogUtils.getTiffExtent(ingestLocation)
-          }
-          case _ => {
-            logger.info("Not generating footprint, already exists")
-            None
-          }
+      val tileFootprint = (newScene.sceneType, newScene.ingestLocation, newScene.tileFootprint) match {
+        case (Some(SceneType.COG), Some(ingestLocation), None) => {
+          logger.info(s"Generating Footprint for Newly Added COG")
+          CogUtils.getTiffExtent(ingestLocation)
         }
-
-        val dataFootprint = (tileFootprint, newScene.dataFootprint) match {
-          case (Some(tf), None) => tileFootprint
-          case _ => newScene.dataFootprint
+        case _ => {
+          logger.info("Not generating footprint, already exists")
+          None
         }
+      }
 
-        val updatedScene = newScene.copy(dataFootprint = dataFootprint, tileFootprint = tileFootprint)
+      val dataFootprint = (tileFootprint, newScene.dataFootprint) match {
+        case (Some(tf), None) => tileFootprint
+        case _ => newScene.dataFootprint
+      }
 
-        onSuccess(SceneDao.insert(updatedScene, user).transact(xa).unsafeToFuture) { scene =>
-          if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested) kickoffSceneIngest(scene.id)
-          complete((StatusCodes.Created, scene))
-        }
+      val updatedScene = newScene.copy(dataFootprint = dataFootprint, tileFootprint = tileFootprint)
+
+      onSuccess(SceneDao.insert(updatedScene, user).transact(xa).unsafeToFuture) { scene =>
+        if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested) kickoffSceneIngest(scene.id)
+        complete((StatusCodes.Created, scene))
       }
     }
   }
 
   def getScene(sceneId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete {
-        SceneWithRelatedDao.getScene(sceneId, user).transact(xa).unsafeToFuture
+    authorizeAsync {
+      SceneWithRelatedDao.query
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete {
+          SceneWithRelatedDao.getScene(sceneId, user).transact(xa).unsafeToFuture
+        }
       }
     }
   }
 
   def updateScene(sceneId: UUID): Route = authenticate { user =>
-    entity(as[Scene]) { updatedScene =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedScene)) {
+    authorizeAsync {
+      SceneDao.query
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      entity(as[Scene]) { updatedScene =>
         onSuccess(SceneDao.update(updatedScene, sceneId, user).transact(xa).unsafeToFuture) { case (result, kickoffIngest) =>
           if (kickoffIngest) kickoffSceneIngest(sceneId)
           completeSingleOrNotFound(result)
@@ -139,32 +184,129 @@ trait SceneRoutes extends Authentication
   }
 
   def deleteScene(sceneId: UUID): Route = authenticate { user =>
-    onSuccess(SceneDao.query.filter(fr"id = ${sceneId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
+    authorizeAsync {
+      SceneDao.query
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.Delete)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      onSuccess(SceneDao.query.filter(sceneId).delete.transact(xa).unsafeToFuture) {
+        completeSingleOrNotFound
+      }
     }
   }
 
   def getDownloadUrl(sceneId: UUID): Route = authenticate { user =>
-    onSuccess(SceneWithRelatedDao.getScene(sceneId, user).transact(xa).unsafeToFuture) { scene =>
+    authorizeAsync {
+      SceneWithRelatedDao.query
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.Download)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      onSuccess(SceneWithRelatedDao.getScene(sceneId, user).transact(xa).unsafeToFuture) { scene =>
+        complete {
+          scene.getOrElse {
+            throw new Exception("Scene does not exist or is not accessible by this user")
+          }.images map { image =>
+            val downloadUri: String = {
+              image.sourceUri match {
+                case uri if uri.startsWith(s"s3://$dataBucket") => {
+                  val s3Uri = new AmazonS3URI(image.sourceUri)
+                  S3.getSignedUrl(s3Uri.getBucket, s3Uri.getKey).toString
+                }
+                case uri if uri.startsWith("s3://") => {
+                  val s3Uri = new AmazonS3URI(image.sourceUri)
+                  s"https://${s3Uri.getBucket}.s3.amazonaws.com/${s3Uri.getKey}"
+                }
+                case _ => image.sourceUri
+              }
+            }
+            image.toDownloadable(downloadUri)
+          }
+        }
+      }
+    }
+  }
+
+  def listScenePermissions(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+    } {
       complete {
-        scene.getOrElse {
-          throw new Exception("Scene does not exist or is not accessible by this user")
-        }.images map { image =>
-          val downloadUri: String = {
-            image.sourceUri match {
-              case uri if uri.startsWith(s"s3://$dataBucket") => {
-                val s3Uri = new AmazonS3URI(image.sourceUri)
-                S3.getSignedUrl(s3Uri.getBucket, s3Uri.getKey).toString
-              }
-              case uri if uri.startsWith("s3://") => {
-                val s3Uri = new AmazonS3URI(image.sourceUri)
-                s"https://${s3Uri.getBucket}.s3.amazonaws.com/${s3Uri.getKey}"
-              }
-              case _ => image.sourceUri
+        AccessControlRuleDao.listByObject(ObjectType.Scene, sceneId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def replaceScenePermissions(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Scene, sceneId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def addScenePermission(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[AccessControlRule.Create]) { acrCreate =>
+        complete {
+          AccessControlRuleDao.createWithResults(
+            acrCreate.toAccessControlRule(user, ObjectType.Scene, sceneId)
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def listUserSceneActions(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneWithRelatedDao.query.authorized(user, ObjectType.Scene, sceneId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } { user.isSuperuser match {
+      case true => complete(List("*"))
+      case false =>
+        onSuccess(
+          SceneWithRelatedDao.unsafeGetScene(sceneId, user).transact(xa).unsafeToFuture
+      ) { scene =>
+        scene.owner == user.id match {
+          case true => complete(List("*"))
+          case false => complete {
+            AccessControlRuleDao.listUserActions(user, ObjectType.Scene, sceneId)
+              .transact(xa).unsafeToFuture
             }
           }
-          image.toDownloadable(downloadUri)
         }
+      }
+    }
+  }
+
+  def deleteScenePermissions(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.deleteByObject(ObjectType.Scene, sceneId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def getSceneDatasource(sceneId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      SceneDao.query
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      onSuccess(SceneDao.getSceneDatasource(sceneId).transact(xa).unsafeToFuture) { datasourceO =>
+        complete { datasourceO }
       }
     }
   }

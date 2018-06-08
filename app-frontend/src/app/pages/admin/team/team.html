@@ -1,0 +1,39 @@
+<div class="container-admin-header">
+  <div class="admin-header">
+    <div class="admin-logo">
+    </div>
+    <div class="admin-logo-text" ng-if="!$ctrl.fetching">
+      <h1 class="admin-logo-name h3">
+        {{$ctrl.team.name}}
+      </h1>
+      <div>
+        Team Management
+      </div>
+    </div>
+    <div class="admin-logo-text" ng-if="$ctrl.fetching">
+      <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
+    </div>
+  </div>
+
+  <div class="admin-tabs">
+    <!-- <div class="admin-tab" -->
+    <!-- ui-sref="admin.team.metrics" -->
+    <!-- ui-sref-active="active" -->
+    <!-- > -->
+    <!-- Metrics -->
+    <!-- </div> -->
+    <div class="admin-tab"
+         ui-sref="admin.team.users"
+         ui-sref-active="active"
+    >
+      User Management
+    </div>
+    <!-- <div class="admin-tab" -->
+    <!-- ui-sref="admin.team.settings" -->
+    <!-- ui-sref-active="active" -->
+    <!-- > -->
+    <!-- Team Settings -->
+    <!-- </div> -->
+  </div>
+</div>
+<ui-view></ui-view>

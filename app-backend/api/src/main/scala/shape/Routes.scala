@@ -20,13 +20,12 @@ import geotrellis.shapefile.ShapeFileReader
 import better.files.{File => ScalaFile, _}
 import akka.http.scaladsl.server.directives.FileInfo
 import cats.effect.IO
-import com.azavea.rf.database.ShapeDao
+import com.azavea.rf.database.{AccessControlRuleDao, ShapeDao}
 import geotrellis.proj4.{CRS, LatLng, WebMercator}
 import geotrellis.slick.Projected
 import geotrellis.vector.reproject.Reproject
 
 import doobie.util.transactor.Transactor
-import com.azavea.rf.datamodel._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -74,7 +73,30 @@ trait ShapeRoutes extends Authentication
           get { getShape(shapeId) } ~
             put { updateShape(shapeId) } ~
             delete { deleteShape(shapeId) }
-        }
+        } ~
+          pathPrefix("permissions") {
+            pathEndOrSingleSlash {
+              put {
+                replaceShapePermissions(shapeId)
+              }
+            } ~
+              post {
+                addShapePermission(shapeId)
+              } ~
+              get {
+                listShapePermissions(shapeId)
+              } ~
+              delete {
+                deleteShapePermissions(shapeId)
+              }
+          } ~
+          pathPrefix("actions") {
+            pathEndOrSingleSlash {
+              get {
+                listUserShapeActions(shapeId)
+              }
+            }
+          }
       }
   }
 
@@ -94,9 +116,8 @@ trait ShapeRoutes extends Authentication
             val reprojectedGeometry = Projected(Reproject(geometry, LatLng, WebMercator), 3857)
             reprojectedGeometry.isValid match {
               case true => {
-                val shape = Shape.create(
+                val shape = Shape.Create(
                   Some(user.id),
-                  user.organizationId,
                   fileMetadata.fileName,
                   None,
                   Some(reprojectedGeometry)
@@ -118,7 +139,11 @@ trait ShapeRoutes extends Authentication
   def listShapes: Route = authenticate { user =>
     (withPagination & shapeQueryParams) { (page: PageRequest, queryParams: ShapeQueryParameters) =>
       complete {
-        ShapeDao.query.filter(queryParams).filter(user).page(page).transact(xa).unsafeToFuture().map { p => {
+        ShapeDao
+          .authQuery(user, ObjectType.Shape)
+          .filter(queryParams)
+          .page(page)
+          .transact(xa).unsafeToFuture().map { p => {
             fromPaginatedResponseToGeoJson[Shape, Shape.GeoJSON](p)
           }
         }
@@ -127,10 +152,16 @@ trait ShapeRoutes extends Authentication
   }
 
   def getShape(shapeId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete {
-        ShapeDao.query.filter(fr"id = ${shapeId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture().map {
-          _ map { _.toGeoJSONFeature }
+    authorizeAsync {
+      ShapeDao.query
+        .authorized(user, ObjectType.Shape, shapeId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete {
+          ShapeDao.query.filter(shapeId).selectOption.transact(xa).unsafeToFuture().map {
+            _ map { _.toGeoJSONFeature }
+          }
         }
       }
     }
@@ -146,8 +177,12 @@ trait ShapeRoutes extends Authentication
   }
 
   def updateShape(shapeId: UUID): Route = authenticate { user =>
-    entity(as[Shape.GeoJSON]) { updatedShape: Shape.GeoJSON =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedShape.properties)) {
+    authorizeAsync {
+      ShapeDao.query
+        .authorized(user, ObjectType.Shape, shapeId, ActionType.Edit)
+        .transact(xa).unsafeToFuture
+    } {
+      entity(as[Shape.GeoJSON]) { updatedShape: Shape.GeoJSON =>
         onSuccess(ShapeDao.updateShape(updatedShape, shapeId, user).transact(xa).unsafeToFuture()) {
           completeSingleOrNotFound
         }
@@ -156,8 +191,84 @@ trait ShapeRoutes extends Authentication
   }
 
   def deleteShape(shapeId: UUID): Route = authenticate { user =>
-    onSuccess(ShapeDao.query.filter(fr"id = ${shapeId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
+    authorizeAsync {
+      ShapeDao.query
+        .authorized(user, ObjectType.Shape, shapeId, ActionType.Delete)
+        .transact(xa).unsafeToFuture
+    } {
+      onSuccess(ShapeDao.query.filter(shapeId).delete.transact(xa).unsafeToFuture) {
+        completeSingleOrNotFound
+      }
+    }
+  }
+
+  def listShapePermissions(shapeId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Shape, shapeId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def replaceShapePermissions(shapeId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Shape, shapeId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def addShapePermission(shapeId: UUID): Route = authenticate { user =>
+      authorizeAsync {
+        ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
+      } {
+        entity(as[AccessControlRule.Create]) { acrCreate =>
+          complete {
+            AccessControlRuleDao.createWithResults(
+              acrCreate.toAccessControlRule(user, ObjectType.Shape, shapeId)
+            ).transact(xa).unsafeToFuture
+          }
+        }
+      }
+    }
+
+  def listUserShapeActions(shapeId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ShapeDao.query.authorized(user, ObjectType.Shape, shapeId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } { user.isSuperuser match {
+      case true => complete(List("*"))
+      case false =>
+        onSuccess(
+          ShapeDao.unsafeGetShapeById(shapeId).transact(xa).unsafeToFuture
+        ) { shape =>
+          shape.owner == user.id match {
+            case true => complete(List("*"))
+            case false => complete {
+              AccessControlRuleDao.listUserActions(user, ObjectType.Shape, shapeId)
+                .transact(xa).unsafeToFuture
+            }
+          }
+        }
+      }
+    }
+  }
+
+  def deleteShapePermissions(shapeId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.deleteByObject(ObjectType.Shape, shapeId).transact(xa).unsafeToFuture
+      }
     }
   }
 }

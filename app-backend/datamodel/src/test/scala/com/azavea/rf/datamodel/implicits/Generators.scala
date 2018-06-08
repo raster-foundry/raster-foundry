@@ -21,6 +21,9 @@ import java.util.UUID
 
 object Generators extends ArbitraryInstances {
 
+  // This is only necessary until a Platform generator is supported
+  val defaultPlatformId = UUID.fromString("31277626-968b-4e40-840b-559d9c67863c")
+
   private def stringListGen: Gen[List[String]] =
     Gen.oneOf(0, 15) flatMap { Gen.listOfN(_, nonEmptyStringGen) }
 
@@ -34,6 +37,24 @@ object Generators extends ArbitraryInstances {
     Gen.const(PageRequest(0, 20, Map("created_at" -> Order.Desc)))
 
   private def userRoleGen: Gen[UserRole] = Gen.oneOf(UserRoleRole, Viewer, Admin)
+
+  private def groupTypeGen: Gen[GroupType] = Gen.oneOf(
+    GroupType.Platform, GroupType.Organization, GroupType.Team
+  )
+
+  private def groupRoleGen: Gen[GroupRole] = Gen.oneOf(
+    GroupRole.Admin, GroupRole.Member
+  )
+
+  private def subjectTypeGen: Gen[SubjectType] = Gen.oneOf(
+    SubjectType.All, SubjectType.Platform, SubjectType.Organization, SubjectType.Team, SubjectType.User
+  )
+
+  private def actionTypeGen: Gen[ActionType] = Gen.oneOf(
+    ActionType.View, ActionType.Edit, ActionType.Deactivate, ActionType.Delete, ActionType.Annotate,
+    ActionType.Export, ActionType.Download
+  )
+
 
   private def annotationQualityGen: Gen[AnnotationQuality] = Gen.oneOf(
     AnnotationQuality.Yes, AnnotationQuality.No, AnnotationQuality.Miss, AnnotationQuality.Unsure
@@ -70,11 +91,10 @@ object Generators extends ArbitraryInstances {
   private def shapePropertiesGen: Gen[ShapeProperties] = for {
     timeField <- timestampIn2016Gen
     userField <- nonEmptyStringGen
-    organizationId <- uuidGen
     name <- nonEmptyStringGen
     description <- Gen.oneOf(Gen.const(None), nonEmptyStringGen map { Some(_) })
   } yield {
-    ShapeProperties(timeField, userField, timeField, userField, userField, organizationId, name, description)
+    ShapeProperties(timeField, userField, timeField, userField, userField, name, description)
   }
 
   private def thumbnailSizeGen: Gen[ThumbnailSize] = Gen.oneOf(
@@ -92,6 +112,10 @@ object Generators extends ArbitraryInstances {
 
   private def fileTypeGen: Gen[FileType] = Gen.oneOf(
     FileType.Geotiff, FileType.GeotiffWithMetadata
+  )
+
+  private def userVisibility: Gen[UserVisibility] = Gen.oneOf(
+    UserVisibility.Public, UserVisibility.Private
   )
 
   private def timestampIn2016Gen: Gen[Timestamp] = for {
@@ -142,18 +166,17 @@ object Generators extends ArbitraryInstances {
 
   private def organizationCreateGen: Gen[Organization.Create] = for {
     name <- nonEmptyStringGen
-  } yield (Organization.Create(name))
+  } yield (Organization.Create(name, defaultPlatformId))
 
   private def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization }
 
   private def shapeCreateGen: Gen[Shape.Create] = for {
     owner <- Gen.const(None)
-    organizationId <- uuidGen
     name <- nonEmptyStringGen
     description <- nonEmptyStringGen map { Some(_) }
     geometry <- Gen.oneOf(Gen.const(None), projectedMultiPolygonGen3857 map { Some(_) })
   } yield {
-    Shape.Create(owner, organizationId, name, description, geometry)
+    Shape.Create(owner, name, description, geometry)
   }
 
   private def shapeGeoJSONGen: Gen[Shape.GeoJSON] = for {
@@ -165,10 +188,18 @@ object Generators extends ArbitraryInstances {
   }
 
   private def userCreateGen: Gen[User.Create] = for {
-    id <- nonEmptyStringGen
-    org <- organizationGen
+    id <- uuidGen map { _.toString }
     role <- userRoleGen
-  } yield { User.Create(id, org.id, role) }
+    email <- nonEmptyStringGen
+    name <- nonEmptyStringGen
+    profileImageUri <- nonEmptyStringGen
+  } yield { User.Create(id, role, email, name, profileImageUri) }
+
+  private def userJwtFieldsGen: Gen[User.JwtFields] =
+    for {
+      userCreate <- userCreateGen
+      placeholderUUID <- uuidGen
+    } yield { User.JwtFields(userCreate.id, userCreate.email, userCreate.name, userCreate.profileImageUri, placeholderUUID, placeholderUUID) }
 
   private def userGen: Gen[User] = userCreateGen map { _.toUser }
 
@@ -196,7 +227,6 @@ object Generators extends ArbitraryInstances {
   } yield { SingleBandOptions.Params(band, datatype, colorBins, colorScheme, legendOrientation) }
 
   private def imageCreateGen: Gen[Image.Create] = for {
-    orgId <- uuidGen
     rawDataBytes <- rawDataBytesGen
     visibility <- visibilityGen
     filename <- nonEmptyStringGen
@@ -208,13 +238,12 @@ object Generators extends ArbitraryInstances {
     metadataFiles <- stringListGen
   } yield (
     Image.Create(
-      orgId, rawDataBytes, visibility, filename, sourceUri, scene, imageMetadata,
+      rawDataBytes, visibility, filename, sourceUri, scene, imageMetadata,
       owner, resolutionMeters, metadataFiles
     )
   )
 
   private def imageBandedGen: Gen[Image.Banded] = for {
-    orgId <- uuidGen
     rawDataBytes <- rawDataBytesGen
     visibility <- visibilityGen
     filename <- nonEmptyStringGen
@@ -227,7 +256,7 @@ object Generators extends ArbitraryInstances {
     bands <- Gen.listOfN(3, bandCreateGen)
   } yield (
     Image.Banded(
-      orgId, rawDataBytes, visibility, filename, sourceUri, owner, scene, imageMetadata,
+      rawDataBytes, visibility, filename, sourceUri, owner, scene, imageMetadata,
       resolutionMeters, metadataFiles, bands
     )
   )
@@ -237,7 +266,6 @@ object Generators extends ArbitraryInstances {
   } yield (imCreate.copy(owner=Some(user.id)).toImage(user))
 
   private def projectCreateGen: Gen[Project.Create] = for {
-    orgId <- uuidGen
     name <- nonEmptyStringGen
     description <- nonEmptyStringGen
     visibility <- visibilityGen
@@ -250,7 +278,7 @@ object Generators extends ArbitraryInstances {
     singleBandOptions <- singleBandOptionsParamsGen map { Some(_) }
   } yield {
     Project.Create(
-      orgId, name, description, visibility, tileVisibility, isAOIProject, aoiCadenceMillis,
+      name, description, visibility, tileVisibility, isAOIProject, aoiCadenceMillis,
       owner, tags, isSingleBand, singleBandOptions
     )
   }
@@ -275,13 +303,12 @@ object Generators extends ArbitraryInstances {
 
   private def thumbnailIdentifiedGen: Gen[Thumbnail.Identified] = for {
     id <- uuidGen map { Some(_) }
-    organizationId <- uuidGen
     thumbnailSize <- thumbnailSizeGen
     sideLength <- Gen.choose(200, 1000)
     sceneId <- uuidGen
     url <- nonEmptyStringGen
   } yield {
-    Thumbnail.Identified(id, organizationId, thumbnailSize, sideLength, sideLength, sceneId, url)
+    Thumbnail.Identified(id, thumbnailSize, sideLength, sideLength, sceneId, url)
   }
 
   private def thumbnailGen: Gen[Thumbnail] = for {
@@ -291,7 +318,6 @@ object Generators extends ArbitraryInstances {
 
   private def sceneCreateGen: Gen[Scene.Create] = for {
     sceneId <- uuidGen map { Some(_) }
-    organizationId <- uuidGen
     ingestSizeBytes <- Gen.const(0)
     visibility <- visibilityGen
     tags <- stringListGen
@@ -309,14 +335,13 @@ object Generators extends ArbitraryInstances {
     statusFields <- sceneStatusFieldsGen
     sceneType <- Gen.option(sceneTypeGen)
   } yield {
-    Scene.Create(sceneId, organizationId, ingestSizeBytes, visibility, tags,
+    Scene.Create(sceneId, ingestSizeBytes, visibility, tags,
                  datasource, sceneMetadata, name, owner, tileFootprint, dataFootprint,
                  metadataFiles, images, thumbnails, ingestLocation, filterFields, statusFields,
                  sceneType)
   }
 
   private def aoiCreateGen: Gen[AOI.Create] = for {
-    organizationId <- uuidGen
     area <- projectedMultiPolygonGen3857
     filters <- Gen.const(().asJson) // maybe this should be CombinedSceneQueryParams as json
     owner <- Gen.const(None)
@@ -324,13 +349,12 @@ object Generators extends ArbitraryInstances {
     startTime <- timestampIn2016Gen
     approvalRequired <- arbitrary[Boolean]
   } yield {
-    AOI.Create(organizationId, area, filters, owner, isActive, startTime, approvalRequired)
+    AOI.Create(area, filters, owner, isActive, startTime, approvalRequired)
   }
 
   private def aoiGen: Gen[AOI] = for {
     id <- uuidGen
     timeField <- timestampIn2016Gen
-    organizationId <- uuidGen
     userField <- nonEmptyStringGen
     area <- projectedMultiPolygonGen3857
     filters <- Gen.const(().asJson) // maybe this should be CombinedSceneQueryParams as json
@@ -339,25 +363,23 @@ object Generators extends ArbitraryInstances {
     approvalRequired <- arbitrary[Boolean]
     projectId <- uuidGen
   } yield {
-    AOI(id, timeField, timeField, organizationId, userField, userField, userField, area,
+    AOI(id, timeField, timeField, userField, userField, userField, area,
         filters, isActive, startTime, approvalRequired, projectId)
   }
 
   private def datasourceCreateGen: Gen[Datasource.Create] = for {
-    orgId <- uuidGen
     name <- nonEmptyStringGen
     visibility <- visibilityGen
-    owner <- arbitrary[Option[String]]
+    owner <- Gen.const(None)
     composites <- Gen.delay(().asJson)
     extras <- Gen.delay(().asJson)
     bands <- Gen.delay(().asJson)
     licenseName <- Gen.oneOf(None, Some("GPL-3.0"))
   } yield {
-    Datasource.Create(orgId, name, visibility, owner, composites, extras, bands, licenseName)
+    Datasource.Create(name, visibility, owner, composites, extras, bands, licenseName)
   }
 
   private def uploadCreateGen: Gen[Upload.Create] = for {
-    organizationId <- uuidGen
     uploadStatus <- uploadStatusGen
     fileType <- fileTypeGen
     uploadType <- uploadTypeGen
@@ -369,7 +391,7 @@ object Generators extends ArbitraryInstances {
     projectId <- Gen.const(None)
     source <- Gen.oneOf(nonEmptyStringGen map { Some(_) }, Gen.const(None))
   } yield {
-    Upload.Create(organizationId, uploadStatus, fileType, uploadType, files, datasource, metadata,
+    Upload.Create(uploadStatus, fileType, uploadType, files, datasource, metadata,
                   owner, visibility, projectId, source)
   }
 
@@ -389,6 +411,49 @@ object Generators extends ArbitraryInstances {
 
   private def combinedSceneQueryParamsGen: Gen[CombinedSceneQueryParams] =
     Gen.const(CombinedSceneQueryParams())
+
+  private def teamCreateGen: Gen[Team.Create] = for {
+    orgId <- uuidGen
+    name <- nonEmptyStringGen
+    settings <- Gen.const(().asJson)
+  } yield Team.Create(orgId, name, settings)
+
+  private def teamGen: Gen[Team] = for {
+    user <- userGen
+    teamCreate <- teamCreateGen
+  } yield {
+    teamCreate.toTeam(user)
+  }
+
+  private def accessControlRuleCreateGen: Gen[AccessControlRule.Create] = for {
+    subjectType <- subjectTypeGen
+    subjectId <- uuidGen
+    actionType <- actionTypeGen
+  } yield { AccessControlRule.Create(true, subjectType, Some(subjectId.toString()), actionType) }
+
+  private def userGroupRoleCreateGen: Gen[UserGroupRole.Create] = for {
+    user <- userGen
+    groupType <- groupTypeGen
+    groupId <- uuidGen
+    groupRole <- groupRoleGen
+  } yield { UserGroupRole.Create(user.id, groupType, groupId, groupRole) }
+
+  private def platformGen: Gen[Platform] =
+    for {
+      platformId <- uuidGen
+      platformName <- uuidGen map { _.toString }
+      settings <- Gen.const(().asJson)
+      isActive <- arbitrary[Boolean]
+      defaultOrganizationId <- Gen.const(None)
+    } yield { Platform(platformId, platformName, settings, isActive, defaultOrganizationId) }
+
+  private def userOrgPlatformGen: Gen[(User.Create, Organization.Create, Platform)] =
+    for {
+      platform <- platformGen
+      orgCreate <- organizationCreateGen map { _.copy(platformId = platform.id) }
+      userCreate <- userCreateGen
+    } yield { (userCreate, orgCreate, platform) }
+
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
@@ -447,6 +512,28 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbListLayerAttribute: Arbitrary[List[LayerAttribute]] = Arbitrary {
       layerAttributesWithSameLayerNameGen
+    }
+
+    implicit def arbTeamCreate: Arbitrary[Team.Create] = Arbitrary { teamCreateGen }
+
+    implicit def arbTeam: Arbitrary[Team] = Arbitrary { teamGen }
+
+    implicit def arbUserGroupRoleCreate: Arbitrary[UserGroupRole.Create] = Arbitrary { userGroupRoleCreateGen }
+
+    implicit def arbGroupRoleCreate: Arbitrary[GroupRole] = Arbitrary { groupRoleGen }
+
+    implicit def arbPlatform: Arbitrary[Platform] = Arbitrary { platformGen }
+
+    implicit def arbUserOrgPlatform: Arbitrary[(User.Create, Organization.Create, Platform)] = Arbitrary {
+      userOrgPlatformGen
+    }
+
+    implicit def arbUserJwtFields: Arbitrary[User.JwtFields] = Arbitrary {
+      userJwtFieldsGen
+    }
+
+    implicit def arbAccessControlRule : Arbitrary[AccessControlRule.Create] = Arbitrary {
+      accessControlRuleCreateGen
     }
   }
 }

@@ -12,6 +12,8 @@ import io.circe._
 import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
 
+import com.lonelyplanet.akka.http.extensions.PageRequest
+
 import scala.concurrent.Future
 import java.sql.Timestamp
 import java.util.{Date, UUID}
@@ -24,17 +26,17 @@ object AoiDao extends Dao[AOI] {
   val selectF =
     sql"""
       SELECT
-        id, created_at, modified_at, organization_id,
+        id, created_at, modified_at,
         created_by, modified_by, owner, area, filters, is_active, start_time,
         approval_required, project_id
       FROM
     """ ++ tableF
 
-  def unsafeGetAoiById(id: UUID, user: User): ConnectionIO[AOI] =
-    query.ownerFilter(user).filter(id).select
+  def unsafeGetAoiById(id: UUID): ConnectionIO[AOI] =
+    query.filter(id).select
 
-  def getAoiById(id: UUID, user: User): ConnectionIO[Option[AOI]] =
-    query.ownerFilter(user).filter(id).selectOption
+  def getAoiById(id: UUID): ConnectionIO[Option[AOI]] =
+    query.filter(id).selectOption
 
   def updateAOI(aoi: AOI, id: UUID, user: User): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
@@ -54,15 +56,15 @@ object AoiDao extends Dao[AOI] {
     val ownerId = Ownership.checkOwner(user, Some(aoi.owner))
 
     val aoiCreate: ConnectionIO[AOI] = (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, modified_at, organization_id,
+        (id, created_at, modified_at,
         created_by, modified_by, owner, area, filters, is_active,
         approval_required, start_time, project_id)
       VALUES
-        (${aoi.id}, NOW(), NOW(), ${user.organizationId},
+        (${aoi.id}, NOW(), NOW(),
         ${user.id}, ${user.id}, ${ownerId}, ${aoi.area}, ${aoi.filters}, ${aoi.isActive},
         ${aoi.approvalRequired}, ${aoi.startTime}, ${aoi.projectId})
     """).update.withUniqueGeneratedKeys[AOI](
-      "id", "created_at", "modified_at", "organization_id",
+      "id", "created_at", "modified_at",
       "created_by", "modified_by", "owner", "area", "filters", "is_active",
       "start_time", "approval_required", "project_id"
     )
@@ -73,10 +75,35 @@ object AoiDao extends Dao[AOI] {
   def listAOIs(projectId: UUID, user: User, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] =
     query.filter(fr"project_id = ${projectId}").page(page)
 
+  def listAuthorizedAois(user: User, aoiQueryParams: AoiQueryParameters, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] = {
+    val authedProjectsIO = ProjectDao.authQuery(user, ObjectType.Project).list
+    for {
+      authedProjects <- authedProjectsIO
+      authedProjectIdsF = (authedProjects map { _.id }).toNel map {
+        Fragments.in(fr"project_id", _)
+      }
+      authFilterF = Fragments.orOpt(authedProjectIdsF, Some(fr"owner = ${user.id}"))
+      aois <- {
+        AoiDao.query
+          .filter(aoiQueryParams)
+          .filter(authFilterF)
+          .page(page)
+      }
+    } yield { aois }
+  }
+
   def deleteAOI(id: UUID, user: User): ConnectionIO[Int]= {
     (
-      fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(query.ownerFilterF(user), Some(fr"id = ${id}"))
+      fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(Some(fr"id = ${id}"))
     ).update.run
   }
+
+  def authorize(aoiId: UUID, user: User, actionType: ActionType): ConnectionIO[Boolean] = for {
+    aoiO <- AoiDao.query.filter(aoiId).selectOption
+    projectAuthed <- aoiO map { _.projectId } match {
+      case Some(projectId) => ProjectDao.query.authorized(user, ObjectType.Project, projectId, actionType)
+      case _ => false.pure[ConnectionIO]
+    }
+  } yield { projectAuthed }
 }
 

@@ -41,8 +41,8 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
 
   def run: Unit = {
     val exportDefinitionWrite = for {
-      user <- UserDao.query.filter(fr"id = ${systemUser}").select
-      export <- ExportDao.query.filter(fr"id = ${exportId}").select
+      user <- UserDao.unsafeGetUserById(systemUser)
+      export <- ExportDao.query.filter(exportId).select
       exportDef <- ExportDao.getExportDefinition(export, user)
       x <- {
         writeExportDefToS3(exportDef, bucket, key)

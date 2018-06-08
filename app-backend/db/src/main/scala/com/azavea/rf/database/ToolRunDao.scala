@@ -23,8 +23,8 @@ object ToolRunDao extends Dao[ToolRun] {
 
   val selectF = sql"""
     SELECT
-      id, name, created_at, created_by, modified_at, modified_by, owner, visibility,
-      organization_id, execution_parameters
+      distinct(id), name, created_at, created_by, modified_at, modified_by, owner, visibility,
+      execution_parameters
     FROM
   """ ++ tableF
 
@@ -34,14 +34,13 @@ object ToolRunDao extends Dao[ToolRun] {
 
     sql"""
           INSERT INTO tool_runs
-            (id, name, created_at, created_by, modified_at, modified_by, owner, visibility, organization_id,
+            (id, name, created_at, created_by, modified_at, modified_by, owner, visibility,
              execution_parameters)
           VALUES
-            (${id}, ${newRun.name}, ${now}, ${user.id}, ${now}, ${user.id}, ${newRun.owner.getOrElse(user.id)}, ${newRun.visibility}, ${newRun.organizationId},
-             ${newRun.executionParameters})
+            (${id}, ${newRun.name}, ${now}, ${user.id}, ${now}, ${user.id}, ${newRun.owner.getOrElse(user.id)}, ${newRun.visibility}, ${newRun.executionParameters})
        """.update.withUniqueGeneratedKeys[ToolRun](
       "id", "name", "created_at", "created_by", "modified_at", "modified_by", "owner", "visibility",
-      "organization_id", "execution_parameters"
+      "execution_parameters"
     )
   }
 
@@ -57,7 +56,7 @@ object ToolRunDao extends Dao[ToolRun] {
          modified_by = ${user.id},
          visibility = ${updatedRun.visibility},
          execution_parameters = ${updatedRun.executionParameters}
-       """ ++ Fragments.whereAndOpt(ownerEditFilter(user), Some(idFilter))).update.run
+       """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 }
 

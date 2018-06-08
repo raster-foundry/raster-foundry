@@ -1,13 +1,21 @@
 <ui-view>
-  <div class="admin-users-content container column-stretch dashboard">
+  <div class="admin-users-content container column-stretch">
     <div class="admin-users-actions">
-      <input type="text" class="form-control admin-search" placeholder="Search for organizations">
-      <button type="button" class="btn btn-primary"
-              ng-click="$ctrl.newOrgModal()">
-        New Organization
-      </button>
+      <input type="text"
+             class="form-control admin-search"
+             placeholder="Search for organizations"
+             ng-model="$ctrl.search"
+             ng-disabled="$ctrl.fetching"
+      >
+      <div class="actions-right">
+        <button type="button" class="btn btn-primary"
+                ng-click="$ctrl.newOrgModal()"
+                ng-disabled="$ctrl.fetching">
+          New Organization
+        </button>
+      </div>
     </div>
-    <table class="admin-table admin-platform-org-table">
+    <table class="admin-table admin-platform-org-table" ng-if="!$ctrl.fetching">
       <tbody>
         <tr ng-repeat="organization in $ctrl.organizations track by $index">
           <td class="name">
@@ -19,27 +27,56 @@
           <td class="email">
             {{organization.email}}
           </td>
-          <td class="subscription">
-            {{organization.subscription.name}}
-          </td>
           <td class="users">
-            <a ui-sref="admin.organization.users({id: organization.id})">
-              <ng-pluralize
-                  count="organization.userCount"
-                  when="{'0': 'No users',
-                         'one': '1 user',
-                         'other': '{} users'}"
-              ></ng-pluralize>
-            </a>
+            <div class="user-avatar"
+                 ng-repeat="user in organization.fetchedUsers.results track by $index | limitTo : 5"
+                 ng-attr-title="{{user.name || user.email || user.id}}"
+            >
+              <img class="avatar" ng-src="{{user.profileImageUri}}">
+            </div>
+            <div>
+              <a class="users-more" title="View organization details"
+                 ui-sref="admin.organization.users({organizationId: organization.id})">
+                <ng-pluralize count="organization.fetchedUsers.count"
+                              when="{'0': ' No members',
+                                     '1': ' View 1 member',
+                                     'other': ' View {} more members'}"
+
+                >
+                </ng-pluralize>
+              </a>
+            </div>
           </td>
+          <td>{{ organization.isActive ? "Active" : "Deactivated"}}</td>
           <td class="actions">
-            <a ui-sref="admin.organization.metrics({id: organization.id})">View page</a>
-            <rf-dropdown data-options="organization.options">
-              <span class="icon-caret-down"></span>
-            </rf-dropdown>
+            <div ng-if="organization.showOptions">
+              <a ui-sref="admin.organization.users({organizationId: organization.id})">View page</a>
+              <rf-dropdown data-options="organization.options">
+                <span class="icon-caret-down"></span>
+              </rf-dropdown>
+            </div>
           </td>
         </tr>
       </tbody>
     </table>
+  <div class="table-loading" ng-if="$ctrl.fetching">
+    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
+  </div>
+
+      <!-- Pagination -->
+      <div class="list-group text-center"
+           ng-show="!$ctrl.loading && $ctrl.lastOrgResult && $ctrl.pagination.show && !$ctrl.errorMsg">
+        <ul uib-pagination
+            items-per-page="$ctrl.lastOrgResult.pageSize"
+            total-items="$ctrl.pagination.count"
+            ng-model="$ctrl.currentPage"
+            max-size="4"
+            rotate="true"
+            boundary-link-numbers="true"
+            force-ellipses="true"
+            ng-change="$ctrl.fetchOrganizations($ctrl.currentPage, $ctrl.search)">
+        </ul>
+      </div>
+      <!-- Pagination -->
   </div>
 </ui-view>

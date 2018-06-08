@@ -202,30 +202,7 @@ export default (app) => {
         }
 
         getDatasource(scene) {
-            return this.$q((resolve, reject) => {
-                if (this.datasourceCache.has(scene.datasource)) {
-                    let datasource = this.datasourceCache.get(scene.datasource);
-                    if (datasource.then) {
-                        datasource.then((d) => {
-                            resolve(d);
-                        });
-                    } else {
-                        resolve(datasource);
-                    }
-                } else {
-                    this.datasourceCache = this.datasourceCache.set(
-                        scene.datasource,
-                        this.datasourceService
-                            .get(scene.datasource)
-                            .then((datasource) => {
-                                resolve(datasource);
-                                return datasource;
-                            }, (err) => {
-                                reject(err);
-                            })
-                    );
-                }
-            });
+            return this.$q((resolve) => resolve(scene.datasource));
         }
 
 

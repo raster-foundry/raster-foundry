@@ -14,14 +14,15 @@ case class Datasource(
   modifiedAt: java.sql.Timestamp,
   modifiedBy: String,
   owner: String,
-  organizationId: UUID,
   name: String,
   visibility: Visibility,
   composites: Json,
   extras: Json,
   bands: Json,
   licenseName: Option[String]
-)
+) {
+  def toThin: Datasource.Thin = Datasource.Thin(this.name, this.id)
+}
 
 object Datasource {
 
@@ -30,8 +31,13 @@ object Datasource {
   def create = Create.apply _
 
   @JsonCodec
+  case class Thin (
+    name: String,
+    id: UUID
+  )
+
+  @JsonCodec
   case class Create (
-    organizationId: UUID,
     name: String,
     visibility: Visibility,
     owner: Option[String],
@@ -53,7 +59,6 @@ object Datasource {
         now, // modifiedAt
         user.id, // modifiedBy
         ownerId, // owner
-        this.organizationId,
         this.name,
         this.visibility,
         this.composites,

@@ -4,7 +4,7 @@ import java.net.URI
 
 import com.azavea.rf.batch.Job
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.{SceneDao, UserDao}
+import com.azavea.rf.database._
 import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.datamodel._
 import com.azavea.rf.batch.util._
@@ -82,7 +82,6 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       val filename = obj.split("/").last
       val imageBand = filename.split("\\.").head
       Image.Banded(
-        organizationId   = sentinel2Config.organizationUUID,
         rawDataBytes     = 0,
         visibility       = Visibility.Public,
         filename         = filename,
@@ -101,15 +100,16 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     val keyPath: String = s"$tilePath/preview.jpg"
     val thumbnailUrl = s"${sentinel2Config.baseHttpPath}$keyPath"
 
-    Thumbnail.Identified(
-      id = None,
-      organizationId = UUID.fromString(landsat8Config.organization),
-      thumbnailSize  = ThumbnailSize.Square,
-      widthPx        = 343,
-      heightPx       = 343,
-      sceneId        = sceneId,
-      url            = thumbnailUrl
-    ) :: Nil
+    if (!isUriExists(thumbnailUrl)) Nil
+    else
+      Thumbnail.Identified(
+        id = None,
+        thumbnailSize  = ThumbnailSize.Square,
+        widthPx        = 343,
+        heightPx       = 343,
+        sceneId        = sceneId,
+        url            = thumbnailUrl
+      ) :: Nil
   }
 
   def getSentinel2Products(date: LocalDate): List[URI] = {
@@ -129,6 +129,13 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     ).list map { (scenes: List[Scene]) => scenes map { _.name } }
     scenesConnIO.transact(xa).unsafeRunSync
   }
+
+  protected def insertAcrForScene(swr: Scene.WithRelated, user: User): ConnectionIO[AccessControlRule] =
+    AccessControlRuleDao.create(
+      AccessControlRule.Create(
+        true, SubjectType.All, None, ActionType.View
+      ).toAccessControlRule(user, ObjectType.Scene, swr.id)
+    )
 
   /** Because it makes scenes -- get it? */
   def riot(scenePath: String, datasourceUUID: UUID, user: User): IO[Option[Scene.WithRelated]] = {
@@ -169,7 +176,6 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     logger.info(s"${datasourcePrefix} - Creating scene case class ${scenePath}")
     val sceneCreate = Scene.Create(
       id = sceneId.some,
-      organizationId = sentinel2Config.organizationUUID,
       ingestSizeBytes = 0,
       visibility = Visibility.Public,
       tags = List("Sentinel-2", "JPEG2000"),
@@ -199,7 +205,15 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       sceneType = SceneType.Avro.some
     )
 
-    IO.shift(SceneCreationIOContext) *> SceneDao.insertMaybe(sceneCreate, user).transact(xa)
+    val sceneInsertIO = for {
+      sceneInsert <- SceneDao.insertMaybe(sceneCreate, user).transact(xa)
+      _ <- sceneInsert match {
+        case Some(swr) => insertAcrForScene(swr, user).transact(xa)
+        case _ => ().pure[IO]
+      }
+    } yield { sceneInsert }
+
+    IO.shift(SceneCreationIOContext) *> sceneInsertIO
   }
 
   def insertSceneFromURI(uri: URI, existingSceneNames: List[String], datasourceUUID: UUID, user: User): List[IO[Option[Scene.WithRelated]]] = {

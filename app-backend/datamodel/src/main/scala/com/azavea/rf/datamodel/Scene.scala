@@ -58,7 +58,6 @@ case class Scene(
   modifiedAt: java.sql.Timestamp,
   modifiedBy: String,
   owner: String,
-  organizationId: UUID,
   ingestSizeBytes: Int,
   visibility: Visibility,
   tags: List[String],
@@ -77,7 +76,8 @@ case class Scene(
 
   def withRelatedFromComponents(
     images: List[Image.WithRelated],
-    thumbnails: List[Thumbnail]
+    thumbnails: List[Thumbnail],
+    datasource: Datasource
   ): Scene.WithRelated = Scene.WithRelated(
     this.id,
     this.createdAt,
@@ -85,11 +85,10 @@ case class Scene(
     this.modifiedAt,
     this.modifiedBy,
     this.owner,
-    this.organizationId,
     this.ingestSizeBytes,
     this.visibility,
     this.tags,
-    this.datasource,
+    datasource.toThin,
     this.sceneMetadata,
     this.name,
     this.tileFootprint,
@@ -111,7 +110,6 @@ object Scene {
   @JsonCodec
   case class Create(
     id: Option[UUID],
-    organizationId: UUID,
     ingestSizeBytes: Int,
     visibility: Visibility,
     tags: List[String],
@@ -141,7 +139,6 @@ object Scene {
         now, // modifiedAt
         user.id, // modifiedBy
         ownerId, // owner
-        organizationId,
         ingestSizeBytes,
         visibility,
         tags,
@@ -167,11 +164,10 @@ object Scene {
     modifiedAt: Timestamp,
     modifiedBy: String,
     owner: String,
-    organizationId: UUID,
     ingestSizeBytes: Int,
     visibility: Visibility,
     tags: List[String],
-    datasource: UUID,
+    datasource: Datasource.Thin,
     sceneMetadata: Json,
     name: String,
     tileFootprint: Option[Projected[MultiPolygon]],
@@ -192,11 +188,10 @@ object Scene {
         modifiedAt,
         modifiedBy,
         owner,
-        organizationId,
         ingestSizeBytes,
         visibility,
         tags,
-        datasource,
+        datasource.id,
         sceneMetadata,
         name,
         tileFootprint,

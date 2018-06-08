@@ -29,6 +29,12 @@ export default (app) => {
                 update: {
                     method: 'PUT',
                     cache: false
+                },
+                getTeams: {
+                    url: `${BUILDCONFIG.API_HOST}/api/users/me/teams`,
+                    method: 'GET',
+                    cache: false,
+                    isArray: true
                 }
             });
         }
@@ -54,6 +60,14 @@ export default (app) => {
                     }, (err) => reject(err));
                 }, (err) => reject(err));
             });
+        }
+
+        getTeams() {
+            return this.User.getTeams().$promise;
+        }
+
+        getUserById(id) {
+            return this.UserMetadata.get({userid: id}).$promise;
         }
     }
 

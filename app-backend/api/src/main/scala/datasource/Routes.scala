@@ -11,6 +11,7 @@ import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, PageRequest}
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.effect.IO
+import kamon.akka.http.KamonTraceDirectives
 
 import java.util.UUID
 import scala.util.{Success, Failure}
@@ -35,25 +36,58 @@ trait DatasourceRoutes extends Authentication
       post { createDatasource }
     } ~
     pathPrefix(JavaUUID) { datasourceId =>
-      get { getDatasource(datasourceId) } ~
-      put { updateDatasource(datasourceId) } ~
-      delete { deleteDatasource(datasourceId) }
+      pathEndOrSingleSlash {
+        get { getDatasource(datasourceId) } ~
+          put { updateDatasource(datasourceId) } ~
+          delete { deleteDatasource(datasourceId) }
+      } ~
+        pathPrefix("permissions") {
+          pathEndOrSingleSlash {
+            put {
+              replaceDatasourcePermissions(datasourceId)
+            }
+          } ~
+            post {
+              addDatasourcePermission(datasourceId)
+            } ~
+            get {
+              listDatasourcePermissions(datasourceId)
+            } ~
+            delete {
+              deleteDatasourcePermissions(datasourceId)
+            }
+        } ~
+        pathPrefix("actions") {
+          pathEndOrSingleSlash {
+            get {
+              listUserDatasourceActions(datasourceId)
+            }
+          }
+        }
     }
   }
 
   def listDatasources: Route = authenticate { user =>
     (withPagination & datasourceQueryParams) { (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
       complete {
-        DatasourceDao.listDatasources(page, datasourceParams, user).transact(xa).unsafeToFuture
+        DatasourceDao
+          .authQuery(user, ObjectType.Datasource)
+          .filter(datasourceParams)
+          .page(page)
+          .transact(xa).unsafeToFuture
       }
     }
   }
 
   def getDatasource(datasourceId: UUID): Route = authenticate { user =>
-    get {
+    authorizeAsync {
+      DatasourceDao.query
+        .authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } {
       rejectEmptyResponse {
         complete {
-          DatasourceDao.getDatasourceById(datasourceId, user).transact(xa).unsafeToFuture
+          DatasourceDao.getDatasourceById(datasourceId).transact(xa).unsafeToFuture
         }
       }
     }
@@ -61,17 +95,19 @@ trait DatasourceRoutes extends Authentication
 
   def createDatasource: Route = authenticate { user =>
     entity(as[Datasource.Create]) { newDatasource =>
-      authorize(user.isInRootOrSameOrganizationAs(newDatasource)) {
-        onSuccess(DatasourceDao.createDatasource(newDatasource, user).transact(xa).unsafeToFuture) { datasource =>
-          complete((StatusCodes.Created, datasource))
-        }
+      onSuccess(DatasourceDao.createDatasource(newDatasource, user).transact(xa).unsafeToFuture) { datasource =>
+        complete((StatusCodes.Created, datasource))
       }
     }
   }
 
   def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
-    entity(as[Datasource]) { updateDatasource =>
-      authorize(user.isInRootOrOwner(updateDatasource)) {
+    authorizeAsync (
+      DatasourceDao.query
+        .authorized(user, ObjectType.Datasource, datasourceId, ActionType.Edit)
+        .transact(xa).unsafeToFuture
+    ) {
+      entity(as[Datasource]) { updateDatasource =>
         onSuccess(DatasourceDao.updateDatasource(updateDatasource, datasourceId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
@@ -80,8 +116,84 @@ trait DatasourceRoutes extends Authentication
   }
 
   def deleteDatasource(datasourceId: UUID): Route = authenticate { user =>
-    onSuccess(DatasourceDao.query.filter(fr"owner = ${user.id}").filter(datasourceId).delete.transact(xa).unsafeToFuture) {
-       completeSingleOrNotFound
+    authorizeAsync {
+      DatasourceDao.query
+        .authorized(user, ObjectType.Datasource, datasourceId, ActionType.Delete)
+        .transact(xa).unsafeToFuture
+    } {
+      onSuccess(DatasourceDao.query.filter(datasourceId).delete.transact(xa).unsafeToFuture) {
+         completeSingleOrNotFound
+      }
+    }
+  }
+
+  def listDatasourcePermissions(datasourceId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      DatasourceDao.query.ownedBy(user, datasourceId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Datasource, datasourceId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def replaceDatasourcePermissions(datasourceId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      DatasourceDao.query.ownedBy(user, datasourceId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Datasource, datasourceId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def addDatasourcePermission(datasourceId: UUID): Route = authenticate { user =>
+      authorizeAsync {
+        DatasourceDao.query.ownedBy(user, datasourceId).exists.transact(xa).unsafeToFuture
+      } {
+        entity(as[AccessControlRule.Create]) { acrCreate =>
+          complete {
+            AccessControlRuleDao.createWithResults(
+              acrCreate.toAccessControlRule(user, ObjectType.Datasource, datasourceId)
+            ).transact(xa).unsafeToFuture
+          }
+        }
+      }
+    }
+
+  def listUserDatasourceActions(datasourceId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      DatasourceDao.query.authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } { user.isSuperuser match {
+         case true => complete(List("*"))
+         case false =>
+           onSuccess(
+             DatasourceDao.unsafeGetDatasourceById(datasourceId).transact(xa).unsafeToFuture
+           ) { datasource =>
+             datasource.owner == user.id match {
+               case true => complete(List("*"))
+               case false => complete {
+                 AccessControlRuleDao.listUserActions(user, ObjectType.Datasource, datasourceId)
+                   .transact(xa).unsafeToFuture
+               }
+             }
+           }
+       }
+    }
+  }
+
+  def deleteDatasourcePermissions(datasourceId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      DatasourceDao.query.ownedBy(user, datasourceId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.deleteByObject(ObjectType.Analysis, datasourceId).transact(xa).unsafeToFuture
+      }
     }
   }
 }

@@ -24,26 +24,19 @@ object DatasourceDao extends Dao[Datasource] {
 
   val selectF = sql"""
       SELECT
-        id, created_at, created_by, modified_at, modified_by, owner,
-        organization_id, name, visibility, composites, extras, bands, license_name
+        distinct(id), created_at, created_by, modified_at, modified_by, owner,
+        name, visibility, composites, extras, bands, license_name
       FROM
     """ ++ tableF
 
-  def unsafeGetDatasourceById(datasourceId: UUID, user: User): ConnectionIO[Datasource] = {
-    (selectF ++ Fragments.whereAndOpt(query.ownerVisibilityFilterF(user), fr"id = ${datasourceId}".some))
-      .query[Datasource]
-      .unique
-  }
+  def unsafeGetDatasourceById(datasourceId: UUID): ConnectionIO[Datasource] =
+    query.filter(datasourceId).select
 
-  def getDatasourceById(datasourceId: UUID, user: User): ConnectionIO[Option[Datasource]] = {
-    (selectF ++ Fragments.whereAndOpt(query.ownerVisibilityFilterF(user), fr"id = ${datasourceId}".some))
-      .query[Datasource]
-      .option
-  }
+  def getDatasourceById(datasourceId: UUID): ConnectionIO[Option[Datasource]] =
+    query.filter(datasourceId).selectOption
 
   def listDatasources(page: PageRequest, params: DatasourceQueryParameters, user: User): ConnectionIO[PaginatedResponse[Datasource]] = {
     DatasourceDao.query.filter(params)
-      .filter(fr"owner = ${user.id} OR visibility = ${Visibility.Public.toString.toUpperCase} :: visibility")
       .page(page)
   }
 
@@ -54,15 +47,15 @@ object DatasourceDao extends Dao[Datasource] {
     val ownerId = util.Ownership.checkOwner(user, Some(datasource.owner))
     (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, created_at, created_by, modified_at, modified_by, owner,
-      organization_id, name, visibility, composites, extras, bands, license_name)
+      name, visibility, composites, extras, bands, license_name)
     VALUES
       (${datasource.id}, ${datasource.createdAt}, ${datasource.createdBy}, ${datasource.modifiedAt},
-      ${datasource.modifiedBy}, ${ownerId}, ${datasource.organizationId}, ${datasource.name},
+      ${datasource.modifiedBy}, ${ownerId}, ${datasource.name},
       ${datasource.visibility}, ${datasource.composites},
       ${datasource.extras}, ${datasource.bands}, ${datasource.licenseName})
     """).update.withUniqueGeneratedKeys[Datasource](
       "id", "created_at", "created_by", "modified_at", "modified_by", "owner",
-      "organization_id", "name", "visibility", "composites", "extras", "bands", "license_name"
+      "name", "visibility", "composites", "extras", "bands", "license_name"
     )
   }
 
@@ -80,13 +73,13 @@ object DatasourceDao extends Dao[Datasource] {
       extras = ${datasource.extras},
       bands = ${datasource.bands},
       license_name = ${datasource.licenseName}
-      where id = ${id} AND owner = ${user.id}
+      where id = ${id}
       """
     updateQuery.update.run
   }
 
   def deleteDatasource(id: UUID, user: User): ConnectionIO[Int] = {
-    (fr"DELETE FROM " ++ this.tableF ++ fr" WHERE owner = ${user.id} AND id = ${id}")
+    (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE id = ${id}")
       .update
       .run
   }
@@ -96,4 +89,3 @@ object DatasourceDao extends Dao[Datasource] {
     this.create(datasource, user)
   }
 }
-

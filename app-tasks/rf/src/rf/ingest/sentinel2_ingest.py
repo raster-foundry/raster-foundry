@@ -99,21 +99,6 @@ def make_tif_image_copy(image):
     return copied
 
 
-def copy_scene(scene):
-    """Create a copy of this scene with images converted to tifs in s3
-
-    Args:
-        scene (Scene): scene to copy images from
-
-    Return:
-        Scene: the copied scene with substitute images
-    """
-
-    copied = Scene.from_dict(scene.to_dict())
-    copied.images = [make_tif_image_copy(image) for image in scene.images]
-    return copied
-
-
 def get_source(image, extent):
     """Construct source for a Sentinel-2 image
     Args:
@@ -187,7 +172,7 @@ def create_sentinel2_ingest(scene):
         Ingest
     """
 
-    copied = copy_scene(scene)
+    scene.images = [make_tif_image_copy(image) for image in scene.images]
     layer = get_sentinel2_layer(copied)
     id = copied.id
     return Ingest(id, [layer])

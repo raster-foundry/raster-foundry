@@ -1,0 +1,87 @@
+<div class="modal-scrollable-body modal-sidebar-header">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.handleClose()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <h4 class="modal-title">
+      Upload a logo
+    </h4>
+    <p>Upload a picture as the organization logo.</p>
+  </div>
+  <div class="modal-body"
+       ng-if="$ctrl.currentStepIs('UPLOAD')"
+       ngf-drop-available=true
+       ng-model="$ctrl.selectedPhoto"
+       accept="image/png"
+       ngf-max-height="512"
+       ngf-change="$ctrl.photoSelected($file, $invalidFiles)"
+       ngf-drop>
+    <!--Local picture import -->
+    <div class="content">
+      <h3 class="no-margin">Local Picture Upload</h3>
+      <ng-container>
+        <p>Select a picture from your computer and we'll set it as your profile picture. Please note that only .PNG format with size less than 512 x 512 pixels is supported at the moment.</p>
+        <br/>
+        <br/>
+        <div class="text-center">
+          <button class="btn btn-primary"
+                  ng-model="$ctrl.selectedPhoto"
+                  accept="image/png"
+                  ngf-max-height="512"
+                  ngf-change="$ctrl.photoSelected($file, $invalidFiles)"
+                  ngf-select>
+            Select Files
+          </button>
+          <br/>
+          <br/>
+          or drag and drop a picture here
+        </div>
+        <p ng-if="$ctrl.selectedPhotoErrorMsg" style="color: red;">{{$ctrl.selectedPhotoErrorMsg}}</p>
+      </ng-container>
+    </div>
+  </div>
+  <!--Picture preview -->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('PREVIEW')">
+    <div class="content">
+      <h3 class="no-margin">Preview</h3>
+      <div class="text-center">
+        <img ngf-thumbnail="$ctrl.selectedPhoto">
+      </div>
+    </div>
+  </div>
+  <!-- Upload Progress -->
+  <div class="modal-body" ng-if="$ctrl.currentStepIs('UPLOAD_PROGRESS')">
+    <div class="content">
+      <h3 class="no-margin">Progress</h3>
+      {{$ctrl.uploadInProgress ? 'In progress' :
+        $ctrl.uploadDone ? 'Finished' : 'Failed: ' + $ctrl.currentError}}
+    </div>
+  </div>
+</div>
+  <!--Default Footer-->
+  <div class="modal-footer">
+    <button type="button" class="btn pull-left"
+            ng-if="$ctrl.allowClose()"
+            ng-click="$ctrl.handleClose()">
+      Cancel
+    </button>
+
+    <button type="button" class="btn"
+            ng-if="$ctrl.hasPrevious()"
+            ng-click="$ctrl.handlePrevious()"
+            ng-disabled="!$ctrl.allowPrevious()">
+      Back
+    </button>
+    <button type="button" class="btn btn-primary"
+            ng-if="$ctrl.hasNext()"
+            ng-click="$ctrl.handleNext()"
+            ng-disabled="!$ctrl.allowNext()">
+      Next
+    </button>
+    <button type="button" class="btn btn-primary"
+            ng-if="$ctrl.allowDone()"
+            ng-click="$ctrl.handleDone()">
+      Done
+    </button>
+  </div>
+</div>

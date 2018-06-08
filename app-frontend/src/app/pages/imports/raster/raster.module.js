@@ -1,3 +1,4 @@
+/* global BUILDCONFIG */
 class RasterListController {
     constructor(authService, $uibModal) {
         'ngInject';
@@ -6,7 +7,7 @@ class RasterListController {
     }
 
     $onInit() {
-
+        this.BUILDCONFIG = BUILDCONFIG;
     }
 
     $onDestroy() {

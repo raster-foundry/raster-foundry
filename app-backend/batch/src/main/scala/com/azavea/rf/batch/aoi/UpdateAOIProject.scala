@@ -86,22 +86,12 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
       val alreadyCheckedFilter: Option[Fragment] = Some(fr"created_at > ${lastChecked}")
       val acquisitionFilter: Option[Fragment] = Some(fr"acquisition_date > ${startTime}")
       val areaFilter: Option[Fragment] = Some(fr"st_intersects(data_footprint, ${geom})")
-      val ownerFilter: Option[Fragment] = if (user.isInRootOrganization) {
-          None
-        } else {
-          // ignore org visibility because it's all going away and it's only extremely narrowly applicable
-          Some(fr"(owner = ${user.id} OR visibility = ${Visibility.Public.toString} :: visibility)")
-        }
-      for {
-        _ <- updateProjectIO(user, projectId)
-        sceneIds <- {
-          val fragment = (base ++ Fragments.whereAndOpt(qpFilters, alreadyCheckedFilter, acquisitionFilter)) // areaFilter, ownerFilter
-          (base ++ Fragments.whereAndOpt(qpFilters, alreadyCheckedFilter, acquisitionFilter, areaFilter, ownerFilter))
-            .query[UUID]
-            .stream
-            .compile.toList
-        }
-      } yield { sceneIds }
+      SceneWithRelatedDao
+        .authQuery(user, ObjectType.Scene)
+        .filter(geom)
+        .filter(queryParams.getOrElse(CombinedSceneQueryParams()))
+        .list
+        .map { (scenes: List[Scene.WithRelated]) => scenes map { _.id } }
     }
 
     def addScenesToProjectWithProjectIO: ConnectionIO[UUID] = {

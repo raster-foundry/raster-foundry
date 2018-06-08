@@ -1,5 +1,8 @@
 /* eslint-disable */
 export default angular.module('index.components', [
+    // permission components
+    require('./components/permissions/permissionsModal.module.js').name,
+
     // scene components
     require('./components/scenes/importList/importList.module.js').name,
     require('./components/scenes/sceneItem/sceneItem.module.js').name,
@@ -61,6 +64,8 @@ export default angular.module('index.components', [
     require('./components/settings/userModal/userModal.module.js').name,
     require('./components/settings/teamModal/teamModal.module.js').name,
     require('./components/settings/organizationModal/organizationModal.module.js').name,
+    require('./components/settings/addUserModal/addUserModal.module.js').name,
+    require('./components/settings/addPhotoModal/addPhotoModal.module.js').name,
 
     // export components
     require('./components/exports/exportItem/exportItem.module.js').name,

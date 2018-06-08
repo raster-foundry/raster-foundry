@@ -8,7 +8,7 @@ import cats.effect.IO
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
 import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database.UserDao
+import com.azavea.rf.database._
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
 import io.circe._
@@ -39,14 +39,20 @@ trait UserRoutes extends Authentication
   implicit val xa: Transactor[IO]
 
   val userRoutes: Route = handleExceptions(userExceptionHandler) {
-    pathEndOrSingleSlash {
-      get { listUsers } ~
-      post { createUser }
-    } ~
     pathPrefix("me") {
-      get { getAuth0User } ~
-      patch { updateAuth0User } ~
-      put { updateOwnUser }
+      pathPrefix("teams") {
+        pathEndOrSingleSlash {
+          get { getUserTeams }
+        }
+      } ~
+      pathPrefix("roles") {
+        get { getUserRoles }
+      } ~
+      pathEndOrSingleSlash {
+        get { getAuth0User } ~
+          patch { updateAuth0User } ~
+          put { updateOwnUser }
+      }
     }  ~
     pathPrefix("dropbox-setup") {
       pathEndOrSingleSlash {
@@ -57,25 +63,6 @@ trait UserRoutes extends Authentication
       pathEndOrSingleSlash {
         get { getUserByEncodedAuthId(authIdEncoded) } ~
         put { updateUserByEncodedAuthId(authIdEncoded) }
-      }
-    }
-  }
-
-  def listUsers: Route = authenticateRootMember { user =>
-    withPagination { page =>
-      complete {
-        UserDao.query.page(page).transact(xa).unsafeToFuture
-      }
-    }
-  }
-
-  def createUser: Route = authenticateRootMember { root =>
-    entity(as[User.Create]) { newUser =>
-      onSuccess(UserDao.create(newUser).transact(xa).unsafeToFuture()) { createdUser =>
-        onSuccess(UserDao.query.filter(fr"id = ${createdUser.id}").selectOption.transact(xa).unsafeToFuture()) {
-          case Some(user) => complete((StatusCodes.Created, user))
-          case None => throw new IllegalStateException("Unable to create user")
-        }
       }
     }
   }
@@ -133,19 +120,29 @@ trait UserRoutes extends Authentication
   def getUserByEncodedAuthId(authIdEncoded: String): Route = authenticate { user =>
     rejectEmptyResponse {
       val authId = URLDecoder.decode(authIdEncoded, "US_ASCII")
-      if (user.isInRootOrganization || user.id == authId) {
-        complete(UserDao.query.filter(fr"id = ${authId}").select.transact(xa).unsafeToFuture())
+      if (user.id == authId) {
+        complete(UserDao.unsafeGetUserById(authId).transact(xa).unsafeToFuture())
       } else {
         complete(StatusCodes.NotFound)
       }
     }
   }
 
-  def updateUserByEncodedAuthId(authIdEncoded: String): Route = authenticateRootMember { root =>
+
+  def getUserTeams: Route = authenticate { user =>
+    complete { TeamDao.teamsForUser(user).transact(xa).unsafeToFuture }
+  }
+  def updateUserByEncodedAuthId(authIdEncoded: String): Route = authenticateSuperUser { root =>
     entity(as[User]) { updatedUser =>
       onSuccess(UserDao.updateUser(updatedUser, authIdEncoded).transact(xa).unsafeToFuture()) {
         completeSingleOrNotFound
       }
+    }
+  }
+
+  def getUserRoles: Route = authenticate { user =>
+    complete {
+      UserGroupRoleDao.listByUser(user).transact(xa).unsafeToFuture()
     }
   }
 }

@@ -36,6 +36,14 @@ export default (app) => {
                         params: {
                             id: '@id'
                         }
+                    },
+                    datasource: {
+                        method: 'GET',
+                        url: `${BUILDCONFIG.API_HOST}/api/scenes/:id/datasource`,
+                        cache: true,
+                        params: {
+                            id: '@id'
+                        }
                     }
                 }
             );
@@ -139,6 +147,10 @@ export default (app) => {
 
         getDownloadableImages(scene) {
             return this.Scene.download({id: scene.id}).$promise;
+        }
+
+        datasource({id}) {
+            return this.Scene.datasource({id: id}).$promise;
         }
     }
 

@@ -4,6 +4,7 @@ import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.OrganizationDao
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.api.utils.Config
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
@@ -21,64 +22,47 @@ import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
-/**
-  * Routes for Organizations
-  */
 trait OrganizationRoutes extends Authentication
+    with Config
     with PaginationDirectives
     with CommonHandlers
-    with UserErrorHandler {
+    with UserErrorHandler
+    with OrganizationQueryParameterDirective {
 
   val xa: Transactor[IO]
 
   val organizationRoutes: Route = handleExceptions(userExceptionHandler) {
-    pathEndOrSingleSlash {
-      get { listOrganizations } ~
-      post { createOrganization }
-    } ~
     pathPrefix(JavaUUID) { orgId =>
       pathEndOrSingleSlash {
-        get { getOrganization(orgId) } ~
-        put { updateOrganization(orgId) }
-      }
-    }
-  }
-
-  def listOrganizations: Route = authenticate { user =>
-    withPagination { page =>
-      if (user.isInRootOrganization) {
-        complete(OrganizationDao.query.page(page).transact(xa).unsafeToFuture)
-      } else {
-        complete(OrganizationDao.query.filter(List(user.organizationId)).page(page).transact(xa).unsafeToFuture())
-      }
-    }
-  }
-
-  def createOrganization: Route = authenticateRootMember { root =>
-    entity(as[Organization.Create]) { newOrg =>
-      onSuccess(OrganizationDao.createOrganization(newOrg).transact(xa).unsafeToFuture()) { org =>
-        complete(StatusCodes.Created, org)
-      }
+        get { getOrganization(orgId) }
+      } ~
+        pathPrefix("logo") {
+          pathEndOrSingleSlash {
+            post { addOrganizationLogo(orgId) }
+          }
+        }
     }
   }
 
   def getOrganization(orgId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
-      if (user.isInRootOrSameOrganizationAs(new { val organizationId = orgId })) {
-        complete(OrganizationDao.getOrganizationById(orgId).transact(xa).unsafeToFuture())
-      } else {
-        complete(StatusCodes.NotFound)
+      complete {
+        OrganizationDao.query.filter(orgId).selectOption.transact(xa).unsafeToFuture()
       }
     }
   }
 
-  def updateOrganization(orgId: UUID): Route = authenticateRootMember { root =>
-    entity(as[Organization]) { updatedOrg =>
-      onSuccess(OrganizationDao.updateOrganization(updatedOrg, orgId).transact(xa).unsafeToFuture()) {
-        completeSingleOrNotFound
+  def addOrganizationLogo(orgID: UUID): Route = authenticate { user =>
+    authorizeAsync (
+      OrganizationDao.userIsAdmin(user, orgID).transact(xa).unsafeToFuture()
+    ) {
+      entity(as[String]) { logoBase64 =>
+        onSuccess(OrganizationDao.addLogo(logoBase64, orgID, dataBucket).transact(xa).unsafeToFuture()) { organization =>
+          complete((StatusCodes.Created, organization))
+        }
       }
     }
   }
 
+  // @TODO: There is no delete functionality as we most likely will want to instead deactivate organizations
 }

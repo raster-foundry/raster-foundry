@@ -18,32 +18,16 @@ import java.sql.Timestamp
 import java.time.LocalDate
 
 class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
-  test("list scenes with related") {
-    check {
-      forAll {
-        (user: User.Create, org: Organization.Create, page: PageRequest, csq: CombinedSceneQueryParams) => {
-          val sceneListIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (dbOrg, dbUser) = orgAndUser
-            sceneList <- SceneWithRelatedDao.listScenes(page, csq, dbUser)
-          } yield sceneList
-
-          sceneListIO.transact(xa).unsafeRunSync.results.length >= 0
-        }
-      }
-    }
-  }
-
   test("list scenes for a project") {
     check {
       forAll {
         (user: User.Create, org: Organization.Create, project: Project.Create, scenes: List[Scene.Create],
-         page: PageRequest, csq: CombinedSceneQueryParams) => {
+         dsCreate: Datasource.Create, page: PageRequest, csq: CombinedSceneQueryParams) => {
           val scenesInsertWithUserProjectIO = for {
             orgUserProject <- insertUserOrgProject(user, org, project)
             (dbOrg, dbUser, dbProject) = orgUserProject
-            datasource <- unsafeGetRandomDatasource
-            scenesInsert <- (scenes map { fixupSceneCreate(dbUser, dbOrg, datasource, _) }).traverse(
+            datasource <- DatasourceDao.create(dsCreate.toDatasource(dbUser), dbUser)
+            scenesInsert <- (scenes map { fixupSceneCreate(dbUser, datasource, _) }).traverse(
               (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
             )
           } yield (scenesInsert, dbUser, dbProject)
@@ -69,6 +53,41 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
     }
   }
 
+  test("list authorized scenes") {
+    check {
+      forAll {
+        (user1: User.Create, user2: User.Create, org: Organization.Create, pageRequest: PageRequest,
+         scenes1: List[Scene.Create], scenes2: List[Scene.Create],
+         dsCreate1: Datasource.Create, dsCreate2: Datasource.Create) => {
+          val scenesIO = for {
+            dbUser1 <- UserDao.create(user1)
+            dbUser2 <- UserDao.create(user2)
+            datasource1 <- DatasourceDao.create(dsCreate1.toDatasource(dbUser1), dbUser1)
+            datasource2 <- DatasourceDao.create(dsCreate2.toDatasource(dbUser2), dbUser2)
+            dbScenes1 <- (scenes1 map {
+              (scene: Scene.Create) => fixupSceneCreate(dbUser1, datasource1, scene)
+            }).traverse(
+              (scene: Scene.Create) => SceneDao.insert(scene, dbUser1)
+            )
+            _ <- (scenes2 map {
+              (scene: Scene.Create) => fixupSceneCreate(dbUser2, datasource2, scene)
+            }).traverse(
+              (scene: Scene.Create) => SceneDao.insert(scene, dbUser2)
+            )
+            listedScenes <- SceneWithRelatedDao.listAuthorizedScenes(pageRequest, CombinedSceneQueryParams(), dbUser1)
+          } yield { (dbScenes1, listedScenes) }
+
+          val (insertedScenes, listedScenes) = scenesIO.transact(xa).unsafeRunSync
+          val insertedNamesSet = insertedScenes.toSet map { (scene: Scene.WithRelated) => scene.name }
+          val listedNamesSet = listedScenes.results.toSet map { (scene: Scene.WithRelated) => scene.name }
+          assert(listedNamesSet.intersect(insertedNamesSet) == listedNamesSet,
+                 "listed scenes should be a strict subset of inserted scenes by user 1")
+          true
+        }
+      }
+    }
+  }
+
   test("get scenes to ingest") {
     check {
       forAll {
@@ -77,7 +96,7 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
             orgUserProject <- insertUserOrgProject(user, org, project)
             (dbOrg, dbUser, dbProject) = orgUserProject
             datasource <- unsafeGetRandomDatasource
-            scenesInsert <- (scenes map { fixupSceneCreate(dbUser, dbOrg, datasource, _) }).traverse(
+            scenesInsert <- (scenes map { fixupSceneCreate(dbUser, datasource, _) }).traverse(
               (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
             )
           } yield (scenesInsert, dbUser, dbProject)

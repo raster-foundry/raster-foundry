@@ -31,6 +31,11 @@ class ImportListController {
         this.populateImportList(this.$state.params.page || 1);
         this.sceneActions = [
             {
+                label: 'Modify permissions',
+                onClick: this.shareModal.bind(this),
+                iconClass: 'icon-key'
+            },
+            {
                 label: 'Download',
                 onClick: this.downloadModal.bind(this),
                 iconClass: 'icon-download'
@@ -95,6 +100,18 @@ class ImportListController {
             component: 'rfSceneDownloadModal',
             resolve: {
                 scene: () => scene
+            }
+        });
+    }
+
+    shareModal(scene) {
+        this.modalService.open({
+            component: 'permissionsModal',
+            resolve: {
+                object: () => scene,
+                permissionsBase: () => 'scenes',
+                objectName: () => scene.name,
+                extraActions: () => []
             }
         });
     }

@@ -1,55 +1,70 @@
 import angular from 'angular';
+import _ from 'lodash';
 
 class PlatformUsersController {
-    constructor(modalService) {
+    constructor(
+        $scope, $stateParams,
+        modalService, platformService
+    ) {
+        this.$scope = $scope;
+        this.$stateParams = $stateParams;
+
         this.modalService = modalService;
-        this.fetchUsers();
+        this.platformService = platformService;
+        // check if has permissions for platform page
+        this.fetching = true;
+        this.platAdminEmail = 'example@email.com';
+
+        let debouncedSearch = _.debounce(
+            this.onSearch.bind(this),
+            500,
+            {leading: false, trailing: true}
+        );
+
+        this.$scope.$watch('$ctrl.search', debouncedSearch);
     }
 
-    fetchUsers() {
-        this.users = [
-            {
-                id: '1',
-                name: 'user one',
-                email: 'user@example.com',
-                organization: 'Organization one',
-                role: 'Manager',
-                teams: [1]
-            },
-            {
-                id: '2',
-                name: 'user two',
-                email: 'user@example.com',
-                organization: 'Organization two',
-                role: 'Viewer',
-                teams: []
-            },
-            {
-                id: '3',
-                name: 'user three',
-                email: 'user@example.com',
-                organization: 'Organization three',
-                role: 'Uploader',
-                teams: [1, 2, 3]
-            },
-            {
-                id: '4',
-                name: 'user four',
-                email: 'user@example.com',
-                organization: 'Organization four',
-                role: 'Uploader',
-                teams: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-            }
-        ];
+    onSearch(search) {
+        // eslint-disable-next-line
+        this.fetchUsers(undefined, search);
+    }
 
-        this.users.forEach(
-            (user) => Object.assign(
-                user, {
+    updatePagination(data) {
+        this.pagination = {
+            show: data.count > data.pageSize,
+            count: data.count,
+            currentPage: data.page + 1,
+            startingItem: data.page * data.pageSize + 1,
+            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
+            hasNext: data.hasNext,
+            hasPrevious: data.hasPrevious
+        };
+    }
+
+    fetchUsers(page = 1, search) {
+        let platformId = this.$stateParams.platformId;
+        this.fetching = true;
+        this.platformService.getMembers(
+            platformId,
+            page - 1,
+            search && search.length ? search : null
+        ).then((response) => {
+            this.fetching = false;
+            this.updatePagination(response);
+            this.lastUserResult = response;
+            this.users = response.results;
+
+            this.users.forEach(user => {
+                Object.assign(user, {
                     options: {
                         items: this.itemsForUser(user)
                     }
-                }
-            ));
+                });
+            });
+        }, (error) => {
+            this.fetching = false;
+            this.errrorMsg = `${error.data}. Please contact `;
+        });
     }
 
     itemsForUser(user) {
@@ -60,13 +75,6 @@ class PlatformUsersController {
                 callback: () => {
                     console.log('edit callback for user:', user);
                 }
-            },
-            {
-                label: 'Delete',
-                callback: () => {
-                    console.log('delete callback for user:', user);
-                },
-                classes: ['color-danger']
             }
         ];
         /* eslint-enable */

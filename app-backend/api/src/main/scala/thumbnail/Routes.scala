@@ -36,63 +36,10 @@ trait ThumbnailRoutes extends Authentication
 
   val xa: Transactor[IO]
 
-  val thumbnailRoutes: Route = handleExceptions(userExceptionHandler) {
-    pathEndOrSingleSlash {
-      get { listThumbnails } ~
-      post {
-        traceName("thumbnails-list") {
-          createThumbnail
-        }
-      }
-    } ~
-    pathPrefix(JavaUUID) { thumbnailId =>
-      pathEndOrSingleSlash {
-        get { traceName("thumbnails-detail") {
-          getThumbnail(thumbnailId) }
-        } ~
-        put { updateThumbnail(thumbnailId) } ~
-        delete { deleteThumbnail(thumbnailId) }
-      }
-    } ~
-    pathPrefix(Segment) { thumbnailPath =>
-      pathEndOrSingleSlash {
-        get { getThumbnailImage(thumbnailPath) }
-      }
-    }
-  }
-
   val thumbnailImageRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix(Segment) { thumbnailPath =>
       pathEndOrSingleSlash {
         get { getThumbnailImage(thumbnailPath) }
-      }
-    }
-  }
-
-  def listThumbnails: Route = authenticate { user =>
-    (withPagination & thumbnailSpecificQueryParameters) { (page, thumbnailParams) =>
-      complete {
-        ThumbnailDao.query.ownerFilter(user).filter(thumbnailParams).page(page).transact(xa).unsafeToFuture
-      }
-    }
-  }
-
-  def createThumbnail: Route = authenticate { user =>
-    entity(as[Thumbnail.Create]) { newThumbnail =>
-      authorize(user.isInRootOrSameOrganizationAs(newThumbnail)) {
-        onSuccess(ThumbnailDao.insert(newThumbnail.toThumbnail).transact(xa).unsafeToFuture) { thumbnail =>
-          complete(StatusCodes.Created, thumbnail)
-        }
-      }
-    }
-  }
-
-  def getThumbnail(thumbnailId: UUID): Route = authenticate { user =>
-    withPagination { page =>
-      rejectEmptyResponse {
-        complete {
-          ThumbnailDao.query.ownerFilter(user).filter(thumbnailId).selectOption.transact(xa).unsafeToFuture
-        }
       }
     }
   }
@@ -109,21 +56,5 @@ trait ThumbnailRoutes extends Authentication
     complete(HttpResponse(entity =
       HttpEntity(ContentType(s3MediaType), S3.getObjectBytes(s3Object))
     ))
-  }
-
-  def updateThumbnail(thumbnailId: UUID): Route = authenticate { user =>
-    entity(as[Thumbnail]) { updatedThumbnail =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedThumbnail)) {
-        onSuccess(ThumbnailDao.update(updatedThumbnail, thumbnailId).transact(xa).unsafeToFuture) {
-          completeSingleOrNotFound
-        }
-      }
-    }
-  }
-
-  def deleteThumbnail(thumbnailId: UUID): Route = authenticate { user =>
-    onSuccess(ThumbnailDao.query.ownerFilter(user).filter(fr"id = ${thumbnailId}").delete.transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
-    }
   }
 }

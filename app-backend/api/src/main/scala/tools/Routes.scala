@@ -17,7 +17,7 @@ import kamon.akka.http.KamonTraceDirectives
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.database.ToolDao
+import com.azavea.rf.database.{AccessControlRuleDao, ToolDao}
 import doobie._
 import doobie.implicits._
 import doobie.Fragments.in
@@ -81,15 +81,51 @@ trait ToolRoutes extends Authentication
             }
           }
         }
-      }
+      } ~
+        pathPrefix("permissions") {
+          pathEndOrSingleSlash {
+            put {
+              traceName("replace-tool-permissions") {
+                replaceToolPermissions(toolId)
+              }
+            }
+          } ~
+            post {
+              traceName("add-tool-permission") {
+                addToolPermission(toolId)
+              }
+            } ~
+            get {
+              traceName("list-tool-permissions") {
+                listToolPermissions(toolId)
+              }
+            } ~
+            delete {
+              deleteToolPermissions(toolId)
+            }
+        } ~
+        pathPrefix("actions") {
+          pathEndOrSingleSlash {
+            get {
+              traceName("list-user-allowed-actions") {
+                listUserTemplateActions(toolId)
+              }
+            }
+          }
+        }
     }
   }
 
   def getToolSources(toolId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      onSuccess(ToolDao.query.filter(fr"id = ${toolId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture) { maybeTool =>
-        val sources = maybeTool.map(_.definition.as[MapAlgebraAST].valueOr(throw _).sources)
-        complete(sources)
+    authorizeAsync {
+      ToolDao.query.authorized(user, ObjectType.Template, toolId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        onSuccess(ToolDao.query.filter(toolId).selectOption.transact(xa).unsafeToFuture) { maybeTool =>
+          val sources = maybeTool.map(_.definition.as[MapAlgebraAST].valueOr(throw _).sources)
+          complete(sources)
+        }
       }
     }
   }
@@ -97,30 +133,40 @@ trait ToolRoutes extends Authentication
   def listTools: Route = authenticate { user =>
     (withPagination & combinedToolQueryParams) { (page, combinedToolQueryParameters) =>
       complete {
-        ToolDao.query.filter(combinedToolQueryParameters).ownerVisibilityFilter(user).page(page).transact(xa).unsafeToFuture
+        ToolDao
+          .authQuery(user, ObjectType.Template)
+          .filter(combinedToolQueryParameters)
+          .page(page)
+          .transact(xa).unsafeToFuture
       }
     }
   }
 
   def createTool: Route = authenticate { user =>
     entity(as[Tool.Create]) { newTool =>
-      authorize(user.isInRootOrSameOrganizationAs(newTool)) {
-        onSuccess(ToolDao.insert(newTool, user).transact(xa).unsafeToFuture) { tool =>
-          complete(StatusCodes.Created, tool)
-        }
+      onSuccess(ToolDao.insert(newTool, user).transact(xa).unsafeToFuture) { tool =>
+        complete(StatusCodes.Created, tool)
       }
     }
   }
 
   def getTool(toolId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete(ToolDao.query.filter(fr"id = ${toolId}").ownerFilter(user).selectOption.transact(xa).unsafeToFuture)
+    authorizeAsync {
+      ToolDao.query.authorized(user, ObjectType.Template, toolId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete(ToolDao.query.filter(toolId).selectOption.transact(xa).unsafeToFuture)
+      }
     }
   }
 
   def updateTool(toolId: UUID): Route = authenticate { user =>
-    entity(as[Tool]) { updatedTool =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedTool)) {
+    authorizeAsync {
+      ToolDao.query.authorized(user, ObjectType.Template, toolId, ActionType.Edit)
+        .transact(xa).unsafeToFuture
+    } {
+      entity(as[Tool]) { updatedTool =>
         onSuccess(ToolDao.update(updatedTool, toolId, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
@@ -129,8 +175,13 @@ trait ToolRoutes extends Authentication
   }
 
   def deleteTool(toolId: UUID): Route = authenticate { user =>
-    onSuccess(ToolDao.query.filter(fr"id = ${toolId}").ownerFilter(user).delete.transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
+    authorizeAsync {
+      ToolDao.query.authorized(user, ObjectType.Template, toolId, ActionType.Delete)
+        .transact(xa).unsafeToFuture
+    } {
+      onSuccess(ToolDao.query.filter(toolId).delete.transact(xa).unsafeToFuture) {
+        completeSingleOrNotFound
+      }
     }
   }
 
@@ -150,4 +201,73 @@ trait ToolRoutes extends Authentication
     }
   }
 
+  def listToolPermissions(toolId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.listByObject(ObjectType.Template, toolId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def replaceToolPermissions(toolId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        complete {
+          AccessControlRuleDao.replaceWithResults(
+            user, ObjectType.Template, toolId, acrCreates
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def addToolPermission(toolId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[AccessControlRule.Create]) { acrCreate =>
+        complete {
+          AccessControlRuleDao.createWithResults(
+            acrCreate.toAccessControlRule(user, ObjectType.Template, toolId)
+          ).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def listUserTemplateActions(templateId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolDao.query.authorized(user, ObjectType.Template, templateId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } { user.isSuperuser match {
+         case true => complete(List("*"))
+         case false =>
+           onSuccess(
+             ToolDao.query.filter(templateId).select.transact(xa).unsafeToFuture
+           ) { template =>
+             template.owner == user.id match {
+               case true => complete(List("*"))
+               case false => complete {
+                 AccessControlRuleDao.listUserActions(user, ObjectType.Template, templateId)
+                   .transact(xa).unsafeToFuture
+               }
+             }
+           }
+       }
+    }
+  }
+
+  def deleteToolPermissions(toolId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
+    } {
+      complete {
+        AccessControlRuleDao.deleteByObject(ObjectType.Template, toolId).transact(xa).unsafeToFuture
+      }
+    }
+  }
 }

@@ -1,9 +1,23 @@
 import angular from 'angular';
 
 class PlatformController {
-    constructor() {
-        // eslint-disable-next-line
-        console.log('Platform Controller');
+    constructor($stateParams, platformService, authService) {
+        'ngInject';
+        this.$stateParams = $stateParams;
+        this.platformService = platformService;
+        this.authService = authService;
+        this.fetching = true;
+    }
+
+    $onInit() {
+        this.platformService
+            .getPlatform(this.$stateParams.platformId)
+            .then((platform) => {
+                this.platform = platform;
+                this.fetching = false;
+            });
+        this.currentUserPromise = this.authService.getCurrentUser().then();
+        this.currentUgrPromise = this.authService.fetchUserRoles().then();
     }
 }
 

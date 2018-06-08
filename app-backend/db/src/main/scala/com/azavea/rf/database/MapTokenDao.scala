@@ -2,6 +2,7 @@ package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -24,7 +25,7 @@ object MapTokenDao extends Dao[MapToken] {
     sql"""
       SELECT
         id, created_at, created_by, modified_at, modified_by,
-        owner, organization_id, name, project_id, toolrun_id
+        owner, name, project_id, toolrun_id
       FROM
     """ ++ tableF
 
@@ -35,14 +36,56 @@ object MapTokenDao extends Dao[MapToken] {
 
     sql"""
        INSERT INTO map_tokens
-          (id, created_at, created_by, modified_at, modified_by, owner, organization_id, name, project_id, toolrun_id)
+          (id, created_at, created_by, modified_at, modified_by, owner, name, project_id, toolrun_id)
        VALUES
-          (${id}, ${now}, ${user.id}, ${now}, ${user.id}, ${ownerId}, ${newMapToken.organizationId}, ${newMapToken.name},
+          (${id}, ${now}, ${user.id}, ${now}, ${user.id}, ${ownerId}, ${newMapToken.name},
            ${newMapToken.project}, ${newMapToken.toolRun})
        """.update.withUniqueGeneratedKeys[MapToken](
       "id", "created_at", "created_by", "modified_at", "modified_by",
-      "owner", "organization_id", "name", "project_id", "toolrun_id"
+      "owner", "name", "project_id", "toolrun_id"
     )
+  }
+
+  def authorize(mapTokenId: UUID, user: User, actionType: ActionType): ConnectionIO[Boolean] = for {
+    mapTokenO <- MapTokenDao.query.filter(mapTokenId).selectOption
+    projAuthed = (
+      mapTokenO flatMap { _.project } map {
+        (projectId: UUID) => {
+          ProjectDao.query.authorized(user, ObjectType.Project, projectId, actionType)
+        }
+      }
+    ).getOrElse(false.pure[ConnectionIO])
+    toolRunAuthed = (
+      mapTokenO flatMap { _.toolRun } map {
+        (toolRunId: UUID) => {
+          ToolRunDao.query.authorized(user, ObjectType.Analysis, toolRunId, actionType)
+        }
+      }
+    ).getOrElse(false.pure[ConnectionIO])
+    authTuple <- (projAuthed, toolRunAuthed).tupled
+  } yield { authTuple._1 || authTuple._2 }
+
+  def listAuthorizedMapTokens(user: User, mapTokenParams: CombinedMapTokenQueryParameters, page: PageRequest): ConnectionIO[PaginatedResponse[MapToken]] = {
+    val authedProjectsIO = ProjectDao.authQuery(user, ObjectType.Project).list
+    val authedAnalysesIO = ToolRunDao.authQuery(user, ObjectType.Analysis).list
+
+    for {
+      projAndAnalyses <- (authedProjectsIO, authedAnalysesIO).tupled
+      (authedProjects, authedAnalyses) = projAndAnalyses
+      projIdsF: Option[Fragment] = (authedProjects map { _.id }).toNel map {
+        Fragments.in(fr"project_id", _)
+      }
+      analysesIdsF: Option[Fragment] = (authedAnalyses map { _.id  }).toNel map {
+        Fragments.in(fr"toolrun_id", _)
+      }
+      authFilterF: Fragment = Fragments.orOpt(projIdsF, analysesIdsF, Some(fr"owner = ${user.id}"))
+      mapTokens <- {
+        MapTokenDao.query
+          .filter(mapTokenParams)
+          .filter(authFilterF)
+          .page(page)
+      }
+    } yield { mapTokens }
   }
 
   def update(mapToken: MapToken, id: UUID, user: User): ConnectionIO[Int] = {
@@ -57,14 +100,13 @@ object MapTokenDao extends Dao[MapToken] {
          owner = ${mapToken.owner},
          name = ${mapToken.name},
          project_id = ${mapToken.project},
-         toolrun_id = ${mapToken.project}
-       """ ++ Fragments.whereAndOpt(ownerEditFilter(user), Some(idFilter))).update.run
+         toolrun_id = ${mapToken.toolRun}
+       """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
   def create(
     user: User,
     owner: Option[String],
-    organizationId: UUID,
     name: String,
     project: Option[UUID],
     toolRun: Option[UUID]
@@ -72,7 +114,7 @@ object MapTokenDao extends Dao[MapToken] {
     val id = UUID.randomUUID
     val now = new Timestamp((new java.util.Date()).getTime())
     val ownerId = util.Ownership.checkOwner(user, owner)
-    val newMapToken = MapToken.Create(organizationId, name, project, toolRun, Some(ownerId))
+    val newMapToken = MapToken.Create(name, project, toolRun, Some(ownerId))
     insert(newMapToken, user)
   }
 }

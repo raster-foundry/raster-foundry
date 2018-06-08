@@ -20,7 +20,6 @@ case class Project(
   id: UUID,
   createdAt: Timestamp,
   modifiedAt: Timestamp,
-  organizationId: UUID,
   createdBy: String,
   modifiedBy: String,
   owner: String,
@@ -60,7 +59,6 @@ object Project extends GeoJsonSupport {
   }
 
   case class Create(
-    organizationId: UUID,
     name: String,
     description: String,
     visibility: Visibility,
@@ -81,7 +79,6 @@ object Project extends GeoJsonSupport {
         UUID.randomUUID, // primary key
         now, // createdAt
         now, // modifiedAt
-        organizationId,
         user.id, // createdBy
         user.id, // modifiedBy
         ownerId, // owner
@@ -105,8 +102,7 @@ object Project extends GeoJsonSupport {
   object Create {
     /** Custon Circe decoder for [[Create]], to handle default values. */
     implicit val dec: Decoder[Create] = Decoder.instance(c =>
-      (c.downField("organizationId").as[UUID]
-        |@| c.downField("name").as[String]
+      (c.downField("name").as[String]
         |@| c.downField("description").as[String]
         |@| c.downField("visibility").as[Visibility]
         |@| c.downField("tileVisibility").as[Visibility]

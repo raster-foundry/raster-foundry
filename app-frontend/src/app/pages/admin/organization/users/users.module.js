@@ -1,51 +1,95 @@
 import angular from 'angular';
+import _ from 'lodash';
 
 class OrganizationUsersController {
-    constructor(modalService) {
+    constructor(
+        $scope, $stateParams,
+        modalService, organizationService
+    ) {
+        this.$scope = $scope;
+        this.$stateParams = $stateParams;
         this.modalService = modalService;
-        this.fetchUsers();
+        this.organizationService = organizationService;
+        this.fetching = true;
+
+        this.platAdminEmail = 'example@email.com';
+
+        let debouncedSearch = _.debounce(
+            this.onSearch.bind(this),
+            500,
+            {leading: false, trailing: true}
+        );
+
+        this.orgWatch = this.$scope.$parent.$watch('$ctrl.organization', (organization) => {
+            if (organization && this.orgWatch) {
+                this.orgWatch();
+                delete this.orgWatch;
+                this.organization = organization;
+                this.organizationId = this.organization.id;
+                this.currentUserPromise = this.$scope.$parent.$ctrl.currentUserPromise;
+                this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
+                this.getUserAndUgrs();
+                this.$scope.$watch('$ctrl.search', debouncedSearch);
+            }
+        });
     }
 
-    fetchUsers() {
-        this.users = [
-            {
-                id: '1',
-                name: 'user one',
-                email: 'user@example.com',
-                role: 'Manager',
-                teams: [1]
-            },
-            {
-                id: '2',
-                name: 'user two',
-                email: 'user@example.com',
-                role: 'Viewer',
-                teams: []
-            },
-            {
-                id: '3',
-                name: 'user three',
-                email: 'user@example.com',
-                role: 'Uploader',
-                teams: [1, 2, 3]
-            },
-            {
-                id: '4',
-                name: 'user four',
-                email: 'user@example.com',
-                role: 'Uploader',
-                teams: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-            }
-        ];
+    getUserAndUgrs() {
+        this.currentUserPromise.then(resp => {
+            this.currentUser = resp;
+        });
+        this.currentUgrPromise.then((resp) => {
+            this.currentOrgUgr = resp.filter((ugr) => {
+                return ugr.groupId === this.organizationId;
+            })[0];
+            this.currentPlatUgr = resp.filter((ugr) => {
+                return ugr.groupId === this.organization.platformId;
+            })[0];
+        });
+    }
 
-        this.users.forEach(
-            (user) => Object.assign(
-                user, {
+    onSearch(search) {
+        this.fetchUsers(1, search);
+    }
+
+    updatePagination(data) {
+        this.pagination = {
+            show: data.count > data.pageSize,
+            count: data.count,
+            currentPage: data.page + 1,
+            startingItem: data.page * data.pageSize + 1,
+            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
+            hasNext: data.hasNext,
+            hasPrevious: data.hasPrevious
+        };
+    }
+
+    fetchUsers(page = 1, search) {
+        const platformId = this.organization.platformId;
+        const organizationId = this.organization.id;
+        this.fetching = true;
+        this.organizationService
+            .getMembers(platformId, organizationId, page - 1, search)
+            .then((response) => {
+                this.fetching = false;
+                this.updatePagination(response);
+                this.lastUserResult = response;
+                this.users = response.results;
+
+                let isAdmin = this.currentPlatUgr && this.currentPlatUgr.groupRole === 'ADMIN' ||
+                    this.currentOrgUgr && this.currentOrgUgr.groupRole === 'ADMIN';
+
+                this.users.forEach(user => Object.assign(user, {
                     options: {
                         items: this.itemsForUser(user)
-                    }
-                }
-            ));
+                    },
+                    showOptions: user.isActive && (user.id === this.currentUser.id ||
+                        user.isSuperuser || isAdmin)
+                }));
+            }, (error) => {
+                this.fetching = false;
+                this.errorMsg = `${error.data}. Please contact `;
+            });
     }
 
     itemsForUser(user) {
@@ -56,26 +100,28 @@ class OrganizationUsersController {
                 callback: () => {
                     console.log('edit callback for user:', user);
                 }
-            },
-            {
-                label: 'Delete',
-                callback: () => {
-                    console.log('delete callback for user:', user);
-                },
-                classes: ['color-danger']
             }
+            // {
+            //     label: 'Delete',
+            //     callback: () => {
+            //         console.log('delete callback for user:', user);
+            //     },
+            //     classes: ['color-danger']
+            // }
         ];
         /* eslint-enable */
     }
 
-    newUserModal() {
+    addUserModal() {
         this.modalService.open({
-            component: 'rfUserModal',
-            resolve: { },
-            size: 'sm'
-        }).result.then((result) => {
-            // eslint-disable-next-line
-            console.log('user modal closed with value:', result);
+            component: 'rfAddUserModal',
+            resolve: {
+                platformId: () => this.organization.platformId,
+                organizationId: () => this.organization.id,
+                adminView: () => 'organization'
+            }
+        }).result.then(() => {
+            this.fetchUsers(1, this.search);
         });
     }
 }

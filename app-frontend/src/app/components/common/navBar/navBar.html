@@ -62,7 +62,6 @@
         <i class="icon-extent" ng-if="$ctrl.isMiniVideoHover"></i>
         <i class="icon-cross" ng-if="$ctrl.isMiniVideoHover" ng-click="$ctrl.onVideoClose($event)"></i>
       </div>
-      <div class="admin-logo" ui-sref="admin" feature-flag="profile-org-edit"></div>
       <div uib-dropdown class="dropdown-help" on-toggle="$ctrl.onHelpToggled()" ng-if="$ctrl.showHelpCenter">
         <a href uib-dropdown-toggle class="dropdown-help-link">
           <i class="help-center icon-help"></i>
@@ -107,6 +106,11 @@
           <li>
             <a href ui-sref="settings.profile">
               <i class="icon-settings"></i> Settings
+            </a>
+          </li>
+          <li ng-if="$ctrl.showAdmin">
+            <a href ui-sref="admin">
+              <i class="icon-key"></i> Admin
             </a>
           </li>
           <li role="separator" class="divider"></li>

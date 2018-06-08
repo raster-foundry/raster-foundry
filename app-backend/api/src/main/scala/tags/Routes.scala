@@ -44,30 +44,34 @@ trait ToolTagRoutes extends Authentication
   def listToolTags: Route = authenticate { user =>
     (withPagination) { (page) =>
       complete {
-        ToolTagDao.query.ownerFilter(user).page(page).transact(xa).unsafeToFuture()
+        ToolTagDao.query.filter(user).page(page).transact(xa).unsafeToFuture()
       }
     }
   }
 
   def createToolTag: Route = authenticate { user =>
     entity(as[ToolTag.Create]) { newToolTag =>
-      authorize(user.isInRootOrSameOrganizationAs(newToolTag)) {
-        onSuccess(ToolTagDao.insert(newToolTag, user).transact(xa).unsafeToFuture()) { toolTag =>
-          complete(StatusCodes.Created, toolTag)
-        }
+      onSuccess(ToolTagDao.insert(newToolTag, user).transact(xa).unsafeToFuture()) { toolTag =>
+        complete(StatusCodes.Created, toolTag)
       }
     }
   }
 
   def getToolTag(toolTagId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete(ToolTagDao.query.ownerFilter(user).filter(fr"id = ${toolTagId}").select.transact(xa).unsafeToFuture)
+    authorizeAsync {
+      ToolTagDao.query.ownedBy(user, toolTagId).exists.transact(xa).unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete(ToolTagDao.query.filter(toolTagId).select.transact(xa).unsafeToFuture)
+      }
     }
   }
 
   def updateToolTag(toolTagId: UUID): Route = authenticate { user =>
-    entity(as[ToolTag]) { updatedToolTag =>
-      authorize(user.isInRootOrSameOrganizationAs(updatedToolTag)) {
+    authorizeAsync {
+      ToolTagDao.query.ownedBy(user, toolTagId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[ToolTag]) { updatedToolTag =>
         onSuccess(ToolTagDao.update(updatedToolTag, toolTagId, user).transact(xa).unsafeToFuture()) {
           completeSingleOrNotFound
         }
@@ -76,8 +80,12 @@ trait ToolTagRoutes extends Authentication
   }
 
   def deleteToolTag(toolTagId: UUID): Route = authenticate { user =>
-    onSuccess(ToolTagDao.query.ownerFilter(user).filter(fr"id = ${toolTagId}").delete.transact(xa).unsafeToFuture()) {
-      completeSingleOrNotFound
+    authorizeAsync {
+      ToolTagDao.query.ownedBy(user, toolTagId).exists.transact(xa).unsafeToFuture
+    } {
+      onSuccess(ToolTagDao.query.filter(toolTagId).delete.transact(xa).unsafeToFuture()) {
+        completeSingleOrNotFound
+      }
     }
   }
 
