@@ -1,11 +1,12 @@
 # Change Log
 
-## [](https://github.com/raster-foundry/raster-foundry/tree/) (2018-06-07)
+## [1.0.0](https://github.com/raster-foundry/raster-foundry/tree/1.0.0) (2018-06-08)
 
-[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.36.0...)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.36.0...1.0.0)
 
 **Merged pull requests:**
 
+- Bump up MAML version [\#3481](https://github.com/raster-foundry/raster-foundry/pull/3481)
 - Get subject name in sharing modal. [\#3477](https://github.com/raster-foundry/raster-foundry/pull/3477)
 - Make tool permissions from tools instead of datasources [\#3476](https://github.com/raster-foundry/raster-foundry/pull/3476)
 - Handle case where user tries to log in without a platform or an org [\#3475](https://github.com/raster-foundry/raster-foundry/pull/3475)
