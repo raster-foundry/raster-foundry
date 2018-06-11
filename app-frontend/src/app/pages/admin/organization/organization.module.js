@@ -2,12 +2,12 @@ import angular from 'angular';
 
 class OrganizationController {
     constructor(
-      $stateParams,
+      $stateParams, $q,
       organizationService, authService, modalService) {
         'ngInject';
 
         this.$stateParams = $stateParams;
-
+        this.$q = $q;
         this.organizationService = organizationService;
         this.authService = authService;
         this.modalService = modalService;
@@ -15,29 +15,36 @@ class OrganizationController {
     }
 
     $onInit() {
-        this.organizationService
+        this.currentOrgPromise = this.organizationService
             .getOrganization(this.$stateParams.organizationId)
             .then((organization) => {
                 this.organization = organization;
                 this.orgLogoUri = this.setOrgLogoUri(this.organization.logoUri);
                 this.fetching = false;
+                return organization;
             });
-        this.currentUserPromise = this.authService.getCurrentUser().then();
-        this.currentUgrPromise = this.authService.fetchUserRoles().then();
+        this.currentUserPromise = this.authService.getCurrentUser();
+        this.currentUgrPromise = this.authService.fetchUserRoles();
         this.isLogoChangeAllowed();
     }
 
     isLogoChangeAllowed() {
-        // need to be a superuser or an org admin to change logo
-        let self = this;
-        this.currentUserPromise.then(respUser => {
-            self.currentUgrPromise.then((respUgr) => {
-                let currentOrgUgr = respUgr.filter((ugr) => {
-                    return ugr.groupId === self.$stateParams.organizationId;
-                })[0];
-                self.isSuperOrAdmin = respUser.isSuperuser ||
-                    currentOrgUgr && currentOrgUgr.groupRole === 'ADMIN';
+        // need to be a superuser or a platform/org admin to change logo
+        this.$q.all({
+            respOrg: this.currentOrgPromise,
+            respUser: this.currentUserPromise,
+            respUgr: this.currentUgrPromise
+        }).then(({respOrg, respUser, respUgr}) => {
+            let currentOrgUgr = respUgr.find(ugr => {
+                return ugr.groupId === respOrg.id;
             });
+            let currentPlatUgr = respUgr.find(ugr => {
+                return ugr.groupId === respOrg.platformId;
+            });
+            this.isSuperOrAdmin =
+                respUser.isSuperuser ||
+                currentOrgUgr && currentOrgUgr.groupRole === 'ADMIN' ||
+                currentPlatUgr && currentPlatUgr.groupRole === 'ADMIN';
         });
     }
 

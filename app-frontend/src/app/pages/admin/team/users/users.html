@@ -1,11 +1,12 @@
 <div class="admin-users-content container column-stretch">
   <div class="admin-users-actions">
-    <input type="text" class="form-control admin-search" placeholder="Search for users"
-           ng-model="$ctrl.search" ng-disabled="$ctrl.fetching">
-    <button type="button" class="btn btn-primary"
-            ng-click="$ctrl.addUser()" ng-disabled="$ctrl.fetching">
-      Add users
-    </button>
+      <rf-search on-search="$ctrl.debouncedSearch(value)" placeholder="Search for users" auto-focus="true"></rf-search>
+    <div class="actions-right">
+      <button type="button" class="btn btn-primary"
+              ng-click="$ctrl.addUser()" ng-disabled="$ctrl.fetching">
+        Add users
+      </button>
+    </div>
   </div>
   <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching">
     <tbody>
@@ -23,11 +24,19 @@
           {{user.email}}
         </td>
         <td class="roles titlecase">
-          {{user.groupRole}}
+            <select class="form-control"
+                    ng-model="user.groupRole"
+                    ng-change="$ctrl.updateUserGroupRole(user)"
+                    ng-if="$ctrl.isAdmin"
+            >
+              <option value="ADMIN">Admin</option>
+              <option value="MEMBER">Member</option>
+            </select>
+            <span ng-if="!$ctrl.isAdmin">{{user.groupRole}}</span>
         </td>
         <td class="actions">
           <rf-dropdown data-options="user.options" ng-if="user.showOptions">
-            <span class="icon-caret-down"></span>
+            <span class="icon-edit"></span>
           </rf-dropdown>
         </td>
       </tr>

@@ -2,50 +2,51 @@
   <div ng-if="$ctrl.errorMsg">
     <p>
       {{$ctrl.errorMsg}}
-      <a ng-href="mailto:{{$ctrl.orgAdminEmail}}">organization admin</a>.
     </p>
   </div>
   <div ng-if="!$ctrl.errorMsg">
     <div class="admin-users-actions">
-      <input type="text" class="form-control admin-search" placeholder="Search for teams" ng-disabled="$ctrl.fetching">
-      <button type="button" class="btn btn-primary"
-              ng-click="$ctrl.newTeamModal()" ng-disabled="$ctrl.fetching">
-        New Team
-      </button>
+      <div class="actions-right">
+        <button type="button" class="btn btn-primary"
+                ng-click="$ctrl.newTeamModal()" ng-disabled="$ctrl.fetching">
+          New Team
+        </button>
+      </div>
     </div>
   </div>
   <table class="admin-table admin-team-table" ng-if="!$ctrl.fetching">
-    <thead>
-      <tr>
-        <td>Name</td>
-        <td class="users">Users</td>
-        <td>Actions</td>
-      </tr>
-    </thead>
     <tbody>
       <tr ng-repeat="team in $ctrl.teams track by team.id">
         <td class="name">
-          {{team.name}}
-        </td>
-        <td class="users">
-          <div class="user-avatar"
-               ng-repeat="user in team.fetchedUsers.results track by $index | limitTo : 5"
-               ng-attr-title="{{user.name || user.email || user.id}}"
-          >
-            <img class="avatar" ng-src="{{user.profileImageUri}}">
-          </div>
-          <a class="users-more" title="View team details"
+          <a title="View team details"
              ui-sref="admin.team.users({teamId: team.id})">
-            <ng-pluralize count="team.fetchedUsers.count"
-                          when="{'0': ' No team members',
-                                 '1': ' View 1 team member',
-                                 'other': ' View {} team members'}"
-
-            >
-            </ng-pluralize>
+            {{team.name}}
           </a>
         </td>
-        <td class="teams" ng-if="!team.fetchedUsers">
+        <td class="users">
+          <div class="user-group-avatars">
+            <div class="avatar user-avatar image-placeholder"
+                 ng-if="!user.profileImageUri"
+                 ng-repeat-start="user in team.fetchedUsers.results track by $index | limitTo : 5">
+            </div>
+            <div class="user-avatar"
+                 ng-if="user.profileImageUri"
+                 ng-repeat-end>
+              <img class="avatar"
+                   ng-src="{{user.profileImageUri}}"
+                   ng-attr-title="{{user.name || user.email || user.id}}">
+            </div>
+          </div>
+          &nbsp;
+          <ng-pluralize count="team.fetchedUsers.count"
+                        when="{'0': ' No members',
+                               '1': ' 1 member',
+                               'other': '{} members'}"
+
+          >
+          </ng-pluralize>
+        </td>
+        <td class="users" ng-if="!team.fetchedUsers">
           <a class="users-more" title="View team details"
              ui-sref="admin.team.users({teamId: team.id})">
             Counting members...
@@ -53,7 +54,7 @@
         </td>
         <td class="actions">
           <rf-dropdown data-options="team.options" ng-if="team.showOptions">
-            <span class="icon-caret-down"></span>
+            <span class="icon-edit"></span>
           </rf-dropdown>
         </td>
       </tr>

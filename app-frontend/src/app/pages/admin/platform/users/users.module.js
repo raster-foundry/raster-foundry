@@ -15,13 +15,13 @@ class PlatformUsersController {
         this.fetching = true;
         this.platAdminEmail = 'example@email.com';
 
-        let debouncedSearch = _.debounce(
+        this.debouncedSearch = _.debounce(
             this.onSearch.bind(this),
             500,
             {leading: false, trailing: true}
         );
 
-        this.$scope.$watch('$ctrl.search', debouncedSearch);
+        this.fetchUsers(1, '');
     }
 
     onSearch(search) {
