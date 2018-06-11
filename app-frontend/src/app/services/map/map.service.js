@@ -244,8 +244,16 @@ class MapWrapper {
     }
 
     shouldRectifyBounds(bounds, beforeArea, afterArea) {
+        // NOTE: This magic number was tested to work with MODIS imagery, which is the largest
+        //       that we've worked with so far. The largest I saw was around 10, so 30
+        //       is a conservative guess that should cover everything that matters.
+        //       Essentially, this boils down to checking if
+        //       the middle of a polygon that may cross the anti-meridian is 30 degrees or
+        //       less off center. In order for a scene to not trigger rectification, it
+        //       would need to cover 60+ degrees of longitude
+        const differenceThreshold = 30;
         return bounds &&
-              Math.abs(bounds.getEast() + bounds.getWest()) < 30 &&
+              Math.abs(bounds.getEast() + bounds.getWest()) < differenceThreshold &&
               afterArea < beforeArea;
     }
 
