@@ -216,6 +216,12 @@ class MapWrapper {
         if (allOptions.onEachFeature) {
             allOptions.onEachFeature(geojson, layer);
         }
+
+        if (options && options.rectify) {
+            // TODO: if rectified, needs to duplicate the polygon on the other side of the map
+            this.rectifyLayerCoords(layer);
+        }
+
         this._geoJsonLayerGroup.addLayer(layer);
         if (this._geoJsonMap.has(id)) {
             this._geoJsonMap = this._geoJsonMap.set(
@@ -225,6 +231,36 @@ class MapWrapper {
             this._geoJsonMap = this._geoJsonMap.set(id, [layer]);
         }
         return this;
+    }
+
+    rectifyCoords(latlongs) {
+        return latlongs.map((multipolygon) => {
+            return multipolygon.map((polygon) => {
+                return polygon.map((cord) => {
+                    return {lng: cord.lng > 0 ? cord.lng - 360 : cord.lng, lat: cord.lat};
+                });
+            });
+        });
+    }
+
+    shouldRectifyBounds(bounds, beforeArea, afterArea) {
+        return bounds &&
+              Math.abs(bounds.getEast() + bounds.getWest()) < 30 &&
+              afterArea < beforeArea;
+    }
+
+    rectifyLayerCoords(currentLayer) {
+        const bounds = currentLayer.getBounds && currentLayer.getBounds();
+
+        const currentArea = L.GeometryUtil.geodesicArea(currentLayer.getLatLngs()[0][0]);
+
+        const latlongs = currentLayer.getLatLngs();
+        const newCoords = this.rectifyCoords(latlongs);
+        const rectifiedArea = L.GeometryUtil.geodesicArea(newCoords[0][0]);
+
+        if (this.shouldRectifyBounds(bounds, currentArea, rectifiedArea)) {
+            currentLayer.setLatLngs(newCoords);
+        }
     }
 
     /** Update a geojson layer. Overwrites current contents
@@ -517,14 +553,16 @@ class MapWrapper {
                 }
                 this.setGeojson(
                     'thumbnail',
-                    footprintGeojson
+                    footprintGeojson,
+                    {rectify: true}
                 );
             });
         } else if (scene.dataFootprint) {
             this.deleteLayers('thumbnail');
             this.setGeojson(
                 'thumbnail',
-                footprintGeojson
+                footprintGeojson,
+                {rectify: true}
             );
         }
         return this;
