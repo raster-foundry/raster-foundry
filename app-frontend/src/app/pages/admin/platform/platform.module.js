@@ -18,6 +18,16 @@ class PlatformController {
             });
         this.currentUserPromise = this.authService.getCurrentUser().then();
         this.currentUgrPromise = this.authService.fetchUserRoles().then();
+
+        this.currentUserPromise.then(user => {
+            this.currentUgrPromise.then(ugrs => {
+                let platUgr = ugrs.filter(ugr => ugr.groupId === this.$stateParams.platformId)[0];
+                if (platUgr) {
+                    this.isSuperOrAdmin = user.isActive && user.isSuperuser ||
+                        platUgr.isActive && platUgr.groupRole === 'ADMIN';
+                }
+            });
+        });
     }
 }
 

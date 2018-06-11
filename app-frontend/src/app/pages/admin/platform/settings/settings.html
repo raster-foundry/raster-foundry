@@ -1,4 +1,5 @@
-<div class="admin-users-content-row container column-stretch admin-dashboard admin-settings">
+<div class="admin-users-content-row container column-stretch admin-dashboard admin-settings"
+     ng-if="$ctrl.isSuperOrAdmin">
   <div class="sidebar">
     <nav>
       <a ui-sref="admin.platform.settings.email" ui-sref-active="active">Email Notifications</a>

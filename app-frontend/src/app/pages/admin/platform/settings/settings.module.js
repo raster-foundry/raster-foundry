@@ -1,8 +1,14 @@
 import angular from 'angular';
 
 class PlatformSettingsController {
-    constructor() {
+    constructor($scope) {
         'ngInject';
+
+        this.$scope = $scope;
+    }
+
+    $onInit() {
+        this.isSuperOrAdmin = this.$scope.$parent.$ctrl.isSuperOrAdmin;
     }
 }
 

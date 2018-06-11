@@ -32,7 +32,8 @@
     </div>
     <div class="admin-tab"
          ui-sref="admin.platform.settings.email"
-         ui-sref-active="active">
+         ui-sref-active="active"
+         ng-if="$ctrl.isSuperOrAdmin">
       Settings
     </div>
   </div>
