@@ -3,12 +3,9 @@ import os
 import subprocess
 
 import boto3
-from botocore.exceptions import ClientError
 
 import rf.uploads.geotiff.io as geotiff_io
-from rf.utils.io import s3_obj_exists
-from rf.ingest import geotiff_ingest
-from rf.models import Image, Scene
+from rf.models import Image
 from rf.uploads.landsat8.io import get_tempdir
 
 from .models import Ingest, Layer, Source
@@ -173,6 +170,6 @@ def create_sentinel2_ingest(scene):
     """
 
     scene.images = [make_tif_image_copy(image) for image in scene.images]
-    layer = get_sentinel2_layer(copied)
-    id = copied.id
+    layer = get_sentinel2_layer(scene)
+    id = scene.id
     return Ingest(id, [layer])
