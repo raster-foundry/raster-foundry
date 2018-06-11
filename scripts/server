@@ -21,6 +21,11 @@ then
     then
         docker-compose -f "${DIR}/../docker-compose.yml" \
                        -f "${DIR}/../docker-compose.metrics.yml" up
+    elif [ "${1:-}" = "--quiet" ]
+    then
+        shift
+        docker-compose up -d && \
+            docker-compose logs -f --tail 20 api-server "$@"
     else
         docker-compose up --remove-orphans
     fi
