@@ -6,12 +6,37 @@ import java.sql.Timestamp
 import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
+import io.circe.generic.semiauto._
+import cats.syntax.either._
 
-@JsonCodec
+
 case class Platform(
   id: UUID,
   name: String,
-  settings: Json,
+  publicSettings: Platform.PublicSettings,
   isActive: Boolean,
-  defaultOrganizationId: Option[UUID]
+  defaultOrganizationId: Option[UUID],
+  privateSettings: Platform.PrivateSettings
 )
+
+object Platform {
+
+  def tupled = (Platform.apply _).tupled
+
+  @JsonCodec
+  case class PublicSettings(
+    emailUser: String,
+    emailSmtpHost: String,
+    emailIngestNotification: Boolean,
+    emailAoiNotification: Boolean
+  )
+
+  @JsonCodec
+  case class PrivateSettings(emailPassword: String)
+
+  implicit val decodePlatform: Decoder[Platform] = deriveDecoder[Platform]
+
+  implicit val encodePlatform: Encoder[Platform] = Encoder.forProduct5(
+       "id", "name", "publicSettings", "isActive", "defaultOrganizationId"
+    )(s => (s.id, s.name, s.publicSettings, s.isActive, s.defaultOrganizationId))
+}
