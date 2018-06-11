@@ -71,9 +71,20 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
      """).update.run
   }
 
-  def listMembers(organizationId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
-    UserGroupRoleDao.listUsersByGroup(GroupType.Organization, organizationId, page, searchParams, actingUser)
-
+  def listMembers(organizationId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = for {
+    organizationO <- OrganizationDao.getOrganizationById(organizationId)
+    isDefaultOrg <- organizationO match {
+      case Some(org) => PlatformDao.organizationIsPublicOrg(organizationId, org.platformId)
+      case None => false.pure[ConnectionIO]
+    }
+    usersPage <- UserGroupRoleDao.listUsersByGroup(GroupType.Organization, organizationId, page, searchParams, actingUser)
+    maybeSanitized = isDefaultOrg match {
+      case true => usersPage.copy(
+        results = usersPage.results map { _.copy(email = "") }
+      )
+      case false => usersPage
+    }
+  } yield { maybeSanitized }
 
   def validatePath(platformId: UUID,
                    organizationId: UUID): ConnectionIO[Boolean] =

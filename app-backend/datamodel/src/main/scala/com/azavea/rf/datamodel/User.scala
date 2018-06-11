@@ -89,6 +89,7 @@ object User {
 
   def create = Create.apply _
 
+
   @JsonCodec
   case class WithGroupRole (
     id: String,

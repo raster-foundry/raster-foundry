@@ -19,6 +19,7 @@ import doobie.postgres.implicits._
 import io.circe._
 import kamon.akka.http.KamonTraceDirectives
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
 import java.util.UUID

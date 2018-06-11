@@ -41,7 +41,11 @@ object PlatformDao extends Dao[Platform] {
     query.page(page)
 
   def listMembers(platformId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
-    UserGroupRoleDao.listUsersByGroup(GroupType.Platform, platformId, page, searchParams, actingUser)
+    UserGroupRoleDao.listUsersByGroup(GroupType.Platform, platformId, page, searchParams, actingUser) map {
+      (usersePage: PaginatedResponse[User.WithGroupRole]) => {
+         usersePage.copy(results = usersePage.results map { _.copy(email = "" ) })
+      }
+    }
 
   def create(platform: Platform): ConnectionIO[Platform] = {
     createF(platform).update.withUniqueGeneratedKeys[Platform](
@@ -143,5 +147,13 @@ object PlatformDao extends Dao[Platform] {
        is_active = false,
        where id = ${platformId}
       """).update.run
+  }
+
+  def organizationIsPublicOrg(organizationId: UUID, platformId: UUID): ConnectionIO[Boolean] = {
+    query.filter(platformId).selectOption map {
+      platformO => {
+        platformO.map( _.defaultOrganizationId === Some(organizationId)).getOrElse(false)
+      }
+    }
   }
 }
