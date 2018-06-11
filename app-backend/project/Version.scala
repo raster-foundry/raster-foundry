@@ -39,6 +39,7 @@ object Version {
   val scaffeine          = "2.0.0"
   val scala              = "2.11.11"
   val scalaCheck         = "1.13.4"
+  val scalaCsv           = "1.3.5"
   val scalaForklift      = "0.3.1"
   val scalaLogging       = "3.5.0"
   val scalaTest          = "3.0.1"

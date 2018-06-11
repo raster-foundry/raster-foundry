@@ -1,10 +1,11 @@
 package com.azavea.rf.batch.landsat8
 
 import com.azavea.rf.batch.Job
-import com.azavea.rf.batch.util._
+import com.azavea.rf.batch.util.{isUriExists, S3}
 import com.azavea.rf.database._
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
+import com.github.tototoshi.csv._
 import io.circe._
 import io.circe.syntax._
 import geotrellis.proj4.CRS
@@ -12,8 +13,6 @@ import geotrellis.slick.Projected
 import geotrellis.vector._
 import jp.ne.opt.chronoscala.Imports._
 import org.postgresql.util.PSQLException
-import java.time.{LocalDate, ZoneOffset}
-import java.util.UUID
 
 import cats.implicits._
 import cats.effect.IO
@@ -36,6 +35,12 @@ import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.{Failure, Success, Try}
 import scala.util.control.Breaks._
 
+import java.io.{File, FileInputStream}
+import java.time.{LocalDate, ZoneOffset}
+import java.util.UUID
+
+import sys.process._
+
 
 case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), threshold: Int = 10)(implicit val xa: Transactor[IO]) extends Job {
   val name = ImportLandsat8C1.name
@@ -44,35 +49,29 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
   def s3Client = S3(region = landsat8Config.awsRegion)
 
   protected def rowsFromCsv: List[Map[String, String]] = {
-    val reader = CSV.parse(landsat8Config.usgsLandsatUrlC1)
-    val iterator = reader.iterator()
+    logger.info("Downloading and filtering Landsat CSV")
+    /* This preprocessing downloads the file to stdout, unzips, and filters to the
+     * header row or rows containing the start date in their acquisitionDate column,
+     * I _think_ in a single traversal of the file. Without a very high download speed
+     * (ethernet is slower than wifi in the office, for some reason), it takes about 90
+     * total seconds to do everything.
+     *
+     * Also, java's ProcessBuilder does some weird things to quotes, so while it's necessary
+     * in real life to single-quote the awk script, it's necessary not to here. It's weird
+     * and I don't like it but no quotes/no spaces was the only way I could get it to
+     * interpret the awk script correctly.
+     */
+    s"wget -q -O - ${landsat8Config.usgsLandsatUrlC1}.gz" #|
+        "zcat" #|
+        s"""awk -F, {if($$33=="${startDate}"||/acquisitionDate/){print}}""" #>
+        new File("/tmp/landsat.csv") !
 
-    val endDate = startDate + 1.day
-    val (_, indexToId) = CSV.getBiFunctions(iterator.next())
 
-    var counter = 0
-    var rows = List.empty[Map[String, String]]
-    breakable {
-      while(iterator.hasNext) {
-        val line = reader.readNext()
+    logger.info("CSV downloaded and filtered successfully")
 
-        val row =
-          line
-            .zipWithIndex
-            .map { case (v, i) => indexToId(i) -> v }
-            .toMap
-
-        row.get("acquisitionDate") foreach {
-          dateStr => {
-            val date = LocalDate.parse(dateStr)
-            if (startDate <= date && endDate > date) rows :+= row
-            else if (date > endDate) counter += 1
-          }
-        }
-        if (counter > threshold) break
-      }
-    }
-    logger.info(s"Number of scenes to attempt: ${rows.length}")
+    val reader = CSVReader.open(new File("/tmp/landsat.csv"))
+    val rows = reader.allWithHeaders()
+    logger.info(s"Found ${rows.length} rows for ${startDate}")
     rows
   }
 

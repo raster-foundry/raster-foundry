@@ -15,4 +15,5 @@ object CSV {
 
   def parse(uri: URI): CSVReader = new CSVReader(new InputStreamReader(getStream(uri)))
   def parse(uri: String): CSVReader = parse(new URI(uri))
+  def parse(inf: FileInputStream): CSVReader = parse(inf)
 }
