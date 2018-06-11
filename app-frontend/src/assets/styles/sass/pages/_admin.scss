@@ -7,7 +7,6 @@
 
 .admin-logo {
     border-radius: 3px;
-    background: $gray-lightest;
     width: 4em;
     height: 4em;
     margin-right: 1.4rem;
@@ -124,8 +123,8 @@
     }
 
     .placeholder-avatar {
-        width: 2.5em;
-        height: 2.5em;
+        width: 2.5rem;
+        height: 2.5rem;
         background: #ddd;
         border-radius: 3px;
         margin-right: 1em;
@@ -142,8 +141,8 @@
         text-align: right;
         display: flex;
         flex-direction: row;
-        justify-content: flex-end;
-        align-items: flex-end;
+        justify-content: center;
+        align-items: center;
 
         .users-more {
             padding: 0 1em;
@@ -184,20 +183,28 @@
     }
 
     .users {
-        width: 20em;
-        * {
-            display: inline-block;
-        }
+        min-width: 20em;
+        overflow: hidden;
+        white-space: nowrap;
     }
 
     .actions {
         width: 13em;
+        text-align: right;
         a {
             margin-right: 1em;
         }
         a, rf-dropdown {
             display: inline-block;
         }
+    }
+}
+
+.user-group-avatars {
+    display: inline-block;
+    .user-avatar {
+        display: inline-block;
+        margin-right: 0.25rem;
     }
 }
 

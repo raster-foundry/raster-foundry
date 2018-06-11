@@ -7,16 +7,15 @@
   </div>
   <div ng-if="!$ctrl.errorMsg">
     <div class="admin-users-actions">
-      <input type="text" class="form-control admin-search" placeholder="Search for users"
-             ng-model="$ctrl.search" ng-disabled="$ctrl.fetching">
+      <rf-search on-search="$ctrl.debouncedSearch(value)" placeholder="Search for users" auto-focus="true"></rf-search>
     </div>
     <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching">
       <tbody>
         <tr ng-repeat="user in $ctrl.users track by $index">
           <td class="username">
-            <div class="placeholder-avatar" ng-if="!user.profileImageUri"></div>
-            <div class="user-avatar" ng-if="user.profileImageUri">
-              <img class="avatar" ng-src="{{user.profileImageUri}}">
+            <div class="avatar user-avatar image-placeholder" ng-if="!user.profileImageUri"></div>
+            <div ng-if="user.profileImageUri">
+              <img class="avatar user-avatar" ng-src="{{user.profileImageUri}}">
             </div>
             <div>
               {{user.name || user.email || user.id}}

@@ -47,11 +47,11 @@ export default class NavBarController {
             this.currentUgrPromise = this.authService.fetchUserRoles().then(res => {
                 let isPlatOrgAdmin = res.filter((ugr) => {
                     return ugr.groupType === 'PLATFORM' &&
-                           ugr.groupRole === 'ADMIN' &&
-                           ugr.isActive ||
-                              ugr.groupType === 'ORGANIZATION' &&
-                              ugr.groupRole === 'ADMIN' &&
-                              ugr.isActive;
+                        ugr.groupRole === 'ADMIN' &&
+                        ugr.isActive ||
+                        ugr.groupType === 'ORGANIZATION' &&
+                        ugr.groupRole === 'ADMIN' &&
+                        ugr.isActive;
                 }).length;
                 this.showAdmin = isPlatOrgAdmin || isSuperuser;
             });

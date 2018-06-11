@@ -2,13 +2,11 @@
   <div ng-if="$ctrl.errorMsg">
     <p>
       {{$ctrl.errorMsg}}
-      <a ng-href="mailto:{{$ctrl.platAdminEmail}}">platform admin</a>.
     </p>
   </div>
   <div ng-if="!$ctrl.errorMsg">
     <div class="admin-users-actions">
-      <input type="text" class="form-control admin-search" placeholder="Search for users"
-             ng-model="$ctrl.search">
+      <rf-search on-search="$ctrl.debouncedSearch(value)" placeholder="Search for users" auto-focus="true"></rf-search>
       <div class="actions-right">
         <button type="button" class="btn btn-primary"
                 ng-click="$ctrl.addUserModal()"
@@ -19,20 +17,12 @@
     </div>
   </div>
   <table class="admin-table admin-org-user-table" ng-if="!$ctrl.fetching">
-    <thead>
-      <tr>
-        <td>Name</td>
-        <td>Email</td>
-        <td>Role</td>
-        <td>Teams</td>
-      </tr>
-    </thead>
     <tbody>
       <tr ng-repeat="user in $ctrl.users track by $index">
         <td class="username">
-          <div class="placeholder-avatar" ng-if="!user.profileImageUri"></div>
-          <div class="user-avatar" ng-if="user.profileImageUri">
-            <img class="avatar" ng-src="{{user.profileImageUri}}">
+          <div class="avatar user-avatar image-placeholder" ng-if="!user.profileImageUri"></div>
+          <div ng-if="user.profileImageUri">
+            <img class="avatar user-avatar" ng-src="{{user.profileImageUri}}">
           </div>
           <div>
             {{user.name || user.email || user.id}}
@@ -46,13 +36,12 @@
                     ng-model="user.groupRole"
                     ng-disabled="$ctrl.disabled"
                     ng-change="$ctrl.updateUserGroupRole(user)"
+                    ng-if="$ctrl.currentPlatUgr.groupRole === 'ADMIN' || $ctrl.currentOrgUgr.groupRole === 'ADMIN'"
             >
               <option value="ADMIN">Admin</option>
               <option value="MEMBER">Member</option>
             </select>
-        </td>
-        <td class="teams">
-          In {{user.teams.length || 0}} teams
+            <span ng-if="!$ctrl.currentPlatUgr.groupRole === 'ADMIN' && !$ctrl.currentOrgUgr.groupRole === 'ADMIN'">{{user.groupRole}}</span>
         </td>
       </tr>
     </tbody>

@@ -14,7 +14,7 @@ class OrganizationUsersController {
 
         this.platAdminEmail = 'example@email.com';
 
-        let debouncedSearch = _.debounce(
+        this.debouncedSearch = _.debounce(
             this.onSearch.bind(this),
             500,
             {leading: false, trailing: true}
@@ -29,7 +29,7 @@ class OrganizationUsersController {
                 this.currentUserPromise = this.$scope.$parent.$ctrl.currentUserPromise;
                 this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
                 this.getUserAndUgrs();
-                this.$scope.$watch('$ctrl.search', debouncedSearch);
+                this.fetchUsers(1, '');
             }
         });
     }
@@ -105,19 +105,19 @@ class OrganizationUsersController {
     itemsForUser(user) {
         /* eslint-disable */
         return [
-            // {
-            //     label: 'Edit',
-            //     callback: () => {
-            //         console.log('edit callback for user:', user);
-            //     }
-            // }
-            // {
-            //     label: 'Delete',
-            //     callback: () => {
-            //         console.log('delete callback for user:', user);
-            //     },
-            //     classes: ['color-danger']
-            // }
+            {
+                label: 'Edit',
+                callback: () => {
+                    console.log('edit callback for user:', user);
+                }
+            },
+            {
+                label: 'Delete',
+                callback: () => {
+                    console.log('delete callback for user:', user);
+                },
+                classes: ['color-danger']
+            }
         ];
         /* eslint-enable */
     }
