@@ -13,6 +13,12 @@
     width: 22rem;
   }
 
+  .admin-dashboard & {
+    border-right-width: 1px;
+    padding: 2rem 0 0 3rem;
+    width: 22rem;
+  }
+
   .dashboard-filter & {
     border-right: 1px solid $border-color-default;
     padding: 2rem;
@@ -276,7 +282,7 @@ rf-scene-filter-pane {
       background-color: $brand-primary;
     }
 
-    /* prevent title from persisting 
+    /* prevent title from persisting
     after clicking tab */
     &:focus:before,
     &:focus:after {

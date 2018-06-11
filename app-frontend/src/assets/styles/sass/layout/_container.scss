@@ -60,3 +60,7 @@ $navbar-secondary-height: 4.7rem !default;
     min-height: calc(100vh - #{$navbar-height + $navbar-secondary-height}); // Fixes flex + height issue in some browsers
   }
 }
+
+.admin-settings{
+  top: -3rem;
+}

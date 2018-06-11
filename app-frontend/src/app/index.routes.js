@@ -59,6 +59,8 @@ import organizationSettingsTpl from './pages/admin/organization/settings/setting
 import platformTpl from './pages/admin/platform/platform.html';
 import platformMetricsTpl from './pages/admin/platform/metrics/metrics.html';
 import platformUsersTpl from './pages/admin/platform/users/users.html';
+import platformSettingsTpl from './pages/admin/platform/settings/settings.html';
+import platformSettingsEmailTpl from './pages/admin/platform/settings/email/email.html';
 import platformOrganizationsTpl from './pages/admin/platform/organizations/organizations.html';
 import platformOrganizationsDetailTpl from './pages/admin/platform/organizations/detail/detail.html';
 import adminDetailFeaturesTpl from './pages/admin/platform/organizations/detail/features/features.html';
@@ -526,6 +528,20 @@ function adminStates($stateProvider) {
             url: '/users',
             templateUrl: platformUsersTpl,
             controller: 'PlatformUsersController',
+            controllerAs: '$ctrl'
+        })
+        .state('admin.platform.settings', {
+            url: '/settings',
+            title: 'Platform Settings',
+            templateUrl: platformSettingsTpl,
+            controller: 'PlatformSettingsController',
+            controllerAs: '$ctrl'
+        })
+        .state('admin.platform.settings.email', {
+            url: '/email',
+            title: 'Platform Email Settings',
+            templateUrl: platformSettingsEmailTpl,
+            controller: 'PlatformEmailController',
             controllerAs: '$ctrl'
         })
         .state('admin.platform.organizations', {
