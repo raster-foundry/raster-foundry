@@ -9,7 +9,14 @@ object M123 {
       TO public_settings;
 
     ALTER TABLE platforms
-      ADD COLUMN private_settings JSONB NOT NULL default '{}';
+    ALTER COLUMN public_settings
+    SET DEFAULT
+      JSONB '{
+        "emailUser": "",
+        "emailSmtpHost": "",
+        "emailIngestNotification": false,
+        "emailAoiNotification": false
+      }';
 
     UPDATE platforms
     SET public_settings = JSONB '{
@@ -19,10 +26,11 @@ object M123 {
       "emailAoiNotification": false
     }';
 
-    UPDATE platforms
-    SET private_settings = JSONB '{
-      "emailPassword": ""
-    }';
+    ALTER TABLE platforms
+      ADD COLUMN private_settings JSONB NOT NULL default
+        JSONB '{
+          "emailPassword": ""
+        }';
     """
   ))
 }

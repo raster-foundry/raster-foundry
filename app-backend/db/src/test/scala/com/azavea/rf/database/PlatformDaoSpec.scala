@@ -44,7 +44,8 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
           val dbPlatform = insertPlatformIO.transact(xa).unsafeRunSync
 
           dbPlatform.name == platform.name &&
-            dbPlatform.publicSettings == platform.publicSettings
+            dbPlatform.publicSettings == platform.publicSettings &&
+            dbPlatform.privateSettings == platform.privateSettings
         }
       }
     }
@@ -73,7 +74,8 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
         val (affectedRows, updatedPlatform) = updatePlatformWithPlatformAndAffectedRowsIO.transact(xa).unsafeRunSync
           affectedRows == 1 &&
             updatedPlatform.name == platformUpdate.name &&
-            updatedPlatform.publicSettings == platformUpdate.publicSettings
+            updatedPlatform.publicSettings == platformUpdate.publicSettings &&
+            updatedPlatform.privateSettings == platformUpdate.privateSettings
         }
       }
     }
