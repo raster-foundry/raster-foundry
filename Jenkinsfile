@@ -29,9 +29,11 @@ node {
       if (env.BRANCH_NAME =~ /(release|hotfix)\//) {
         env.RF_DOCS_BUCKET = 'rasterfoundry-production-docs-site-us-east-1'
         env.RF_DEPLOYMENT_BRANCH = 'master'
+        env.RF_DEPLOYMENT_ENVIRONMENT = "Production"
       } else {
         env.RF_DOCS_BUCKET = 'rasterfoundry-staging-docs-site-us-east-1'
         env.RF_DEPLOYMENT_BRANCH = 'develop'
+        env.RF_DEPLOYMENT_ENVIRONMENT = "Staging"
       }
 
       // Publish container images built and tested during `cibuild`
