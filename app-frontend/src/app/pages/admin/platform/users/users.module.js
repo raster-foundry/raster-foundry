@@ -6,6 +6,7 @@ class PlatformUsersController {
         $scope, $stateParams, $q,
         modalService, platformService
     ) {
+        'ngInject';
         this.$scope = $scope;
         this.$stateParams = $stateParams;
         this.$q = $q;

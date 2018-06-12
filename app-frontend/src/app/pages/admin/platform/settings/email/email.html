@@ -1,0 +1,68 @@
+<div class="content column-10">
+  <div class="dashboard-header">
+    <h1 class="h3 page-title">Email Notifications</h1>
+  </div>
+  <form name="emailSettings" autocomplete="off">
+    <input autocomplete="false" name="hidden" type="text" style="display:none;">
+    <div class="form-group">
+      <label for="name">User Name</label>
+      <input id="name"
+             type="email"
+             class="form-control"
+             name="email"
+             ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailUser.length ?
+               $ctrl.platformBuffer.publicSettings.emailUser : 'user@example.com'}}"
+             ng-model="$ctrl.platformBuffer.publicSettings.emailUser"
+             required>
+      <span class="error color-danger" ng-show="emailSettings.email.$error.required">required</span>
+      <span class="error color-danger" ng-show="emailSettings.email.$error.email">invalid email</span>
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input id="password"
+             type="password"
+             class="form-control"
+             name="password"
+             placeholder="******"
+             ng-model="$ctrl.platformBuffer.privateSettings.emailPassword"
+             required>
+      <span class="error color-danger" ng-show="emailSettings.password.$error.required">required</span>
+    </div>
+    <div class="form-group">
+      <label for="smtp">SMTP Host</label>
+      <input id="smtp"
+             type="text"
+             class="form-control"
+             name="smtp"
+             ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailSmtpHost.length ?
+               $ctrl.platformBuffer.publicSettings.emailSmtpHost : 'smtp.example.com'}}"
+             ng-model="$ctrl.platformBuffer.publicSettings.emailSmtpHost"
+             required>
+     <span class="error color-danger" ng-show="emailSettings.smtp.$error.required">required</span>
+    </div>
+    <div class="form-group">
+      <label>Subscriptions</label>
+      <rf-toggle value="$ctrl.platformBuffer.publicSettings.emailIngestNotification"
+                 on-change="$ctrl.onToggleChange('ingest')"
+                 class="subscription-toggle">
+        <span>Ingest Status</span>
+      </rf-toggle>
+      <rf-toggle value="$ctrl.platformBuffer.publicSettings.emailAoiNotification"
+                 on-change="$ctrl.onToggleChange('aoi')"
+                 class="subscription-toggle">
+        <span class="subscription-selection">AOI Update</span>
+      </rf-toggle>
+      <button type="button"
+              class="btn btn-primary pull-right"
+              ng-class="{'btn-danger': $ctrl.error }"
+              ng-click="$ctrl.onSubmit()"
+              ng-disabled="
+                emailSettings.email.$error.required ||
+                emailSettings.email.$error.email ||
+                emailSettings.password.$error.required ||
+                emailSettings.smtp.$error.required">
+        {{$ctrl.getButtonText()}}
+      </button>
+    </div>
+  </form>
+</div>

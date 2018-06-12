@@ -3087,3 +3087,14 @@ rf-reclassify-table {
     text-transform: uppercase;
   }
 }
+
+// page route: admin/platform/<id>/settings/email
+.subscription-toggle {
+  & .checkbox {
+    padding-top: 1rem;
+
+    & span {
+      padding-left: 1rem;
+    }
+  }
+}

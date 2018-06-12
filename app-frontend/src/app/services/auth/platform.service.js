@@ -30,6 +30,12 @@ export default (app) => {
                     setPlatformStatus: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:id/`,
                         method: 'POST'
+                    },
+                    updatePlatform: {
+                        method: 'PUT',
+                        params: {
+                            id: '@id'
+                        }
                     }
                 }
             );
@@ -71,6 +77,10 @@ export default (app) => {
 
         deactivatePlatform(platformId) {
             return this.Platform.setPlatformStatus({id: platformId}, {isActive: false});
+        }
+
+        updatePlatform(params) {
+            return this.Platform.updatePlatform(params).$promise;
         }
     }
 
