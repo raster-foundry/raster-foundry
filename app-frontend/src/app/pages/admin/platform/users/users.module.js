@@ -45,7 +45,7 @@ class PlatformUsersController {
             platform: this.platformPromise
         }).then(({ugrs, platform}) => {
             this.currentPlatUgr = ugrs.find((ugr) => {
-                return ugr.groupId === platform.id;
+                return ugr.groupId === platform.id && ugr.groupRole === 'ADMIN';
             });
         });
     }

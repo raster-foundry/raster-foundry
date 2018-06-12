@@ -17,8 +17,8 @@
               <div ng-if="organization.logoUri">
                 <img class="avatar user-avatar" ng-src="{{organization.logoUri}}">
               </div>
-            <div>
-              <a ui-sref="admin.organization.users({organizationId: organization.id})">{{organization.name}}</a>
+            <div >
+              <a class="font-600" ui-sref="admin.organization.users({organizationId: organization.id})">{{organization.name}}</a>
             </div>
           </td>
           <td class="users">
