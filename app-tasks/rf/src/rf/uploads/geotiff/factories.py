@@ -32,7 +32,7 @@ class GeoTiffS3SceneFactory(object):
             # connection to S3
     ```
     """
-    def __init__(self, upload):
+    def __init__(self, upload, make_cog=False):
         """Args:
             upload (Upload): instance of upload model to create scenes for
         """
@@ -45,6 +45,7 @@ class GeoTiffS3SceneFactory(object):
         self.acquisitionDate = self._upload.metadata.get('acquisitionDate')
         self.cloudCover = self._upload.metadata.get('cloudCover', 0)
         self.tags = self._upload.metadata.get('tags') or ['']
+        self.make_cog = make_cog
 
     def generate_scenes(self):
         """Create a Scene and associated Image for each GeoTiff in self.s3_path
@@ -109,5 +110,6 @@ class GeoTiffS3SceneFactory(object):
             cloudCover=self.cloudCover,
             name=name,
             owner=self.owner,
-            ingestStatus=ingestStatus
+            ingestStatus=ingestStatus,
+            sceneType="COG" if self.make_cog else "AVRO"
         )

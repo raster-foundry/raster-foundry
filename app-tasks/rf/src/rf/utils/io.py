@@ -67,21 +67,39 @@ def s3_obj_exists(url):
     return resp.status_code != 404
 
 
+def base_metadata_for_landsat_id(landsat_id):
+    pattern = re.compile(r'L(?P<sensor_id>.)(?P<landsat_number>\d)(?P<path>\d{3})(?P<row>\d{3}).*')
+    match = pattern.match(landsat_id)
+    if not match:
+        raise Exception('Could not parse Landsat ID. Make sure you entered it correctly.')
+    return match.groupdict()
+
+
 def gcs_path_for_landsat_id(landsat_id):
     """Create a Google Cloud Storage path from a Landsat ID
     """
-    pattern = re.compile(r'L(?P<sensor_id>.)(?P<landsat_number>\d)(?P<path>\d{3})(?P<row>\d{3}).*')
-    match = pattern.match(landsat_id)
+    metadata = base_metadata_for_landsat_id(landsat_id)
     tmpl = (
         'https://storage.googleapis.com/gcp-public-data-landsat/'
         'L{sensor_id}0{landsat_number}/PRE/{path}/{row}/{landsat_id}'
     )
-    if not match:
-        raise Exception('Could not parse Landsat ID. Make sure you entered it correctly.')
-    if match.group('landsat_number') in ['4', '5', '7']:
-        return tmpl.format(**dict(landsat_id=landsat_id, **match.groupdict()))
-    else:
-        raise Exception('Landsat number was something other than 4, 5, or 7. Aborting.')
+    return tmpl.format(**dict(landsat_id=landsat_id, **metadata))
+
+
+def make_fname_for_band(band, landsat_id):
+    return '{}_B{}.TIF'.format(landsat_id, band)
+
+
+def make_fname_for_mtl(landsat_id):
+    return '{}_MTL.txt'.format(landsat_id)
+
+
+def make_path_for_band(prefix, band, landsat_id):
+    return '/'.join([prefix, make_fname_for_band(band, landsat_id)])
+
+
+def make_path_for_mtl(prefix, landsat_id):
+    return '/'.join([prefix, make_fname_for_mtl(landsat_id)])
 
 
 def get_jwt():
