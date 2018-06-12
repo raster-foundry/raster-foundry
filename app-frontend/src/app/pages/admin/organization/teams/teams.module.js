@@ -114,22 +114,23 @@ class OrganizationTeamsController {
     itemsForTeam(team) {
         /* eslint-disable */
         return [
+            // {
+            //     label: 'Edit',
+            //     callback: () => {
+            //         this.$state.go('admin.team.users', {teamId: team.id});
+            //     },
+            //     classes: []
+            // },
             {
-                label: 'Edit',
-                callback: () => {
-                    this.$state.go('admin.team.users', {teamId: team.id});
-                },
-                classes: []
-            },
-            {
-                label: 'Add to team...',
+                label: 'Add User',
                 callback: () => {
                     this.modalService.open({
                         component: 'rfAddUserModal',
                         resolve: {
-                            platformId: () => this.platformId,
-                            organizationId: () => this.organizationId,
-                            teamId: () => team.id
+                            platformId: () => this.organization.platformId,
+                            organizationId: () => this.organization.id,
+                            teamId: () => team.id,
+                            adminView: () => 'organization'
                         }
                     }).result.then(() => {
                         this.teamService

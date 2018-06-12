@@ -1,12 +1,6 @@
 <ui-view>
   <div class="admin-users-content container column-stretch">
     <div class="admin-users-actions">
-      <input type="text"
-             class="form-control admin-search"
-             placeholder="Search for organizations"
-             ng-model="$ctrl.search"
-             ng-disabled="$ctrl.fetching"
-      >
       <div class="actions-right">
         <button type="button" class="btn btn-primary"
                 ng-click="$ctrl.newOrgModal()"
@@ -19,42 +13,42 @@
       <tbody>
         <tr ng-repeat="organization in $ctrl.organizations track by $index">
           <td class="name">
-            <div class="placeholder-avatar"></div>
+              <div class="avatar user-avatar image-placeholder" ng-if="!organization.logoUri"></div>
+              <div ng-if="organization.logoUri">
+                <img class="avatar user-avatar" ng-src="{{organization.logoUri}}">
+              </div>
             <div>
-              {{organization.name}}
+              <a ui-sref="admin.organization.users({organizationId: organization.id})">{{organization.name}}</a>
             </div>
-          </td>
-          <td class="email">
-            {{organization.email}}
           </td>
           <td class="users">
-            <div class="user-avatar"
-                 ng-repeat="user in organization.fetchedUsers.results track by $index | limitTo : 5"
-                 ng-attr-title="{{user.name || user.email || user.id}}"
-            >
-              <img class="avatar" ng-src="{{user.profileImageUri}}">
+            <div class="user-group-avatars">
+              <div class="avatar user-avatar image-placeholder"
+                   ng-if="!user.profileImageUri"
+                   ng-repeat-start="user in organization.fetchedUsers.results track by $index | limitTo : 5">
+              </div>
+              <div class="user-avatar"
+                   ng-if="user.profileImageUri"
+                   ng-repeat-end>
+                <img class="avatar"
+                     ng-src="{{user.profileImageUri}}"
+                     ng-attr-title="{{user.name || user.email || user.id}}">
+              </div>
             </div>
-            <div>
-              <a class="users-more" title="View organization details"
-                 ui-sref="admin.organization.users({organizationId: organization.id})">
-                <ng-pluralize count="organization.fetchedUsers.count"
-                              when="{'0': ' No members',
-                                     '1': ' View 1 member',
-                                     'other': ' View {} more members'}"
+            &nbsp;
+            <ng-pluralize count="organization.fetchedUsers.count"
+                          when="{'0': 'No members',
+                                 '1': '1 member',
+                                 'other': '{} members'}"
 
-                >
-                </ng-pluralize>
-              </a>
-            </div>
+            >
+            </ng-pluralize>
           </td>
           <td>{{ organization.isActive ? "Active" : "Deactivated"}}</td>
-          <td class="actions">
-            <div ng-if="organization.showOptions">
-              <a ui-sref="admin.organization.users({organizationId: organization.id})">View page</a>
-              <rf-dropdown data-options="organization.options">
-                <span class="icon-caret-down"></span>
-              </rf-dropdown>
-            </div>
+          <td class="actions" ng-if="organization.showOptions">
+            <rf-dropdown data-options="organization.options">
+              <span class="icon-edit"></span>
+            </rf-dropdown>
           </td>
         </tr>
       </tbody>

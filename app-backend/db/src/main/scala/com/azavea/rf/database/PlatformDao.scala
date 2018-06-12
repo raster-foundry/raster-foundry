@@ -18,15 +18,16 @@ object PlatformDao extends Dao[Platform] {
 
   val selectF = sql"""
     SELECT
-      id, name, settings, is_active, default_organization_id
+      id, name, public_settings, is_active, default_organization_id, private_settings
     FROM
   """ ++ tableF
 
   def createF(platform: Platform) = fr"INSERT INTO" ++ tableF ++ fr"""(
-        id, name, settings, is_active, default_organization_id
+        id, name, public_settings , is_active, default_organization_id, private_settings
       )
       VALUES (
-        ${platform.id}, ${platform.name}, ${platform.settings}, ${platform.isActive}, ${platform.defaultOrganizationId}
+        ${platform.id}, ${platform.name}, ${platform.publicSettings}, ${platform.isActive},
+        ${platform.defaultOrganizationId}, ${platform.privateSettings}
       )
   """
 
@@ -40,19 +41,24 @@ object PlatformDao extends Dao[Platform] {
     query.page(page)
 
   def listMembers(platformId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
-    UserGroupRoleDao.listUsersByGroup(GroupType.Platform, platformId, page, searchParams, actingUser)
+    UserGroupRoleDao.listUsersByGroup(GroupType.Platform, platformId, page, searchParams, actingUser) map {
+      (usersePage: PaginatedResponse[User.WithGroupRole]) => {
+         usersePage.copy(results = usersePage.results map { _.copy(email = "" ) })
+      }
+    }
 
   def create(platform: Platform): ConnectionIO[Platform] = {
     createF(platform).update.withUniqueGeneratedKeys[Platform](
-      "id", "name", "settings", "is_active", "default_organization_id"
+      "id", "name", "public_settings", "is_active", "default_organization_id", "private_settings"
     )
   }
 
   def update(platform: Platform, id: UUID, user: User): ConnectionIO[Int] = {
       (fr"UPDATE" ++ tableF ++ fr"""SET
         name = ${platform.name},
-        settings = ${platform.settings},
-        default_organization_id = ${platform.defaultOrganizationId}
+        public_settings = ${platform.publicSettings},
+        default_organization_id = ${platform.defaultOrganizationId},
+        private_settings = ${platform.privateSettings}
         where id = ${id}
       """).update.run
   }
@@ -141,5 +147,13 @@ object PlatformDao extends Dao[Platform] {
        is_active = false,
        where id = ${platformId}
       """).update.run
+  }
+
+  def organizationIsPublicOrg(organizationId: UUID, platformId: UUID): ConnectionIO[Boolean] = {
+    query.filter(platformId).selectOption map {
+      platformO => {
+        platformO.map( _.defaultOrganizationId === Some(organizationId)).getOrElse(false)
+      }
+    }
   }
 }

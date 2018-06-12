@@ -230,7 +230,7 @@ class ProjectsEditController {
             }
         });
         this.getMap().then((map) => {
-            map.setGeojson('footprint', styledGeojson);
+            map.setGeojson('footprint', styledGeojson, {rectify: true});
         });
     }
 

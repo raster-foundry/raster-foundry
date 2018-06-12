@@ -438,14 +438,26 @@ object Generators extends ArbitraryInstances {
     groupRole <- groupRoleGen
   } yield { UserGroupRole.Create(user.id, groupType, groupId, groupRole) }
 
+  private def platformPublicSettingsGen: Gen[Platform.PublicSettings] = for {
+    emailUser <- nonEmptyStringGen
+    emailSmtpHost <- nonEmptyStringGen
+    emailIngestNotification <- arbitrary[Boolean]
+    emailAoiNotification <- arbitrary[Boolean]
+  } yield { Platform.PublicSettings(emailUser, emailSmtpHost, emailIngestNotification, emailAoiNotification) }
+
+  private def platformPrivateSettingsGen: Gen[Platform.PrivateSettings] = for {
+    emailPassword <- nonEmptyStringGen
+  } yield { Platform.PrivateSettings(emailPassword) }
+
   private def platformGen: Gen[Platform] =
     for {
       platformId <- uuidGen
       platformName <- uuidGen map { _.toString }
-      settings <- Gen.const(().asJson)
+      publicSettings <- platformPublicSettingsGen
       isActive <- arbitrary[Boolean]
       defaultOrganizationId <- Gen.const(None)
-    } yield { Platform(platformId, platformName, settings, isActive, defaultOrganizationId) }
+      privateSettings <- platformPrivateSettingsGen
+    } yield { Platform(platformId, platformName, publicSettings, isActive, defaultOrganizationId, privateSettings) }
 
   private def userOrgPlatformGen: Gen[(User.Create, Organization.Create, Platform)] =
     for {

@@ -22,15 +22,15 @@ class TeamUsersController {
             this.organization = organization;
             this.platformId = organization.platformId;
 
-            let debouncedSearch = _.debounce(
+            this.debouncedSearch = _.debounce(
                 this.onSearch.bind(this),
                 500,
                 {leading: false, trailing: true}
             );
 
-            this.getUserAndUgrs();
-
-            this.$scope.$watch('$ctrl.search', debouncedSearch);
+            this.getUserAndUgrs().then(() => {
+                this.fetchUsers(1, '');
+            });
         });
     }
 
@@ -38,17 +38,29 @@ class TeamUsersController {
         this.authService.getCurrentUser().then(resp => {
             this.currentUser = resp;
         });
-        this.authService.fetchUserRoles().then(resp => {
+        return this.authService.fetchUserRoles().then(resp => {
             this.currentTeamUgr = resp.filter(ugr => ugr.groupId === this.team.id)[0];
             this.currentOrgUgr = resp.filter(ugr => ugr.groupId === this.organization.id)[0];
             this.currentPlatUgr = resp.filter(ugr => ugr.groupId === this.platformId)[0];
-            this.isAdmin = this.matchUrgRole(this.currentPlatUgr) ||
-                this.matchUrgRole(this.currentOrgUgr) ||
-                this.matchUrgRole(this.currentTeamUgr);
+            this.isAdmin =
+                this.matchUgrRole(this.currentPlatUgr) ||
+                this.matchUgrRole(this.currentOrgUgr) ||
+                this.matchUgrRole(this.currentTeamUgr);
         });
     }
 
-    matchUrgRole(urg, role = 'ADMIN') {
+    updateUserGroupRole(user) {
+        this.teamService.setUserRole(
+            this.organization.platformId,
+            this.organization.id,
+            this.team.id,
+            user
+        ).catch(() => {
+            this.fetchUsers(this.pagination.currentPage, this.search);
+        });
+    }
+
+    matchUgrRole(urg, role = 'ADMIN') {
         return urg && urg.groupRole === role;
     }
 
@@ -95,12 +107,12 @@ class TeamUsersController {
     itemsForUser(user) {
         /* eslint-disable */
         return [
-            {
-                label: 'Edit',
-                callback: () => {
-                    console.log('edit callback for user:', user);
-                }
-            },
+            // {
+            //     label: 'Edit',
+            //     callback: () => {
+            //         console.log('edit callback for user:', user);
+            //     }
+            // },
             {
                 label: 'Remove',
                 callback: () => {

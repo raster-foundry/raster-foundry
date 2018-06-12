@@ -9,7 +9,7 @@ import cats._
 import cats.data._
 import cats.effect.IO
 import cats.syntax.either._
-import com.azavea.rf.datamodel.{Band, ColorCorrect, Image, Thumbnail}
+import com.azavea.rf.datamodel._
 import io.circe._
 import io.circe.syntax._
 import org.postgresql.util.PGobject
@@ -106,5 +106,34 @@ trait CirceJsonbMeta {
       a => a.toString
     )
   }
-}
 
+  implicit val PlatformPublicSettingsMeta: Meta[Platform.PublicSettings] = {
+    Meta.other[PGobject]("jsonb").xmap[Platform.PublicSettings](
+      a => io.circe.parser.parse(a.getValue).leftMap[Json](e => throw e).merge.as[Platform.PublicSettings] match {
+        case Right(p) => p
+        case Left(e) => throw e
+      },
+      a => {
+        val o = new PGobject
+        o.setType("jsonb")
+        o.setValue(a.asJson.noSpaces)
+        o
+      }
+    )
+  }
+
+  implicit val PlatformPrivateSettingsMeta: Meta[Platform.PrivateSettings] = {
+    Meta.other[PGobject]("jsonb").xmap[Platform.PrivateSettings](
+      a => io.circe.parser.parse(a.getValue).leftMap[Json](e => throw e).merge.as[Platform.PrivateSettings] match {
+        case Right(p) => p
+        case Left(e) => throw e
+      },
+      a => {
+        val o = new PGobject
+        o.setType("jsonb")
+        o.setValue(a.asJson.noSpaces)
+        o
+      }
+    )
+  }
+}
