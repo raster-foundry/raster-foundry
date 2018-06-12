@@ -187,4 +187,48 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
       }
     }
   }
+
+  test("get Platforms And Users By Users Ids") {
+    check {
+      forAll{
+        (
+          userCreateOne: User.Create,
+          userCreateTwo: User.Create,
+          orgCreate: Organization.Create,
+          platform: Platform,
+          userRole: GroupRole
+        ) => {
+          val listOfPwuIO = for {
+            orgAndUserOne <- insertUserAndOrg(userCreateOne, orgCreate)
+            (org, dbUserOne) = orgAndUserOne
+            orgAndUserTwo <- insertUserAndOrg(userCreateTwo, orgCreate)
+            (org, dbUserTwo) = orgAndUserTwo
+            insertedPlatform <- PlatformDao.create(platform)
+            insertedUserGroupRoleOne <- PlatformDao.addUserRole(dbUserOne, dbUserOne.id, insertedPlatform.id, userRole)
+            insertedUserGroupRoleTwo <- PlatformDao.addUserRole(dbUserTwo, dbUserTwo.id, insertedPlatform.id, userRole)
+            listOfUserIds = List(UUID.fromString(dbUserOne.id), UUID.fromString(dbUserTwo.id))
+            listOfPwu <- PlatformDao.getPlatformsAndUsersByUsersId(listOfUserIds)
+          } yield (listOfPwu, dbUserOne, dbUserTwo)
+
+          val (listOfPwu, dbUserOne, dbUserTwo) = listOfPwuIO.transact(xa).unsafeRunSync
+
+          listOfPwu.length >= 0 &&
+            listOfPwu(0).platId == platform.id &&
+            listOfPwu(1).platId == platform.id &&
+            listOfPwu(0).uId == dbUserOne.id &&
+            listOfPwu(1).uId == dbUserTwo.id &&
+            listOfPwu(0).pubSettings == platform.publicSettings &&
+            listOfPwu(1).pubSettings == platform.publicSettings &&
+            listOfPwu(0).priSettings == platform.privateSettings &&
+            listOfPwu(1).priSettings == platform.privateSettings &&
+            listOfPwu(0).email == dbUserOne.email &&
+            listOfPwu(1).email == dbUserTwo.email &&
+            listOfPwu(0).emailNotifications == dbUserOne.emailNotifications &&
+            listOfPwu(1).emailNotifications == dbUserTwo.emailNotifications
+
+
+        }
+      }
+    }
+  }
 }

@@ -6,7 +6,7 @@ import com.azavea.rf.datamodel._
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
+import cats._, cats.data._, cats.effect.IO, cats.implicits._, cats.syntax.all._
 import io.circe._
 
 import com.lonelyplanet.akka.http.extensions.PageRequest
@@ -152,20 +152,25 @@ object PlatformDao extends Dao[Platform] {
   def organizationIsPublicOrg(organizationId: UUID, platformId: UUID): ConnectionIO[Boolean] = {
     query.filter(platformId).selectOption map {
       platformO => {
-        platformO.map( _.defaultOrganizationId === Some(organizationId)).getOrElse(false)
+        platformO.map( _.defaultOrganizationId == Some(organizationId)).getOrElse(false)
       }
     }
   }
 
   def getPlatformsAndUsersByUsersId(userIds: List[UUID]): ConnectionIO[List[PlatformWithUsers]]  = {
-    fr"""
-      SELECT p.id plat_id, u.id u_id, p.public_settings pub_settings, p.private_settings pri_settings
-      FROM users u
-        JOIN user_group_roles ugr ON u.id = ugr.user_id
-          JOIN platforms p ON ugr.group_id = p.id
-      WHERE
-    """ ++ Fragments.in(fr"u.id", userIds.toNel)))
-    .query[PlatformWithUsers]
-    .to[List]
+    val userIdsString = "(" ++ userIds.map("'" ++ _.toString() ++ "'" ).mkString(", ") ++ ")"
+    Fragment.const(
+      """
+        SELECT p.id AS plat_id, u.id AS u_id, p.public_settings AS pub_settings,
+               p.private_settings AS pri_settings, u.email as email,
+               u.email_notifications AS email_notifications
+        FROM users AS u
+          JOIN user_group_roles AS ugr
+          ON u.id = ugr.user_id
+          JOIN platforms AS p
+          ON ugr.group_id = p.id
+        WHERE u.id IN
+      """ ++ userIdsString
+    ).query[PlatformWithUsers].to[List]
   }
 }

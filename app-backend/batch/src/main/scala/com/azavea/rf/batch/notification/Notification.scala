@@ -8,14 +8,14 @@ import com.typesafe.scalalogging.LazyLogging
 import java.util.UUID
 
 import cats.effect.IO
-import org.apache.commons.mail.*;
+import org.apache.commons.mail._;
 
 import scala.concurrent.Future
 import com.azavea.rf.batch.Job
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.common.{RollbarNotifier, S3}
-import com.azavea.rf.database.{ProjectDao, SceneDao}
+import com.azavea.rf.database.{ProjectDao, SceneDao, PlatformDao}
 import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
@@ -63,7 +63,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
     val platformsWithUsersAndSceneIO = for {
       consumers <- getSceneConsumers(sceneId)
       owner <- getSceneOwner(sceneId)
-      userIds <- (owner +: consumers).distinct.filter(_ != auth0Config.systemUser).map(_.id)
+      userIds = (owner :: consumers).distinct.filter(_ != auth0Config.systemUser).map(UUID.fromString(_))
       platformsWithUsers <- PlatformDao.getPlatformsAndUsersByUsersId(userIds)
       sceneO <- SceneDao.getSceneById(sceneId)
     } yield (platformsWithUsers, sceneO)
@@ -73,9 +73,8 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
     platformsWithUsers.map(pU => {
       sceneO match {
         case Some(scene) =>
-          val userEmail = mgmtApi.users().get(pU.uId, new UserFilter()).execute().getEmail
-          val subject = " "
-          val msg = scene.statusFields.ingestStatus
+          val subject = s"Scene ${sceneId} Ingest Status Update"
+          val msg = scene.statusFields.ingestStatus.toString
           val email = setEmail(
             pU.pubSettings.emailSmtpHost,
             465,
@@ -83,12 +82,11 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
             pU.priSettings.emailPassword,
             subject,
             msg,
-            userEmail)
+            pU.email)
           email.send()
-        case _ => ???
+        case _ => throw new Exception(s"No matched scene of id: ${sceneId}")
       }
     })
-    
     stop
   }
 }

@@ -46,5 +46,7 @@ case class PlatformWithUsers(
   platId: UUID,
   uId: String,
   pubSettings: Platform.PublicSettings,
-  priSettings: Platform.PrivateSettings
+  priSettings: Platform.PrivateSettings,
+  email: String,
+  emailNotifications: Boolean
 )
