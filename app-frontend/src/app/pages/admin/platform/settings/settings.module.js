@@ -1,16 +1,14 @@
 import angular from 'angular';
 
 class PlatformSettingsController {
-    constructor($scope) {
+    constructor($stateParams, authService) {
         'ngInject';
 
-        this.$scope = $scope;
+        this.$stateParams = $stateParams;
+        this.authService = authService;
     }
 
     $onInit() {
-        this.$scope.$parent.$ctrl.isSuperOrAdminPromise.then(res => {
-            this.isSuperOrAdmin = res;
-        });
     }
 }
 

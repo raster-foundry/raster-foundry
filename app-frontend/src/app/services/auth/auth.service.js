@@ -465,24 +465,38 @@ export default (app) => {
         }
 
         isSuperOrAdmin(groupIds) {
-            let deferred = this.$q.defer();
+            // let deferred = this.$q.defer();
+            //
+            // console.log(this.userRoles);
+            //
+            // console.log(this.user);
+            //
+            // // this.getCurrentUser().then(resp => {
+            // //     resp.
+            // // })
+            //
+            // this.$q.all({
+            //     respUser: this.getCurrentUser(),
+            //     respUgr: this.fetchUserRoles()
+            // }).then(({respUser, respUgr}) => {
+            //     deferred.resolve(respUser.isSuperuser ||
+            //         respUgr.find((ugr) => {
+            //             return ugr.groupRole === 'ADMIN' &&
+            //                 groupIds.find(id => id === ugr.groupId);
+            //         }
+            //       )
+            //     );
+            // }, (error) => {
+            //     deferred.reject(error);
+            // });
+            //
+            // return deferred.promise;
 
-            this.$q.all({
-                respUser: this.getCurrentUser(),
-                respUgr: this.fetchUserRoles()
-            }).then(({respUser, respUgr}) => {
-                deferred.resolve(respUser.isSuperuser ||
-                    respUgr.find((ugr) => {
-                        return ugr.groupRole === 'ADMIN' &&
-                            groupIds.find(id => id === ugr.groupId);
-                    }
-                  )
-                );
-            }, (error) => {
-                deferred.reject(error);
+
+            return this.user && this.user.isSuperuser || this.userRoles.find(ugr => {
+                return ugr.groupRole === 'ADMIN' &&
+                    groupIds.find(id => id === ugr.groupId);
             });
-
-            return deferred.promise;
         }
     }
 

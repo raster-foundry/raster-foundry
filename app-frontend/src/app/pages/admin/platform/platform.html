@@ -33,7 +33,7 @@
     <div class="admin-tab"
          ui-sref="admin.platform.settings.email"
          ui-sref-active="active"
-         ng-if="$ctrl.isSuperOrAdmin">
+         ng-if="$ctrl.authService.isSuperOrAdmin([$ctrl.$stateParams.platformId])">
       Settings
     </div>
   </div>

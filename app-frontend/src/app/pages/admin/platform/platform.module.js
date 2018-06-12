@@ -18,13 +18,6 @@ class PlatformController {
             });
         this.currentUserPromise = this.authService.getCurrentUser().then();
         this.currentUgrPromise = this.authService.fetchUserRoles().then();
-
-        this.isSuperOrAdminPromise =
-            this.authService.isSuperOrAdmin([this.$stateParams.platformId]);
-
-        this.isSuperOrAdminPromise.then(resp => {
-            this.isSuperOrAdmin = resp;
-        });
     }
 }
 
