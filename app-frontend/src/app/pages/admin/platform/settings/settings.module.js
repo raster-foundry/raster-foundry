@@ -8,7 +8,9 @@ class PlatformSettingsController {
     }
 
     $onInit() {
-        this.isSuperOrAdmin = this.$scope.$parent.$ctrl.isSuperOrAdmin;
+        this.$scope.$parent.$ctrl.isSuperOrAdminPromise.then(res => {
+            this.isSuperOrAdmin = res;
+        });
     }
 }
 

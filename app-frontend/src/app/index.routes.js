@@ -535,7 +535,8 @@ function adminStates($stateProvider) {
             title: 'Platform Settings',
             templateUrl: platformSettingsTpl,
             controller: 'PlatformSettingsController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            abstract: true
         })
         .state('admin.platform.settings.email', {
             url: '/email',

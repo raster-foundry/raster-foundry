@@ -463,6 +463,27 @@ export default (app) => {
         fetchUserRoles() {
             return this.User.roles().$promise;
         }
+
+        isSuperOrAdmin(groupIds) {
+            let deferred = this.$q.defer();
+
+            this.$q.all({
+                respUser: this.getCurrentUser(),
+                respUgr: this.fetchUserRoles()
+            }).then(({respUser, respUgr}) => {
+                deferred.resolve(respUser.isSuperuser ||
+                    respUgr.find((ugr) => {
+                        return ugr.groupRole === 'ADMIN' &&
+                            groupIds.find(id => id === ugr.groupId);
+                    }
+                  )
+                );
+            }, (error) => {
+                deferred.reject(error);
+            });
+
+            return deferred.promise;
+        }
     }
 
     app.service('authService', AuthService);

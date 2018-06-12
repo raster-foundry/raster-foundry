@@ -45,9 +45,22 @@ class PlatformEmailController {
                 }, 500);
             },
             err => {
-                this.$log.error(err);
+                this.error = err;
+                this.$timeout(() => {
+                    delete this.error;
+                }, 1000);
             }
         );
+    }
+
+    getButtonText() {
+        if (this.saved) {
+            return 'Saved';
+        }
+        if (this.error) {
+            return 'Failed';
+        }
+        return 'Save';
     }
 }
 

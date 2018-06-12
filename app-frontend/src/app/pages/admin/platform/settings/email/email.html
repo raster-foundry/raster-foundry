@@ -2,7 +2,8 @@
   <div class="dashboard-header">
     <h1 class="h3 page-title">Email Notifications</h1>
   </div>
-  <form name="emailSettings">
+  <form name="emailSettings" autocomplete="off">
+    <input autocomplete="false" name="hidden" type="text" style="display:none;">
     <div class="form-group">
       <label for="name">User Name</label>
       <input id="name"
@@ -53,13 +54,14 @@
       </rf-toggle>
       <button type="button"
               class="btn btn-primary pull-right"
+              ng-class="{'btn-danger': $ctrl.error }"
               ng-click="$ctrl.onSubmit()"
               ng-disabled="
                 emailSettings.email.$error.required ||
                 emailSettings.email.$error.email ||
                 emailSettings.password.$error.required ||
                 emailSettings.smtp.$error.required">
-        {{$ctrl.saved ? 'Saved!' : 'Save'}}
+        {{$ctrl.getButtonText()}}
       </button>
     </div>
   </form>
