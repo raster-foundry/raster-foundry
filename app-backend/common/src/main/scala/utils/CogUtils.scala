@@ -3,6 +3,7 @@ package com.azavea.rf.common.utils
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo._
 import com.azavea.rf.common.{Config => CommonConfig}
+
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.crop._
@@ -15,9 +16,6 @@ import geotrellis.util._
 import geotrellis.proj4._
 import geotrellis.spark.tiling._
 
-import scala.util.Properties
-import scala.math
-import scala.util.Try
 import scala.concurrent._
 import cats.data._
 import cats.implicits._
@@ -35,7 +33,7 @@ object CogUtils {
 
   /** Read GeoTiff from URI while caching the header bytes in memcache */
   def fromUri(uri: String)(implicit ec: ExecutionContext): OptionT[Future, GeoTiff[MultibandTile]] = {
-    val cacheKey = s"cog-header-${uri}"
+    val cacheKey = s"cog-header-${URIUtils.withNoParams(uri)}"
     val cacheSize = 1<<18
 
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
@@ -53,7 +51,7 @@ object CogUtils {
   }
 
   def fetch(uri: String, zoom: Int, x: Int, y: Int)(implicit ec: ExecutionContext): OptionT[Future, MultibandTile] =
-    rfCache.cachingOptionT(s"cog-tile-${zoom}-${x}-${y}-${uri}")(
+    rfCache.cachingOptionT(s"cog-tile-${zoom}-${x}-${y}-${URIUtils.withNoParams(uri)}")(
       CogUtils.fromUri(uri).mapFilter { tiff =>
         val transform = Proj4Transform(tiff.crs, WebMercator)
         val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
