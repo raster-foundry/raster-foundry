@@ -1,5 +1,25 @@
 # Change Log
 
+## [1.0.2](https://github.com/raster-foundry/raster-foundry/tree/1.0.2) (2018-06-12)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.0.1...1.0.2)
+
+**Merged pull requests:**
+
+- Refactor csv processing strategy [\#3502](https://github.com/raster-foundry/raster-foundry/pull/3502)
+- Fix anti-meridian artifacts on scene footprints [\#3496](https://github.com/raster-foundry/raster-foundry/pull/3496)
+- Show placeholder when no org logo present [\#3495](https://github.com/raster-foundry/raster-foundry/pull/3495)
+- Replace copied with scene [\#3494](https://github.com/raster-foundry/raster-foundry/pull/3494)
+- Show emails only when user proves some commonality with others [\#3493](https://github.com/raster-foundry/raster-foundry/pull/3493)
+- Add quiet option to scripts/server [\#3491](https://github.com/raster-foundry/raster-foundry/pull/3491)
+- Various front-end cleanup items [\#3490](https://github.com/raster-foundry/raster-foundry/pull/3490)
+- Add Platform Email Settings Storage Backend [\#3489](https://github.com/raster-foundry/raster-foundry/pull/3489)
+- add landsat 4 5 7 product datasources [\#3459](https://github.com/raster-foundry/raster-foundry/pull/3459)
+
+## [1.0.1](https://github.com/raster-foundry/raster-foundry/tree/1.0.1) (2018-06-08)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.0.0...1.0.1)
+
 ## [1.0.0](https://github.com/raster-foundry/raster-foundry/tree/1.0.0) (2018-06-08)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/0.36.0...1.0.0)
