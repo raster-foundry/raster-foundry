@@ -17,7 +17,7 @@
             <div ng-if="user.profileImageUri">
               <img class="avatar user-avatar" ng-src="{{user.profileImageUri}}">
             </div>
-            <div>
+            <div class="font-600">
               {{user.name || user.email || user.id}}
             </div>
           </td>
@@ -25,7 +25,16 @@
             {{user.email}}
           </td>
           <td class="roles titlecase">
-            {{user.groupRole}}
+            <select class="form-control"
+                    ng-model="user.groupRole"
+                    ng-disabled="$ctrl.disabled"
+                    ng-change="$ctrl.updateUserGroupRole(user)"
+                    ng-if="$ctrl.currentPlatUgr.groupRole === 'ADMIN'"
+            >
+              <option value="ADMIN">Admin</option>
+              <option value="MEMBER">Member</option>
+            </select>
+            <span ng-if="!$ctrl.currentPlatUgr.groupRole === 'ADMIN'">{{user.groupRole}}</span>
           </td>
         </tr>
       </tbody>

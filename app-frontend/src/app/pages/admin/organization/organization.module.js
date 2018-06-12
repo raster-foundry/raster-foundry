@@ -35,16 +35,13 @@ class OrganizationController {
             respUser: this.currentUserPromise,
             respUgr: this.currentUgrPromise
         }).then(({respOrg, respUser, respUgr}) => {
-            let currentOrgUgr = respUgr.find(ugr => {
-                return ugr.groupId === respOrg.id;
+            let adminOrgUgr = respUgr.find(ugr => {
+                return ugr.groupId === respOrg.id && ugr.groupRole === 'ADMIN';
             });
-            let currentPlatUgr = respUgr.find(ugr => {
-                return ugr.groupId === respOrg.platformId;
+            let adminPlatUgr = respUgr.find(ugr => {
+                return ugr.groupId === respOrg.platformId && ugr.groupRole === 'ADMIN';
             });
-            this.isSuperOrAdmin =
-                respUser.isSuperuser ||
-                currentOrgUgr && currentOrgUgr.groupRole === 'ADMIN' ||
-                currentPlatUgr && currentPlatUgr.groupRole === 'ADMIN';
+            this.isSuperOrAdmin = respUser.isSuperuser || adminOrgUgr || adminPlatUgr;
         });
     }
 
