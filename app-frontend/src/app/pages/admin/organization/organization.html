@@ -1,10 +1,10 @@
 <div class="container-admin-header">
   <div class="admin-header">
+    <div class="admin-logo image-placeholder" ng-if="!$ctrl.orgLogoUri.length"></div>
     <div class="admin-logo"
          ng-mouseenter="$ctrl.isSuperOrAdmin && $ctrl.onLogoHovered(true)"
-         ng-if="!(!$ctrl.fetching && $ctrl.onLogoHover)">
-      <img ng-attr-src="{{$ctrl.orgLogoUri}}"
-           ng-if="!$ctrl.fetching && $ctrl.orgLogoUri.length">
+         ng-if="!(!$ctrl.fetching && $ctrl.onLogoHover) && $ctrl.orgLogoUri.length">
+      <img ng-attr-src="{{$ctrl.orgLogoUri}}">
     </div>
     <div class="admin-logo-overlay"
          ng-click="$ctrl.addLogoModal()"
