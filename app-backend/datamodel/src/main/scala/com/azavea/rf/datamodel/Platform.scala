@@ -40,3 +40,11 @@ object Platform {
        "id", "name", "publicSettings", "isActive", "defaultOrganizationId"
     )(s => (s.id, s.name, s.publicSettings, s.isActive, s.defaultOrganizationId))
 }
+
+@JsonCodec
+case class PlatformWithUsers(
+  platId: UUID,
+  uId: String,
+  pubSettings: Platform.PublicSettings,
+  priSettings: Platform.PrivateSettings
+)

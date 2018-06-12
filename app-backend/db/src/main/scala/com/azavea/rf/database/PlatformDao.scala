@@ -156,4 +156,16 @@ object PlatformDao extends Dao[Platform] {
       }
     }
   }
+
+  def getPlatformsAndUsersByUsersId(userIds: List[UUID]): ConnectionIO[List[PlatformWithUsers]]  = {
+    fr"""
+      SELECT p.id plat_id, u.id u_id, p.public_settings pub_settings, p.private_settings pri_settings
+      FROM users u
+        JOIN user_group_roles ugr ON u.id = ugr.user_id
+          JOIN platforms p ON ugr.group_id = p.id
+      WHERE
+    """ ++ Fragments.in(fr"u.id", userIds.toNel)))
+    .query[PlatformWithUsers]
+    .to[List]
+  }
 }

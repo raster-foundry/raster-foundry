@@ -52,4 +52,5 @@ object Version {
   val slickMigrationAPI  = "0.4.0"
   val slickPG            = "0.15.4"
   val spark              = "2.2.0"
+  val apacheCommonsEmail = "1.6-SNAPSHOT"
 }

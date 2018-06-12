@@ -8,7 +8,7 @@ import com.typesafe.scalalogging.LazyLogging
 import java.util.UUID
 
 import cats.effect.IO
-
+import org.apache.commons.mail.*;
 
 import scala.concurrent.Future
 import com.azavea.rf.batch.Job
@@ -41,36 +41,54 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
     } yield scene.owner
   }
 
+  def setEmail(host: String, port: Int, uName: String, uPw: String, subject: String, msg: String, to: String ): Email = {
+    val email = new SimpleEmail();
+    email.setHostName(host)
+    email.setSmtpPort(port);
+    email.setAuthenticator(new DefaultAuthenticator(uName, uPw))
+    email.setSSLOnConnect(true);
+    email.setFrom(uName);
+    email.setSubject(subject);
+    email.setMsg(msg);
+    email.addTo(to);
+    email
+  }
+
   def run: Unit = {
     val authApi = new AuthAPI(auth0Config.domain, auth0Config.clientId, auth0Config.clientSecret)
     val mgmtTokenRequest = authApi.requestToken(s"https://${auth0Config.domain}/api/v2/")
     val mgmtToken = mgmtTokenRequest.execute
     val mgmtApi = new ManagementAPI(auth0Config.domain, mgmtToken.getAccessToken)
 
-    val notificationStrings = for {
+    val platformsWithUsersAndSceneIO = for {
       consumers <- getSceneConsumers(sceneId)
       owner <- getSceneOwner(sceneId)
-    } yield {
-      (owner +: consumers)
-        .distinct
-        .filter(_ != auth0Config.systemUser)
-        .map { uid: String =>
-          try {
-            val user = mgmtApi.users().get(uid, new UserFilter()).execute()
-            Some(s"Notification stub - ${uid} -> ${user.getEmail}")
-          } catch {
-            case e: Throwable => {
-              sendError(e)
-              logger.warn(s"No user found for this id: ${uid}")
-              None
-            }
-          }
-        }
-    }
-    notificationStrings.transact(xa).unsafeRunSync().map {
-      case Some(s) => logger.info(s)
-      case _ => None
-    }
+      userIds <- (owner +: consumers).distinct.filter(_ != auth0Config.systemUser).map(_.id)
+      platformsWithUsers <- PlatformDao.getPlatformsAndUsersByUsersId(userIds)
+      sceneO <- SceneDao.getSceneById(sceneId)
+    } yield (platformsWithUsers, sceneO)
+
+    val (platformsWithUsers, sceneO) = platformsWithUsersAndSceneIO.transact(xa).unsafeRunSync()
+
+    platformsWithUsers.map(pU => {
+      sceneO match {
+        case Some(scene) =>
+          val userEmail = mgmtApi.users().get(pU.uId, new UserFilter()).execute().getEmail
+          val subject = " "
+          val msg = scene.statusFields.ingestStatus
+          val email = setEmail(
+            pU.pubSettings.emailSmtpHost,
+            465,
+            pU.pubSettings.emailUser,
+            pU.priSettings.emailPassword,
+            subject,
+            msg,
+            userEmail)
+          email.send()
+        case _ => ???
+      }
+    })
+    
     stop
   }
 }
