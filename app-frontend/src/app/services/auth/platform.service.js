@@ -13,6 +13,12 @@ export default (app) => {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:id/members`,
                         method: 'GET'
                     },
+                    addUser: {
+                        url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
+                            'members',
+                        method: 'POST',
+                        isArray: true
+                    },
                     organizations: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:id/organizations`,
                         method: 'GET'
@@ -27,6 +33,15 @@ export default (app) => {
                     }
                 }
             );
+        }
+
+        setUserRole(platformId, user) {
+            return this.Platform.addUser({
+                platformId
+            }, {
+                userId: user.id,
+                groupRole: user.groupRole
+            }).$promise;
         }
 
         getPlatform(platformId) {

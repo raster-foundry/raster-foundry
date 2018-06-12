@@ -6,15 +6,16 @@ class PlatformController {
         this.$stateParams = $stateParams;
         this.platformService = platformService;
         this.authService = authService;
-        this.fetching = true;
     }
 
     $onInit() {
-        this.platformService
+        this.fetching = true;
+        this.platformPromise = this.platformService
             .getPlatform(this.$stateParams.platformId)
             .then((platform) => {
                 this.platform = platform;
                 this.fetching = false;
+                return platform;
             });
         this.currentUserPromise = this.authService.getCurrentUser().then();
         this.currentUgrPromise = this.authService.fetchUserRoles().then();

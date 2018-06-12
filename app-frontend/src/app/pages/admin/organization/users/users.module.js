@@ -39,12 +39,12 @@ class OrganizationUsersController {
             this.currentUser = resp;
         });
         this.currentUgrPromise.then((resp) => {
-            this.currentOrgUgr = resp.filter((ugr) => {
+            this.currentOrgUgr = resp.find((ugr) => {
                 return ugr.groupId === this.organizationId;
-            })[0];
-            this.currentPlatUgr = resp.filter((ugr) => {
+            });
+            this.currentPlatUgr = resp.find((ugr) => {
                 return ugr.groupId === this.organization.platformId;
-            })[0];
+            });
         });
     }
 
