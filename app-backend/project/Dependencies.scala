@@ -27,6 +27,7 @@ object Dependencies {
   val awsSdk                  = "com.amazonaws"                % "aws-java-sdk"                      % Version.awsSdk
   val hikariCP                = "com.typesafe.slick"          %% "slick-hikaricp"                    % Version.hikariCP
   val postgres                = "org.postgresql"               % "postgresql"                        % Version.postgres
+  val scalaCsv                = "com.github.tototoshi"        %% "scala-csv"                         % Version.scalaCsv
   val scalaforklift           = "com.liyaos"                  %% "scala-forklift-slick"              % Version.scalaForklift
   val scalatest               = "org.scalatest"               %% "scalatest"                         % Version.scalaTest % "test"
   val slf4j                   = "org.slf4j"                    % "slf4j-simple"                      % Version.slf4j
