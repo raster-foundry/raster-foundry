@@ -1,6 +1,6 @@
 .panel.project-item {
   border-radius: $border-radius-base;
-  
+
   .panel-body {
     padding: 1rem;
   }
@@ -14,7 +14,7 @@
   overflow: hidden;
   max-width: 100%;
   text-overflow: ellipsis;
-  padding-right: 6rem;
+  padding-right: 8.5rem;
 
   &:after {
     content: attr(data-title);
@@ -39,7 +39,7 @@
 }
 
 .project-status {
-  
+
   .inline-tag {
     text-indent: 0;
     top: 50%;
