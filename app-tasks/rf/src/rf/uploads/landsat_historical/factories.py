@@ -40,7 +40,7 @@ class LandsatHistoricalSceneFactory(object):
         }[self.sensor]
         self._metadata = None
         self.filenames = {
-            'COG': '/tmp/{}.COG.tif'.format(self.landsat_id),
+            'COG': '/tmp/{}_COG.tif'.format(self.landsat_id),
             'STACKED': '/tmp/{}_STACKED.tif'.format(self.landsat_id)
         }
 
@@ -114,7 +114,11 @@ class LandsatHistoricalSceneFactory(object):
 
 
 class Dummy(object):
-    source = 'LE70010562000338CUB00'
+    source = 'LT40050601988093XXX04'
+    files = []
+    owner = 'foo'
+    datasource = 'foobar'
+    metadata = {}
 
 
 exampleFactory = LandsatHistoricalSceneFactory(Dummy())
