@@ -18,6 +18,9 @@ function runBlock(
         flagsPromise = perUserFeatureFlags.load();
         featureFlags.set(flagsPromise);
     }
+    if (APP_CONFIG.error) {
+        $state.go('error');
+    }
 
     $rootScope.$on('$stateChangeStart', function (e, toState, params) {
         function setupState() {

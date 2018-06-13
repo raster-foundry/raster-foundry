@@ -295,9 +295,10 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
     } {
-      withPagination { page =>
+      (withPagination & searchParams) { (page, search) =>
         complete {
-          OrganizationDao.query.filter(fr"platform_id = ${platformId}").page(page).transact(xa).unsafeToFuture
+          OrganizationDao.listAuthorizedOrganizations(page, search, platformId, user)
+            .transact(xa).unsafeToFuture
         }
       }
     }
