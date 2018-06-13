@@ -16,7 +16,8 @@ case class Organization(
   isActive: Boolean,
   dropboxCredential: Credential,
   planetCredential: Credential,
-  logoUri: String
+  logoUri: String,
+  visibility: Visibility
 )
 
 object Organization {
@@ -27,12 +28,13 @@ object Organization {
   @JsonCodec
   case class Create(
     name: String,
-    platformId: UUID
+    platformId: UUID,
+    visibility: Option[Visibility]
   ) {
     def toOrganization: Organization = {
       val id = java.util.UUID.randomUUID()
       val now = new Timestamp((new java.util.Date()).getTime())
-      Organization(id, now, now, name, platformId, true, Credential(None), Credential(None), "")
+      Organization(id, now, now, name, platformId, true, Credential(None), Credential(None), "", visibility.getOrElse(Visibility.Private))
     }
   }
 

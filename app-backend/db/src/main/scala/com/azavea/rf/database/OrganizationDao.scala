@@ -34,7 +34,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
   val selectF = sql"""
     SELECT
       id, created_at, modified_at, name, platform_id, is_active,
-      dropbox_credential, planet_credential, logo_uri
+      dropbox_credential, planet_credential, logo_uri, visibility
     FROM
   """ ++ tableF
 
@@ -44,12 +44,12 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     org: Organization
   ): ConnectionIO[Organization] =
     (fr"INSERT INTO" ++ tableF ++ fr"""
-          (id, created_at, modified_at, name, platform_id, is_active)
+          (id, created_at, modified_at, name, platform_id, is_active, visibility)
         VALUES
-          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId}, true)
+          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId}, true, ${org.visibility})
     """).update.withUniqueGeneratedKeys[Organization](
       "id", "created_at", "modified_at", "name", "platform_id", "is_active",
-      "dropbox_credential", "planet_credential", "logo_uri"
+      "dropbox_credential", "planet_credential", "logo_uri", "visibility"
     )
 
   def getOrganizationById(id: UUID): ConnectionIO[Option[Organization]] =
@@ -237,8 +237,16 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
        WHERE id = ${orgID}
      """).update.withUniqueGeneratedKeys[Organization](
        "id", "created_at", "modified_at", "name", "platform_id", "is_active",
-       "dropbox_credential", "planet_credential", "logo_uri"
+       "dropbox_credential", "planet_credential", "logo_uri", "visibility"
      )
+  }
+
+  def setVisibility(visibility: Visibility, organizationId: UUID): ConnectionIO[Int] = {
+    val updateTime = new Timestamp((new java.util.Date()).getTime)
+    (fr"UPDATE" ++ tableF ++ fr"""
+        modified_at = ${updateTime},
+        visibility = ${visibility}
+        """).update.run
   }
 
   def activateOrganization(actingUser: User, organizationId: UUID) = {
@@ -255,5 +263,64 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
        modified_at = now()
        where id = ${organizationId}
       """).update.run
+  }
+
+  /*
+   Filter to platforms that:
+   - user is a member of
+   - are public
+   - user is admin of the platform
+   */
+  def viewFilter(user: User): Dao.QueryBuilder[Organization] =
+    Dao.QueryBuilder[Organization](
+      user.isSuperuser match {
+        case true =>
+          selectF
+        case _ =>
+          (selectF ++ fr"""
+        JOIN (
+          -- user is member or admin of org
+          SELECT ugr1.group_id as org_id
+          FROM user_group_roles ugr1
+          WHERE ugr1.group_type = 'ORGANIZATION' AND ugr1.user_id = ${user.id}
+
+          UNION
+          -- if user is admin of platform
+          SELECT org.id AS org_id FROM user_group_roles ugr2
+          JOIN platforms ON ugr2.group_id = platforms.id
+          JOIN organizations org ON org.platform_id = platforms.id
+          WHERE ugr2.group_type = 'PLATFORM' AND ugr2.group_role = 'ADMIN' AND ugr2.user_id = ${user.id}
+
+          UNION
+
+          -- org is public and user is in same platform
+          SELECT org2.id AS org_id FROM""" ++ tableF ++ fr"""org2
+          JOIN (
+            SELECT p.id AS pid
+            FROM platforms p JOIN user_group_roles ugr3
+            ON ugr3.group_id = p.id
+            WHERE ugr3.user_id = ${user.id}
+          ) AS platformids ON org2.platform_id = platformids.pid
+          WHERE org2.visibility = 'PUBLIC'
+        ) AS org_ids ON """ ++ Fragment.const(s"${tableName}.id") ++ fr"= org_ids.org_id")
+      }, tableF, List.empty
+    )
+
+  def listAuthorizedOrganizations(pageRequest: PageRequest, searchParams: SearchQueryParameters, platformId: UUID, user: User): ConnectionIO[PaginatedResponse[Organization]] =  {
+    val organizationSearchBuilder = {
+      OrganizationDao.viewFilter(user)
+        .filter(fr"platform_id=${platformId}")
+        .filter(searchParams)
+    }
+    for {
+      organizations <- organizationSearchBuilder.list((pageRequest.offset * pageRequest.limit), pageRequest.limit)
+      count <- organizationSearchBuilder.countIO
+    } yield {
+      val hasPrevious = pageRequest.offset > 0
+      val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
+      PaginatedResponse[Organization](
+        count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, organizations
+      )
+    }
   }
 }
