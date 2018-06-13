@@ -157,7 +157,7 @@ object PlatformDao extends Dao[Platform] {
     }
   }
 
-  def getPlatformsAndUsersByUsersId(userIds: List[UUID]): ConnectionIO[List[PlatformWithUsers]]  = {
+  def getPlatformsAndUsersByUsersId(userIds: List[String]): ConnectionIO[List[PlatformWithUsers]]  = {
     val userIdsString = "(" ++ userIds.map("'" ++ _.toString() ++ "'" ).mkString(", ") ++ ")"
     Fragment.const(
       """
