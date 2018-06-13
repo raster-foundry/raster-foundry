@@ -166,7 +166,8 @@ object Generators extends ArbitraryInstances {
 
   private def organizationCreateGen: Gen[Organization.Create] = for {
     name <- nonEmptyStringGen
-  } yield (Organization.Create(name, defaultPlatformId))
+    visibility <- visibilityGen
+  } yield (Organization.Create(name, defaultPlatformId, Some(visibility)))
 
   private def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization }
 
