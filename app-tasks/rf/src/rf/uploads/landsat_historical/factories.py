@@ -1,9 +1,11 @@
 from collections import OrderedDict
 import glob
+import logging
 import os
 import subprocess
 
 
+import boto3
 import rasterio
 import requests
 
@@ -13,6 +15,9 @@ from rf.uploads.geotiff import create_geotiff_image
 from rf.uploads.landsat8.io import get_tempdir
 from rf.utils import io
 from .parse_mtl import extract_metadata
+
+
+logger = logging.getLogger(__name__)
 
 
 class MultiSpectralScannerConfig(object):
@@ -74,7 +79,9 @@ class LandsatHistoricalSceneFactory(object):
 
 
 def create_scene(owner, prefix, landsat_id, config, datasource):
+    logger.info('Creating scene for landsat id {}'.format(landsat_id))
     gcs_prefix = io.gcs_path_for_landsat_id(landsat_id)
+    logger.info('Fetching all bands')
     for band in config.bands.keys():
         fetch_band(prefix, gcs_prefix, band, landsat_id)
     filter_metadata = extract_metadata(
@@ -89,15 +96,16 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
     convert_to_cog(prefix, filenames['STACKED'], filenames['COG'],
                    config, landsat_id)
     s3_location = upload_file(owner, filenames['COG'], cog_fname)
+    logger.info('Creating image')
     image = create_geotiff_image(
         filenames['COG'], s3_location, filename=cog_fname, owner=owner,
-        band_create_function=lambda: config.bands.values()
+        band_create_function=lambda x: config.bands.values()
     )
     return Scene(
         0, 'PRIVATE', [], datasource, {}, landsat_id, 'SUCCESS', 'SUCCESS',
         'INGESTED', io.make_path_for_mtl(gcs_prefix, landsat_id),
         cloudCover=filter_metadata['cloud_cover'],
-        aquisitionDate=filter_metadata['acquisition_date'],
+        acquisitionDate=filter_metadata['acquisition_date'],
         images=[image], sceneType='COG'
     )
 
@@ -127,14 +135,18 @@ def convert_to_cog(prefix, stacked_tif_path, cog_tif_path, config, landsat_id):
         '-co', 'COPY_SRC_OVERVIEWS=YES'
     ]
 
+    logger.info('Tiling input tif')
     subprocess.check_call(translate_cmd)
+    logger.info('Adding overviews')
     subprocess.check_call(overviews_cmd)
+    logger.info('Converting tif to COG')
     subprocess.check_call(cog_cmd)
 
 
 def upload_file(owner, local_path, remote_fname):
+    s3_client = boto3.client('s3')
     key = 'user-uploads/{}/{}'.format(owner, remote_fname)
-    io.s3.put_object(
+    s3_client.put_object(
         Bucket=os.getenv('DATA_BUCKET', 'rasterfoundry-development-data-us-east-1'),
         Key=key,
         Body=open(local_path, 'r')
@@ -152,7 +164,7 @@ def fetch_band(local_prefix, gcs_prefix, band, landsat_id):
 
 
 class Dummy(object):
-    owner = 'auth0|59318a9d2fbbca3e16bcfc92'
+    owner = 'default'
     files = ['LT40130551992288XXX02']
     datasource = 'e8c4d923-5a73-430d-8fe4-53bd6a12ce6a'
 
