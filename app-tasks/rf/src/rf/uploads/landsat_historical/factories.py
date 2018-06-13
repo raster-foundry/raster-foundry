@@ -50,7 +50,7 @@ class LandsatHistoricalSceneFactory(object):
         self.convert_to_cog()
         s3_location = self.upload_file()
         self.upload.files = ['s3://{}'.format(s3_location)]
-        return GeoTiffS3SceneFactory(self.upload)
+        return GeoTiffS3SceneFactory(self.upload, make_cog=True)
 
     @property
     def metadata(self):
