@@ -1,14 +1,29 @@
 <div class="admin-users-content container column-stretch">
-  <div class="admin-users-actions">
+  <div class="admin-users-actions" ng-if="$ctrl.users.length">
       <rf-search on-search="$ctrl.debouncedSearch(value)" placeholder="Search for users" auto-focus="true"></rf-search>
     <div class="actions-right">
       <button type="button" class="btn btn-primary"
               ng-click="$ctrl.addUser()" ng-disabled="$ctrl.fetching">
-        Add users
+        Add Users
       </button>
     </div>
   </div>
-  <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching">
+  <rf-call-to-action-item
+    title="No users are in this team yet"
+    class="panel panel-off-white"
+    ng-if="!$ctrl.users.length && !$ctrl.fetching">
+    <p class="pb-25">
+      The {{$ctrl.team.name}} team does not have any users yet.
+      When it does, they'll be shown here.
+    </p>
+
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.addUser()"
+    >
+      Add Users
+    </button>
+  </rf-call-to-action-item>
+  <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching && $ctrl.users.length">
     <tbody>
       <tr ng-repeat="user in $ctrl.users track by $index">
         <td class="username">
