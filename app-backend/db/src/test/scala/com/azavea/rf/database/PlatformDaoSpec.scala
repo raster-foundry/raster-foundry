@@ -206,7 +206,7 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
             insertedPlatform <- PlatformDao.create(platform)
             insertedUserGroupRoleOne <- PlatformDao.addUserRole(dbUserOne, dbUserOne.id, insertedPlatform.id, userRole)
             insertedUserGroupRoleTwo <- PlatformDao.addUserRole(dbUserTwo, dbUserTwo.id, insertedPlatform.id, userRole)
-            listOfUserIds = List(UUID.fromString(dbUserOne.id), UUID.fromString(dbUserTwo.id))
+            listOfUserIds = List(dbUserOne.id, dbUserTwo.id)
             listOfPwu <- PlatformDao.getPlatformsAndUsersByUsersId(listOfUserIds)
           } yield (listOfPwu, dbUserOne, dbUserTwo)
 

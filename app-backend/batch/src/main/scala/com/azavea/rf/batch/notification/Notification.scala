@@ -8,8 +8,8 @@ import com.typesafe.scalalogging.LazyLogging
 import java.util.UUID
 
 import cats.effect.IO
-import org.apache.commons.mail._;
-import org.apache.commons.mail.Email._;
+import org.apache.commons.mail._
+import org.apache.commons.mail.Email._
 
 import scala.concurrent.Future
 import com.azavea.rf.batch.Job
@@ -44,44 +44,20 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
   }
 
   def setEmail(host: String, port: Int, uName: String, uPw: String, subject: String, msg: String, to: String): Email = {
-    logger.info("in set email")
-    logger.info(s"${host}, ${port}, ${uName}, ${uPw}, ${subject}, ${msg}, ${to}")
     val email = new SimpleEmail()
     email.setDebug(true)
-
     email.setHostName(host)
-    logger.info(email.getHostName())
-
-    email.setSmtpPort(port)
-    logger.info(email.getSmtpPort())
-
-    email.setAuthentication(uName, uPw)
-
-    email.setSSLOnConnect(false)
-
+    email.setSSL(true)
+    email.setSslSmtpPort(port.toString)
+    email.setAuthenticator(new DefaultAuthenticator(uName, uPw))
     email.setFrom(uName)
-    logger.info(email.getFromAddress().toString)
-
     email.setSubject(subject)
-    logger.info(email.getSubject())
-
     email.setMsg(msg)
-
     email.addTo(to)
-    logger.info(email.getToAddresses().toString)
-
-    logger.info(email.toString)
-
     email
   }
 
   def run: Unit = {
-    logger.info("in run")
-    // val authApi = new AuthAPI(auth0Config.domain, auth0Config.clientId, auth0Config.clientSecret)
-    // val mgmtTokenRequest = authApi.requestToken(s"https://${auth0Config.domain}/api/v2/")
-    // val mgmtToken = mgmtTokenRequest.execute
-    // val mgmtApi = new ManagementAPI(auth0Config.domain, mgmtToken.getAccessToken)
-
     val platformsWithUsersAndSceneIO = for {
       consumers <- getSceneConsumers(sceneId)
       owner <- getSceneOwner(sceneId)
@@ -92,27 +68,21 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
 
     val (platformsWithUsers, sceneO, userIds) = platformsWithUsersAndSceneIO.transact(xa).unsafeRunSync()
 
-    logger.info(userIds.mkString(", "))
-
-    logger.info("after transaction")
-
-
     platformsWithUsers.map(pU => {
       logger.info(pU.toString)
       sceneO match {
         case Some(scene) =>
           val subject = s"Scene ${sceneId} Ingest Status Update"
           val msg = scene.statusFields.ingestStatus.toString
-          logger.info(s"${msg}, ${subject}")
-          logger.info(s"${pU.email}, ${pU.emailNotifications}, ${pU.pubSettings}, ${pU.priSettings}")
           val email = setEmail(
-            "smtp.mailtrap.io",
-            25,
-            "d0f7603b04a07c",
-            "b16a364057e19a",
+            pU.pubSettings.emailSmtpHost,
+            465,
+            pU.pubSettings.emailUser,
+            pU.priSettings.emailPassword,
             subject,
             msg,
-            "xunzesu@outlook.com")
+            pU.email
+          )
           email.send()
         case _ => logger.warn(s"No matched scene of id: ${sceneId}")
       }
