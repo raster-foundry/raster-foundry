@@ -1,10 +1,13 @@
 <div class="container-admin-header">
   <div class="admin-header">
     <div class="admin-logo image-placeholder editable-image"
-         ng-if="($ctrl.fetching || !$ctrl.orgLogoUri.length) && $ctrl.isSuperOrAdmin"
+         ng-if="$ctrl.fetching"
+    ></div>
+    <div class="admin-logo image-placeholder editable-image-placeholder"
+         ng-if="!$ctrl.orgLogoUri.length && $ctrl.isSuperOrAdmin"
          ng-click="$ctrl.addLogoModal()"
     ></div>
-    <div class="admin-logo editable-image"
+    <div class="admin-logo editable-image-always"
          ng-if="$ctrl.orgLogoUri.length && $ctrl.isSuperOrAdmin"
          ng-click="$ctrl.addLogoModal()"
     >
