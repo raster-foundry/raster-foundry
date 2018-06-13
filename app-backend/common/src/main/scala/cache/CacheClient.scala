@@ -40,6 +40,7 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
   val cacheEnabled = Config.memcached.enabled
   val localCacheEnabled = Config.memcached.localCacheEnabled
   val localCacheSize = Config.memcached.localCacheSize
+  val keySize = Config.memcached.keySize
 
   val retryMaxMillis = 30000
   val retrySleepMillis = 25
@@ -50,24 +51,30 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
       .maximumSize(localCacheSize)
       .build[String, Option[Any]]()
 
+  private def abbreviateKey(key: String): String =
+    if(key.length <= Config.memcached.keySize) key
+    else key.substring(0, keySize - 1)
+
+  private def withAbbreviatedKey[T](key: String)(body: String => T): T =
+    body(abbreviateKey(key))
+
   def delete(key: String): Unit =
-    if(cacheEnabled) {
-      client.delete(key)
-    }
+    if (cacheEnabled) withAbbreviatedKey(key)(client.delete)
 
-  def setValue[T](key: String, value: T, ttlSeconds: Int = 0): Unit = {
-    logger.debug(s"Setting Key: ${key} with TTL ${ttlSeconds}")
-    val f = Future {
-      client.set(key, ttlSeconds, value)
-    }
+  def setValue[T](key: String, value: T, ttlSeconds: Int = 0): Unit =
+    withAbbreviatedKey(key) { key =>
+      logger.debug(s"Setting Key: ${key} with TTL ${ttlSeconds}")
+      val f = Future {
+        client.set(key, ttlSeconds, value)
+      }
 
-    f.onFailure{
-      case e => {
-        logger.error(s"Error ${e.getMessage}")
-        sendError(e)
+      f.onFailure {
+        case e => {
+          logger.error(s"Error ${e.getMessage}")
+          sendError(e)
+        }
       }
     }
-  }
 
   // Suppress asInstanceOf warning because we can't pattern match on the returned type since it's
   // eliminated by type erasure
@@ -80,15 +87,16 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
     depth: Int = 0)(
     fallbackFunction: (String, => Future[Option[CachedType]], Boolean) => Future[Option[CachedType]]
     ): Future[Option[CachedType]] = {
-
+    // in order not to break tailrec
+    val key = abbreviateKey(cacheKey)
     def fallback: Future[Option[CachedType]] = {
       // Signal to other cache reads that the operation in already in progress
-      localCache.put(cacheKey, Some("AWAIT"))
+      localCache.put(key, Some("AWAIT"))
       // Use the fallback function to retrieve the value and cache it
-      val fallbackFuture: Future[Option[CachedType]] = fallbackFunction(cacheKey, expensiveOperation, doCache)
+      val fallbackFuture: Future[Option[CachedType]] = fallbackFunction(key, expensiveOperation, doCache)
       fallbackFuture.onComplete {
         case Success(cachedValueO) => {
-          localCache.put(cacheKey, cachedValueO)
+          localCache.put(key, cachedValueO)
         }
         case Failure(e) => {
           sendError(RfStackTrace(e))
@@ -98,17 +106,17 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
       fallbackFuture
     }
 
-    localCache.getIfPresent(cacheKey) match {
+    localCache.getIfPresent(key) match {
       // The requested key is in the local cache
       case Some(cachedValueO) => {
         cachedValueO match {
           // The requested key is already being computed, try again
           case Some("AWAIT") if depth < maxRetryDepth => {
             Thread.sleep(retrySleepMillis)
-            localGetOrElse(cacheKey, expensiveOperation, doCache, depth + 1)(fallbackFunction)
+            localGetOrElse(key, expensiveOperation, doCache, depth + 1)(fallbackFunction)
           }
           case Some(cachedValue) if depth < maxRetryDepth => {
-            logger.debug(s"Local Cache Hit: ${cacheKey}")
+            logger.debug(s"Local Cache Hit: ${key}")
             Future.successful(Some(cachedValue.asInstanceOf[CachedType]))
           }
           case _ => {
@@ -131,7 +139,7 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
     cacheKey: String,
     expensiveOperation: => Future[Option[CachedType]],
     doCache: Boolean = true
-    ): Future[Option[CachedType]] = {
+    ): Future[Option[CachedType]] = withAbbreviatedKey(cacheKey) { cacheKey =>
     val futureCached = Future { client.asyncGet(cacheKey).get() }
     futureCached.flatMap(
       {
@@ -164,7 +172,7 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
     cacheKey: String,
     expensiveOperation: => Future[Option[CachedType]],
     doCache: Boolean = true
-    ): Future[Option[CachedType]] = {
+    ): Future[Option[CachedType]] = withAbbreviatedKey(cacheKey) { cacheKey =>
     (doCache, cacheEnabled, localCacheEnabled) match {
       case (true, true, true)  => localGetOrElse[CachedType](cacheKey, expensiveOperation, doCache)(getOrElseUpdateMemcached[CachedType])
       case (true, true, false) => getOrElseUpdateMemcached[CachedType](cacheKey, expensiveOperation, doCache)
