@@ -14,5 +14,6 @@ def extract_metadata(inf_string):
     acquisition_date = acquisition_date_re.search(inf_string).group('acquisition_date')
     return {
         'cloud_cover': cloud_cover,
-        'acquisition_date': acquisition_date
+        'acquisition_date': acquisition_date,
+        'raw': inf_string
     }

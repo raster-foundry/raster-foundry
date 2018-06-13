@@ -63,7 +63,7 @@ def process_upload(upload_id):
             )
         elif upload.uploadType.lower() in ['landsat_historical']:
             logger.info('Processing historical Landsat data from USGS and GCS')
-            factory = LandsatHistoricalSceneFactory(upload).get_geotiff_factory()
+            factory = LandsatHistoricalSceneFactory(upload)
         else:
             raise Exception('upload type ({}) didn\'t make any sense'.format(upload.uploadType))
         scenes = factory.generate_scenes()
