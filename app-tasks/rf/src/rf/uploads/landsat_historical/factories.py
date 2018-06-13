@@ -41,7 +41,7 @@ class LandsatHistoricalSceneFactory(object):
         self._metadata = None
         self.filenames = {
             'COG': '/tmp/{}.COG.tif'.format(self.landsat_id),
-            'STACKED': '/tmp/{}.STACKED.tif'.format(self.landsat_id)
+            'STACKED': '/tmp/{}_STACKED.tif'.format(self.landsat_id)
         }
 
     def get_geotiff_factory(self):
@@ -50,7 +50,7 @@ class LandsatHistoricalSceneFactory(object):
         self.convert_to_cog()
         s3_location = self.upload_file()
         self.upload.files = ['s3://{}'.format(s3_location)]
-        GeoTiffS3SceneFactory(self.upload)
+        return GeoTiffS3SceneFactory(self.upload)
 
     @property
     def metadata(self):
