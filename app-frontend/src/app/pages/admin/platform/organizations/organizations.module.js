@@ -19,7 +19,7 @@ class PlatformOrganizationsController {
         }
         this.fetching = true;
 
-        let debouncedSearch = _.debounce(
+        this.debouncedSearch = _.debounce(
             this.onSearch.bind(this),
             500,
             {leading: false, trailing: true}
@@ -30,7 +30,7 @@ class PlatformOrganizationsController {
         });
         this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
         this.getPlatUgrs();
-        this.$scope.$watch('$ctrl.search', debouncedSearch);
+        this.debouncedSearch();
     }
 
     $onInit() {

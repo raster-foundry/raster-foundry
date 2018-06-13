@@ -1,6 +1,7 @@
 <ui-view>
   <div class="admin-users-content container column-stretch">
     <div class="admin-users-actions">
+      <rf-search on-search="$ctrl.debouncedSearch(value)" placeholder="Search for organizations" auto-focus="true"></rf-search>
       <div class="actions-right">
         <button type="button" class="btn btn-primary"
                 ng-click="$ctrl.newOrgModal()"
