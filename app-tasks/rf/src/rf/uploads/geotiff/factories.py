@@ -93,11 +93,15 @@ class GeoTiffS3SceneFactory(object):
                                     filename=filename, visibility=self.visibility, owner=self.owner)
 
     def create_geotiff_scene(self, tif_path, name):
-        # If this upload is not associated with a project, set the scene's
+        # If this is a COG, we don't need to do an ingest, so set the status
+        # to INGESTED to prevent a job from being kicked off.
+        # Otherwise, if this upload is not associated with a project, set the scene's
         # ingest status to TOBEINGESTED so that scene creation will kick off
         # an ingest. Otherwise, set the status to NOTINGESTED, so that the status
         # will be updated when the scene is added to this upload's project
-        if not self.isProjectUpload:
+        if self.make_cog:
+            ingestStatus = IngestStatus.INGESTED
+        elif not self.isProjectUpload:
             ingestStatus = IngestStatus.TOBEINGESTED
         else:
             ingestStatus = IngestStatus.NOTINGESTED
