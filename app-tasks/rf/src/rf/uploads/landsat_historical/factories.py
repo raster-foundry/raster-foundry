@@ -3,6 +3,7 @@ import glob
 import logging
 import os
 import subprocess
+import urllib
 
 
 import boto3
@@ -18,6 +19,8 @@ from .parse_mtl import extract_metadata
 
 
 logger = logging.getLogger(__name__)
+
+data_bucket = os.getenv('DATA_BUCKET', 'rasterfoundry-development-data-us-east-1')
 
 
 class MultiSpectralScannerConfig(object):
@@ -97,15 +100,17 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
                    config, landsat_id)
     s3_location = upload_file(owner, filenames['COG'], cog_fname)
     logger.info('Creating image')
+    ingest_location = 's3://{}/{}'.format(data_bucket, urllib.quote(s3_location))
     scene = Scene(
         0, 'PRIVATE', [], datasource, {}, landsat_id, 'SUCCESS', 'SUCCESS',
-        'INGESTED', [io.make_path_for_mtl(gcs_prefix, landsat_id)],
+        'INGESTED', [io.make_path_for_mtl(gcs_prefix, landsat_id)], ingestLocation=ingest_location,
         cloudCover=filter_metadata['cloud_cover'],
         acquisitionDate=filter_metadata['acquisition_date'],
-        sceneType='COG'
+        sceneType='COG', owner=owner
     )
     image = create_geotiff_image(
-        filenames['COG'], s3_location, filename=cog_fname, owner=owner, scene=scene.id,
+        filenames['COG'], ingest_location,
+        filename=cog_fname, owner=owner, scene=scene.id,
         band_create_function=lambda x: config.bands.values()
     )
     scene.images = [image]
@@ -148,11 +153,7 @@ def convert_to_cog(prefix, stacked_tif_path, cog_tif_path, config, landsat_id):
 def upload_file(owner, local_path, remote_fname):
     s3_client = boto3.client('s3')
     key = 'user-uploads/{}/{}'.format(owner, remote_fname)
-    s3_client.put_object(
-        Bucket=os.getenv('DATA_BUCKET', 'rasterfoundry-development-data-us-east-1'),
-        Key=key,
-        Body=open(local_path, 'r')
-    )
+    s3_client.put_object(Bucket=data_bucket, Key=urllib.quote(key), Body=open(local_path, 'r'))
     return key
 
 
@@ -166,7 +167,7 @@ def fetch_band(local_prefix, gcs_prefix, band, landsat_id):
 
 
 class Dummy(object):
-    owner = 'default'
+    owner = 'auth0|59318a9d2fbbca3e16bcfc92'
     files = ['LT40130551992288XXX02']
     datasource = 'e8c4d923-5a73-430d-8fe4-53bd6a12ce6a'
 
