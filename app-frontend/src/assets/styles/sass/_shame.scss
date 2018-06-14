@@ -20,6 +20,7 @@
  */
 
 div.image-placeholder {
+  position: relative;
   background: $gray-lightest;
   box-sizing: border-box;
   display: inline-flex;
@@ -34,6 +35,27 @@ div.image-placeholder {
     text-align: center;
     font-size: 1.1rem;
     opacity: 0.7;
+  }
+}
+
+.editable-image {
+  position: relative;
+  border: 1px solid rgba($brand-primary, 0);
+  cursor: pointer;
+  &:hover {
+    border: 1px solid $brand-primary;
+  }
+  &:hover:before {
+    position: absolute;
+    padding: 2px 12px;
+    text-align: center;
+    background: $brand-primary;
+    color: #fff;
+    content: 'Edit';
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
   }
 }
 
@@ -2693,7 +2715,7 @@ rf-node-histogram {
   }
 
   .checkbox {
-    margin-after: 5px;
+    margin-right: 5px;
     font-weight: 600;
   }
 
@@ -3063,5 +3085,16 @@ rf-reclassify-table {
   text-transform: lowercase;
   &:first-letter {
     text-transform: uppercase;
+  }
+}
+
+// page route: admin/platform/<id>/settings/email
+.subscription-toggle {
+  & .checkbox {
+    padding-top: 1rem;
+
+    & span {
+      padding-left: 1rem;
+    }
   }
 }

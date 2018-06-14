@@ -3,17 +3,18 @@ import _ from 'lodash';
 
 class PlatformUsersController {
     constructor(
-        $scope, $stateParams,
+        $scope, $stateParams, $q,
         modalService, platformService
     ) {
+        'ngInject';
         this.$scope = $scope;
         this.$stateParams = $stateParams;
+        this.$q = $q;
 
         this.modalService = modalService;
         this.platformService = platformService;
         // check if has permissions for platform page
         this.fetching = true;
-        this.platAdminEmail = 'example@email.com';
 
         this.debouncedSearch = _.debounce(
             this.onSearch.bind(this),
@@ -21,12 +22,44 @@ class PlatformUsersController {
             {leading: false, trailing: true}
         );
 
+    }
+
+    $onInit() {
+        this.platformPromise = this.$scope.$parent.$ctrl.platformPromise;
+        this.currentUserPromise = this.$scope.$parent.$ctrl.currentUserPromise;
+        this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
         this.fetchUsers(1, '');
+        this.getUserAndUgrs();
     }
 
     onSearch(search) {
         // eslint-disable-next-line
         this.fetchUsers(undefined, search);
+    }
+
+    getUserAndUgrs() {
+        this.currentUserPromise.then(resp => {
+            this.currentUser = resp;
+        });
+        this.$q.all({
+            ugrs: this.currentUgrPromise,
+            platform: this.platformPromise
+        }).then(({ugrs, platform}) => {
+            this.currentPlatUgr = ugrs.find((ugr) => {
+                return ugr.groupId === platform.id && ugr.groupRole === 'ADMIN';
+            });
+        });
+    }
+
+    updateUserGroupRole(user) {
+        this.platformPromise.then(platform => {
+            this.platformService.setUserRole(
+                platform.id,
+                user
+            ).catch(() => {
+                this.fetchUsers(this.pagination.currentPage, this.search);
+            });
+        });
     }
 
     updatePagination(data) {

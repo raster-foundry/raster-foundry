@@ -463,6 +463,12 @@ export default (app) => {
         fetchUserRoles() {
             return this.User.roles().$promise;
         }
+
+        isSuperOrAdmin(groupIds) {
+            return this.user && this.user.isSuperuser || this.userRoles.find(ugr => {
+                return ugr.groupRole === 'ADMIN' && groupIds.find(id => id === ugr.groupId);
+            });
+        }
     }
 
     app.service('authService', AuthService);

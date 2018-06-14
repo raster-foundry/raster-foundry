@@ -13,6 +13,12 @@ export default (app) => {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:id/members`,
                         method: 'GET'
                     },
+                    addUser: {
+                        url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
+                            'members',
+                        method: 'POST',
+                        isArray: true
+                    },
                     organizations: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:id/organizations`,
                         method: 'GET'
@@ -24,9 +30,24 @@ export default (app) => {
                     setPlatformStatus: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:id/`,
                         method: 'POST'
+                    },
+                    updatePlatform: {
+                        method: 'PUT',
+                        params: {
+                            id: '@id'
+                        }
                     }
                 }
             );
+        }
+
+        setUserRole(platformId, user) {
+            return this.Platform.addUser({
+                platformId
+            }, {
+                userId: user.id,
+                groupRole: user.groupRole
+            }).$promise;
         }
 
         getPlatform(platformId) {
@@ -56,6 +77,10 @@ export default (app) => {
 
         deactivatePlatform(platformId) {
             return this.Platform.setPlatformStatus({id: platformId}, {isActive: false});
+        }
+
+        updatePlatform(params) {
+            return this.Platform.updatePlatform(params).$promise;
         }
     }
 

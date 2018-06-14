@@ -18,7 +18,8 @@
     <tbody>
       <tr ng-repeat="team in $ctrl.teams track by team.id">
         <td class="name">
-          <a title="View team details"
+          <a class="font-600"
+             title="View team details"
              ui-sref="admin.team.users({teamId: team.id})">
             {{team.name}}
           </a>

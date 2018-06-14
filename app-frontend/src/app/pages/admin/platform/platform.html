@@ -28,6 +28,12 @@
          ui-sref-active="active">
       Organizations
     </div>
+    <div class="admin-tab"
+         ui-sref="admin.platform.settings.email"
+         ui-sref-active="active"
+         ng-if="$ctrl.authService.isSuperOrAdmin([$ctrl.$stateParams.platformId])">
+      Settings
+    </div>
   </div>
 </div>
 

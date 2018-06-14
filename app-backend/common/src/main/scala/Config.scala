@@ -46,6 +46,9 @@ object Config {
     lazy val enabled: Boolean =
       memcachedConfig.getBoolean("enabled")
 
+    lazy val keySize: Int =
+      memcachedConfig.getInt("keySize")
+
     lazy val localCacheEnabled: Boolean =
       memcachedConfig.getBoolean("localCache.enabled")
 

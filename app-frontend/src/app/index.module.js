@@ -104,6 +104,8 @@ const App = angular.module(
         require('./pages/admin/platform/platform.module.js').name,
         require('./pages/admin/platform/metrics/metrics.module.js').name,
         require('./pages/admin/platform/users/users.module.js').name,
+        require('./pages/admin/platform/settings/settings.module.js').name,
+        require('./pages/admin/platform/settings/email/email.module.js').name,
         require('./pages/admin/platform/organizations/organizations.module.js').name,
         require('./pages/admin/platform/organizations/detail/detail.module.js').name,
         require('./pages/admin/platform/organizations/detail/features/features.js').name,

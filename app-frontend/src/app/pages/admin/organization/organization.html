@@ -1,16 +1,19 @@
 <div class="container-admin-header">
   <div class="admin-header">
-    <div class="admin-logo image-placeholder" ng-if="!$ctrl.orgLogoUri.length"></div>
-    <div class="admin-logo"
-         ng-mouseenter="$ctrl.isSuperOrAdmin && $ctrl.onLogoHovered(true)"
-         ng-if="!(!$ctrl.fetching && $ctrl.onLogoHover) && $ctrl.orgLogoUri.length">
+    <div class="admin-logo image-placeholder editable-image"
+         ng-if="($ctrl.fetching || !$ctrl.orgLogoUri.length) && $ctrl.isSuperOrAdmin"
+         ng-click="$ctrl.addLogoModal()"
+    ></div>
+    <div class="admin-logo editable-image"
+         ng-if="$ctrl.orgLogoUri.length && $ctrl.isSuperOrAdmin"
+         ng-click="$ctrl.addLogoModal()"
+    >
       <img ng-attr-src="{{$ctrl.orgLogoUri}}">
     </div>
-    <div class="admin-logo-overlay"
-         ng-click="$ctrl.addLogoModal()"
-         ng-mouseleave="$ctrl.isSuperOrAdmin && $ctrl.onLogoHovered(false)"
-         ng-if="!$ctrl.fetching && $ctrl.onLogoHover && $ctrl.isSuperOrAdmin">
-      <p>{{$ctrl.orgLogoUri.length ? 'Change' : 'Add'}}</p>
+    <div class="admin-logo image-placeholder" ng-if="($ctrl.fetching || !$ctrl.orgLogoUri.length) && !$ctrl.isSuperOrAdmin"></div>
+    <div class="admin-logo"
+         ng-if="$ctrl.orgLogoUri.length && !$ctrl.isSuperOrAdmin">
+      <img ng-attr-src="{{$ctrl.orgLogoUri}}">
     </div>
     <div class="admin-logo-text" ng-if="!$ctrl.fetching">
       <h1 class="admin-logo-name h3">
