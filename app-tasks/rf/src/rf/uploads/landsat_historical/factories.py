@@ -164,12 +164,3 @@ def fetch_band(local_prefix, gcs_prefix, band, landsat_id):
                 io.make_path_for_band(gcs_prefix, band, landsat_id)
             ).content
         )
-
-
-class Dummy(object):
-    owner = 'auth0|59318a9d2fbbca3e16bcfc92'
-    files = ['LT40130551992288XXX02']
-    datasource = 'e8c4d923-5a73-430d-8fe4-53bd6a12ce6a'
-
-
-exampleFactory = LandsatHistoricalSceneFactory(Dummy())
