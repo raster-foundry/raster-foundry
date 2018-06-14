@@ -6,6 +6,7 @@ from planet import api
 
 from ..models import Upload
 from ..uploads.geotiff import GeoTiffS3SceneFactory
+from ..uploads.landsat_historical import LandsatHistoricalSceneFactory
 from ..uploads.planet.factories import PlanetSceneFactory
 from ..uploads.modis.factories import MODISSceneFactory
 from ..utils.exception_reporting import wrap_rollbar
@@ -60,6 +61,9 @@ def process_upload(upload_id):
                 upload.visibility,
                 upload.owner
             )
+        elif upload.uploadType.lower() in ['landsat_historical']:
+            logger.info('Processing historical Landsat data from USGS and GCS')
+            factory = LandsatHistoricalSceneFactory(upload)
         else:
             raise Exception('upload type ({}) didn\'t make any sense'.format(upload.uploadType))
         scenes = factory.generate_scenes()
