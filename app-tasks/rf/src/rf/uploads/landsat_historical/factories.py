@@ -103,7 +103,7 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
     )
     return Scene(
         0, 'PRIVATE', [], datasource, {}, landsat_id, 'SUCCESS', 'SUCCESS',
-        'INGESTED', io.make_path_for_mtl(gcs_prefix, landsat_id),
+        'INGESTED', [io.make_path_for_mtl(gcs_prefix, landsat_id)],
         cloudCover=filter_metadata['cloud_cover'],
         acquisitionDate=filter_metadata['acquisition_date'],
         images=[image], sceneType='COG'
