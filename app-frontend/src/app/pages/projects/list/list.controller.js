@@ -2,7 +2,7 @@
 
 class ProjectsListController {
     constructor( // eslint-disable-line max-params
-        $log, $state, modalService, $scope, projectService, userService
+        $log, $state, modalService, $scope, projectService, userService, authService
     ) {
         'ngInject';
         this.$log = $log;
@@ -11,6 +11,7 @@ class ProjectsListController {
         this.projectService = projectService;
         this.userService = userService;
         this.$scope = $scope;
+	this.authService = authService;
     }
 
     $onInit() {
@@ -29,7 +30,8 @@ class ProjectsListController {
             {
                 sort: 'createdAt,desc',
                 pageSize: 10,
-                page: page - 1
+                page: page - 1,
+		owner: this.authService.getProfile().sub
             }
         ).then(
             (projectResult) => {
