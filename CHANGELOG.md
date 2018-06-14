@@ -1,5 +1,17 @@
 # Change Log
 
+## [1.0.3](https://github.com/raster-foundry/raster-foundry/tree/1.0.3) (2018-06-14)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.0.2...1.0.3)
+
+**Merged pull requests:**
+
+- Restrict Projects to Owners for Frontend [\#3542](https://github.com/raster-foundry/raster-foundry/pull/3542)
+- Signed requests should never send a HEAD request [\#3516](https://github.com/raster-foundry/raster-foundry/pull/3516)
+- Allow organization admins to add and modify roles for that organization [\#3511](https://github.com/raster-foundry/raster-foundry/pull/3511)
+- Platform email notification settings frontend [\#3501](https://github.com/raster-foundry/raster-foundry/pull/3501)
+-  Add RF\_DEPLOYMENT\_ENVIRONMENT variable [\#3500](https://github.com/raster-foundry/raster-foundry/pull/3500)
+
 ## [1.0.2](https://github.com/raster-foundry/raster-foundry/tree/1.0.2) (2018-06-12)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.0.1...1.0.2)
