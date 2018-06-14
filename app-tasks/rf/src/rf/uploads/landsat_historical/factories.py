@@ -97,17 +97,19 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
                    config, landsat_id)
     s3_location = upload_file(owner, filenames['COG'], cog_fname)
     logger.info('Creating image')
-    image = create_geotiff_image(
-        filenames['COG'], s3_location, filename=cog_fname, owner=owner,
-        band_create_function=lambda x: config.bands.values()
-    )
-    return Scene(
+    scene = Scene(
         0, 'PRIVATE', [], datasource, {}, landsat_id, 'SUCCESS', 'SUCCESS',
         'INGESTED', [io.make_path_for_mtl(gcs_prefix, landsat_id)],
         cloudCover=filter_metadata['cloud_cover'],
         acquisitionDate=filter_metadata['acquisition_date'],
-        images=[image], sceneType='COG'
+        sceneType='COG'
     )
+    image = create_geotiff_image(
+        filenames['COG'], s3_location, filename=cog_fname, owner=owner, scene=scene.id,
+        band_create_function=lambda x: config.bands.values()
+    )
+    scene.images = [image]
+    return scene
 
 
 def convert_to_cog(prefix, stacked_tif_path, cog_tif_path, config, landsat_id):
