@@ -30,7 +30,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
 
   val selectF = sql"""
     SELECT
-      distinct(id), created_at, created_by, modified_at, modified_by, owner,
+      id, created_at, created_by, modified_at, modified_by, owner,
       ingest_size_bytes, visibility, tags,
       datasource, scene_metadata, name, tile_footprint,
       data_footprint, metadata_files, ingest_location, cloud_cover,
@@ -38,6 +38,36 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       boundary_status, ingest_status, scene_type
     FROM
   """ ++ tableF
+
+  override def authQuery(user: User, objectType: ObjectType): Dao.QueryBuilder[Scene] = {
+    if (user.isSuperuser) {
+      Dao.QueryBuilder[Scene](selectF, tableF, List.empty)
+    } else {
+      val authFilter =
+        fr"""( owner = ${user.id} OR visibility = 'PUBLIC' OR id in (
+             SELECT acr.object_id
+             FROM access_control_rules acr
+             WHERE acr.object_type = 'SCENE'
+             AND acr.action_type = 'VIEW'
+             AND -- Match if the ACR is an ALL or per user
+             (acr.subject_type = 'ALL' OR (acr.subject_type = 'USER'
+               AND acr.subject_id = ${user.id})
+             )
+
+             UNION ALL -- Collect objects the user has access to for group permissions
+
+             SELECT acr.object_id
+             FROM access_control_rules acr
+             JOIN user_group_roles ugr ON acr.subject_type::text = ugr.group_type::text
+             AND acr.subject_id::text = ugr.group_id::text
+             WHERE ugr.user_id = ${user.id}
+             AND acr.object_type = 'SCENE'
+             AND acr.action_type = 'VIEW'
+             ) )
+          """
+      Dao.QueryBuilder[Scene](selectF, tableF, List(Some(authFilter)))
+    }
+  }
 
   def getSceneById(id: UUID): ConnectionIO[Option[Scene]] =
     query.filter(id).selectOption
