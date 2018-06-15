@@ -18,7 +18,9 @@ import cats.effect.IO
 import geotrellis.slick.Projected
 import geotrellis.vector._
 
-trait Filterables extends RFMeta {
+import com.typesafe.scalalogging.LazyLogging
+
+trait Filterables extends RFMeta with LazyLogging {
 
   implicit val aoiQueryParamsFilter = Filterable[Any, AoiQueryParameters] { qp: AoiQueryParameters =>
       Filters.userQP(qp.userParams) ++
@@ -108,7 +110,7 @@ trait Filterables extends RFMeta {
           case (Some(bboxPolygons), _) => {
             val fragments = bboxPolygons.map(bbox =>
               fr"ST_Intersects(data_footprint, ${bbox})")
-            Some(Fragments.and(fragments: _*))
+            Some(fr"(" ++ Fragments.or(fragments: _*) ++ fr")")
           }
           case _ => None
         }

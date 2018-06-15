@@ -49,7 +49,7 @@ case class SceneQueryParameters(
   minSunAzimuth: Option[Float] = None,
   maxSunElevation: Option[Float] = None,
   minSunElevation: Option[Float] = None,
-  bbox: Option[String] = None,
+  bbox: Iterable[String] = Seq[String](),
   point: Option[String] = None,
   project: Option[UUID] = None,
   ingested: Option[Boolean] = None,
@@ -59,14 +59,16 @@ case class SceneQueryParameters(
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] = try {
     bbox match {
-      case Some(b) => Option[Seq[Projected[Polygon]]](
-        b.split(";")
-        .map(Extent.fromString)
-        .map(_.toPolygon)
-        .map(Projected(_, 4326))
-        .map(_.reproject(LatLng, WebMercator)(3857))
+      case Nil => None
+      case b: Seq[String] => Option[Seq[Projected[Polygon]]](
+        b.map(
+          _.split(";")
+            .map(Extent.fromString)
+            .map(_.toPolygon)
+            .map(Projected(_, 4326))
+            .map(_.reproject(LatLng, WebMercator)(3857))
+        ).flatten
       )
-      case _ => None
     }
   } catch {
     case e: Exception => throw new IllegalArgumentException(
