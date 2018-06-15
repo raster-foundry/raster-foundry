@@ -1,6 +1,6 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.datamodel.{Organization, Platform, User, GroupRole, GroupType}
+import com.azavea.rf.datamodel.{Organization, Platform, User, GroupRole, GroupType, Scene, Project, UserGroupRole}
 import com.azavea.rf.datamodel.Generators.Implicits._
 import com.azavea.rf.database.Implicits._
 import doobie._
@@ -188,47 +188,57 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
     }
   }
 
-  // test("get Platforms And Users By Users Ids") {
-  //   check {
-  //     forAll{
-  //       (
-  //         userCreateOne: User.Create,
-  //         userCreateTwo: User.Create,
-  //         orgCreate: Organization.Create,
-  //         platform: Platform,
-  //         userRole: GroupRole
-  //       ) => {
-  //         val listOfPwuIO = for {
-  //           orgAndUserOne <- insertUserAndOrg(userCreateOne, orgCreate)
-  //           (org, dbUserOne) = orgAndUserOne
-  //           orgAndUserTwo <- insertUserAndOrg(userCreateTwo, orgCreate)
-  //           (org, dbUserTwo) = orgAndUserTwo
-  //           insertedPlatform <- PlatformDao.create(platform)
-  //           insertedUserGroupRoleOne <- PlatformDao.addUserRole(dbUserOne, dbUserOne.id, insertedPlatform.id, userRole)
-  //           insertedUserGroupRoleTwo <- PlatformDao.addUserRole(dbUserTwo, dbUserTwo.id, insertedPlatform.id, userRole)
-  //           listOfUserIds = List(dbUserOne.id, dbUserTwo.id)
-  //           listOfPwu <- PlatformDao.getPlatformsAndUsersByUsersId(listOfUserIds)
-  //         } yield (listOfPwu, dbUserOne, dbUserTwo)
-  //
-  //         val (listOfPwu, dbUserOne, dbUserTwo) = listOfPwuIO.transact(xa).unsafeRunSync
-  //
-  //         listOfPwu.length >= 0 &&
-  //           listOfPwu(0).platId == platform.id &&
-  //           listOfPwu(1).platId == platform.id &&
-  //           listOfPwu(0).uId == dbUserOne.id &&
-  //           listOfPwu(1).uId == dbUserTwo.id &&
-  //           listOfPwu(0).pubSettings == platform.publicSettings &&
-  //           listOfPwu(1).pubSettings == platform.publicSettings &&
-  //           listOfPwu(0).priSettings == platform.privateSettings &&
-  //           listOfPwu(1).priSettings == platform.privateSettings &&
-  //           listOfPwu(0).email == dbUserOne.email &&
-  //           listOfPwu(1).email == dbUserTwo.email &&
-  //           listOfPwu(0).emailNotifications == dbUserOne.emailNotifications &&
-  //           listOfPwu(1).emailNotifications == dbUserTwo.emailNotifications
-  //
-  //
-  //       }
-  //     }
-  //   }
-  // }
+  test("get Platform Users And Projests By Consumers And Scene IDs") {
+    check {
+      forAll{
+        (
+          userCreate: User.Create,
+          userCreateAnother: User.Create,
+          orgCreate: Organization.Create,
+          platform: Platform,
+          projectCreate: Project.Create,
+          projectCreateAnother: Project.Create,
+          sceneCreate: Scene.Create
+        ) => {
+          val listOfPwuIO = for {
+            userOrgPlatProject <- insertUserOrgPlatProject(userCreate, orgCreate, platform, projectCreate)
+            (dbUser, dbOrg, dbPlatform, dbProject) = userOrgPlatProject
+            userProjectAnother <- insertUserProject(userCreateAnother, dbOrg, dbPlatform, projectCreateAnother)
+            (dbUserAnother, dbProjectAnother) = userProjectAnother
+            datasource <- unsafeGetRandomDatasource
+            sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, datasource, sceneCreate), dbUser)
+            _ <- ProjectDao.addScenesToProject(List(sceneInsert.id), dbProject.id, dbUser)
+            _ <- ProjectDao.addScenesToProject(List(sceneInsert.id), dbProjectAnother.id, dbUserAnother)
+            listOfUserIds = List(dbUser.id, dbUserAnother.id)
+            listOfPUSP <- PlatformDao.getPlatUsersAndProjByConsumerAndSceneID(listOfUserIds, sceneInsert.id)
+          } yield (dbUser, dbUserAnother, dbPlatform, dbProject, dbProjectAnother, listOfPUSP)
+
+          val (dbUser, dbUserAnother, dbPlatform, dbProject, dbProjectAnother, listOfPUSP) = listOfPwuIO.transact(xa).unsafeRunSync
+
+          assert(listOfPUSP.length == 2, "; list of return length is not 2")
+          assert(listOfPUSP(0).platId == dbPlatform.id &&
+            listOfPUSP(1).platId == dbPlatform.id, "; platform ID don't match")
+          assert(listOfPUSP(0).platName == dbPlatform.name &&
+            listOfPUSP(1).platName == dbPlatform.name, "; platform name don't match")
+          assert((listOfPUSP(0).uId == dbUser.id || listOfPUSP(0).uId == dbUserAnother.id) &&
+            (listOfPUSP(1).uId == dbUser.id || listOfPUSP(1).uId == dbUserAnother.id), "; user ID don't match")
+          assert((listOfPUSP(0).uName == dbUser.name || listOfPUSP(0).uName == dbUserAnother.name) &&
+            (listOfPUSP(1).uName == dbUser.name || listOfPUSP(1).uName == dbUserAnother.name), "; user name don't match")
+          assert(listOfPUSP(0).pubSettings == dbPlatform.publicSettings &&
+            listOfPUSP(1).pubSettings == dbPlatform.publicSettings, "; platform public settings don't match")
+          assert(listOfPUSP(0).priSettings == dbPlatform.privateSettings &&
+            listOfPUSP(1).priSettings == dbPlatform.privateSettings, "; platform private settings don't match")
+          assert((listOfPUSP(0).email == dbUser.email || listOfPUSP(0).email == dbUserAnother.email) &&
+            (listOfPUSP(1).email == dbUser.email || listOfPUSP(1).email == dbUserAnother.email), "; user email don't match")
+          assert((listOfPUSP(0).emailNotifications == dbUser.emailNotifications || listOfPUSP(0).emailNotifications == dbUserAnother.emailNotifications) &&
+            listOfPUSP(1).emailNotifications == dbUser.emailNotifications || listOfPUSP(1).emailNotifications == dbUserAnother.emailNotifications, "; user email notification don't match")
+          assert((listOfPUSP(0).projectId == dbProject.id || listOfPUSP(0).projectId == dbProjectAnother.id) &&
+            listOfPUSP(1).projectId == dbProject.id || listOfPUSP(1).projectId == dbProjectAnother.id, "; project ID don't match")
+          assert((listOfPUSP(0).projectName == dbProject.name || listOfPUSP(0).projectName == dbProjectAnother.name) &&
+            (listOfPUSP(1).projectName == dbProject.name || listOfPUSP(1).projectName == dbProjectAnother.name), "; project name don't match")
+          true
+        }
+      }
+    }
+  }
 }
