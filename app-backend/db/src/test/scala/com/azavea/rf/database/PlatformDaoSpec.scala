@@ -241,4 +241,40 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
       }
     }
   }
+
+  test("get Platform And Users By Scene Owner Id") {
+    check {
+      forAll{
+        (
+          userCreate: User.Create,
+          orgCreate: Organization.Create,
+          platform: Platform,
+          projectCreate: Project.Create,
+          sceneCreate: Scene.Create
+        ) => {
+          val puIO = for {
+            userOrgPlatProject <- insertUserOrgPlatProject(userCreate, orgCreate, platform, projectCreate)
+            (dbUser, dbOrg, dbPlatform, dbProject) = userOrgPlatProject
+            datasource <- unsafeGetRandomDatasource
+            sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, datasource, sceneCreate), dbUser)
+            _ <- ProjectDao.addScenesToProject(List(sceneInsert.id), dbProject.id, dbUser)
+            pUO <- PlatformDao.getPlatAndUsersBySceneOwnerId(Some(sceneInsert.owner))
+          } yield (dbUser, dbPlatform, dbProject, pUO)
+
+          val (dbUser, dbPlatform, dbProject, pUO) = puIO.transact(xa).unsafeRunSync
+          val pU = pUO.get
+
+          assert(pU.platId == dbPlatform.id, "; platform ID don't match")
+          assert(pU.platName == dbPlatform.name, "; platform name don't match")
+          assert(pU.uId == dbUser.id, "; user ID don't match")
+          assert(pU.uName == dbUser.name, "; user name don't match")
+          assert(pU.pubSettings == dbPlatform.publicSettings, "; platform public settings don't match")
+          assert(pU.priSettings == dbPlatform.privateSettings, "; platform private settings don't match")
+          assert(pU.email == dbUser.email, "; user email don't match")
+          assert(pU.emailNotifications == dbUser.emailNotifications, "; user email notification don't match")
+          true
+        }
+      }
+    }
+  }
 }
