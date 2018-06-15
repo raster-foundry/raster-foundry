@@ -24,7 +24,7 @@ trait SceneQueryParameterDirective extends QueryParametersCommon {
     'minSunAzimuth.as[Float].?,
     'maxSunElevation.as[Float].?,
     'minSunElevation.as[Float].?,
-    'bbox.as[String].?,
+    'bbox.as[String].*,
     'point.as[String].?,
     'project.as[UUID].?,
     'ingested.as[Boolean].?,
