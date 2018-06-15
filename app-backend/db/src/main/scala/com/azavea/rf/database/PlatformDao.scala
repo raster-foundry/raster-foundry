@@ -175,9 +175,9 @@ object PlatformDao extends Dao[Platform] {
           ON u.id = prj.owner
           JOIN scenes_to_projects AS stp
           ON prj.id = stp.project_id
-        WHERE stp.scene_id = """ ++ sceneIdString ++ """
-          AND u.id IN
-      """ ++ userIdsString
+        WHERE stp.scene_id = ${sceneIdString}
+          AND u.id IN ${userIdsString}
+      """
     ).query[PlatformWithUsersSceneProjects].to[List]
   }
 
