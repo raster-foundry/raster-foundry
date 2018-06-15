@@ -261,11 +261,15 @@ class MapContainerController {
                 component: 'rfMapSearchModal',
                 resolve: { }
             }).result.then(location => {
-                const mapView = location.mapView;
-                this.map.fitBounds([
-                    [mapView.bottomRight.latitude, mapView.bottomRight.longitude],
-                    [mapView.topLeft.latitude, mapView.topLeft.longitude]
-                ]);
+                if (location.coords) {
+                    this.map.setView(location.coords, 11);
+                } else {
+                    const mapView = location.mapView;
+                    this.map.fitBounds([
+                        [mapView.bottomRight.latitude, mapView.bottomRight.longitude],
+                        [mapView.topLeft.latitude, mapView.topLeft.longitude]
+                    ]);
+                }
             });
     }
 
