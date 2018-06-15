@@ -2,7 +2,35 @@ import logging
 import os
 import subprocess
 
+import rasterio
+from rasterio.warp import calculate_default_transform, reproject, Resampling
+
 logger = logging.getLogger(__name__)
+
+
+def warp_tif(combined_tif_path, warped_tif_path, dst_crs={'init': 'EPSG:3857'}):
+    with rasterio.open(combined_tif_path) as src:
+        meta = src.meta
+        new_meta = meta.copy()
+        transform, width, height = calculate_default_transform(
+            src.crs, dst_crs, src.width, src.height, *src.bounds)
+        new_meta.update({
+            'crs': dst_crs,
+            'transform': transform,
+            'width': width,
+            'height': height
+        })
+        with rasterio.open(warped_tif_path, 'w', compress='LZW', tiled=True, **new_meta) as dst:
+            for i in range(1, src.count):
+                reproject(
+                    source=rasterio.band(src, i),
+                    destination=rasterio.band(dst, i),
+                    src_transform=src.transform,
+                    src_crs=src.crs,
+                    dst_transform=transform,
+                    dst_crs=dst_crs,
+                    resampling=Resampling.nearest
+                )
 
 
 def create_geotiffs(modis_path, output_directory):
@@ -25,6 +53,7 @@ def create_geotiffs(modis_path, output_directory):
     pre_warp_output_path = os.path.join(pre_warp_directory, 'B.tif')
     combined_tif_filepath = os.path.join(output_directory, 'combined-tif.tif')
     warped_tif_path = os.path.join(output_directory, 'warped-combined.tif')
+    cropped_tif_path = os.path.join(output_directory, 'cropped-warped.tif')
     cog_filename = '.'.join(os.path.basename(modis_path).split('.')[:-1]) + '.tif'
     cog_tif_filepath = os.path.join(output_directory, cog_filename)
 
@@ -37,16 +66,8 @@ def create_geotiffs(modis_path, output_directory):
                      '-a_nodata', '-28672',
                      '-separate']
 
-    warp_command = [
-        'gdalwarp', '-co', 'COMPRESS=LZW',
-        '-co', 'TILED=YES',
-        '-t_srs', 'epsg:3857',
-        combined_tif_filepath,
-        warped_tif_path
-    ]
-
     # Generate overviews
-    overview_command = ['gdaladdo', warped_tif_path, '2', '4', '8', '16', '32']
+    overview_command = ['gdaladdo', cropped_tif_path, '2', '4', '8', '16', '32']
 
     # Create final tif with overviews
     translate_cog_command = ['gdal_translate', warped_tif_path, '-co', 'TILED=YES',
@@ -64,7 +85,7 @@ def create_geotiffs(modis_path, output_directory):
 
     # Warp combined tif
     logger.info('Warping tif %s => %s', combined_tif_filepath, warped_tif_path)
-    subprocess.check_call(warp_command)
+    warp_tif(combined_tif_filepath, warped_tif_path)
     logger.info('Running Overview Command: %s', ' '.join(overview_command))
     subprocess.check_call(overview_command)
     logger.info('Running COG translate Command: %s', ' '.join(translate_cog_command))
