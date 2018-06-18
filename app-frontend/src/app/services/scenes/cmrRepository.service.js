@@ -15,11 +15,43 @@ export default (app) => {
                 name: 'MYD09A1: MODIS/Aqua ',
                 uuid: '755735945-9da5-47c3-8ae4-572b5e11205b',
                 id: 'MYD09A1',
+                uploadType: 'MODIS_USGS',
+                fileAdapter(scene) {
+                    return [ scene.sceneMetadata.links.find(l => l.rel.contains('data#')).href ];
+                },
                 default: true
             }, {
                 name: 'MOD09A1: MODIS/Terra',
                 uuid: 'a11b768b-d869-476e-a1ed-0ac3205ed761',
-                id: 'MOD09A1'
+                uploadType: 'MODIS_USGS',
+                id: 'MOD09A1',
+                fileAdapter(scene) {
+                    return [ scene.sceneMetadata.links.find(l => l.rel.contains('data#')).href ];
+                }
+            }, {
+                name: 'Landsat 4 + 5 TM',
+                uuid: 'e8c4d923-5a73-430d-8fe4-53bd6a12ce6a',
+                uploadType: 'LANDSAT_HISTORICAL',
+                id: 'Landsat4-5_TM_C1',
+                fileAdapter(scene) {
+                    return [scene.name];
+                }
+            }, {
+                name: 'Landsat 7 ETM',
+                uuid: '5a462d31-5744-4ab9-9e80-5dbcb118f72f',
+                uploadType: 'LANDSAT_HISTORICAL',
+                id: 'Landsat7_ETM_Plus_C1',
+                fileAdapter(scene) {
+                    return [scene.name];
+                }
+            }, {
+                name: 'Landsat Tri-Decadal MSS',
+                uuid: '7b205ec9-6cce-444d-998a-f34d379258b2',
+                uploadType: 'LANDSAT_HISTORICAL',
+                id: 'MSS',
+                fileAdapter(scene) {
+                    return [scene.name];
+                }
             }];
         }
 
@@ -188,13 +220,12 @@ export default (app) => {
         }
 
         sceneToUploadObject(scene, projectId, user) {
-            const dataRel = 'http://esipfed.org/ns/fedsearch/1.1/data#';
-            const dataHref = scene.sceneMetadata.links.find(l => l.rel === dataRel).href;
+            const datasource = this.datasources.find(d => d.id === scene.datasource);
             return {
-                files: [dataHref],
+                files: datasource.fileAdapter(scene),
                 fileType: 'GEOTIFF',
-                uploadType: 'MODIS_USGS',
-                datasource: this.datasources.find(d => d.id === scene.datasource).uuid,
+                uploadType: datasource.uploadType,
+                datasource: datasource.uuid,
                 uploadStatus: 'UPLOADED',
                 visibility: 'PRIVATE',
                 organizationId: user.organizationId,

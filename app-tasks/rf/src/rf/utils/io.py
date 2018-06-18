@@ -68,7 +68,9 @@ def s3_obj_exists(url):
 
 
 def base_metadata_for_landsat_id(landsat_id):
-    pattern = re.compile(r'L(?P<sensor_id>.)(?P<landsat_number>\d)(?P<path>\d{3})(?P<row>\d{3}).*')
+    pattern = re.compile(
+        r'L(?P<sensor_id>.).(?P<landsat_number>\d)_.{4}_(?P<path>\d{3})(?P<row>\d{3}).*'
+    )
     match = pattern.match(landsat_id)
     if not match:
         raise Exception('Could not parse Landsat ID. Make sure you entered it correctly.')
@@ -77,11 +79,14 @@ def base_metadata_for_landsat_id(landsat_id):
 
 def gcs_path_for_landsat_id(landsat_id):
     """Create a Google Cloud Storage path from a Landsat ID
+
+    Args:
+        landsat_id (str): Level 1 collection id of a Landsat scene
     """
     metadata = base_metadata_for_landsat_id(landsat_id)
     tmpl = (
         'https://storage.googleapis.com/gcp-public-data-landsat/'
-        'L{sensor_id}0{landsat_number}/PRE/{path}/{row}/{landsat_id}'
+        'L{sensor_id}0{landsat_number}/01/{path}/{row}/{landsat_id}'
     )
     return tmpl.format(**dict(landsat_id=landsat_id, **metadata))
 

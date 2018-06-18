@@ -153,7 +153,8 @@ def convert_to_cog(prefix, stacked_tif_path, cog_tif_path, config, landsat_id):
 def upload_file(owner, local_path, remote_fname):
     s3_client = boto3.client('s3')
     key = 'user-uploads/{}/{}'.format(owner, remote_fname)
-    s3_client.put_object(Bucket=data_bucket, Key=urllib.quote(key), Body=open(local_path, 'r'))
+    s3_client.put_object(Bucket=data_bucket, Key=key, Body=open(local_path, 'r'))
+    logger.info("Uploading COG: %s => (Bucket: %s, Key: %s)", local_path, data_bucket, key)
     return key
 
 
