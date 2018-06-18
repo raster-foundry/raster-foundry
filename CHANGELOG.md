@@ -1,12 +1,17 @@
 # Change Log
 
-## [1.0.3](https://github.com/raster-foundry/raster-foundry/tree/1.0.3) (2018-06-14)
+## [1.1.0](https://github.com/raster-foundry/raster-foundry/tree/1.1.0) (2018-06-18)
 
-[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.0.2...1.0.3)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.0.2...1.1.0)
 
 **Merged pull requests:**
 
+- Use rasterio warp module to warp modis tifs [\#3548](https://github.com/raster-foundry/raster-foundry/pull/3548)
+- Improve Scene Query Performance [\#3547](https://github.com/raster-foundry/raster-foundry/pull/3547)
 - Restrict Projects to Owners for Frontend [\#3542](https://github.com/raster-foundry/raster-foundry/pull/3542)
+- Add support for lat long coordinates in map search [\#3541](https://github.com/raster-foundry/raster-foundry/pull/3541)
+- Add frontend support for Landsat 4, 5, and 7 [\#3540](https://github.com/raster-foundry/raster-foundry/pull/3540)
+- Add processing for Landsat 4, 5, and 7 scenes [\#3529](https://github.com/raster-foundry/raster-foundry/pull/3529)
 - Signed requests should never send a HEAD request [\#3516](https://github.com/raster-foundry/raster-foundry/pull/3516)
 - Allow organization admins to add and modify roles for that organization [\#3511](https://github.com/raster-foundry/raster-foundry/pull/3511)
 - Platform email notification settings frontend [\#3501](https://github.com/raster-foundry/raster-foundry/pull/3501)
