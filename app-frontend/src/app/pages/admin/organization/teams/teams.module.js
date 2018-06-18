@@ -37,6 +37,10 @@ class OrganizationTeamsController {
         });
     }
 
+    $onInit() {
+        this.userTeamRole = {};
+    }
+
     getUserAndUgrs() {
         this.currentUserPromise.then(resp => {
             this.currentUser = resp;
@@ -86,11 +90,12 @@ class OrganizationTeamsController {
                 this.teams.forEach((team) => {
                     let teamUgr = this.currentUgrs.filter(ugr => ugr.groupId === team.id)[0];
                     let isAdmin = this.isPlatOrOrgAdmin || teamUgr && teamUgr.groupRole === 'ADMIN';
+                    this.userTeamRole[team.id] = this.currentUser.isSuperuser || isAdmin;
                     Object.assign(team, {
                         options: {
                             items: this.itemsForTeam(team)
                         },
-                        showOptions: this.currentUser.isSuperuser || isAdmin
+                        showOptions: this.userTeamRole[team.id]
                     });
                 });
 
@@ -197,6 +202,27 @@ class OrganizationTeamsController {
                 this.fetchTeams(this.pagination.currentPage, this.search);
             });
         });
+    }
+
+    toggleTeamNameEdit(teamId, isEdit) {
+        this.nameBuffer = '';
+        this.editTeamId = isEdit ? teamId : null;
+        this.isEditOrgName = isEdit;
+    }
+
+    finishTeamNameEdit(team) {
+        if (this.nameBuffer && this.nameBuffer.length && team.name !== this.nameBuffer) {
+            let teamUpdated = Object.assign({}, team, {name: this.nameBuffer});
+            this.teamService
+                .updateTeam(this.platformId, this.organizationId, team.id, teamUpdated)
+                .then(resp => {
+                    this.$log.log(resp);
+                    this.teams[this.teams.indexOf(team)] = resp;
+                });
+        }
+        delete this.editTeamId;
+        delete this.isEditTeamName;
+        this.nameBuffer = '';
     }
 }
 

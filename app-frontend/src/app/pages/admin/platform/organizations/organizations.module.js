@@ -202,13 +202,8 @@ class PlatformOrganizationsController {
 
     toggleOrgNameEdit(orgId, isEdit) {
         this.nameBuffer = '';
-        if (isEdit) {
-            this.editOrgId = orgId;
-            this.isEditOrgName = isEdit;
-        } else {
-            delete this.editOrgId;
-            delete this.isEditOrgName;
-        }
+        this.editOrgId = isEdit ? orgId : null;
+        this.isEditOrgName = isEdit;
     }
 
     finishOrgNameEdit(org) {

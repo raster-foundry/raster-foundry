@@ -18,11 +18,37 @@
     <tbody>
       <tr ng-repeat="team in $ctrl.teams track by team.id">
         <td class="name">
-          <a class="font-600"
-             title="View team details"
-             ui-sref="admin.team.users({teamId: team.id})">
-            {{team.name}}
-          </a>
+          <div ng-if="$ctrl.editTeamId !== team.id">
+            <a class="font-600"
+               title="View team details"
+               ui-sref="admin.team.users({teamId: team.id})">
+              {{team.name}}
+            </a>
+            <button class="btn btn-tiny btn-admin-name-edit-small"
+                    type="button"
+                    ng-click="$ctrl.toggleTeamNameEdit(team.id, true)"
+                    ng-disabled="$ctrl.isEditTeamName"
+                    ng-if="$ctrl.userTeamRole[team.id]">
+              <span class="icon-pencil"></span>
+            </button>
+          </div>
+          <div ng-if="$ctrl.editTeamId === team.id">
+            <form class="inline-form" ng-submit="$ctrl.finishTeamNameEdit(team)">
+              <div class="form-group all-in-one form-admin-name-edit">
+                <input id="name"
+                       type="text"
+                       class="form-control"
+                       ng-attr-placeholder="{{team.name}}"
+                       ng-model="$ctrl.nameBuffer">
+                <button class="btn btn-link flex-last node-header-eidt-group">
+                  <span class="icon-save node-label-name"></span>
+                </button>
+                <button type="button" class="btn btn-link node-header-eidt-group" ng-click="$ctrl.toggleTeamNameEdit(team.id, false)">
+                  <span class="icon-cancel node-label-name"></span>
+                </button>
+              </div>
+            </form>
+          </div>
         </td>
         <td class="users">
           <div class="user-group-avatars">

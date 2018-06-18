@@ -26,6 +26,17 @@ export default (app) => {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                             'organizations/:organizationId/teams/',
                         method: 'POST'
+                    },
+                    update: {
+                        url:
+                        `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
+                            'organizations/:organizationId/teams/:teamId',
+                        method: 'PUT',
+                        params: {
+                            platformId: '@platformId',
+                            organizationId: '@organizationId',
+                            teamId: '@teamId'
+                        }
                     }
                 }
             );
@@ -96,6 +107,10 @@ export default (app) => {
 
         deactivateTeam(platformId, organizationId, teamId) {
             return this.PlatformTeam.delete({platformId, organizationId, teamId}).$promise;
+        }
+
+        updateTeam(platformId, organizationId, teamId, params) {
+            return this.PlatformTeam.update({platformId, organizationId, teamId}, params).$promise;
         }
     }
 
