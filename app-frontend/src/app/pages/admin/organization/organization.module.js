@@ -2,13 +2,12 @@ import angular from 'angular';
 
 class OrganizationController {
     constructor(
-      $stateParams, $q, $log,
+      $stateParams, $q,
       organizationService, authService, modalService) {
         'ngInject';
 
         this.$stateParams = $stateParams;
         this.$q = $q;
-        this.$log = $log;
         this.organizationService = organizationService;
         this.authService = authService;
         this.modalService = modalService;

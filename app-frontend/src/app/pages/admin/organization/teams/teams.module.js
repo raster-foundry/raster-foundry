@@ -216,7 +216,6 @@ class OrganizationTeamsController {
             this.teamService
                 .updateTeam(this.platformId, this.organizationId, team.id, teamUpdated)
                 .then(resp => {
-                    this.$log.log(resp);
                     this.teams[this.teams.indexOf(team)] = resp;
                 });
         }
