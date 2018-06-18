@@ -1,4 +1,3 @@
-/* globals document */
 import angular from 'angular';
 import _ from 'lodash';
 
@@ -213,7 +212,7 @@ class PlatformOrganizationsController {
     }
 
     finishOrgNameEdit(org) {
-        if (this.nameBuffer.length && org.name !== this.nameBuffer) {
+        if (this.nameBuffer && this.nameBuffer.length && org.name !== this.nameBuffer) {
             let orgUpdated = Object.assign({}, org, {name: this.nameBuffer});
             this.organizationService
                 .updateOrganization(orgUpdated.platformId, orgUpdated.id, orgUpdated)

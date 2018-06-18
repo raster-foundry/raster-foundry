@@ -328,6 +328,7 @@
 .btn-admin-name-edit-small {
   padding: 0.2em;
   border: 0px;
+  margin-left: 0rem;
 }
 
 .form-admin-name-edit {
@@ -338,4 +339,12 @@
   }
 
   max-width: 140px;
+}
+
+.form-admin-name-edit-header {
+  margin-bottom: 0;
+
+  input button {
+    height: 2rem;
+  }
 }

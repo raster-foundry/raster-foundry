@@ -2,12 +2,13 @@ import angular from 'angular';
 
 class OrganizationController {
     constructor(
-      $stateParams, $q,
+      $stateParams, $q, $log,
       organizationService, authService, modalService) {
         'ngInject';
 
         this.$stateParams = $stateParams;
         this.$q = $q;
+        this.$log = $log;
         this.organizationService = organizationService;
         this.authService = authService;
         this.modalService = modalService;
@@ -68,6 +69,25 @@ class OrganizationController {
     // to differentiate logos since uri itself does not change
     // but the picture itself changes
         return uri.length ? `${uri}?${new Date().getTime()}` : '';
+    }
+
+    toggleOrgNameEdit() {
+        this.isEditOrgName = !this.isEditOrgName;
+        delete this.nameBuffer;
+    }
+
+    finishOrgNameEdit() {
+        if (this.nameBuffer && this.nameBuffer.length
+            && this.nameBuffer !== this.organization.name) {
+            let orgUpdated = Object.assign({}, this.organization, {name: this.nameBuffer});
+            this.organizationService.updateOrganization(
+              this.organization.platformId, this.organization.id, orgUpdated)
+            .then(resp => {
+                this.organization = resp;
+            });
+        }
+        delete this.nameBuffer;
+        delete this.isEditOrgName;
     }
 }
 
