@@ -319,7 +319,7 @@ object Generators extends ArbitraryInstances {
   private def sceneCreateGen: Gen[Scene.Create] = for {
     sceneId <- uuidGen map { Some(_) }
     ingestSizeBytes <- Gen.const(0)
-    visibility <- visibilityGen
+    visibility <- Gen.const(Visibility.Private)
     tags <- stringListGen
     datasource <- uuidGen
     sceneMetadata <- Gen.const(().asJson)
