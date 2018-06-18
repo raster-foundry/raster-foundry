@@ -53,7 +53,6 @@ def create_geotiffs(modis_path, output_directory):
     pre_warp_output_path = os.path.join(pre_warp_directory, 'B.tif')
     combined_tif_filepath = os.path.join(output_directory, 'combined-tif.tif')
     warped_tif_path = os.path.join(output_directory, 'warped-combined.tif')
-    cropped_tif_path = os.path.join(output_directory, 'cropped-warped.tif')
     cog_filename = '.'.join(os.path.basename(modis_path).split('.')[:-1]) + '.tif'
     cog_tif_filepath = os.path.join(output_directory, cog_filename)
 
@@ -67,10 +66,10 @@ def create_geotiffs(modis_path, output_directory):
                      '-separate']
 
     # Generate overviews
-    overview_command = ['gdaladdo', cropped_tif_path, '2', '4', '8', '16', '32']
+    overview_command = ['gdaladdo', warped_tif_path, '2', '4', '8', '16', '32']
 
     # Create final tif with overviews
-    translate_cog_command = ['gdal_translate', warped_tif_path, '-a_nodata', '0',
+    translate_cog_command = ['gdal_translate', warped_tif_path, '-a_nodata', '-28672',
                              '-co', 'TILED=YES', '-co', 'COMPRESS=LZW', '-co', 'COPY_SRC_OVERVIEWS=YES',
                              cog_tif_filepath]
 
