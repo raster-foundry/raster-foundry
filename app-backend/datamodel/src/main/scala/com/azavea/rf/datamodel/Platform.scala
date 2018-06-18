@@ -37,6 +37,32 @@ object Platform {
   implicit val decodePlatform: Decoder[Platform] = deriveDecoder[Platform]
 
   implicit val encodePlatform: Encoder[Platform] = Encoder.forProduct5(
-       "id", "name", "publicSettings", "isActive", "defaultOrganizationId"
-    )(s => (s.id, s.name, s.publicSettings, s.isActive, s.defaultOrganizationId))
+    "id", "name", "publicSettings", "isActive", "defaultOrganizationId"
+  )(s => (s.id, s.name, s.publicSettings, s.isActive, s.defaultOrganizationId))
 }
+
+@JsonCodec
+case class PlatformWithUsersSceneProjects(
+  platId: UUID,
+  platName: String,
+  uId: String,
+  uName: String,
+  pubSettings: Platform.PublicSettings,
+  priSettings: Platform.PrivateSettings,
+  email: String,
+  emailNotifications: Boolean,
+  projectId: UUID,
+  projectName: String
+)
+
+@JsonCodec
+case class PlatformWithSceneOwner(
+  platId: UUID,
+  platName: String,
+  uId: String,
+  uName: String,
+  pubSettings: Platform.PublicSettings,
+  priSettings: Platform.PrivateSettings,
+  email: String,
+  emailNotifications: Boolean
+)
