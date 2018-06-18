@@ -38,29 +38,6 @@ div.image-placeholder {
   }
 }
 
-.editable-image {
-  $background: rgba(0,0,0,0.7);
-  position: relative;
-  border: 1px solid rgba(0, 0, 0, 0);
-  cursor: pointer;
-  &:hover {
-    border: 1px solid $background;
-  }
-  &:hover:before {
-    font-size: 1.1rem;
-    position: absolute;
-    padding: 2px 0px;
-    text-align: center;
-    background: $background;
-    color: #fff;
-    content: 'Change';
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-  }
-}
-
 .editable-image-placeholder,
 .editable-image-always {
   $background: rgba(0,0,0,0.7);

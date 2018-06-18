@@ -1,21 +1,18 @@
 <div class="container-admin-header">
   <div class="admin-header">
-    <div class="admin-logo image-placeholder editable-image"
-         ng-if="$ctrl.fetching"
-    ></div>
+    <div class="admin-logo image-placeholder" ng-if="!$ctrl.orgLogoUri.length && !$ctrl.isSuperOrAdmin || $ctrl.fetching"></div>
     <div class="admin-logo image-placeholder editable-image-placeholder"
-         ng-if="!$ctrl.orgLogoUri.length && $ctrl.isSuperOrAdmin"
+         ng-if="!$ctrl.orgLogoUri.length && $ctrl.isSuperOrAdmin && !$ctrl.fetching"
          ng-click="$ctrl.addLogoModal()"
     ></div>
     <div class="admin-logo editable-image-always"
-         ng-if="$ctrl.orgLogoUri.length && $ctrl.isSuperOrAdmin"
+         ng-if="$ctrl.orgLogoUri.length && $ctrl.isSuperOrAdmin && !$ctrl.fetching"
          ng-click="$ctrl.addLogoModal()"
     >
       <img ng-attr-src="{{$ctrl.orgLogoUri}}">
     </div>
-    <div class="admin-logo image-placeholder" ng-if="($ctrl.fetching || !$ctrl.orgLogoUri.length) && !$ctrl.isSuperOrAdmin"></div>
     <div class="admin-logo"
-         ng-if="$ctrl.orgLogoUri.length && !$ctrl.isSuperOrAdmin">
+         ng-if="$ctrl.orgLogoUri.length && !$ctrl.isSuperOrAdmin && !$ctrl.fetching">
       <img ng-attr-src="{{$ctrl.orgLogoUri}}">
     </div>
     <div class="admin-logo-text" ng-if="!$ctrl.fetching">
