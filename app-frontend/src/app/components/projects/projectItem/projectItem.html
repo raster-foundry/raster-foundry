@@ -45,6 +45,15 @@
         </div>
       </a>
     </div>
+
+    <div class="project-ownership">
+      <div ng-if="$ctrl.project.owner.profileImageUri">
+        <img class="avatar user-avatar pull-left" src="{{ $ctrl.project.owner.profileImageUri }}" />
+      </div>
+      <div class="font-600">
+        Modified on {{ $ctrl.project.modifiedAt | date }}
+      </div>
+    </div>
   </ng-container>
 
   <ng-container ng-if="$ctrl.slim">
