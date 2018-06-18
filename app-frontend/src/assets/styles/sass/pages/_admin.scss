@@ -324,3 +324,18 @@
   padding-left: 3rem;
   padding-right: 3rem;
 }
+
+.btn-admin-name-edit-small {
+  padding: 0.2em;
+  border: 0px;
+}
+
+.form-admin-name-edit {
+  margin-bottom: 0;
+  input, button {
+    padding: 2px;
+    height: 2.5rem;
+  }
+
+  max-width: 140px;
+}

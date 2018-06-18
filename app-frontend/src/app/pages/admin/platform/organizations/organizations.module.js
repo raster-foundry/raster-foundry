@@ -1,3 +1,4 @@
+/* globals document */
 import angular from 'angular';
 import _ from 'lodash';
 
@@ -30,6 +31,10 @@ class PlatformOrganizationsController {
         this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
         this.getPlatUgrs();
         this.$scope.$watch('$ctrl.search', debouncedSearch);
+    }
+
+    $onInit() {
+        this.userOrgRole = {};
     }
 
     getPlatUgrs() {
@@ -76,11 +81,13 @@ class PlatformOrganizationsController {
                         this.isPlatOrOrgAdmin =
                             this.currentOrgUgr && this.currentOrgUgr.groupRole === 'ADMIN' ||
                             this.isPlatAdmin;
+                        this.userOrgRole[org.id] =
+                            this.currentUser.isSuperuser || this.isPlatOrOrgAdmin;
                         Object.assign(org, {
                             options: {
                                 items: this.itemsForOrg(org)
                             },
-                            showOptions: this.currentUser.isSuperuser || this.isPlatOrOrgAdmin
+                            showOptions: this.userOrgRole[org.id]
                         });
                     });
                 });
@@ -192,6 +199,31 @@ class PlatformOrganizationsController {
                     this.fetchOrganizations();
                 });
         });
+    }
+
+    toggleOrgNameEdit(orgId, isEdit) {
+        this.nameBuffer = '';
+        if (isEdit) {
+            this.editOrgId = orgId;
+            this.isEditOrgName = isEdit;
+        } else {
+            delete this.editOrgId;
+            delete this.isEditOrgName;
+        }
+    }
+
+    finishOrgNameEdit(org) {
+        if (this.nameBuffer.length && org.name !== this.nameBuffer) {
+            let orgUpdated = Object.assign({}, org, {name: this.nameBuffer});
+            this.organizationService
+                .updateOrganization(orgUpdated.platformId, orgUpdated.id, orgUpdated)
+                .then(resp => {
+                    this.organizations[this.organizations.indexOf(org)] = resp;
+                });
+        }
+        delete this.editOrgId;
+        delete this.isEditOrgName;
+        this.nameBuffer = '';
     }
 }
 

@@ -17,8 +17,36 @@
               <div ng-if="organization.logoUri">
                 <img class="avatar user-avatar" ng-src="{{organization.logoUri}}">
               </div>
-            <div >
-              <a class="font-600" ui-sref="admin.organization.users({organizationId: organization.id})">{{organization.name}}</a>
+            <div ng-if="$ctrl.editOrgId !== organization.id">
+              <a class="font-600"
+                 ui-sref="admin.organization.users({organizationId: organization.id})">
+                 {{organization.name}}</a>
+              <button class="btn btn-tiny btn-admin-name-edit-small"
+                      type="button"
+                      ng-click="$ctrl.toggleOrgNameEdit(organization.id, true)"
+                      ng-disabled="$ctrl.isEditOrgName"
+                      ng-if="$ctrl.userOrgRole[organization.id]">
+                <span class="icon-pencil"></span>
+              </button>
+            </div>
+            <div ng-if="$ctrl.editOrgId === organization.id">
+              <form class="inline-form" ng-submit="$ctrl.finishOrgNameEdit(organization)">
+                <div class="form-group all-in-one form-admin-name-edit">
+                  <input id="name"
+                         type="text"
+                         class="form-control"
+                         ng-attr-placeholder="{{organization.name}}"
+                         ng-model="$ctrl.nameBuffer">
+                  <button class="btn btn-link flex-last node-header-eidt-group">
+                    <span class="sr-only">Save</span>
+                    <span class="icon-save node-label-name"</span>
+                  </button>
+                  <button type="button" class="btn btn-link node-header-eidt-group" ng-click="$ctrl.toggleOrgNameEdit(organization.id, false)">
+                    <span class="sr-only">Cancel</span>
+                    <span class="icon-cancel node-label-name"></span>
+                  </button>
+                </div>
+              </form>
             </div>
           </td>
           <td class="users">
