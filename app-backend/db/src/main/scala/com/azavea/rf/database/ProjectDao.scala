@@ -294,7 +294,8 @@ object ProjectDao extends Dao[Project] {
               projectsPage.results map {
                 (project: Project) => Project.WithUser(
                   project,
-                  groupedUsers.get(project.owner).getOrElse(
+                  groupedUsers.getOrElse(
+                    project.owner,
                     throw new Exception("Somehow, a user id was lost to the aether")
                   ).head
                 )
