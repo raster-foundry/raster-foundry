@@ -11,7 +11,7 @@ class ProjectsListController {
         this.projectService = projectService;
         this.userService = userService;
         this.$scope = $scope;
-	this.authService = authService;
+        this.authService = authService;
     }
 
     $onInit() {
@@ -31,7 +31,7 @@ class ProjectsListController {
                 sort: 'createdAt,desc',
                 pageSize: 10,
                 page: page - 1,
-		owner: this.authService.getProfile().sub
+                owner: this.authService.getProfile().sub
             }
         ).then(
             (projectResult) => {

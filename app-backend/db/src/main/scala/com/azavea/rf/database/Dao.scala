@@ -250,6 +250,9 @@ object Dao {
     def listQ(offset: Int, limit: Int): Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"OFFSET $offset" ++ fr"LIMIT $limit").query[Model]
 
+    def listQ(offset: Int, limit: Int, orderClause: Fragment): Query0[Model] =
+      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ orderClause ++ fr"OFFSET $offset" ++ fr"LIMIT $limit").query[Model]
+
     /** Provide a list of responses */
     def list: ConnectionIO[List[Model]] = {
       (selectF ++ Fragments.whereAndOpt(filters: _*))
@@ -260,6 +263,10 @@ object Dao {
     /** Provide a list of responses */
     def list(offset: Int, limit: Int): ConnectionIO[List[Model]] = {
       listQ(offset, limit).list
+    }
+
+    def list(offset: Int, limit: Int, orderClause: Fragment): ConnectionIO[List[Model]] = {
+      listQ(offset, limit, orderClause).list
     }
 
     def selectQ: Query0[Model] =

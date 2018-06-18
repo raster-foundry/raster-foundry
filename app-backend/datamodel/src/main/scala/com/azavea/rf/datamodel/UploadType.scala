@@ -13,6 +13,7 @@ object UploadType {
   case object Local extends UploadType("LOCAL")
   case object Planet extends UploadType("PLANET")
   case object Modis extends UploadType("MODIS_USGS")
+  case object LandsatHistorical extends UploadType("LANDSAT_HISTORICAL")
 
   def fromString(s: String): UploadType = s.toUpperCase match {
     case "DROPBOX" => Dropbox
@@ -20,6 +21,7 @@ object UploadType {
     case "LOCAL" => Local
     case "PLANET" => Planet
     case "MODIS_USGS" => Modis
+    case "LANDSAT_HISTORICAL" => LandsatHistorical
   }
 
   implicit val uploadTypeEncoder: Encoder[UploadType] =

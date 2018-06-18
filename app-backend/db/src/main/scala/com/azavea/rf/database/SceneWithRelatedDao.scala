@@ -36,7 +36,6 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
-
       PaginatedResponse[Scene.WithRelated](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
     }
   }
@@ -52,7 +51,11 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
         .filter(shapeO map { _.geometry })
         .filter(sceneParams)
     }
-    scenes <- sceneSearchBuilder.list((pageRequest.offset * pageRequest.limit), pageRequest.limit)
+    scenes <- sceneSearchBuilder.list(
+      (pageRequest.offset * pageRequest.limit),
+      pageRequest.limit,
+      fr"ORDER BY coalesce (acquisition_date, created_at) DESC, id"
+    )
     withRelateds <- scenesToScenesWithRelated(scenes)
     count <- sceneSearchBuilder.countIO
   } yield {

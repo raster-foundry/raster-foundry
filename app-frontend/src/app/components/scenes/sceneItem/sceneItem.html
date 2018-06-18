@@ -15,10 +15,10 @@
                    status="$ctrl.getSceneIngestStatus()"
                    ng-class="{'on-drag': $ctrl.isDraggable}"></rf-status-tag>
     <img ng-attr-src="{{$ctrl.thumbnail}}"
-         ng-if="$ctrl.thumbnail"
+         ng-if="$ctrl.thumbnail && !$ctrl.imageError"
          class="rounded-img item-img">
-    <div ng-if="!$ctrl.thumbnail"
-        class="rounded-img item-img image-placeholder">
+    <div ng-if="!$ctrl.thumbnail || $ctrl.imageError"
+         class="rounded-img item-img image-placeholder">
         <div>No preview available</div>
     </div>
   </div>

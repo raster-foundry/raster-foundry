@@ -17,12 +17,14 @@ const SceneItemComponent = {
 
 class SceneItemController {
     constructor(
-        $scope, $attrs, thumbnailService, mapService, modalService
+        $scope, $attrs, $element, $timeout, thumbnailService, mapService, modalService
     ) {
         'ngInject';
 
         this.$scope = $scope;
         this.$parent = $scope.$parent.$ctrl;
+        this.$element = $element;
+        this.$timeout = $timeout;
 
         this.isDraggable = $attrs.hasOwnProperty('draggable');
 
@@ -34,6 +36,16 @@ class SceneItemController {
         this.modalService = modalService;
         this.$scope = $scope;
         this.datasource = this.scene.datasource;
+    }
+
+    $postLink() {
+        this.$timeout(() => {
+            const el = $(this.$element[0]).find('img.item-img').get(0);
+            $(el).on('error', () => {
+                this.imageError = true;
+                this.$scope.$evalAsync();
+            });
+        }, 0);
     }
 
     $onChanges(changes) {

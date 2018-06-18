@@ -71,22 +71,37 @@ export default class MapSearchModalController {
             this.results.suggestions.length > this.activeResultIndex &&
             this.activeResultIndex >= 0
         ) {
-            const locationId = this.results.suggestions[this.activeResultIndex].locationId;
-            this.geocodeService.getLocation(locationId).then(l => {
-                this.close({$value: l.response.view[0].result[0].location});
-            });
+            const suggestion = this.results.suggestions[this.activeResultIndex];
+            if (suggestion.coordinateFlag) {
+                this.close({$value: suggestion});
+            } else {
+                const locationId = suggestion.locationId;
+                this.geocodeService.getLocation(locationId).then(l => {
+                    this.close({$value: l.response.view[0].result[0].location});
+                });
+            }
         }
     }
 
     search() {
-        this.isLoading = true;
-        this.geocodeService.getLocationSuggestions(this.query).then(r => {
-            this.$scope.$evalAsync(() => {
-                this.results = r;
-                this.isLoading = false;
-                this.activateFirstResult();
+        if (this.isCoordinatePair(this.query)) {
+            this.results = {
+                suggestions: [{
+                    label: `Go to coordinates: ${this.query}`,
+                    coordinateFlag: true,
+                    coords: this.extractCoordinatePair(this.query)
+                }]
+            };
+        } else {
+            this.isLoading = true;
+            this.geocodeService.getLocationSuggestions(this.query).then(r => {
+                this.$scope.$evalAsync(() => {
+                    this.results = r;
+                    this.isLoading = false;
+                    this.activateFirstResult();
+                });
             });
-        });
+        }
     }
 
     activateFirstResult() {
@@ -128,5 +143,20 @@ export default class MapSearchModalController {
             this.results &&
             this.results.suggestions &&
             !this.results.suggestions.length;
+    }
+
+    isCoordinatePair(searchString) {
+        const cleanedStrings = this.extractCoordinatePair(searchString);
+        return cleanedStrings.length === 2 &&
+            !isNaN(cleanedStrings[0]) &&
+            !isNaN(cleanedStrings[1]) &&
+            cleanedStrings[0].length &&
+            cleanedStrings[1].length &&
+            +cleanedStrings[0] >= -90 && +cleanedStrings[0] <= 90 &&
+            +cleanedStrings[1] >= -180 && +cleanedStrings[1] <= 180 ;
+    }
+
+    extractCoordinatePair(searchString) {
+        return searchString.replace(/ /g, '').split(',');
     }
 }

@@ -21,7 +21,6 @@ class PlatformUsersController {
             500,
             {leading: false, trailing: true}
         );
-
     }
 
     $onInit() {
