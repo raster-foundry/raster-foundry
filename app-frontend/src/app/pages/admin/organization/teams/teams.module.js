@@ -130,7 +130,7 @@ class OrganizationTeamsController {
                             platformId: () => this.organization.platformId,
                             organizationId: () => this.organization.id,
                             teamId: () => team.id,
-                            adminView: () => 'organization'
+                            groupType: () => 'team'
                         }
                     }).result.then(() => {
                         this.teamService

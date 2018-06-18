@@ -56,7 +56,7 @@ class AddUserModalController {
 
     fetchUsers(page = 1, search) {
         this.fetching = true;
-        if (this.resolve.adminView === 'organization') {
+        if (this.resolve.groupType === 'organization') {
             this.platformService.getMembers(
                 this.platformId,
                 page - 1,
@@ -71,7 +71,7 @@ class AddUserModalController {
                 // platform admins or super users are allowed to list platform users
                 this.permissionDenied(error, 'platform admin', 'example@email.com');
             });
-        } else if (this.resolve.adminView === 'team') {
+        } else if (this.resolve.groupType === 'team') {
             this.organizationService.getMembers(
                 this.platformId,
                 this.organizationId,
@@ -100,14 +100,14 @@ class AddUserModalController {
     addUsers() {
         delete this.error;
         let promises = this.selected.toArray().map((userId) => {
-            if (this.resolve.adminView === 'team') {
+            if (this.resolve.groupType === 'team') {
                 return this.teamService.addUser(
                     this.resolve.platformId,
                     this.resolve.organizationId,
                     this.resolve.teamId,
                     userId
                 );
-            } else if (this.resolve.adminView === 'organization') {
+            } else if (this.resolve.groupType === 'organization') {
                 return this.organizationService.addUser(
                     this.resolve.platformId,
                     this.resolve.organizationId,

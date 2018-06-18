@@ -128,7 +128,7 @@ class OrganizationUsersController {
             resolve: {
                 platformId: () => this.organization.platformId,
                 organizationId: () => this.organization.id,
-                adminView: () => 'organization'
+                groupType: () => 'organization'
             }
         }).result.then(() => {
             this.fetchUsers(1, this.search);
