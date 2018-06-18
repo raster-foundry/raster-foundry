@@ -136,6 +136,13 @@ object User {
     }
   }
 
+  @JsonCodec
+  case class Thin(
+    id: String,
+    name: String,
+    profileImageUri: String
+  )
+
   case class JwtFields(
     id: String,
     email: String,
