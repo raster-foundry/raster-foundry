@@ -3,12 +3,13 @@ import _ from 'lodash';
 
 class OrganizationTeamsController {
     constructor(
-        $scope, $stateParams, $log,
+        $scope, $stateParams, $log, $window,
         modalService, organizationService, teamService, authService
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
         this.$log = $log;
+        this.$window = $window;
         this.modalService = modalService;
         this.organizationService = organizationService;
         this.teamService = teamService;
@@ -35,6 +36,10 @@ class OrganizationTeamsController {
                 this.$scope.$watch('$ctrl.search', debouncedSearch);
             }
         });
+    }
+
+    $onInit() {
+        this.userTeamRole = {};
     }
 
     getUserAndUgrs() {
@@ -86,11 +91,12 @@ class OrganizationTeamsController {
                 this.teams.forEach((team) => {
                     let teamUgr = this.currentUgrs.filter(ugr => ugr.groupId === team.id)[0];
                     let isAdmin = this.isPlatOrOrgAdmin || teamUgr && teamUgr.groupRole === 'ADMIN';
+                    this.userTeamRole[team.id] = this.currentUser.isSuperuser || isAdmin;
                     Object.assign(team, {
                         options: {
                             items: this.itemsForTeam(team)
                         },
-                        showOptions: this.currentUser.isSuperuser || isAdmin
+                        showOptions: this.userTeamRole[team.id]
                     });
                 });
 
@@ -197,6 +203,38 @@ class OrganizationTeamsController {
                 this.fetchTeams(this.pagination.currentPage, this.search);
             });
         });
+    }
+
+    toggleTeamNameEdit(teamId, isEdit) {
+        this.nameBuffer = '';
+        this.editTeamId = isEdit ? teamId : null;
+        this.isEditOrgName = isEdit;
+    }
+
+    finishTeamNameEdit(team) {
+        if (this.nameBuffer && this.nameBuffer.length && team.name !== this.nameBuffer) {
+            let teamUpdated = Object.assign({}, team, {name: this.nameBuffer});
+            this.teamService
+                .updateTeam(this.platformId, this.organizationId, team.id, teamUpdated)
+                .then(resp => {
+                    this.teams[this.teams.indexOf(team)] = resp;
+                }, () => {
+                    this.$window.alert('Team\'s name cannot be updated at the moment.');
+                }).finally(() => {
+                    delete this.editTeamId;
+                    delete this.isEditTeamName;
+                    this.nameBuffer = '';
+                });
+        } else {
+            delete this.editTeamId;
+            delete this.isEditTeamName;
+            this.nameBuffer = '';
+        }
+    }
+
+    getInitialNameBuffer(teamId) {
+        let team = this.teams.find(t => t.id === teamId);
+        return team ? team.name : '';
     }
 }
 

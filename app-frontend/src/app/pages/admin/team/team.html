@@ -1,9 +1,33 @@
 <div class="container-admin-header">
   <div class="admin-header">
     <div class="admin-logo-text" ng-if="!$ctrl.fetching">
-      <h1 class="admin-logo-name h3">
+      <h1 class="admin-logo-name h3"
+          ng-if="!$ctrl.isEditTeamName">
         {{$ctrl.team.name}}
+        <button class="btn btn-tiny btn-admin-name-edit-small"
+                type="button"
+                ng-click="$ctrl.toggleTeamNameEdit()"
+                ng-if="$ctrl.isSuperOrAdmin">
+          <span class="icon-pencil"></span>
+        </button>
       </h1>
+      <div ng-if="$ctrl.isEditTeamName">
+        <form class="inline-form" ng-submit="$ctrl.finishTeamNameEdit()">
+          <div class="form-group all-in-one form-admin-name-edit-header">
+            <input id="name"
+                   type="text"
+                   class="form-control"
+                   ng-init="$ctrl.nameBuffer = $ctrl.team.name"
+                   ng-model="$ctrl.nameBuffer">
+            <button class="btn btn-link flex-last node-header-eidt-group">
+              <span class="icon-save node-label-name"</span>
+            </button>
+            <button type="button" class="btn btn-link node-header-eidt-group" ng-click="$ctrl.toggleTeamNameEdit()">
+              <span class="icon-cancel node-label-name"></span>
+            </button>
+          </div>
+        </form>
+      </div>
       <div>
         Team Management
       </div>

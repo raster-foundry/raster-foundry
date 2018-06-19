@@ -43,6 +43,13 @@ export default (app) => {
                             'organizations/:organizationId',
                         method: 'POST',
                         params: {platformId: '@platformId', organizationId: '@organizationId'}
+                    },
+                    updateOrganization: {
+                        url:
+                        `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
+                            'organizations/:organizationId',
+                        method: 'PUT',
+                        params: {platformId: '@platformId', organizationId: '@organizationId'}
                     }
                 }
             );
@@ -124,6 +131,11 @@ export default (app) => {
             return this.Organization
                 .addOrganizationLogo({organizationId}, logoBase64)
                 .$promise;
+        }
+
+        updateOrganization(platformId, organizationId, params) {
+            return this.PlatformOrganization
+                .updateOrganization({platformId, organizationId}, params).$promise;
         }
     }
 
