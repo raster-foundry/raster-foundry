@@ -26,6 +26,14 @@ trait CirceJsonbMeta {
       a => a.token.getOrElse("").toString
     )
 
+  implicit val membershipStatusMeta: Meta[MembershipStatus] =
+    Meta.other[String]("text").xmap[MembershipStatus](
+      a => {
+        MembershipStatus.fromString(a)
+      },
+      a => a.toString
+    )
+
   implicit val jsonbMeta: Meta[Json] =
   Meta.other[PGobject]("jsonb").xmap[Json](
     a => io.circe.parser.parse(a.getValue).leftMap[Json](e => throw e).merge, // failure raises an exception

@@ -90,8 +90,8 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
       forAll{
         (userCreate: User.Create, orgCreate: Organization.Create, userRole: GroupRole) => {
           val addPlatformRoleWithPlatformIO = for {
-            orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-                                          (org, dbUser) = orgAndUser
+            orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
+            (org, dbUser) = orgAndUser
             insertedUserGroupRole <- OrganizationDao.addUserRole(dbUser, dbUser.id, org.id, userRole)
             byIdUserGroupRole <- UserGroupRoleDao.getOption(insertedUserGroupRole.id)
           } yield { (org, byIdUserGroupRole) }

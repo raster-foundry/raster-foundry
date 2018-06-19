@@ -23,7 +23,7 @@ trait PropTestHelpers {
           GroupType.Platform,
           dbPlatform.id,
           GroupRole.Member
-        ).toUserGroupRole(dbUser)
+        ).toUserGroupRole(dbUser, MembershipStatus.Approved)
       ) else ().pure[ConnectionIO]
     } yield { (dbUser, dbOrg, dbPlatform) }
 
@@ -55,7 +55,7 @@ trait PropTestHelpers {
           GroupType.Organization,
           orgInsert.id,
           GroupRole.Member
-        ).toUserGroupRole(userInsert)) else ().pure[ConnectionIO]
+        ).toUserGroupRole(userInsert, MembershipStatus.Approved)) else ().pure[ConnectionIO]
     } yield (orgInsert, userInsert)
   }
 

@@ -24,6 +24,8 @@ object TeamDao extends Dao[Team] {
     FROM
   """ ++ tableF
 
+  def createUserGroupRole = UserGroupRoleDao.createWithGuard(userIsAdmin, GroupType.Team) _
+
   def getById(teamId: UUID): ConnectionIO[Option[Team]] =
     TeamDao.query.filter(teamId).selectOption
 
@@ -210,7 +212,7 @@ object TeamDao extends Dao[Team] {
     val userGroupRoleCreate = UserGroupRole.Create(
       subjectId, GroupType.Team, teamId, groupRole
     )
-    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser))
+    createUserGroupRole(teamId, actingUser, subjectId, userGroupRoleCreate)
   }
 
   def setUserRole(actingUser: User, subjectId: String, teamId: UUID, groupRole: GroupRole): ConnectionIO[List[UserGroupRole]] = {

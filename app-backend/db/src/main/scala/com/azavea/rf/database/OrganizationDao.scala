@@ -38,6 +38,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     FROM
   """ ++ tableF
 
+  def createUserGroupRole = UserGroupRoleDao.createWithGuard(userIsAdmin, GroupType.Organization) _
+
   def create(
     org: Organization
   ): ConnectionIO[Organization] =
@@ -171,7 +173,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     val userGroupRoleCreate = UserGroupRole.Create(
       subjectId, GroupType.Organization, organizationId, groupRole
     )
-    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser))
+
+    createUserGroupRole(organizationId, actingUser, subjectId, userGroupRoleCreate)
   }
 
   def setUserRole(actingUser: User, subjectId: String, organizationId: UUID, groupRole: GroupRole):

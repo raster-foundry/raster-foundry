@@ -22,6 +22,8 @@ object PlatformDao extends Dao[Platform] {
     FROM
   """ ++ tableF
 
+  def createUserGroupRole = UserGroupRoleDao.createWithGuard(userIsAdmin, GroupType.Platform) _
+
   def createF(platform: Platform) = fr"INSERT INTO" ++ tableF ++ fr"""(
         id, name, public_settings , is_active, default_organization_id, private_settings
       )
@@ -119,7 +121,7 @@ object PlatformDao extends Dao[Platform] {
     val userGroupRoleCreate = UserGroupRole.Create(
       subjectId, GroupType.Platform, platformId, userRole
     )
-    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser))
+    createUserGroupRole(platformId, actingUser, subjectId, userGroupRoleCreate)
   }
 
   def setUserRole(actingUser: User, subjectId: String, platformId: UUID, userRole: GroupRole):
