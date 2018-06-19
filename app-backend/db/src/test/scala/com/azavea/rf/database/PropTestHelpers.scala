@@ -38,9 +38,9 @@ trait PropTestHelpers {
     ConnectionIO[(User, Project)] = for {
       dbUser <- UserDao.create(user)
       _ <- UserGroupRoleDao.create(UserGroupRole.Create(dbUser.id, GroupType.Organization, org.id,
-        GroupRole.Member).toUserGroupRole(dbUser))
+        GroupRole.Member).toUserGroupRole(dbUser, MembershipStatus.Approved))
       _ <- UserGroupRoleDao.create(UserGroupRole.Create(dbUser.id, GroupType.Platform, platform.id,
-        GroupRole.Member).toUserGroupRole(dbUser))
+        GroupRole.Member).toUserGroupRole(dbUser, MembershipStatus.Approved))
       dbProject <- ProjectDao.insertProject(fixupProjectCreate(dbUser, proj), dbUser)
     } yield (dbUser, dbProject)
 
