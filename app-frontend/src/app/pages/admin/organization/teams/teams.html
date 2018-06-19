@@ -4,16 +4,30 @@
       {{$ctrl.errorMsg}}
     </p>
   </div>
-  <div ng-if="!$ctrl.errorMsg">
-    <div class="admin-users-actions">
-      <div class="actions-right">
-        <button type="button" class="btn btn-primary"
-                ng-click="$ctrl.newTeamModal()" ng-disabled="$ctrl.fetching">
-          New Team
-        </button>
-      </div>
+  <div class="admin-users-actions" ng-if="!$ctrl.errorMsg && $ctrl.teams.length">
+    <div class="actions-right">
+      <button type="button" class="btn btn-primary"
+              ng-click="$ctrl.newTeamModal()" ng-disabled="$ctrl.fetching">
+        Create Team
+      </button>
     </div>
   </div>
+  <rf-call-to-action-item
+    title="No teams have been formed yet"
+    class="panel panel-off-white"
+    ng-if="!$ctrl.teams.length && !$ctrl.fetching">
+    <p class="pb-25">
+      The {{$ctrl.organization.name}} organization does not have any teams yet.
+      You can use teams to organize users and make sharing common data even easier.
+      When you form teams, they'll be shown here.
+    </p>
+
+    <button type="button" class="btn btn-primary"
+            ng-click="$ctrl.newTeamModal()"
+    >
+      Create Team
+    </button>
+  </rf-call-to-action-item>
   <table class="admin-table admin-team-table" ng-if="!$ctrl.fetching">
     <tbody>
       <tr ng-repeat="team in $ctrl.teams track by team.id">
@@ -40,7 +54,7 @@
           </div>
           &nbsp;
           <ng-pluralize count="team.fetchedUsers.count"
-                        when="{'0': ' No members',
+                        when="{'0': ' No members yet',
                                '1': ' 1 member',
                                'other': '{} members'}"
 
