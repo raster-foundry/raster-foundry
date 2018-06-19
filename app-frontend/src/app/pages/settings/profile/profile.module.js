@@ -72,8 +72,8 @@ class ProfileController {
 
     getCurrentUser() {
         this.authService.getCurrentUser().then(resp => {
-            this.provider = this.providers.find(l => {
-                return resp.id.includes(l.provider);
+            this.provider = this.providers.find(provider => {
+                return resp.id.includes(provider.provider);
             }) || this.defaultProvider;
         });
     }
