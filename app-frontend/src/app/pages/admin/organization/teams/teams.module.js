@@ -233,7 +233,7 @@ class OrganizationTeamsController {
     }
 
     getInitialNameBuffer(teamId) {
-        let team = this.teams.filter(t => t.id === teamId)[0];
+        let team = this.teams.find(t => t.id === teamId);
         return team ? team.name : '';
     }
 }

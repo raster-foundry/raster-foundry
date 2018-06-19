@@ -229,7 +229,7 @@ class PlatformOrganizationsController {
     }
 
     getInitialNameBuffer(orgId) {
-        let organization = this.organizations.filter(org => org.id === orgId)[0];
+        let organization = this.organizations.find(org => org.id === orgId);
         return organization ? organization.name : '';
     }
 }
