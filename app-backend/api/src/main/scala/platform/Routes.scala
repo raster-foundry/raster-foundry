@@ -297,7 +297,7 @@ trait PlatformRoutes extends Authentication
 
   def addUserToPlatform(platformId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
+      PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
     } {
       entity(as[UserGroupRole.UserRole]) { ur =>
         complete {
@@ -380,7 +380,7 @@ trait PlatformRoutes extends Authentication
 
   def addUserToOrganization(platformId: UUID, orgId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
+      PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
     } {
       entity(as[UserGroupRole.UserRole]) { ur =>
         complete {
@@ -473,7 +473,7 @@ trait PlatformRoutes extends Authentication
 
   def addUserToTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
+      PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
     } {
       entity(as[UserGroupRole.UserRole]) { ur =>
         complete {
