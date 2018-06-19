@@ -39,7 +39,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     FROM
   """ ++ tableF
 
-  override def authQuery(user: User, objectType: ObjectType): Dao.QueryBuilder[Scene] = {
+  def authViewQuery(user: User, objectType: ObjectType): Dao.QueryBuilder[Scene] = {
     if (user.isSuperuser) {
       Dao.QueryBuilder[Scene](selectF, tableF, List.empty)
     } else {
