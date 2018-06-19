@@ -27,6 +27,23 @@ trait PropTestHelpers {
       ) else ().pure[ConnectionIO]
     } yield { (dbUser, dbOrg, dbPlatform) }
 
+  def insertUserOrgPlatProject(user: User.Create, org: Organization.Create, platform: Platform, proj: Project.Create):
+    ConnectionIO[(User, Organization, Platform, Project)] = for {
+      userOrgPlatform <- insertUserOrgPlatform(user, org, platform)
+      (dbUser, dbOrg, dbPlatform) = userOrgPlatform
+      dbProject <- ProjectDao.insertProject(fixupProjectCreate(dbUser, proj), dbUser)
+    } yield (dbUser, dbOrg, dbPlatform, dbProject)
+
+  def insertUserProject(user: User.Create, org: Organization, platform: Platform, proj: Project.Create):
+    ConnectionIO[(User, Project)] = for {
+      dbUser <- UserDao.create(user)
+      _ <- UserGroupRoleDao.create(UserGroupRole.Create(dbUser.id, GroupType.Organization, org.id,
+        GroupRole.Member).toUserGroupRole(dbUser))
+      _ <- UserGroupRoleDao.create(UserGroupRole.Create(dbUser.id, GroupType.Platform, platform.id,
+        GroupRole.Member).toUserGroupRole(dbUser))
+      dbProject <- ProjectDao.insertProject(fixupProjectCreate(dbUser, proj), dbUser)
+    } yield (dbUser, dbProject)
+
   def insertUserAndOrg(user: User.Create, org: Organization.Create, doUserGroupRole: Boolean = true):
       ConnectionIO[(Organization, User)] = {
     for {

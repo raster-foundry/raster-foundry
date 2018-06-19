@@ -7,8 +7,8 @@
 
 .admin-logo {
     border-radius: 3px;
-    width: 4em;
-    height: 4em;
+    width: 6em;
+    height: 6em;
     margin-right: 1.4rem;
     position: relative;
 
@@ -48,6 +48,7 @@
 
 .admin-logo-name {
   margin: 0;
+  display: flex;
 }
 
 .admin-tabs {
@@ -323,4 +324,28 @@
   max-width: 100%;
   padding-left: 3rem;
   padding-right: 3rem;
+}
+
+.btn-admin-name-edit-small {
+  padding: 0.2em;
+  border: 0px;
+  margin-left: 1rem;
+}
+
+.form-admin-name-edit {
+  margin-bottom: 0;
+  input, button {
+    padding: 2px;
+    height: 2.5rem;
+  }
+
+  max-width: 140px;
+}
+
+.form-admin-name-edit-header {
+  margin-bottom: 0;
+
+  input button {
+    height: 2rem;
+  }
 }

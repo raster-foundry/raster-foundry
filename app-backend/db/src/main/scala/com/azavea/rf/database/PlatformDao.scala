@@ -6,7 +6,7 @@ import com.azavea.rf.datamodel._
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
+import cats._, cats.data._, cats.effect.IO, cats.implicits._, cats.syntax._
 import io.circe._
 
 import com.lonelyplanet.akka.http.extensions.PageRequest
@@ -152,8 +152,58 @@ object PlatformDao extends Dao[Platform] {
   def organizationIsPublicOrg(organizationId: UUID, platformId: UUID): ConnectionIO[Boolean] = {
     query.filter(platformId).selectOption map {
       platformO => {
-        platformO.map( _.defaultOrganizationId === Some(organizationId)).getOrElse(false)
+        platformO.map( _.defaultOrganizationId == Some(organizationId)).getOrElse(false)
       }
+    }
+  }
+
+  def getPlatUsersAndProjByConsumerAndSceneID(userIds: List[String], sceneId: UUID): ConnectionIO[List[PlatformWithUsersSceneProjects]] = {
+    val userIdsString = "(" ++ userIds.map("'" ++ _.toString() ++ "'" ).mkString(", ") ++ ")"
+    val sceneIdString = "'" ++ sceneId.toString ++ "'"
+    Fragment.const(
+      s"""
+        SELECT plat.id AS plat_id, plat.name AS plat_name, u.id AS u_id, u.name AS u_name,
+               plat.public_settings AS pub_settings, plat.private_settings AS pri_settings,
+               u.email AS email, u.email_notifications AS email_notifications,
+               prj.id AS projectId, prj.name AS project_name
+        FROM users AS u
+          JOIN user_group_roles AS ugr
+          ON u.id = ugr.user_id
+          JOIN platforms AS plat
+          ON ugr.group_id = plat.id
+          JOIN projects AS prj
+          ON u.id = prj.owner
+          JOIN scenes_to_projects AS stp
+          ON prj.id = stp.project_id
+        WHERE stp.scene_id = ${sceneIdString}
+          AND u.id IN ${userIdsString}
+      """
+    ).query[PlatformWithUsersSceneProjects].to[List]
+  }
+
+  def getPlatAndUsersBySceneOwnerId(sceneOwnerIdO: Option[String]): ConnectionIO[Option[PlatformWithSceneOwner]] = {
+    sceneOwnerIdO match {
+      case Some(sceneOwnerId) => {
+        val ownerId = "'" ++ sceneOwnerId ++ "'"
+        Fragment.const(
+          s"""
+            SELECT DISTINCT
+              plat.id AS plat_id, plat.name AS plat_name, u.id AS u_id, u.name AS u_name,
+              plat.public_settings AS pub_settings, plat.private_settings AS pri_settings,
+              u.email AS email, u.email_notifications AS email_notifications
+            FROM users AS u
+              JOIN user_group_roles AS ugr
+              ON u.id = ugr.user_id
+              JOIN platforms AS plat
+              ON ugr.group_id = plat.id
+              JOIN projects AS prj
+              ON u.id = prj.owner
+              JOIN scenes_to_projects AS stp
+              ON prj.id = stp.project_id
+            WHERE u.id = ${ownerId}
+          """).query[PlatformWithSceneOwner].option
+      }
+      case _ => Option.empty.pure[ConnectionIO]
     }
   }
 }

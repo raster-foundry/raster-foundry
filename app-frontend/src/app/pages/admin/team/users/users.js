@@ -130,7 +130,7 @@ class TeamUsersController {
                 platformId: () => this.platformId,
                 organizationId: () => this.organization.id,
                 teamId: () => this.team.id,
-                adminView: () => 'team'
+                groupType: () => 'team'
             }
         }).result.then(() => {
             this.fetchUsers(1, this.search);
