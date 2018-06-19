@@ -13,13 +13,15 @@
         <div class="picture-description">
           <div class="panel panel-info">
             <div class="panel-body">
-              To change your profile picture, upload a new one to your linked {{$ctrl.providerName}} account
+              Your profile picture is managed by
+              <span>{{$ctrl.provider.provider === 'gravatar' || $ctrl.provider.provider === 'auth0' ? 'Gravatar' : $ctrl.provider.name}}</span>.
+              <a ng-href="{{$ctrl.provider.link}}" target="_blank">Click here for instructions on how to change it</a>.
             </div>
           </div>
         </div>
       </div>
 
-      <div ng-if="$ctrl.provider === 'google-oauth2'">
+      <div ng-if="$ctrl.provider.provider === 'google-oauth2'">
         <div class="form-group">
           <label for="name">Name</label>
           <input id="name"
@@ -47,7 +49,7 @@
         </button>
       </div>
 
-      <div ng-if="$ctrl.provider === 'auth0'">
+      <div ng-if="$ctrl.provider.provider === 'auth0'">
         <div class="form-group">
           <label for="name">Name</label>
           <input id="name" type="text"
@@ -67,7 +69,6 @@
           <p class="help-block">Contact support to change your username</p>
         </div>
         <button type="button"
-                ng-if="$ctrl.provider === 'auth0'"
                 class="btn btn-primary btn-large"
                 ng-click="$ctrl.authService.changePassword()">
           Change Password
