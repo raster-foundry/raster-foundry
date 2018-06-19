@@ -23,14 +23,14 @@ const providers = [
         name: 'GitHub'
     },
     {
-        link: 'https://auth0.com/docs/user-profile/user-picture',
+        link: 'https://en.gravatar.com/support/activating-your-account/',
         provider: 'auth0',
         name: 'Auth0'
     }
 ];
 
 const defaultProvider = {
-    link: 'https://en.gravatar.com/',
+    link: 'https://en.gravatar.com/support/activating-your-account/',
     provider: 'gravatar',
     name: 'Gravatar'
 };

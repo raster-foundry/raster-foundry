@@ -12,9 +12,13 @@
         </div>
         <div class="picture-description">
           <div class="panel panel-info">
-            <div class="panel-body">
+            <div class="panel-body" ng-if="!($ctrl.provider.provider === 'gravatar' || $ctrl.provider.provider === 'auth0')">
               To change your profile picture, upload a new one to your linked
-              <a ng-href="{{$ctrl.provider.link}}" target="_blank">{{$ctrl.provider.name}}</a> account
+              <a ng-href="{{$ctrl.provider.link}}" target="_blank">{{$ctrl.provider.name}}</a> account.
+            </div>
+            <div class="panel-body" ng-if="$ctrl.provider.provider === 'gravatar' || $ctrl.provider.provider === 'auth0'">
+              This profile picture is associated with your email in Gravatar. Please find out about how to change it
+              <a ng-href="{{$ctrl.provider.link}}" target="_blank">here</a>.
             </div>
           </div>
         </div>
