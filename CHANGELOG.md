@@ -1,5 +1,17 @@
 # Change Log
 
+## [1.1.1](https://github.com/raster-foundry/raster-foundry/tree/1.1.1) (2018-06-19)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.1.0...1.1.1)
+
+**Merged pull requests:**
+
+- Update scene authorization check to use updated logic [\#3562](https://github.com/raster-foundry/raster-foundry/pull/3562)
+- Fix add user to team bug [\#3554](https://github.com/raster-foundry/raster-foundry/pull/3554)
+- Make organization and team names editable for admins [\#3550](https://github.com/raster-foundry/raster-foundry/pull/3550)
+- More frontend fixes [\#3539](https://github.com/raster-foundry/raster-foundry/pull/3539)
+- Make sending ingest notification emails work [\#3525](https://github.com/raster-foundry/raster-foundry/pull/3525)
+
 ## [1.1.0](https://github.com/raster-foundry/raster-foundry/tree/1.1.0) (2018-06-18)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.0.2...1.1.0)
