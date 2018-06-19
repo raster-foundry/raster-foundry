@@ -98,11 +98,9 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
             UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved)) <*
               UserGroupRoleDao.deactivate(existingRoleO.map( _.id).get, actingUser)
           case (None, true) =>
-            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Invited)) <*
-              UserGroupRoleDao.deactivate(existingRoleO.map( _.id).get, actingUser)
+            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Invited))
           case (None, false) =>
-            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Requested)) <*
-              UserGroupRoleDao.deactivate(existingRoleO.map( _.id).get, actingUser)
+            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Requested))
           case (Some(_), _) => existingRoleO.get.pure[ConnectionIO]
         }
       }
