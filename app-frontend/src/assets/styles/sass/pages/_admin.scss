@@ -48,6 +48,7 @@
 
 .admin-logo-name {
   margin: 0;
+  display: flex;
 }
 
 .admin-tabs {
@@ -328,7 +329,7 @@
 .btn-admin-name-edit-small {
   padding: 0.2em;
   border: 0px;
-  margin-left: 0rem;
+  margin-left: 1rem;
 }
 
 .form-admin-name-edit {

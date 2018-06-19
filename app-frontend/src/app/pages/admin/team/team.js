@@ -1,10 +1,11 @@
 import angular from 'angular';
 
 class TeamController {
-    constructor($q, $stateParams, teamService, organizationService, authService) {
+    constructor($q, $stateParams, $window, teamService, organizationService, authService) {
         'ngInject';
         this.$q = $q;
         this.$stateParams = $stateParams;
+        this.$window = $window;
         this.teamService = teamService;
         this.organizationService = organizationService;
         this.fetching = true;
@@ -45,7 +46,6 @@ class TeamController {
 
     toggleTeamNameEdit() {
         this.isEditTeamName = !this.isEditTeamName;
-        delete this.nameBuffer;
     }
 
     finishTeamNameEdit() {
@@ -59,10 +59,17 @@ class TeamController {
                 teamUpdated)
             .then(resp => {
                 this.team = resp;
+                this.nameBuffer = this.team.name;
+            }, () => {
+                this.$window.alert('Team\'s name cannot be updated at the moment.');
+                delete this.nameBuffer;
+            }).finally(() => {
+                delete this.isEditTeamName;
             });
+        } else {
+            delete this.nameBuffer;
+            delete this.isEditTeamName;
         }
-        delete this.nameBuffer;
-        delete this.isEditTeamName;
     }
 }
 

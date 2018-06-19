@@ -32,7 +32,7 @@
             <input id="name"
                    type="text"
                    class="form-control"
-                   ng-attr-placeholder="{{$ctrl.organization.name}}"
+                   ng-init="$ctrl.nameBuffer = $ctrl.organization.name"
                    ng-model="$ctrl.nameBuffer">
             <button class="btn btn-link flex-last node-header-eidt-group">
               <span class="sr-only">Save</span>

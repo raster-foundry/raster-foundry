@@ -3,12 +3,13 @@ import _ from 'lodash';
 
 class OrganizationTeamsController {
     constructor(
-        $scope, $stateParams, $log,
+        $scope, $stateParams, $log, $window,
         modalService, organizationService, teamService, authService
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
         this.$log = $log;
+        this.$window = $window;
         this.modalService = modalService;
         this.organizationService = organizationService;
         this.teamService = teamService;
@@ -217,11 +218,23 @@ class OrganizationTeamsController {
                 .updateTeam(this.platformId, this.organizationId, team.id, teamUpdated)
                 .then(resp => {
                     this.teams[this.teams.indexOf(team)] = resp;
+                }, () => {
+                    this.$window.alert('Team\'s name cannot be updated at the moment.');
+                }).finally(() => {
+                    delete this.editTeamId;
+                    delete this.isEditTeamName;
+                    this.nameBuffer = '';
                 });
+        } else {
+            delete this.editTeamId;
+            delete this.isEditTeamName;
+            this.nameBuffer = '';
         }
-        delete this.editTeamId;
-        delete this.isEditTeamName;
-        this.nameBuffer = '';
+    }
+
+    getInitialNameBuffer(teamId) {
+        let team = this.teams.filter(t => t.id === teamId)[0];
+        return team ? team.name : '';
     }
 }
 

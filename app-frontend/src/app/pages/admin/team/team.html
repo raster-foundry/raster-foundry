@@ -17,7 +17,7 @@
             <input id="name"
                    type="text"
                    class="form-control"
-                   ng-attr-placeholder="{{$ctrl.team.name}}"
+                   ng-init="$ctrl.nameBuffer = $ctrl.team.name"
                    ng-model="$ctrl.nameBuffer">
             <button class="btn btn-link flex-last node-header-eidt-group">
               <span class="icon-save node-label-name"</span>

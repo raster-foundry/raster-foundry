@@ -3,13 +3,14 @@ import _ from 'lodash';
 
 class PlatformOrganizationsController {
     constructor(
-        $state, modalService, $stateParams, $scope, $log,
+        $state, modalService, $stateParams, $scope, $log, $window,
         platformService, organizationService
     ) {
         this.$state = $state;
         this.$scope = $scope;
         this.$stateParams = $stateParams;
         this.$log = $log;
+        this.$window = $window;
         this.modalService = modalService;
         this.platformService = platformService;
         this.organizationService = organizationService;
@@ -213,11 +214,23 @@ class PlatformOrganizationsController {
                 .updateOrganization(orgUpdated.platformId, orgUpdated.id, orgUpdated)
                 .then(resp => {
                     this.organizations[this.organizations.indexOf(org)] = resp;
+                }, () => {
+                    this.$window.alert('Organization\'s name cannot be updated at the moment.');
+                }).finally(() => {
+                    delete this.editOrgId;
+                    delete this.isEditOrgName;
+                    this.nameBuffer = '';
                 });
+        } else {
+            delete this.editOrgId;
+            delete this.isEditOrgName;
+            this.nameBuffer = '';
         }
-        delete this.editOrgId;
-        delete this.isEditOrgName;
-        this.nameBuffer = '';
+    }
+
+    getInitialNameBuffer(orgId) {
+        let organization = this.organizations.filter(org => org.id === orgId)[0];
+        return organization ? organization.name : '';
     }
 }
 
