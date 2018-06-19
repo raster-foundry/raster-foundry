@@ -7,7 +7,8 @@ import akka.http.scaladsl.model.StatusCodes
 import cats.effect.IO
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
-import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database._
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._

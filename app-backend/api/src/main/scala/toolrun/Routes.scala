@@ -1,5 +1,6 @@
 package com.azavea.rf.api.toolrun
 
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common._
 import com.azavea.rf.common.ast._
 import com.azavea.rf.datamodel._

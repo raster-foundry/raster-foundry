@@ -1,6 +1,7 @@
 package com.azavea.rf.api.thumbnail
 
-import com.azavea.rf.common.{UserErrorHandler, Authentication, S3, CommonHandlers}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{UserErrorHandler, S3, CommonHandlers}
 import com.azavea.rf.database.ThumbnailDao
 import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.Config

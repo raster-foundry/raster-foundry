@@ -1,7 +1,8 @@
 package com.azavea.rf.api.featureflags
 
 import akka.http.scaladsl.server.Route
-import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.FeatureFlagDao
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives

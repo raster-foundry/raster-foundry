@@ -1,4 +1,4 @@
-package com.azavea.rf.common
+package com.azavea.rf.authentication
 
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected

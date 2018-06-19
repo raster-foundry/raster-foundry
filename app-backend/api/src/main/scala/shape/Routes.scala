@@ -12,6 +12,7 @@ import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.Implicits._

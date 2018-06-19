@@ -154,7 +154,7 @@ lazy val root = Project("root", file("."))
   .settings(commonSettings:_*)
 
 lazy val api = Project("api", file("api"))
-  .dependsOn(db, datamodel, common % "test->test;compile->compile")
+  .dependsOn(db, datamodel, common % "test->test;compile->compile", authentication)
   .settings(apiSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
@@ -281,7 +281,7 @@ lazy val batch = Project("batch", file("batch"))
 
 import _root_.io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
-  .dependsOn(datamodel, common % "test->test;compile->compile")
+  .dependsOn(datamodel, common % "test->test;compile->compile", authentication)
   .dependsOn(tool)
   .enablePlugins(GatlingPlugin)
   .settings(commonSettings:_*)
@@ -339,6 +339,15 @@ lazy val tool = Project("tool", file("tool"))
     )
   })
 
+lazy val authentication = Project("authentication", file("authentication"))
+  .dependsOn(common, db)
+  .settings(commonSettings:_*)
+  .settings({libraryDependencies ++= Seq(
+               Dependencies.nimbusJose,
+               Dependencies.akka,
+               Dependencies.akkahttp,
+               Dependencies.akkaCirceJson
+             )})
 
 lazy val bridge = Project("bridge", file("bridge"))
   .settings(commonSettings:_*)
