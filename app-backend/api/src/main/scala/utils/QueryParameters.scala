@@ -30,7 +30,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     orgQueryParams &
     userQueryParameters &
     timestampQueryParameters &
-    searchParams
+    searchParams &
+    ownershipTypeQueryParameters
   ).as(ProjectQueryParameters.apply _)
 
   def aoiQueryParameters = (
@@ -44,6 +45,10 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
   def ownerQueryParameters = parameters(
     'owner.as[String].?
   ).as(OwnerQueryParameters.apply _)
+
+  def ownershipTypeQueryParameters = parameters(
+    'ownershipType.as[String].?
+  ).as(OwnershipTypeQueryParameters.apply _)
 
   def userAuditQueryParameters = parameters(
     (
