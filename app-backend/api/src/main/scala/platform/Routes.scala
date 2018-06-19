@@ -80,11 +80,6 @@ trait PlatformRoutes extends Authentication
                 listPlatformMembers(platformId)
               }
             }
-          } ~
-          post {
-            traceName("platforms-member-add") {
-              addUserToPlatform(platformId)
-            }
           }
         }
       } ~
@@ -290,18 +285,6 @@ trait PlatformRoutes extends Authentication
       (withPagination & searchParams) { (page, searchParams) =>
         complete {
           PlatformDao.listMembers(platformId, page, searchParams, user).transact(xa).unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def addUserToPlatform(platformId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
-    } {
-      entity(as[UserGroupRole.UserRole]) { ur =>
-        complete {
-          PlatformDao.setUserRole(user, ur.userId, platformId, ur.groupRole).transact(xa).unsafeToFuture
         }
       }
     }
