@@ -47,7 +47,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     }
     sceneSearchBuilder = {
       SceneDao
-        .authQuery(user, ObjectType.Scene)
+        .authViewQuery(user, ObjectType.Scene)
         .filter(shapeO map { _.geometry })
         .filter(sceneParams)
     }

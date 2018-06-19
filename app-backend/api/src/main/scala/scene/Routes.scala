@@ -154,8 +154,9 @@ trait SceneRoutes extends Authentication
 
   def getScene(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneWithRelatedDao.query
-        .authorized(user, ObjectType.Scene, sceneId, ActionType.View)
+      SceneDao.authViewQuery(user, ObjectType.Scene)
+        .filter(sceneId)
+        .exists
         .transact(xa)
         .unsafeToFuture
     } {
@@ -268,7 +269,9 @@ trait SceneRoutes extends Authentication
 
   def listUserSceneActions(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneWithRelatedDao.query.authorized(user, ObjectType.Scene, sceneId, ActionType.View)
+      SceneDao.authViewQuery(user, ObjectType.Scene)
+        .filter(sceneId)
+        .exists
         .transact(xa).unsafeToFuture
     } { user.isSuperuser match {
       case true => complete(List("*"))
@@ -300,8 +303,9 @@ trait SceneRoutes extends Authentication
 
   def getSceneDatasource(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.query
-        .authorized(user, ObjectType.Scene, sceneId, ActionType.View)
+      SceneDao.authViewQuery(user, ObjectType.Scene)
+        .filter(sceneId)
+        .exists
         .transact(xa)
         .unsafeToFuture
     } {
