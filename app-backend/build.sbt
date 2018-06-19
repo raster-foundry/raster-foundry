@@ -180,7 +180,9 @@ lazy val common = Project("common", file("common"))
     Dependencies.catsCore,
     Dependencies.awsBatchSdk,
     Dependencies.awsStsSdk,
-    Dependencies.rollbar
+    Dependencies.rollbar,
+    Dependencies.doobiePostgres,
+    Dependencies.geotrellisSlick.exclude("postgresql", "postgresql")
   )})
 
 lazy val db = Project("db", file("db"))
@@ -232,7 +234,7 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
   })
 
 lazy val batch = Project("batch", file("batch"))
-  .dependsOn(common, datamodel, tool, bridge)
+  .dependsOn(common, datamodel, tool, bridge, geotrellis)
   .settings(commonSettings:_*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
@@ -281,7 +283,7 @@ lazy val batch = Project("batch", file("batch"))
 
 import _root_.io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
-  .dependsOn(datamodel, common % "test->test;compile->compile", authentication)
+  .dependsOn(datamodel, common % "test->test;compile->compile", authentication, geotrellis)
   .dependsOn(tool)
   .enablePlugins(GatlingPlugin)
   .settings(commonSettings:_*)
@@ -338,6 +340,15 @@ lazy val tool = Project("tool", file("tool"))
       Dependencies.mamlJvm
     )
   })
+
+lazy val geotrellis = Project("geotrellis", file("geotrellis"))
+  .dependsOn(db, common, datamodel)
+  .settings(commonSettings:_*)
+  .settings({libraryDependencies ++= Seq(
+               Dependencies.geotrellisRaster,
+               Dependencies.geotrellisSpark,
+               Dependencies.catsCore,
+             )})
 
 lazy val authentication = Project("authentication", file("authentication"))
   .dependsOn(common, db)
