@@ -1,4 +1,41 @@
 /* globals process */
+
+/* eslint-disable */
+const providers = [
+    {
+        link: 'https://support.google.com/mail/answer/35529?hl=en&co=GENIE.Platform',
+        provider: 'google-oauth2',
+        name: 'Google'
+    },
+    {
+        link: 'https://help.twitter.com/en/managing-your-account/common-issues-when-uploading-profile-photo',
+        provider: 'twitter',
+        name: 'Twitter'
+    },
+    {
+        link: 'https://www.facebook.com/help/163248423739693?helpref=faq_content',
+        provider: 'facebook',
+        name: 'Facebook'
+    },
+    {
+        link: 'https://help.github.com/articles/setting-your-profile-picture/',
+        provider: 'github',
+        name: 'GitHub'
+    },
+    {
+        link: 'https://auth0.com/docs/user-profile/user-picture',
+        provider: 'auth0',
+        name: 'Auth0'
+    }
+];
+
+const defaultProvider = {
+    link: 'https://en.gravatar.com/',
+    provider: 'gravatar',
+    name: 'Gravatar'
+};
+/* eslint-enable */
+
 class ProfileController {
     constructor($log, localStorage, authService, $window, userService) {
         'ngInject';
@@ -13,6 +50,9 @@ class ProfileController {
 
     $onInit() {
         this.env = process.env.NODE_ENV;
+        this.providers = providers;
+        this.defaultProvider = defaultProvider;
+        this.getCurrentUser();
     }
 
     updateGoogleProfile() {
@@ -28,6 +68,14 @@ class ProfileController {
                 this.$log.debug('Error updating profile:', err);
                 this.profile = this.localStorage.get('profile');
             });
+    }
+
+    getCurrentUser() {
+        this.authService.getCurrentUser().then(resp => {
+            this.provider = this.providers.find(l => {
+                return resp.id.includes(l.provider);
+            }) || this.defaultProvider;
+        });
     }
 }
 
