@@ -162,7 +162,7 @@ lazy val api = Project("api", file("api"))
   })
 
 lazy val common = Project("common", file("common"))
-  .dependsOn(db, datamodel)
+  .dependsOn(datamodel)
   .settings(apiSettings:_*)
   .settings({libraryDependencies ++= testDependencies ++ Seq(
     Dependencies.nimbusJose,
@@ -184,7 +184,7 @@ lazy val common = Project("common", file("common"))
   )})
 
 lazy val db = Project("db", file("db"))
-  .dependsOn(datamodel % "compile->compile;test->test")
+  .dependsOn(datamodel % "compile->compile;test->test", common)
   .settings(commonSettings:_*)
   .settings({
      libraryDependencies ++= dbDependencies ++ loggingDependencies ++ Seq(
