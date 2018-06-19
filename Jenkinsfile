@@ -23,18 +23,10 @@ node {
 
     env.RF_SETTINGS_BUCKET = 'rasterfoundry-staging-config-us-east-1'
 
-    if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME =~ /(release|hotfix|test)\//) {
-      // When a release branch is used, override `env.RF_DOCS_BUCKET`
-      // and `env.RF_DEPLOYMENT_BRANCH`.
-      if (env.BRANCH_NAME =~ /(release|hotfix)\//) {
-        env.RF_DOCS_BUCKET = 'rasterfoundry-production-docs-site-us-east-1'
-        env.RF_DEPLOYMENT_BRANCH = 'master'
-        env.RF_DEPLOYMENT_ENVIRONMENT = "Production"
-      } else {
+    if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME =~ /test\//) {
         env.RF_DOCS_BUCKET = 'rasterfoundry-staging-docs-site-us-east-1'
         env.RF_DEPLOYMENT_BRANCH = 'develop'
         env.RF_DEPLOYMENT_ENVIRONMENT = "Staging"
-      }
 
       // Publish container images built and tested during `cibuild`
       // to the private Amazon Container Registry tagged with the
@@ -68,16 +60,6 @@ node {
                                      relativeTargetDir: 'raster-foundry-deployment']],
                        userRemoteConfigs: [[credentialsId: '3bc1e878-814a-43d1-864e-2e378ebddb0f',
                                             url: 'https://github.com/azavea/raster-foundry-deployment.git']]]
-
-        // When a release branch is used, override `env.RF_SETTINGS_BUCKET`
-        // so that it uses the production infrastructure configuration
-        // settings.
-        if (env.BRANCH_NAME =~ /(release|hotfix)\//) {
-          env.RF_SETTINGS_BUCKET = 'rasterfoundry-production-config-us-east-1'
-
-          def slackMessage = ":rasterfoundry: production deployment in-progress... <${env.BUILD_URL}|View Build>"
-          slackSend color: 'warning', message: slackMessage
-        }
 
         dir('raster-foundry-deployment') {
           wrap([$class: 'AnsiColorBuildWrapper']) {
