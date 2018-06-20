@@ -297,6 +297,7 @@ trait ProjectRoutes extends Authentication
           .authQuery(user, ObjectType.Project)
           .filter(projectQueryParameters)
           .page(page)
+          .flatMap(ProjectDao.projectsToProjectsWithRelated)
           .transact(xa).unsafeToFuture
       }
     }

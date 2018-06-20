@@ -260,7 +260,7 @@ object ProjectDao extends Dao[Project] {
   }
 
   def deleteScenesFromProject(sceneIds: List[UUID], projectId: UUID): ConnectionIO[Int] = {
-    val f:Option[Fragment] = sceneIds.toNel.map(Fragments.in(fr"scene_id", _))
+    val f:Option[Fragment] = sceneIds.toList.toNel.map(Fragments.in(fr"scene_id", _))
     val deleteQuery = fr"DELETE FROM scenes_to_projects" ++
       Fragments.whereAndOpt(f, Some(fr"project_id = ${projectId}"))
     deleteQuery.update.run
@@ -273,4 +273,36 @@ object ProjectDao extends Dao[Project] {
       scenesAdded <- addScenesToProject(scenes.map(_.id), projectId, user)
     } yield scenesAdded
   }
+
+  // head is safe here, because we're looking up users from the ids in projects, and the map was
+  // build from those same ids.
+  // throwing the exception is also safe, since the foreign key from project owners to users requires
+  // that every project's owner is a key in the resulting list of users
+  @SuppressWarnings(Array("TraversableHead"))
+  def projectsToProjectsWithRelated(projectsPage: PaginatedResponse[Project]): ConnectionIO[PaginatedResponse[Project.WithUser]] =
+    projectsPage.results.toList.toNel match {
+      case Some(nelProjects) => {
+        val usersIO: ConnectionIO[List[User]] =
+          UserDao.query.filter(Fragments.in(fr"id", nelProjects map { _.owner })).list
+        usersIO map {
+          (users: List[User]) => {
+            val groupedUsers = users.groupBy(_.id)
+            val withUsers =
+              projectsPage.results map {
+                (project: Project) => Project.WithUser(
+                  project,
+                  groupedUsers.getOrElse(
+                    project.owner,
+                    throw new Exception("Somehow, a user id was lost to the aether")
+                  ).head
+                )
+              }
+            projectsPage.copy(results = withUsers)
+          }
+        }
+      }
+      case _ => {
+        projectsPage.copy(results = List.empty[Project.WithUser]).pure[ConnectionIO]
+      }
+    }
 }
