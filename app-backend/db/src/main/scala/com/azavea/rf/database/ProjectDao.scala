@@ -282,13 +282,10 @@ object ProjectDao extends Dao[Project] {
   def projectsToProjectsWithRelated(projectsPage: PaginatedResponse[Project]): ConnectionIO[PaginatedResponse[Project.WithUser]] =
     projectsPage.results.toList.toNel match {
       case Some(nelProjects) => {
-        val usersIO: ConnectionIO[List[User.Thin]] =
-          (fr"select id, name, profile_image_uri from users where" ++
-             Fragments.in(fr"id", nelProjects map { _.owner }))
-            .query[User.Thin]
-            .list
+        val usersIO: ConnectionIO[List[User]] =
+          UserDao.query.filter(Fragments.in(fr"id", nelProjects map { _.owner })).list
         usersIO map {
-          (users: List[User.Thin]) => {
+          (users: List[User]) => {
             val groupedUsers = users.groupBy(_.id)
             val withUsers =
               projectsPage.results map {

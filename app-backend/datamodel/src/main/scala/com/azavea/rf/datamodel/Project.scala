@@ -41,6 +41,17 @@ case class Project(
 /** Case class for project creation */
 object Project extends GeoJsonSupport {
 
+  implicit val thinUserEncoder: Encoder[User] = Encoder.forProduct3(
+    "id", "name", "profileImageUri"
+  )(user => (user.id, user.name, user.profileImageUri))
+  implicit val thinUserDecoder: Decoder[User.Create] = Decoder.forProduct3(
+    "id", "name", "profileImageUri"
+  )(
+    (id: String, name: String, profileImageUri: String) => User.Create(
+      id, Viewer, "", name,  profileImageUri
+    )
+  )
+
   /* One week, in milliseconds */
   val DEFAULT_CADENCE: Long = 604800000
 
@@ -122,7 +133,7 @@ object Project extends GeoJsonSupport {
        c.downField("tileVisibility").as[Visibility],
        c.downField("isAOIProject").as[Option[Boolean]].map(_.getOrElse(false)),
        c.downField("aoiCadenceMillis").as[Option[Long]].map(_.getOrElse(DEFAULT_CADENCE)),
-       c.downField("owner").as[User.Thin] map { usr: User.Thin => Some(usr.id) },
+       c.downField("owner").as[User.Create] map { usr: User.Create => Some(usr.id) },
        c.downField("tags").as[List[String]],
        c.downField("isSingleBand").as[Option[Boolean]].map(_.getOrElse(false)),
        c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]]
@@ -134,15 +145,13 @@ object Project extends GeoJsonSupport {
     implicit val enc: Encoder[Create] = deriveEncoder
   }
 
-  // TODO: this should not take a whole user, but a thin user of some sort, so we don't expose
-  // credentials to other users
   case class WithUser(
     id: UUID,
     createdAt: Timestamp,
     modifiedAt: Timestamp,
     createdBy: String,
     modifiedBy: String,
-    owner: User.Thin,
+    owner: User,
     name: String,
     slugLabel: String,
     description: String,
@@ -159,7 +168,7 @@ object Project extends GeoJsonSupport {
   )
 
   object WithUser {
-    def apply(project: Project, user: User.Thin): WithUser = {
+    def apply(project: Project, user: User): WithUser = {
       WithUser(
         project.id,
         project.createdAt,
