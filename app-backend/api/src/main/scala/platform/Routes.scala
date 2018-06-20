@@ -92,7 +92,7 @@ trait PlatformRoutes extends Authentication
           ) {
             get {
               traceName("platforms-organizations-list") {
-                listOrganizations(platformId)
+                listPlatformOrganizations(platformId)
               }
             } ~
             post {
@@ -291,13 +291,13 @@ trait PlatformRoutes extends Authentication
     }
   }
 
-  def listOrganizations(platformId: UUID): Route = authenticate { user =>
+  def listPlatformOrganizations(platformId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
+      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
     } {
       (withPagination & searchParams) { (page, search) =>
         complete {
-          OrganizationDao.listAuthorizedOrganizations(page, search, platformId, user)
+          OrganizationDao.listPlatformOrganizations(page, search, platformId, user)
             .transact(xa).unsafeToFuture
         }
       }

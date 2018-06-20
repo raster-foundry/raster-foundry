@@ -306,7 +306,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
       }, tableF, List.empty
     )
 
-  def listAuthorizedOrganizations(pageRequest: PageRequest, searchParams: SearchQueryParameters, platformId: UUID, user: User): ConnectionIO[PaginatedResponse[Organization]] =  {
+  def listPlatformOrganizations(pageRequest: PageRequest, searchParams: SearchQueryParameters, platformId: UUID, user: User): ConnectionIO[PaginatedResponse[Organization]] =  {
     val organizationSearchBuilder = {
       OrganizationDao.viewFilter(user)
         .filter(fr"platform_id=${platformId}")
@@ -322,5 +322,11 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
         count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, organizations
       )
     }
+  }
+
+  def searchOrganizations(user: User, searchParams: SearchQueryParameters): ConnectionIO[List[Organization]] = {
+    OrganizationDao.viewFilter(user)
+      .filter(searchParams)
+      .list(0, 5, fr"order by name")
   }
 }
