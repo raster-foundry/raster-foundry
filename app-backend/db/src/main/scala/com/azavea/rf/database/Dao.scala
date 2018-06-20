@@ -64,12 +64,12 @@ abstract class Dao[Model: Composite] extends Filterables {
        AND acr.action_type = ${ActionType.View.toString}::action_type
     """
     val inheritedF: Fragment = (groupTypeO, groupIdO) match {
-     case (Some(groupType), Some(groupId)) => inheritedBaseF ++ fr"""
+      case (Some(groupType), Some(groupId)) => inheritedBaseF ++ fr"""
        AND ugr.group_type = ${groupType}
        AND ugr.group_id = ${groupId}
      """
      case _ => inheritedBaseF
-   }
+    }
     ownershipTypeO match {
       // owned by the requesting user only
       case Some(ownershipType) if ownershipType == "owned" =>

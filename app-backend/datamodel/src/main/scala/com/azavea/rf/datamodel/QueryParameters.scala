@@ -113,7 +113,9 @@ case class CombinedSceneQueryParams(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-  sceneParams: SceneQueryParameters = SceneQueryParameters()
+  sceneParams: SceneQueryParameters = SceneQueryParameters(),
+  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
 /** Combined all query parameters for grids */

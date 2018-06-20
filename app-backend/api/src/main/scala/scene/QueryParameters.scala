@@ -36,6 +36,8 @@ trait SceneQueryParameterDirective extends QueryParametersCommon {
   val sceneQueryParameters = (orgQueryParams &
     userQueryParameters &
     timestampQueryParameters &
-    sceneSpecificQueryParams
+    sceneSpecificQueryParams &
+    ownershipTypeQueryParameters &
+    groupQueryParameters
   ).as(CombinedSceneQueryParams.apply _)
 }
