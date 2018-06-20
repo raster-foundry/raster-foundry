@@ -1,6 +1,7 @@
 package com.azavea.rf.api.toolcategory
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.UserErrorHandler
 import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.filter.Filterables._

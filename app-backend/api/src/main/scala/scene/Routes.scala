@@ -1,7 +1,8 @@
 package com.azavea.rf.api.scene
 
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.common.{AWSBatch, Authentication, CommonHandlers, S3, UserErrorHandler}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{AWSBatch, CommonHandlers, S3, UserErrorHandler}
 import com.azavea.rf.datamodel._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route

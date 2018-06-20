@@ -1,6 +1,7 @@
 package com.azavea.rf.api.uploads
 
-import com.azavea.rf.common.{AWSBatch, Authentication, CommonHandlers, S3, UserErrorHandler}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{AWSBatch, CommonHandlers, S3, UserErrorHandler}
 import com.azavea.rf.datamodel._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes

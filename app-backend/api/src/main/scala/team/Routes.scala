@@ -1,6 +1,7 @@
 package com.azavea.rf.api.team
 
-import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.TeamDao
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._

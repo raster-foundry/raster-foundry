@@ -1,5 +1,6 @@
 package com.azavea.rf.tile.routes
 
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common._
 import com.azavea.rf.common.ast._
 import com.azavea.rf.datamodel.User

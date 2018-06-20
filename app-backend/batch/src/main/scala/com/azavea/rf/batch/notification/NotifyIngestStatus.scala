@@ -7,6 +7,7 @@ import cats.effect.IO
 
 import scala.concurrent.Future
 import com.azavea.rf.batch.Job
+import com.azavea.rf.common.notification.Email.NotificationEmail
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.common.{RollbarNotifier, S3}

@@ -4,7 +4,8 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server._
 import cats.effect.IO
 import com.azavea.rf.api.Codec._
-import com.azavea.rf.common.{Authentication, RollbarNotifier}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.RollbarNotifier
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.util.transactor.Transactor
 import org.postgresql.util.PSQLException
