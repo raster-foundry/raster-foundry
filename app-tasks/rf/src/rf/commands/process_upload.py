@@ -41,15 +41,17 @@ def process_upload(upload_id):
             factory = GeoTiffS3SceneFactory(upload)
         elif upload.uploadType.lower() == 'planet':
             logger.info('Processing a planet upload. This might take a while...')
+            logger.info('Retrieving Planet API Client')
+            client = api.ClientV1(upload.metadata.get('planetKey'))
             factory = PlanetSceneFactory(
                 upload.files,
                 upload.datasource,
                 upload.id,
+                client,
                 upload.projectId,
                 upload.visibility,
                 [],
-                upload.owner,
-                api.ClientV1(upload.metadata.get('planetKey'))
+                upload.owner
             )
         elif upload.uploadType.lower() == 'modis_usgs':
             logger.info('Processing MODIS upload from USGS')
