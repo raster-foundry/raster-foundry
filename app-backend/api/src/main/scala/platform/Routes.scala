@@ -377,7 +377,7 @@ trait PlatformRoutes extends Authentication
         authCheck.transact(xa).unsafeToFuture
       } {
         complete {
-          OrganizationDao.setUserOrganization(user, ur.userId, orgId, ur.groupRole)
+          OrganizationDao.addUserRole(user, ur.userId, orgId, ur.groupRole)
             .transact(xa).unsafeToFuture
         }
       }
