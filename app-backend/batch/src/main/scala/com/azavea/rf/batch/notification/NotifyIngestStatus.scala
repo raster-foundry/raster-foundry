@@ -32,7 +32,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
   }
 
   def createIngestEmailContentForConsumers(pU: PlatformWithUsersSceneProjects, scene: Scene, ingestStatus: String): (String, String, String) = {
-    // TODO: domain needs to be parameterized
+    val platformHost = pO.pubSettings.platformHost.getOrElse("app.rasterfoundry.com")
     ingestStatus match {
       case status: String if status == "INGESTED" =>
         (
@@ -41,18 +41,20 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           <html>
             <p>${pU.uName},</p><br>
             <p>The scene "${scene.name}" has been successfully ingested into your project: ${pU.projectName}! You can access
-            this project <a href="https://app.rasterfoundry.com/projects/edit/${pU.projectId}/scenes">here</a> or any past
-            projects you've created at any time <a href="https://app.rasterfoundry.com/projects/">here</a>.</p>
-            <p>If you have questions, please feel free to reach out any time at ${pU.pubSettings.emailUser}.</p>
+            this project <a href="https://${platformHost}/projects/edit/${pU.projectId}/scenes">here</a> or any past
+            projects you've created at any time <a href="https://${platformHost}/projects/">here</a>.</p>
+            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.</p>
             <p>- The ${pU.platName} Team</p>
           </html>
           """,
           s"""
-          ${pU.uName}: The scene "${scene.name}" has been successfully ingested into your project: ${pU.projectName}!
-          You can access this project at here: https://app.rasterfoundry.com/projects/edit/${pU.projectId}/scenes or
-          any past projects you've created at any time here: https://app.rasterfoundry.com/projects/ . If you have
-          questions, please feel free to reach out any time at ${pU.pubSettings.emailUser}. - The ${pU.platName} Team
-          """
+          | ${pU.uName}: The scene "${scene.name}" has been successfully ingested into your project: ${pU.projectName}!
+          | You can access this project at here: https://${platformHost}/projects/edit/${pU.projectId}/scenes or
+          | any past projects you've created at any time here: https://${platformHost}/projects/ . If you have
+          | questions, support is available via in-app chat at ${platformHost} or less quickly via email to
+          | ${pO.pubSettings.emailUser}.
+          | - The ${pU.platName} Team
+          """.trim.stripMargin
         )
       case status: String if status == "FAILED" =>
         (
@@ -61,23 +63,25 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           <html>
             <p>${pU.uName},</p><br>
             <p>The scene "${scene.name}" in your project: ${pU.projectName} has failed to ingest. But you can access
-            this project <a href="https://app.rasterfoundry.com/projects/edit/${pU.projectId}/scenes">here</a> or any past
-            projects you've created at any time <a href="https://app.rasterfoundry.com/projects/">here</a>.</p>
-            <p>If you have questions, please feel free to reach out any time at ${pU.pubSettings.emailUser}.</p>
+            this project <a href="https://${platformHost}/projects/edit/${pU.projectId}/scenes">here</a> or any past
+            projects you've created at any time <a href="https://${platformHost}/projects/">here</a>.</p>
+            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.</p>
             <p>- The ${pU.platName} Team</p>
           </html>
           """,
           s"""
-          ${pU.uName}: The scene "${scene.name}" in your project: ${pU.projectName} has failed to ingest. But you can
-          access this project at here: https://app.rasterfoundry.com/projects/edit/${pU.projectId}/scenes or
-          any past projects you've created at any time here: https://app.rasterfoundry.com/projects/ . If you have
-          questions, please feel free to reach out any time at ${pU.pubSettings.emailUser}. - The ${pU.platName} Team
-          """
+          | ${pU.uName}: The scene "${scene.name}" in your project: ${pU.projectName} has failed to ingest. But you can
+          | access this project at here: https://${platformHost}/projects/edit/${pU.projectId}/scenes or
+          | any past projects you've created at any time here: https://${platformHost}/projects/ . If you have
+          | questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.
+          | - The ${pU.platName} Team
+          """.trim.stripMargin
         )
     }
   }
 
   def createIngestEmailContentForOwner(pO: PlatformWithSceneOwner, scene: Scene, ingestStatus: String): (String, String, String) = {
+    val platformHost = pO.pubSettings.platformHost.getOrElse("app.rasterfoundry.com")
     ingestStatus match {
       case status: String if status == "INGESTED" =>
         (
@@ -86,14 +90,15 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           <html>
             <p>${pO.uName},</p><br>
             <p>The scene "${scene.name}" has been successfully ingested!</p>
-            <p>If you have questions, please feel free to reach out any time at ${pO.pubSettings.emailUser}.</p>
+            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.</p>
             <p>- The ${pO.platName} Team</p>
           </html>
           """,
           s"""
-          ${pO.uName}: The scene "${scene.name}" has been successfully ingested! If you have questions,
-          please feel free to reach out any time at ${pO.pubSettings.emailUser}. - The ${pO.platName} Team
-          """
+          | ${pO.uName}: The scene "${scene.name}" has been successfully ingested!
+          | If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.
+          | - The ${pO.platName} Team
+          """.trim.stripMargin
         )
       case status: String if status == "FAILED" =>
         (
@@ -102,14 +107,16 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           <html>
             <p>${pO.uName},</p><br>
             <p>The scene "${scene.name}" has failed to ingest. </p>
-            <p>If you have questions, please feel free to reach out any time at ${pO.pubSettings.emailUser}.</p>
+            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.</p>
             <p>- The ${pO.platName} Team</p>
           </html>
           """,
           s"""
-          ${pO.uName}: The scene "${scene.name}" has failed to ingest. If you have questions,
-          please feel free to reach out any time at ${pO.pubSettings.emailUser}. - The ${pO.platName} Team
-          """
+          | ${pO.uName}: The scene "${scene.name}" has failed to ingest.
+          | If you have questions,
+          | support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.
+          | - The ${pO.platName} Team
+          """.trim.stripMargin
         )
     }
   }

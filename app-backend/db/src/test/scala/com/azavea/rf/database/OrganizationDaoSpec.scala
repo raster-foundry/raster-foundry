@@ -164,7 +164,7 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
           val addPlatformRoleWithPlatformIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
             (org, dbUser) = orgAndUser
-            insertedUserGroupRole <- OrganizationDao.addUserRole(dbUser, dbUser.id, org.id, userRole)
+            insertedUserGroupRole <- OrganizationDao.addUserRole(org.platformId, dbUser, dbUser.id, org.id, userRole)
             byIdUserGroupRole <- UserGroupRoleDao.getOption(insertedUserGroupRole.id)
           } yield { (org, byIdUserGroupRole) }
 
@@ -200,7 +200,7 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
           val setPlatformRoleIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
             (org, dbUser) = orgAndUser
-            originalUserGroupRole <- OrganizationDao.addUserRole(dbUser, dbUser.id, org.id, userRole)
+            originalUserGroupRole <- OrganizationDao.addUserRole(org.platformId, dbUser, dbUser.id, org.id, userRole)
             updatedUserGroupRoles <- OrganizationDao.deactivateUserRoles(dbUser, dbUser.id, org.id)
           } yield { (originalUserGroupRole, updatedUserGroupRoles) }
 
@@ -213,39 +213,6 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
                  "; The updated  UGRs should all be deactivated")
           assert(dbUpdatedUGRs.filter((ugr) => ugr.id == dbOldUGR.id && ugr.isActive == false).size == 1,
                  "; The originally created UGR should be updated to be inactive")
-          true
-        }
-      }
-    }
-  }
-
-  test("replace a user's roles") {
-    check {
-      forAll{
-        (
-          userCreate: User.Create, orgCreate: Organization.Create, userRole: GroupRole
-        ) => {
-          val setPlatformRoleIO = for {
-            orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
-            (org, dbUser) = orgAndUser
-            originalUserGroupRole <- OrganizationDao.addUserRole(dbUser, dbUser.id, org.id, userRole)
-            updatedUserGroupRoles <- OrganizationDao.setUserRole(dbUser, dbUser.id, org.id, userRole)
-            allUserGroupRoles <- UserGroupRoleDao.query.filter(fr"user_id = ${dbUser.id}").list
-          } yield { (org, originalUserGroupRole, updatedUserGroupRoles, allUserGroupRoles ) }
-
-          val (dbOrg, dbOldUGR, dbUpdatedUGRs, dbAllUGRs) = setPlatformRoleIO.transact(xa).unsafeRunSync
-
-          assert(dbUpdatedUGRs.filter((ugr) => ugr.isActive == true).size == 2,
-                 "; There should be two active roles in the updated roles, " +
-                   "one for the platform and one for the org")
-          assert(dbUpdatedUGRs.filter((ugr) => ugr.isActive == false).size == 1,
-                 "; If an active role exists, it should be updated to be inactive")
-          assert(dbUpdatedUGRs.filter((ugr) => ugr.id == dbOldUGR.id && ugr.isActive == false).size == 1,
-                 "; The old role should be updated to be inactive")
-          assert(dbUpdatedUGRs.filter((ugr) => ugr.id != dbOldUGR.id && ugr.isActive == true).size == 2,
-                 "; The new roles (org and platform) should be active")
-          assert(dbAllUGRs.size == 3, "; The user should, in total, have 3 roles specified")
-          assert(dbUpdatedUGRs.size == 3, "; Expected 2 new active roles, and one deactivated role")
           true
         }
       }

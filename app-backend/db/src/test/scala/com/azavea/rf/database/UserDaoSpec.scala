@@ -16,7 +16,12 @@ import scala.util.Random
 
 import com.typesafe.scalalogging.LazyLogging
 
-class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with LazyLogging {
+class UserDaoSpec extends FunSuite
+    with Matchers
+    with Checkers
+    with DBTestConfig
+    with LazyLogging
+    with PropTestHelpers {
 
   // create
   test("inserting users") {
@@ -238,6 +243,28 @@ class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
           true
         }
       )
+    }
+  }
+
+  // getUsersByIds
+  test("bulk lookup users by id") {
+    check {
+      forAll {
+        (user1: User.Create, user2: User.Create, user3: User.Create, org: Organization.Create) => {
+          val outUsersIO = for {
+            orgAndUser <- insertUserAndOrg(user1, org)
+            (_, dbUser1) = orgAndUser
+            dbUser2 <- UserDao.create(user2)
+            _ <- UserDao.create(user3)
+            listedUsers <- UserDao.getUsersByIds(List(dbUser1.id, dbUser2.id))
+          } yield { listedUsers }
+
+          val outUsers = outUsersIO.transact(xa).unsafeRunSync
+          assert(outUsers.map( _.id ).toSet == Set(user1.id, user2.id),
+                 "Lookup by ids should return the correct set of users")
+          true
+        }
+      }
     }
   }
 }

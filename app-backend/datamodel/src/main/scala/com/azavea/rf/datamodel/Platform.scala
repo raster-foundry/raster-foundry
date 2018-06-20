@@ -31,7 +31,8 @@ object Platform {
     emailSmtpEncryption: String,
     emailIngestNotification: Boolean,
     emailAoiNotification: Boolean,
-    emailExportNotification: Boolean
+    emailExportNotification: Boolean,
+    platformHost: Option[String]
   )
 
   @JsonCodec
