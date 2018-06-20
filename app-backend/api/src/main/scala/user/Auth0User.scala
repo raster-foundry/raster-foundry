@@ -18,9 +18,12 @@ import akka.http.scaladsl.marshalling.Marshal
 import cats.effect.IO
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.typesafe.scalalogging.LazyLogging
+
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.JsonCodec
+import io.circe.generic.semiauto._
+
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -55,6 +58,14 @@ case class UserWithOAuth(
   user: User,
   oauth: Auth0User
 )
+
+object UserWithOAuth {
+  implicit val encodeUser: Encoder[User] = Encoder.forProduct8(
+    "id", "name", "email", "profileImageUri", "emailNotifications", "visibility",
+    "dropboxCredential", "planetCredential"
+  )(u => (u.id, u.name, u.email,u.profileImageUri, u.emailNotifications, u.visibility, u.dropboxCredential, u.planetCredential))
+}
+
 
 @JsonCodec
 case class Auth0UserUpdate(

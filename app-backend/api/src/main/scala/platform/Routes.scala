@@ -281,7 +281,7 @@ trait PlatformRoutes extends Authentication
 
   def listPlatformMembers(platformId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
+      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
     } {
       (withPagination & searchParams) { (page, searchParams) =>
         complete {
