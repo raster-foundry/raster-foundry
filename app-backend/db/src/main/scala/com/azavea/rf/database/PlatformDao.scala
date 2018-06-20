@@ -105,7 +105,8 @@ object PlatformDao extends Dao[Platform] {
           ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
           ugr.group_id = ${platformId} AND
           ugr.is_active = true AND
-          p.is_active = true
+          p.is_active = true AND
+          membership_status = 'APPROVED'
       )
   """
 

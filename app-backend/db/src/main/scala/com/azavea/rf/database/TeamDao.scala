@@ -158,7 +158,8 @@ object TeamDao extends Dao[Team] {
           group_type = ${GroupType.Team.toString}::group_type AND
           group_role = ${GroupRole.Admin.toString}::group_role AND
           group_id = ${teamId} AND
-          is_active = true
+          is_active = true  AND
+          membership_status = 'APPROVED'
         LIMIT 1
       ) OR (
         SELECT count(ugr.id) > 0
@@ -172,7 +173,8 @@ object TeamDao extends Dao[Team] {
           ugr.user_id = ${user.id} AND
           ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
           ugr.group_type = ${GroupType.Organization.toString}::group_type AND
-          ugr.is_active = true
+          ugr.is_active = true  AND
+          membership_status = 'APPROVED'
       ) OR (
         SELECT count(ugr.id) > 0
         FROM""" ++ PlatformDao.tableF ++ fr"""AS p
@@ -187,7 +189,8 @@ object TeamDao extends Dao[Team] {
           ugr.user_id = ${user.id} AND
           ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
           ugr.group_type = ${GroupType.Platform.toString}::group_type AND
-          ugr.is_active = true
+          ugr.is_active = true  AND
+          membership_status = 'APPROVED'
       )
     """
   }
