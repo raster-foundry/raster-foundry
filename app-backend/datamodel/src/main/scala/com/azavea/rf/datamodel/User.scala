@@ -8,6 +8,7 @@ import java.util.UUID
 import io.circe._
 import io.circe.generic.JsonCodec
 import cats.syntax.either._
+import io.circe.generic.semiauto._
 
 sealed abstract class UserRole(val repr: String) extends Product with Serializable
 case object UserRoleRole extends UserRole("USER")
@@ -59,7 +60,6 @@ object Credential {
   }
 }
 
-@JsonCodec
 case class User(
   id: String,
   role: UserRole,
@@ -89,6 +89,12 @@ object User {
 
   def create = Create.apply _
 
+
+  implicit val decodeUser: Decoder[User] = deriveDecoder[User]
+
+  implicit val encodeUser: Encoder[User] = Encoder.forProduct4(
+    "id", "name", "email", "profileImageUri"
+  )(u => (u.id, u.name, u.email, u.profileImageUri))
 
   @JsonCodec
   case class WithGroupRole (

@@ -219,6 +219,10 @@ trait Filterables extends RFMeta with LazyLogging {
     Filters.searchQP(params, List("name"))
   }
 
+  implicit val userSearchQueryParamsFilter = Filterable[User, SearchQueryParameters] { params: SearchQueryParameters =>
+    Filters.searchQP(params, List("name", "email"))
+  }
+
   implicit def projectedGeometryFilter = Filterable[Any, Projected[Geometry]] {
     geom => List(Some(fr"ST_Intersects(data_footprint, ${geom})"))
   }

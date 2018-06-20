@@ -165,5 +165,80 @@ class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
       )
     )
   }
+
+  test("list visibile users") {
+    check {
+      forAll(
+        (uc1: User.Create, uc2: User.Create,
+         uc3: User.Create, uc4: User.Create,
+         pc1: Platform, pc2: Platform,
+         org1: Organization.Create, org2: Organization.Create) => {
+          val defaultUser = uc1.toUser.copy(id="default")
+          val orgsIO = for {
+            p1 <- PlatformDao.create(pc1)
+            p2 <- PlatformDao.create(pc2)
+            org1 <- OrganizationDao.createOrganization(org1.copy(platformId = p1.id))
+            org2 <- OrganizationDao.createOrganization(org2.copy(platformId = p2.id))
+            u1i <- UserDao.create(uc1)
+            u1 = u1i.copy(visibility=UserVisibility.Private)
+            u2 <- UserDao.create(uc2)
+            u3i <- UserDao.create(uc3)
+            u3 = u3i.copy(visibility=UserVisibility.Public)
+            _ <- UserDao.updateUser(u3, u3i.id)
+            u4i <- UserDao.create(uc4)
+            u4 = u4i.copy(visibility=UserVisibility.Public)
+            _ <- UserDao.updateUser(u4, u4i.id)
+            _ <- UserGroupRoleDao.create(
+              UserGroupRole.Create(u1.id, GroupType.Platform, p1.id, GroupRole.Member)
+                .toUserGroupRole(defaultUser, MembershipStatus.Approved)
+            )
+            _ <- UserGroupRoleDao.create(
+              UserGroupRole.Create(u1.id, GroupType.Organization, org1.id, GroupRole.Member)
+                .toUserGroupRole(defaultUser, MembershipStatus.Approved)
+            )
+            _ <- UserGroupRoleDao.create(
+              UserGroupRole.Create(u2.id, GroupType.Platform, p1.id, GroupRole.Member)
+                .toUserGroupRole(defaultUser, MembershipStatus.Approved)
+            )
+            _ <- UserGroupRoleDao.create(
+              UserGroupRole.Create(u2.id, GroupType.Organization, org1.id, GroupRole.Member)
+                .toUserGroupRole(defaultUser, MembershipStatus.Approved)
+            )
+            u3platugr <- UserGroupRoleDao.create(
+              UserGroupRole.Create(u3.id, GroupType.Platform, p1.id, GroupRole.Member)
+                .toUserGroupRole(defaultUser, MembershipStatus.Approved)
+            )
+            _ <- UserGroupRoleDao.create(
+              UserGroupRole.Create(u3.id, GroupType.Platform, p2.id, GroupRole.Member)
+                .toUserGroupRole(defaultUser, MembershipStatus.Approved)
+            )
+            u1VisibleUsers <- UserDao.viewFilter(u1).list
+            u2VisibleUsers <- UserDao.viewFilter(u2).list
+            u3VisibleUsers <- UserDao.viewFilter(u3).list
+            _ <- UserGroupRoleDao.update(u3platugr.copy(groupRole = GroupRole.Admin), u3platugr.id, u2)
+            u3AdminVisibleUsers <- UserDao.viewFilter(u3).list
+          } yield { (u1, u2, u3, u4, u1VisibleUsers, u2VisibleUsers, u3VisibleUsers, u3AdminVisibleUsers) }
+          orgsIO.transact(xa).unsafeRunSync
+
+          val (u1, u2, u3, u4, u1users, u2users, u3users, u3usersAdmin) = orgsIO.transact(xa).unsafeRunSync
+          val u1userids = u1users.toSet.map { u: User =>  u.id }
+          val u2userids = u2users.toSet.map { u: User => u.id }
+          val u3userids = u3users.toSet.map { u: User => u.id }
+          val u3useridsAdmin = u3usersAdmin.toSet.map {u: User =>  u.id }
+          assert(u2userids.contains(u1.id),
+                 "; members of orgs should be able to see each other if they are hidden")
+          assert(u1userids.contains(u3.id),
+                 "; members should be able to see public users on the same platform")
+          assert(!u1userids.contains(u4.id),
+                 "; members should not be able to see public users on other platforms")
+          assert(!u3userids.contains(u1.id),
+                 "; platform members should not see hidden users on the same platform")
+          assert(u3useridsAdmin.contains(u1.id),
+                 "; platform admins should be able to see hidden users on their platform")
+          true
+        }
+      )
+    }
+  }
 }
 

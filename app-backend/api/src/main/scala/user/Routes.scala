@@ -2,6 +2,10 @@ package com.azavea.rf.api.user
 
 import java.net.URLDecoder
 
+import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import cats.effect.IO
@@ -15,17 +19,20 @@ import com.azavea.rf.datamodel._
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import com.typesafe.scalalogging.LazyLogging
-import doobie.util.transactor.Transactor
-
-import scala.collection.JavaConverters._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 import doobie._
 import doobie.implicits._
 import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
+
+import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.database._
+import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.datamodel._
+import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 
 
 /**
@@ -35,6 +42,7 @@ trait UserRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler
+    with QueryParametersCommon
     with LazyLogging {
 
   implicit val xa: Transactor[IO]
@@ -58,6 +66,11 @@ trait UserRoutes extends Authentication
     pathPrefix("dropbox-setup") {
       pathEndOrSingleSlash {
         post { getDropboxAccessToken }
+      }
+    } ~
+    pathPrefix("search") {
+      pathEndOrSingleSlash {
+        get { searchUsers }
       }
     } ~
     pathPrefix(Segment) { authIdEncoded =>
@@ -144,6 +157,14 @@ trait UserRoutes extends Authentication
   def getUserRoles: Route = authenticate { user =>
     complete {
       UserGroupRoleDao.listByUser(user).transact(xa).unsafeToFuture()
+    }
+  }
+
+  def searchUsers: Route = authenticate { user =>
+    searchParams { (searchParams) =>
+      complete {
+        UserDao.searchUsers(user, searchParams).transact(xa).unsafeToFuture
+      }
     }
   }
 }
