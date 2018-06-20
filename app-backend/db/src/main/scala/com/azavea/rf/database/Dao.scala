@@ -30,21 +30,22 @@ abstract class Dao[Model: Composite] extends Filterables {
   /** Begin construction of a complex, filtered query */
   def query: Dao.QueryBuilder[Model] = Dao.QueryBuilder[Model](selectF, tableF, List.empty)
 
-  def authQuery(user: User, objectType: ObjectType, ownershipTypeO: Option[String]= None): Dao.QueryBuilder[Model] =
+  def authQuery(user: User, objectType: ObjectType, ownershipTypeO: Option[String]= None,
+    groupTypeO: Option[GroupType] = None, groupIdO: Option[UUID] = None): Dao.QueryBuilder[Model] =
     if (user.isSuperuser) {
       Dao.QueryBuilder[Model](selectF, tableF, List.empty)
     } else {
-      Dao.QueryBuilder[Model](selectF ++ authTableF(user, objectType, ownershipTypeO),
-        tableF ++ authTableF(user, objectType, ownershipTypeO),
+      Dao.QueryBuilder[Model](
+        selectF ++ authTableF(user, objectType, ownershipTypeO, groupTypeO, groupIdO),
+        tableF ++ authTableF(user, objectType, ownershipTypeO, groupTypeO, groupIdO),
         List.empty)
     }
 
-
-  def authTableF(user: User, objectType: ObjectType, ownershipTypeO: Option[String]): Fragment = {
+  def authTableF(user: User, objectType: ObjectType, ownershipTypeO: Option[String],
+    groupTypeO: Option[GroupType], groupIdO: Option[UUID]): Fragment = {
     val ownedF: Fragment = fr"""
       SELECT id as object_id FROM""" ++ tableF ++ fr"""WHERE owner = ${user.id}
     """
-
     val sharedF: Fragment = fr"""
       SELECT acr.object_id
       FROM access_control_rules acr
@@ -53,8 +54,7 @@ abstract class Dao[Model: Composite] extends Filterables {
         AND -- Match if the ACR is an ALL or per user
         (acr.subject_type = 'ALL' OR (acr.subject_type = 'USER' AND acr.subject_id = ${user.id}))
     """
-
-    val inheritedF: Fragment = fr"""
+    val inheritedBaseF: Fragment = fr"""
       SELECT acr.object_id
       FROM access_control_rules acr
       JOIN user_group_roles ugr ON acr.subject_type::text = ugr.group_type::text
@@ -63,15 +63,26 @@ abstract class Dao[Model: Composite] extends Filterables {
        AND acr.object_type = ${objectType}
        AND acr.action_type = ${ActionType.View.toString}::action_type
     """
-
+    val inheritedF: Fragment = (groupTypeO, groupIdO) match {
+     case (Some(groupType), Some(groupId)) => inheritedBaseF ++ fr"""
+       AND ugr.group_type = ${groupType}
+       AND ugr.group_id = ${groupId}
+     """
+     case _ => inheritedBaseF
+   }
     ownershipTypeO match {
+      // owned by the requesting user only
       case Some(ownershipType) if ownershipType == "owned" =>
         fr"WHERE owner = ${user.id}"
-
-      case Some(ownershipType) if ownershipType == "inherited" =>
+      // shared to the requesting user directly, across platform, or due to group membership
+      case Some(ownershipType) if ownershipType == "shared" =>
         fr"INNER JOIN (" ++ sharedF ++ fr"UNION ALL" ++ inheritedF ++ fr") as object_ids ON" ++
           Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id"
-
+      // shared to the requesting user due to group membership
+      case Some(ownershipType) if ownershipType == "inherited" =>
+        fr"INNER JOIN (" ++ inheritedF ++ fr") as object_ids ON" ++
+          Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id"
+      // the default
       case _ =>
         fr"INNER JOIN (" ++ ownedF ++ fr"UNION ALL" ++ sharedF ++ fr"UNION ALL" ++
           inheritedF ++ fr") as object_ids ON" ++ Fragment.const(s"${tableName}.id") ++

@@ -133,7 +133,8 @@ case class ProjectQueryParameters(
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
   searchParams: SearchQueryParameters = SearchQueryParameters(),
-  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters()
+  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
 @JsonCodec
@@ -186,13 +187,21 @@ case class OwnerQueryParameters(
 )
 
 /** Query parameters to filter by ownership type:
-  - owned by me only: owned
-  - shared to be by group membership: inherited
-  - both the above: all, this is default
+  - owned by the requesting user only: owned
+  - shared to the requesting user due to group membership: inherited
+  - shared to the requesting user directly, across platform, or due to group membership: shared
+  - both the above: none, this is default
 */
 @JsonCodec
 case class OwnershipTypeQueryParameters(
   ownershipType: Option[String] = None
+)
+
+/** Query parameters to filter by group membership*/
+@JsonCodec
+case class GroupQueryParameters(
+  groupType: Option[GroupType] = None,
+  groupId: Option[UUID] = None
 )
 
 /** Query parameters to filter by users */
