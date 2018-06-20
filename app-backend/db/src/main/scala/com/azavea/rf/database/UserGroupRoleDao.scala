@@ -22,7 +22,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       SELECT
         id, created_at, created_by,
         modified_at, modified_by, is_active,
-        user_id, group_type, group_id, group_role
+        user_id, group_type, group_id, group_role, membership_status
       FROM
     """ ++ tableF
 
@@ -30,11 +30,12 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
     fr"INSERT INTO" ++ tableF ++ fr"""(
         id, created_at, created_by,
         modified_at, modified_by, is_active,
-        user_id, group_type, group_id, group_role
+        user_id, group_type, group_id, group_role, membership_status
       ) VALUES (
           ${ugr.id}, ${ugr.createdAt}, ${ugr.createdBy},
           ${ugr.modifiedAt}, ${ugr.modifiedBy}, ${ugr.isActive},
-          ${ugr.userId}, ${ugr.groupType}, ${ugr.groupId}, ${ugr.groupRole}
+          ${ugr.userId}, ${ugr.groupType}, ${ugr.groupId}, ${ugr.groupRole},
+          ${ugr.membershipStatus} :: membership_status
       )
     """
 
@@ -64,7 +65,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
     val create = createF(ugr).update.withUniqueGeneratedKeys[UserGroupRole](
       "id", "created_at", "created_by",
       "modified_at", "modified_by", "is_active",
-      "user_id", "group_type", "group_id", "group_role"
+      "user_id", "group_type", "group_id", "group_role", "membership_status"
     )
 
     for {
@@ -75,6 +76,35 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       }
     } yield createUGR
   }
+
+  @SuppressWarnings(Array("OptionGet"))
+  def createWithGuard(adminCheckFunc: (User, UUID) => ConnectionIO[Boolean], groupType: GroupType)
+                     (groupId: UUID, actingUser: User, subjectId: String, userGroupRoleCreate: UserGroupRole.Create):
+      ConnectionIO[UserGroupRole] =
+    for {
+      adminCheck <- adminCheckFunc(actingUser, groupId)
+      existingRoleO <- {
+        query
+          .filter(fr"user_id = ${subjectId}")
+          .filter(fr"group_id = ${groupId}")
+          .filter(fr"group_type = ${groupType.toString} :: group_type")
+          .filter(fr"is_active = true")
+          .selectOption
+      }
+      existingMembershipStatus = existingRoleO map { _.membershipStatus }
+      createdOrReturned <- {
+        (existingMembershipStatus, adminCheck) match {
+          case (Some(MembershipStatus.Requested), true) | (Some(MembershipStatus.Invited), false) =>
+            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved)) <*
+              UserGroupRoleDao.deactivate(existingRoleO.map( _.id).get, actingUser)
+          case (None, true) =>
+            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Invited))
+          case (None, false) =>
+            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Requested))
+          case (Some(_), _) => existingRoleO.get.pure[ConnectionIO]
+        }
+      }
+    } yield { createdOrReturned }
 
   def getOption(id: UUID): ConnectionIO[Option[UserGroupRole]] = {
     query.filter(id).selectOption
@@ -221,7 +251,8 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       "user_id",
       "group_type",
       "group_id",
-      "group_role"
+      "group_role",
+      "membership_status"
     ).compile.toList
   }
 

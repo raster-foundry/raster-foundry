@@ -288,12 +288,12 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
             _ <- UserGroupRoleDao.create(
               UserGroupRole.Create(
                 dbUser.id, GroupType.Team, team1.id, groupRole
-              ).toUserGroupRole(dbUser)
+              ).toUserGroupRole(dbUser, MembershipStatus.Approved)
             )
             _ <- UserGroupRoleDao.create(
               UserGroupRole.Create(
                 dbUser.id, GroupType.Team, team2.id, groupRole
-              ).toUserGroupRole(dbUser)
+              ).toUserGroupRole(dbUser, MembershipStatus.Approved)
             )
             listedTeams <- TeamDao.teamsForUser(dbUser)
           } yield { (List(team1, team2), listedTeams) }

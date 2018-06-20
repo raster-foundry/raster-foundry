@@ -80,11 +80,6 @@ trait PlatformRoutes extends Authentication
                 listPlatformMembers(platformId)
               }
             }
-          } ~
-          post {
-            traceName("platforms-member-add") {
-              addUserToPlatform(platformId)
-            }
           }
         }
       } ~
@@ -295,18 +290,6 @@ trait PlatformRoutes extends Authentication
     }
   }
 
-  def addUserToPlatform(platformId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
-    } {
-      entity(as[UserGroupRole.UserRole]) { ur =>
-        complete {
-          PlatformDao.setUserRole(user, ur.userId, platformId, ur.groupRole).transact(xa).unsafeToFuture
-        }
-      }
-    }
-  }
-
   def listOrganizations(platformId: UUID): Route = authenticate { user =>
     authorizeAsync {
       PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
@@ -379,12 +362,22 @@ trait PlatformRoutes extends Authentication
   }
 
   def addUserToOrganization(platformId: UUID, orgId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
-    } {
-      entity(as[UserGroupRole.UserRole]) { ur =>
+    entity(as[UserGroupRole.UserRole]) { ur =>
+      authorizeAsync {
+        val authCheck = (
+          OrganizationDao.userIsAdmin(user, orgId),
+          PlatformDao.userIsMember(user, platformId),
+          (user.id == ur.userId).pure[ConnectionIO]
+        ).tupled.map(
+          {
+            case (true, _, _) | (_, true, true) => true
+            case _ => false
+          }
+        )
+        authCheck.transact(xa).unsafeToFuture
+      } {
         complete {
-          OrganizationDao.setUserOrganization(user, ur.userId, orgId, ur.groupRole)
+          OrganizationDao.addUserRole(user, ur.userId, orgId, ur.groupRole)
             .transact(xa).unsafeToFuture
         }
       }
@@ -472,10 +465,20 @@ trait PlatformRoutes extends Authentication
   }
 
   def addUserToTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
-    } {
-      entity(as[UserGroupRole.UserRole]) { ur =>
+    entity(as[UserGroupRole.UserRole]) { ur =>
+      authorizeAsync {
+        val authCheck = (
+          TeamDao.userIsAdmin(user, orgId),
+          PlatformDao.userIsMember(user, platformId),
+          (user.id == ur.userId).pure[ConnectionIO]
+        ).tupled.map(
+          {
+            case (true, _, _) | (_, true, true) => true
+            case _ => false
+          }
+        )
+        authCheck.transact(xa).unsafeToFuture
+      } {
         complete {
           TeamDao.setUserRole(user, ur.userId, teamId, ur.groupRole).transact(xa).unsafeToFuture
         }

@@ -38,6 +38,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     FROM
   """ ++ tableF
 
+  def createUserGroupRole = UserGroupRoleDao.createWithGuard(userIsAdmin, GroupType.Organization) _
+
   def create(
     org: Organization
   ): ConnectionIO[Organization] =
@@ -144,7 +146,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
         group_type = ${GroupType.Organization.toString}::group_type AND
         group_role = ${GroupRole.Admin.toString}::group_role AND
         group_id = ${organizationId} AND
-        is_active = true
+        is_active = true AND
+        membership_status = 'APPROVED'
     ) OR (
       SELECT count(ugr.id) > 0
       FROM""" ++ PlatformDao.tableF ++ fr"""AS p
@@ -157,7 +160,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
         ugr.user_id = ${user.id} AND
         ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
         ugr.group_type = ${GroupType.Platform.toString}::group_type AND
-        ugr.is_active = true
+        ugr.is_active = true AND
+        membership_status = 'APPROVED'
     )
   """
 
@@ -171,7 +175,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     val userGroupRoleCreate = UserGroupRole.Create(
       subjectId, GroupType.Organization, organizationId, groupRole
     )
-    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser))
+
+    createUserGroupRole(organizationId, actingUser, subjectId, userGroupRoleCreate)
   }
 
   def setUserRole(actingUser: User, subjectId: String, organizationId: UUID, groupRole: GroupRole):
@@ -207,22 +212,6 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
       subjectId, GroupType.Organization, organizationId
     )
     UserGroupRoleDao.deactivateUserGroupRoles(userGroup, actingUser)
-  }
-
-  def setUserOrganization(actingUser: User, subjectId: String, organizationId: UUID, groupRole: GroupRole): ConnectionIO[List[UserGroupRole]] = {
-    UserDao.getUserById(subjectId) flatMap {
-      case Some(subjectUser) =>
-        for {
-          oldOrgRoles <- UserGroupRoleDao.listByUserAndGroupType(subjectUser, GroupType.Organization)
-          // This is OK because we only expect there to be a single org role at a time
-          deactivatedOrgRoles <- oldOrgRoles.traverse(
-            (role) => {
-              OrganizationDao.deactivateUserRoles(actingUser, subjectUser.id, role.groupId)
-            })
-          newOrgRoles <- OrganizationDao.setUserRole(actingUser, subjectUser.id, organizationId, groupRole)
-        } yield (newOrgRoles ++ deactivatedOrgRoles.flatten)
-      case None => throw new IllegalArgumentException(s"User not in database: ${subjectId}")
-    }
   }
 
   def addLogo(logoBase64: String, orgID: UUID, dataBucket: String): ConnectionIO[Organization] = {

@@ -39,7 +39,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
             insertedPlatform <- PlatformDao.create(platform)
             insertedUgr <- UserGroupRoleDao.create(
               fixupUserGroupRole(insertedUser, insertedOrg, insertedTeam, insertedPlatform, ugrCreate)
-                .toUserGroupRole(insertedUser)
+                .toUserGroupRole(insertedUser, MembershipStatus.Approved)
             )
           } yield { insertedUgr }
 
@@ -87,7 +87,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPublicUser.id,
                 GroupType.Platform,
                 dbPlatform.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr2 <- UserGroupRoleDao.create(
@@ -95,7 +95,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPrivateUser.id,
                 GroupType.Platform,
                 dbPlatform.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr3 <- UserGroupRoleDao.create(
@@ -103,7 +103,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPublicUser.id,
                 GroupType.Organization,
                 dbMainOrg.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr4 <- UserGroupRoleDao.create(
@@ -111,7 +111,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPrivateUser.id,
                 GroupType.Organization,
                 dbAltOrg.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             usersInPlatform <- UserGroupRoleDao.listUsersByGroup(
@@ -167,7 +167,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPublicUser.id,
                 GroupType.Platform,
                 dbPlatform.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr2 <- UserGroupRoleDao.create(
@@ -175,7 +175,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPrivateUser.id,
                 GroupType.Platform,
                 dbPlatform.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr3 <- UserGroupRoleDao.create(
@@ -183,7 +183,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPublicUser.id,
                 GroupType.Organization,
                 dbMainOrg.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr4 <- UserGroupRoleDao.create(
@@ -191,7 +191,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPrivateUser.id,
                 GroupType.Organization,
                 dbMainOrg.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             usersInPlatform <- UserGroupRoleDao.listUsersByGroup(
@@ -253,7 +253,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPublicUser.id,
                 GroupType.Platform,
                 dbPlatform.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr2 <- UserGroupRoleDao.create(
@@ -261,7 +261,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPrivateUser.id,
                 GroupType.Platform,
                 dbPlatform.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr3 <- UserGroupRoleDao.create(
@@ -269,7 +269,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPublicUser.id,
                 GroupType.Organization,
                 dbMainOrg.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr4 <- UserGroupRoleDao.create(
@@ -277,7 +277,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPrivateUser.id,
                 GroupType.Organization,
                 dbAltOrg.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             usersInPlatform <- UserGroupRoleDao.listUsersByGroup(
@@ -337,7 +337,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPublicUser.id,
                 GroupType.Platform,
                 dbPlatform.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr2 <- UserGroupRoleDao.create(
@@ -345,7 +345,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPrivateUser.id,
                 GroupType.Platform,
                 dbPlatform.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr3 <- UserGroupRoleDao.create(
@@ -353,7 +353,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPublicUser.id,
                 GroupType.Organization,
                 dbMainOrg.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr4 <- UserGroupRoleDao.create(
@@ -361,7 +361,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPrivateUser.id,
                 GroupType.Organization,
                 dbAltOrg.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr5 <- UserGroupRoleDao.create(
@@ -369,7 +369,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPublicUser.id,
                 GroupType.Team,
                 dbTeam.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             ugr6 <- UserGroupRoleDao.create(
@@ -377,7 +377,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
                 dbPrivateUser.id,
                 GroupType.Team,
                 dbTeam.id,
-                GroupRole.Member).toUserGroupRole(dbTestingUser)
+                GroupRole.Member).toUserGroupRole(dbTestingUser, MembershipStatus.Approved)
             )
 
             usersInPlatform <- UserGroupRoleDao.listUsersByGroup(
@@ -414,20 +414,20 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
             _ <- UserGroupRoleDao.create(
               UserGroupRole.Create(
                 managerUser.id, GroupType.Organization, insertedOrg.id, GroupRole.Admin
-              ).toUserGroupRole(managerUser)
+              ).toUserGroupRole(managerUser, MembershipStatus.Approved)
             )
             insertedTeam <- TeamDao.create(teamCreate.copy(organizationId = insertedOrg.id).toTeam(insertedUser))
             insertedPlatform <- PlatformDao.create(platform)
             insertedUgr <- UserGroupRoleDao.create(
               fixupUserGroupRole(insertedUser, insertedOrg, insertedTeam, insertedPlatform, ugrCreate)
-                .toUserGroupRole(managerUser)
+                .toUserGroupRole(managerUser, MembershipStatus.Approved)
             )
           } yield (insertedUgr, insertedUser, managerUser, insertedOrg, insertedTeam, insertedPlatform)
 
           val updateUgrWithUpdatedAndAffectedRowsIO = insertUgrWithRelationsIO flatMap {
             case (dbUgr: UserGroupRole, dbMember: User, dbAdmin: User, dbOrg: Organization, dbTeam: Team, dbPlatform: Platform) => {
               val fixedUpUgrUpdate = fixupUserGroupRole(dbMember, dbOrg, dbTeam, dbPlatform, ugrUpdate)
-                .toUserGroupRole(dbAdmin)
+                .toUserGroupRole(dbAdmin, MembershipStatus.Approved)
               UserGroupRoleDao.update(fixedUpUgrUpdate, dbUgr.id, dbAdmin) flatMap {
                 (affectedRows: Int) => {
                   UserGroupRoleDao.unsafeGetUserGroupRoleById(dbUgr.id, dbMember) map { (affectedRows, _) }
@@ -460,7 +460,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
             insertedPlatform <- PlatformDao.create(platform)
             insertedUgr <- UserGroupRoleDao.create(
               fixupUserGroupRole(insertedUser, insertedOrg, insertedTeam, insertedPlatform, ugrCreate)
-                .toUserGroupRole(insertedUser)
+                .toUserGroupRole(insertedUser, MembershipStatus.Approved)
             )
           } yield (insertedUgr, insertedUser)
 
@@ -496,7 +496,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
             insertedPlatform <- PlatformDao.create(platform)
             insertedUgr <- UserGroupRoleDao.create(
               fixupUserGroupRole(insertedUser, insertedOrg, insertedTeam, insertedPlatform, ugrCreate)
-                .toUserGroupRole(insertedUser)
+                .toUserGroupRole(insertedUser, MembershipStatus.Approved)
             )
           } yield (insertedUgr, insertedUser)
 

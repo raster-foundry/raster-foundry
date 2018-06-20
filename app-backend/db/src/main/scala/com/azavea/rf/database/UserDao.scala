@@ -78,7 +78,7 @@ object UserDao extends Dao[User] {
           GroupType.Platform,
           jwtUser.platformId,
           GroupRole.Member
-        ).toUserGroupRole(creatingUser)
+        ).toUserGroupRole(creatingUser, MembershipStatus.Approved)
       )
       organizationRole <- UserGroupRoleDao.create(
         UserGroupRole.Create(
@@ -88,7 +88,7 @@ object UserDao extends Dao[User] {
             throw new RuntimeException("Tried to create a user role using a non-existent organization ID")
           ).id,
           GroupRole.Member
-        ).toUserGroupRole(creatingUser)
+        ).toUserGroupRole(creatingUser, MembershipStatus.Approved)
       )
     } yield (createdUser, List(platformRole, organizationRole))
   }
