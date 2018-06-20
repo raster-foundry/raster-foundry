@@ -182,7 +182,8 @@ lazy val common = Project("common", file("common"))
     Dependencies.awsStsSdk,
     Dependencies.rollbar,
     Dependencies.doobiePostgres,
-    Dependencies.geotrellisSlick.exclude("postgresql", "postgresql")
+    Dependencies.geotrellisSlick.exclude("postgresql", "postgresql"),
+    Dependencies.apacheCommonsEmail
   )})
 
 lazy val db = Project("db", file("db"))
@@ -266,8 +267,7 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.mamlSpark,
       Dependencies.auth0,
       Dependencies.catsEffect,
-      Dependencies.scalaCsv,
-      Dependencies.apacheCommonsEmail
+      Dependencies.scalaCsv
     )
   })
   .settings(assemblyShadeRules in assembly := Seq(

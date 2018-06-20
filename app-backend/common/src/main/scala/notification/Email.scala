@@ -1,15 +1,10 @@
-package com.azavea.rf.batch.notification
+package com.azavea.rf.common.notification.Email
 
 import com.typesafe.scalalogging.LazyLogging
 
-import cats.effect.IO
 import org.apache.commons.mail._
 import org.apache.commons.mail.Email._
 import org.apache.commons.mail.HtmlEmail
-
-import scala.concurrent.Future
-import com.azavea.rf.batch.Job
-
 
 class NotificationEmail {
 
