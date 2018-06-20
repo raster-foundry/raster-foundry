@@ -134,7 +134,12 @@ trait ToolRoutes extends Authentication
     (withPagination & combinedToolQueryParams) { (page, combinedToolQueryParameters) =>
       complete {
         ToolDao
-          .authQuery(user, ObjectType.Template)
+          .authQuery(
+            user,
+            ObjectType.Template,
+            combinedToolQueryParameters.ownershipTypeParams.ownershipType,
+            combinedToolQueryParameters.groupQueryParameters.groupType,
+            combinedToolQueryParameters.groupQueryParameters.groupId)
           .filter(combinedToolQueryParameters)
           .page(page)
           .transact(xa).unsafeToFuture

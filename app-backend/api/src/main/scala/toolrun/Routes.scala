@@ -78,7 +78,12 @@ trait ToolRunRoutes extends Authentication
     (withPagination & toolRunQueryParameters) { (page, runParams) =>
       complete {
         ToolRunDao
-          .authQuery(user, ObjectType.Analysis)
+          .authQuery(
+            user,
+            ObjectType.Analysis,
+            runParams.ownershipTypeParams.ownershipType,
+            runParams.groupQueryParameters.groupType,
+            runParams.groupQueryParameters.groupId)
           .filter(runParams)
           .page(page)
           .transact(xa).unsafeToFuture

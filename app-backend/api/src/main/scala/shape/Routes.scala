@@ -140,7 +140,12 @@ trait ShapeRoutes extends Authentication
     (withPagination & shapeQueryParams) { (page: PageRequest, queryParams: ShapeQueryParameters) =>
       complete {
         ShapeDao
-          .authQuery(user, ObjectType.Shape)
+          .authQuery(
+            user,
+            ObjectType.Shape,
+            queryParams.ownershipTypeParams.ownershipType,
+            queryParams.groupQueryParameters.groupType,
+            queryParams.groupQueryParameters.groupId)
           .filter(queryParams)
           .page(page)
           .transact(xa).unsafeToFuture().map { p => {

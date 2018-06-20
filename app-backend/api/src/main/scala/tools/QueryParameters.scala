@@ -11,6 +11,8 @@ trait ToolQueryParameterDirective extends QueryParametersCommon {
     orgQueryParams &
     userQueryParameters &
     timestampQueryParameters &
-    searchParams
+    searchParams &
+    ownershipTypeQueryParameters &
+    groupQueryParameters
   ).as(CombinedToolQueryParameters.apply _)
 }

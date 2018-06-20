@@ -150,7 +150,9 @@ case class CombinedToolQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-  searchParams: SearchQueryParameters = SearchQueryParameters()
+  searchParams: SearchQueryParameters = SearchQueryParameters(),
+  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
 @JsonCodec
@@ -236,7 +238,9 @@ case class ToolRunQueryParameters(
 @JsonCodec
 case class CombinedToolRunQueryParameters(
   toolRunParams: ToolRunQueryParameters = ToolRunQueryParameters(),
-  timestampParams: TimestampQueryParameters = TimestampQueryParameters()
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
 @JsonCodec
@@ -247,7 +251,9 @@ case class CombinedToolCategoryQueryParams(
 
 @JsonCodec
 case class DatasourceQueryParameters(
-  searchParams: SearchQueryParameters = SearchQueryParameters()
+  searchParams: SearchQueryParameters = SearchQueryParameters(),
+  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
 @JsonCodec
@@ -298,7 +304,9 @@ case class AnnotationQueryParameters(
 case class ShapeQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
-  timestampParams: TimestampQueryParameters = TimestampQueryParameters()
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
 @JsonCodec

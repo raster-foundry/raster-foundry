@@ -71,7 +71,12 @@ trait DatasourceRoutes extends Authentication
     (withPagination & datasourceQueryParams) { (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
       complete {
         DatasourceDao
-          .authQuery(user, ObjectType.Datasource)
+          .authQuery(
+            user,
+            ObjectType.Datasource,
+            datasourceParams.ownershipTypeParams.ownershipType,
+            datasourceParams.groupQueryParameters.groupType,
+            datasourceParams.groupQueryParameters.groupId)
           .filter(datasourceParams)
           .page(page)
           .transact(xa).unsafeToFuture

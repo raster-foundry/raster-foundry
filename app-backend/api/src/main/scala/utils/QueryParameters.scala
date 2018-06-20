@@ -95,7 +95,11 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     ))).as(AnnotationQueryParameters.apply _)
 
   def shapeQueryParams = (
-    orgQueryParams & userQueryParameters & timestampQueryParameters
+    orgQueryParams &
+    userQueryParameters &
+    timestampQueryParameters &
+    ownershipTypeQueryParameters &
+    groupQueryParameters
   ).as(ShapeQueryParameters.apply _)
 
   def searchParams = parameters(

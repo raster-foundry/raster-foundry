@@ -16,6 +16,8 @@ trait ToolRunQueryParametersDirective extends QueryParametersCommon {
 
   val toolRunQueryParameters = (
     toolRunSpecificQueryParams &
-    timestampQueryParameters
+    timestampQueryParameters &
+    ownershipTypeQueryParameters &
+    groupQueryParameters
   ).as(CombinedToolRunQueryParameters.apply _)
 }
