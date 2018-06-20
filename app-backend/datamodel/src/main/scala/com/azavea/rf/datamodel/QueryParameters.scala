@@ -242,7 +242,8 @@ case class CombinedToolRunQueryParameters(
   toolRunParams: ToolRunQueryParameters = ToolRunQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
   ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
-  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
+  userParams: UserQueryParameters = UserQueryParameters()
 )
 
 @JsonCodec
@@ -253,6 +254,7 @@ case class CombinedToolCategoryQueryParams(
 
 @JsonCodec
 case class DatasourceQueryParameters(
+  userParams: UserQueryParameters = UserQueryParameters(),
   searchParams: SearchQueryParameters = SearchQueryParameters(),
   ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
   groupQueryParameters: GroupQueryParameters = GroupQueryParameters()

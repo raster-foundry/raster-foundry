@@ -10,6 +10,7 @@ import com.azavea.rf.api.utils.queryparams._
 
 trait DatasourceQueryParameterDirective extends QueryParametersCommon {
   def datasourceQueryParams = (
+    userQueryParameters &
     searchParams &
     ownershipTypeQueryParameters &
     groupQueryParameters
