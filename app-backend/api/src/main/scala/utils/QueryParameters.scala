@@ -23,6 +23,9 @@ trait QueryParameterDeserializers {
     Timestamp.from(DatatypeConverter.parseDateTime(s).getTime().toInstant())
   }
 
+  implicit val deserializerGroupType: Unmarshaller[String, GroupType] = Unmarshaller.strict[String, GroupType] {s =>
+    GroupType.fromString(s)
+  }
 }
 
 trait QueryParametersCommon extends QueryParameterDeserializers {
@@ -30,7 +33,9 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     orgQueryParams &
     userQueryParameters &
     timestampQueryParameters &
-    searchParams
+    searchParams &
+    ownershipTypeQueryParameters &
+    groupQueryParameters
   ).as(ProjectQueryParameters.apply _)
 
   def aoiQueryParameters = (
@@ -44,6 +49,17 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
   def ownerQueryParameters = parameters(
     'owner.as[String].?
   ).as(OwnerQueryParameters.apply _)
+
+  def ownershipTypeQueryParameters = parameters(
+    'ownershipType.as[String].?
+  ).as(OwnershipTypeQueryParameters.apply _)
+
+  def groupQueryParameters = parameters(
+    (
+    'groupType.as(deserializerGroupType).?,
+    'groupId.as(deserializerUUID).?
+    )
+  ).as(GroupQueryParameters.apply _)
 
   def userAuditQueryParameters = parameters(
     (
@@ -79,7 +95,11 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     ))).as(AnnotationQueryParameters.apply _)
 
   def shapeQueryParams = (
-    orgQueryParams & userQueryParameters & timestampQueryParameters
+    orgQueryParams &
+    userQueryParameters &
+    timestampQueryParameters &
+    ownershipTypeQueryParameters &
+    groupQueryParameters
   ).as(ShapeQueryParameters.apply _)
 
   def searchParams = parameters(

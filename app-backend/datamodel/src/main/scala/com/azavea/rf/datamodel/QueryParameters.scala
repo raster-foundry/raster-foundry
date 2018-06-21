@@ -113,7 +113,9 @@ case class CombinedSceneQueryParams(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-  sceneParams: SceneQueryParameters = SceneQueryParameters()
+  sceneParams: SceneQueryParameters = SceneQueryParameters(),
+  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
 /** Combined all query parameters for grids */
@@ -132,7 +134,9 @@ case class ProjectQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-  searchParams: SearchQueryParameters = SearchQueryParameters()
+  searchParams: SearchQueryParameters = SearchQueryParameters(),
+  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
 @JsonCodec
@@ -148,7 +152,9 @@ case class CombinedToolQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-  searchParams: SearchQueryParameters = SearchQueryParameters()
+  searchParams: SearchQueryParameters = SearchQueryParameters(),
+  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
 @JsonCodec
@@ -184,6 +190,24 @@ case class OwnerQueryParameters(
   owner: Option[String] = None
 )
 
+/** Query parameters to filter by ownership type:
+  - owned by the requesting user only: owned
+  - shared to the requesting user due to group membership: inherited
+  - shared to the requesting user directly, across platform, or due to group membership: shared
+  - both the above: none, this is default
+*/
+@JsonCodec
+case class OwnershipTypeQueryParameters(
+  ownershipType: Option[String] = None
+)
+
+/** Query parameters to filter by group membership*/
+@JsonCodec
+case class GroupQueryParameters(
+  groupType: Option[GroupType] = None,
+  groupId: Option[UUID] = None
+)
+
 /** Query parameters to filter by users */
 @JsonCodec
 case class UserQueryParameters(
@@ -216,7 +240,10 @@ case class ToolRunQueryParameters(
 @JsonCodec
 case class CombinedToolRunQueryParameters(
   toolRunParams: ToolRunQueryParameters = ToolRunQueryParameters(),
-  timestampParams: TimestampQueryParameters = TimestampQueryParameters()
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
+  userParams: UserQueryParameters = UserQueryParameters()
 )
 
 @JsonCodec
@@ -227,7 +254,10 @@ case class CombinedToolCategoryQueryParams(
 
 @JsonCodec
 case class DatasourceQueryParameters(
-  searchParams: SearchQueryParameters = SearchQueryParameters()
+  userParams: UserQueryParameters = UserQueryParameters(),
+  searchParams: SearchQueryParameters = SearchQueryParameters(),
+  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
 @JsonCodec
@@ -278,7 +308,9 @@ case class AnnotationQueryParameters(
 case class ShapeQueryParameters(
   orgParams: OrgQueryParameters = OrgQueryParameters(),
   userParams: UserQueryParameters = UserQueryParameters(),
-  timestampParams: TimestampQueryParameters = TimestampQueryParameters()
+  timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+  ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
 @JsonCodec

@@ -295,7 +295,12 @@ trait ProjectRoutes extends Authentication
     (withPagination & projectQueryParameters) { (page, projectQueryParameters) =>
       complete {
         ProjectDao
-          .authQuery(user, ObjectType.Project)
+          .authQuery(
+            user, 
+            ObjectType.Project,
+            projectQueryParameters.ownershipTypeParams.ownershipType,
+            projectQueryParameters.groupQueryParameters.groupType,
+            projectQueryParameters.groupQueryParameters.groupId)
           .filter(projectQueryParameters)
           .page(page)
           .flatMap(ProjectDao.projectsToProjectsWithRelated)

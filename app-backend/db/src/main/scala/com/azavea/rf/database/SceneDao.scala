@@ -39,32 +39,57 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     FROM
   """ ++ tableF
 
-  def authViewQuery(user: User, objectType: ObjectType): Dao.QueryBuilder[Scene] = {
+  def authViewQuery(user: User, objectType: ObjectType, ownershipTypeO: Option[String] = None,
+    groupTypeO: Option[GroupType] = None, groupIdO: Option[UUID] = None): Dao.QueryBuilder[Scene] = {
     if (user.isSuperuser) {
       Dao.QueryBuilder[Scene](selectF, tableF, List.empty)
     } else {
-      val authFilter =
-        fr"""( owner = ${user.id} OR visibility = 'PUBLIC' OR id in (
-             SELECT acr.object_id
-             FROM access_control_rules acr
-             WHERE acr.object_type = 'SCENE'
-             AND acr.action_type = 'VIEW'
-             AND -- Match if the ACR is an ALL or per user
-             (acr.subject_type = 'ALL' OR (acr.subject_type = 'USER'
-               AND acr.subject_id = ${user.id})
-             )
+      val ownedF: Fragment = fr"owner = ${user.id}"
+      val visibilityF: Fragment= fr"visibility = 'PUBLIC'"
+      val sharedF: Fragment = fr"""
+        SELECT acr.object_id
+        FROM access_control_rules acr
+        WHERE acr.object_type = 'SCENE'
+        AND acr.action_type = 'VIEW'
+        AND (acr.subject_type = 'ALL' OR (acr.subject_type = 'USER'
+           AND acr.subject_id = ${user.id}))
+      """
+      val inheritedBaseF: Fragment = fr"""
+        SELECT acr.object_id
+        FROM access_control_rules acr
+        JOIN user_group_roles ugr ON acr.subject_type::text = ugr.group_type::text
+        AND acr.subject_id::text = ugr.group_id::text
+        WHERE ugr.user_id = ${user.id}
+          AND acr.object_type = 'SCENE'
+          AND acr.action_type = 'VIEW'
+      """
+      val inheritedF: Fragment = (groupTypeO, groupIdO) match {
+        case (Some(groupType), Some(groupId)) => inheritedBaseF ++ fr"""
+         AND ugr.group_type = ${groupType}
+         AND ugr.group_id = ${groupId}
+      """
+        case _ => inheritedBaseF
+      }
 
-             UNION ALL -- Collect objects the user has access to for group permissions
-
-             SELECT acr.object_id
-             FROM access_control_rules acr
-             JOIN user_group_roles ugr ON acr.subject_type::text = ugr.group_type::text
-             AND acr.subject_id::text = ugr.group_id::text
-             WHERE ugr.user_id = ${user.id}
-             AND acr.object_type = 'SCENE'
-             AND acr.action_type = 'VIEW'
-             ) )
-          """
+      val authFilter = ownershipTypeO match {
+        // owned by the requesting user only
+        case Some(ownershipType) if ownershipType == "owned" =>
+          fr"("++ ownedF ++ fr")"
+        // shared to the requesting user directly, across platform, or due to group membership
+        case Some(ownershipType) if ownershipType == "shared" =>
+          fr"(" ++ visibilityF ++
+            fr"OR id in(" ++ sharedF ++ fr")" ++
+            fr"OR id in(" ++ inheritedF ++ fr"))"
+        // shared to the requesting user due to group membership
+        case Some(ownershipType) if ownershipType == "inherited" =>
+          fr"(id in("++ inheritedF  ++ fr"))"
+        // the default
+        case _ =>
+          fr"(" ++ ownedF ++
+            fr"OR" ++ visibilityF ++
+            fr"OR id in(" ++ sharedF ++ fr")" ++
+            fr"OR id in(" ++ inheritedF ++ fr"))"
+      }
       Dao.QueryBuilder[Scene](selectF, tableF, List(Some(authFilter)))
     }
   }
