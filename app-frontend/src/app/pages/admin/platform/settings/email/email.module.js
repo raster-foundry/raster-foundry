@@ -32,6 +32,9 @@ class PlatformEmailController {
         } else if (type === 'aoi') {
             this.platformBuffer.publicSettings.emailAoiNotification =
                 !this.platformBuffer.publicSettings.emailAoiNotification;
+        } else if (type === 'export') {
+            this.platformBuffer.publicSettings.emailExportNotification =
+                !this.platformBuffer.publicSettings.emailExportNotification;
         }
     }
 
@@ -61,6 +64,10 @@ class PlatformEmailController {
             return 'Failed';
         }
         return 'Save';
+    }
+
+    setEncryptionMethod(encryption) {
+        this.platformBuffer.publicSettings.emailSmtpEncryption = encryption;
     }
 }
 
