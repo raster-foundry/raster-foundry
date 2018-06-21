@@ -27,8 +27,11 @@ object Platform {
   case class PublicSettings(
     emailUser: String,
     emailSmtpHost: String,
+    emailSmtpPort: Int,
+    emailSmtpEncryption: String,
     emailIngestNotification: Boolean,
-    emailAoiNotification: Boolean
+    emailAoiNotification: Boolean,
+    emailExportNotification: Boolean
   )
 
   @JsonCodec

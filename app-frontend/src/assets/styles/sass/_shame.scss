@@ -3097,7 +3097,8 @@ rf-reclassify-table {
 }
 
 // page route: admin/platform/<id>/settings/email
-.subscription-toggle {
+.subscription-toggle,
+.encryption-toggle {
   & .checkbox {
     padding-top: 1rem;
 
