@@ -6,9 +6,9 @@ object M128 {
     sqlu"""
 UPDATE scenes
 SET data_footprint = (
-  SELECT st_collect(
-    ST_TRANSFORM(rightpoly.thegeom, 3857),
-    ST_TRANSFORM(ST_TRANSLATE(leftpoly.thegeom, -360, 0), 3857)
+  SELECT ST_UNION(
+    ST_COLLECT(ST_TRANSFORM(rightpoly.thegeom, 3857)),
+    ST_COLLECT(ST_TRANSFORM(ST_TRANSLATE(leftpoly.thegeom, -360, 0), 3857))
   ) FROM
   (SELECT foo2.thegeom thegeom FROM
     (SELECT (ST_DUMP(foo.geom)).geom AS thegeom FROM
