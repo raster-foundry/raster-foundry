@@ -127,18 +127,27 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
     }
   }
 
+  def isValidEmailSettings(host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String): Boolean =
+    host.length != 0 &&
+      (port == 25 || port == 465 || port == 587 || port == 2525) &&
+      encryption.length!= 0 &&
+      (encryption == "ssl" || encryption == "tls" || encryption == "starttls") &&
+      platUserEmail.length != 0 &&
+      pw.length != 0 &&
+      userEmail.length != 0
+
   def sendIngestStatusEmailToConsumers(platformsWithConsumers: List[PlatformWithUsersSceneProjects], scene: Scene, ingestStatus: String) =
     platformsWithConsumers.map(pU => {
       val email = new NotificationEmail
-
       (pU.emailNotifications, pU.pubSettings.emailIngestNotification) match {
         case (true, true) =>
-          (pU.pubSettings.emailSmtpHost, pU.pubSettings.emailUser, pU.priSettings.emailPassword, pU.email) match {
-            case (host: String, platUserEmail: String, pw: String, userEmail: String) if
-              host.length != 0 && platUserEmail.length != 0 && pw.length != 0 && userEmail.length != 0 =>
+          (pU.pubSettings.emailSmtpHost, pU.pubSettings.emailSmtpPort, pU.pubSettings.emailSmtpEncryption,
+            pU.pubSettings.emailUser, pU.priSettings.emailPassword, pU.email) match {
+            case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
+               isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
               val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForConsumers(pU, scene, ingestStatus)
-              email.setEmail(host, 465, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).send()
-            case (_, _, _, _) => logger.warn(email.insufficientSettingsWarning(pU.platId.toString(), pU.uId))
+              email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).send()
+            case _ => logger.warn(email.insufficientSettingsWarning(pU.platId.toString(), pU.uId))
           }
         case (false, true) => logger.warn(email.userEmailNotificationDisabledWarning(pU.uId))
         case (true, false) => logger.warn(email.platformNotSubscribedWarning(pU.platId.toString()))
@@ -152,12 +161,13 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
       val email = new NotificationEmail
       (pO.emailNotifications, pO.pubSettings.emailIngestNotification) match {
         case (true, true) =>
-          (pO.pubSettings.emailSmtpHost, pO.pubSettings.emailUser, pO.priSettings.emailPassword, pO.email) match {
-            case (host: String, platUserEmail: String, pw: String, userEmail: String) if
-              host.length != 0 && platUserEmail.length != 0 && pw.length != 0 && userEmail.length != 0 =>
+          (pO.pubSettings.emailSmtpHost, pO.pubSettings.emailSmtpPort, pO.pubSettings.emailSmtpEncryption,
+            pO.pubSettings.emailUser, pO.priSettings.emailPassword, pO.email) match {
+            case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
+              isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
               val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForOwner(pO, scene, ingestStatus)
-              email.setEmail(host, 465, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).send()
-            case (_, _, _, _) => logger.warn(email.insufficientSettingsWarning(pO.platId.toString(), pO.uId))
+              email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).send()
+            case _ => logger.warn(email.insufficientSettingsWarning(pO.platId.toString(), pO.uId))
           }
         case (false, true) => logger.warn(email.userEmailNotificationDisabledWarning(pO.uId))
         case (true, false) => logger.warn(email.platformNotSubscribedWarning(pO.platId.toString()))
