@@ -4,7 +4,8 @@ import _ from 'lodash';
 class OrganizationTeamsController {
     constructor(
         $scope, $stateParams, $log, $window,
-        modalService, organizationService, teamService, authService
+        modalService, organizationService, teamService, authService,
+        platform, organization, user, userRoles
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
@@ -15,50 +16,25 @@ class OrganizationTeamsController {
         this.teamService = teamService;
         this.authService = authService;
 
-        this.orgAdminEmail = 'example@email.com';
+        this.platform = platform;
+        this.organization = organization;
+        this.user = user;
+        this.userRoles = userRoles;
+    }
 
-        let debouncedSearch = _.debounce(
+    $onInit() {
+        this.debouncedSearch = _.debounce(
             this.onSearch.bind(this),
             500,
             {leading: false, trailing: true}
         );
-        this.fetching = true;
-        this.orgWatch = this.$scope.$parent.$watch('$ctrl.organization', (organization) => {
-            if (organization && this.orgWatch) {
-                this.orgWatch();
-                delete this.orgWatch;
-                this.organization = organization;
-                this.organizationId = this.organization.id;
-                this.platformId = this.organization.platformId;
-                this.currentUserPromise = this.$scope.$parent.$ctrl.currentUserPromise;
-                this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
-                this.getUserAndUgrs();
-                this.$scope.$watch('$ctrl.search', debouncedSearch);
-            }
-        });
-    }
 
-    $onInit() {
-        this.userTeamRole = {};
-    }
+        this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
+            this.organization.id,
+            this.platform.id
+        ]);
 
-    getUserAndUgrs() {
-        this.currentUserPromise.then(resp => {
-            this.currentUser = resp;
-        });
-        this.currentUgrPromise.then((resp) => {
-            this.currentUgrs = resp;
-            this.currentOrgUgr = resp.filter((ugr) => {
-                return ugr.groupId === this.organizationId;
-            })[0];
-            this.currentPlatUgr = resp.filter((ugr) => {
-                return ugr.groupId === this.organization.platformId;
-            })[0];
-
-            this.isPlatOrOrgAdmin = this.currentPlatUgr &&
-                this.currentPlatUgr.groupRole === 'ADMIN' ||
-                this.currentOrgUgr && this.currentOrgUgr.groupRole === 'ADMIN';
-        });
+        this.fetchTeams(1, '');
     }
 
     onSearch(search) {
@@ -81,7 +57,7 @@ class OrganizationTeamsController {
     fetchTeams(page = 1, search) {
         this.fetching = true;
         this.organizationService
-            .getTeams(this.platformId, this.organizationId, page - 1, search)
+            .getTeams(this.platform.id, this.organization.id, page - 1, search)
             .then((response) => {
                 this.fetching = false;
                 this.updatePagination(response);
@@ -89,14 +65,15 @@ class OrganizationTeamsController {
                 this.teams = response.results;
 
                 this.teams.forEach((team) => {
-                    let teamUgr = this.currentUgrs.filter(ugr => ugr.groupId === team.id)[0];
-                    let isAdmin = this.isPlatOrOrgAdmin || teamUgr && teamUgr.groupRole === 'ADMIN';
-                    this.userTeamRole[team.id] = this.currentUser.isSuperuser || isAdmin;
                     Object.assign(team, {
                         options: {
                             items: this.itemsForTeam(team)
                         },
-                        showOptions: this.userTeamRole[team.id]
+                        showOptions: this.authService.isEffectiveAdmin([
+                            this.platform.id,
+                            this.organization.id,
+                            team.id
+                        ])
                     });
                 });
 
@@ -104,7 +81,7 @@ class OrganizationTeamsController {
                 this.teams.forEach(
                     (team) => {
                         this.teamService
-                            .getMembers(this.platformId, this.organizationId, team.id)
+                            .getMembers(this.platform.id, this.organization.id, team.id)
                             .then((paginatedUsers) => {
                                 team.fetchedUsers = paginatedUsers;
                             });
@@ -140,7 +117,7 @@ class OrganizationTeamsController {
                         }
                     }).result.then(() => {
                         this.teamService
-                            .getMembers(this.platformId, this.organization.id, team.id)
+                            .getMembers(this.platform.id, this.organization.id, team.id)
                             .then((paginatedUsers) => {
                                 team.fetchedUsers = paginatedUsers;
                             });
@@ -163,7 +140,7 @@ class OrganizationTeamsController {
                     });
 
                     modal.result.then(() => {
-                        this.teamService.deactivateTeam(this.platformId, this.organizationId, team.id).then(
+                        this.teamService.deactivateTeam(this.platform.id, this.organization.id, team.id).then(
                             () => {
                                 this.fetchTeams(this.pagination.currentPage, this.search);
                             },
@@ -181,27 +158,16 @@ class OrganizationTeamsController {
     }
 
     newTeamModal() {
-        let permissionDenied = {};
-        if (!(this.currentUser.isActive &&
-            (this.currentUser.isSuperuser || this.isPlatOrOrgAdmin))) {
-            permissionDenied = {
-                isDenied: true,
-                adminEmail: 'example@email.com',
-                message: 'You do not have access to this operation. Please contact ',
-                subject: 'organization admin'
-            };
-        }
         this.modalService.open({
             component: 'rfTeamModal',
-            resolve: {
-                permissionDenied: permissionDenied
-            },
             size: 'sm'
         }).result.then((result) => {
             // eslint-disable-next-line
-            this.teamService.createTeam(this.platformId, this.organizationId, result.name).then(() => {
-                this.fetchTeams(this.pagination.currentPage, this.search);
-            });
+            this.teamService
+                .createTeam(this.platform.id, this.organization.id, result.name)
+                .then(() => {
+                    this.fetchTeams(this.pagination.currentPage, this.search);
+                });
         });
     }
 
@@ -215,7 +181,7 @@ class OrganizationTeamsController {
         if (this.nameBuffer && this.nameBuffer.length && team.name !== this.nameBuffer) {
             let teamUpdated = Object.assign({}, team, {name: this.nameBuffer});
             this.teamService
-                .updateTeam(this.platformId, this.organizationId, team.id, teamUpdated)
+                .updateTeam(this.platform.id, this.organization.id, team.id, teamUpdated)
                 .then(resp => {
                     this.teams[this.teams.indexOf(team)] = resp;
                 }, () => {

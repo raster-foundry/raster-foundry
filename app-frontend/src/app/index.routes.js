@@ -52,11 +52,13 @@ import importsDatasourcesDetailTpl from './pages/imports/datasources/detail/deta
 
 import adminTpl from './pages/admin/admin.html';
 import organizationTpl from './pages/admin/organization/organization.html';
+import organizationModule from './pages/admin/organization/organization';
 import organizationMetricsTpl from './pages/admin/organization/metrics/metrics.html';
 import organizationUsersTpl from './pages/admin/organization/users/users.html';
 import organizationTeamsTpl from './pages/admin/organization/teams/teams.html';
 import organizationSettingsTpl from './pages/admin/organization/settings/settings.html';
 import platformTpl from './pages/admin/platform/platform.html';
+import platformModule from './pages/admin/platform/platform.module';
 import platformMetricsTpl from './pages/admin/platform/metrics/metrics.html';
 import platformUsersTpl from './pages/admin/platform/users/users.html';
 import platformSettingsTpl from './pages/admin/platform/settings/settings.html';
@@ -67,6 +69,7 @@ import adminDetailFeaturesTpl from './pages/admin/platform/organizations/detail/
 import adminDetailLimitsTpl from './pages/admin/platform/organizations/detail/limits/limits.html';
 import adminDetailSettingsTpl from './pages/admin/platform/organizations/detail/settings/settings.html';
 import adminTeamTpl from './pages/admin/team/team.html';
+import adminTeamModule from './pages/admin/team/team';
 import adminTeamUsersTpl from './pages/admin/team/users/users.html';
 
 
@@ -466,7 +469,8 @@ function adminStates($stateProvider) {
             templateUrl: organizationTpl,
             controller: 'OrganizationController',
             controllerAs: '$ctrl',
-            abstract: true
+            abstract: true,
+            resolve: organizationModule.resolve
         })
         .state('admin.organization.metrics', {
             title: 'Organization Metrics',
@@ -514,7 +518,8 @@ function adminStates($stateProvider) {
             templateUrl: platformTpl,
             controller: 'PlatformController',
             controllerAs: '$ctrl',
-            abstract: true
+            abstract: true,
+            resolve: platformModule.resolve
         })
         .state('admin.platform.metrics', {
             title: 'Platform Metrics',
@@ -587,7 +592,8 @@ function adminStates($stateProvider) {
             templateUrl: adminTeamTpl,
             controller: 'AdminTeamController',
             controllerAs: '$ctrl',
-            abstract: true
+            abstract: true,
+            resolve: adminTeamModule.resolve
         })
         .state('admin.team.users', {
             url: '/users',
@@ -606,7 +612,8 @@ function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvi
 
 
     $stateProvider.state('root', {
-        templateUrl: rootTpl
+        templateUrl: rootTpl,
+        controller: 'IndexController'
     }).state('callback', {
         url: '/callback'
     });

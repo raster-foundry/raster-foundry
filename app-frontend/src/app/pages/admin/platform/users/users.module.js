@@ -4,7 +4,8 @@ import _ from 'lodash';
 class PlatformUsersController {
     constructor(
         $scope, $stateParams, $q,
-        modalService, platformService
+        modalService, platformService, authService,
+        platform
     ) {
         'ngInject';
         this.$scope = $scope;
@@ -13,22 +14,19 @@ class PlatformUsersController {
 
         this.modalService = modalService;
         this.platformService = platformService;
-        // check if has permissions for platform page
-        this.fetching = true;
+        this.authService = authService;
 
+        this.platform = platform;
+    }
+
+    $onInit() {
+        this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
         this.debouncedSearch = _.debounce(
             this.onSearch.bind(this),
             500,
             {leading: false, trailing: true}
         );
-    }
-
-    $onInit() {
-        this.platformPromise = this.$scope.$parent.$ctrl.platformPromise;
-        this.currentUserPromise = this.$scope.$parent.$ctrl.currentUserPromise;
-        this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
         this.fetchUsers(1, '');
-        this.getUserAndUgrs();
     }
 
     onSearch(search) {
@@ -36,28 +34,12 @@ class PlatformUsersController {
         this.fetchUsers(undefined, search);
     }
 
-    getUserAndUgrs() {
-        this.currentUserPromise.then(resp => {
-            this.currentUser = resp;
-        });
-        this.$q.all({
-            ugrs: this.currentUgrPromise,
-            platform: this.platformPromise
-        }).then(({ugrs, platform}) => {
-            this.currentPlatUgr = ugrs.find((ugr) => {
-                return ugr.groupId === platform.id && ugr.groupRole === 'ADMIN';
-            });
-        });
-    }
-
     updateUserGroupRole(user) {
-        this.platformPromise.then(platform => {
-            this.platformService.setUserRole(
-                platform.id,
-                user
-            ).catch(() => {
-                this.fetchUsers(this.pagination.currentPage, this.search);
-            });
+        return this.platformService.setUserRole(
+            this.platform.id,
+            user
+        ).catch(() => {
+            this.fetchUsers(this.pagination.currentPage, this.search);
         });
     }
 
@@ -85,30 +67,50 @@ class PlatformUsersController {
             this.updatePagination(response);
             this.lastUserResult = response;
             this.users = response.results;
-
-            this.users.forEach(user => {
-                Object.assign(user, {
-                    options: {
-                        items: this.itemsForUser(user)
-                    }
-                });
-            });
+            this.buildOptions();
         }, (error) => {
             this.fetching = false;
             this.errrorMsg = `${error.data}. Please contact `;
         });
     }
 
+    buildOptions() {
+        this.users.forEach(user => Object.assign(user, {
+            options: {
+                items: this.itemsForUser(user)
+            },
+            showOptions: this.isEffectiveAdmin
+        }));
+    }
+
     itemsForUser(user) {
         /* eslint-disable */
-        return [
-            {
-                label: 'Edit',
+        let options = [];
+
+        if (user.groupRole === 'ADMIN') {
+            options.push({
+                label: 'Revoke admin role',
                 callback: () => {
-                    console.log('edit callback for user:', user);
+                    this.updateUserGroupRole(Object.assign(user, {
+                        groupRole: 'MEMBER'
+                    })).then(() => {
+                        this.buildOptions();
+                    });
                 }
-            }
-        ];
+            });
+        } else {
+            options.push({
+                label: 'Grant admin role',
+                callback: () => {
+                    this.updateUserGroupRole(Object.assign(user, {
+                        groupRole: 'ADMIN'
+                    })).then(() => {
+                        this.buildOptions();
+                    });
+                }
+            });
+        }
+        return options;
         /* eslint-enable */
     }
 

@@ -1,5 +1,5 @@
-<div class="admin-users-content-row container column-stretch admin-dashboard admin-settings"
-     ng-if="$ctrl.authService.isSuperOrAdmin([$ctrl.$stateParams.platformId])">
+<div class="admin-list-content-row column-stretch"
+     ng-if="$ctrl.authService.isEffectiveAdmin($ctrl.$stateParams.platformId)">
   <div class="sidebar">
     <nav>
       <a ui-sref="admin.platform.settings.email" ui-sref-active="active">Email Notifications</a>

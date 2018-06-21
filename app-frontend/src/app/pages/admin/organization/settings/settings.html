@@ -1,10 +1,4 @@
-settings.html
-
-<pre>
-* Set pinned project
-* Default sharing settings?
-* Uploading logo, org name
-* Third party integrations?
-* Default notification settings
-* Default limits for users: number of projects a user can create, amount of data uploaded
-</pre>
+<div class="admin-list-content-row column-stretch"
+     ng-if="$ctrl.authService.isEffectiveAdmin($ctrl.organization.id)">
+  <h4>Organization Logo</h4>
+</div>

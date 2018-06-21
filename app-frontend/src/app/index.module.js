@@ -1,6 +1,8 @@
 /* globals window */
 import config from './index.config';
 import run from './index.run';
+import IndexController from './index.controller';
+
 (() => {
     'use strict';
     window.Auth0Lock = require('auth0-lock').default;
@@ -95,7 +97,7 @@ const App = angular.module(
         require('./pages/settings/organizations/organizations.module.js').name,
 
         require('./pages/admin/admin.module.js').name,
-        require('./pages/admin/organization/organization.module.js').name,
+        require('./pages/admin/organization/organization.js').name,
         require('./pages/admin/organization/metrics/metrics.module.js').name,
         require('./pages/admin/organization/teams/teams.module.js').name,
         require('./pages/admin/organization/users/users.module.js').name,
@@ -115,6 +117,8 @@ const App = angular.module(
         require('./pages/admin/team/users/users.js').name
     ]
 );
+
+App.controller('IndexController', IndexController);
 
 App.config(config)
     .run(run);

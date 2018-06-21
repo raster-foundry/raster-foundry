@@ -1,5 +1,8 @@
 /* eslint-disable */
 export default angular.module('index.components', [
+    //admin components
+    require('./components/admin/editableLogo/editableLogo.js').name,
+
     // permission components
     require('./components/permissions/permissionsModal.module.js').name,
 
@@ -92,6 +95,7 @@ export default angular.module('index.components', [
     require('./components/common/search/search.js').name,
     require('./components/common/sortingHeader/sortingHeader.js').name,
     require('./components/common/dropdown/dropdown.module.js').name,
+    require('./components/common/paginationCount/paginationCount.js').name,
 
 
     // Single components for new domains

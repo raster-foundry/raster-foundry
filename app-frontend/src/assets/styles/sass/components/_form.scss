@@ -186,6 +186,7 @@ input[type=radio] {
   border-radius: $border-radius-base;
   border: 1px solid $border-color-default;
   position: relative;
+  display: flex;
 
   :nth-child(1) {
       &.form-control {
@@ -202,14 +203,16 @@ input[type=radio] {
 
   .btn-link {
     border: none;
-    position: absolute;
-    top: 0;
-    right: 0;
     padding: 0.7em;
     color: $shade-light;
     pointer-events: none;
     i {
         pointer-events: auto;
+    }
+    margin-left: -40px;
+    &:hover {
+      text-decoration: none;
+      color: $brand-primary;
     }
   }
 

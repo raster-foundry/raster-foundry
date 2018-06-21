@@ -1,47 +1,24 @@
 import angular from 'angular';
 
 class TeamController {
-    constructor($q, $stateParams, $window, teamService, organizationService, authService) {
+    constructor(
+        authService, teamService,
+        platform, organization, team, users
+    ) {
         'ngInject';
-        this.$q = $q;
-        this.$stateParams = $stateParams;
-        this.$window = $window;
-        this.teamService = teamService;
-        this.organizationService = organizationService;
-        this.fetching = true;
         this.authService = authService;
+        this.teamService = teamService;
+        this.platform = platform;
+        this.organization = organization;
+        this.team = team;
+        this.users = users;
     }
-
     $onInit() {
-        this.teamPromise = this.$q((resolve, reject) => {
-            this.teamService
-                .getTeam(this.$stateParams.teamId)
-                .then((team) => {
-                    this.fetching = false;
-                    this.team = team;
-                    return this.organizationService
-                        .getOrganization(team.organizationId)
-                        .then((organization) => {
-                            resolve({
-                                team, organization
-                            });
-                        }, reject);
-                }, reject);
-        });
-
-        this.isSuperOrAdmin = this.isUserSuperOrAdmin();
-    }
-
-    isUserSuperOrAdmin() {
-        return this.teamPromise.then(resp => {
-            this.platformId = resp.organization.platformId;
-            this.organizationId = resp.organization.id;
-            this.isSuperOrAdmin = this.authService.isSuperOrAdmin(
-                [this.platformId,
-                this.organizationId,
-                this.$stateParams.teamId]
-            );
-        });
+        this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
+            this.platform.id,
+            this.organization.id,
+            this.team.id
+        ]);
     }
 
     toggleTeamNameEdit() {
@@ -53,11 +30,11 @@ class TeamController {
             && this.nameBuffer !== this.team.name) {
             let teamUpdated = Object.assign({}, this.team, {name: this.nameBuffer});
             this.teamService.updateTeam(
-                this.platformId,
-                this.organizationId,
-                this.$stateParams.teamId,
-                teamUpdated)
-            .then(resp => {
+                this.platform.id,
+                this.organization.id,
+                this.team.id,
+                teamUpdated
+            ).then(resp => {
                 this.team = resp;
                 this.nameBuffer = this.team.name;
             }, () => {
@@ -74,6 +51,28 @@ class TeamController {
 }
 
 const TeamModule = angular.module('pages.admin.team', []);
+
+TeamModule.resolve = {
+    team: ($stateParams, teamService) => {
+        return teamService.getTeam($stateParams.teamId);
+    },
+    organization: (team, organizationService) => {
+        return organizationService.getOrganization(team.organizationId);
+    },
+    platform: (organization, platformService) => {
+        return platformService.getPlatform(organization.platformId);
+    },
+    user: (authService) => {
+        return authService.getCurrentUser();
+    },
+    userRoles: (authService) => {
+        return authService.fetchUserRoles();
+    },
+    users: (platform, organization, team, teamService) => {
+        return teamService.getMembers(platform.id, organization.id, team.id);
+    }
+};
+
 TeamModule.controller('AdminTeamController', TeamController);
 
 export default TeamModule;

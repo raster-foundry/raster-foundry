@@ -1,0 +1,19 @@
+<div class="admin-logo image-placeholder"
+     ng-if="!$ctrl.processedUri.length && !$ctrl.canEdit || $ctrl.showPlaceholder"
+></div>
+
+<div class="admin-logo image-placeholder editable-image-placeholder"
+     ng-if="!$ctrl.processedUri.length && $ctrl.canEdit && !$ctrl.showPlaceholder"
+     ng-click="$ctrl.onEdit()"
+></div>
+<div class="admin-logo editable-image-always"
+     ng-if="$ctrl.processedUri.length && $ctrl.canEdit && !$ctrl.showPlaceholder"
+     ng-click="$ctrl.onEdit()"
+>
+    <img ng-attr-src="{{$ctrl.processedUri}}">
+</div>
+<div class="admin-logo"
+     ng-if="$ctrl.processedUri.length && !$ctrl.canEdit && !$ctrl.showPlaceholder"
+>
+    <img ng-attr-src="{{$ctrl.processedUri}}">
+</div>

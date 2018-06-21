@@ -1,10 +1,18 @@
-<div class="admin-users-content container column-stretch">
-  <div ng-if="$ctrl.errorMsg">
-    <p>
-      {{$ctrl.errorMsg}}
-    </p>
-  </div>
-  <div class="admin-users-actions" ng-if="!$ctrl.errorMsg && $ctrl.teams.length">
+<div class="admin-list-content column-stretch">
+  <div class="admin-list-actions" ng-if="!$ctrl.errorMsg && $ctrl.teams.length">
+    <div>
+      <rf-search on-search="$ctrl.debouncedSearch(value)"
+              placeholder="Search for teams"
+              auto-focus="true"
+              disabled="$ctrl.fetching || !$ctrl.teams.length"
+      ></rf-search>
+      <rf-pagination-count
+        start-index="$ctrl.pagination.startingItem"
+        end-index="$ctrl.pagination.endingItem"
+        total="$ctrl.pagination.count"
+        item-name="teams"
+      ></rf-pagination-count>
+    </div>
     <div class="actions-right">
       <button type="button" class="btn btn-primary"
               ng-click="$ctrl.newTeamModal()" ng-disabled="$ctrl.fetching">
@@ -28,7 +36,7 @@
       Create Team
     </button>
   </rf-call-to-action-item>
-  <table class="admin-table admin-team-table" ng-if="!$ctrl.fetching">
+  <table class="admin-table admin-team-table" ng-if="!$ctrl.fetching && $ctrl.teams.length">
     <tbody>
       <tr ng-repeat="team in $ctrl.teams track by team.id">
         <td class="name">
@@ -78,20 +86,15 @@
                    ng-attr-title="{{user.name || user.email || user.id}}">
             </div>
           </div>
-          &nbsp;
-          <ng-pluralize count="team.fetchedUsers.count"
+        </td>
+        <td class="users-count">
+            <ng-pluralize count="team.fetchedUsers.count"
                         when="{'0': ' No members yet',
                                '1': ' 1 member',
                                'other': '{} members'}"
 
-          >
-          </ng-pluralize>
-        </td>
-        <td class="users" ng-if="!team.fetchedUsers">
-          <a class="users-more" title="View team details"
-             ui-sref="admin.team.users({teamId: team.id})">
-            Counting members...
-          </a>
+            >
+            </ng-pluralize>
         </td>
         <td class="actions">
           <rf-dropdown data-options="team.options" ng-if="team.showOptions">

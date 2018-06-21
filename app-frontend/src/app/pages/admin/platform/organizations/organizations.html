@@ -1,7 +1,6 @@
 <ui-view>
-  <div class="admin-users-content container column-stretch">
-    <div class="admin-users-actions">
-      <rf-search on-search="$ctrl.debouncedSearch(value)" placeholder="Search for organizations" auto-focus="true"></rf-search>
+  <div class="admin-list-content column-stretch">
+    <div class="admin-list-actions">
       <div class="actions-right">
         <button type="button" class="btn btn-primary"
                 ng-click="$ctrl.newOrgModal()"
@@ -74,7 +73,7 @@
           <td>{{ organization.isActive ? "Active" : "Deactivated"}}</td>
           <td class="actions" ng-if="organization.showOptions">
             <rf-dropdown data-options="organization.options">
-              <span class="icon-edit"></span>
+              <span class="icon-caret-down h4"></span>
             </rf-dropdown>
           </td>
         </tr>

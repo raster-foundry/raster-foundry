@@ -1,9 +1,18 @@
 import angular from 'angular';
 
 class OrganizationSettingsController {
-    constructor() {
-        //eslint-disable-next-line
-        console.log('Organization Settings Controller');
+    constructor(
+        $stateParams, authService,
+        platform, organization, user, userRoles
+    ) {
+        'ngInject';
+
+        this.$stateParams = $stateParams;
+        this.authService = authService;
+        this.platform = platform;
+        this.organization = organization;
+        this.user = user;
+        this.userRoles = userRoles;
     }
 }
 
