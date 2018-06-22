@@ -71,7 +71,7 @@
             >
             </ng-pluralize>
           </td>
-          <td>{{ organization.isActive ? "Active" : "Deactivated"}}</td>
+          <td>{{ organization.status | humanStatus }}</td>
           <td class="actions" ng-if="organization.showOptions">
             <rf-dropdown data-options="organization.options">
               <span class="icon-edit"></span>

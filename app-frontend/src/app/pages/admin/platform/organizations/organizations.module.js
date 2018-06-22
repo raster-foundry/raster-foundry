@@ -194,7 +194,7 @@ class PlatformOrganizationsController {
             size: 'sm'
         }).result.then((result) => {
             this.platformService
-                .createOrganization(this.$stateParams.platformId, result.name)
+                .createOrganization(this.$stateParams.platformId, result.name, 'ACTIVE')
                 .then(() => {
                     this.fetchOrganizations();
                 });
