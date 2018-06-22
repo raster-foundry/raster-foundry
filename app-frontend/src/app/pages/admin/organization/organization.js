@@ -4,7 +4,8 @@ class OrganizationController {
     constructor(
         $stateParams, $q, $window,
         organizationService, authService, modalService,
-        organization, platform, user, userRoles, members, teams
+        organization, platform, user, userRoles, members, teams,
+        projects, rasters, vectors, datasources, templates, analyses
     ) {
         'ngInject';
 
@@ -20,6 +21,12 @@ class OrganizationController {
         this.userRoles = userRoles;
         this.members = members;
         this.teams = teams;
+        this.projects = projects;
+        this.rasters = rasters;
+        this.vectors = vectors;
+        this.datasources = datasources;
+        this.templates = templates;
+        this.analyses = analyses;
     }
 
     $onInit() {
@@ -91,6 +98,78 @@ OrganizationModule.resolve = {
     },
     userRoles: (authService) => {
         return authService.fetchUserRoles();
+    },
+    projects: (organization, projectService) => {
+        return projectService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'organization',
+                groupId: organization.id
+            }
+        );
+    },
+    rasters: (organization, sceneService) => {
+        return sceneService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'organization',
+                groupId: organization.id
+            }
+        );
+    },
+    vectors: (organization, shapesService) => {
+        return shapesService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'organization',
+                groupId: organization.id
+            }
+        );
+    },
+    datasources: (organization, datasourceService) => {
+        return datasourceService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'organization',
+                groupId: organization.id
+            }
+        );
+    },
+    templates: (organization, analysisService) => {
+        return analysisService.fetchTemplates(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'organization',
+                groupId: organization.id
+            }
+        );
+    },
+    analyses: (organization, analysisService) => {
+        return analysisService.fetchAnalyses(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'organization',
+                groupId: organization.id
+            }
+        );
     }
 };
 

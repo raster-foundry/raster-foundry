@@ -1,0 +1,25 @@
+<section>
+    <ul class="sidebar-list">
+      <li class="sidebar-list-item">
+        <a class="sidebar-list-item-header"
+           ui-sref="{{$ctrl.sref}}"
+        >
+          People
+        </a>
+        <div class="flex-fill"></div>
+        <a ui-sref="{{$ctrl.sref}}">
+          <span>{{$ctrl.paginatedResponse.count}}</span>
+          <i class="icon-caret-right"></i>
+        </a>
+      </li>
+      <li class="sidebar-list-item"
+          ng-repeat="user in $ctrl.paginatedResponse.results | limitTo: 3"
+      >
+          <div class="avatar user-avatar image-placeholder" ng-if="!user.profileImageUri"></div>
+          <div ng-if="user.profileImageUri">
+            <img class="avatar user-avatar" ng-src="{{user.profileImageUri}}">
+          </div>
+          <div class="content">{{user.name || user.email || user.id}}</div>
+      </li>
+    </ul>
+</section>

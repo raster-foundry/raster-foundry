@@ -2,6 +2,9 @@
 export default angular.module('index.components', [
     //admin components
     require('./components/admin/editableLogo/editableLogo.js').name,
+    require('./components/admin/sidebarUserList/sidebarUserList.js').name,
+    require('./components/admin/sidebarTeamList/sidebarTeamList.js').name,
+    require('./components/admin/sidebarOrganizationList/sidebarOrganizationList.js').name,
 
     // permission components
     require('./components/permissions/permissionsModal.module.js').name,

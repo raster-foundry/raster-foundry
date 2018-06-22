@@ -294,3 +294,34 @@ rf-scene-filter-pane {
 .sidebar-settings {
   width: 28rem;
 }
+
+.sidebar-list {
+  list-style: none;
+}
+
+.sidebar-list-item-header {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.sidebar-list-item
+// , .sidebar-list-item a
+{
+  display: flex;
+  white-space: nowrap;
+  align-items: center;
+  .content {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.sidebar-list-item a {
+  text-decoration: none;
+  color: inherit;
+  &:hover {
+    color: $brand-primary;
+    text-decoration: none;
+  }
+}

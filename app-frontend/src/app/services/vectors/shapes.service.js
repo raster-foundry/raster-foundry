@@ -2,7 +2,13 @@
 export default (app) => {
     class ShapesService {
         constructor($resource) {
-            this.shapeApi = $resource(`${BUILDCONFIG.API_HOST}/api/shapes/:id`, {id: '@id'}, {
+            this.shapeApi = $resource(`${BUILDCONFIG.API_HOST}/api/shapes/:id`, {
+                id: '@properties.id'
+            }, {
+                query: {
+                    method: 'GET',
+                    cache: false
+                },
                 get: {
                     method: 'GET',
                     cache: false
@@ -15,6 +21,10 @@ export default (app) => {
                     isArray: true
                 }
             });
+        }
+
+        query(params = {}) {
+            return this.shapeApi.query(params).$promise;
         }
 
         fetchShapes(params) {

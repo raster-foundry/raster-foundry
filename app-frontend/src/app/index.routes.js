@@ -57,20 +57,34 @@ import organizationMetricsTpl from './pages/admin/organization/metrics/metrics.h
 import organizationUsersTpl from './pages/admin/organization/users/users.html';
 import organizationTeamsTpl from './pages/admin/organization/teams/teams.html';
 import organizationSettingsTpl from './pages/admin/organization/settings/settings.html';
+import organizationProjectsTpl from './pages/admin/organization/projects/projects.html';
+import organizationRastersTpl from './pages/admin/organization/rasters/rasters.html';
+import organizationVectorsTpl from './pages/admin/organization/vectors/vectors.html';
+import organizationDatasourcesTpl from './pages/admin/organization/datasources/datasources.html';
+import organizationTemplatesTpl from './pages/admin/organization/templates/templates.html';
+import organizationAnalysesTpl from './pages/admin/organization/analyses/analyses.html';
 import platformTpl from './pages/admin/platform/platform.html';
 import platformModule from './pages/admin/platform/platform.module';
 import platformMetricsTpl from './pages/admin/platform/metrics/metrics.html';
 import platformUsersTpl from './pages/admin/platform/users/users.html';
+import platformOrganizationsTpl from './pages/admin/platform/organizations/organizations.html';
 import platformSettingsTpl from './pages/admin/platform/settings/settings.html';
 import platformSettingsEmailTpl from './pages/admin/platform/settings/email/email.html';
-import platformOrganizationsTpl from './pages/admin/platform/organizations/organizations.html';
-import platformOrganizationsDetailTpl from './pages/admin/platform/organizations/detail/detail.html';
-import adminDetailFeaturesTpl from './pages/admin/platform/organizations/detail/features/features.html';
-import adminDetailLimitsTpl from './pages/admin/platform/organizations/detail/limits/limits.html';
-import adminDetailSettingsTpl from './pages/admin/platform/organizations/detail/settings/settings.html';
-import adminTeamTpl from './pages/admin/team/team.html';
-import adminTeamModule from './pages/admin/team/team';
-import adminTeamUsersTpl from './pages/admin/team/users/users.html';
+import platformProjectsTpl from './pages/admin/platform/projects/projects.html';
+import platformRastersTpl from './pages/admin/platform/rasters/rasters.html';
+import platformVectorsTpl from './pages/admin/platform/vectors/vectors.html';
+import platformDatasourcesTpl from './pages/admin/platform/datasources/datasources.html';
+import platformTemplatesTpl from './pages/admin/platform/templates/templates.html';
+import platformAnalysesTpl from './pages/admin/platform/analyses/analyses.html';
+import teamTpl from './pages/admin/team/team.html';
+import teamModule from './pages/admin/team/team';
+import teamUsersTpl from './pages/admin/team/users/users.html';
+import teamProjectsTpl from './pages/admin/team/projects/projects.html';
+import teamRastersTpl from './pages/admin/team/rasters/rasters.html';
+import teamVectorsTpl from './pages/admin/team/vectors/vectors.html';
+import teamDatasourcesTpl from './pages/admin/team/datasources/datasources.html';
+import teamTemplatesTpl from './pages/admin/team/templates/templates.html';
+import teamAnalysesTpl from './pages/admin/team/analyses/analyses.html';
 
 
 function projectEditStates($stateProvider) {
@@ -482,6 +496,60 @@ function adminStates($stateProvider) {
             controller: 'OrganizationMetricsController',
             controllerAs: '$ctrl'
         })
+        .state('admin.organization.projects', {
+            title: 'Organization projects',
+            url: '/projects',
+            params: {
+                organization: null
+            },
+            templateUrl: organizationProjectsTpl,
+            controller: 'OrganizationProjectsController'
+        })
+        .state('admin.organization.rasters', {
+            title: 'Organization rasters',
+            url: '/rasters',
+            params: {
+                organization: null
+            },
+            templateUrl: organizationRastersTpl,
+            controller: 'OrganizationRastersController'
+        })
+        .state('admin.organization.vectors', {
+            title: 'Organization vectors',
+            url: '/vectors',
+            params: {
+                organization: null
+            },
+            templateUrl: organizationVectorsTpl,
+            controller: 'OrganizationVectorsController'
+        })
+        .state('admin.organization.datasources', {
+            title: 'Organization datasources',
+            url: '/datasources',
+            params: {
+                organization: null
+            },
+            templateUrl: organizationDatasourcesTpl,
+            controller: 'OrganizationDatasourcesController'
+        })
+        .state('admin.organization.templates', {
+            title: 'Organization templates',
+            url: '/templates',
+            params: {
+                organization: null
+            },
+            templateUrl: organizationTemplatesTpl,
+            controller: 'OrganizationTemplatesController'
+        })
+        .state('admin.organization.analyses', {
+            title: 'Organization analyses',
+            url: '/analyses',
+            params: {
+                organization: null
+            },
+            templateUrl: organizationAnalysesTpl,
+            controller: 'OrganizationAnalysesController'
+        })
         .state('admin.organization.users', {
             title: 'Organization Users',
             url: '/users',
@@ -521,6 +589,60 @@ function adminStates($stateProvider) {
             abstract: true,
             resolve: platformModule.resolve
         })
+        .state('admin.platform.projects', {
+            title: 'Platform projects',
+            url: '/projects',
+            params: {
+                platform: null
+            },
+            templateUrl: platformProjectsTpl,
+            controller: 'PlatformProjectsController'
+        })
+        .state('admin.platform.rasters', {
+            title: 'Platform rasters',
+            url: '/rasters',
+            params: {
+                platform: null
+            },
+            templateUrl: platformRastersTpl,
+            controller: 'PlatformRastersController'
+        })
+        .state('admin.platform.vectors', {
+            title: 'Platform vectors',
+            url: '/vectors',
+            params: {
+                platform: null
+            },
+            templateUrl: platformVectorsTpl,
+            controller: 'PlatformVectorsController'
+        })
+        .state('admin.platform.datasources', {
+            title: 'Platform datasources',
+            url: '/datasources',
+            params: {
+                platform: null
+            },
+            templateUrl: platformDatasourcesTpl,
+            controller: 'PlatformDatasourcesController'
+        })
+        .state('admin.platform.templates', {
+            title: 'Platform templates',
+            url: '/templates',
+            params: {
+                platform: null
+            },
+            templateUrl: platformTemplatesTpl,
+            controller: 'PlatformTemplatesController'
+        })
+        .state('admin.platform.analyses', {
+            title: 'Platform analyses',
+            url: '/analyses',
+            params: {
+                platform: null
+            },
+            templateUrl: platformAnalysesTpl,
+            controller: 'PlatformAnalysesController'
+        })
         .state('admin.platform.metrics', {
             title: 'Platform Metrics',
             url: '/metrics',
@@ -551,54 +673,79 @@ function adminStates($stateProvider) {
             controllerAs: '$ctrl'
         })
         .state('admin.platform.organizations', {
-            title: 'Platform Organizations',
+            title: 'Platform: Organizations',
             url: '/organizations',
             templateUrl: platformOrganizationsTpl,
             controller: 'PlatformOrganizationsController',
             controllerAs: '$ctrl'
         })
-        .state('admin.platform.organizations.detail', {
-            title: 'Platform Organization Management',
-            url: '/detail/:orgId',
-            templateUrl: platformOrganizationsDetailTpl,
-            controller: 'PlatformOrganizationDetailController',
-            controllerAs: '$ctrl',
-            abstract: true
-        })
-        .state('admin.platform.organizations.detail.features', {
-            title: 'Platform: Organization Features',
-            url: '/features',
-            templateUrl: adminDetailFeaturesTpl,
-            controller: 'AdminDetailFeaturesController',
-            controllerAs: '$ctrl'
-        })
-        .state('admin.platform.organizations.detail.limits', {
-            title: 'Platform: Organization Limits',
-            url: '/limits',
-            templateUrl: adminDetailLimitsTpl,
-            controller: 'AdminDetailLimitsController',
-            controllerAs: '$ctrl'
-        })
-        .state('admin.platform.organizations.detail.settings', {
-            title: 'Platform: Organization Settings',
-            url: '/settings',
-            templateUrl: adminDetailSettingsTpl,
-            controller: 'AdminDetailSettingsController',
-            controllerAs: '$ctrl'
-        })
         .state('admin.team', {
             title: 'Team',
             url: '/team/:teamId',
-            templateUrl: adminTeamTpl,
+            templateUrl: teamTpl,
             controller: 'AdminTeamController',
             controllerAs: '$ctrl',
             abstract: true,
-            resolve: adminTeamModule.resolve
+            resolve: teamModule.resolve
+        })
+        .state('admin.team.projects', {
+            title: 'Team projects',
+            url: '/projects',
+            params: {
+                team: null
+            },
+            templateUrl: teamProjectsTpl,
+            controller: 'TeamProjectsController'
+        })
+        .state('admin.team.rasters', {
+            title: 'Team rasters',
+            url: '/rasters',
+            params: {
+                team: null
+            },
+            templateUrl: teamRastersTpl,
+            controller: 'TeamRastersController'
+        })
+        .state('admin.team.vectors', {
+            title: 'Team vectors',
+            url: '/vectors',
+            params: {
+                team: null
+            },
+            templateUrl: teamVectorsTpl,
+            controller: 'TeamVectorsController'
+        })
+        .state('admin.team.datasources', {
+            title: 'Team datasources',
+            url: '/datasources',
+            params: {
+                team: null
+            },
+            templateUrl: teamDatasourcesTpl,
+            controller: 'TeamDatasourcesController'
+        })
+        .state('admin.team.templates', {
+            title: 'Team templates',
+            url: '/templates',
+            params: {
+                team: null
+            },
+            templateUrl: teamTemplatesTpl,
+            controller: 'TeamTemplatesController'
+        })
+        .state('admin.team.analyses', {
+            title: 'Team analyses',
+            url: '/analyses',
+            params: {
+                team: null
+            },
+            templateUrl: teamAnalysesTpl,
+            controller: 'TeamAnalysesController'
         })
         .state('admin.team.users', {
             url: '/users',
             title: 'Team Members',
-            templateUrl: adminTeamUsersTpl,
+            templateUrl: teamUsersTpl,
             controller: 'AdminTeamUsersController',
             controllerAs: '$ctrl'
         });

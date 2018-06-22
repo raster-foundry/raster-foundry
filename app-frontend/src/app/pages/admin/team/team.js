@@ -3,15 +3,22 @@ import angular from 'angular';
 class TeamController {
     constructor(
         authService, teamService,
-        platform, organization, team, users
+        platform, team, organization, members,
+        projects, rasters, vectors, datasources, templates, analyses
     ) {
         'ngInject';
         this.authService = authService;
         this.teamService = teamService;
         this.platform = platform;
-        this.organization = organization;
         this.team = team;
-        this.users = users;
+        this.organization = organization;
+        this.members = members;
+        this.projects = projects;
+        this.rasters = rasters;
+        this.vectors = vectors;
+        this.datasources = datasources;
+        this.templates = templates;
+        this.analyses = analyses;
     }
     $onInit() {
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
@@ -68,8 +75,80 @@ TeamModule.resolve = {
     userRoles: (authService) => {
         return authService.fetchUserRoles();
     },
-    users: (platform, organization, team, teamService) => {
+    members: (platform, team, organization, teamService) => {
         return teamService.getMembers(platform.id, organization.id, team.id);
+    },
+    projects: (team, projectService) => {
+        return projectService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'team',
+                groupId: team.id
+            }
+        );
+    },
+    rasters: (team, sceneService) => {
+        return sceneService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'team',
+                groupId: team.id
+            }
+        );
+    },
+    vectors: (team, shapesService) => {
+        return shapesService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'team',
+                groupId: team.id
+            }
+        );
+    },
+    datasources: (team, datasourceService) => {
+        return datasourceService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'team',
+                groupId: team.id
+            }
+        );
+    },
+    templates: (team, analysisService) => {
+        return analysisService.fetchTemplates(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'team',
+                groupId: team.id
+            }
+        );
+    },
+    analyses: (team, analysisService) => {
+        return analysisService.fetchAnalyses(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'team',
+                groupId: team.id
+            }
+        );
     }
 };
 

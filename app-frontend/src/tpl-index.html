@@ -17,10 +17,6 @@
     <meta name="msapplication-config" content="/favicons/browserconfig.xml">
     <meta name="theme-color" content="#464f77">
 
-    {% for (var css in o.htmlWebpackPlugin.files.css) { %}
-      <link href="{%=o.htmlWebpackPlugin.files.css[css] %}" rel="stylesheet">
-    {% } %}
-
     {% for (var chunk in o.htmlWebpackPlugin.files.chunks) { %}
       <script src="{%=o.htmlWebpackPlugin.files.chunks[chunk].entry %}" defer></script>
     {% } %}
@@ -33,11 +29,32 @@
     {% } %}
 </head>
 <body>
+    <style>
+      div.app-loading-indicator {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: rgba(255, 255, 255, 0.50);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      div.app-loading-indicator.is-visible {
+        opacity: 1;
+        pointer-events: all;
+      }
+    </style>
     <!--[if lt IE 10]>
     <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
-  <div class="app-wrapper">
-    <div ui-view></div>
-  </div>
+    <div class="app-wrapper">
+      <div ui-view></div>
+    </div>
+
+    {% for (var css in o.htmlWebpackPlugin.files.css) { %}
+      <link href="{%=o.htmlWebpackPlugin.files.css[css] %}" rel="stylesheet">
+    {% } %}
 </body>
 </html>

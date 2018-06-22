@@ -11,7 +11,8 @@ class PlatformController {
     constructor(
         $stateParams,
         platformService, authService,
-        platform, members, organizations
+        platform, members, organizations,
+        projects, rasters, vectors, datasources, templates, analyses
     ) {
         'ngInject';
         this.$stateParams = $stateParams;
@@ -20,7 +21,13 @@ class PlatformController {
         this.platformLogo = assetLogo;
         this.platform = platform;
         this.organizations = organizations;
-        this.users = members;
+        this.members = members;
+        this.projects = projects;
+        this.rasters = rasters;
+        this.vectors = vectors;
+        this.datasources = datasources;
+        this.templates = templates;
+        this.analyses = analyses;
     }
 
     $onInit() {
@@ -42,6 +49,78 @@ PlatformModule.resolve = {
     },
     organizations: (platform, platformService) => {
         return platformService.getOrganizations(platform.id, 0, '');
+    },
+    projects: (platform, projectService) => {
+        return projectService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'platform',
+                groupId: platform.id
+            }
+        );
+    },
+    rasters: (platform, sceneService) => {
+        return sceneService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'platform',
+                groupId: platform.id
+            }
+        );
+    },
+    vectors: (platform, shapesService) => {
+        return shapesService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'platform',
+                groupId: platform.id
+            }
+        );
+    },
+    datasources: (platform, datasourceService) => {
+        return datasourceService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'platform',
+                groupId: platform.id
+            }
+        );
+    },
+    templates: (platform, analysisService) => {
+        return analysisService.fetchTemplates(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'platform',
+                groupId: platform.id
+            }
+        );
+    },
+    analyses: (platform, analysisService) => {
+        return analysisService.fetchAnalyses(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                page: 1,
+                ownershipType: 'inherited',
+                groupType: 'platform',
+                groupId: platform.id
+            }
+        );
     }
 };
 
