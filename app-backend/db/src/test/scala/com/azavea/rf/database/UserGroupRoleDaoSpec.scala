@@ -70,8 +70,8 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
           val usersInPlatformIO = for {
             // Create necessary groups
             dbPlatform <- PlatformDao.create(platform)
-            dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization)
-            dbAltOrg <- OrganizationDao.create(altOrg.copy(platformId = dbPlatform.id).toOrganization)
+            dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization(true))
+            dbAltOrg <- OrganizationDao.create(altOrg.copy(platformId = dbPlatform.id).toOrganization(true))
 
             // Create necessary users
             dbTestingUser <- UserDao.create(testingUser)
@@ -151,7 +151,7 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
           val usersInPlatformIO = for {
             // Create necessary groups
             dbPlatform <- PlatformDao.create(platform)
-            dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization)
+            dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization(true))
 
             // Create necessary users
             dbTestingUser <- UserDao.create(testingUser)
@@ -236,8 +236,8 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
 
             // Create necessary groups
             dbPlatform <- PlatformDao.create(platform)
-            dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization)
-            dbAltOrg <- OrganizationDao.create(altOrg.copy(platformId = dbPlatform.id).toOrganization)
+            dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization(true))
+            dbAltOrg <- OrganizationDao.create(altOrg.copy(platformId = dbPlatform.id).toOrganization(true))
 
             // Create necessary users
             dbTestingUser <- UserDao.create(testingUser)
@@ -320,8 +320,8 @@ class UserGroupRoleDaoSpec extends FunSuite with Matchers with Checkers with DBT
 
             // Create necessary groups
             dbPlatform <- PlatformDao.create(platform)
-            dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization)
-            dbAltOrg <- OrganizationDao.create(altOrg.copy(platformId = dbPlatform.id).toOrganization)
+            dbMainOrg <- OrganizationDao.create(mainOrg.copy(platformId = dbPlatform.id).toOrganization(true))
+            dbAltOrg <- OrganizationDao.create(altOrg.copy(platformId = dbPlatform.id).toOrganization(true))
             dbTeam <- TeamDao.create(team.copy(organizationId = dbMainOrg.id).toTeam(dbTestingUser))
 
             // Create necessary users

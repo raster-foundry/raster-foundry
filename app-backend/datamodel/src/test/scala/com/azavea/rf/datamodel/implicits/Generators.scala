@@ -63,6 +63,10 @@ object Generators extends ArbitraryInstances {
   private def visibilityGen: Gen[Visibility] = Gen.oneOf(
     Visibility.Public, Visibility.Organization, Visibility.Private)
 
+  private def orgStatusGen: Gen[OrgStatus] = Gen.oneOf(
+    OrgStatus.Requested, OrgStatus.Active, OrgStatus.Inactive)
+
+
   private def sceneTypeGen: Gen[SceneType] = Gen.oneOf(
     SceneType.Avro, SceneType.COG
   )
@@ -167,9 +171,10 @@ object Generators extends ArbitraryInstances {
   private def organizationCreateGen: Gen[Organization.Create] = for {
     name <- nonEmptyStringGen
     visibility <- visibilityGen
-  } yield (Organization.Create(name, defaultPlatformId, Some(visibility)))
+    orgStatus <- orgStatusGen
+  } yield (Organization.Create(name, defaultPlatformId, Some(visibility), orgStatus))
 
-  private def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization }
+  private def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization(true) }
 
   private def shapeCreateGen: Gen[Shape.Create] = for {
     owner <- Gen.const(None)

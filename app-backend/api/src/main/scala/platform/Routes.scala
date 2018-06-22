@@ -308,10 +308,11 @@ trait PlatformRoutes extends Authentication
 
     entity(as[Organization.Create]) { orgToCreate =>
       completeOrFail {
-        for {
+        val createdOrg = for {
           isAdmin <- PlatformDao.userIsAdmin(user, platformId)
           org <- OrganizationDao.create(orgToCreate.toOrganization(isAdmin))
-        } yield org.transact(xa).unsafeToFuture
+        } yield org
+        createdOrg.transact(xa).unsafeToFuture
       }
     }
   }
