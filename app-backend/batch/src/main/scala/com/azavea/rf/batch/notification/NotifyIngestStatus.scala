@@ -6,7 +6,6 @@ import java.util.UUID
 import cats.effect.IO
 
 import scala.concurrent.Future
-import scala.util._
 import com.azavea.rf.batch.Job
 import com.azavea.rf.common.notification.Email.NotificationEmail
 import com.azavea.rf.datamodel._
