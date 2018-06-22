@@ -33,24 +33,25 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, name, platform_id, is_active,
+      id, created_at, modified_at, name, platform_id, status,
       dropbox_credential, planet_credential, logo_uri, visibility
     FROM
   """ ++ tableF
 
   def createUserGroupRole = UserGroupRoleDao.createWithGuard(userIsAdmin, GroupType.Organization) _
 
-  def create(
-    org: Organization
-  ): ConnectionIO[Organization] =
-    (fr"INSERT INTO" ++ tableF ++ fr"""
-          (id, created_at, modified_at, name, platform_id, is_active, visibility)
+  def create(org: Organization): ConnectionIO[Organization] = {
+
+    (fr"INSERT INTO" ++ tableF ++
+      fr"""
+          (id, created_at, modified_at, name, platform_id, status, visibility)
         VALUES
-          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId}, true, ${org.visibility})
+          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId}, ${org.status}, ${org.visibility})
     """).update.withUniqueGeneratedKeys[Organization](
-      "id", "created_at", "modified_at", "name", "platform_id", "is_active",
+      "id", "created_at", "modified_at", "name", "platform_id", "status",
       "dropbox_credential", "planet_credential", "logo_uri", "visibility"
     )
+  }
 
   def getOrganizationById(id: UUID): ConnectionIO[Option[Organization]] =
     query.filter(id).selectOption
@@ -59,7 +60,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     query.filter(id).select
 
   def createOrganization(newOrg: Organization.Create): ConnectionIO[Organization] =
-    create(newOrg.toOrganization)
+    create(newOrg.toOrganization(true))
 
   def update(org: Organization, id: UUID): ConnectionIO[Int] = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
