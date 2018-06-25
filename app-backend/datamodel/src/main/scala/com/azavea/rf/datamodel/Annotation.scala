@@ -45,142 +45,143 @@ case class Annotation(
   quality: Option[AnnotationQuality],
   geometry: Option[Projected[Geometry]]
 ) extends GeoJSONSerializable[Annotation.GeoJSON] {
-    def toGeoJSONFeature: Annotation.GeoJSON = {
-        Annotation.GeoJSON(
-            this.id,
-            this.geometry,
-            AnnotationProperties(
-                this.projectId,
-                this.createdAt,
-                this.createdBy,
-                this.modifiedAt,
-                this.modifiedBy,
-                this.owner,
-                this.label,
-                this.description,
-                this.machineGenerated,
-                this.confidence,
-                this.quality
-            ),
-            "Feature"
-        )
-    }
+  def toGeoJSONFeature: Annotation.GeoJSON = {
+    Annotation.GeoJSON(
+      this.id,
+      this.geometry,
+      AnnotationProperties(
+        this.projectId,
+        this.createdAt,
+        this.createdBy,
+        this.modifiedAt,
+        this.modifiedBy,
+        this.owner,
+        this.label,
+        this.description,
+        this.machineGenerated,
+        this.confidence,
+        this.quality
+      ),
+      "Feature"
+    )
+  }
 }
 
 @JsonCodec
 case class AnnotationProperties(
-    projectId: UUID,
-    createdAt: Timestamp,
-    createdBy: String,
-    modifiedAt: Timestamp,
-    modifiedBy: String,
-    owner: String,
-    label: String,
-    description: Option[String],
-    machineGenerated: Option[Boolean],
-    confidence: Option[Float],
-    quality: Option[AnnotationQuality]
+  projectId: UUID,
+  createdAt: Timestamp,
+  createdBy: String,
+  modifiedAt: Timestamp,
+  modifiedBy: String,
+  owner: String,
+  label: String,
+  description: Option[String],
+  machineGenerated: Option[Boolean],
+  confidence: Option[Float],
+  quality: Option[AnnotationQuality]
 )
 
 @JsonCodec
 case class AnnotationPropertiesCreate(
-    owner: Option[String],
-    label: String,
-    description: Option[String],
-    machineGenerated: Option[Boolean],
-    confidence: Option[Float],
-    quality: Option[AnnotationQuality]
+  owner: Option[String],
+  label: String,
+  description: Option[String],
+  machineGenerated: Option[Boolean],
+  confidence: Option[Float],
+  quality: Option[AnnotationQuality]
 )
 
 
 object Annotation {
 
-    implicit val config: Configuration = Configuration.default.copy(
-      transformMemberNames = {
-        case "_type" => "type"
-        case other => other
-      }
-    )
-
-    def tupled = (Annotation.apply _).tupled
-    def create = Create.apply _
-
-
-    @ConfiguredJsonCodec
-    case class GeoJSON(
-        id: UUID,
-        geometry: Option[Projected[Geometry]],
-        properties: AnnotationProperties,
-        _type: String = "Feature"
-    ) extends GeoJSONFeature {
-        def toAnnotation: Annotation = {
-            Annotation(
-                id,
-                properties.projectId,
-                properties.createdAt,
-                properties.createdBy,
-                properties.modifiedAt,
-                properties.modifiedBy,
-                properties.owner,
-                properties.label,
-                properties.description,
-                properties.machineGenerated,
-                properties.confidence,
-                properties.quality,
-                geometry
-            )
-        }
+  implicit val config: Configuration = Configuration.default.copy(
+    transformMemberNames = {
+      case "_type" => "type"
+      case other => other
     }
+  )
 
-    @JsonCodec
-    case class Create(
-        owner: Option[String],
-        label: String,
-        description: Option[String],
-        machineGenerated: Option[Boolean],
-        confidence: Option[Float],
-        quality: Option[AnnotationQuality],
-        geometry: Option[Projected[Geometry]]
-    ) extends OwnerCheck {
+  def tupled = (Annotation.apply _).tupled
+  def create = Create.apply _
 
-        def toAnnotation(projectId: UUID, user: User): Annotation = {
-            val now = new Timestamp((new java.util.Date()).getTime())
-            val ownerId = checkOwner(user, this.owner)
-            Annotation(
-                UUID.randomUUID, // id
-                projectId, // projectId
-                now, // createdAt
-                user.id, // createdBy
-                now, // modifiedAt
-                user.id, // modifiedBy
-                ownerId, // owner
-                label,
-                description,
-                machineGenerated,
-                confidence,
-                quality,
-                geometry
-            )
-        }
+
+
+  @ConfiguredJsonCodec
+  case class GeoJSON(
+    id: UUID,
+    geometry: Option[Projected[Geometry]],
+    properties: AnnotationProperties,
+    _type: String = "Feature"
+  ) extends GeoJSONFeature {
+    def toAnnotation: Annotation = {
+      Annotation(
+        id,
+        properties.projectId,
+        properties.createdAt,
+        properties.createdBy,
+        properties.modifiedAt,
+        properties.modifiedBy,
+        properties.owner,
+        properties.label,
+        properties.description,
+        properties.machineGenerated,
+        properties.confidence,
+        properties.quality,
+        geometry
+      )
     }
+  }
 
-    @JsonCodec
-    case class GeoJSONFeatureCreate(
-        geometry: Option[Projected[Geometry]],
-        properties: AnnotationPropertiesCreate
-    ) extends OwnerCheck {
-        def toAnnotationCreate(): Annotation.Create = {
-            Annotation.Create(
-                properties.owner,
-                properties.label,
-                properties.description,
-                properties.machineGenerated,
-                properties.confidence,
-                properties.quality,
-                geometry
-            )
-        }
+  @JsonCodec
+  case class Create(
+    owner: Option[String],
+    label: String,
+    description: Option[String],
+    machineGenerated: Option[Boolean],
+    confidence: Option[Float],
+    quality: Option[AnnotationQuality],
+    geometry: Option[Projected[Geometry]]
+  ) extends OwnerCheck {
+
+    def toAnnotation(projectId: UUID, user: User): Annotation = {
+      val now = new Timestamp((new java.util.Date()).getTime())
+      val ownerId = checkOwner(user, this.owner)
+      Annotation(
+        UUID.randomUUID, // id
+        projectId, // projectId
+        now, // createdAt
+        user.id, // createdBy
+        now, // modifiedAt
+        user.id, // modifiedBy
+        ownerId, // owner
+        label,
+        description,
+        machineGenerated,
+        confidence,
+        quality,
+        geometry
+      )
     }
+  }
+
+  @JsonCodec
+  case class GeoJSONFeatureCreate(
+    geometry: Option[Projected[Geometry]],
+    properties: AnnotationPropertiesCreate
+  ) extends OwnerCheck {
+    def toAnnotationCreate(): Annotation.Create = {
+      Annotation.Create(
+        properties.owner,
+        properties.label,
+        properties.description,
+        properties.machineGenerated,
+        properties.confidence,
+        properties.quality,
+        geometry
+      )
+    }
+  }
 }
 
 object AnnotationShapefileService extends LazyLogging {
