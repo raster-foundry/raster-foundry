@@ -88,7 +88,7 @@ trait TeamRoutes extends Authentication
   def getTeam(teamId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        TeamDao.getById(teamId).transact(xa).unsafeToFuture
+        TeamDao.getTeamById(teamId).transact(xa).unsafeToFuture
       }
     }
   }

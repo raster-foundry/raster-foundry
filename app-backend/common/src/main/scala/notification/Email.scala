@@ -1,12 +1,14 @@
 package com.azavea.rf.common.notification.Email
 
-import com.typesafe.scalalogging.LazyLogging
+import com.azavea.rf.common.RollbarNotifier
 
 import org.apache.commons.mail._
 import org.apache.commons.mail.Email._
 import org.apache.commons.mail.HtmlEmail
 
-class NotificationEmail {
+import java.lang.IllegalArgumentException
+
+class NotificationEmail extends RollbarNotifier {
 
   def insufficientSettingsWarning(platId: String, userId: String): String =
     s"Supplied settings are not sufficient to send an email from Platform: ${platId} to User: ${userId}."
@@ -18,25 +20,30 @@ class NotificationEmail {
     s"Platform ${platId} did not subscribe to this notification service."
 
   def setEmail(host: String, port: Int, encryption: String, uName: String, uPw: String,
-    to: String, subject: String, bodyHtml: String, bodyPlain: String): Email = {
+    to: String, subject: String, bodyHtml: String, bodyPlain: String): Either[Unit, Email] = {
 
     val email = new HtmlEmail()
 
-    email.setDebug(true)
-    email.setHostName(host)
-    if (encryption == "starttls") {
-      email.setStartTLSEnabled(true)
-      email.setSmtpPort(port);
-    } else {
-      email.setSSLOnConnect(true)
-      email.setSslSmtpPort(port.toString)
+    try {
+      email.setDebug(true)
+      email.setHostName(host)
+      if (encryption == "starttls") {
+        email.setStartTLSEnabled(true)
+        email.setSmtpPort(port);
+      } else {
+        email.setSSLOnConnect(true)
+        email.setSslSmtpPort(port.toString)
+      }
+      email.setAuthenticator(new DefaultAuthenticator(uName, uPw))
+      email.setFrom(uName)
+      email.setSubject(subject)
+      email.setHtmlMsg(bodyHtml)
+      email.setTextMsg(bodyPlain)
+      email.addTo(to)
+      Right(email)
+    } catch {
+      case e: IllegalArgumentException => Left(sendError(e))
+      case e: EmailException => Left(sendError(e))
     }
-    email.setAuthenticator(new DefaultAuthenticator(uName, uPw))
-    email.setFrom(uName)
-    email.setSubject(subject)
-    email.setHtmlMsg(bodyHtml)
-    email.setTextMsg(bodyPlain)
-    email.addTo(to)
-    email
   }
 }

@@ -41,6 +41,15 @@ object UserDao extends Dao[User] {
     filterById(id).selectOption
   }
 
+  def getUsersByIds(ids: List[String]): ConnectionIO[List[User]] = {
+    ids.toNel match {
+      case Some(idsNel) =>
+        query.filter(Fragments.in(fr"id", idsNel)).list
+      case None =>
+        List.empty[User].pure[ConnectionIO]
+    }
+  }
+
   def getUserAndActiveRolesById(id: String): ConnectionIO[UserOptionAndRoles] = {
     for {
       user <- getUserById(id)
