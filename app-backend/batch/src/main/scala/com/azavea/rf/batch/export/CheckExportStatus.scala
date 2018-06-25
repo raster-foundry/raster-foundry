@@ -61,7 +61,7 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
         <p>${user.name},</p><br>
         <p>Your export in ${exportType} "${targetName}" ${content} can access
         this ${exportType} <a href="${targetLink}" target="_blank">here</a> or any past
-        projects you've created at any time <a href="${listLink}">here</a>.</p>
+        projects you've created at any time <a href="${listLink}" target="_blank">here</a>.</p>
         <p>If you have questions, please feel free to reach out any time at ${platform.publicSettings.emailUser}.</p>
         <p>- The ${platform.name} Team</p>
       </html>
@@ -97,26 +97,27 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
   }
 
   def notifyExportOwner(status: String) = {
-    val projectIdAndPlatformIO = for {
-      export <- ExportDao.query.filter(fr"id = ${exportId}").select
-      projectIdO = export.projectId
-      analysisIdO = export.toolRunId
-      ugr <- UserGroupRoleDao.query.filter(fr"user_id = ${export.owner}")
-        .filter(fr"group_type = 'PLATFORM'").filter(fr"is_active = true").select
-      platform <- PlatformDao.query.filter(ugr.groupId).select
-      user <- UserDao.query.filter(fr"id = ${export.owner}").select
-    } yield (projectIdO, analysisIdO, platform, user)
+    val export = ExportDao.query.filter(fr"id = ${exportId}").select.transact(xa).unsafeRunSync
 
-    val (projectIdO, analysisIdO, platform, user) = projectIdAndPlatformIO.transact(xa).unsafeRunSync
-
-    (projectIdO, analysisIdO) match {
-      case (Some(projectId), None) =>
-        val project = ProjectDao.query.filter(projectId).select.transact(xa).unsafeRunSync
-        sendExportNotification(status, user, platform, Some(project.name), project.id, "project")
-      case (None, Some(analysisId)) =>
-        val analysis = ToolRunDao.query.filter(analysisId).select.transact(xa).unsafeRunSync
-        sendExportNotification(status, user, platform, analysis.name, analysis.id, "analysis")
-      case _ => logger.warn(s"No project or analysis found for export ${exportId}")
+    if (export.owner == auth0Config.systemUser) {
+      logger.warn(s"Owner of export ${exportId} is a system user. Email is not sent.")
+    } else {
+      val platAndUserIO = for {
+        ugr <- UserGroupRoleDao.query.filter(fr"user_id = ${export.owner}")
+          .filter(fr"group_type = 'PLATFORM'").filter(fr"is_active = true").select
+        platform <- PlatformDao.query.filter(ugr.groupId).select
+        user <- UserDao.query.filter(fr"id = ${export.owner}").select
+      } yield (platform, user)
+      val (platform, user) = platAndUserIO.transact(xa).unsafeRunSync
+      (export.projectId, export.toolRunId) match {
+        case (Some(projectId), None) =>
+          val project = ProjectDao.query.filter(projectId).select.transact(xa).unsafeRunSync
+          sendExportNotification(status, user, platform, Some(project.name), project.id, "project")
+        case (None, Some(analysisId)) =>
+          val analysis = ToolRunDao.query.filter(analysisId).select.transact(xa).unsafeRunSync
+          sendExportNotification(status, user, platform, analysis.name, analysis.id, "analysis")
+        case _ => logger.warn(s"No project or analysis found for export ${exportId}")
+      }
     }
   }
 

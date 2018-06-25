@@ -53,8 +53,8 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
     <html>
       <p>${user.name},</p><br>
       <p>You have ${sceneCount} new scenes updated to your AOI project "${project.name}"! You can access
-      these new scenes <a href="https://app.rasterfoundry.com/projects/edit/${project.id}/scenes">here</a> or any past
-      projects you've created at any time <a href="https://app.rasterfoundry.com/projects/">here</a>.</p>
+      these new scenes <a href="https://app.rasterfoundry.com/projects/edit/${project.id}/scenes" target="_blank">here</a> or any past
+      projects you've created at any time <a href="https://app.rasterfoundry.com/projects/list" target="_blank">here</a>.</p>
       <p>If you have questions, please feel free to reach out any time at ${platform.publicSettings.emailUser}.</p>
       <p>- The ${platform.name} Team</p>
     </html>
@@ -62,7 +62,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
     s"""
     ${user.name}: You have ${sceneCount} new scenes updated to your AOI project "${project.name}"! You can access
     these new scenes here: https://app.rasterfoundry.com/projects/edit/${project.id}/scenes , or any past
-    projects you've created at any time here: https://app.rasterfoundry.com/projects/ . If you have questions,
+    projects you've created at any time here: https://app.rasterfoundry.com/projects/list . If you have questions,
     please feel free to reach out any time at ${platform.publicSettings.emailUser}. - The ${platform.name} Team
     """
   )
@@ -89,17 +89,20 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
 
   def notifyProjectOwner(projId: UUID, sceneCount: Int) = {
     if (sceneCount > 0) {
-      val projectPlatformUserIO = for {
-        project <- ProjectDao.query.filter(projId).select
-        ugr <- UserGroupRoleDao.query.filter(fr"user_id = ${project.owner}")
-          .filter(fr"group_type = 'PLATFORM'").filter(fr"is_active = true").select
-        platform <- PlatformDao.query.filter(ugr.groupId).select
-        user <- UserDao.query.filter(fr"id = ${project.owner}").select
-      } yield (project, platform, user)
+      val project = ProjectDao.query.filter(projId).select.transact(xa).unsafeRunSync
 
-      val (project, platform, user) = projectPlatformUserIO.transact(xa).unsafeRunSync
-
-      sendAoiNotificationEmail(project, platform, user, sceneCount)
+      if (project.owner == auth0Config.systemUser) {
+        logger.warn(s"Owner of project ${projId} is a system user. Email is not sent.")
+      } else {
+        val platAndUserIO = for {
+          ugr <- UserGroupRoleDao.query.filter(fr"user_id = ${project.owner}")
+            .filter(fr"group_type = 'PLATFORM'").filter(fr"is_active = true").select
+          platform <- PlatformDao.query.filter(ugr.groupId).select
+          user <- UserDao.query.filter(fr"id = ${project.owner}").select
+        } yield (platform, user)
+        val (platform, user) = platAndUserIO.transact(xa).unsafeRunSync
+        sendAoiNotificationEmail(project, platform, user, sceneCount)
+      }
     } else {
       logger.warn(s"AOI project ${projId.toString} has no new scenes updated. Project owner is not notified.")
     }
