@@ -69,9 +69,9 @@ export default (app) => {
         }
 
 
-        createOrganization(platformId, name) {
+        createOrganization(platformId, name, status) {
             return this.Platform
-                .createOrganization({id: platformId}, {platformId, name})
+                .createOrganization({id: platformId}, {platformId, name, status})
                 .$promise;
         }
 

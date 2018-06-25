@@ -141,8 +141,8 @@ trait Authentication extends Directives with LazyLogging {
         } yield MembershipAndUser(plat, org, userUpdate)
         onSuccess(query.transact(xa).unsafeToFuture).flatMap {
           case MembershipAndUser(plat, org, userUpdate) =>
-            (plat map { _.isActive }, org map { _.isActive }) match {
-              case (Some(true), Some(true)) =>
+            (plat map { _.isActive }, org map { _.status }) match {
+              case (Some(true), Some(OrgStatus.Active)) =>
                 provide(userUpdate)
               case _ =>
                 reject(AuthenticationFailedRejection(CredentialsRejected, challenge))

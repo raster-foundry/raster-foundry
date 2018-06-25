@@ -41,6 +41,15 @@ object UserDao extends Dao[User] {
     filterById(id).selectOption
   }
 
+  def getUsersByIds(ids: List[String]): ConnectionIO[List[User]] = {
+    ids.toNel match {
+      case Some(idsNel) =>
+        query.filter(Fragments.in(fr"id", idsNel)).list
+      case None =>
+        List.empty[User].pure[ConnectionIO]
+    }
+  }
+
   def getUserAndActiveRolesById(id: String): ConnectionIO[UserOptionAndRoles] = {
     for {
       user <- getUserById(id)
@@ -152,4 +161,60 @@ object UserDao extends Dao[User] {
 
   def isSuperUser(user: User): ConnectionIO[Boolean] =
     isSuperUserF(user).query[Boolean].option.map(_.getOrElse(false))
+
+  def viewFilter(user: User): Dao.QueryBuilder[User] =
+    Dao.QueryBuilder[User](
+      user.isSuperuser match {
+        case true => selectF
+        case _ =>
+          (selectF ++ fr"""
+        JOIN (
+          -- users in same platform and is admin
+          SELECT target_ugr1.user_id AS user_id
+          FROM user_group_roles requesting_ugr1
+          JOIN user_group_roles target_ugr1 ON requesting_ugr1.group_id = target_ugr1.group_id
+          WHERE
+          requesting_ugr1.group_type = 'PLATFORM' AND
+          requesting_ugr1.user_id = ${user.id} AND
+          requesting_ugr1.group_role = 'ADMIN'
+
+          UNION
+          -- users in same platform and public
+          SELECT target_ugr2.user_id AS user_id
+          FROM user_group_roles requesting_ugr2
+          JOIN user_group_roles target_ugr2 ON requesting_ugr2.group_id = target_ugr2.group_id
+          JOIN users platform_users ON target_ugr2.user_id = platform_users.id
+          WHERE
+          requesting_ugr2.group_type = 'PLATFORM' AND
+          requesting_ugr2.user_id = ${user.id} AND
+          platform_users.visibility = 'PUBLIC'
+
+          UNION
+          -- users in same orgs
+          SELECT target_ugr3.user_id AS user_id
+          FROM user_group_roles requesting_ugr3
+          JOIN user_group_roles target_ugr3 ON requesting_ugr3.group_id = target_ugr3.group_id
+          JOIN users organization_users ON target_ugr3.user_id = organization_users.id
+          WHERE
+          requesting_ugr3.group_type = 'ORGANIZATION' AND
+          requesting_ugr3.user_id = ${user.id}
+
+          UNION
+          -- users in same teams
+          SELECT target_ugr4.user_id AS user_id
+          FROM user_group_roles requesting_ugr4
+          JOIN user_group_roles target_ugr4 ON requesting_ugr4.group_id = target_ugr4.group_id
+          JOIN users team_users ON target_ugr4.user_id = team_users.id
+          WHERE
+          requesting_ugr4.group_type = 'TEAM' AND
+          requesting_ugr4.user_id = ${user.id}
+        ) AS search ON""" ++ Fragment.const(s"${tableName}.id") ++ fr"= search.user_id")
+      }, tableF, List.empty
+    )
+
+  def searchUsers(user: User, searchParams: SearchQueryParameters): ConnectionIO[List[User]] = {
+    UserDao.viewFilter(user)
+      .filter(searchParams)
+      .list(0, 5, fr"order by name")
+  }
 }

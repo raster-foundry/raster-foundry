@@ -13,7 +13,7 @@ case class Organization(
   modifiedAt: Timestamp,
   name: String,
   platformId: UUID,
-  isActive: Boolean,
+  status: OrgStatus,
   dropboxCredential: Credential,
   planetCredential: Credential,
   logoUri: String,
@@ -29,12 +29,19 @@ object Organization {
   case class Create(
     name: String,
     platformId: UUID,
-    visibility: Option[Visibility]
+    visibility: Option[Visibility],
+    status: OrgStatus
   ) {
-    def toOrganization: Organization = {
+    def toOrganization(isAdmin: Boolean): Organization = {
       val id = java.util.UUID.randomUUID()
       val now = new Timestamp((new java.util.Date()).getTime())
-      Organization(id, now, now, name, platformId, true, Credential(None), Credential(None), "", visibility.getOrElse(Visibility.Private))
+
+      val finalStatus = isAdmin match {
+        case true => status
+        case _ => OrgStatus.Requested
+      }
+
+      Organization(id, now, now, name, platformId, finalStatus, Credential(None), Credential(None), "", visibility.getOrElse(Visibility.Private))
     }
   }
 

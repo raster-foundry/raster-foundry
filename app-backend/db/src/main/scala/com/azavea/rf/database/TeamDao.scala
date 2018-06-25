@@ -26,10 +26,10 @@ object TeamDao extends Dao[Team] {
 
   def createUserGroupRole = UserGroupRoleDao.createWithGuard(userIsAdmin, GroupType.Team) _
 
-  def getById(teamId: UUID): ConnectionIO[Option[Team]] =
+  def getTeamById(teamId: UUID): ConnectionIO[Option[Team]] =
     TeamDao.query.filter(teamId).selectOption
 
-  def unsafeGetById(teamId: UUID): ConnectionIO[Team] =
+  def unsafeGetTeamById(teamId: UUID): ConnectionIO[Team] =
     TeamDao.query.filter(teamId).select
 
   def create(
@@ -211,18 +211,11 @@ object TeamDao extends Dao[Team] {
     } yield teamUpdate
   }
 
-  def addUserRole(actingUser: User, subjectId: String, teamId: UUID, groupRole: GroupRole): ConnectionIO[UserGroupRole] = {
+  def addUserRole(platformId: UUID, actingUser: User, subjectId: String, teamId: UUID, groupRole: GroupRole): ConnectionIO[UserGroupRole] = {
     val userGroupRoleCreate = UserGroupRole.Create(
       subjectId, GroupType.Team, teamId, groupRole
     )
-    createUserGroupRole(teamId, actingUser, subjectId, userGroupRoleCreate)
-  }
-
-  def setUserRole(actingUser: User, subjectId: String, teamId: UUID, groupRole: GroupRole): ConnectionIO[List[UserGroupRole]] = {
-    deactivateUserRoles(actingUser, subjectId, teamId).flatMap(
-      deactivatedUserRoles => addUserRole(actingUser, subjectId, teamId, groupRole)
-        .map(deactivatedUserRoles ++ List(_))
-    )
+    createUserGroupRole(teamId, actingUser, subjectId, userGroupRoleCreate, platformId)
   }
 
   def deactivateUserRoles(actingUser: User, subjectId: String, teamId: UUID): ConnectionIO[List[UserGroupRole]] = {

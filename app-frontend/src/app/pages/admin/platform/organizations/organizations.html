@@ -58,20 +58,19 @@
           <ng-pluralize count="organization.fetchedUsers.count"
                         when="{'0': 'No members',
                                '1': '1 member',
-                               'other': '{} members'}"
-
-          >
-          </ng-pluralize>
-        </td>
-        <td>{{ organization.isActive ? "Active" : "Deactivated"}}</td>
-        <td class="actions" ng-if="organization.showOptions">
-          <rf-dropdown data-options="organization.options">
-            <span class="icon-caret-down h4"></span>
-          </rf-dropdown>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+                               'other': '{} members'}"        
+            >
+            </ng-pluralize>
+          </td>
+          <td>{{ organization.status | humanStatus }}</td>
+          <td class="actions" ng-if="organization.showOptions">
+            <rf-dropdown data-options="organization.options">
+              <span class="icon-caret-down h4"></span>
+            </rf-dropdown>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   <div class="table-loading" ng-if="$ctrl.fetching">
     <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
   </div>
