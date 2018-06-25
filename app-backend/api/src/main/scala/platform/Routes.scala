@@ -305,13 +305,14 @@ trait PlatformRoutes extends Authentication
   }
 
   def createOrganization(platformId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
-    } {
-      entity(as[Organization.Create]) { orgToCreate =>
-        completeOrFail {
-          OrganizationDao.create(orgToCreate.toOrganization).transact(xa).unsafeToFuture
-        }
+
+    entity(as[Organization.Create]) { orgToCreate =>
+      completeOrFail {
+        val createdOrg = for {
+          isAdmin <- PlatformDao.userIsAdmin(user, platformId)
+          org <- OrganizationDao.create(orgToCreate.toOrganization(isAdmin))
+        } yield org
+        createdOrg.transact(xa).unsafeToFuture
       }
     }
   }

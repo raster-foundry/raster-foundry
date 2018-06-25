@@ -25,13 +25,12 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
             rootOrg <- rootOrgQ
             insertedUser <- UserDao.create(rootUserCreate)
             insertedPlatform <- PlatformDao.create(platform)
-            newOrg <- OrganizationDao.create(orgCreate.copy(platformId = insertedPlatform.id).toOrganization)
+            newOrg <- OrganizationDao.create(orgCreate.copy(platformId = insertedPlatform.id).toOrganization(true))
           } yield (newOrg, insertedPlatform)
           val (insertedOrg, insertedPlatform) = orgInsertIO.transact(xa).unsafeRunSync
 
           insertedOrg.platformId == insertedPlatform.id &&
-            insertedOrg.name == orgCreate.name &&
-            insertedOrg.isActive == true
+            insertedOrg.name == orgCreate.name
         }
       )
     }
@@ -67,14 +66,14 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
               OrganizationDao.update(org.copy(name = withoutNull), org.id) flatMap {
                 case (affectedRows: Int) => {
                   OrganizationDao.unsafeGetOrganizationById(org.id) map {
-                    (retrievedOrg: Organization) => (affectedRows, retrievedOrg.name, retrievedOrg.isActive)
+                    (retrievedOrg: Organization) => (affectedRows, retrievedOrg.name, retrievedOrg.status)
                   }
                 }
               }
             }
           }
-          val (affectedRows, updatedName, updatedActive) = insertAndUpdateIO.transact(xa).unsafeRunSync
-          (affectedRows == 1) && (updatedName == withoutNull) && (updatedActive == true)
+          val (affectedRows, updatedName, updatedStatus) = insertAndUpdateIO.transact(xa).unsafeRunSync
+          (affectedRows == 1) && (updatedName == withoutNull) && (updatedStatus == orgCreate.status)
         }
       )
     }

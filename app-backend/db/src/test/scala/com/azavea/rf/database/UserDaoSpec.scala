@@ -45,7 +45,7 @@ class UserDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
           val insertedUserIO = for {
             creatingUser <- UserDao.create(creatingUser)
             insertedPlatform <- PlatformDao.create(platform)
-            insertedOrg <- OrganizationDao.create(orgCreate.copy(platformId = insertedPlatform.id).toOrganization)
+            insertedOrg <- OrganizationDao.create(orgCreate.copy(platformId = insertedPlatform.id).toOrganization(true))
             newUserAndRoles <- {
               val newUserFields = jwtFields.copy(platformId = insertedPlatform.id, organizationId = insertedOrg.id)
               UserDao.createUserWithJWT(creatingUser, newUserFields)
