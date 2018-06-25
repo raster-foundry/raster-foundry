@@ -53,23 +53,8 @@ class Controller {
     }
 
 
-    fetchPage(page = 0, search = '') {
-    }
-
-
-    buildOptions() {
-        this.items.forEach(obj => {
-            Object.assign(obj, {
-                options: {
-                    items: this.buildOptions(obj)
-                },
-                showOptions: this.isEffectiveAdmin
-            });
-        });
-    }
-
-    buildOptions(obj) {
-        return [];
+    // fetchPage(page = 0, search = '') {
+    fetchPage() {
     }
 }
 

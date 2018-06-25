@@ -54,27 +54,14 @@ class OrganizationTemplatesController {
     }
 
 
-    fetchPage(page = 0, search = '') {
-    }
-
-
-    buildOptions() {
-        this.items.forEach(obj => {
-            Object.assign(obj, {
-                options: {
-                    items: this.buildOptions(obj)
-                },
-                showOptions: this.isEffectiveAdmin
-            });
-        });
-    }
-
-    buildOptions(obj) {
-        return [];
+    fetchPage() {
     }
 }
 
-const OrganizationTemplatesModule = angular.module('pages.organization.templates', []);
-OrganizationTemplatesModule.controller('OrganizationTemplatesController', OrganizationTemplatesController);
+const OrganizationTemplatesModule =
+    angular.module('pages.organization.templates', []);
+
+OrganizationTemplatesModule
+    .controller('OrganizationTemplatesController', OrganizationTemplatesController);
 
 export default OrganizationTemplatesModule;

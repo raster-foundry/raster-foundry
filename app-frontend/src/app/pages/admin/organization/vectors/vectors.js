@@ -54,27 +54,14 @@ class OrganizationVectorsController {
     }
 
 
-    fetchPage(page = 0, search = '') {
-    }
-
-
-    buildOptions() {
-        this.items.forEach(obj => {
-            Object.assign(obj, {
-                options: {
-                    items: this.buildOptions(obj)
-                },
-                showOptions: this.isEffectiveAdmin
-            });
-        });
-    }
-
-    buildOptions(obj) {
-        return [];
+    fetchPage() {
     }
 }
 
-const OrganizationVectorsModule = angular.module('pages.organization.vectors', []);
-OrganizationVectorsModule.controller('OrganizationVectorsController', OrganizationVectorsController);
+const OrganizationVectorsModule =
+    angular.module('pages.organization.vectors', []);
+
+OrganizationVectorsModule
+    .controller('OrganizationVectorsController', OrganizationVectorsController);
 
 export default OrganizationVectorsModule;

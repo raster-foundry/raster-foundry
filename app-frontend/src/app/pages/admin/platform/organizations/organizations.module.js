@@ -139,21 +139,8 @@ class PlatformOrganizationsController {
     }
 
     newOrgModal() {
-        let permissionDenied = {};
-        if (!(this.currentUser.isActive &&
-            (this.currentUser.isSuperuser || this.isPlatAdmin))) {
-            permissionDenied = {
-                isDenied: true,
-                adminEmail: 'example@email.com',
-                message: 'You do not have access to this operation. Please contact ',
-                subject: 'platform admin'
-            };
-        }
         this.modalService.open({
             component: 'rfOrganizationModal',
-            resolve: {
-                permissionDenied: permissionDenied
-            },
             size: 'sm'
         }).result.then((result) => {
             this.platformService

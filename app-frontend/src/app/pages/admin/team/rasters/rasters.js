@@ -79,22 +79,6 @@ class Controller {
             this.loading = false;
         });
     }
-
-
-    buildOptions() {
-        this.items.forEach(obj => {
-            Object.assign(obj, {
-                options: {
-                    items: this.buildOptions(obj)
-                },
-                showOptions: this.isEffectiveAdmin
-            });
-        });
-    }
-
-    buildOptions(obj) {
-        return [];
-    }
 }
 
 const Module = angular.module('pages.team.rasters', []);

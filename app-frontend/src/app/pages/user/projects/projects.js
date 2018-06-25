@@ -47,7 +47,7 @@ class UserProjectsController {
     }
 
 
-    fetchPage(page = 0, search = '') {
+    fetchPage(page = 0) {
         this.loading = true;
         this.projectService.query(
             {

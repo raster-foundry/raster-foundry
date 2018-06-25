@@ -2,6 +2,7 @@
   <div class="admin-list-actions">
     <div class="actions-right">
       <button type="button" class="btn btn-primary"
+              ng-if="$ctrl.isEffectiveAdmin"
               ng-click="$ctrl.newOrgModal()"
               ng-disabled="$ctrl.fetching">
         New Organization
@@ -58,7 +59,7 @@
           <ng-pluralize count="organization.fetchedUsers.count"
                         when="{'0': 'No members',
                                '1': '1 member',
-                               'other': '{} members'}"        
+                               'other': '{} members'}"
             >
             </ng-pluralize>
           </td>

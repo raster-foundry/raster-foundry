@@ -53,7 +53,7 @@ class Controller {
     }
 
 
-    fetchPage(page = 0, search = '') {
+    fetchPage(page = 0) {
         this.loading = true;
         this.sceneService.query(
             {
@@ -68,22 +68,6 @@ class Controller {
         }).finally(() => {
             this.loading = false;
         });
-    }
-
-
-    buildOptions() {
-        this.items.forEach(obj => {
-            Object.assign(obj, {
-                options: {
-                    items: this.buildOptions(obj)
-                },
-                showOptions: this.isEffectiveAdmin
-            });
-        });
-    }
-
-    buildOptions(obj) {
-        return [];
     }
 }
 
