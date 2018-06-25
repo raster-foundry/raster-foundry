@@ -1,0 +1,27 @@
+<section>
+    <ul class="sidebar-list">
+      <li class="sidebar-list-item">
+        <a class="sidebar-list-item-header"
+           ui-sref="{{$ctrl.sref}}"
+        >
+          Organizations
+        </a>
+        <div class="flex-fill"></div>
+        <a ui-sref="{{$ctrl.sref}}">
+          <span>{{$ctrl.paginatedResponse.count}}</span>
+          <i class="icon-caret-right"></i>
+        </a>
+      </li>
+      <li class="sidebar-list-item"
+          ng-repeat="organization in $ctrl.paginatedResponse.results | limitTo: 3"
+      >
+          <div class="avatar user-avatar image-placeholder" ng-if="!organization.logoUri"></div>
+          <div ng-if="organization.logoUri">
+            <img class="avatar user-avatar" ng-src="{{organization.logoUri}}">
+          </div>
+          <a class="content"
+             ui-sref="admin.organization({organizationId: organization.id})"
+          >{{organization.name}}</a>
+      </li>
+    </ul>
+</section>

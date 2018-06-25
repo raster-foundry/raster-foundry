@@ -1,0 +1,19 @@
+<div class="row content stack-sm">
+  <div class="column-8">
+    <rf-call-to-action-item
+      title="No templates have been shared with the {{$ctrl.organization.name}} organization"
+      class="panel panel-off-white"
+      ng-if="!$ctrl.pagination.count">
+      <p class="pb-25">
+        When users share templates with this organization, they'll be visible here.
+        Templates shared with this organization will be accessible to all members of this organization.
+      </p>
+    </rf-call-to-action-item>
+    </div>
+  <div class="column spacer"></div>
+  <div class="column-3">
+    <rf-sidebar-user-list paginated-response="$ctrl.members" sref="admin.organization.users"></rf-sidebar-user-list>
+    <rf-sidebar-team-list paginated-response="$ctrl.teams" sref="admin.organization.teams"></rf-sidebar-team-list>
+  </div>
+  <div class="column-1"></div>
+</div>

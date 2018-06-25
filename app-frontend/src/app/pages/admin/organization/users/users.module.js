@@ -4,48 +4,35 @@ import _ from 'lodash';
 class OrganizationUsersController {
     constructor(
         $scope, $stateParams,
-        modalService, organizationService
+        modalService, organizationService, authService,
+        // params from parent route resolve
+        organization, platform, user
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
+
         this.modalService = modalService;
         this.organizationService = organizationService;
-        this.fetching = true;
+        this.authService = authService;
 
-        this.platAdminEmail = 'example@email.com';
+        this.organization = organization;
+        this.platform = platform;
+        this.user = user;
+    }
 
+    $onInit() {
         this.debouncedSearch = _.debounce(
             this.onSearch.bind(this),
             500,
             {leading: false, trailing: true}
         );
 
-        this.orgWatch = this.$scope.$parent.$watch('$ctrl.organization', (organization) => {
-            if (organization && this.orgWatch) {
-                this.orgWatch();
-                delete this.orgWatch;
-                this.organization = organization;
-                this.organizationId = this.organization.id;
-                this.currentUserPromise = this.$scope.$parent.$ctrl.currentUserPromise;
-                this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
-                this.getUserAndUgrs();
-                this.fetchUsers(1, '');
-            }
-        });
-    }
+        this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
+            this.platform.id,
+            this.organization.id
+        ]);
 
-    getUserAndUgrs() {
-        this.currentUserPromise.then(resp => {
-            this.currentUser = resp;
-        });
-        this.currentUgrPromise.then((resp) => {
-            this.currentOrgUgr = resp.find((ugr) => {
-                return ugr.groupId === this.organizationId;
-            });
-            this.currentPlatUgr = resp.find((ugr) => {
-                return ugr.groupId === this.organization.platformId;
-            });
-        });
+        this.fetchUsers(1, '');
     }
 
     onSearch(search) {
@@ -65,7 +52,7 @@ class OrganizationUsersController {
     }
 
     updateUserGroupRole(user) {
-        this.organizationService.setUserRole(
+        return this.organizationService.setUserRole(
             this.organization.platformId,
             this.organization.id,
             user
@@ -75,50 +62,57 @@ class OrganizationUsersController {
     }
 
     fetchUsers(page = 1, search) {
-        const platformId = this.organization.platformId;
-        const organizationId = this.organization.id;
         this.fetching = true;
         this.organizationService
-            .getMembers(platformId, organizationId, page - 1, search)
+            .getMembers(this.platform.id, this.organization.id, page - 1, search)
             .then((response) => {
                 this.fetching = false;
                 this.updatePagination(response);
                 this.lastUserResult = response;
                 this.users = response.results;
-
-                let isAdmin = this.currentPlatUgr && this.currentPlatUgr.groupRole === 'ADMIN' ||
-                    this.currentOrgUgr && this.currentOrgUgr.groupRole === 'ADMIN';
-
-                this.users.forEach(user => Object.assign(user, {
-                    options: {
-                        items: this.itemsForUser(user)
-                    },
-                    showOptions: user.isActive && (user.id === this.currentUser.id ||
-                        user.isSuperuser || isAdmin)
-                }));
-            }, (error) => {
+                this.buildOptions();
+            }, () => {
                 this.fetching = false;
-                this.errorMsg = `${error.data}. Please contact `;
             });
+    }
+
+    buildOptions() {
+        this.users.forEach(user => Object.assign(user, {
+            options: {
+                items: this.itemsForUser(user)
+            },
+            showOptions: this.isEffectiveAdmin
+        }));
     }
 
     itemsForUser(user) {
         /* eslint-disable */
-        return [
-            {
-                label: 'Edit',
+        let options = [];
+
+        if (user.groupRole === 'ADMIN') {
+            options.push({
+                label: 'Revoke admin role',
                 callback: () => {
-                    console.log('edit callback for user:', user);
+                    this.updateUserGroupRole(Object.assign(user, {
+                        groupRole: 'MEMBER'
+                    })).then(() => {
+                        this.buildOptions();
+                    });
                 }
-            },
-            {
-                label: 'Delete',
+            });
+        } else {
+            options.push({
+                label: 'Grant admin role',
                 callback: () => {
-                    console.log('delete callback for user:', user);
-                },
-                classes: ['color-danger']
-            }
-        ];
+                    this.updateUserGroupRole(Object.assign(user, {
+                        groupRole: 'ADMIN'
+                    })).then(() => {
+                        this.buildOptions();
+                    });
+                }
+            });
+        }
+        return options;
         /* eslint-enable */
     }
 

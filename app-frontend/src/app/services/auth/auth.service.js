@@ -464,10 +464,13 @@ export default (app) => {
             return this.User.roles().$promise;
         }
 
-        isSuperOrAdmin(groupIds) {
-            return this.user && this.user.isSuperuser || this.userRoles.find(ugr => {
-                return ugr.groupRole === 'ADMIN' && groupIds.find(id => id === ugr.groupId);
-            });
+        isEffectiveAdmin(groupIds) {
+            const ids = [].concat(groupIds || []);
+            return this.user &&
+                this.user.isSuperuser ||
+                this.userRoles.find(r => {
+                    return r.groupRole === 'ADMIN' && ids.includes(r.groupId);
+                });
         }
     }
 

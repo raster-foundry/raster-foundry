@@ -12,9 +12,7 @@ const searchComponent = {
 };
 
 class SearchController {
-    constructor(
-        $element, $timeout
-    ) {
+    constructor($element, $timeout) {
         'ngInject';
         this.$element = $element;
         this.$timeout = $timeout;
@@ -22,11 +20,21 @@ class SearchController {
 
     $postLink() {
         if (this.autoFocus) {
-            this.$timeout(() => {
-                const el = $(this.$element[0]).find('input').get(0);
-                el.focus();
-            }, 0);
+            this.claimFocus();
         }
+    }
+
+    $onChanges(changes) {
+        if (changes.disabled.currentValue) {
+            this.claimFocus(100);
+        }
+    }
+
+    claimFocus(interval = 0) {
+        this.$timeout(() => {
+            const el = $(this.$element[0]).find('input').get(0);
+            el.focus();
+        }, interval);
     }
 
     clearSearch() {

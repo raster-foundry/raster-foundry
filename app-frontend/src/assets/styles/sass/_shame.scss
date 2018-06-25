@@ -14,6 +14,14 @@
    should be completely empty. This is all temporary.
 */
 
+div.app-loading-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba($brand-primary, 0.25);
+}
 
 /*
  * app-wide
@@ -2949,10 +2957,6 @@ rf-reclassify-table {
       width: 0;
       padding: 1em 0;
   }
-}
-
-.pagination-count {
-  margin-bottom: 1em;
 }
 
 .lab-info-dialogue {

@@ -1,4 +1,4 @@
-<div class="admin-users-content container column-stretch">
+<div class="admin-list-content column-stretch">
   <div ng-if="$ctrl.errrorMsg">
     <p>
       {{$ctrl.errrorMsg}}
@@ -6,8 +6,16 @@
     </p>
   </div>
   <div ng-if="!$ctrl.errorMsg">
-    <div class="admin-users-actions">
-      <rf-search on-search="$ctrl.debouncedSearch(value)" placeholder="Search for users" auto-focus="true"></rf-search>
+    <div class="admin-list-actions">
+      <div>
+        <rf-search on-search="$ctrl.debouncedSearch(value)" placeholder="Search for users" auto-focus="true"></rf-search>
+        <rf-pagination-count
+          start-index="$ctrl.pagination.startingItem"
+          end-index="$ctrl.pagination.endingItem"
+          total="$ctrl.pagination.count"
+          item-name="users"
+        ></rf-pagination-count>
+      </div>
     </div>
     <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching">
       <tbody>
@@ -21,20 +29,16 @@
               {{user.name || user.email || user.id}}
             </div>
           </td>
-          <td class="emails">
-            {{user.email}}
+          <td class="emails" ng-class="{'color-light': !user.email}">
+            {{user.email || 'No email available'}}
           </td>
           <td class="roles titlecase">
-            <select class="form-control"
-                    ng-model="user.groupRole"
-                    ng-disabled="$ctrl.disabled"
-                    ng-change="$ctrl.updateUserGroupRole(user)"
-                    ng-if="$ctrl.currentPlatUgr.groupRole === 'ADMIN'"
-            >
-              <option value="ADMIN">Admin</option>
-              <option value="MEMBER">Member</option>
-            </select>
-            <span ng-if="!$ctrl.currentPlatUgr.groupRole === 'ADMIN'">{{user.groupRole}}</span>
+            {{user.groupRole}}
+          </td>
+          <td class="actions">
+            <rf-dropdown data-options="user.options" ng-if="user.showOptions">
+              <span class="icon-caret-down h4"></span>
+            </rf-dropdown>
           </td>
         </tr>
       </tbody>

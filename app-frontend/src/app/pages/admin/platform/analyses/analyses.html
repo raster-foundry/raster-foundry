@@ -1,0 +1,19 @@
+<div class="row content stack-sm">
+  <div class="column-8">
+    <rf-call-to-action-item
+      title="No analyses have been shared with the {{$ctrl.platform.name}} platform"
+      class="panel panel-off-white"
+      ng-if="!$ctrl.pagination.count">
+      <p class="pb-25">
+        When users share analyses with this platform, they'll be visible here.
+        Analyses shared with this platform will be accessible to all users.
+      </p>
+    </rf-call-to-action-item>
+  </div>
+  <div class="column spacer"></div>
+  <div class="column-3">
+    <rf-sidebar-user-list paginated-response="$ctrl.members" sref="admin.platform.users"></rf-sidebar-user-list>
+    <rf-sidebar-organization-list paginated-response="$ctrl.organizations" sref="admin.platform.organizations"></rf-sidebar-user-list>
+  </div>
+  <div class="column-1"></div>
+</div>

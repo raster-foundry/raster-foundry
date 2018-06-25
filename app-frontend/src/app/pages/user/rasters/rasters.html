@@ -1,0 +1,27 @@
+<div class="row content stack-sm">
+  <div class="column-8">
+    <rf-call-to-action-item
+      title="You haven't uploaded or imported any raster data yet"
+      class="panel panel-off-white"
+      ng-if="!$ctrl.pagination.count">
+      <p class="pb-25">
+        When you add your own raster data it'll be visible here.
+      </p>
+    </rf-call-to-action-item>
+    <div ng-if="!$ctrl.loading && $ctrl.pagination.count" class="list-group">
+      <rf-scene-item
+          previewable
+          scene="raster"
+          repository="$ctrl.repository"
+          ng-repeat="raster in $ctrl.rasters"
+      >
+      </rf-scene-item>
+    </div>
+  </div>
+  <div class="column spacer"></div>
+  <div class="column-3">
+    <rf-sidebar-organization-list paginated-response="{ 'count': $ctrl.organizations.length, 'results': $ctrl.organizations }" sref="user.organizations"></rf-sidebar-organization-list>
+    <rf-sidebar-team-list paginated-response="{ 'count': $ctrl.teams.length, 'results': $ctrl.teams }" sref="user.teams"></rf-sidebar-team-list>
+  </div>
+  <div class="column-1"></div>
+</div>
