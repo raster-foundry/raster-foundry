@@ -5,7 +5,7 @@ class OrganizationVectorsController {
     constructor(
         $scope, $stateParams, $log, $window,
         modalService, organizationService, teamService, authService,
-        platform, organization
+        platform, organization, members, teams
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
@@ -18,6 +18,8 @@ class OrganizationVectorsController {
 
         this.platform = platform;
         this.organization = organization;
+        this.members = members;
+        this.teams = teams;
     }
 
     $onInit() {
@@ -36,7 +38,7 @@ class OrganizationVectorsController {
     }
 
     onSearch(search) {
-        this.fetchPage(1, search);
+        this.fetchPage(0, search);
     }
 
     updatePagination(data) {
@@ -52,7 +54,7 @@ class OrganizationVectorsController {
     }
 
 
-    fetchPage(page = 1, search = '') {
+    fetchPage(page = 0, search = '') {
     }
 
 

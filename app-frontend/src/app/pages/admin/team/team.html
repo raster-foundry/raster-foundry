@@ -8,7 +8,7 @@
       <h4 class="admin-logo-name"
           ng-if="!$ctrl.isEditTeamName">
           <a class="parent"
-             ui-sref="admin.platform.users({platformId: $ctrl.platform.id})"
+             ui-sref="admin.platform({platformId: $ctrl.platform.id})"
              ng-if="$ctrl.authService.isEffectiveAdmin($ctrl.platform.id)"
            >
             {{$ctrl.platform.name}}
@@ -16,7 +16,7 @@
           <i class="icon-caret-right"
              ng-if="$ctrl.authService.isEffectiveAdmin($ctrl.platform.id)"
           ></i>
-          <a ui-sref="admin.organization.users({organizationId: $ctrl.organization.id})" class="parent">
+          <a ui-sref="admin.organization({organizationId: $ctrl.organization.id})" class="parent">
             {{$ctrl.organization.name}}
           </a>
           <i class="icon-caret-right"></i>

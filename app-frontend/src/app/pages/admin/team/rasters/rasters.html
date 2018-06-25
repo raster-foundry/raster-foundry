@@ -1,6 +1,14 @@
 <div class="row content stack-sm">
   <div class="column-8">
-    List
+    <rf-call-to-action-item
+      title="No rasters have been shared with the {{$ctrl.team.name}} team"
+      class="panel panel-off-white"
+      ng-if="!$ctrl.pagination.count">
+      <p class="pb-25">
+        When users share rasters with this team, they'll be visible here.
+        Rasters shared with this organization will be accessible to all members of this team.
+      </p>
+    </rf-call-to-action-item>
   </div>
   <div class="column spacer"></div>
   <div class="column-3">

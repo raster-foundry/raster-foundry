@@ -4,20 +4,22 @@ import _ from 'lodash';
 class Controller {
     constructor(
         $scope, $stateParams, $log, $window,
-        modalService, organizationService, teamService, authService,
-        platform, organization
+        modalService, projectService, teamService, authService,
+        platform, organization, members, team
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
         this.$log = $log;
         this.$window = $window;
         this.modalService = modalService;
-        this.organizationService = organizationService;
+        this.projectService = projectService;
         this.teamService = teamService;
         this.authService = authService;
 
         this.platform = platform;
         this.organization = organization;
+        this.members = members;
+        this.team = team;
     }
 
     $onInit() {
@@ -36,7 +38,7 @@ class Controller {
     }
 
     onSearch(search) {
-        this.fetchPage(1, search);
+        this.fetchPage(0, search);
     }
 
     updatePagination(data) {
@@ -52,7 +54,24 @@ class Controller {
     }
 
 
-    fetchPage(page = 1, search = '') {
+    fetchPage(page = 0, search = '') {
+        this.loading = true;
+        this.projectService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                ownershipType: 'inherited',
+                groupType: 'team',
+                groupId: this.team.id,
+                search,
+                page
+            }
+        ).then(paginatedResponse => {
+            this.projects = paginatedResponse.results;
+            this.updatePagination(paginatedResponse);
+        }).finally(() => {
+            this.loading = false;
+        });
     }
 
 

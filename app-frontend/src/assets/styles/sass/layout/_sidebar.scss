@@ -300,13 +300,13 @@ rf-scene-filter-pane {
 }
 
 .sidebar-list-item-header {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 700;
 }
 
 .sidebar-list-item
-// , .sidebar-list-item a
 {
+  font-size: 1.3rem;
   display: flex;
   white-space: nowrap;
   align-items: center;
@@ -324,4 +324,8 @@ rf-scene-filter-pane {
     color: $brand-primary;
     text-decoration: none;
   }
+}
+
+.dashboard .sidebar {
+  padding: 2rem 0;
 }

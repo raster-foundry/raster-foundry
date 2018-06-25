@@ -3,16 +3,17 @@ import angular from 'angular';
 class PlatformSettingsController {
     constructor(
         $stateParams, authService,
-        platform, organization, user, userRoles
+        platform
     ) {
         'ngInject';
 
         this.$stateParams = $stateParams;
         this.authService = authService;
         this.platform = platform;
-        this.organization = organization;
-        this.user = user;
-        this.userRoles = userRoles;
+    }
+
+    $onInit() {
+        this.authService.isEffectiveAdmin(this.platform.id);
     }
 }
 

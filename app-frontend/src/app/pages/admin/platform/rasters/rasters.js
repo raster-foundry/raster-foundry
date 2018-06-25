@@ -5,7 +5,7 @@ class Controller {
     constructor(
         $scope, $stateParams, $log, $window,
         modalService, organizationService, teamService, authService,
-        platform
+        platform, organizations, members
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
@@ -17,6 +17,8 @@ class Controller {
         this.authService = authService;
 
         this.platform = platform;
+        this.organizations = organizations;
+        this.members = members;
     }
 
     $onInit() {
@@ -32,7 +34,7 @@ class Controller {
     }
 
     onSearch(search) {
-        this.fetchPage(1, search);
+        this.fetchPage(0, search);
     }
 
     updatePagination(data) {
@@ -48,7 +50,24 @@ class Controller {
     }
 
 
-    fetchPage(page = 1, search = '') {
+    fetchPage(page = 0, search = '') {
+        this.loading = true;
+        this.sceneService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                ownershipType: 'inherited',
+                groupType: 'platform',
+                groupId: this.platform.id,
+                search,
+                page
+            }
+        ).then(paginatedResponse => {
+            this.rasters = paginatedResponse.results;
+            this.updatePagination(paginatedResponse);
+        }).finally(() => {
+            this.loading = false;
+        });
     }
 
 

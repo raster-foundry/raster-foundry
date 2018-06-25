@@ -1,9 +1,8 @@
-<div class="admin-list-content-row column-stretch"
-     ng-if="$ctrl.authService.isEffectiveAdmin($ctrl.$stateParams.platformId)">
+<div class="container dashboard">
   <div class="sidebar">
     <nav>
       <a ui-sref="admin.platform.settings.email" ui-sref-active="active">Email Notifications</a>
     </nav>
   </div>
-  <ui-view class="flex-fill"></ui-view>
+  <ui-view class="main"></ui-view>
 </div>

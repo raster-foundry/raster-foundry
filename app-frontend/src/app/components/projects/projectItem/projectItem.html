@@ -1,10 +1,11 @@
 <div class="panel-body">
   <ng-container ng-if="!$ctrl.slim">
     <rf-status-tag ng-if="$ctrl.status && $ctrl.status != 'CURRENT' " entity-type="project" status="$ctrl.status" class="project-status"></rf-status-tag>
-    <a href ui-sref="projects.edit({projectid: $ctrl.project.id})" class="h4 font-600">
-      <h4 class="project-title" data-title="{{$ctrl.project.name}}">{{$ctrl.project.name}}</h4>
+    <a href ui-sref="projects.edit({projectid: $ctrl.project.id})" class="h4 font-600 project-title" data-title="{{$ctrl.project.name}}">
+      <img class="avatar user-avatar pull-left" ng-attr-src="{{ $ctrl.project.owner.profileImageUri }}" ng-if="$ctrl.project.owner.profileImageUri"/>
+      <span>{{$ctrl.project.name}}</span>
     </a>
-    <div class="project-actions">
+    <div class="project-actions" ng-if="!$ctrl.hideOptions">
       <a href ng-click="$ctrl.publishModal()">
         <i class="icon-share"></i>
         <span class="sr-only">Publish</span>
@@ -44,15 +45,6 @@
                style="background-image: url({{$ctrl.thumbnailUrl}})"></div>
         </div>
       </a>
-    </div>
-
-    <div class="project-ownership">
-      <div ng-if="$ctrl.project.owner.profileImageUri">
-        <img class="avatar user-avatar pull-left" src="{{ $ctrl.project.owner.profileImageUri }}" />
-      </div>
-      <div class="font-600">
-        Modified on {{ $ctrl.project.modifiedAt | date }}
-      </div>
     </div>
   </ng-container>
 

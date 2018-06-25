@@ -1,38 +1,40 @@
 import angular from 'angular';
 import _ from 'lodash';
 
-class Controller {
+class PlatformProjectsController {
     constructor(
-        $scope, $stateParams, $log, $window,
-        modalService, organizationService, teamService, authService,
-        platform
+        $stateParams, $log, $window,
+        modalService, authService, projectService,
+        platform, organizations, members
     ) {
-        this.$scope = $scope;
         this.$stateParams = $stateParams;
         this.$log = $log;
         this.$window = $window;
         this.modalService = modalService;
-        this.organizationService = organizationService;
-        this.teamService = teamService;
         this.authService = authService;
+        this.projectService = projectService;
 
         this.platform = platform;
+        this.organizations = organizations;
+        this.members = members;
     }
 
     $onInit() {
+        this.projects = [];
+        this.loading = false;
+        this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
+
         this.debouncedSearch = _.debounce(
             this.onSearch.bind(this),
             500,
             {leading: false, trailing: true}
         );
 
-        this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
-
         this.fetchPage();
     }
 
     onSearch(search) {
-        this.fetchPage(1, search);
+        this.fetchPage(0, search);
     }
 
     updatePagination(data) {
@@ -48,7 +50,24 @@ class Controller {
     }
 
 
-    fetchPage(page = 1, search = '') {
+    fetchPage(page = 0, search = '') {
+        this.loading = true;
+        this.projectService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                ownershipType: 'inherited',
+                groupType: 'platform',
+                groupId: this.platform.id,
+                search,
+                page
+            }
+        ).then(paginatedResponse => {
+            this.projects = paginatedResponse.results;
+            this.updatePagination(paginatedResponse);
+        }).finally(() => {
+            this.loading = false;
+        });
     }
 
 
@@ -63,12 +82,12 @@ class Controller {
         });
     }
 
-    buildOptions(obj) {
+    buildOptions() {
         return [];
     }
 }
 
 const Module = angular.module('pages.platform.projects', []);
-Module.controller('PlatformProjectsController', Controller);
+Module.controller('PlatformProjectsController', PlatformProjectsController);
 
 export default Module;

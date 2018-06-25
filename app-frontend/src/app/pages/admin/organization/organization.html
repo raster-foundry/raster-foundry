@@ -10,7 +10,7 @@
     <h4 class="admin-logo-name"
         ng-if="!$ctrl.isEditOrgName">
       <a class="parent"
-         ui-sref="admin.platform.users({platformId: $ctrl.platform.id})"
+         ui-sref="admin.platform({platformId: $ctrl.platform.id})"
          ng-if="$ctrl.authService.isEffectiveAdmin($ctrl.platform.id)"
       >
         {{$ctrl.platform.name}}

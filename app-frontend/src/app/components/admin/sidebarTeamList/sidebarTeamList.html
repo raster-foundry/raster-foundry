@@ -16,7 +16,7 @@
           ng-repeat="team in $ctrl.paginatedResponse.results"
       >
         <a class="content"
-           ui-sref="admin.team.users({teamId: team.id})"
+           ui-sref="admin.team({teamId: team.id})"
         >{{team.name}}</a>
       </li>
     </ul>

@@ -43,16 +43,9 @@
           <div ng-if="$ctrl.editTeamId !== team.id">
             <a class="font-600"
                title="View team details"
-               ui-sref="admin.team.users({teamId: team.id})">
+               ui-sref="admin.team({teamId: team.id})">
               {{team.name}}
             </a>
-            <button class="btn btn-tiny btn-admin-name-edit-small"
-                    type="button"
-                    ng-click="$ctrl.toggleTeamNameEdit(team.id, true)"
-                    ng-disabled="$ctrl.isEditTeamName"
-                    ng-if="$ctrl.userTeamRole[team.id]">
-              <span class="icon-pencil"></span>
-            </button>
           </div>
           <div ng-if="$ctrl.editTeamId === team.id">
             <form class="inline-form" ng-submit="$ctrl.finishTeamNameEdit(team)">
@@ -98,7 +91,7 @@
         </td>
         <td class="actions">
           <rf-dropdown data-options="team.options" ng-if="team.showOptions">
-            <span class="icon-edit"></span>
+            <span class="icon-caret-down h4"></span>
           </rf-dropdown>
         </td>
       </tr>

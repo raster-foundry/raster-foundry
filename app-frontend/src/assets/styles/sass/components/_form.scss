@@ -332,6 +332,10 @@ div.radio {
   font-weight: 500;
   margin: 0;
 
+  span {
+    margin-left: 1em;
+  }
+
   &:after {
     content: '';
     order: -1;

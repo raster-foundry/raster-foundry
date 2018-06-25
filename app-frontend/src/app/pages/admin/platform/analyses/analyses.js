@@ -3,20 +3,13 @@ import _ from 'lodash';
 
 class Controller {
     constructor(
-        $scope, $stateParams, $log, $window,
-        modalService, organizationService, teamService, authService,
-        platform
+        authService,
+        platform, organizations, members
     ) {
-        this.$scope = $scope;
-        this.$stateParams = $stateParams;
-        this.$log = $log;
-        this.$window = $window;
-        this.modalService = modalService;
-        this.organizationService = organizationService;
-        this.teamService = teamService;
         this.authService = authService;
-
         this.platform = platform;
+        this.organizations = organizations;
+        this.members = members;
     }
 
     $onInit() {
@@ -32,7 +25,7 @@ class Controller {
     }
 
     onSearch(search) {
-        this.fetchPage(1, search);
+        this.fetchPage(0, search);
     }
 
     updatePagination(data) {
@@ -48,7 +41,7 @@ class Controller {
     }
 
 
-    fetchPage(page = 1, search = '') {
+    fetchPage(page = 0, search = '') {
     }
 
 

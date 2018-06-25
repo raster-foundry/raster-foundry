@@ -5,7 +5,7 @@ class Controller {
     constructor(
         $scope, $stateParams, $log, $window,
         modalService, organizationService, teamService, authService,
-        platform, organization
+        platform, organization, members
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
@@ -18,6 +18,7 @@ class Controller {
 
         this.platform = platform;
         this.organization = organization;
+        this.members = members;
     }
 
     $onInit() {
@@ -36,7 +37,7 @@ class Controller {
     }
 
     onSearch(search) {
-        this.fetchPage(1, search);
+        this.fetchPage(0, search);
     }
 
     updatePagination(data) {
@@ -52,7 +53,7 @@ class Controller {
     }
 
 
-    fetchPage(page = 1, search = '') {
+    fetchPage(page = 0, search = '') {
     }
 
 

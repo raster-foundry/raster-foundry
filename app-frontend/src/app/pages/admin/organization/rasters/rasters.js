@@ -38,7 +38,7 @@ class OrganizationRastersController {
     }
 
     onSearch(search) {
-        this.fetchPage(1, search);
+        this.fetchPage(0, search);
     }
 
     updatePagination(data) {
@@ -54,7 +54,7 @@ class OrganizationRastersController {
     }
 
 
-    fetchPage(page = 1, search = '') {
+    fetchPage(page = 0, search = '') {
     }
 
 

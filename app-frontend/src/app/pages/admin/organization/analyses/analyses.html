@@ -1,6 +1,14 @@
 <div class="row content stack-sm">
   <div class="column-8">
-    List
+      <rf-call-to-action-item
+      title="No analyses have been shared with the {{$ctrl.organization.name}} organization"
+      class="panel panel-off-white"
+      ng-if="!$ctrl.pagination.count">
+      <p class="pb-25">
+        When users share analyses with this organization, they'll be visible here.
+        Analyses shared with this organization will be accessible to all members of this organization.
+      </p>
+    </rf-call-to-action-item>
   </div>
   <div class="column spacer"></div>
   <div class="column-3">

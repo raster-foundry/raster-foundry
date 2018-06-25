@@ -126,6 +126,9 @@ class OrganizationTeamsController {
                 classes: []
             },
             {
+                classes: ['divider']
+            },
+            {
                 label: 'Delete',
                 callback: () => {
                     const modal = this.modalService.open({
