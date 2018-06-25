@@ -6,13 +6,17 @@ import java.sql.Timestamp
 import scala.collection.JavaConverters._
 
 import better.files._
+import cats.implicits._
 import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.generic.extras._
+import io.circe.parser._
 
 import geotrellis.slick.Projected
 import geotrellis.vector.Geometry
 import geotrellis.vector._
+import geotrellis.vector.io.wkt.WKT
+import geotrellis.vector.reproject.Reproject
 import geotrellis.proj4.CRS
 import geotrellis.geotools._
 import geotrellis.proj4.{LatLng, WebMercator}
@@ -24,6 +28,7 @@ import org.geotools.data.shapefile.{ShapefileDataStore, ShapefileDataStoreFactor
 import org.geotools.data.simple.{SimpleFeatureCollection, SimpleFeatureStore}
 import org.geotools.feature.{DefaultFeatureCollection, DefaultFeatureCollections}
 import org.geotools.feature.simple.{SimpleFeatureTypeBuilder, SimpleFeatureBuilder}
+import org.opengis.feature.Property
 import org.opengis.feature.simple.{SimpleFeature, SimpleFeatureType}
 import org.geotools.referencing.crs.DefaultGeographicCRS
 
@@ -105,7 +110,42 @@ object Annotation {
   def tupled = (Annotation.apply _).tupled
   def create = Create.apply _
 
-
+  def fromSimpleFeature(sf: SimpleFeature): Option[Create] = {
+    val geom = WKT.read(sf.getDefaultGeometry.toString)
+    val projected = Projected(Reproject(geom, LatLng, WebMercator), 3857)
+    if (projected.isValid) {
+      val owner = Option(sf.getAttribute("owner")) map { (o: Object) => o.toString }
+      val label = sf.getProperty("label").getValue.toString
+      val description = Option(sf.getAttribute("descriptio")) map { (o: Object) => o.toString }
+      val machineGenerated = Option(sf.getProperty("machineGen")) flatMap {
+        (p: Property) => p.getValue.toString match {
+          // Apparently ogr2ogr stores bools as ints /shrug
+          case "1" => Some(true)
+          case "0" => Some(false)
+          case _ => None
+        }
+      }
+      val confidence = Option(sf.getProperty("confidence")) flatMap {
+        (p: Property) =>  decode[Float](p.getValue.toString).toOption
+      }
+      val quality = Option(sf.getProperty("quality")) flatMap {
+        (p: Property) => decode[AnnotationQuality](p.getValue.toString).toOption
+      }
+      Some(
+        Create(
+          Some("auth0|59318a9d2fbbca3e16bcfc92"),
+          label,
+          description,
+          machineGenerated,
+          confidence,
+          quality,
+          Some(projected)
+        )
+      )
+    } else {
+      None
+    }
+  }
 
   @ConfiguredJsonCodec
   case class GeoJSON(
