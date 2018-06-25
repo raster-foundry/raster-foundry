@@ -31,6 +31,7 @@ export default class ProjectItemController {
         this.addProjectLayer();
         this.getProjectStatus();
         this.getThumbnailURL();
+        this.getProjectScenes();
     }
 
     getThumbnailURL() {
@@ -43,7 +44,7 @@ export default class ProjectItemController {
         let url = this.projectService.getProjectLayerURL(
             this.project,
             {token: this.authService.token()}
-        );
+        )
 
         let layer = L.tileLayer(url);
 
@@ -68,6 +69,7 @@ export default class ProjectItemController {
         if (!this.statusFetched) {
             this.projectService.getProjectStatus(this.project.id).then(status => {
                 this.status = status;
+                console.log(status);
             });
             this.statusFetched = true;
         }

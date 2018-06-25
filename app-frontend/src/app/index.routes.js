@@ -42,6 +42,7 @@ import userSettingsConnectionsTpl from './pages/user/settings/connections/connec
 import userOrganizationsTpl from './pages/user/organizations/organizations.html';
 import userTeamsTpl from './pages/user/teams/teams.html';
 import userProjectsTpl from './pages/user/projects/projects.html';
+import userRastersTpl from './pages/user/rasters/rasters.html';
 
 import errorTpl from './pages/error/error.html';
 import shareTpl from './pages/share/share.html';
@@ -330,6 +331,13 @@ function settingsStates($stateProvider) {
             url: '/projects',
             templateUrl: userProjectsTpl,
             controller: 'UserProjectsController',
+            controllerAs: '$ctrl'
+        })
+        .state('user.rasters', {
+            title: 'Rasters',
+            url: '/rasters',
+            templateUrl: userRastersTpl,
+            controller: 'UserRastersController',
             controllerAs: '$ctrl'
         });
 }

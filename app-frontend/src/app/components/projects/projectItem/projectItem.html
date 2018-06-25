@@ -23,7 +23,7 @@
       <!-- IF project has no scenes -->
       <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
         <div class="project-preview-container placeholder"
-             ng-if="!$ctrl.project.scenes"
+             ng-if="$ctrl.status === 'NOSCENES'"
              style="background-image: url({{$ctrl.projectPlaceholder}})">
         </div>
       </a>
@@ -31,7 +31,7 @@
        <!-- IF not all scenes ingested: -->
       <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
         <div class="project-preview-container placeholder"
-             ng-if="$ctrl.project.scenes && $ctrl.status !== 'CURRENT'"
+             ng-if="$ctrl.status !== 'CURRENT' && $ctrl.status !== 'NOSCENES'"
              style="background-image: url({{$ctrl.projectPlaceholder}})">
         </div>
       </a>
@@ -39,7 +39,7 @@
       <!-- IF using a project's thumbnail: -->
       <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
         <div class="project-preview-container placeholder"
-             ng-if="$ctrl.project.scenes && $ctrl.thumbnailUrl && $ctrl.status === 'CURRENT'"
+             ng-if="$ctrl.thumbnailUrl && $ctrl.status === 'CURRENT'"
              style="background-image: url({{$ctrl.projectPlaceholder}})">
           <div class="thumbnail"
                style="background-image: url({{$ctrl.thumbnailUrl}})"></div>

@@ -90,6 +90,7 @@ const App = angular.module(
 
         require('./pages/user/user.js').name,
         require('./pages/user/projects/projects.js').name,
+        require('./pages/user/rasters/rasters.js').name,
         require('./pages/user/settings/settings.module.js').name,
         require('./pages/user/settings/profile/profile.module.js').name,
         require('./pages/user/settings/api/api.module.js').name,
