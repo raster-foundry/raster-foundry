@@ -31,7 +31,8 @@ import geotrellis.slick.Projected
 import geotrellis.vector._
 
 import com.azavea.rf.common.AWSBatch
-import com.azavea.rf.database.{ProjectDao, SceneWithRelatedDao, UserDao}
+import com.azavea.rf.common.notification.Email.NotificationEmail
+import com.azavea.rf.database.{ProjectDao, SceneWithRelatedDao, UserDao, UserGroupRoleDao, PlatformDao}
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util.RFTransactor
 
@@ -43,6 +44,62 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
 
   type LastChecked = Timestamp
   type StartTime = Timestamp
+
+  def aoiEmailContent(project: Project, platform: Platform, user: User, sceneCount: Int): (String, String, String) = (
+    s"""
+      ${platform.name}: New Scenes Updated to Your AOI Project "${project.name}"
+    """,
+    s"""
+    <html>
+      <p>${user.name},</p><br>
+      <p>You have ${sceneCount} new scenes updated to your AOI project "${project.name}"! You can access
+      these new scenes <a href="https://app.rasterfoundry.com/projects/edit/${project.id}/scenes">here</a> or any past
+      projects you've created at any time <a href="https://app.rasterfoundry.com/projects/">here</a>.</p>
+      <p>If you have questions, please feel free to reach out any time at ${platform.publicSettings.emailUser}.</p>
+      <p>- The ${platform.name} Team</p>
+    </html>
+    """,
+    s"""
+    ${user.name}: You have ${sceneCount} new scenes updated to your AOI project "${project.name}"! You can access
+    these new scenes here: https://app.rasterfoundry.com/projects/edit/${project.id}/scenes , or any past
+    projects you've created at any time here: https://app.rasterfoundry.com/projects/ . If you have questions,
+    please feel free to reach out any time at ${platform.publicSettings.emailUser}. - The ${platform.name} Team
+    """
+  )
+
+  def sendAoiNotificationEmail(project: Project, platform: Platform, user: User, sceneCount: Int) = {
+    val email = new NotificationEmail
+    (user.emailNotifications, platform.publicSettings.emailAoiNotification) match {
+      case (true, true) =>
+        val (pub, pri) = (platform.publicSettings, platform.privateSettings)
+        (pub.emailSmtpHost, pub.emailSmtpPort, pub.emailSmtpEncryption, pub.emailUser, pri.emailPassword, user.email) match {
+          case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
+            email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
+            val (subject, html, plain) = aoiEmailContent(project, platform, user, sceneCount)
+            email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, subject, html, plain).send()
+            logger.info(s"Notified project owner ${user.id} about AOI updates")
+          case _ => logger.warn(email.insufficientSettingsWarning(platform.id.toString(), user.id))
+        }
+      case (false, true) => logger.warn(email.userEmailNotificationDisabledWarning(user.id))
+      case (true, false) => logger.warn(email.platformNotSubscribedWarning(platform.id.toString()))
+      case (false, false) => logger.warn(
+        email.userEmailNotificationDisabledWarning(user.id) ++ " " ++ email.platformNotSubscribedWarning(platform.id.toString()))
+    }
+  }
+
+  def notifyProjectOwner(projId: UUID, sceneCount: Int) = {
+    val projectPlatformUserIO = for {
+      project <- ProjectDao.query.filter(projId).select
+      ugr <- UserGroupRoleDao.query.filter(fr"user_id = ${project.owner}")
+        .filter(fr"group_type = 'PLATFORM'").filter(fr"is_active = true").select
+      platform <- PlatformDao.query.filter(ugr.groupId).select
+      user <- UserDao.query.filter(fr"id = ${project.owner}").select
+    } yield (project, platform, user)
+
+    val (project, platform, user) = projectPlatformUserIO.transact(xa).unsafeRunSync
+
+    sendAoiNotificationEmail(project, platform, user, sceneCount)
+  }
 
   def run: Unit = {
     logger.info(s"Updating project ${projectId}")
@@ -127,14 +184,17 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
       affectedRows <- ProjectDao.updateProject(newProject, proj.id, user)
     } yield affectedRows
 
-    def kickoffIngestsIO: ConnectionIO[Unit] = for {
+    def kickoffIngestsIO: ConnectionIO[(UUID, List[UUID])] = for {
       projId <- addScenesToProjectWithProjectIO
       sceneIds <- SceneWithRelatedDao.getScenesToIngest(projId) map {
         (scenes: List[Scene.WithRelated]) => scenes map { _.id }
       }
-    } yield { sceneIds map { kickoffSceneIngest } }
+    } yield (projId, sceneIds)
 
-    kickoffIngestsIO.transact(xa).unsafeRunSync
+    val (projId, sceneIds) = kickoffIngestsIO.transact(xa).unsafeRunSync
+    sceneIds map { kickoffSceneIngest }
+
+    notifyProjectOwner(projId, sceneIds.length)
   }
 }
 

@@ -35,16 +35,7 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
   def updateExportStatus(export: Export, status: ExportStatus): Export =
     export.copy(exportStatus = status)
 
-  def isValidEmailSettings(host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String): Boolean =
-    host.length != 0 &&
-      (port == 25 || port == 465 || port == 587 || port == 2525) &&
-      encryption.length!= 0 &&
-      (encryption == "ssl" || encryption == "tls" || encryption == "starttls") &&
-      platUserEmail.length != 0 &&
-      pw.length != 0 &&
-      userEmail.length != 0
-
-  def exportEmailContent(status: String, user: User, platform: Platform, project: Project) = {
+  def exportEmailContent(status: String, user: User, platform: Platform, project: Project): (String, String, String) = {
   // TODO: domain needs to be parameterized
     val (subject, content) = status match {
       case status: String if status == "EXPORTED" => ("is ready", "is ready! You")
@@ -78,7 +69,7 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
         val (pub, pri) = (platform.publicSettings, platform.privateSettings)
         (pub.emailSmtpHost, pub.emailSmtpPort, pub.emailSmtpEncryption, pub.emailUser, pri.emailPassword, user.email) match {
           case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
-             isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
+             email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
              projectO match {
                case Some(project) =>
                  val (subject, html, plain) = exportEmailContent(status, user, platform, project)
