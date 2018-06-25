@@ -95,7 +95,7 @@ object Dao {
 
   case class QueryBuilder[Model: Composite](selectF: Fragment, tableF: Fragment, filters: List[Option[Fragment]]) {
 
-    val countF = fr"SELECT count(*) FROM" ++ tableF
+    val countF = fr"SELECT count(distinct(id)) FROM" ++ tableF
     val deleteF = fr"DELETE FROM" ++ tableF
     val existF = fr"SELECT 1 FROM" ++ tableF
 
