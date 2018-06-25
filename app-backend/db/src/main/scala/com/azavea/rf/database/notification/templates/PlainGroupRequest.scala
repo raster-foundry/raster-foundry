@@ -33,7 +33,7 @@ case class PlainGroupRequest(
       val plainBody = s"""
       | User ${subjectEmail} has requested your permission to join the ${groupName} ${groupType.toString.toLowerCase}.
       |
-      | To approve or reject this request, visit {Admin_Link}.
+      | To approve or reject this request, visit https://${platformHost}/users/me/${groupType.toString.toLowerCase}s
       |
       | If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to
       | ${platform.publicSettings.emailUser}.
@@ -43,7 +43,10 @@ case class PlainGroupRequest(
       val richBody = s"""
 <html>
   <p>${subjectEmail} has requested your permission to join the ${groupName} ${groupType.toString.toLowerCase}.
-    To approve or reject this request, visit {Admin_Link}.
+    To approve or reject this request, visit
+     <a href="https://${platformHost}/users/me/${groupType.toString.toLowerCase}s>
+       your ${groupType.toString.toLowerCase} requests page
+     </a>.
   </p>
   <p>
     If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to
