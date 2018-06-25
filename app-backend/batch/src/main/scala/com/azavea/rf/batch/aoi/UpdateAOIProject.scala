@@ -88,17 +88,21 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
   }
 
   def notifyProjectOwner(projId: UUID, sceneCount: Int) = {
-    val projectPlatformUserIO = for {
-      project <- ProjectDao.query.filter(projId).select
-      ugr <- UserGroupRoleDao.query.filter(fr"user_id = ${project.owner}")
-        .filter(fr"group_type = 'PLATFORM'").filter(fr"is_active = true").select
-      platform <- PlatformDao.query.filter(ugr.groupId).select
-      user <- UserDao.query.filter(fr"id = ${project.owner}").select
-    } yield (project, platform, user)
+    if (sceneCount > 0) {
+      val projectPlatformUserIO = for {
+        project <- ProjectDao.query.filter(projId).select
+        ugr <- UserGroupRoleDao.query.filter(fr"user_id = ${project.owner}")
+          .filter(fr"group_type = 'PLATFORM'").filter(fr"is_active = true").select
+        platform <- PlatformDao.query.filter(ugr.groupId).select
+        user <- UserDao.query.filter(fr"id = ${project.owner}").select
+      } yield (project, platform, user)
 
-    val (project, platform, user) = projectPlatformUserIO.transact(xa).unsafeRunSync
+      val (project, platform, user) = projectPlatformUserIO.transact(xa).unsafeRunSync
 
-    sendAoiNotificationEmail(project, platform, user, sceneCount)
+      sendAoiNotificationEmail(project, platform, user, sceneCount)
+    } else {
+      logger.warn(s"AOI project ${projId.toString} has no new scenes updated. Project owner is not notified.")
+    }
   }
 
   def run: Unit = {
