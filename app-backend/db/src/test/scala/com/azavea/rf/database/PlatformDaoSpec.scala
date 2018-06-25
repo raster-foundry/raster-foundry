@@ -258,11 +258,10 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
             datasource <- unsafeGetRandomDatasource
             sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, datasource, sceneCreate), dbUser)
             _ <- ProjectDao.addScenesToProject(List(sceneInsert.id), dbProject.id, dbUser)
-            pUO <- PlatformDao.getPlatAndUsersBySceneOwnerId(Some(sceneInsert.owner))
+            pUO <- PlatformDao.getPlatAndUsersBySceneOwnerId(sceneInsert.owner)
           } yield (dbUser, dbPlatform, dbProject, pUO)
 
-          val (dbUser, dbPlatform, dbProject, pUO) = puIO.transact(xa).unsafeRunSync
-          val pU = pUO.get
+          val (dbUser, dbPlatform, dbProject, pU) = puIO.transact(xa).unsafeRunSync
 
           assert(pU.platId == dbPlatform.id, "; platform ID don't match")
           assert(pU.platName == dbPlatform.name, "; platform name don't match")

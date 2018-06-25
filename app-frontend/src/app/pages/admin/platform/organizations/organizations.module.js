@@ -4,7 +4,8 @@ import _ from 'lodash';
 class PlatformOrganizationsController {
     constructor(
         $state, modalService, $stateParams, $scope, $log, $window,
-        platformService, organizationService
+        platformService, organizationService, authService,
+        platform
     ) {
         this.$state = $state;
         this.$scope = $scope;
@@ -14,36 +15,20 @@ class PlatformOrganizationsController {
         this.modalService = modalService;
         this.platformService = platformService;
         this.organizationService = organizationService;
-        if (!this.$stateParams.platformId) {
-            this.$state.go('admin');
-        }
-        this.fetching = true;
+        this.authService = authService;
+        this.platform = platform;
+    }
 
-        let debouncedSearch = _.debounce(
+    $onInit() {
+        this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
+
+        this.debouncedSearch = _.debounce(
             this.onSearch.bind(this),
             500,
             {leading: false, trailing: true}
         );
 
-        this.$scope.$parent.$ctrl.currentUserPromise.then(resp => {
-            this.currentUser = resp;
-        });
-        this.currentUgrPromise = this.$scope.$parent.$ctrl.currentUgrPromise;
-        this.getPlatUgrs();
-        this.$scope.$watch('$ctrl.search', debouncedSearch);
-    }
-
-    $onInit() {
-        this.userOrgRole = {};
-    }
-
-    getPlatUgrs() {
-        this.currentUgrPromise.then((resp) => {
-            this.currentPlatUgr = resp.filter((ugr) => {
-                return ugr.groupId === this.$stateParams.platformId;
-            })[0];
-            this.isPlatAdmin = this.currentPlatUgr && this.currentPlatUgr.groupRole === 'ADMIN';
-        });
+        this.fetchOrganizations(1, '');
     }
 
     onSearch(search) {
@@ -72,48 +57,26 @@ class PlatformOrganizationsController {
                 this.lastOrgResult = response;
                 this.organizations = response.results;
 
-                this.organizations.forEach((org) => {
-                    this.currentUgrPromise.then((resp) => {
-                        // eslint-disable-next-line
-                        this.currentOrgUgr = resp.filter((ugr) => {
-                            return ugr.groupId === org.id;
-                        })[0];
-                        this.isPlatOrOrgAdmin =
-                            this.currentOrgUgr && this.currentOrgUgr.groupRole === 'ADMIN' ||
-                            this.isPlatAdmin;
-                        this.userOrgRole[org.id] =
-                            this.currentUser.isSuperuser || this.isPlatOrOrgAdmin;
-                        Object.assign(org, {
-                            options: {
-                                items: this.itemsForOrg(org)
-                            },
-                            showOptions: this.userOrgRole[org.id]
-                        });
+                this.organizations.forEach(org => {
+                    Object.assign(org, {
+                        options: {
+                            items: this.itemsForOrg(org)
+                        },
+                        showOptions: this.isEffectiveAdmin
                     });
+                    this.organizationService
+                        .getMembers(this.$stateParams.platformId, org.id)
+                        .then((paginatedUsers) => {
+                            org.fetchedUsers = paginatedUsers;
+                        });
                 });
-
-                this.organizations.forEach(
-                    (organization) => {
-                        this.organizationService
-                            .getMembers(this.$stateParams.platformId, organization.id)
-                            .then((paginatedUsers) => {
-                                organization.fetchedUsers = paginatedUsers;
-                            });
-                    }
-                );
             });
     }
 
+
     itemsForOrg(organization) {
         /* eslint-disable */
-        let actions = [
-            // {
-            //     label: 'Manage',
-            //     callback: () => {
-            //         this.$state.go('.detail.features', {orgId: organization.id});
-            //     }
-            // }
-        ];
+        let actions = [];
         if (organization.isActive) {
             actions.push({
                 label: 'Deactivate',
@@ -127,8 +90,7 @@ class PlatformOrganizationsController {
                 label: 'Activate',
                 callback: () => {
                     this.activateOrganization(organization);
-                },
-                classes: ['color-secondary']
+                }
             });
         };
         return actions;
@@ -138,6 +100,7 @@ class PlatformOrganizationsController {
     deactivateOrganization(organization) {
         const modal = this.modalService.open({
             component: 'rfConfirmationModal',
+            size: 'sm',
             resolve: {
                 title: () => 'Deactivate organization ?',
                 content: () => 'The organization can be reactivated at any time',
@@ -176,25 +139,12 @@ class PlatformOrganizationsController {
     }
 
     newOrgModal() {
-        let permissionDenied = {};
-        if (!(this.currentUser.isActive &&
-            (this.currentUser.isSuperuser || this.isPlatAdmin))) {
-            permissionDenied = {
-                isDenied: true,
-                adminEmail: 'example@email.com',
-                message: 'You do not have access to this operation. Please contact ',
-                subject: 'platform admin'
-            };
-        }
         this.modalService.open({
             component: 'rfOrganizationModal',
-            resolve: {
-                permissionDenied: permissionDenied
-            },
             size: 'sm'
         }).result.then((result) => {
             this.platformService
-                .createOrganization(this.$stateParams.platformId, result.name)
+                .createOrganization(this.$stateParams.platformId, result.name, 'ACTIVE')
                 .then(() => {
                     this.fetchOrganizations();
                 });

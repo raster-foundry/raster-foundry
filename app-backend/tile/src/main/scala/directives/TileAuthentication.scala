@@ -1,6 +1,6 @@
 package com.azavea.rf.tile
 
-import com.azavea.rf.common.Authentication
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common.cache.CacheClient
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.database.Implicits._

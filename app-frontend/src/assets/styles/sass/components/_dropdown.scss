@@ -254,19 +254,18 @@
     border: 1px solid $shade-light;
     border-radius: 3px 0 3px 3px;
     z-index: 100;
+    white-space: nowrap;
 
     .rf-dropdown-item {
         text-align: left;
-        padding: 0.5em 1em;
+        padding: 0.66em 1em;
         cursor: pointer;
+        &.divider {
+          padding: 0;
+          border-bottom: 1px solid $shade-light;
+        }
         &:hover {
-            background: $off-white;
-        }
-        &:first-child {
-            padding-top: 1em;
-        }
-        &:last-child {
-            padding-bottom: 1em;
+            color: $brand-primary;
         }
     }
 }

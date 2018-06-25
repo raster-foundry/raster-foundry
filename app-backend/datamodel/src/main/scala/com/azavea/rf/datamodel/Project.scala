@@ -41,6 +41,17 @@ case class Project(
 /** Case class for project creation */
 object Project extends GeoJsonSupport {
 
+  implicit val thinUserEncoder: Encoder[User] = Encoder.forProduct3(
+    "id", "name", "profileImageUri"
+  )(user => (user.id, user.name, user.profileImageUri))
+  implicit val thinUserDecoder: Decoder[User.Create] = Decoder.forProduct3(
+    "id", "name", "profileImageUri"
+  )(
+    (id: String, name: String, profileImageUri: String) => User.Create(
+      id, Viewer, "", name,  profileImageUri
+    )
+  )
+
   /* One week, in milliseconds */
   val DEFAULT_CADENCE: Long = 604800000
 
@@ -101,20 +112,87 @@ object Project extends GeoJsonSupport {
 
   object Create {
     /** Custon Circe decoder for [[Create]], to handle default values. */
-    implicit val dec: Decoder[Create] = Decoder.instance(c =>
-      (c.downField("name").as[String]
-        |@| c.downField("description").as[String]
-        |@| c.downField("visibility").as[Visibility]
-        |@| c.downField("tileVisibility").as[Visibility]
-        |@| c.downField("isAOIProject").as[Option[Boolean]].map(_.getOrElse(false))
-        |@| c.downField("aoiCadenceMillis").as[Option[Long]].map(_.getOrElse(DEFAULT_CADENCE))
-        |@| c.downField("owner").as[Option[String]]
-        |@| c.downField("tags").as[List[String]]
-        |@| c.downField("isSingleBand").as[Option[Boolean]].map(_.getOrElse(false))
-        |@| c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]]
-      ).map(Create.apply)
+    val decWithUserString: Decoder[Create] = Decoder.instance(c =>
+      (c.downField("name").as[String],
+       c.downField("description").as[String],
+       c.downField("visibility").as[Visibility],
+       c.downField("tileVisibility").as[Visibility],
+       c.downField("isAOIProject").as[Option[Boolean]].map(_.getOrElse(false)),
+       c.downField("aoiCadenceMillis").as[Option[Long]].map(_.getOrElse(DEFAULT_CADENCE)),
+       c.downField("owner").as[Option[String]],
+       c.downField("tags").as[List[String]],
+       c.downField("isSingleBand").as[Option[Boolean]].map(_.getOrElse(false)),
+       c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]]
+      ).mapN(Create.apply)
     )
 
+    val decWithUserObject: Decoder[Create] = Decoder.instance(c =>
+      (c.downField("name").as[String],
+       c.downField("description").as[String],
+       c.downField("visibility").as[Visibility],
+       c.downField("tileVisibility").as[Visibility],
+       c.downField("isAOIProject").as[Option[Boolean]].map(_.getOrElse(false)),
+       c.downField("aoiCadenceMillis").as[Option[Long]].map(_.getOrElse(DEFAULT_CADENCE)),
+       c.downField("owner").as[User.Create] map { usr: User.Create => Some(usr.id) },
+       c.downField("tags").as[List[String]],
+       c.downField("isSingleBand").as[Option[Boolean]].map(_.getOrElse(false)),
+       c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]]
+      ).mapN(Create.apply)
+    )
+
+    implicit val dec: Decoder[Create] = decWithUserString or decWithUserObject
+
     implicit val enc: Encoder[Create] = deriveEncoder
+  }
+
+  case class WithUser(
+    id: UUID,
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    createdBy: String,
+    modifiedBy: String,
+    owner: User,
+    name: String,
+    slugLabel: String,
+    description: String,
+    visibility: Visibility,
+    tileVisibility: Visibility,
+    isAOIProject: Boolean,
+    aoiCadenceMillis: Long, /* Milliseconds */
+    aoisLastChecked: Timestamp,
+    tags: List[String],
+    extent: Option[Projected[Geometry]],
+    manualOrder: Boolean,
+    isSingleBand: Boolean,
+    singleBandOptions: Option[SingleBandOptions.Params]
+  )
+
+  object WithUser {
+    def apply(project: Project, user: User): WithUser = {
+      WithUser(
+        project.id,
+        project.createdAt,
+        project.modifiedAt,
+        project.createdBy,
+        project.modifiedBy,
+        user,
+        project.name,
+        project.slugLabel,
+        project.description,
+        project.visibility,
+        project.tileVisibility,
+        project.isAOIProject,
+        project.aoiCadenceMillis,
+        project.aoisLastChecked,
+        project.tags,
+        project.extent,
+        project.manualOrder,
+        project.isSingleBand,
+        project.singleBandOptions
+      )
+    }
+
+    // This has an encoder and no decoder because a Project.WithUser should never be POSTed
+    implicit val withUserEncoder = deriveEncoder[WithUser]
   }
 }

@@ -1,7 +1,8 @@
 package com.azavea.rf.api.aoi
 
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
-import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
 

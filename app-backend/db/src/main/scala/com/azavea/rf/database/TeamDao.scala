@@ -24,10 +24,12 @@ object TeamDao extends Dao[Team] {
     FROM
   """ ++ tableF
 
-  def getById(teamId: UUID): ConnectionIO[Option[Team]] =
+  def createUserGroupRole = UserGroupRoleDao.createWithGuard(userIsAdmin, GroupType.Team) _
+
+  def getTeamById(teamId: UUID): ConnectionIO[Option[Team]] =
     TeamDao.query.filter(teamId).selectOption
 
-  def unsafeGetById(teamId: UUID): ConnectionIO[Team] =
+  def unsafeGetTeamById(teamId: UUID): ConnectionIO[Team] =
     TeamDao.query.filter(teamId).select
 
   def create(
@@ -156,7 +158,8 @@ object TeamDao extends Dao[Team] {
           group_type = ${GroupType.Team.toString}::group_type AND
           group_role = ${GroupRole.Admin.toString}::group_role AND
           group_id = ${teamId} AND
-          is_active = true
+          is_active = true  AND
+          membership_status = 'APPROVED'
         LIMIT 1
       ) OR (
         SELECT count(ugr.id) > 0
@@ -170,7 +173,8 @@ object TeamDao extends Dao[Team] {
           ugr.user_id = ${user.id} AND
           ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
           ugr.group_type = ${GroupType.Organization.toString}::group_type AND
-          ugr.is_active = true
+          ugr.is_active = true  AND
+          membership_status = 'APPROVED'
       ) OR (
         SELECT count(ugr.id) > 0
         FROM""" ++ PlatformDao.tableF ++ fr"""AS p
@@ -185,7 +189,8 @@ object TeamDao extends Dao[Team] {
           ugr.user_id = ${user.id} AND
           ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
           ugr.group_type = ${GroupType.Platform.toString}::group_type AND
-          ugr.is_active = true
+          ugr.is_active = true  AND
+          membership_status = 'APPROVED'
       )
     """
   }
@@ -206,18 +211,11 @@ object TeamDao extends Dao[Team] {
     } yield teamUpdate
   }
 
-  def addUserRole(actingUser: User, subjectId: String, teamId: UUID, groupRole: GroupRole): ConnectionIO[UserGroupRole] = {
+  def addUserRole(platformId: UUID, actingUser: User, subjectId: String, teamId: UUID, groupRole: GroupRole): ConnectionIO[UserGroupRole] = {
     val userGroupRoleCreate = UserGroupRole.Create(
       subjectId, GroupType.Team, teamId, groupRole
     )
-    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser))
-  }
-
-  def setUserRole(actingUser: User, subjectId: String, teamId: UUID, groupRole: GroupRole): ConnectionIO[List[UserGroupRole]] = {
-    deactivateUserRoles(actingUser, subjectId, teamId).flatMap(
-      deactivatedUserRoles => addUserRole(actingUser, subjectId, teamId, groupRole)
-        .map(deactivatedUserRoles ++ List(_))
-    )
+    createUserGroupRole(teamId, actingUser, subjectId, userGroupRoleCreate, platformId)
   }
 
   def deactivateUserRoles(actingUser: User, subjectId: String, teamId: UUID): ConnectionIO[List[UserGroupRole]] = {

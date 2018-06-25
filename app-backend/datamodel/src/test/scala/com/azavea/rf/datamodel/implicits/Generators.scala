@@ -63,6 +63,10 @@ object Generators extends ArbitraryInstances {
   private def visibilityGen: Gen[Visibility] = Gen.oneOf(
     Visibility.Public, Visibility.Organization, Visibility.Private)
 
+  private def orgStatusGen: Gen[OrgStatus] = Gen.oneOf(
+    OrgStatus.Requested, OrgStatus.Active, OrgStatus.Inactive)
+
+
   private def sceneTypeGen: Gen[SceneType] = Gen.oneOf(
     SceneType.Avro, SceneType.COG
   )
@@ -166,9 +170,11 @@ object Generators extends ArbitraryInstances {
 
   private def organizationCreateGen: Gen[Organization.Create] = for {
     name <- nonEmptyStringGen
-  } yield (Organization.Create(name, defaultPlatformId))
+    visibility <- visibilityGen
+    orgStatus <- orgStatusGen
+  } yield (Organization.Create(name, defaultPlatformId, Some(visibility), orgStatus))
 
-  private def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization }
+  private def organizationGen: Gen[Organization] = organizationCreateGen map { _.toOrganization(true) }
 
   private def shapeCreateGen: Gen[Shape.Create] = for {
     owner <- Gen.const(None)
@@ -441,9 +447,15 @@ object Generators extends ArbitraryInstances {
   private def platformPublicSettingsGen: Gen[Platform.PublicSettings] = for {
     emailUser <- nonEmptyStringGen
     emailSmtpHost <- nonEmptyStringGen
+    emailSmtpPort <- Gen.oneOf(25, 2525, 465, 587)
+    emailSmtpEncryption <- Gen.oneOf("ssl", "tls", "starttls")
     emailIngestNotification <- arbitrary[Boolean]
     emailAoiNotification <- arbitrary[Boolean]
-  } yield { Platform.PublicSettings(emailUser, emailSmtpHost, emailIngestNotification, emailAoiNotification) }
+    emailExportNotification <- arbitrary[Boolean]
+    platformHost <- Gen.const(None)
+  } yield {
+    Platform.PublicSettings(emailUser, emailSmtpHost, emailSmtpPort, emailSmtpEncryption,
+      emailIngestNotification, emailAoiNotification, emailExportNotification, platformHost) }
 
   private def platformPrivateSettingsGen: Gen[Platform.PrivateSettings] = for {
     emailPassword <- nonEmptyStringGen

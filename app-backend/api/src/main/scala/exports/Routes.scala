@@ -9,6 +9,7 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import io.circe._
 import io.circe.syntax._
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common._
 import com.azavea.rf.datamodel._
 import java.net.URL

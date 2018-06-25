@@ -26,9 +26,9 @@ class PlanetSceneFactory(object):
     ```
     """
 
-    def __init__(self, planet_ids, datasource, id, upload_id,
+    def __init__(self, planet_ids, datasource, upload_id, client,
                  project_id=None, visibility=Visibility.PRIVATE, tags=[],
-                 owner=None, client=None):
+                 owner=None):
         self.upload_id = upload_id
         self.isProjectUpload = project_id is not None
         self.datasource = datasource
@@ -48,6 +48,7 @@ class PlanetSceneFactory(object):
         else:
             ingest_status = IngestStatus.TOBEINGESTED
         for planet_id in set(self.planet_ids):
+            logger.info('Preparing to copy planet asset to s3: %s', planet_id)
             planet_feature, temp_tif_file = self.copy_asset_to_s3(planet_id)
             planet_key = self.client.auth.value
             planet_scene = create_planet_scene(
@@ -71,6 +72,7 @@ class PlanetSceneFactory(object):
         """
 
         item_type, item_id = planet_id.split(':')
+        logger.info('Retrieving item type %s with id %s', item_type, item_id)
         item = self.get_item(item_id, item_type)
         item_id = item['id']
 
@@ -117,6 +119,7 @@ class PlanetSceneFactory(object):
         Returns:
             dict
         """
+        logger.info('Requesting asset from Planet: %s, %s', item_id, item_type)
         assets = self.client.get_assets_by_id(item_type, item_id).get()
         return assets
 
@@ -131,8 +134,9 @@ class PlanetSceneFactory(object):
         Returns:
             item
         """
-        item = self.client.get_item(item_type, item_id).get()
-        return item
+        item = self.client.get_item(item_type, item_id)
+        logger.info('Retrieved Item: %s', item)
+        return item.get()
 
     @retry(wait_fixed=5000, stop_max_attempt_number=5)
     def activate(self, asset_type, assets):

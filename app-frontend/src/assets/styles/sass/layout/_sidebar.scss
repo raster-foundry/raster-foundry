@@ -4,7 +4,7 @@
   background: #fff;
   width: 40rem;
   padding: 0;
-  border-right: 2px solid $border-color-default;
+  border-right: 1px solid $border-color-default;
   word-wrap: break-word;
 
   .dashboard & {
@@ -289,4 +289,43 @@ rf-scene-filter-pane {
       display: none;
     }
   }
+}
+
+.sidebar-settings {
+  width: 28rem;
+}
+
+.sidebar-list {
+  list-style: none;
+}
+
+.sidebar-list-item-header {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.sidebar-list-item
+{
+  font-size: 1.3rem;
+  display: flex;
+  white-space: nowrap;
+  align-items: center;
+  .content {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.sidebar-list-item a {
+  text-decoration: none;
+  color: inherit;
+  &:hover {
+    color: $brand-primary;
+    text-decoration: none;
+  }
+}
+
+.dashboard .sidebar {
+  padding: 2rem 0;
 }

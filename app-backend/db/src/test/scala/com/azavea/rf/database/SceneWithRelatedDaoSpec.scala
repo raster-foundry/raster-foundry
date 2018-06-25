@@ -60,6 +60,8 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
          scenes1: List[Scene.Create], scenes2: List[Scene.Create],
          dsCreate1: Datasource.Create, dsCreate2: Datasource.Create) => {
           val scenesIO = for {
+            // quick and dirty fix for dev database. listedScenes being a paginated result makes things complicated otherwise
+            _ <- fr"truncate scenes cascade".update.run
             dbUser1 <- UserDao.create(user1)
             dbUser2 <- UserDao.create(user2)
             datasource1 <- DatasourceDao.create(dsCreate1.toDatasource(dbUser1), dbUser1)

@@ -1,6 +1,7 @@
 package com.azavea.rf.api.datasource
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.filter.Filterables._
@@ -71,7 +72,12 @@ trait DatasourceRoutes extends Authentication
     (withPagination & datasourceQueryParams) { (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
       complete {
         DatasourceDao
-          .authQuery(user, ObjectType.Datasource)
+          .authQuery(
+            user,
+            ObjectType.Datasource,
+            datasourceParams.ownershipTypeParams.ownershipType,
+            datasourceParams.groupQueryParameters.groupType,
+            datasourceParams.groupQueryParameters.groupId)
           .filter(datasourceParams)
           .page(page)
           .transact(xa).unsafeToFuture

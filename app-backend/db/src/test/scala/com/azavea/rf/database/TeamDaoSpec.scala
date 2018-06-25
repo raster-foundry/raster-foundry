@@ -40,7 +40,7 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
 
           val getTeamAndOrgIO = createTeamIO flatMap {
             case (team: Team, org: Organization) => {
-              TeamDao.getById(team.id) map { (_, org) }
+              TeamDao.getTeamById(team.id) map { (_, org) }
             }
           }
 
@@ -68,7 +68,7 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
 
           val getTeamAndOrgIO = createTeamIO flatMap {
             case (team: Team, org: Organization) => {
-              TeamDao.unsafeGetById(team.id) map { (_, org) }
+              TeamDao.unsafeGetTeamById(team.id) map { (_, org) }
             }
           }
 
@@ -195,9 +195,9 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
         ) => {
           val addUserTeamRoleIO = for {
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-                                          (org, dbUser) = orgAndUser
+            (org, dbUser) = orgAndUser
             insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
-            insertedUserGroupRole <- TeamDao.addUserRole(dbUser, dbUser.id, insertedTeam.id, userRole)
+            insertedUserGroupRole <- TeamDao.addUserRole(org.platformId, dbUser, dbUser.id, insertedTeam.id, userRole)
             byIdUserGroupRole <- UserGroupRoleDao.getOption(insertedUserGroupRole.id)
           } yield { (insertedTeam, byIdUserGroupRole) }
 
@@ -216,38 +216,6 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
     }
   }
 
-  test("replace a user's roles") {
-    check {
-      forAll{
-        (
-          userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
-          userRole: GroupRole
-        ) => {
-          val setPlatformRoleIO = for {
-            orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-            (org, dbUser) = orgAndUser
-            insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
-            originalUserGroupRole <- TeamDao.addUserRole(dbUser, dbUser.id, insertedTeam.id, userRole)
-            updatedUserGroupRoles <- TeamDao.setUserRole(dbUser, dbUser.id, insertedTeam.id, userRole)
-          } yield { (originalUserGroupRole, updatedUserGroupRoles ) }
-
-          val (dbOldUGR, dbNewUGRs) = setPlatformRoleIO.transact(xa).unsafeRunSync
-
-          assert(dbNewUGRs.filter((ugr) => ugr.isActive == true).size == 1,
-                 "; Updated UGRs should have one set to active")
-          assert(dbNewUGRs.filter((ugr) => ugr.isActive == false).size == 1,
-                 "; Updated UGRs should have one set to inactive")
-          assert(dbNewUGRs.filter((ugr) => ugr.id == dbOldUGR.id && ugr.isActive == false).size == 1,
-                 "; Old UGR should be set to inactive")
-          assert(dbNewUGRs.filter((ugr) => ugr.id != dbOldUGR.id && ugr.isActive == true).size == 1,
-                 "; New UGR should be set to active")
-          assert(dbNewUGRs.size == 2, "; Update should have old and new UGRs")
-          true
-        }
-      }
-    }
-  }
-
   test("deactivate a user's roles") {
     check {
       forAll{
@@ -259,7 +227,7 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
             orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
             (org, dbUser) = orgAndUser
             insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
-            originalUserGroupRole <- TeamDao.addUserRole(dbUser, dbUser.id, insertedTeam.id, userRole)
+            originalUserGroupRole <- TeamDao.addUserRole(org.platformId, dbUser, dbUser.id, insertedTeam.id, userRole)
             updatedUserGroupRoles <- TeamDao.deactivateUserRoles(dbUser, dbUser.id, insertedTeam.id)
           } yield { (originalUserGroupRole, updatedUserGroupRoles ) }
 
@@ -288,12 +256,12 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
             _ <- UserGroupRoleDao.create(
               UserGroupRole.Create(
                 dbUser.id, GroupType.Team, team1.id, groupRole
-              ).toUserGroupRole(dbUser)
+              ).toUserGroupRole(dbUser, MembershipStatus.Approved)
             )
             _ <- UserGroupRoleDao.create(
               UserGroupRole.Create(
                 dbUser.id, GroupType.Team, team2.id, groupRole
-              ).toUserGroupRole(dbUser)
+              ).toUserGroupRole(dbUser, MembershipStatus.Approved)
             )
             listedTeams <- TeamDao.teamsForUser(dbUser)
           } yield { (List(team1, team2), listedTeams) }

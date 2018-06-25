@@ -18,7 +18,9 @@ import cats.effect.IO
 import geotrellis.slick.Projected
 import geotrellis.vector._
 
-trait Filterables extends RFMeta {
+import com.typesafe.scalalogging.LazyLogging
+
+trait Filterables extends RFMeta with LazyLogging {
 
   implicit val aoiQueryParamsFilter = Filterable[Any, AoiQueryParameters] { qp: AoiQueryParameters =>
       Filters.userQP(qp.userParams) ++
@@ -108,7 +110,7 @@ trait Filterables extends RFMeta {
           case (Some(bboxPolygons), _) => {
             val fragments = bboxPolygons.map(bbox =>
               fr"ST_Intersects(data_footprint, ${bbox})")
-            Some(Fragments.and(fragments: _*))
+            Some(fr"(" ++ Fragments.or(fragments: _*) ++ fr")")
           }
           case _ => None
         }
@@ -128,11 +130,13 @@ trait Filterables extends RFMeta {
 
   implicit val combinedToolRunQueryParameters =
     Filterable[Any, CombinedToolRunQueryParameters] { combinedToolRunParams: CombinedToolRunQueryParameters =>
-      Filters.timestampQP(combinedToolRunParams.timestampParams) ++ List(
-        combinedToolRunParams.toolRunParams.createdBy.map({createdBy => fr"created_by = ${createdBy}"}),
-        combinedToolRunParams.toolRunParams.projectId.map({projectId => fr"project_id = ${projectId}"}),
-        combinedToolRunParams.toolRunParams.toolId.map({toolId => fr"tool_id = ${toolId}"})
-      )
+      Filters.userQP(combinedToolRunParams.userParams) ++
+        Filters.timestampQP(combinedToolRunParams.timestampParams) ++
+        List(
+          combinedToolRunParams.toolRunParams.createdBy.map({createdBy => fr"created_by = ${createdBy}"}),
+          combinedToolRunParams.toolRunParams.projectId.map({projectId => fr"project_id = ${projectId}"}),
+          combinedToolRunParams.toolRunParams.toolId.map({toolId => fr"tool_id = ${toolId}"})
+        )
     }
 
   implicit val fragmentFilter = Filterable[Any, Fragment] { fragment: Fragment => List(Some(fragment)) }
@@ -149,7 +153,8 @@ trait Filterables extends RFMeta {
   }}
 
   implicit val datasourceQueryparamsFilter = Filterable[Any, DatasourceQueryParameters] { dsParams: DatasourceQueryParameters =>
-    Filters.searchQP(dsParams.searchParams, List("name"))
+    Filters.searchQP(dsParams.searchParams, List("name")) ++
+      Filters.userQP(dsParams.userParams)
   }
 
   implicit val uploadQueryParameters = Filterable[Any, UploadQueryParameters] {uploadParams: UploadQueryParameters =>
@@ -208,6 +213,14 @@ trait Filterables extends RFMeta {
     Filters.searchQP(params.searchParams, List("name")) ++
     Filters.activationQP(params.activationParams) ++
     Filters.platformIdQP(params.platformIdParams)
+  }
+
+  implicit val orgSearchQueryParamsFilter = Filterable[Organization, SearchQueryParameters] { params: SearchQueryParameters =>
+    Filters.searchQP(params, List("name"))
+  }
+
+  implicit val userSearchQueryParamsFilter = Filterable[User, SearchQueryParameters] { params: SearchQueryParameters =>
+    Filters.searchQP(params, List("name", "email"))
   }
 
   implicit def projectedGeometryFilter = Filterable[Any, Projected[Geometry]] {

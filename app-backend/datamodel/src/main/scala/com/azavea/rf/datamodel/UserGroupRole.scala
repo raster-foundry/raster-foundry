@@ -18,7 +18,8 @@ case class UserGroupRole(
   userId: String,
   groupType: GroupType,
   groupId: UUID,
-  groupRole: GroupRole
+  groupRole: GroupRole,
+  membershipStatus: MembershipStatus
 )
 
 object UserGroupRole {
@@ -44,7 +45,7 @@ object UserGroupRole {
     groupId: UUID,
     groupRole: GroupRole
   ) {
-    def toUserGroupRole(creator: User): UserGroupRole = {
+    def toUserGroupRole(creator: User, membershipStatus: MembershipStatus): UserGroupRole = {
       val now = new Timestamp((new java.util.Date()).getTime())
       UserGroupRole(
         UUID.randomUUID(),
@@ -56,7 +57,8 @@ object UserGroupRole {
         userId, // user that is being given the group role
         groupType,
         groupId,
-        groupRole
+        groupRole,
+        membershipStatus
       )
     }
   }

@@ -1,6 +1,7 @@
 package com.azavea.rf.api.platform
 
-import com.azavea.rf.common.{Authentication, UserErrorHandler, CommonHandlers}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{UserErrorHandler, CommonHandlers}
 import com.azavea.rf.database.{PlatformDao, OrganizationDao, TeamDao, UserDao, UserGroupRoleDao}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.filter.Filterables._
@@ -10,6 +11,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import cats.effect.IO
 import cats.implicits._
+import cats.syntax._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
@@ -80,11 +82,6 @@ trait PlatformRoutes extends Authentication
                 listPlatformMembers(platformId)
               }
             }
-          } ~
-          post {
-            traceName("platforms-member-add") {
-              addUserToPlatform(platformId)
-            }
           }
         }
       } ~
@@ -96,7 +93,7 @@ trait PlatformRoutes extends Authentication
           ) {
             get {
               traceName("platforms-organizations-list") {
-                listOrganizations(platformId)
+                listPlatformOrganizations(platformId)
               }
             } ~
             post {
@@ -285,7 +282,7 @@ trait PlatformRoutes extends Authentication
 
   def listPlatformMembers(platformId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
+      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
     } {
       (withPagination & searchParams) { (page, searchParams) =>
         complete {
@@ -295,38 +292,28 @@ trait PlatformRoutes extends Authentication
     }
   }
 
-  def addUserToPlatform(platformId: UUID): Route = authenticate { user =>
+  def listPlatformOrganizations(platformId: UUID): Route = authenticate { user =>
     authorizeAsync {
       PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
     } {
-      entity(as[UserGroupRole.UserRole]) { ur =>
+      (withPagination & searchParams) { (page, search) =>
         complete {
-          PlatformDao.setUserRole(user, ur.userId, platformId, ur.groupRole).transact(xa).unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def listOrganizations(platformId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
-    } {
-      withPagination { page =>
-        complete {
-          OrganizationDao.query.filter(fr"platform_id = ${platformId}").page(page).transact(xa).unsafeToFuture
+          OrganizationDao.listPlatformOrganizations(page, search, platformId, user)
+            .transact(xa).unsafeToFuture
         }
       }
     }
   }
 
   def createOrganization(platformId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
-    } {
-      entity(as[Organization.Create]) { orgToCreate =>
-        completeOrFail {
-          OrganizationDao.create(orgToCreate.toOrganization).transact(xa).unsafeToFuture
-        }
+
+    entity(as[Organization.Create]) { orgToCreate =>
+      completeOrFail {
+        val createdOrg = for {
+          isAdmin <- PlatformDao.userIsAdmin(user, platformId)
+          org <- OrganizationDao.create(orgToCreate.toOrganization(isAdmin))
+        } yield org
+        createdOrg.transact(xa).unsafeToFuture
       }
     }
   }
@@ -379,12 +366,22 @@ trait PlatformRoutes extends Authentication
   }
 
   def addUserToOrganization(platformId: UUID, orgId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
-    } {
-      entity(as[UserGroupRole.UserRole]) { ur =>
+    entity(as[UserGroupRole.UserRole]) { ur =>
+      authorizeAsync {
+        val authCheck = (
+          OrganizationDao.userIsAdmin(user, orgId),
+          PlatformDao.userIsMember(user, platformId),
+          (user.id == ur.userId).pure[ConnectionIO]
+        ).tupled.map(
+          {
+            case (true, _, _) | (_, true, true) => true
+            case _ => false
+          }
+        )
+        authCheck.transact(xa).unsafeToFuture
+      } {
         complete {
-          OrganizationDao.setUserOrganization(user, ur.userId, orgId, ur.groupRole)
+          OrganizationDao.addUserRole(platformId, user, ur.userId, orgId, ur.groupRole)
             .transact(xa).unsafeToFuture
         }
       }
@@ -472,12 +469,22 @@ trait PlatformRoutes extends Authentication
   }
 
   def addUserToTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
-    } {
-      entity(as[UserGroupRole.UserRole]) { ur =>
+    entity(as[UserGroupRole.UserRole]) { ur =>
+      authorizeAsync {
+        val authCheck = (
+          TeamDao.userIsAdmin(user, teamId),
+          PlatformDao.userIsMember(user, platformId),
+          (user.id == ur.userId).pure[ConnectionIO]
+        ).tupled.map(
+          {
+            case (true, _, _) | (_, true, true) => true
+            case _ => false
+          }
+        )
+        authCheck.transact(xa).unsafeToFuture
+      } {
         complete {
-          TeamDao.setUserRole(user, ur.userId, teamId, ur.groupRole).transact(xa).unsafeToFuture
+          TeamDao.addUserRole(platformId, user, ur.userId, teamId, ur.groupRole).transact(xa).unsafeToFuture
         }
       }
     }

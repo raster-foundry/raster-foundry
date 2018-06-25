@@ -1,0 +1,28 @@
+<div class="row content stack-sm">
+  <div class="column-8">
+    <rf-call-to-action-item
+      title="You haven't created any projects yet"
+      class="panel panel-off-white"
+      ng-if="!$ctrl.loading && !$ctrl.pagination.count">
+      <p class="pb-25">
+        Any projects you create will be visible here.
+      </p>
+    </rf-call-to-action-item>
+    <div ng-if="!$ctrl.loading && $ctrl.projects.length" class="row stack-xs">
+      <div class="column-6 flex-display"
+           ng-repeat="project in $ctrl.projects"
+      >
+        <rf-project-item
+            class="panel panel-off-white project-item"
+            project="project">
+        </rf-project-item>
+      </div>
+    </div>
+  </div>
+  <div class="column spacer"></div>
+  <div class="column-3">
+    <rf-sidebar-organization-list paginated-response="{ 'count': $ctrl.organizations.length, 'results': $ctrl.organizations }" sref="user.organizations"></rf-sidebar-organization-list>
+    <rf-sidebar-team-list paginated-response="{ 'count': $ctrl.teams.length, 'results': $ctrl.teams }" sref="user.teams"></rf-sidebar-team-list>
+  </div>
+  <div class="column-1"></div>
+</div>

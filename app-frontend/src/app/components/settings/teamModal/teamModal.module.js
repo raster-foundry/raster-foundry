@@ -13,8 +13,22 @@ const TeamModalComponent = {
 };
 
 class TeamModalController {
-    constructor() {
+    constructor($element, $timeout) {
+        'ngInject';
+        this.$element = $element;
+        this.$timeout = $timeout;
         this.permissionDenied = this.resolve.permissionDenied;
+    }
+
+    $postLink() {
+        this.claimFocus();
+    }
+
+    claimFocus(interval = 0) {
+        this.$timeout(() => {
+            const el = $(this.$element[0]).find('input').get(0);
+            el.focus();
+        }, interval);
     }
 
     onAdd() {

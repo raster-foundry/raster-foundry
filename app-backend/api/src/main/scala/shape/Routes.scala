@@ -12,6 +12,7 @@ import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.syntax._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.Implicits._
@@ -140,7 +141,12 @@ trait ShapeRoutes extends Authentication
     (withPagination & shapeQueryParams) { (page: PageRequest, queryParams: ShapeQueryParameters) =>
       complete {
         ShapeDao
-          .authQuery(user, ObjectType.Shape)
+          .authQuery(
+            user,
+            ObjectType.Shape,
+            queryParams.ownershipTypeParams.ownershipType,
+            queryParams.groupQueryParameters.groupType,
+            queryParams.groupQueryParameters.groupId)
           .filter(queryParams)
           .page(page)
           .transact(xa).unsafeToFuture().map { p => {

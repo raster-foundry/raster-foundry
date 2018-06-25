@@ -4,7 +4,8 @@ import _ from 'lodash';
 class TeamUsersController {
     constructor(
       $scope,
-      teamService, modalService, authService
+      teamService, modalService, authService,
+      platform, organization, team
     ) {
         'ngInject';
         this.$scope = $scope;
@@ -12,45 +13,32 @@ class TeamUsersController {
         this.teamService = teamService;
         this.modalService = modalService;
         this.authService = authService;
-
-        this.fetching = true;
+        this.platform = platform;
+        this.organization = organization;
+        this.team = team;
+        this.searchTerm = false;
     }
 
     $onInit() {
-        this.$scope.$parent.$ctrl.teamPromise.then(({team, organization}) => {
-            this.team = team;
-            this.organization = organization;
-            this.platformId = organization.platformId;
+        this.platformId = this.organization.platformId;
 
-            this.debouncedSearch = _.debounce(
-                this.onSearch.bind(this),
-                500,
-                {leading: false, trailing: true}
-            );
+        this.debouncedSearch = _.debounce(
+            this.onSearch.bind(this),
+            500,
+            {leading: false, trailing: true}
+        );
 
-            this.getUserAndUgrs().then(() => {
-                this.fetchUsers(1, '');
-            });
-        });
-    }
+        this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
+            this.platform.id,
+            this.organization.id,
+            this.team.id
+        ]);
 
-    getUserAndUgrs() {
-        this.authService.getCurrentUser().then(resp => {
-            this.currentUser = resp;
-        });
-        return this.authService.fetchUserRoles().then(resp => {
-            this.currentTeamUgr = resp.filter(ugr => ugr.groupId === this.team.id)[0];
-            this.currentOrgUgr = resp.filter(ugr => ugr.groupId === this.organization.id)[0];
-            this.currentPlatUgr = resp.filter(ugr => ugr.groupId === this.platformId)[0];
-            this.isAdmin =
-                this.matchUgrRole(this.currentPlatUgr) ||
-                this.matchUgrRole(this.currentOrgUgr) ||
-                this.matchUgrRole(this.currentTeamUgr);
-        });
+        this.fetchUsers(1, '');
     }
 
     updateUserGroupRole(user) {
-        this.teamService.setUserRole(
+        return this.teamService.setUserRole(
             this.organization.platformId,
             this.organization.id,
             this.team.id,
@@ -58,10 +46,6 @@ class TeamUsersController {
         ).catch(() => {
             this.fetchUsers(this.pagination.currentPage, this.search);
         });
-    }
-
-    matchUgrRole(urg, role = 'ADMIN') {
-        return urg && urg.groupRole === role;
     }
 
     onSearch(search) {
@@ -83,6 +67,7 @@ class TeamUsersController {
 
     fetchUsers(page = 1, search) {
         this.fetching = true;
+        this.searchTerm = search;
         this.teamService.getMembers(
             this.platformId,
             this.organization.id,
@@ -94,32 +79,57 @@ class TeamUsersController {
             this.updatePagination(response);
             this.lastUserResult = response;
             this.users = response.results;
-
-            this.users.forEach(user => Object.assign(user, {
-                options: {
-                    items: this.itemsForUser(user)
-                },
-                showOptions: user.isActive && (user.isSuperuser || this.isAdmin)
-            }));
+            this.buildOptions();
         });
+    }
+
+    buildOptions() {
+        this.users.forEach(user => Object.assign(user, {
+            options: {
+                items: this.itemsForUser(user)
+            },
+            showOptions: this.isEffectiveAdmin
+        }));
     }
 
     itemsForUser(user) {
         /* eslint-disable */
-        return [
-            // {
-            //     label: 'Edit',
-            //     callback: () => {
-            //         console.log('edit callback for user:', user);
-            //     }
-            // },
-            {
-                label: 'Remove',
+        let options = [];
+
+        if (user.groupRole === 'ADMIN') {
+            options.push({
+                label: 'Revoke admin role',
                 callback: () => {
-                    this.removeUser(user);
+                    this.updateUserGroupRole(Object.assign(user, {
+                        groupRole: 'MEMBER'
+                    })).then(() => {
+                        this.buildOptions();
+                    });
                 }
+            });
+        } else {
+            options.push({
+                label: 'Grant admin role',
+                callback: () => {
+                    this.updateUserGroupRole(Object.assign(user, {
+                        groupRole: 'ADMIN'
+                    })).then(() => {
+                        this.buildOptions();
+                    });
+                }
+            });
+        }
+
+        options = options.concat([{
+            classes: 'divider'
+        },{
+            label: 'Remove',
+            callback: () => {
+                this.removeUser(user);
             }
-        ];
+        }]);
+
+        return options;
         /* eslint-enable */
     }
 
@@ -161,6 +171,7 @@ class TeamUsersController {
 }
 
 const TeamUsersModule = angular.module('pages.admin.team.users', []);
+
 TeamUsersModule.controller('AdminTeamUsersController', TeamUsersController);
 
 export default TeamUsersModule;

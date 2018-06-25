@@ -41,7 +41,42 @@
      <span class="error color-danger" ng-show="emailSettings.smtp.$error.required">required</span>
     </div>
     <div class="form-group">
-      <label>Subscriptions</label>
+      <label for="port">SMTP Port</label>
+      <input id="port"
+             type="number"
+             step="1"
+             class="form-control"
+             name="port"
+             ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailSmtpPort ?
+               $ctrl.platformBuffer.publicSettings.emailSmtpPort : 465}}"
+             ng-model="$ctrl.platformBuffer.publicSettings.emailSmtpPort"
+             required>
+     <span class="error color-danger" ng-show="emailSettings.port.$error.required">required</span>
+    </div>
+    <div class="form-group">
+      <div class="label">SMTP Encryption Method</div>
+        <rf-toggle radio="true"
+                   value="$ctrl.platformBuffer.publicSettings.emailSmtpEncryption === 'ssl'"
+                   on-change="$ctrl.setEncryptionMethod('ssl')"
+                   class="encryption-toggle">
+        <span>SSL</span>
+        </rf-toggle>
+        <rf-toggle radio="true"
+                   value="$ctrl.platformBuffer.publicSettings.emailSmtpEncryption === 'tls'"
+                   on-change="$ctrl.setEncryptionMethod('tls')"
+                   class="encryption-toggle">
+        <span>TLS</span>
+        </rf-toggle>
+        <rf-toggle radio="true"
+                   value="$ctrl.platformBuffer.publicSettings.emailSmtpEncryption === 'starttls'"
+                   on-change="$ctrl.setEncryptionMethod('starttls')"
+                   class="encryption-toggle">
+        <span>STARTTLS</span>
+        </rf-toggle>
+     <span class="error color-danger" ng-show="emailSettings.port.$error.required">required</span>
+    </div>
+    <div class="form-group">
+      <div class="label">Subscriptions</div>
       <rf-toggle value="$ctrl.platformBuffer.publicSettings.emailIngestNotification"
                  on-change="$ctrl.onToggleChange('ingest')"
                  class="subscription-toggle">
@@ -50,7 +85,12 @@
       <rf-toggle value="$ctrl.platformBuffer.publicSettings.emailAoiNotification"
                  on-change="$ctrl.onToggleChange('aoi')"
                  class="subscription-toggle">
-        <span class="subscription-selection">AOI Update</span>
+        <span>AOI Update</span>
+      </rf-toggle>
+      <rf-toggle value="$ctrl.platformBuffer.publicSettings.emailExportNotification"
+                 on-change="$ctrl.onToggleChange('export')"
+                 class="subscription-toggle">
+        <span>Scene Export Status</span>
       </rf-toggle>
       <button type="button"
               class="btn btn-primary pull-right"

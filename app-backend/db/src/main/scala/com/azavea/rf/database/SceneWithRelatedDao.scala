@@ -40,14 +40,21 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     }
   }
 
-  def listAuthorizedScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = for {
+  def listAuthorizedScenes(pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User, ownershipTypeO: Option[String] = None,
+    groupTypeO: Option[GroupType] = None, groupIdO: Option[UUID] = None): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = for {
     shapeO <- sceneParams.sceneParams.shape match {
       case Some(shpId) => ShapeDao.getShapeById(shpId)
       case _ => None.pure[ConnectionIO]
     }
     sceneSearchBuilder = {
       SceneDao
-        .authViewQuery(user, ObjectType.Scene)
+        .authViewQuery(
+          user,
+          ObjectType.Scene,
+          sceneParams.ownershipTypeParams.ownershipType,
+          sceneParams.groupQueryParameters.groupType,
+          sceneParams.groupQueryParameters.groupId
+        )
         .filter(shapeO map { _.geometry })
         .filter(sceneParams)
     }

@@ -1,79 +1,72 @@
-<ui-view>
-  <div class="admin-users-content container column-stretch">
-    <div class="admin-users-actions">
-      <div class="actions-right">
-        <button type="button" class="btn btn-primary"
-                ng-click="$ctrl.newOrgModal()"
-                ng-disabled="$ctrl.fetching">
-          New Organization
-        </button>
-      </div>
+<div class="admin-list-content column-stretch">
+  <div class="admin-list-actions">
+    <div class="actions-right">
+      <button type="button" class="btn btn-primary"
+              ng-if="$ctrl.isEffectiveAdmin"
+              ng-click="$ctrl.newOrgModal()"
+              ng-disabled="$ctrl.fetching">
+        New Organization
+      </button>
     </div>
-    <table class="admin-table admin-platform-org-table" ng-if="!$ctrl.fetching">
-      <tbody>
-        <tr ng-repeat="organization in $ctrl.organizations track by $index">
-          <td class="name">
-              <div class="avatar user-avatar image-placeholder" ng-if="!organization.logoUri"></div>
-              <div ng-if="organization.logoUri">
-                <img class="avatar user-avatar" ng-src="{{organization.logoUri}}">
-              </div>
-            <div ng-if="$ctrl.editOrgId !== organization.id">
-              <a class="font-600"
-                 ui-sref="admin.organization.users({organizationId: organization.id})">
-                 {{organization.name}}</a>
-              <button class="btn btn-tiny btn-admin-name-edit-small"
-                      type="button"
-                      ng-click="$ctrl.toggleOrgNameEdit(organization.id, true)"
-                      ng-disabled="$ctrl.isEditOrgName"
-                      ng-if="$ctrl.userOrgRole[organization.id]">
-                <span class="icon-pencil"></span>
-              </button>
+  </div>
+  <table class="admin-table admin-platform-org-table" ng-if="!$ctrl.fetching">
+    <tbody>
+      <tr ng-repeat="organization in $ctrl.organizations track by $index">
+        <td class="name">
+            <div class="avatar user-avatar image-placeholder" ng-if="!organization.logoUri"></div>
+            <div ng-if="organization.logoUri">
+              <img class="avatar user-avatar" ng-src="{{organization.logoUri}}">
             </div>
-            <div ng-if="$ctrl.editOrgId === organization.id">
-              <form class="inline-form" ng-submit="$ctrl.finishOrgNameEdit(organization)">
-                <div class="form-group all-in-one form-admin-name-edit">
-                  <input id="name"
-                         type="text"
-                         class="form-control"
-                         ng-init="$ctrl.nameBuffer = $ctrl.getInitialNameBuffer(organization.id)"
-                         ng-model="$ctrl.nameBuffer">
-                  <button class="btn btn-link flex-last node-header-eidt-group">
-                    <span class="icon-save node-label-name"></span>
-                  </button>
-                  <button type="button" class="btn btn-link node-header-eidt-group" ng-click="$ctrl.toggleOrgNameEdit(organization.id, false)">
-                    <span class="icon-cancel node-label-name"></span>
-                  </button>
-                </div>
-              </form>
-            </div>
-          </td>
-          <td class="users">
-            <div class="user-group-avatars">
-              <div class="avatar user-avatar image-placeholder"
-                   ng-if="!user.profileImageUri"
-                   ng-repeat-start="user in organization.fetchedUsers.results track by $index | limitTo : 5">
+          <div ng-if="$ctrl.editOrgId !== organization.id">
+            <a class="font-600"
+               ui-sref="admin.organization({organizationId: organization.id})">
+               {{organization.name}}
+            </a>
+          </div>
+          <div ng-if="$ctrl.editOrgId === organization.id">
+            <form class="inline-form" ng-submit="$ctrl.finishOrgNameEdit(organization)">
+              <div class="form-group all-in-one form-admin-name-edit">
+                <input id="name"
+                       type="text"
+                       class="form-control"
+                       ng-init="$ctrl.nameBuffer = $ctrl.getInitialNameBuffer(organization.id)"
+                       ng-model="$ctrl.nameBuffer">
+                <button class="btn btn-link flex-last node-header-eidt-group">
+                  <span class="icon-save node-label-name"></span>
+                </button>
+                <button type="button" class="btn btn-link node-header-eidt-group" ng-click="$ctrl.toggleOrgNameEdit(organization.id, false)">
+                  <span class="icon-cancel node-label-name"></span>
+                </button>
               </div>
-              <div class="user-avatar"
-                   ng-if="user.profileImageUri"
-                   ng-repeat-end>
-                <img class="avatar"
-                     ng-src="{{user.profileImageUri}}"
-                     ng-attr-title="{{user.name || user.email || user.id}}">
-              </div>
+            </form>
+          </div>
+        </td>
+        <td class="users">
+          <div class="user-group-avatars">
+            <div class="avatar user-avatar image-placeholder"
+                 ng-if="!user.profileImageUri"
+                 ng-repeat-start="user in organization.fetchedUsers.results track by $index | limitTo : 5">
             </div>
-            &nbsp;
-            <ng-pluralize count="organization.fetchedUsers.count"
-                          when="{'0': 'No members',
-                                 '1': '1 member',
-                                 'other': '{} members'}"
-
+            <div class="user-avatar"
+                 ng-if="user.profileImageUri"
+                 ng-repeat-end>
+              <img class="avatar"
+                   ng-src="{{user.profileImageUri}}"
+                   ng-attr-title="{{user.name || user.email || user.id}}">
+            </div>
+          </div>
+          &nbsp;
+          <ng-pluralize count="organization.fetchedUsers.count"
+                        when="{'0': 'No members',
+                               '1': '1 member',
+                               'other': '{} members'}"
             >
             </ng-pluralize>
           </td>
-          <td>{{ organization.isActive ? "Active" : "Deactivated"}}</td>
+          <td>{{ organization.status | humanStatus }}</td>
           <td class="actions" ng-if="organization.showOptions">
             <rf-dropdown data-options="organization.options">
-              <span class="icon-edit"></span>
+              <span class="icon-caret-down h4"></span>
             </rf-dropdown>
           </td>
         </tr>
@@ -83,20 +76,19 @@
     <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
   </div>
 
-      <!-- Pagination -->
-      <div class="list-group text-center"
-           ng-show="!$ctrl.loading && $ctrl.lastOrgResult && $ctrl.pagination.show && !$ctrl.errorMsg">
-        <ul uib-pagination
-            items-per-page="$ctrl.lastOrgResult.pageSize"
-            total-items="$ctrl.pagination.count"
-            ng-model="$ctrl.currentPage"
-            max-size="4"
-            rotate="true"
-            boundary-link-numbers="true"
-            force-ellipses="true"
-            ng-change="$ctrl.fetchOrganizations($ctrl.currentPage, $ctrl.search)">
-        </ul>
-      </div>
-      <!-- Pagination -->
+  <!-- Pagination -->
+  <div class="list-group text-center"
+       ng-show="!$ctrl.loading && $ctrl.lastOrgResult && $ctrl.pagination.show && !$ctrl.errorMsg">
+    <ul uib-pagination
+        items-per-page="$ctrl.lastOrgResult.pageSize"
+        total-items="$ctrl.pagination.count"
+        ng-model="$ctrl.currentPage"
+        max-size="4"
+        rotate="true"
+        boundary-link-numbers="true"
+        force-ellipses="true"
+        ng-change="$ctrl.fetchOrganizations($ctrl.currentPage, $ctrl.search)">
+    </ul>
   </div>
-</ui-view>
+  <!-- Pagination -->
+</div>

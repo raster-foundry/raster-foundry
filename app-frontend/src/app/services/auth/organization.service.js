@@ -119,12 +119,12 @@ export default (app) => {
 
         deactivate(platformId, organizationId) {
             return this.PlatformOrganization
-                .setOrganizationStatus({platformId, organizationId}, {isActive: false}).$promise;
+                .setOrganizationStatus({platformId, organizationId}, {status: 'INACTIVE'}).$promise;
         }
 
         activate(platformId, organizationId) {
             return this.PlatformOrganization
-                .setOrganizationStatus({platformId, organizationId}, {isActive: true}).$promise;
+                .setOrganizationStatus({platformId, organizationId}, {status: 'ACTIVE'}).$promise;
         }
 
         addOrganizationLogo(organizationId, logoBase64) {

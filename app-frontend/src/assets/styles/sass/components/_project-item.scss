@@ -8,6 +8,8 @@
 
 .project-title {
   @extend .font-base;
+  display: flex;
+  align-items: center;
   font-size: 1.6rem;
   margin: 0;
   white-space: nowrap;
@@ -15,27 +17,32 @@
   max-width: 100%;
   text-overflow: ellipsis;
   padding-right: 8.5rem;
+  color: inherit;
+  transition: .5s ease opacity;
+  transition-delay: .25s;
 
-  &:after {
-    content: attr(data-title);
-    position: absolute;
-    top: 0;
-    left: 0;
-    padding: 1rem;
-    max-width: 100%;
-    white-space: normal;
-    background: $off-white;
-    z-index: 1;
-    visibility: hidden;
-    opacity: 0;
-  }
+  // &:after {
+  //   content: attr(data-title);
+  //   position: absolute;
+  //   top: 0;
+  //   left: 0;
+  //   padding: 1rem;
+  //   max-width: 100%;
+  //   white-space: normal;
+  //   background: $off-white;
+  //   z-index: 1;
+  //   visibility: hidden;
+  //   opacity: 0;
+  // }
 
-  &:hover:after {
-    visibility: visible;
-    opacity: 1;
-    transition: .5s ease opacity;
-    transition-delay: .5s;
-  }
+  // &:hover {
+  //   visibility: hidden;
+  // }
+
+  // &:hover:after {
+  //   visibility: visible;
+  //   opacity: 1;
+  // }
 }
 
 .project-status {
@@ -76,4 +83,8 @@
   margin: 1rem 0 0;
   border-radius: $border-radius-base;
   overflow: hidden;
+}
+
+.project-ownership {
+  margin: 0.5rem 0 0;
 }

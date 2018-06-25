@@ -16,7 +16,8 @@ import cats.implicits._
 import com.azavea.rf.api.scene._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.api.utils.Config
-import com.azavea.rf.common.{Authentication, CommonHandlers, RollbarNotifier, UserErrorHandler}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{CommonHandlers, RollbarNotifier, UserErrorHandler}
 import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.common.S3._
 import com.azavea.rf.database._
@@ -294,9 +295,15 @@ trait ProjectRoutes extends Authentication
     (withPagination & projectQueryParameters) { (page, projectQueryParameters) =>
       complete {
         ProjectDao
-          .authQuery(user, ObjectType.Project)
+          .authQuery(
+            user, 
+            ObjectType.Project,
+            projectQueryParameters.ownershipTypeParams.ownershipType,
+            projectQueryParameters.groupQueryParameters.groupType,
+            projectQueryParameters.groupQueryParameters.groupId)
           .filter(projectQueryParameters)
           .page(page)
+          .flatMap(ProjectDao.projectsToProjectsWithRelated)
           .transact(xa).unsafeToFuture
       }
     }

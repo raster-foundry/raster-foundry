@@ -1,6 +1,7 @@
 package com.azavea.rf.api.organization
 
-import com.azavea.rf.common.{Authentication, CommonHandlers, UserErrorHandler}
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.OrganizationDao
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
@@ -41,6 +42,10 @@ trait OrganizationRoutes extends Authentication
             post { addOrganizationLogo(orgId) }
           }
         }
+    } ~ pathPrefix("search") {
+      pathEndOrSingleSlash {
+        get { searchOrganizations() }
+      }
     }
   }
 
@@ -48,6 +53,14 @@ trait OrganizationRoutes extends Authentication
     rejectEmptyResponse {
       complete {
         OrganizationDao.query.filter(orgId).selectOption.transact(xa).unsafeToFuture()
+      }
+    }
+  }
+
+  def searchOrganizations(): Route = authenticate { user =>
+    searchParams { (searchParams)  =>
+      complete {
+        OrganizationDao.searchOrganizations(user, searchParams).transact(xa).unsafeToFuture
       }
     }
   }

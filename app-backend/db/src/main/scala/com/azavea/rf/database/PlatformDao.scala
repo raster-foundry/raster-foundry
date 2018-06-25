@@ -42,8 +42,8 @@ object PlatformDao extends Dao[Platform] {
 
   def listMembers(platformId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
     UserGroupRoleDao.listUsersByGroup(GroupType.Platform, platformId, page, searchParams, actingUser) map {
-      (usersePage: PaginatedResponse[User.WithGroupRole]) => {
-         usersePage.copy(results = usersePage.results map { _.copy(email = "" ) })
+      (usersPage: PaginatedResponse[User.WithGroupRole]) => {
+         usersPage.copy(results = usersPage.results map { _.copy(email = "" ) })
       }
     }
 
@@ -105,7 +105,8 @@ object PlatformDao extends Dao[Platform] {
           ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
           ugr.group_id = ${platformId} AND
           ugr.is_active = true AND
-          p.is_active = true
+          p.is_active = true AND
+          membership_status = 'APPROVED'
       )
   """
 
@@ -119,7 +120,7 @@ object PlatformDao extends Dao[Platform] {
     val userGroupRoleCreate = UserGroupRole.Create(
       subjectId, GroupType.Platform, platformId, userRole
     )
-    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser))
+    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved))
   }
 
   def setUserRole(actingUser: User, subjectId: String, platformId: UUID, userRole: GroupRole):
@@ -181,29 +182,20 @@ object PlatformDao extends Dao[Platform] {
     ).query[PlatformWithUsersSceneProjects].to[List]
   }
 
-  def getPlatAndUsersBySceneOwnerId(sceneOwnerIdO: Option[String]): ConnectionIO[Option[PlatformWithSceneOwner]] = {
-    sceneOwnerIdO match {
-      case Some(sceneOwnerId) => {
-        val ownerId = "'" ++ sceneOwnerId ++ "'"
-        Fragment.const(
-          s"""
-            SELECT DISTINCT
-              plat.id AS plat_id, plat.name AS plat_name, u.id AS u_id, u.name AS u_name,
-              plat.public_settings AS pub_settings, plat.private_settings AS pri_settings,
-              u.email AS email, u.email_notifications AS email_notifications
-            FROM users AS u
-              JOIN user_group_roles AS ugr
-              ON u.id = ugr.user_id
-              JOIN platforms AS plat
-              ON ugr.group_id = plat.id
-              JOIN projects AS prj
-              ON u.id = prj.owner
-              JOIN scenes_to_projects AS stp
-              ON prj.id = stp.project_id
-            WHERE u.id = ${ownerId}
-          """).query[PlatformWithSceneOwner].option
-      }
-      case _ => Option.empty.pure[ConnectionIO]
-    }
+  def getPlatAndUsersBySceneOwnerId(sceneOwnerId: String): ConnectionIO[PlatformWithSceneOwner] = {
+    val ownerId = "'" ++ sceneOwnerId ++ "'"
+    Fragment.const(
+      s"""
+        SELECT DISTINCT
+          plat.id AS plat_id, plat.name AS plat_name, u.id AS u_id, u.name AS u_name,
+          plat.public_settings AS pub_settings, plat.private_settings AS pri_settings,
+          u.email AS email, u.email_notifications AS email_notifications
+        FROM users AS u
+          JOIN user_group_roles AS ugr
+          ON u.id = ugr.user_id
+          JOIN platforms AS plat
+          ON ugr.group_id = plat.id
+        WHERE u.id = ${ownerId}
+      """).query[PlatformWithSceneOwner].unique
   }
 }

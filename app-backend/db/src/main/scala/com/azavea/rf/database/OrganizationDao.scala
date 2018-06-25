@@ -33,22 +33,25 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
 
   val selectF = sql"""
     SELECT
-      id, created_at, modified_at, name, platform_id, is_active,
-      dropbox_credential, planet_credential, logo_uri
+      id, created_at, modified_at, name, platform_id, status,
+      dropbox_credential, planet_credential, logo_uri, visibility
     FROM
   """ ++ tableF
 
-  def create(
-    org: Organization
-  ): ConnectionIO[Organization] =
-    (fr"INSERT INTO" ++ tableF ++ fr"""
-          (id, created_at, modified_at, name, platform_id, is_active)
+  def createUserGroupRole = UserGroupRoleDao.createWithGuard(userIsAdmin, GroupType.Organization) _
+
+  def create(org: Organization): ConnectionIO[Organization] = {
+
+    (fr"INSERT INTO" ++ tableF ++
+      fr"""
+          (id, created_at, modified_at, name, platform_id, status, visibility)
         VALUES
-          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId}, true)
+          (${org.id}, ${org.createdAt}, ${org.modifiedAt}, ${org.name}, ${org.platformId}, ${org.status}, ${org.visibility})
     """).update.withUniqueGeneratedKeys[Organization](
-      "id", "created_at", "modified_at", "name", "platform_id", "is_active",
-      "dropbox_credential", "planet_credential", "logo_uri"
+      "id", "created_at", "modified_at", "name", "platform_id", "status",
+      "dropbox_credential", "planet_credential", "logo_uri", "visibility"
     )
+  }
 
   def getOrganizationById(id: UUID): ConnectionIO[Option[Organization]] =
     query.filter(id).selectOption
@@ -57,7 +60,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     query.filter(id).select
 
   def createOrganization(newOrg: Organization.Create): ConnectionIO[Organization] =
-    create(newOrg.toOrganization)
+    create(newOrg.toOrganization(true))
 
   def update(org: Organization, id: UUID): ConnectionIO[Int] = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
@@ -144,7 +147,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
         group_type = ${GroupType.Organization.toString}::group_type AND
         group_role = ${GroupRole.Admin.toString}::group_role AND
         group_id = ${organizationId} AND
-        is_active = true
+        is_active = true AND
+        membership_status = 'APPROVED'
     ) OR (
       SELECT count(ugr.id) > 0
       FROM""" ++ PlatformDao.tableF ++ fr"""AS p
@@ -157,7 +161,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
         ugr.user_id = ${user.id} AND
         ugr.group_role = ${GroupRole.Admin.toString}::group_role AND
         ugr.group_type = ${GroupType.Platform.toString}::group_type AND
-        ugr.is_active = true
+        ugr.is_active = true AND
+        membership_status = 'APPROVED'
     )
   """
 
@@ -167,39 +172,12 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
   def getOrgPlatformId(organizationId: UUID): ConnectionIO[UUID] =
     unsafeGetOrganizationById(organizationId) map { _.platformId }
 
-  def addUserRole(actingUser: User, subjectId: String, organizationId: UUID, groupRole: GroupRole): ConnectionIO[UserGroupRole] = {
+  def addUserRole(platformId: UUID, actingUser: User, subjectId: String, organizationId: UUID, groupRole: GroupRole): ConnectionIO[UserGroupRole] = {
     val userGroupRoleCreate = UserGroupRole.Create(
       subjectId, GroupType.Organization, organizationId, groupRole
     )
-    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser))
-  }
 
-  def setUserRole(actingUser: User, subjectId: String, organizationId: UUID, groupRole: GroupRole):
-      ConnectionIO[List[UserGroupRole]] = {
-    for {
-      orgRoles <-
-        OrganizationDao
-          .deactivateUserRoles(
-            actingUser, subjectId, organizationId
-          ).flatMap(
-            (deactivatedRoles) => {
-              OrganizationDao.addUserRole(actingUser, subjectId, organizationId, groupRole)
-                .map((role) => deactivatedRoles ++ List(role))
-            }
-          )
-      platformId <- getOrgPlatformId(organizationId)
-      platformRoles <-
-        UserGroupRoleDao
-          .listUserGroupRoles(GroupType.Platform, platformId, subjectId)
-          .flatMap(
-            (roles: List[UserGroupRole]) => roles match {
-              case Nil =>
-                PlatformDao.setUserRole(actingUser, subjectId, platformId, GroupRole.Member)
-              case roles =>
-                List.empty[UserGroupRole].pure[ConnectionIO]
-            }
-          )
-    } yield (platformRoles ++ orgRoles)
+    createUserGroupRole(organizationId, actingUser, subjectId, userGroupRoleCreate, platformId)
   }
 
   def deactivateUserRoles(actingUser: User, subjectId: String, organizationId: UUID): ConnectionIO[List[UserGroupRole]] = {
@@ -207,22 +185,6 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
       subjectId, GroupType.Organization, organizationId
     )
     UserGroupRoleDao.deactivateUserGroupRoles(userGroup, actingUser)
-  }
-
-  def setUserOrganization(actingUser: User, subjectId: String, organizationId: UUID, groupRole: GroupRole): ConnectionIO[List[UserGroupRole]] = {
-    UserDao.getUserById(subjectId) flatMap {
-      case Some(subjectUser) =>
-        for {
-          oldOrgRoles <- UserGroupRoleDao.listByUserAndGroupType(subjectUser, GroupType.Organization)
-          // This is OK because we only expect there to be a single org role at a time
-          deactivatedOrgRoles <- oldOrgRoles.traverse(
-            (role) => {
-              OrganizationDao.deactivateUserRoles(actingUser, subjectUser.id, role.groupId)
-            })
-          newOrgRoles <- OrganizationDao.setUserRole(actingUser, subjectUser.id, organizationId, groupRole)
-        } yield (newOrgRoles ++ deactivatedOrgRoles.flatten)
-      case None => throw new IllegalArgumentException(s"User not in database: ${subjectId}")
-    }
   }
 
   def addLogo(logoBase64: String, orgID: UUID, dataBucket: String): ConnectionIO[Organization] = {
@@ -248,8 +210,16 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
        WHERE id = ${orgID}
      """).update.withUniqueGeneratedKeys[Organization](
        "id", "created_at", "modified_at", "name", "platform_id", "is_active",
-       "dropbox_credential", "planet_credential", "logo_uri"
+       "dropbox_credential", "planet_credential", "logo_uri", "visibility"
      )
+  }
+
+  def setVisibility(visibility: Visibility, organizationId: UUID): ConnectionIO[Int] = {
+    val updateTime = new Timestamp((new java.util.Date()).getTime)
+    (fr"UPDATE" ++ tableF ++ fr"""
+        modified_at = ${updateTime},
+        visibility = ${visibility}
+        """).update.run
   }
 
   def activateOrganization(actingUser: User, organizationId: UUID) = {
@@ -266,5 +236,70 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
        modified_at = now()
        where id = ${organizationId}
       """).update.run
+  }
+
+  /*
+   Filter to platforms that:
+   - user is a member of
+   - are public
+   - user is admin of the platform
+   */
+  def viewFilter(user: User): Dao.QueryBuilder[Organization] =
+    Dao.QueryBuilder[Organization](
+      user.isSuperuser match {
+        case true =>
+          selectF
+        case _ =>
+          (selectF ++ fr"""
+        JOIN (
+          -- user is member or admin of org
+          SELECT ugr1.group_id as org_id
+          FROM user_group_roles ugr1
+          WHERE ugr1.group_type = 'ORGANIZATION' AND ugr1.user_id = ${user.id}
+
+          UNION
+          -- if user is admin of platform
+          SELECT org.id AS org_id FROM user_group_roles ugr2
+          JOIN platforms ON ugr2.group_id = platforms.id
+          JOIN organizations org ON org.platform_id = platforms.id
+          WHERE ugr2.group_type = 'PLATFORM' AND ugr2.group_role = 'ADMIN' AND ugr2.user_id = ${user.id}
+
+          UNION
+
+          -- org is public and user is in same platform
+          SELECT org2.id AS org_id FROM""" ++ tableF ++ fr"""org2
+          JOIN (
+            SELECT p.id AS pid
+            FROM platforms p JOIN user_group_roles ugr3
+            ON ugr3.group_id = p.id
+            WHERE ugr3.user_id = ${user.id}
+          ) AS platformids ON org2.platform_id = platformids.pid
+          WHERE org2.visibility = 'PUBLIC'
+        ) AS org_ids ON """ ++ Fragment.const(s"${tableName}.id") ++ fr"= org_ids.org_id")
+      }, tableF, List.empty
+    )
+
+  def listPlatformOrganizations(pageRequest: PageRequest, searchParams: SearchQueryParameters, platformId: UUID, user: User): ConnectionIO[PaginatedResponse[Organization]] =  {
+    val organizationSearchBuilder = {
+      OrganizationDao.viewFilter(user)
+        .filter(fr"platform_id=${platformId}")
+        .filter(searchParams)
+    }
+    for {
+      organizations <- organizationSearchBuilder.list((pageRequest.offset * pageRequest.limit), pageRequest.limit)
+      count <- organizationSearchBuilder.countIO
+    } yield {
+      val hasPrevious = pageRequest.offset > 0
+      val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
+      PaginatedResponse[Organization](
+        count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, organizations
+      )
+    }
+  }
+
+  def searchOrganizations(user: User, searchParams: SearchQueryParameters): ConnectionIO[List[Organization]] = {
+    OrganizationDao.viewFilter(user)
+      .filter(searchParams)
+      .list(0, 5, fr"order by name")
   }
 }

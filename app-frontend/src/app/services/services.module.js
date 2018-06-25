@@ -70,6 +70,7 @@ require('./common/thumbnail.service')(shared);
 require('./common/decimal.filter')(shared);
 require('./common/modal.service')(shared);
 require('./common/url.filter')(shared);
+require('./common/orgStatus.filter')(shared);
 
 
 export default shared;

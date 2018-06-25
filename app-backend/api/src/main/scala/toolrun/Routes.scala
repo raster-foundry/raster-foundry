@@ -1,5 +1,6 @@
 package com.azavea.rf.api.toolrun
 
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common._
 import com.azavea.rf.common.ast._
 import com.azavea.rf.datamodel._
@@ -78,7 +79,12 @@ trait ToolRunRoutes extends Authentication
     (withPagination & toolRunQueryParameters) { (page, runParams) =>
       complete {
         ToolRunDao
-          .authQuery(user, ObjectType.Analysis)
+          .authQuery(
+            user,
+            ObjectType.Analysis,
+            runParams.ownershipTypeParams.ownershipType,
+            runParams.groupQueryParameters.groupType,
+            runParams.groupQueryParameters.groupId)
           .filter(runParams)
           .page(page)
           .transact(xa).unsafeToFuture

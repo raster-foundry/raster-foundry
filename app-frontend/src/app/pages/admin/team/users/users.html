@@ -1,10 +1,19 @@
-<div class="admin-users-content container column-stretch">
-  <div class="admin-users-actions" ng-if="$ctrl.users.length">
+<div class="admin-list-content column-stretch">
+  <div class="admin-list-actions" ng-if="$ctrl.users.length">
+    <div>
       <rf-search on-search="$ctrl.debouncedSearch(value)" placeholder="Search for users" auto-focus="true"></rf-search>
+      <rf-pagination-count
+        start-index="$ctrl.pagination.startingItem"
+        end-index="$ctrl.pagination.endingItem"
+        total="$ctrl.pagination.count"
+        item-name="users"
+        ng-if="!$ctrl.fetching && $ctrl.users.length && !$ctrl.searchTerm"
+      ></rf-pagination-count>
+    </div>
     <div class="actions-right">
       <button type="button" class="btn btn-primary"
               ng-click="$ctrl.addUser()" ng-disabled="$ctrl.fetching">
-        Add Users
+        Invite Users
       </button>
     </div>
   </div>
@@ -23,13 +32,14 @@
       Add Users
     </button>
   </rf-call-to-action-item>
+
   <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching && $ctrl.users.length">
     <tbody>
       <tr ng-repeat="user in $ctrl.users track by $index">
         <td class="username">
-          <div class="placeholder-avatar" ng-if="!user.profileImageUri"></div>
-          <div class="user-avatar" ng-if="user.profileImageUri">
-            <img class="avatar" ng-src="{{user.profileImageUri}}">
+          <div class="user-avatar" >
+            <div class="avatar image-placeholder" ng-if="!user.profileImageUri"></div>
+            <img class="avatar" ng-src="{{user.profileImageUri}}" ng-if="user.profileImageUri">
           </div>
           <div class="font-600">
             {{user.name || user.email || user.id}}
@@ -39,19 +49,11 @@
           {{user.email}}
         </td>
         <td class="roles titlecase">
-            <select class="form-control"
-                    ng-model="user.groupRole"
-                    ng-change="$ctrl.updateUserGroupRole(user)"
-                    ng-if="$ctrl.isAdmin"
-            >
-              <option value="ADMIN">Admin</option>
-              <option value="MEMBER">Member</option>
-            </select>
-            <span ng-if="!$ctrl.isAdmin">{{user.groupRole}}</span>
+            <span>{{user.groupRole}}</span>
         </td>
         <td class="actions">
           <rf-dropdown data-options="user.options" ng-if="user.showOptions">
-            <span class="icon-edit"></span>
+            <span class="icon-caret-down h4"></span>
           </rf-dropdown>
         </td>
       </tr>

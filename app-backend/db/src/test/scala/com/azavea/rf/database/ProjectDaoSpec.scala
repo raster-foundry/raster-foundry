@@ -122,7 +122,28 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
 
   // list projects
   test("list projects") {
-    ProjectDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
+    check {
+      forAll {
+        (user: User.Create, org: Organization.Create, project: Project.Create, pageRequest: PageRequest) => {
+          val projectsListIO = for {
+            orgAndUser <- insertUserAndOrg(user, org)
+            (dbOrg, dbUser) = orgAndUser
+            _ <- ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser)
+            listedProjects <- {
+              ProjectDao
+                .authQuery(dbUser, ObjectType.Project)
+                .filter(dbUser)
+                .page(pageRequest)
+                .flatMap(ProjectDao.projectsToProjectsWithRelated)
+            }
+          } yield { listedProjects }
+
+          val returnedThinUser = projectsListIO.transact(xa).unsafeRunSync.results.head.owner
+          assert(returnedThinUser.id == user.id, "Listed project's owner should be the same as the creating user")
+          true
+        }
+      }
+    }
   }
 
   // add scenes to a project

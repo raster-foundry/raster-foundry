@@ -31,6 +31,7 @@ export default class ProjectItemController {
         this.addProjectLayer();
         this.getProjectStatus();
         this.getThumbnailURL();
+        this.getProjectScenes();
     }
 
     getThumbnailURL() {
