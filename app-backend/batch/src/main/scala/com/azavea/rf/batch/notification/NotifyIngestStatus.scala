@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.LazyLogging
 import java.util.UUID
 
 import cats.effect.IO
+import cats.implicits._
 
 import scala.concurrent.Future
 import com.azavea.rf.batch.Job
@@ -18,6 +19,7 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import Fragments._
+import org.apache.commons.mail.Email
 import com.azavea.rf.database.util.RFTransactor
 
 case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) extends Job
@@ -32,7 +34,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
   }
 
   def createIngestEmailContentForConsumers(pU: PlatformWithUsersSceneProjects, scene: Scene, ingestStatus: String): (String, String, String) = {
-    val platformHost = pO.pubSettings.platformHost.getOrElse("app.rasterfoundry.com")
+    val platformHost = pU.pubSettings.platformHost.getOrElse("app.rasterfoundry.com")
     ingestStatus match {
       case status: String if status == "INGESTED" =>
         (
@@ -43,7 +45,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
             <p>The scene "${scene.name}" has been successfully ingested into your project: ${pU.projectName}! You can access
             this project <a href="https://${platformHost}/projects/edit/${pU.projectId}/scenes">here</a> or any past
             projects you've created at any time <a href="https://${platformHost}/projects/">here</a>.</p>
-            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.</p>
+            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailUser}.</p>
             <p>- The ${pU.platName} Team</p>
           </html>
           """,
@@ -52,7 +54,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           | You can access this project at here: https://${platformHost}/projects/edit/${pU.projectId}/scenes or
           | any past projects you've created at any time here: https://${platformHost}/projects/ . If you have
           | questions, support is available via in-app chat at ${platformHost} or less quickly via email to
-          | ${pO.pubSettings.emailUser}.
+          | ${pU.pubSettings.emailUser}.
           | - The ${pU.platName} Team
           """.trim.stripMargin
         )
@@ -65,7 +67,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
             <p>The scene "${scene.name}" in your project: ${pU.projectName} has failed to ingest. But you can access
             this project <a href="https://${platformHost}/projects/edit/${pU.projectId}/scenes">here</a> or any past
             projects you've created at any time <a href="https://${platformHost}/projects/">here</a>.</p>
-            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.</p>
+            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailUser}.</p>
             <p>- The ${pU.platName} Team</p>
           </html>
           """,
@@ -73,7 +75,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           | ${pU.uName}: The scene "${scene.name}" in your project: ${pU.projectName} has failed to ingest. But you can
           | access this project at here: https://${platformHost}/projects/edit/${pU.projectId}/scenes or
           | any past projects you've created at any time here: https://${platformHost}/projects/ . If you have
-          | questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.
+          | questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailUser}.
           | - The ${pU.platName} Team
           """.trim.stripMargin
         )
@@ -140,7 +142,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
             case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
                isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
               val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForConsumers(pU, scene, ingestStatus)
-              email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).send()
+              email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).map((configuredEmail: Email) => configuredEmail.send)
               logger.info(s"Notified project owner ${pU.uId}.")
             case _ => logger.warn(email.insufficientSettingsWarning(pU.platId.toString(), pU.uId))
           }
@@ -160,7 +162,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
             isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
             val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForOwner(pO, scene, ingestStatus)
-            email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).send()
+            email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified scene owner ${pO.uId}.")
           case _ => logger.warn(email.insufficientSettingsWarning(pO.platId.toString(), pO.uId))
         }
