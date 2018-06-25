@@ -20,6 +20,7 @@ import Fragments._
 import doobie.util.transactor.Transactor
 import com.azavea.rf.database.{ExportDao, UserGroupRoleDao, ProjectDao, UserDao, PlatformDao, ToolRunDao}
 import com.azavea.rf.database.Implicits._
+import org.apache.commons.mail.Email
 import com.azavea.rf.database.util.RFTransactor
 
 import scala.concurrent.duration._
@@ -36,22 +37,19 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
     export.copy(exportStatus = status)
 
   def exportEmailContent(status: String, user: User, platform: Platform, nameO: Option[String], id: UUID, exportType: String): (String, String, String) = {
-  // TODO: domain needs to be parameterized
+    val platformHost = platform.publicSettings.platformHost.getOrElse("app.rasterfoundry.com")
     val (subject, content): (String, String) = status match {
       case status: String if status == "EXPORTED" => ("is ready", "is ready! You")
       case status: String if status == "FAILED" => ("has failed", "has failed. But you")
     }
-    val targetName: String = nameO match {
-      case Some(name) => name
-      case _ => id.toString
-    }
+    val targetName: String = nameO.getOrElse(id.toString)
     val (targetLink, listLink): (String, String) = exportType match {
       case eType: String if eType == "project" => (
-        s"https://app.rasterfoundry.com/projects/edit/${id}/exports",
-        "https://app.rasterfoundry.com/projects/list")
+        s"https://${platformHost}/projects/edit/${id}/exports",
+        s"https://${platformHost}/projects/list")
       case eType: String if eType == "analysis" => (
-        s"https://app.rasterfoundry.com/lab/analysis/${id}",
-        "https://app.rasterfoundry.com/lab/browse/analyses")
+        s"https://${platformHost}/lab/analysis/${id}",
+        s"https://${platformHost}/lab/browse/analyses")
     }
 
     (
@@ -85,7 +83,7 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
           case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
              email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
              val (subject, html, plain) = exportEmailContent(status, user, platform, name, id, exportType)
-             email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, subject, html, plain).send()
+             email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, subject, html, plain).map((configuredEmail: Email) => configuredEmail.send)
              logger.info(s"Notified owner ${user.id} about export ${exportId}.")
           case _ => logger.warn(email.insufficientSettingsWarning(platform.id.toString(), user.id))
         }

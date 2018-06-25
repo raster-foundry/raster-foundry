@@ -34,6 +34,7 @@ import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.common.notification.Email.NotificationEmail
 import com.azavea.rf.database.{ProjectDao, SceneWithRelatedDao, UserDao, UserGroupRoleDao, PlatformDao}
 import com.azavea.rf.database.Implicits._
+import org.apache.commons.mail.Email
 import com.azavea.rf.database.util.RFTransactor
 
 import java.sql.Timestamp
@@ -45,27 +46,30 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
   type LastChecked = Timestamp
   type StartTime = Timestamp
 
-  def aoiEmailContent(project: Project, platform: Platform, user: User, sceneCount: Int): (String, String, String) = (
-    s"""
-      ${platform.name}: New Scenes Updated to Your AOI Project "${project.name}"
-    """,
-    s"""
-    <html>
-      <p>${user.name},</p><br>
-      <p>You have ${sceneCount} new scenes updated to your AOI project "${project.name}"! You can access
-      these new scenes <a href="https://app.rasterfoundry.com/projects/edit/${project.id}/scenes" target="_blank">here</a> or any past
-      projects you've created at any time <a href="https://app.rasterfoundry.com/projects/list" target="_blank">here</a>.</p>
-      <p>If you have questions, please feel free to reach out any time at ${platform.publicSettings.emailUser}.</p>
-      <p>- The ${platform.name} Team</p>
-    </html>
-    """,
-    s"""
-    ${user.name}: You have ${sceneCount} new scenes updated to your AOI project "${project.name}"! You can access
-    these new scenes here: https://app.rasterfoundry.com/projects/edit/${project.id}/scenes , or any past
-    projects you've created at any time here: https://app.rasterfoundry.com/projects/list . If you have questions,
-    please feel free to reach out any time at ${platform.publicSettings.emailUser}. - The ${platform.name} Team
-    """
-  )
+  def aoiEmailContent(project: Project, platform: Platform, user: User, sceneCount: Int): (String, String, String) = {
+    val platformHost = platform.publicSettings.platformHost.getOrElse("app.rasterfoundry.com")
+    (
+      s"""
+        ${platform.name}: New Scenes Updated to Your AOI Project "${project.name}"
+      """,
+      s"""
+      <html>
+        <p>${user.name},</p><br>
+        <p>You have ${sceneCount} new scenes updated to your AOI project "${project.name}"! You can access
+        these new scenes <a href="https://${platformHost}/projects/edit/${project.id}/scenes" target="_blank">here</a> or any past
+        projects you've created at any time <a href="https://${platformHost}/projects/list" target="_blank">here</a>.</p>
+        <p>If you have questions, please feel free to reach out any time at ${platform.publicSettings.emailUser}.</p>
+        <p>- The ${platform.name} Team</p>
+      </html>
+      """,
+      s"""
+      ${user.name}: You have ${sceneCount} new scenes updated to your AOI project "${project.name}"! You can access
+      these new scenes here: https://${platformHost}/projects/edit/${project.id}/scenes , or any past
+      projects you've created at any time here: https://${platformHost}/projects/list . If you have questions,
+      please feel free to reach out any time at ${platform.publicSettings.emailUser}. - The ${platform.name} Team
+      """
+    )
+  }
 
   def sendAoiNotificationEmail(project: Project, platform: Platform, user: User, sceneCount: Int) = {
     val email = new NotificationEmail
@@ -76,7 +80,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
           case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
             email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
             val (subject, html, plain) = aoiEmailContent(project, platform, user, sceneCount)
-            email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, subject, html, plain).send()
+            email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, subject, html, plain).map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified project owner ${user.id} about AOI updates")
           case _ => logger.warn(email.insufficientSettingsWarning(platform.id.toString(), user.id))
         }
