@@ -108,12 +108,19 @@
               My Profile
             </a>
           </li>
-          <li ng-if="$ctrl.showAdmin">
+          <li>
+            <a href
+               ui-sref="admin.platform({platformId: $ctrl.platformId})"
+               ng-if="$ctrl.showAdmin">
+              Platform Management
+            </a>
+          </li>
+          <li>
             <a href ui-sref="user.organizations({userId: 'me'})">
               My Organizations
             </a>
           </li>
-          <li ng-if="$ctrl.showAdmin">
+          <li>
             <a href ui-sref="user.teams({userId: 'me'})">
               My Teams
             </a>

@@ -45,6 +45,7 @@ export default class NavBarController {
         this.authService.getCurrentUser().then(resp => {
             let isSuperuser = resp.isSuperuser;
             this.currentUgrPromise = this.authService.fetchUserRoles().then(res => {
+                this.platformId = res.find(r => r.groupType === 'PLATFORM').groupId;
                 let isPlatOrgAdmin = res.filter((ugr) => {
                     return ugr.groupType === 'PLATFORM' &&
                         ugr.groupRole === 'ADMIN' &&

@@ -1,13 +1,4 @@
 <div class="admin-list-content column-stretch">
-  <div class="admin-list-actions">
-    <div class="actions-right">
-      <button type="button" class="btn btn-primary"
-              ng-click="$ctrl.newOrgModal()"
-              ng-disabled="$ctrl.fetching">
-        New Organization
-      </button>
-    </div>
-  </div>
   <table class="admin-table admin-platform-org-table">
     <tbody>
       <tr ng-repeat="organization in $ctrl.organizations track by $index">
