@@ -9,6 +9,14 @@
         Rasters shared with this organization will be accessible to all members of this team.
       </p>
     </rf-call-to-action-item>
+    <div ng-if="!$ctrl.loading && $ctrl.pagination.count" class="row stack-xs">
+      <rf-scene-item
+          previewable
+          scene="raster"
+          repository="$ctrl.repository"
+          ng-repeat="raster in $ctrl.rasters"
+      ></rf-scene-item>
+    </div>
   </div>
   <div class="column spacer"></div>
   <div class="column-3">

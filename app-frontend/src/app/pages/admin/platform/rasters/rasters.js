@@ -5,6 +5,7 @@ class Controller {
     constructor(
         $scope, $stateParams, $log, $window,
         modalService, organizationService, teamService, authService,
+        RasterFoundryRepository, sceneService,
         platform, organizations, members
     ) {
         this.$scope = $scope;
@@ -15,6 +16,11 @@ class Controller {
         this.organizationService = organizationService;
         this.teamService = teamService;
         this.authService = authService;
+        this.repository = {
+            name: 'Raster Foundry',
+            service: RasterFoundryRepository
+        };
+        this.sceneService = sceneService;
 
         this.platform = platform;
         this.organizations = organizations;

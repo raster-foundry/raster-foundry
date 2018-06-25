@@ -5,7 +5,8 @@ class Controller {
     constructor(
         $scope, $stateParams, $log, $window,
         modalService, organizationService, teamService, authService,
-        platform, organization, members
+        RasterFoundryRepository, sceneService,
+        platform, organization, members, team
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
@@ -15,10 +16,16 @@ class Controller {
         this.organizationService = organizationService;
         this.teamService = teamService;
         this.authService = authService;
+        this.repository = {
+            name: 'Raster Foundry',
+            service: RasterFoundryRepository
+        };
+        this.sceneService = sceneService;
 
         this.platform = platform;
         this.organization = organization;
         this.members = members;
+        this.team = team;
     }
 
     $onInit() {
@@ -54,6 +61,23 @@ class Controller {
 
 
     fetchPage(page = 0, search = '') {
+        this.loading = true;
+        this.sceneService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: 10,
+                ownershipType: 'inherited',
+                groupType: 'team',
+                groupId: this.team.id,
+                search,
+                page
+            }
+        ).then(paginatedResponse => {
+            this.rasters = paginatedResponse.results;
+            this.updatePagination(paginatedResponse);
+        }).finally(() => {
+            this.loading = false;
+        });
     }
 
 
