@@ -1,5 +1,30 @@
 # Change Log
 
+## [1.2.0](https://github.com/raster-foundry/raster-foundry/tree/1.2.0) (2018-06-25)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.1.1...1.2.0)
+
+**Merged pull requests:**
+
+- Distinct on ids when counting [\#3590](https://github.com/raster-foundry/raster-foundry/pull/3590)
+- Support Organization Creation Requests [\#3585](https://github.com/raster-foundry/raster-foundry/pull/3585)
+- Fix ingest notification bug [\#3584](https://github.com/raster-foundry/raster-foundry/pull/3584)
+- Send emails when people request to join groups or are invited [\#3582](https://github.com/raster-foundry/raster-foundry/pull/3582)
+- Add User/Org/Team Profiles + Refresh UI [\#3579](https://github.com/raster-foundry/raster-foundry/pull/3579)
+- Update platform email settings and ingest email notification [\#3578](https://github.com/raster-foundry/raster-foundry/pull/3578)
+- Fix anti-meridian migration [\#3576](https://github.com/raster-foundry/raster-foundry/pull/3576)
+- Add user search endpoint [\#3575](https://github.com/raster-foundry/raster-foundry/pull/3575)
+- Fix Planet Upload Processing [\#3574](https://github.com/raster-foundry/raster-foundry/pull/3574)
+- Move email to common subproject [\#3572](https://github.com/raster-foundry/raster-foundry/pull/3572)
+- Update top-level objects' listing filters [\#3571](https://github.com/raster-foundry/raster-foundry/pull/3571)
+- Add org search endpoint [\#3569](https://github.com/raster-foundry/raster-foundry/pull/3569)
+- Separate Staging and production deployment pipelines [\#3568](https://github.com/raster-foundry/raster-foundry/pull/3568)
+- Add user group role acceptance statuses [\#3567](https://github.com/raster-foundry/raster-foundry/pull/3567)
+- Tell users where to update profile photo [\#3566](https://github.com/raster-foundry/raster-foundry/pull/3566)
+- Anti-meridian search fixes, migration for fixing data\_footprints [\#3563](https://github.com/raster-foundry/raster-foundry/pull/3563)
+- Display ownership information with projects [\#3549](https://github.com/raster-foundry/raster-foundry/pull/3549)
+- Filter organizations by visibility and platform [\#3531](https://github.com/raster-foundry/raster-foundry/pull/3531)
+
 ## [1.1.1](https://github.com/raster-foundry/raster-foundry/tree/1.1.1) (2018-06-19)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.1.0...1.1.1)
