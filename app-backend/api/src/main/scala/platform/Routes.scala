@@ -143,6 +143,13 @@ trait PlatformRoutes extends Authentication
                   }
                 }
               }
+            } ~
+            pathPrefix(Segment) { userId =>
+              delete {
+                traceName("platform-organizations-member-remove") {
+                  removeUserFromOrganization(platformId, orgId, userId)
+                }
+              }
             }
           } ~
           pathPrefix("teams") {
@@ -384,6 +391,16 @@ trait PlatformRoutes extends Authentication
           OrganizationDao.addUserRole(platformId, user, ur.userId, orgId, ur.groupRole)
             .transact(xa).unsafeToFuture
         }
+      }
+    }
+  }
+
+  def removeUserFromOrganization(platformId: UUID, orgId: UUID, userId: String): Route = authenticate { user =>
+    authorizeAsync {
+      OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
+    } {
+      complete {
+        OrganizationDao.deactivateUserRoles(user, userId, orgId).transact(xa).unsafeToFuture
       }
     }
   }

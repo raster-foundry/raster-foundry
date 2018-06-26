@@ -10,7 +10,6 @@ class OrganizationUsersController {
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
-
         this.modalService = modalService;
         this.organizationService = organizationService;
         this.authService = authService;
@@ -69,11 +68,26 @@ class OrganizationUsersController {
                 this.fetching = false;
                 this.updatePagination(response);
                 this.lastUserResult = response;
-                this.users = response.results;
+                this.users = this.sortUserList(response.results);
                 this.buildOptions();
             }, () => {
                 this.fetching = false;
             });
+    }
+
+    sortUserList(userList) {
+        return _.sortBy(userList, (user) => {
+            if (user.membershipStatus === 'APPROVED' && user.groupRole === 'MEMBER') {
+                return 4;
+            } else if (user.membershipStatus === 'APPROVED' && user.groupRole === 'ADMIN') {
+                return 3;
+            } else if (user.membershipStatus === 'INVITED') {
+                user.buttonType = 'invited';
+                return 2;
+            }
+            user.buttonType = 'requested';
+            return 1;
+        });
     }
 
     buildOptions() {
@@ -127,6 +141,45 @@ class OrganizationUsersController {
         }).result.then(() => {
             this.fetchUsers(1, this.search);
         });
+    }
+
+    getUserGroupRole(user) {
+        switch (user.membershipStatus) {
+        case 'INVITED':
+            return 'Pending invitation';
+        case 'REQUESTED':
+            return 'Pending approval';
+        default:
+            return user.groupRole;
+        }
+    }
+
+    updateUserMembershipStatus(user, isApprove) {
+        if (isApprove) {
+            this.organizationService.approveUserMembership(
+                this.organization.platformId,
+                this.organization.id,
+                user.id,
+                user.groupRole
+            ).then(resp => {
+                this.users.forEach(thisUser =>{
+                    if (thisUser.id === resp.userId) {
+                        thisUser.membershipStatus = resp.membershipStatus;
+                        delete thisUser.buttonType;
+                    }
+                });
+                this.users = this.sortUserList(this.users);
+            });
+        } else {
+            this.organizationService.removeUser(
+                this.organization.platformId,
+                this.organization.id,
+                user.id
+            ).then(resp => {
+                _.remove(this.users, thisUser => thisUser.id === resp[0].userId);
+                this.users = this.sortUserList(this.users);
+            });
+        }
     }
 }
 

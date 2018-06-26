@@ -57,12 +57,29 @@
           {{user.email || 'No email available'}}
         </td>
         <td class="roles titlecase">
-            {{user.groupRole}}
+            {{$ctrl.getUserGroupRole(user)}}
         </td>
         <td class="actions">
-          <rf-dropdown data-options="user.options" ng-if="user.showOptions">
+          <rf-dropdown data-options="user.options" ng-if="user.showOptions && !user.buttonType">
             <span class="icon-caret-down h4"></span>
           </rf-dropdown>
+          <div class="btn-group">
+            <button type="button" class="btn btn-danger btn-small"
+                    ng-click="$ctrl.updateUserMembershipStatus(user, false)"
+                    ng-if="user.showOptions && user.buttonType === 'requested'">
+              Deny
+            </button>
+            <button type="button" class="btn btn-primary btn-small"
+                    ng-click="$ctrl.updateUserMembershipStatus(user, true)"
+                    ng-if="user.showOptions && user.buttonType === 'requested'">
+              Approve
+            </button>
+          </div>
+          <button type="button" class="btn btn-light btn-small"
+                  ng-click="$ctrl.updateUserMembershipStatus(user, false)"
+                  ng-if="user.showOptions && user.buttonType === 'invited'">
+            Cancel
+          </button>
         </td>
       </tr>
     </tbody>

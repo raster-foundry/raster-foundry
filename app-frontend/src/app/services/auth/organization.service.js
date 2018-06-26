@@ -20,13 +20,16 @@ export default (app) => {
                     addUser: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                             'organizations/:organizationId/members',
-                        method: 'POST',
-                        isArray: true
+                        method: 'POST'
                     },
                     deactivateUser: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                             'organizations/:organizationId/members/:userId',
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        params: {
+                            userId: '@userId'
+                        },
+                        isArray: true
                     },
                     teams: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
@@ -88,6 +91,12 @@ export default (app) => {
             }).$promise;
         }
 
+        approveUserMembership(platformId, organizationId, userId, groupRole) {
+            return this.PlatformOrganization.addUser({platformId, organizationId}, {
+                userId, groupRole
+            }).$promise;
+        }
+
         setUserRole(platformId, organizationId, user) {
             return this.PlatformOrganization.addUser({
                 platformId,
@@ -143,6 +152,11 @@ export default (app) => {
         updateOrganization(platformId, organizationId, params) {
             return this.PlatformOrganization
                 .updateOrganization({platformId, organizationId}, params).$promise;
+        }
+
+        removeUser(platformId, organizationId, userId) {
+            return this.PlatformOrganization
+                .deactivateUser({platformId, organizationId, userId}).$promise;
         }
     }
 
