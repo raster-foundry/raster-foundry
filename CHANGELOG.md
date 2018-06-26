@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.2.1](https://github.com/raster-foundry/raster-foundry/tree/1.2.1) (2018-06-26)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.2.0...1.2.1)
+
+**Merged pull requests:**
+
+- Differentiate rendered tiles from raw tiles for caching [\#3596](https://github.com/raster-foundry/raster-foundry/pull/3596)
+
 ## [1.2.0](https://github.com/raster-foundry/raster-foundry/tree/1.2.0) (2018-06-25)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.1.1...1.2.0)
