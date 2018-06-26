@@ -854,7 +854,9 @@ trait ProjectRoutes extends Authentication
               )
             case Right(annotationCreates) => {
               complete {
-                AnnotationDao.insertAnnotations(annotationCreates, projectId, user).transact(xa).unsafeToFuture
+                (AnnotationDao.insertAnnotations(annotationCreates, projectId, user)
+                   map {(anns: List[Annotation]) => anns map { _.toGeoJSONFeature }}
+                ).transact(xa).unsafeToFuture
               }
             }
           }

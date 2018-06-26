@@ -22,12 +22,13 @@ class AnnotateImportController {
             description: '',
             quality: null
         };
-        this.bindUploadEvent();
+        this.bindGeoJSONUploadEvent();
+        this.bindShapefileUploadEvent();
         this.isMachineData = false;
     }
 
-    bindUploadEvent() {
-        $('#btn-upload').change((e) => {
+    bindGeoJSONUploadEvent() {
+        $('#geojson-btn-upload').change((e) => {
             let upload = _.values(e.target.files);
             if (upload.length) {
                 upload.forEach((datum) => {
@@ -36,6 +37,17 @@ class AnnotateImportController {
                         this.setSelectionMenuItems(JSON.parse(event.target.result));
                     };
                     reader.readAsText(datum);
+                });
+            }
+        });
+    }
+
+    bindShapefileUploadEvent() {
+        $('#shapefile-btn-upload').change((e) => {
+            let upload = _.values(e.target.files);
+            if (upload.length) {
+                upload.forEach((datum) => {
+                    this.setShapefileUploadData(datum);
                 });
             }
         });
@@ -61,6 +73,11 @@ class AnnotateImportController {
             return _.intersection(accu, Object.keys(feature.properties));
         }, Object.keys(data.features[0].properties));
         this.$scope.$apply();
+    }
+
+    setShapefileUploadData(shapefileData) {
+        this.$parent.importShapefile(shapefileData);
+        this.$state.go('projects.edit.annotate');
     }
 
     updateKeySelection(appKey, dataKey) {
