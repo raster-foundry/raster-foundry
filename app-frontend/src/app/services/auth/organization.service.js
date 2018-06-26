@@ -42,7 +42,14 @@ export default (app) => {
                         `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                             'organizations/:organizationId',
                         method: 'POST',
-                        params: {platformId: '@platformId', organizationId: '@organizationId'}
+                        params: {platformId: '@platformId', organizationId: '@organizationId'},
+                        /* eslint-disable */
+                        transformRequest: (data, headers) => {
+                            headers = angular.extend(
+                                {}, headers, {'Content-Type': 'application/json'});
+                            return angular.toJson(data);
+                        /* eslint-enable */
+                        }
                     },
                     updateOrganization: {
                         url:
@@ -119,12 +126,12 @@ export default (app) => {
 
         deactivate(platformId, organizationId) {
             return this.PlatformOrganization
-                .setOrganizationStatus({platformId, organizationId}, {status: 'INACTIVE'}).$promise;
+                .setOrganizationStatus({platformId, organizationId}, 'INACTIVE').$promise;
         }
 
         activate(platformId, organizationId) {
             return this.PlatformOrganization
-                .setOrganizationStatus({platformId, organizationId}, {status: 'ACTIVE'}).$promise;
+                .setOrganizationStatus({platformId, organizationId}, 'ACTIVE').$promise;
         }
 
         addOrganizationLogo(organizationId, logoBase64) {

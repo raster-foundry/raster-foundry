@@ -529,10 +529,10 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       OrganizationDao.userIsAdmin(user, organizationId).transact(xa).unsafeToFuture
     } {
-      entity(as[ActiveStatus]) {
-        case ActiveStatus(true) =>
+      entity(as[String]) {
+        case status: String if status == OrgStatus.Active.toString =>
           activateOrganization(platformId, organizationId, user)
-        case ActiveStatus(false) =>
+        case status: String if status == OrgStatus.Inactive.toString =>
           deactivateOrganization(platformId, organizationId, user)
       }
     }

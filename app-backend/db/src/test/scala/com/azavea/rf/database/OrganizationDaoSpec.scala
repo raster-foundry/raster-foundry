@@ -90,7 +90,7 @@ class OrganizationDaoSpec extends FunSuite with Matchers with Checkers with DBTe
         (uc1: User.Create, uc2: User.Create,
          uc3: User.Create, pc1: Platform, pc2: Platform,
          org1: Organization.Create, org2: Organization.Create, org3: Organization.Create) => {
-          val defaultUser = uc1.toUser.copy(id="default")
+          val defaultUser = uc1.toUser.copy(id = "default")
           val orgsIO = for {
             p1 <- PlatformDao.create(pc1)
             p2 <- PlatformDao.create(pc2)

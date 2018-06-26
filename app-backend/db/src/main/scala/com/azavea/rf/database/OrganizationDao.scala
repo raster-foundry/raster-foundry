@@ -209,7 +209,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
          logo_uri = ${uri}
        WHERE id = ${orgID}
      """).update.withUniqueGeneratedKeys[Organization](
-       "id", "created_at", "modified_at", "name", "platform_id", "is_active",
+       "id", "created_at", "modified_at", "name", "platform_id", "status",
        "dropbox_credential", "planet_credential", "logo_uri", "visibility"
      )
   }
@@ -224,7 +224,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
 
   def activateOrganization(actingUser: User, organizationId: UUID) = {
     (fr"UPDATE" ++ tableF ++ fr"""SET
-       is_active = true,
+       status = 'ACTIVE'::org_status,
        modified_at = now()
        where id = ${organizationId}
       """).update.run
@@ -232,7 +232,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
 
   def deactivateOrganization(actingUser: User, organizationId: UUID) = {
     (fr"UPDATE" ++ tableF ++ fr"""SET
-       is_active = false,
+       status = 'INACTIVE'::org_status,
        modified_at = now()
        where id = ${organizationId}
       """).update.run
