@@ -10,6 +10,15 @@ import java.lang.IllegalArgumentException
 
 class NotificationEmail extends RollbarNotifier {
 
+  def isValidEmailSettings(host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String): Boolean =
+    host.length != 0 &&
+      (port == 25 || port == 465 || port == 587 || port == 2525) &&
+      encryption.length!= 0 &&
+      (encryption == "ssl" || encryption == "tls" || encryption == "starttls") &&
+      platUserEmail.length != 0 &&
+      pw.length != 0 &&
+      userEmail.length != 0
+
   def insufficientSettingsWarning(platId: String, userId: String): String =
     s"Supplied settings are not sufficient to send an email from Platform: ${platId} to User: ${userId}."
 

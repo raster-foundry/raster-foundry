@@ -5,6 +5,17 @@
   <form name="emailSettings" autocomplete="off">
     <input autocomplete="false" name="hidden" type="text" style="display:none;">
     <div class="form-group">
+      <label for="plat-host">Platform Host</label>
+      <input id="plat-host"
+             type="text"
+             class="form-control"
+             name="platHost"
+             ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.platformHost ?
+               $ctrl.platformBuffer.publicSettings.platformHost : 'app.rasterfoundry.com'}}"
+             ng-model="$ctrl.platformBuffer.publicSettings.platformHost"
+             required>
+    </div>
+    <div class="form-group">
       <label for="name">User Name</label>
       <input id="name"
              type="email"
