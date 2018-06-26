@@ -13,7 +13,7 @@ import java.util.UUID
 import cats._
 import cats.data._
 import cats.implicits._
-import cats.syntax.option._
+import cats.syntax._
 import cats.effect.IO
 import doobie._
 import doobie.implicits._
@@ -32,7 +32,7 @@ import geotrellis.vector._
 
 import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.common.notification.Email.NotificationEmail
-import com.azavea.rf.database.{ProjectDao, SceneWithRelatedDao, UserDao, UserGroupRoleDao, PlatformDao}
+import com.azavea.rf.database._
 import com.azavea.rf.database.Implicits._
 import org.apache.commons.mail.Email
 import com.azavea.rf.database.util.RFTransactor
@@ -108,7 +108,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
         sendAoiNotificationEmail(project, platform, user, sceneCount)
       }
     } else {
-      logger.warn(s"AOI project ${projId.toString} has no new scenes updated. Project owner is not notified.")
+      logger.warn(s"AOI project ${projId.toString} has no new scenes available. Project owner will not be notified.")
     }
   }
 
@@ -142,51 +142,34 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
     def fetchProjectScenes(
       user: User, geom: Projected[MultiPolygon], startTime: StartTime,
       lastChecked: LastChecked, queryParams: Option[CombinedSceneQueryParams]): ConnectionIO[List[UUID]] = {
-      val base: Fragment = fr"SELECT id FROM scenes"
-      val qpFilters: Option[Fragment] = queryParams flatMap {
-        (csp: CombinedSceneQueryParams) => {
-          Fragments.andOpt(SceneWithRelatedDao.makeFilters(List(csp)).flatten: _*) match {
-            case Fragment.empty => None
-            case fragment => Some(fragment)
-          }
-        }
-      }
-      val alreadyCheckedFilter: Option[Fragment] = Some(fr"created_at > ${lastChecked}")
-      val acquisitionFilter: Option[Fragment] = Some(fr"acquisition_date > ${startTime}")
-      val areaFilter: Option[Fragment] = Some(fr"st_intersects(data_footprint, ${geom})")
-      SceneWithRelatedDao
-        .authQuery(user, ObjectType.Scene)
+      val baseParams = queryParams.getOrElse(CombinedSceneQueryParams())
+      val augmentedQueryParams =
+        baseParams.copy(
+          sceneParams=baseParams.sceneParams.copy(
+            minAcquisitionDatetime=Some(startTime)
+          ),
+          timestampParams=baseParams.timestampParams.copy(
+            minCreateDatetime=Some(lastChecked)
+          )
+        )
+      SceneDao
+        .authViewQuery(user, ObjectType.Scene)
         .filter(geom)
-        .filter(queryParams.getOrElse(CombinedSceneQueryParams()))
+        .filter(augmentedQueryParams)
         .list
-        .map { (scenes: List[Scene.WithRelated]) => scenes map { _.id } }
+        .map { (scenes: List[Scene]) => scenes map { _.id } }
     }
 
     def addScenesToProjectWithProjectIO: ConnectionIO[UUID] = {
-      val user: ConnectionIO[Option[User]] = fetchBaseData flatMap {
-        case (projOwner: String, _, _, _, _) => UserDao.getUserById(projOwner)
-      }
-      val sceneIds: ConnectionIO[List[UUID]] =
-        fetchBaseData flatMap {
-          case (_, g: Projected[MultiPolygon], startTime: StartTime, lastChecked: LastChecked, qp: Result[CombinedSceneQueryParams]) =>
-            user flatMap {
-              case Some(u) => fetchProjectScenes(u, g, startTime, lastChecked, qp.toOption)
-              case None =>
-                throw new Exception(
-                  "User not found. Should be impossible given foreign key relationship on project")
-            }
-        }
-      sceneIds flatMap {
-        case sceneIds: List[UUID] => {
-          logger.info(s"Adding the following scenes to project ${projectId}: ${sceneIds}")
-          user flatMap {
-            case Some(u) => ProjectDao.addScenesToProject(sceneIds, projectId, u) map { _ => projectId }
-            case None =>
-              throw new Exception(
-                "User not found. Should be impossible given foreign key relationship on project")
-          }
-        }
-      }
+      for {
+        baseData <- fetchBaseData
+        (userId, g, startTime, lastChecked, qp) = baseData
+        user <- UserDao.unsafeGetUserById(userId)
+        sceneIds <- fetchProjectScenes(user, g, startTime, lastChecked, qp.toOption)
+        _ <- logger.info(s"Found ${sceneIds.length} scenes").pure[ConnectionIO]
+        _ <- updateProjectIO(user, projectId)
+        _ <- ProjectDao.addScenesToProject(sceneIds, projectId, user)
+      } yield { projectId }
     }
 
     def updateProjectIO(user: User, projectId: UUID): ConnectionIO[Int] = for {
