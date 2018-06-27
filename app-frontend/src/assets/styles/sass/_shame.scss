@@ -3111,3 +3111,50 @@ rf-reclassify-table {
     }
   }
 }
+
+// color map modal
+.cm-modal-section {
+    &.bg-border {
+        border: 1px solid $gray-lightest;
+        background: lighten($gray-lightest, 10%);
+        border-radius: 2px;
+        padding: 1em;
+        color: $shade-dark;
+    }
+
+    &.error {
+        border: 1px solid $red;
+        background: lighten($red, 40%);
+    }
+
+    &.horizontal {
+        display: flex;
+        flex-direction: row;
+        .btn {
+            margin: 1em;
+        }
+    }
+    &.stationary {
+
+    }
+    .expand {
+        flex: 1;
+    }
+
+    .float-width {
+        width: 17em;
+    }
+    .action-width {
+        width: 5em;
+    }
+}
+
+.cm-modal-value-table {
+    width: 100%;
+    td {
+        border: 1px solid $shade-light;
+        border-collapse: collapse;
+        padding: 0.5em;
+    }
+    margin-bottom: 0.5em;
+}

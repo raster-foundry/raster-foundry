@@ -1,0 +1,155 @@
+<div class="modal-scrollable-body modal-sidebar-header">
+  <div class="modal-header">
+    <h4 class="modal-title">
+      Custom color map
+    </h4>
+    <p class="modal-subtitle">Upload, paste, or select a custom color mapping</p>
+  </div>
+  <div class="modal-body">
+    <div class="content">
+      <select class="form-control"
+              ng-model="$ctrl.selectMode"
+              ng-model-options="{ getterSetter: true }">
+        <option value="form" selected>Select colors and breakpoints</option>
+        <option value="file">Upload color map</option>
+        <option value="text">Paste color map</option>
+      </select>
+      <br>
+      <div ng-if="$ctrl.selectMode === 'form'">
+        <div class="cm-modal-section">
+          <table style="width: 100%">
+            <thead>
+              <tr>
+                <th class="float-width">Breakpoint</th>
+                <th>Color </th>
+                <th class="action-width">Action</th>
+              </tr>
+            </thead>
+            <tbody> <tr ng-repeat="breakpoint in $ctrl.breakpoints track by $index">
+                <td><input type="number" step="1" class="form-control float-width" ng-model="breakpoint.value"></td>
+                <td><input type="color" class="form-control" ng-model="breakpoint.color"></td>
+                <td>
+                  <button class="btn btn-tiny btn-ghost"
+                          title="Add breakpoint above"
+                          ng-click="$ctrl.addBreakpoint(breakpoint, $index)">
+                    <span class="icon-plus"></span>
+                  </button>
+                  <button class="btn btn-tiny btn-ghost"
+                          title="Delete breakpoint"
+                          ng-click="$ctrl.deleteBreakpoint($index)"
+                          ng-disabled="$ctrl.breakpoints.length <= 2">
+                    <span class="icon-trash"></span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div ng-if="$ctrl.selectMode === 'file'">
+        <div class="cm-modal-section">
+          <label class="btn btn-primary btn-block btn-upload-label"
+                 for="btn-upload"
+                 ng-click="$ctrl.onUploadClick()">
+            <input type="file"
+                   accept="application/json"
+                   id="btn-upload"
+                   class="btn-upload">
+            Upload
+          </label>
+        </div>
+        <div class="cm-modal-section bg-border">
+          Upload a JSON file which contains an array of hex color codes.
+          <br>
+          Eg: <code>["#fafafa", "#afafaf"]</code>
+        </div>
+        <div class="cm-modal-section bg-border error" ng-show="$ctrl.uploadError">
+          There was an error parsing the file you selected.
+          <br>
+          Please verify that it is valid JSON, and that the
+          colors are in the correct format.
+          <br>
+          {{$ctrl.uploadError}}
+        </div>
+      </div>
+      <div ng-if="$ctrl.selectMode === 'text'">
+        <div class="cm-modal-section">
+          <textarea class="form-control" placeholder="Paste colormap" ng-model="$ctrl.pastedColormap"></textarea>
+          <button class="btn btn-primary" ng-click="$ctrl.onPaste($ctrl.pastedColormap)">Apply</button>
+        </div>
+        <div class="cm-modal-section bg-border">
+          Paste an JSON array of hex color codes.
+          <br>
+          Eg: <code>["#fafafa", "#afafaf"]</code>
+          <br>
+          <a href="http://colorbrewer2.org" target="_blank">Colorbrewer can be used to generate such an array</a>
+        </div>
+        <div class="cm-modal-section bg-border error" ng-show="$ctrl.pasteError">
+          {{$ctrl.pasteError}}
+          <br><br>
+          There was an error parsing the colors you've pasted
+          <br>
+          Please verify that it is valid JSON, and that the
+          colors are in the correct format.
+        </div>
+      </div>
+    </div>
+    <div class="cm-modal-section horizontal">
+      <table class="cm-modal-value-table">
+        <tbody>
+          <tr>
+            <td>
+              Minimum pixel value detected: <br> {{$ctrl.histMin}}
+            </td>
+            <td>
+              <label>
+                Minimum pixel value:
+                <input class="form-control" type="number" ng-model="$ctrl.minPixelValue">
+              </label>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Maximum pixel value detected: <br> {{$ctrl.histMax}}
+            </td>
+            <td>
+              <label>
+                Maximum pixel value:
+                <input class="form-control" type="number" ng-model="$ctrl.maxPixelValue">
+              </label>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="btn btn-tertiary"
+            ng-click="$ctrl.redistributePixelValues()">
+      Distribute pixel values across defined range
+    </button>
+  </div>
+  <div class="modal-footer">
+    <div class="cm-modal-section horizontal">
+      <nvd3 id="chart-modal"
+            style="height: 51px; flex: 1;"
+            options="$ctrl.histOptions"
+            data="$ctrl.plot"
+            api="$ctrl.api"></nvd3>
+      <button class="btn"
+              ng-click="$ctrl.dismiss()"
+      >Cancel</button>
+      <button class="btn btn-primary"
+              ng-disabled="$ctrl.uploadError || $ctrl.pasteError || $ctrl.breakpointError"
+              ng-click="$ctrl.closeWithBreakpoints()"
+      >Use color scheme</button>
+    </div>
+  </div>
+</div>
+
+<style>
+ #chart-modal .nv-series-0 {
+     fill: url(#line-gradient-modal) !important;
+     fill-opacity: 1 !important;
+     stroke: url(#line-gradient-modal) !important;
+     stroke-opacity: 1 !important;
+ }
+</style>
