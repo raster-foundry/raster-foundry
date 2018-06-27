@@ -69,23 +69,10 @@ class OrganizationUsersController {
                 this.updatePagination(response);
                 this.lastUserResult = response;
                 this.users = response.results;
-                if (this.isEffectiveAdmin) {
-                    this.setUserActonButtons();
-                }
                 this.buildOptions();
             }, () => {
                 this.fetching = false;
             });
-    }
-
-    setUserActonButtons() {
-        this.users.forEach(user => {
-            if (user.membershipStatus === 'INVITED') {
-                user.buttonType = 'invited';
-            } else if (user.membershipStatus === 'REQUESTED') {
-                user.buttonType = 'requested';
-            }
-        });
     }
 
     buildOptions() {
@@ -141,7 +128,7 @@ class OrganizationUsersController {
         });
     }
 
-    getUserGroupRole(user) {
+    getUserGroupRoleLabel(user) {
         switch (user.membershipStatus) {
         case 'INVITED':
             return 'Pending invitation';
@@ -152,8 +139,8 @@ class OrganizationUsersController {
         }
     }
 
-    updateUserMembershipStatus(user, isApprove) {
-        if (isApprove) {
+    updateUserMembershipStatus(user, isApproved) {
+        if (isApproved) {
             this.organizationService.approveUserMembership(
                 this.organization.platformId,
                 this.organization.id,

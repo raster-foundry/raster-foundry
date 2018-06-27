@@ -57,28 +57,27 @@
           {{user.email || 'No email available'}}
         </td>
         <td class="roles titlecase">
-            {{$ctrl.getUserGroupRole(user)}}
+            {{$ctrl.getUserGroupRoleLabel(user)}}
         </td>
         <td class="actions">
-          <rf-dropdown data-options="user.options" ng-if="user.showOptions && !user.buttonType">
+          <rf-dropdown data-options="user.options" ng-if="user.showOptions && user.membershipStatus = 'APPROVED'">
             <span class="icon-caret-down h4"></span>
           </rf-dropdown>
-          <div class="btn-group">
+          <div class="btn-group"
+               ng-if="user.showOptions && user.membershipStatus === 'REQUESTED'">
             <button type="button" class="btn btn-danger btn-small"
-                    ng-click="$ctrl.updateUserMembershipStatus(user, false)"
-                    ng-if="user.showOptions && user.buttonType === 'requested'">
+                    ng-click="$ctrl.updateUserMembershipStatus(user, false)">
               Deny
             </button>
             <button type="button" class="btn btn-primary btn-small"
-                    ng-click="$ctrl.updateUserMembershipStatus(user, true)"
-                    ng-if="user.showOptions && user.buttonType === 'requested'">
+                    ng-click="$ctrl.updateUserMembershipStatus(user, true)">
               Approve
             </button>
           </div>
           <button type="button" class="btn btn-light btn-small"
                   ng-click="$ctrl.updateUserMembershipStatus(user, false)"
-                  ng-if="user.showOptions && user.buttonType === 'invited'">
-            Cancel
+                  ng-if="user.showOptions && user.membershipStatus === 'INVITED'">
+            Cancel Invitation
           </button>
         </td>
       </tr>

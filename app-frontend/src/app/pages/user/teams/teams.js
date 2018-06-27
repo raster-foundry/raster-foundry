@@ -1,18 +1,11 @@
 class UserTeamsController {
-    constructor(teams) {
-        'ngInject';
-
-        this.userRoles = teams.roles;
-        this.teams = [];
-        teams.teams.forEach(teamPromises => {
-            teamPromises.then(team => {
-                this.teams.push(team);
-            });
-        });
+    constructor(teamRoles, teams) {
+        this.teamRoles = teamRoles;
+        this.teams = teams;
     }
 
     getUserTeamRole(teamId) {
-        return this.userRoles.find(role => role.groupId === teamId).groupRole;
+        return this.teamRoles.find(role => role.groupId === teamId).groupRole;
     }
 }
 

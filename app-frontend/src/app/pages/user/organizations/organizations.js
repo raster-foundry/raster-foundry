@@ -1,16 +1,11 @@
 class UserOrganizationsController {
-    constructor(organizations) {
-        this.userRoles = organizations.roles;
-        this.organizations = [];
-        organizations.orgs.forEach(orgPromise => {
-            orgPromise.then(org => {
-                this.organizations.push(org);
-            });
-        });
+    constructor(organizationRoles, organizations) {
+        this.organizationRoles = organizationRoles;
+        this.organizations = organizations;
     }
 
     getUserOrgRole(orgId) {
-        return this.userRoles.find(role => role.groupId === orgId).groupRole;
+        return this.organizationRoles.find(role => role.groupId === orgId).groupRole;
     }
 }
 
