@@ -79,6 +79,9 @@ class TeamUsersController {
             this.updatePagination(response);
             this.lastUserResult = response;
             this.users = response.results;
+            if (this.isEffectiveAdmin) {
+                this.setUserActonButtons();
+            }
             this.buildOptions();
         });
     }
@@ -166,6 +169,56 @@ class TeamUsersController {
             ).then(() => {
                 this.fetchUsers(this.pagination.currentPage, this.search);
             });
+        });
+    }
+
+    getUserGroupRole(user) {
+        switch (user.membershipStatus) {
+        case 'INVITED':
+            return 'Pending invitation';
+        case 'REQUESTED':
+            return 'Pending approval';
+        default:
+            return user.groupRole;
+        }
+    }
+
+    updateUserMembershipStatus(user, isApprove) {
+        if (isApprove) {
+            this.teamService.setUserRole(
+                this.organization.platformId,
+                this.organization.id,
+                this.team.id,
+                user
+            ).then(resp => {
+                this.users.forEach(thisUser =>{
+                    if (thisUser.id === resp.userId) {
+                        thisUser.membershipStatus = resp.membershipStatus;
+                        delete thisUser.buttonType;
+                    }
+                });
+                this.fetchUsers(1, '');
+            });
+        } else {
+            this.teamService.removeUser(
+                this.organization.platformId,
+                this.organization.id,
+                this.team.id,
+                user.id
+            ).then(resp => {
+                _.remove(this.users, thisUser => thisUser.id === resp[0].userId);
+                this.fetchUsers(1, '');
+            });
+        }
+    }
+
+    setUserActonButtons() {
+        this.users.forEach(user => {
+            if (user.membershipStatus === 'INVITED') {
+                user.buttonType = 'invited';
+            } else if (user.membershipStatus === 'REQUESTED') {
+                user.buttonType = 'requested';
+            }
         });
     }
 }

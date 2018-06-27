@@ -48,8 +48,7 @@ export default (app) => {
                     addUser: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                             'organizations/:organizationId/teams/:teamId/members',
-                        method: 'POST',
-                        isArray: true
+                        method: 'POST'
                     },
                     removeUser: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
