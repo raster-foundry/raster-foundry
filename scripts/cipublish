@@ -77,8 +77,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             aws s3 cp \
                 "${DIR}/../app-backend/batch/target/scala-2.11/rf-batch.jar" \
                 "s3://${RF_ARTIFACTS_BUCKET}/batch/rf-batch-${GIT_COMMIT}.jar"
-
-            ./scripts/deploy-docs
         else
             echo "ERROR: No AWS_ECR_ENDPOINT variable defined."
             exit 1

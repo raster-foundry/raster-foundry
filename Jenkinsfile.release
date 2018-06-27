@@ -14,7 +14,6 @@ node{
        [parameters(
            [string(defaultValue: 'develop', description: 'First 7 characters of the SHA for the commit you wish to deploy.', name: 'GIT_COMMIT', trim: false),
             string(defaultValue: '', description: 'Tag of the Current release.', name: 'RELEASE_TAG', trim: false),
-            string(defaultValue: 'rasterfoundry-production-docs-site-us-east-1', description: 'Location of swagger spec.', name: 'RF_DOCS_BUCKET', trim: false),
             string(defaultValue: 'rasterfoundry-production-config-us-east-1', description: 'Location of terraform state & vars files.', name: 'RF_SETTINGS_BUCKET', trim: false),
             string(defaultValue: 'Production', description: 'Environment name, used to target Batch Compute Environments.', name: 'RF_DEPLOYMENT_ENVIRONMENT', trim: false),
             string(defaultValue: 'master', description: 'Branch of azavea/raster-foundry-deployment used for deployment.', name: 'RF_DEPLOYMENT_BRANCH', trim: false)]
@@ -53,10 +52,6 @@ node{
                 }
               }
             }
-        }
-
-        stage('deploy docs'){
-          sh './scripts/deploy-docs'
         }
 
         stage('infra') {
