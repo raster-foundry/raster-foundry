@@ -80,7 +80,8 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
       case Some(org) => PlatformDao.organizationIsPublicOrg(organizationId, org.platformId)
       case None => false.pure[ConnectionIO]
     }
-    usersPage <- UserGroupRoleDao.listUsersByGroup(GroupType.Organization, organizationId, page, searchParams, actingUser)
+    usersPage <- UserGroupRoleDao.listUsersByGroup(GroupType.Organization, organizationId,
+      page, searchParams, actingUser, Some(fr"ORDER BY ugr.membership_status, ugr.group_role"))
     maybeSanitized = isDefaultOrg match {
       case true => usersPage.copy(
         results = usersPage.results map { _.copy(email = "") }

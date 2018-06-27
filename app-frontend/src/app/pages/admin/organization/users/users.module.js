@@ -68,25 +68,23 @@ class OrganizationUsersController {
                 this.fetching = false;
                 this.updatePagination(response);
                 this.lastUserResult = response;
-                this.users = this.sortUserList(response.results);
+                this.users = response.results;
+                if (this.isEffectiveAdmin) {
+                    this.setUserActonButtons();
+                }
                 this.buildOptions();
             }, () => {
                 this.fetching = false;
             });
     }
 
-    sortUserList(userList) {
-        return _.sortBy(userList, (user) => {
-            if (user.membershipStatus === 'APPROVED' && user.groupRole === 'MEMBER') {
-                return 4;
-            } else if (user.membershipStatus === 'APPROVED' && user.groupRole === 'ADMIN') {
-                return 3;
-            } else if (user.membershipStatus === 'INVITED') {
+    setUserActonButtons() {
+        this.users.forEach(user => {
+            if (user.membershipStatus === 'INVITED') {
                 user.buttonType = 'invited';
-                return 2;
+            } else if (user.membershipStatus === 'REQUESTED') {
+                user.buttonType = 'requested';
             }
-            user.buttonType = 'requested';
-            return 1;
         });
     }
 
@@ -168,7 +166,7 @@ class OrganizationUsersController {
                         delete thisUser.buttonType;
                     }
                 });
-                this.users = this.sortUserList(this.users);
+                this.fetchUsers(1, '');
             });
         } else {
             this.organizationService.removeUser(
@@ -177,7 +175,7 @@ class OrganizationUsersController {
                 user.id
             ).then(resp => {
                 _.remove(this.users, thisUser => thisUser.id === resp[0].userId);
-                this.users = this.sortUserList(this.users);
+                this.fetchUsers(1, '');
             });
         }
     }

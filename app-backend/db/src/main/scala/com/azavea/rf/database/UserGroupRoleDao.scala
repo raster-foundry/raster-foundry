@@ -171,7 +171,8 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       .list
   }
 
-  def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
+  def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest,
+      searchParams: SearchQueryParameters, actingUser: User, orderClauseO: Option[Fragment] = None): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
     // PUBLIC users can be seen by anyone within the same platform
     // PRIVATE users can be seen by anyone within the same organization
     // PRIVATE users can be seen by anyone within the same team (even if orgs are different)
@@ -240,7 +241,10 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
               case false => Some(ff)
             }
           )
-          .page[User.WithGroupRole](page, sf, cf)
+          .page[User.WithGroupRole](page, sf, cf, orderClauseO match {
+            case Some(orderClause) => orderClause
+            case None => fr""
+          })
       }
     } yield { result }
   }
