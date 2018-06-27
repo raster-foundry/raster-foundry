@@ -14,7 +14,7 @@ def create_geotiff_scene(tif_path, datasource, acquisitionDate=None, cloudCover=
                          ingestSizeBytes=0, visibility=Visibility.PRIVATE, tags=[],
                          sceneMetadata=None, name=None, thumbnailStatus=JobStatus.QUEUED,
                          boundaryStatus=JobStatus.QUEUED, ingestStatus=IngestStatus.TOBEINGESTED,
-                         metadataFiles=[], owner=None, sceneType="AVRO", **kwargs):
+                         metadataFiles=[], owner=None, sceneType="COG", **kwargs):
     """Returns scenes that can be created via API given a local path to a geotiff.
 
     Does not create Images because those require a Source URI, which this doesn't know about. Use

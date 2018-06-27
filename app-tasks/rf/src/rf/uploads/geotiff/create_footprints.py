@@ -1,4 +1,5 @@
 """Creates a data/tile footprint"""
+import os
 import json
 import logging
 import subprocess
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def extract_footprints(tif_path):
-    """Performs all actions to extract polygon from a kayak scene
+    """Performs all actions to extract polygon from a geotiff scene
 
     Args:
         tif_path (str): path to tif to extract polygons from
@@ -22,11 +23,12 @@ def extract_footprints(tif_path):
         tuple
     """
     logger.info('Beginning process to extract footprint for image:%s', tif_path)
+    print os.path.exists(tif_path)
     with get_tempdir() as temp_dir:
 
         _, resampled_tif_path = tempfile.mkstemp(suffix='.TIF', dir=temp_dir)
         _, warped_path = tempfile.mkstemp(suffix='.TIF', dir=temp_dir)
-        _, geojson_path = tempfile.mkstemp(suffix='.GEOJSON', dir=temp_dir)
+        geojson_path = warped_path.replace('.TIF', '.GEOJSON')
 
         with rasterio.open(tif_path) as src:
             y, x = src.shape
@@ -52,9 +54,9 @@ def extract_footprints(tif_path):
         ys = []
 
         for area in data_footprint:
-          xst, yst = zip(*area[0])
-          xs += xst
-          ys += yst
+            xst, yst = zip(*area[0])
+            xs += xst
+            ys += yst
 
         xmin = min(xs)
         xmax = max(xs)

@@ -1,10 +1,15 @@
+import logging
 import os
 import re
 import tempfile
+import urllib
 from urlparse import urlparse
 
 import boto3
 import requests
+
+
+logger = logging.getLogger(__name__)
 
 
 s3 = boto3.resource('s3', region_name='eu-central-1')
@@ -132,6 +137,36 @@ def get_session():
 
     session.headers.update({'Authorization': 'Bearer {}'.format(encoded_jwt)})
     return session
+
+
+def upload_tifs(tifs, user_id, scene_id):
+    """Upload tifs to S3
+
+    Args:
+        scene_id (str): ID of scene that the tif belongs to
+        user_id (str): ID of user that scene belongs to
+        tifs (list[str]): list of paths to tifs to upload
+
+    Returns:
+        list[str]: list of s3 URIs for tiffs
+    """
+    bucket = os.getenv('DATA_BUCKET')
+    s3_directory = os.path.join('user-uploads', user_id, scene_id)
+    s3_client = boto3.client('s3')
+    s3_uris = []
+    for tif in tifs:
+        filename = os.path.basename(tif)
+        key = os.path.join(s3_directory, filename)
+        logger.info('Uploading %s => bucket: %s, key: %s', tif, bucket, key)
+
+        s3_uris.append('s3://{}/{}'.format(bucket, urllib.quote(key)))
+        with open(tif, 'rb') as inf:
+            s3_client.put_object(
+                Bucket=bucket,
+                Body=inf,
+                Key=key
+            )
+    return s3_uris
 
 
 class JobStatus(object):
