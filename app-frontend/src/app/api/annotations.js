@@ -1,3 +1,5 @@
+/* global FormData */
+
 import {authedRequest} from './authentication';
 
 
