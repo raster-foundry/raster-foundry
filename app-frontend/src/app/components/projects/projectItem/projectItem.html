@@ -1,9 +1,9 @@
 <div class="panel-body">
   <ng-container ng-if="!$ctrl.slim">
     <rf-status-tag ng-if="$ctrl.status && $ctrl.status != 'CURRENT' " entity-type="project" status="$ctrl.status" class="project-status"></rf-status-tag>
-    <a href ui-sref="projects.edit({projectid: $ctrl.project.id})" class="h4 font-600 project-title" data-title="{{$ctrl.project.name}}">
+    <a href ui-sref="projects.edit({projectid: $ctrl.project.id})" class="h4 font-600">
       <img class="avatar user-avatar pull-left" ng-attr-src="{{ $ctrl.project.owner.profileImageUri }}" ng-if="$ctrl.project.owner.profileImageUri"/>
-      <span>{{$ctrl.project.name}}</span>
+      <h4 class="project-title" data-title="{{$ctrl.project.name}}">{{$ctrl.project.name}}</h4>
     </a>
     <div class="project-actions" ng-if="!$ctrl.hideOptions">
       <a href ng-click="$ctrl.publishModal()">
@@ -20,24 +20,20 @@
       </a>
     </div>
     <div class="project-preview">
-      <!-- IF project has no scenes -->
       <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
+        <!-- IF project has no scenes -->
         <div class="project-preview-container placeholder"
              ng-if="$ctrl.status === 'NOSCENES'"
              style="background-image: url({{$ctrl.projectPlaceholder}})">
         </div>
-      </a>
-
-       <!-- IF not all scenes ingested: -->
-      <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
+        
+        <!-- IF not all scenes ingested: -->
         <div class="project-preview-container placeholder"
              ng-if="$ctrl.status !== 'CURRENT' && $ctrl.status !== 'NOSCENES'"
              style="background-image: url({{$ctrl.projectPlaceholder}})">
         </div>
-      </a>
-
-      <!-- IF using a project's thumbnail: -->
-      <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
+        
+        <!-- IF using a project's thumbnail: -->
         <div class="project-preview-container placeholder"
              ng-if="$ctrl.thumbnailUrl && $ctrl.status === 'CURRENT'"
              style="background-image: url({{$ctrl.projectPlaceholder}})">
