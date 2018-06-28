@@ -23,9 +23,14 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
   val selectF = SceneDao.selectF
 
   def listProjectScenes(projectId: UUID, pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
-
-    val projectFilterFragment = fr"id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})"
+    val andPendingF: Fragment = sceneParams.sceneParams.pending match {
+      case Some(isPending) => fr"AND accepted = ${isPending}"
+      case _ => fr""
+    }
+    val projectFilterFragment = fr"id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId}" ++ andPendingF ++ fr")"
     val queryFilters = makeFilters(List(sceneParams)).flatten ++ List(Some(projectFilterFragment))
+    println(projectFilterFragment)
+    println(queryFilters)
     val paginatedQuery = SceneDao.query.filter(queryFilters).list(pageRequest.offset, pageRequest.limit) flatMap {
       (scenes: List[Scene]) => scenesToScenesWithRelated(scenes)
     }

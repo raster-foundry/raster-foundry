@@ -144,6 +144,7 @@ class ProjectsSceneBrowserController {
 
     getProjectSceneIds() {
         this.projectService.getAllProjectScenes({ projectId: this.project.id }).then((scenes) => {
+            this.$log.log(scenes);
             this.projectSceneIds = scenes.map(s => s.id);
             this.projectScenesReady = true;
         });

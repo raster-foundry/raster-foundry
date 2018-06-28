@@ -349,7 +349,7 @@ trait ProjectRoutes extends Authentication
       complete {
         ProjectDao
           .authQuery(
-            user, 
+            user,
             ObjectType.Project,
             projectQueryParameters.ownershipTypeParams.ownershipType,
             projectQueryParameters.groupQueryParameters.groupType,
@@ -644,7 +644,7 @@ trait ProjectRoutes extends Authentication
         .transact(xa).unsafeToFuture
     } {
       entity(as[BulkAcceptParams]) { sceneParams =>
-        sceneParams.sceneIds.toNel.map(ids => ProjectDao.addScenesToProject(ids, projectId, user)) match {
+        sceneParams.sceneIds.toNel.map(ids => ProjectDao.addScenesToProject(ids, projectId, user, true)) match {
           case Some(addQuery) => {
             onSuccess(addQuery.transact(xa).unsafeToFuture) {
               numAdded => complete(sceneParams.sceneIds)
@@ -772,7 +772,7 @@ trait ProjectRoutes extends Authentication
         if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
           complete(StatusCodes.RequestEntityTooLarge)
         }
-        val scenesAdded = ProjectDao.addScenesToProject(sceneIds, projectId, user)
+        val scenesAdded = ProjectDao.addScenesToProject(sceneIds, projectId, user, true)
         val scenesToIngest = SceneWithRelatedDao.getScenesToIngest(projectId)
         val x: ConnectionIO[List[Scene.WithRelated]] = for {
           _ <- scenesAdded
