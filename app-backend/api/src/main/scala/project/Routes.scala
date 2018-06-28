@@ -110,6 +110,39 @@ trait ProjectRoutes extends Authentication
               }
             }
           } ~
+          pathPrefix("annotation-groups") {
+            pathEndOrSingleSlash {
+              get {
+                traceName("projects-list-annotation-groups") {
+                  listAnnotationGroups(projectId)
+                }
+              } ~
+              post {
+                traceName("projects-create-annotation-group") {
+                  createAnnotationGroup(projectId)
+                }
+              }
+            } ~
+            pathPrefix(JavaUUID) { annotationGroupId =>
+              pathEndOrSingleSlash {
+                get {
+                  traceName("projects-get-annotation-group") {
+                    getAnnotationGroup(projectId, annotationGroupId)
+                  }
+                } ~
+                put {
+                  traceName("projects-update-annotation-group") {
+                    updateAnnotationGroup(projectId, annotationGroupId)
+                  }
+                } ~
+                delete {
+                  traceName("projects-delete-annotation-group") {
+                    deleteAnnotationGroup(projectId, annotationGroupId)
+                  }
+                }
+              }
+            }
+          } ~
           pathPrefix("annotations") {
             pathEndOrSingleSlash {
               get {
@@ -385,6 +418,70 @@ trait ProjectRoutes extends Authentication
     } {
       complete {
         AnnotationDao.listProjectLabels(projectId, user).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def listAnnotationGroups(projectId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.query
+        .authorized(user, ObjectType.Project, projectId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } {
+      complete {
+        AnnotationGroupDao.listAnnotationGroupsForProject(projectId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def createAnnotationGroup(projectId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.query
+        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
+        .transact(xa).unsafeToFuture
+    } {
+      entity(as[AnnotationGroup.Create]) { agCreate =>
+        complete {
+          AnnotationGroupDao.createAnnotationGroup(projectId, agCreate, user).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def getAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.query
+        .authorized(user, ObjectType.Project, projectId, ActionType.View)
+        .transact(xa).unsafeToFuture
+    } {
+      complete {
+        AnnotationGroupDao.getAnnotationGroup(projectId, agId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def updateAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.query
+        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
+        .transact(xa).unsafeToFuture
+    } {
+      entity(as[AnnotationGroup]) { annotationGroup =>
+        complete {
+          AnnotationGroupDao.updateAnnotationGroup(annotationGroup, agId, user).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def deleteAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.query
+        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
+        .transact(xa).unsafeToFuture
+    } {
+      complete {
+        AnnotationGroupDao.deleteAnnotationGroup(projectId, agId).transact(xa).unsafeToFuture
       }
     }
   }
@@ -808,7 +905,7 @@ trait ProjectRoutes extends Authentication
       case true => complete(List("*"))
       case false =>
         onSuccess(
-          ProjectDao.unsafeGetProjectById(projectId, Some(user)).transact(xa).unsafeToFuture
+          ProjectDao.unsafeGetProjectById(projectId).transact(xa).unsafeToFuture
         ) { project =>
           project.owner == user.id match {
             case true => complete(List("*"))

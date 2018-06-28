@@ -301,7 +301,8 @@ case class AnnotationQueryParameters(
   machineGenerated: Option[Boolean] = None,
   minConfidence: Option[Double] = None,
   maxConfidence: Option[Double] = None,
-  quality: Option[String] = None
+  quality: Option[String] = None,
+  annotationGroup: Option[UUID] = None
 )
 
 @JsonCodec

@@ -67,7 +67,7 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
               val fixedUpUpdateProject = fixupProjectCreate(dbUser, updateProject).toProject(dbUser)
               ProjectDao.updateProject(fixedUpUpdateProject, dbProject.id, dbUser) flatMap {
                 (affectedRows: Int) => {
-                  ProjectDao.unsafeGetProjectById(dbProject.id, Some(dbUser)) map {
+                  ProjectDao.unsafeGetProjectById(dbProject.id) map {
                     (affectedRows, _)
                   }
                 }

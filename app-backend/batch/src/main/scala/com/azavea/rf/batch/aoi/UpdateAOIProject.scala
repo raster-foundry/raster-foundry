@@ -173,7 +173,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
     }
 
     def updateProjectIO(user: User, projectId: UUID): ConnectionIO[Int] = for {
-      proj <- ProjectDao.unsafeGetProjectById(projectId, Some(user))
+      proj <- ProjectDao.unsafeGetProjectById(projectId)
       newProject = proj.copy(aoisLastChecked=Timestamp.from(Instant.now))
       affectedRows <- ProjectDao.updateProject(newProject, proj.id, user)
     } yield affectedRows

@@ -41,13 +41,14 @@ object ProjectDao extends Dao[Project] {
       modified_by, owner, name, slug_label, description,
       visibility, tile_visibility, is_aoi_project,
       aoi_cadence_millis, aois_last_checked, tags, extent,
-      manual_order, is_single_band, single_band_options
+      manual_order, is_single_band, single_band_options,
+      default_annotation_group
     FROM
   """ ++ tableF
 
   type SceneToProject = (UUID, UUID, Boolean, Option[Int], Option[Json])
 
-  def unsafeGetProjectById(projectId: UUID, user: Option[User]): ConnectionIO[Project] = {
+  def unsafeGetProjectById(projectId: UUID): ConnectionIO[Project] = {
     val idFilter = Some(fr"id = ${projectId}")
 
     (selectF ++ Fragments.whereAndOpt(idFilter))
@@ -73,19 +74,19 @@ object ProjectDao extends Dao[Project] {
         modified_by, owner, name, slug_label, description,
         visibility, tile_visibility, is_aoi_project,
         aoi_cadence_millis, aois_last_checked, tags, extent,
-        manual_order, is_single_band, single_band_options)
+        manual_order, is_single_band, single_band_options, default_annotation_group)
       VALUES
         ($id, $now, $now, ${user.id},
         ${user.id}, $ownerId, ${newProject.name}, $slug, ${newProject.description},
         ${newProject.visibility}, ${newProject.tileVisibility}, ${newProject.isAOIProject},
         ${newProject.aoiCadenceMillis}, $now, ${newProject.tags}, null,
-        TRUE, ${newProject.isSingleBand}, ${newProject.singleBandOptions})
+        TRUE, ${newProject.isSingleBand}, ${newProject.singleBandOptions}, null)
     """).update.withUniqueGeneratedKeys[Project](
       "id", "created_at", "modified_at", "created_by",
       "modified_by", "owner", "name", "slug_label", "description",
       "visibility", "tile_visibility", "is_aoi_project",
       "aoi_cadence_millis", "aois_last_checked", "tags", "extent",
-      "manual_order", "is_single_band", "single_band_options"
+      "manual_order", "is_single_band", "single_band_options", "default_annotation_group"
     )
   }
 
@@ -108,7 +109,8 @@ object ProjectDao extends Dao[Project] {
        extent = ${project.extent},
        manual_order = ${project.manualOrder},
        is_single_band = ${project.isSingleBand},
-       single_band_options = ${project.singleBandOptions}
+       single_band_options = ${project.singleBandOptions},
+       default_annotation_group = ${project.defaultAnnotationGroup}
     """ ++ Fragments.whereAndOpt(Some(idFilter))).update
     query
   }

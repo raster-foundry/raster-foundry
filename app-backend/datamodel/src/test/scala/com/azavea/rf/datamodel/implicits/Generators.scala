@@ -149,6 +149,11 @@ object Generators extends ArbitraryInstances {
   private def projectedMultiPolygonGen3857: Gen[Projected[MultiPolygon]] =
     multiPolygonGen3857 map { Projected(_, 3857) }
 
+  private def annotationGroupCreateGen: Gen[AnnotationGroup.Create] = for {
+    name <- arbitrary[String]
+    defaultStyle <- Gen.const(Some(().asJson))
+  } yield { AnnotationGroup.Create(name, defaultStyle)}
+
   private def annotationCreateGen: Gen[Annotation.Create] = for {
     owner <- Gen.const(None)
     label <- nonEmptyStringGen
@@ -159,16 +164,8 @@ object Generators extends ArbitraryInstances {
     geometry <- projectedMultiPolygonGen3857 map { Some(_) }
   } yield {
     Annotation.Create(
-      owner, label, description, machineGenerated, confidence, quality, geometry
+      owner, label, description, machineGenerated, confidence, quality, geometry, None
     )
-  }
-
-  private def annotationGen: Gen[Annotation] = for {
-    user <- userGen
-    projectId <- uuidGen
-    annotationCreate <- annotationCreateGen
-  } yield {
-    annotationCreate.toAnnotation(projectId, user)
   }
 
   private def organizationCreateGen: Gen[Organization.Create] = for {
@@ -495,7 +492,7 @@ object Generators extends ArbitraryInstances {
       Gen.listOfN(10, arbitrary[Annotation.Create])
     }
 
-    implicit def arbAnnotation: Arbitrary[Annotation] = Arbitrary { annotationGen }
+    implicit def arbAnnotationGroupCreate: Arbitrary[AnnotationGroup.Create] = Arbitrary { annotationGroupCreateGen }
 
     implicit def arbOrganization: Arbitrary[Organization] = Arbitrary { organizationGen }
 

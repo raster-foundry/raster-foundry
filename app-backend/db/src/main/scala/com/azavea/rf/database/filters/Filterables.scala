@@ -71,7 +71,8 @@ trait Filterables extends RFMeta with LazyLogging {
       annotParams.machineGenerated.map({ mg => fr"machine_generated = $mg" }),
       annotParams.minConfidence.map({ minc => fr"min_confidence = $minc" }),
       annotParams.maxConfidence.map({ maxc => fr"max_confidence = $maxc" }),
-      annotParams.quality.map({ quality => fr"quality = $quality" })
+      annotParams.quality.map({ quality => fr"quality = $quality" }),
+      annotParams.annotationGroup.map({ ag => fr"annotation_group = $ag" })
     )
   }
 
