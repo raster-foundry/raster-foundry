@@ -10,7 +10,6 @@ class OrganizationUsersController {
     ) {
         this.$scope = $scope;
         this.$stateParams = $stateParams;
-
         this.modalService = modalService;
         this.organizationService = organizationService;
         this.authService = authService;
@@ -127,6 +126,45 @@ class OrganizationUsersController {
         }).result.then(() => {
             this.fetchUsers(1, this.search);
         });
+    }
+
+    getUserGroupRoleLabel(user) {
+        switch (user.membershipStatus) {
+        case 'INVITED':
+            return 'Pending invitation';
+        case 'REQUESTED':
+            return 'Pending approval';
+        default:
+            return user.groupRole;
+        }
+    }
+
+    updateUserMembershipStatus(user, isApproved) {
+        if (isApproved) {
+            this.organizationService.approveUserMembership(
+                this.organization.platformId,
+                this.organization.id,
+                user.id,
+                user.groupRole
+            ).then(resp => {
+                this.users.forEach(thisUser =>{
+                    if (thisUser.id === resp.userId) {
+                        thisUser.membershipStatus = resp.membershipStatus;
+                        delete thisUser.buttonType;
+                    }
+                });
+                this.fetchUsers(1, '');
+            });
+        } else {
+            this.organizationService.removeUser(
+                this.organization.platformId,
+                this.organization.id,
+                user.id
+            ).then(resp => {
+                _.remove(this.users, thisUser => thisUser.id === resp[0].userId);
+                this.fetchUsers(1, '');
+            });
+        }
     }
 }
 

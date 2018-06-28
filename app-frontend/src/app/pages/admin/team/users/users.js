@@ -168,6 +168,45 @@ class TeamUsersController {
             });
         });
     }
+
+    getUserGroupRoleLabel(user) {
+        switch (user.membershipStatus) {
+        case 'INVITED':
+            return 'Pending invitation';
+        case 'REQUESTED':
+            return 'Pending approval';
+        default:
+            return user.groupRole;
+        }
+    }
+
+    updateUserMembershipStatus(user, isApproved) {
+        if (isApproved) {
+            this.teamService.setUserRole(
+                this.organization.platformId,
+                this.organization.id,
+                this.team.id,
+                user
+            ).then(resp => {
+                this.users.forEach(thisUser =>{
+                    if (thisUser.id === resp.userId) {
+                        thisUser.membershipStatus = resp.membershipStatus;
+                    }
+                });
+                this.fetchUsers(1, '');
+            });
+        } else {
+            this.teamService.removeUser(
+                this.organization.platformId,
+                this.organization.id,
+                this.team.id,
+                user.id
+            ).then(resp => {
+                _.remove(this.users, thisUser => thisUser.id === resp[0].userId);
+                this.fetchUsers(1, '');
+            });
+        }
+    }
 }
 
 const TeamUsersModule = angular.module('pages.admin.team.users', []);

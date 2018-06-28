@@ -79,7 +79,7 @@ object TeamDao extends Dao[Team] {
   }
 
   def listMembers(teamId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
-    UserGroupRoleDao.listUsersByGroup(GroupType.Team, teamId, page, searchParams, actingUser)
+    UserGroupRoleDao.listUsersByGroup(GroupType.Team, teamId, page, searchParams, actingUser, Some(fr"ORDER BY ugr.membership_status, ugr.group_role"))
 
   def validatePath(platformId: UUID,
                    organizationId: UUID,

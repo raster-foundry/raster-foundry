@@ -35,21 +35,17 @@ UserModule.resolve = {
     userRoles: (authService) => {
         return authService.fetchUserRoles();
     },
-    organizations: ($q, userRoles, organizationService) => {
-        const promises =
-            _.uniqBy(userRoles, r => r.groupId)
-            .filter(r => r.groupType === 'ORGANIZATION')
-            .map(r => organizationService.getOrganization(r.groupId));
-
-        return $q.all(promises);
+    organizationRoles: (userRoles) => {
+        return _.uniqBy(userRoles, r => r.groupId).filter(r => r.groupType === 'ORGANIZATION');
     },
-    teams: ($q, userRoles, teamService) => {
-        const promises =
-            _.uniqBy(userRoles, r => r.groupId)
-            .filter(r => r.groupType === 'TEAM')
-            .map(r => teamService.getTeam(r.groupId));
-
-        return $q.all(promises);
+    organizations: ($q, organizationRoles, organizationService) => {
+        return $q.all(organizationRoles.map(r => organizationService.getOrganization(r.groupId)));
+    },
+    teamRoles: (userRoles) => {
+        return _.uniqBy(userRoles, r => r.groupId).filter(r => r.groupType === 'TEAM');
+    },
+    teams: ($q, teamRoles, teamService) => {
+        return $q.all(teamRoles.map(r => teamService.getTeam(r.groupId)));
     },
     projects: (user, projectService) => {
         return projectService.query(

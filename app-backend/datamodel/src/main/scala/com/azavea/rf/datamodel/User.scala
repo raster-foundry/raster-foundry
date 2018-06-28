@@ -111,7 +111,8 @@ object User {
     isSuperuser: Boolean,
     isActive: Boolean,
     visibility: UserVisibility,
-    groupRole: GroupRole
+    groupRole: GroupRole,
+    membershipStatus: MembershipStatus
   )
 
   @JsonCodec
