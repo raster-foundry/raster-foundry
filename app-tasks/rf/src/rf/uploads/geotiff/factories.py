@@ -1,7 +1,6 @@
 # Factories to create scenes from geotiffs on disk somewhere
 import logging
 import os
-import urllib
 
 import boto3
 

@@ -5,7 +5,6 @@ from rf.models import Scene
 from rf.utils.io import IngestStatus, JobStatus, Visibility
 
 from .io import get_geotiff_metadata, get_geotiff_name
-from .create_footprints import extract_footprints
 
 logger = logging.getLogger(__name__)
 
@@ -42,17 +41,13 @@ def create_geotiff_scene(tif_path, datasource, acquisitionDate=None, cloudCover=
     sceneMetadata = sceneMetadata if sceneMetadata else get_geotiff_metadata(tif_path)
     name = name if name else get_geotiff_name(tif_path)
 
-    tile_footprint, data_footprint = extract_footprints(tif_path)
-
     sceneKwargs = {
         'sunAzimuth': None,  # TODO: Calculate from acquisitionDate and tif center.
         'sunElevation': None,  # TODO: Same
         'cloudCover': cloudCover,
         'acquisitionDate': acquisitionDate,
         'id': str(uuid.uuid4()),
-        'thumbnails': None,
-        'tileFootprint': tile_footprint,
-        'dataFootprint': data_footprint
+        'thumbnails': None
     }
     # Override defaults with kwargs
     sceneKwargs.update(kwargs)
