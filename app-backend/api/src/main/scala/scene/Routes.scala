@@ -137,6 +137,7 @@ trait SceneRoutes extends Authentication
           logger.info("Not generating footprint, already exists")
           tf
         }
+        case _ => None
       }
 
       val dataFootprint = (tileFootprint, newScene.dataFootprint) match {
