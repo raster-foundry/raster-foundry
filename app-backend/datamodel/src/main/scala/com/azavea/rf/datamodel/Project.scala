@@ -35,7 +35,8 @@ case class Project(
   extent: Option[Projected[Geometry]] = None,
   manualOrder: Boolean = true,
   isSingleBand: Boolean = false,
-  singleBandOptions: Option[SingleBandOptions.Params]
+  singleBandOptions: Option[SingleBandOptions.Params],
+  defaultAnnotationGroup: Option[UUID]
 )
 
 /** Case class for project creation */
@@ -105,7 +106,8 @@ object Project extends GeoJsonSupport {
         None,
         true,
         isSingleBand,
-        singleBandOptions
+        singleBandOptions,
+        None
       )
     }
   }
