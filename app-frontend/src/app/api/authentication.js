@@ -7,6 +7,9 @@ export function authedRequest(options, state) {
         return Promise.reject('No API token set');
     }
     return axios(Object.assign({}, options, {
-        headers: {Authorization: apiState.apiToken}
+        headers: Object.assign(
+            {Authorization: 'Bearer ' + apiState.apiToken},
+            options.headers
+        )
     }));
 }

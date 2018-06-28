@@ -9,6 +9,7 @@ import {
     ANNOTATIONS_CLEAR, ANNOTATIONS_EDIT, ANNOTATIONS_DELETE,
     ANNOTATIONS_BULK_CREATE,
     ANNOTATIONS_TRANSFORM_DRAWLAYER,
+    ANNOTATIONS_IMPORT_SHAPEFILE,
 
     fetchAnnotations, updateAnnotation, fetchLabels
 } from '_redux/actions/annotation-actions';
@@ -39,6 +40,27 @@ export const annotationReducer = typeToReducer({
             return Object.assign({}, state, {
                 sidebarDisabled: true
             });
+        }
+    },
+    // action.payload should contain the returned annotations (in the fulfilled case)
+    // not clear what comes back in pending
+    // error body in rejected.action.payload
+    [ANNOTATIONS_IMPORT_SHAPEFILE]: {
+        PENDING: (state) => {
+            return Object.assign({}, state, {fetchingAnnotations: true});
+        },
+        REJECTED: (state, action) => {
+            return Object.assign(
+                {}, state, {fetchingAnnotationsError: action.payload}
+            );
+        },
+        FULFILLED: (state, action) => {
+            let annotations = state.annotations;
+            let newAnnotations = action.payload.data;
+            newAnnotations.forEach(annotation => {
+                annotations = annotations.set(annotation.id, annotation);
+            });
+            return Object.assign({}, state, { annotations, fetchingAnnotations: false });
         }
     },
     [ANNOTATIONS_FETCH]: {

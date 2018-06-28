@@ -36,6 +36,8 @@ class AnnotateController {
     }
 
     mapStateToThis(state) {
+        // listen for changes for the shapefile upload so you can know when that's done
+        // and display the posted annotations
         let filter = state.projects.filter;
         const annotations = state.projects.annotations;
         let visibleAnnotations = annotations ? annotations.toArray() : [];
