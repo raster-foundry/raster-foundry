@@ -132,7 +132,7 @@ class UserDaoSpec extends FunSuite
           } yield (created)
           val (affectedRows, updatedToken) = (insertedUserIO flatMap {
             case (insertUser: User) => {
-              UserDao.storePlanetAccessToken(insertUser, insertUser.copy(planetCredential=planetCredential)) flatMap {
+              UserDao.storePlanetAccessToken(insertUser, planetCredential) flatMap {
                 case (affectedRows: Int) => {
                   val updatedPlanetTokenIO = UserDao.unsafeGetUserById(insertUser.id) map { _.planetCredential }
                   updatedPlanetTokenIO map { (affectedRows, _) }
@@ -268,4 +268,3 @@ class UserDaoSpec extends FunSuite
     }
   }
 }
-

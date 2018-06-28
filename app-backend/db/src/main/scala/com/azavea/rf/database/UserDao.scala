@@ -103,8 +103,8 @@ object UserDao extends Dao[User] {
   }
 
   /* Limited update to just modifying planet credential -- users can't change their permissions*/
-  def storePlanetAccessToken(user: User, updatedUser: User): ConnectionIO[Int] = {
-    val cleanUpdateUser = user.copy(planetCredential = updatedUser.planetCredential)
+  def storePlanetAccessToken(user: User, planetTokenC: Credential): ConnectionIO[Int] = {
+    val cleanUpdateUser = user.copy(planetCredential = planetTokenC)
     updateUser(cleanUpdateUser, user.id)
   }
 

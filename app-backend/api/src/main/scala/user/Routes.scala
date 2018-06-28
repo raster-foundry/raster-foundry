@@ -82,8 +82,8 @@ trait UserRoutes extends Authentication
   }
 
   def updateOwnUser: Route = authenticate { user =>
-    entity(as[User]) { updatedUser =>
-      onSuccess(UserDao.storePlanetAccessToken(user, updatedUser).transact(xa).unsafeToFuture()) {
+    entity(as[String]) { planetToken =>
+      onSuccess(UserDao.storePlanetAccessToken(user, Credential(Some(planetToken))).transact(xa).unsafeToFuture()) {
         completeSingleOrNotFound
       }
     }

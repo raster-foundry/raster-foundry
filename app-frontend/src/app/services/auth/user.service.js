@@ -3,13 +3,14 @@
 export default (app) => {
     class UserService {
         constructor(
-            $resource, $q, localStorage,
+            $resource, $q, localStorage, $log,
             authService, APP_CONFIG
         ) {
             'ngInject';
             this.authService = authService;
             this.localStorage = localStorage;
             this.$q = $q;
+            this.$log = $log;
 
             this.UserMetadata = $resource(
                 'https://' + APP_CONFIG.auth0Domain +
@@ -28,7 +29,14 @@ export default (app) => {
             this.User = $resource(`${BUILDCONFIG.API_HOST}/api/users/me`, { }, {
                 update: {
                     method: 'PUT',
-                    cache: false
+                    cache: false,
+                    /* eslint-disable */
+                    transformRequest: (data, headers) => {
+                        headers = angular.extend(
+                            {}, headers, {'Content-Type': 'application/json'});
+                        return angular.toJson(data);
+                    /* eslint-enable */
+                    }
                 },
                 getTeams: {
                     url: `${BUILDCONFIG.API_HOST}/api/users/me/teams`,
@@ -53,11 +61,8 @@ export default (app) => {
 
         updatePlanetToken(token) {
             return this.$q((resolve, reject) => {
-                this.authService.getCurrentUser().then((user) => {
-                    user.planetCredential = token;
-                    this.User.update(user).$promise.then(() => {
-                        resolve();
-                    }, (err) => reject(err));
+                this.User.update(token).$promise.then(() => {
+                    resolve();
                 }, (err) => reject(err));
             });
         }
