@@ -3,14 +3,13 @@
 export default (app) => {
     class UserService {
         constructor(
-            $resource, $q, localStorage, $log,
+            $resource, $q, localStorage,
             authService, APP_CONFIG
         ) {
             'ngInject';
             this.authService = authService;
             this.localStorage = localStorage;
             this.$q = $q;
-            this.$log = $log;
 
             this.UserMetadata = $resource(
                 'https://' + APP_CONFIG.auth0Domain +
