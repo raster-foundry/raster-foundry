@@ -64,9 +64,7 @@ class GeoTiffS3SceneFactory(object):
                 bucket.download_file(key, tmp_fname)
                 cog_path = convert_to_cog(tempdir, filename)
                 scene = self.create_geotiff_scene(tmp_fname, os.path.splitext(filename)[0])
-                scene.ingestLocation = urllib.unquote(
-                    upload_tifs([cog_path], self.owner, scene.id)[0]
-                )
+                scene.ingestLocation = upload_tifs([cog_path], self.owner, scene.id)[0]
                 images = [self.create_geotiff_image(tmp_fname, infile, scene, cog_path)]
 
             scene.thumbnails = []
