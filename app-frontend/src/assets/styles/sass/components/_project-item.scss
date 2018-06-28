@@ -4,12 +4,16 @@
   .panel-body {
     padding: 1rem;
   }
+
+  .avatar {
+    position: relative;
+    z-index: 10;
+    top: -3px;
+  }
 }
 
 .project-title {
   @extend .font-base;
-  display: flex;
-  align-items: center;
   font-size: 1.6rem;
   margin: 0;
   white-space: nowrap;
@@ -17,32 +21,31 @@
   max-width: 100%;
   text-overflow: ellipsis;
   padding-right: 8.5rem;
-  color: inherit;
-  transition: .5s ease opacity;
-  transition-delay: .25s;
 
-  // &:after {
-  //   content: attr(data-title);
-  //   position: absolute;
-  //   top: 0;
-  //   left: 0;
-  //   padding: 1rem;
-  //   max-width: 100%;
-  //   white-space: normal;
-  //   background: $off-white;
-  //   z-index: 1;
-  //   visibility: hidden;
-  //   opacity: 0;
-  // }
+  &:after {
+    content: attr(data-title);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 90px;
+    border-radius: 5px;
+    padding: 1rem;
+    padding-left: 4.5rem;
+    max-width: 100%;
+    white-space: normal;
+    background: $off-white;
+    box-shadow: inset white 0 0 0 1px;
+    z-index: 1;
+    visibility: hidden;
+    opacity: 0;
+  }
 
-  // &:hover {
-  //   visibility: hidden;
-  // }
-
-  // &:hover:after {
-  //   visibility: visible;
-  //   opacity: 1;
-  // }
+  &:hover:after {
+    visibility: visible;
+    opacity: 1;
+    transition: .5s ease opacity;
+    transition-delay: .5s;
+  }
 }
 
 .project-status {
