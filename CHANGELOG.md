@@ -1,5 +1,22 @@
 # Change Log
 
+## [1.3.0](https://github.com/raster-foundry/raster-foundry/tree/1.3.0) (2018-06-29)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.2.1...1.3.0)
+
+**Merged pull requests:**
+
+- Fix redirect to token page [\#3625](https://github.com/raster-foundry/raster-foundry/pull/3625)
+- Create cogs in upload processing [\#3618](https://github.com/raster-foundry/raster-foundry/pull/3618)
+- cleaned up project card frontend and project title hover bug [\#3616](https://github.com/raster-foundry/raster-foundry/pull/3616)
+- Make org de/activation work. Act on membership request/invitations. [\#3604](https://github.com/raster-foundry/raster-foundry/pull/3604)
+- Use authViewQuery for AOI scenes [\#3602](https://github.com/raster-foundry/raster-foundry/pull/3602)
+- Undo swagger spec deployment from \#1402 [\#3600](https://github.com/raster-foundry/raster-foundry/pull/3600)
+- Support shapefile annotation upload [\#3599](https://github.com/raster-foundry/raster-foundry/pull/3599)
+- Prevent multiple active roles on the same group from being created [\#3592](https://github.com/raster-foundry/raster-foundry/pull/3592)
+- Remove active organization requirement to log in [\#3591](https://github.com/raster-foundry/raster-foundry/pull/3591)
+- Export and AOI notifications [\#3586](https://github.com/raster-foundry/raster-foundry/pull/3586)
+
 ## [1.2.1](https://github.com/raster-foundry/raster-foundry/tree/1.2.1) (2018-06-26)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.2.0...1.2.1)
