@@ -4,10 +4,12 @@ import com.azavea.rf.api.utils.Config
 import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common.{AWSBatch, CommonHandlers, S3, UserErrorHandler}
 import com.azavea.rf.datamodel._
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{HttpEntity, MediaTypes, StatusCodes}
 import akka.http.scaladsl.server.Route
+import akka.util.ByteString
 import com.amazonaws.services.s3.AmazonS3URI
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import geotrellis.raster.MultibandTile
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
@@ -35,9 +37,12 @@ import doobie.postgres.implicits._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.azavea.rf.database.util.Page
 
+import scala.concurrent.Future
+
 trait SceneRoutes extends Authentication
     with Config
     with SceneQueryParameterDirective
+    with ThumbnailQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
     with AWSBatch
@@ -113,6 +118,9 @@ trait SceneRoutes extends Authentication
       } ~
       pathPrefix("datasource") {
         pathEndOrSingleSlash { getSceneDatasource(sceneId) }
+      } ~
+      pathPrefix("thumbnail") {
+        pathEndOrSingleSlash { getSceneThumbnail(sceneId) }
       }
     }
   }
@@ -313,6 +321,41 @@ trait SceneRoutes extends Authentication
     } {
       onSuccess(SceneDao.getSceneDatasource(sceneId).transact(xa).unsafeToFuture) { datasourceO =>
         complete { datasourceO }
+      }
+    }
+  }
+
+  def getSceneThumbnail(sceneId: UUID): Route = authenticateWithParameter { user =>
+    {
+      thumbnailQueryParameters {
+        thumbnailParams => {
+          println(s"Params are: ${thumbnailParams}")
+          authorizeAsync {
+            SceneDao.authViewQuery(user, ObjectType.Scene)
+              .filter(sceneId)
+              .exists
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            complete {
+
+              SceneDao.unsafeGetSceneById(sceneId).transact(xa).unsafeToFuture >>=
+                { (scene: Scene) =>
+                  (scene.ingestLocation, scene.sceneType) match {
+                    case (Some(uri), Some(SceneType.COG)) => {
+                      CogUtils.thumbnail(
+                        uri, thumbnailParams.width, thumbnailParams.height
+                      ).map(
+                        (tile: MultibandTile) => HttpEntity(MediaTypes.`image/png`, tile.renderPng.bytes)
+                      ).value
+                    }
+                    case _ =>
+                      Future.successful(None)
+                  }
+                }
+            }
+          }
+        }
       }
     }
   }
