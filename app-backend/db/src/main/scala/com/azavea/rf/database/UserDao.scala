@@ -34,8 +34,8 @@ object UserDao extends Dao[User] {
   }
 
   def unsafeGetUserById(id: String, isOwn: Option[Boolean] = Some(true)): ConnectionIO[User] = isOwn match {
-    case Some(isOwn) if isOwn == true => filterById(id).select
-    case Some(isOwn) if isOwn == false => filterById(id).select map {
+    case Some(true) => filterById(id).select
+    case _ => filterById(id).select map {
       (user: User) => {
         user.copy(planetCredential = Credential(Some("")), dropboxCredential = Credential(Some("")))
       }
