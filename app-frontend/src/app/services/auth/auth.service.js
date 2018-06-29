@@ -144,7 +144,7 @@ export default (app) => {
                     grant_type: 'authorization_code',
                     redirect: true,
                     sso: true,
-                    redirectUrl: `${this.getBaseURL()}/settings/tokens/api`,
+                    redirectUrl: `${this.getBaseURL()}/user/me/settings/api-tokens`,
                     params: {
                         scope: 'openid offline_access',
                         responseType: 'code',
