@@ -21,7 +21,7 @@ case class Datasource(
   bands: Json,
   licenseName: Option[String]
 ) {
-  def toThin: Datasource.Thin = Datasource.Thin(this.name, this.id)
+  def toThin: Datasource.Thin = Datasource.Thin(this.bands, this.name, this.id)
 }
 
 object Datasource {
@@ -32,6 +32,7 @@ object Datasource {
 
   @JsonCodec
   case class Thin (
+    bands: Json,
     name: String,
     id: UUID
   )

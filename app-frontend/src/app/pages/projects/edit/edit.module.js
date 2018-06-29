@@ -131,6 +131,10 @@ class ProjectsEditController {
                             return _.find(allScenes, {id});
                         }), 'id');
 
+                        this.fetchDatasources().then(datasources => {
+                            this.bands = this.datasourceService.getUnifiedBands(datasources);
+                        });
+
                         this.sceneLayers = this.sceneList.map(scene => ({
                             id: scene.id,
                             layer: this.layerService.layerFromScene(scene, this.projectId)
