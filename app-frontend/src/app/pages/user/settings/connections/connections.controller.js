@@ -152,7 +152,8 @@ class ConnectionsController {
         });
 
         modal.result.then((token) => {
-            this.userService.updatePlanetToken(token).then(() => {
+            this.user.planetCredential = token;
+            this.userService.updateOwnUser(this.user).then(() => {
                 this.userPlanetCredential = token;
             }, (err) => {
                 this.$log.log('There was an error updating the user with a planet api token', err);

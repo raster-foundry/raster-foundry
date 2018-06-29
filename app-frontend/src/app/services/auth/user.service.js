@@ -51,15 +51,8 @@ export default (app) => {
             }, (err) => err);
         }
 
-        updatePlanetToken(token) {
-            return this.$q((resolve, reject) => {
-                this.authService.getCurrentUser().then((user) => {
-                    user.planetCredential = token;
-                    this.User.update(user).$promise.then(() => {
-                        resolve();
-                    }, (err) => reject(err));
-                }, (err) => reject(err));
-            });
+        updateOwnUser(user) {
+            return this.User.update(user).$promise;
         }
 
         getTeams() {

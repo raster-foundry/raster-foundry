@@ -60,6 +60,7 @@ object Credential {
   }
 }
 
+@JsonCodec
 case class User(
   id: String,
   role: UserRole,
@@ -88,13 +89,6 @@ object User {
   def tupled = (User.apply _).tupled
 
   def create = Create.apply _
-
-
-  implicit val decodeUser: Decoder[User] = deriveDecoder[User]
-
-  implicit val encodeUser: Encoder[User] = Encoder.forProduct4(
-    "id", "name", "email", "profileImageUri"
-  )(u => (u.id, u.name, u.email, u.profileImageUri))
 
   @JsonCodec
   case class WithGroupRole (

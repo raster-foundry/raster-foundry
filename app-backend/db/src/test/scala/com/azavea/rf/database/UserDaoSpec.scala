@@ -122,25 +122,39 @@ class UserDaoSpec extends FunSuite
   }
 
   // storePlanetAccessToken
-  test("set a planet credential") {
+  test("Updating your own user fields should only update certain ones") {
     check(
       forAll(
-        (user: User.Create, planetCredential: Credential) => {
+        (user: User.Create, planetCredential: Credential, isEmail: Boolean,
+          visibility: UserVisibility, email: String
+        ) => {
           val insertedUserIO = for {
             org <- rootOrgQ
             created <- UserDao.create(user)
           } yield (created)
-          val (affectedRows, updatedToken) = (insertedUserIO flatMap {
-            case (insertUser: User) => {
-              UserDao.storePlanetAccessToken(insertUser, insertUser.copy(planetCredential=planetCredential)) flatMap {
+          val (affectedRows, updatedUser) = (insertedUserIO flatMap {
+            case (created: User) => {
+              val updatedUser = created.copy(
+                email = email,
+                planetCredential = planetCredential,
+                emailNotifications = isEmail,
+                visibility = visibility
+              )
+              UserDao.updateOwnUser(updatedUser) flatMap {
                 case (affectedRows: Int) => {
-                  val updatedPlanetTokenIO = UserDao.unsafeGetUserById(insertUser.id) map { _.planetCredential }
-                  updatedPlanetTokenIO map { (affectedRows, _) }
+                  val updatedUserIO = UserDao.unsafeGetUserById(updatedUser.id)
+                  updatedUserIO map { (affectedRows, _) }
                 }
               }
             }
           }).transact(xa).unsafeRunSync
-          (updatedToken.token == planetCredential.token) && (affectedRows == 1)
+
+          affectedRows == 1 &&
+            updatedUser.emailNotifications == isEmail &&
+            updatedUser.visibility == visibility &&
+            updatedUser.planetCredential.token == planetCredential.token &&
+            updatedUser.email != email &&
+            updatedUser.email == user.email
         }
       )
     )
@@ -178,7 +192,7 @@ class UserDaoSpec extends FunSuite
          uc3: User.Create, uc4: User.Create,
          pc1: Platform, pc2: Platform,
          org1: Organization.Create, org2: Organization.Create) => {
-          val defaultUser = uc1.toUser.copy(id="default")
+          val defaultUser = uc1.toUser.copy(id = "default")
           val orgsIO = for {
             p1 <- PlatformDao.create(pc1)
             p2 <- PlatformDao.create(pc2)
@@ -267,5 +281,21 @@ class UserDaoSpec extends FunSuite
       }
     }
   }
-}
 
+  test("Getting another user's info should not return credentials") {
+    check {
+      forAll {
+        (user: User.Create, org: Organization.Create) => {
+          val createdUserIO = for {
+            orgAndUser <- insertUserAndOrg(user, org)
+            (_, dbUser) = orgAndUser
+            createdUser <- UserDao.unsafeGetUserById(dbUser.id, Some(false))
+          } yield(createdUser)
+          val createdUser = createdUserIO.transact(xa).unsafeRunSync
+          createdUser.planetCredential == Credential(Some("")) &&
+            createdUser.dropboxCredential == Credential(Some(""))
+        }
+      }
+    }
+  }
+}

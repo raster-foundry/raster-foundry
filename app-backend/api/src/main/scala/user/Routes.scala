@@ -82,9 +82,13 @@ trait UserRoutes extends Authentication
   }
 
   def updateOwnUser: Route = authenticate { user =>
-    entity(as[User]) { updatedUser =>
-      onSuccess(UserDao.storePlanetAccessToken(user, updatedUser).transact(xa).unsafeToFuture()) {
-        completeSingleOrNotFound
+    entity(as[User]) { userToUpdate =>
+      if (userToUpdate.id == user.id) {
+        onSuccess(UserDao.updateOwnUser(userToUpdate).transact(xa).unsafeToFuture()) {
+          completeSingleOrNotFound
+        }
+      } else {
+        complete(StatusCodes.NotFound)
       }
     }
   }
@@ -136,6 +140,8 @@ trait UserRoutes extends Authentication
       val authId = URLDecoder.decode(authIdEncoded, "US_ASCII")
       if (user.id == authId) {
         complete(UserDao.unsafeGetUserById(authId).transact(xa).unsafeToFuture())
+      } else if (user.id != authId) {
+        complete(UserDao.unsafeGetUserById(authId, Some(false)).transact(xa).unsafeToFuture())
       } else {
         complete(StatusCodes.NotFound)
       }

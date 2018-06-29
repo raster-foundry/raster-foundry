@@ -63,6 +63,9 @@ object Generators extends ArbitraryInstances {
   private def visibilityGen: Gen[Visibility] = Gen.oneOf(
     Visibility.Public, Visibility.Organization, Visibility.Private)
 
+  private def userVisibilityGen: Gen[UserVisibility] = Gen.oneOf(
+    UserVisibility.Public, UserVisibility.Private)
+
   private def orgStatusGen: Gen[OrgStatus] = Gen.oneOf(
     OrgStatus.Requested, OrgStatus.Active, OrgStatus.Inactive)
 
@@ -559,5 +562,7 @@ object Generators extends ArbitraryInstances {
     implicit def arbAccessControlRule : Arbitrary[AccessControlRule.Create] = Arbitrary {
       accessControlRuleCreateGen
     }
+
+    implicit def arbUserVisibility : Arbitrary[UserVisibility] = Arbitrary { userVisibilityGen }
   }
 }
