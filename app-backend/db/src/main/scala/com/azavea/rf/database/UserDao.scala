@@ -33,8 +33,13 @@ object UserDao extends Dao[User] {
     query.filter(fr"id = ${id}")
   }
 
-  def unsafeGetUserById(id: String): ConnectionIO[User] = {
-    filterById(id).select
+  def unsafeGetUserById(id: String, isOwn: Option[Boolean] = Some(true)): ConnectionIO[User] = isOwn match {
+    case Some(isOwn) if isOwn == true => filterById(id).select
+    case Some(isOwn) if isOwn == false => filterById(id).select map {
+      (user: User) => {
+        user.copy(planetCredential = Credential(Some("")), dropboxCredential = Credential(Some("")))
+      }
+    }
   }
 
   def getUserById(id: String): ConnectionIO[Option[User]] = {
@@ -100,12 +105,6 @@ object UserDao extends Dao[User] {
         ).toUserGroupRole(creatingUser, MembershipStatus.Approved)
       )
     } yield (createdUser, List(platformRole, organizationRole))
-  }
-
-  /* Limited update to just modifying planet credential -- users can't change their permissions*/
-  def storePlanetAccessToken(user: User, planetTokenC: Credential): ConnectionIO[Int] = {
-    val cleanUpdateUser = user.copy(planetCredential = planetTokenC)
-    updateUser(cleanUpdateUser, user.id)
   }
 
   def updateUser(user: User, userId: String): ConnectionIO[Int] = {
@@ -216,5 +215,19 @@ object UserDao extends Dao[User] {
     UserDao.viewFilter(user)
       .filter(searchParams)
       .list(0, 5, fr"order by name")
+  }
+
+  def updateOwnUser(user: User): ConnectionIO[Int] = {
+    val updateTime = new Timestamp((new java.util.Date()).getTime)
+    (
+      sql"""
+        UPDATE users
+        SET
+          modified_at = ${updateTime},
+          planet_credential = ${user.planetCredential.token.getOrElse("")},
+          email_notifications = ${user.emailNotifications},
+          visibility = ${user.visibility}""" ++
+      Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
+     ).update.run
   }
 }

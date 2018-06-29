@@ -28,14 +28,7 @@ export default (app) => {
             this.User = $resource(`${BUILDCONFIG.API_HOST}/api/users/me`, { }, {
                 update: {
                     method: 'PUT',
-                    cache: false,
-                    /* eslint-disable */
-                    transformRequest: (data, headers) => {
-                        headers = angular.extend(
-                            {}, headers, {'Content-Type': 'application/json'});
-                        return angular.toJson(data);
-                    /* eslint-enable */
-                    }
+                    cache: false
                 },
                 getTeams: {
                     url: `${BUILDCONFIG.API_HOST}/api/users/me/teams`,
@@ -58,12 +51,8 @@ export default (app) => {
             }, (err) => err);
         }
 
-        updatePlanetToken(token) {
-            return this.$q((resolve, reject) => {
-                this.User.update(token).$promise.then(() => {
-                    resolve();
-                }, (err) => reject(err));
-            });
+        updateOwnUser(user) {
+            return this.User.update(user).$promise;
         }
 
         getTeams() {
