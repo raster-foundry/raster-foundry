@@ -329,7 +329,6 @@ trait SceneRoutes extends Authentication
     {
       thumbnailQueryParameters {
         thumbnailParams => {
-          println(s"Params are: ${thumbnailParams}")
           authorizeAsync {
             SceneDao.authViewQuery(user, ObjectType.Scene)
               .filter(sceneId)

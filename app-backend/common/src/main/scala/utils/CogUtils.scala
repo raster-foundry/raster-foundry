@@ -86,17 +86,7 @@ object CogUtils {
         val overviewRasterCellSize = overview.raster.cellSize
         val overviewExtentWidth = overview.extent.width
         val overviewExtentHeight = overview.extent.height
-        println(s"Cell data -- cell width ${overviewRasterCellSize.width}, cell height: ${overviewRasterCellSize.height}")
-        println(s"Extent data -- extent width: ${overviewExtentWidth}, extent height: ${overviewExtentHeight}")
-        val thumbnailExtent = ReprojectRasterExtent(
-          RasterExtent(overview.extent,
-                       (overviewExtentWidth / overviewRasterCellSize.width).toInt,
-                       (overviewExtentHeight / overviewRasterCellSize.height).toInt), transform
-        )
-        Some(
-          Raster(overview.tile, overview.extent)
-            .reproject(thumbnailExtent, transform, inverseTransform).tile
-        )
+        Some(Raster(overview.tile, overview.extent).tile)
       }
     )
   }
