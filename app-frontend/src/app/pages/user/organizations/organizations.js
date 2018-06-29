@@ -1,6 +1,11 @@
 class UserOrganizationsController {
-    constructor(organizations) {
+    constructor(organizationRoles, organizations) {
+        this.organizationRoles = organizationRoles;
         this.organizations = organizations;
+    }
+
+    getUserOrgRole(orgId) {
+        return this.organizationRoles.find(role => role.groupId === orgId).groupRole;
     }
 }
 

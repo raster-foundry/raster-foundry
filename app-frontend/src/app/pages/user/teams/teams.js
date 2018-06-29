@@ -1,6 +1,11 @@
 class UserTeamsController {
-    constructor(teams) {
+    constructor(teamRoles, teams) {
+        this.teamRoles = teamRoles;
         this.teams = teams;
+    }
+
+    getUserTeamRole(teamId) {
+        return this.teamRoles.find(role => role.groupId === teamId).groupRole;
     }
 }
 

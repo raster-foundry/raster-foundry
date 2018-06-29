@@ -67,21 +67,6 @@ trait Authentication extends Directives with LazyLogging {
     ConfigurableJwtValidator(jwkSet).validate(token)
   }
 
-  def getOrgCredentials(user: User): ConnectionIO[(Credential, Credential)] = {
-    val orgIO = for {
-      ugrs <- UserGroupRoleDao.listByUserAndGroupType(user, GroupType.Organization)
-      org <- OrganizationDao.getOrganizationById(ugrs.headOption match {
-        case Some(ugr) => ugr.groupId
-        case _ => throw new RuntimeException(
-          s"No matching organization for user with id: ${user.id}")
-      })
-    } yield org
-    orgIO.map {
-      case Some(org) => (org.dropboxCredential, org.planetCredential)
-      case _ => (Credential(Some("")), Credential(Some("")))
-    }
-  }
-
   def getStringClaimOrBlank(claims: JWTClaimsSet, key: String): String =
     Option(claims.getStringClaim(key)).getOrElse("")
 
@@ -95,8 +80,7 @@ trait Authentication extends Directives with LazyLogging {
         val email = getStringClaimOrBlank(jwtClaims, "email")
         val name = getStringClaimOrBlank(jwtClaims, "name")
         val picture = getStringClaimOrBlank(jwtClaims, "picture")
-        case class MembershipAndUser(platform: Option[Platform], organization: Option[Organization], user: User)
-        // All users will have an org role, either added by a migration or created with the user if they are new
+        case class MembershipAndUser(platform: Option[Platform], user: User)
         // All users will have a platform role, either added by a migration or created with the user if they are new
         val query = for {
           userAndRoles <- UserDao.getUserAndActiveRolesById(userId).flatMap {
@@ -104,13 +88,6 @@ trait Authentication extends Directives with LazyLogging {
             case UserOptionAndRoles(None, _) => createUserWithRoles(userId, email, name, picture, jwtClaims)
           }
           (user, roles) = userAndRoles
-          orgRole = roles.filter(role => role.groupType == GroupType.Organization).headOption
-          org <- orgRole match {
-            case Some(role ) => OrganizationDao.getOrganizationById(role.groupId)
-            case _ =>
-              logger.error(s"User without an organization tried to log in: ${userId}")
-              None.pure[ConnectionIO]
-          }
           platformRole = roles.filter(role => role.groupType == GroupType.Platform).headOption
           plat <- platformRole match {
             case Some(role) => PlatformDao.getPlatformById(role.groupId)
@@ -118,18 +95,11 @@ trait Authentication extends Directives with LazyLogging {
               logger.error(s"User without a platform tried to log in: ${userId}")
               None.pure[ConnectionIO]
           }
-          orgCredentials <- (plat, org) match {
-            case (Some(_), Some(_)) => getOrgCredentials(user)
-            case _ => (Credential(None), Credential(None)).pure[ConnectionIO]
-          }
-          (orgDropboxCredential, orgPlanetCredential) = orgCredentials
           updatedUser = (user.dropboxCredential, user.planetCredential) match {
             case (Credential(Some(d)), Credential(Some(p))) if d.length == 0 =>
               user.copy(email = email, name = name, profileImageUri = picture)
-                .copy(dropboxCredential = orgDropboxCredential)
             case (Credential(Some(d)), Credential(Some(p))) if p.length == 0 =>
               user.copy(email = email, name = name, profileImageUri = picture)
-                .copy(planetCredential = orgPlanetCredential)
             case _ => user.copy(email = email, name = name, profileImageUri = picture)
           }
           userUpdate <- {
@@ -138,11 +108,11 @@ trait Authentication extends Directives with LazyLogging {
               case _ => user.pure[ConnectionIO]
             }
           }
-        } yield MembershipAndUser(plat, org, userUpdate)
+        } yield MembershipAndUser(plat, userUpdate)
         onSuccess(query.transact(xa).unsafeToFuture).flatMap {
-          case MembershipAndUser(plat, org, userUpdate) =>
-            (plat map { _.isActive }, org map { _.status }) match {
-              case (Some(true), Some(OrgStatus.Active)) =>
+          case MembershipAndUser(plat, userUpdate) =>
+            plat map { _.isActive } match {
+              case Some(true) =>
                 provide(userUpdate)
               case _ =>
                 reject(AuthenticationFailedRejection(CredentialsRejected, challenge))

@@ -104,13 +104,13 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
         (existingMembershipStatus, adminCheck, rolesMatch) match {
           // Only admins can change group roles, and only approved roles can have their group role changed
           case (Some(MembershipStatus.Approved), true, false) =>
-            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved)) <*
-              UserGroupRoleDao.deactivate(existingRoleO.map( _.id ).get, actingUser)
+            UserGroupRoleDao.deactivate(existingRoleO.map( _.id ).get, actingUser) *>
+            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved))
           // Accepting a role requires agreement about what the groupRole should be -- users can't cheat
           // and become admins by accepting a MEMBER role by posting an ADMIN role
           case (Some(MembershipStatus.Requested), true, true) | (Some(MembershipStatus.Invited), false, true) =>
-            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved)) <*
-              UserGroupRoleDao.deactivate(existingRoleO.map( _.id).get, actingUser)
+            UserGroupRoleDao.deactivate(existingRoleO.map( _.id).get, actingUser) *>
+            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved))
           // rolesMatch will always be false when existingRoleO is None, so don't bother checking it
           case (None, true, _) =>
             UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Invited)) <*
@@ -171,7 +171,8 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       .list
   }
 
-  def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
+  def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest,
+      searchParams: SearchQueryParameters, actingUser: User, orderClauseO: Option[Fragment] = None): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
     // PUBLIC users can be seen by anyone within the same platform
     // PRIVATE users can be seen by anyone within the same organization
     // PRIVATE users can be seen by anyone within the same team (even if orgs are different)
@@ -180,7 +181,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
         SELECT u.id, u.role, u.created_at, u.modified_at,
           u.dropbox_credential, u.planet_credential, u.email_notifications,
           u.email, u.name, u.profile_image_uri, u.is_superuser, u.is_active, u.visibility,
-          ugr.group_role
+          ugr.group_role, ugr.membership_status
         FROM """ ++ tableF ++ fr""" ugr
         JOIN """ ++ UserDao.tableF ++ fr""" u
           ON u.id = ugr.user_id
@@ -240,7 +241,10 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
               case false => Some(ff)
             }
           )
-          .page[User.WithGroupRole](page, sf, cf)
+          .page[User.WithGroupRole](page, sf, cf, orderClauseO match {
+            case Some(orderClause) => orderClause
+            case None => fr""
+          })
       }
     } yield { result }
   }

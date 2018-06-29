@@ -9,7 +9,9 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 import akka.http.scaladsl.model.{Uri, StatusCodes}
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.directives.FileInfo
 import akka.http.scaladsl.unmarshalling._
+import better.files.{File => ScalaFile, _}
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits._
@@ -20,12 +22,15 @@ import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common.{CommonHandlers, RollbarNotifier, UserErrorHandler}
 import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.common.S3._
+import com.azavea.rf.common.utils.Shapefile
 import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.GeoJsonCodec._
 import com.azavea.rf.datamodel.Annotation
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import geotrellis.proj4.{LatLng, WebMercator}
+import geotrellis.shapefile.ShapeFileReader
 import io.circe._
 import io.circe.Json
 import io.circe.generic.JsonCodec
@@ -124,9 +129,24 @@ trait ProjectRoutes extends Authentication
                 }
             } ~
               pathPrefix("shapefile") {
-                get {
-                  traceName("project-annotations-shapefile") {
-                    exportAnnotationShapefile(projectId)
+                pathEndOrSingleSlash {
+                  get {
+                    traceName("project-annotations-shapefile") {
+                      exportAnnotationShapefile(projectId)
+                    }
+                  } ~
+                  post {
+                    traceName("project-annotations-shapefile-import") {
+                      authenticate { user =>
+                        val tempFile = ScalaFile.newTemporaryFile()
+                        tempFile.deleteOnExit()
+                        val response = storeUploadedFile("name", (_) => tempFile.toJava) { (m, _) =>
+                          processShapefile(projectId, tempFile, m)
+                        }
+                        tempFile.delete()
+                        response
+                      }
+                    }
                   }
                 }
               } ~
@@ -808,6 +828,40 @@ trait ProjectRoutes extends Authentication
     } {
       complete {
         AccessControlRuleDao.deleteByObject(ObjectType.Project, projectId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
+  def processShapefile(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo): Route = authenticate { user =>
+    {
+      val unzipped = tempFile.unzip()
+      val matches = unzipped.glob("*.shp")
+      matches.hasNext match {
+        case false =>
+          complete(StatusCodes.ClientError(400)("Bad Request", "No Shapefile Found in Archive"))
+        case true => {
+          val shapefilePath = matches.next.toString
+          val features = ShapeFileReader.readSimpleFeatures(shapefilePath)
+          val featureAccumulationResult =
+            Shapefile.accumulateFeatures(Annotation.fromSimpleFeature)(List(), List(), features.toList)
+          featureAccumulationResult match {
+            case Left(errorIndices) =>
+              complete(
+                StatusCodes.ClientError(400)(
+                  "Bad Request",
+                  s"Several features could not be translated to annotations. Indices: ${errorIndices}"
+                )
+              )
+            case Right(annotationCreates) => {
+              complete(
+                StatusCodes.Created,
+                (AnnotationDao.insertAnnotations(annotationCreates, projectId, user)
+                   map {(anns: List[Annotation]) => anns map { _.toGeoJSONFeature }}
+                ).transact(xa).unsafeToFuture
+              )
+            }
+          }
+        }
       }
     }
   }

@@ -77,7 +77,7 @@ class PlatformOrganizationsController {
     itemsForOrg(organization) {
         /* eslint-disable */
         let actions = [];
-        if (organization.isActive) {
+        if (organization.status === 'ACTIVE') {
             actions.push({
                 label: 'Deactivate',
                 callback: () => {

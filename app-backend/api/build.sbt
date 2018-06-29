@@ -20,6 +20,6 @@ initialCommands in console := """
   |  implicit val system = ActorSystem("rf-system")
   |  implicit val materializer = ActorMaterializer()
   |}
-  |object Main extends Config { implicit val database = Database.DEFAULT }
+  |object Main extends Config
   |import Main._
 """.trim.stripMargin

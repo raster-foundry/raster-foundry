@@ -20,13 +20,16 @@ export default (app) => {
                     addUser: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                             'organizations/:organizationId/members',
-                        method: 'POST',
-                        isArray: true
+                        method: 'POST'
                     },
                     deactivateUser: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                             'organizations/:organizationId/members/:userId',
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        params: {
+                            userId: '@userId'
+                        },
+                        isArray: true
                     },
                     teams: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
@@ -42,7 +45,14 @@ export default (app) => {
                         `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                             'organizations/:organizationId',
                         method: 'POST',
-                        params: {platformId: '@platformId', organizationId: '@organizationId'}
+                        params: {platformId: '@platformId', organizationId: '@organizationId'},
+                        /* eslint-disable */
+                        transformRequest: (data, headers) => {
+                            headers = angular.extend(
+                                {}, headers, {'Content-Type': 'application/json'});
+                            return angular.toJson(data);
+                        /* eslint-enable */
+                        }
                     },
                     updateOrganization: {
                         url:
@@ -78,6 +88,12 @@ export default (app) => {
             return this.PlatformOrganization.addUser({platformId, organizationId}, {
                 userId,
                 groupRole: 'MEMBER'
+            }).$promise;
+        }
+
+        approveUserMembership(platformId, organizationId, userId, groupRole) {
+            return this.PlatformOrganization.addUser({platformId, organizationId}, {
+                userId, groupRole
             }).$promise;
         }
 
@@ -119,12 +135,12 @@ export default (app) => {
 
         deactivate(platformId, organizationId) {
             return this.PlatformOrganization
-                .setOrganizationStatus({platformId, organizationId}, {status: 'INACTIVE'}).$promise;
+                .setOrganizationStatus({platformId, organizationId}, 'INACTIVE').$promise;
         }
 
         activate(platformId, organizationId) {
             return this.PlatformOrganization
-                .setOrganizationStatus({platformId, organizationId}, {status: 'ACTIVE'}).$promise;
+                .setOrganizationStatus({platformId, organizationId}, 'ACTIVE').$promise;
         }
 
         addOrganizationLogo(organizationId, logoBase64) {
@@ -136,6 +152,11 @@ export default (app) => {
         updateOrganization(platformId, organizationId, params) {
             return this.PlatformOrganization
                 .updateOrganization({platformId, organizationId}, params).$promise;
+        }
+
+        removeUser(platformId, organizationId, userId) {
+            return this.PlatformOrganization
+                .deactivateUser({platformId, organizationId, userId}).$promise;
         }
     }
 

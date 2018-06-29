@@ -133,10 +133,11 @@ trait SceneRoutes extends Authentication
           logger.info(s"Generating Footprint for Newly Added COG")
           CogUtils.getTiffExtent(ingestLocation)
         }
-        case _ => {
+        case (_, _, tf@Some(_)) => {
           logger.info("Not generating footprint, already exists")
-          None
+          tf
         }
+        case _ => None
       }
 
       val dataFootprint = (tileFootprint, newScene.dataFootprint) match {

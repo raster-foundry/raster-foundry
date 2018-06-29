@@ -227,9 +227,9 @@ object Dao {
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[T].list
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page[T: Composite](pageRequest: PageRequest, selectF: Fragment, countF: Fragment): ConnectionIO[PaginatedResponse[T]] = {
+    def page[T: Composite](pageRequest: PageRequest, selectF: Fragment, countF: Fragment, orderClause: Fragment = fr""): ConnectionIO[PaginatedResponse[T]] = {
       for {
-        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[T].list
+        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ orderClause ++ Page(pageRequest)).query[T].list
         count <- (countF ++ Fragments.whereAndOpt(filters: _*)).query[Int].unique
       } yield {
         val hasPrevious = pageRequest.offset > 0

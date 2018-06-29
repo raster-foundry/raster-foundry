@@ -2,10 +2,7 @@ from datetime import datetime
 from functools import partial
 import logging
 import os
-import urllib
 import uuid
-
-import boto3
 
 from rf.models import Band
 from rf.models import Scene
@@ -14,6 +11,7 @@ from rf.uploads.landsat8.io import get_tempdir
 from rf.uploads.modis.create_geotiff import create_geotiffs
 from rf.uploads.modis.download_modis import download_hdf
 from rf.utils.io import (
+    upload_tifs,
     IngestStatus,
     JobStatus,
     Visibility
@@ -131,36 +129,6 @@ def create_scene(hdf_url, temp_directory, user_id, datasource):
     scene.sceneType = 'COG'
 
     return scene
-
-
-def upload_tifs(tifs, user_id, scene_id):
-    """Upload tifs to S3
-
-    Args:
-        scene_id (str): ID of scene that the tif belongs to
-        user_id (str): ID of user that scene belongs to
-        tifs (list[str]): list of paths to tifs to upload
-
-    Returns:
-        list[str]: list of s3 URIs for tiffs
-    """
-    bucket = os.getenv('DATA_BUCKET')
-    s3_directory = os.path.join('user-uploads', user_id, scene_id)
-    s3_client = boto3.client('s3')
-    s3_uris = []
-    for tif in tifs:
-        filename = os.path.basename(tif)
-        key = os.path.join(s3_directory, filename)
-        logger.info('Uploading %s => bucket: %s, key: %s', tif, bucket, key)
-
-        s3_uris.append('s3://{}/{}'.format(bucket, urllib.quote(key)))
-        with open(tif, 'rb') as inf:
-            s3_client.put_object(
-                Bucket=bucket,
-                Body=inf,
-                Key=key
-            )
-    return s3_uris
 
 
 def get_image_band(filepath, modis_config=None):

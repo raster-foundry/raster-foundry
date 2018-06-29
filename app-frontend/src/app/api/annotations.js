@@ -1,3 +1,5 @@
+/* global FormData */
+
 import {authedRequest} from './authentication';
 
 
@@ -49,5 +51,17 @@ export function clearProjectAnnotationsRequest(state) {
         method: 'delete',
         url: `${state.api.apiUrl}` +
             `/api/projects/${state.projects.projectId}/annotations/`
+    }, state);
+}
+
+export function postShapefile(state, shapefileBuf) {
+    let data = new FormData();
+    data.append('name', shapefileBuf);
+    return authedRequest({
+        method: 'post',
+        url: `${state.api.apiUrl}` +
+            `/api/projects/${state.projects.projectId}/annotations/shapefile`,
+        data: data,
+        headers: {'Content-Type': 'multipart/form-data;boundary="=="'}
     }, state);
 }

@@ -143,6 +143,13 @@ trait PlatformRoutes extends Authentication
                   }
                 }
               }
+            } ~
+            pathPrefix(Segment) { userId =>
+              delete {
+                traceName("platform-organizations-member-remove") {
+                  removeUserFromOrganization(platformId, orgId, userId)
+                }
+              }
             }
           } ~
           pathPrefix("teams") {
@@ -388,6 +395,16 @@ trait PlatformRoutes extends Authentication
     }
   }
 
+  def removeUserFromOrganization(platformId: UUID, orgId: UUID, userId: String): Route = authenticate { user =>
+    authorizeAsync {
+      OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
+    } {
+      complete {
+        OrganizationDao.deactivateUserRoles(user, userId, orgId).transact(xa).unsafeToFuture
+      }
+    }
+  }
+
   def listTeams(platformId: UUID, organizationId: UUID): Route = authenticate { user =>
     authorizeAsync {
       OrganizationDao.userIsMember(user, organizationId).transact(xa).unsafeToFuture
@@ -529,10 +546,10 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       OrganizationDao.userIsAdmin(user, organizationId).transact(xa).unsafeToFuture
     } {
-      entity(as[ActiveStatus]) {
-        case ActiveStatus(true) =>
+      entity(as[String]) {
+        case status: String if status == OrgStatus.Active.toString =>
           activateOrganization(platformId, organizationId, user)
-        case ActiveStatus(false) =>
+        case status: String if status == OrgStatus.Inactive.toString =>
           deactivateOrganization(platformId, organizationId, user)
       }
     }

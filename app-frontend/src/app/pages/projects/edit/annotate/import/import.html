@@ -10,14 +10,24 @@
     <div class="list-group" ng-show="!$ctrl.uploadData">
       <div class="list-group-item">
         <label class="btn btn-primary btn-block btn-upload-label"
-               for="btn-upload"
+               for="geojson-btn-upload"
                ng-click="$ctrl.onUploadClick()">
           <input type="file"
                  accept="*.geojson"
                  multiple
-                 id="btn-upload"
+                 id="geojson-btn-upload"
                  class="btn-upload"/>
-          Upload
+          Upload GeoJSON
+        </label>
+        <label class="btn btn-primary btn-block btn-upload-label"
+               for="shapefile-btn-upload"
+               ng-click="$ctrl.onUploadClick()">
+          <input type="file"
+                 accept="*.zip"
+                 multiple
+                 id="shapefile-btn-upload"
+                 class="btn-upload"/>
+          Upload Zipped Shapefile
         </label>
       </div>
     </div>

@@ -1,7 +1,13 @@
 import {
     getProjectAnnotationsRequest, createProjectAnnotationsRequest, updateProjectAnnotationRequest,
-    getProjectLabelsRequest, clearProjectAnnotationsRequest, deleteProjectAnnotationRequest
+    getProjectLabelsRequest, clearProjectAnnotationsRequest, deleteProjectAnnotationRequest,
+    postShapefile
 } from '_api/annotations';
+
+// IF YOU ADD CONSTANTS:
+// They MUST be prefixed with whatever the value of ANNOTATIONS_ACTION_PREFIX is
+// For example, if you prefix with ANNOTATION instead of ANNOTATIONS, your state changes
+// will never happen, and you'll be sad, and you won't feel very smart.
 
 export const ANNOTATIONS_RESET = 'ANNOTATIONS_RESET';
 export const ANNOTATIONS_FETCH = 'ANNOTATIONS_FETCH';
@@ -15,9 +21,9 @@ export const ANNOTATIONS_EDIT = 'ANNOTATIONS_EDIT';
 export const ANNOTATIONS_BULK_CREATE = 'ANNOTATIONS_BULK_CREATE';
 export const ANNOTATIONS_SIDEBAR = 'ANNOTATIONS_SIDEBAR';
 export const ANNOTATIONS_TRANSFORM_DRAWLAYER = 'ANNOTATIONS_TRANSFORM_DRAWLAYER';
+export const ANNOTATIONS_IMPORT_SHAPEFILE = 'ANNOTATIONS_IMPORT_SHAPEFILE';
 
 export const ANNOTATIONS_ACTION_PREFIX = 'ANNOTATIONS';
-
 
 export function enableSidebar() {
     return {
@@ -71,6 +77,15 @@ export function createAnnotations(annotations, edit) {
             meta: {
                 edit
             }
+        });
+    };
+}
+
+export function importShapefile(shapefile) {
+    return (dispatch, getState) => {
+        dispatch({
+            type: ANNOTATIONS_IMPORT_SHAPEFILE,
+            payload: postShapefile(getState(), shapefile)
         });
     };
 }
@@ -176,5 +191,5 @@ export default {
     createAnnotations, updateAnnotation, filterAnnotations,
     clearAnnotations, editAnnotation, finishEditingAnnotation,
     deleteAnnotation, bulkCreateAnnotations, finishBulkCreate,
-    transformDrawlayer
+    transformDrawlayer, importShapefile
 };

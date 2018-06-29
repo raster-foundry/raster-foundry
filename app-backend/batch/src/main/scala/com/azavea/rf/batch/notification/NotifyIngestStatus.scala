@@ -123,15 +123,6 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
     }
   }
 
-  def isValidEmailSettings(host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String): Boolean =
-    host.length != 0 &&
-      (port == 25 || port == 465 || port == 587 || port == 2525) &&
-      encryption.length!= 0 &&
-      (encryption == "ssl" || encryption == "tls" || encryption == "starttls") &&
-      platUserEmail.length != 0 &&
-      pw.length != 0 &&
-      userEmail.length != 0
-
   def sendIngestStatusEmailToConsumers(platformsWithConsumers: List[PlatformWithUsersSceneProjects], scene: Scene, ingestStatus: String) =
     platformsWithConsumers.map(pU => {
       val email = new NotificationEmail
@@ -140,7 +131,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           (pU.pubSettings.emailSmtpHost, pU.pubSettings.emailSmtpPort, pU.pubSettings.emailSmtpEncryption,
             pU.pubSettings.emailUser, pU.priSettings.emailPassword, pU.email) match {
             case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
-               isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
+              email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
               val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForConsumers(pU, scene, ingestStatus)
               email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).map((configuredEmail: Email) => configuredEmail.send)
               logger.info(s"Notified project owner ${pU.uId}.")
@@ -160,7 +151,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
         (pO.pubSettings.emailSmtpHost, pO.pubSettings.emailSmtpPort, pO.pubSettings.emailSmtpEncryption,
           pO.pubSettings.emailUser, pO.priSettings.emailPassword, pO.email) match {
           case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
-            isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
+            email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
             val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForOwner(pO, scene, ingestStatus)
             email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified scene owner ${pO.uId}.")
