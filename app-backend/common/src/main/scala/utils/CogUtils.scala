@@ -71,6 +71,10 @@ object CogUtils {
       OptionT[Future, MultibandTile] =
   {
     def trim: Int => Int = Math.min(_, 512)
+    // Check width and height parameters, defaulting to 256 if neither is provided, otherwise
+    // trimming to [0, 512]. Widths and heights are approximate anyway, with the actual size of
+    // the returned PNG determined by the size of the closest overview to the cell size implied by
+    // the requested width and height.
     val (width, height) = (widthO, heightO) match {
       case (Some(w), Some(h)) => (trim(w), trim(h))
       case (Some(w), None) => (trim(w), trim(w))

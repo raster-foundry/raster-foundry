@@ -337,7 +337,6 @@ trait SceneRoutes extends Authentication
               .unsafeToFuture
           } {
             complete {
-
               SceneDao.unsafeGetSceneById(sceneId).transact(xa).unsafeToFuture >>=
                 { (scene: Scene) =>
                   (scene.ingestLocation, scene.sceneType) match {
