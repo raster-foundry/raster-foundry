@@ -357,3 +357,10 @@ case class OrganizationQueryParameters(
   activationParams: ActivationQueryParameters = ActivationQueryParameters(),
   platformIdParams: PlatformIdQueryParameters = PlatformIdQueryParameters()
 )
+
+@JsonCodec
+case class SceneThumbnailQueryParameters(
+  width: Option[Int],
+  height: Option[Int],
+  token: String
+)

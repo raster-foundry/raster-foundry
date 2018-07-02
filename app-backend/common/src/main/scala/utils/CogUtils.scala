@@ -67,6 +67,34 @@ object CogUtils {
       }
     )
 
+  def thumbnail(uri: String, widthO: Option[Int], heightO: Option[Int])(implicit ec: ExecutionContext):
+      OptionT[Future, MultibandTile] =
+  {
+    def trim: Int => Int = Math.min(_, 512)
+    // Check width and height parameters, defaulting to 256 if neither is provided, otherwise
+    // trimming to [0, 512]. Widths and heights are approximate anyway, with the actual size of
+    // the returned PNG determined by the size of the closest overview to the cell size implied by
+    // the requested width and height.
+    val (width, height) = (widthO, heightO) match {
+      case (Some(w), Some(h)) => (trim(w), trim(h))
+      case (Some(w), None) => (trim(w), trim(w))
+      case (None, Some(h)) => (trim(h), trim(h))
+      case _ => (256, 256)
+    }
+    rfCache.cachingOptionT(s"cog-thumbnail-${width}-${height}-${URIUtils.withNoParams(uri)}")(
+      CogUtils.fromUri(uri).mapFilter { tiff =>
+        val transform = Proj4Transform(tiff.crs, WebMercator)
+        val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
+        val cellSize = CellSize(tiff.extent, width, height)
+        val overview = closestTiffOverview(tiff, cellSize, Auto(0))
+        val overviewRasterCellSize = overview.raster.cellSize
+        val overviewExtentWidth = overview.extent.width
+        val overviewExtentHeight = overview.extent.height
+        Some(Raster(overview.tile, overview.extent).tile)
+      }
+    )
+  }
+
   def cropForZoomExtent(tiff: GeoTiff[MultibandTile], zoom: Int, extent: Option[Extent])(implicit ec: ExecutionContext): OptionT[Future, MultibandTile] = {
     val transform = Proj4Transform(tiff.crs, WebMercator)
     val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
