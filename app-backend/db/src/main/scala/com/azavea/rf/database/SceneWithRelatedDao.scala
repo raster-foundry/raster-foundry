@@ -61,7 +61,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     scenes <- sceneSearchBuilder.list(
       (pageRequest.offset * pageRequest.limit),
       pageRequest.limit,
-      fr"ORDER BY coalesce (acquisition_date, created_at) DESC, id"
+      fr"ORDER BY coalesce (acquisition_date, created_at) DESC, id DESC"
     )
     withRelateds <- scenesToScenesWithRelated(scenes)
     count <- sceneSearchBuilder.countIO
