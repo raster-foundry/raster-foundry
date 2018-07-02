@@ -163,7 +163,10 @@ object Annotation {
         properties.modifiedAt,
         properties.modifiedBy,
         properties.owner,
-        properties.label,
+        properties.label.length match {
+          case 0 => "Unlabeled"
+          case _ => properties.label
+        },
         properties.description,
         properties.machineGenerated,
         properties.confidence,
@@ -195,7 +198,10 @@ object Annotation {
         now, // modifiedAt
         user.id, // modifiedBy
         ownerId, // owner
-        label,
+        label.length match {
+          case 0 => "Unlabeled"
+          case _ => label
+        },
         description,
         machineGenerated,
         confidence,
@@ -269,7 +275,10 @@ object AnnotationShapefileService extends LazyLogging {
 
         val data = Seq(
           ("id", annotation.id),
-          ("label", annotation.label),
+          ("label", annotation.label.length match {
+            case 0 => "Unlabeled"
+            case _ => annotation.label
+          }),
           ("desc", annotation.description.getOrElse("")),
           ("machinegen", annotation.machineGenerated.getOrElse(false)),
           ("confidence", annotation.confidence.getOrElse(0)),
