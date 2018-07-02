@@ -643,9 +643,13 @@ trait ProjectRoutes extends Authentication
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa).unsafeToFuture
     } {
-      entity(as[BulkAcceptParams]) { sceneParams =>
-        onSuccess(ProjectDao.addScenesToProject(sceneParams.sceneIds, projectId, user, true).transact(xa).unsafeToFuture) {
-          completeSingleOrNotFound
+      entity(as[List[UUID]]) { sceneIds =>
+        if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+          complete(StatusCodes.RequestEntityTooLarge)
+        }
+
+        onSuccess(SceneToProjectDao.acceptScenes(projectId, sceneIds).transact(xa).unsafeToFuture) { updatedOrder =>
+          complete(StatusCodes.NoContent)
         }
       }
     }

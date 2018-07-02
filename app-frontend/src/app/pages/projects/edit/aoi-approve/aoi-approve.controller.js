@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 export default class AOIApproveController {
     constructor(
-        $scope, $state, $q, $log, $stateParams,
+        $scope, $state, $q, $log, $window, $stateParams,
         projectService, projectEditService, mapService,
         RasterFoundryRepository
     ) {
@@ -11,6 +11,7 @@ export default class AOIApproveController {
         this.$state = $state;
         this.$q = $q;
         this.$log = $log;
+        this.$window = $window;
         this.$stateParams = $stateParams;
         this.projectService = projectService;
         this.projectEditService = projectEditService;
@@ -146,14 +147,14 @@ export default class AOIApproveController {
 
         if (scenesToHandle.APPROVED.length) {
             requests.push(
-              this.projectService.approveScene(
+              this.projectService.approveScenes(
                   this.$stateParams.projectid, scenesToHandle.APPROVED));
         }
 
         if (requests.length) {
-            this.$q.all(requests).then(res => {
-                this.$log.log(res);
-                this.$state.go('projects.edit', {}, { reload: true });
+            this.$q.all(requests).then(() => {
+                this.$state.go('projects.edit');
+                this.$window.location.reload();
             }, () => {
                 this.$log.error(
               'There was a problem applying the status to one or more scenes');

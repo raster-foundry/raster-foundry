@@ -153,24 +153,30 @@ object ProjectDao extends Dao[Project] {
   }
 
   def addScenesToProject(sceneIds: NonEmptyList[UUID], projectId: UUID, user: User, isAccepted: Boolean): ConnectionIO[Int] = {
-    val inClause = Fragments.in(fr"scenes.id", sceneIds)
-    val sceneIdWithDatasourceF = sql"""
-         SELECT scenes.id,
-                datasources.id,
-                datasources.created_at,
-                datasources.created_by,
-                datasources.modified_at,
-                datasources.modified_by,
-                datasources.owner,
-                datasources.name,
-                datasources.visibility,
-                datasources.composites,
-                datasources.extras,
-                datasources.bands,
-                datasources.license_name
-         FROM scenes
-         INNER JOIN datasources ON scenes.datasource = datasources.id
-         WHERE NOT (scenes.id = ANY(ARRAY(SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})::UUID[])) AND """ ++ inClause
+    val inClause = fr"scenes.id IN (" ++ Fragment.const(sceneIds.map(_.show).foldSmash("'", "','", "'")) ++ fr")"
+    val sceneIdWithDatasourceF = fr"""
+      SELECT scenes.id,
+            datasources.id,
+            datasources.created_at,
+            datasources.created_by,
+            datasources.modified_at,
+            datasources.modified_by,
+            datasources.owner,
+            datasources.name,
+            datasources.visibility,
+            datasources.composites,
+            datasources.extras,
+            datasources.bands,
+            datasources.license_name
+      FROM scenes
+      INNER JOIN datasources ON scenes.datasource = datasources.id
+      WHERE
+      scenes.id NOT IN (
+       SELECT scene_id
+       FROM scenes_to_projects
+       WHERE project_id = ${projectId} AND accepted = true
+      )
+      AND """ ++ inClause
     for {
       sceneQueryResult <- sceneIdWithDatasourceF.query[(UUID, Datasource)].list
       sceneToProjectInserts <- {
@@ -205,7 +211,6 @@ object ProjectDao extends Dao[Project] {
     val redBand = redBandPath.getOption(composites).getOrElse(0)
     val greenBand = greenBandPath.getOption(composites).getOrElse(1)
     val blueBand = blueBandPath.getOption(composites).getOrElse(2)
-
     (
       sceneId, projectId, isAccepted, None, Some(
         ColorCorrect.Params(
