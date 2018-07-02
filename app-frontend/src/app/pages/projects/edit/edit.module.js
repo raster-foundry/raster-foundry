@@ -123,9 +123,6 @@ class ProjectsEditController {
                 this.addUningestedScenesToMap(allScenes.filter(
                     (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
                 ));
-                // TODO:
-                // This logic should be modified so that if allScenes.length == 0
-                // do something else instead of below
                 return this.projectService.getSceneOrder(this.projectId).then(
                     (res) => {
                         this.orderedSceneId = res.results;
