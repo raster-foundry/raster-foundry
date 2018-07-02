@@ -123,14 +123,15 @@ class ProjectsEditController {
                 this.addUningestedScenesToMap(allScenes.filter(
                     (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
                 ));
+                // TODO:
+                // This logic should be modified so that if allScenes.length == 0
+                // do something else instead of below
                 return this.projectService.getSceneOrder(this.projectId).then(
                     (res) => {
                         this.orderedSceneId = res.results;
-                        this.$log.log(this.orderedSceneId);
                         this.sceneList = _(
                           this.orderedSceneId.map((id) => _.find(allScenes, {id}))
                         ).uniqBy('id').compact().value();
-                        this.$log.log(this.sceneList);
 
                         this.fetchDatasources().then(datasources => {
                             this.bands = this.datasourceService.getUnifiedBands(datasources);
@@ -201,8 +202,7 @@ class ProjectsEditController {
                 pending: true
             });
             this.pendingSceneRequest.then(pendingScenes => {
-                this.pendingSceneList = pendingScenes;
-                this.$log.log('pending scene list', this.pendingSceneList);
+                this.pendingSceneList = _(pendingScenes).uniqBy('id').compact().value();
             });
         }
         return this.pendingSceneRequest;

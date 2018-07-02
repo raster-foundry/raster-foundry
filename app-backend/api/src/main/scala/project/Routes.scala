@@ -644,13 +644,8 @@ trait ProjectRoutes extends Authentication
         .transact(xa).unsafeToFuture
     } {
       entity(as[BulkAcceptParams]) { sceneParams =>
-        sceneParams.sceneIds.toNel.map(ids => ProjectDao.addScenesToProject(ids, projectId, user, true)) match {
-          case Some(addQuery) => {
-            onSuccess(addQuery.transact(xa).unsafeToFuture) {
-              numAdded => complete(sceneParams.sceneIds)
-            }
-          }
-          case _ => complete(StatusCodes.BadRequest)
+        onSuccess(ProjectDao.addScenesToProject(sceneParams.sceneIds, projectId, user, true).transact(xa).unsafeToFuture) {
+          completeSingleOrNotFound
         }
       }
     }

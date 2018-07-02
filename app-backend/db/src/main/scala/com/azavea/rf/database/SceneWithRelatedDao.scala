@@ -24,10 +24,15 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
 
   def listProjectScenes(projectId: UUID, pageRequest: PageRequest, sceneParams: CombinedSceneQueryParams, user: User): ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
     val andPendingF: Fragment = sceneParams.sceneParams.pending match {
-      case Some(isPending) => fr"AND accepted = ${isPending}"
-      case _ => fr""
+      case Some(true) => fr"AND accepted = false"
+      case _ => fr"AND accepted = true"
     }
-    val projectFilterFragment = fr"id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId}" ++ andPendingF ++ fr")"
+    val projectFilterFragment: Fragment = fr"""
+      id IN (
+        SELECT scene_id
+        FROM scenes_to_projects
+        WHERE
+          project_id = ${projectId}""" ++ andPendingF ++ fr")"
     val queryFilters = makeFilters(List(sceneParams)).flatten ++ List(Some(projectFilterFragment))
     println(projectFilterFragment)
     println(queryFilters)
