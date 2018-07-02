@@ -39,6 +39,7 @@ import userSettingsProfileTpl from './pages/user/settings/profile/profile.html';
 import userSettingsApiTokensTpl from './pages/user/settings/api/api.html';
 import userSettingsMapTokensTpl from './pages/user/settings/map/map.html';
 import userSettingsConnectionsTpl from './pages/user/settings/connections/connections.html';
+import userSettingsPrivacyTpl from './pages/user/settings/privacy/privacy.html';
 import userOrganizationsTpl from './pages/user/organizations/organizations.html';
 import userTeamsTpl from './pages/user/teams/teams.html';
 import userProjectsTpl from './pages/user/projects/projects.html';
@@ -310,6 +311,13 @@ function settingsStates($stateProvider) {
             url: '/connections',
             templateUrl: userSettingsConnectionsTpl,
             controller: 'ConnectionsController',
+            controllerAs: '$ctrl'
+        })
+        .state('user.settings.privacy', {
+            title: 'Settings: User Privacy',
+            url: '/privacy',
+            templateUrl: userSettingsPrivacyTpl,
+            controller: 'PrivacyController',
             controllerAs: '$ctrl'
         })
         .state('user.organizations', {

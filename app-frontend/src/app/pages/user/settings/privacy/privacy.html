@@ -1,0 +1,17 @@
+<div class="row content stack-sm">
+  <div class="column-8">
+    <p>
+      A <strong>public</strong> user can be found by users through searching and will be shown on member's profiles.
+    </p>
+    <p>
+      A <strong>private</strong> user is not discoverable and is only visible to those who have permissions.
+    </p>
+    <rf-toggle radio="true" value="$ctrl.user.visibility === 'PUBLIC'" on-change="$ctrl.updateUserPrivacy('PUBLIC')">
+      <span><strong>Public</strong></span>
+    </rf-toggle>
+    <br/>
+    <rf-toggle radio="true" value="$ctrl.user.visibility === 'PRIVATE'" on-change="$ctrl.updateUserPrivacy('PRIVATE')">
+      <span><strong>Private</strong></span>
+    </rf-toggle>
+  </div>
+</div>

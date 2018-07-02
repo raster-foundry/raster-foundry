@@ -96,6 +96,7 @@ const App = angular.module(
         require('./pages/user/settings/api/api.module.js').name,
         require('./pages/user/settings/map/map.module.js').name,
         require('./pages/user/settings/connections/connections.module.js').name,
+        require('./pages/user/settings/privacy/privacy.module.js').name,
         require('./pages/user/organizations/organizations.js').name,
         require('./pages/user/teams/teams.js').name,
 
