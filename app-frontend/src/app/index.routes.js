@@ -40,6 +40,7 @@ import userSettingsApiTokensTpl from './pages/user/settings/api/api.html';
 import userSettingsMapTokensTpl from './pages/user/settings/map/map.html';
 import userSettingsConnectionsTpl from './pages/user/settings/connections/connections.html';
 import userSettingsPrivacyTpl from './pages/user/settings/privacy/privacy.html';
+import userSettingsNotificationTpl from './pages/user/settings/notification/notification.html';
 import userOrganizationsTpl from './pages/user/organizations/organizations.html';
 import userTeamsTpl from './pages/user/teams/teams.html';
 import userProjectsTpl from './pages/user/projects/projects.html';
@@ -318,6 +319,13 @@ function settingsStates($stateProvider) {
             url: '/privacy',
             templateUrl: userSettingsPrivacyTpl,
             controller: 'PrivacyController',
+            controllerAs: '$ctrl'
+        })
+        .state('user.settings.notification', {
+            title: 'Settings: User Notification',
+            url: '/notification',
+            templateUrl: userSettingsNotificationTpl,
+            controller: 'NotificationController',
             controllerAs: '$ctrl'
         })
         .state('user.organizations', {
