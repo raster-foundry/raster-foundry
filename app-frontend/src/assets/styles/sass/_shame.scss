@@ -3112,6 +3112,7 @@ rf-reclassify-table {
   }
 }
 
+
 // color map modal
 .cm-modal-section {
     &.bg-border {
@@ -3204,4 +3205,15 @@ rf-navbar-search {
             color: $white;
         }
     }
+}
+
+.div-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+
+  > * {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
 }

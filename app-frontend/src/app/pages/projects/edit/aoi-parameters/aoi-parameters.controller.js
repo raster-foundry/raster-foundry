@@ -40,6 +40,8 @@ const addMethods = [
 ];
 */
 
+const startTimeTooltip = 'Start time may not be changed once a monitoring has started.'
+
 export default class AOIParametersController {
     constructor(
         $log, $q, $scope, $state, modalService, $timeout,
@@ -62,6 +64,7 @@ export default class AOIParametersController {
         this.authService = authService;
 
         this.getMap = () => mapService.getMap('edit');
+        this.startTimeTooltip = startTimeTooltip;
     }
 
     $onInit() {
@@ -146,6 +149,7 @@ export default class AOIParametersController {
             this.aoiRequest = this.projectService.getProjectAois(
                 this.$parent.projectId
             ).then((response) => {
+                this.disableStartTimeChange = response.count;
                 this.projectAois = response.results;
                 if (response.count === 1) {
                     let aoi = _.first(this.projectAois);
