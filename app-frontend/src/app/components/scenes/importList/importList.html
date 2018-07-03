@@ -1,7 +1,7 @@
 <div class="text-center" ng-show="$ctrl.loading">
   <div>Loading Imports</div>
   <span class="list-placeholder h3">
-    <i class="icon-load animate-spin"></i>
+    <i class="icon-load animate-spin" ng-class="{'stop': !$ctrl.loading}"></i>
   </span>
 </div>
 <div class="list-group">
