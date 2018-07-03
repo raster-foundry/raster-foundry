@@ -35,6 +35,12 @@ export default (app) => {
                     method: 'GET',
                     cache: false,
                     isArray: true
+                },
+                search: {
+                    url: `${BUILDCONFIG.API_HOST}/api/users/search`,
+                    method: 'GET',
+                    cache: false,
+                    isArray: true
                 }
             });
         }
@@ -61,6 +67,10 @@ export default (app) => {
 
         getUserById(id) {
             return this.UserMetadata.get({userid: id}).$promise;
+        }
+
+        searchUsers(searchText) {
+            return this.User.search({search: searchText}).$promise;
         }
     }
 

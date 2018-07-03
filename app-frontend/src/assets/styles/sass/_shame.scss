@@ -3158,3 +3158,50 @@ rf-reclassify-table {
     }
     margin-bottom: 0.5em;
 }
+
+rf-navbar-search {
+    position: relative;
+}
+
+.navbar-search-results {
+    position: absolute;
+    bottom: -0.5em;
+    right: 0;
+    transform: translateY(100%);
+    width: 25.5em;
+    background: $white;
+    border: 1px solid $shade-light;
+    border-radius: 3px;
+    background: $white;
+    z-index: 5000;
+    display: flex;
+    flex-direction: column;
+
+    .navbar-search-result {
+        display: flex;
+        flex-direction: row;
+        flex: 1;
+        text-align: left;
+        color: $shade-light;
+        padding: 0.5em;
+        .result-placeholder {
+            text-align: center;
+            padding: 0.5em;
+            width: 100%;
+        }
+        .avatar {
+            display: block;
+        }
+        .result-text {
+            margin-left: 1em;
+            flex: 1;
+            display: block;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+        &:hover {
+            background: $shade-light;
+            color: $white;
+        }
+    }
+}

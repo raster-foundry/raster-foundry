@@ -180,15 +180,18 @@
   align-items: center;
   justify-content: flex-start;
 
-  &.primary {
-    flex: 2;
-  }
-
   &.secondary {
     align-items: center;
     justify-content: flex-end;
     text-align: right;
   }
+}
+
+.navbar .form-group.all-in-one {
+    select {
+        width: 7em;
+        border-right: 1px solid $shade-dark;
+    }
 }
 
 .brand {
