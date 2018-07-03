@@ -76,7 +76,7 @@
   >
   </rf-histogram-breakpoint>
   <div class="histogram-placeholder" ng-if="$ctrl.histogram.fetching">
-    <span class="icon-load animate-spin"></span>
+    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.histogram.fetching}"></span>
       Loading
   </div>
   <div class="histogram-placeholder" ng-if="$ctrl.noValidData && !$ctrl.histogram.fetching">

@@ -92,7 +92,9 @@
     <div class="content"
          ng-if="$ctrl.fetchingAnnotations">
       <div class="alert alert-default">
-        <p class="">Loading Annotations <span class="icon-load animate-spin"></span></p>
+        <p class="">Loading Annotations
+          <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetchingAnnotations}"></span>
+        </p>
       </div>
     </div>
     <div class="list-group"
