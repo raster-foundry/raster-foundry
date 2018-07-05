@@ -81,6 +81,7 @@
                 <th>Index</th>
                 <th>Number</th>
                 <th>Name</th>
+                <th>Wavelength</th>
                 <th></th>
               </tr>
             </thead>
@@ -105,6 +106,14 @@
                          ng-change="$ctrl.updateBandBuffer($index, band)"
                          ng-disabled="!$ctrl.isOwner">
                 </td>
+                <td>
+                  <input type="text" class="form-control" placeholder="Wavelength"
+                         title="x,y min and max nanometers for band's wavelength"
+                         ng-model="band.wavelength"
+                         ng-model-options="{ debounce: 500 }"
+                         ng-change="$ctrl.updateBandBuffer($index, band)"
+                         ng-disabled="!$ctrl.isOwner">
+                </td>
                 <td class="text-right">
                   <div ng-show="$ctrl.isOwner">
                     <button class="btn btn-small" ng-click="$ctrl.removeBand($index)">
@@ -112,6 +121,13 @@
                       <i class="icon-trash"></i>
                     </button>
                   </div>
+                </td>
+                <td class="text-right">
+                  <span class="icon-warning color-warning"
+                        ng-if="band.invalidWavelength"
+                        tooltips
+                        tooltip-class="rf-tooltip" tooltip-side="top"
+                        tooltip-template="You have entered an invalid wavelength range. Wavelengths should be two integers separated by commas"></span>
                 </td>
               </tr>
             </tbody>
@@ -127,7 +143,12 @@
               <button class="btn" ng-click="$ctrl.resetBandsBuffer()">
                 Cancel
               </button>
-              <button class="btn btn-default" ng-click="$ctrl.saveBufferedBands()">
+              <button class="btn btn-default" ng-click="$ctrl.saveBufferedBands()"
+                      ng-if="$ctrl.anyInvalidWavelengths()" disabled>
+                Save Changes
+              </button>
+              <button class="btn btn-default" ng-click="$ctrl.saveBufferedBands()"
+                      ng-if="!$ctrl.anyInvalidWavelengths()">
                 Save Changes
               </button>
             </div>
