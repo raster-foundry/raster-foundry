@@ -5,30 +5,32 @@ const SidebarTeamListComponent = {
     bindings: {
         paginatedResponse: '<',
         showOrgLogo: '<?',
+        displayLimit: '<?',
         sref: '@'
     },
     templateUrl: tpl
 };
 
-const displayLimit = 3;
+const defaultDisplayLimit = 3;
 
 class SidebarTeamListController {
     constructor(organizationService) {
         'ngInject';
         this.organizationService = organizationService;
-        this.displayLimit = displayLimit;
+        this.displayLimit = this.displayLimit || defaultDisplayLimit;
     }
 
     $onInit() {
+        this.displayTeams = this.paginatedResponse.results.length <= this.displayLimit ?
+            this.paginatedResponse.results :
+            this.paginatedResponse.results.slice(this.displayLimit - 1);
         if (this.showOrgLogo) {
-            this.diplayTeams = this.paginatedResponse.results.length <= this.displayLimit ?
-                this.paginatedResponse.results : this.paginatedResponse.results.slice(2);
             this.getOrganizations();
         }
     }
 
     getOrganizations() {
-        this.orgURIs = this.diplayTeams.map(team => team.organizationId)
+        this.orgURIs = this.displayTeams.map(team => team.organizationId)
             .filter((val, idx, self) => self.indexOf(val) === idx)
             .reduce((obj, orgId) => {
                 obj[orgId] = '';

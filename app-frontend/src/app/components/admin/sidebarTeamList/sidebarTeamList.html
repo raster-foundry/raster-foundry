@@ -13,7 +13,7 @@
         </a>
       </li>
       <li class="sidebar-list-item"
-          ng-repeat="team in $ctrl.paginatedResponse.results  | limitTo: $ctrl.displayLimit">
+          ng-repeat="team in $ctrl.displayTeams">
         <div ng-if="$ctrl.showOrgLogo">
           <div class="avatar user-avatar image-placeholder"
                ng-if="!($ctrl.orgURIs[team.organizationId] && $ctrl.orgURIs[team.organizationId].length)"></div>
