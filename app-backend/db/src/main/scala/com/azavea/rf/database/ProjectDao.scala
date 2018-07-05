@@ -145,37 +145,43 @@ object ProjectDao extends Dao[Project] {
     updateStatusQuery.update.run
   }
 
-  def addScenesToProject(sceneIds: List[UUID], projectId: UUID, user: User): ConnectionIO[Int] = {
+  def addScenesToProject(sceneIds: List[UUID], projectId: UUID, user: User, isAccepted: Boolean = true): ConnectionIO[Int] = {
     sceneIds.toNel match {
-      case Some(ids) => addScenesToProject(ids, projectId, user)
+      case Some(ids) => addScenesToProject(ids, projectId, user, isAccepted)
       case _ => 0.pure[ConnectionIO]
     }
   }
 
-  def addScenesToProject(sceneIds: NonEmptyList[UUID], projectId: UUID, user: User): ConnectionIO[Int] = {
-    val inClause = Fragments.in(fr"scenes.id", sceneIds)
-    val sceneIdWithDatasourceF = sql"""
-         SELECT scenes.id,
-                datasources.id,
-                datasources.created_at,
-                datasources.created_by,
-                datasources.modified_at,
-                datasources.modified_by,
-                datasources.owner,
-                datasources.name,
-                datasources.visibility,
-                datasources.composites,
-                datasources.extras,
-                datasources.bands,
-                datasources.license_name
-         FROM scenes
-         INNER JOIN datasources ON scenes.datasource = datasources.id
-         WHERE NOT (scenes.id = ANY(ARRAY(SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})::UUID[])) AND """ ++ inClause
+  def addScenesToProject(sceneIds: NonEmptyList[UUID], projectId: UUID, user: User, isAccepted: Boolean): ConnectionIO[Int] = {
+    val inClause = fr"scenes.id IN (" ++ Fragment.const(sceneIds.map(_.show).foldSmash("'", "','", "'")) ++ fr")"
+    val sceneIdWithDatasourceF = fr"""
+      SELECT scenes.id,
+            datasources.id,
+            datasources.created_at,
+            datasources.created_by,
+            datasources.modified_at,
+            datasources.modified_by,
+            datasources.owner,
+            datasources.name,
+            datasources.visibility,
+            datasources.composites,
+            datasources.extras,
+            datasources.bands,
+            datasources.license_name
+      FROM scenes
+      INNER JOIN datasources ON scenes.datasource = datasources.id
+      WHERE
+      scenes.id NOT IN (
+       SELECT scene_id
+       FROM scenes_to_projects
+       WHERE project_id = ${projectId} AND accepted = true
+      )
+      AND """ ++ inClause
     for {
       sceneQueryResult <- sceneIdWithDatasourceF.query[(UUID, Datasource)].list
       sceneToProjectInserts <- {
         val scenesToProject: List[SceneToProject] = sceneQueryResult.map { case (sceneId, datasource) =>
-            createScenesToProject(sceneId, projectId, datasource)
+            createScenesToProject(sceneId, projectId, datasource, isAccepted)
         }
         val inserts = "INSERT INTO scenes_to_projects (scene_id, project_id, accepted, scene_order, mosaic_definition) VALUES (?, ?, ?, ?, ?)"
         Update[SceneToProject](inserts).updateMany(scenesToProject)
@@ -196,7 +202,7 @@ object ProjectDao extends Dao[Project] {
     } yield sceneToProjectInserts
   }
 
-  def createScenesToProject(sceneId: UUID, projectId: UUID, datasource: Datasource): SceneToProject = {
+  def createScenesToProject(sceneId: UUID, projectId: UUID, datasource: Datasource, isAccepted: Boolean): SceneToProject = {
     val composites = datasource.composites
     val redBandPath = root.natural.selectDynamic("value").redBand.int
     val greenBandPath = root.natural.selectDynamic("value").greenBand.int
@@ -205,9 +211,8 @@ object ProjectDao extends Dao[Project] {
     val redBand = redBandPath.getOption(composites).getOrElse(0)
     val greenBand = greenBandPath.getOption(composites).getOrElse(1)
     val blueBand = blueBandPath.getOption(composites).getOrElse(2)
-
     (
-      sceneId, projectId, true, None, Some(
+      sceneId, projectId, isAccepted, None, Some(
         ColorCorrect.Params(
           redBand, greenBand, blueBand,             // Bands
           // Color corrections; everything starts out disabled (false) and null for now
@@ -248,7 +253,7 @@ object ProjectDao extends Dao[Project] {
 
   def replaceScenesInProject(sceneIds: NonEmptyList[UUID], projectId: UUID, user: User): ConnectionIO[Iterable[Scene]] = {
     val deleteQuery = sql"DELETE FROM scenes_to_projects WHERE project_id = ${projectId}".update.run
-    val scenesAdded = addScenesToProject(sceneIds, projectId, user)
+    val scenesAdded = addScenesToProject(sceneIds, projectId, user, true)
     val projectScenes = SceneDao
       .query
       .filter(fr"scenes.id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId}")

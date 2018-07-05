@@ -49,9 +49,7 @@ export default class NavBarController {
                 let isPlatOrgAdmin = res.filter((ugr) => {
                     return ugr.groupType === 'PLATFORM' &&
                         ugr.groupRole === 'ADMIN' &&
-                        ugr.isActive ||
-                        ugr.groupType === 'ORGANIZATION' &&
-                        ugr.groupRole === 'ADMIN' &&
+                        ugr.membershipStatus === 'APPROVED' &&
                         ugr.isActive;
                 }).length;
                 this.showAdmin = isPlatOrgAdmin || isSuperuser;

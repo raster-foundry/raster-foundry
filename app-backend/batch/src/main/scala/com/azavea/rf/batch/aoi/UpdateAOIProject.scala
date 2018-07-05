@@ -168,7 +168,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
         sceneIds <- fetchProjectScenes(user, g, startTime, lastChecked, qp.toOption)
         _ <- logger.info(s"Found ${sceneIds.length} scenes").pure[ConnectionIO]
         _ <- updateProjectIO(user, projectId)
-        _ <- ProjectDao.addScenesToProject(sceneIds, projectId, user)
+        _ <- ProjectDao.addScenesToProject(sceneIds, projectId, user, false)
       } yield { projectId }
     }
 

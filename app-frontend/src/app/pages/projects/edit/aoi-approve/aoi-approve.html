@@ -55,17 +55,18 @@
 <div class="sidebar-scrollable list-group">
   <rf-scene-item
       previewable
+      clickable
       scene="scene"
       repository="$ctrl.repository"
-      is-disabled="$ctrl.isInProject(scene)"
-      on-select="$ctrl.setSelected(scene, selected)"
-      class="selectable"
+      selected="$ctrl.isSceneApproved(scene)"
+      on-select="$ctrl.toggleSceneApproval(scene)"
       ng-mouseenter="$ctrl.setHoveredScene(scene)"
       ng-mouseleave="$ctrl.removeHoveredScene()"
       ng-repeat="scene in $ctrl.pendingSceneList track by scene.id">
-    <rf-toggle value="$ctrl.isSceneApproved(scene)" on-change="$ctrl.toggleSceneApproval(scene, $event)">
-    </rf-toggle>
-    <rf-toggle value="$ctrl.isSceneRejected(scene)" on-change="$ctrl.toggleSceneRejection(scene, $event)" custom-icon="true" class-name="danger">
+    <rf-toggle value="$ctrl.isSceneRejected(scene)"
+               on-change="$ctrl.toggleSceneRejection(scene, $event)"
+               custom-icon="true"
+               class-name="danger">
       <i class="icon-cross"></i>
     </rf-toggle>
   </rf-scene-item>

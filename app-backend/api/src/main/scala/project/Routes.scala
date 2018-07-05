@@ -349,7 +349,7 @@ trait ProjectRoutes extends Authentication
       complete {
         ProjectDao
           .authQuery(
-            user, 
+            user,
             ObjectType.Project,
             projectQueryParameters.ownershipTypeParams.ownershipType,
             projectQueryParameters.groupQueryParameters.groupType,
@@ -643,14 +643,13 @@ trait ProjectRoutes extends Authentication
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa).unsafeToFuture
     } {
-      entity(as[BulkAcceptParams]) { sceneParams =>
-        sceneParams.sceneIds.toNel.map(ids => ProjectDao.addScenesToProject(ids, projectId, user)) match {
-          case Some(addQuery) => {
-            onSuccess(addQuery.transact(xa).unsafeToFuture) {
-              numAdded => complete(sceneParams.sceneIds)
-            }
-          }
-          case _ => complete(StatusCodes.BadRequest)
+      entity(as[List[UUID]]) { sceneIds =>
+        if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+          complete(StatusCodes.RequestEntityTooLarge)
+        }
+
+        onSuccess(SceneToProjectDao.acceptScenes(projectId, sceneIds).transact(xa).unsafeToFuture) { updatedOrder =>
+          complete(StatusCodes.NoContent)
         }
       }
     }
@@ -772,7 +771,7 @@ trait ProjectRoutes extends Authentication
         if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
           complete(StatusCodes.RequestEntityTooLarge)
         }
-        val scenesAdded = ProjectDao.addScenesToProject(sceneIds, projectId, user)
+        val scenesAdded = ProjectDao.addScenesToProject(sceneIds, projectId, user, true)
         val scenesToIngest = SceneWithRelatedDao.getScenesToIngest(projectId)
         val x: ConnectionIO[List[Scene.WithRelated]] = for {
           _ <- scenesAdded

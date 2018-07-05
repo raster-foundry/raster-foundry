@@ -1,6 +1,8 @@
+import _ from 'lodash';
+
 export default class AOIApproveController {
     constructor(
-        $scope, $state, $q, $log,
+        $scope, $state, $q, $log, $window, $stateParams,
         projectService, projectEditService, mapService,
         RasterFoundryRepository
     ) {
@@ -9,6 +11,8 @@ export default class AOIApproveController {
         this.$state = $state;
         this.$q = $q;
         this.$log = $log;
+        this.$window = $window;
+        this.$stateParams = $stateParams;
         this.projectService = projectService;
         this.projectEditService = projectEditService;
         this.mapService = mapService;
@@ -22,7 +26,7 @@ export default class AOIApproveController {
     $onInit() {
         this.pendingSceneList = [];
         this.$parent.getPendingSceneList().then(pendingScenes => {
-            this.pendingSceneList = pendingScenes;
+            this.pendingSceneList = _(pendingScenes).uniqBy('id').compact().value();
             this.resetAllScenes();
             this.sceneStatusCounts = this.getSceneStatusCount();
         });
@@ -132,23 +136,29 @@ export default class AOIApproveController {
     }
 
     applySceneStatuses() {
-        this.projectEditService.fetchCurrentProject().then(project => {
-            const scenesToHandle = this.getScenesStatusIds();
-            const requests = [];
+        const scenesToHandle = this.getScenesStatusIds();
+        const requests = [];
+
+        if (scenesToHandle.REJECTED.length) {
             requests.push(
-                this.projectService.removeScenesFromProject(project.id, scenesToHandle.REJECTED)
-            );
-            // @TODO: refactor this when we have a bulk approval endpoint
-            scenesToHandle.APPROVED.forEach(id => {
-                requests.push(
-                    this.projectService.approveScene(project.id, id)
-                );
-            });
+                this.projectService.removeScenesFromProject(
+                    this.$stateParams.projectid, scenesToHandle.REJECTED));
+        }
+
+        if (scenesToHandle.APPROVED.length) {
+            requests.push(
+              this.projectService.approveScenes(
+                  this.$stateParams.projectid, scenesToHandle.APPROVED));
+        }
+
+        if (requests.length) {
             this.$q.all(requests).then(() => {
-                this.$state.go('projects.edit', {}, { reload: true });
+                this.$state.go('projects.edit');
+                this.$window.location.reload();
             }, () => {
-                this.$log.error('There was a problem applying the status to one or more scenes');
+                this.$log.error(
+              'There was a problem applying the status to one or more scenes');
             });
-        });
+        }
     }
 }

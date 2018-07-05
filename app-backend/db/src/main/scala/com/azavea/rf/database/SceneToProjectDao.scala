@@ -39,6 +39,26 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     """.update.run
   }
 
+  def acceptScenes(projectId: UUID, sceneIds: List[UUID]): ConnectionIO[Int] = {
+    sceneIds.toNel match {
+      case Some(ids) => acceptScenes(projectId, ids)
+      case _ => 0.pure[ConnectionIO]
+    }
+  }
+
+  def acceptScenes(projectId: UUID, sceneIds: NonEmptyList[UUID]): ConnectionIO[Int] = {
+    val updateF: Fragment =fr"""
+      UPDATE scenes_to_projects
+      SET accepted = true
+      WHERE
+        project_id = ${projectId}
+        AND
+        scene_id IN (""" ++
+      Fragment.const(sceneIds.map(_.show).foldSmash("'", "','", "'")) ++
+      fr")"
+    updateF.update.run
+  }
+
   def setManualOrder(projectId: UUID, sceneIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = {
     val updates = for {
       i <- sceneIds.indices
@@ -102,4 +122,3 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     updates
   }
 }
-
