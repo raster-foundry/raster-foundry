@@ -1,0 +1,12 @@
+<div class="row content stack-sm">
+  <div class="column-8">
+    <p>
+      You may opt in to receive email notifications from your platform admin about {{$ctrl.subscriptionsString}}.
+    </p>
+    <rf-toggle value="$ctrl.user.emailNotifications === true"
+               on-change="$ctrl.updateUserEmailNotification()"
+               class="subscription-toggle">
+      <span>Send me email notifications</span>
+    </rf-toggle>
+  </div>
+</div>

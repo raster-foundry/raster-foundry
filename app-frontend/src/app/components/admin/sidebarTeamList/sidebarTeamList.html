@@ -13,8 +13,15 @@
         </a>
       </li>
       <li class="sidebar-list-item"
-          ng-repeat="team in $ctrl.paginatedResponse.results"
-      >
+          ng-repeat="team in $ctrl.displayTeams">
+        <div ng-if="$ctrl.showOrgLogo">
+          <div class="avatar user-avatar image-placeholder"
+               ng-if="!($ctrl.orgURIs[team.organizationId] && $ctrl.orgURIs[team.organizationId].length)"></div>
+          <div ng-if="$ctrl.orgURIs[team.organizationId] && $ctrl.orgURIs[team.organizationId].length">
+            <img class="avatar user-avatar"
+                 ng-src="{{$ctrl.cacheBustUri($ctrl.orgURIs[team.organizationId])}}">
+          </div>
+        </div>
         <a class="content"
            ui-sref="admin.team({teamId: team.id})"
         >{{team.name}}</a>

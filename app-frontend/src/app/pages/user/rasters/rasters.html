@@ -20,8 +20,13 @@
   </div>
   <div class="column spacer"></div>
   <div class="column-3">
-    <rf-sidebar-organization-list paginated-response="{ 'count': $ctrl.organizations.length, 'results': $ctrl.organizations }" sref="user.organizations"></rf-sidebar-organization-list>
-    <rf-sidebar-team-list paginated-response="{ 'count': $ctrl.teams.length, 'results': $ctrl.teams }" sref="user.teams"></rf-sidebar-team-list>
+    <rf-sidebar-organization-list
+      paginated-response="{ 'count': $ctrl.organizations.length, 'results': $ctrl.organizations }"
+      sref="user.organizations"></rf-sidebar-organization-list>
+    <rf-sidebar-team-list
+      paginated-response="{ 'count': $ctrl.teams.length, 'results': $ctrl.teams }"
+      show-org-logo="true"
+      sref="user.teams"></rf-sidebar-team-list>
   </div>
   <div class="column-1"></div>
 </div>
