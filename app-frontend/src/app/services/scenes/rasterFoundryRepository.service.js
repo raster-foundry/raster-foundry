@@ -195,6 +195,14 @@ export default (app) => {
             return this.$q((resolve, reject) => {
                 if (scene.thumbnails.length) {
                     resolve(this.thumbnailService.getBestFitUrl(scene.thumbnails, 1000));
+                } else if (scene.sceneType === 'COG') {
+                    this.sceneService.cogThumbnail(scene.id, this.authService.token(), 300, 300)
+                        .then(resp => {
+                            let base64String = Object.values(resp)
+                                .filter(chr => _.isString(chr))
+                                .join('');
+                            resolve(`data:image/png;base64,${base64String}`);
+                        });
                 } else {
                     reject();
                 }

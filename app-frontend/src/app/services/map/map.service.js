@@ -527,9 +527,11 @@ class MapWrapper {
                 }
             }
         );
-        if (scene.tileFootprint && scene.thumbnails && scene.thumbnails.length) {
-            // get smallest thumbnail - it's a small map
 
+        let displayThumbnail = scene.tileFootprint &&
+            (scene.thumbnails && scene.thumbnails.length || scene.sceneType === 'COG');
+
+        if (displayThumbnail) {
             let boundsGeoJson = L.geoJSON();
             boundsGeoJson.addData(scene.tileFootprint);
             let imageBounds = boundsGeoJson.getBounds();

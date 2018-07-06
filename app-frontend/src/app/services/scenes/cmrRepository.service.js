@@ -1,13 +1,14 @@
-// import _ from 'lodash';
+import _ from 'lodash';
 import axios from 'axios';
 
 export default (app) => {
     class CMRRepository {
-        constructor($q, authService, uploadService) {
+        constructor($q, authService, uploadService, sceneService) {
             this.$q = $q;
             this.previewOnMap = false;
             this.authService = authService;
             this.uploadService = uploadService;
+            this.sceneService = sceneService;
         }
 
         initDatasources() {
@@ -83,9 +84,21 @@ export default (app) => {
         }
 
         getThumbnail(scene) {
-            return this.$q(resolve => {
+            return this.$q((resolve, reject) => {
                 const thumbnails = this.getThumbnails(scene);
-                resolve(thumbnails.length ? thumbnails[0].href : false);
+                if (thumbnails.length) {
+                    resolve(thumbnails[0].href);
+                } else if (scene.sceneType === 'COG') {
+                    this.sceneService.cogThumbnail(scene.id, this.authService.token(), 300, 300)
+                        .then(resp => {
+                            let base64String = Object.values(resp)
+                                .filter(chr => _.isString(chr))
+                                .join('');
+                            resolve(`data:image/png;base64,${base64String}`);
+                        });
+                } else {
+                    reject();
+                }
             });
         }
 
