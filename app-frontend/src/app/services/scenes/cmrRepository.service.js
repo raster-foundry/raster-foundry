@@ -1,4 +1,4 @@
-import _ from 'lodash';
+// import _ from 'lodash';
 import axios from 'axios';
 
 export default (app) => {
@@ -88,14 +88,6 @@ export default (app) => {
                 const thumbnails = this.getThumbnails(scene);
                 if (thumbnails.length) {
                     resolve(thumbnails[0].href);
-                } else if (scene.sceneType === 'COG') {
-                    this.sceneService.cogThumbnail(scene.id, this.authService.token(), 300, 300)
-                        .then(resp => {
-                            let base64String = Object.values(resp)
-                                .filter(chr => _.isString(chr))
-                                .join('');
-                            resolve(`data:image/png;base64,${base64String}`);
-                        });
                 } else {
                     reject();
                 }

@@ -345,8 +345,7 @@ trait SceneRoutes extends Authentication
                       CogUtils.thumbnail(
                         uri, thumbnailParams.width, thumbnailParams.height
                       ).map(
-                        (tile: MultibandTile) => ApacheBase64.encodeBase64String(tile.renderPng.bytes)
-                      ).value
+                        (tile: MultibandTile) => HttpEntity(MediaTypes.`image/png`, tile.renderPng.bytes)).value
                     }
                     case _ =>
                       Future.successful(None)

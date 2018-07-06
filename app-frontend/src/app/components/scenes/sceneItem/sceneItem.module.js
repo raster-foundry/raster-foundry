@@ -1,5 +1,4 @@
 import angular from 'angular';
-import _ from 'lodash';
 import sceneTpl from './sceneItem.html';
 
 const SceneItemComponent = {
@@ -63,10 +62,7 @@ class SceneItemController {
                     this.scene.id,
                     this.authService.token()
                 ).then(res => {
-                    let base64String = Object.values(res)
-                        .filter(chr => _.isString(chr))
-                        .join('');
-                    this.thumbnail = `data:image/png;base64,${base64String}`;
+                    this.thumbnail = `data:image/png;base64,${res}`;
                 });
             } else {
                 this.repository.service.getThumbnail(this.scene).then((thumbnail) => {

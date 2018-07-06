@@ -17,6 +17,7 @@ export default (app) => {
             this.projectService = projectService;
             this.datasourceCache = new Map();
             this.previewOnMap = true;
+            this.cogThumbnailCache = [];
         }
 
         initRepository() {
@@ -196,13 +197,23 @@ export default (app) => {
                 if (scene.thumbnails.length) {
                     resolve(this.thumbnailService.getBestFitUrl(scene.thumbnails, 1000));
                 } else if (scene.sceneType === 'COG') {
-                    this.sceneService.cogThumbnail(scene.id, this.authService.token(), 300, 300)
-                        .then(resp => {
-                            let base64String = Object.values(resp)
-                                .filter(chr => _.isString(chr))
-                                .join('');
-                            resolve(`data:image/png;base64,${base64String}`);
-                        });
+                    let matchedCt = this.cogThumbnailCache.length &&
+                        this.cogThumbnailCache.find(ct => ct.id === scene.id);
+                    if (matchedCt) {
+                        resolve(`data:image/png;base64,${matchedCt.thumbnail}`);
+                    } else {
+                        this.sceneService.cogThumbnail(
+                            scene.id, this.authService.token(), 512, 512)
+                            .then(resp => {
+                                this.cogThumbnailCache.push({
+                                    id: scene.id,
+                                    thumbnail: resp
+                                });
+                                resolve(`data:image/png;base64,${resp}`);
+                            }, () => {
+                                reject();
+                            });
+                    }
                 } else {
                     reject();
                 }

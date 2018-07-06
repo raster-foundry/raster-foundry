@@ -1,9 +1,10 @@
-/* globals BUILDCONFIG */
+/* globals BUILDCONFIG, btoa, Uint8Array */
 
 export default (app) => {
     class SceneService {
-        constructor($resource, authService, projectService, uuid4) {
+        constructor($resource, $http, authService, projectService, uuid4) {
             'ngInject';
+            this.$http = $http;
             this.authService = authService;
             this.projectService = projectService;
             this.uuid4 = uuid4;
@@ -43,18 +44,6 @@ export default (app) => {
                         cache: true,
                         params: {
                             id: '@id'
-                        }
-                    },
-                    cogThumbnail: {
-                        method: 'GET',
-                        url: `${BUILDCONFIG.API_HOST}/api/scenes/:sceneId/thumbnail?` +
-                            'token=:token&width=:width&height=:height',
-                        cache: true,
-                        params: {
-                            sceneId: '@sceneId',
-                            token: '@token',
-                            width: '@width',
-                            height: '@width'
                         }
                     }
                 }
@@ -166,7 +155,34 @@ export default (app) => {
         }
 
         cogThumbnail(sceneId, token, width = 128, height = 128) {
-            return this.Scene.cogThumbnail({sceneId, token, width, height}).$promise;
+            return this.$http({
+                'method': 'GET',
+                'url': `${BUILDCONFIG.API_HOST}/api/scenes/${sceneId}/thumbnail?` +
+                    `token=${token}&width=${width}&height=${height}`,
+                'headers': {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'arraybuffer'
+                },
+                'responseType': 'arraybuffer'
+            }).then(
+                (response) => {
+                    let arr = new Uint8Array(response.data);
+                    let rawString = this.uint8ToString(arr);
+                    return btoa(rawString);
+                },
+                (error) => {
+                    return error;
+                }
+            );
+        }
+
+        uint8ToString(u8a) {
+            const CHUNK_SZ = 0x8000;
+            let result = [];
+            for (let i = 0; i < u8a.length; i += CHUNK_SZ) {
+                result.push(String.fromCharCode.apply(null, u8a.subarray(i, i + CHUNK_SZ)));
+            }
+            return result.join('');
         }
     }
 
