@@ -5,7 +5,7 @@ import _ from 'lodash';
 class ProjectsSceneBrowserController {
     constructor( // eslint-disable-line max-params
         $log, $state, $location, $scope, $timeout,
-        modalService, mapService, sceneService,
+        modalService, mapService,
         projectService, sessionStorage, planetLabsService, authService, featureFlags,
         RasterFoundryRepository, PlanetRepository, CMRRepository
     ) {
@@ -17,13 +17,14 @@ class ProjectsSceneBrowserController {
         this.$scope = $scope;
         this.$timeout = $timeout;
         this.modalService = modalService;
-        this.sceneService = sceneService;
         this.projectService = projectService;
         this.sessionStorage = sessionStorage;
         this.mapService = mapService;
         this.planetLabsService = planetLabsService;
         this.authService = authService;
 
+        this.helperText = null;
+        this.zoomHelpText = 'Zoom in to search for scenes';
         this.repositories = [
             {
                 label: 'Raster Foundry',
@@ -139,6 +140,10 @@ class ProjectsSceneBrowserController {
                     mapWrapper.map.getZoom()
                 );
             });
+            if (browseMap.zoom < 8) {
+                this.helperText = this.zoomHelpText;
+                this.sceneList = [];
+            }
         });
     }
 
@@ -154,20 +159,22 @@ class ProjectsSceneBrowserController {
         this.currentRepository = repository;
 
         this.sceneList = [];
-        if (this.bboxCoords || this.queryParams && this.queryParams.bbox) {
-            this.fetchNextScenesForBbox = this.bboxFetchFactory(
-                this.bboxCoords || this.queryParams.bbox
-            );
-            this.fetchNextScenes();
-        } else {
-            this.getMap().then((mapWrapper) => {
+        this.getMap().then((mapWrapper) => {
+            if (this.bboxCoords || this.queryParams && this.queryParams.bbox &&
+                (getZoom() >= 8 || repository.label !== 'Raster Foundry')) {
+                this.helperText = null;
+                this.fetchNextScenesForBbox = this.bboxFetchFactory(
+                    this.bboxCoords || this.queryParams.bbox
+                );
+                this.fetchNextScenes();
+            } else {
                 this.onViewChange(
                     mapWrapper.map.getBounds(),
                     mapWrapper.map.getCenter(),
                     mapWrapper.map.getZoom()
                 );
-            });
-        }
+            };
+        });
     }
 
     onViewChange(newBounds, newCenter, zoom) {
@@ -178,6 +185,13 @@ class ProjectsSceneBrowserController {
         this.$parent.center = newCenter;
 
         this.setBboxParam(this.bboxCoords);
+        if (this.currentRepository.label === 'Raster Foundry' && zoom < 8) {
+            this.sceneList = [];
+            this.sceneCount = 0;
+            this.helperText = this.zoomHelpText;
+            return;
+        }
+        this.helperText = null;
         this.onBboxChange();
     }
 
