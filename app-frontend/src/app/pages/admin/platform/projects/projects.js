@@ -3,25 +3,17 @@ import _ from 'lodash';
 
 class PlatformProjectsController {
     constructor(
-        $stateParams, $log, $window,
-        modalService, authService, projectService,
+        $scope, $state, $stateParams, $log, $window,
+        modalService, authService, projectService, paginationService,
         platform, organizations, members
     ) {
-        this.$stateParams = $stateParams;
-        this.$log = $log;
-        this.$window = $window;
-        this.modalService = modalService;
-        this.authService = authService;
-        this.projectService = projectService;
-
-        this.platform = platform;
-        this.organizations = organizations;
-        this.members = members;
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
-        this.projects = [];
+        this.pagination = {};
         this.loading = false;
+        this.searchTerm = '';
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
 
         this.debouncedSearch = _.debounce(
@@ -34,56 +26,29 @@ class PlatformProjectsController {
     }
 
     onSearch(search) {
-        this.fetchPage(0, search);
+        this.searchTerm = search;
+        this.fetchPage();
     }
 
-    updatePagination(data) {
-        this.pagination = {
-            show: data.count > data.pageSize,
-            count: data.count,
-            currentPage: data.page + 1,
-            startingItem: data.page * data.pageSize + 1,
-            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious
-        };
-    }
-
-
-    fetchPage(page = 0, search = '') {
+    fetchPage(page = this.$stateParams.page || 1) {
         this.loading = true;
         this.projectService.query(
             {
                 sort: 'createdAt,desc',
-                pageSize: 10,
+                pageSize: 1,
                 ownershipType: 'inherited',
                 groupType: 'platform',
                 groupId: this.platform.id,
-                search,
-                page
+                search: this.searchTerm,
+                page: page - 1
             }
         ).then(paginatedResponse => {
-            this.projects = paginatedResponse.results;
-            this.updatePagination(paginatedResponse);
+            this.results = paginatedResponse.results;
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page);
         }).finally(() => {
             this.loading = false;
         });
-    }
-
-
-    buildOptions() {
-        this.items.forEach(obj => {
-            Object.assign(obj, {
-                options: {
-                    items: this.buildOptions(obj)
-                },
-                showOptions: this.isEffectiveAdmin
-            });
-        });
-    }
-
-    buildOptions() {
-        return [];
     }
 }
 

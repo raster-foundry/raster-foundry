@@ -4,22 +4,15 @@ import _ from 'lodash';
 class PlatformOrganizationsController {
     constructor(
         $state, modalService, $stateParams, $scope, $log, $window,
-        platformService, organizationService, authService,
+        platformService, organizationService, authService, paginationService,
         platform
     ) {
-        this.$state = $state;
-        this.$scope = $scope;
-        this.$stateParams = $stateParams;
-        this.$log = $log;
-        this.$window = $window;
-        this.modalService = modalService;
-        this.platformService = platformService;
-        this.organizationService = organizationService;
-        this.authService = authService;
-        this.platform = platform;
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
+        this.searchTerm = '';
+        this.loading = false;
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
 
         this.debouncedSearch = _.debounce(
@@ -28,49 +21,45 @@ class PlatformOrganizationsController {
             {leading: false, trailing: true}
         );
 
-        this.fetchOrganizations(1, '');
+        this.fetchPage();
     }
 
     onSearch(search) {
-        this.fetchOrganizations(1, search);
+        this.searchTerm = search;
+        this.fetchPage();
     }
 
-    updatePagination(data) {
-        this.pagination = {
-            show: data.count > data.pageSize,
-            count: data.count,
-            currentPage: data.page + 1,
-            startingItem: data.page * data.pageSize + 1,
-            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious
-        };
-    }
-
-    fetchOrganizations(page = 1, search) {
-        this.fetching = true;
+    fetchPage(page = this.$stateParams.page || 1) {
+        this.loading = true;
         this.platformService
-            .getOrganizations(this.$stateParams.platformId, page - 1, search)
-            .then((response) => {
-                this.fetching = false;
-                this.updatePagination(response);
-                this.lastOrgResult = response;
-                this.organizations = response.results;
-
-                this.organizations.forEach(org => {
-                    Object.assign(org, {
-                        options: {
-                            items: this.itemsForOrg(org)
-                        },
-                        showOptions: this.isEffectiveAdmin
-                    });
-                    this.organizationService
-                        .getMembers(this.$stateParams.platformId, org.id)
-                        .then((paginatedUsers) => {
-                            org.fetchedUsers = paginatedUsers;
-                        });
-                });
+            .getOrganizations(
+                this.$stateParams.platformId,
+                page - 1,
+                this.searchTerm
+            ).then(paginatedResponse => {
+                this.results = paginatedResponse.results;
+                this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                this.paginationService.updatePageParam(page);
+                this.buildOptions();
+            }).finally(() => {
+                this.loading = false;
             });
+    }
+
+    buildOptions() {
+        this.results.forEach(org => {
+            Object.assign(org, {
+                options: {
+                    items: this.itemsForOrg(org)
+                },
+                showOptions: this.isEffectiveAdmin
+            });
+            this.organizationService
+                .getMembers(this.$stateParams.platformId, org.id)
+                .then(paginatedUsers => {
+                    org.fetchedUsers = paginatedUsers;
+                });
+        });
     }
 
 
@@ -114,11 +103,11 @@ class PlatformOrganizationsController {
                 this.$stateParams.platformId, organization.id
             ).then(
                 () => {
-                    this.fetchOrganizations(this.pagination.currentPage);
+                    this.fetchPage(this.pagination.currentPage);
                 },
                 (err) => {
                     this.$log.debug('error deactivating organization', err);
-                    this.fetchOrganizations(this.pagination.currentPage);
+                    this.fetchPage(this.pagination.currentPage);
                 }
             );
         });
@@ -129,11 +118,11 @@ class PlatformOrganizationsController {
             this.$stateParams.platformId, organization.id
         ).then(
             () => {
-                this.fetchOrganizations(this.pagination.currentPage);
+                this.fetchPage(this.pagination.currentPage);
             },
             (err) => {
                 this.$log.debug('error activating organization', err);
-                this.fetchOrganizations(this.pagination.currentPage);
+                this.fetchPage(this.pagination.currentPage);
             }
         );
     }
@@ -146,7 +135,7 @@ class PlatformOrganizationsController {
             this.platformService
                 .createOrganization(this.$stateParams.platformId, result.name, 'ACTIVE')
                 .then(() => {
-                    this.fetchOrganizations();
+                    this.fetchPage();
                 });
         });
     }

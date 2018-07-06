@@ -17,7 +17,6 @@ class TeamModalController {
         'ngInject';
         this.$element = $element;
         this.$timeout = $timeout;
-        this.permissionDenied = this.resolve.permissionDenied;
     }
 
     $postLink() {

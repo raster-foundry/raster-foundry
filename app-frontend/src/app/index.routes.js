@@ -267,9 +267,6 @@ function settingsStates($stateProvider) {
     $stateProvider
         .state('user', {
             parent: 'root',
-            params: {
-                user: null
-            },
             url: '/user/:userId',
             templateUrl: userTpl,
             controller: 'UserController',
@@ -364,9 +361,6 @@ function labStates($stateProvider) {
             title: 'Start an analysis',
             url: '/start-analysis/:templateid',
             parent: 'lab',
-            params: {
-                'template': null
-            },
             templateUrl: labStartAnalysisTpl,
             controller: 'LabStartAnalysisController',
             controllerAs: '$ctrl'
@@ -375,9 +369,6 @@ function labStates($stateProvider) {
             title: 'Analysis details',
             url: '/analysis/:analysisid',
             parent: 'lab',
-            params: {
-                'analysis': null
-            },
             views: {
                 'navmenu@root': {
                     templateUrl: labNavbarTpl,
@@ -517,89 +508,62 @@ function adminStates($stateProvider) {
         .state('admin.organization.metrics', {
             title: 'Organization Metrics',
             url: '/metrics',
-            params: {
-                organization: null
-            },
             templateUrl: organizationMetricsTpl,
             controller: 'OrganizationMetricsController',
             controllerAs: '$ctrl'
         })
         .state('admin.organization.projects', {
             title: 'Organization projects',
-            url: '/projects',
-            params: {
-                organization: null
-            },
+            url: '/projects?:page',
             templateUrl: organizationProjectsTpl,
             controller: 'OrganizationProjectsController',
             controllerAs: '$ctrl'
         })
         .state('admin.organization.rasters', {
             title: 'Organization rasters',
-            url: '/rasters',
-            params: {
-                organization: null
-            },
+            url: '/rasters?:page',
             templateUrl: organizationRastersTpl,
             controller: 'OrganizationRastersController',
             controllerAs: '$ctrl'
         })
         .state('admin.organization.vectors', {
             title: 'Organization vectors',
-            url: '/vectors',
-            params: {
-                organization: null
-            },
+            url: '/vectors?:page',
             templateUrl: organizationVectorsTpl,
             controller: 'OrganizationVectorsController',
             controllerAs: '$ctrl'
         })
         .state('admin.organization.datasources', {
             title: 'Organization datasources',
-            url: '/datasources',
-            params: {
-                organization: null
-            },
+            url: '/datasources?:page',
             templateUrl: organizationDatasourcesTpl,
             controller: 'OrganizationDatasourcesController',
             controllerAs: '$ctrl'
         })
         .state('admin.organization.templates', {
             title: 'Organization templates',
-            url: '/templates',
-            params: {
-                organization: null
-            },
+            url: '/templates?:page',
             templateUrl: organizationTemplatesTpl,
             controller: 'OrganizationTemplatesController',
             controllerAs: '$ctrl'
         })
         .state('admin.organization.analyses', {
             title: 'Organization analyses',
-            url: '/analyses',
-            params: {
-                organization: null
-            },
+            url: '/analyses?:page',
             templateUrl: organizationAnalysesTpl,
             controller: 'OrganizationAnalysesController',
             controllerAs: '$ctrl'
         })
         .state('admin.organization.users', {
             title: 'Organization Users',
-            url: '/users',
-            params: {
-                organization: null
-            },
+            url: '/users?:page',
             templateUrl: organizationUsersTpl,
             controller: 'OrganizationUsersController',
             controllerAs: '$ctrl'
         })
         .state('admin.organization.teams', {
             title: 'Organization Teams',
-            url: '/teams',
-            params: {
-                organization: null
-            },
+            url: '/teams?:page',
             templateUrl: organizationTeamsTpl,
             controller: 'OrganizationTeamsController',
             controllerAs: '$ctrl'
@@ -607,9 +571,6 @@ function adminStates($stateProvider) {
         .state('admin.organization.settings', {
             title: 'Organization Settings',
             url: '/settings',
-            params: {
-                organization: null
-            },
             templateUrl: organizationSettingsTpl,
             controller: 'OrganizationSettingsController',
             controllerAs: '$ctrl',
@@ -626,60 +587,42 @@ function adminStates($stateProvider) {
         })
         .state('admin.platform.projects', {
             title: 'Platform projects',
-            url: '/projects',
-            params: {
-                platform: null
-            },
+            url: '/projects?:page',
             templateUrl: platformProjectsTpl,
             controller: 'PlatformProjectsController',
             controllerAs: '$ctrl'
         })
         .state('admin.platform.rasters', {
             title: 'Platform rasters',
-            url: '/rasters',
-            params: {
-                platform: null
-            },
+            url: '/rasters?:page',
             templateUrl: platformRastersTpl,
             controller: 'PlatformRastersController',
             controllerAs: '$ctrl'
         })
         .state('admin.platform.vectors', {
             title: 'Platform vectors',
-            url: '/vectors',
-            params: {
-                platform: null
-            },
+            url: '/vectors?:page',
             templateUrl: platformVectorsTpl,
             controller: 'PlatformVectorsController',
             controllerAs: '$ctrl'
         })
         .state('admin.platform.datasources', {
             title: 'Platform datasources',
-            url: '/datasources',
-            params: {
-                platform: null
-            },
+            url: '/datasources?:page',
             templateUrl: platformDatasourcesTpl,
             controller: 'PlatformDatasourcesController',
             controllerAs: '$ctrl'
         })
         .state('admin.platform.templates', {
             title: 'Platform templates',
-            url: '/templates',
-            params: {
-                platform: null
-            },
+            url: '/templates?:page',
             templateUrl: platformTemplatesTpl,
             controller: 'PlatformTemplatesController',
             controllerAs: '$ctrl'
         })
         .state('admin.platform.analyses', {
             title: 'Platform analyses',
-            url: '/analyses',
-            params: {
-                platform: null
-            },
+            url: '/analyses?:page',
             templateUrl: platformAnalysesTpl,
             controller: 'PlatformAnalysesController',
             controllerAs: '$ctrl'
@@ -693,7 +636,7 @@ function adminStates($stateProvider) {
         })
         .state('admin.platform.users', {
             title: 'Organization Users',
-            url: '/users',
+            url: '/users?:page',
             templateUrl: platformUsersTpl,
             controller: 'PlatformUsersController',
             controllerAs: '$ctrl'
@@ -715,7 +658,7 @@ function adminStates($stateProvider) {
         })
         .state('admin.platform.organizations', {
             title: 'Platform: Organizations',
-            url: '/organizations',
+            url: '/organizations?:page',
             templateUrl: platformOrganizationsTpl,
             controller: 'PlatformOrganizationsController',
             controllerAs: '$ctrl'
@@ -731,66 +674,48 @@ function adminStates($stateProvider) {
         })
         .state('admin.team.projects', {
             title: 'Team projects',
-            url: '/projects',
-            params: {
-                team: null
-            },
+            url: '/projects?:page',
             templateUrl: teamProjectsTpl,
             controller: 'TeamProjectsController',
             controllerAs: '$ctrl'
         })
         .state('admin.team.rasters', {
             title: 'Team rasters',
-            url: '/rasters',
-            params: {
-                team: null
-            },
+            url: '/rasters?:page',
             templateUrl: teamRastersTpl,
             controller: 'TeamRastersController',
             controllerAs: '$ctrl'
         })
         .state('admin.team.vectors', {
             title: 'Team vectors',
-            url: '/vectors',
-            params: {
-                team: null
-            },
+            url: '/vectors?:page',
             templateUrl: teamVectorsTpl,
             controller: 'TeamVectorsController',
             controllerAs: '$ctrl'
         })
         .state('admin.team.datasources', {
             title: 'Team datasources',
-            url: '/datasources',
-            params: {
-                team: null
-            },
+            url: '/datasources?:page',
             templateUrl: teamDatasourcesTpl,
             controller: 'TeamDatasourcesController',
             controllerAs: '$ctrl'
         })
         .state('admin.team.templates', {
             title: 'Team templates',
-            url: '/templates',
-            params: {
-                team: null
-            },
+            url: '/templates?:page',
             templateUrl: teamTemplatesTpl,
             controller: 'TeamTemplatesController',
             controllerAs: '$ctrl'
         })
         .state('admin.team.analyses', {
             title: 'Team analyses',
-            url: '/analyses',
-            params: {
-                team: null
-            },
+            url: '/analyses?:page',
             templateUrl: teamAnalysesTpl,
             controller: 'TeamAnalysesController',
             controllerAs: '$ctrl'
         })
         .state('admin.team.users', {
-            url: '/users',
+            url: '/users?:page',
             title: 'Team Members',
             templateUrl: teamUsersTpl,
             controller: 'AdminTeamUsersController',

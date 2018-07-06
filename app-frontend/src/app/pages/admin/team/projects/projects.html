@@ -1,3 +1,13 @@
+<div class="object-list-actions">
+  <div>
+    <rf-pagination-count
+      start-index="$ctrl.pagination.startingItem"
+      end-index="$ctrl.pagination.endingItem"
+      total="$ctrl.pagination.count"
+      item-name="projects"
+    ></rf-pagination-count>
+  </div>
+</div>
 <div class="row content stack-sm">
   <div class="column-8">
     <rf-call-to-action-item

@@ -17,9 +17,9 @@
         ></rf-pagination-count>
       </div>
     </div>
-    <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching">
+    <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.loading">
       <tbody>
-        <tr ng-repeat="user in $ctrl.users track by $index">
+        <tr ng-repeat="user in $ctrl.results track by $index">
           <td class="username">
             <div class="avatar user-avatar image-placeholder" ng-if="!user.profileImageUri"></div>
             <div ng-if="user.profileImageUri">
@@ -43,22 +43,13 @@
         </tr>
       </tbody>
     </table>
-    <div class="table-loading" ng-if="$ctrl.fetching">
-      <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
+    <div class="table-loading" ng-if="$ctrl.loading">
+      <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.loading}"></span>
     </div>
-    <!-- Pagination -->
-    <div class="list-group text-center"
-          ng-show="!$ctrl.loading && $ctrl.lastUserResult && $ctrl.pagination.show && !$ctrl.errorMsg">
-      <ul uib-pagination
-          items-per-page="$ctrl.lastUserResult.pageSize"
-          total-items="$ctrl.pagination.count"
-          ng-model="$ctrl.currentPage"
-          max-size="4"
-          rotate="true"
-          boundary-link-numbers="true"
-          force-ellipses="true"
-          ng-change="$ctrl.fetchUsers($ctrl.currentPage, $ctrl.search)">
-      </ul>
-    </div>
+    <rf-pagination-controls
+      pagination="$ctrl.pagination"
+      is-loading="$ctrl.loading"
+      on-change="$ctrl.fetchPage(value)"
+    ></rf-pagination-controls>
   </div>
 </div>
