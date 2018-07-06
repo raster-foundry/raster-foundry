@@ -164,7 +164,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       s"$awsBase/$scenePath/metadata.xml",
       s"$awsBase/$scenePath/productInfo.json"
     )
-    val cloudCover = sceneMetadata.get("dataCoveragePercentage").map(_.toFloat)
+    val cloudCover = sceneMetadata.get("cloudyPixelPercentage").map(_.toFloat)
     val acquisitionDate = sceneMetadata.get("timeStamp").map { dt =>
       new java.sql.Timestamp(
         ZonedDateTime
