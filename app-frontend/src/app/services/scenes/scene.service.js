@@ -44,6 +44,18 @@ export default (app) => {
                         params: {
                             id: '@id'
                         }
+                    },
+                    cogThumbnail: {
+                        method: 'GET',
+                        url: `${BUILDCONFIG.API_HOST}/api/scenes/:sceneId/thumbnail?` +
+                            'token=:token&width=:width&height=:height',
+                        cache: true,
+                        params: {
+                            sceneId: '@sceneId',
+                            token: '@token',
+                            width: '@width',
+                            height: '@width'
+                        }
                     }
                 }
             );
@@ -151,6 +163,10 @@ export default (app) => {
 
         datasource({id}) {
             return this.Scene.datasource({id: id}).$promise;
+        }
+
+        cogThumbnail(sceneId, token, width = 128, height = 128) {
+            return this.Scene.cogThumbnail({sceneId, token, width, height}).$promise;
         }
     }
 

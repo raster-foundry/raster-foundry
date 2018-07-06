@@ -1,4 +1,5 @@
 import angular from 'angular';
+import _ from 'lodash';
 import sceneTpl from './sceneItem.html';
 
 const SceneItemComponent = {
@@ -17,7 +18,8 @@ const SceneItemComponent = {
 
 class SceneItemController {
     constructor(
-        $scope, $attrs, $element, $timeout, thumbnailService, mapService, modalService
+        $scope, $attrs, $element, $timeout,
+        thumbnailService, mapService, modalService, sceneService, authService
     ) {
         'ngInject';
 
@@ -30,11 +32,13 @@ class SceneItemController {
 
         this.thumbnailService = thumbnailService;
         this.mapService = mapService;
+        this.modalService = modalService;
+        this.sceneService = sceneService;
+        this.authService = authService;
+
         this.isDraggable = $attrs.hasOwnProperty('draggable');
         this.isPreviewable = $attrs.hasOwnProperty('previewable');
         this.isClickable = $attrs.hasOwnProperty('clickable');
-        this.modalService = modalService;
-        this.$scope = $scope;
         this.datasource = this.scene.datasource;
     }
 
@@ -54,9 +58,21 @@ class SceneItemController {
         }
         if (changes.repository && changes.repository.currentValue) {
             this.repository = changes.repository.currentValue;
-            this.repository.service.getThumbnail(this.scene).then((thumbnail) => {
-                this.thumbnail = thumbnail;
-            });
+            if (this.scene.sceneType === 'COG') {
+                this.sceneService.cogThumbnail(
+                    this.scene.id,
+                    this.authService.token()
+                ).then(res => {
+                    let base64String = Object.values(res)
+                        .filter(chr => _.isString(chr))
+                        .join('');
+                    this.thumbnail = `data:image/png;base64,${base64String}`;
+                });
+            } else {
+                this.repository.service.getThumbnail(this.scene).then((thumbnail) => {
+                    this.thumbnail = thumbnail;
+                });
+            }
         }
     }
 
