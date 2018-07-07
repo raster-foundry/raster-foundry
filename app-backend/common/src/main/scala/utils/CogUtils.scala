@@ -172,4 +172,43 @@ object CogUtils {
       hists
     }
   }
+
+  def geoTiffDoubleHistogram(tiff: GeoTiff[MultibandTile], buckets: Int = 80, size: Int = 128): Array[Histogram[Double]] = {
+    def diagonal(tiff:
+                 GeoTiff[MultibandTile]): Int =
+      math.sqrt(tiff.cols*tiff.cols + tiff.rows*tiff.rows).toInt
+
+    val goldyLocksOverviews = tiff.overviews.filter{ tiff =>
+      val d = diagonal(tiff)
+      (d >= size && d <= size*4)
+    }
+
+    if (goldyLocksOverviews.nonEmpty){
+      // case: overview that is close enough to the size, not more than 4x larger
+      // -- read the overview and get histogram
+      val theOne = goldyLocksOverviews.minBy(diagonal)
+      val hists = Array.fill(tiff.bandCount)(DoubleHistogram(buckets))
+      theOne.tile.foreachDouble{ (band, v) => hists(band).countItem(v, 1) }
+      hists.toArray
+    } else {
+      // case: such oveview can't be found
+      // -- take min overview and sample window from center
+      val theOne = tiff.overviews.minBy(diagonal)
+      val sampleBounds = {
+        val side = math.sqrt(size*size/2)
+        val centerCol = theOne.cols / 2
+        val centerRow = theOne.rows / 2
+        GridBounds(
+          colMin = math.max(0, centerCol - (side / 2)).toInt,
+          rowMin = math.max(0, centerRow - (side / 2)).toInt,
+          colMax = math.min(theOne.cols - 1, centerCol + (side / 2)).toInt,
+          rowMax = math.min(theOne.rows - 1, centerRow + (side / 2)).toInt
+        )
+      }
+      val sample = theOne.crop(List(sampleBounds)).next._2
+      val hists = Array.fill(tiff.bandCount)(DoubleHistogram(buckets))
+      sample.foreachDouble{ (band, v) => hists(band).countItem(v, 1) }
+      hists.toArray
+    }
+  }
 }

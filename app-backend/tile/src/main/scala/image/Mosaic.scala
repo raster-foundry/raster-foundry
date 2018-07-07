@@ -1,13 +1,12 @@
 package com.azavea.rf.tile.image
 
-import com.azavea.rf.tile._
+import com.azavea.rf.tile.{image, _}
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.database.{ProjectDao, SceneDao}
 import com.azavea.rf.datamodel.Project
 import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.common.cache.CacheClient
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
-
 import geotrellis.raster._
 import geotrellis.raster.render.Png
 import geotrellis.slick.Projected

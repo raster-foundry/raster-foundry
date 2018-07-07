@@ -1,12 +1,11 @@
 package com.azavea.rf.tile.image
 
-import com.azavea.rf.common.utils.TileUtils
+import com.azavea.rf.common.utils.{CogUtils, TileUtils}
 import com.azavea.rf.common.cache.CacheClient
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.{SceneToProjectDao}
-import com.azavea.rf.datamodel.{ColorRampMosaic, Project, SingleBandOptions}
+import com.azavea.rf.database.{SceneDao, SceneToProjectDao}
+import com.azavea.rf.datamodel.{ColorRampMosaic, MosaicDefinition, Project, SceneType, SingleBandOptions}
 import com.azavea.rf.tile._
-
 import com.typesafe.scalalogging.LazyLogging
 import cats.data._
 import cats.implicits._
@@ -58,6 +57,28 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
     }
   }
 
+  def fetchCogTileWithHist(bbox: Option[Projected[Polygon]], zoom: Int, sceneId: UUID, ingestLocation: String) = {
+
+    val extent: Option[Extent] = bbox.map { poly =>
+      poly.geom.envelope
+    }
+
+    val cacheKey = extent match {
+      case Some(e) => s"scene-bbox-${sceneId}-${zoom}-${e.xmin}-${e.ymin}-${e.xmax}-${e.ymax}-single-band}"
+      case _ => s"scene-bbox-${sceneId}-${zoom}-no-extent-single-band}"
+    }
+
+
+    rfCache.cachingOptionT(cacheKey)(
+      CogUtils.fromUri(ingestLocation).flatMap { tiff =>
+        CogUtils.cropForZoomExtent(tiff, zoom, extent).flatMap { cropped: MultibandTile =>
+          val hist = CogUtils.geoTiffDoubleHistogram(tiff)
+          OptionT.pure[Future]((cropped, hist))
+        }
+      }
+    ).value
+  }
+
   /** SingleBandMosaic tiles from TMS pyramids given that they are in the same projection.
     *   If a layer does not go up to requested zoom it will be up-sampled.
     *   Layers missing color correction in the mosaic definition will be excluded.
@@ -70,28 +91,33 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
 
       val polygonBbox: Projected[Polygon] = TileUtils.getTileBounds(zoom, col, row)
       project.singleBandOptions match {
-        case Some(singleBandOptions: SingleBandOptions.Params) =>
-          val futureTiles: Future[Seq[(MultibandTile, Array[Histogram[Double]])]] =
-            SceneToProjectDao.query.filter(fr"project_id = ${project.id}").list.transact(xa).unsafeToFuture
-              .map { _.map { _.sceneId }}
-              .flatMap {
-                sceneIds => {
-                  Future.sequence(
-                    sceneIds map { sceneId =>
-                      SingleBandMosaic
-                        .fetch(sceneId, zoom, col, row)(xa, sceneIds.toSet)
-                        .value
-                        .zip(LayerCache.layerHistogram(sceneId, zoom).value)
-                        .map ({ case (tile, histogram) => for (a <- tile; b <- histogram) yield (a, b) })
-                    }
-                  ).map(_.flatten)
+        case Some(singleBandOptions: SingleBandOptions.Params) => {
+          val futureTiles: Future[Seq[(MultibandTile, Array[Histogram[Double]])]] = {
+            SceneToProjectDao.getMosaicDefinition(project.id, Some(polygonBbox)).transact(xa).unsafeToFuture.map { mds =>
+              val sceneIds = mds.map {
+                case MosaicDefinition(sceneId, _, _, _) => sceneId
+              }.toSet
+
+              Future.sequence(mds.map { md =>
+                (md.sceneType, md.ingestLocation) match {
+                  case (Some(SceneType.COG), Some(loc)) => {
+                    fetchCogTileWithHist(Some(polygonBbox), zoom, md.sceneId, loc)
+                  }
+                  case _ => {
+                    OptionT(SingleBandMosaic.fetchAvroTile(md.sceneId, zoom, col, row)(xa, sceneIds).value
+                      .zip(LayerCache.layerHistogram(md.sceneId, zoom).value)
+                      .map({ case (tile, histogram) => for (a <- tile; b <- histogram) yield (a, b) })).value
+                  }
                 }
-              }
+              }).map(_.flatten)
+            }.flatten
+          }
           val futureColoredTile =
             for {
               tiles: Seq[(MultibandTile, Array[Histogram[Double]])] <- futureTiles
             } yield ColorRampMosaic(tiles.toList, singleBandOptions)
           OptionT(futureColoredTile)
+        }
         case _ =>
           val message = "No valid single band render options found"
           logger.error(message)
@@ -118,16 +144,27 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
     val zoom: Int = zoomOption.getOrElse(8)
     project.singleBandOptions match {
       case Some(singleBandOptions: SingleBandOptions.Params) =>
-        val futureTiles: Future[Seq[(MultibandTile, Array[Histogram[Double]])]] =
-          SceneToProjectDao.query.filter(fr"project_id = ${project.id}").list.transact(xa).unsafeToFuture
-            .map { _.map { _.sceneId } }
-            .flatMap { sceneIds: Seq[UUID] =>
-          Future.sequence(
-              sceneIds map { sceneId: UUID =>
-                SingleBandMosaic.fetchRenderedExtent(sceneId, zoom, bboxPolygon)(xa, sceneIds.toSet).value
+        val futureTiles: Future[Seq[(MultibandTile, Array[Histogram[Double]])]] = {
+          SceneToProjectDao.getMosaicDefinition(project.id, bboxPolygon).transact(xa).unsafeToFuture.map { mds =>
+            val sceneIds = mds.map {
+              case MosaicDefinition(sceneId, _, _, _) => sceneId
+            }.toSet
+
+            Future.sequence(mds.map { md =>
+              (md.sceneType, md.ingestLocation) match {
+                case (Some(SceneType.COG), Some(loc)) => {
+                  fetchCogTileWithHist(bboxPolygon, zoom, md.sceneId, loc)
+                }
+                case _ => {
+                  OptionT(SingleBandMosaic.fetchRenderedExtent(md.sceneId, zoom, bboxPolygon)(xa, sceneIds).value
+                    .zip(LayerCache.layerHistogram(md.sceneId, zoom).value)
+                    .map({ case (tile, histogram) => for (a <- tile; b <- histogram) yield (a._1, b) })).value
+                }
               }
-          ).map(_.flatten)
+            }).map(_.flatten)
+          }.flatten
         }
+
         colorCorrect match {
           case true =>
             val futureColoredRender = for {
@@ -158,7 +195,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
   }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
-  def fetch(id: UUID, zoom: Int, col: Int, row: Int)(
+  def fetchAvroTile(id: UUID, zoom: Int, col: Int, row: Int)(
       implicit xa: Transactor[IO],
       sceneIds: Set[UUID]
   ): OptionT[Future, MultibandTile] = {
@@ -210,4 +247,3 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
         } yield (t, h)
     }
 }
-
