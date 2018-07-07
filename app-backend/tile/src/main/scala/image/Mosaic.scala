@@ -2,7 +2,7 @@ package com.azavea.rf.tile.image
 
 import com.azavea.rf.tile._
 import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.{ProjectDao}
+import com.azavea.rf.database.{ProjectDao, SceneDao}
 import com.azavea.rf.datamodel.Project
 import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.common.cache.CacheClient
@@ -52,6 +52,23 @@ object Mosaic extends LazyLogging with KamonTrace {
           logger.debug(s"Constructing MultiBand Mosaic ${project}")
           MultiBandMosaic(projectId, zoom, col, row)
       }
+    }
+  }
+
+  def apply(
+      id: UUID,
+      zoom: Int,
+      col: Int,
+      row: Int,
+      isScene: Boolean
+  )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = traceName(s"Mosaic.apply($id)") {
+    if (isScene) {
+      OptionT(SceneDao.query.filter(id).selectOption.transact(xa).unsafeToFuture) flatMap { scene =>
+        logger.debug(s"Constructing MultiBand Mosaic ${scene}")
+        MultiBandMosaic(id, zoom, col, row, true)
+      }
+    } else {
+      apply(id, zoom, col, row)
     }
   }
 

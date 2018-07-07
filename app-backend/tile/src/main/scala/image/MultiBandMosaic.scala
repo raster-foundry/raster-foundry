@@ -1,7 +1,7 @@
 package com.azavea.rf.tile.image
 
 import com.azavea.rf.tile._
-import com.azavea.rf.database.SceneToProjectDao
+import com.azavea.rf.database.{SceneToProjectDao, SceneDao}
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.{MosaicDefinition, SceneType, WhiteBalance}
@@ -66,6 +66,16 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
 
     logger.debug(s"Reading mosaic definition (project: $projectId")
     SceneToProjectDao.getMosaicDefinition(projectId, polygonOption).transact(xa).unsafeToFuture
+  }
+
+  def mosaicDefinition(id: UUID, polygonOption: Option[Projected[Polygon]], isScene: Boolean)(
+    implicit xa: Transactor[IO]): Future[Seq[MosaicDefinition]] = {
+    if (isScene) {
+      logger.debug(s"Reading mosaic definition (scene: $id")
+      SceneDao.getMosaicDefinition(id, polygonOption).transact(xa).unsafeToFuture
+    } else (
+      mosaicDefinition(id, polygonOption)
+    )
   }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
@@ -244,6 +254,23 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
         // )
       )
     )
+  }
+
+  def apply(
+      id: UUID,
+      zoom: Int,
+      col: Int,
+      row: Int,
+      isScene: Boolean
+  )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = traceName(s"MultiBandMosaic.apply($id)") {
+    if (isScene) {
+      logger.debug(s"Creating mosaic (scene: $id, zoom: $zoom, col: $col, row: $row)")
+      val polygonBbox: Projected[Polygon] = TileUtils.getTileBounds(zoom, col, row)
+      val md: Future[Seq[MosaicDefinition]] = mosaicDefinition(id, Option(polygonBbox), true)
+      OptionT(mergeTiles(renderForBbox(md, Some(polygonBbox), zoom, Some(s"${zoom}-${col}-${row}"), false)))
+    } else {
+      apply(id, zoom, col, row)
+    }
   }
 
   def renderForBbox(

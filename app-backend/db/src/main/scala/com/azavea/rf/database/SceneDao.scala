@@ -2,6 +2,7 @@ package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.datamodel.color._
 import com.azavea.rf.datamodel.{Scene, SceneFilterFields, SceneStatusFields, User, Visibility}
 import doobie._
 import doobie.implicits._
@@ -12,6 +13,13 @@ import cats.data._
 import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
+import geotrellis.slick.Projected
+import geotrellis.vector.Polygon
+import geotrellis.raster.histogram._
+import io.circe._
+import io.circe.optics.JsonPath._
+import io.circe.generic.JsonCodec
+import io.circe.syntax._
 
 import scala.concurrent.duration._
 import java.sql.Timestamp
@@ -236,4 +244,40 @@ object SceneDao extends Dao[Scene] with LazyLogging {
         }
     }
   }
+
+  def getMosaicDefinition(sceneId: UUID, polygonO: Option[Projected[Polygon]]): ConnectionIO[Seq[MosaicDefinition]] = {
+    val polygonF: Fragment = polygonO match {
+      case Some(polygon) => fr"ST_Intersects(tile_footprint, ${polygon})"
+      case _ => fr""
+    }
+    for {
+      scene <- SceneDao.query.filter(sceneId).filter(polygonF).select
+      datasource <- DatasourceDao.query.filter(scene.datasource).select
+    } yield {
+      val composites = datasource.composites
+      val redBandPath = root.natural.selectDynamic("value").redBand.int
+      val greenBandPath = root.natural.selectDynamic("value").greenBand.int
+      val blueBandPath = root.natural.selectDynamic("value").blueBand.int
+
+      Seq(MosaicDefinition(
+        scene.id,
+        ColorCorrect.Params(
+          redBandPath.getOption(composites).getOrElse(0),
+          greenBandPath.getOption(composites).getOrElse(1),
+          blueBandPath.getOption(composites).getOrElse(2),
+          BandGamma(false, None, None, None),
+          PerBandClipping(false, None, None, None,
+            None, None, None),
+          MultiBandClipping(false, None, None),
+          SigmoidalContrast(false, None, None),
+          Saturation(false, None),
+          Equalization(false),
+          AutoWhiteBalance(false)
+        ),
+        scene.sceneType,
+        scene.ingestLocation)
+      )
+    }
+  }
+
 }
