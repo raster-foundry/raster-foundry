@@ -7,6 +7,7 @@ class PlatformProjectsController {
         modalService, authService, projectService, paginationService,
         platform, organizations, members
     ) {
+        'ngInject';
         $scope.autoInject(this, arguments);
     }
 
@@ -15,18 +16,8 @@ class PlatformProjectsController {
         this.loading = false;
         this.searchTerm = '';
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
+        this.onSearch = this.paginationService.buildPagedSearch(this);
 
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
-
-        this.fetchPage();
-    }
-
-    onSearch(search) {
-        this.searchTerm = search;
         this.fetchPage();
     }
 

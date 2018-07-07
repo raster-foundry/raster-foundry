@@ -8,7 +8,7 @@
   <div ng-if="!$ctrl.errorMsg">
     <div class="admin-list-actions">
       <div>
-        <rf-search on-search="$ctrl.debouncedSearch(value)" placeholder="Search for users" auto-focus="true"></rf-search>
+        <rf-search on-search="$ctrl.onSearch(value)" placeholder="Search for users" auto-focus="true"></rf-search>
         <rf-pagination-count
           start-index="$ctrl.pagination.startingItem"
           end-index="$ctrl.pagination.endingItem"

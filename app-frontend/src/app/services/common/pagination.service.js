@@ -1,8 +1,20 @@
+/* global _ */
 
 export default (app) => {
     class PaginationService {
         constructor($state) {
             this.$state = $state;
+        }
+
+        buildPagedSearch(context) {
+            const searchFn = function (search) {
+                this.searchTerm = search;
+                this.fetchPage();
+            };
+            return _.debounce(searchFn.bind(context), 500, {
+                leading: false,
+                trailing: true
+            });
         }
 
         buildPagination(paginatedResponse) {
@@ -32,6 +44,8 @@ export default (app) => {
                 }
             );
         }
+
+
     }
 
     app.service('paginationService', PaginationService);

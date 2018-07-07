@@ -4,74 +4,37 @@ import _ from 'lodash';
 class OrganizationUsersController {
     constructor(
         $scope, $stateParams,
-        modalService, organizationService, authService,
+        modalService, organizationService, authService, paginationService,
         // params from parent route resolve
         organization, platform, user
     ) {
-        this.$scope = $scope;
-        this.$stateParams = $stateParams;
-        this.modalService = modalService;
-        this.organizationService = organizationService;
-        this.authService = authService;
-
-        this.organization = organization;
-        this.platform = platform;
-        this.user = user;
+        'ngInject';
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
+        this.searchTerm = '';
+        this.loading = false;
+        this.onSearch = this.paginationService.buildPagedSearch(this);
 
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
             this.platform.id,
             this.organization.id
         ]);
 
-        this.fetchUsers(1, '');
+        this.fetchPage();
     }
 
-    onSearch(search) {
-        this.fetchUsers(1, search);
-    }
-
-    updatePagination(data) {
-        this.pagination = {
-            show: data.count > data.pageSize,
-            count: data.count,
-            currentPage: data.page + 1,
-            startingItem: data.page * data.pageSize + 1,
-            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious
-        };
-    }
-
-    updateUserGroupRole(user) {
-        return this.organizationService.setUserRole(
-            this.organization.platformId,
-            this.organization.id,
-            user
-        ).catch(() => {
-            this.fetchUsers(this.pagination.currentPage, this.search);
-        });
-    }
-
-    fetchUsers(page = 1, search) {
-        this.fetching = true;
+    fetchPage(page = this.$stateParams.page || 1) {
+        this.loading = true;
         this.organizationService
-            .getMembers(this.platform.id, this.organization.id, page - 1, search)
-            .then((response) => {
-                this.fetching = false;
-                this.updatePagination(response);
-                this.lastUserResult = response;
-                this.users = response.results;
-                this.buildOptions();
-            }, () => {
-                this.fetching = false;
+            .getMembers(this.platform.id, this.organization.id, page - 1, this.searchTerm)
+            .then(paginatedResponse => {
+                this.results = paginatedResponse.results;
+                this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                this.paginationService.updatePageParam(page);
+            }).finally(() => {
+                this.loading = false;
             });
     }
 
@@ -137,6 +100,16 @@ class OrganizationUsersController {
         default:
             return user.groupRole;
         }
+    }
+
+    updateUserGroupRole(user) {
+        return this.organizationService.setUserRole(
+            this.organization.platformId,
+            this.organization.id,
+            user
+        ).catch(() => {
+            this.fetchUsers(this.pagination.currentPage);
+        });
     }
 
     updateUserMembershipStatus(user, isApproved) {

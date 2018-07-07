@@ -4,29 +4,17 @@ import _ from 'lodash';
 class OrganizationProjectsController {
     constructor(
         $scope, $stateParams, $log, $window,
-        modalService, authService, projectService,
+        modalService, authService, projectService, paginationService,
         platform, organization, members, teams
     ) {
-        this.$scope = $scope;
-        this.$stateParams = $stateParams;
-        this.$log = $log;
-        this.$window = $window;
-        this.modalService = modalService;
-        this.authService = authService;
-        this.projectService = projectService;
-
-        this.platform = platform;
-        this.organization = organization;
-        this.members = members;
-        this.teams = teams;
+        'ngInject';
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
+        this.searchTerm = '';
+        this.loading = false;
+        this.onSearch = this.paginationService.buildPagedSearch(this);
 
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
             this.platform.id,
@@ -36,47 +24,28 @@ class OrganizationProjectsController {
         this.fetchPage();
     }
 
-    onSearch(search) {
-        this.fetchPage(0, search);
-    }
-
-    updatePagination(data) {
-        this.pagination = {
-            show: data.count > data.pageSize,
-            count: data.count,
-            currentPage: data.page + 1,
-            startingItem: data.page * data.pageSize + 1,
-            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious
-        };
-    }
-
-
-    fetchPage(page = 0, search = '') {
+    fetchPage(page = this.$stateParams.page || 1) {
         this.loading = true;
         this.projectService.query(
             {
                 sort: 'createdAt,desc',
-                pageSize: 10,
+                pageSize: 1,
                 ownershipType: 'inherited',
                 groupType: 'organization',
                 groupId: this.organization.id,
-                search,
-                page
+                search: this.searchTerm,
+                page: page - 1
             }
         ).then(paginatedResponse => {
-            this.projects = paginatedResponse.results;
-            this.updatePagination(paginatedResponse);
+            this.results = paginatedResponse.results;
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page);
         }).finally(() => {
             this.loading = false;
         });
     }
 }
 
-const OrganizationProjectsModule = angular.module('pages.organization.projects', []);
-
-OrganizationProjectsModule
+export default angular
+    .module('pages.organization.projects', [])
     .controller('OrganizationProjectsController', OrganizationProjectsController);
-
-export default OrganizationProjectsModule;

@@ -19,14 +19,19 @@
         Rasters shared with this organization will be accessible to all members of this organization.
       </p>
     </rf-call-to-action-item>
-    <div ng-if="!$ctrl.loading && $ctrl.pagination.count" class="list-group">
+    <div ng-if="!$ctrl.loading && $ctrl.results.length" class="list-group">
       <rf-scene-item
           previewable
           scene="raster"
           repository="$ctrl.repository"
-          ng-repeat="raster in $ctrl.rasters"
+          ng-repeat="raster in $ctrl.results"
       ></rf-scene-item>
     </div>
+    <rf-pagination-controls
+      pagination="$ctrl.pagination"
+      is-loading="$ctrl.loading"
+      on-change="$ctrl.fetchPage(value)"
+    ></rf-pagination-controls>
   </div>
   <div class="column spacer"></div>
   <div class="column-3">

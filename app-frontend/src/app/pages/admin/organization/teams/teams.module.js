@@ -4,106 +4,68 @@ import _ from 'lodash';
 class OrganizationTeamsController {
     constructor(
         $scope, $stateParams, $log, $window,
-        modalService, organizationService, teamService, authService,
+        modalService, organizationService, teamService, authService, paginationService,
         platform, organization, user, userRoles
     ) {
-        this.$scope = $scope;
-        this.$stateParams = $stateParams;
-        this.$log = $log;
-        this.$window = $window;
-        this.modalService = modalService;
-        this.organizationService = organizationService;
-        this.teamService = teamService;
-        this.authService = authService;
-
-        this.platform = platform;
-        this.organization = organization;
-        this.user = user;
-        this.userRoles = userRoles;
+        'ngInject';
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
+        this.onSearch = this.paginationService.buildPagedSearch(this);
 
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
             this.organization.id,
             this.platform.id
         ]);
 
-        this.fetchTeams(1, '');
+        this.fetchPage();
     }
 
-    onSearch(search) {
-        this.fetchTeams(1, search);
-    }
-
-    updatePagination(data) {
-        this.pagination = {
-            show: data.count > data.pageSize,
-            count: data.count,
-            currentPage: data.page + 1,
-            startingItem: data.page * data.pageSize + 1,
-            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious
-        };
-    }
-
-
-    fetchTeams(page = 1, search) {
-        this.fetching = true;
+    fetchPage(page = this.$stateParams.page || 1) {
+        this.loading = true;
         this.organizationService
-            .getTeams(this.platform.id, this.organization.id, page - 1, search)
-            .then((response) => {
-                this.fetching = false;
-                this.updatePagination(response);
-                this.lastTeamResult = response;
-                this.teams = response.results;
-
-                this.teams.forEach((team) => {
-                    Object.assign(team, {
-                        options: {
-                            items: this.itemsForTeam(team)
-                        },
-                        showOptions: this.authService.isEffectiveAdmin([
-                            this.platform.id,
-                            this.organization.id,
-                            team.id
-                        ])
-                    });
-                });
-
-                // fetch team users
-                this.teams.forEach(
-                    (team) => {
-                        this.teamService
-                            .getMembers(this.platform.id, this.organization.id, team.id)
-                            .then((paginatedUsers) => {
-                                team.fetchedUsers = paginatedUsers;
-                            });
-                    }
-                );
-            }, (error) => {
-                this.fetching = false;
-                this.errorMsg = `${error.data}. Please contact `;
+            .getTeams(this.platform.id, this.organization.id, page - 1, this.searchTerm)
+            .then(paginatedResponse => {
+                this.results = paginatedResponse.results;
+                this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                this.paginationService.updatePageParam(page);
+                this.buildOptions();
+                this.fetchTeamUsers();
+            }).finally(() => {
+                this.loading = false;
             });
+    }
+
+    buildOptions() {
+        this.results.forEach((team) => {
+            Object.assign(team, {
+                options: {
+                    items: this.itemsForTeam(team)
+                },
+                showOptions: this.authService.isEffectiveAdmin([
+                    this.platform.id,
+                    this.organization.id,
+                    team.id
+                ])
+            });
+        });
+    }
+
+    fetchTeamUsers() {
+        this.results.forEach(team => {
+            this.teamService
+                .getMembers(this.platform.id, this.organization.id, team.id)
+                .then((paginatedUsers) => {
+                    team.fetchedUsers = paginatedUsers;
+                });
+        });
     }
 
 
     itemsForTeam(team) {
         /* eslint-disable */
         return [
-            // {
-            //     label: 'Edit',
-            //     callback: () => {
-            //         this.$state.go('admin.team.users', {teamId: team.id});
-            //     },
-            //     classes: []
-            // },
             {
                 label: 'Add User',
                 callback: () => {
@@ -145,11 +107,11 @@ class OrganizationTeamsController {
                     modal.result.then(() => {
                         this.teamService.deactivateTeam(this.platform.id, this.organization.id, team.id).then(
                             () => {
-                                this.fetchTeams(this.pagination.currentPage, this.search);
+                                this.fetchPage(this.pagination.currentPage);
                             },
                             (err) => {
                                 this.$log.debug('error deleting team', err);
-                                this.fetchTeams(this.pagination.currentPage, this.search);
+                                this.fetchPage(this.pagination.currentPage);
                             }
                         );
                     });
@@ -169,7 +131,7 @@ class OrganizationTeamsController {
             this.teamService
                 .createTeam(this.platform.id, this.organization.id, result.name)
                 .then(() => {
-                    this.fetchTeams(this.pagination.currentPage, this.search);
+                    this.fetchPage(this.pagination.currentPage);
                 });
         });
     }

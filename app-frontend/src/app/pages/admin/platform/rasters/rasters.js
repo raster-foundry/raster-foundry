@@ -8,6 +8,7 @@ class Controller {
         RasterFoundryRepository, sceneService, paginationService,
         platform, organizations, members
     ) {
+        'ngInject';
         $scope.autoInject(this, arguments);
     }
 

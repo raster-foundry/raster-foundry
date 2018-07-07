@@ -7,6 +7,7 @@ class PlatformUsersController {
         modalService, platformService, authService, paginationService,
         platform
     ) {
+        'ngInject';
         $scope.autoInject(this, arguments);
     }
 
@@ -14,18 +15,7 @@ class PlatformUsersController {
         this.searchTerm = '';
         this.loading = false;
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
-
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
-
-        this.fetchPage();
-    }
-
-    onSearch(search) {
-        this.searchTerm = search;
+        this.onSearch = this.paginationService.buildPagedSearch(this);
         this.fetchPage();
     }
 
