@@ -3,12 +3,11 @@ import axios from 'axios';
 
 export default (app) => {
     class CMRRepository {
-        constructor($q, authService, uploadService, sceneService) {
+        constructor($q, authService, uploadService) {
             this.$q = $q;
             this.previewOnMap = false;
             this.authService = authService;
             this.uploadService = uploadService;
-            this.sceneService = sceneService;
         }
 
         initDatasources() {

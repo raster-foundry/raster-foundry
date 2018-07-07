@@ -20,7 +20,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 import java.net._
 import java.util.UUID
-import org.apache.commons.codec.binary.{Base64 => ApacheBase64}
 
 import cats.effect.IO
 import com.azavea.rf.database._
@@ -345,7 +344,8 @@ trait SceneRoutes extends Authentication
                       CogUtils.thumbnail(
                         uri, thumbnailParams.width, thumbnailParams.height
                       ).map(
-                        (tile: MultibandTile) => HttpEntity(MediaTypes.`image/png`, tile.renderPng.bytes)).value
+                        (tile: MultibandTile) => HttpEntity(MediaTypes.`image/png`, tile.renderPng.bytes)
+                      ).value
                     }
                     case _ =>
                       Future.successful(None)

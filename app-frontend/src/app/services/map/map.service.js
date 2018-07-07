@@ -528,10 +528,7 @@ class MapWrapper {
             }
         );
 
-        let displayThumbnail = scene.tileFootprint &&
-            (scene.thumbnails && scene.thumbnails.length || scene.sceneType === 'COG');
-
-        if (displayThumbnail) {
+        if (scene.tileFootprint && scene.thumbnails && scene.thumbnails.length) {
             let boundsGeoJson = L.geoJSON();
             boundsGeoJson.addData(scene.tileFootprint);
             let imageBounds = boundsGeoJson.getBounds();

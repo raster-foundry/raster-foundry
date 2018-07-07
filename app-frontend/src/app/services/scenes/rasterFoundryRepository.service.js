@@ -196,24 +196,6 @@ export default (app) => {
             return this.$q((resolve, reject) => {
                 if (scene.thumbnails.length) {
                     resolve(this.thumbnailService.getBestFitUrl(scene.thumbnails, 1000));
-                } else if (scene.sceneType === 'COG') {
-                    let matchedCt = this.cogThumbnailCache.length &&
-                        this.cogThumbnailCache.find(ct => ct.id === scene.id);
-                    if (matchedCt) {
-                        resolve(`data:image/png;base64,${matchedCt.thumbnail}`);
-                    } else {
-                        this.sceneService.cogThumbnail(
-                            scene.id, this.authService.token(), 512, 512)
-                            .then(resp => {
-                                this.cogThumbnailCache.push({
-                                    id: scene.id,
-                                    thumbnail: resp
-                                });
-                                resolve(`data:image/png;base64,${resp}`);
-                            }, () => {
-                                reject();
-                            });
-                    }
                 } else {
                     reject();
                 }

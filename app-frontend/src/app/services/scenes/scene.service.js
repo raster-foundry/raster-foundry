@@ -2,12 +2,15 @@
 
 export default (app) => {
     class SceneService {
-        constructor($resource, $http, authService, projectService, uuid4) {
+        constructor($resource, $http, APP_CONFIG,
+            authService, projectService, uuid4) {
             'ngInject';
             this.$http = $http;
             this.authService = authService;
             this.projectService = projectService;
             this.uuid4 = uuid4;
+
+            this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
             this.Scene = $resource(
                 `${BUILDCONFIG.API_HOST}/api/scenes/:id/`, {
@@ -183,6 +186,13 @@ export default (app) => {
                 result.push(String.fromCharCode.apply(null, u8a.subarray(i, i + CHUNK_SZ)));
             }
             return result.join('');
+        }
+
+        getSceneLayerURL(scene, params) {
+            let sceneId = typeof scene === 'object' ? scene.id : scene;
+            let queryParams = params || {};
+            let formattedParams = L.Util.getParamString(queryParams);
+            return `${this.tileServer}/scenes/${sceneId}/{z}/{x}/{y}/${formattedParams}`;
         }
     }
 
