@@ -4,7 +4,7 @@ import com.azavea.rf.tile._
 import com.azavea.rf.database.{SceneToProjectDao, SceneDao}
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{MosaicDefinition, SceneType, WhiteBalance}
+import com.azavea.rf.datamodel.{ColorCorrect, MosaicDefinition, SceneType, WhiteBalance}
 import com.azavea.rf.common.cache.CacheClient
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
@@ -86,7 +86,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     }
   }
 
-  private def fetchAvroTile(id: UUID, zoom: Int, col: Int, row: Int)(implicit xa: Transactor[IO]) = {
+  def fetchAvroTile(id: UUID, zoom: Int, col: Int, row: Int)(implicit xa: Transactor[IO]) = {
     tileLayerMetadata(id, zoom).flatMap {
       case (sourceZoom, tlm) =>
         val zoomDiff = zoom - sourceZoom
@@ -289,31 +289,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
         val tiles = mosaic.map {
           case MosaicDefinition(sceneId, colorCorrectParams, sceneType, Some(ingestLocation)) => {
             val tile = sceneType match {
-              case (Some(SceneType.COG)) => {
-                val extent: Option[Extent] = bbox.map{ poly =>
-                  poly.geom.envelope
-                }
-
-                val cacheKey = extent match {
-                  case Some(e) => s"scene-bbox-${sceneId}-${zoom}-${e.xmin}-${e.ymin}-${e.xmax}-${e.ymax}-${colorCorrectParams.hashCode()}"
-                  case _ => s"scene-bbox-${sceneId}-${zoom}-no-extent-${colorCorrectParams.hashCode()}"
-                }
-
-
-                rfCache.cachingOptionT(cacheKey)(
-                  CogUtils.fromUri(ingestLocation).flatMap { tiff =>
-                    CogUtils.cropForZoomExtent(tiff, zoom, extent).flatMap { cropped: MultibandTile =>
-                      if (colorCorrect) {
-                        rfCache.cachingOptionT(s"hist-tiff-${sceneId}"){
-                          OptionT.liftF(Future(CogUtils.geoTiffHistogram(tiff)))
-                        }.semiflatMap { histogram =>
-                          Future(colorCorrectParams.colorCorrect(cropped, histogram))
-                        }
-                      } else OptionT.pure[Future](cropped)
-                    }
-                  }
-                )
-              }
+              case (Some(SceneType.COG)) => fetchCogTile(bbox, zoom, colorCorrect, sceneId, colorCorrectParams, ingestLocation)
               case _ => {
                 MultiBandMosaic
                   .fetchRenderedExtent(sceneId, zoom, bbox)
@@ -339,6 +315,34 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
         Future.traverse(tiles)(_.value).map(_.flatten)
       }
     }
+
+  def fetchCogTile(bbox: Option[Projected[Polygon]], zoom: Int, colorCorrect: Boolean, sceneId: UUID, colorCorrectParams: ColorCorrect.Params, ingestLocation: String): OptionT[Future, MultibandTile] = {
+
+    val extent: Option[Extent] = bbox.map { poly =>
+      poly.geom.envelope
+    }
+
+    val cacheKey = extent match {
+      case Some(e) => s"scene-bbox-${sceneId}-${zoom}-${e.xmin}-${e.ymin}-${e.xmax}-${e.ymax}-${colorCorrectParams.hashCode()}"
+      case _ => s"scene-bbox-${sceneId}-${zoom}-no-extent-${colorCorrectParams.hashCode()}"
+    }
+
+
+    rfCache.cachingOptionT(cacheKey)(
+      CogUtils.fromUri(ingestLocation).flatMap { tiff =>
+        CogUtils.cropForZoomExtent(tiff, zoom, extent).flatMap { cropped: MultibandTile =>
+          if (colorCorrect) {
+            rfCache.cachingOptionT(s"hist-tiff-${sceneId}") {
+              OptionT.liftF(Future(CogUtils.geoTiffHistogram(tiff)))
+            }.semiflatMap { histogram =>
+              Future(colorCorrectParams.colorCorrect(cropped, histogram))
+            }
+          } else OptionT.pure[Future](cropped)
+        }
+      }
+    )
+
+  }
 
   def colorCorrectTiles(tiles: Future[Seq[MultibandTile]]): Future[Seq[MultibandTile]] = {
     tiles.map(ts => WhiteBalance(ts.toList))
