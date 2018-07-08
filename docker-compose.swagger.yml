@@ -6,7 +6,7 @@ services:
       - "8888:8080"
 
   swagger-ui:
-    image: nginx:1.10
+    image: nginx:1.14
     volumes:
       - ./docs/swagger/:/usr/share/nginx/html:ro
     ports:
