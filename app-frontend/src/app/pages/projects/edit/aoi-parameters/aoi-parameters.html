@@ -50,7 +50,10 @@
   </li>
   <li class="separator">
     <span class="label">Start time</span>
-    <div class="dropdown btn-group fixedwidth" ng-click="$ctrl.openDatePickerModal()">
+    <div class="dropdown btn-group fixedwidth"
+         ng-click="$ctrl.openDatePickerModal()"
+         ng-disabled="$ctrl.disableStartTimeChange"
+         ng-class="{'div-disabled': $ctrl.disableStartTimeChange}">
       <a class="btn dropdown-label" >
         {{$ctrl.getCurrentStartTime()}}
       </a>
@@ -58,7 +61,12 @@
         <i class="icon-calendar"></i>
       </button>
     </div>
-    <i class="icon-info"></i>
+    <i class="icon-info"
+       tooltips
+       tooltip-template="{{$ctrl.startTimeTooltip}}"
+       tooltip-size="small"
+       tooltip-class="rf-tooltip" tooltip-side="bottom">
+    </i>
   </li>
 </ul>
 <div class="sidebar-content" ng-if="$ctrl.project">

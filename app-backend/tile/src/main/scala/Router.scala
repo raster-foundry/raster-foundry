@@ -65,6 +65,11 @@ class Router extends LazyLogging
             }
           }
         }
+      } ~
+      pathPrefix("scenes") {
+        pathPrefix(JavaUUID) { sceneId =>
+          MosaicRoutes.mosaicScene(sceneId)(xa)
+        }
       }
     }
   }

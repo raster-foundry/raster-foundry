@@ -27,7 +27,16 @@
       color-scheme-options="$ctrl.options.baseScheme"
       on-change="$ctrl.onColorSchemeChange(value)"
       data-disabled="$ctrl.isSource"
+      ng-show="!$ctrl.isSource"
   ></rf-color-scheme-dropdown>
+  <button class="btn btn-square btn-small btn-ghost"
+          ng-click="$ctrl.customColorModal()"
+          ng-disabled="!$ctrl.histogram"
+          ng-show="!$ctrl.isSource"
+          title="Customize color map"
+  >
+    <span class="icon-settings"></span>
+  </button>
 </div>
 
 <div class="graph-container"
@@ -67,7 +76,7 @@
   >
   </rf-histogram-breakpoint>
   <div class="histogram-placeholder" ng-if="$ctrl.histogram.fetching">
-    <span class="icon-load animate-spin"></span>
+    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.histogram.fetching}"></span>
       Loading
   </div>
   <div class="histogram-placeholder" ng-if="$ctrl.noValidData && !$ctrl.histogram.fetching">

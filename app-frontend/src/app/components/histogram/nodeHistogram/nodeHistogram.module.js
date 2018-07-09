@@ -20,8 +20,8 @@ const NodeHistogram = {
 
 class NodeHistogramController {
     constructor(
-        $log, $scope, $element, $ngRedux,
-        histogramService, colorSchemeService, uuid4
+        $log, $scope, $element, $ngRedux, uuid4,
+        histogramService, colorSchemeService, modalService
     ) {
         'ngInject';
         this.$log = $log;
@@ -29,6 +29,7 @@ class NodeHistogramController {
         this.$element = $element;
         this.histogramService = histogramService;
         this.uuid4 = uuid4;
+        this.modalService = modalService;
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis.bind(this),
@@ -453,6 +454,47 @@ class NodeHistogramController {
         if (!this.isSource) {
             this.lastMouseOver = id;
         }
+    }
+
+    customColorModal() {
+        const modal = this.modalService.open({
+            component: 'rfColormapModal',
+            // size: 'sm',
+            resolve: {
+                histogram: () => this.histogram,
+                plot: () => this.plot,
+                breakpoints: () => this.breakpoints.map(bp => ({value: bp.value, color: bp.color}))
+            }
+        });
+        modal.result.then((bpMap) => {
+            this.breakpoints = breakpointsFromRenderDefinition(
+                Object.assign({}, this.renderDefinition, {breakpoints: bpMap}),
+                this.uuid4.generate
+            );
+
+            const baseScheme = {
+                dataType: 'CUSTOM',
+                colorBins: 0,
+                colorScheme: _.keys(bpMap)
+                    .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+                    .map((value) => bpMap[value.toString()])
+            };
+
+            this.options = Object.assign({}, this.options, {
+                baseScheme: Object.assign({}, baseScheme)
+            });
+            let renderDefinition = renderDefinitionFromState(this.options, this.breakpoints);
+
+            this.api.refresh();
+
+            this.updateRenderDefinition({
+                nodeId: this.nodeId,
+                renderDefinition,
+                histogramOptions: Object.assign({}, this.histogramOptions, {
+                    baseScheme
+                })
+            });
+        });
     }
 }
 

@@ -83,8 +83,11 @@ class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTest
           val annotationsUpdateWithAnnotationIO = annotationInsertWithUserAndProjectIO flatMap {
             case (annotations: List[Annotation], dbUser: User, dbProject: Project) => {
               // safe because it's coming from inserting an annotation above
-              val annotationId = annotations.head.id
-              val newAnnotation = annotationUpdate.toAnnotation(dbProject.id, dbUser).copy(id=annotationId)
+              val firstAnnotation = annotations.head
+              val annotationId = firstAnnotation.id
+              val newAnnotation = annotationUpdate.toAnnotation(
+                dbProject.id, dbUser, firstAnnotation.annotationGroup
+              ).copy(id=annotationId)
               AnnotationDao.updateAnnotation(newAnnotation, annotationId, dbUser) flatMap {
                 (affectedRows: Int) => {
                   AnnotationDao.unsafeGetAnnotationById(annotationId, dbUser) map {

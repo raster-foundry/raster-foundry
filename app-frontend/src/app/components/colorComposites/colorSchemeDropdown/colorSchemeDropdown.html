@@ -9,12 +9,16 @@
   >
       <div class="gradient-bar gradient-bkg"
            title="{{ $ctrl.state.scheme.label }}"
-          ng-style="$ctrl.colorSchemeService.colorsToBackground(
+           ng-show="$ctrl.state.schemeType"
+           ng-style="$ctrl.colorSchemeService.colorsToBackground(
                       $ctrl.state.scheme.colors,
                       90,
                       $ctrl.state.blending.bins,
                       $ctrl.state.reversed)"
       ></div>
+      <div  ng-show="!$ctrl.state.schemeType">
+        Custom color map
+      </div>
       <i class="icon-caret-down"></i>
   </button>
   <div class="dropdown-menu dropdown-menu-light colorscheme-selector" uib-dropdown-menu role="menu">
@@ -24,7 +28,7 @@
           <a class="dropdown-header-link" ng-click="$ctrl.moveToView('BLENDING')">{{$ctrl.state.blending.label}}...</a>
         </div>
         <div class="dropdown-header-link-container">
-          <a class="dropdown-header-link" ng-click="$ctrl.moveToView('SCHEME')">{{$ctrl.state.schemeType.label}}...</a>
+          <a class="dropdown-header-link" ng-click="$ctrl.moveToView('SCHEME')">{{$ctrl.state.schemeType.label || 'Custom scheme'}}...</a>
         </div>
       </div>
       <ul class="dropdown-list">
@@ -69,7 +73,7 @@
             ng-class="$ctrl.getSchemeTypeClass(schemeType)"
             ng-click="$ctrl.setSchemeType(schemeType)"
         >
-          {{schemeType.label}} <span ng-if="$ctrl.isActiveSchemeType('CATEGORICAL')">(needs discrete bins)</span>
+          {{schemeType.label || 'Custom'}} <span ng-if="$ctrl.isActiveSchemeType('CATEGORICAL')">(needs discrete bins)</span>
         </li>
       </ul>
     </div>

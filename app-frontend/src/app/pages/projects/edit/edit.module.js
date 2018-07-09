@@ -126,10 +126,9 @@ class ProjectsEditController {
                 return this.projectService.getSceneOrder(this.projectId).then(
                     (res) => {
                         this.orderedSceneId = res.results;
-                        this.sceneList = _.uniqBy(this.orderedSceneId.map((id) => {
-                            // eslint-disable-next-line
-                            return _.find(allScenes, {id});
-                        }), 'id');
+                        this.sceneList = _(
+                          this.orderedSceneId.map((id) => _.find(allScenes, {id}))
+                        ).uniqBy('id').compact().value();
 
                         this.fetchDatasources().then(datasources => {
                             this.bands = this.datasourceService.getUnifiedBands(datasources);
@@ -200,7 +199,7 @@ class ProjectsEditController {
                 pending: true
             });
             this.pendingSceneRequest.then(pendingScenes => {
-                this.pendingSceneList = pendingScenes;
+                this.pendingSceneList = _(pendingScenes).uniqBy('id').compact().value();
             });
         }
         return this.pendingSceneRequest;

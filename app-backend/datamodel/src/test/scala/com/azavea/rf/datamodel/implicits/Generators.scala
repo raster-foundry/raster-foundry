@@ -63,6 +63,9 @@ object Generators extends ArbitraryInstances {
   private def visibilityGen: Gen[Visibility] = Gen.oneOf(
     Visibility.Public, Visibility.Organization, Visibility.Private)
 
+  private def userVisibilityGen: Gen[UserVisibility] = Gen.oneOf(
+    UserVisibility.Public, UserVisibility.Private)
+
   private def orgStatusGen: Gen[OrgStatus] = Gen.oneOf(
     OrgStatus.Requested, OrgStatus.Active, OrgStatus.Inactive)
 
@@ -146,6 +149,11 @@ object Generators extends ArbitraryInstances {
   private def projectedMultiPolygonGen3857: Gen[Projected[MultiPolygon]] =
     multiPolygonGen3857 map { Projected(_, 3857) }
 
+  private def annotationGroupCreateGen: Gen[AnnotationGroup.Create] = for {
+    name <- arbitrary[String]
+    defaultStyle <- Gen.const(Some(().asJson))
+  } yield { AnnotationGroup.Create(name, defaultStyle)}
+
   private def annotationCreateGen: Gen[Annotation.Create] = for {
     owner <- Gen.const(None)
     label <- nonEmptyStringGen
@@ -156,16 +164,8 @@ object Generators extends ArbitraryInstances {
     geometry <- projectedMultiPolygonGen3857 map { Some(_) }
   } yield {
     Annotation.Create(
-      owner, label, description, machineGenerated, confidence, quality, geometry
+      owner, label, description, machineGenerated, confidence, quality, geometry, None
     )
-  }
-
-  private def annotationGen: Gen[Annotation] = for {
-    user <- userGen
-    projectId <- uuidGen
-    annotationCreate <- annotationCreateGen
-  } yield {
-    annotationCreate.toAnnotation(projectId, user)
   }
 
   private def organizationCreateGen: Gen[Organization.Create] = for {
@@ -492,7 +492,7 @@ object Generators extends ArbitraryInstances {
       Gen.listOfN(10, arbitrary[Annotation.Create])
     }
 
-    implicit def arbAnnotation: Arbitrary[Annotation] = Arbitrary { annotationGen }
+    implicit def arbAnnotationGroupCreate: Arbitrary[AnnotationGroup.Create] = Arbitrary { annotationGroupCreateGen }
 
     implicit def arbOrganization: Arbitrary[Organization] = Arbitrary { organizationGen }
 
@@ -559,5 +559,7 @@ object Generators extends ArbitraryInstances {
     implicit def arbAccessControlRule : Arbitrary[AccessControlRule.Create] = Arbitrary {
       accessControlRuleCreateGen
     }
+
+    implicit def arbUserVisibility : Arbitrary[UserVisibility] = Arbitrary { userVisibilityGen }
   }
 }

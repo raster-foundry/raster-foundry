@@ -365,7 +365,9 @@ export default class SceneImportModalController {
     }
 
     finishUpload() {
-        this.upload.uploadStatus = 'UPLOADED';
+        this.upload.uploadStatus = this.importType === 'COG' ?
+            'COMPLETE' :
+            'UPLOADED';
         this.uploadService.update(this.upload).then(() => {
             this.allowInterruptions();
         });
@@ -524,12 +526,10 @@ export default class SceneImportModalController {
                     this.handleNext();
                     return this.sceneService.createCogScene({
                         metadata: this.sceneData,
-                        location: f,
+                        location: encodeURI(f),
                         projectId: _.get(this, 'resolve.project.id') || false
                     }, this.datasource);
-                })).then(() => {
-                    this.handleNext();
-                });
+                }));
             } else {
                 this.handleNext();
             }

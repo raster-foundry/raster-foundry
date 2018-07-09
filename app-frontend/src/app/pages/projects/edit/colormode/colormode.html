@@ -14,7 +14,7 @@
 </div>
 <div class="sidebar-overlay" ng-show="!$ctrl.corrections || $ctrl.isLoading">
   <div class="sidebar-loading">
-    <span class="icon-load animate-spin"></span>
+    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.isLoading}"></span>
   </div>
 </div>
 <div class="sidebar-scrollable">

@@ -11,7 +11,7 @@
           ng-click="$ctrl.toggleEdit()">
     <span class="icon-pencil"></span>
   </button>
-  <span ng-show="$ctrl.updating" class="icon-load animate-spin"></span>
+  <span ng-show="$ctrl.updating" class="icon-load animate-spin" ng-class="{'stop': !$ctrl.updating}"></span>
   <span class="navbar-detail-title" ng-attr-title="{{$ctrl.analysis.name}}">
     {{$ctrl.analysis.name}}
   </span>
@@ -35,6 +35,7 @@
 </span>
 <span ng-if="!$ctrl.analysis && !this.updating">
   <span class="navbar-detail-title">
-    <span class="icon-load animate-spin"></span> Loading Analysis...
+    <span class="icon-load animate-spin" ng-class="{'stop': $ctrl.analysis || this.updating}"></span>
+    Loading Analysis...
   </span>
 </span>

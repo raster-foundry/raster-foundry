@@ -469,7 +469,9 @@ export default (app) => {
             return this.user &&
                 this.user.isSuperuser ||
                 this.userRoles.find(r => {
-                    return r.groupRole === 'ADMIN' && ids.includes(r.groupId);
+                    return r.groupRole === 'ADMIN' &&
+                        ids.includes(r.groupId) &&
+                        r.membershipStatus === 'APPROVED';
                 });
         }
     }

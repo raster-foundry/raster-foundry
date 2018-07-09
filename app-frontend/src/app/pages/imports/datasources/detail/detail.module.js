@@ -24,6 +24,7 @@ class DatasourceDetailController {
         this.BUILDCONFIG = BUILDCONFIG;
         this.initLicenseSettings();
         this.loadDatasource();
+        this.bandsBuffer = [];
     }
 
     initLicenseSettings() {
@@ -215,7 +216,9 @@ class DatasourceDetailController {
             ...this.bandsBuffer,
             {
                 name: '',
-                number: ''
+                number: '',
+                wavelength: null,
+                invalidWavelength: true
             }
         ];
         this.changedBandsBuffer = true;
@@ -230,8 +233,28 @@ class DatasourceDetailController {
     }
 
     updateBandBuffer(index, band) {
+        if (band.wavelength === null || this.testWavelength(band.wavelength)) {
+            band.invalidWavelength = false;
+        } else {
+            band.invalidWavelength = true;
+        }
         this.bandsBuffer[index] = band;
         this.changedBandsBuffer = true;
+    }
+
+    testWavelength(wavelengthStr) {
+        let wavelengthRegex = /^ *\d+(,| )+( *)\d+ *$/;
+        return wavelengthRegex.test(wavelengthStr);
+    }
+
+    anyInvalidWavelengths() {
+        return this.bandsBuffer.length === 0 ?
+            false :
+            _.reduce(
+                this.bandsBuffer, (prior, band) => {
+                    return band.invalidWavelength || prior;
+                }, false
+            );
     }
 
     saveBufferedBands() {

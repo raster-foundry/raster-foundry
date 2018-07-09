@@ -58,6 +58,11 @@
       Try again <i icon="icon-refresh"></i>
     </button>
   </div>
+  <div class="list-group-item" ng-if="$ctrl.helperText !== null">
+    <strong class="color-warning">
+      {{ $ctrl.helperText }}
+    </strong>
+  </div>
 </div>
 <div class="list-group" ng-if="$ctrl.fetchingScenes">
   <div class="list-group-item">
@@ -69,7 +74,7 @@
   </div>
 </div>
 <div class="list-group"
-     ng-if="$ctrl.sceneList && $ctrl.sceneList.length === 0 && !$ctrl.fetchingScenes && !$ctrl.fetchError">
+     ng-if="$ctrl.sceneList && $ctrl.sceneList.length === 0 && !$ctrl.fetchingScenes && !$ctrl.fetchError && $ctrl.helperText === null">
   <div class="list-group-item">
     <strong class="color-dark">
       No scenes match this filter

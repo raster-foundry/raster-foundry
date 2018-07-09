@@ -51,6 +51,7 @@ export default angular.module('index.components', [
     require('./components/lab/classifyNode/classifyNode.module.js').name,
     require('./components/lab/nodeStatistics/nodeStatistics.module.js').name,
     require('./components/lab/labNode/labNode.module.js').name,
+    require('./components/lab/colormapModal/colormapModal.js').name,
     require('./components/map/nodeSelector/nodeSelector.module.js').name,
 
     // map components
@@ -99,6 +100,7 @@ export default angular.module('index.components', [
     require('./components/common/sortingHeader/sortingHeader.js').name,
     require('./components/common/dropdown/dropdown.module.js').name,
     require('./components/common/paginationCount/paginationCount.js').name,
+    require('./components/common/navbarSearch/navbarSearch.js').name,
 
 
     // Single components for new domains

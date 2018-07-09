@@ -48,7 +48,8 @@ case class Annotation(
   machineGenerated: Option[Boolean],
   confidence: Option[Float],
   quality: Option[AnnotationQuality],
-  geometry: Option[Projected[Geometry]]
+  geometry: Option[Projected[Geometry]],
+  annotationGroup: UUID
 ) extends GeoJSONSerializable[Annotation.GeoJSON] {
   def toGeoJSONFeature: Annotation.GeoJSON = {
     Annotation.GeoJSON(
@@ -65,7 +66,8 @@ case class Annotation(
         this.description,
         this.machineGenerated,
         this.confidence,
-        this.quality
+        this.quality,
+        this.annotationGroup
       ),
       "Feature"
     )
@@ -84,7 +86,8 @@ case class AnnotationProperties(
   description: Option[String],
   machineGenerated: Option[Boolean],
   confidence: Option[Float],
-  quality: Option[AnnotationQuality]
+  quality: Option[AnnotationQuality],
+  annotationGroup: UUID
 )
 
 @JsonCodec
@@ -94,7 +97,8 @@ case class AnnotationPropertiesCreate(
   description: Option[String],
   machineGenerated: Option[Boolean],
   confidence: Option[Float],
-  quality: Option[AnnotationQuality]
+  quality: Option[AnnotationQuality],
+  annotationGroup: Option[UUID]
 )
 
 
@@ -131,6 +135,9 @@ object Annotation {
       val quality = Option(sf.getProperty("quality")) flatMap {
         (p: Property) => decode[AnnotationQuality](p.getValue.toString).toOption
       }
+      val annotationGroup = Option(sf.getProperty("group")) flatMap {
+        (p: Property) => decode[UUID](p.getValue.toString).toOption
+      }
       Some(
         Create(
           Some("auth0|59318a9d2fbbca3e16bcfc92"),
@@ -139,7 +146,8 @@ object Annotation {
           machineGenerated,
           confidence,
           quality,
-          Some(projected)
+          Some(projected),
+          annotationGroup
         )
       )
     } else {
@@ -163,12 +171,16 @@ object Annotation {
         properties.modifiedAt,
         properties.modifiedBy,
         properties.owner,
-        properties.label,
+        properties.label.length match {
+          case 0 => "Unlabeled"
+          case _ => properties.label
+        },
         properties.description,
         properties.machineGenerated,
         properties.confidence,
         properties.quality,
-        geometry
+        geometry,
+        properties.annotationGroup
       )
     }
   }
@@ -181,10 +193,11 @@ object Annotation {
     machineGenerated: Option[Boolean],
     confidence: Option[Float],
     quality: Option[AnnotationQuality],
-    geometry: Option[Projected[Geometry]]
+    geometry: Option[Projected[Geometry]],
+    annotationGroup: Option[UUID]
   ) extends OwnerCheck {
 
-    def toAnnotation(projectId: UUID, user: User): Annotation = {
+    def toAnnotation(projectId: UUID, user: User, defaultAnnotationGroup: UUID): Annotation = {
       val now = new Timestamp((new java.util.Date()).getTime())
       val ownerId = checkOwner(user, this.owner)
       Annotation(
@@ -195,12 +208,16 @@ object Annotation {
         now, // modifiedAt
         user.id, // modifiedBy
         ownerId, // owner
-        label,
+        label.length match {
+          case 0 => "Unlabeled"
+          case _ => label
+        },
         description,
         machineGenerated,
         confidence,
         quality,
-        geometry
+        geometry,
+        annotationGroup.getOrElse(defaultAnnotationGroup)
       )
     }
   }
@@ -218,7 +235,8 @@ object Annotation {
         properties.machineGenerated,
         properties.confidence,
         properties.quality,
-        geometry
+        geometry,
+        properties.annotationGroup
       )
     }
   }
@@ -269,7 +287,10 @@ object AnnotationShapefileService extends LazyLogging {
 
         val data = Seq(
           ("id", annotation.id),
-          ("label", annotation.label),
+          ("label", annotation.label.length match {
+            case 0 => "Unlabeled"
+            case _ => annotation.label
+          }),
           ("desc", annotation.description.getOrElse("")),
           ("machinegen", annotation.machineGenerated.getOrElse(false)),
           ("confidence", annotation.confidence.getOrElse(0)),

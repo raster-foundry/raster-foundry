@@ -52,6 +52,9 @@
   <!-- Nav Right -->
   <div class="navbar-section secondary">
     <nav>
+      <rf-navbar-search class="form-group all-in-one" ng-if="!$ctrl.$state.includes('projects.edit')"
+                        ng-show="false">
+      </rf-navbar-search>
       <div
         class="video-mini-logo"
         ng-click="$ctrl.onMiniVideoClick()"

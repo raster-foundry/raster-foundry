@@ -168,12 +168,12 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
         sceneIds <- fetchProjectScenes(user, g, startTime, lastChecked, qp.toOption)
         _ <- logger.info(s"Found ${sceneIds.length} scenes").pure[ConnectionIO]
         _ <- updateProjectIO(user, projectId)
-        _ <- ProjectDao.addScenesToProject(sceneIds, projectId, user)
+        _ <- ProjectDao.addScenesToProject(sceneIds, projectId, user, false)
       } yield { projectId }
     }
 
     def updateProjectIO(user: User, projectId: UUID): ConnectionIO[Int] = for {
-      proj <- ProjectDao.unsafeGetProjectById(projectId, Some(user))
+      proj <- ProjectDao.unsafeGetProjectById(projectId)
       newProject = proj.copy(aoisLastChecked=Timestamp.from(Instant.now))
       affectedRows <- ProjectDao.updateProject(newProject, proj.id, user)
     } yield affectedRows

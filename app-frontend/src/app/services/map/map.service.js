@@ -527,9 +527,8 @@ class MapWrapper {
                 }
             }
         );
-        if (scene.tileFootprint && scene.thumbnails && scene.thumbnails.length) {
-            // get smallest thumbnail - it's a small map
 
+        if (scene.tileFootprint && scene.thumbnails && scene.thumbnails.length) {
             let boundsGeoJson = L.geoJSON();
             boundsGeoJson.addData(scene.tileFootprint);
             let imageBounds = boundsGeoJson.getBounds();

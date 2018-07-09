@@ -35,6 +35,12 @@ export default (app) => {
                     method: 'GET',
                     cache: false,
                     isArray: true
+                },
+                search: {
+                    url: `${BUILDCONFIG.API_HOST}/api/users/search`,
+                    method: 'GET',
+                    cache: false,
+                    isArray: true
                 }
             });
         }
@@ -51,15 +57,8 @@ export default (app) => {
             }, (err) => err);
         }
 
-        updatePlanetToken(token) {
-            return this.$q((resolve, reject) => {
-                this.authService.getCurrentUser().then((user) => {
-                    user.planetCredential = token;
-                    this.User.update(user).$promise.then(() => {
-                        resolve();
-                    }, (err) => reject(err));
-                }, (err) => reject(err));
-            });
+        updateOwnUser(user) {
+            return this.User.update(user).$promise;
         }
 
         getTeams() {
@@ -68,6 +67,10 @@ export default (app) => {
 
         getUserById(id) {
             return this.UserMetadata.get({userid: id}).$promise;
+        }
+
+        searchUsers(searchText) {
+            return this.User.search({search: searchText}).$promise;
         }
     }
 

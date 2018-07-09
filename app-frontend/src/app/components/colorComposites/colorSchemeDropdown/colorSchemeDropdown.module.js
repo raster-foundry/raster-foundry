@@ -29,10 +29,11 @@ class ColorSchemeDropdownController {
         this.bins = [0, ...[ ...Array(1 + MAX_BINS - MIN_BINS).keys()].map(b => b + MIN_BINS)];
 
         this.filterToValidSchemes = (value) => {
-            return this.state &&
-                value.type === this.state.schemeType.value &&
-                (this.state.blending.bins === 0 ||
-                 Object.keys(value).length >= this.state.blending.bins);
+            const schemeValue = _.get(this, 'state.schemeType.value');
+            const bins = _.get(this, 'state.blending.bins', 0);
+            return value.type === schemeValue &&
+                (bins === 0 ||
+                 Object.keys(value).length >= bins);
         };
     }
 
@@ -259,8 +260,9 @@ class ColorSchemeDropdownController {
     }
 
     isActiveSchemeType(schemeType) {
-        if (this.state) {
-            return this.state.schemeType.value === schemeType.value;
+        const schemeValue = _.get(this, 'state.schemeType.value');
+        if (schemeValue) {
+            return schemeValue === schemeType.value;
         }
         return false;
     }
