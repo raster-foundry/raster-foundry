@@ -161,19 +161,24 @@ class ProjectsSceneBrowserController {
         this.sceneList = [];
         this.getMap().then((mapWrapper) => {
             if (this.bboxCoords || this.queryParams && this.queryParams.bbox &&
-                (getZoom() >= 8 || repository.label !== 'Raster Foundry')) {
+                (mapWrapper.map.getZoom() >= 8 || repository.label !== 'Raster Foundry')) {
                 this.helperText = null;
                 this.fetchNextScenesForBbox = this.bboxFetchFactory(
                     this.bboxCoords || this.queryParams.bbox
                 );
                 this.fetchNextScenes();
             } else {
-                this.onViewChange(
-                    mapWrapper.map.getBounds(),
-                    mapWrapper.map.getCenter(),
-                    mapWrapper.map.getZoom()
-                );
-            };
+                if (mapWrapper.map.getZoom() >= 8 || repository.label !== 'Raster Foundry') {
+                    this.helperText = null;
+                    this.onViewChange(
+                        mapWrapper.map.getBounds(),
+                        mapWrapper.map.getCenter(),
+                        mapWrapper.map.getZoom()
+                    );
+                } else {
+                    this.helperText = this.zoomHelpText;
+                }
+            }
         });
     }
 
