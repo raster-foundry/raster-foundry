@@ -54,13 +54,21 @@ object PlatformDao extends Dao[Platform] {
       id IN (
         SELECT group_id
         FROM user_group_roles
-        WHERE group_type = 'TEAM' AND user_id = ${user.id})
+        WHERE
+          group_type = 'TEAM' AND
+          user_id = ${user.id} AND
+          is_active = true
+        )
     """
     val organizationsF: Fragment = fr"""
       organization_id IN (
         SELECT group_id
         FROM user_group_roles
-        WHERE group_type = 'ORGANIZATION' AND user_id = ${user.id})
+        WHERE
+          group_type = 'ORGANIZATION' AND
+          user_id = ${user.id} AND
+          is_active = true
+        )
     """
     TeamDao.query
       .filter(teamsF ++ fr"OR" ++ organizationsF)
