@@ -11,6 +11,8 @@ from .utils import convert_to_cog
 from rf.utils.io import Visibility, IngestStatus, upload_tifs
 from rf.uploads.landsat8.io import get_tempdir
 
+import urllib
+
 logger = logging.getLogger(__name__)
 
 
@@ -64,7 +66,9 @@ class GeoTiffS3SceneFactory(object):
                 cog_path = convert_to_cog(tempdir, filename)
                 scene = self.create_geotiff_scene(tmp_fname, os.path.splitext(filename)[0])
                 scene.ingestLocation = upload_tifs([cog_path], self.owner, scene.id)[0]
-                images = [self.create_geotiff_image(tmp_fname, infile, scene, cog_path)]
+                images = [self.create_geotiff_image(
+                    tmp_fname, urllib.unquote(scene.ingestLocation), scene, cog_path
+                )]
 
             scene.thumbnails = []
             scene.images = images

@@ -41,7 +41,8 @@ object PlatformDao extends Dao[Platform] {
     query.page(page)
 
   def listMembers(platformId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
-    UserGroupRoleDao.listUsersByGroup(GroupType.Platform, platformId, page, searchParams, actingUser) map {
+    UserGroupRoleDao.listUsersByGroup(GroupType.Platform, platformId, page, searchParams, actingUser,
+                                      Some(fr"ORDER BY ugr.membership_status, ugr.group_role")) map {
       (usersPage: PaginatedResponse[User.WithGroupRole]) => {
          usersPage.copy(results = usersPage.results map { _.copy(email = "" ) })
       }

@@ -29,6 +29,23 @@ export default (app) => {
                         url: `${BUILDCONFIG.API_HOST}/api/datasources/:id`,
                         params: {
                             id: '@id'
+                        },
+                        transformRequest: (payload) => {
+                            let transformed = Object.assign(
+                                {}, payload, {
+                                    bands: _.map(
+                                        payload.bands,
+                                        (band) => {
+                                            let bookends = band.wavelength.trim().split(',');
+                                            band.wavelength = _.map(
+                                                bookends, (x) => Number.parseInt(x, 10)
+                                            );
+                                            return band;
+                                        }
+                                    )
+                                }
+                            );
+                            return angular.toJson(transformed);
                         }
                     }
                 }

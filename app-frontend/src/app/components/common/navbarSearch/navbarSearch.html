@@ -1,0 +1,33 @@
+<select class="form-control"
+        title="Search Users and Organizations"
+        ng-init="$ctrl.searchType = 'Organizations'"
+        ng-model="$ctrl.searchType"
+        ng-change="$ctrl.clearSearch()"
+>
+  <option value="Organizations" title="Organizations">Orgs</option>
+  <option value="Users" title="Users">Users</option>
+</select>
+<input type="text" class="form-control"
+       ng-model="$ctrl.searchText"
+       ng-attr-placeholder="Search {{$ctrl.searchType}}..."
+       ng-model-options="{ updateOn: 'default', debounce: 200}"
+>
+<button class="btn-link"
+        ng-click="$ctrl.clearSearch()">
+  <span class="icon-cross"></span>
+</button>
+<div class="navbar-search-results" ng-show="$ctrl.searchResults && $ctrl.searchResults.length || $ctrl.loading">
+  <a ui-sref="{{result.state}}" class="navbar-search-result" ng-repeat="result in $ctrl.searchResults track by $index" ng-click="$ctrl.clearSearch()">
+    <img class="avatar"
+         ng-attr-title="{{result.name}}"
+         ng-if="result.avatar && result.avatar.length"
+         ng-src="{{result.avatar}}">
+    <div class="avatar user-avatar image-placeholder" ng-if="!result.avatar || !result.avatar.length"></div>
+    <div class="result-text" ng-attr-title="{{result.name}}">{{result.name}}</div>
+  </a>
+  <div class="navbar-search-result" ng-show="$ctrl.loading">
+    <div class="result-placeholder">
+      <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.loading}"></span>
+    </div>
+  </div>
+</div>

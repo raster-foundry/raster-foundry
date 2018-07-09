@@ -29,6 +29,7 @@ lazy val commonSettings = Seq(
   externalResolvers := Seq(
     "Geotoolkit Repo" at "http://maven.geotoolkit.org",
     "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
+    "boundless" at "https://repo.boundlessgeo.com/main/",
     "imageio-ext Repository" at "http://maven.geo-solutions.it",
     DefaultMavenRepository,
     Resolver.sonatypeRepo("snapshots"),

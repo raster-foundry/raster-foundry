@@ -129,13 +129,12 @@ export default (app) => {
                             projectId: '@projectId'
                         }
                     },
-                    approveScene: {
+                    approveScenes: {
                         method: 'POST',
                         url: `${BUILDCONFIG.API_HOST}` +
-                            '/api/projects/:projectId/scenes/:sceneId/accept',
+                            '/api/projects/:projectId/scenes/accept',
                         params: {
-                            projectId: '@projectId',
-                            sceneId: '@sceneId'
+                            projectId: '@projectId'
                         }
                     },
                     sceneOrder: {
@@ -423,8 +422,11 @@ export default (app) => {
             });
         }
 
-        approveScene(projectId, sceneId) {
-            return this.Project.approveScene({ projectId, sceneId }).$promise;
+        approveScenes(projectId, sceneIds) {
+            return this.Project.approveScenes(
+                {projectId},
+                sceneIds
+            ).$promise;
         }
 
         getProjectLayerURL(project, params) {

@@ -174,7 +174,8 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
                 // this.get is safe because the arbitrary instance only produces NELs
                 (dbScenes map {_.id}).toNel.get,
                 dbProject.id,
-                dbUser
+                dbUser,
+                true
               )
             }
           }
@@ -253,7 +254,7 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
               val sceneIds = dbScenes map {_.id}
               ProjectDao.addScenesToProject(
                 // this.get is safe because the arbitrary instance only produces NELs
-                (dbScenes map {_.id}).toNel.get, dbProject.id, dbUser) flatMap {
+                (dbScenes map {_.id}).toNel.get, dbProject.id, dbUser, true) flatMap {
                 _ => ProjectDao.deleteScenesFromProject(dbScenes map {_.id}, dbProject.id) map {
                   _ => (dbProject, dbUser)
                 }
@@ -275,4 +276,3 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
     }
   }
 }
-

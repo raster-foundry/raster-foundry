@@ -113,6 +113,27 @@ object MosaicRoutes extends LazyLogging with KamonTrace {
       }
     }
 
+  def mosaicScene(sceneId: UUID)(implicit xa: Transactor[IO]): Route =
+    pathPrefix (IntNumber / IntNumber / IntNumber ) { (zoom, x, y) =>
+      get {
+        complete {
+          val future =
+            timedFuture("tile-zxy") (
+              Mosaic(sceneId, zoom, x, y, true)
+                .map(_.renderPng)
+                .getOrElse(emptyTilePng)
+                .map(pngAsHttpResponse)
+            )
+          future onComplete {
+            case Success(s) => s
+            case Failure(e) =>
+              logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+          }
+          future
+        }
+      }
+    }
+
   /** Return the histogram (with color correction applied) for a list of scenes in a project */
   def getProjectScenesHistogram(projectId: UUID)(implicit xa: Transactor[IO]): Route = {
     def correctedHistograms(sceneId: UUID, projectId: UUID): OptionT[Future, Vector[Histogram[Int]]] = {

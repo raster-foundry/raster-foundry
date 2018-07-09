@@ -44,14 +44,6 @@ export default (app) => {
                 fileAdapter(scene) {
                     return [scene.name];
                 }
-            }, {
-                name: 'Landsat Tri-Decadal MSS',
-                uuid: '7b205ec9-6cce-444d-998a-f34d379258b2',
-                uploadType: 'LANDSAT_HISTORICAL',
-                id: 'MSS',
-                fileAdapter(scene) {
-                    return [scene.name];
-                }
             }];
         }
 
@@ -91,9 +83,13 @@ export default (app) => {
         }
 
         getThumbnail(scene) {
-            return this.$q(resolve => {
+            return this.$q((resolve, reject) => {
                 const thumbnails = this.getThumbnails(scene);
-                resolve(thumbnails.length ? thumbnails[0].href : false);
+                if (thumbnails.length) {
+                    resolve(thumbnails[0].href);
+                } else {
+                    reject();
+                }
             });
         }
 

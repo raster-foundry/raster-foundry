@@ -79,6 +79,12 @@ export default (app) => {
                             return angular.toJson(data);
                         /* eslint-enable */
                         }
+                    },
+                    search: {
+                        url: `${BUILDCONFIG.API_HOST}/api/organizations/search`,
+                        method: 'GET',
+                        cache: false,
+                        isArray: true
                     }
                 }
             );
@@ -157,6 +163,10 @@ export default (app) => {
         removeUser(platformId, organizationId, userId) {
             return this.PlatformOrganization
                 .deactivateUser({platformId, organizationId, userId}).$promise;
+        }
+
+        searchOrganizations(searchText) {
+            return this.Organization.search({search: searchText}).$promise;
         }
     }
 
