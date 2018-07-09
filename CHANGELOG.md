@@ -1,5 +1,30 @@
 # Change Log
 
+## [1.4.0](https://github.com/raster-foundry/raster-foundry/tree/1.4.0) (2018-07-09)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.3.0...1.4.0)
+
+**Merged pull requests:**
+
+- Simplify and fix conditional logic in onRepositoryChange [\#3655](https://github.com/raster-foundry/raster-foundry/pull/3655)
+- Fix scene download permission bug [\#3653](https://github.com/raster-foundry/raster-foundry/pull/3653)
+- Support COG tile in scene detail view. [\#3649](https://github.com/raster-foundry/raster-foundry/pull/3649)
+- Enable Single Band Visualization for COGs [\#3647](https://github.com/raster-foundry/raster-foundry/pull/3647)
+- Only search for scenes if zoom level \>= 8 when in RF repository [\#3646](https://github.com/raster-foundry/raster-foundry/pull/3646)
+- Add COG scene browse support for thumbnail and tiles [\#3640](https://github.com/raster-foundry/raster-foundry/pull/3640)
+- Allow updating wavelength from datasource detail view [\#3639](https://github.com/raster-foundry/raster-foundry/pull/3639)
+- Remove Tri-Decadal MSS from NASA CMR search options [\#3638](https://github.com/raster-foundry/raster-foundry/pull/3638)
+- Search for users and organizations in the navbar [\#3635](https://github.com/raster-foundry/raster-foundry/pull/3635)
+- Add some enhancements on admin and user frontend [\#3633](https://github.com/raster-foundry/raster-foundry/pull/3633)
+- Polish local COG upload processing [\#3631](https://github.com/raster-foundry/raster-foundry/pull/3631)
+- Add default sort to platform member list [\#3630](https://github.com/raster-foundry/raster-foundry/pull/3630)
+- Fix AOI update and approval bug [\#3628](https://github.com/raster-foundry/raster-foundry/pull/3628)
+- Allow separating annotations into groups [\#3627](https://github.com/raster-foundry/raster-foundry/pull/3627)
+- Generate thumbnails from COG scenes [\#3626](https://github.com/raster-foundry/raster-foundry/pull/3626)
+- Fix add planet token bug [\#3624](https://github.com/raster-foundry/raster-foundry/pull/3624)
+- Fix empty exported annotation shapefile bug [\#3619](https://github.com/raster-foundry/raster-foundry/pull/3619)
+- Add and use color map modal [\#3613](https://github.com/raster-foundry/raster-foundry/pull/3613)
+
 ## [1.3.0](https://github.com/raster-foundry/raster-foundry/tree/1.3.0) (2018-06-29)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.2.1...1.3.0)
@@ -64,16 +89,23 @@
 
 ## [1.1.0](https://github.com/raster-foundry/raster-foundry/tree/1.1.0) (2018-06-18)
 
-[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.0.2...1.1.0)
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.0.3...1.1.0)
 
 **Merged pull requests:**
 
 - Use rasterio warp module to warp modis tifs [\#3548](https://github.com/raster-foundry/raster-foundry/pull/3548)
 - Improve Scene Query Performance [\#3547](https://github.com/raster-foundry/raster-foundry/pull/3547)
-- Restrict Projects to Owners for Frontend [\#3542](https://github.com/raster-foundry/raster-foundry/pull/3542)
 - Add support for lat long coordinates in map search [\#3541](https://github.com/raster-foundry/raster-foundry/pull/3541)
 - Add frontend support for Landsat 4, 5, and 7 [\#3540](https://github.com/raster-foundry/raster-foundry/pull/3540)
 - Add processing for Landsat 4, 5, and 7 scenes [\#3529](https://github.com/raster-foundry/raster-foundry/pull/3529)
+
+## [1.0.3](https://github.com/raster-foundry/raster-foundry/tree/1.0.3) (2018-06-14)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.0.2...1.0.3)
+
+**Merged pull requests:**
+
+- Restrict Projects to Owners for Frontend [\#3542](https://github.com/raster-foundry/raster-foundry/pull/3542)
 - Signed requests should never send a HEAD request [\#3516](https://github.com/raster-foundry/raster-foundry/pull/3516)
 - Allow organization admins to add and modify roles for that organization [\#3511](https://github.com/raster-foundry/raster-foundry/pull/3511)
 - Platform email notification settings frontend [\#3501](https://github.com/raster-foundry/raster-foundry/pull/3501)
