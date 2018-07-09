@@ -12,6 +12,7 @@ import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import java.util.UUID
 
+import cats.data.OptionT
 import cats.effect.IO
 
 import doobie.util.transactor.Transactor
@@ -49,22 +50,15 @@ trait TeamRoutes extends Authentication
   def getTeam(teamId: UUID): Route = authenticate { user =>
     authorizeAsync {
       val authIO = for {
-        teamO <- TeamDao.getTeamById(teamId)
-        organizationO <- teamO match {
-          case Some(team) => OrganizationDao.getOrganizationById(team.organizationId)
-          case _ => None.pure[ConnectionIO]
-        }
-        platformAdmin <- organizationO match {
-          case Some(org) => PlatformDao.userIsAdmin(user, org.platformId)
-          case _ => false.pure[ConnectionIO]
-        }
-        organizationMember <- organizationO match {
-          case Some(org) => OrganizationDao.userIsMember(user, org.id)
-          case _ => false.pure[ConnectionIO]
-        }
-        teamMember <- TeamDao.userIsMember(user, teamId)
+        teamMember <- OptionT.liftF[ConnectionIO, Boolean](TeamDao.userIsMember(user, teamId))
+        team <- OptionT[ConnectionIO, Team](TeamDao.getTeamById(teamId))
+        organization <- OptionT[ConnectionIO, Organization](
+          OrganizationDao.getOrganizationById(team.organizationId)
+        )
+        platformAdmin <- OptionT.liftF[ConnectionIO, Boolean](PlatformDao.userIsAdmin(user, organization.platformId))
+        organizationMember <- OptionT.liftF[ConnectionIO, Boolean](OrganizationDao.userIsMember(user, organization.id))
       } yield { teamMember || organizationMember || platformAdmin }
-      authIO.transact(xa).unsafeToFuture
+      authIO.value.map( _.getOrElse(false) ).transact(xa).unsafeToFuture
     } {
       rejectEmptyResponse {
         complete {
