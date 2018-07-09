@@ -85,6 +85,22 @@ trait PlatformRoutes extends Authentication
           }
         }
       } ~
+      pathPrefix("teams") {
+        validate (
+          PlatformDao.validatePath(platformId).transact(xa).unsafeRunSync,
+          "Resource path invalid"
+        ) {
+          pathPrefix("search") {
+            pathEndOrSingleSlash {
+              get {
+                traceName("platforms-teams-search") {
+                  listPlatformUserTeams(platformId)
+                }
+              }
+            }
+          }
+        }
+      } ~
       pathPrefix("organizations") {
         pathEndOrSingleSlash {
           validate (
@@ -294,6 +310,23 @@ trait PlatformRoutes extends Authentication
       (withPagination & searchParams) { (page, searchParams) =>
         complete {
           PlatformDao.listMembers(platformId, page, searchParams, user).transact(xa).unsafeToFuture
+        }
+      }
+    }
+  }
+
+  // List teams:
+  // - the operating user belongs to
+  // - the operating user can see due to organization membership
+  // - limited to first 5 ordered by team name
+  // - filtered by `search=<team name>` if specified
+  def listPlatformUserTeams(platformId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
+    } {
+      (searchParams) { (searchParams) =>
+        complete {
+          PlatformDao.listPlatformUserTeams(user, searchParams).transact(xa).unsafeToFuture
         }
       }
     }

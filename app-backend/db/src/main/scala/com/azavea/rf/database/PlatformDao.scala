@@ -2,6 +2,7 @@ package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.database.filter.Filters._
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
@@ -47,6 +48,26 @@ object PlatformDao extends Dao[Platform] {
          usersPage.copy(results = usersPage.results map { _.copy(email = "" ) })
       }
     }
+
+  def listPlatformUserTeams(user: User, searchParams: SearchQueryParameters): ConnectionIO[List[Team]] = {
+    val teamsF: Fragment = fr"""
+      id IN (
+        SELECT group_id
+        FROM user_group_roles
+        WHERE group_type = 'TEAM' AND user_id = ${user.id})
+    """
+    val organizationsF: Fragment = fr"""
+      organization_id IN (
+        SELECT group_id
+        FROM user_group_roles
+        WHERE group_type = 'ORGANIZATION' AND user_id = ${user.id})
+    """
+    TeamDao.query
+      .filter(teamsF ++ fr"OR" ++ organizationsF)
+      .filter(searchQP(searchParams, List("name")))
+      .filter(fr"is_active = true")
+      .list(0, 5, fr"order by name")
+  }
 
   def create(platform: Platform): ConnectionIO[Platform] = {
     createF(platform).update.withUniqueGeneratedKeys[Platform](
