@@ -179,8 +179,8 @@ object Dao {
 
     // Filter to validate access to a specific object
     def authorize[M >: Model](user: User, objectType: ObjectType, objectId: UUID, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
-      val scenePublicF: Fragment = objectType match {
-        case ObjectType.Scene =>
+      val scenePublicF: Fragment = (objectType, actionType) match {
+        case (ObjectType.Scene, ActionType.View) | (ObjectType.Scene, ActionType.Download) =>
           fr"""
           -- Match if scene is Public
           visibility = 'PUBLIC' OR"""
