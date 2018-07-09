@@ -23,20 +23,4 @@
   <div class="table-loading" ng-if="$ctrl.fetching">
     <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
   </div>
-
-  <!-- Pagination -->
-  <div class="list-group text-center"
-       ng-show="!$ctrl.loading && $ctrl.lastOrgResult && $ctrl.pagination.show && !$ctrl.errorMsg">
-    <ul uib-pagination
-        items-per-page="$ctrl.lastOrgResult.pageSize"
-        total-items="$ctrl.pagination.count"
-        ng-model="$ctrl.currentPage"
-        max-size="4"
-        rotate="true"
-        boundary-link-numbers="true"
-        force-ellipses="true"
-        ng-change="$ctrl.fetchOrganizations($ctrl.currentPage, $ctrl.search)">
-    </ul>
-  </div>
-  <!-- Pagination -->
 </div>

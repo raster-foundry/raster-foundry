@@ -12,11 +12,10 @@ class PlatformProjectsController {
     }
 
     $onInit() {
-        this.pagination = {};
         this.loading = false;
         this.searchTerm = '';
-        this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
         this.onSearch = this.paginationService.buildPagedSearch(this);
+        this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
 
         this.fetchPage();
     }
@@ -26,7 +25,7 @@ class PlatformProjectsController {
         this.projectService.query(
             {
                 sort: 'createdAt,desc',
-                pageSize: 1,
+                pageSize: 10,
                 ownershipType: 'inherited',
                 groupType: 'platform',
                 groupId: this.platform.id,

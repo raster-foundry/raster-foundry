@@ -58,7 +58,7 @@ export default (app) => {
 
         getMembers(platformId, page, search) {
             return this.Platform
-                .members({id: platformId, page, search, pageSize: 2})
+                .members({id: platformId, page, search, pageSize: 10})
                 .$promise;
         }
 

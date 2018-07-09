@@ -118,7 +118,7 @@ export default (app) => {
             }
 
             return this.PlatformOrganization
-                .members({platformId, organizationId, page, search, pageSize: 2})
+                .members({platformId, organizationId, page, search, pageSize: 10})
                 .$promise;
         }
 
@@ -129,7 +129,7 @@ export default (app) => {
             }
 
             return this.PlatformOrganization
-                .teams({platformId, organizationId, page, search, pageSize: 2})
+                .teams({platformId, organizationId, page, search, pageSize: 10})
                 .$promise;
         }
 

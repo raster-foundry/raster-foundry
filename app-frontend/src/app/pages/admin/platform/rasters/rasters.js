@@ -42,7 +42,7 @@ class Controller {
         this.sceneService.query(
             {
                 sort: 'createdAt,desc',
-                pageSize: 1,
+                pageSize: 10,
                 ownershipType: 'inherited',
                 groupType: 'platform',
                 groupId: this.platform.id,

@@ -29,7 +29,7 @@ class OrganizationProjectsController {
         this.projectService.query(
             {
                 sort: 'createdAt,desc',
-                pageSize: 1,
+                pageSize: 10,
                 ownershipType: 'inherited',
                 groupType: 'organization',
                 groupId: this.organization.id,
