@@ -52,7 +52,7 @@ trait OrganizationRoutes extends Authentication
   def getOrganization(orgId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        OrganizationDao.query.filter(orgId).selectOption.transact(xa).unsafeToFuture()
+        OrganizationDao.viewFilter(user).filter(orgId).selectOption.transact(xa).unsafeToFuture()
       }
     }
   }
