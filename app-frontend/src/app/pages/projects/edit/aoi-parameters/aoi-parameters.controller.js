@@ -40,7 +40,7 @@ const addMethods = [
 ];
 */
 
-const startTimeTooltip = 'Start time may not be changed once a monitoring has started.'
+const startTimeTooltip = 'Start time may not be changed once a monitoring has started.';
 
 export default class AOIParametersController {
     constructor(

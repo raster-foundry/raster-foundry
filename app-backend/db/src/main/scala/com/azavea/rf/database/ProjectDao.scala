@@ -14,7 +14,6 @@ import com.lonelyplanet.akka.http.extensions.PageRequest
 import scala.concurrent.Future
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.color._
 import com.lonelyplanet.akka.http.extensions._
 import com.typesafe.scalalogging.LazyLogging

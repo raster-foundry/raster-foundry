@@ -83,9 +83,13 @@ export default (app) => {
         }
 
         getThumbnail(scene) {
-            return this.$q(resolve => {
+            return this.$q((resolve, reject) => {
                 const thumbnails = this.getThumbnails(scene);
-                resolve(thumbnails.length ? thumbnails[0].href : false);
+                if (thumbnails.length) {
+                    resolve(thumbnails[0].href);
+                } else {
+                    reject();
+                }
             });
         }
 

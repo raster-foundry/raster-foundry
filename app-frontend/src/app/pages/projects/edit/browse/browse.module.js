@@ -223,15 +223,31 @@ class ProjectsSceneBrowserController {
         if (scene !== this.hoveredScene) {
             this.hoveredScene = scene;
             this.getMap().then((map) => {
-                map.setThumbnail(scene, this.currentRepository);
+                if (scene.sceneType !== 'COG') {
+                    map.setThumbnail(scene, this.currentRepository);
+                } else {
+                    map.setLayer(
+                      'Hovered Scene',
+                      L.tileLayer(
+                        this.sceneService.getSceneLayerURL(
+                            scene,
+                            {token: this.authService.token()}
+                        ),
+                        {maxZoom: 30})
+                    );
+                }
             });
         }
     }
 
     removeHoveredScene() {
         this.getMap().then((map) => {
+            if (this.hoveredScene.sceneType === 'COG') {
+                map.deleteLayers('Hovered Scene');
+            } else {
+                map.deleteThumbnail();
+            }
             delete this.hoveredScene;
-            map.deleteThumbnail();
         });
     }
 
