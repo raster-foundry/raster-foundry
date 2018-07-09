@@ -311,28 +311,28 @@ function settingsStates($stateProvider) {
         })
         .state('user.organizations', {
             title: 'Organizations',
-            url: '/organizations',
+            url: '/organizations?:page',
             templateUrl: userOrganizationsTpl,
             controller: 'UserOrganizationsController',
             controllerAs: '$ctrl'
         })
         .state('user.teams', {
             title: 'Teams',
-            url: '/teams',
+            url: '/teams?:page',
             templateUrl: userTeamsTpl,
             controller: 'UserTeamsController',
             controllerAs: '$ctrl'
         })
         .state('user.projects', {
             title: 'Projects',
-            url: '/projects',
+            url: '/projects?:page',
             templateUrl: userProjectsTpl,
             controller: 'UserProjectsController',
             controllerAs: '$ctrl'
         })
         .state('user.rasters', {
             title: 'Rasters',
-            url: '/rasters',
+            url: '/rasters?:page',
             templateUrl: userRastersTpl,
             controller: 'UserRastersController',
             controllerAs: '$ctrl'
