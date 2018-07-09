@@ -38,13 +38,27 @@ class SceneDetailModalController {
 
     $postLink() {
         this.getMap().then(mapWrapper => {
-            mapWrapper.setThumbnail(
-                this.scene,
-                this.repository,
-                {
-                    persist: true
-                }
-            );
+            if (this.scene.sceneType === 'COG') {
+                mapWrapper.setLayer(
+                  'Browse Scene',
+                  L.tileLayer(
+                    this.sceneService.getSceneLayerURL(
+                        this.scene,
+                        {token: this.authService.token()}
+                    ),
+                    {maxZoom: 30}
+                  ),
+                  true
+                );
+            } else {
+                mapWrapper.setThumbnail(
+                    this.scene,
+                    this.repository,
+                    {
+                        persist: true
+                    }
+                );
+            }
             mapWrapper.map.fitBounds(this.getSceneBounds());
         });
         this.repository.service.getDatasource(this.scene).then(d => {
