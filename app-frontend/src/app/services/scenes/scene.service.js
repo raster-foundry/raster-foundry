@@ -157,16 +157,25 @@ export default (app) => {
             return this.Scene.datasource({id: id}).$promise;
         }
 
-        cogThumbnail(sceneId, token, width = 128, height = 128) {
+        cogThumbnail(sceneId, token, width = 128, height = 128,
+                     red = 0, green = 1, blue = 2, floor = 25) {
             return this.$http({
-                'method': 'GET',
-                'url': `${BUILDCONFIG.API_HOST}/api/scenes/${sceneId}/thumbnail?` +
-                    `token=${token}&width=${width}&height=${height}`,
-                'headers': {
+                method: 'GET',
+                url: `${BUILDCONFIG.API_HOST}/api/scenes/${sceneId}/thumbnail`,
+                headers: {
                     'Authorization': 'Bearer ' + token,
                     'Content-Type': 'arraybuffer'
                 },
-                'responseType': 'arraybuffer'
+                responseType: 'arraybuffer',
+                params: {
+                    red,
+                    green,
+                    blue,
+                    floor,
+                    width,
+                    height,
+                    token
+                }
             }).then(
                 (response) => {
                     let arr = new Uint8Array(response.data);
