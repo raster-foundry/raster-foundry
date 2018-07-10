@@ -55,7 +55,7 @@
             <p>
               Hello, <strong>{{$ctrl.authService.getProfile().nickname}}</strong>
             </p>
-            <a class="btn btn-light" ui-sref="settings.profile">Manage account</a>
+            <a class="btn btn-light" ui-sref="user.settings.profile">Manage account</a>
           </section>
           <section ng-if="$ctrl.blogPosts && $ctrl.blogPosts.length">
             <h5>From our blog</h5>
