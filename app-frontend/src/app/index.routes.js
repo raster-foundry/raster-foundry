@@ -628,8 +628,7 @@ function adminStates($stateProvider) {
             },
             templateUrl: organizationSettingsTpl,
             controller: 'OrganizationSettingsController',
-            controllerAs: '$ctrl',
-            redirectTo: 'admin.organizations.settings.email'
+            controllerAs: '$ctrl'
         })
         .state('admin.platform', {
             title: 'Platform',
