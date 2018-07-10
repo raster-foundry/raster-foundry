@@ -428,7 +428,8 @@ function shareStates($stateProvider) {
             url: '/share/:projectid',
             templateUrl: shareTpl,
             controller: 'ShareController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            bypassAuth: true
         });
 }
 
@@ -439,7 +440,8 @@ function loginStates($stateProvider) {
             url: '/login',
             templateUrl: loginTpl,
             controller: 'LoginController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            bypassAuth: true
         });
 }
 
