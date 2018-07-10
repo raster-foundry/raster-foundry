@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import angular from 'angular';
 import sceneTpl from './sceneItem.html';
 
@@ -58,9 +59,21 @@ class SceneItemController {
         if (changes.repository && changes.repository.currentValue) {
             this.repository = changes.repository.currentValue;
             if (this.scene.sceneType === 'COG') {
+                let redBand = _.findIndex(
+                    this.datasource.bands, (x) => x.name.toLowerCase() === 'red');
+                let greenBand = _.findIndex(
+                    this.datasource.bands, (x) => x.name.toLowerCase() === 'green');
+                let blueBand = _.findIndex(
+                    this.datasource.bands, (x) => x.name.toLowerCase() === 'blue');
+                let atLeastThreeBands = this.datasource.bands.length >= 3;
                 this.sceneService.cogThumbnail(
                     this.scene.id,
-                    this.authService.token()
+                    this.authService.token(),
+                    128,
+                    128,
+                    Math.max(redBand, atLeastThreeBands ? 0 : 0),
+                    Math.max(greenBand, atLeastThreeBands ? 1 : 0),
+                    Math.max(blueBand, atLeastThreeBands ? 2 : 0)
                 ).then(res => {
                     this.thumbnail = `data:image/png;base64,${res}`;
                 });
