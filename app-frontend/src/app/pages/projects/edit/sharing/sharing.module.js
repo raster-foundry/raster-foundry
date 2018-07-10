@@ -139,6 +139,7 @@ class SharingController {
             this.activePolicy = policy;
             this.activePolicy.active = true;
             this.project.tileVisibility = this.activePolicy.enum;
+            this.project.visibility = this.activePolicy.enum;
 
             if (shouldUpdate) {
                 this.projectService.updateProject(this.project).then((res) => {

@@ -11,11 +11,6 @@
 
   <div class="navbar-section secondary">
     <nav>
-      <div ng-if="!$ctrl.authService.isLoggedIn || $ctrl.testNoAuth">
-        <button class="btn btn-primary">
-          Sign Up or Sign In
-        </button>
-      </div>
       <div ng-if="$ctrl.authService.isLoggedIn && !$ctrl.testNoAuth" uib-dropdown class="dropdown-my-account" on-toggle="toggled($ctrl.optionsOpen)">
         <a href uib-dropdown-toggle>
           <img ng-if="$ctrl.authService.getProfile().picture" class="avatar" ng-src="{{$ctrl.authService.getProfile().picture}}">

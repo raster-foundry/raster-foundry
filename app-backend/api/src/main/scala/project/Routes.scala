@@ -370,15 +370,26 @@ trait ProjectRoutes extends Authentication
     }
   }
 
-  def getProject(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
-    } {
+  def getProject(projectId: UUID): Route = {
+    val isPublic = ProjectDao.isProjectPublic(projectId).transact(xa).unsafeRunSync
+    if (isPublic) {
       rejectEmptyResponse {
         complete {
           ProjectDao.query.filter(projectId).selectOption.transact(xa).unsafeToFuture
+        }
+      }
+    } else {
+      authenticate { user =>
+        authorizeAsync {
+          ProjectDao.query
+            .authorized(user, ObjectType.Project, projectId, ActionType.View)
+            .transact(xa).unsafeToFuture
+        } {
+          rejectEmptyResponse {
+            complete {
+              ProjectDao.query.filter(projectId).selectOption.transact(xa).unsafeToFuture
+            }
+          }
         }
       }
     }
