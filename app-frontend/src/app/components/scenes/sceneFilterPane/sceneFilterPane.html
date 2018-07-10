@@ -20,14 +20,14 @@
         <label>Repository</label>
         <div class="btn-group" uib-dropdown keyboard-nav ng-show="!$ctrl.settingRepository">
           <button type="button" class="btn btn-default browse-source-drop-down" uib-dropdown-toggle>
-            {{$ctrl.currentRepository.label}}
+            {{$ctrl.currentRepository.overrideLabel || $ctrl.currentRepository.label}}
             <i class="icon-caret-down"></i>
           </button>
           <ul class="dropdown-menu" uib-dropdown-menu role="menu">
             <li role="menuitem"
                 ng-repeat="repository in $ctrl.repositories"
                 ng-click="$ctrl.setRepository(repository)">
-              <a>{{repository.label}}</a>
+              <a>{{repository.overrideLabel || repository.label}}</a>
             </li>
           </ul>
         </div>
