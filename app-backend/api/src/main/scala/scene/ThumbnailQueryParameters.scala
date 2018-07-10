@@ -9,5 +9,9 @@ trait ThumbnailQueryParameterDirective {
   val thumbnailQueryParameters = parameters(
     ('width.as[Int].?,
      'height.as[Int].?,
-     'token.as[String])).as(SceneThumbnailQueryParameters.apply _)
+     'token.as[String],
+     'red.as[Int].?,
+     'green.as[Int].?,
+     'blue.as[Int].?,
+     'floor.as[Int].?)).as(SceneThumbnailQueryParameters.apply _)
 }

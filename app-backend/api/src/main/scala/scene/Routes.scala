@@ -342,7 +342,9 @@ trait SceneRoutes extends Authentication
                   (scene.ingestLocation, scene.sceneType) match {
                     case (Some(uri), Some(SceneType.COG)) => {
                       CogUtils.thumbnail(
-                        uri, thumbnailParams.width, thumbnailParams.height
+                        uri, thumbnailParams.width, thumbnailParams.height,
+                        thumbnailParams.red, thumbnailParams.green, thumbnailParams.blue,
+                        thumbnailParams.floor
                       ).map(
                         (tile: MultibandTile) => HttpEntity(MediaTypes.`image/png`, tile.renderPng.bytes)
                       ).value

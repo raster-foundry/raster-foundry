@@ -67,7 +67,9 @@ object CogUtils {
       }
     )
 
-  def thumbnail(uri: String, widthO: Option[Int], heightO: Option[Int])(implicit ec: ExecutionContext):
+  def thumbnail(uri: String, widthO: Option[Int], heightO: Option[Int],
+                redO: Option[Int], greenO: Option[Int], blueO: Option[Int],
+                floorO: Option[Int])(implicit ec: ExecutionContext):
       OptionT[Future, MultibandTile] =
   {
     def trim: Int => Int = Math.min(_, 512)
@@ -81,16 +83,26 @@ object CogUtils {
       case (None, Some(h)) => (trim(h), trim(h))
       case _ => (256, 256)
     }
-    rfCache.cachingOptionT(s"cog-thumbnail-${width}-${height}-${URIUtils.withNoParams(uri)}")(
+    val (red, green, blue) = (redO.getOrElse(0), greenO.getOrElse(1), blueO.getOrElse(2))
+    val floor = floorO.getOrElse(25)
+    rfCache.cachingOptionT(s"cog-thumbnail-${width}-${height}-${URIUtils.withNoParams(uri)}-${red}-${green}-${blue}-${floor}")(
       CogUtils.fromUri(uri).mapFilter { tiff =>
-        val transform = Proj4Transform(tiff.crs, WebMercator)
-        val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
         val cellSize = CellSize(tiff.extent, width, height)
         val overview = closestTiffOverview(tiff, cellSize, Auto(0))
         val overviewRasterCellSize = overview.raster.cellSize
         val overviewExtentWidth = overview.extent.width
         val overviewExtentHeight = overview.extent.height
-        Some(Raster(overview.tile, overview.extent).tile)
+        val tile = Raster(overview.tile, overview.extent).tile
+          .subsetBands(red, green, blue)
+        val normalized = tile.bands map {
+          (b: Tile) => {
+            val tileO = (b.histogram.minValue, b.histogram.maxValue).tupled map {
+              case (minVal, maxVal) => b.normalize(minVal, maxVal, floorO.getOrElse(15), 255)
+            }
+            tileO.getOrElse(IntArrayTile.fill(0, b.cols, b.rows).convert(b.cellType))
+          }
+        }
+        Some(MultibandTile(normalized: _*))
       }
     )
   }
