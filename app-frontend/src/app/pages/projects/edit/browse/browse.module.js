@@ -1,3 +1,5 @@
+/* global BUILDCONFIG */
+
 import angular from 'angular';
 import { Map } from 'immutable';
 import _ from 'lodash';
@@ -28,6 +30,7 @@ class ProjectsSceneBrowserController {
         this.repositories = [
             {
                 label: 'Raster Foundry',
+                overrideLabel: BUILDCONFIG.APP_NAME,
                 service: RasterFoundryRepository
             }
         ];
