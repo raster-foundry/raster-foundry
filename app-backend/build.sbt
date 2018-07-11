@@ -271,6 +271,13 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.scalaCsv
     )
   })
+  .settings({
+    dependencyOverrides ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.9.2",
+      "com.fasterxml.jackson.core" % "jackson-databind" % "2.9.2",
+      "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.9.2"
+    )
+  })
   .settings(assemblyShadeRules in assembly := Seq(
       ShadeRule.rename("shapeless.**" -> "com.azavea.shaded.shapeless.@1").inAll,
       ShadeRule.rename(
