@@ -157,6 +157,8 @@ export default (app) => {
             return this.Scene.datasource({id: id}).$promise;
         }
 
+        // set the default floor to 25 to brighten up images -- this was a fine value for
+        // MODIS Terra scenes, but other datasources may need to pass a different parameter
         cogThumbnail(sceneId, token, width = 128, height = 128,
                      red = 0, green = 1, blue = 2, floor = 25) {
             return this.$http({

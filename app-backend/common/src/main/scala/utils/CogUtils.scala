@@ -97,6 +97,7 @@ object CogUtils {
         val normalized = tile.bands map {
           (b: Tile) => {
             val tileO = (b.histogram.minValue, b.histogram.maxValue).tupled map {
+              // If no floor passed, set floor to 15 to do some minimal brightening to the image
               case (minVal, maxVal) => b.normalize(minVal, maxVal, floorO.getOrElse(15), 255)
             }
             tileO.getOrElse(IntArrayTile.fill(0, b.cols, b.rows).convert(b.cellType))
