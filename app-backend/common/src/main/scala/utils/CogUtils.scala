@@ -84,6 +84,7 @@ object CogUtils {
       case _ => (256, 256)
     }
     val (red, green, blue) = (redO.getOrElse(0), greenO.getOrElse(1), blueO.getOrElse(2))
+    // If no floor passed, set floor to 25 to do some minimal brightening to the image
     val floor = floorO.getOrElse(25)
     rfCache.cachingOptionT(s"cog-thumbnail-${width}-${height}-${URIUtils.withNoParams(uri)}-${red}-${green}-${blue}-${floor}")(
       CogUtils.fromUri(uri).mapFilter { tiff =>
@@ -97,8 +98,7 @@ object CogUtils {
         val normalized = tile.bands map {
           (b: Tile) => {
             val tileO = (b.histogram.minValue, b.histogram.maxValue).tupled map {
-              // If no floor passed, set floor to 15 to do some minimal brightening to the image
-              case (minVal, maxVal) => b.normalize(minVal, maxVal, floorO.getOrElse(15), 255)
+              case (minVal, maxVal) => b.normalize(minVal, maxVal, floor,255)
             }
             tileO.getOrElse(IntArrayTile.fill(0, b.cols, b.rows).convert(b.cellType))
           }
