@@ -67,6 +67,9 @@ object CogUtils {
       }
     )
 
+  // To construct a multiband geotiff, we have to have more than one band, so the fact that
+  // we have one at all guarantees that bands.head is defined
+  @SuppressWarnings(Array("TraversableHead"))
   def thumbnail(uri: String, widthO: Option[Int], heightO: Option[Int],
                 redO: Option[Int], greenO: Option[Int], blueO: Option[Int],
                 floorO: Option[Int])(implicit ec: ExecutionContext):
@@ -84,6 +87,7 @@ object CogUtils {
       case _ => (256, 256)
     }
     val (red, green, blue) = (redO.getOrElse(0), greenO.getOrElse(1), blueO.getOrElse(2))
+    println(s"${red}, ${green}, ${blue}")
     // If no floor passed, set floor to 25 to do some minimal brightening to the image
     val floor = floorO.getOrElse(25)
     rfCache.cachingOptionT(s"cog-thumbnail-${width}-${height}-${URIUtils.withNoParams(uri)}-${red}-${green}-${blue}-${floor}")(
@@ -93,17 +97,32 @@ object CogUtils {
         val overviewRasterCellSize = overview.raster.cellSize
         val overviewExtentWidth = overview.extent.width
         val overviewExtentHeight = overview.extent.height
-        val tile = Raster(overview.tile, overview.extent).tile
-          .subsetBands(red, green, blue)
-        val normalized = tile.bands map {
-          (b: Tile) => {
-            val tileO = (b.histogram.minValue, b.histogram.maxValue).tupled map {
-              case (minVal, maxVal) => b.normalize(minVal, maxVal, floor,255)
+        val normalized = tiff.tile.bandCount match {
+          case x if x >= 3 => {
+            val tile = Raster(overview.tile, overview.extent).tile
+              .subsetBands(red, green, blue)
+            tile.bands map {
+              (b: Tile) => {
+                val tileO = (b.histogram.minValue, b.histogram.maxValue).tupled map {
+                  case (minVal, maxVal) => b.normalize(minVal, maxVal, floor,255)
+                }
+                tileO.getOrElse(IntArrayTile.fill(0, b.cols, b.rows).convert(b.cellType))
+              }
             }
-            tileO.getOrElse(IntArrayTile.fill(0, b.cols, b.rows).convert(b.cellType))
+          }
+          case x => {
+            val tile = overview.tile.bands.head
+            val normalizedO = (tile.histogram.minValue, tile.histogram.maxValue).tupled map {
+              case (minVal, maxVal) => tile.normalize(minVal, maxVal, floor,255)
+            }
+            Vector(
+              normalizedO.getOrElse(
+                IntArrayTile.fill(0, tile.cols, tile.rows).convert(tile.cellType)
+              )
+            )
           }
         }
-        Some(MultibandTile(normalized: _*))
+        Some(MultibandTile(normalized))
       }
     )
   }

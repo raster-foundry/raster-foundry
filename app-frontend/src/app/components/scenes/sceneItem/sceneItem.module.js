@@ -65,15 +65,25 @@ class SceneItemController {
                     this.datasource.bands, (x) => x.name.toLowerCase() === 'green');
                 let blueBand = _.findIndex(
                     this.datasource.bands, (x) => x.name.toLowerCase() === 'blue');
+                let bands = {};
                 let atLeastThreeBands = this.datasource.bands.length >= 3;
+                if (atLeastThreeBands) {
+                    bands.red = redBand || 0;
+                    bands.green = greenBand || 1;
+                    bands.blue = blueBand || 2;
+                } else {
+                    bands.red = 0;
+                    bands.green = 0;
+                    bands.blue = 0;
+                }
                 this.sceneService.cogThumbnail(
                     this.scene.id,
                     this.authService.token(),
                     128,
                     128,
-                    Math.max(redBand, atLeastThreeBands ? 0 : 0),
-                    Math.max(greenBand, atLeastThreeBands ? 1 : 0),
-                    Math.max(blueBand, atLeastThreeBands ? 2 : 0)
+                    bands.red,
+                    bands.green,
+                    bands.blue
                 ).then(res => {
                     this.thumbnail = `data:image/png;base64,${res}`;
                 });

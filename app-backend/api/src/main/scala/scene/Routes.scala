@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Route
 import akka.util.ByteString
 import com.amazonaws.services.s3.AmazonS3URI
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import geotrellis.raster.MultibandTile
+import geotrellis.raster.{IntArrayTile, MultibandTile}
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
@@ -346,7 +346,16 @@ trait SceneRoutes extends Authentication
                         thumbnailParams.red, thumbnailParams.green, thumbnailParams.blue,
                         thumbnailParams.floor
                       ).map(
-                        (tile: MultibandTile) => HttpEntity(MediaTypes.`image/png`, tile.renderPng.bytes)
+                        (tile: MultibandTile) => {
+                          tile match {
+                            case t if t.bands.length >= 3 =>
+                              HttpEntity(MediaTypes.`image/png`, tile.renderPng.bytes)
+                            case t if t.bands.length > 0 =>
+                              HttpEntity(MediaTypes.`image/png`, tile.bands.head.renderPng.bytes)
+                            case t =>
+                              HttpEntity(MediaTypes.`image/png`, IntArrayTile.fill(0, 256, 256).renderPng.bytes)
+                          }
+                        }
                       ).value
                     }
                     case _ =>
