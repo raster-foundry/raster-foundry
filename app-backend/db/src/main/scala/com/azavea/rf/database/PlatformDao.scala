@@ -7,6 +7,7 @@ import com.azavea.rf.database.filter.Filters._
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
+import doobie.{Fragments, Fragment}
 import cats._, cats.data._, cats.effect.IO, cats.implicits._, cats.syntax._
 import io.circe._
 
@@ -50,7 +51,7 @@ object PlatformDao extends Dao[Platform] {
     }
 
   def listPlatformUserTeams(user: User, searchParams: SearchQueryParameters): ConnectionIO[List[Team]] = {
-    val teamsF: Fragment = fr"""
+    val teamsF: Option[Fragment] = Some(fr"""
       id IN (
         SELECT group_id
         FROM user_group_roles
@@ -59,8 +60,8 @@ object PlatformDao extends Dao[Platform] {
           user_id = ${user.id} AND
           is_active = true
         )
-    """
-    val organizationsF: Fragment = fr"""
+    """)
+    val organizationsF: Option[Fragment] = Some(fr"""
       organization_id IN (
         SELECT group_id
         FROM user_group_roles
@@ -69,9 +70,9 @@ object PlatformDao extends Dao[Platform] {
           user_id = ${user.id} AND
           is_active = true
         )
-    """
+    """)
     TeamDao.query
-      .filter(teamsF ++ fr"OR" ++ organizationsF)
+      .filter(Fragment.const("(") ++ Fragments.orOpt(teamsF, organizationsF) ++ Fragment.const(")"))
       .filter(searchQP(searchParams, List("name")))
       .filter(fr"is_active = true")
       .list(0, 5, fr"order by name")
