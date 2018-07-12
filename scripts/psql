@@ -16,7 +16,7 @@ then
     else
         docker-compose up -d postgres
         docker-compose \
-            exec postgres bash -c "psql -U rasterfoundry -d rasterfoundry"
+            exec -e COLUMNS="$(tput cols)" -e LINES="$(tput lines)" postgres bash -c "psql -U rasterfoundry -d rasterfoundry"
     fi
     exit
 fi

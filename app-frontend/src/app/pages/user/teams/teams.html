@@ -47,6 +47,21 @@
             </ng-pluralize>
         </td>
         <td class="actions">
+          <button class="btn btn-danger btn-small btn-nowrap"
+                  ng-if="$ctrl.membershipPending(team)"
+                  ng-click="$ctrl.updateUserMembershipStatus(team, false)">
+            Decline
+          </button>
+          <button class="btn btn-primary btn-small btn-nowrap"
+                  ng-if="$ctrl.membershipPending(team)"
+                  ng-click="$ctrl.updateUserMembershipStatus(team, true)">
+            Accept
+          </button>
+          <button class="btn btn-default btn-small btn-nowrap"
+                  ng-if="!$ctrl.membershipPending(team)"
+                  ng-click="$ctrl.updateUserMembershipStatus(team, false)">
+            Leave Team
+          </button>
           <rf-dropdown data-options="team.options" ng-if="team.showOptions">
             <span class="icon-caret-down h4"></span>
           </rf-dropdown>

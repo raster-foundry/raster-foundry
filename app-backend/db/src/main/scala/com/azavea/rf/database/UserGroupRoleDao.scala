@@ -108,7 +108,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
             UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved))
           // Accepting a role requires agreement about what the groupRole should be -- users can't cheat
           // and become admins by accepting a MEMBER role by posting an ADMIN role
-          case (Some(MembershipStatus.Requested), true, true) | (Some(MembershipStatus.Invited), false, true) =>
+          case (Some(MembershipStatus.Requested), true, true) | (Some(MembershipStatus.Invited), _, true) =>
             UserGroupRoleDao.deactivate(existingRoleO.map( _.id).get, actingUser) *>
             UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved))
           // rolesMatch will always be false when existingRoleO is None, so don't bother checking it
@@ -234,7 +234,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           .filter(fr"ugr.group_type = ${groupType}")
           .filter(fr"ugr.group_id = ${groupId}")
           .filter(fr"ugr.is_active = true")
-          .filter(searchQP(searchParams, List("u.name", "u.email")))
+          .filter(searchQP(searchParams, List("u.name", "u.email", "u.id")))
           .filter(
             ( userIsPlatformAdmin || isSuperUser) match {
               case true => None

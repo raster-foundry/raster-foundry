@@ -13,8 +13,21 @@ const OrganizationModalComponent = {
 };
 
 class OrganizationModalController {
-    constructor() {
-        this.permissionDenied = this.resolve.permissionDenied;
+    constructor($element, $timeout) {
+        'ngInject';
+        this.$element = $element;
+        this.$timeout = $timeout;
+    }
+
+    $postLink() {
+        this.claimFocus();
+    }
+
+    claimFocus(interval = 0) {
+        this.$timeout(() => {
+            const el = $(this.$element[0]).find('input').get(0);
+            el.focus();
+        }, interval);
     }
 
     onAdd() {

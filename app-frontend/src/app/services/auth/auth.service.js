@@ -468,7 +468,7 @@ export default (app) => {
             const ids = [].concat(groupIds || []);
             return this.user &&
                 this.user.isSuperuser ||
-                this.userRoles.find(r => {
+                !!this.userRoles.find(r => {
                     return r.groupRole === 'ADMIN' &&
                         ids.includes(r.groupId) &&
                         r.membershipStatus === 'APPROVED';

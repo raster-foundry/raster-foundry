@@ -19,7 +19,7 @@
                ng-if="!($ctrl.orgURIs[team.organizationId] && $ctrl.orgURIs[team.organizationId].length)"></div>
           <div ng-if="$ctrl.orgURIs[team.organizationId] && $ctrl.orgURIs[team.organizationId].length">
             <img class="avatar user-avatar"
-                 ng-src="{{$ctrl.cacheBustUri($ctrl.orgURIs[team.organizationId])}}">
+                 ng-src="{{$ctrl.orgURIs[team.organizationId]}}">
           </div>
         </div>
         <a class="content"

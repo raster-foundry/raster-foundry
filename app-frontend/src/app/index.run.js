@@ -81,6 +81,12 @@ function runBlock(
             setupState();
         }
     });
+
+    $rootScope.autoInject = function (context, args) {
+        context.constructor.$inject.forEach((injectable, idx) => {
+            context[injectable] = args[idx];
+        });
+    };
 }
 
 export default runBlock;
