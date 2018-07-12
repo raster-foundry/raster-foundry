@@ -136,7 +136,7 @@ def get_band_index(band_name):
     name, num = band_name.split(' - ')
     if num.lower() == '8a':
         return 9
-    elif num.lower() > '8a':
+    elif int(num) > 8:
         return int(num) + 1
     else:
         return int(num)
