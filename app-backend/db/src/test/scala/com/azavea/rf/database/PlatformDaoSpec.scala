@@ -319,8 +319,7 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
 
             // User belongs to Team3 but not Org3
             org3 <- OrganizationDao.createOrganization(orgCreate3)
-            teamInsert3 <- TeamDao.create(fixupTeam(
-              fixTeamName(teamCreate3, teamNamePartial), org3, user))
+            teamInsert3 <- TeamDao.create(fixupTeam(teamCreate3, org3, user))
             _ <- UserGroupRoleDao.create(
               UserGroupRole.Create(
                 user.id,
@@ -337,7 +336,10 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
           }
           val teams = filterTeamIO.transact(xa).unsafeRunSync
 
-          teams.length == 3
+          teamNamePartial.search match {
+            case Some(teamName) if teamName.length != 0 => teams.length == 2
+            case _ => teams.length == 3
+          }
         }
       }
     }
