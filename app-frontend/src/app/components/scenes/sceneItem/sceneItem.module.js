@@ -86,7 +86,7 @@ class SceneItemController {
                     bands.blue
                 ).then(res => {
                     // Because 504s aren't rejections, apparently
-                    if (res.status === 200) {
+                    if (_.isString(res)) {
                         this.thumbnail = `data:image/png;base64,${res}`;
                     }
                 }).catch(() => {
