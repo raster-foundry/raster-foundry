@@ -104,7 +104,8 @@ object CogUtils {
             tile.bands map {
               (b: Tile) => {
                 val tileO = (b.histogram.minValue, b.histogram.maxValue).tupled map {
-                  case (minVal, maxVal) => b.normalize(minVal, maxVal, floor,255)
+                  case (minVal, maxVal) if maxVal > minVal => b.normalize(minVal, maxVal, floor,255)
+                  case (minVal, maxVal) => b.normalize(minVal, minVal + 255, floor, 255)
                 }
                 tileO.getOrElse(IntArrayTile.fill(0, b.cols, b.rows).convert(b.cellType))
               }
