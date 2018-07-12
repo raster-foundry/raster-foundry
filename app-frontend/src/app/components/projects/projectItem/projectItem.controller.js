@@ -1,18 +1,21 @@
 import projectPlaceholder from '../../../../assets/images/transparent.svg';
 
 export default class ProjectItemController {
-    constructor($scope, $state, $attrs, $log, projectService, mapService, mapUtilsService,
-                authService, modalService) {
+    constructor($scope, $state, $attrs, $log,
+        projectService, mapService, mapUtilsService, authService, modalService,
+        featureFlags) {
         'ngInject';
         this.$scope = $scope;
         this.$state = $state;
         this.$attrs = $attrs;
+        this.$log = $log;
+
         this.projectService = projectService;
         this.mapService = mapService;
         this.mapUtilsService = mapUtilsService;
         this.authService = authService;
         this.modalService = modalService;
-        this.$log = $log;
+        this.featureFlags = featureFlags;
 
         this.projectPlaceholder = projectPlaceholder;
     }
@@ -25,12 +28,13 @@ export default class ProjectItemController {
                 this.selectedStatus = selected;
             }
         );
-        this.getMap = () => this.mapService.getMap(`${this.project.id}-map`);
+        this.mapId = `${this.project.id}-map`;
+        this.getMap = () => this.mapService.getMap(this.mapId);
 
-        this.fitProjectExtent();
-        this.addProjectLayer();
+        this.showProjectThumbnail =
+            this.featureFlags.isOnByDefault('project-preview-mini-map');
+
         this.getProjectStatus();
-        this.getThumbnailURL();
     }
 
     getThumbnailURL() {
@@ -68,6 +72,16 @@ export default class ProjectItemController {
         if (!this.statusFetched) {
             this.projectService.getProjectStatus(this.project.id).then(status => {
                 this.status = status;
+                if (this.status === 'CURRENT') {
+                    this.fitProjectExtent();
+                    this.addProjectLayer();
+
+                    if (this.showProjectThumbnail) {
+                        this.getThumbnailURL();
+                    } else {
+                        this.mapOptions = {showAttributions: false};
+                    }
+                }
             });
             this.statusFetched = true;
         }
