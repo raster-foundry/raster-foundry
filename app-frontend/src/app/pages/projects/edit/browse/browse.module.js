@@ -7,7 +7,7 @@ import _ from 'lodash';
 class ProjectsSceneBrowserController {
     constructor( // eslint-disable-line max-params
         $log, $state, $location, $scope, $timeout,
-        modalService, mapService,
+        modalService, mapService, sceneService,
         projectService, sessionStorage, planetLabsService, authService, featureFlags,
         RasterFoundryRepository, PlanetRepository, CMRRepository
     ) {
@@ -24,6 +24,7 @@ class ProjectsSceneBrowserController {
         this.mapService = mapService;
         this.planetLabsService = planetLabsService;
         this.authService = authService;
+        this.sceneService = sceneService;
 
         this.helperText = null;
         this.zoomHelpText = 'Zoom in to search for scenes';
