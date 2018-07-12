@@ -110,7 +110,7 @@ trait Filterables extends RFMeta with LazyLogging {
           case (_, Some(shpId)) => None
           case (Some(bboxPolygons), _) => {
             val fragments = bboxPolygons.map(bbox =>
-              fr"ST_Intersects(data_footprint, ${bbox})")
+              fr"(_ST_Intersects(data_footprint, ${bbox}) AND tile_footprint && ${bbox})")
             Some(fr"(" ++ Fragments.or(fragments: _*) ++ fr")")
           }
           case _ => None
