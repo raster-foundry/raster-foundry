@@ -87,7 +87,6 @@ object CogUtils {
       case _ => (256, 256)
     }
     val (red, green, blue) = (redO.getOrElse(0), greenO.getOrElse(1), blueO.getOrElse(2))
-    println(s"${red}, ${green}, ${blue}")
     // If no floor passed, set floor to 25 to do some minimal brightening to the image
     val floor = floorO.getOrElse(25)
     rfCache.cachingOptionT(s"cog-thumbnail-${width}-${height}-${URIUtils.withNoParams(uri)}-${red}-${green}-${blue}-${floor}")(
