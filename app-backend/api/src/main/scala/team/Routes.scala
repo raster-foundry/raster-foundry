@@ -2,7 +2,7 @@ package com.azavea.rf.api.team
 
 import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database.TeamDao
+import com.azavea.rf.database._
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
 import akka.http.scaladsl.server.Route
@@ -12,6 +12,7 @@ import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import java.util.UUID
 
+import cats.data.OptionT
 import cats.effect.IO
 
 import doobie.util.transactor.Transactor
@@ -32,78 +33,38 @@ trait TeamRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler
-    with KamonTraceDirectives
-    with TeamQueryParameterDirective {
+    with KamonTraceDirectives {
 
   val xa: Transactor[IO]
 
   val teamRoutes: Route = handleExceptions(userExceptionHandler) {
-    pathEndOrSingleSlash {
-      get {
-        traceName("teams-list") {
-          listTeams
-        }
-      } ~
-      post {
-        traceName("teams-create") {
-          createTeam
-        }
-      }
-    } ~
     pathPrefix(JavaUUID) { teamId =>
       get {
         traceName("team-detail") {
           getTeam(teamId)
         }
-      } ~
-      put {
-        traceName("team-update") {
-          updateTeam(teamId)
-        }
-      } ~
-      delete {
-        traceName("team-delete") {
-          deleteTeam(teamId)
-        }
-      }
-    }
-  }
-
-  def listTeams: Route = authenticate { user =>
-    (withPagination & teamQueryParameters) { (page, teamQueryParameters) =>
-      complete {
-        TeamDao.query.filter(teamQueryParameters).page(page).transact(xa).unsafeToFuture
-      }
-    }
-  }
-
-  def createTeam: Route = authenticate { user =>
-    entity(as[Team.Create]) { newTeamCreate =>
-      onSuccess(TeamDao.create(newTeamCreate.toTeam(user)).transact(xa).unsafeToFuture()) { team =>
-        complete(StatusCodes.Created, team)
       }
     }
   }
 
   def getTeam(teamId: UUID): Route = authenticate { user =>
-    rejectEmptyResponse {
-      complete {
-        TeamDao.getTeamById(teamId).transact(xa).unsafeToFuture
+    authorizeAsync {
+      val authIO = for {
+        teamMember <- OptionT.liftF[ConnectionIO, Boolean](TeamDao.userIsMember(user, teamId))
+        team <- OptionT[ConnectionIO, Team](TeamDao.getTeamById(teamId))
+        organization <- OptionT[ConnectionIO, Organization](
+          OrganizationDao.getOrganizationById(team.organizationId)
+        )
+        platformAdmin <- OptionT.liftF[ConnectionIO, Boolean](PlatformDao.userIsAdmin(user, organization.platformId))
+        organizationMember <- OptionT.liftF[ConnectionIO, Boolean](OrganizationDao.userIsMember(user, organization.id))
+      } yield { teamMember || organizationMember || platformAdmin }
+      authIO.value.map( _.getOrElse(false) ).transact(xa).unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete {
+          TeamDao.getTeamById(teamId).transact(xa).unsafeToFuture
+        }
       }
-    }
-  }
-
-  def updateTeam(teamId: UUID): Route = authenticate { user =>
-    entity(as[Team]) { updatedTeam =>
-      onSuccess(TeamDao.update(updatedTeam, teamId, user).transact(xa).unsafeToFuture()) { team =>
-        complete(StatusCodes.OK, team)
-      }
-    }
-  }
-
-  def deleteTeam(teamId: UUID): Route = authenticate { user =>
-    onSuccess(TeamDao.delete(teamId).transact(xa).unsafeToFuture) {
-      completeSingleOrNotFound
     }
   }
 
