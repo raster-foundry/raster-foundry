@@ -35,6 +35,13 @@ UserModule.resolve = {
     userRoles: (authService) => {
         return authService.fetchUserRoles();
     },
+    platform: (userRoles, platformService) => {
+        const platformRole = userRoles.find(r =>
+            r.groupType === 'PLATFORM'
+        );
+
+        return platformService.getPlatform(platformRole.groupId);
+    },
     organizationRoles: (userRoles) => {
         return _.uniqBy(userRoles, r => r.groupId).filter(r => r.groupType === 'ORGANIZATION');
     },

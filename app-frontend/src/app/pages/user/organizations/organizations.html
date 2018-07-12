@@ -17,6 +17,23 @@
         <td class="roles titlecase">
           {{$ctrl.getUserOrgRole(organization.id)}}
         </td>
+        <td class="actions">
+          <button class="btn btn-danger btn-small btn-nowrap"
+                  ng-if="$ctrl.membershipPending(organization)"
+                  ng-click="$ctrl.updateUserMembershipStatus(organization, false)">
+            Decline
+          </button>
+          <button class="btn btn-primary btn-small btn-nowrap"
+                  ng-if="$ctrl.membershipPending(organization)"
+                  ng-click="$ctrl.updateUserMembershipStatus(organization, true)">
+            Accept
+          </button>
+          <button class="btn btn-default btn-small btn-nowrap"
+                  ng-if="!$ctrl.membershipPending(organization)"
+                  ng-click="$ctrl.updateUserMembershipStatus(organization, false)">
+            Leave Organization
+          </button>
+        </td>
       </tr>
     </tbody>
   </table>

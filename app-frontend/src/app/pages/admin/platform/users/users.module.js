@@ -80,7 +80,7 @@ class PlatformUsersController {
             this.platform.id,
             user
         ).catch(() => {
-            this.fetchUsers(this.pagination.currentPage, this.search);
+            this.fetchPage(this.pagination.currentPage);
         });
     }
 

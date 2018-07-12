@@ -33,13 +33,14 @@ class OrganizationUsersController {
                 this.results = paginatedResponse.results;
                 this.pagination = this.paginationService.buildPagination(paginatedResponse);
                 this.paginationService.updatePageParam(page);
+                this.buildOptions();
             }).finally(() => {
                 this.loading = false;
             });
     }
 
     buildOptions() {
-        this.users.forEach(user => Object.assign(user, {
+        this.results.forEach(user => Object.assign(user, {
             options: {
                 items: this.itemsForUser(user)
             },
@@ -87,7 +88,7 @@ class OrganizationUsersController {
                 groupType: () => 'organization'
             }
         }).result.then(() => {
-            this.fetchUsers(1, this.search);
+            this.fetchPage();
         });
     }
 
@@ -108,7 +109,7 @@ class OrganizationUsersController {
             this.organization.id,
             user
         ).catch(() => {
-            this.fetchUsers(this.pagination.currentPage);
+            this.fetchPage(this.pagination.currentPage);
         });
     }
 
@@ -120,13 +121,13 @@ class OrganizationUsersController {
                 user.id,
                 user.groupRole
             ).then(resp => {
-                this.users.forEach(thisUser =>{
+                this.results.forEach(thisUser =>{
                     if (thisUser.id === resp.userId) {
                         thisUser.membershipStatus = resp.membershipStatus;
                         delete thisUser.buttonType;
                     }
                 });
-                this.fetchUsers(1, '');
+                this.fetchPage();
             });
         } else {
             this.organizationService.removeUser(
@@ -134,8 +135,8 @@ class OrganizationUsersController {
                 this.organization.id,
                 user.id
             ).then(resp => {
-                _.remove(this.users, thisUser => thisUser.id === resp[0].userId);
-                this.fetchUsers(1, '');
+                _.remove(this.results, thisUser => thisUser.id === resp[0].userId);
+                this.fetchPage();
             });
         }
     }
