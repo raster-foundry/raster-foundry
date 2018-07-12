@@ -325,6 +325,9 @@ trait SceneRoutes extends Authentication
     }
   }
 
+  // Safe to `bands.head`, since construction of a MultibandTile requires at least one band, so it's
+  // impossible to have an empty one
+  @SuppressWarnings(Array("TraversableHead"))
   def getSceneThumbnail(sceneId: UUID): Route = authenticateWithParameter { user =>
     {
       thumbnailQueryParameters {
