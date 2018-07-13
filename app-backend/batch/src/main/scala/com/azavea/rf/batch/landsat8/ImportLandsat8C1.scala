@@ -210,7 +210,8 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
         * or non-imagery data in some way. We don't know what they are. But we dislike them
         * and never want to see them again
         */
-      if (cloudCover < 0) {
+      if (cloudCover.map( _ < 0 ).getOrElse(false) ) {
+        logger.info(s"Skipping import for ${landsatPath} since cloud_cover was ${cloudCover}")
         None
       } else {
       val sunElevation = row.get("sunElevation").map(_.toFloat)
