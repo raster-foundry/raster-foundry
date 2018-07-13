@@ -3,6 +3,7 @@ from functools import partial
 import logging
 import os
 import uuid
+import urllib
 
 from rf.models import Band
 from rf.models import Scene
@@ -121,8 +122,8 @@ def create_scene(hdf_url, temp_directory, user_id, datasource):
     get_band_func = partial(get_image_band, modis_config=config)
     for local_path, remote_path in zip(tifs, s3_uris):
 
-        image = create_geotiff_image(local_path, remote_path, scene=scene.id, owner=user_id,
-                                     band_create_function=get_band_func)
+        image = create_geotiff_image(local_path, urllib.unquote(s3_uris[0]),
+                                     scene=scene.id, owner=user_id, band_create_function=get_band_func)
         images.append(image)
     scene.images = images
     scene.ingestLocation = s3_uris[0]
