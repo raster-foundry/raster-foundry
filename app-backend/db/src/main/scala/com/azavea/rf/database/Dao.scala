@@ -261,13 +261,13 @@ object Dao {
     def countIO: ConnectionIO[Int] = {
       val countQuery = countF ++ Fragments.whereAndOpt(filters: _*)
       val over10000IO: ConnectionIO[Boolean] =
-        (fr"SELECT EXISTS(" ++ (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"offset 10000") ++ fr")")
+        (fr"SELECT EXISTS(" ++ (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"offset 100") ++ fr")")
           .query[Boolean]
           .unique
       over10000IO flatMap {
         (exists: Boolean) => {
           exists match {
-            case true => 10000.pure[ConnectionIO]
+            case true => 100.pure[ConnectionIO]
             case false => countQuery.query[Int].unique
           }
         }
