@@ -206,6 +206,13 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
         }
 
       val cloudCover = row.get("cloudCoverFull").map(_.toFloat)
+      /** Some Landsat 8 scenes have negative cloud cover, indicating that they're bad
+        * or non-imagery data in some way. We don't know what they are. But we dislike them
+        * and never want to see them again
+        */
+      if (cloudCover < 0) {
+        None
+      } else {
       val sunElevation = row.get("sunElevation").map(_.toFloat)
       val sunAzimuth = row.get("sunAzimuth").map(_.toFloat)
       val bands15m = landsat8Config.bandLookup.`15m`
@@ -266,6 +273,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
         sceneType = Some(SceneType.Avro)
       )
       Some(scene)
+      }
     }
   }
 
