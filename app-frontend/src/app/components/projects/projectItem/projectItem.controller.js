@@ -1,22 +1,11 @@
 import projectPlaceholder from '../../../../assets/images/transparent.svg';
 
 export default class ProjectItemController {
-    constructor($scope, $state, $attrs, $log,
+    constructor($rootScope, $scope, $state, $attrs, $log,
         projectService, mapService, mapUtilsService, authService, modalService,
         featureFlags) {
         'ngInject';
-        this.$scope = $scope;
-        this.$state = $state;
-        this.$attrs = $attrs;
-        this.$log = $log;
-
-        this.projectService = projectService;
-        this.mapService = mapService;
-        this.mapUtilsService = mapUtilsService;
-        this.authService = authService;
-        this.modalService = modalService;
-        this.featureFlags = featureFlags;
-
+        $rootScope.autoInject(this, arguments);
         this.projectPlaceholder = projectPlaceholder;
     }
 

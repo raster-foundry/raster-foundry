@@ -16,13 +16,9 @@ const StaticMapComponent = {
 };
 
 class StaticMapController {
-    constructor($log, $element, $scope, $timeout, mapService) {
+    constructor($rootScope, $log, $element, $scope, $timeout, mapService) {
         'ngInject';
-        this.$element = $element;
-        this.$log = $log;
-        this.$scope = $scope;
-        this.$timeout = $timeout;
-        this.mapService = mapService;
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
