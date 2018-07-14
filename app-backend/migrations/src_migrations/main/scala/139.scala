@@ -9,7 +9,7 @@ object M139 {
       ) VALUES (
         'dd486e2d-de6c-4ea6-afbe-cd0a2a2fa698',
         'project-preview-mini-map',
-        false,
+        true,
         'Project preview mini leaflet map',
         'Make Project Previews mini Leaflet Maps'
       );
