@@ -21,7 +21,7 @@ export default class ProjectItemController {
         this.getMap = () => this.mapService.getMap(this.mapId);
 
         this.showProjectThumbnail =
-            this.featureFlags.isOnByDefault('project-preview-mini-map');
+            !this.featureFlags.isOnByDefault('project-preview-mini-map');
 
         this.getProjectStatus();
     }
