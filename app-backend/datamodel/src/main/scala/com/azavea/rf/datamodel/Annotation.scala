@@ -347,8 +347,10 @@ object AnnotationShapefileService extends LazyLogging {
           featureStore.addFeatures(featureCollection)
           transaction.commit()
         } catch {
-          case default: Throwable =>
+          case default: Throwable => {
             transaction.rollback()
+            throw default
+          }
         } finally {
           transaction.close()
         }
