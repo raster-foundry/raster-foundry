@@ -150,20 +150,24 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
       sql"update exports set export_status = ${exportStatus} where id = ${exportId}"
         .update.withUniqueGeneratedKeys("export_status")
 
-    val withLoggingUpdateExportStatus: ConnectionIO[Unit] =
-      updateIo(exportId, s3ExportStatus.exportStatus) map {
-        case ExportStatus.Failed => {
-          logger.info(s"Export finished with ${s3ExportStatus.exportStatus}")
-          sendError(s"Export status update failed for ${exportId}")
-          notifyExportOwner("FAILED")
+    val withLoggingUpdateExportStatus: ConnectionIO[ExportStatus] =
+      updateIo(exportId, s3ExportStatus.exportStatus) <* (
+        {
+          s3ExportStatus.exportStatus match {
+            case ExportStatus.Failed => {
+              logger.info(s"Export finished with ${s3ExportStatus.exportStatus}")
+              sendError(s"Export status update failed for ${exportId}")
+              notifyExportOwner("FAILED")
+            }
+            case ExportStatus.Exported => {
+              logger.info(s"Export updated successfully")
+              notifyExportOwner("EXPORTED")
+            }
+            case _ =>
+              logger.info(s"Export ${exportId} has not yet completed: ${s3ExportStatus.exportStatus}")
+          }
         }
-        case ExportStatus.Exported => {
-          logger.info(s"Export updated successfully")
-          notifyExportOwner("EXPORTED")
-        }
-        case _ =>
-          logger.info(s"Export ${exportId} has not yet completed: ${s3ExportStatus.exportStatus}")
-      }
+      ).pure[ConnectionIO].attempt
 
     withLoggingUpdateExportStatus.transact(xa).unsafeRunSync
   }

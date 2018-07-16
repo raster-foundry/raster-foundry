@@ -39,7 +39,7 @@
       </div>
     </div>
   </div>
-  <div class="list-group" ng-if="$ctrl.dataProperties.length">
+  <div class="list-group" ng-if="$ctrl.uploadData">
     <div class="list-group-item">
       <div>
         <span title="Machine made"><strong>Machine made</strong></span>
@@ -77,7 +77,9 @@
       <span title="Default Label"><strong>Default Label</strong></span>
       <div class="list-group-right">
         <input type="text" class="form-control "
-               placeholder="No Default" ng-model="$ctrl.defaultKeys['label']">
+               placeholder="No Default"
+               ng-model="$ctrl.defaultKeys['label']"
+               ng-init="$ctrl.defaultKeys['label'] = 'Unlabeled'">
       </div>
     </div>
     <div class="list-group-item">
@@ -108,7 +110,9 @@
       <span title="Default Label"><strong>Default Description</strong></span>
       <div class="list-group-right">
         <input type="textarea" class="form-control "
-               placeholder="No Description" ng-model="$ctrl.defaultKeys['description']">
+               placeholder="No Description"
+               ng-model="$ctrl.defaultKeys['description']"
+               ng-init="$ctrl.defaultKeys['description'] = 'No Description'">
       </div>
     </div>
     <div class="list-group-item" ng-if="$ctrl.isMachineData">

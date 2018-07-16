@@ -116,12 +116,12 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
             UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Invited)) <*
               Notify.sendGroupNotification(
                 platformId, groupId, groupType, actingUser.id, subjectId, MessageType.GroupInvitation
-              )
+              ).attempt
           case (None, false, _) => {
             UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Requested)) <*
               Notify.sendGroupNotification(
                 platformId, groupId, groupType, subjectId, subjectId, MessageType.GroupRequest
-              )
+              ).attempt
           }
           case (Some(_), _, _) => existingRoleO.get.pure[ConnectionIO]
         }
