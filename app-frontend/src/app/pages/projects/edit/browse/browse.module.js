@@ -144,10 +144,6 @@ class ProjectsSceneBrowserController {
                     mapWrapper.map.getZoom()
                 );
             });
-            if (browseMap.zoom < 8) {
-                this.helperText = this.zoomHelpText;
-                this.sceneList = [];
-            }
         });
     }
 
@@ -164,9 +160,7 @@ class ProjectsSceneBrowserController {
 
         this.sceneList = [];
         this.getMap().then((mapWrapper) => {
-            if (mapWrapper.map.getZoom() < 8 && repository.label === 'Raster Foundry') {
-                this.helperText = this.zoomHelpText;
-            } else if (this.bboxCoords || this.queryParams && this.queryParams.bbox) {
+            if (this.bboxCoords || this.queryParams && this.queryParams.bbox) {
                 this.helperText = null;
                 this.fetchNextScenesForBbox = this.bboxFetchFactory(
                     this.bboxCoords || this.queryParams.bbox
@@ -191,12 +185,7 @@ class ProjectsSceneBrowserController {
         this.$parent.center = newCenter;
 
         this.setBboxParam(this.bboxCoords);
-        if (this.currentRepository.label === 'Raster Foundry' && zoom < 8) {
-            this.sceneList = [];
-            this.sceneCount = 0;
-            this.helperText = this.zoomHelpText;
-            return;
-        }
+
         this.helperText = null;
         this.onBboxChange();
     }
