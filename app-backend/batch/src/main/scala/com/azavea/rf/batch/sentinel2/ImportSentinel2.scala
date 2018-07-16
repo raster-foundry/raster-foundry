@@ -8,13 +8,15 @@ import com.azavea.rf.database._
 import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.datamodel._
 import com.azavea.rf.batch.util._
+import com.azavea.rf.common.utils.AntimeridianUtils
 import io.circe._
 import io.circe.syntax._
 import cats.implicits._
-import geotrellis.proj4.CRS
+import geotrellis.proj4._
 import geotrellis.slick.Projected
 import geotrellis.vector._
 import geotrellis.vector.io._
+import com.vividsolutions.jts.geom.LineString
 import org.postgresql.util.PSQLException
 import java.security.InvalidParameterException
 import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
@@ -158,6 +160,13 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     logger.info(s"${datasourcePrefix} - Extracting polygons for ${scenePath}")
     val tileFootprint = multiPolygonFromJson(tileinfo, "tileGeometry", sentinel2Config.targetProjCRS)
     val dataFootprint = multiPolygonFromJson(tileinfo, "tileDataGeometry", sentinel2Config.targetProjCRS)
+    val intersects = dataFootprint.map(AntimeridianUtils.crossesAntimeridian).getOrElse(false)
+    val correctedDataFootprint = AntimeridianUtils.correctDataFootprint(
+      intersects, dataFootprint, sentinel2Config.targetProjCRS
+    )
+    val correctedTileFootprint = AntimeridianUtils.correctTileFootprint(
+      intersects, tileFootprint, sentinel2Config.targetProjCRS
+    )
     val awsBase = s"https://${sentinel2Config.bucketName}.s3.amazonaws.com"
     val metadataFiles = List(
       s"$awsBase/$scenePath/tileInfo.json",
@@ -186,9 +195,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       tileFootprint = (sentinel2Config.targetProjCRS.epsgCode |@| tileFootprint).map {
         case (code, mp) => Projected(mp, code)
       },
-      dataFootprint = (sentinel2Config.targetProjCRS.epsgCode |@| dataFootprint).map {
-        case (code, mp) => Projected(mp, code)
-      },
+      dataFootprint = correctedDataFootprint,
       metadataFiles = metadataFiles,
       images = images,
       thumbnails = createThumbnails(sceneId, scenePath),
