@@ -42,8 +42,11 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
   def run: Unit = {
     val exportDefinitionWrite = for {
       user <- UserDao.unsafeGetUserById(systemUser)
+      _ <- logger.info(s"Obtained user ${user.id}")
       export <- ExportDao.query.filter(exportId).select
+      _ <- logger.info(s"Obtained export ${export.id}")
       exportDef <- ExportDao.getExportDefinition(export, user)
+      _ <- logger.info(s"Obtained export definition for ${export.id}")
       x <- {
         writeExportDefToS3(exportDef, bucket, key)
         val updatedExport = export.copy(
