@@ -1,8 +1,8 @@
 import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
-object M139 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(139)(List(
+object M141 {
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(141)(List(
     sqlu"""
       INSERT INTO feature_flags (
         id, key, active, name, description
