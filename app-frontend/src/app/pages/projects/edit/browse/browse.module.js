@@ -26,8 +26,6 @@ class ProjectsSceneBrowserController {
         this.authService = authService;
         this.sceneService = sceneService;
 
-        this.helperText = null;
-        this.zoomHelpText = 'Zoom in to search for scenes';
         this.repositories = [
             {
                 label: 'Raster Foundry',
@@ -161,13 +159,11 @@ class ProjectsSceneBrowserController {
         this.sceneList = [];
         this.getMap().then((mapWrapper) => {
             if (this.bboxCoords || this.queryParams && this.queryParams.bbox) {
-                this.helperText = null;
                 this.fetchNextScenesForBbox = this.bboxFetchFactory(
                     this.bboxCoords || this.queryParams.bbox
                 );
                 this.fetchNextScenes();
             } else {
-                this.helperText = null;
                 this.onViewChange(
                     mapWrapper.map.getBounds(),
                     mapWrapper.map.getCenter(),
@@ -186,7 +182,6 @@ class ProjectsSceneBrowserController {
 
         this.setBboxParam(this.bboxCoords);
 
-        this.helperText = null;
         this.onBboxChange();
     }
 
