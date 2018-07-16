@@ -26,23 +26,8 @@ class StaticMapController {
         this.hasTileLoadingError = false;
         this.tileLoadingErrors = new Map();
         this.tileLoadingStatus = new Map();
-        this.initMap();
-    }
-
-    $onChanges(changes) {
-        if (changes.options && changes.options.currentValue) {
-            this.mapService.getMap(this.mapId).then((mapWrapper) => {
-                mapWrapper.changeOptions(changes.options.currentValue);
-            });
-        }
-    }
-
-    $onDestroy() {
-        this.mapService.deregisterMap(this.mapId);
-    }
-
-    initMap() {
-        this.map = L.map(this.$element[0].children[0], {
+        this.mapOptions = Object.assign({
+            static: true,
             zoomControl: false,
             worldCopyJump: true,
             minZoom: 2,
@@ -53,21 +38,38 @@ class StaticMapController {
             boxZoom: false,
             keyboard: false,
             tap: false,
-            maxZoom: 30,
-            attributionControl: this.options ? this.options.showAttributions : true
-        }).setView(
+            maxZoom: 30
+        }, this.options);
+    }
+
+    $postLink() {
+        this.$timeout(() => {
+            this.initMap();
+        }, 0);
+    }
+
+    $onChanges(changes) {
+        if (changes.options && changes.options.currentValue) {
+            this.mapService.getMap(this.mapId).then((mapWrapper) => {
+                mapWrapper.changeOptions(
+                    Object.assign({}, this.mapOptions, changes.options.currentValue)
+                );
+            });
+        }
+    }
+
+    $onDestroy() {
+        this.mapService.deregisterMap(this.mapId);
+    }
+
+    initMap() {
+        this.map = L.map(this.$element[0].children[0], this.mapOptions).setView(
             this.initialCenter ? this.initialCenter : [0, 0],
             this.initialZoom ? this.initialZoom : 2
         );
-
-        this.$scope.$evalAsync(() => {
-            this.mapWrapper = this.mapService.registerMap(this.map, this.mapId, { static: true });
-            this.addLoadingIndicator();
-        });
-
-        this.$timeout(() => {
-            this.map.invalidateSize();
-        });
+        this.mapWrapper = this.mapService.registerMap(this.map, this.mapId, this.mapOptions);
+        this.addLoadingIndicator();
+        this.map.invalidateSize();
     }
 
     addLoadingIndicator() {

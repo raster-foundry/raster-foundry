@@ -68,7 +68,7 @@ export default class ProjectItemController {
                     if (this.showProjectThumbnail) {
                         this.getThumbnailURL();
                     } else {
-                        this.mapOptions = {showAttributions: false};
+                        this.mapOptions = {attributionControl: false};
                     }
                 }
             });
