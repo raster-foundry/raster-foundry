@@ -26,19 +26,24 @@
              ng-if="$ctrl.status === 'NOSCENES'"
              style="background-image: url({{$ctrl.projectPlaceholder}})">
         </div>
-        
+
         <!-- IF not all scenes ingested: -->
         <div class="project-preview-container placeholder"
              ng-if="$ctrl.status !== 'CURRENT' && $ctrl.status !== 'NOSCENES'"
              style="background-image: url({{$ctrl.projectPlaceholder}})">
         </div>
-        
+
         <!-- IF using a project's thumbnail: -->
         <div class="project-preview-container placeholder"
-             ng-if="$ctrl.thumbnailUrl && $ctrl.status === 'CURRENT'"
+             ng-if="$ctrl.status === 'CURRENT'"
              style="background-image: url({{$ctrl.projectPlaceholder}})">
           <div class="thumbnail"
+               ng-if="$ctrl.showProjectThumbnail"
                style="background-image: url({{$ctrl.thumbnailUrl}})"></div>
+          <rf-static-map
+            ng-if="!$ctrl.showProjectThumbnail"
+            map-id="{{$ctrl.mapId}}"
+            options="$ctrl.mapOptions"></rf-static-map>
         </div>
       </a>
     </div>

@@ -78,7 +78,14 @@
   margin-bottom: 2rem;
 }
 
-/* 
+.project-preview-container {
+  rf-static-map {
+    flex: 1;
+    align-self: stretch;
+  }
+}
+
+/*
  * safari fix for map not displaying
  */
 .main > rf-map-container {
