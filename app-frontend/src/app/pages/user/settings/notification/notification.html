@@ -3,10 +3,28 @@
     <p>
       You may opt in to receive email notifications from your platform admin about {{$ctrl.subscriptionsString}}.
     </p>
-    <rf-toggle value="$ctrl.user.emailNotifications === true"
+    <p>
+      <b>Send email notifications to:</b>
+    </p>
+    <rf-toggle value="$ctrl.userBuffer.emailNotifications === true"
+               on-change="$ctrl.updateUserEmailNotification('login')"
+               class="subscription-toggle"
+               radio="true">
+      <span>{{$ctrl.userBuffer.email}}</span>
+    </rf-toggle>
+    <rf-toggle value="$ctrl.userBuffer.personalInfo.emailNotifications === true"
+               on-change="$ctrl.updateUserEmailNotification('personal')"
+               class="subscription-toggle"
+               radio="true"
+               ng-if="$ctrl.userBuffer.personalInfo.email.length">
+      <span>{{$ctrl.userBuffer.personalInfo.email}}</span>
+    </rf-toggle>
+    <rf-toggle value="$ctrl.userBuffer.emailNotifications === false
+                      && $ctrl.userBuffer.personalInfo.emailNotifications === false"
                on-change="$ctrl.updateUserEmailNotification()"
-               class="subscription-toggle">
-      <span>Send me email notifications</span>
+               class="subscription-toggle"
+               radio="true">
+      <span>None</span>
     </rf-toggle>
   </div>
 </div>
