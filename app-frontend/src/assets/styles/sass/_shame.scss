@@ -3221,10 +3221,13 @@ rf-navbar-search {
 }
 
 // user/me/settings/profile
+.user-profile-body,
 .user-profile-content {
-  padding-top: 0rem;
+  padding-top: 0;
+  padding-left: 0;
 }
 
 .user-profile-form {
   padding-top: 2rem;
+  padding-left: 2rem;
 }
