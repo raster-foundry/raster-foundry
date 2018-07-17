@@ -65,5 +65,7 @@ trait EnumMeta {
 
   implicit val orgStatusMeta: Meta[OrgStatus] =
     pgEnumString("org_status", OrgStatus.fromString, _.repr)
-}
 
+  implicit val orgTypeMeta: Meta[OrganizationType] =
+    pgEnumString("organization_type", OrganizationType.fromString, _.repr)
+}
