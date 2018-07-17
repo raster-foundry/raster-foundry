@@ -44,7 +44,7 @@ const userOrgTypes = ['COMMERCIAL', 'GOVERNMENT', 'NON-PROFIT', 'ACADEMIC', 'MIL
 
 class ProfileController {
     constructor(
-        $scope, $log, $window,
+        $scope, $log, $window, $timeout,
         localStorage, authService, userService
     ) {
         'ngInject';
@@ -105,10 +105,18 @@ class ProfileController {
     }
 
     onPersonalInfoSubmit() {
+        this.saved = false;
         this.userService.updateOwnUser(this.currentUserBuffer).then(res => {
-            this.$log.log(res);
-        }, err => {
-            this.$log.error(err);
+            this.saved = true;
+            this.$timeout(() => {
+                this.saved = false;
+            }, 500);
+            this.currentUser = res;
+        }, (err) => {
+            this.error = err;
+            this.$timeout(() => {
+                delete this.error;
+            }, 1000);
         });
     }
 }
