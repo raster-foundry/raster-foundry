@@ -3,48 +3,50 @@
 /* eslint-disable */
 const providers = [
     {
-        link: 'https://support.google.com/mail/answer/35529?hl=en&co=GENIE.Platform',
+        profilePictureLink: 'https://support.google.com/mail/answer/35529?hl=en&co=GENIE.Platform',
+        profileSettingsLink: 'https://aboutme.google.com/',
         provider: 'google-oauth2',
         name: 'Google'
     },
     {
-        link: 'https://help.twitter.com/en/managing-your-account/common-issues-when-uploading-profile-photo',
+        profilePictureLink: 'https://help.twitter.com/en/managing-your-account/common-issues-when-uploading-profile-photo',
+        profileSettingsLink: 'https://twitter.com/settings/profile',
         provider: 'twitter',
         name: 'Twitter'
     },
     {
-        link: 'https://www.facebook.com/help/163248423739693?helpref=faq_content',
+        profilePictureLink: 'https://www.facebook.com/help/163248423739693?helpref=faq_content',
+        profileSettingsLink: 'https://www.facebook.com/settings',
         provider: 'facebook',
         name: 'Facebook'
     },
     {
-        link: 'https://help.github.com/articles/setting-your-profile-picture/',
+        profilePictureLink: 'https://help.github.com/articles/setting-your-profile-picture/',
+        profileSettingsLink: 'https://github.com/settings/profile',
         provider: 'github',
         name: 'GitHub'
     },
     {
-        link: 'https://en.gravatar.com/support/activating-your-account/',
+        profilePictureLink: 'https://en.gravatar.com/support/activating-your-account/',
         provider: 'auth0',
         name: 'Auth0'
     }
 ];
 
 const defaultProvider = {
-    link: 'https://en.gravatar.com/support/activating-your-account/',
+    profilePictureLink: 'https://en.gravatar.com/support/activating-your-account/',
     provider: 'gravatar',
     name: 'Gravatar'
 };
 /* eslint-enable */
 
 class ProfileController {
-    constructor($log, localStorage, authService, $window, userService) {
+    constructor(
+        $scope, $log, $window,
+        localStorage, authService, userService
+    ) {
         'ngInject';
-        this.$log = $log;
-        this.authService = authService;
-        this.$window = $window;
-        this.userService = userService;
-        this.localStorage = localStorage;
-
+        $scope.autoInject(this, arguments);
         this.profile = localStorage.get('profile');
     }
 
@@ -52,11 +54,12 @@ class ProfileController {
         this.env = process.env.NODE_ENV;
         this.providers = providers;
         this.defaultProvider = defaultProvider;
+        this.profileType = 'login';
         this.getCurrentUser();
     }
 
     updateGoogleProfile() {
-        this.$window.open('https://aboutme.google.com/', '_blank');
+        this.$window.open(this.provider.profileSettingsLink, '_blank');
     }
 
     updateUserMetadata() {
@@ -75,7 +78,15 @@ class ProfileController {
             this.provider = this.providers.find(provider => {
                 return resp.id.includes(provider.provider);
             }) || this.defaultProvider;
+            this.showProfileSettingsButton = this.isThirdParty();
         });
+    }
+
+    isThirdParty() {
+        return this.provider.provider === 'google-oauth2' ||
+            this.provider.provider === 'twitter' ||
+            this.provider.provider === 'facebook' ||
+            this.provider.provider === 'github';
     }
 }
 

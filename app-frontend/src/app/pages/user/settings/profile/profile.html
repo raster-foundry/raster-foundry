@@ -1,6 +1,20 @@
 <div class="row content stack-sm">
-  <div class="column-8">
-    <form action="">
+  <div class="column-8 user-profile-content">
+    <ul class="tabbed-list-header app-width-container">
+      <li>
+        <a ng-click="$ctrl.profileType = 'login'"
+           ng-class="{active: $ctrl.profileType === 'login'}">
+          Login Info
+        </a>
+      </li>
+      <li>
+        <a ng-click="$ctrl.profileType = 'personal'"
+           ng-class="{active: $ctrl.profileType === 'personal'}">
+          Personal Info
+        </a>
+      </li>
+    </ul>
+    <form class="user-profile-form" ng-if="$ctrl.profileType === 'login'">
       <label for="upload-profile-picture">Profile picture</label>
       <div class="picture-section">
         <div class="form-group picture">
@@ -12,13 +26,13 @@
             <div class="panel-body">
               Your profile picture is managed by
               <span>{{$ctrl.provider.provider === 'gravatar' || $ctrl.provider.provider === 'auth0' ? 'Gravatar' : $ctrl.provider.name}}</span>.
-              <a ng-href="{{$ctrl.provider.link}}" target="_blank">Click here for instructions on how to change it</a>.
+              <a ng-href="{{$ctrl.provider.profilePictureLink}}" target="_blank">Click here for instructions on how to change it</a>.
             </div>
           </div>
         </div>
       </div>
 
-      <div ng-if="$ctrl.provider.provider === 'google-oauth2'">
+      <div>
         <div class="form-group">
           <label for="name">Name</label>
           <input id="name"
@@ -41,17 +55,24 @@
         </div>
         <button type="button"
                 ng-click="$ctrl.updateGoogleProfile()"
-                class="btn btn-primary btn-large">
+                class="btn btn-primary btn-large"
+                ng-if="$ctrl.showProfileSettingsButton">
           Go to Google profile settings
+        </button>
+        <button type="button"
+                class="btn btn-primary btn-large"
+                ng-click="$ctrl.authService.changePassword()"
+                ng-if="$ctrl.provider.provider === 'auth0'">
+          Change Password
         </button>
       </div>
 
-      <div ng-if="$ctrl.provider.provider === 'auth0'">
+      <!-- <div>
         <div class="form-group">
           <label for="name">Name</label>
           <input id="name" type="text"
                  class="form-control"
-                 ng-attr-value="{{$ctrl.authService.user.nickname}}"
+                 ng-attr-value="{{$ctrl.authService.user.name}}"
                  disabled
           >
         </div>
@@ -65,12 +86,8 @@
           >
           <p class="help-block">Contact support to change your username</p>
         </div>
-        <button type="button"
-                class="btn btn-primary btn-large"
-                ng-click="$ctrl.authService.changePassword()">
-          Change Password
-        </button>
-      </div>
+
+      </div> -->
       <div ng-if="$ctrl.authService.user.user_metadata">
         <div class="form-group" ng-repeat="(id, field) in $ctrl.authService.user.user_metadata track by id">
           <label>{{field.label}}</label>
