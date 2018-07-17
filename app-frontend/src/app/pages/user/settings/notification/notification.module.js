@@ -1,28 +1,34 @@
+/* globals _ */
+
 const SUBSCRIPTIONS = ['AOI project update', 'scene ingest status', 'scene export status'];
 
 class NotificationController {
-    constructor($window, authService, userService) {
+    constructor($scope, $window, authService, userService) {
         'ngInject';
-        this.$window = $window;
-        this.authService = authService;
-        this.userService = userService;
+        $scope.autoInject(this, arguments);
         this.subscriptions = SUBSCRIPTIONS;
     }
 
     $onInit() {
         this.authService.getCurrentUser().then((user) => {
             this.user = user;
+            this.userBuffer = _.cloneDeep(this.user);
         });
         this.subscriptionsString = this.subscriptions.join(', ');
     }
 
-    updateUserEmailNotification() {
-        let emailNotifications = !this.user.emailNotifications;
-        this.userService.updateOwnUser(Object.assign(
-            {},
-            this.user,
-            {emailNotifications}
-        )).then(res => {
+    updateUserEmailNotification(emailType = '') {
+        if (emailType === 'login') {
+            this.userBuffer.emailNotifications = true;
+            this.userBuffer.personalInfo.emailNotifications = false;
+        } else if (emailType === 'personal') {
+            this.userBuffer.personalInfo.emailNotifications = true;
+            this.userBuffer.emailNotifications = false;
+        } else {
+            this.userBuffer.emailNotifications = false;
+            this.userBuffer.personalInfo.emailNotifications = false;
+        }
+        this.userService.updateOwnUser(this.userBuffer).then(res => {
             this.user = res;
         }, () => {
             this.$window.alert(
