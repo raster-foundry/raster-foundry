@@ -25,7 +25,7 @@ object UserDao extends Dao[User] {
     SELECT
       id, role, created_at, modified_at,
       dropbox_credential, planet_credential, email_notifications,
-      email, name, profile_image_uri, is_superuser, is_active, visibility
+      email, name, profile_image_uri, is_superuser, is_active, visibility, personal_info
     FROM
   """ ++ tableF
 
@@ -139,13 +139,14 @@ object UserDao extends Dao[User] {
     sql"""
        INSERT INTO users
           (id, role, created_at, modified_at, email_notifications,
-          email, name, profile_image_uri, is_superuser, is_active, visibility)
+          email, name, profile_image_uri, is_superuser, is_active, visibility, personal_info)
        VALUES
           (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false,
-          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, ${UserVisibility.Private.toString}::user_visibility)
+          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, ${UserVisibility.Private.toString}::user_visibility,
+          ${newUser.personalInfo})
        """.update.withUniqueGeneratedKeys[User](
       "id", "role", "created_at", "modified_at", "dropbox_credential", "planet_credential", "email_notifications",
-      "email", "name", "profile_image_uri", "is_superuser", "is_active", "visibility"
+      "email", "name", "profile_image_uri", "is_superuser", "is_active", "visibility", "personal_info"
     )
   }
 
@@ -226,7 +227,9 @@ object UserDao extends Dao[User] {
           modified_at = ${updateTime},
           planet_credential = ${user.planetCredential.token.getOrElse("")},
           email_notifications = ${user.emailNotifications},
-          visibility = ${user.visibility}""" ++
+          visibility = ${user.visibility},
+          personal_info = ${user.personal_info}
+          """ ++
       Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
      ).update.run
   }
