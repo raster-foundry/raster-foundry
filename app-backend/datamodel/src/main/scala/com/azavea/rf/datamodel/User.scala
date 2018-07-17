@@ -4,6 +4,7 @@ import java.net.{URI, URLEncoder}
 import java.sql.Timestamp
 import java.util.Date
 import java.util.UUID
+import java.security.InvalidParameterException
 
 import io.circe._
 import io.circe.generic.JsonCodec
@@ -65,12 +66,12 @@ sealed abstract class OrganizationType(val repr: String) {
 }
 
 object OrganizationType {
-  case object Commercial extends MembershipStatus("COMMERCIAL")
-  case object Government extends MembershipStatus("GOVERNMENT")
-  case object NonProfit extends MembershipStatus("NON-PROFIT")
-  case object Academic extends MembershipStatus("ACADEMIC")
-  case object Military extends MembershipStatus("MILITARY")
-  case object Other extends MembershipStatus("OTHER")
+  case object Commercial extends OrganizationType("COMMERCIAL")
+  case object Government extends OrganizationType("GOVERNMENT")
+  case object NonProfit extends OrganizationType("NON-PROFIT")
+  case object Academic extends OrganizationType("ACADEMIC")
+  case object Military extends OrganizationType("MILITARY")
+  case object Other extends OrganizationType("OTHER")
 
   def fromString(s: String): OrganizationType = s.toUpperCase match {
     case "COMMERCIAL" => Commercial
@@ -180,7 +181,7 @@ object User {
         false, //isSuperuser
         true, //isActive
         UserVisibility.Private,
-        User.PersonalInfo
+        User.PersonalInfo()
       )
     }
   }
@@ -209,7 +210,7 @@ object User {
         false, //isSuperuser
         true, //isActive
         UserVisibility.Private,
-        User.PersonalInfo
+        User.PersonalInfo()
       )
     }
   }

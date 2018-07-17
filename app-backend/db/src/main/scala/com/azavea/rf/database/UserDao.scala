@@ -2,9 +2,8 @@ package com.azavea.rf.database
 
 import java.sql.Timestamp
 
-import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.{User, UserRole, Credential, UserVisibility}
+import com.azavea.rf.datamodel.{User, UserRole, Credential, UserVisibility, OrganizationType}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -16,6 +15,8 @@ import cats.implicits._
 import java.util.UUID
 
 import scala.concurrent.Future
+
+import com.azavea.rf.database.Implicits._
 
 object UserDao extends Dao[User] {
 
@@ -139,11 +140,10 @@ object UserDao extends Dao[User] {
     sql"""
        INSERT INTO users
           (id, role, created_at, modified_at, email_notifications,
-          email, name, profile_image_uri, is_superuser, is_active, visibility, personal_info)
+          email, name, profile_image_uri, is_superuser, is_active, visibility)
        VALUES
           (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false,
-          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, ${UserVisibility.Private.toString}::user_visibility,
-          ${newUser.personalInfo})
+          ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, ${UserVisibility.Private.toString}::user_visibility)
        """.update.withUniqueGeneratedKeys[User](
       "id", "role", "created_at", "modified_at", "dropbox_credential", "planet_credential", "email_notifications",
       "email", "name", "profile_image_uri", "is_superuser", "is_active", "visibility", "personal_info"
@@ -228,7 +228,7 @@ object UserDao extends Dao[User] {
           planet_credential = ${user.planetCredential.token.getOrElse("")},
           email_notifications = ${user.emailNotifications},
           visibility = ${user.visibility},
-          personal_info = ${user.personal_info}
+          personal_info = ${user.personalInfo}
           """ ++
       Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
      ).update.run

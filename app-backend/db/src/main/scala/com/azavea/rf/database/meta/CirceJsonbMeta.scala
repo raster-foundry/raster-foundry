@@ -144,4 +144,19 @@ trait CirceJsonbMeta {
       }
     )
   }
+
+  implicit val UserPersonalInfoMeta: Meta[User.PersonalInfo] = {
+    Meta.other[PGobject]("jsonb").xmap[User.PersonalInfo](
+      a => io.circe.parser.parse(a.getValue).leftMap[Json](e => throw e).merge.as[User.PersonalInfo] match {
+        case Right(p) => p
+        case Left(e) => throw e
+      },
+      a => {
+        val o = new PGobject
+        o.setType("jsonb")
+        o.setValue(a.asJson.noSpaces)
+        o
+      }
+    )
+  }
 }
