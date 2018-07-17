@@ -1,4 +1,4 @@
-/* globals process */
+/* globals process, _ */
 
 /* eslint-disable */
 const providers = [
@@ -38,6 +38,8 @@ const defaultProvider = {
     provider: 'gravatar',
     name: 'Gravatar'
 };
+
+const userOrgTypes = ['COMMERCIAL', 'GOVERNMENT', 'NON-PROFIT', 'ACADEMIC', 'MILITARY', 'OTHER'];
 /* eslint-enable */
 
 class ProfileController {
@@ -54,7 +56,8 @@ class ProfileController {
         this.env = process.env.NODE_ENV;
         this.providers = providers;
         this.defaultProvider = defaultProvider;
-        this.profileType = 'login';
+        this.userOrgTypes = userOrgTypes;
+        this.profileType = 'personal';
         this.getCurrentUser();
     }
 
@@ -75,6 +78,8 @@ class ProfileController {
 
     getCurrentUser() {
         this.authService.getCurrentUser().then(resp => {
+            this.currentUser = resp;
+            this.currentUserBuffer = _.cloneDeep(this.currentUser);
             this.provider = this.providers.find(provider => {
                 return resp.id.includes(provider.provider);
             }) || this.defaultProvider;
@@ -87,6 +92,24 @@ class ProfileController {
             this.provider.provider === 'twitter' ||
             this.provider.provider === 'facebook' ||
             this.provider.provider === 'github';
+    }
+
+    getButtonText() {
+        if (this.saved) {
+            return 'Saved';
+        }
+        if (this.error) {
+            return 'Failed';
+        }
+        return 'Save';
+    }
+
+    onPersonalInfoSubmit() {
+        this.userService.updateOwnUser(this.currentUserBuffer).then(res => {
+            this.$log.log(res);
+        }, err => {
+            this.$log.error(err);
+        });
     }
 }
 
