@@ -95,26 +95,24 @@
                  ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.lastName}}"
                  ng-model="$ctrl.currentUserBuffer.personalInfo.lastName">
         </div>
-      </div>
-      <div class="form-group">
-        <label for="personal-email">Personal Email</label>
-        <input id="personal-email"
-               type="email"
-               name="personalEmail"
-               class="form-control"
-               ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.email}}"
-               ng-model="$ctrl.currentUserBuffer.personalInfo.email">
-        <span class="error color-danger" ng-show="personalInfo.personalEmail.$error.email">invalid email</span>
-      </div>
-      <div class="form-group">
-        <label for="phone-number">Phone number</label>
-        <input id="phone-number"
-               type="text"
-               class="form-control"
-               ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.phoneNumber}}"
-               ng-model="$ctrl.currentUserBuffer.personalInfo.phoneNumber">
-      </div>
-      <div class="row content stack-sm">
+        <div class="form-group column-12">
+          <label for="personal-email">Personal Email</label>
+          <input id="personal-email"
+                 type="email"
+                 name="personalEmail"
+                 class="form-control"
+                 ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.email}}"
+                 ng-model="$ctrl.currentUserBuffer.personalInfo.email">
+          <span class="error color-danger" ng-show="personalInfo.personalEmail.$error.email">invalid email</span>
+        </div>
+        <div class="form-group column-12">
+          <label for="phone-number">Phone number</label>
+          <input id="phone-number"
+                 type="text"
+                 class="form-control"
+                 ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.phoneNumber}}"
+                 ng-model="$ctrl.currentUserBuffer.personalInfo.phoneNumber">
+        </div>
         <div class="form-group column-6">
           <label for="org-name">Organization Name</label>
           <input id="org-name"
@@ -126,7 +124,7 @@
         <div class="form-group column-6">
           <label>Organization Type</label>
           <div class="dropdown btn-group" uib-dropdown uib-dropdown-toggle>
-            <a class="btn dropdown-label titlecase">{{$ctrl.currentUserBuffer.personalInfo.organizationType}}</a>
+            <a class="btn dropdown-label titlecase profile-dropdown">{{$ctrl.currentUserBuffer.personalInfo.organizationType}}</a>
             <button type="button" class="btn btn-primary dropdown-toggle">
               <i class="icon-caret-down"></i>
             </button>
@@ -139,45 +137,47 @@
             </ul>
           </div>
         </div>
+        <div class="form-group column-12">
+          <label for="org-website">Organization Website</label>
+          <input id="org-website"
+                 type="text"
+                 class="form-control"
+                 ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.organizationWebsite}}"
+                 ng-model="$ctrl.currentUserBuffer.personalInfo.organizationWebsite">
+        </div>
+        <div class="form-group column-6">
+          <label for="profile-website">Profile Website</label>
+          <input id="profile-website"
+                 type="text"
+                 class="form-control"
+                 ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.profileWebsite}}"
+                 ng-model="$ctrl.currentUserBuffer.personalInfo.profileWebsite">
+        </div>
+        <div class="form-group column-6">
+          <label for="profile-url">Profile URL</label>
+          <input id="profile-url"
+                 type="text"
+                 class="form-control"
+                 ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.profileUrl}}"
+                 ng-model="$ctrl.currentUserBuffer.personalInfo.profileUrl">
+        </div>
+        <div class="form-group column-12">
+          <label for="profile-bio">Profile Bio</label>
+          <input class="form-control"
+                 id="profile-bio"
+                 type="text"
+                 ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.profileBio}}"
+                 ng-model="$ctrl.currentUserBuffer.personalInfo.profileBio">
+        </div>
+        <div class="column-12">
+          <button type="button"
+                  class="btn btn-primary pull-right"
+                  ng-click="$ctrl.onPersonalInfoSubmit()"
+                  ng-disabled="personalInfo.personalEmail.$error.email">
+            {{$ctrl.getButtonText()}}
+          </button>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="org-website">Organization Website</label>
-        <input id="org-website"
-               type="text"
-               class="form-control"
-               ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.organizationWebsite}}"
-               ng-model="$ctrl.currentUserBuffer.personalInfo.organizationWebsite">
-      </div>
-      <div class="form-group">
-        <label for="profile-website">Profile Website</label>
-        <input id="profile-website"
-               type="text"
-               class="form-control"
-               ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.profileWebsite}}"
-               ng-model="$ctrl.currentUserBuffer.personalInfo.profileWebsite">
-      </div>
-      <div class="form-group">
-        <label for="profile-bio">Profile Bio</label>
-        <input id="profile-bio"
-               type="text"
-               class="form-control"
-               ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.profileBio}}"
-               ng-model="$ctrl.currentUserBuffer.personalInfo.profileBio">
-      </div>
-      <div class="form-group">
-        <label for="profile-url">Profile URL</label>
-        <input id="profile-url"
-               type="text"
-               class="form-control"
-               ng-attr-placeholder="{{$ctrl.currentUserBuffer.personalInfo.profileUrl}}"
-               ng-model="$ctrl.currentUserBuffer.personalInfo.profileUrl">
-      </div>
-      <button type="button"
-              class="btn btn-primary pull-right"
-              ng-click="$ctrl.onPersonalInfoSubmit()"
-              ng-disabled="personalInfo.personalEmail.$error.email">
-        {{$ctrl.getButtonText()}}
-      </button>
     </form>
   </div>
 </div>
