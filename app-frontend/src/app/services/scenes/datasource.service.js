@@ -35,11 +35,13 @@ export default (app) => {
                                 {}, payload, {
                                     bands: _.map(
                                         payload.bands,
-                                        (band) => {
-                                            let bookends = band.wavelength.trim().split(',');
-                                            band.wavelength = _.map(
-                                                bookends, (x) => Number.parseInt(x, 10)
-                                            );
+                                        band => {
+                                            if (_.isString(band.wavelength)) {
+                                                let bookends = band.wavelength.trim().split(',');
+                                                band.wavelength = _.map(
+                                                    bookends, (x) => Number.parseInt(x, 10)
+                                                );
+                                            }
                                             return band;
                                         }
                                     )

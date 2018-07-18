@@ -209,6 +209,20 @@ sometimes, the id won't be present in the database anyway. For this reason, a sa
 return a `ConnectionIO[Foo]`, you should name your method `unsafeGetFooById` to make it
 clear to users that it can fail in an unhandled way.
 
+### What should I do with purely side-effecting IO?
+
+This question is about the following scenario:
+
+- you want to do something in the database (add a user to a group, for example)
+- afterward, you want to do some kind of side-effect (logging, sending an email...) that can
+  fail
+- you don't care about whether the side-effect fails for whether the initial action should fail
+
+In that case, you should, supposing you have `addUserToGroupIO <* sendEmailIO`, you should
+`.attempt` the second IO -- `attempt(effect: M[A]): M[Either[Throwable, A]]`. Using `.attempt`
+will protect the first effect from failures in the second effect. `.attempt` is available on
+`ConnectionIO`s in `doobie` and on `IO`s in `cats.effect`.
+
 Migrations
 ---------
 

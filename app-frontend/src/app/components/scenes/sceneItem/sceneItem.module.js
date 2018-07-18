@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import angular from 'angular';
 import sceneTpl from './sceneItem.html';
 
@@ -58,11 +59,38 @@ class SceneItemController {
         if (changes.repository && changes.repository.currentValue) {
             this.repository = changes.repository.currentValue;
             if (this.scene.sceneType === 'COG') {
+                let redBand = _.findIndex(
+                    this.datasource.bands, (x) => x.name.toLowerCase() === 'red');
+                let greenBand = _.findIndex(
+                    this.datasource.bands, (x) => x.name.toLowerCase() === 'green');
+                let blueBand = _.findIndex(
+                    this.datasource.bands, (x) => x.name.toLowerCase() === 'blue');
+                let bands = {};
+                let atLeastThreeBands = this.datasource.bands.length >= 3;
+                if (atLeastThreeBands) {
+                    bands.red = redBand || 0;
+                    bands.green = greenBand || 1;
+                    bands.blue = blueBand || 2;
+                } else {
+                    bands.red = 0;
+                    bands.green = 0;
+                    bands.blue = 0;
+                }
                 this.sceneService.cogThumbnail(
                     this.scene.id,
-                    this.authService.token()
+                    this.authService.token(),
+                    128,
+                    128,
+                    bands.red,
+                    bands.green,
+                    bands.blue
                 ).then(res => {
-                    this.thumbnail = `data:image/png;base64,${res}`;
+                    // Because 504s aren't rejections, apparently
+                    if (_.isString(res)) {
+                        this.thumbnail = `data:image/png;base64,${res}`;
+                    }
+                }).catch(() => {
+                    this.imageError = true;
                 });
             } else {
                 this.repository.service.getThumbnail(this.scene).then((thumbnail) => {

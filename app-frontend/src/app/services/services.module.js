@@ -71,6 +71,7 @@ require('./common/decimal.filter')(shared);
 require('./common/modal.service')(shared);
 require('./common/url.filter')(shared);
 require('./common/orgStatus.filter')(shared);
+require('./common/pagination.service')(shared);
 
 
 export default shared;

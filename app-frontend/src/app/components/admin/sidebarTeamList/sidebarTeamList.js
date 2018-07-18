@@ -39,7 +39,7 @@ class SidebarTeamListController {
 
         Object.keys(this.orgURIs).forEach(orgId => {
             this.organizationService.getOrganization(orgId).then(resp => {
-                this.orgURIs[orgId] = resp.logoUri;
+                this.orgURIs[orgId] = this.cacheBustUri(resp.logoUri);
             });
         });
     }

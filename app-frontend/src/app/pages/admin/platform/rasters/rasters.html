@@ -1,3 +1,14 @@
+<div class="object-list-actions">
+  <div>
+    <rf-pagination-count
+      ng-if="$ctrl.results.length"
+      start-index="$ctrl.pagination.startingItem"
+      end-index="$ctrl.pagination.endingItem"
+      total="$ctrl.pagination.count"
+      item-name="scenes"
+    ></rf-pagination-count>
+  </div>
+</div>
 <div class="row content stack-sm">
   <div class="column-8">
     <rf-call-to-action-item
@@ -14,10 +25,16 @@
           previewable
           scene="raster"
           repository="$ctrl.repository"
-          ng-repeat="raster in $ctrl.rasters"
+          ng-repeat="raster in $ctrl.results"
       ></rf-scene-item>
     </div>
+    <rf-pagination-controls
+      pagination="$ctrl.pagination"
+      is-loading="$ctrl.loading"
+      on-change="$ctrl.fetchPage(value)"
+    ></rf-pagination-controls>
   </div>
+
   <div class="column spacer"></div>
   <div class="column-3">
     <rf-sidebar-user-list paginated-response="$ctrl.members" sref="admin.platform.users"></rf-sidebar-user-list>

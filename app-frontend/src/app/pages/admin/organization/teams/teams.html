@@ -1,11 +1,6 @@
 <div class="admin-list-content column-stretch">
-  <div class="admin-list-actions" ng-if="!$ctrl.errorMsg && $ctrl.teams.length">
+  <div class="admin-list-actions" ng-if="!$ctrl.errorMsg && $ctrl.results.length">
     <div>
-      <rf-search on-search="$ctrl.debouncedSearch(value)"
-              placeholder="Search for teams"
-              auto-focus="true"
-              disabled="$ctrl.fetching || !$ctrl.teams.length"
-      ></rf-search>
       <rf-pagination-count
         start-index="$ctrl.pagination.startingItem"
         end-index="$ctrl.pagination.endingItem"
@@ -15,7 +10,7 @@
     </div>
     <div class="actions-right">
       <button type="button" class="btn btn-primary"
-              ng-click="$ctrl.newTeamModal()" ng-disabled="$ctrl.fetching">
+              ng-click="$ctrl.newTeamModal()" ng-disabled="$ctrl.loading">
         Create Team
       </button>
     </div>
@@ -23,7 +18,7 @@
   <rf-call-to-action-item
     title="No teams have been formed yet"
     class="panel panel-off-white"
-    ng-if="!$ctrl.teams.length && !$ctrl.fetching">
+    ng-if="!$ctrl.results.length && !$ctrl.loading">
     <p class="pb-25">
       The {{$ctrl.organization.name}} organization does not have any teams yet.
       You can use teams to organize users and make sharing common data even easier.
@@ -36,9 +31,9 @@
       Create Team
     </button>
   </rf-call-to-action-item>
-  <table class="admin-table admin-team-table" ng-if="!$ctrl.fetching && $ctrl.teams.length">
+  <table class="admin-table admin-team-table" ng-if="!$ctrl.loading && $ctrl.results.length">
     <tbody>
-      <tr ng-repeat="team in $ctrl.teams track by team.id">
+      <tr ng-repeat="team in $ctrl.results track by team.id">
         <td class="name">
           <div ng-if="$ctrl.editTeamId !== team.id">
             <a class="font-600"
@@ -97,22 +92,12 @@
       </tr>
     </tbody>
   </table>
-  <div class="table-loading" ng-if="$ctrl.fetching">
-    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
+  <div class="table-loading" ng-if="$ctrl.loading">
+    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.loading}"></span>
   </div>
-  <!-- Pagination -->
-  <div class="list-group text-center"
-        ng-show="!$ctrl.loading && $ctrl.lastTeamResult && $ctrl.pagination.show && !$ctrl.errorMsg">
-    <ul uib-pagination
-        items-per-page="$ctrl.lastTeamResult.pageSize"
-        total-items="$ctrl.pagination.count"
-        ng-model="$ctrl.currentPage"
-        max-size="4"
-        rotate="true"
-        boundary-link-numbers="true"
-        force-ellipses="true"
-        ng-change="$ctrl.fetchTeams($ctrl.currentPage, $ctrl.search)">
-    </ul>
-  </div>
-  <!-- Pagination -->
+  <rf-pagination-controls
+    pagination="$ctrl.pagination"
+    is-loading="$ctrl.loading"
+    on-change="$ctrl.fetchPage(value)"
+  ></rf-pagination-controls>
 </div>

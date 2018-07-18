@@ -1,3 +1,13 @@
+<div class="object-list-actions">
+  <div>
+    <rf-pagination-count
+      start-index="$ctrl.pagination.startingItem"
+      end-index="$ctrl.pagination.endingItem"
+      total="$ctrl.pagination.count"
+      item-name="projects"
+    ></rf-pagination-count>
+  </div>
+</div>
 <div class="row content stack-sm">
   <div class="column-8">
     <rf-call-to-action-item
@@ -9,9 +19,9 @@
         Projects shared with this organization will be accessible to all members of this team.
       </p>
     </rf-call-to-action-item>
-    <div ng-if="!$ctrl.loading && $ctrl.projects.length" class="row stack-xs">
+    <div ng-if="!$ctrl.loading && $ctrl.results.length" class="row stack-xs">
       <div class="column-6 flex-display"
-           ng-repeat="project in $ctrl.projects"
+           ng-repeat="project in $ctrl.results"
       >
         <rf-project-item
             class="panel panel-off-white project-item"
@@ -20,6 +30,11 @@
         </rf-project-item>
       </div>
     </div>
+    <rf-pagination-controls
+      pagination="$ctrl.pagination"
+      is-loading="$ctrl.loading"
+      on-change="$ctrl.fetchPage(value)"
+    ></rf-pagination-controls>
   </div>
   <div class="column spacer"></div>
   <div class="column-3">

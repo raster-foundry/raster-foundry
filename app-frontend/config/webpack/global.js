@@ -218,6 +218,12 @@ module.exports = function (_path) {
                     'expose?loam'
                 ]
             }, {
+                test: /node_modules[\\\/]auth0-js[\\\/].*\.js$/,
+                loaders: ['transform-loader/cacheable?brfs',
+                          'transform-loader/cacheable?packageify',
+                          'babel-loader?presets[]=latest'
+                         ]
+            }, {
                 test: /node_modules[\\\/]auth0-lock[\\\/].*\.js$/,
                 loaders: ['transform-loader/cacheable?brfs',
                           'transform-loader/cacheable?packageify']
@@ -230,8 +236,12 @@ module.exports = function (_path) {
             }]
         },
 
-        // post css
-        postcss: [autoprefixer({browsers: ['last 5 versions']})],
+        // post css.
+        // TODO This should be
+        // ['>0.25%', 'not ie 11', 'not op_mini all']
+        // see https://jamie.build/last-2-versions
+        // this doesn't seem to be compatible with the loader version that we're using
+        postcss: [autoprefixer({browsers: ['last 2 versions']})],
 
         imageWebpackLoader: {
             pngquant: {

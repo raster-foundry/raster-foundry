@@ -195,7 +195,7 @@ export default (app) => {
             const nonce = this.randomString(35);
             this.localStorage.set('nonce', nonce);
             // eslint-disable-next-line
-            const tentantUrl = `https://${this.APP_CONFIG.auth0Domain}/authorize/?client_id=${clientId}&response_type=code&scope=openid offline_access&redirect_uri=${this.getBaseURL()}/settings/tokens/api&connection=${connection}&nonce=${nonce}&audience=https://${this.APP_CONFIG.auth0Domain}/api/v2/&device=${name}`;
+            const tentantUrl = `https://${this.APP_CONFIG.auth0Domain}/authorize/?client_id=${clientId}&response_type=code&scope=openid offline_access&redirect_uri=${this.getBaseURL()}/user/me/settings/api-tokens&connection=${connection}&nonce=${nonce}&audience=https://${this.APP_CONFIG.auth0Domain}/api/v2/&device=${name}`;
             window.location = tentantUrl;
         }
 
@@ -468,7 +468,7 @@ export default (app) => {
             const ids = [].concat(groupIds || []);
             return this.user &&
                 this.user.isSuperuser ||
-                this.userRoles.find(r => {
+                !!this.userRoles.find(r => {
                     return r.groupRole === 'ADMIN' &&
                         ids.includes(r.groupId) &&
                         r.membershipStatus === 'APPROVED';

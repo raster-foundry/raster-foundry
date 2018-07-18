@@ -4,12 +4,12 @@
       {{$ctrl.errorMsg}}
     </p>
   </div>
-  <div class="admin-list-actions" ng-if="!$ctrl.errorMsg && $ctrl.users.length">
+  <div class="admin-list-actions" ng-if="!$ctrl.errorMsg && $ctrl.results.length">
     <div>
-      <rf-search on-search="$ctrl.debouncedSearch(value)"
+      <rf-search on-search="$ctrl.onSearch(value)"
                  placeholder="Search for users"
                  auto-focus="true"
-                 disabled="$ctrl.fetching || !$ctrl.users.length"
+                 disabled="$ctrl.loading || !$ctrl.results.length"
       ></rf-search>
       <rf-pagination-count
         start-index="$ctrl.pagination.startingItem"
@@ -21,7 +21,7 @@
     <div class="actions-right">
       <button type="button" class="btn btn-primary"
               ng-click="$ctrl.addUserModal()"
-              ng-disabled="$ctrl.fetching">
+              ng-disabled="$ctrl.loading">
         Add Users
       </button>
     </div>
@@ -29,7 +29,7 @@
   <rf-call-to-action-item
     title="No users are in this organization yet"
     class="panel panel-off-white"
-    ng-if="!$ctrl.users.length && !$ctrl.fetching">
+    ng-if="!$ctrl.results.length && !$ctrl.loading">
     <p class="pb-25">
       The {{$ctrl.organization.name}} organization does not have any users yet.
       When it does, they'll be shown here.
@@ -41,9 +41,9 @@
       Add Users
     </button>
   </rf-call-to-action-item>
-  <table class="admin-table admin-org-user-table" ng-if="!$ctrl.fetching && $ctrl.users.length">
+  <table class="admin-table admin-org-user-table" ng-if="!$ctrl.loading && $ctrl.results.length">
     <tbody>
-      <tr ng-repeat="user in $ctrl.users track by $index">
+      <tr ng-repeat="user in $ctrl.results track by $index">
         <td class="username">
           <div class="avatar user-avatar image-placeholder" ng-if="!user.profileImageUri"></div>
           <div ng-if="user.profileImageUri">
@@ -60,7 +60,7 @@
             {{$ctrl.getUserGroupRoleLabel(user)}}
         </td>
         <td class="actions">
-          <rf-dropdown data-options="user.options" ng-if="user.showOptions && user.membershipStatus = 'APPROVED'">
+          <rf-dropdown data-options="user.options" ng-if="user.showOptions && user.membershipStatus === 'APPROVED'">
             <span class="icon-caret-down h4"></span>
           </rf-dropdown>
           <div class="btn-group"
@@ -74,7 +74,7 @@
               Approve
             </button>
           </div>
-          <button type="button" class="btn btn-light btn-small"
+          <button type="button" class="btn btn-light btn-small btn-nowrap"
                   ng-click="$ctrl.updateUserMembershipStatus(user, false)"
                   ng-if="user.showOptions && user.membershipStatus === 'INVITED'">
             Cancel Invitation
@@ -83,22 +83,12 @@
       </tr>
     </tbody>
   </table>
-  <div class="table-loading" ng-if="$ctrl.fetching">
-    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
+  <div class="table-loading" ng-if="$ctrl.loading">
+    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.loading}"></span>
   </div>
-  <!-- Pagination -->
-  <div class="list-group text-center"
-        ng-show="!$ctrl.loading && $ctrl.lastUserResult && $ctrl.pagination.show && !$ctrl.errorMsg">
-    <ul uib-pagination
-        items-per-page="$ctrl.lastUserResult.pageSize"
-        total-items="$ctrl.pagination.count"
-        ng-model="$ctrl.currentPage"
-        max-size="4"
-        rotate="true"
-        boundary-link-numbers="true"
-        force-ellipses="true"
-        ng-change="$ctrl.fetchUsers($ctrl.currentPage, $ctrl.search)">
-    </ul>
-  </div>
-  <!-- Pagination -->
+  <rf-pagination-controls
+    pagination="$ctrl.pagination"
+    is-loading="$ctrl.loading"
+    on-change="$ctrl.fetchPage(value)"
+  ></rf-pagination-controls>
 </div>

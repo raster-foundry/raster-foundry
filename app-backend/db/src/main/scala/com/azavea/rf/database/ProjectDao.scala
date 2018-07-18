@@ -63,6 +63,13 @@ object ProjectDao extends Dao[Project] {
       .option
   }
 
+  def isProjectPublic(projectId: UUID): ConnectionIO[Boolean] = {
+    this.query
+      .filter(projectId)
+      .filter(fr"visibility = 'PUBLIC'")
+      .exists
+  }
+
   def insertProject(newProject: Project.Create, user: User): ConnectionIO[Project] = {
     val id = UUID.randomUUID()
     val now = new Timestamp((new java.util.Date()).getTime())

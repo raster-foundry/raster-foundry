@@ -152,4 +152,9 @@ trait PropTestHelpers {
       case GroupType.Team => ugrCreate.copy(groupId = team.id, userId = user.id)
     }
   }
+
+  def fixTeamName(teamCreate: Team.Create, searchParams: SearchQueryParameters): Team.Create = searchParams.search match {
+    case Some(teamName) if teamName.length != 0 => teamCreate.copy(name = teamName)
+    case _ => teamCreate
+  }
 }

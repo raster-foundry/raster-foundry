@@ -363,5 +363,9 @@ case class OrganizationQueryParameters(
 case class SceneThumbnailQueryParameters(
   width: Option[Int],
   height: Option[Int],
-  token: String
+  token: String,
+  red: Option[Int],
+  green: Option[Int],
+  blue: Option[Int],
+  floor: Option[Int]
 )

@@ -3,88 +3,58 @@ import _ from 'lodash';
 
 class TeamUsersController {
     constructor(
-      $scope,
-      teamService, modalService, authService,
+      $scope, $stateParams,
+      teamService, modalService, authService, paginationService,
       platform, organization, team
     ) {
         'ngInject';
-        this.$scope = $scope;
-
-        this.teamService = teamService;
-        this.modalService = modalService;
-        this.authService = authService;
-        this.platform = platform;
-        this.organization = organization;
-        this.team = team;
-        this.searchTerm = false;
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
-        this.platformId = this.organization.platformId;
-
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
-
+        this.loading = false;
+        this.searchTerm = '';
+        this.onSearch = this.paginationService.buildPagedSearch(this);
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
             this.platform.id,
             this.organization.id,
             this.team.id
         ]);
 
-        this.fetchUsers(1, '');
+        this.fetchPage();
     }
 
     updateUserGroupRole(user) {
         return this.teamService.setUserRole(
-            this.organization.platformId,
+            this.platform.id,
             this.organization.id,
             this.team.id,
             user
         ).catch(() => {
-            this.fetchUsers(this.pagination.currentPage, this.search);
+            this.fetchPage(this.pagination.currentPage);
         });
     }
 
-    onSearch(search) {
-        // eslint-disable-next-line
-        this.fetchUsers(undefined, search);
-    }
-
-    updatePagination(data) {
-        this.pagination = {
-            show: data.count > data.pageSize,
-            count: data.count,
-            currentPage: data.page + 1,
-            startingItem: data.page * data.pageSize + 1,
-            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious
-        };
-    }
-
-    fetchUsers(page = 1, search) {
-        this.fetching = true;
-        this.searchTerm = search;
+    fetchPage(page = this.$stateParams.page || 1) {
+        this.loading = true;
         this.teamService.getMembers(
-            this.platformId,
+            this.platform.id,
             this.organization.id,
             this.team.id,
             page - 1,
-            search && search.length ? search : null
-        ).then((response) => {
-            this.fetching = false;
-            this.updatePagination(response);
-            this.lastUserResult = response;
-            this.users = response.results;
+            this.searchTerm
+        ).then(paginatedResponse => {
+            this.results = paginatedResponse.results;
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page);
             this.buildOptions();
+        }).finally(() => {
+            this.loading = false;
         });
     }
 
     buildOptions() {
-        this.users.forEach(user => Object.assign(user, {
+        this.results.forEach(user => Object.assign(user, {
             options: {
                 items: this.itemsForUser(user)
             },
@@ -137,13 +107,13 @@ class TeamUsersController {
         this.modalService.open({
             component: 'rfAddUserModal',
             resolve: {
-                platformId: () => this.platformId,
+                platformId: () => this.platform.id,
                 organizationId: () => this.organization.id,
                 teamId: () => this.team.id,
                 groupType: () => 'team'
             }
         }).result.then(() => {
-            this.fetchUsers(1, this.search);
+            this.fetchPage();
         });
     }
 
@@ -159,12 +129,12 @@ class TeamUsersController {
 
         modal.result.then(() => {
             this.teamService.removeUser(
-                this.platformId,
+                this.platform.id,
                 this.organization.id,
                 this.team.id,
                 user.id
             ).then(() => {
-                this.fetchUsers(this.pagination.currentPage, this.search);
+                this.fetchPage(this.pagination.currentPage);
             });
         });
     }
@@ -183,27 +153,27 @@ class TeamUsersController {
     updateUserMembershipStatus(user, isApproved) {
         if (isApproved) {
             this.teamService.setUserRole(
-                this.organization.platformId,
+                this.platform.id,
                 this.organization.id,
                 this.team.id,
                 user
             ).then(resp => {
-                this.users.forEach(thisUser =>{
+                this.results.forEach(thisUser =>{
                     if (thisUser.id === resp.userId) {
                         thisUser.membershipStatus = resp.membershipStatus;
                     }
                 });
-                this.fetchUsers(1, '');
+                this.fetchPage(this.pagination.currentPage, '');
             });
         } else {
             this.teamService.removeUser(
-                this.organization.platformId,
+                this.platform.id,
                 this.organization.id,
                 this.team.id,
                 user.id
             ).then(resp => {
-                _.remove(this.users, thisUser => thisUser.id === resp[0].userId);
-                this.fetchUsers(1, '');
+                _.remove(this.results, thisUser => thisUser.id === resp[0].userId);
+                this.fetchPage(this.pagination.currentPage);
             });
         }
     }

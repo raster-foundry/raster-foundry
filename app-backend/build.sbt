@@ -80,6 +80,7 @@ lazy val apiSettings = commonSettings ++ Seq(
   assemblyMergeStrategy in assembly := {
     case "reference.conf" => MergeStrategy.concat
     case "application.conf" => MergeStrategy.concat
+    case n if n.startsWith("META-INF/services") => MergeStrategy.concat
     case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") => MergeStrategy.discard
     case "META-INF/MANIFEST.MF" => MergeStrategy.discard
     case PathList("META-INF", "aop.xml") => aopMerge
@@ -269,6 +270,13 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.auth0,
       Dependencies.catsEffect,
       Dependencies.scalaCsv
+    )
+  })
+  .settings({
+    dependencyOverrides ++= Seq(
+      "com.fasterxml.jackson.core" % "jackson-core" % "2.9.2",
+      "com.fasterxml.jackson.core" % "jackson-databind" % "2.9.2",
+      "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.9.2"
     )
   })
   .settings(assemblyShadeRules in assembly := Seq(

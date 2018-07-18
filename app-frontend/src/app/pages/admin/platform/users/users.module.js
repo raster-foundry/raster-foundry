@@ -4,78 +4,39 @@ import _ from 'lodash';
 class PlatformUsersController {
     constructor(
         $scope, $stateParams, $q,
-        modalService, platformService, authService,
+        modalService, platformService, authService, paginationService,
         platform
     ) {
         'ngInject';
-        this.$scope = $scope;
-        this.$stateParams = $stateParams;
-        this.$q = $q;
-
-        this.modalService = modalService;
-        this.platformService = platformService;
-        this.authService = authService;
-
-        this.platform = platform;
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
+        this.searchTerm = '';
+        this.loading = false;
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
-        this.debouncedSearch = _.debounce(
-            this.onSearch.bind(this),
-            500,
-            {leading: false, trailing: true}
-        );
-        this.fetchUsers(1, '');
+        this.onSearch = this.paginationService.buildPagedSearch(this);
+        this.fetchPage();
     }
 
-    onSearch(search) {
-        // eslint-disable-next-line
-        this.fetchUsers(undefined, search);
-    }
-
-    updateUserGroupRole(user) {
-        return this.platformService.setUserRole(
-            this.platform.id,
-            user
-        ).catch(() => {
-            this.fetchUsers(this.pagination.currentPage, this.search);
-        });
-    }
-
-    updatePagination(data) {
-        this.pagination = {
-            show: data.count > data.pageSize,
-            count: data.count,
-            currentPage: data.page + 1,
-            startingItem: data.page * data.pageSize + 1,
-            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious
-        };
-    }
-
-    fetchUsers(page = 1, search) {
-        let platformId = this.$stateParams.platformId;
-        this.fetching = true;
+    fetchPage(page = this.$stateParams.page || 1) {
+        this.loading = true;
         this.platformService.getMembers(
-            platformId,
+            this.platform.id,
             page - 1,
-            search && search.length ? search : null
-        ).then((response) => {
-            this.fetching = false;
-            this.updatePagination(response);
-            this.lastUserResult = response;
-            this.users = response.results;
+            this.searchTerm
+        ).then(paginatedResponse => {
+            this.results = paginatedResponse.results;
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page);
             this.buildOptions();
-        }, (error) => {
-            this.fetching = false;
-            this.errrorMsg = `${error.data}. Please contact `;
+        }).finally(() => {
+            this.loading = false;
         });
     }
 
     buildOptions() {
-        this.users.forEach(user => Object.assign(user, {
+        this.results.forEach(user => Object.assign(user, {
             options: {
                 items: this.itemsForUser(user)
             },
@@ -112,6 +73,15 @@ class PlatformUsersController {
         }
         return options;
         /* eslint-enable */
+    }
+
+    updateUserGroupRole(user) {
+        return this.platformService.setUserRole(
+            this.platform.id,
+            user
+        ).catch(() => {
+            this.fetchPage(this.pagination.currentPage);
+        });
     }
 
     newUserModal() {

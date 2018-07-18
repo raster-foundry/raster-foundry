@@ -1,0 +1,13 @@
+<div class="list-group text-center"
+      ng-show="!$ctrl.isLoading && $ctrl.pagination.show">
+  <ul uib-pagination
+      items-per-page="$ctrl.pagination.pageSize"
+      total-items="$ctrl.pagination.count"
+      ng-model="$ctrl.pagination.currentPage"
+      max-size="4"
+      rotate="true"
+      boundary-link-numbers="true"
+      force-ellipses="true"
+      ng-change="$ctrl.handleOnChange($ctrl.pagination.currentPage)">
+  </ul>
+</div>

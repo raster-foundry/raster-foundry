@@ -69,7 +69,7 @@ export default (app) => {
             return this.auth0Token.create({
                 'grant_type': 'authorization_code',
                 'client_id': this.APP_CONFIG.clientId,
-                'redirect_uri': `${this.authService.getBaseURL()}/settings/tokens/api`,
+                'redirect_uri': `${this.authService.getBaseURL()}/user/me/settings/api-tokens`,
                 code
             }).$promise;
         }

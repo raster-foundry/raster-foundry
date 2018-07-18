@@ -478,6 +478,9 @@ object Generators extends ArbitraryInstances {
       userCreate <- userCreateGen
     } yield { (userCreate, orgCreate, platform) }
 
+  private def searchQueryParametersGen: Gen[SearchQueryParameters] = for {
+    searchName <- possiblyEmptyStringGen
+  } yield { SearchQueryParameters(Some(searchName)) }
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary { credentialGen }
@@ -561,5 +564,7 @@ object Generators extends ArbitraryInstances {
     }
 
     implicit def arbUserVisibility : Arbitrary[UserVisibility] = Arbitrary { userVisibilityGen }
+
+    implicit def arbSearchQueryParameters : Arbitrary[SearchQueryParameters] = Arbitrary { searchQueryParametersGen }
   }
 }

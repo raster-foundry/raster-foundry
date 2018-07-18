@@ -1,17 +1,25 @@
 <div class="admin-list-content column-stretch">
   <div class="admin-list-actions">
+    <div>
+      <rf-pagination-count
+        start-index="$ctrl.pagination.startingItem"
+        end-index="$ctrl.pagination.endingItem"
+        total="$ctrl.pagination.count"
+        item-name="organizations"
+      ></rf-pagination-count>
+    </div>
     <div class="actions-right">
       <button type="button" class="btn btn-primary"
               ng-if="$ctrl.isEffectiveAdmin"
               ng-click="$ctrl.newOrgModal()"
-              ng-disabled="$ctrl.fetching">
+              ng-disabled="$ctrl.loading">
         New Organization
       </button>
     </div>
   </div>
-  <table class="admin-table admin-platform-org-table" ng-if="!$ctrl.fetching">
+  <table class="admin-table admin-platform-org-table" ng-if="!$ctrl.loading">
     <tbody>
-      <tr ng-repeat="organization in $ctrl.organizations track by $index">
+      <tr ng-repeat="organization in $ctrl.results track by $index">
         <td class="name">
             <div class="avatar user-avatar image-placeholder" ng-if="!organization.logoUri"></div>
             <div ng-if="organization.logoUri">
@@ -72,23 +80,12 @@
         </tr>
       </tbody>
     </table>
-  <div class="table-loading" ng-if="$ctrl.fetching">
-    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetching}"></span>
+  <div class="table-loading" ng-if="$ctrl.loading">
+    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.loading}"></span>
   </div>
-
-  <!-- Pagination -->
-  <div class="list-group text-center"
-       ng-show="!$ctrl.loading && $ctrl.lastOrgResult && $ctrl.pagination.show && !$ctrl.errorMsg">
-    <ul uib-pagination
-        items-per-page="$ctrl.lastOrgResult.pageSize"
-        total-items="$ctrl.pagination.count"
-        ng-model="$ctrl.currentPage"
-        max-size="4"
-        rotate="true"
-        boundary-link-numbers="true"
-        force-ellipses="true"
-        ng-change="$ctrl.fetchOrganizations($ctrl.currentPage, $ctrl.search)">
-    </ul>
-  </div>
-  <!-- Pagination -->
+  <rf-pagination-controls
+    pagination="$ctrl.pagination"
+    is-loading="$ctrl.loading"
+    on-change="$ctrl.fetchPage(value)"
+  ></rf-pagination-controls>
 </div>

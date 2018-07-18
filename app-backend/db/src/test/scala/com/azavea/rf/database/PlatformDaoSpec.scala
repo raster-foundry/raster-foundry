@@ -1,6 +1,6 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.datamodel.{Organization, Platform, User, GroupRole, GroupType, Scene, Project, UserGroupRole}
+import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.Generators.Implicits._
 import com.azavea.rf.database.Implicits._
 import doobie._
@@ -272,6 +272,75 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
           assert(pU.email == dbUser.email, "; user email don't match")
           assert(pU.emailNotifications == dbUser.emailNotifications, "; user email notification don't match")
           true
+        }
+      }
+    }
+  }
+
+  test("list teams a platform user belongs to or can see due to organization memberships") {
+    check {
+      forAll{
+        (
+          orgCreate1: Organization.Create,
+          orgCreate2: Organization.Create,
+          orgCreate3: Organization.Create,
+          teamCreate1: Team.Create,
+          teamCreate2: Team.Create,
+          teamCreate3: Team.Create,
+          userCreate: User.Create,
+          teamNamePartial: SearchQueryParameters
+        ) => {
+          val createAndGetTeamsIO =  for {
+            // Team# is in Org#
+            // User belongs to Org1 and Team1
+            orgUserInserted1 <- insertUserAndOrg(userCreate, orgCreate1, true)
+            (org1, user) = orgUserInserted1
+            teamInsert1 <- TeamDao.create(fixupTeam(
+              fixTeamName(teamCreate1, teamNamePartial), org1, user))
+            _ <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                user.id,
+                GroupType.Team,
+                teamInsert1.id,
+                GroupRole.Member
+              ).toUserGroupRole(user, MembershipStatus.Approved))
+
+            // User belongs to Org2 but not Team2
+            org2 <- OrganizationDao.createOrganization(orgCreate2)
+            _ <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                user.id,
+                GroupType.Organization,
+                org2.id,
+                GroupRole.Member
+              ).toUserGroupRole(user, MembershipStatus.Approved))
+            teamInsert2 <- TeamDao.create(fixupTeam(
+              fixTeamName(teamCreate2, teamNamePartial), org2, user))
+
+            // User belongs to Team3 but not Org3
+            org3 <- OrganizationDao.createOrganization(orgCreate3)
+            teamInsert3 <- TeamDao.create(fixupTeam(teamCreate3, org3, user))
+            _ <- UserGroupRoleDao.create(
+              UserGroupRole.Create(
+                user.id,
+                GroupType.Team,
+                teamInsert3.id,
+                GroupRole.Member
+              ).toUserGroupRole(user, MembershipStatus.Approved))
+
+            searchedTeams <- PlatformDao.listPlatformUserTeams(user, teamNamePartial)
+
+          } yield (teamInsert1, teamInsert2, teamInsert3, searchedTeams)
+
+          val (teamInsert1, teamInsert2, teamInsert3, searchedTeams) = createAndGetTeamsIO.transact(xa).unsafeRunSync
+
+          val teams = List(teamInsert1, teamInsert2, teamInsert3)
+
+          teamNamePartial.search match {
+            case Some(teamName) if teamName.length != 0 =>
+              teams.filter(_.name.toUpperCase.contains(teamName.toUpperCase)).length == searchedTeams.length
+            case _ => searchedTeams.length == 3
+          }
         }
       }
     }
