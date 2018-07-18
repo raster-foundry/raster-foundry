@@ -108,9 +108,11 @@ export default class ProjectItemController {
                     'The project will be permanently deleted,'
                     + ' but scenes will be unaffected.',
                 content: () =>
-                    '<div class="text-center color-danger">'
-                    + 'You are about to delete the project. This action is not reversible.'
-                    + ' Are you sure you wish to continue?'
+                    '<div class="color-danger">'
+                    + 'You are about to delete the project. '
+                    + 'Annotations, exports, and analyses that use this project '
+                    + 'will not longer be accessible. This action is not reversible. '
+                    + 'Are you sure you wish to continue?'
                     + '</div>',
                 confirmText: () => 'Delete Project',
                 cancelText: () => 'Cancel'

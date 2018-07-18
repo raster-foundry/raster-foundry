@@ -290,7 +290,7 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
           userCreate: User.Create,
           teamNamePartial: SearchQueryParameters
         ) => {
-          val creatAndGetTeamsIO =  for {
+          val createAndGetTeamsIO =  for {
             // Team# is in Org#
             // User belongs to Org1 and Team1
             orgUserInserted1 <- insertUserAndOrg(userCreate, orgCreate1, true)
@@ -332,7 +332,7 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
 
           } yield (teamInsert1, teamInsert2, teamInsert3, searchedTeams)
 
-          val (teamInsert1, teamInsert2, teamInsert3, searchedTeams) = creatAndGetTeamsIO.transact(xa).unsafeRunSync
+          val (teamInsert1, teamInsert2, teamInsert3, searchedTeams) = createAndGetTeamsIO.transact(xa).unsafeRunSync
 
           val teams = List(teamInsert1, teamInsert2, teamInsert3)
 
