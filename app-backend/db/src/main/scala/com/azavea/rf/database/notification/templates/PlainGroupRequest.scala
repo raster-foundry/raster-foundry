@@ -1,13 +1,12 @@
 package com.azavea.rf.database.notification.templates
 
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
-
-import doobie.ConnectionIO
-
 import java.util.UUID
 
-case class PlainGroupRequest(
+import com.azavea.rf.database._
+import com.azavea.rf.datamodel._
+import doobie.ConnectionIO
+
+final case class PlainGroupRequest(
   groupId: UUID,
   groupType: GroupType,
   subjectId: String,

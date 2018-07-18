@@ -1,27 +1,24 @@
 package com.azavea.rf.batch.aoi
 
-import com.azavea.rf.batch.Job
-import java.sql.Timestamp
-import java.time.ZonedDateTime
+import java.util.UUID
 
 import cats.effect.IO
 import cats.syntax.option._
-import doobie.{ConnectionIO, Fragment, Fragments}
+import com.azavea.rf.batch.Job
+import com.azavea.rf.common.AWSBatch
+import com.azavea.rf.database.util.RFTransactor
+import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.util.RFTransactor
-import java.util.UUID
+import doobie.{ConnectionIO, Fragment, Fragments}
 
-import com.azavea.rf.common.AWSBatch
-
-case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job with AWSBatch {
+final case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job with AWSBatch {
   val name = FindAOIProjects.name
 
-  def run: Unit = {
+  def run(): Unit = {
     def timeToEpoch(timeFunc: String): Fragment = Fragment.const(s"extract(epoch from ${timeFunc})")
+
     val aoiProjectsToUpdate: ConnectionIO[List[UUID]] = {
 
 
@@ -56,10 +53,13 @@ case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job with AWS
   }
 }
 
-object FindAOIProjects {
+object FindAOIProjects extends LazyLogging {
   val name = "find_aoi_projects"
 
   def main(args: Array[String]): Unit = {
+    if (args.length > 0) {
+      logger.warn(s"Ignoring arguments to FindAOIProjects: ${args}")
+    }
     implicit val xa = RFTransactor.xa
     val job = FindAOIProjects()
     job.run

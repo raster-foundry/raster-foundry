@@ -1,23 +1,24 @@
 package com.azavea.rf.batch.dropbox
 
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataOutputStream, InputStream}
+
 import geotrellis.raster.CellGrid
 import geotrellis.raster.io.geotiff.GeoTiff
 import geotrellis.raster.io.geotiff.writer.GeoTiffWriter
-import geotrellis.spark.io.hadoop._
 import geotrellis.util.MethodExtensions
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.spark.SparkContext
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataOutputStream, InputStream}
-
 trait Implicits {
+
   trait HadoopRasterMethods[T] extends MethodExtensions[T] {
     def write(path: Path)(implicit sc: SparkContext): Unit = write(path, sc.hadoopConfiguration)
+
     def write(path: Path, conf: Configuration): Unit
   }
 
+  @SuppressWarnings(Array("ClassNames"))
   implicit class withGeoTiffWriteMethods[T <: CellGrid](val self: GeoTiff[T]) {
     def dropboxWrite(save: InputStream => String): String = {
       val bos = new ByteArrayOutputStream()
@@ -34,4 +35,5 @@ trait Implicits {
       }
     }
   }
+
 }

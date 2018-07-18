@@ -23,10 +23,10 @@ case class InputDefinition(
 
 object InputDefinition {
   implicit val dec: Decoder[InputDefinition] = Decoder.instance(c =>
-      (c.downField("resolution").as[Int]
-       |@| c.downField("style").as[SimpleInput].map(Left(_))
-         .orElse(c.downField("style").as[ASTInput].map(Right(_)))
-    ).map(InputDefinition.apply)
+    (c.downField("resolution").as[Int]
+      |@| c.downField("style").as[SimpleInput].map(Left(_))
+      .orElse(c.downField("style").as[ASTInput].map(Right(_)))
+      ).map(InputDefinition.apply)
   )
 
   implicit val eitherEnc: Encoder[Either[SimpleInput, ASTInput]] = new Encoder[Either[SimpleInput, ASTInput]] {
