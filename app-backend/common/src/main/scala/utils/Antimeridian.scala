@@ -3,17 +3,16 @@ package com.azavea.rf.common.utils
 import geotrellis.proj4._
 import geotrellis.slick.Projected
 import geotrellis.vector._
+import geotrellis.vector.io._
 
 object AntimeridianUtils {
   def crossesAntimeridian(multi: MultiPolygon) = {
     val latLngFootprint = multi.reproject(WebMercator, LatLng)
     val antiMeridian = Projected(Line(Point(180, -90), Point(180, 90)), 4326)
-    val longitudeShifted = latLngFootprint.vertices.map {
-      case p: Point if p.y < 0 =>
-        Point(p.x, p.y + 360)
-      case p: Point if p.y >= 0 =>
-        Point(p.x, p.y)
-    }
+    val longitudeShifted = MultiPolygon(
+      latLngFootprint.polygons.map(
+        poly => Polygon(poly.vertices.map(shiftPoint(_, 0, 1, false, 360)))
+      ))
     longitudeShifted.intersects(antiMeridian)
   }
 
