@@ -1,12 +1,13 @@
 <configuration>
-    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>[%thread] %-5level - %msg%n</pattern>
+    </encoder>
+  </appender>
 
-    <root level="${APP_SERVER_LOG_LEVEL:-info}">
-        <appender-ref ref="stdout"/>
-    </root>
+  <logger name="com.azavea.rf" level="${RF_LOG_LEVEL:-INFO}"/>
 
+  <root level="INFO">
+    <appender-ref ref="STDOUT" />
+  </root>
 </configuration>
