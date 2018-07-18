@@ -290,7 +290,7 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
           userCreate: User.Create,
           teamNamePartial: SearchQueryParameters
         ) => {
-          val creatTeamsIO =  for {
+          val createAndGetTeamsIO =  for {
             // Team# is in Org#
             // User belongs to Org1 and Team1
             orgUserInserted1 <- insertUserAndOrg(userCreate, orgCreate1, true)
@@ -328,17 +328,18 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
                 GroupRole.Member
               ).toUserGroupRole(user, MembershipStatus.Approved))
 
-          } yield (teamInsert1, teamInsert2, teamInsert3, user)
+            searchedTeams <- PlatformDao.listPlatformUserTeams(user, teamNamePartial)
 
-          val filterTeamIO = creatTeamsIO flatMap {
-            case (teamInsert1: Team, teamInsert2: Team, teamInsert3: Team, user: User) =>
-              PlatformDao.listPlatformUserTeams(user, teamNamePartial)
-          }
-          val teams = filterTeamIO.transact(xa).unsafeRunSync
+          } yield (teamInsert1, teamInsert2, teamInsert3, searchedTeams)
+
+          val (teamInsert1, teamInsert2, teamInsert3, searchedTeams) = createAndGetTeamsIO.transact(xa).unsafeRunSync
+
+          val teams = List(teamInsert1, teamInsert2, teamInsert3)
 
           teamNamePartial.search match {
-            case Some(teamName) if teamName.length != 0 => teams.length == 2
-            case _ => teams.length == 3
+            case Some(teamName) if teamName.length != 0 =>
+              teams.filter(_.name.toUpperCase.contains(teamName.toUpperCase)).length == searchedTeams.length
+            case _ => searchedTeams.length == 3
           }
         }
       }
