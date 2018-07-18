@@ -15,7 +15,7 @@ import scala.collection.mutable
 import scala.collection.JavaConverters._
 import scala.annotation.tailrec
 
-case class S3(
+final case class S3(
   credentialsProviderChain: AWSCredentialsProvider = new DefaultAWSCredentialsProviderChain,
   region: Option[String] = None
 ) extends Serializable {
@@ -31,7 +31,7 @@ case class S3(
 
   /** Copy buckets */
   @tailrec
-  final def copyListing(bucket: String, destBucket: String, sourcePrefix: String, destPrefix: String, listing: ObjectListing): Unit = {
+  def copyListing(bucket: String, destBucket: String, sourcePrefix: String, destPrefix: String, listing: ObjectListing): Unit = {
     listing.getObjectSummaries.asScala.foreach { os =>
       val key = os.getKey
       client.copyObject(bucket, key, destBucket, key.replace(sourcePrefix, destPrefix))
@@ -96,6 +96,7 @@ case class S3(
   /** List the keys to files found within a given bucket.
     *  (copied from GeoTrellis codebase)
     */
+  @SuppressWarnings(Array("NullAssignment")) // copied from GeoTrellis so ignoring null assignment
   def listKeys(listObjectsRequest: ListObjectsRequest): Seq[String] = {
     var listing: ObjectListing = null
     val result = mutable.ListBuffer[String]()

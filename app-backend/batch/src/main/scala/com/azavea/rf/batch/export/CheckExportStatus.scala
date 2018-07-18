@@ -27,7 +27,7 @@ import scala.concurrent.duration._
 import scala.io.Source
 import scala.util._
 
-case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60.minutes, region: Option[String] = None)(implicit val xa: Transactor[IO]) extends Job {
+final case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60.minutes, region: Option[String] = None)(implicit val xa: Transactor[IO]) extends Job {
   val name = CreateExportDef.name
 
   /** Get S3 client per each call */
@@ -121,7 +121,8 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
     }
   }
 
-  def run: Unit = {
+  @SuppressWarnings(Array("CatchThrowable")) // need to catch everything and ensure actor system stops
+  def run(): Unit = {
     logger.info(s"Checking export ${exportId} process...")
     val json =
       try {

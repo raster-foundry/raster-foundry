@@ -23,7 +23,6 @@ import java.util.UUID
 import java.util.concurrent.Executors
 
 import cats.effect.{IO, Fiber}
-import cats.implicits._
 import com.azavea.rf.common.RollbarNotifier
 import doobie.{ConnectionIO, Fragment, Fragments}
 import doobie.implicits._
@@ -35,7 +34,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.{Failure, Success, Try}
 
-case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))(implicit val xa: Transactor[IO]) extends Job {
+final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))(implicit val xa: Transactor[IO]) extends Job {
 
   // To resolve an ambiguous implicit
   import doobie.free.connection.AsyncConnectionIO

@@ -7,7 +7,7 @@ import doobie.ConnectionIO
 
 import java.util.UUID
 
-case class PlainGroupRequest(
+final case class PlainGroupRequest(
   groupId: UUID,
   groupType: GroupType,
   subjectId: String,

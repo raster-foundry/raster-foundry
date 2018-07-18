@@ -27,6 +27,7 @@ package object batch {
     def cellSize: CellSize = CellSize(obj.extent.width / obj.cols, obj.extent.height / obj.rows)
   }
 
+  @SuppressWarnings(Array("ClassNames"))
   implicit class withRasterFoundryTilerKeyMethods(val self: (ProjectedExtent, Int))
       extends TilerKeyMethods[(ProjectedExtent, Int), (SpatialKey, Int)] {
     def extent = self._1.extent
@@ -39,12 +40,14 @@ package object batch {
   implicit val rfProjectedExtentIntComponent =
     Component[(ProjectedExtent, Int), ProjectedExtent](from => from._1, (from, to) => (to, from._2))
 
+  @SuppressWarnings(Array("ClassNames"))
   implicit class withMultibandTileSplitMethods(val self: MultibandTile) extends MultibandTileSplitMethods
 
   /**
     * Custom cache implemented to allow safe multithreading.
     * Can be removed after GeoTrellis 1.2 release.
     * */
+  @SuppressWarnings(Array("ClassNames"))
   implicit class withAttributeStoreMethods(that: AttributeStore) {
     def cacheReadSafe[T: JsonFormat](layerId: LayerId, attributeName: String)(implicit cache: Cache[(LayerId, String), Any]): T =
       cache.get(layerId -> attributeName, _ => that.read[T](layerId, attributeName)).asInstanceOf[T]

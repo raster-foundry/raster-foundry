@@ -22,7 +22,7 @@ import Fragments._
 import org.apache.commons.mail.Email
 import com.azavea.rf.database.util.RFTransactor
 
-case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) extends Job
+final case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) extends Job
   with RollbarNotifier {
 
   val name = NotifyIngestStatus.name
@@ -165,13 +165,13 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
       case (_, false) => logger.warn(email.platformNotSubscribedWarning(pO.platId.toString()))
     }
   }
-  def notifyConsumers(scene: Scene, ingestStatus: String) = {
+  def notifyConsumers(scene: Scene, ingestStatus: String): Unit = {
     logger.info("Notifying Consumers...")
 
     val consumerIdsO: List[String] = getSceneConsumers(sceneId).transact(xa).unsafeRunSync()
 
     consumerIdsO match {
-      case consumerIds: List[String] if consumerIds.length != 0 =>
+      case consumerIds: List[String] if consumerIds.nonEmpty =>
         val platformsWithConsumers = PlatformDao.getPlatUsersAndProjByConsumerAndSceneID(
           consumerIds, sceneId).transact(xa).unsafeRunSync()
         sendIngestStatusEmailToConsumers(platformsWithConsumers, scene, ingestStatus)
@@ -179,7 +179,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
     }
   }
 
-  def notifyOwners(scene: Scene, ingestStatus: String) = {
+  def notifyOwners(scene: Scene, ingestStatus: String): Unit = {
     logger.info("Notifying owner...")
 
     if (scene.owner == auth0Config.systemUser) {

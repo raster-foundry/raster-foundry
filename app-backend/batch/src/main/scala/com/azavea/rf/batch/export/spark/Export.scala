@@ -313,6 +313,7 @@ object Export extends SparkJob with Config with LazyLogging {
     *
     * @param args Arguments to be parsed by the tooling defined in [[CommandLine]]
     */
+  @SuppressWarnings(Array("CatchThrowable")) // need to ensure that status is written for errors
   def main(args: Array[String]): Unit = {
     implicit val xa = RFTransactor.xa
 

@@ -7,7 +7,7 @@ import doobie.ConnectionIO
 
 import java.util.UUID
 
-case class PlainGroupInvitation(
+final case class PlainGroupInvitation(
   groupId: UUID,
   groupType: GroupType,
   subjectId: String,

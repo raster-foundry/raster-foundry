@@ -16,12 +16,12 @@ trait Config {
   import Ficus._
   import ArbitraryTypeReader._
 
-  protected case class Landsat8Bands(
+  protected final case class Landsat8Bands(
     `15m`: List[Band.Create],
     `30m`: List[Band.Create]
   )
 
-  protected case class Landsat8(
+  protected final case class Landsat8(
     organization: String,
     bandLookup: Landsat8Bands,
     datasourceId: String,
@@ -36,7 +36,7 @@ trait Config {
     def datasourceUUID = UUID.fromString(datasourceId)
   }
 
-  protected case class ExportDef(
+  protected final case class ExportDef(
     awsRegion: Option[String],
     bucketName: String,
     awsDataproc: String,
@@ -46,7 +46,7 @@ trait Config {
     sparkMemory: String
   )
 
-  protected case class Sentinel2Bands(
+  protected final case class Sentinel2Bands(
     // 10m
     B02: Band.Create,
     B03: Band.Create,
@@ -65,7 +65,7 @@ trait Config {
     B10: Band.Create
   )
 
-  protected case class Sentinel2(
+  protected final case class Sentinel2(
     organization: String,
     bandLookup: Sentinel2Bands,
     datasourceId: String,
@@ -84,14 +84,14 @@ trait Config {
       }.headOption.flatten
   }
 
-  case class Dropbox(appKey: String, appSecret: String) {
+  final case class Dropbox(appKey: String, appSecret: String) {
     lazy val appInfo = new DbxAppInfo(appKey, appSecret)
     lazy val config  = new DbxRequestConfig("azavea/rf-dropbox-test")
 
     def client(accessToken: String) = new DbxClientV2(config, accessToken)
   }
 
-  case class Auth0(
+  final case class Auth0(
     clientId: String,
     clientSecret: String,
     systemUser: String,

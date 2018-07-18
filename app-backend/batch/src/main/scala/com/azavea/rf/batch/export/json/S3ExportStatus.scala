@@ -6,4 +6,4 @@ import io.circe.generic.JsonCodec
 import java.util.UUID
 
 @JsonCodec
-case class S3ExportStatus(exportId: UUID, exportStatus: ExportStatus)
+final case class S3ExportStatus(exportId: UUID, exportStatus: ExportStatus)

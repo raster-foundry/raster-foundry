@@ -20,6 +20,7 @@ import java.net._
 
 package object util extends LazyLogging {
   implicit class ConfigurationMethods(conf: Configuration) {
+    @SuppressWarnings(Array("NullParameter"))
     def isKeyUnset(key: String): Boolean = conf.get(key) == null
   }
 

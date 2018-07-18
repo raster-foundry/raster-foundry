@@ -6,7 +6,6 @@ import com.auth0.client.auth._
 import com.auth0.json.auth.TokenHolder
 import com.azavea.rf.batch.Job
 import com.azavea.rf.datamodel._
-import java.sql.Timestamp
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -39,7 +38,7 @@ import com.azavea.rf.database.util.RFTransactor
 import java.sql.Timestamp
 import java.time.Instant
 
-case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) extends Job with AWSBatch {
+final case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) extends Job with AWSBatch {
   val name = FindAOIProjects.name
 
   type LastChecked = Timestamp
@@ -113,7 +112,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
     }
   }
 
-  def run: Unit = {
+  def run(): Unit = {
     logger.info(s"Updating project ${projectId}")
     /** Fetch the project, AOI area, last checked time, start time, and AOI scene query parameters */
     def fetchBaseData: ConnectionIO[

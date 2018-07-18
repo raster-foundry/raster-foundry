@@ -22,7 +22,7 @@ import scala.util.{Failure, Success, Try}
 import scala.util.control.Breaks._
 
 @deprecated(message = "Use com.azavea.rf.batch.landsat8.airflow.ImportLandsat8C1 instead, as USGS changes LC8 storage rules: https://landsat.usgs.gov/landsat-collections", since = "https://github.com/azavea/raster-foundry/pull/1821")
-case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), threshold: Int = 10)(implicit val xa: Transactor[IO]) extends Job {
+final case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), threshold: Int = 10)(implicit val xa: Transactor[IO]) extends Job {
   val name = ImportLandsat8.name
 
   /** Get S3 client per each call */
@@ -248,7 +248,7 @@ case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), 
 //    }
 //  }.flatMap(identity)
 
-  def run: Unit = ???
+  def run(): Unit = ???
 //    logger.info("Importing scenes...")
 //    Users.getUserById(systemUser).flatMap { (userOpt) =>
 //      scenesFromCsv(

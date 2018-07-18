@@ -5,12 +5,13 @@ import java.net.URI
 import com.azavea.rf.batch.Job
 import com.azavea.rf.batch.util.S3
 
-case class S3Copy(source: URI, target: URI, region: Option[String] = None) extends Job {
+final case class S3Copy(source: URI, target: URI, region: Option[String] = None) extends Job {
   val name = S3Copy.name
 
   lazy val client = S3(region = region)
 
-  def run: Unit = try {
+  @SuppressWarnings(Array("CatchThrowable")) // need to ensure actor system stops and exit status set
+  def run(): Unit = try {
     logger.info(s"S3 copy from $source to $target started...")
     client.copyListing(
       source.getHost,

@@ -5,7 +5,7 @@ import java.net.URI
 import scala.util._
 
 object CommandLine {
-  case class Params(
+  final case class Params(
     jobDefinition: URI = new URI(""),
     statusURI: URI = new URI("")
   )

@@ -11,6 +11,7 @@ lazy val commonSettings = Seq(
   cancelable in Global := true,
   scapegoatVersion in ThisBuild := Version.scapegoat,
   scapegoatIgnoredFiles := Seq(".*/datamodel/.*"),
+  scapegoatDisabledInspections := Seq("PartialFunctionInsteadOfMatch"),
   scalaVersion in ThisBuild := Version.scala,
   scalacOptions := Seq(
     "-deprecation",

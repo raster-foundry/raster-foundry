@@ -13,12 +13,12 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.util._
 
-case class DropboxCopy(source: URI, target: URI, accessToken: String, region: Option[String] = None) extends Job {
+final case class DropboxCopy(source: URI, target: URI, accessToken: String, region: Option[String] = None) extends Job {
   val name: String = DropboxCopy.name
 
   lazy val s3Client = S3(region = region)
 
-  final def copyListing(is: (InputStream, String) => String): List[Future[String]] = {
+  def copyListing(is: (InputStream, String) => String): List[Future[String]] = {
     @tailrec
     def copy(listing: ObjectListing, accumulator: List[Future[String]]): List[Future[String]] = {
       def getObjects: List[Future[String]] =
@@ -52,7 +52,7 @@ case class DropboxCopy(source: URI, target: URI, accessToken: String, region: Op
     copy(s3Client.client.listObjects(listObjectsRequest), Nil)
   }
 
-  def run: Unit = {
+  def run(): Unit = {
     logger.info(s"Dropbox copy from $source to $target Started...")
     val client = dropboxConfig.client(accessToken)
 

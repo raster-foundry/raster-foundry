@@ -39,7 +39,7 @@ import com.azavea.rf.batch.util.conf.Config
 case class MetadataWithStartStop(start: Timestamp, end: Timestamp)
 
 object CommandLine {
-  case class Params(
+  final case class Params(
     path: String = "",
     testRun: Boolean = false,
     // Default will never be used because parameter is required

@@ -17,7 +17,7 @@ import java.net.{URI, URLDecoder}
   * @param dropboxCredential dropbox token
   */
 @JsonCodec
-case class OutputDefinition(
+final case class OutputDefinition(
   crs: Option[CRS],
   rasterSize: Option[Int],
   render: Option[Render],
