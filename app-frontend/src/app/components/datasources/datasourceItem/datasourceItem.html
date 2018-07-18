@@ -23,8 +23,17 @@
          ui-sref="imports.datasources.detail({ datasourceid: $ctrl.datasource.id })"
          ui-sref-opts="{inherit: false}"
          ng-if="!$ctrl.isSelectable">
-        View
+         <span class="sr-only">View</span>
+         <i class="icon-eye"></i>
       </a>
+      <button
+        type="button"
+        class="btn btn-small btn-danger"
+        ng-click="$ctrl.onOpenDatasourceDeleteModal()"
+        ng-if="$ctrl.isOwner">
+        <span class="sr-only">Delete</span>
+        <i class="icon-trash"></i>
+      </button>
     </div>
   </div>
 </div>

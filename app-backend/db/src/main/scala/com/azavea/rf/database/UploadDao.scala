@@ -73,4 +73,3 @@ object UploadDao extends Dao[Upload] {
      """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 }
-

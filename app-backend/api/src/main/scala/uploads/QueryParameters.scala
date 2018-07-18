@@ -10,7 +10,6 @@ import com.azavea.rf.api.utils.queryparams._
 trait UploadQueryParameterDirective extends QueryParametersCommon {
   val uploadQueryParams = parameters((
     'datasource.as[UUID].?,
-    'organization.as[UUID].?,
-    'uploadStatus.as[String].?
+    'uploadStatus.as(deserializerUploadStatus).?
   )).as(UploadQueryParameters.apply _)
 }

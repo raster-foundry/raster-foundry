@@ -12,14 +12,15 @@ const DatasourceItemComponent = {
 };
 
 class DatasourceItemController {
-    constructor($scope, $attrs, authService) {
+    constructor($rootScope, $scope, $attrs, authService, modalService) {
         'ngInject';
-        let id = authService.getProfile().sub;
-        this.isOwner = id === this.datasource.owner;
+        $rootScope.autoInject(this, arguments);
+    }
 
-
-        this.isSelectable = $attrs.hasOwnProperty('selectable');
-        $scope.$watch(
+    $onInit() {
+        this.isOwner = this.authService.getProfile().sub === this.datasource.owner;
+        this.isSelectable = this.$attrs.hasOwnProperty('selectable');
+        this.$scope.$watch(
             () => this.selected({project: this.project}),
             (selected) => {
                 this.selectedStatus = selected;
@@ -30,6 +31,16 @@ class DatasourceItemController {
     toggleSelected(event) {
         this.onSelect({project: this.project, selected: !this.selectedStatus});
         event.stopPropagation();
+    }
+
+    onOpenDatasourceDeleteModal() {
+        this.modalService.open({
+            component: 'rfDatasourceDeleteModal',
+            resolve: {
+                datasource: () => this.datasource
+            }
+        }).result.then(() => {
+        });
     }
 }
 
