@@ -1,17 +1,12 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-Vagrant.require_version ">= 1.8"
+Vagrant.require_version ">= 2.1"
 
-ANSIBLE_VERSION = "2.3.1.0"
+ANSIBLE_VERSION = "2.4.6.0"
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "ubuntu/trusty64"
-
-  # Wire up package caching:
-  if Vagrant.has_plugin?("vagrant-cachier")
-    config.cache.scope = :machine
-  end
+  config.vm.box = "bento/ubuntu-16.04"
 
   config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.synced_folder ".", "/opt/raster-foundry", type: "rsync",
@@ -61,25 +56,26 @@ Vagrant.configure(2) do |config|
   rf_artifacts_bucket = ENV.fetch("RF_ARTIFACTS_BUCKET",
                                    "rasterfoundry-global-artifacts-us-east-1")
 
+  config.vm.provision "shell", inline: "mkdir -p /vagrant"
+  config.vm.provision "ansible_local" do |ansible|
+    ansible.compatibility_mode = "2.0"
+    ansible.install = true
+    ansible.install_mode = "pip_args_only"
+    ansible.pip_args = "ansible==#{ANSIBLE_VERSION}"
+    ansible.playbook = "/opt/raster-foundry/deployment/ansible/raster-foundry.yml"
+    ansible.galaxy_role_file = "/opt/raster-foundry/deployment/ansible/roles.yml"
+    ansible.galaxy_roles_path = "/opt/raster-foundry/deployment/ansible/roles"
+    ansible.extra_vars = {
+      host_user: host_user,
+      aws_profile: aws_profile,
+      rf_settings_bucket: rf_settings_bucket,
+      rf_artifacts_bucket: rf_artifacts_bucket
+    }
+  end
+
   config.vm.provision "shell" do |s|
     s.inline = <<-SHELL
-      if [ ! -x /usr/local/bin/ansible ] || ! ansible --version | grep #{ANSIBLE_VERSION}; then
-        sudo apt-get update -qq
-        sudo apt-get install python-pip python-dev -y
-        sudo pip install --upgrade pip
-        sudo pip install ansible==#{ANSIBLE_VERSION}
-      fi
-
-      cd /opt/raster-foundry/deployment/ansible && \
-      ruby ../vagrant/run_ansible_galaxy.rb
-      ANSIBLE_FORCE_COLOR=1 PYTHONUNBUFFERED=1 ANSIBLE_CALLBACK_WHITELIST=profile_tasks \
-      ansible-playbook -u vagrant -i 'localhost,' \
-          --extra-vars "host_user=#{host_user} aws_profile=#{aws_profile} \
-                        rf_settings_bucket=#{rf_settings_bucket} \
-                        rf_artifacts_bucket=#{rf_artifacts_bucket}" \
-          raster-foundry.yml
       cd /opt/raster-foundry
-
       export AWS_PROFILE=#{aws_profile}
       export RF_SETTINGS_BUCKET=#{rf_settings_bucket}
       export RF_ARTIFACTS_BUCKET=#{rf_artifacts_bucket}
