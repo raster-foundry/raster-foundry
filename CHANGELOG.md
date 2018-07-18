@@ -1,5 +1,36 @@
 # Change Log
 
+## [1.5.0](https://github.com/raster-foundry/raster-foundry/tree/1.5.0) (2018-07-18)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.4.0...1.5.0)
+
+**Merged pull requests:**
+
+- Fixes whitebalance issues for multiple scenes in a project [\#3727](https://github.com/raster-foundry/raster-foundry/pull/3727)
+- Update auth0 lock [\#3722](https://github.com/raster-foundry/raster-foundry/pull/3722)
+- Add cascade deletion when it makes sense [\#3720](https://github.com/raster-foundry/raster-foundry/pull/3720)
+- Remove Zoom Restriction for Browsing Scenes in UI [\#3719](https://github.com/raster-foundry/raster-foundry/pull/3719)
+- Fix annotation shapefile export [\#3718](https://github.com/raster-foundry/raster-foundry/pull/3718)
+- Scene Query Improvements [\#3717](https://github.com/raster-foundry/raster-foundry/pull/3717)
+- Remove landsat scenes with \< 0 cloud cover [\#3715](https://github.com/raster-foundry/raster-foundry/pull/3715)
+- Allow importing GeoJSON annotation with blank properties [\#3714](https://github.com/raster-foundry/raster-foundry/pull/3714)
+- Only transform band wavelength if it's a string [\#3713](https://github.com/raster-foundry/raster-foundry/pull/3713)
+- Fix download for MODIS scenes [\#3712](https://github.com/raster-foundry/raster-foundry/pull/3712)
+- Fix async exports for ingested scenes [\#3710](https://github.com/raster-foundry/raster-foundry/pull/3710)
+- Add project list preview mini leaflet maps [\#3706](https://github.com/raster-foundry/raster-foundry/pull/3706)
+- Add fallthrough mosaic match to extent and zoom fetch [\#3705](https://github.com/raster-foundry/raster-foundry/pull/3705)
+- Fix sentinel 2 ingest definition generation to fix missing band [\#3703](https://github.com/raster-foundry/raster-foundry/pull/3703)
+- Fix browse COG scene tile bug [\#3693](https://github.com/raster-foundry/raster-foundry/pull/3693)
+- Update redirect\_uris [\#3691](https://github.com/raster-foundry/raster-foundry/pull/3691)
+- Fix MODIS thumbnails [\#3686](https://github.com/raster-foundry/raster-foundry/pull/3686)
+- Allow saving of bands without wavelength in UI [\#3684](https://github.com/raster-foundry/raster-foundry/pull/3684)
+- Fix organization setting button bug [\#3676](https://github.com/raster-foundry/raster-foundry/pull/3676)
+- Use BUILDCONFIG.APP\_NAME as base repository label [\#3674](https://github.com/raster-foundry/raster-foundry/pull/3674)
+- Add team search backend support [\#3661](https://github.com/raster-foundry/raster-foundry/pull/3661)
+- Fixup authorization in team and organization routes [\#3654](https://github.com/raster-foundry/raster-foundry/pull/3654)
+- Use correct cloud coverage field for Sentinel-2 [\#3643](https://github.com/raster-foundry/raster-foundry/pull/3643)
+- Normalize pagination and add to all group object lists [\#3641](https://github.com/raster-foundry/raster-foundry/pull/3641)
+
 ## [1.4.0](https://github.com/raster-foundry/raster-foundry/tree/1.4.0) (2018-07-09)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.3.0...1.4.0)
