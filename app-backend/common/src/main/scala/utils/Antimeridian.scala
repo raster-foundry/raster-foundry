@@ -6,16 +6,6 @@ import geotrellis.vector._
 import geotrellis.vector.io._
 
 object AntimeridianUtils {
-  def crossesAntimeridian(multi: MultiPolygon) = {
-    val latLngFootprint = multi.reproject(WebMercator, LatLng)
-    val antiMeridian = Projected(Line(Point(180, -90), Point(180, 90)), 4326)
-    val longitudeShifted = MultiPolygon(
-      latLngFootprint.polygons.map(
-        poly => Polygon(poly.vertices.map(shiftPoint(_, 0, 1, false, 360)))
-      ))
-    longitudeShifted.intersects(antiMeridian)
-  }
-
   def shiftPoint(p: Point, split: Double, compareMultiplier: Double, inclusive: Boolean, degrees: Double): Point = {
     inclusive match {
       case true => p match {
@@ -33,8 +23,18 @@ object AntimeridianUtils {
     }
   }
 
-  def splitDataFootprintOverAntimeridian(multi: MultiPolygon, code: Int): Projected[MultiPolygon] = {
+  def crossesAntimeridian(multi: MultiPolygon) = {
     val latLngFootprint = multi.reproject(WebMercator, LatLng)
+    val antiMeridian = Projected(Line(Point(180, -90), Point(180, 90)), 4326)
+    val longitudeShifted = MultiPolygon(
+      latLngFootprint.polygons.map(
+        poly => Polygon(poly.vertices.map(shiftPoint(_, 0, 1, false, 360)))
+      ))
+    longitudeShifted.intersects(antiMeridian)
+  }
+
+  def splitDataFootprintOverAntimeridian(multi: MultiPolygon, inputCRS: CRS, outputCRS: CRS): Projected[MultiPolygon] = {
+    val latLngFootprint = multi.reproject(inputCRS, LatLng)
     val antiMeridian = Projected(Line(Point(180, -90), Point(180, 90)), 4326)
     val longitudeShifted = MultiPolygon(
       latLngFootprint.polygons.map(
@@ -57,8 +57,12 @@ object AntimeridianUtils {
         throw new RuntimeException(
           "Error while splitting polygon over anti-meridian: neither side of the anti-meridian had a polygon")
     }
-    unioned.reproject(LatLng, CRS.fromName(s"EPSG:$code"))
-    Projected(unioned, code)
+    val reprojected = unioned.reproject(LatLng, outputCRS)
+    outputCRS.epsgCode match {
+      case Some(code) =>
+      Projected(reprojected, code)
+      case _ => throw new RuntimeException(s"Unable to create projected polygon if CRS does not have a valid EPSG code: $outputCRS")
+    }
   }
 
   def cloneTileFootprint(multi: MultiPolygon, code: Int): Projected[MultiPolygon] = {
@@ -84,8 +88,8 @@ object AntimeridianUtils {
   def correctDataFootprint(intersects: Boolean, dataFootprint: Option[MultiPolygon], targetCRS: CRS):
       Option[Projected[MultiPolygon]] = {
     val correctedDataFootprint = (intersects, dataFootprint, targetCRS.epsgCode) match {
-      case (true, Some(footprint), Some(code)) =>
-        Some(AntimeridianUtils.splitDataFootprintOverAntimeridian(footprint, code))
+      case (true, Some(footprint), _) =>
+        Some(splitDataFootprintOverAntimeridian(footprint, targetCRS, targetCRS))
       case (false, Some(footprint), Some(code)) =>
         Some(Projected(footprint, code))
       case _ => None
