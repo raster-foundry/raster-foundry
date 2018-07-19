@@ -48,20 +48,22 @@ object AntimeridianUtils {
     );
     val unioned = (leftOfAntimeridian, rightOfAntimeridian) match {
       case (Some(leftPoly: MultiPolygon), Some(rightPoly: MultiPolygon)) =>
-        leftPoly.union(rightPoly).asMultiPolygon.get
+        leftPoly.union(rightPoly).asMultiPolygon
       case (Some(leftPoly: MultiPolygon), _) =>
-        leftPoly
+        Some(leftPoly)
       case (_, Some(rightPoly: MultiPolygon)) =>
-        rightPoly
+        Some(rightPoly)
       case (_, _) =>
         throw new RuntimeException(
           "Error while splitting polygon over anti-meridian: neither side of the anti-meridian had a polygon")
     }
-    val reprojected = unioned.reproject(LatLng, outputCRS)
-    outputCRS.epsgCode match {
-      case Some(code) =>
-      Projected(reprojected, code)
-      case _ => throw new RuntimeException(s"Unable to create projected polygon if CRS does not have a valid EPSG code: $outputCRS")
+    val reprojected = unioned map {
+      _.reproject(LatLng, outputCRS)
+    }
+    (reprojected, outputCRS.epsgCode) match {
+      case (Some(multi), Some(code)) =>
+      Projected(multi, code)
+      case _ => throw new RuntimeException(s"Error while splitting data footprint over antimeridian: ${latLngFootprint.toGeoJson()}")
     }
   }
 
