@@ -77,11 +77,12 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
 
     val filters = List(
       polygonOption.map(polygon => fr"ST_Intersects(scenes.tile_footprint, ${polygon})"),
-      Some(fr"scenes_to_projects.project_id = ${projectId}")
+      Some(fr"scenes_to_projects.project_id = ${projectId}"),
+      Some(fr"scenes.ingest_status = 'INGESTED'")
     )
     val select = fr"""
     SELECT
-      scene_id, project_id,accepted, scene_order, mosaic_definition, scene_type, ingest_location
+      scene_id, project_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location
     FROM
       scenes_to_projects
     LEFT JOIN
