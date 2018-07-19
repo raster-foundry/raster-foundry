@@ -1,7 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import addUserModalTpl from './addUserModal.html';
-import {Set} from 'immutable';
+import {Map} from 'immutable';
 
 const AddUserModalComponent = {
     templateUrl: addUserModalTpl,
@@ -15,17 +15,23 @@ const AddUserModalComponent = {
 };
 
 class AddUserModalController {
-    constructor($log, $q, $scope, platformService, organizationService, teamService) {
+    constructor(
+        $log, $q, $scope,
+        authService, platformService, organizationService, teamService, userService
+    ) {
         'ngInject';
         this.$log = $log;
         this.$q = $q;
         this.$scope = $scope;
+        this.authService = authService;
         this.platformService = platformService;
         this.organizationService = organizationService;
         this.teamService = teamService;
+        this.userService = userService;
+
         this.platformId = this.resolve.platformId;
         this.organizationId = this.resolve.organizationId;
-        this.selected = new Set();
+        this.selected = new Map();
     }
 
     $onInit() {
@@ -57,20 +63,34 @@ class AddUserModalController {
     fetchUsers(page = 1, search) {
         this.fetching = true;
         if (this.resolve.groupType === 'organization') {
-            this.platformService.getMembers(
-                this.platformId,
-                page - 1,
-                search && search.length ? search : null
-            ).then((response) => {
-                this.hasPermission = true;
-                this.fetching = false;
-                this.updatePagination(response);
-                this.lastUserResult = response;
-                this.users = response.results;
-            }, (error) => {
-                // platform admins or super users are allowed to list platform users
-                this.permissionDenied(error, 'platform admin', 'example@email.com');
-            });
+            if (this.isPlatformAdmin) {
+                this.platformService.getMembers(
+                    this.platformId,
+                    page - 1,
+                    search && search.length ? search : null
+                ).then((response) => {
+                    this.hasPermission = true;
+                    this.fetching = false;
+                    this.updatePagination(response);
+                    this.lastUserResult = response;
+                    this.users = response.results;
+                }, (error) => {
+                    // platform admins or super users are allowed to list platform users
+                    this.permissionDenied(error, 'platform admin');
+                });
+            } else if (search && search.length) {
+                this.userService.searchUsers(search).then(response => {
+                    this.hasPermission = true;
+                    this.fetching = false;
+                    this.users = response;
+                });
+            } else {
+                this.$scope.$evalAsync(() => {
+                    this.hasPermission = true;
+                    this.fetching = false;
+                    this.users = [];
+                });
+            }
         } else if (this.resolve.groupType === 'team') {
             this.organizationService.getMembers(
                 this.platformId,
@@ -84,33 +104,39 @@ class AddUserModalController {
                 this.lastUserResult = response;
                 this.users = response.results;
             }, (error) => {
-                this.permissionDenied(error, 'organization admin', 'example@email.com');
+                this.permissionDenied(error, 'organization admin');
             });
         }
     }
 
-    toggleUserSelect(user) {
-        if (this.selected.has(user.id)) {
+    toggleUserSelect(user, adminToggle) {
+        if (this.selected.has(user.id) && !adminToggle) {
             this.selected = this.selected.delete(user.id);
+        } else if (this.selected.has(user.id)) {
+            this.selected = this.selected.set(user.id, !this.selected.get(user.id));
         } else {
-            this.selected = this.selected.add(user.id);
+            this.selected = this.selected.set(user.id, adminToggle);
         }
     }
 
     addUsers() {
         delete this.error;
-        let promises = this.selected.toArray().map((userId) => {
+        let promises = this.selected.entrySeq().toArray().map((select) => {
+            const userId = select[0];
+            const isAdmin = select[1];
             if (this.resolve.groupType === 'team') {
-                return this.teamService.addUser(
+                return this.teamService.addUserWithrole(
                     this.resolve.platformId,
                     this.resolve.organizationId,
                     this.resolve.teamId,
+                    isAdmin ? 'ADMIN' : 'MEMBER',
                     userId
                 );
             } else if (this.resolve.groupType === 'organization') {
-                return this.organizationService.addUser(
+                return this.organizationService.addUserWithRole(
                     this.resolve.platformId,
                     this.resolve.organizationId,
+                    isAdmin ? 'ADMIN' : 'MEMBER',
                     userId
                 );
             }
