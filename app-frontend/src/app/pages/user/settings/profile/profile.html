@@ -1,6 +1,6 @@
 <div class="row content stack-sm user-profile-body">
   <div class="column-8 user-profile-content">
-    <ul class="tabbed-list-header app-width-container">
+    <!-- <ul class="tabbed-list-header app-width-container">
       <li>
         <a ng-click="$ctrl.profileType = 'login'"
            ng-class="{active: $ctrl.profileType === 'login'}">
@@ -13,9 +13,9 @@
           Personal Info
         </a>
       </li>
-    </ul>
+    </ul> -->
     <!-- Login Info -->
-    <form class="user-profile-form" ng-if="$ctrl.profileType === 'login'">
+    <form class="user-profile-form">
       <label for="upload-profile-picture">Profile picture</label>
       <div class="picture-section">
         <div class="form-group picture">
@@ -33,7 +33,7 @@
         </div>
       </div>
       <div class="form-group">
-        <label for="name">Display name</label>
+        <label for="name">Name</label>
         <input id="name"
                type="text"
                class="form-control"
@@ -42,7 +42,7 @@
                disabled>
       </div>
       <div class="form-group">
-        <label for="username">Username</label>
+        <label for="username">Login email</label>
         <input id="username"
                type="text"
                class="form-control"
@@ -74,7 +74,6 @@
     <!-- Personal Info -->
     <form
       class="user-profile-form"
-      ng-if="$ctrl.profileType === 'personal'"
       name="personalInfo"
       autocomplete="off">
       <input autocomplete="false" name="hidden" type="text" style="display:none;">
@@ -96,7 +95,7 @@
                  ng-model="$ctrl.currentUserBuffer.personalInfo.lastName">
         </div>
         <div class="form-group column-12">
-          <label for="personal-email">Personal Email</label>
+          <label for="personal-email">Contact Email</label>
           <input id="personal-email"
                  type="email"
                  name="personalEmail"
@@ -172,8 +171,9 @@
         <div class="column-12">
           <button type="button"
                   class="btn btn-primary pull-right"
+                  ng-class="{'btn-danger': $ctrl.error}"
                   ng-click="$ctrl.onPersonalInfoSubmit()"
-                  ng-disabled="personalInfo.personalEmail.$error.email">
+                  ng-disabled="personalInfo.personalEmail.$error.email || $ctrl.isSendingReq">
             {{$ctrl.getButtonText()}}
           </button>
         </div>

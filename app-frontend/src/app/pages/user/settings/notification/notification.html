@@ -10,14 +10,14 @@
                on-change="$ctrl.updateUserEmailNotification('login')"
                class="subscription-toggle"
                radio="true">
-      <span>{{$ctrl.userBuffer.email}}</span>
+      <span>Login email ({{$ctrl.userBuffer.email}})</span>
     </rf-toggle>
     <rf-toggle value="$ctrl.userBuffer.personalInfo.emailNotifications === true"
                on-change="$ctrl.updateUserEmailNotification('personal')"
                class="subscription-toggle"
                radio="true"
                ng-if="$ctrl.userBuffer.personalInfo.email.length">
-      <span>{{$ctrl.userBuffer.personalInfo.email}}</span>
+      <span>Contact email ({{$ctrl.userBuffer.personalInfo.email}})</span>
     </rf-toggle>
     <rf-toggle value="$ctrl.userBuffer.emailNotifications === false
                       && $ctrl.userBuffer.personalInfo.emailNotifications === false"
