@@ -57,7 +57,6 @@ class ProfileController {
         this.providers = providers;
         this.defaultProvider = defaultProvider;
         this.userOrgTypes = userOrgTypes;
-        this.profileType = 'login';
         this.getCurrentUser();
     }
 
