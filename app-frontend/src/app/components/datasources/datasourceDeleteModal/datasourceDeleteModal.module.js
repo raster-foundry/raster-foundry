@@ -10,12 +10,15 @@ const DatasourceDeleteModalComponent = {
     }
 };
 
+const uploadProgress = 'CREATED,UPLOADING,UPLOADED,QUEUED,PROCESSING';
+
 class DatasourceDeleteModalController {
     constructor($rootScope, $scope, $log, uploadService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
 
         this.datasource = this.resolve.datasource;
+        this.uploadProgress = uploadProgress;
     }
 
     $onInit() {
@@ -23,9 +26,24 @@ class DatasourceDeleteModalController {
     }
 
     checkUploadStatus() {
-        this.uploadService.query({datasource: this.datasource.id}).then(res => {
-            this.$log.log(res);
+        this.uploadService.query({
+            datasource: this.datasource.id,
+            uploadStatus: this.uploadProgress
+        }).then(res => {
+            if (res.count === 0) {
+                this.checkSceneDatasource();
+            } else {
+                this.setUploadMsg();
+            }
         });
+    }
+
+    checkSceneDatasource() {
+        this.$log.log('check scene datasources');
+    }
+
+    setUploadMsg() {
+        this.$log.log('show message for upload');
     }
 }
 

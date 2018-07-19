@@ -27,9 +27,6 @@ trait QueryParameterDeserializers {
     GroupType.fromString(s)
   }
 
-  implicit val deserializerUploadStatus: Unmarshaller[String, UploadStatus] = Unmarshaller.strict[String, UploadStatus] {s =>
-    UploadStatus.fromString(s)
-  }
 }
 
 trait QueryParametersCommon extends QueryParameterDeserializers {

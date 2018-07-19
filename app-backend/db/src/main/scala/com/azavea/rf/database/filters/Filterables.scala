@@ -161,7 +161,13 @@ trait Filterables extends RFMeta with LazyLogging {
   implicit val uploadQueryParameters = Filterable[Any, UploadQueryParameters] {uploadParams: UploadQueryParameters =>
     List(
       uploadParams.datasource.map({ ds => fr"datasource = ${ds}"}),
-      uploadParams.uploadStatus.map({ uploadStatus => fr"upload_status = ${uploadStatus}"})
+      uploadParams.uploadStatus.map({ uploadStatus =>
+        val statusF: List[Fragment] = uploadStatus.split(",")
+          .map(_.trim)
+          .toList
+          .map(status => fr"upload_status = ${status}::upload_status")
+        fr"(" ++ Fragments.or(statusF: _*) ++ fr")"
+      })
     )
   }
 
