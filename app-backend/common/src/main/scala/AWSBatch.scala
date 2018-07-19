@@ -69,4 +69,10 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
     val jobName = s"$jobDefinition-$exportId"
     submitJobRequest(jobDefinition, awsbatchConfig.ingestJobQueue, Map("exportId" -> s"$exportId"), jobName)
   }
+
+  def kickoffAOIUpdateProject(projectId: UUID): Unit = {
+    val jobDefinition = awsbatchConfig.aoiUpdateJobName
+    val jobName = s"$jobDefinition-$projectId"
+    submitJobRequest(jobDefinition, awsbatchConfig.jobQueue, Map("projectId" -> s"$projectId"), jobName)
+  }
 }

@@ -11,13 +11,13 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util.RFTransactor
-
 import java.util.UUID
 
-case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job {
+import com.azavea.rf.common.AWSBatch
+
+case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job with AWSBatch {
   val name = FindAOIProjects.name
 
   def run: Unit = {
@@ -50,10 +50,9 @@ case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job {
         .to[List]
     }
 
-    // TODO: this stdout-based process communication _extremely_ brittle. See #3263
-    aoiProjectsToUpdate.transact(xa).unsafeRunSync.foreach(
-      (projectId: UUID) => println(s"Project to update: ${projectId}")
-    )
+    val projectIds = aoiProjectsToUpdate.transact(xa).unsafeRunSync
+    logger.info(s"Found the following projects to update: ${projectIds}")
+    projectIds.map(kickoffAOIUpdateProject)
   }
 }
 

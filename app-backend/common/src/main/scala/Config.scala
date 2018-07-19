@@ -18,6 +18,7 @@ object Config {
     val ingestJobName = awsBatchConfig.getString("ingestJobName")
     val importJobName = awsBatchConfig.getString("importJobName")
     val exportJobName = awsBatchConfig.getString("exportJobName")
+    val aoiUpdateJobName = awsBatchConfig.getString("aoiUpdateJobName")
 
     val environment = awsBatchConfig.getString("environment")
   }
