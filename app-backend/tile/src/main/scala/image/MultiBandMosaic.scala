@@ -287,10 +287,10 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
         }.toSet
 
         val tiles = mosaic.map {
-          case MosaicDefinition(sceneId, colorCorrectParams, sceneType, Some(ingestLocation)) => {
-            val tile = sceneType match {
-              case (Some(SceneType.COG)) => fetchCogTile(bbox, zoom, colorCorrect, sceneId, colorCorrectParams, ingestLocation)
-              case _ => {
+          case MosaicDefinition(sceneId, colorCorrectParams, sceneType, maybeIngestLocation) => {
+            val tile = (maybeIngestLocation, sceneType) match {
+              case (Some(ingestLocation), Some(SceneType.COG)) => fetchCogTile(bbox, zoom, colorCorrect, sceneId, colorCorrectParams, ingestLocation)
+              case (Some(ingestLocation), _) => {
                 MultiBandMosaic
                   .fetchRenderedExtent(sceneId, zoom, bbox)
                   .flatMap { tile =>
@@ -303,6 +303,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
                     }
                   }
               }
+              case _ => OptionT.none[Future, MultibandTile]
             }
             cacheKey match {
               case Some(key) =>
