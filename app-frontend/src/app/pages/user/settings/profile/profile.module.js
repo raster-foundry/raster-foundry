@@ -99,24 +99,25 @@ class ProfileController {
             return 'Saved';
         }
         if (this.error) {
-            return 'Failed';
+            return 'Error, retry?';
         }
         return 'Save';
     }
 
     onPersonalInfoSubmit() {
         this.saved = false;
+        this.isSendingReq = true;
         this.userService.updateOwnUser(this.currentUserBuffer).then(res => {
             this.saved = true;
             this.$timeout(() => {
                 this.saved = false;
-            }, 500);
+                this.isSendingReq = false;
+            }, 1000);
             this.currentUser = res;
+            delete this.error;
         }, (err) => {
             this.error = err;
-            this.$timeout(() => {
-                delete this.error;
-            }, 1000);
+            this.isSendingReq = false;
         });
     }
 }
