@@ -97,6 +97,13 @@ export default (app) => {
             }).$promise;
         }
 
+        addUserWithRole(platformId, organizationId, groupRole, userId) {
+            return this.PlatformOrganization.addUser(
+                { platformId, organizationId },
+                { userId, groupRole }
+            ).$promise;
+        }
+
         approveUserMembership(platformId, organizationId, userId, groupRole) {
             return this.PlatformOrganization.addUser({platformId, organizationId}, {
                 userId, groupRole
