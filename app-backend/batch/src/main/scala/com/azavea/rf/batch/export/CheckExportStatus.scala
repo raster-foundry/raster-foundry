@@ -45,11 +45,11 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
     val targetName: String = nameO.getOrElse(id.toString)
     val (targetLink, listLink): (String, String) = exportType match {
       case eType: String if eType == "project" => (
-        s"https://${platformHost}/projects/edit/${id}/exports",
-        s"https://${platformHost}/projects/list")
+        s"http://${platformHost}/projects/edit/${id}/exports",
+        s"http://${platformHost}/projects/list")
       case eType: String if eType == "analysis" => (
-        s"https://${platformHost}/lab/analysis/${id}",
-        s"https://${platformHost}/lab/browse/analyses")
+        s"http://${platformHost}/lab/analysis/${id}",
+        s"http://${platformHost}/lab/browse/analyses")
     }
 
     (

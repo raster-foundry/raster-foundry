@@ -56,16 +56,16 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
       <html>
         <p>${user.name},</p><br>
         <p>You have ${sceneCount} new scenes updated to your AOI project "${project.name}"! You can access
-        these new scenes <a href="https://${platformHost}/projects/edit/${project.id}/scenes" target="_blank">here</a> or any past
-        projects you've created at any time <a href="https://${platformHost}/projects/list" target="_blank">here</a>.</p>
+        these new scenes <a href="http://${platformHost}/projects/edit/${project.id}/scenes" target="_blank">here</a> or any past
+        projects you've created at any time <a href="http://${platformHost}/projects/list" target="_blank">here</a>.</p>
         <p>If you have questions, please feel free to reach out any time at ${platform.publicSettings.emailUser}.</p>
         <p>- The ${platform.name} Team</p>
       </html>
       """,
       s"""
       ${user.name}: You have ${sceneCount} new scenes updated to your AOI project "${project.name}"! You can access
-      these new scenes here: https://${platformHost}/projects/edit/${project.id}/scenes , or any past
-      projects you've created at any time here: https://${platformHost}/projects/list . If you have questions,
+      these new scenes here: http://${platformHost}/projects/edit/${project.id}/scenes , or any past
+      projects you've created at any time here: http://${platformHost}/projects/list . If you have questions,
       please feel free to reach out any time at ${platform.publicSettings.emailUser}. - The ${platform.name} Team
       """
     )

@@ -43,16 +43,16 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           <html>
             <p>${pU.uName},</p><br>
             <p>The scene "${scene.name}" has been successfully ingested into your project: ${pU.projectName}! You can access
-            this project <a href="https://${platformHost}/projects/edit/${pU.projectId}/scenes">here</a> or any past
-            projects you've created at any time <a href="https://${platformHost}/projects/">here</a>.</p>
+            this project <a href="http://${platformHost}/projects/edit/${pU.projectId}/scenes">here</a> or any past
+            projects you've created at any time <a href="http://${platformHost}/projects/">here</a>.</p>
             <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailUser}.</p>
             <p>- The ${pU.platName} Team</p>
           </html>
           """,
           s"""
           | ${pU.uName}: The scene "${scene.name}" has been successfully ingested into your project: ${pU.projectName}!
-          | You can access this project at here: https://${platformHost}/projects/edit/${pU.projectId}/scenes or
-          | any past projects you've created at any time here: https://${platformHost}/projects/ . If you have
+          | You can access this project at here: http://${platformHost}/projects/edit/${pU.projectId}/scenes or
+          | any past projects you've created at any time here: http://${platformHost}/projects/ . If you have
           | questions, support is available via in-app chat at ${platformHost} or less quickly via email to
           | ${pU.pubSettings.emailUser}.
           | - The ${pU.platName} Team
@@ -65,16 +65,16 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           <html>
             <p>${pU.uName},</p><br>
             <p>The scene "${scene.name}" in your project: ${pU.projectName} has failed to ingest. But you can access
-            this project <a href="https://${platformHost}/projects/edit/${pU.projectId}/scenes">here</a> or any past
-            projects you've created at any time <a href="https://${platformHost}/projects/">here</a>.</p>
+            this project <a href="http://${platformHost}/projects/edit/${pU.projectId}/scenes">here</a> or any past
+            projects you've created at any time <a href="http://${platformHost}/projects/">here</a>.</p>
             <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailUser}.</p>
             <p>- The ${pU.platName} Team</p>
           </html>
           """,
           s"""
           | ${pU.uName}: The scene "${scene.name}" in your project: ${pU.projectName} has failed to ingest. But you can
-          | access this project at here: https://${platformHost}/projects/edit/${pU.projectId}/scenes or
-          | any past projects you've created at any time here: https://${platformHost}/projects/ . If you have
+          | access this project at here: http://${platformHost}/projects/edit/${pU.projectId}/scenes or
+          | any past projects you've created at any time here: http://${platformHost}/projects/ . If you have
           | questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailUser}.
           | - The ${pU.platName} Team
           """.trim.stripMargin
