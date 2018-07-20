@@ -1,7 +1,10 @@
-/* globals _ */
+/* globals _, document */
 export default class DateRangePickerModalController {
-    constructor(moment, dateRangePickerConf) {
+    constructor($log, $scope, $timeout, moment, dateRangePickerConf) {
         'ngInject';
+        this.$log = $log;
+        this.$scope = $scope;
+        this.$timeout = $timeout;
         this.Moment = moment;
         this.dateRangePickerConf = dateRangePickerConf;
     }
@@ -16,6 +19,21 @@ export default class DateRangePickerModalController {
         this.ranges = this.resolve.config.ranges || [];
         this.minDay = this.resolve.config.minDay;
         this.maxDay = this.resolve.config.maxDay;
+
+        this.$timeout(() => {
+            const ele = angular.element(document.getElementsByClassName('input-container'));
+            const startInput = angular.element(ele[0].lastChild);
+            const endInput = angular.element(ele[1].lastChild);
+            this.setStartEndValues(startInput, endInput);
+            // this.bindInputChangeEvents(startInput, endInput);
+        }, 100);
+    }
+
+    setStartEndValues(startInput, endInput) {
+        let startReformat = this.Moment(startInput.val(), 'MMM DD, YYYY').format('MM/DD/YYYY');
+        startInput.val(startReformat);
+        let endReformat = this.Moment(endInput.val(), 'MMM DD, YYYY').format('MM/DD/YYYY');
+        endInput.val(endReformat);
     }
 
     isActivePreset(range, index) {
