@@ -9,6 +9,7 @@ import io.circe.generic.extras._
 
 import geotrellis.slick.Projected
 import geotrellis.vector.Geometry
+import java.security.InvalidParameterException
 
 @JsonCodec
 case class Shape(
@@ -20,12 +21,12 @@ case class Shape(
   owner: String,
   name: String,
   description: Option[String],
-  geometry: Option[Projected[Geometry]]
+  geometry: Projected[Geometry]
 ) extends GeoJSONSerializable[Shape.GeoJSON] {
     def toGeoJSONFeature: Shape.GeoJSON = {
         Shape.GeoJSON(
             this.id,
-            this.geometry,
+            Some(this.geometry),
             ShapeProperties(
                 this.createdAt,
                 this.createdBy,
@@ -80,7 +81,9 @@ object Shape {
         _type: String = "Feature"
     ) extends GeoJSONFeature {
         def toShape: Shape = {
-            Shape(
+          geometry match {
+            case Some(g) =>
+              Shape(
                 id,
                 properties.createdAt,
                 properties.createdBy,
@@ -89,8 +92,11 @@ object Shape {
                 properties.owner,
                 properties.name,
                 properties.description,
-                geometry
-            )
+                g
+              )
+            case _ =>
+              throw new InvalidParameterException("Shapes must have a geometry defined")
+          }
         }
     }
 
@@ -99,7 +105,7 @@ object Shape {
         owner: Option[String],
         name: String,
         description: Option[String],
-        geometry: Option[Projected[Geometry]]
+        geometry: Projected[Geometry]
     ) extends OwnerCheck {
 
         def toShape(user: User): Shape = {
@@ -121,7 +127,7 @@ object Shape {
 
     @JsonCodec
     case class GeoJSONFeatureCreate(
-        geometry: Option[Projected[Geometry]],
+        geometry: Projected[Geometry],
         properties: ShapePropertiesCreate
     ) extends OwnerCheck {
         def toShapeCreate(): Shape.Create = {

@@ -70,12 +70,24 @@
   </li>
 </ul>
 <div class="sidebar-content" ng-if="$ctrl.project">
-  <button class="btn btn-primary btn-block"
+  <button class="btn btn-block"
           type="button"
           ng-click="$ctrl.saveParameters()"
-          ng-disabled="!$ctrl.aoiPolygons"
-  >
-    Start AOI Monitoring
+          ng-disabled="!$ctrl.aoiPolygons || $ctrl.isSavingParameters() || $ctrl.unsupportedAois"
+          ng-class="{
+                 'btn-primary': !$ctrl.error,
+                 'btn-warning': $ctrl.error
+                 }">
+    <span ng-show="!$ctrl.error && $ctrl.lastAoiResponse.count === 1">Save AOI changes</span>
+    <span ng-show="!$ctrl.error && $ctrl.lastAoiResponse.count === 0">Start AOI Monitoring</span>
+    <span ng-show="$ctrl.unsupportedAois">This AOI must be modified using the API directly</span>
+    <span ng-show="$ctrl.error">Error saving changes. Retry?</span>
+    <span ng-show="$ctrl.isSavingParameters()"
+          class="icon-load animate-spin"
+          ng-class="{'stop': !$ctrl.isSavingParameters()}"
+    ></span>
+    <span ng-show="$ctrl.saveSuccessful" class="icon-check"></span>
+    <span ng-show="$ctrl.error" class="icon-refresh"></span>
   </button>
 </div>
 <div class="sidebar sidebar-extended sidebar-dark"

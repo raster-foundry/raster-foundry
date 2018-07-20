@@ -6,7 +6,7 @@ import java.util.{Date, UUID}
 
 import com.azavea.rf.bridge._
 import geotrellis.slick.Projected
-import geotrellis.vector.MultiPolygon
+import geotrellis.vector.Geometry
 import io.circe._
 import io.circe.generic.JsonCodec
 
@@ -29,7 +29,7 @@ case class AOI(
   owner: String,
 
   /* Unique fields */
-  area: Projected[MultiPolygon],
+  shape: UUID,
   filters: Json,
 
   isActive: Boolean = true,
@@ -46,7 +46,7 @@ object AOI {
 
   @JsonCodec
   case class Create(
-    area: Projected[MultiPolygon],
+    shape: UUID,
     filters: Json,
     owner: Option[String],
     isActive: Boolean = true,
@@ -59,9 +59,25 @@ object AOI {
 
       AOI(
         UUID.randomUUID, now, now,
-        user.id, user.id, ownerId, area, filters, isActive,
+        user.id, user.id, ownerId, shape, filters, isActive,
         startTime, approvalRequired, projectId
       )
     }
   }
+
+  @JsonCodec
+  case class AOIwithShape(
+    id: UUID,
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    createdBy: String,
+    modifiedBy: String,
+    owner: String,
+    shape: Shape,
+    filters: Json,
+    isActive: Boolean = true,
+    startTime: Timestamp,
+    approvalRequired: Boolean,
+    projectId: UUID
+  )
 }

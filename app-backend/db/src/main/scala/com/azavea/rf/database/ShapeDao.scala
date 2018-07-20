@@ -32,6 +32,22 @@ object ShapeDao extends Dao[Shape] {
   def getShapeById(shapeId: UUID): ConnectionIO[Option[Shape]] =
     query.filter(shapeId).selectOption
 
+  def insertShape(shapeCreate: Shape.Create, user: User): ConnectionIO[Shape] = {
+    val shape = shapeCreate.toShape(user)
+    sql"""
+      INSERT INTO shapes
+      (id, created_at, created_by, modified_at, modified_by, owner, name, description, geometry)
+      VALUES
+      (
+      ${shape.id}, ${shape.createdAt}, ${shape.createdBy}, ${shape.modifiedAt}, ${shape.modifiedBy},
+      ${shape.owner}, ${shape.name}, ${shape.description}, ${shape.geometry}
+      )
+    """.update.withUniqueGeneratedKeys[Shape](
+      "id", "created_at", "created_by", "modified_at", "modified_by", "owner",
+      "name", "description", "geometry"
+    )
+  }
+
   def insertShapes(shapes: Seq[Shape.Create], user: User): ConnectionIO[Seq[Shape.GeoJSON]] = {
     val insertSql = """
        INSERT INTO shapes
