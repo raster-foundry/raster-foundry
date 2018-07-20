@@ -98,7 +98,7 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
     logger.info(s"Preparing to notify export owners of status: ${status}")
     val export = ExportDao.query.filter(fr"id = ${exportId}").select.transact(xa).unsafeRunSync
     logger.info(s"Retrieved export: ${export}")
-    if (export.owner == auth0Config.systemUser) {
+    if (export.owner === UUID.fromString(auth0Config.systemUser)) {
       logger.warn(s"Owner of export ${exportId} is a system user. Email is not sent.")
     } else {
       val platAndUserIO = for {
