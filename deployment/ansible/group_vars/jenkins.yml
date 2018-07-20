@@ -3,7 +3,7 @@ docker_users:
   - "vagrant"
   - "jenkins"
 
-java_version: "8u141*"
+java_version: "8u171*"
 java_major_version: "8"
 
 packer_version: "1.0.4"
