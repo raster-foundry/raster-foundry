@@ -1,9 +1,9 @@
 @font-face {
   font-family: 'icomoon';
   src:
-    url('fonts/icomoon.ttf?ul4ovq') format('truetype'),
-    url('fonts/icomoon.woff?ul4ovq') format('woff'),
-    url('fonts/icomoon.svg?ul4ovq#icomoon') format('svg');
+    url('fonts/icomoon.ttf?iot252') format('truetype'),
+    url('fonts/icomoon.woff?iot252') format('woff'),
+    url('fonts/icomoon.svg?iot252#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -29,7 +29,7 @@
 .icon-video:before {
   content: "\e947";
 }
-.icon-Support:before {
+.icon-support:before {
   content: "\e948";
 }
 .icon-users:before {
