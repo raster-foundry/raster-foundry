@@ -62,7 +62,7 @@
 - name: Setup weekly NPM cleanup cron task
   cron:
     name: "npm-cleanup"
-    user: "{{ jenkins_name }}"
+    user: "root"
     special_time: "weekly"
     job: find /var/lib/jenkins/workspace/ -path "*/.node_modules/*" -delete
     state: "present"
@@ -71,7 +71,7 @@
 - name: Setup weekly Maven cleanup cron task
   cron:
     name: "maven-cleanup"
-    user: "{{ jenkins_name }}"
+    user: "root"
     special_time: "weekly"
     job: find /var/lib/jenkins/workspace/ -path "*/target/*" -delete
     state: "present"
@@ -80,7 +80,7 @@
 - name: Setup weekly Ivy cleanup cron task
   cron:
     name: "ivy-cleanup"
-    user: "{{ jenkins_name }}"
+    user: "root"
     special_time: "weekly"
     job: find /var/lib/jenkins/workspace/ -path "*/.ivy/*" -delete
     state: "present"
