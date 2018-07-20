@@ -45,6 +45,7 @@ class DatasourceDetailController {
         this.datasourceService.get(this.datasourceId).then(
             datasourceResponse => {
                 this.datasource = datasourceResponse;
+                this.hasBands = !_.isEmpty(this.datasource.bands);
                 this.isPublic = this.isPublicDatasource();
                 let id = this.authService.getProfile().sub;
                 this.isOwner = id === this.datasource.owner;
