@@ -219,7 +219,7 @@ export default (app) => {
         export(project, settings = {}, options = {}) {
             const defaultOptions = {
                 resolution: 9,
-                stitch: false,
+                stitch: true,
                 crop: false
             };
 
