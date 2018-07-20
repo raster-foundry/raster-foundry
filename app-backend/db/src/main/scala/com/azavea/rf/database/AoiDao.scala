@@ -27,7 +27,7 @@ object AoiDao extends Dao[AOI] {
     sql"""
       SELECT
         id, created_at, modified_at,
-        created_by, modified_by, owner, area, filters, is_active, start_time,
+        created_by, modified_by, owner, shape, filters, is_active, start_time,
         approval_required, project_id
       FROM
     """ ++ tableF
@@ -42,7 +42,7 @@ object AoiDao extends Dao[AOI] {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
         modified_at = NOW(),
         modified_by = ${user.id},
-        area = ${aoi.area},
+        shape = ${aoi.shape},
         filters = ${aoi.filters},
         is_active = ${aoi.isActive},
         start_time = ${aoi.startTime},
@@ -57,21 +57,21 @@ object AoiDao extends Dao[AOI] {
 
     val aoiCreate: ConnectionIO[AOI] = (fr"INSERT INTO" ++ tableF ++ fr"""
         (id, created_at, modified_at,
-        created_by, modified_by, owner, area, filters, is_active,
+        created_by, modified_by, owner, shape, filters, is_active,
         approval_required, start_time, project_id)
       VALUES
         (${aoi.id}, NOW(), NOW(),
-        ${user.id}, ${user.id}, ${ownerId}, ${aoi.area}, ${aoi.filters}, ${aoi.isActive},
+        ${user.id}, ${user.id}, ${ownerId}, ${aoi.shape}, ${aoi.filters}, ${aoi.isActive},
         ${aoi.approvalRequired}, ${aoi.startTime}, ${aoi.projectId})
     """).update.withUniqueGeneratedKeys[AOI](
       "id", "created_at", "modified_at",
-      "created_by", "modified_by", "owner", "area", "filters", "is_active",
+      "created_by", "modified_by", "owner", "shape", "filters", "is_active",
       "start_time", "approval_required", "project_id"
     )
-
     aoiCreate
   }
 
+  // TODO embed shape into aoi
   def listAOIs(projectId: UUID, user: User, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] =
     query.filter(fr"project_id = ${projectId}").page(page)
 

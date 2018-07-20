@@ -180,17 +180,17 @@ object Generators extends ArbitraryInstances {
     owner <- Gen.const(None)
     name <- nonEmptyStringGen
     description <- nonEmptyStringGen map { Some(_) }
-    geometry <- Gen.oneOf(Gen.const(None), projectedMultiPolygonGen3857 map { Some(_) })
+    geometry <- projectedMultiPolygonGen3857
   } yield {
     Shape.Create(owner, name, description, geometry)
   }
 
   private def shapeGeoJSONGen: Gen[Shape.GeoJSON] = for {
     id <- uuidGen
-    geometry <- Gen.oneOf(Gen.const(None), projectedMultiPolygonGen3857 map { Some(_) })
+    geometry <- projectedMultiPolygonGen3857
     properties <- shapePropertiesGen
   } yield {
-    Shape.GeoJSON(id, geometry, properties)
+    Shape.GeoJSON(id, Some(geometry), properties)
   }
 
   private def userCreateGen: Gen[User.Create] = for {
@@ -348,28 +348,28 @@ object Generators extends ArbitraryInstances {
   }
 
   private def aoiCreateGen: Gen[AOI.Create] = for {
-    area <- projectedMultiPolygonGen3857
+    shape <- uuidGen
     filters <- Gen.const(().asJson) // maybe this should be CombinedSceneQueryParams as json
     owner <- Gen.const(None)
     isActive <- arbitrary[Boolean]
     startTime <- timestampIn2016Gen
     approvalRequired <- arbitrary[Boolean]
   } yield {
-    AOI.Create(area, filters, owner, isActive, startTime, approvalRequired)
+    AOI.Create(shape, filters, owner, isActive, startTime, approvalRequired)
   }
 
   private def aoiGen: Gen[AOI] = for {
     id <- uuidGen
     timeField <- timestampIn2016Gen
     userField <- nonEmptyStringGen
-    area <- projectedMultiPolygonGen3857
+    shape <- uuidGen
     filters <- Gen.const(().asJson) // maybe this should be CombinedSceneQueryParams as json
     isActive <- arbitrary[Boolean]
     startTime <- timestampIn2016Gen
     approvalRequired <- arbitrary[Boolean]
     projectId <- uuidGen
   } yield {
-    AOI(id, timeField, timeField, userField, userField, userField, area,
+    AOI(id, timeField, timeField, userField, userField, userField, shape,
         filters, isActive, startTime, approvalRequired, projectId)
   }
 
