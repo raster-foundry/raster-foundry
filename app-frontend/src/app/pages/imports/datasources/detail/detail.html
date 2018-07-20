@@ -8,7 +8,18 @@
         <rf-toggle value="$ctrl.isPublic" on-change="$ctrl.changeVisibility()" ng-if="$ctrl.isOwner">
           <label>Share publicly</label>
         </rf-toggle>
-        <button class="btn btn-primary" ng-click="$ctrl.openImportModal()">Start an Import</button>
+        <button
+          class="btn btn-primary"
+          ng-click="$ctrl.openImportModal()"
+          ng-disabled="!$ctrl.hasBands">Start an Import</button>
+        <i
+          class="icon-info"
+          tooltips
+          tooltip-template="Band definitions are required before importing any scenes."
+          tooltip-size="small"
+          tooltip-class="rf-tooltip"
+          tooltip-side="right"
+          ng-if="!$ctrl.hasBands"></i>
       </div>
       <!-- Dashboard Header -->
       <div class="cta-row">

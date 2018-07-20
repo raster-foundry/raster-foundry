@@ -22,7 +22,7 @@ class HomeController {
         });
     }
 
-    openToolCreateModal() {
+    openTemplateCreateModal() {
         this.modalService.open({
             component: 'rfTemplateCreateModal'
         });
