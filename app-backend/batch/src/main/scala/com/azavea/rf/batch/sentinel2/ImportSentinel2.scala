@@ -113,16 +113,14 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     val keyPath: String = s"$tilePath/preview.jpg"
     val thumbnailUrl = s"${sentinel2Config.baseHttpPath}$keyPath"
 
-    if (!isUriExists(thumbnailUrl)) Nil
-    else
-      Thumbnail.Identified(
-        id = None,
-        thumbnailSize  = ThumbnailSize.Square,
-        widthPx        = 343,
-        heightPx       = 343,
-        sceneId        = sceneId,
-        url            = thumbnailUrl
-      ) :: Nil
+    Thumbnail.Identified(
+      id = None,
+      thumbnailSize  = ThumbnailSize.Square,
+      widthPx        = 343,
+      heightPx       = 343,
+      sceneId        = sceneId,
+      url            = thumbnailUrl
+    ) :: Nil
   }
 
   def getSentinel2Products(date: LocalDate): List[URI] = {
