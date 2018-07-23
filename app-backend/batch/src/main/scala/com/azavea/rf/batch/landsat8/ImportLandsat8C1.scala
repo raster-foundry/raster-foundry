@@ -48,6 +48,19 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
   /** Get S3 client per each call */
   def s3Client = S3(region = landsat8Config.awsRegion)
 
+  // Eagerly get existing scene names
+  val previousDay = startDate.minusDays(1)
+  val nextDay = startDate.plusDays(1)
+  val sceneQuery =
+    sql"""SELECT name
+            FROM scenes
+            WHERE
+            acquisition_date <= ${nextDay.toString}::timestamp AND
+            acquisition_date >= ${previousDay.toString}::timestamp AND
+            datasource = ${landsat8Config.datasourceUUID}
+      """.query[String].list
+  val existingSceneNames = sceneQuery.transact(xa).unsafeRunSync.toSet
+
   protected def rowsFromCsv: List[Map[String, String]] = {
     logger.info("Downloading and filtering Landsat CSV")
     /* This preprocessing downloads the file to stdout, unzips, and filters to the
@@ -130,16 +143,17 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
     val sceneId = UUID.randomUUID()
     val productId = row("LANDSAT_PRODUCT_ID")
     val landsatPath = getLandsatPath(productId)
-    val sceneName = s"L8 $landsatPath"
 
     val maybeInsertScene: ConnectionIO[Option[Scene.WithRelated]] = for {
-      maybeExistingScene <- SceneDao.query.filter(fr"name = ${sceneName}").filter(fr"owner = ${user.id}").selectOption
       sceneInsert <- {
-        maybeExistingScene match {
-          case Some(scene) => {
+
+        val sceneNameExists = existingSceneNames.contains(landsatPath)
+        sceneNameExists match {
+          case true => {
+            logger.warn(s"Skipping inserting ${landsatPath} -- already exists")
             None.pure[ConnectionIO]
           }
-          case None => {
+          case _ => {
             createSceneFromRow(row, user, srcProj, targetProj, sceneId, productId, landsatPath) match {
               case Some(scene) => for {
                 sceneInsert <- SceneDao.insertMaybe(scene, user)
