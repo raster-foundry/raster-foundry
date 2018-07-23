@@ -56,7 +56,8 @@ case class PlatformWithUsersSceneProjects(
   email: String,
   emailNotifications: Boolean,
   projectId: UUID,
-  projectName: String
+  projectName: String,
+  personalInfo: User.PersonalInfo
 )
 
 @JsonCodec
@@ -68,5 +69,6 @@ case class PlatformWithSceneOwner(
   pubSettings: Platform.PublicSettings,
   priSettings: Platform.PrivateSettings,
   email: String,
-  emailNotifications: Boolean
+  emailNotifications: Boolean,
+  personalInfo: User.PersonalInfo
 )

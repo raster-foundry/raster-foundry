@@ -76,10 +76,20 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
 
   def sendExportNotification(status: String, user: User, platform: Platform, name: Option[String], id: UUID, exportType: String) = {
     val email = new NotificationEmail
-    (user.emailNotifications, platform.publicSettings.emailExportNotification) match {
-      case (true, true) =>
+
+    val userEmailAddress: String = (user.emailNotifications, user.personalInfo.emailNotifications) match {
+      case (true, true) | (false, true) => user.personalInfo.email
+      case (true, false) => user.email
+      case (false, false) => ""
+    }
+
+    (userEmailAddress, platform.publicSettings.emailExportNotification) match {
+      case ("", true) => logger.warn(email.userEmailNotificationDisabledWarning(user.id))
+      case ("", false) => logger.warn(
+        email.userEmailNotificationDisabledWarning(user.id) ++ " " ++ email.platformNotSubscribedWarning(platform.id.toString()))
+      case (userEmailAddress, true) =>
         val (pub, pri) = (platform.publicSettings, platform.privateSettings)
-        (pub.emailSmtpHost, pub.emailSmtpPort, pub.emailSmtpEncryption, pub.emailUser, pri.emailPassword, user.email) match {
+        (pub.emailSmtpHost, pub.emailSmtpPort, pub.emailSmtpEncryption, pub.emailUser, pri.emailPassword, userEmailAddress) match {
           case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
              email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
              val (subject, html, plain) = exportEmailContent(status, user, platform, name, id, exportType)
@@ -87,11 +97,25 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
              logger.info(s"Notified owner ${user.id} about export ${exportId}.")
           case _ => logger.warn(email.insufficientSettingsWarning(platform.id.toString(), user.id))
         }
-      case (false, true) => logger.warn(email.userEmailNotificationDisabledWarning(user.id))
-      case (true, false) => logger.warn(email.platformNotSubscribedWarning(platform.id.toString()))
-      case (false, false) => logger.warn(
-        email.userEmailNotificationDisabledWarning(user.id) ++ " " ++ email.platformNotSubscribedWarning(platform.id.toString()))
+      case (_, false) => logger.warn(email.platformNotSubscribedWarning(platform.id.toString()))
     }
+
+    // (user.emailNotifications, platform.publicSettings.emailExportNotification) match {
+    //   case (true, true) =>
+    //     val (pub, pri) = (platform.publicSettings, platform.privateSettings)
+    //     (pub.emailSmtpHost, pub.emailSmtpPort, pub.emailSmtpEncryption, pub.emailUser, pri.emailPassword, user.email) match {
+    //       case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
+    //          email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
+    //          val (subject, html, plain) = exportEmailContent(status, user, platform, name, id, exportType)
+    //          email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, subject, html, plain).map((configuredEmail: Email) => configuredEmail.send)
+    //          logger.info(s"Notified owner ${user.id} about export ${exportId}.")
+    //       case _ => logger.warn(email.insufficientSettingsWarning(platform.id.toString(), user.id))
+    //     }
+    //   case (false, true) => logger.warn(email.userEmailNotificationDisabledWarning(user.id))
+    //   case (true, false) => logger.warn(email.platformNotSubscribedWarning(platform.id.toString()))
+    //   case (false, false) => logger.warn(
+    //     email.userEmailNotificationDisabledWarning(user.id) ++ " " ++ email.platformNotSubscribedWarning(platform.id.toString()))
+    // }
   }
 
   def notifyExportOwner(status: String): Unit = {

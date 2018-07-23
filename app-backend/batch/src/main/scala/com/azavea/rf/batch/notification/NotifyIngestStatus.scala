@@ -126,10 +126,20 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
   def sendIngestStatusEmailToConsumers(platformsWithConsumers: List[PlatformWithUsersSceneProjects], scene: Scene, ingestStatus: String) =
     platformsWithConsumers.map(pU => {
       val email = new NotificationEmail
-      (pU.emailNotifications, pU.pubSettings.emailIngestNotification) match {
-        case (true, true) =>
+
+      val userEmailAddress: String = (pU.emailNotifications, pU.personalInfo.emailNotifications) match {
+        case (true, true) | (false, true) => pU.personalInfo.email
+        case (true, false) => pU.email
+        case (false, false) => ""
+      }
+
+      (userEmailAddress, pU.pubSettings.emailIngestNotification) match {
+        case ("", true) => logger.warn(email.userEmailNotificationDisabledWarning(pU.uId))
+        case ("", false) => logger.warn(
+          email.userEmailNotificationDisabledWarning(pU.uId) ++ " " ++ email.platformNotSubscribedWarning(pU.platId.toString()))
+        case (userEmailAddress, true) =>
           (pU.pubSettings.emailSmtpHost, pU.pubSettings.emailSmtpPort, pU.pubSettings.emailSmtpEncryption,
-            pU.pubSettings.emailUser, pU.priSettings.emailPassword, pU.email) match {
+            pU.pubSettings.emailUser, pU.priSettings.emailPassword, userEmailAddress) match {
             case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
               email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
               val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForConsumers(pU, scene, ingestStatus)
@@ -137,19 +147,44 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
               logger.info(s"Notified project owner ${pU.uId}.")
             case _ => logger.warn(email.insufficientSettingsWarning(pU.platId.toString(), pU.uId))
           }
-        case (false, true) => logger.warn(email.userEmailNotificationDisabledWarning(pU.uId))
-        case (true, false) => logger.warn(email.platformNotSubscribedWarning(pU.platId.toString()))
-        case (false, false) => logger.warn(
-          email.userEmailNotificationDisabledWarning(pU.uId) ++ " " ++ email.platformNotSubscribedWarning(pU.platId.toString()))
+        case (_, false) => logger.warn(email.platformNotSubscribedWarning(pU.platId.toString()))
       }
+
+      // (pU.emailNotifications, pU.pubSettings.emailIngestNotification) match {
+      //   case (true, true) =>
+      //     (pU.pubSettings.emailSmtpHost, pU.pubSettings.emailSmtpPort, pU.pubSettings.emailSmtpEncryption,
+      //       pU.pubSettings.emailUser, pU.priSettings.emailPassword, pU.email) match {
+      //       case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
+      //         email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
+      //         val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForConsumers(pU, scene, ingestStatus)
+      //         email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).map((configuredEmail: Email) => configuredEmail.send)
+      //         logger.info(s"Notified project owner ${pU.uId}.")
+      //       case _ => logger.warn(email.insufficientSettingsWarning(pU.platId.toString(), pU.uId))
+      //     }
+      //   case (false, true) => logger.warn(email.userEmailNotificationDisabledWarning(pU.uId))
+      //   case (true, false) => logger.warn(email.platformNotSubscribedWarning(pU.platId.toString()))
+      //   case (false, false) => logger.warn(
+      //     email.userEmailNotificationDisabledWarning(pU.uId) ++ " " ++ email.platformNotSubscribedWarning(pU.platId.toString()))
+      // }
     })
 
   def sendIngestStatusEmailToOwner(pO: PlatformWithSceneOwner, scene: Scene, ingestStatus: String) = {
     val email = new NotificationEmail
-    (pO.emailNotifications, pO.pubSettings.emailIngestNotification) match {
-      case (true, true) =>
+
+    val userEmailAddress: String = (pO.emailNotifications, pO.personalInfo.emailNotifications) match {
+      case (true, true) | (false, true) => pO.personalInfo.email
+      case (true, false) => pO.email
+      case (false, false) => ""
+    }
+
+    (userEmailAddress, pO.pubSettings.emailIngestNotification) match {
+
+      case ("", true) => logger.warn(email.userEmailNotificationDisabledWarning(pO.uId))
+      case ("", false) => logger.warn(
+        email.userEmailNotificationDisabledWarning(pO.uId) ++ " " ++ email.platformNotSubscribedWarning(pO.platId.toString()))
+      case (userEmailAddress, true) =>
         (pO.pubSettings.emailSmtpHost, pO.pubSettings.emailSmtpPort, pO.pubSettings.emailSmtpEncryption,
-          pO.pubSettings.emailUser, pO.priSettings.emailPassword, pO.email) match {
+          pO.pubSettings.emailUser, pO.priSettings.emailPassword, userEmailAddress) match {
           case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
             email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
             val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForOwner(pO, scene, ingestStatus)
@@ -157,11 +192,24 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
             logger.info(s"Notified scene owner ${pO.uId}.")
           case _ => logger.warn(email.insufficientSettingsWarning(pO.platId.toString(), pO.uId))
         }
-      case (false, true) => logger.warn(email.userEmailNotificationDisabledWarning(pO.uId))
-      case (true, false) => logger.warn(email.platformNotSubscribedWarning(pO.platId.toString()))
-      case (false, false) => logger.warn(
-        email.userEmailNotificationDisabledWarning(pO.uId) ++ " " ++ email.platformNotSubscribedWarning(pO.platId.toString()))
+      case (_, false) => logger.warn(email.platformNotSubscribedWarning(pO.platId.toString()))
     }
+    // (pO.emailNotifications, pO.pubSettings.emailIngestNotification) match {
+    //   case (true, true) =>
+    //     (pO.pubSettings.emailSmtpHost, pO.pubSettings.emailSmtpPort, pO.pubSettings.emailSmtpEncryption,
+    //       pO.pubSettings.emailUser, pO.priSettings.emailPassword, pO.email) match {
+    //       case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
+    //         email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
+    //         val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForOwner(pO, scene, ingestStatus)
+    //         email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).map((configuredEmail: Email) => configuredEmail.send)
+    //         logger.info(s"Notified scene owner ${pO.uId}.")
+    //       case _ => logger.warn(email.insufficientSettingsWarning(pO.platId.toString(), pO.uId))
+    //     }
+    //   case (false, true) => logger.warn(email.userEmailNotificationDisabledWarning(pO.uId))
+    //   case (true, false) => logger.warn(email.platformNotSubscribedWarning(pO.platId.toString()))
+    //   case (false, false) => logger.warn(
+    //     email.userEmailNotificationDisabledWarning(pO.uId) ++ " " ++ email.platformNotSubscribedWarning(pO.platId.toString()))
+    // }
   }
   def notifyConsumers(scene: Scene, ingestStatus: String) = {
     logger.info("Notifying Consumers...")

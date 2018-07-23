@@ -236,6 +236,8 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
             listOfPUSP(1).projectId == dbProject.id || listOfPUSP(1).projectId == dbProjectAnother.id, "; project ID don't match")
           assert((listOfPUSP(0).projectName == dbProject.name || listOfPUSP(0).projectName == dbProjectAnother.name) &&
             (listOfPUSP(1).projectName == dbProject.name || listOfPUSP(1).projectName == dbProjectAnother.name), "; project name don't match")
+          assert((listOfPUSP(0).personalInfo == dbUser.personalInfo || listOfPUSP(0).personalInfo == dbUserAnother.personalInfo) &&
+            (listOfPUSP(1).personalInfo == dbUser.personalInfo || listOfPUSP(1).personalInfo == dbUserAnother.personalInfo), "; user personal info don't match")
           true
         }
       }
@@ -271,6 +273,7 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
           assert(pU.priSettings == dbPlatform.privateSettings, "; platform private settings don't match")
           assert(pU.email == dbUser.email, "; user email don't match")
           assert(pU.emailNotifications == dbUser.emailNotifications, "; user email notification don't match")
+          assert(pU.personalInfo == dbUser.personalInfo, "; user personal info don't match")
           true
         }
       }
