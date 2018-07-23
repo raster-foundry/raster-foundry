@@ -1,10 +1,8 @@
 /* globals _, document */
 export default class DateRangePickerModalController {
-    constructor($log, $scope, $timeout, moment, dateRangePickerConf) {
+    constructor($rootScope, $log, $scope, $timeout, moment, dateRangePickerConf) {
         'ngInject';
-        this.$log = $log;
-        this.$scope = $scope;
-        this.$timeout = $timeout;
+        $rootScope.autoInject(this, arguments);
         this.Moment = moment;
         this.dateRangePickerConf = dateRangePickerConf;
     }
@@ -21,19 +19,82 @@ export default class DateRangePickerModalController {
         this.maxDay = this.resolve.config.maxDay;
 
         this.$timeout(() => {
-            const ele = angular.element(document.getElementsByClassName('input-container'));
-            const startInput = angular.element(ele[0].lastChild);
-            const endInput = angular.element(ele[1].lastChild);
-            this.setStartEndValues(startInput, endInput);
-            // this.bindInputChangeEvents(startInput, endInput);
-        }, 100);
+            this.inputElements = angular.element(
+                document.getElementsByClassName('input-container')
+            );
+            this.startInput = $(this.inputElements[0].lastChild);
+            this.endInput = $(this.inputElements[1].lastChild);
+            this.setFormatTips();
+            this.setStartEndValues();
+            this.bindInputChangeEvents();
+        }, 0);
     }
 
-    setStartEndValues(startInput, endInput) {
-        let startReformat = this.Moment(startInput.val(), 'MMM DD, YYYY').format('MM/DD/YYYY');
-        startInput.val(startReformat);
-        let endReformat = this.Moment(endInput.val(), 'MMM DD, YYYY').format('MM/DD/YYYY');
-        endInput.val(endReformat);
+    setFormatTips() {
+        $(this.inputElements[0]).append('<div class="format-tip">mm/dd/yyyy</div>');
+        $(this.inputElements[1]).append('<div class="format-tip">mm/dd/yyyy</div>');
+    }
+
+    resetRange(moment, bound) {
+        if (bound.length) {
+            this._range[bound] = moment;
+        }
+    }
+
+    checkInvalidFormat(isInvalid, bound) {
+        if (bound === 'start') {
+            this.isInvalidStartFormat = isInvalid;
+        } else if (bound === 'end') {
+            this.isInvalidEndFormat = isInvalid;
+        }
+    }
+
+    resetDateDisplay(inputVal, inputEle, bound = '') {
+        let date = {
+            default: this.Moment(inputVal, 'MMM DD, YYYY', true),
+            display: this.Moment(inputVal, 'MM/DD/YYYY', true)
+        };
+        if (date.default.isValid()) {
+            this.resetRange(date.default, bound);
+            this.$timeout(() => {
+                inputEle.val(date.default.format('MM/DD/YYYY'));
+            }, 0);
+            this.checkInvalidFormat(false, bound);
+        } else if (date.display.isValid()) {
+            this.resetRange(date.display, bound);
+            this.$timeout(() => {
+                inputEle.val(date.display.format('MM/DD/YYYY'));
+            }, 0);
+            this.checkInvalidFormat(false, bound);
+        } else {
+            this.checkInvalidFormat(true, bound);
+        }
+    }
+
+    setStartEndValues() {
+        this.resetDateDisplay(this.startInput.val(), this.startInput, 'start');
+        this.resetDateDisplay(this.endInput.val(), this.endInput, 'end');
+    }
+
+    isRangeValid() {
+        return this._range.start.isBefore(this._range.end) ||
+            this._range.start.isSame(this._range.end);
+    }
+
+    bindInputChangeEvents() {
+        this.startInput.on('change', (e) => {
+            this.resetDateDisplay(e.target.value, this.startInput, 'start');
+        });
+        this.endInput.on('change', (e) => {
+            this.resetDateDisplay(e.target.value, this.endInput, 'end');
+        });
+    }
+
+    onCalendarClick() {
+        this.$timeout(() => {
+            this.resetDateDisplay(this.startInput.val(), this.startInput, 'start');
+            this.resetDateDisplay(this.endInput.val(), this.endInput, 'end');
+        }, 0);
     }
 
     isActivePreset(range, index) {
@@ -56,6 +117,7 @@ export default class DateRangePickerModalController {
             this.isRangeEmpty = true;
         }
         this.selectedRangeIndex = index;
+        this.$timeout(() => this.setStartEndValues(), 0);
     }
 
     getSelectedPreset() {
