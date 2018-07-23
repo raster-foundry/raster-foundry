@@ -5,7 +5,9 @@ import geotrellis.slick.Projected
 import geotrellis.vector._
 import geotrellis.vector.io._
 
-object AntimeridianUtils {
+import com.typesafe.scalalogging.LazyLogging
+
+object AntimeridianUtils extends LazyLogging {
   def shiftPoint(p: Point, split: Double, compareMultiplier: Double, inclusive: Boolean, degrees: Double): Point = {
     inclusive match {
       case true => p match {
@@ -48,7 +50,7 @@ object AntimeridianUtils {
       latLngFootprint.polygons.map(
         poly => Polygon(poly.vertices.map(shiftPoint(_, 0, 1, false, 360)))
       ))
-    latLngFootprint.area > longitudeShifted.area
+    latLngFootprint.area - 1 > longitudeShifted.area
   }
 
   def splitDataFootprintOverAntimeridian(multi: MultiPolygon, inputCRS: CRS, outputCRS: CRS): Projected[MultiPolygon] = {
@@ -85,23 +87,30 @@ object AntimeridianUtils {
     }
   }
 
-  def cloneTileFootprint(multi: MultiPolygon, code: Int): Projected[MultiPolygon] = {
+  def cloneTileFootprint(multi: MultiPolygon, targetCRS: CRS): Projected[MultiPolygon] = {
 
-    val latLngFootprint = multi.reproject(WebMercator, LatLng)
+    val latLngFootprint = multi.reproject(targetCRS, LatLng)
     val antiMeridian = Projected(Line(Point(180, -90), Point(180, 90)), 4326)
     val longitudeShifted = MultiPolygon(
       latLngFootprint.polygons.map(
         poly => Polygon(poly.vertices.map(shiftPoint(_, 0, 1, false, 360)))
       ))
+    logger.debug(s"Cloning tile footprint")
+    logger.debug(s"original footprint: ${latLngFootprint.toGeoJson()}")
+    logger.debug(s"shifted footprint: ${longitudeShifted.toGeoJson()}")
     val leftClone = MultiPolygon(
       longitudeShifted.polygons.map(
         poly => Polygon(poly.vertices.map(p => Point(p.x - 360, p.y)))
       )
     )
+    logger.debug(s"cloned footprint: ${leftClone.toGeoJson()}")
 
-    leftClone.union(longitudeShifted).asMultiPolygon.map(Projected(_, code)) match {
-      case Some(m : Projected[MultiPolygon]) => m
-      case _ => throw new RuntimeException(s"Error cloning tile footprint across anti-meridian: ${multi}")
+    val unioned = leftClone.union(longitudeShifted)
+    (unioned.asMultiPolygon, targetCRS.epsgCode) match {
+      case (Some(multi: MultiPolygon), Some(code: Int)) =>
+        logger.debug(s"unioned footprint: ${multi.toGeoJson()}")
+        Projected(multi.reproject(LatLng, targetCRS), code)
+      case (a, b) => throw new RuntimeException(s"Error cloning tile footprint across anti-meridian. Polygon: $a, epsg code: $b")
     }
   }
 
@@ -109,7 +118,9 @@ object AntimeridianUtils {
       Option[Projected[MultiPolygon]] = {
     val correctedDataFootprint = (intersects, dataFootprint, targetCRS.epsgCode) match {
       case (true, Some(footprint), _) =>
-        Some(splitDataFootprintOverAntimeridian(footprint, targetCRS, targetCRS))
+        val newDataFootprint = splitDataFootprintOverAntimeridian(footprint, targetCRS, targetCRS)
+        logger.debug(s"Split data footprint: ${newDataFootprint.geom.reproject(targetCRS, LatLng).toGeoJson()}")
+        Some(newDataFootprint)
       case (false, Some(footprint), Some(code)) =>
         Some(Projected(footprint, code))
       case _ => None
@@ -120,7 +131,7 @@ object AntimeridianUtils {
   def correctTileFootprint(intersects: Boolean, tileFootprint: Option[MultiPolygon], targetCRS: CRS):
       Option[Projected[MultiPolygon]] = {
     val correctedTileFootprint = (intersects, tileFootprint, targetCRS.epsgCode) match {
-      case (true, Some(footprint), Some(code)) => Some(cloneTileFootprint(footprint, code))
+      case (true, Some(footprint), Some(code)) => Some(cloneTileFootprint(footprint, targetCRS))
       case (false, Some(footprint), Some(code)) => Some(Projected(footprint, code))
       case _ => None
     }
