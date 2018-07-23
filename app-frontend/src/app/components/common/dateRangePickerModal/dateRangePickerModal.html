@@ -3,19 +3,26 @@
     <date-range-picker
         api="$ctrl.pickerApi"
         range="$ctrl._range"
-        min-day="$ctrl._getMinDay()"
-        max-day="$ctrl._getMaxDay()">
-      </date-range-picker>
-      <div class="datepicker-ranges">
-        <h5 class="text-center preset-header">Date Filter Presets</h5>
-        <button class="btn btn-range"
-            ng-repeat="range in $ctrl.ranges"
-            ng-class="{'btn-primary': $ctrl.isActivePreset(range, $index), 'disabled': range.disabled}"
-            ng-click="$ctrl.onPresetSelect(range, $index)"
-        >{{range.name}}
-        </button>
-      </div>
+        ng-click="$ctrl.onCalendarClick()">
+    </date-range-picker>
+    <div class="datepicker-ranges">
+      <h5 class="text-center preset-header">Date Filter Presets</h5>
+      <button
+        class="btn btn-range"
+        ng-repeat="range in $ctrl.ranges"
+        ng-class="{'btn-primary': $ctrl.isActivePreset(range, $index), 'disabled': range.disabled}"
+        ng-click="$ctrl.onPresetSelect(range, $index)">
+        {{range.name}}
+      </button>
     </div>
+  </div>
+  <div class="content color-danger" ng-if="!$ctrl.isRangeValid">
+    Range is invalid.
+  </div>
+  <div
+    class="content color-danger"
+    ng-if="$ctrl.isInvalidStartFormat || $ctrl.isInvalidEndFormat">
+    Date format is invalid. Please use format MM-DD-YYYY.
   </div>
 </div>
 <div class="modal-footer">
@@ -23,8 +30,11 @@
           ng-click="$ctrl.cancel()">
     Cancel
   </button>
-  <button type="button" class="btn btn-primary"
-          ng-click="$ctrl.apply()">
+  <button
+    type="button"
+    class="btn btn-primary"
+    ng-click="$ctrl.apply()"
+    ng-disabled="!$ctrl.isRangeValid || $ctrl.isInvalidStartFormat || $ctrl.isInvalidEndFormat">
     Apply
   </button>
 </div>
