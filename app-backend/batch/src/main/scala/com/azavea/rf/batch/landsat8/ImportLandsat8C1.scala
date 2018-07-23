@@ -259,6 +259,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
     }
   }
 
+  @SuppressWarnings(Array("TraversableHead"))
   def getRowFootprints(row: Map[String, String], srcProj: CRS, targetProj: CRS):
       (Option[Projected[MultiPolygon]], Option[Projected[MultiPolygon]]) = {
     val ll = row("lowerLeftCornerLongitude").toDouble -> row("lowerLeftCornerLatitude").toDouble

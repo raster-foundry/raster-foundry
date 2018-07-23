@@ -23,14 +23,32 @@ object AntimeridianUtils {
     }
   }
 
+  /*
+   *  This does a very simple check:
+   *  Reproject the polygon to LatLng
+   *  Shift points in the polygon which have negative values by adding 360 to them so the projection is now
+   *      on a 0 to 360 degrees projection instead of -180 to 180
+   *  If the resulting polygon is smaller, then we assume the polygon crosses the antimeridian.
+   *  We can make this assumption because Landsat and Sentinel do not record imagery in sections which
+   *  span a large enough portion of the globe to break the assumption
+   *  We define the anti-meridian as Line(Point(180, -90), Point(180, 90)) because
+   *      in LatLng, it's Line(Point(-180, -90), Point(-180, 90)) and we add 360 to it
+   *
+   *  Eg: A polygon with a left bound of Point(-179, 1) and a right bound of Point(179, 1)
+   *      would stretch across the entire map. The shifted bounds of Point(179, 1) and Point(181, 1)
+   *      have a smaller area, so we split the polygon and shift the half which is > 180 back 360 degrees
+   *
+   *      A polygon with bounds Point(-1, 1) and Point(1, 1) when shifted will be Point(1, 1) and Point(359, 1)
+   *      This crosses the anti-meridian, but creates a shape which is larger than the original. We therefore
+   *      concluded that it does not need splitting.
+   */
   def crossesAntimeridian(multi: MultiPolygon) = {
     val latLngFootprint = multi.reproject(WebMercator, LatLng)
-    val antiMeridian = Projected(Line(Point(180, -90), Point(180, 90)), 4326)
     val longitudeShifted = MultiPolygon(
       latLngFootprint.polygons.map(
         poly => Polygon(poly.vertices.map(shiftPoint(_, 0, 1, false, 360)))
       ))
-    longitudeShifted.intersects(antiMeridian)
+    latLngFootprint.area > longitudeShifted.area
   }
 
   def splitDataFootprintOverAntimeridian(multi: MultiPolygon, inputCRS: CRS, outputCRS: CRS): Projected[MultiPolygon] = {
