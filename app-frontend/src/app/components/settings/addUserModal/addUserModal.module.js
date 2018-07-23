@@ -125,7 +125,7 @@ class AddUserModalController {
             const userId = select[0];
             const isAdmin = select[1];
             if (this.resolve.groupType === 'team') {
-                return this.teamService.addUserWithrole(
+                return this.teamService.addUserWithRole(
                     this.resolve.platformId,
                     this.resolve.organizationId,
                     this.resolve.teamId,
