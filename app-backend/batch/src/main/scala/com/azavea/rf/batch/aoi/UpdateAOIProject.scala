@@ -97,22 +97,6 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
         }
       case (_, false) => logger.warn(email.platformNotSubscribedWarning(platform.id.toString()))
     }
-    // (user.emailNotifications, platform.publicSettings.emailAoiNotification) match {
-    //   case (true, true) =>
-    //     val (pub, pri) = (platform.publicSettings, platform.privateSettings)
-    //     (pub.emailSmtpHost, pub.emailSmtpPort, pub.emailSmtpEncryption, pub.emailUser, pri.emailPassword, user.email) match {
-    //       case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
-    //         email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
-    //         val (subject, html, plain) = aoiEmailContent(project, platform, user, sceneCount)
-    //         email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, subject, html, plain).map((configuredEmail: Email) => configuredEmail.send)
-    //         logger.info(s"Notified project owner ${user.id} about AOI updates")
-    //       case _ => logger.warn(email.insufficientSettingsWarning(platform.id.toString(), user.id))
-    //     }
-    //   case (false, true) => logger.warn(email.userEmailNotificationDisabledWarning(user.id))
-    //   case (true, false) => logger.warn(email.platformNotSubscribedWarning(platform.id.toString()))
-    //   case (false, false) => logger.warn(
-    //     email.userEmailNotificationDisabledWarning(user.id) ++ " " ++ email.platformNotSubscribedWarning(platform.id.toString()))
-    // }
   }
 
   def notifyProjectOwner(projId: UUID, sceneCount: Int) = {
