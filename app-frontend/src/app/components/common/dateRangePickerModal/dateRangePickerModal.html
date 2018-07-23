@@ -16,7 +16,7 @@
       </button>
     </div>
   </div>
-  <div class="content color-danger" ng-if="!$ctrl.isRangeValid()">
+  <div class="content color-danger" ng-if="!$ctrl.isRangeValid">
     Range is invalid.
   </div>
   <div
@@ -34,7 +34,7 @@
     type="button"
     class="btn btn-primary"
     ng-click="$ctrl.apply()"
-    ng-disabled="!$ctrl.isRangeValid() || $ctrl.isInvalidStartFormat || $ctrl.isInvalidEndFormat)">
+    ng-disabled="!$ctrl.isRangeValid || $ctrl.isInvalidStartFormat || $ctrl.isInvalidEndFormat">
     Apply
   </button>
 </div>

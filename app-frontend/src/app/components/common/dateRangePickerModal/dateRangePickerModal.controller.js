@@ -25,7 +25,7 @@ export default class DateRangePickerModalController {
             this.startInput = $(this.inputElements[0].lastChild);
             this.endInput = $(this.inputElements[1].lastChild);
             this.setFormatTips();
-            this.setStartEndValues();
+            this.setInitStartEndValues();
             this.bindInputChangeEvents();
         }, 0);
     }
@@ -35,10 +35,26 @@ export default class DateRangePickerModalController {
         $(this.inputElements[1]).append('<div class="format-tip">mm/dd/yyyy</div>');
     }
 
+    checkRange() {
+        return this._range.start.isBefore(this._range.end) ||
+            this._range.start.isSame(this._range.end);
+    }
+
+    setInitStartEndValues() {
+        this.startInput.val(
+            this.Moment(this.startInput.val(), 'MMM DD, YYYY', true).format('MM/DD/YYYY')
+        );
+        this.endInput.val(
+            this.Moment(this.endInput.val(), 'MMM DD, YYYY', true).format('MM/DD/YYYY')
+        );
+        this.isRangeValid = this.checkRange();
+    }
+
     resetRange(moment, bound) {
         if (bound.length) {
             this._range[bound] = moment;
         }
+        this.isRangeValid = this.checkRange();
     }
 
     checkInvalidFormat(isInvalid, bound) {
@@ -49,20 +65,24 @@ export default class DateRangePickerModalController {
         }
     }
 
-    resetDateDisplay(inputVal, inputEle, bound = '') {
+    resetDateDisplay(inputVal, inputEle, bound = '', resetRange = true) {
         let date = {
             default: this.Moment(inputVal, 'MMM DD, YYYY', true),
             display: this.Moment(inputVal, 'MM/DD/YYYY', true)
         };
         if (date.default.isValid()) {
-            this.resetRange(date.default, bound);
             this.$timeout(() => {
+                if (resetRange) {
+                    this.resetRange(date.default, bound);
+                }
                 inputEle.val(date.default.format('MM/DD/YYYY'));
             }, 0);
             this.checkInvalidFormat(false, bound);
         } else if (date.display.isValid()) {
-            this.resetRange(date.display, bound);
             this.$timeout(() => {
+                if (resetRange) {
+                    this.resetRange(date.display, bound);
+                }
                 inputEle.val(date.display.format('MM/DD/YYYY'));
             }, 0);
             this.checkInvalidFormat(false, bound);
@@ -71,29 +91,24 @@ export default class DateRangePickerModalController {
         }
     }
 
-    setStartEndValues() {
-        this.resetDateDisplay(this.startInput.val(), this.startInput, 'start');
-        this.resetDateDisplay(this.endInput.val(), this.endInput, 'end');
-    }
-
-    isRangeValid() {
-        return this._range.start.isBefore(this._range.end) ||
-            this._range.start.isSame(this._range.end);
-    }
-
     bindInputChangeEvents() {
-        this.startInput.on('change', (e) => {
+        this.startInput.on('change blur', (e) => {
             this.resetDateDisplay(e.target.value, this.startInput, 'start');
         });
-        this.endInput.on('change', (e) => {
+        this.endInput.on('change blur', (e) => {
             this.resetDateDisplay(e.target.value, this.endInput, 'end');
         });
     }
 
     onCalendarClick() {
         this.$timeout(() => {
-            this.resetDateDisplay(this.startInput.val(), this.startInput, 'start');
-            this.resetDateDisplay(this.endInput.val(), this.endInput, 'end');
+            this.isRangeValid = this.checkRange();
+            if (this.isRangeValid) {
+                this.resetDateDisplay(
+                    this._range.start.format('MM/DD/YYYY'), this.startInput, 'start', false);
+                this.resetDateDisplay(
+                    this._range.end.format('MM/DD/YYYY'), this.endInput, 'end', false);
+            }
         }, 0);
     }
 
@@ -117,7 +132,10 @@ export default class DateRangePickerModalController {
             this.isRangeEmpty = true;
         }
         this.selectedRangeIndex = index;
-        this.$timeout(() => this.setStartEndValues(), 0);
+        this.$timeout(() => {
+            this.resetDateDisplay(this.startInput.val(), this.startInput, 'start', false);
+            this.resetDateDisplay(this.endInput.val(), this.endInput, 'end', false);
+        }, 0);
     }
 
     getSelectedPreset() {
