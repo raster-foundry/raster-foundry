@@ -147,7 +147,6 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     logger.info(s"Attempting to import ${scenePath}")
     val sceneId = UUID.randomUUID()
     val images = List(10f, 20f, 60f).map(createImages(sceneId, scenePath.some, _)).reduce(_ ++ _)
-    val thumbnails = createThumbnails(sceneId, scenePath)
     val sceneName = s"S2 ${scenePath}"
     logger.info(s"Starting scene creation: ${scenePath}- ${sceneName}")
     logger.info(s"Getting tile info for ${scenePath}")
