@@ -42,6 +42,19 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
   val cachedThreadPool = Executors.newFixedThreadPool(5)
   val SceneCreationIOContext = ExecutionContext.fromExecutor(cachedThreadPool)
 
+  // Eagerly get existing scene names
+  val previousDay = startDate.minusDays(1)
+  val nextDay = startDate.plusDays(1)
+  val sceneQuery =
+    sql"""SELECT name
+            FROM scenes
+            WHERE
+            acquisition_date <= ${nextDay.toString}::timestamp AND
+            acquisition_date >= ${previousDay.toString}::timestamp AND
+            datasource = ${sentinel2Config.datasourceUUID}
+      """.query[String].list
+  val existingSceneNames = sceneQuery.transact(xa).unsafeRunSync.toSet
+
   val name = ImportSentinel2.name
 
   /** Get S3 client per each call */
@@ -120,14 +133,6 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
         ext       = "productInfo.json",
         recursive = true
       ).toList
-  }
-
-  def getExistingScenes(date: LocalDate, datasourceUUID: UUID): List[String] = {
-    logger.info("Getting scenes that already exist in the database")
-    val scenesConnIO = SceneDao.query.filter(
-      Fragments.and(fr"datasource = ${datasourceUUID} :: uuid", fr"date(acquisition_date) = date(${date}) :: date")
-    ).list map { (scenes: List[Scene]) => scenes map { _.name } }
-    scenesConnIO.transact(xa).unsafeRunSync
   }
 
   protected def insertAcrForScene(swr: Scene.WithRelated, user: User): ConnectionIO[AccessControlRule] =
