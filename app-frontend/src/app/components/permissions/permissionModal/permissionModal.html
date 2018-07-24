@@ -94,7 +94,9 @@
                           on-delete="$ctrl.onActionsDelete('PLATFORM', id)"
       >
         <div class="avatar user-avatar image-placeholder" ng-if="!$ctrl.entityCache.user[id].profileImageUri">
-          <div>E</div>
+          <div>
+            <i class="icon-users"></i>
+          </div>
         </div>
         <div class="labels">Everyone</div>
       </rf-permission-item>
