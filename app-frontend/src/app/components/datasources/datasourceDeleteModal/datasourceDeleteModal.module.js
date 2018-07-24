@@ -73,8 +73,8 @@ class DatasourceDeleteModalController {
         let text = sceneCount === 1 ? 'scene is' : 'scenes are';
         this.deleteMsg = '<div class="color-danger">'
             + `<p>${sceneCount} ${text} using this datasource.</p>`
-            + '<p>You are about to delete this scene. '
-            + 'Scenes using this datasource will not longer be accessible. '
+            + '<p>You are about to delete this datasource. '
+            + 'Scenes using this datasource will no longer be accessible. '
             + 'This action is not reversible. '
             + 'Are you sure you wish to continue?</p>'
             + '</div>';
