@@ -49,6 +49,15 @@ export default (app) => {
                             );
                             return angular.toJson(transformed);
                         }
+                    },
+                    getPermissions: {
+                        method: 'GET',
+                        cache: true,
+                        url: `${BUILDCONFIG.API_HOST}/api/datasources/:id/permissions`,
+                        params: {
+                            id: '@id'
+                        },
+                        isArray: true
                     }
                 }
             );
@@ -122,6 +131,10 @@ export default (app) => {
                 }));
             }
             return [];
+        }
+
+        getPermissions(id) {
+            return this.Datasource.getPermissions({id}).$promise;
         }
     }
 

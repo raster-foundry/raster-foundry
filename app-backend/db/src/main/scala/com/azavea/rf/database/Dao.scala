@@ -49,7 +49,9 @@ abstract class Dao[Model: Composite] extends Filterables {
     val sharedF: Fragment = fr"""
       SELECT acr.object_id
       FROM access_control_rules acr
-      WHERE acr.object_type = ${objectType}
+      WHERE
+        acr.is_active = true
+        AND acr.object_type = ${objectType}
         AND acr.action_type = ${ActionType.View.toString}::action_type
         AND -- Match if the ACR is an ALL or per user
         (acr.subject_type = 'ALL' OR (acr.subject_type = 'USER' AND acr.subject_id = ${user.id}))
@@ -59,9 +61,11 @@ abstract class Dao[Model: Composite] extends Filterables {
       FROM access_control_rules acr
       JOIN user_group_roles ugr ON acr.subject_type::text = ugr.group_type::text
       AND acr.subject_id::text = ugr.group_id::text
-      WHERE ugr.user_id = ${user.id}
-       AND acr.object_type = ${objectType}
-       AND acr.action_type = ${ActionType.View.toString}::action_type
+      WHERE
+        acr.is_active = true
+        AND ugr.user_id = ${user.id}
+        AND acr.object_type = ${objectType}
+        AND acr.action_type = ${ActionType.View.toString}::action_type
     """
     val inheritedF: Fragment = (groupTypeO, groupIdO) match {
       case (Some(groupType), Some(groupId)) => inheritedBaseF ++ fr"""
