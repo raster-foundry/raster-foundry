@@ -6,14 +6,19 @@ const DatasourceDeleteModalComponent = {
     controller: 'DatasourceDeleteModalController',
     bindings: {
         resolve: '<',
-        modalInstance: '<'
+        modalInstance: '<',
+        close: '&',
+        dismiss: '&'
     }
 };
 
 const uploadProgress = 'CREATED,UPLOADING,UPLOADED,QUEUED,PROCESSING';
 
 class DatasourceDeleteModalController {
-    constructor($rootScope, $scope, $log, uploadService) {
+    constructor(
+        $rootScope, $scope, $log,
+        uploadService, sceneService
+    ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
 
@@ -33,17 +38,46 @@ class DatasourceDeleteModalController {
             if (res.count === 0) {
                 this.checkSceneDatasource();
             } else {
-                this.setUploadMsg();
+                this.allowDelete = false;
+                this.displayUploadMsg(res.count);
             }
         });
     }
 
     checkSceneDatasource() {
-        this.$log.log('check scene datasources');
+        this.sceneService.query({
+            datasource: this.datasource.id
+        }).then(scenes => {
+            if (scenes.count !== 0) {
+                this.displaySceneMsg(scenes.count);
+            } else {
+                this.deleteMsg = '<div class="color-danger">'
+                    + 'You are about to delete this scene. '
+                    + 'This action is not reversible. '
+                    + 'Are you sure you wish to continue?'
+                    + '</div>';
+            }
+            this.allowDelete = true;
+        });
     }
 
-    setUploadMsg() {
-        this.$log.log('show message for upload');
+    displayUploadMsg(uploadCount) {
+        let text = uploadCount === 1 ? 'upload is' : 'uploads are';
+        this.deleteMsg = '<div class="color-danger">'
+            + `<p>${uploadCount} in progress ${text} using this datasource.</p>`
+            + '<p>Datasource cannot be deleted at this time.</p>'
+            + '</div>';
+    }
+
+    displaySceneMsg(sceneCount) {
+        let text = sceneCount === 1 ? 'scene is' : 'scenes are';
+        this.deleteMsg = '<div class="color-danger">'
+            + `<p>${sceneCount} ${text} using this datasource.</p>`
+            + '<p>You are about to delete this scene. '
+            + 'Scenes using this datasource will not longer be accessible. '
+            + 'This action is not reversible. '
+            + 'Are you sure you wish to continue?</p>'
+            + '</div>';
     }
 }
 
