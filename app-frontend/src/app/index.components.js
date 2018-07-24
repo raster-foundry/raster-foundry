@@ -8,6 +8,8 @@ export default angular.module('index.components', [
 
     // permission components
     require('./components/permissions/permissionsModal.module.js').name,
+    require('./components/permissions/permissionModal/permissionModal.js').name,
+    require('./components/permissions/permissionItem/permissionItem.js').name,
 
     // scene components
     require('./components/scenes/importList/importList.module.js').name,

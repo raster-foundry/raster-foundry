@@ -13,3 +13,17 @@
     <i class="icon-cross"></i>
   </button>
 </div>
+<div class="search-suggestions" ng-if="$ctrl.showSuggestions && $ctrl.suggestions.length && $ctrl.searchText">
+  <div class="search-suggestion"
+       ng-repeat="suggestion in $ctrl.suggestions"
+       ng-click="$ctrl.handleSuggestionSelect(suggestion)"
+  >
+    <div class="avatar user-avatar image-placeholder" ng-if="$ctrl.showSuggestionAvatars && !suggestion.avatar"></div>
+    <div ng-if="$ctrl.showSuggestionAvatars && suggestion.avatar">
+      <img class="avatar user-avatar" ng-src="{{suggestion.avatar}}"/>
+    </div>
+    <div class="labels">
+      <div>{{suggestion.label}}</div>
+    </div>
+  </div>
+</div>

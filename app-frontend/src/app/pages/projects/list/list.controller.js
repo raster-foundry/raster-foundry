@@ -2,7 +2,7 @@
 
 class ProjectsListController {
     constructor( // eslint-disable-line max-params
-        $log, $state, modalService, $scope, projectService, userService, authService
+        $log, $state, modalService, $scope, projectService, userService, authService, platform
     ) {
         'ngInject';
         this.$log = $log;

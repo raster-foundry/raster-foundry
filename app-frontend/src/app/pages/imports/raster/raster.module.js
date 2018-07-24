@@ -1,9 +1,10 @@
 /* global BUILDCONFIG */
 class RasterListController {
-    constructor(authService, $uibModal) {
+    constructor(authService, $uibModal, platform) {
         'ngInject';
         this.authService = authService;
         this.$uibModal = $uibModal;
+        this.platform = platform;
     }
 
     $onInit() {

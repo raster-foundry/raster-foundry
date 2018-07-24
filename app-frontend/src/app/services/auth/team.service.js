@@ -50,6 +50,12 @@ export default (app) => {
                             'organizations/:organizationId/teams/:teamId/members',
                         method: 'POST'
                     },
+                    search: {
+                        url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/teams/search`,
+                        method: 'GET',
+                        cache: false,
+                        isArray: true
+                    },
                     removeUser: {
                         url: `${BUILDCONFIG.API_HOST}/api/platforms/:platformId/` +
                             'organizations/:organizationId/teams/:teamId/members/:userId',
@@ -117,6 +123,9 @@ export default (app) => {
 
         updateTeam(platformId, organizationId, teamId, params) {
             return this.PlatformTeam.update({platformId, organizationId, teamId}, params).$promise;
+        }
+        searchTeams(searchText, platformId) {
+            return this.Team.search({search: searchText, platformId}).$promise;
         }
     }
 

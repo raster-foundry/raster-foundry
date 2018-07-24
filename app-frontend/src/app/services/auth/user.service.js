@@ -26,6 +26,13 @@ export default (app) => {
                     }
                 });
             this.User = $resource(`${BUILDCONFIG.API_HOST}/api/users/me`, { }, {
+                get: {
+                    url: `${BUILDCONFIG.API_HOST}/api/users/:userId`,
+                    method: 'GET',
+                    params: {
+                        userId: '@userId'
+                    }
+                },
                 update: {
                     method: 'PUT',
                     cache: false
@@ -66,7 +73,7 @@ export default (app) => {
         }
 
         getUserById(id) {
-            return this.UserMetadata.get({userid: id}).$promise;
+            return this.User.get({userId: id}).$promise;
         }
 
         searchUsers(searchText) {
