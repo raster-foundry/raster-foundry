@@ -7,7 +7,6 @@ export default angular.module('index.components', [
     require('./components/admin/sidebarOrganizationList/sidebarOrganizationList.js').name,
 
     // permission components
-    require('./components/permissions/permissionsModal.module.js').name,
     require('./components/permissions/permissionModal/permissionModal.js').name,
     require('./components/permissions/permissionItem/permissionItem.js').name,
 
