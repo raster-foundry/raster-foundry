@@ -51,7 +51,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
             WHERE
             acquisition_date <= ${nextDay.toString}::timestamp AND
             acquisition_date >= ${previousDay.toString}::timestamp AND
-            datasource = ${sentinel2Config.datasourceUUID}
+            datasource = ${sentinel2Config.datasourceUUID}::uuid
       """.query[String].list
   val existingSceneNames = sceneQuery.transact(xa).unsafeRunSync.toSet
 
