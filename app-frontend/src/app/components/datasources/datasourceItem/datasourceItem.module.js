@@ -13,7 +13,7 @@ const DatasourceItemComponent = {
 
 class DatasourceItemController {
     constructor(
-        $rootScope, $scope, $attrs, $log,
+        $rootScope, $scope, $attrs, $log, $state,
         authService, modalService, datasourceService
     ) {
         'ngInject';
@@ -55,6 +55,11 @@ class DatasourceItemController {
                 datasource: () => this.datasource
             }
         }).result.then(() => {
+            this.datasourceService.deleteDatasource(this.datasource.id).then(res => {
+                this.$state.reload();
+            }, (err) => {
+                this.$log.debug('error deleting datasource', err);
+            });
         });
     }
 }

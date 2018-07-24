@@ -50,6 +50,9 @@ export default (app) => {
                             return angular.toJson(transformed);
                         }
                     },
+                    delete: {
+                        method: 'DELETE'
+                    },
                     getPermissions: {
                         method: 'GET',
                         cache: true,
@@ -135,6 +138,10 @@ export default (app) => {
 
         getPermissions(id) {
             return this.Datasource.getPermissions({id}).$promise;
+        }
+
+        deleteDatasource(id) {
+            return this.Datasource.delete({id}).$promise;
         }
     }
 
