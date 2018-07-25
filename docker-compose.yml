@@ -63,6 +63,8 @@ services:
       postgres:
         condition: service_healthy
     env_file: .env
+    environment:
+      - RF_LOG_LEVEL=INFO
     ports:
       - "9000:9000"
       - "9010:9010"
@@ -113,6 +115,8 @@ services:
     external_links:
       - statsd
     env_file: .env
+    environment:
+      - RF_LOG_LEVEL=INFO
     ports:
       - "9900:9900"
       - "9020:9020"
