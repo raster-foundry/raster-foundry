@@ -3,18 +3,17 @@ package com.azavea.rf.common.cache
 
 import com.azavea.rf.common.{Config, RfStackTrace, RollbarNotifier}
 import java.util.concurrent.Executors
-
 import net.spy.memcached._
 
 import scala.concurrent._
 import scala.concurrent.duration._
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+
 import cats.data._
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
-import jdk.nashorn.internal.ir.debug.ObjectSizeCalculator
 
 import scala.util.{Failure, Success}
 import scala.annotation.tailrec
@@ -64,10 +63,7 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
 
   def setValue[T](key: String, value: T, ttlSeconds: Int = 0): Unit =
     withAbbreviatedKey(key) { key =>
-      if (logger.underlying.isDebugEnabled()) {
-        val size = ObjectSizeCalculator.getObjectSize(value)
-        logger.debug(s"Setting Key: ${key} of size ${size} with TTL ${ttlSeconds}")
-      }
+      logger.debug(s"Setting Key: ${key} with TTL ${ttlSeconds}")
       val f = Future {
         client.set(key, ttlSeconds, value)
       }
