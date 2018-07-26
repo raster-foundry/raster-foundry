@@ -1,5 +1,27 @@
 # Change Log
 
+## [1.6.0](https://github.com/raster-foundry/raster-foundry/tree/1.6.0) (2018-07-26)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.5.0...1.6.0)
+
+**Merged pull requests:**
+
+- Make planet credentials less persistent in service [\#3767](https://github.com/raster-foundry/raster-foundry/pull/3767)
+- Make manual date range update work for scene browse filter [\#3751](https://github.com/raster-foundry/raster-foundry/pull/3751)
+- Fix Indexing Duplicates [\#3750](https://github.com/raster-foundry/raster-foundry/pull/3750)
+- Refactor email notification body for org/team invitation/request [\#3746](https://github.com/raster-foundry/raster-foundry/pull/3746)
+- Fix broken links and buttons on home page and datasource create modal [\#3743](https://github.com/raster-foundry/raster-foundry/pull/3743)
+- Fix Export and Export Emails [\#3742](https://github.com/raster-foundry/raster-foundry/pull/3742)
+- added help center and everyone sharing icons [\#3741](https://github.com/raster-foundry/raster-foundry/pull/3741)
+- Allow setting role when adding a user to an organization or team [\#3739](https://github.com/raster-foundry/raster-foundry/pull/3739)
+- Submit Update AOI projects from Scala [\#3738](https://github.com/raster-foundry/raster-foundry/pull/3738)
+- Add cron tasks to clean up Jenkins cache, bump versions  [\#3736](https://github.com/raster-foundry/raster-foundry/pull/3736)
+- Fix Match Error in Project Mosaics [\#3735](https://github.com/raster-foundry/raster-foundry/pull/3735)
+- Correct ImportLandsat8C1 and ImportSentinel2 data and tile footprint [\#3730](https://github.com/raster-foundry/raster-foundry/pull/3730)
+- Fix bringing up development environment from scratch [\#3725](https://github.com/raster-foundry/raster-foundry/pull/3725)
+- Add additional fields to user profile [\#3723](https://github.com/raster-foundry/raster-foundry/pull/3723)
+
+
 ## [1.5.0](https://github.com/raster-foundry/raster-foundry/tree/1.5.0) (2018-07-18)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.4.0...1.5.0)
