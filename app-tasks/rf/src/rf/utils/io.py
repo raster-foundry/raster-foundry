@@ -136,6 +136,7 @@ def get_session():
     session = requests.Session()
 
     session.headers.update({'Authorization': 'Bearer {}'.format(encoded_jwt)})
+    session.headers.update({'User-Agent': 'RF/App-Tasks Client'})
     return session
 
 

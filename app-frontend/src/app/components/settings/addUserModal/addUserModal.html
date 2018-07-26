@@ -16,7 +16,7 @@
         <input type="text" class="form-control admin-search" placeholder="Search for users"
                ng-model="$ctrl.search" ng-disabled="$ctrl.fetching && !$ctrl.search.length">
         <p class="font-size-small"
-          ng-if="!$ctrl.searchString"
+          ng-if="!$ctrl.searchString && $ctrl.pagination"
         >
          Showing {{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}} of {{$ctrl.pagination.count}} users
         </p>
@@ -24,9 +24,10 @@
       <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.fetching">
         <thead>
           <tr>
-            <td>Name</td>
-            <td>Email</td>
-            <td>Select</td>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Add as admin</th>
+            <th>Select</th>
           </tr>
         </thead>
         <tbody>
@@ -43,8 +44,12 @@
             <td class="emails" ng-class="{'color-light': !user.email}">
               {{user.email || 'None'}}
             </td>
+            <td>
+              <rf-toggle value="$ctrl.selected.has(user.id) && $ctrl.selected.get(user.id)"
+                         on-change="$ctrl.toggleUserSelect(user, true)"></rf-toggle>
+            </td>
             <td class="actions">
-              <rf-toggle value="$ctrl.selected.has(user.id)" on-change="$ctrl.toggleUserSelect(user)">
+              <rf-toggle value="$ctrl.selected.has(user.id)" on-change="$ctrl.toggleUserSelect(user, false)">
               </rf-toggle>
             </td>
           </tr>
@@ -71,7 +76,9 @@
     <div ng-if="!$ctrl.hasPermission">
       <p>
         {{$ctrl.permissionDeniedMsg}}
-        <a ng-href="mailto:{{$ctrl.adminEmail}}">{{$ctrl.subject}}</a>.
+        <a ng-href="mailto:{{$ctrl.adminEmail}}" ng-if="$ctrl.adminEmail">{{$ctrl.subject}}</a>
+        <span ng-if="!$ctrl.adminEmail">{{$ctrl.subject}}</span>
+        .
       </p>
     </div>
   </div>

@@ -33,7 +33,7 @@ case class PlainGroupInvitation(
       val plainBody = s"""
       | ${subjectEmail} has invited you to join the ${groupType.toString.toLowerCase} ${groupName}.
       |
-      | To approve or reject this request, visit https://${platformHost}/users/me/${groupType.toString.toLowerCase}s
+      | To approve or reject this request, visit https://${platformHost}/user/me/${groupType.toString.toLowerCase}s
       |
       | If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to
       | ${platform.publicSettings.emailUser}.
@@ -44,7 +44,7 @@ case class PlainGroupInvitation(
 <html>
   <p>${subjectEmail} has invited you to join the ${groupType.toString.toLowerCase} ${groupName}.
      To approve or reject this invitation, visit
-     <a href="https://${platformHost}/users/me/${groupType.toString.toLowerCase}s>
+     <a href="https://${platformHost}/user/me/${groupType.toString.toLowerCase}s">
        your ${groupType.toString.toLowerCase} invitations page
      </a>.
   </p>

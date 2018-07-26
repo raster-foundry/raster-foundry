@@ -3219,3 +3219,26 @@ rf-navbar-search {
     pointer-events: none;
   }
 }
+
+// user/me/settings/profile
+.user-profile-body,
+.user-profile-content {
+  padding-top: 0;
+  padding-left: 0;
+}
+
+.user-profile-form {
+  padding-top: 2rem;
+  padding-left: 2rem;
+}
+
+.profile-dropdown {
+  border-color: $gray-lightest;
+  height: 3.8rem;
+}
+
+// components/common/dateRangePickerModal
+.format-tip {
+  margin-left: 6.5rem;
+  font-size: 80%;
+}

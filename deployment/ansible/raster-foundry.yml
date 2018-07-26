@@ -8,7 +8,6 @@
       apt: update_cache=yes cache_valid_time=3600
 
   roles:
-    - { role: "azavea.python-security", when: 'ansible_python_version | version_compare("2.7.9", "<")' }
     - role: "raster-foundry.docker"
     - role: "raster-foundry.aws-cli"
 

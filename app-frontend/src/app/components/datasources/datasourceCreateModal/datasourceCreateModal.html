@@ -39,21 +39,9 @@
       <p>You have successfully created a new datasource. The next time you import imagery, you
       will be able to assign it to this datasource.
       </p>
-      <p>Now you can:</p>
-      <ul>
-        <li>
-          <a ui-sref="imports.datasources.detail.colorComposites({
-            datasourceid: $ctrl.datasource.id
-          })"
-            ng-click="$ctrl.dismiss()">Edit your datasource's color composites</a>
-        </li>
-        <li>
-          <a ui-sref="imports.datasources.detail({
-            datasourceid: $ctrl.datasource.id
-            })"
-            ng-click="$ctrl.dismiss()">Import imagery from this datasource</a>
-        </li>
-      </ul>
+      <p>Now you may <a ui-sref="imports.datasources.detail({
+        datasourceid: $ctrl.datasource.id
+      })">edit your datasource's bands and color composites</a>.</p>
     </div>
   </div>
   <!-- Footer -->

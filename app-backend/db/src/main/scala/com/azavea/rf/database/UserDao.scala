@@ -2,9 +2,8 @@ package com.azavea.rf.database
 
 import java.sql.Timestamp
 
-import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.{User, UserRole, Credential, UserVisibility}
+import com.azavea.rf.datamodel.{User, UserRole, Credential, UserVisibility, OrganizationType}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -17,6 +16,8 @@ import java.util.UUID
 
 import scala.concurrent.Future
 
+import com.azavea.rf.database.Implicits._
+
 object UserDao extends Dao[User] {
 
   val tableName = "users"
@@ -25,7 +26,7 @@ object UserDao extends Dao[User] {
     SELECT
       id, role, created_at, modified_at,
       dropbox_credential, planet_credential, email_notifications,
-      email, name, profile_image_uri, is_superuser, is_active, visibility
+      email, name, profile_image_uri, is_superuser, is_active, visibility, personal_info
     FROM
   """ ++ tableF
 
@@ -145,7 +146,7 @@ object UserDao extends Dao[User] {
           ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, ${UserVisibility.Private.toString}::user_visibility)
        """.update.withUniqueGeneratedKeys[User](
       "id", "role", "created_at", "modified_at", "dropbox_credential", "planet_credential", "email_notifications",
-      "email", "name", "profile_image_uri", "is_superuser", "is_active", "visibility"
+      "email", "name", "profile_image_uri", "is_superuser", "is_active", "visibility", "personal_info"
     )
   }
 
@@ -226,7 +227,9 @@ object UserDao extends Dao[User] {
           modified_at = ${updateTime},
           planet_credential = ${user.planetCredential.token.getOrElse("")},
           email_notifications = ${user.emailNotifications},
-          visibility = ${user.visibility}""" ++
+          visibility = ${user.visibility},
+          personal_info = ${user.personalInfo}
+          """ ++
       Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
      ).update.run
   }

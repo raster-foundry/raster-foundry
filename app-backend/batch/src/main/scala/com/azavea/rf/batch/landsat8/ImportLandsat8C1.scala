@@ -5,6 +5,7 @@ import com.azavea.rf.batch.util.{isUriExists, S3}
 import com.azavea.rf.database._
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel._
+import com.azavea.rf.common.utils.AntimeridianUtils
 import com.github.tototoshi.csv._
 import io.circe._
 import io.circe.syntax._
@@ -47,6 +48,19 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
 
   /** Get S3 client per each call */
   def s3Client = S3(region = landsat8Config.awsRegion)
+
+  // Eagerly get existing scene names
+  val previousDay = startDate.minusDays(1)
+  val nextDay = startDate.plusDays(1)
+  val sceneQuery =
+    sql"""SELECT name
+            FROM scenes
+            WHERE
+            acquisition_date <= ${nextDay.toString}::timestamp AND
+            acquisition_date >= ${previousDay.toString}::timestamp AND
+            datasource = ${landsat8Config.datasourceUUID}::uuid
+      """.query[String].list
+  val existingSceneNames = sceneQuery.transact(xa).unsafeRunSync.toSet
 
   protected def rowsFromCsv: List[Map[String, String]] = {
     logger.info("Downloading and filtering Landsat CSV")
@@ -130,16 +144,17 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
     val sceneId = UUID.randomUUID()
     val productId = row("LANDSAT_PRODUCT_ID")
     val landsatPath = getLandsatPath(productId)
-    val sceneName = s"L8 $landsatPath"
 
     val maybeInsertScene: ConnectionIO[Option[Scene.WithRelated]] = for {
-      maybeExistingScene <- SceneDao.query.filter(fr"name = ${sceneName}").filter(fr"owner = ${user.id}").selectOption
       sceneInsert <- {
-        maybeExistingScene match {
-          case Some(scene) => {
+
+        val sceneNameExists = existingSceneNames.contains(landsatPath)
+        sceneNameExists match {
+          case true => {
+            logger.warn(s"Skipping inserting ${landsatPath} -- already exists")
             None.pure[ConnectionIO]
           }
-          case None => {
+          case _ => {
             createSceneFromRow(row, user, srcProj, targetProj, sceneId, productId, landsatPath) match {
               case Some(scene) => for {
                 sceneInsert <- SceneDao.insertMaybe(scene, user)
@@ -162,28 +177,8 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
   // All of the heads here are from a locally constructed list that we know has members
   @SuppressWarnings(Array("TraversableHead"))
   private def createSceneFromRow(row: Map[String, String], user: User, srcProj: CRS, targetProj: CRS, sceneId: UUID, productId: String, landsatPath: String) = {
-    val ll = row("lowerLeftCornerLongitude").toDouble -> row("lowerLeftCornerLatitude").toDouble
-    val lr = row("lowerRightCornerLongitude").toDouble -> row("lowerRightCornerLatitude").toDouble
-    val ul = row("upperLeftCornerLongitude").toDouble -> row("upperLeftCornerLatitude").toDouble
-    val ur = row("upperRightCornerLongitude").toDouble -> row("upperRightCornerLatitude").toDouble
 
-    val srcCoords = ll :: ul :: ur :: lr :: Nil
-    val srcPolygon = Polygon(Line(srcCoords :+ srcCoords.head))
-
-    val sortedByX = srcCoords.sortBy(_.x)
-    val sortedByY = srcCoords.sortBy(_.y)
-
-    val extent = Extent(
-      xmin = sortedByX.head.x,
-      ymin = sortedByY.head.y,
-      xmax = sortedByX.last.x,
-      ymax = sortedByY.last.y
-    )
-
-    val (transformedCoords, transformedExtent) = {
-      if (srcProj.equals(targetProj)) srcPolygon -> extent
-      else srcPolygon.reproject(srcProj, targetProj) -> extent.reproject(srcProj, targetProj)
-    }
+    val (tileFootprint, dataFootprint) = getRowFootprints(row, srcProj, targetProj)
 
     val s3Url = s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/index.html"
 
@@ -254,8 +249,8 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
         sceneMetadata = sceneMetadata.asJson,
         name = landsatPath,
         owner = Some(systemUser),
-        tileFootprint = targetProj.epsgCode.map(Projected(MultiPolygon(transformedExtent.toPolygon()), _)),
-        dataFootprint = targetProj.epsgCode.map(Projected(MultiPolygon(transformedCoords), _)),
+        tileFootprint = tileFootprint,
+        dataFootprint = dataFootprint,
         metadataFiles = List(s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/${productId}_MTL.txt"),
         images = images,
         thumbnails = createThumbnails(sceneId, productId),
@@ -276,6 +271,43 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
       Some(scene)
       }
     }
+  }
+
+  @SuppressWarnings(Array("TraversableHead"))
+  def getRowFootprints(row: Map[String, String], srcProj: CRS, targetProj: CRS):
+      (Option[Projected[MultiPolygon]], Option[Projected[MultiPolygon]]) = {
+    val ll = row("lowerLeftCornerLongitude").toDouble -> row("lowerLeftCornerLatitude").toDouble
+    val lr = row("lowerRightCornerLongitude").toDouble -> row("lowerRightCornerLatitude").toDouble
+    val ul = row("upperLeftCornerLongitude").toDouble -> row("upperLeftCornerLatitude").toDouble
+    val ur = row("upperRightCornerLongitude").toDouble -> row("upperRightCornerLatitude").toDouble
+
+    val srcCoords = ll :: ul :: ur :: lr :: Nil
+    val srcPolygon = Polygon(Line(srcCoords :+ srcCoords.head))
+
+    val sortedByX = srcCoords.sortBy(_.x)
+    val sortedByY = srcCoords.sortBy(_.y)
+
+    val extent = Extent(
+      xmin = sortedByX.head.x,
+      ymin = sortedByY.head.y,
+      xmax = sortedByX.last.x,
+      ymax = sortedByY.last.y
+    )
+
+    val (transformedCoords, transformedExtent) = {
+      if (srcProj.equals(targetProj)) srcPolygon -> extent
+      else srcPolygon.reproject(srcProj, targetProj) -> extent.reproject(srcProj, targetProj)
+    }
+
+    val dataFootprint = MultiPolygon(transformedCoords)
+    val tileFootprint = MultiPolygon(transformedExtent.toPolygon())
+
+    val intersects = AntimeridianUtils.crossesAntimeridian(tileFootprint)
+
+    val correctedDataFootprint = AntimeridianUtils.correctDataFootprint(intersects, Some(dataFootprint), targetProj)
+    val correctedTileFootprint = AntimeridianUtils.correctTileFootprint(intersects, Some(tileFootprint), targetProj)
+
+    (correctedTileFootprint, correctedDataFootprint)
   }
 
   def run: Unit = {

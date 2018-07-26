@@ -94,28 +94,29 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
     }
   }
 
-  def notifyExportOwner(status: String) = {
+  def notifyExportOwner(status: String): Unit = {
+    logger.info(s"Preparing to notify export owners of status: ${status}")
     val export = ExportDao.query.filter(fr"id = ${exportId}").select.transact(xa).unsafeRunSync
+    logger.info(s"Retrieved export: ${export}")
+    val platAndUserIO = for {
+      ugr <- UserGroupRoleDao.query.filter(fr"user_id = ${export.owner}")
+        .filter(fr"group_type = 'PLATFORM'").filter(fr"is_active = true").select
+      platform <- PlatformDao.query.filter(ugr.groupId).select
+      user <- UserDao.query.filter(fr"id = ${export.owner}").select
+    } yield (platform, user)
 
-    if (export.owner == auth0Config.systemUser) {
-      logger.warn(s"Owner of export ${exportId} is a system user. Email is not sent.")
-    } else {
-      val platAndUserIO = for {
-        ugr <- UserGroupRoleDao.query.filter(fr"user_id = ${export.owner}")
-          .filter(fr"group_type = 'PLATFORM'").filter(fr"is_active = true").select
-        platform <- PlatformDao.query.filter(ugr.groupId).select
-        user <- UserDao.query.filter(fr"id = ${export.owner}").select
-      } yield (platform, user)
-      val (platform, user) = platAndUserIO.transact(xa).unsafeRunSync
-      (export.projectId, export.toolRunId) match {
-        case (Some(projectId), None) =>
-          val project = ProjectDao.query.filter(projectId).select.transact(xa).unsafeRunSync
-          sendExportNotification(status, user, platform, Some(project.name), project.id, "project")
-        case (None, Some(analysisId)) =>
-          val analysis = ToolRunDao.query.filter(analysisId).select.transact(xa).unsafeRunSync
-          sendExportNotification(status, user, platform, analysis.name, analysis.id, "analysis")
-        case _ => logger.warn(s"No project or analysis found for export ${exportId}")
-      }
+    logger.info(s"Retrieving Platform and User")
+    val (platform, user) = platAndUserIO.transact(xa).unsafeRunSync
+    logger.info(s"Retrieved platform (${platform})and user (${user})")
+
+    (export.projectId, export.toolRunId) match {
+      case (Some(projectId), None) =>
+        val project = ProjectDao.query.filter(projectId).select.transact(xa).unsafeRunSync
+        sendExportNotification(status, user, platform, Some(project.name), project.id, "project")
+      case (None, Some(analysisId)) =>
+        val analysis = ToolRunDao.query.filter(analysisId).select.transact(xa).unsafeRunSync
+        sendExportNotification(status, user, platform, analysis.name, analysis.id, "analysis")
+      case _ => logger.warn(s"No project or analysis found for export ${exportId}")
     }
   }
 
@@ -150,26 +151,21 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
       sql"update exports set export_status = ${exportStatus} where id = ${exportId}"
         .update.withUniqueGeneratedKeys("export_status")
 
-    val withLoggingUpdateExportStatus: ConnectionIO[ExportStatus] =
-      updateIo(exportId, s3ExportStatus.exportStatus) <* (
-        {
-          s3ExportStatus.exportStatus match {
-            case ExportStatus.Failed => {
-              logger.info(s"Export finished with ${s3ExportStatus.exportStatus}")
-              sendError(s"Export status update failed for ${exportId}")
-              notifyExportOwner("FAILED")
-            }
-            case ExportStatus.Exported => {
-              logger.info(s"Export updated successfully")
-              notifyExportOwner("EXPORTED")
-            }
-            case _ =>
-              logger.info(s"Export ${exportId} has not yet completed: ${s3ExportStatus.exportStatus}")
-          }
-        }
-      ).pure[ConnectionIO].attempt
-
-    withLoggingUpdateExportStatus.transact(xa).unsafeRunSync
+    updateIo(exportId, s3ExportStatus.exportStatus).transact(xa).unsafeRunSync()
+    s3ExportStatus.exportStatus match {
+      case ExportStatus.Failed => {
+        logger.info(s"Export finished with ${s3ExportStatus.exportStatus}")
+        sendError(s"Export status update failed for ${exportId}")
+        notifyExportOwner("FAILED")
+      }
+      case ExportStatus.Exported => {
+        logger.info(s"Export updated successfully")
+        logger.info(s"Updating export owners")
+        notifyExportOwner("EXPORTED")
+      }
+      case _ =>
+        logger.info(s"Export ${exportId} has not yet completed: ${s3ExportStatus.exportStatus}")
+    }
   }
 }
 

@@ -4,6 +4,7 @@ import java.net.{URI, URLEncoder}
 import java.sql.Timestamp
 import java.util.Date
 import java.util.UUID
+import java.security.InvalidParameterException
 
 import io.circe._
 import io.circe.generic.JsonCodec
@@ -60,6 +61,37 @@ object Credential {
   }
 }
 
+sealed abstract class OrganizationType(val repr: String) {
+  override def toString = repr
+}
+
+object OrganizationType {
+  case object Commercial extends OrganizationType("COMMERCIAL")
+  case object Government extends OrganizationType("GOVERNMENT")
+  case object NonProfit extends OrganizationType("NON-PROFIT")
+  case object Academic extends OrganizationType("ACADEMIC")
+  case object Military extends OrganizationType("MILITARY")
+  case object Other extends OrganizationType("OTHER")
+
+  def fromString(s: String): OrganizationType = s.toUpperCase match {
+    case "COMMERCIAL" => Commercial
+    case "GOVERNMENT" => Government
+    case "NON-PROFIT" => NonProfit
+    case "ACADEMIC" => Academic
+    case "MILITARY" => Military
+    case "OTHER" => Other
+    case _ => throw new InvalidParameterException(s"Invalid membership status: $s")
+  }
+
+  implicit val organizationTypeEncoder: Encoder[OrganizationType] =
+    Encoder.encodeString.contramap[OrganizationType](_.toString)
+
+  implicit val organizationTypeDecoder: Decoder[OrganizationType] =
+    Decoder.decodeString.emap { str =>
+      Either.catchNonFatal(fromString(str)).leftMap(t => "OrganizationType")
+    }
+}
+
 @JsonCodec
 case class User(
   id: String,
@@ -74,7 +106,8 @@ case class User(
   profileImageUri: String,
   isSuperuser: Boolean,
   isActive: Boolean,
-  visibility: UserVisibility
+  visibility: UserVisibility,
+  personalInfo: User.PersonalInfo
 ) {
   private val rootOrganizationId = UUID.fromString("9e2bef18-3f46-426b-a5bd-9913ee1ff840")
 
@@ -89,6 +122,21 @@ object User {
   def tupled = (User.apply _).tupled
 
   def create = Create.apply _
+
+  @JsonCodec
+  case class PersonalInfo(
+    firstName: String = "",
+    lastName: String = "",
+    email: String = "",
+    emailNotifications: Boolean = false,
+    phoneNumber: String = "",
+    organizationName: String = "",
+    organizationType: OrganizationType = OrganizationType.Other,
+    organizationWebsite: String = "",
+    profileWebsite: String = "",
+    profileBio: String = "",
+    profileUrl: String = ""
+  )
 
   @JsonCodec
   case class WithGroupRole (
@@ -132,7 +180,8 @@ object User {
         profileImageUri,
         false, //isSuperuser
         true, //isActive
-        UserVisibility.Private
+        UserVisibility.Private,
+        User.PersonalInfo()
       )
     }
   }
@@ -160,7 +209,8 @@ object User {
         picture,
         false, //isSuperuser
         true, //isActive
-        UserVisibility.Private
+        UserVisibility.Private,
+        User.PersonalInfo()
       )
     }
   }
