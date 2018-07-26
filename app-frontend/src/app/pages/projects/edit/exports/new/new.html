@@ -61,17 +61,17 @@
     </div>
   </li>
   <li class="separator">
-    <span class="label">Approximate resolution</span>
+    <span class="label">Zoom Level</span>
     <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
       <a class="btn dropdown-label" >
-       {{$ctrl.getCurrentResolution().label}}
+       {{$ctrl.getCurrentResolution().value}} ({{$ctrl.getCurrentResolution().label}}<sup>2</sup>)
       </a>
       <button type="button" class="btn btn-default dropdown-toggle">
         <i class="icon-caret-down"></i>
       </button>
       <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
         <li ng-repeat="res in $ctrl.availableResolutions" role="menuitem">
-          <a ng-click="$ctrl.updateResolution(res.value)">{{res.label}}</a>
+          <a ng-click="$ctrl.updateResolution(res.value)">{{res.value}} ({{res.label}})</a>
         </li>
       </ul>
     </div>

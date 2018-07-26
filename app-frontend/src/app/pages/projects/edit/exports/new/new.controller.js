@@ -1,23 +1,47 @@
 const availableResolutions = [
     {
-        label: '300m',
+        label: '~300m',
         value: 9
     },
     {
-        label: '75m',
+        label: '~150m',
+        value: 10
+    },
+    {
+        label: '~75m',
         value: 11
     },
     {
-        label: '20m',
+        label: '~38m',
+        value: 12
+    },
+    {
+        label: '~19m',
         value: 13
     },
     {
-        label: '5m',
+        label: '~10m',
+        value: 14
+    },
+    {
+        label: '~5m',
         value: 15
     },
     {
-        label: '1m',
+        label: '~2m',
+        value: 16
+    },
+    {
+        label: '~1m',
         value: 17
+    },
+    {
+        label: '~0.5m',
+        value: 18
+    },
+    {
+        label: '~0.3m',
+        value: 19
     }
 ];
 
