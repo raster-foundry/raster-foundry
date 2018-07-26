@@ -56,6 +56,9 @@ class HistogramBreakpointController {
         if (changes.precision && changes.precision.currentValue) {
             this.setPositionFromBreakpoint();
         }
+        if (changes.breakpoint && Number.isFinite(changes.breakpoint.currentValue)) {
+            this.setPositionFromBreakpoint();
+        }
     }
 
     validateBreakpoint(value) {
@@ -76,8 +79,10 @@ class HistogramBreakpointController {
             breakpoint = this.lowerBound;
         }
 
-        if (Number.isFinite(this.precision) && this.precision >= 0) {
+        if (Number.isFinite(this.precision) && this.precision > 0) {
             breakpoint = Math.round(breakpoint / this.precision) * this.precision;
+        } else if (this.precision === 0) {
+            breakpoint = Math.round(breakpoint);
         }
         return breakpoint;
     }
@@ -132,6 +137,7 @@ class HistogramBreakpointController {
             event.target.tagName === 'rf-reclassify-histogram'
         ) {
             event.stopPropagation();
+            // this is changing depending on the zoom width, so we need to find a way around it
             let width = this.parent.width();
             let position = event.offsetX;
             let percent = position / width;

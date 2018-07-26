@@ -76,8 +76,10 @@ class ChannelHistogramController {
             this.plots = this.bandsToPlots(this.data[0], this.data[1], this.data[2]);
         }
 
-        this.$scope.$watch('$ctrl.lowerClip', _.debounce(this.updateClipping.bind(this), 500));
-        this.$scope.$watch('$ctrl.upperClip', _.debounce(this.updateClipping.bind(this), 500));
+        const debouncedUpdate = _.debounce(this.updateClipping.bind(this), 500);
+
+        this.$scope.$watch('$ctrl.lowerClip', debouncedUpdate);
+        this.$scope.$watch('$ctrl.upperClip', debouncedUpdate);
     }
 
     updateClipping() {
@@ -85,11 +87,23 @@ class ChannelHistogramController {
             let clipping = this.clipping[this.histogramMode];
             let changed = false;
             if (clipping.max !== this.upperClip) {
-                clipping.max = this.upperClip;
+                if (this.histogramMode === 'rgb') {
+                    _.forOwn(this.clipping, (clip) => {
+                        clip.max = this.upperClip;
+                    });
+                } else {
+                    clipping.max = this.upperClip;
+                }
                 changed = true;
             }
             if (clipping.min !== this.lowerClip) {
-                clipping.min = this.lowerClip;
+                if (this.histogramMode === 'rgb') {
+                    _.forOwn(this.clipping, (clip) => {
+                        clip.min = this.lowerClip;
+                    });
+                } else {
+                    clipping.min = this.lowerClip;
+                }
                 changed = true;
             }
 
@@ -101,6 +115,7 @@ class ChannelHistogramController {
     }
 
     $onChanges(changesObj) {
+        console.log(changesObj);
         if ('data' in changesObj && changesObj.data.currentValue) {
             let data = changesObj.data.currentValue;
             if (data[0] && data[1] && data[2]) {
@@ -246,17 +261,21 @@ class ChannelHistogramController {
     }
 
     onMinBreakpointChange(breakpoint) {
+        console.log('min breakpoint changed');
         this.lowerClip = breakpoint;
         if (this.lowerClip > this.upperClip) {
             this.upperClip = this.lowerClip;
         }
+        this.$scope.$evalAsync();
     }
 
     onMaxBreakpointChange(breakpoint) {
+        console.log('max breakpoint changed');
         this.upperClip = breakpoint;
         if (this.upperClip < this.lowerClip) {
             this.lowerClip = this.upperClip;
         }
+        this.$scope.$evalAsync();
     }
 }
 
