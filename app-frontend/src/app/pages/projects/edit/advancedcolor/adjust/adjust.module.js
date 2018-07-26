@@ -140,12 +140,12 @@ class ProjectsColorAdjustController {
      * @returns {undefined}
      */
     onFilterChange() {
-        this.$parent.onCorrectionChange(Object.assign({}, this.correction));
-
-        this.$timeout(() => {
-            this.$scope.$broadcast('rzSliderForceRender');
-            this.initHistogram();
-        });
+        this.$parent.onCorrectionChange(Object.assign({}, this.correction))
+            .then(() => {
+                this.$scope.$broadcast('rzSliderForceRender');
+                this.initHistogram();
+                this.$scope.$evalAsync();
+            });
     }
 
     gammaLinkToggled() {
