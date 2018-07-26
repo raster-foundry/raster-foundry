@@ -28,35 +28,31 @@ export default (app) => {
                     uuid: 'dd68e7eb-4055-4657-9cfb-bd82c0904f78',
                     name: 'RapidEye OrthoTiles'
                 }];
-                if (this.planetToken) {
-                    resolve();
-                } else {
-                    this.authService.getCurrentUser().then((user) => {
-                        if (user.planetCredential) {
-                            this.planetToken = user.planetCredential;
-                            resolve();
-                        } else {
-                            const modal = this.modalService.open({
-                                component: 'rfConfirmationModal',
-                                resolve: {
-                                    title: () => 'You don\'t have a Planet API token set',
-                                    content: () => 'Go to your API connections page and set one?',
-                                    confirmText: () => 'Add Planet API Token',
-                                    cancelText: () => 'Cancel'
-                                }
-                            });
+                this.authService.getCurrentUser().then((user) => {
+                    if (user.planetCredential) {
+                        this.planetToken = user.planetCredential;
+                        resolve();
+                    } else {
+                        const modal = this.modalService.open({
+                            component: 'rfConfirmationModal',
+                            resolve: {
+                                title: () => 'You don\'t have a Planet API token set',
+                                content: () => 'Go to your API connections page and set one?',
+                                confirmText: () => 'Add Planet API Token',
+                                cancelText: () => 'Cancel'
+                            }
+                        });
 
-                            modal.result.then(() => {
-                                reject();
-                                this.$state.go('settings.connections');
-                            }, () => {
-                                reject();
-                            });
-                        }
-                    }, () => {
-                        reject();
-                    });
-                }
+                        modal.result.then(() => {
+                            reject();
+                            this.$state.go('user.settings.connections');
+                        }, () => {
+                            reject();
+                        });
+                    }
+                }, () => {
+                    reject();
+                });
             });
         }
 
