@@ -285,7 +285,7 @@ class PermissionModalController {
             this.actionsBuffer[this.currentTargetSubject] || {};
         if (this.currentTargetSubject === 'PLATFORM') {
             this.actionsBuffer.PLATFORM[this.resolve.platform.id] = this.defaultAction;
-        } else {
+        } else if (this.selectedSubjectId) {
             this.actionsBuffer[this.currentTargetSubject][this.selectedSubjectId] =
                 this.defaultAction;
         }

@@ -77,7 +77,7 @@
       <div class="permission-button-row">
           <button class="btn btn-primary btn-small"
                   ng-click="$ctrl.onActionsAdd()"
-                  ng-disabled="$ctrl.duplicateDetected"
+                  ng-disabled="$ctrl.duplicateDetected || (!$ctrl.selectedSubjectId && $ctrl.currentTargetSubject !== 'PLATFORM')"
           >
             Add Permission
           </button>
