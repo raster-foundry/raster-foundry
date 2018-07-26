@@ -63,7 +63,12 @@ object Notify extends RollbarNotifier {
         case MessageType.GroupInvitation =>
           UserDao.unsafeGetUserById(subjectId).map((usr: User) => List(usr))
       }
-      emails = users map { _.email }
+      emails = users map { user =>
+        (user.personalInfo.email, user.email) match {
+          case ("", loginEmail) => loginEmail
+          case (contactEmail, _) => contactEmail
+        }
+      }
       _ <- logger.debug(s"Sending emails to ${users.length} admins").pure[ConnectionIO]
       result <- emails.map(
         sendEmail(publicSettings, privateSettings, _,

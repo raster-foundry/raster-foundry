@@ -197,7 +197,7 @@ object PlatformDao extends Dao[Platform] {
         SELECT plat.id AS plat_id, plat.name AS plat_name, u.id AS u_id, u.name AS u_name,
                plat.public_settings AS pub_settings, plat.private_settings AS pri_settings,
                u.email AS email, u.email_notifications AS email_notifications,
-               prj.id AS projectId, prj.name AS project_name
+               prj.id AS projectId, prj.name AS project_name, u.personal_info AS personal_info
         FROM users AS u
           JOIN user_group_roles AS ugr
           ON u.id = ugr.user_id
@@ -220,7 +220,8 @@ object PlatformDao extends Dao[Platform] {
         SELECT DISTINCT
           plat.id AS plat_id, plat.name AS plat_name, u.id AS u_id, u.name AS u_name,
           plat.public_settings AS pub_settings, plat.private_settings AS pri_settings,
-          u.email AS email, u.email_notifications AS email_notifications
+          u.email AS email, u.email_notifications AS email_notifications,
+          u.personal_info AS personal_info
         FROM users AS u
           JOIN user_group_roles AS ugr
           ON u.id = ugr.user_id

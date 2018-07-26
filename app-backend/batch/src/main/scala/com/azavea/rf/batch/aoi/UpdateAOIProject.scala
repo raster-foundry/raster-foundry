@@ -73,10 +73,15 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
 
   def sendAoiNotificationEmail(project: Project, platform: Platform, user: User, sceneCount: Int) = {
     val email = new NotificationEmail
-    (user.emailNotifications, platform.publicSettings.emailAoiNotification) match {
-      case (true, true) =>
+
+    (user.getEmail, platform.publicSettings.emailAoiNotification) match {
+      case ("", true) => logger.warn(email.userEmailNotificationDisabledWarning(user.id))
+      case ("", false) => logger.warn(
+        email.userEmailNotificationDisabledWarning(user.id) ++ " " ++ email.platformNotSubscribedWarning(platform.id.toString()))
+      case (userEmailAddress, true) =>
+        // send emails
         val (pub, pri) = (platform.publicSettings, platform.privateSettings)
-        (pub.emailSmtpHost, pub.emailSmtpPort, pub.emailSmtpEncryption, pub.emailUser, pri.emailPassword, user.email) match {
+        (pub.emailSmtpHost, pub.emailSmtpPort, pub.emailSmtpEncryption, pub.emailUser, pri.emailPassword, userEmailAddress) match {
           case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
             email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
             val (subject, html, plain) = aoiEmailContent(project, platform, user, sceneCount)
@@ -84,10 +89,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
             logger.info(s"Notified project owner ${user.id} about AOI updates")
           case _ => logger.warn(email.insufficientSettingsWarning(platform.id.toString(), user.id))
         }
-      case (false, true) => logger.warn(email.userEmailNotificationDisabledWarning(user.id))
-      case (true, false) => logger.warn(email.platformNotSubscribedWarning(platform.id.toString()))
-      case (false, false) => logger.warn(
-        email.userEmailNotificationDisabledWarning(user.id) ++ " " ++ email.platformNotSubscribedWarning(platform.id.toString()))
+      case (_, false) => logger.warn(email.platformNotSubscribedWarning(platform.id.toString()))
     }
   }
 
