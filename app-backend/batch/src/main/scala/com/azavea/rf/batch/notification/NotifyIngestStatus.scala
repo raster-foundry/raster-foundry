@@ -127,13 +127,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
     platformsWithConsumers.map(pU => {
       val email = new NotificationEmail
 
-      val userEmailAddress: String = (pU.emailNotifications, pU.personalInfo.emailNotifications) match {
-        case (true, true) | (false, true) => pU.personalInfo.email
-        case (true, false) => pU.email
-        case (false, false) => ""
-      }
-
-      (userEmailAddress, pU.pubSettings.emailIngestNotification) match {
+      (pU.getUserEmail, pU.pubSettings.emailIngestNotification) match {
         case ("", true) => logger.warn(email.userEmailNotificationDisabledWarning(pU.uId))
         case ("", false) => logger.warn(
           email.userEmailNotificationDisabledWarning(pU.uId) ++ " " ++ email.platformNotSubscribedWarning(pU.platId.toString()))
@@ -154,14 +148,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
   def sendIngestStatusEmailToOwner(pO: PlatformWithSceneOwner, scene: Scene, ingestStatus: String) = {
     val email = new NotificationEmail
 
-    val userEmailAddress: String = (pO.emailNotifications, pO.personalInfo.emailNotifications) match {
-      case (true, true) | (false, true) => pO.personalInfo.email
-      case (true, false) => pO.email
-      case (false, false) => ""
-    }
-
-    (userEmailAddress, pO.pubSettings.emailIngestNotification) match {
-
+    (pO.getUserEmail, pO.pubSettings.emailIngestNotification) match {
       case ("", true) => logger.warn(email.userEmailNotificationDisabledWarning(pO.uId))
       case ("", false) => logger.warn(
         email.userEmailNotificationDisabledWarning(pO.uId) ++ " " ++ email.platformNotSubscribedWarning(pO.platId.toString()))

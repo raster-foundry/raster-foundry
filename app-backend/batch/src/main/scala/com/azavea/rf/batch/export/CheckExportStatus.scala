@@ -77,19 +77,13 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
   def sendExportNotification(status: String, user: User, platform: Platform, name: Option[String], id: UUID, exportType: String) = {
     val email = new NotificationEmail
 
-    val userEmailAddress: String = (user.emailNotifications, user.personalInfo.emailNotifications) match {
-      case (true, true) | (false, true) => user.personalInfo.email
-      case (true, false) => user.email
-      case (false, false) => ""
-    }
-
-    (userEmailAddress, platform.publicSettings.emailExportNotification) match {
+    (user.getEmail, platform.publicSettings.emailExportNotification) match {
       case ("", true) => logger.warn(email.userEmailNotificationDisabledWarning(user.id))
       case ("", false) => logger.warn(
         email.userEmailNotificationDisabledWarning(user.id) ++ " " ++ email.platformNotSubscribedWarning(platform.id.toString()))
-      case (userEmailAddress, true) =>
+      case (emailAddress, true) =>
         val (pub, pri) = (platform.publicSettings, platform.privateSettings)
-        (pub.emailSmtpHost, pub.emailSmtpPort, pub.emailSmtpEncryption, pub.emailUser, pri.emailPassword, userEmailAddress) match {
+        (pub.emailSmtpHost, pub.emailSmtpPort, pub.emailSmtpEncryption, pub.emailUser, pri.emailPassword, emailAddress) match {
           case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
              email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
              val (subject, html, plain) = exportEmailContent(status, user, platform, name, id, exportType)

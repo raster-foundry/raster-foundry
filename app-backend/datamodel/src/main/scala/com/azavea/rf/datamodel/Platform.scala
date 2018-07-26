@@ -58,7 +58,13 @@ case class PlatformWithUsersSceneProjects(
   projectId: UUID,
   projectName: String,
   personalInfo: User.PersonalInfo
-)
+) {
+  def getUserEmail: String = (emailNotifications, personalInfo.emailNotifications) match {
+    case (true, true) | (false, true) => personalInfo.email
+    case (true, false) => email
+    case (false, false) => ""
+  }
+}
 
 @JsonCodec
 case class PlatformWithSceneOwner(
@@ -71,4 +77,10 @@ case class PlatformWithSceneOwner(
   email: String,
   emailNotifications: Boolean,
   personalInfo: User.PersonalInfo
-)
+) {
+  def getUserEmail: String = (emailNotifications, personalInfo.emailNotifications) match {
+    case (true, true) | (false, true) => personalInfo.email
+    case (true, false) => email
+    case (false, false) => ""
+  }
+}

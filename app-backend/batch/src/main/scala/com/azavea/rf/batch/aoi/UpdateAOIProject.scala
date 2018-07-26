@@ -74,13 +74,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
   def sendAoiNotificationEmail(project: Project, platform: Platform, user: User, sceneCount: Int) = {
     val email = new NotificationEmail
 
-    val userEmailAddress: String = (user.emailNotifications, user.personalInfo.emailNotifications) match {
-      case (true, true) | (false, true) => user.personalInfo.email
-      case (true, false) => user.email
-      case (false, false) => ""
-    }
-
-    (userEmailAddress, platform.publicSettings.emailAoiNotification) match {
+    (user.getEmail, platform.publicSettings.emailAoiNotification) match {
       case ("", true) => logger.warn(email.userEmailNotificationDisabledWarning(user.id))
       case ("", false) => logger.warn(
         email.userEmailNotificationDisabledWarning(user.id) ++ " " ++ email.platformNotSubscribedWarning(platform.id.toString()))
