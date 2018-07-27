@@ -285,17 +285,15 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
       OrganizationDao.viewFilter(user)
         .filter(fr"platform_id=${platformId}")
         .filter(searchParams)
+        .page(pageRequest)
     }
+
     for {
-      organizations <- organizationSearchBuilder.list((pageRequest.offset * pageRequest.limit), pageRequest.limit)
-      count <- organizationSearchBuilder.countIO
+      organizationPage <- organizationSearchBuilder
     } yield {
-      val hasPrevious = pageRequest.offset > 0
-      val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
-      PaginatedResponse[Organization](
-        count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, organizations
-      )
+      organizationPage
     }
+
   }
 
   def searchOrganizations(user: User, searchParams: SearchQueryParameters): ConnectionIO[List[Organization]] = {

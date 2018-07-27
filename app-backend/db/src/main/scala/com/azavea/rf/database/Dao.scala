@@ -258,13 +258,14 @@ object Dao {
       listQ(pageRequest).list
     }
 
-    def countIO: ConnectionIO[Int] = {
+    /** Short circuit for quickly getting an approximate count for large queries (e.g. scenes) **/
+    def sceneCountIO: ConnectionIO[Int] = {
       val countQuery = countF ++ Fragments.whereAndOpt(filters: _*)
-      val over10000IO: ConnectionIO[Boolean] =
+      val over100IO: ConnectionIO[Boolean] =
         (fr"SELECT EXISTS(" ++ (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"offset 100") ++ fr")")
           .query[Boolean]
           .unique
-      over10000IO flatMap {
+      over100IO flatMap {
         (exists: Boolean) => {
           exists match {
             case true => 100.pure[ConnectionIO]
@@ -323,6 +324,7 @@ object Dao {
         Some((deleteF ++ Fragments.whereAndOpt(filters: _*)).update)
       }
     }
+
 
     def delete: ConnectionIO[Int] = {
       deleteQOption
