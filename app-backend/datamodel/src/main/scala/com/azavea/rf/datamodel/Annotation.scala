@@ -114,45 +114,117 @@ object Annotation {
   def tupled = (Annotation.apply _).tupled
   def create = Create.apply _
 
-  def fromSimpleFeature(sf: SimpleFeature): Option[Create] = {
+  def getPropertiesNames(sf: SimpleFeature): List[String] = {
+    println("fromSimpleFeature")
     val geom = WKT.read(sf.getDefaultGeometry.toString)
+    println("geom")
+    println(geom)
     val projected = Projected(Reproject(geom, LatLng, WebMercator), 3857)
-    if (projected.isValid) {
-      val owner = Option(sf.getAttribute("owner")) map { (o: Object) => o.toString }
-      val label = sf.getProperty("label").getValue.toString
-      val description = Option(sf.getAttribute("descriptio")) map { (o: Object) => o.toString }
-      val machineGenerated = Option(sf.getProperty("machineGen")) flatMap {
-        (p: Property) => p.getValue.toString match {
-          // Apparently ogr2ogr stores bools as ints /shrug
-          case "1" => Some(true)
-          case "0" => Some(false)
-          case _ => None
-        }
+    println("projected")
+    println(projected)
+    println("projected.isValid")
+    println(projected.isValid)
+    println("sf.getProperties()")
+    println(sf.getProperties())
+    sf.getProperties()
+      .toArray
+      .toList(0)
+      .toString
+      .split("SimpleFeatureImpl.Attribute: ")
+      .filter(s => s != "")
+      .map(s => s.split("<")(0))
+      .toList
+  }
+
+  def fromSimpleFeature(sf: SimpleFeature): Option[Create] = {
+    println("fromSimpleFeature")
+    val geom = WKT.read(sf.getDefaultGeometry.toString)
+    println("geom")
+    println(geom)
+    val projected = Projected(Reproject(geom, LatLng, WebMercator), 3857)
+    println("projected")
+    println(projected)
+    println("projected.isValid")
+    println(projected.isValid)
+    println("sf.getProperties()")
+    println(sf.getProperties())
+
+    val owner = Option(sf.getAttribute("owner")) map { (o: Object) => o.toString }
+    val label = sf.getProperty("label").getValue.toString
+    val description = Option(sf.getAttribute("descriptio")) map { (o: Object) => o.toString }
+    val machineGenerated = Option(sf.getProperty("machineGen")) flatMap {
+      (p: Property) => p.getValue.toString match {
+        // Apparently ogr2ogr stores bools as ints /shrug
+        case "1" => Some(true)
+        case "0" => Some(false)
+        case _ => None
       }
-      val confidence = Option(sf.getProperty("confidence")) flatMap {
-        (p: Property) =>  decode[Float](p.getValue.toString).toOption
-      }
-      val quality = Option(sf.getProperty("quality")) flatMap {
-        (p: Property) => decode[AnnotationQuality](p.getValue.toString).toOption
-      }
-      val annotationGroup = Option(sf.getProperty("group")) flatMap {
-        (p: Property) => decode[UUID](p.getValue.toString).toOption
-      }
-      Some(
-        Create(
-          Some("auth0|59318a9d2fbbca3e16bcfc92"),
-          label,
-          description,
-          machineGenerated,
-          confidence,
-          quality,
-          Some(projected),
-          annotationGroup
-        )
-      )
-    } else {
-      None
     }
+    val confidence = Option(sf.getProperty("confidence")) flatMap {
+      (p: Property) =>  decode[Float](p.getValue.toString).toOption
+    }
+    val quality = Option(sf.getProperty("quality")) flatMap {
+      (p: Property) => decode[AnnotationQuality](p.getValue.toString).toOption
+    }
+    // TODO: this is not correct
+    // this function is only used when uploading shapefile to a project
+    // so if a project has annotations, it should use the same group id
+    // if not, create one
+    val annotationGroup = Option(sf.getProperty("group")) flatMap {
+      (p: Property) => decode[UUID](p.getValue.toString).toOption
+    }
+    Some(
+      Create(
+        Some("auth0|59318a9d2fbbca3e16bcfc92"),
+        label,
+        description,
+        machineGenerated,
+        confidence,
+        quality,
+        Some(projected),
+        annotationGroup
+      )
+    )
+    // if (projected.isValid) {
+    //   val owner = Option(sf.getAttribute("owner")) map { (o: Object) => o.toString }
+    //   val label = sf.getProperty("label").getValue.toString
+    //   val description = Option(sf.getAttribute("descriptio")) map { (o: Object) => o.toString }
+    //   val machineGenerated = Option(sf.getProperty("machineGen")) flatMap {
+    //     (p: Property) => p.getValue.toString match {
+    //       // Apparently ogr2ogr stores bools as ints /shrug
+    //       case "1" => Some(true)
+    //       case "0" => Some(false)
+    //       case _ => None
+    //     }
+    //   }
+    //   val confidence = Option(sf.getProperty("confidence")) flatMap {
+    //     (p: Property) =>  decode[Float](p.getValue.toString).toOption
+    //   }
+    //   val quality = Option(sf.getProperty("quality")) flatMap {
+    //     (p: Property) => decode[AnnotationQuality](p.getValue.toString).toOption
+    //   }
+    //   // TODO: this is not correct
+    //   // this function is only used when uploading shapefile to a project
+    //   // so if a project has annotations, it should use the same group id
+    //   // if not, create one
+    //   val annotationGroup = Option(sf.getProperty("group")) flatMap {
+    //     (p: Property) => decode[UUID](p.getValue.toString).toOption
+    //   }
+    //   Some(
+    //     Create(
+    //       Some("auth0|59318a9d2fbbca3e16bcfc92"),
+    //       label,
+    //       description,
+    //       machineGenerated,
+    //       confidence,
+    //       quality,
+    //       Some(projected),
+    //       annotationGroup
+    //     )
+    //   )
+    // } else {
+    //   None
+    // }
   }
 
   @ConfiguredJsonCodec
