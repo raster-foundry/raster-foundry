@@ -10,27 +10,43 @@ function usage() {
     echo -n \
 "Usage: $(basename "$0" JAR_NAME)
 
-Publish jars to S3 for easy access
+Publish jars to Bintray
 "
 }
 
-
-if [ -d "./scripts/cibuild.d" ]; then
-    for file in ./scripts/cibuild.d/*.sh; do
-        source "${file}"
-    done
-fi
-
-if [ -d "./scripts/cipublish.d" ]; then
-    for file in ./scripts/cipublish.d/*.sh; do
-        source "${file}"
-    done
-fi
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
     fi
-    build_ingest_jar
-    upload_ingest_jar "${RF_HOST_USER}"
+    
+    GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    if [[ "$GIT_BRANCH" != "master" ]]; then
+      echo 'Bintray does not support publishing snapshot artifacts. Run this only on release.';
+      exit 1;
+    fi
+    
+    echo "Publishing application JAR"
+    docker-compose \
+        run --rm --no-deps api-server api/publish
+        
+    echo "Publishing authentication JAR"
+    docker-compose \
+        run --rm --no-deps api-server api/publish
+        
+    echo "Publishing batch JAR"
+    docker-compose \
+        run --rm --no-deps api-server batch/publish
+        
+    echo "Publishing datamodel JAR"
+    docker-compose \
+        run --rm --no-deps api-server datamodel/publish
+        
+    echo "Publishing db JAR"
+    docker-compose \
+        run --rm --no-deps api-server db/publish
+        
+    echo "Publishing tile server JAR"
+    docker-compose \
+        run --rm --no-deps api-server tile/publish          
 fi

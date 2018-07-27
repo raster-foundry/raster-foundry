@@ -76,6 +76,12 @@ node{
             slackMessage = ":rasterfoundry: production deployment is complete"
             slackSend color: 'warning', message: slackMessage
         }
+        
+        stage('publish-jars') {
+            wrap([$class: 'AnsiColorBuildWrapper']) {
+                sh './scripts/publish-jars'
+            }
+        }
       } catch(err) {
         def slackMessage = ":jenkins-angry: *Deployment #${env.BUILD_NUMBER} of release/hotfix ${params.RELEASE_TAG} has failed*"
         slackMessage += "\n<${env.BUILD_URL}|View Build>"
