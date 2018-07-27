@@ -7,6 +7,13 @@
   top: 1em;
 }
 
+.export-dropdown-control {
+  position: absolute;
+  left: -1em;
+  top: 14em;
+  transform: translateX(-100%);
+}
+
 .m-popup-title{
     font-size: 18px;
 }
@@ -24,4 +31,31 @@
 
 .measure-delete-btn{
     width: 100%;
+}
+
+.export-control-body {
+  p {
+    padding: 0 0.5em;
+  }
+
+  button {
+    margin-bottom: 1em;
+  }
+
+  .lab-export-cancel {
+    margin-left: 0.5em;
+  }
+
+  .lab-export-confirm {
+    margin-right: 0.5em;
+  }
+
+  .node-select-dropdown {
+    background-color: $shade-normal;
+  }
+
+  .btn-node-select {
+    margin-left: 0.5rem;
+    width: 153px;
+  }
 }

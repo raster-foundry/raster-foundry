@@ -16,28 +16,34 @@ const LabMapComponent = {
     controller: 'LabMapController',
     bindings: {
         mapId: '@',
+        analysisId: '@?',
         options: '<?',
         initialCenter: '<?',
         onClose: '&',
         onCompareClick: '&',
-        comparing: '<'
+        comparing: '<',
+        enableNodeExport: '<?'
     }
 };
 
 class LabMapController {
     constructor(
-        $log, $document, $element, $scope, $timeout, $compile,
-        mapService
+        $rootScope, $log, $document, $element, $scope, $timeout, $compile, $window, $ngRedux,
+        mapService, authService, APP_CONFIG
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$document = $document;
-        this.$element = $element;
-        this.$scope = $scope;
-        this.$timeout = $timeout;
-        this.$compile = $compile;
-        this.mapService = mapService;
+        $rootScope.autoInject(this, arguments);
         this.getMap = () => this.mapService.getMap(this.mapId);
+
+        $ngRedux.subscribe(() => {
+            this.nodes = $ngRedux.getState().lab.nodes;
+            this.nodeArray = this.nodes ?
+                this.nodes.toArray().filter((node) => {
+                    return node.type !== 'const';
+                }).map(({id, metadata}) => ({id, label: metadata.label})) :
+                [];
+            this.$log.log(this.nodeArray);
+        });
     }
 
     $onInit() {
@@ -203,7 +209,12 @@ class LabMapController {
 
     createMeasureShape(e) {
         this.disableDrawHandlers();
-        this.addMeasureShapeToMap(e.layer, e.layerType);
+        if (e.layerType === 'rectangle') {
+            this.drawBboxRectangleHandler.disable();
+            this.addExportBboxToMap(e.layer);
+        } else {
+            this.addMeasureShapeToMap(e.layer, e.layerType);
+        }
     }
 
     disableDrawHandlers() {
@@ -282,6 +293,57 @@ class LabMapController {
         }
     }
 
+    toggleQuickExport(event) {
+        event.stopPropagation();
+        if (this.quickExportOpen) {
+            this.onExportCancel();
+        } else {
+            this.quickExportOpen = true;
+            this.setBboxDrawHandlers();
+            this.drawBboxRectangleHandler.enable();
+        }
+    }
+
+    setBboxDrawHandlers() {
+        this.drawBboxRectangleHandler = new L.Draw.Rectangle(this.mapWrapper.map, {
+            allowIntersection: false,
+            shapeOptions: {
+                weight: 2,
+                fillOpacity: 0.2,
+                color: GREEN,
+                fillColor: GREEN
+            }
+        });
+    }
+
+    addExportBboxToMap(layer) {
+        this.exportBboxString = layer.getBounds().toBBoxString();
+        this.mapWrapper.setLayer('Export', layer, false);
+        this.hasExportBbox = true;
+        this.$scope.$evalAsync();
+    }
+
+    onExportCancel() {
+        this.hasExportBbox = false;
+        this.quickExportOpen = false;
+        delete this.selectedNode;
+        delete this.exportBboxString;
+        this.drawBboxRectangleHandler.disable();
+        this.mapWrapper.deleteLayers('Export');
+    }
+
+    onExportConfirm() {
+        this.exportConfirmed = true;
+        this.downLoadUrl = `${this.APP_CONFIG.tileServerLocation}/tools/${this.analysisId}/raw`
+            + `?bbox=${this.exportBboxString}&zoom=${this.map.getZoom()}`
+            + `&node=${this.selectedNode.id}&token=${this.authService.token()}`;
+    }
+
+    onExportDownload() {
+        this.exportConfirmed = false;
+        this.$window.open(this.downLoadUrl, '_blank');
+    }
+
     toggleMeasure(shapeType) {
         if (shapeType === 'Polygon') {
             this.drawPolygonHandler.enable();
@@ -296,6 +358,10 @@ class LabMapController {
         this.mapWrapper.deleteLayers('Measurement');
         this.disableDrawHandlers();
         this.onClose();
+    }
+
+    onNodeSelect(node) {
+        this.selectedNode = node;
     }
 }
 
