@@ -42,13 +42,25 @@ object PlatformDao extends Dao[Platform] {
   def listPlatforms(page: PageRequest) =
     query.page(page)
 
-  def listMembers(platformId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] =
-    UserGroupRoleDao.listUsersByGroup(GroupType.Platform, platformId, page, searchParams, actingUser,
-                                      Some(fr"ORDER BY ugr.membership_status, ugr.group_role")) map {
-      (usersPage: PaginatedResponse[User.WithGroupRole]) => {
-         usersPage.copy(results = usersPage.results map { _.copy(email = "" ) })
+  def listMembers(platformId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
+    for {
+      isAdmin <- userIsAdmin(actingUser, platformId)
+      userPageIO <- {
+        val userListPage = UserGroupRoleDao.listUsersByGroup(GroupType.Platform, platformId, page, searchParams, actingUser,
+          Some(fr"ORDER BY ugr.membership_status, ugr.group_role"))
+        isAdmin match {
+          case true => userListPage
+          case false => userListPage.map {
+            (usersPage: PaginatedResponse[User.WithGroupRole]) => {
+              usersPage.copy(results = usersPage.results map {
+                _.copy(email = "")
+              })
+            }
+          }
+        }
       }
-    }
+    } yield userPageIO
+  }
 
   def listPlatformUserTeams(user: User, searchParams: SearchQueryParameters): ConnectionIO[List[Team]] = {
     val teamsF: Option[Fragment] = Some(fr"""
