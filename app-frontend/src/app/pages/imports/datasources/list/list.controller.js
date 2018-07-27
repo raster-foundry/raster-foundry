@@ -84,6 +84,9 @@ class DatasourceListController {
         }).result.then(() => {
             this.loadDatasources();
             this.searchString = '';
+        }, () => {
+            this.loadDatasources();
+            this.searchString = '';
         });
     }
 

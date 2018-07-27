@@ -123,12 +123,11 @@ trait DatasourceRoutes extends Authentication
 
   def deleteDatasource(datasourceId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      DatasourceDao.query
-        .authorized(user, ObjectType.Datasource, datasourceId, ActionType.Delete)
+      DatasourceDao.isDeletable(datasourceId, user, ObjectType.Datasource)
         .transact(xa).unsafeToFuture
     } {
-      onSuccess(DatasourceDao.query.filter(datasourceId).delete.transact(xa).unsafeToFuture) {
-         completeSingleOrNotFound
+      onSuccess(DatasourceDao.deleteDatasourceWithRelated(datasourceId).transact(xa).unsafeToFuture) { counts: List[Int] =>
+        complete(StatusCodes.OK -> s"${counts(1)} uploads deleted, ${counts(2)} scenes deleted. ${counts(0)} datasources deleted.")
       }
     }
   }

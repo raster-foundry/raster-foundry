@@ -37,6 +37,7 @@ export default angular.module('index.components', [
     // datasource components
     require('./components/datasources/datasourceItem/datasourceItem.module.js').name,
     require('./components/datasources/datasourceCreateModal/datasourceCreateModal.module.js').name,
+    require('./components/datasources/datasourceDeleteModal/datasourceDeleteModal.module.js').name,
 
     // lab components
     require('./components/lab/templateItem/templateItem.module.js').name,
