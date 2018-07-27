@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.6.1](https://github.com/raster-foundry/raster-foundry/tree/1.6.1) (2018-07-27)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.6.0...1.6.1)
+
+**Merged pull requests:**
+
+- Minor Admin Fixes [\#3770](https://github.com/raster-foundry/raster-foundry/pull/3770)
+- Support sending notifications to user contact email [\#3752](https://github.com/raster-foundry/raster-foundry/pull/3752)
+
 ## [1.6.0](https://github.com/raster-foundry/raster-foundry/tree/1.6.0) (2018-07-26)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.5.0...1.6.0)
