@@ -115,7 +115,6 @@ class ChannelHistogramController {
     }
 
     $onChanges(changesObj) {
-        console.log(changesObj);
         if ('data' in changesObj && changesObj.data.currentValue) {
             let data = changesObj.data.currentValue;
             if (data[0] && data[1] && data[2]) {
@@ -261,7 +260,6 @@ class ChannelHistogramController {
     }
 
     onMinBreakpointChange(breakpoint) {
-        console.log('min breakpoint changed');
         this.lowerClip = breakpoint;
         if (this.lowerClip > this.upperClip) {
             this.upperClip = this.lowerClip;
@@ -270,7 +268,6 @@ class ChannelHistogramController {
     }
 
     onMaxBreakpointChange(breakpoint) {
-        console.log('max breakpoint changed');
         this.upperClip = breakpoint;
         if (this.upperClip < this.lowerClip) {
             this.lowerClip = this.upperClip;
