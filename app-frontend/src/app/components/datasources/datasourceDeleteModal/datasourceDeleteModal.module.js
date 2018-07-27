@@ -62,7 +62,7 @@ class DatasourceDeleteModalController {
     }
 
     displayUploadMsg(uploadCount) {
-        let text = uploadCount === 1 ? 'upload is' : 'uploads are';
+        const text = uploadCount === 1 ? 'upload is' : 'uploads are';
         this.deleteMsg = '<div class="color-danger">'
             + `<p>${uploadCount} in progress ${text} using this datasource.</p>`
             + '<p>Datasource cannot be deleted at this time.</p>'
@@ -70,7 +70,7 @@ class DatasourceDeleteModalController {
     }
 
     displaySceneMsg(sceneCount) {
-        let text = sceneCount === 1 ? 'scene is' : 'scenes are';
+        const text = sceneCount === 1 ? 'scene is' : 'scenes are';
         this.deleteMsg = '<div class="color-danger">'
             + `<p>${sceneCount} ${text} using this datasource.</p>`
             + '<p>You are about to delete this datasource. '

@@ -127,7 +127,7 @@ trait DatasourceRoutes extends Authentication
         .transact(xa).unsafeToFuture
     } {
       onSuccess(DatasourceDao.deleteDatasourceWithRelated(datasourceId).transact(xa).unsafeToFuture) { counts: List[Int] =>
-        complete(StatusCodes.OK -> s"${counts(1)} uploads deleted, ${counts(2)} scenes deleted. ${counts(0)} datasources deleted. ")
+        complete(StatusCodes.OK -> s"${counts(1)} uploads deleted, ${counts(2)} scenes deleted. ${counts(0)} datasources deleted.")
       }
     }
   }
