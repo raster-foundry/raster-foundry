@@ -1046,6 +1046,10 @@ rf-map-container:-webkit-full-screen {
     outline: transparent;
   }
   user-select: none;
+
+  &.export-dropdown-control {
+    width: 20em;
+  }
 }
 
 .layer-picker-title {
