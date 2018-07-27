@@ -10,6 +10,7 @@ import labAnalysisTpl from './pages/lab/analysis/analysis.html';
 import labStartAnalysisTpl from './pages/lab/startAnalysis/startAnalysis.html';
 import labNavbarTpl from './pages/lab/navbar/navbar.html';
 
+import projectsModule from './pages/projects/projects.module';
 import projectsTpl from './pages/projects/projects.html';
 import projectsNavbarTpl from './pages/projects/navbar/navbar.html';
 import projectsEditTpl from './pages/projects/edit/edit.html';
@@ -50,6 +51,7 @@ import errorTpl from './pages/error/error.html';
 import shareTpl from './pages/share/share.html';
 import homeTpl from './pages/home/home.html';
 import importsTpl from './pages/imports/imports.html';
+import importsModule from './pages/imports/imports.module';
 import rasterListTpl from './pages/imports/raster/raster.html';
 import vectorListTpl from './pages/imports/vector/vector.html';
 import importsDatasourcesTpl from './pages/imports/datasources/datasources.html';
@@ -253,7 +255,8 @@ function projectStates($stateProvider) {
             templateUrl: projectsTpl,
             controller: 'ProjectsController',
             controllerAs: '$ctrl',
-            abstract: true
+            abstract: true,
+            resolve: projectsModule.resolve
         })
         .state('projects.list', {
             title: 'User Projects',
@@ -463,7 +466,8 @@ function importStates($stateProvider) {
             templateUrl: importsTpl,
             controller: 'ImportsController',
             controllerAs: '$ctrl',
-            abstract: true
+            abstract: true,
+            resolve: importsModule.resolve
         })
         .state('imports.rasters', {
             title: 'Rasters',

@@ -9,24 +9,11 @@ class ProjectsEditController {
         $log, $q, $state, $scope, modalService, $timeout, $ngRedux, $location,
         authService, projectService, projectEditService,
         mapService, mapUtilsService, layerService,
-        datasourceService, imageOverlayService, thumbnailService, sceneService
+        datasourceService, imageOverlayService, thumbnailService, sceneService,
+        platform
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$q = $q;
-        this.$state = $state;
-        this.$scope = $scope;
-        this.$location = $location;
-        this.modalService = modalService;
-        this.authService = authService;
-        this.projectService = projectService;
-        this.projectEditService = projectEditService;
-        this.mapUtilsService = mapUtilsService;
-        this.layerService = layerService;
-        this.datasourceService = datasourceService;
-        this.imageOverlayService = imageOverlayService;
-        this.sceneService = sceneService;
-        this.thumbnailService = thumbnailService;
+        $scope.autoInject(this, arguments);
         this.getMap = () => mapService.getMap('edit');
 
         let unsubscribe = $ngRedux.connect(
@@ -282,12 +269,14 @@ class ProjectsEditController {
 
     openShareModal() {
         this.modalService.open({
-            component: 'permissionsModal',
+            component: 'rfPermissionModal',
+            size: 'med',
             resolve: {
                 object: () => this.project,
                 permissionsBase: () => 'projects',
+                objectType: () => 'PROJECT',
                 objectName: () => this.project.name,
-                extraActions: () => ['ANNOTATE']
+                platform: () => this.platform
             }
         });
     }

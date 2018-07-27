@@ -1,0 +1,17 @@
+<div class="subject" ng-transclude>
+  <!-- Transcluded content goes here -->
+</div>
+<div class="flex-fill"></div>
+<div class="controls">
+    <select class="form-control"
+            ng-model="$ctrl.currentActionTag"
+            ng-change="$ctrl.handleActionChange()">
+      <option ng-repeat="action in $ctrl.actions"
+              value="{{action.tag}}">{{action.label}}</option>
+    </select>
+    <button class="btn btn-square"
+            ng-click="$ctrl.handleDelete()"
+    >
+      <i class="icon-cross"></i>
+    </button>
+</div>

@@ -1,3 +1,4 @@
+/* global _ */
 import searchTemplate from './search.html';
 
 const searchComponent = {
@@ -7,39 +8,76 @@ const searchComponent = {
         autoFocus: '<',
         disabled: '<',
         placeholder: '@',
-        onSearch: '&'
+        onSearch: '&',
+        suggestions: '<',
+        onSuggestionSelect: '&',
+        showSuggestionAvatars: '<'
     }
 };
 
 class SearchController {
-    constructor($element, $timeout) {
+    constructor($rootScope, $scope, $element, $timeout) {
         'ngInject';
-        this.$element = $element;
-        this.$timeout = $timeout;
+        $rootScope.autoInject(this, arguments);
+    }
+
+    $onInit() {
+        this.showSuggestions = true;
     }
 
     $postLink() {
         if (this.autoFocus) {
             this.claimFocus();
         }
+        this.addBlurHandlers();
     }
 
     $onChanges(changes) {
-        if (changes.disabled.currentValue) {
+        if (_.get(changes, 'disabled.currentValue')) {
             this.claimFocus(100);
         }
+        if (_.get(changes, 'suggestions.currentValue') && !this.searchText) {
+            this.suggestions = [];
+        }
+    }
+
+    $onDestroy() {
+        $(this.$element[0]).off();
     }
 
     claimFocus(interval = 0) {
         this.$timeout(() => {
             const el = $(this.$element[0]).find('input').get(0);
-            el.focus();
+            if (el) {
+                el.focus();
+            }
         }, interval);
+    }
+
+    addBlurHandlers() {
+        this.$timeout(() => {
+            const el = $(this.$element[0]);
+            el.on('focusin', () => {
+                this.$timeout(() => {
+                    this.showSuggestions = true;
+                }, 0);
+            });
+            el.on('focusout', () => {
+                this.$timeout(() => {
+                    this.showSuggestions = false;
+                }, 250);
+            });
+        }, 0);
     }
 
     clearSearch() {
         this.searchText = '';
         this.onSearch();
+    }
+
+    handleSuggestionSelect(suggestion) {
+        this.showSuggestions = false;
+        this.onSuggestionSelect({ value: suggestion });
     }
 }
 
