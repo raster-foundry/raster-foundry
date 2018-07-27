@@ -41,3 +41,35 @@
     margin: .5%;
   }
 }
+
+.aoi-shape-filter {
+    width: 100%;
+    .filter {
+        justify-content: space-between;
+        label {
+            font-weight: 700;
+            color: $text-base;
+            font-size: 1.4rem;
+        }
+    }
+    .shapefilter-container {
+        width: 20rem;
+    }
+    .shapefilter-box {
+        background: $white;
+        color: $shade-light;
+        border: 1px solid $shade-light;
+        &:hover {
+            background: $shade-light;
+            * {
+                color: $white;
+            }
+        }
+    }
+    .shapefilter-text {
+        color: $shade-light;
+    }
+    .shapefilter-dropdown {
+        border: 1px solid $shade-light;
+    }
+}
