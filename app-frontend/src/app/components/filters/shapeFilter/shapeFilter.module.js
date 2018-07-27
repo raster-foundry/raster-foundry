@@ -9,7 +9,8 @@ const ShapeFilterComponent = {
     controller: 'ShapeFilterController',
     bindings: {
         filter: '<',
-        onFilterChange: '&'
+        onFilterChange: '&',
+        shape: '<?'
     }
 };
 
@@ -48,21 +49,52 @@ class ShapeFilterController {
         };
     }
 
+    $onInit() {
+        this.shapeRequest = this.getShapes().then((shapes) => {
+            this.shapes = shapes;
+            this.filteredShapes = shapes;
+            this.shapeSearch = '';
+            if (this.shape) {
+                this.setShapeFromShape(this.shape);
+            } else if (this.paramValue) {
+                this.setShapeFromParam(this.paramValue);
+            }
+        });
+        this.shapeRequest.catch((err) => {
+            this.error = err;
+        });
+    }
+
     $onChanges(changes) {
         if (changes.filter && changes.filter.currentValue) {
             this.filter = changes.filter.currentValue;
-            const paramValue = this.$location.search()[this.filter.param];
-            this.getShapes().then((shapes) => {
-                this.shapes = shapes;
-                this.filteredShapes = shapes;
-                this.shapeSearch = '';
-                let paramShape = _.first(
-                    this.shapes.filter((shape) => shape.id === paramValue)
-                );
+            if (this.filter.param) {
+                this.paramValue = this.$location.search()[this.filter.param];
+                this.setShapeFromParam(this.paramValue);
+            }
+        }
+        if (changes.shape && changes.shape.currentValue) {
+            if (changes.shape.currentValue.id !== (this.selectedShape && this.selectedShape.id)) {
+                this.setShapeFromShape(changes.shape.currentValue);
+            }
+        }
+    }
+
+    setShapeFromParam(param) {
+        if (this.shapes && this.shapes.length) {
+            let paramShape = _.first(this.shapes.filter((shape) => shape.id === this.paramValue));
+            if (paramShape) {
                 this.onSelectShape(paramShape);
-            }, (err) => {
-                this.error = err;
-            });
+            }
+        }
+    }
+
+    setShapeFromShape(bindShape) {
+        if (this.shapes && this.shapes.length) {
+            let boundShape = _.first(this.shapes.filter((shape) => shape.id === bindShape.id));
+            if (boundShape) {
+                this.onSelectShape(boundShape);
+            }
         }
     }
 

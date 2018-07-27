@@ -60,26 +60,23 @@ class AOIParametersController {
     }
 
     $onInit() {
-        this.$scope.$on('$destroy', () => {
-            this.getMap().then(mapWrapper => mapWrapper.deleteLayers('Areas Of Interest'));
-        });
-
         this.showFilters = false;
         this.projectLoaded = false;
-        this.isProjectAoisDrawn = false;
         this.aoiProjectParameters = {};
-        this.drawOptions = {
-            areaType: 'interest',
-            requirePolygons: true
+
+        this.shapeParams = {
+            type: 'shape',
+            label: 'Area of Interest',
+            param: 'shape'
         };
 
         this.$q.all({
             project: this.projectEditService.fetchCurrentProject(),
             aoi: this.fetchProjectAOIs()
         }).then((result) => {
-            this.project = result.project;
-            if (result.aoi) {
-                this.aoiParameters = result.aoi.filters;
+            ({project: this.project, aoi: {aoi: this.aoi, shape: this.shape}} = result);
+            if (this.aoi) {
+                this.aoiParameters = this.aoi.filters;
             } else {
                 this.aoiParameters = {
                     'orgParams': {
@@ -111,31 +108,6 @@ class AOIParametersController {
         });
     }
 
-    drawProjectAois(multipolygon) {
-        this.getMap().then((map) => {
-            let aoiLayer = L.geoJSON(multipolygon, {
-                style: () => {
-                    return {
-                        weight: 2,
-                        fillOpacity: 0.2
-                    };
-                }
-            });
-            map.setLayer(
-                'Areas Of Interest',
-                aoiLayer,
-                true
-            );
-            let bounds = aoiLayer.getBounds();
-            if (bounds.isValid()) {
-                map.map.fitBounds(bounds, {
-                    padding: [35, 35]
-                });
-            }
-        });
-        this.isProjectAoisDrawn = true;
-    }
-
     fetchProjectAOIs() {
         return this.projectService.getProjectAois(
             this.$parent.projectId
@@ -144,23 +116,15 @@ class AOIParametersController {
             this.lastAoiResponse = response;
             if (response.count === 1) {
                 this.projectAoi = _.first(response.results);
-                return this.$q.all([
-                    this.projectAoi, this.shapesService.fetchShapes({id: this.projectAoi.shape})
-                ]);
+                return this.$q.all({
+                    aoi: this.projectAoi,
+                    shape: this.shapesService.fetchShapes({id: this.projectAoi.shape})
+                });
             } else if (response.count > 1) {
                 this.unsupportedAois = true;
                 return this.$q.reject(new Error('Multiple AOI\'s are not currently supported.'));
             }
-            return this.$q.resolve([]);
-        }).then((results) => {
-            let [aoi, shape] = results;
-            if (aoi && shape) {
-                this.aoiPolygons = {geom: shape.geometry};
-                if (!this.isProjectAoisDrawn) {
-                    this.drawProjectAois(this.aoiPolygons.geom);
-                }
-            }
-            return aoi;
+            return this.$q.resolve({});
         }).catch((error) => {
             if (error instanceof Error) {
                 this.$log.error(error.message);
@@ -175,43 +139,26 @@ class AOIParametersController {
         if (this.unsupportedAois === true) {
             return this.$q.reject('Projects with multiple AOI\'s are not currently supported');
         }
-        return this.shapesService.createShape({
-            type: 'FeatureCollection',
-            features: [
+        if (this.projectAoi) {
+            let aoiToUpdate = Object.assign(
+                _.clone(this.projectAoi),
                 {
-                    type: 'Feature',
-                    geometry: {
-                        'type': multipolygon.geom.type,
-                        'coordinates': multipolygon.geom.coordinates,
-                        'srid': multipolygon.geom.srid
-                    },
-                    properties: {
-                        name: `AOI: ${this.project.name} ${(new Date()).toLocaleString()}`
-                    }
+                    filters: aoiFilters,
+                    isActive: isActive,
+                    shape: this.shape.id
                 }
-            ]
-        }).then(([shape]) => {
-            if (this.projectAoi) {
-                let aoiToUpdate = Object.assign(
-                    _.clone(this.projectAoi),
-                    {
-                        filters: aoiFilters,
-                        isActive: isActive,
-                        shape: shape.id
-                    }
-                );
-                return this.$q.all([shape, this.aoiService.updateAOI(aoiToUpdate)]);
-            }
-            let newAOI = {
-                owner: this.authService.getProfile().sub,
-                shape: shape.id,
-                filters: aoiFilters,
-                isActive: isActive,
-                startTime: this.aoiProjectParameters.aoisLastChecked,
-                approvalRequired: false
-            };
-            return this.$q.all([shape, this.projectService.createAOI(this.project.id, newAOI)]);
-        });
+            );
+            return this.aoiService.updateAOI(aoiToUpdate);
+        }
+        let newAOI = {
+            owner: this.authService.getProfile().sub,
+            shape: this.shape.id,
+            filters: aoiFilters,
+            isActive: isActive,
+            startTime: this.aoiProjectParameters.aoisLastChecked,
+            approvalRequired: false
+        };
+        return this.projectService.createAOI(this.project.id, newAOI);
     }
 
     toggleFilters() {
@@ -255,13 +202,14 @@ class AOIParametersController {
 
     getCurrentFrequency() {
         const frequencyValue = this.aoiProjectParameters.aoiCadenceMillis;
-        return this.updateFrequencies
-            .find(f => f.value === frequencyValue)
-            .label;
+        const frequency = this.updateFrequencies
+              .find(f => f.value === frequencyValue);
+        return frequency && frequency.label;
     }
 
     getCurrentStartTime() {
-        return this.aoiProjectParameters.aoisLastChecked.format('MM/DD/YY');
+        return this.aoiProjectParameters.aoisLastChecked &&
+            this.aoiProjectParameters.aoisLastChecked.format('MM/DD/YY');
     }
 
     saveParameters() {
@@ -292,26 +240,9 @@ class AOIParametersController {
         return this.saveParametersRequest && this.saveParametersRequest.$$state.status === 0;
     }
 
-    startDrawing() {
-        this.drawing = true;
-        this.getMap().then((mapWrapper) => {
-            mapWrapper.hideLayers('Areas Of Interest', false);
-        });
-    }
-
-    onAoiSave(multipolygon) {
-        this.drawing = false;
-        this.aoiPolygons = multipolygon;
-        this.drawProjectAois(multipolygon.geom);
-    }
-
-    onAoiCancel() {
-        this.drawing = false;
-        this.getMap().then((mapWrapper) => {
-            if (mapWrapper.getLayers('Areas Of Interest').length) {
-                mapWrapper.showLayers('Areas Of Interest', true);
-            }
-        });
+    onShapeChange(filter, filterParams) {
+        this.shape = filterParams.shape;
+        this.aoiPolygons = {geom: filterParams.geometry};
     }
 
     onCloseFilterPane(showFilterPane) {
