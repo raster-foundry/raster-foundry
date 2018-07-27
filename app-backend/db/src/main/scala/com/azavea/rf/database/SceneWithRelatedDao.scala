@@ -72,7 +72,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
       fr"ORDER BY coalesce (acquisition_date, created_at) DESC, id DESC"
     )
     withRelateds <- scenesToScenesWithRelated(scenes)
-    count <- sceneSearchBuilder.countIO
+    count <- sceneSearchBuilder.sceneCountIO
   } yield {
     val hasPrevious = pageRequest.offset > 0
     val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
