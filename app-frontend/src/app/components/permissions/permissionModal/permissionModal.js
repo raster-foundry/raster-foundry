@@ -15,8 +15,8 @@ const PermissionModalComponent = {
 
 class PermissionModalController {
     constructor(
-        $rootScope, $scope, $element, $timeout,
-        permissionsService, organizationService, teamService, userService
+        $rootScope, $scope, $element, $timeout, $q,
+        permissionsService, organizationService, teamService, userService, authService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -313,14 +313,21 @@ class PermissionModalController {
         if (searchTerm && searchTerm.length) {
             this.lastRequestTime = Date.now();
             const thisRequestTime = this.lastRequestTime;
-            this.userService.searchUsers(searchTerm).then(results => {
+
+            this.$q.all({
+                user: this.authService.getCurrentUser(),
+                results: this.userService.searchUsers(searchTerm)
+            }).then(({user, results}) => {
                 // Only use results if the request is the most recent
                 if (this.lastRequestTime === thisRequestTime) {
-                    this.suggestions = results.map(user => ({
-                        label: user.name || user.email || user.id,
-                        avatar: user.profileImageUri,
-                        id: user.id
-                    }));
+                    this.suggestions =
+                        results
+                            .filter(r => r.id !== user.id)
+                            .map(r => ({
+                                label: r.name || r.email || r.id,
+                                avatar: r.profileImageUri,
+                                id: r.id
+                            }));
                 }
             }).finally(() => {
                 // Only alter the loading flag if the request is the most recent
