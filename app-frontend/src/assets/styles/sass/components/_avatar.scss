@@ -8,9 +8,28 @@
   height: 32px;
   width: 32px;
 
+  &.tiny {
+    width: 25px;
+    height: 25px;
+  }
+
+  /* 
+   * This is default sizing, but including a 
+   * class alternative in case of weird override issues
+   */
+  &.sm {
+    width: 32px;
+    height: 32px;
+  }
+
   &.md {
     width: 100px;
     height: 100px;
+  }
+
+  &.lg {
+    width: 250px;
+    height: 250px;
   }
 }
 

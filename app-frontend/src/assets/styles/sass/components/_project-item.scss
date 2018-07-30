@@ -6,9 +6,9 @@
   }
 
   .avatar {
-    position: relative;
+    position: absolute;
     z-index: 10;
-    top: -3px;
+    margin-top: -3px;
   }
 }
 
@@ -20,6 +20,7 @@
   overflow: hidden;
   max-width: 100%;
   text-overflow: ellipsis;
+  padding-left: 3.5rem;
   padding-right: 8.5rem;
 
   &:after {
@@ -35,7 +36,7 @@
     white-space: normal;
     background: $off-white;
     box-shadow: inset white 0 0 0 1px;
-    z-index: 1;
+    z-index: 2;
     visibility: hidden;
     opacity: 0;
   }
@@ -86,6 +87,8 @@
   margin: 1rem 0 0;
   border-radius: $border-radius-base;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .project-ownership {
