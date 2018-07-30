@@ -14,7 +14,7 @@ import cats.effect.IO
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.slick.Projected
-import geotrellis.vector.Polygon
+import geotrellis.vector.{MultiPolygon, Polygon}
 import geotrellis.raster.histogram._
 import doobie.Fragments._
 import doobie.Fragments._
@@ -71,8 +71,11 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
   }
 
   // Check swagger spec for appropriate return type
+  // we filter to make sure the list only includes non-None geometries, so it's safe to `get`
+  @SuppressWarnings(Array("OptionGet"))
   def getMosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]]): ConnectionIO[Seq[MosaicDefinition]] = {
 
+    def geom(stpWithFootprint: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) = stpWithFootprint._2.get.geom
     val filters = List(
       polygonOption.map(polygon => fr"ST_Intersects(scenes.tile_footprint, ${polygon})"),
       Some(fr"scenes_to_projects.project_id = ${projectId}"),
@@ -80,7 +83,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     )
     val select = fr"""
     SELECT
-      scene_id, project_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location
+      scene_id, project_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location, data_footprint
     FROM
       scenes_to_projects
     LEFT JOIN
@@ -88,12 +91,31 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     ON scenes.id = scenes_to_projects.scene_id
       """
     for {
-      stps <- {
-        (select ++ whereAndOpt(filters: _*)).query[SceneToProjectwithSceneType].list
+      stpsWithFootprints <- {
+        (select ++ whereAndOpt(filters: _*)).query[(SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])].list
       }
     } yield {
-      logger.debug(s"Found ${stps.length} scenes in projects")
-      val md = MosaicDefinition.fromScenesToProjects(stps)
+      logger.debug(s"Found ${stpsWithFootprints.length} scenes in projects")
+      val filteredStpsWithFootprints = stpsWithFootprints.filter(
+        (pair: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => !(geom(pair).isEmpty)
+      ) match {
+        case Nil => Nil
+        case h +: Nil => stpsWithFootprints
+        case h +: t +: Nil => {
+          stpsWithFootprints.foldLeft(List(h)) {
+            (acc: List[(SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])], candidate: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => {
+              if(geom(candidate).coveredBy(geom(acc.last))) {
+                acc
+              } else {
+                acc :+ (candidate._1, Some(Projected((geom(candidate) union geom(acc.last)).asMultiPolygon.get, 3857)))
+              }
+            }
+          }
+
+        }
+      }
+      logger.debug(s"Wound up with ${filteredStpsWithFootprints.length} scenes that contribute")
+      val md = MosaicDefinition.fromScenesToProjects(filteredStpsWithFootprints map { _._1 })
       logger.debug(s"Mosaic Definition: ${md}")
       md
     }
