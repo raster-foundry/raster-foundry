@@ -89,6 +89,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     LEFT JOIN
       scenes
     ON scenes.id = scenes_to_projects.scene_id
+    ORDER BY scene_order ASC;
       """
     for {
       stpsWithFootprints <- {
