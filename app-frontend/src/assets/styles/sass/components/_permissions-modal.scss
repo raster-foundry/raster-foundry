@@ -56,9 +56,17 @@ rf-permission-item {
         align-items: center;
         flex-shrink: 1;
         font-size: 1.5rem;
+        overflow: hidden;
         .labels {
             flex: 1;
+            flex-shrink: 1;
             margin-left: 0.5em;
+            overflow: hidden;
+            > * {
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
             .subtitle {
                 opacity: 0.8;
                 font-size: 1.3rem;
