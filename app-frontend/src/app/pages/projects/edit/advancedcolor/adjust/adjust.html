@@ -32,6 +32,18 @@
                               on-change="$ctrl.onHistogramChange(clipping)"
                               corrections="$ctrl.correction">
         </rf-channel-histogram>
+        <div class="histogram-overlay" ng-show="$ctrl.loadingHistogram || !$ctrl.histogramData.length">
+          <div class="list-group" ng-show="!$ctrl.loadingHistogram && $ctrl.histogramData && !$ctrl.histogramData.length">
+            Scenes in this project do not support histograms,<br />
+            or they contain no data.<br />
+            Cloud optimized geotif support is coming soon.
+          </div>
+          <div class="list-group" ng-show="!$ctrl.histogramData || $ctrl.loadingHistogram">
+            <span class="list-placeholder">
+              <i class="icon-load animate-spin" ng-class="{'stop': $ctrl.histogramData && !$ctrl.loadingHistogram}"></i>
+            </span>
+          </div>
+        </div>
       </div>
 
         <!-- Color Correction -->

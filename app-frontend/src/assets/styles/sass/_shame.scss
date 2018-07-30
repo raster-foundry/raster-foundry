@@ -3242,3 +3242,16 @@ rf-navbar-search {
   margin-left: 6.5rem;
   font-size: 80%;
 }
+
+.color-filters-container {
+    position: relative;
+}
+
+.histogram-overlay {
+    position: absolute;
+    top: 30%;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    text-align: center;
+}
