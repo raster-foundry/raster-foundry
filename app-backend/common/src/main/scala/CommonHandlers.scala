@@ -38,6 +38,6 @@ trait CommonHandlers extends RouteDirectives {
   }
 
   def circeDecodingError = ExceptionHandler {
-    case df: DecodingFailure => complete { (StatusCodes.InternalServerError, DecodingFailure.showDecodingFailure.show(df)) }
+    case df: DecodingFailure => complete { (StatusCodes.BadRequest, DecodingFailure.showDecodingFailure.show(df)) }
   }
 }
