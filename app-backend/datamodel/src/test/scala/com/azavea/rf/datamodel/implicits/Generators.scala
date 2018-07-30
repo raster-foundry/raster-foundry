@@ -150,7 +150,7 @@ object Generators extends ArbitraryInstances {
     multiPolygonGen3857 map { Projected(_, 3857) }
 
   private def annotationGroupCreateGen: Gen[AnnotationGroup.Create] = for {
-    name <- arbitrary[String]
+    name <- nonEmptyStringGen
     defaultStyle <- Gen.const(Some(().asJson))
   } yield { AnnotationGroup.Create(name, defaultStyle)}
 
