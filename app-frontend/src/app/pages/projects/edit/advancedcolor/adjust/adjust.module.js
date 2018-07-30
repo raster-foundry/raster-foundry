@@ -93,11 +93,13 @@ class ProjectsColorAdjustController {
             return;
         }
         this.histogramData = [];
+        this.loadingHistogram = true;
         this.histogramService.getHistogram(
             this.$state.params.projectid,
             Array.from(sceneKeys)
         ).then((response) => {
             this.histogramData = response.data;
+            this.loadingHistogram = false;
         });
     }
 

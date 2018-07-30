@@ -37,6 +37,10 @@ export default class ProjectsEditColormode {
         return sceneListQuery.then(() => {
             let sceneLayers = Array.from(this.$parent.sceneLayers)
                 .map(([id, layer]) => ({id, layer}));
+            if (sceneLayers.length === 0) {
+                this.isLoading = false;
+                return;
+            }
             this.fetchAllColorCorrections(sceneLayers);
 
             let firstLayer = _.first(sceneLayers);
