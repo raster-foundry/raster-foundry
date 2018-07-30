@@ -7,8 +7,10 @@ import java.util.UUID
 import java.security.InvalidParameterException
 
 import io.circe._
-import io.circe.parser._
 import io.circe.generic.semiauto._
+import io.circe.optics.JsonPath._
+import io.circe.parser._
+import io.circe.syntax._
 
 import com.azavea.rf.bridge._
 
@@ -31,10 +33,20 @@ trait JsonCodecs {
 
   implicit val uuidEncoder: Encoder[UUID] =
     Encoder.encodeString.contramap[UUID](_.toString)
-  implicit val uuidDecoder: Decoder[UUID] =
+  val withUUIDFieldUUIDDecoder: Decoder[UUID] = Decoder[JsonObject] map {
+    js => {
+      val path = root.id.string
+      path.getOption(js.asJson) match {
+        case Some(id) => UUID.fromString(id)
+        case None => throw DecodingFailure("no id field found in a related object", List.empty)
+      }
+    }
+  }
+  val directUUIDDecoder: Decoder[UUID] =
     Decoder.decodeString.emap { str =>
       Either.catchNonFatal(UUID.fromString(str)).leftMap(_ => "UUID")
     }
+  implicit val uuidDecoder: Decoder[UUID] = directUUIDDecoder or withUUIDFieldUUIDDecoder
 
   implicit val uriEncoder: Encoder[URI] =
     Encoder.encodeString.contramap[URI] { _.toString }
