@@ -36,12 +36,19 @@ class LabMapController {
         this.getMap = () => this.mapService.getMap(this.mapId);
 
         $ngRedux.subscribe(() => {
-            this.nodes = $ngRedux.getState().lab.nodes;
+            this.state = $ngRedux.getState();
+            this.nodes = this.state.lab.nodes;
+            this.defaultPreviewNodeId = this.state.lab.previewNodes[0];
             this.nodeArray = this.nodes ?
                 this.nodes.toArray().filter((node) => {
                     return node.type !== 'const';
                 }).map(({id, metadata}) => ({id, label: metadata.label})) :
                 [];
+            if (this.defaultPreviewNodeId && this.defaultPreviewNodeId.length) {
+                this.selectedNode = this.nodeArray.find(node => {
+                    return node.id === this.defaultPreviewNodeId;
+                });
+            }
         });
     }
 
