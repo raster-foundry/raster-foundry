@@ -324,7 +324,6 @@ object Generators extends ArbitraryInstances {
 
   private def sceneCreateGen: Gen[Scene.Create] = for {
     sceneId <- uuidGen map { Some(_) }
-    ingestSizeBytes <- Gen.const(0)
     visibility <- Gen.const(Visibility.Private)
     tags <- stringListGen
     datasource <- uuidGen
@@ -341,7 +340,7 @@ object Generators extends ArbitraryInstances {
     statusFields <- sceneStatusFieldsGen
     sceneType <- Gen.option(sceneTypeGen)
   } yield {
-    Scene.Create(sceneId, ingestSizeBytes, visibility, tags,
+    Scene.Create(sceneId, visibility, tags,
                  datasource, sceneMetadata, name, owner, tileFootprint, dataFootprint,
                  metadataFiles, images, thumbnails, ingestLocation, filterFields, statusFields,
                  sceneType)
