@@ -20,12 +20,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     fi
     
-    GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    if [[ "$GIT_BRANCH" != "master" ]]; then
-      echo 'Bintray does not support publishing snapshot artifacts. Run this only on release.';
-      exit 1;
-    fi
-    
     echo "Publishing application JAR"
     docker-compose \
         run --rm --no-deps api-server api/publish
