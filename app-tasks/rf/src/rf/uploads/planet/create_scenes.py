@@ -78,7 +78,6 @@ def create_planet_scene(planet_feature, datasource, planet_key,
     cloudCover = props['cloud_cover']
     visibility = visibility
     tags = tags
-    dataFootprint = planet_feature['geometry']['coordinates']
 
     scene_kwargs = {
         'sunAzimuth': props['sun_azimuth'],
