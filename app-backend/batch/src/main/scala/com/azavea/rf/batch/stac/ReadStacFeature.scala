@@ -126,7 +126,6 @@ object ReadStacFeature extends Config with LazyLogging {
 
     Scene.Create(
       id = Some(sceneId),
-      ingestSizeBytes = 0,
       visibility = Visibility.Public,
       tags = feature.properties.provider.split(",").map(_.trim).toList,
       datasource = datasource,
