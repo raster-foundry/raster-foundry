@@ -169,7 +169,7 @@ trait ProjectRoutes extends Authentication
                     }
                   } ~
                   post {
-                    traceName("project-annotations-shapefile-import") {
+                    traceName("project-annotations-shapefile-upload") {
                       authenticate { user =>
                         val tempFile = ScalaFile.newTemporaryFile()
                         tempFile.deleteOnExit()
@@ -949,24 +949,14 @@ trait ProjectRoutes extends Authentication
         case true => {
           val shapefilePath = matches.next.toString
           val features = ShapeFileReader.readSimpleFeatures(shapefilePath)
-          println("features")
-          println(features.toList)
+          val properties = features.toList(0)
+            .toString
+            .split("SimpleFeatureImpl")
+            .filter(s => s != "" && s.contains(".Attribute: "))
+            .map(_.split(".Attribute: ")(1).split("<")(0))
+            .toList
 
-          val featureAccumulationResult =
-            Shapefile.accumulateFeatures(Annotation.getPropertiesNames)(List(), List(), features.toList)
-          featureAccumulationResult match {
-            case Left(errorIndices) =>
-              complete(
-                StatusCodes.ClientError(400)(
-                  "Bad Request",
-                  s"Several features could not be translated to annotations. Indices: ${errorIndices}"
-                )
-              )
-            case Right(propertyNames) => {
-              complete(propertyNames)
-            }
-          }
-
+          complete(StatusCodes.OK, properties)
 
           // val featureAccumulationResult =
           //   Shapefile.accumulateFeatures(Annotation.fromSimpleFeature)(List(), List(), features.toList)

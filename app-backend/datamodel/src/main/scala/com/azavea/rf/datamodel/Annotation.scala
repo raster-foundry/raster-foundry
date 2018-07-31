@@ -114,27 +114,6 @@ object Annotation {
   def tupled = (Annotation.apply _).tupled
   def create = Create.apply _
 
-  def getPropertiesNames(sf: SimpleFeature): List[String] = {
-    println("fromSimpleFeature")
-    val geom = WKT.read(sf.getDefaultGeometry.toString)
-    println("geom")
-    println(geom)
-    val projected = Projected(Reproject(geom, LatLng, WebMercator), 3857)
-    println("projected")
-    println(projected)
-    println("projected.isValid")
-    println(projected.isValid)
-    println("sf.getProperties()")
-    println(sf.getProperties())
-    sf.getProperties()
-      .toArray
-      .toList(0)
-      .toString
-      .split("SimpleFeatureImpl.Attribute: ")
-      .filter(s => s != "")
-      .map(s => s.split("<")(0))
-      .toList
-  }
 
   def fromSimpleFeature(sf: SimpleFeature): Option[Create] = {
     println("fromSimpleFeature")
