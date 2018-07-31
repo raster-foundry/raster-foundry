@@ -5,7 +5,7 @@
           ng-click="$ctrl.zoomIn()">
     <span class="icon-plus"></span>
   </button>
-  <div class="map-zoom" title="Current Zoom">{{$ctrl.map.getZoom()}}</div>
+  <div class="map-zoom" title="Current Zoom">{{$ctrl.zoomLevel}}</div>
   <button class="btn btn-default btn-square btn-small"
           title="Zoom Out"
           ng-click="$ctrl.zoomOut()">
@@ -86,11 +86,12 @@
   <div class="filler"></div>
   <button class="btn btn-default btn-square btn-small"
           title="Export"
-          ng-click="$ctrl.toggleQuickExport($event)">
-    <span class="icon-processing"></span>
+          ng-click="$ctrl.toggleQuickExport($event)"
+          ng-if="$ctrl.enableNodeExport">
+    <span class="icon-caret-down"></span>
   </button>
   <div class="layer-picker export-dropdown-control"
-       ng-show="$ctrl.quickExportOpen">
+       ng-show="$ctrl.quickExportOpen && $ctrl.enableNodeExport">
     <div class="layer-picker-title">Define an area for export</div>
     <div class="dropdown-arrow"></div>
     <div class="layer-picker-body export-control-body">

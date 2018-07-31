@@ -42,7 +42,6 @@ class LabMapController {
                     return node.type !== 'const';
                 }).map(({id, metadata}) => ({id, label: metadata.label})) :
                 [];
-            this.$log.log(this.nodeArray);
         });
     }
 
@@ -87,7 +86,10 @@ class LabMapController {
         }).setView(
             this.initialCenter ? this.initialCenter : [0, 0],
             this.initialZoom ? this.initialZoom : 2
-        );
+        ).on('zoom', () => {
+            this.zoomLevel = this.map.getZoom();
+            this.$scope.$evalAsync();
+        });
 
 
         this.$timeout(() => {
@@ -132,11 +134,13 @@ class LabMapController {
     zoomIn() {
         this.map.zoomIn();
         this.$timeout(() => {}, 500);
+        this.zoomLevel = this.map.getZoom();
     }
 
     zoomOut() {
         this.map.zoomOut();
         this.$timeout(()=> {}, 500);
+        this.zoomLevel = this.map.getZoom();
     }
 
     toggleLayerPicker(event) {
@@ -326,6 +330,7 @@ class LabMapController {
     onExportCancel() {
         this.hasExportBbox = false;
         this.quickExportOpen = false;
+        this.exportConfirmed = false;
         delete this.selectedNode;
         delete this.exportBboxString;
         this.drawBboxRectangleHandler.disable();
