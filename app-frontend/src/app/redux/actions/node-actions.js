@@ -101,7 +101,6 @@ export function compareNodes(nodeIds) {
             Promise.all(
                 renderDefPromises
             ).then((nodesToUpdate) => {
-                // update nodes
                 const updatedNodes = nodesToUpdate;
                 const updatedAnalysis = astFromNodes(labState, updatedNodes);
                 const nodeUpdateRequest = authedRequest({

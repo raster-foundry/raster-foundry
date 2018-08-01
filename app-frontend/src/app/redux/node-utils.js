@@ -5,7 +5,6 @@ import {authedRequest} from '../api/authentication';
 import {colorStopsToRange} from '_redux/histogram-utils';
 import {createRenderDefinition} from '_redux/histogram-utils';
 
-// make this work for multiple nodes
 export function astFromNodes(labState, updatedNodes) {
     const analysis = labState.analysis;
     const nodes = labState.nodes;

@@ -47,6 +47,7 @@ class DiagramContainerController {
             readonly: state.lab.readonly,
             selectingNode: state.lab.selectingNode,
             selectedNode: state.lab.selectedNode,
+            preventSelecting: state.lab.preventSelecting,
             reduxState: state
         };
     }
