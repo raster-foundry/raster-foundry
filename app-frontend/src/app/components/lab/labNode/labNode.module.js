@@ -51,6 +51,7 @@ class LabNodeController {
     mapStateToThis(state) {
         return {
             readonly: state.lab.readonly,
+            preventSelecting: state.lab.preventSelecting,
             analysis: state.lab.analysis,
             selectingNode: state.lab.selectingNode,
             selectedNode: state.lab.selectedNode,
@@ -152,7 +153,7 @@ class LabNodeController {
     }
 
     onNodeClick(event) {
-        if (this.selectingNode && this.selectedNode !== this.nodeId) {
+        if (this.selectingNode && this.selectedNode !== this.nodeId && !this.preventSelecting) {
             event.stopPropagation();
             this.selectNode(this.nodeId);
         }
