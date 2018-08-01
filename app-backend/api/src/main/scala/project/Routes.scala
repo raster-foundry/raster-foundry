@@ -174,14 +174,31 @@ trait ProjectRoutes extends Authentication
                         val tempFile = ScalaFile.newTemporaryFile()
                         tempFile.deleteOnExit()
                         val response = storeUploadedFile("name", (_) => tempFile.toJava) { (m, _) =>
-                          processShapefile(projectId, tempFile, m)
+                          processShapefileUpload(projectId, tempFile, m)
                         }
                         tempFile.delete()
                         response
                       }
                     }
                   }
-                }
+                } ~
+                  pathPrefix("import") {
+                    pathEndOrSingleSlash {
+                      (post & formFieldMap) { fields =>
+                        traceName("project-annotations-shapefile-import-with-fields") {
+                          authenticate { user =>
+                            val tempFile = ScalaFile.newTemporaryFile()
+                            tempFile.deleteOnExit()
+                            val response = storeUploadedFile("name", (_) => tempFile.toJava) { (m, _) =>
+                              processShapefileImport(projectId, tempFile, m, fields)
+                            }
+                            tempFile.delete()
+                            response
+                          }
+                        }
+                      }
+                    }
+                  }
               } ~
               pathPrefix(JavaUUID) { annotationId =>
                 pathEndOrSingleSlash {
@@ -939,7 +956,7 @@ trait ProjectRoutes extends Authentication
     }
   }
 
-  def processShapefile(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo): Route = authenticate { user =>
+  def processShapefileUpload(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo): Route = authenticate { user =>
     {
       val unzipped = tempFile.unzip()
       val matches = unzipped.glob("*.shp")
@@ -977,6 +994,41 @@ trait ProjectRoutes extends Authentication
           //     )
           //   }
           // }
+        }
+      }
+    }
+  }
+
+  def processShapefileImport(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo, fields: Map[String, String]: Route = authenticate { user =>
+    {
+      val unzipped = tempFile.unzip()
+      val matches = unzipped.glob("*.shp")
+      matches.hasNext match {
+        case false =>
+          complete(StatusCodes.ClientError(400)("Bad Request", "No Shapefile Found in Archive"))
+        case true => {
+          val shapefilePath = matches.next.toString
+          val features = ShapeFileReader.readSimpleFeatures(shapefilePath)
+
+          val featureAccumulationResult =
+            Shapefile.accumulateFeatures(Annotation.fromSimpleFeature)(List(), List(), features.toList)
+          featureAccumulationResult match {
+            case Left(errorIndices) =>
+              complete(
+                StatusCodes.ClientError(400)(
+                  "Bad Request",
+                  s"Several features could not be translated to annotations. Indices: ${errorIndices}"
+                )
+              )
+            case Right(annotationCreates) => {
+              complete(
+                StatusCodes.Created,
+                (AnnotationDao.insertAnnotations(annotationCreates, projectId, user)
+                   map {(anns: List[Annotation]) => anns map { _.toGeoJSONFeature }}
+                ).transact(xa).unsafeToFuture
+              )
+            }
+          }
         }
       }
     }

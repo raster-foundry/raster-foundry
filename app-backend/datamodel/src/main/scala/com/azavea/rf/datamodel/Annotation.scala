@@ -115,7 +115,7 @@ object Annotation {
   def create = Create.apply _
 
 
-  def fromSimpleFeature(sf: SimpleFeature): Option[Create] = {
+  def fromSimpleFeature(sf: SimpleFeature, fields: Option[Map[String, String]] = None): Option[Create] = {
     println("fromSimpleFeature")
     val geom = WKT.read(sf.getDefaultGeometry.toString)
     println("geom")
