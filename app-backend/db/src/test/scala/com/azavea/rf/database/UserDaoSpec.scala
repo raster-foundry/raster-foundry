@@ -298,4 +298,23 @@ class UserDaoSpec extends FunSuite
       }
     }
   }
+
+  test("Lookup a user's platform") {
+    check {
+      forAll {
+        (user: User.Create, org: Organization.Create, platform: Platform) => {
+          val platformsIO = for {
+            userOrgPlat <- insertUserOrgPlatform(user, org, platform, true)
+            (dbUser, _, insertedPlatform) = userOrgPlat
+            listedPlatform <- UserDao.unsafeGetUserPlatform(dbUser.id)
+          } yield (insertedPlatform, listedPlatform)
+
+          val (inserted, listed) = platformsIO.transact(xa).unsafeRunSync
+          assert(inserted == listed,
+                 "Unsafe get of a user's platform should return the user's platform")
+          true
+        }
+      }
+    }
+  }
 }

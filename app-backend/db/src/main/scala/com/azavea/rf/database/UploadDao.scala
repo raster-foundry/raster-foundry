@@ -1,7 +1,8 @@
 package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{Upload, User}
+import com.azavea.rf.database.notification._
+import com.azavea.rf.datamodel._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -10,6 +11,7 @@ import cats._
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
+import cats.syntax._
 import java.util.UUID
 
 
@@ -56,7 +58,8 @@ object UploadDao extends Dao[Upload] {
 
   def update(upload: Upload, id: UUID, user: User): ConnectionIO[Int] = {
     val idFilter = fr"id = ${id}"
-    (sql"""
+    val oldUploadIO = unsafeGetUploadById(id)
+    val recordUpdateIO = (sql"""
        UPDATE uploads
        SET
           modified_at = NOW(),
@@ -71,5 +74,24 @@ object UploadDao extends Dao[Upload] {
           project_id = ${upload.projectId},
           source = ${upload.source}
      """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
+    (for {
+      oldUpload <- oldUploadIO
+      newStatus <- upload.uploadStatus.pure[ConnectionIO]
+      nAffected <- recordUpdateIO
+      userPlatform <- UserDao.unsafeGetUserPlatform(oldUpload.owner)
+      owner <- UserDao.unsafeGetUserById(oldUpload.owner)
+     } yield (oldUpload, newStatus, nAffected, userPlatform, owner)) flatMap {
+      case (oldUpload: Upload, newStatus: UploadStatus, nAffected: Int, platform: Platform, owner: User) => {
+        (oldUpload.uploadStatus, newStatus, platform.publicSettings.emailIngestNotification, owner.emailNotifications) match {
+          case (UploadStatus.Processing, UploadStatus.Failed, true, true) =>
+            UploadNotifier(platform.id, id, MessageType.UploadSucceeded).send *>
+              nAffected.pure[ConnectionIO]
+          case (UploadStatus.Processing, UploadStatus.Complete, true, true) =>
+            UploadNotifier(platform.id, id, MessageType.UploadFailed).send *>
+              nAffected.pure[ConnectionIO]
+          case _ => nAffected.pure[ConnectionIO]
+        }
+      }
+    }
   }
 }

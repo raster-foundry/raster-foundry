@@ -11,11 +11,12 @@ case class PlainGroupRequest(
   groupId: UUID,
   groupType: GroupType,
   subjectId: String,
-  platform: Platform
+  platformId: UUID
 ) {
   def build: ConnectionIO[EmailData] = {
-    val platformHost = platform.publicSettings.platformHost.getOrElse("app.rasterfoundry.com")
     for {
+      platform <- PlatformDao.unsafeGetPlatformById(platformId)
+      platformHost = platform.publicSettings.platformHost.getOrElse("app.rasterfoundry.com")
       subjectEmail <- UserDao.unsafeGetUserById(subjectId).map((usr: User) => usr.email)
       groupName <- groupType match {
         case GroupType.Team =>
@@ -46,7 +47,7 @@ case class PlainGroupRequest(
      </a>.
   </p>
   <p>
-    -- The ${platform.name} team
+    -- The ${platform.name} Team
   </p>
 </html>
       """

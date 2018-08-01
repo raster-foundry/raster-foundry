@@ -43,6 +43,17 @@ object UserDao extends Dao[User] {
     }
   }
 
+  def unsafeGetUserPlatform(id: String): ConnectionIO[Platform] = for {
+    platformRole <- {
+      UserGroupRoleDao.query
+        .filter(fr"group_type = 'PLATFORM' :: group_type")
+        .filter(fr"user_id = $id")
+        .filter(fr"is_active = true")
+        .select
+    }
+    platform <- PlatformDao.unsafeGetPlatformById(platformRole.groupId)
+  } yield platform
+
   def getUserById(id: String): ConnectionIO[Option[User]] = {
     filterById(id).selectOption
   }

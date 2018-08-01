@@ -2,7 +2,7 @@
 
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.filter.Filters._
-import com.azavea.rf.database.notification.{Notify, MessageType}
+import com.azavea.rf.database.notification.{GroupNotifier, MessageType}
 import com.azavea.rf.database.notification.templates.PlainGroupRequest
 import com.azavea.rf.datamodel._
 
@@ -116,16 +116,16 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
             UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved))
           } else {
             UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Invited)) <*
-              Notify.sendGroupNotification(
+              GroupNotifier(
                 platformId, groupId, groupType, actingUser.id, subjectId, MessageType.GroupInvitation
-              ).attempt
+              ).send
           }
-        case (None, false, _) => {
-          UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Requested)) <*
-            Notify.sendGroupNotification(
-              platformId, groupId, groupType, subjectId, subjectId, MessageType.GroupRequest
-            ).attempt
-        }
+          case (None, false, _) => {
+            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Requested)) <*
+              GroupNotifier(
+                platformId, groupId, groupType, subjectId, subjectId, MessageType.GroupRequest
+              ).send
+          }
         case (Some(_), _, _) => existingRoleO.get.pure[ConnectionIO]
       }
     }
