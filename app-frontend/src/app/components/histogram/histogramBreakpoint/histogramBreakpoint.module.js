@@ -138,9 +138,9 @@ class HistogramBreakpointController {
         ) {
             event.stopPropagation();
             // this is changing depending on the zoom width, so we need to find a way around it
-            let width = this.parent.width();
-            let position = event.offsetX;
-            let percent = position / width;
+            let leftBound = this.parent.offset().left;
+            let position = event.clientX;
+            let percent = (position - leftBound) / this.parent.width();
             let breakpoint = this.validateBreakpoint(
                 (this.range.max - this.range.min) * percent + this.range.min
             );
