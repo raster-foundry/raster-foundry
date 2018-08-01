@@ -73,16 +73,15 @@ class ShapeFilterController {
                 this.setShapeFromParam(this.paramValue);
             }
         }
-        if (changes.shape && changes.shape.currentValue) {
-            if (changes.shape.currentValue.id !== (this.selectedShape && this.selectedShape.id)) {
-                this.setShapeFromShape(changes.shape.currentValue);
-            }
+        let shape = _.get(changes, 'shape.currentValue');
+        if (shape && shape.id !== _.get(this, 'selectedShape.id')) {
+            this.setShapeFromShape(shape);
         }
     }
 
     setShapeFromParam(param) {
         if (this.shapes && this.shapes.length) {
-            let paramShape = _.first(this.shapes.filter((shape) => shape.id === this.paramValue));
+            const paramShape = _.first(this.shapes.filter((shape) => shape.id === this.paramValue));
             if (paramShape) {
                 this.onSelectShape(paramShape);
             }
@@ -91,7 +90,7 @@ class ShapeFilterController {
 
     setShapeFromShape(bindShape) {
         if (this.shapes && this.shapes.length) {
-            let boundShape = _.first(this.shapes.filter((shape) => shape.id === bindShape.id));
+            const boundShape = _.first(this.shapes.filter((shape) => shape.id === bindShape.id));
             if (boundShape) {
                 this.onSelectShape(boundShape);
             }
