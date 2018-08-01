@@ -1,4 +1,6 @@
 import typeToReducer from 'type-to-reducer';
+import {Map} from 'immutable';
+import _ from 'lodash';
 
 import {
     NODE_PREVIEWS, NODE_SET_ERROR, NODE_UPDATE_SOFT, NODE_UPDATE_HARD, NODE_INIT
@@ -24,11 +26,13 @@ export const nodeReducer = typeToReducer({
         SELECT_NODE: (state, action) => {
             if (state.selectingNode === 'compare') {
                 return Object.assign({}, state, {
+                    preventSelecting: false,
                     selectingNode: 'select',
                     selectedNode: action.nodeId
                 });
             } else if (state.selectingNode === 'select') {
                 return Object.assign({}, state, {
+                    preventSelecting: false,
                     selectingNode: null,
                     selectedNode: null,
                     showMap: true,
@@ -36,6 +40,7 @@ export const nodeReducer = typeToReducer({
                 });
             }
             return Object.assign({}, state, {
+                preventSelecting: false,
                 selectingNode: null,
                 selectedNode: null,
                 showMap: true,
@@ -44,6 +49,7 @@ export const nodeReducer = typeToReducer({
         },
         COMPARE_NODES: (state, action) => {
             return Object.assign({}, state, {
+                preventSelecting: false,
                 selectingNodes: null,
                 selectedNode: null,
                 showMap: true,
@@ -52,8 +58,22 @@ export const nodeReducer = typeToReducer({
         },
         CANCEL_SELECT: (state) => {
             return Object.assign({}, state, {
+                preventSelecting: false,
                 selectingNode: null,
                 selectedNode: null
+            });
+        },
+        PAUSE_SELECT: (state) => {
+            return Object.assign({}, state, {
+                preventSelecting: true
+            });
+        },
+        ERROR: (state, action) => {
+            return Object.assign({
+                preventSelecting: false,
+                selectingNode: null,
+                selectedNode: null,
+                selectingError: action.error
             });
         }
     },
@@ -75,13 +95,29 @@ export const nodeReducer = typeToReducer({
             return state;
         },
         FULFILLED: (state, action) => {
-            return Object.assign({}, state, {
-                previewNodes: state.previewNodes.concat([]),
-                analysis: action.meta.analysis,
-                nodes: state.nodes.set(action.meta.node.id, action.meta.node),
-                lastAnalysisSave: new Date(),
-                lastAnalysisRefresh: new Date()
-            });
+            if (action.meta.nodes) {
+                const nodeMap = _.reduce(
+                    action.meta.nodes,
+                    (m, node) => m.set(node.id, node),
+                    new Map()
+                );
+                return Object.assign({}, state, {
+                    previewNodes: state.previewNodes.concat([]),
+                    analysis: action.meta.analysis,
+                    nodes: _.merge({}, state.nodes, nodeMap),
+                    lastAnalysisSave: new Date(),
+                    lastAnalysisRefresh: new Date()
+                });
+            } else if (action.meta.node) {
+                return Object.assign({}, state, {
+                    previewNodes: state.previewNodes.concat([]),
+                    analysis: action.meta.analysis,
+                    nodes: state.nodes.set(action.meta.node.id, action.meta.node),
+                    lastAnalysisSave: new Date(),
+                    lastAnalysisRefresh: new Date()
+                });
+            }
+            throw new Error('Node update needs to specify node or nodes in action meta');
         }
     },
     [NODE_UPDATE_SOFT]: {

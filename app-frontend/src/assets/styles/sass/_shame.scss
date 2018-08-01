@@ -2989,7 +2989,7 @@ rf-reclassify-table {
     margin-bottom: 0;
 }
 
-.selectable {
+.selectable-node {
     pointer-events: auto;
     cursor: pointer;
     * {
@@ -2999,6 +2999,15 @@ rf-reclassify-table {
         /* outline: 2px solid $brand-secondary; */
         /* outline-radius: 5px; */
         box-shadow: 0 0 3pt 2pt $brand-secondary;
+    }
+}
+.selected-node {
+    pointer-events: auto;
+    cursor: not-allowed;
+    box-shadow: 0 0 3pt 2pt $brand-secondary;
+
+    * {
+        pointer-events: none;
     }
 }
 

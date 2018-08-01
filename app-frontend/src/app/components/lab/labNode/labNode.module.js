@@ -30,16 +30,16 @@ class LabNodeController {
         });
         $scope.$watch('$ctrl.selectingNode', (selectingNode) => {
             if (selectingNode) {
-                this.$element.addClass('selectable');
+                this.$element.addClass('selectable-node');
             } else {
-                this.$element.removeClass('selectable');
+                this.$element.removeClass('selectable-node');
             }
         });
         $scope.$watch('$ctrl.selectedNode', (selectedNode) => {
             if (selectedNode === this.nodeId) {
-                this.$element.addClass('selected');
+                this.$element.addClass('selected-node');
             } else {
-                this.$element.removeClass('selected');
+                this.$element.removeClass('selected-node');
             }
         });
     }
