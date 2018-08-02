@@ -1,12 +1,13 @@
-name := "rf-backend"
-
 addCommandAlias("mg", "migrations/run")
 
-scalaVersion := Version.scala
+// Add the default sonatype repository setting
+publishTo := sonatypePublishTo.value
 
 lazy val commonSettings = Seq(
-  organization := "com.azavea",
-  version := Version.rasterFoundry,
+  organization := "com.rasterfoundry",
+  organizationName := "Raster Foundry",
+  organizationHomepage := Some(new URL("https://www.rasterfoundry.com")),
+  description := "A platform to find, combine and analyze earth imagery at any scale.",
   cancelable in Global := true,
   scapegoatVersion in ThisBuild := Version.scapegoat,
   scapegoatIgnoredFiles := Seq(".*/datamodel/.*"),
