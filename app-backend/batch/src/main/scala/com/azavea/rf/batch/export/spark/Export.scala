@@ -11,7 +11,6 @@ import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.maml.serve._
 import com.azavea.maml.eval._
 import io.circe.parser._
 import io.circe.syntax._
