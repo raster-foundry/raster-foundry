@@ -65,6 +65,7 @@ TAGS
 
 # sbt specific
 .cache
+.coursier-cache
 .history
 .lib/
 dist/*
