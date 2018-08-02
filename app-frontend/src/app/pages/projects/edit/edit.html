@@ -62,7 +62,11 @@
 
   <!-- Main map area -->
   <div class="main">
-    <rf-map-container map-id="edit" ng-show="!$ctrl.showPreviewMap"></rf-map-container>
+    <rf-map-container map-id="edit"
+                      ng-show="!$ctrl.showPreviewMap"
+                      initial-center="$ctrl.initialCenter"
+                      initial-zoom="$ctrl.initialZoom"
+    ></rf-map-container>
     <rf-map-container map-id="preview"
                       ng-if="$ctrl.showPreviewMap"
                       initial-center="$ctrl.center"
