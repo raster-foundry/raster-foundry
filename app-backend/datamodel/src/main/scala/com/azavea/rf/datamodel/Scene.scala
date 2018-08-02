@@ -9,7 +9,6 @@ import geotrellis.slick.Projected
 
 import io.circe._
 import io.circe.generic.JsonCodec
-import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 

@@ -5,6 +5,7 @@ const ImportListComponent = {
     templateUrl: importListTpl,
     controller: 'ImportListController',
     bindings: {
+        platform: '<'
     }
 };
 
@@ -106,12 +107,14 @@ class ImportListController {
 
     shareModal(scene) {
         this.modalService.open({
-            component: 'permissionsModal',
+            component: 'rfPermissionModal',
+            size: 'med',
             resolve: {
                 object: () => scene,
                 permissionsBase: () => 'scenes',
+                objectType: () => 'SCENE',
                 objectName: () => scene.name,
-                extraActions: () => []
+                platform: () => this.platform
             }
         });
     }

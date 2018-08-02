@@ -3,21 +3,20 @@ import angular from 'angular';
 
 class ProjectsScenesController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, modalService, projectService, RasterFoundryRepository
+        $log, $state, $scope, $timeout,
+        modalService, projectService, RasterFoundryRepository,
+        platform
     ) {
         'ngInject';
-        this.$log = $log;
-        this.modalService = modalService;
-        this.projectId = $state.params.projectid;
-        this.$parent = $scope.$parent.$ctrl;
-        this.projectService = projectService;
-        this.repository = {
-            name: 'Raster Foundry',
-            service: RasterFoundryRepository
-        };
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
+        this.$parent = this.$scope.$parent.$ctrl;
+        this.repository = {
+            name: 'Raster Foundry',
+            service: this.RasterFoundryRepository
+        };
         // eslint-disable-next-line
         let thisItem = this;
         this.treeOptions = {
@@ -57,6 +56,20 @@ class ProjectsScenesController {
                 this.$log.log('error removing scene from project');
             }
         );
+    }
+
+    shareModal(project) {
+        this.modalService.open({
+            component: 'rfPermissionModal',
+            size: 'med',
+            resolve: {
+                object: () => project,
+                permissionsBase: () => 'projects',
+                objectType: () => 'PROJECT',
+                objectName: () => project.name,
+                platform: () => this.platform
+            }
+        });
     }
 
     openImportModal() {

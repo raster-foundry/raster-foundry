@@ -7,7 +7,8 @@ export default angular.module('index.components', [
     require('./components/admin/sidebarOrganizationList/sidebarOrganizationList.js').name,
 
     // permission components
-    require('./components/permissions/permissionsModal.module.js').name,
+    require('./components/permissions/permissionModal/permissionModal.js').name,
+    require('./components/permissions/permissionItem/permissionItem.js').name,
 
     // scene components
     require('./components/scenes/importList/importList.module.js').name,
@@ -36,6 +37,7 @@ export default angular.module('index.components', [
     // datasource components
     require('./components/datasources/datasourceItem/datasourceItem.module.js').name,
     require('./components/datasources/datasourceCreateModal/datasourceCreateModal.module.js').name,
+    require('./components/datasources/datasourceDeleteModal/datasourceDeleteModal.module.js').name,
 
     // lab components
     require('./components/lab/templateItem/templateItem.module.js').name,

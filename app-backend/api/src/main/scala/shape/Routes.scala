@@ -121,7 +121,7 @@ trait ShapeRoutes extends Authentication
                   Some(user.id),
                   fileMetadata.fileName,
                   None,
-                  Some(reprojectedGeometry)
+                  reprojectedGeometry
                 )
                 complete(StatusCodes.Created, ShapeDao.insertShapes(Seq(shape), user).transact(xa).unsafeToFuture)
               }

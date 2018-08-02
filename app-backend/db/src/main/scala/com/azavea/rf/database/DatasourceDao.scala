@@ -88,4 +88,32 @@ object DatasourceDao extends Dao[Datasource] {
     val datasource = dsCreate.toDatasource(user)
     this.create(datasource, user)
   }
+
+  def isDeletable(datasourceId: UUID, user: User, objectType: ObjectType): ConnectionIO[Boolean] = {
+    val statusF: List[Fragment] = List("CREATED", "UPLOADING", "UPLOADED", "QUEUED", "PROCESSING")
+      .map(status => fr"upload_status = ${status}::upload_status")
+
+    for {
+      datasourceO <- DatasourceDao.getDatasourceById(datasourceId)
+      isOwner = datasourceO match {
+        case Some(datasource) if datasource.owner == user.id => true
+        case _ => false
+      }
+      isShared <- AccessControlRuleDao.query
+        .filter(fr"object_type = ${objectType}::object_type")
+        .filter(fr"object_id = ${datasourceId}")
+        .filter(fr"is_active = true")
+        .exists
+      hasUpload <- UploadDao.query.filter(fr"datasource = ${datasourceId}").filter(fr"(" ++ Fragments.or(statusF: _*) ++ fr")").exists
+    } yield (isOwner && !isShared && !hasUpload)
+  }
+
+  def deleteDatasourceWithRelated(datasourceId: UUID): ConnectionIO[List[Int]] = {
+    for {
+      uDeleteCount <- UploadDao.query.filter(fr"datasource = ${datasourceId}").delete
+      sDeleteCount <- SceneDao.query.filter(fr"datasource = ${datasourceId}").delete
+      dDeleteCount <- DatasourceDao.query.filter(datasourceId).delete
+    } yield { List(uDeleteCount, sDeleteCount, dDeleteCount) }
+
+  }
 }

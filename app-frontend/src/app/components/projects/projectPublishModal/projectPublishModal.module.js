@@ -118,7 +118,12 @@ class ProjectPublishModalController {
         policy.active = true;
 
         this.project.tileVisibility = policy.enum;
+        this.project.visibility = policy.enum;
+
         if (shouldUpdate) {
+            if (this.project.owner.id) {
+                this.project.owner = this.project.owner.id;
+            }
             this.projectService.updateProject(this.project).then((res) => {
                 this.$log.debug(res);
             }, (err) => {

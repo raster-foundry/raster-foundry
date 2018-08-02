@@ -1,8 +1,8 @@
 <div class="panel-body">
   <ng-container ng-if="!$ctrl.slim">
     <rf-status-tag ng-if="$ctrl.status && $ctrl.status != 'CURRENT' " entity-type="project" status="$ctrl.status" class="project-status"></rf-status-tag>
-    <a href ui-sref="projects.edit({projectid: $ctrl.project.id})" class="h4 font-600">
-      <img class="avatar user-avatar pull-left" ng-attr-src="{{ $ctrl.project.owner.profileImageUri }}" ng-if="$ctrl.project.owner.profileImageUri"/>
+    <a href ui-sref="projects.edit({projectid: $ctrl.project.id})" class="no-hover">
+      <img class="avatar tiny" ng-attr-src="{{ $ctrl.project.owner.profileImageUri }}" ng-if="$ctrl.project.owner.profileImageUri"/>
       <h4 class="project-title" data-title="{{$ctrl.project.name}}">{{$ctrl.project.name}}</h4>
     </a>
     <div class="project-actions" ng-if="!$ctrl.hideOptions">

@@ -1,9 +1,11 @@
 import projectPlaceholder from '../../../../assets/images/transparent.svg';
 
 export default class ProjectItemController {
-    constructor($rootScope, $scope, $state, $attrs, $log,
+    constructor(
+        $rootScope, $scope, $state, $attrs, $log,
         projectService, mapService, mapUtilsService, authService, modalService,
-        featureFlags) {
+        featureFlags
+    ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
         this.projectPlaceholder = projectPlaceholder;
@@ -89,12 +91,14 @@ export default class ProjectItemController {
 
     shareModal(project) {
         this.modalService.open({
-            component: 'permissionsModal',
+            component: 'rfPermissionModal',
+            size: 'med',
             resolve: {
                 object: () => project,
                 permissionsBase: () => 'projects',
+                objectType: () => 'PROJECT',
                 objectName: () => project.name,
-                extraActions: () => ['ANNOTATE']
+                platform: () => this.platform
             }
         });
     }

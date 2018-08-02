@@ -26,6 +26,7 @@ trait QueryParameterDeserializers {
   implicit val deserializerGroupType: Unmarshaller[String, GroupType] = Unmarshaller.strict[String, GroupType] {s =>
     GroupType.fromString(s)
   }
+
 }
 
 trait QueryParametersCommon extends QueryParameterDeserializers {

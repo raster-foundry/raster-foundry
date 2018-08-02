@@ -30,12 +30,14 @@ function runBlock(
             if (APP_CONFIG.error && toState.name !== 'error') {
                 e.preventDefault();
                 $state.go('error');
-            } else if (toState.name !== 'login' && !authService.verifyAuthCache()) {
+            } else if (toState.bypassAuth && !authService.verifyAuthCache()) {
+                rollbarWrapperService.init();
+            } else if (!toState.bypassAuth && !authService.verifyAuthCache()) {
                 e.preventDefault();
                 rollbarWrapperService.init();
                 intercomService.shutdown();
                 $state.go('login');
-            } else if (toState.name !== 'login' && toState.name !== 'callback') {
+            } else if (!toState.bypassAuth && toState.name !== 'callback') {
                 rollbarWrapperService.init(authService.getProfile());
                 intercomService.bootWithUser(authService.getProfile());
                 if (toState.redirectTo) {
