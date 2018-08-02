@@ -34,7 +34,6 @@ object Version {
   val maml               = "0.0.4-0fbf423"
   val nimbusJose         = "0.6.0"
   val postgres           = "42.1.1"
-  val rasterFoundry      = "0.1"
   val rollbar            = "1.0.1"
   val scaffeine          = "2.0.0"
   val scala              = "2.11.11"
