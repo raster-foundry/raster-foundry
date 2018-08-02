@@ -34,17 +34,14 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
         WHERE
           project_id = ${projectId}""" ++ andPendingF ++ fr")"
     val queryFilters = makeFilters(List(sceneParams)).flatten ++ List(Some(projectFilterFragment))
-    val paginatedQuery = SceneDao.query.filter(queryFilters).list(pageRequest.offset, pageRequest.limit) flatMap {
-      (scenes: List[Scene]) => scenesToScenesWithRelated(scenes)
-    }
-
-    for {
-      page <- paginatedQuery
-      count <- query.filter(projectFilterFragment).sceneCountIO
-    } yield {
-      val hasPrevious = pageRequest.offset > 0
-      val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
-      PaginatedResponse[Scene.WithRelated](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
+    SceneDao.query.filter(queryFilters).page(pageRequest) flatMap {
+      (pr: PaginatedResponse[Scene]) =>
+      scenesToScenesWithRelated(pr.results.toList).map(
+        scenesWithRelated =>
+        PaginatedResponse[Scene.WithRelated](
+          pr.count, pr.hasPrevious, pr.hasNext, pr.page, pr.pageSize, scenesWithRelated
+        )
+      )
     }
   }
 
