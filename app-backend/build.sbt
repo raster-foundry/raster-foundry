@@ -7,6 +7,7 @@ scalaVersion := Version.scala
 lazy val commonSettings = Seq(
   organization := "com.azavea",
   version := Version.rasterFoundry,
+  licenses in ThisBuild := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
   cancelable in Global := true,
   scapegoatVersion in ThisBuild := Version.scapegoat,
   scapegoatIgnoredFiles := Seq(".*/datamodel/.*"),
@@ -46,7 +47,10 @@ lazy val commonSettings = Seq(
     Resolver.file("local", file(Path.userHome.absolutePath + "/.ivy2/local"))(Resolver.ivyStylePatterns) // important to pull deps from the local repo
   ),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
-  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+  bintrayVcsUrl := Some("https://github.com/raster-foundry/raster-foundry"),
+  bintrayOrganization := Some("raster-foundry"),
+  bintrayRepository := "raster-foundry"
 )
 
 // Create a new MergeStrategy for aop.xml files
