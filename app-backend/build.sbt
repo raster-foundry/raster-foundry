@@ -335,7 +335,7 @@ lazy val tool = Project("tool", file("tool"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
-      Dependencies.spark,
+      Dependencies.sparkCore,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisRasterTestkit,
@@ -346,6 +346,7 @@ lazy val tool = Project("tool", file("tool"))
       Dependencies.circeParser,
       Dependencies.circeOptics,
       Dependencies.scalaCheck,
+      Dependencies.scalaz,
       Dependencies.mamlJvm
     )
   })
