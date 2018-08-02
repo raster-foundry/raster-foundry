@@ -63,6 +63,8 @@ services:
       postgres:
         condition: service_healthy
     env_file: .env
+    environment:
+      - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
     ports:
       - "9000:9000"
       - "9010:9010"
