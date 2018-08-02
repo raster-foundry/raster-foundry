@@ -109,13 +109,14 @@ class ProjectsEditController {
                 pending: false
             }
         ).then(
-            (allScenes) => {
+            ({count: sceneCount, scenes: allScenes}) => {
+                this.sceneCount = sceneCount;
                 this.addUningestedScenesToMap(allScenes.filter(
                     (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
                 ));
                 return this.projectService.getSceneOrder(this.projectId).then(
-                    (res) => {
-                        this.orderedSceneId = res.results;
+                    (orderedIds) => {
+                        this.orderedSceneId = orderedIds;
                         this.sceneList = _(
                           this.orderedSceneId.map((id) => _.find(allScenes, {id}))
                         ).uniqBy('id').compact().value();
@@ -188,7 +189,8 @@ class ProjectsEditController {
                 projectId: this.projectId,
                 pending: true
             });
-            this.pendingSceneRequest.then(pendingScenes => {
+            this.pendingSceneRequest.then(({count, scenes: pendingScenes}) => {
+                this.pendingSceneCount = count;
                 this.pendingSceneList = _(pendingScenes).uniqBy('id').compact().value();
             });
         }

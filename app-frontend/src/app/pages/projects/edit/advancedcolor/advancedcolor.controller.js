@@ -140,7 +140,7 @@ export default class ProjectsAdvancedColorController {
             this.projectService.getAllProjectScenes({
                 projectId: this.project.id,
                 bbox: this.filterBboxList.map(r => r.toBBoxString()).join(';')
-            }).then((selectedScenes) => {
+            }).then(({scenes: selectedScenes}) => {
                 if (this.lastRequest === requestTime) {
                     this.selectNoScenes();
                     selectedScenes.map((scene) => this.setSelected(scene, true));

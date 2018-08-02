@@ -1,6 +1,4 @@
-/* globals BUILDCONFIG */
-
-/* global L */
+/* globals BUILDCONFIG _ L*/
 const availableProcessingOptions = [
     {
         label: 'Color Corrected',
@@ -282,7 +280,7 @@ export default (app) => {
         }
 
         getProjectCorners(projectId) {
-            return this.getAllProjectScenes({projectId: projectId}).then((scenes) => {
+            return this.getAllProjectScenes({projectId: projectId}).then(({scenes}) => {
                 let corners = {
                     lowerLeftLon: null,
                     lowerLeftLat: null,
@@ -318,57 +316,33 @@ export default (app) => {
          * @return {Promise} promise that will resolve when all scenes are available
          */
         getAllProjectScenes(params) {
-            return this.$q((resolve, reject) => {
-                let pageSize = 30;
-                let firstPageParams = Object.assign({}, params, {
-                    pageSize: pageSize,
-                    page: 0,
-                    sort: 'createdAt,desc'
-                });
-                let firstRequest = this.getProjectScenes(firstPageParams);
+            let pageSize = 30;
+            let firstPageParams = Object.assign({}, params, {
+                pageSize: pageSize,
+                page: 0,
+                sort: 'createdAt,desc'
+            });
+            let firstRequest = this.getProjectScenes(firstPageParams);
 
-                firstRequest.then((page) => {
-                    let self = this;
-                    let numScenes = page.count;
-                    let requests = [firstRequest];
-                    if (page.count > pageSize) {
-                        let requestMaker = function *(totalResults) {
-                            let pageNum = 1;
-                            while (pageNum * pageSize <= totalResults) {
-                                let pageParams = Object.assign({}, params, {
-                                    pageSize: pageSize,
-                                    page: pageNum,
-                                    sort: 'createdAt,desc'
-                                });
-                                yield self.getProjectScenes(pageParams);
-                                pageNum = pageNum + 1;
-                            }
-                        };
-
-                        requests = requests.concat(Array.from(requestMaker(numScenes)));
-                        // Unpack responses into a single scene list.
-                        // The structure to unpack is:
-                        // [{ results: [{},{},...] }, { results: [{},{},...]},...]
-                    }
-
-                    this.$q.all(requests).then(
-                        (allResponses) => {
-                            resolve(
-                                allResponses.reduce((res, resp) => res.concat(resp.results), [])
-                            );
-                        },
-                        () => {
-                            reject('Error loading scenes.');
-                        }
-                    );
-                }, () => {
-                    reject('Error loading scenes.');
+            return firstRequest.then((res) => {
+                const count = res.count;
+                const scenes = res.results;
+                const requests = Array(Math.floor(count / pageSize) - 1)
+                      .fill().map((x, page) => {
+                          return this.getProjectScenes(Object.assign({}, params, {
+                              pageSize,
+                              page: page + 1,
+                              sort: 'createdAt,desc'
+                          })).then((pageResponse) => pageResponse.results);
+                      });
+                return this.$q.all(requests).then((sceneChunks) => {
+                    return {count, scenes: scenes.concat(_.flatten(sceneChunks))};
                 });
             });
         }
 
         getProjectStatus(projectId) {
-            return this.getAllProjectScenes({ projectId }).then(scenes => {
+            return this.getAllProjectScenes({ projectId }).then(({scenes}) => {
                 if (scenes) {
                     const counts = scenes.reduce((acc, scene) => {
                         const ingestStatus = scene.statusFields.ingestStatus;
@@ -516,7 +490,27 @@ export default (app) => {
         }
 
         getSceneOrder(projectId) {
-            return this.Project.sceneOrder({projectId: projectId}).$promise;
+            const pageSize = 30;
+            const firtPageParams = {
+                pageSize,
+                page: 0
+            };
+            return this.Project.sceneOrder({projectId: projectId})
+                .$promise.then((res) => {
+                    const scenes = res.results;
+                    const count = res.count;
+                    let promises = Array(Math.floor(count / pageSize) - 1).fill().map((x, page) => {
+                        return this.Project.sceneOrder({
+                            projectId,
+                            pageSize,
+                            page: page + 1
+                        }).$promise.then((pageResponse) => pageResponse.results);
+                    });
+                    return this.$q.all(promises).then((sceneChunks) => {
+                        const allScenes = scenes.concat(_.flatten(sceneChunks));
+                        return allScenes;
+                    });
+                });
         }
 
         updateSceneOrder(projectId, sceneIds) {

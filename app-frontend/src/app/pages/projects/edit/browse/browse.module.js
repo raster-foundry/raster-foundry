@@ -146,10 +146,11 @@ class ProjectsSceneBrowserController {
     }
 
     getProjectSceneIds() {
-        this.projectService.getAllProjectScenes({ projectId: this.project.id }).then((scenes) => {
-            this.projectSceneIds = scenes.map(s => s.id);
-            this.projectScenesReady = true;
-        });
+        this.projectService.getAllProjectScenes({ projectId: this.project.id })
+            .then(({scenes}) => {
+                this.projectSceneIds = scenes.map(s => s.id);
+                this.projectScenesReady = true;
+            });
     }
 
     onRepositoryChange(bboxFetchFactory, repository) {
