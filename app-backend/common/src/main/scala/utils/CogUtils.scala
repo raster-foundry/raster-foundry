@@ -45,7 +45,7 @@ object CogUtils {
     }.mapFilter { headerBytes =>
       RangeReaderUtils.fromUri(uri).map { rr =>
         val crr = CacheRangeReader(rr, headerBytes)
-        GeoTiffReader.readMultiband(crr, decompress = false, streaming = true)
+        GeoTiffReader.readMultiband(crr, streaming = true)
       }
     }
   }
@@ -149,7 +149,7 @@ object CogUtils {
   def getTiffExtent(uri: String): Option[Projected[MultiPolygon]] = {
     for {
       rr <- RangeReaderUtils.fromUri(uri)
-      tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)
+      tiff = GeoTiffReader.readMultiband(rr, streaming = true)
     } yield {
       val crs = tiff.crs
       Projected(MultiPolygon(tiff.extent.reproject(crs, WebMercator).toPolygon()), 3857)
