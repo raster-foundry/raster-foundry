@@ -159,7 +159,7 @@ object ProjectDao extends Dao[Project] {
   }
 
   def addScenesToProject(sceneIds: NonEmptyList[UUID], projectId: UUID, user: User, isAccepted: Boolean): ConnectionIO[Int] = {
-    val inClause = fr"scenes.id IN (" ++ Fragment.const(sceneIds.map(_.show).foldSmash("'", "','", "'")) ++ fr")"
+    val inClause = Fragments.in(fr"scenes.id",  sceneIds)
     val sceneIdWithDatasourceF = fr"""
       SELECT scenes.id,
             datasources.id,
