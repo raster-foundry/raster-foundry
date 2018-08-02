@@ -1,3 +1,4 @@
+/* global BUILDCONFIG */
 import angular from 'angular';
 import {Map} from 'immutable';
 import ProjectActions from '_redux/actions/project-actions';
@@ -28,6 +29,8 @@ class ProjectsEditController {
         this.mosaicLayer = new Map();
         this.sceneLayers = new Map();
         this.projectId = this.$state.params.projectid;
+        this.initialCenter = BUILDCONFIG.MAP_CENTER || [0, 0];
+        this.initialZoom = BUILDCONFIG.MAP_ZOOM || 2;
 
         if (!this.project) {
             if (this.projectId) {

@@ -298,7 +298,9 @@ module.exports = function (_path) {
                     LOGOFILE: JSON.stringify('raster-foundry-logo.svg'),
                     LOGOURL: JSON.stringify(false),
                     FAVICON_DIR: JSON.stringify('/favicon'),
-                    FEED_SOURCE: JSON.stringify('https://blog.rasterfoundry.com/latest?format=json')
+                    FEED_SOURCE: JSON.stringify('https://blog.rasterfoundry.com/latest?format=json'),
+                    MAP_CENTER: JSON.stringify([-6.7, 39.2]),
+                    MAP_ZOOM: 5
                 },
                 'HELPCONFIG': {
                     API_DOCS_URL: JSON.stringify('https://docs.rasterfoundry.com/'),
