@@ -16,7 +16,6 @@ import com.azavea.maml.ast._
 import com.azavea.maml.eval._
 import com.azavea.maml.eval.directive._
 import com.azavea.maml.util._
-import com.azavea.maml.serve._
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import geotrellis.proj4._
@@ -48,7 +47,6 @@ import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 
 class ToolRoutes extends Authentication
   with LazyLogging
-  with InterpreterExceptionHandling
   with CommonHandlers
   with KamonTraceDirectives {
 
@@ -153,7 +151,7 @@ class ToolRoutes extends Authentication
   def tms(
     toolRunId: UUID, user: User
   ): Route =
-    (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
+    handleExceptions(circeDecodingError) {
       traceName("toolrun-tms") {
         pathPrefix(IntNumber / IntNumber / IntNumber) { (z, x, y) =>
           parameter(
@@ -222,7 +220,7 @@ class ToolRoutes extends Authentication
   def raw (
     toolRunId: UUID, user: User
   ): Route =
-    (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
+    handleExceptions(circeDecodingError) {
       traceName("analysis-raw") {
         pathPrefix("raw") {
           parameter("bbox", "zoom".as[Int], "node".?) {
