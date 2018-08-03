@@ -93,7 +93,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       """
     for {
       stpsWithFootprints <- {
-        (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scene_order").query[(SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])].list
+        (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scene_order, coalesce(acquisition_date, scenes.created_at) DESC").query[(SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])].list
       }
     } yield {
       logger.debug(s"Found ${stpsWithFootprints.length} scenes in projects")
