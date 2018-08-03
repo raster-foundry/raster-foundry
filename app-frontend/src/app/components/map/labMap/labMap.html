@@ -96,34 +96,50 @@
     <div class="dropdown-arrow"></div>
     <div class="layer-picker-body export-control-body">
       <p ng-if="!$ctrl.isExportCreated">Draw an area of interest to export the analysis result as *.geotiff format.</p>
-      <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle ng-if="!$ctrl.isExportCreated">
-        <label class="pull-left">Export to</label>
-        <a class="btn dropdown-label">
-          {{$ctrl.exportTarget.label}}
-        </a>
-        <button type="button" class="btn btn-default dropdown-toggle">
-          <i class="icon-caret-down"></i>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-          <li ng-repeat="target in $ctrl.availableTargets" role="menuitem">
-            <a ng-click="$ctrl.updateTarget(target)">{{target.label}}</a>
-          </li>
-        </ul>
-      </div>
-      <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle ng-if="!$ctrl.isExportCreated">
-        <label class="pull-left">Zoom level</label>
-        <a class="btn dropdown-label export-dropdown">
-         {{$ctrl.getCurrentResolution().value}} ({{$ctrl.getCurrentResolution().label}}<sup>2</sup>)
-        </a>
-        <button type="button" class="btn btn-default dropdown-toggle">
-          <i class="icon-caret-down"></i>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-          <li ng-repeat="res in $ctrl.availableResolutions" role="menuitem">
-            <a ng-click="$ctrl.updateResolution(res.value)">{{res.value}} ({{res.label}})</a>
-          </li>
-        </ul>
-      </div>
+      <ul class="sidebar-list" ng-if="!$ctrl.isExportCreated">
+        <li>
+          <div class="label">
+            Export to
+          </div>
+          <div
+            class="dropdown btn-group fixedwidth"
+            uib-dropdown
+            uib-dropdown-toggle>
+            <a class="btn dropdown-label">
+              {{$ctrl.exportTarget.label}}
+            </a>
+            <button type="button" class="btn btn-default dropdown-toggle">
+              <i class="icon-caret-down"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+              <li ng-repeat="target in $ctrl.availableTargets" role="menuitem">
+                <a ng-click="$ctrl.updateTarget(target)">{{target.label}}</a>
+              </li>
+            </ul>
+          </div>
+        </li>
+        <li>
+          <div class="label">
+            Zoom level
+          </div>
+          <div
+            class="dropdown btn-group fixedwidth"
+            uib-dropdown
+            uib-dropdown-toggle>
+            <a class="btn dropdown-label" >
+              {{$ctrl.getCurrentResolution().value}} ({{$ctrl.getCurrentResolution().label}}<sup>2</sup>)
+            </a>
+            <button type="button" class="btn btn-default dropdown-toggle">
+              <i class="icon-caret-down"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+              <li ng-repeat="res in $ctrl.availableResolutions" role="menuitem">
+                <a ng-click="$ctrl.updateResolution(res.value)">{{res.value}} ({{res.label}})</a>
+              </li>
+            </ul>
+          </div>
+        </li>
+      </ul>
       <div>
         <p>{{$ctrl.exportNotice}}</p>
       </div>

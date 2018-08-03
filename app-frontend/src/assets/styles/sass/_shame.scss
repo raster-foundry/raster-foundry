@@ -1048,7 +1048,7 @@ rf-map-container:-webkit-full-screen {
   user-select: none;
 
   &.export-dropdown-control {
-    width: 20em;
+    width: 25em;
   }
 }
 
@@ -3258,4 +3258,9 @@ rf-navbar-search {
     right: 0;
     bottom: 0;
     text-align: center;
+}
+
+// components/exports/exportAnalysisDownloadModal/exportAnalysisDownloadModal.html
+.export-modal-download-btn {
+  width: 155px;
 }

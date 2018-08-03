@@ -1,17 +1,17 @@
 /* global BUILDCONFIG */
 import {Set} from 'immutable';
 class LabBrowseAnalysesController {
-    constructor($state, analysisService, authService, localStorage, modalService) {
+    constructor(
+        $scope, $state, $log,
+        analysisService, authService, localStorage, modalService, exportService
+    ) {
         'ngInject';
-        this.$state = $state;
-        this.analysisService = analysisService;
-        this.authService = authService;
-        this.localStorage = localStorage;
-        this.modalService = modalService;
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
+        this.analysesExports = {};
         this.defaultSortingDirection = 'desc';
         this.defaultSortingField = 'modifiedAt';
         this.initSorting();
@@ -54,6 +54,8 @@ class LabBrowseAnalysesController {
             this.lastAnalysisResponse = d;
             this.analysesList = d.results;
             this.loadingAnalyses = false;
+
+            this.checkAnalysesExports(this.analysesList);
         });
     }
 
@@ -144,6 +146,37 @@ class LabBrowseAnalysesController {
         } else {
             this.selected = this.selected.add(id);
         }
+    }
+
+    onAnalysisExportModalClick(analysis) {
+        this.modalService.open({
+            component: 'rfExportAnalysisDownloadModal',
+            resolve: {
+                analysis: () => analysis,
+                exports: () => this.analysesExports[analysis.id].results
+            }
+        });
+    }
+
+    checkAnalysesExports(analysesList) {
+        analysesList.map(analysis => {
+            this.checkAnalysisExport(analysis.id);
+        });
+    }
+
+    checkAnalysisExport(analysisId) {
+        this.exportService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: '20',
+                page: 0,
+                analysis: analysisId
+            }
+        ).then(firstPageExports => {
+            if (firstPageExports.results.find(r => r.toolRunId === analysisId)) {
+                this.analysesExports[analysisId] = firstPageExports;
+            }
+        });
     }
 }
 
