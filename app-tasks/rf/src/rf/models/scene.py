@@ -16,7 +16,7 @@ class Scene(BaseModel):
 
     URL_PATH = '/api/scenes/'
 
-    def __init__(self, ingestSizeBytes, visibility, tags,
+    def __init__(self, visibility, tags,
                  datasource, sceneMetadata, name, thumbnailStatus, boundaryStatus,
                  ingestStatus, metadataFiles, sunAzimuth=None, sunElevation=None,
                  cloudCover=None, acquisitionDate=None, id=None, thumbnails=None,
@@ -26,7 +26,6 @@ class Scene(BaseModel):
         """Create a new Scene
 
         Args:
-            ingestSizeBytes (int): size of ingested (through geotrellis) scene
             visibility (str): level of access to search for/view scene
             tags (List[str]): list of tags for scene
             datasource (str): datasource that scene belongs to
@@ -50,7 +49,6 @@ class Scene(BaseModel):
         self.ingestLocation = ingestLocation
         self.modifiedBy = modifiedBy
         self.createdBy = createdBy
-        self.ingestSizeBytes = ingestSizeBytes
         self.visibility = visibility
         self.tags = tags
         self.datasource = datasource
@@ -99,7 +97,7 @@ class Scene(BaseModel):
             data_footprint = None
 
         return cls(
-            d.get('ingestSizeBytes'), d.get('visibility'),
+            d.get('visibility'),
             d.get('tags'), d.get('datasource')['id'], d.get('sceneMetadata'), d.get('name'), statuses.get('thumbnailStatus'),
             statuses.get('boundaryStatus'), statuses.get('ingestStatus'), d.get('metadataFiles'),
             filter_fields.get('sunAzimuth'), filter_fields.get('sunElevation'), filter_fields.get('cloudCover'),
@@ -114,7 +112,7 @@ class Scene(BaseModel):
                             boundaryStatus=self.boundaryStatus,
                             ingestStatus=self.ingestStatus)
         scene_dict = dict(
-            ingestSizeBytes=self.ingestSizeBytes, visibility=self.visibility,
+            visibility=self.visibility,
             tags=self.tags, datasource=self.datasource, sceneMetadata=self.sceneMetadata, filterFields=filterFields,
             name=self.name, statusFields=statusFields, metadataFiles=self.metadataFiles,
             ingestLocation=self.ingestLocation, owner=self.owner, sceneType=self.sceneType)

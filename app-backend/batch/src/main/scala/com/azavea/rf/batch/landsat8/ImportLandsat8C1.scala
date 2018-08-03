@@ -242,7 +242,6 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
 
       val scene = Scene.Create(
         id = Some(sceneId),
-        ingestSizeBytes = 0,
         visibility = Visibility.Public,
         tags = tags,
         datasource = landsat8Config.datasourceUUID,

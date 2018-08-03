@@ -187,7 +187,6 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     logger.info(s"${datasourcePrefix} - Creating scene case class ${scenePath}")
     val sceneCreate = Scene.Create(
       id = sceneId.some,
-      ingestSizeBytes = 0,
       visibility = Visibility.Public,
       tags = List("Sentinel-2", "JPEG2000"),
       datasource = datasourceUUID,

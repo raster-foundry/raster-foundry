@@ -57,7 +57,6 @@ case class Scene(
   modifiedAt: java.sql.Timestamp,
   modifiedBy: String,
   owner: String,
-  ingestSizeBytes: Int,
   visibility: Visibility,
   tags: List[String],
   datasource: UUID,
@@ -84,7 +83,6 @@ case class Scene(
     this.modifiedAt,
     this.modifiedBy,
     this.owner,
-    this.ingestSizeBytes,
     this.visibility,
     this.tags,
     datasource.toThin,
@@ -109,7 +107,6 @@ object Scene {
   @JsonCodec
   case class Create(
     id: Option[UUID],
-    ingestSizeBytes: Int,
     visibility: Visibility,
     tags: List[String],
     datasource: UUID,
@@ -138,7 +135,6 @@ object Scene {
         now, // modifiedAt
         user.id, // modifiedBy
         ownerId, // owner
-        ingestSizeBytes,
         visibility,
         tags,
         datasource,
@@ -163,7 +159,6 @@ object Scene {
     modifiedAt: Timestamp,
     modifiedBy: String,
     owner: String,
-    ingestSizeBytes: Int,
     visibility: Visibility,
     tags: List[String],
     datasource: Datasource.Thin,
@@ -187,7 +182,6 @@ object Scene {
         modifiedAt,
         modifiedBy,
         owner,
-        ingestSizeBytes,
         visibility,
         tags,
         datasource.id,
