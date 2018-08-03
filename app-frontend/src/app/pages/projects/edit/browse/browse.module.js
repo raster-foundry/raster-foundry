@@ -306,7 +306,9 @@ class ProjectsSceneBrowserController {
             this.projectSceneIds = this.projectSceneIds.concat(sceneIds);
             this.selectNoScenes();
         }).finally(() => {
-            this.$parent.getSceneList();
+            this.$parent.getSceneList().then(() => {
+                this.$parent.fetchDatasources(true);
+            });
         });
     }
 

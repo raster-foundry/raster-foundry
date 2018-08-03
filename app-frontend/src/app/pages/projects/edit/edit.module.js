@@ -121,9 +121,6 @@ class ProjectsEditController {
                           this.orderedSceneIds.map((id) => _.find(allScenes, {id}))
                         ).uniqBy('id').compact().value();
 
-                        this.fetchDatasources().then(datasources => {
-                            this.bands = this.datasourceService.getUnifiedBands(datasources);
-                        });
 
                         this.sceneLayers = this.sceneList.map(scene => ({
                             id: scene.id,
@@ -134,6 +131,7 @@ class ProjectsEditController {
 
                         this.layerFromProject();
                         this.initColorComposites();
+                        return this.fetchDatasources();
                     },
                     (err) => {
                         this.$log.error('Error while adding scenes to projects', err);
@@ -247,7 +245,10 @@ class ProjectsEditController {
         if (!this.datasourceRequest || force) {
             this.datasourceRequest = this.$q.all(
                 this.sceneList.map(s => this.sceneService.datasource(s))
-            );
+            ).then((datasources) => {
+                this.bands = this.datasourceService.getUnifiedBands(datasources);
+                return datasources;
+            });
         }
         return this.datasourceRequest;
     }
