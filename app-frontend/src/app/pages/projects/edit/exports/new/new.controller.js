@@ -1,82 +1,20 @@
 /* globals BUILDCONFIG */
-const availableResolutions = [
-    {
-        label: '~300m',
-        value: 9
-    },
-    {
-        label: '~150m',
-        value: 10
-    },
-    {
-        label: '~75m',
-        value: 11
-    },
-    {
-        label: '~38m',
-        value: 12
-    },
-    {
-        label: '~19m',
-        value: 13
-    },
-    {
-        label: '~10m',
-        value: 14
-    },
-    {
-        label: '~5m',
-        value: 15
-    },
-    {
-        label: '~2m',
-        value: 16
-    },
-    {
-        label: '~1m',
-        value: 17
-    },
-    {
-        label: '~0.5m',
-        value: 18
-    },
-    {
-        label: '~0.3m',
-        value: 19
-    }
-];
-
-const availableTargets = [
-    {
-        label: 'Download',
-        value: 'internalS3',
-        default: true
-    }, {
-        label: 'S3 Bucket',
-        value: 'externalS3'
-    }, {
-        label: 'Dropbox',
-        value: 'dropbox'
-    }
-];
 
 export default class NewExportController {
     constructor(
         $scope, $state, $timeout,
         projectService, analysisService, mapService,
-        projectEditService
+        projectEditService, exportService
     ) {
         'ngInject';
-        this.$scope = $scope;
+        $scope.autoInject(this, arguments);
+
         this.$parent = this.$scope.$parent.$ctrl;
-        this.$state = $state;
-        this.$timeout = $timeout;
-        this.projectService = projectService;
-        this.projectEditService = projectEditService;
-        this.analysisService = analysisService;
-        this.availableResolutions = availableResolutions;
-        this.availableTargets = availableTargets;
+
+        this.availableResolutions = this.exportService.getAvailableResolutions();
+        this.availableTargets = this.exportService.getAvailableTargets();
         this.availableProcessingOptions = this.projectService.availableProcessingOptions;
+
         this.getMap = () => mapService.getMap('edit');
     }
 
