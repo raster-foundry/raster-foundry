@@ -54,13 +54,30 @@ export function clearProjectAnnotationsRequest(state) {
     }, state);
 }
 
-export function postShapefile(state, shapefileBuf) {
+export function uploadShapefileOnly(state, shapefileBuf) {
     let data = new FormData();
     data.append('name', shapefileBuf);
     return authedRequest({
         method: 'post',
         url: `${state.api.apiUrl}` +
             `/api/projects/${state.projects.projectId}/annotations/shapefile`,
+        data: data,
+        headers: {'Content-Type': 'multipart/form-data;boundary="=="'}
+    }, state);
+}
+
+export function uploadShapefileWithProps(state, shapefileBuf, matchedKeys) {
+    let data = new FormData();
+    data.append('shapefile', shapefileBuf);
+    data.append('label', matchedKeys.label);
+    data.append('description', matchedKeys.description);
+    data.append('isMachine', matchedKeys.isMachine);
+    data.append('confidence', matchedKeys.confidence);
+    data.append('quality', matchedKeys.quality);
+    return authedRequest({
+        method: 'post',
+        url: `${state.api.apiUrl}` +
+            `/api/projects/${state.projects.projectId}/annotations/shapefile/import`,
         data: data,
         headers: {'Content-Type': 'multipart/form-data;boundary="=="'}
     }, state);

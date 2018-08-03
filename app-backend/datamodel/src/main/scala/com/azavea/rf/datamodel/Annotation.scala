@@ -102,7 +102,7 @@ case class AnnotationPropertiesCreate(
 )
 
 
-object Annotation {
+object Annotation extends LazyLogging {
 
   implicit val config: Configuration = Configuration.default.copy(
     transformMemberNames = {
@@ -115,95 +115,74 @@ object Annotation {
   def create = Create.apply _
 
 
-  def fromSimpleFeature(sf: SimpleFeature, fields: Option[Map[String, String]] = None): Option[Create] = {
-    println("fromSimpleFeature")
-    val geom = WKT.read(sf.getDefaultGeometry.toString)
-    println("geom")
-    println(geom)
-    val projected = Projected(Reproject(geom, LatLng, WebMercator), 3857)
-    println("projected")
-    println(projected)
-    println("projected.isValid")
-    println(projected.isValid)
-    println("sf.getProperties()")
-    println(sf.getProperties())
+  def fromSimpleFeatureWithProps(sf: SimpleFeature, fields: Map[String, String], user: User): Option[Create] = {
+    // val geom = WKT.read(
+    //   sf.getDefaultGeometry
+    //   .toString
+    //   .replaceAll("[^\\x00-\\x7F]", ""))
+    val geom: Geometry = sf.toGeometry[Geometry]
+    println(geom.toString)
 
-    val owner = Option(sf.getAttribute("owner")) map { (o: Object) => o.toString }
-    val label = sf.getProperty("label").getValue.toString
-    val description = Option(sf.getAttribute("descriptio")) map { (o: Object) => o.toString }
-    val machineGenerated = Option(sf.getProperty("machineGen")) flatMap {
-      (p: Property) => p.getValue.toString match {
-        // Apparently ogr2ogr stores bools as ints /shrug
-        case "1" => Some(true)
-        case "0" => Some(false)
-        case _ => None
-      }
+    val projected = Projected(Reproject(geom, LatLng, WebMercator), 3857)
+
+    println(projected.toString)
+    val labelPropName = fields.getOrElse("label", null)
+    val desPropName = fields.getOrElse("description", null)
+    val machinePropName = fields.getOrElse("isMachine", null)
+
+    val label = labelPropName match {
+      case null => "Unlabeled"
+      case _ => sf.getProperty(labelPropName).getValue.toString
     }
-    val confidence = Option(sf.getProperty("confidence")) flatMap {
-      (p: Property) =>  decode[Float](p.getValue.toString).toOption
+    println(label)
+    val description = desPropName match {
+      case null => Some("No Description")
+      case _ => Some(sf.getProperty(desPropName).getValue.toString)
     }
-    val quality = Option(sf.getProperty("quality")) flatMap {
-      (p: Property) => decode[AnnotationQuality](p.getValue.toString).toOption
+    val (isMachine, confidence, quality) = machinePropName match {
+      case null => (Some(false), None, None)
+      case _ =>
+        val isM = Option(sf.getProperty(machinePropName)) flatMap {
+          (p: Property) => p.getValue.toString match {
+            // Apparently ogr2ogr stores bools as ints /shrug
+            case "1" => Some(true)
+            case "0" => Some(false)
+            case _ => None
+          }
+        }
+
+        val confPropName = fields.getOrElse("confidence", null)
+        val conf = confPropName match {
+          case null => None
+          case _ => Option(sf.getProperty(confPropName)) flatMap {
+            (p: Property) =>  decode[Float](p.getValue.toString).toOption
+          }
+        }
+
+        val quaPropName = fields.getOrElse("quality", null)
+        val qua = quaPropName match {
+          case null => None
+          case _ => Option(sf.getProperty(quaPropName)) flatMap {
+            (p: Property) => decode[AnnotationQuality](p.getValue.toString).toOption
+          }
+        }
+        (isM, conf, qua)
     }
-    // TODO: this is not correct
-    // this function is only used when uploading shapefile to a project
-    // so if a project has annotations, it should use the same group id
-    // if not, create one
-    val annotationGroup = Option(sf.getProperty("group")) flatMap {
-      (p: Property) => decode[UUID](p.getValue.toString).toOption
-    }
+    
+    // annotationGroup is passed None in here since it will be handled
+    // in insertAnnotations in AnnotationDao
     Some(
       Create(
-        Some("auth0|59318a9d2fbbca3e16bcfc92"),
+        Some(user.id),
         label,
         description,
-        machineGenerated,
+        isMachine,
         confidence,
         quality,
         Some(projected),
-        annotationGroup
+        None
       )
     )
-    // if (projected.isValid) {
-    //   val owner = Option(sf.getAttribute("owner")) map { (o: Object) => o.toString }
-    //   val label = sf.getProperty("label").getValue.toString
-    //   val description = Option(sf.getAttribute("descriptio")) map { (o: Object) => o.toString }
-    //   val machineGenerated = Option(sf.getProperty("machineGen")) flatMap {
-    //     (p: Property) => p.getValue.toString match {
-    //       // Apparently ogr2ogr stores bools as ints /shrug
-    //       case "1" => Some(true)
-    //       case "0" => Some(false)
-    //       case _ => None
-    //     }
-    //   }
-    //   val confidence = Option(sf.getProperty("confidence")) flatMap {
-    //     (p: Property) =>  decode[Float](p.getValue.toString).toOption
-    //   }
-    //   val quality = Option(sf.getProperty("quality")) flatMap {
-    //     (p: Property) => decode[AnnotationQuality](p.getValue.toString).toOption
-    //   }
-    //   // TODO: this is not correct
-    //   // this function is only used when uploading shapefile to a project
-    //   // so if a project has annotations, it should use the same group id
-    //   // if not, create one
-    //   val annotationGroup = Option(sf.getProperty("group")) flatMap {
-    //     (p: Property) => decode[UUID](p.getValue.toString).toOption
-    //   }
-    //   Some(
-    //     Create(
-    //       Some("auth0|59318a9d2fbbca3e16bcfc92"),
-    //       label,
-    //       description,
-    //       machineGenerated,
-    //       confidence,
-    //       quality,
-    //       Some(projected),
-    //       annotationGroup
-    //     )
-    //   )
-    // } else {
-    //   None
-    // }
   }
 
   @ConfiguredJsonCodec

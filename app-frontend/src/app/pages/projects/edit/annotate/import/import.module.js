@@ -25,6 +25,13 @@ class AnnotateImportController {
         this.bindGeoJSONUploadEvent();
         this.bindShapefileUploadEvent();
         this.isMachineData = false;
+
+        this.$scope.$watch('$ctrl.$parent.annotationShapefileProps', (props) => {
+            if (props && props.length) {
+                this.hasShapefileProps = true;
+                this.dataProperties = props;
+            }
+        });
     }
 
     bindGeoJSONUploadEvent() {
@@ -76,8 +83,9 @@ class AnnotateImportController {
     }
 
     setShapefileUploadData(shapefileData) {
-        this.$parent.importShapefile(shapefileData);
-        this.$state.go('projects.edit.annotate');
+        this.shapefileData = shapefileData;
+        this.$parent.uploadShapefile(shapefileData);
+        // this.$state.go('projects.edit.annotate');
     }
 
     updateKeySelection(appKey, dataKey) {
@@ -105,31 +113,39 @@ class AnnotateImportController {
     }
 
     onImportClick() {
-        this.$parent.createAnnotations({
-            'type': 'FeatureCollection',
-            'features': this.uploadData.features.map((feature) => {
-                let confidence = null;
-                let quality = null;
-                if (this.isMachineData) {
-                    confidence = this.matchKeys.confidence ?
-                        feature.properties[this.matchKeys.confidence] : null;
-                    quality = this.getValOrDefault('quality', feature);
-                }
-                return {
-                    'properties': {
-                        'label': this.getValOrDefault('label', feature).toString(),
-                        'description': (
-                            this.getValOrDefault('description', feature) || ''
-                        ).toString(),
-                        'machineGenerated': this.isMachineData,
-                        'confidence': confidence,
-                        'quality': quality
-                    },
-                    'geometry': feature.geometry,
-                    'type': 'Feature'
-                };
-            })
-        });
+        if (this.uploadData) {
+            this.$parent.createAnnotations({
+                'type': 'FeatureCollection',
+                'features': this.uploadData.features.map((feature) => {
+                    let confidence = null;
+                    let quality = null;
+                    if (this.isMachineData) {
+                        confidence = this.matchKeys.confidence ?
+                            feature.properties[this.matchKeys.confidence] : null;
+                        quality = this.getValOrDefault('quality', feature);
+                    }
+                    return {
+                        'properties': {
+                            'label': this.getValOrDefault('label', feature).toString(),
+                            'description': (
+                                this.getValOrDefault('description', feature) || ''
+                            ).toString(),
+                            'machineGenerated': this.isMachineData,
+                            'confidence': confidence,
+                            'quality': quality
+                        },
+                        'geometry': feature.geometry,
+                        'type': 'Feature'
+                    };
+                })
+            });
+        }
+
+        if (this.hasShapefileProps) {
+            this.$parent.importShapefileWithProps(this.shapefileData, this.matchKeys);
+            this.hasShapefileProps = false;
+        }
+
         this.$state.go('projects.edit.annotate');
     }
 }

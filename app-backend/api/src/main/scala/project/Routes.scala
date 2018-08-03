@@ -189,7 +189,7 @@ trait ProjectRoutes extends Authentication
                           authenticate { user =>
                             val tempFile = ScalaFile.newTemporaryFile()
                             tempFile.deleteOnExit()
-                            val response = storeUploadedFile("name", (_) => tempFile.toJava) { (m, _) =>
+                            val response = storeUploadedFile("shapefile", (_) => tempFile.toJava) { (m, _) =>
                               processShapefileImport(projectId, tempFile, m, fields)
                             }
                             tempFile.delete()
@@ -974,32 +974,12 @@ trait ProjectRoutes extends Authentication
             .toList
 
           complete(StatusCodes.OK, properties)
-
-          // val featureAccumulationResult =
-          //   Shapefile.accumulateFeatures(Annotation.fromSimpleFeature)(List(), List(), features.toList)
-          // featureAccumulationResult match {
-          //   case Left(errorIndices) =>
-          //     complete(
-          //       StatusCodes.ClientError(400)(
-          //         "Bad Request",
-          //         s"Several features could not be translated to annotations. Indices: ${errorIndices}"
-          //       )
-          //     )
-          //   case Right(annotationCreates) => {
-          //     complete(
-          //       StatusCodes.Created,
-          //       (AnnotationDao.insertAnnotations(annotationCreates, projectId, user)
-          //          map {(anns: List[Annotation]) => anns map { _.toGeoJSONFeature }}
-          //       ).transact(xa).unsafeToFuture
-          //     )
-          //   }
-          // }
         }
       }
     }
   }
 
-  def processShapefileImport(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo, fields: Map[String, String]: Route = authenticate { user =>
+  def processShapefileImport(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo, fields: Map[String, String]): Route = authenticate { user =>
     {
       val unzipped = tempFile.unzip()
       val matches = unzipped.glob("*.shp")
@@ -1011,7 +991,7 @@ trait ProjectRoutes extends Authentication
           val features = ShapeFileReader.readSimpleFeatures(shapefilePath)
 
           val featureAccumulationResult =
-            Shapefile.accumulateFeatures(Annotation.fromSimpleFeature)(List(), List(), features.toList)
+            Shapefile.accumulateFeatures(Annotation.fromSimpleFeatureWithProps)(List(), List(), features.toList, fields, user)
           featureAccumulationResult match {
             case Left(errorIndices) =>
               complete(

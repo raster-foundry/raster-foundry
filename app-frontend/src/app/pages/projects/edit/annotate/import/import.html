@@ -39,7 +39,7 @@
       </div>
     </div>
   </div>
-  <div class="list-group" ng-if="$ctrl.uploadData">
+  <div class="list-group" ng-if="$ctrl.uploadData || $ctrl.hasShapefileProps">
     <div class="list-group-item">
       <div>
         <span title="Machine made"><strong>Machine made</strong></span>
@@ -113,6 +113,30 @@
                placeholder="No Description"
                ng-model="$ctrl.defaultKeys['description']"
                ng-init="$ctrl.defaultKeys['description'] = 'No Description'">
+      </div>
+    </div>
+    <div class="list-group-item" ng-if="$ctrl.isMachineData && $ctrl.hasShapefileProps">
+      <span title="Confidence"><strong>Machine Made</strong></span>
+      <div class="list-group-right">
+        <div class="dropdown btn-group fixedwidth upload" uib-dropdown uib-dropdown-toggle>
+          <a class="btn dropdown-label" ng-show="$ctrl.matchKeys.isMachine !== null">
+            {{$ctrl.matchKeys.isMachine || 'Choose a column'}}
+          </a>
+          <a class="btn dropdown-label" ng-show="$ctrl.matchKeys.isMachine === null">
+            No indication
+          </a>
+          <button type="button" class="btn btn-primary dropdown-toggle">
+            <i class="icon-caret-down"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+            <li role="menuitem">
+              <a ng-click="$ctrl.updateKeySelection('isMachine', null)">No indication</a>
+            </li>
+            <li ng-repeat="p in $ctrl.dataProperties" role="menuitem">
+              <a ng-click="$ctrl.updateKeySelection('isMachine', p)">{{p}}</a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
     <div class="list-group-item" ng-if="$ctrl.isMachineData">

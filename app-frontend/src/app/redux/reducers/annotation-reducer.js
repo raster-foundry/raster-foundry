@@ -9,6 +9,7 @@ import {
     ANNOTATIONS_CLEAR, ANNOTATIONS_EDIT, ANNOTATIONS_DELETE,
     ANNOTATIONS_BULK_CREATE,
     ANNOTATIONS_TRANSFORM_DRAWLAYER,
+    ANNOTATIONS_UPLOAD_SHAPEFILE,
     ANNOTATIONS_IMPORT_SHAPEFILE,
 
     fetchAnnotations, updateAnnotation, fetchLabels
@@ -45,6 +46,24 @@ export const annotationReducer = typeToReducer({
     // action.payload should contain the returned annotations (in the fulfilled case)
     // not clear what comes back in pending
     // error body in rejected.action.payload
+    [ANNOTATIONS_UPLOAD_SHAPEFILE]: {
+        PENDING: (state) => {
+            return Object.assign({}, state, {fetchingAnnotations: true});
+        },
+        REJECTED: (state, action) => {
+            return Object.assign(
+                {}, state, {fetchingAnnotationsError: action.payload}
+            );
+        },
+        FULFILLED: (state, action) => {
+            let annotationShapefileProps = action.payload.data;
+            console.log(state, action);
+            return Object.assign({}, state, {
+                annotationShapefileProps,
+                fetchingAnnotations: false
+            });
+        }
+    },
     [ANNOTATIONS_IMPORT_SHAPEFILE]: {
         PENDING: (state) => {
             return Object.assign({}, state, {fetchingAnnotations: true});
@@ -60,7 +79,10 @@ export const annotationReducer = typeToReducer({
             newAnnotations.forEach(annotation => {
                 annotations = annotations.set(annotation.id, annotation);
             });
-            return Object.assign({}, state, { annotations, fetchingAnnotations: false });
+            return Object.assign({}, state, {
+                annotations,
+                fetchingAnnotations: false
+            });
         }
     },
     [ANNOTATIONS_FETCH]: {
