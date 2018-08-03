@@ -60,6 +60,7 @@
   <div class="map-control">
     <button class="btn btn-default btn-square"
             title="Layers"
+            ng-show="!$ctrl.modalService.activeModal"
             ng-click="$ctrl.openMapSearchModal()">
       <i class="icon-search"></i>
     </button>

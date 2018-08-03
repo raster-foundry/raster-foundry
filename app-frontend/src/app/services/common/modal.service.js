@@ -10,9 +10,11 @@ export default (app) => {
                 this.closeActiveModal();
             }
 
-            const modal = this.$uibModal.open(modalConfig);
-            this.activeModal = modal;
-            return modal;
+            this.activeModal = this.$uibModal.open(modalConfig);
+            this.activeModal.result.finally(() => {
+                delete this.activeModal;
+            });
+            return this.activeModal;
         }
 
         closeActiveModal() {
