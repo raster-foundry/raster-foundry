@@ -562,6 +562,18 @@ class LabAnalysisController {
             this.selectNode(this.previewData[0]);
         }
     }
+
+    setDefaultExportNode(nodeId) {
+        let hasNodeId = nodeId && nodeId.length;
+        if (hasNodeId && this.frameControlAdded) {
+            this.onLeftSelect(nodeId);
+            this.onRightSelect(nodeId);
+        }
+
+        if (hasNodeId && !this.frameControlAdded && this.singlePreviewSelection) {
+            this.onSingleSelect(nodeId);
+        }
+    }
 }
 
 
