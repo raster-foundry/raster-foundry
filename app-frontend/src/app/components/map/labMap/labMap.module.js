@@ -1,4 +1,4 @@
-/* globals BUILDCONFIG, mathjs*/
+/* globals BUILDCONFIG, mathjs, _*/
 import angular from 'angular';
 import turfArea from '@turf/area';
 import turfDistance from '@turf/distance';
@@ -29,29 +29,19 @@ const LabMapComponent = {
 
 class LabMapController {
     constructor(
-        $rootScope, $log, $document, $element, $scope, $timeout, $compile, $window, $ngRedux,
-        mapService, authService, exportService, APP_CONFIG
+        $rootScope, $log, $state, $document, $element, $scope, $timeout, $compile,
+        $window, $ngRedux, mapService, authService, exportService, modalService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
         this.getMap = () => this.mapService.getMap(this.mapId);
 
         this.availableResolutions = this.exportService.getAvailableResolutions();
+        this.availableTargets = this.exportService.getAvailableTargets(false);
 
         $ngRedux.subscribe(() => {
             this.state = $ngRedux.getState();
             this.nodes = this.state.lab.nodes;
-            this.defaultPreviewNodeId = this.state.lab.previewNodes[0];
-            this.nodeArray = this.nodes ?
-                this.nodes.toArray().filter((node) => {
-                    return node.type !== 'const';
-                }).map(({id, metadata}) => ({id, label: metadata.label})) :
-                [];
-            if (this.defaultPreviewNodeId && this.defaultPreviewNodeId.length) {
-                this.selectedNode = this.nodeArray.find(node => {
-                    return node.id === this.defaultPreviewNodeId;
-                });
-            }
             if (this.nodes) {
                 let resultNode = this.nodes.toArray().find(node => node.args.length);
                 if (resultNode) {
@@ -62,6 +52,9 @@ class LabMapController {
     }
 
     $onInit() {
+        if (this.enableNodeExport) {
+            this.exportOptions = {};
+        }
         this.initMap();
     }
 
@@ -104,6 +97,7 @@ class LabMapController {
             this.initialZoom ? this.initialZoom : 2
         ).on('zoom', () => {
             this.zoomLevel = this.map.getZoom();
+            this.exportOptions.resolution = this.zoomLevel;
             this.$scope.$evalAsync();
         });
 
@@ -325,6 +319,7 @@ class LabMapController {
     toggleQuickExport(event) {
         event.stopPropagation();
         this.setDefaultExportOptions();
+        this.setDefaultTarget();
         if (this.quickExportOpen) {
             this.onExportCancel();
         } else {
@@ -352,28 +347,33 @@ class LabMapController {
             coordinates: [layer.toGeoJSON().geometry.coordinates],
             type: 'MultiPolygon'
         };
-        this.exportBboxString = layer.getBounds().toBBoxString();
         this.mapWrapper.setLayer('Export', layer, false);
         this.hasExportBbox = true;
         this.$scope.$evalAsync();
     }
 
     onExportCancel() {
-        this.hasExportBbox = false;
-        this.quickExportOpen = false;
-        this.exportConfirmed = false;
-        delete this.selectedNode;
-        delete this.exportBboxString;
+        delete this.hasExportBbox;
+        delete this.quickExportOpen;
+        delete this.exportConfirmed;
         delete this.exportNotice;
+        delete this.isExportCreating;
+        delete this.isExportCreated;
         this.drawBboxRectangleHandler.disable();
         this.mapWrapper.deleteLayers('Export');
     }
 
     onExportConfirm() {
         this.exportConfirmed = true;
-        this.isCreatingExport = true;
+        this.isExportCreating = true;
+
+        let resolution = this.getCurrentResolution().value;
+
         this.exportService
-            .exportLabNode(this.analysisId, {}, this.exportOptions)
+            .exportLabNode(
+                this.analysisId,
+                this.exportTarget.value === 'dropbox' ? {exportType: 'DROPBOX'} : {},
+                Object.assign(this.exportOptions, {resolution}))
             .then(() => {
                 this.exportNotice =
                     'Your export job has been created. '
@@ -385,7 +385,8 @@ class LabMapController {
                     + 'Please try again later.';
             })
             .finally(() => {
-                this.isCreatingExport = false;
+                delete this.isExportCreating;
+                this.isExportCreated = true;
             });
     }
 
@@ -406,20 +407,52 @@ class LabMapController {
         this.onClose();
     }
 
-    onNodeSelect(node) {
-        this.selectedNode = node;
-    }
-
     updateResolution(res) {
         this.exportOptions.resolution = res;
         this.map.setZoom(res);
     }
 
     getCurrentResolution() {
-        // const resolutionValue = this.exportOptions.resolution || 9;
-        const resolutionValue = 9;
+        const resolutionValue = this.exportOptions ? this.exportOptions.resolution : 9;
         return this.availableResolutions
             .find(r => r.value === resolutionValue) || this.availableResolutions[0];
+    }
+
+    setDefaultTarget() {
+        this.exportTarget = this.availableTargets.find(t => t.default) ||
+            this.availableTargets[0];
+    }
+
+    updateTarget(target) {
+        if (target.value === 'dropbox') {
+            let hasDropbox = this.authService.user.dropboxCredential &&
+                this.authService.user.dropboxCredential.length;
+            if (hasDropbox) {
+                this.exportTarget = target;
+                let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
+                this.exportOptions.source = `dropbox:///Apps/${appName}/${this.analysisId}`;
+            } else {
+                _.remove(this.availableTargets, tar => tar.value === 'dropbox');
+                this.displayDropboxModal();
+            }
+        } else {
+            delete this.exportOptions.source;
+        }
+    }
+
+    displayDropboxModal() {
+        this.modalService.open({
+            component: 'rfConfirmationModal',
+            resolve: {
+                title: () => 'You don\'t have Dropbox credential set',
+                content: () => 'Go to your API connections page and set one?',
+                confirmText: () => 'Add Dropbox credential',
+                cancelText: () => 'Cancel'
+            }
+        }).result.then((resp) => {
+            this.$log.log(resp);
+            this.$state.go('user.settings.connections');
+        });
     }
 }
 

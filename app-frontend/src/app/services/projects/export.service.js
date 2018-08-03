@@ -123,6 +123,28 @@ export default (app) => {
                 }
             ];
         }
+
+        getAvailableTargets(includeS3 = true) {
+            let targets = [
+                {
+                    label: 'Download',
+                    value: 'internalS3',
+                    default: true
+                }, {
+                    label: 'Dropbox',
+                    value: 'dropbox'
+                }
+            ];
+
+            if (includeS3) {
+                targets.push({
+                    label: 'S3 Bucket',
+                    value: 'externalS3'
+                });
+            }
+
+            return targets;
+        }
     }
 
 
