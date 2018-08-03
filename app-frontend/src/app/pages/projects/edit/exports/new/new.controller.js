@@ -94,7 +94,7 @@ export default class NewExportController {
         // Export defaults
         this.exportOptions = {
             resolution: 9,
-            stitch: false,
+            stitch: true,
             crop: false,
             raw: false
         };

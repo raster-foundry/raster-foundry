@@ -22,18 +22,21 @@ const LabMapComponent = {
         onClose: '&',
         onCompareClick: '&',
         comparing: '<',
-        enableNodeExport: '<?'
+        enableNodeExport: '<?',
+        setDefaultExportNode: '&'
     }
 };
 
 class LabMapController {
     constructor(
         $rootScope, $log, $document, $element, $scope, $timeout, $compile, $window, $ngRedux,
-        mapService, authService, APP_CONFIG
+        mapService, authService, exportService, APP_CONFIG
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
         this.getMap = () => this.mapService.getMap(this.mapId);
+
+        this.availableResolutions = this.exportService.getAvailableResolutions();
 
         $ngRedux.subscribe(() => {
             this.state = $ngRedux.getState();
@@ -48,6 +51,12 @@ class LabMapController {
                 this.selectedNode = this.nodeArray.find(node => {
                     return node.id === this.defaultPreviewNodeId;
                 });
+            }
+            if (this.nodes) {
+                let resultNode = this.nodes.toArray().find(node => node.args.length);
+                if (resultNode) {
+                    this.resultNodeId = resultNode.id;
+                }
             }
         });
     }
@@ -108,6 +117,15 @@ class LabMapController {
 
         this.basemapOptions = BUILDCONFIG.BASEMAPS.layers;
         this.basemapKeys = Object.keys(this.basemapOptions);
+    }
+
+    setDefaultExportOptions() {
+        this.exportOptions = {
+            resolution: this.map.getZoom(),
+            stitch: true,
+            crop: false,
+            raw: false
+        };
     }
 
     setDrawListeners() {
@@ -306,12 +324,14 @@ class LabMapController {
 
     toggleQuickExport(event) {
         event.stopPropagation();
+        this.setDefaultExportOptions();
         if (this.quickExportOpen) {
             this.onExportCancel();
         } else {
             this.quickExportOpen = true;
             this.setBboxDrawHandlers();
             this.drawBboxRectangleHandler.enable();
+            this.setDefaultExportNode({nodeId: this.resultNodeId});
         }
     }
 
@@ -328,6 +348,10 @@ class LabMapController {
     }
 
     addExportBboxToMap(layer) {
+        this.exportOptions.mask = {
+            coordinates: [layer.toGeoJSON().geometry.coordinates],
+            type: 'MultiPolygon'
+        };
         this.exportBboxString = layer.getBounds().toBBoxString();
         this.mapWrapper.setLayer('Export', layer, false);
         this.hasExportBbox = true;
@@ -340,21 +364,31 @@ class LabMapController {
         this.exportConfirmed = false;
         delete this.selectedNode;
         delete this.exportBboxString;
+        delete this.exportNotice;
         this.drawBboxRectangleHandler.disable();
         this.mapWrapper.deleteLayers('Export');
     }
 
     onExportConfirm() {
         this.exportConfirmed = true;
-        this.downLoadUrl = `${this.APP_CONFIG.tileServerLocation}/tools/${this.analysisId}/raw`
-            + `?bbox=${this.exportBboxString}&zoom=${this.map.getZoom()}`
-            + `&node=${this.selectedNode.id}&token=${this.authService.token()}`;
+        this.isCreatingExport = true;
+        this.exportService
+            .exportLabNode(this.analysisId, {}, this.exportOptions)
+            .then(() => {
+                this.exportNotice =
+                    'Your export job has been created. '
+                    + 'Please check it from your list of analyses later.';
+            }, err => {
+                this.$log.error(err);
+                this.exportNotice =
+                    'Your export job has failed to create. '
+                    + 'Please try again later.';
+            })
+            .finally(() => {
+                this.isCreatingExport = false;
+            });
     }
 
-    onExportDownload() {
-        this.exportConfirmed = false;
-        this.$window.open(this.downLoadUrl, '_blank');
-    }
 
     toggleMeasure(shapeType) {
         if (shapeType === 'Polygon') {
@@ -374,6 +408,18 @@ class LabMapController {
 
     onNodeSelect(node) {
         this.selectedNode = node;
+    }
+
+    updateResolution(res) {
+        this.exportOptions.resolution = res;
+        this.map.setZoom(res);
+    }
+
+    getCurrentResolution() {
+        // const resolutionValue = this.exportOptions.resolution || 9;
+        const resolutionValue = 9;
+        return this.availableResolutions
+            .find(r => r.value === resolutionValue) || this.availableResolutions[0];
     }
 }
 
