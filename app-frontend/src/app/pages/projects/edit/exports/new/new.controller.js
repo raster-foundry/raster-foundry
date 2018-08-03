@@ -1,3 +1,4 @@
+/* globals BUILDCONFIG */
 const availableResolutions = [
     {
         label: '~300m',
@@ -230,7 +231,8 @@ export default class NewExportController {
         if (this.getCurrentTarget().value === 'externalS3') {
             this.exportOptions.source = this.exportTargetURI;
         } else if (this.getCurrentTarget().value === 'dropbox') {
-            this.exportOptions.source = `dropbox:///${this.project.id}`;
+            let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
+            this.exportOptions.source = `dropbox:///Apps/${appName}/${this.project.id}`;
         }
     }
 
