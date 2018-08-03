@@ -12,6 +12,7 @@ trait ExportQueryParameterDirective extends QueryParametersCommon {
   val exportQueryParams = parameters((
     'organization.as[UUID].?,
     'project.as[UUID].?,
+    'analysis.as[UUID].?,
     'exportStatus.as[String].*
   )).as(ExportQueryParameters.apply _)
 }
