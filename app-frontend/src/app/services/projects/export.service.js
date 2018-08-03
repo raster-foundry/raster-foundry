@@ -11,6 +11,11 @@ export default (app) => {
                 `${BUILDCONFIG.API_HOST}/api/exports/:id/`, {
                     id: '@properties.id'
                 }, {
+                    query: {
+                        method: 'GET',
+                        cache: false,
+                        url: `${BUILDCONFIG.API_HOST}/api/exports`
+                    },
                     getFiles: {
                         isArray: true,
                         url: `${BUILDCONFIG.API_HOST}/api/exports/:exportId/files`,
@@ -18,12 +23,16 @@ export default (app) => {
                             exportId: '@exportId'
                         }
                     },
-                    export: {
+                    createExport: {
                         method: 'POST',
                         url: `${BUILDCONFIG.API_HOST}/api/exports/`
                     }
                 }
             );
+        }
+
+        query(params = {}) {
+            return this.Export.query(params).$promise;
         }
 
         getFiles(exportObject) {
@@ -63,7 +72,7 @@ export default (app) => {
 
             return userRequest.then(
                 (user) => {
-                    return this.Export.export(
+                    return this.Export.createExport(
                         Object.assign(finalSettings, {
                             owner: user.id
                         })

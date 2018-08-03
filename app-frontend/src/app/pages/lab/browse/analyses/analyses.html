@@ -55,6 +55,8 @@
               Last Modified
             </rf-sorting-header>
           </th>
+          <th>
+          </th>
           <th class="action-column">
             <button type="button" class="btn btn-danger"
                     ng-click="$ctrl.deleteSelected()"
@@ -67,6 +69,13 @@
             {{analysis.name || 'Untitled analysis'}}
           </a></td>
           <td>{{analysis.modifiedAt | date : 'longDate'}}</td>
+          <td>
+            <a
+              ng-click="$ctrl.onAnalysisExportModalClick(analysis)"
+              ng-if="$ctrl.analysesExports[analysis.id] && $ctrl.analysesExports[analysis.id].count">
+              Exports
+            </a>
+          </td>
           <td class="row-controls">
             <label class="checkbox" ng-class="{active: $ctrl.selected.has(analysis.id)}">
               <input type="checkbox"
