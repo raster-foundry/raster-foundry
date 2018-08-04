@@ -7,6 +7,7 @@ import com.amazonaws.services.s3.AmazonS3URI
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
+import scala.io.Source._
 import akka.http.scaladsl.model.{Uri, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
