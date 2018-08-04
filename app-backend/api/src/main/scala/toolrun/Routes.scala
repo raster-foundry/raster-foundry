@@ -7,7 +7,6 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.rf.tool.eval.PureInterpreter
 import com.azavea.rf.database.filter.Filterables._
-import com.azavea.maml.serve.InterpreterExceptionHandling
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import akka.http.scaladsl.model.StatusCodes
@@ -33,8 +32,7 @@ trait ToolRunRoutes extends Authentication
     with PaginationDirectives
     with ToolRunQueryParametersDirective
     with CommonHandlers
-    with UserErrorHandler
-    with InterpreterExceptionHandling {
+    with UserErrorHandler {
 
   val xa: Transactor[IO]
 
@@ -95,7 +93,7 @@ trait ToolRunRoutes extends Authentication
   def createToolRun: Route = authenticate { user =>
     entity(as[ToolRun.Create]) { newRun =>
       onSuccess(ToolRunDao.insertToolRun(newRun, user).transact(xa).unsafeToFuture) { toolRun =>
-        handleExceptions(interpreterExceptionHandler) {
+        {
           complete {
             (StatusCodes.Created, toolRun)
           }
