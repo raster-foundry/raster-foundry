@@ -175,7 +175,7 @@ trait ProjectRoutes extends Authentication
                         val tempFile = ScalaFile.newTemporaryFile()
                         tempFile.deleteOnExit()
                         val response = storeUploadedFile("name", (_) => tempFile.toJava) { (m, _) =>
-                          processShapefileUpload(projectId, tempFile, m)
+                          processShapefile(projectId, tempFile, m)
                         }
                         tempFile.delete()
                         response
@@ -191,7 +191,7 @@ trait ProjectRoutes extends Authentication
                             val tempFile = ScalaFile.newTemporaryFile()
                             tempFile.deleteOnExit()
                             val response = storeUploadedFile("shapefile", (_) => tempFile.toJava) { (m, _) =>
-                              processShapefileImport(projectId, tempFile, m, fields)
+                              processShapefile(projectId, tempFile, m, Some(fields))
                             }
                             tempFile.delete()
                             response
@@ -957,61 +957,67 @@ trait ProjectRoutes extends Authentication
     }
   }
 
-  def processShapefileUpload(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo): Route = authenticate { user =>
+  def processShapefile(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo, propsO: Option[Map[String, String]] = None): Route = authenticate { user =>
     {
       val unzipped = tempFile.unzip()
       val matches = unzipped.glob("*.shp")
-      matches.hasNext match {
-        case false =>
-          complete(StatusCodes.ClientError(400)("Bad Request", "No Shapefile Found in Archive"))
-        case true => {
-          val shapefilePath = matches.next.toString
-          val features = ShapeFileReader.readSimpleFeatures(shapefilePath)
-          val properties = features.toList(0)
-            .toString
-            .split("SimpleFeatureImpl")
-            .filter(s => s != "" && s.contains(".Attribute: "))
-            .map(_.split(".Attribute: ")(1).split("<")(0))
-            .toList
-
-          complete(StatusCodes.OK, properties)
+      val prj = unzipped.glob("*.prj")
+      (matches.hasNext, prj.hasNext) match {
+        case (false, false) =>
+          complete(StatusCodes.ClientError(400)("Bad Request", "No .shp and .prj Files Found in Archive"))
+        case (true, false) =>
+          complete(StatusCodes.ClientError(400)("Bad Request", "No .prj File Found in Archive"))
+        case (false, true) =>
+          complete(StatusCodes.ClientError(400)("Bad Request", "No .shp File Found in Archive"))
+        case (true, true) => {
+          propsO match {
+            case Some(props) => processShapefileImport(matches, prj, props, user, projectId)
+            case _ => complete(StatusCodes.OK, processShapefileUpload(matches))
+          }
         }
       }
     }
   }
 
-  def processShapefileImport(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo, fields: Map[String, String]): Route = authenticate { user =>
-    {
-      val unzipped = tempFile.unzip()
-      val matches = unzipped.glob("*.shp")
-      matches.hasNext match {
-        case false =>
-          complete(StatusCodes.ClientError(400)("Bad Request", "No Shapefile Found in Archive"))
-        case true => {
-          val shapefilePath = matches.next.toString
-          val features = ShapeFileReader.readSimpleFeatures(shapefilePath)
+  def processShapefileImport(matches: Iterator[File], prj: Iterator[File], props: Map[String, String], user: User, projectId: UUID): Route = {
+    val shapefilePath = matches.next.toString
+    val prjPath: String = prj.next.toString
+    val projectionSource = scala.io.Source.fromFile(prjPath)
 
-          val featureAccumulationResult =
-            Shapefile.accumulateFeatures(Annotation.fromSimpleFeatureWithProps)(List(), List(), features.toList, fields, user)
-          featureAccumulationResult match {
-            case Left(errorIndices) =>
-              complete(
-                StatusCodes.ClientError(400)(
-                  "Bad Request",
-                  s"Several features could not be translated to annotations. Indices: ${errorIndices}"
-                )
-              )
-            case Right(annotationCreates) => {
-              complete(
-                StatusCodes.Created,
-                (AnnotationDao.insertAnnotations(annotationCreates, projectId, user)
-                   map {(anns: List[Annotation]) => anns map { _.toGeoJSONFeature }}
-                ).transact(xa).unsafeToFuture
-              )
-            }
-          }
-        }
+    val features = ShapeFileReader.readSimpleFeatures(shapefilePath)
+    val projection = try projectionSource.mkString finally projectionSource.close()
+
+    val featureAccumulationResult =
+      Shapefile.accumulateFeatures(Annotation.fromSimpleFeatureWithProps)(List(), List(), features.toList, props, user.id, projection)
+    featureAccumulationResult match {
+      case Left(errorIndices) =>
+        complete(
+          StatusCodes.ClientError(400)(
+            "Bad Request",
+            s"Several features could not be translated to annotations. Indices: ${errorIndices}"
+          )
+        )
+      case Right(annotationCreates) => {
+        complete(
+          StatusCodes.Created,
+          (AnnotationDao.insertAnnotations(annotationCreates, projectId, user)
+             map {(anns: List[Annotation]) => anns map { _.toGeoJSONFeature }}
+          ).transact(xa).unsafeToFuture
+        )
       }
     }
+  }
+
+
+  def processShapefileUpload(matches: Iterator[File]): List[String] = {
+    // shapefile should have same fields in the property table
+    // so it is fine to use toList(0)
+    ShapeFileReader.readSimpleFeatures(matches.next.toString)
+      .toList(0)
+      .toString
+      .split("SimpleFeatureImpl")
+      .filter(s => s != "" && s.contains(".Attribute: "))
+      .map(_.split(".Attribute: ")(1).split("<")(0))
+      .toList
   }
 }

@@ -19,6 +19,7 @@ import geotrellis.vector.io.wkt.WKT
 import geotrellis.vector.reproject.Reproject
 import geotrellis.proj4.CRS
 import geotrellis.geotools._
+import org.geotools.referencing.{CRS => geotoolsCRS}
 import geotrellis.proj4.{LatLng, WebMercator}
 
 import com.vividsolutions.jts.{geom => jts}
@@ -31,6 +32,7 @@ import org.geotools.feature.simple.{SimpleFeatureTypeBuilder, SimpleFeatureBuild
 import org.opengis.feature.Property
 import org.opengis.feature.simple.{SimpleFeature, SimpleFeatureType}
 import org.geotools.referencing.crs.DefaultGeographicCRS
+import org.opengis.referencing.crs.CoordinateReferenceSystem
 
 import com.typesafe.scalalogging.LazyLogging
 
@@ -115,17 +117,14 @@ object Annotation extends LazyLogging {
   def create = Create.apply _
 
 
-  def fromSimpleFeatureWithProps(sf: SimpleFeature, fields: Map[String, String], user: User): Option[Create] = {
-    // val geom = WKT.read(
-    //   sf.getDefaultGeometry
-    //   .toString
-    //   .replaceAll("[^\\x00-\\x7F]", ""))
+  def fromSimpleFeatureWithProps(sf: SimpleFeature, fields: Map[String, String], userId: String, prj: String): Option[Create] = {
+    // get the projection from the passed string in .prj file
+    // then get its EPSG code to retrieve its CRS in geotrellis as the start CRS
+    val startCsr: CoordinateReferenceSystem = geotoolsCRS.parseWKT(prj)
+    val startEpsgCode: Int = geotoolsCRS.lookupIdentifier(startCsr, true).replace("EPSG:", "").toInt
     val geom: Geometry = sf.toGeometry[Geometry]
-    println(geom.toString)
+    val projected = Projected(Reproject(geom, CRS.fromEpsgCode(startEpsgCode), WebMercator), 3857)
 
-    val projected = Projected(Reproject(geom, LatLng, WebMercator), 3857)
-
-    println(projected.toString)
     val labelPropName = fields.getOrElse("label", null)
     val desPropName = fields.getOrElse("description", null)
     val machinePropName = fields.getOrElse("isMachine", null)
@@ -168,12 +167,12 @@ object Annotation extends LazyLogging {
         }
         (isM, conf, qua)
     }
-    
+
     // annotationGroup is passed None in here since it will be handled
     // in insertAnnotations in AnnotationDao
     Some(
       Create(
-        Some(user.id),
+        Some(userId),
         label,
         description,
         isMachine,
@@ -299,7 +298,9 @@ object AnnotationShapefileService extends LazyLogging {
   def createSimpleFeature(annotation: Annotation): Option[SimpleFeature] = {
     annotation.geometry match {
       case Some(geometry) =>
-        val geom = geometry.geom
+        // annotations in RF DB are projected to EPSG: 3857, WebMercator
+        // when exporting, we reproject them to EPSG:4326, WGS:84
+        val geom = Reproject(geometry.geom, CRS.fromEpsgCode(3857), CRS.fromEpsgCode(4326))
         val geometryField = "the_geom"
         val sftb = (new SimpleFeatureTypeBuilder).minOccurs(1).maxOccurs(1).nillable(false)
 
@@ -365,6 +366,8 @@ object AnnotationShapefileService extends LazyLogging {
       .createNewDataStore(params)
       .asInstanceOf[ShapefileDataStore]
     newDataStore.createSchema(featureCollection.getSchema)
+    // we reprojected annotations from WebMercator to WGS84 above
+    // so schema should be as follow
     newDataStore.forceSchemaCRS(DefaultGeographicCRS.WGS84)
 
     val transaction = new DefaultTransaction("create")
