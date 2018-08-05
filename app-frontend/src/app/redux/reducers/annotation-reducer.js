@@ -11,6 +11,7 @@ import {
     ANNOTATIONS_TRANSFORM_DRAWLAYER,
     ANNOTATIONS_UPLOAD_SHAPEFILE,
     ANNOTATIONS_IMPORT_SHAPEFILE,
+    ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE,
 
     fetchAnnotations, updateAnnotation, fetchLabels
 } from '_redux/actions/annotation-actions';
@@ -57,7 +58,6 @@ export const annotationReducer = typeToReducer({
         },
         FULFILLED: (state, action) => {
             let annotationShapefileProps = action.payload.data;
-            console.log(state, action);
             return Object.assign({}, state, {
                 annotationShapefileProps,
                 fetchingAnnotations: false
@@ -81,9 +81,13 @@ export const annotationReducer = typeToReducer({
             });
             return Object.assign({}, state, {
                 annotations,
-                fetchingAnnotations: false
+                fetchingAnnotations: false,
+                annotationShapefileProps: []
             });
         }
+    },
+    [ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE]: (state) => {
+        return Object.assign({}, state, {annotationShapefileProps: []});
     },
     [ANNOTATIONS_FETCH]: {
         PENDING: (state) => {

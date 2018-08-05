@@ -2,7 +2,7 @@
 <div class="sidebar-project">
   <div class="sidebar-static">
     <div class="sidebar-header">
-      <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit.annotate">
+      <a class="btn sidebar-header-nav-btn" ng-click="$ctrl.onGoToParent()">
         <i class="icon-arrow-left"></i>
       </a>
       <h5 class="sidebar-title">Import Annotations</h5>
@@ -19,6 +19,8 @@
                  class="btn-upload"/>
           Upload GeoJSON
         </label>
+      </div>
+      <div class="list-group-item">
         <label class="btn btn-primary btn-block btn-upload-label"
                for="shapefile-btn-upload"
                ng-click="$ctrl.onUploadClick()">

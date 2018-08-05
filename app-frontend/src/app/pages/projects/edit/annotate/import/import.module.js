@@ -85,7 +85,6 @@ class AnnotateImportController {
     setShapefileUploadData(shapefileData) {
         this.shapefileData = shapefileData;
         this.$parent.uploadShapefile(shapefileData);
-        // this.$state.go('projects.edit.annotate');
     }
 
     updateKeySelection(appKey, dataKey) {
@@ -146,6 +145,13 @@ class AnnotateImportController {
             this.hasShapefileProps = false;
         }
 
+        this.$state.go('projects.edit.annotate');
+    }
+
+    onGoToParent() {
+        this.hasShapefileProps = false;
+        this.dataProperties = [];
+        this.$parent.deleteShapeFileUpload();
         this.$state.go('projects.edit.annotate');
     }
 }

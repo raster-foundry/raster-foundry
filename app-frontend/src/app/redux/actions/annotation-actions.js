@@ -23,6 +23,7 @@ export const ANNOTATIONS_SIDEBAR = 'ANNOTATIONS_SIDEBAR';
 export const ANNOTATIONS_TRANSFORM_DRAWLAYER = 'ANNOTATIONS_TRANSFORM_DRAWLAYER';
 export const ANNOTATIONS_UPLOAD_SHAPEFILE = 'ANNOTATIONS_UPLOAD_SHAPEFILE';
 export const ANNOTATIONS_IMPORT_SHAPEFILE = 'ANNOTATIONS_IMPORT_SHAPEFILE';
+export const ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE = 'ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE';
 
 export const ANNOTATIONS_ACTION_PREFIX = 'ANNOTATIONS';
 
@@ -87,6 +88,14 @@ export function uploadShapefile(shapefile) {
         dispatch({
             type: ANNOTATIONS_UPLOAD_SHAPEFILE,
             payload: uploadShapefileOnly(getState(), shapefile)
+        });
+    };
+}
+
+export function deleteShapeFileUpload() {
+    return (dispatch, getState) => {
+        dispatch({
+            type: ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE
         });
     };
 }
@@ -201,5 +210,6 @@ export default {
     createAnnotations, updateAnnotation, filterAnnotations,
     clearAnnotations, editAnnotation, finishEditingAnnotation,
     deleteAnnotation, bulkCreateAnnotations, finishBulkCreate,
-    transformDrawlayer, uploadShapefile, importShapefileWithProps
+    transformDrawlayer, uploadShapefile, importShapefileWithProps,
+    deleteShapeFileUpload
 };

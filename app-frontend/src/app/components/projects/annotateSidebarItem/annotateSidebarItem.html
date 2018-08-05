@@ -3,7 +3,7 @@
   <div class="sidebar-item annotation-item">
     <div class="inner">
       <i class="icon-polygon"
-         ng-if="$ctrl.annotation.geometry.type === 'Polygon'"></i>
+         ng-if="$ctrl.annotation.geometry.type === 'Polygon' || $ctrl.annotation.geometry.type === 'MultiPolygon'"></i>
       <i class="icon-map-pin"
          ng-if="$ctrl.annotation.geometry.type === 'Point'"></i>
       <p class="annotation-confidence" ng-if="$ctrl.annotation.properties.machineGenerated">
