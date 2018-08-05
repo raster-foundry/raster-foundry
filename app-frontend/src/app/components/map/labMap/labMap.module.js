@@ -434,7 +434,6 @@ class LabMapController {
                 let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
                 this.exportOptions.source = `dropbox:///Apps/${appName}/${this.analysisId}`;
             } else {
-                // _.remove(this.availableTargets, tar => tar.value === 'dropbox');
                 this.displayDropboxModal();
             }
         } else {
