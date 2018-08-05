@@ -133,7 +133,6 @@ object Annotation extends LazyLogging {
       case null => "Unlabeled"
       case _ => sf.getProperty(labelPropName).getValue.toString
     }
-    println(label)
     val description = desPropName match {
       case null => Some("No Description")
       case _ => Some(sf.getProperty(desPropName).getValue.toString)
