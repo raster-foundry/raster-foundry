@@ -326,7 +326,10 @@ class LabMapController {
             this.quickExportOpen = true;
             this.setBboxDrawHandlers();
             this.drawBboxRectangleHandler.enable();
-            this.setDefaultExportNode({nodeId: this.resultNodeId});
+            if (this.resultNodeId !== this.lastResultNodeId) {
+                this.setDefaultExportNode({nodeId: this.resultNodeId});
+                this.lastResultNodeId = this.resultNodeId;
+            }
         }
     }
 
@@ -409,7 +412,6 @@ class LabMapController {
 
     updateResolution(res) {
         this.exportOptions.resolution = res;
-        this.map.setZoom(res);
     }
 
     getCurrentResolution() {
@@ -432,7 +434,7 @@ class LabMapController {
                 let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
                 this.exportOptions.source = `dropbox:///Apps/${appName}/${this.analysisId}`;
             } else {
-                _.remove(this.availableTargets, tar => tar.value === 'dropbox');
+                // _.remove(this.availableTargets, tar => tar.value === 'dropbox');
                 this.displayDropboxModal();
             }
         } else {
