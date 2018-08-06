@@ -212,7 +212,11 @@ object ExportDao extends Dao[Export] {
     logger.info(s"Working with this many scenes: ${sceneIds.size}")
 
     for {
-      scenes <- SceneDao.query.filter(sceneIds.toList.toNel.map(ids => Fragments.in(fr"id", ids))).list
+      scenes <- sceneIds.toList.toNel match {
+        case Some(ids) =>
+          SceneDao.query.filter(sceneIds.toList.toNel.map(ids => Fragments.in(fr"id", ids))).list
+        case _ => List.empty[Scene].pure[ConnectionIO]
+      }
     } yield {
       scenes.flatMap{ scene =>
         scene.ingestLocation.map((scene.id, _))
