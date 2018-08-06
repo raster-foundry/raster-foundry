@@ -36,7 +36,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     timestampQueryParameters &
     searchParams &
     ownershipTypeQueryParameters &
-    groupQueryParameters
+    groupQueryParameters &
+    tagQueryParameters
   ).as(ProjectQueryParameters.apply _)
 
   def aoiQueryParameters = (
@@ -116,4 +117,9 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
   def platformIdParams = parameters(
     'platformId.as[UUID].?
   ).as(PlatformIdQueryParameters.apply _)
+
+  def tagQueryParameters = parameters(
+    'tagsInclude.as[String].*,
+    'tagsExclude.as[String].*
+  ).as(TagQueryParameters.apply _)
 }
