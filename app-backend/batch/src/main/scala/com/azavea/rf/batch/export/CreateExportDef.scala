@@ -58,7 +58,7 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
       sys.exit(0)
     }
 
-    exportDefinitionWrite.transact(xa).handleErrorWith(
+    exportDefinitionWrite.transact(xa).attempt.handleErrorWith(
       (error: Throwable) => {
         logger.error(error.stackTraceString)
         sendError(error)

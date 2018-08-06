@@ -78,13 +78,15 @@ object ExportDao extends Dao[Export] {
       case Right(eo) => eo
     }
 
-    val dropboxToken = for {
+    logger.info("Decoded export options successfully")
+
+    val dropboxToken: ConnectionIO[Option[String]] = for {
       user <- UserDao.getUserById(export.owner)
     } yield {
       user.flatMap(_.dropboxCredential.token)
     }
 
-    val outputDefinition = for {
+    val outputDefinition: ConnectionIO[OutputDefinition] = for {
       dbxToken <- dropboxToken
     } yield {
       OutputDefinition(
@@ -108,10 +110,12 @@ object ExportDao extends Dao[Export] {
 
     for {
       outDef <- outputDefinition
+      _ <- logger.info(s"Created output definition for ${outDef.source}").pure[ConnectionIO]
       inputDefinition <- exportInput match {
         case Left(si) => si.map(s => InputDefinition(export.projectId, exportOptions.resolution, Left(s)))
         case Right(asti) => asti.map(s => InputDefinition(export.projectId, exportOptions.resolution, Right(s)))
       }
+      _ <- logger.info("Created input definition").pure[ConnectionIO]
     } yield ExportDefinition(export.id, inputDefinition, outDef)
   }
 
