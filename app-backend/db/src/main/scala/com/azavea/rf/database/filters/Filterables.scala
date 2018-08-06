@@ -56,7 +56,21 @@ trait Filterables extends RFMeta with LazyLogging {
   implicit val projectQueryParametersFilter = Filterable[Any, ProjectQueryParameters] { projectParams: ProjectQueryParameters =>
     Filters.timestampQP(projectParams.timestampParams) ++
       Filters.userQP(projectParams.userParams) ++
-      Filters.searchQP(projectParams.searchParams, List("name"))
+      Filters.searchQP(projectParams.searchParams, List("name")) ++
+      List(
+        projectParams.tagQueryParameters.tagsInclude.toList.toNel.map({ tags =>
+          val tagsIncludeF = tags.map({tag =>
+            fr"${tag} = ANY (projects.tags)"
+          }).toList
+          fr"(" ++ Fragments.or(tagsIncludeF: _*) ++ fr")"
+        }),
+        projectParams.tagQueryParameters.tagsExclude.toList.toNel.map({ tags =>
+          val tagsIncludeF = tags.map({tag =>
+            fr"${tag} = ANY (projects.tags)"
+          }).toList
+          fr"(NOT (" ++ Fragments.or(tagsIncludeF: _*) ++ fr"))"
+        })
+      )
   }
 
   implicit val CombinedToolQueryParametersFilter = Filterable[Any, CombinedToolQueryParameters] { toolParams: CombinedToolQueryParameters =>

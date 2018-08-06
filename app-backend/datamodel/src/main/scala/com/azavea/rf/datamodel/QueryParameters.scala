@@ -119,7 +119,8 @@ case class ProjectQueryParameters(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
   searchParams: SearchQueryParameters = SearchQueryParameters(),
   ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
-  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
+  tagQueryParameters: TagQueryParameters = TagQueryParameters()
 )
 
 @JsonCodec
@@ -354,6 +355,12 @@ case class SceneThumbnailQueryParameters(
   green: Option[Int],
   blue: Option[Int],
   floor: Option[Int]
+)
+
+@JsonCodec
+case class TagQueryParameters(
+  tagsInclude: Iterable[String] = Seq[String](),
+  tagsExclude: Iterable[String] = Seq[String]()
 )
 
 object BboxUtil {
