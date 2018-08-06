@@ -79,7 +79,7 @@ trait ExportRoutes extends Authentication
 
   def getExport(exportId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ExportDao.query.ownedBy(user, exportId).exists.transact(xa).unsafeToFuture
+      ExportDao.query.ownedByOrSuperUser(user, exportId).exists.transact(xa).unsafeToFuture
     } {
       rejectEmptyResponse {
         complete {
@@ -91,7 +91,7 @@ trait ExportRoutes extends Authentication
 
   def getExportDefinition(exportId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ExportDao.query.ownedBy(user, exportId).exists.transact(xa).unsafeToFuture
+      ExportDao.query.ownedByOrSuperUser(user, exportId).exists.transact(xa).unsafeToFuture
     } {
       rejectEmptyResponse {
         val exportDefinition = for {
