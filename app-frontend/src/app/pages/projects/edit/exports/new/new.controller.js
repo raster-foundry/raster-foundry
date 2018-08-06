@@ -170,7 +170,7 @@ export default class NewExportController {
             this.exportOptions.source = this.exportTargetURI;
         } else if (this.getCurrentTarget().value === 'dropbox') {
             let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
-            this.exportOptions.source = `dropbox:///Apps/${appName}/${this.project.id}`;
+            this.exportOptions.source = `dropbox:///${appName}/projects/${this.project.id}`;
         }
     }
 
