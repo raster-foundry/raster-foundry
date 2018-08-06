@@ -145,7 +145,7 @@ def upload_processed_tif(merged_tiff_path, export_definition):
     if export_type == 's3':
         s3_upload_export(merged_tiff_path, dest)
     else:
-        dropbox_upload_export(dropbox_access_token, merged_tiff_path, dest.lstrip('dropbox://'))
+        dropbox_upload_export(dropbox_access_token, merged_tiff_path, dest.replace('dropbox:///', '/'))
 
 
 def run_export(export_s3_uri, export_id):
