@@ -98,7 +98,7 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
   def notifyExportOwner(status: String): Unit = {
     logger.info(s"Preparing to notify export owners of status: ${status}")
     val export = ExportDao.query.filter(fr"id = ${exportId}").select.transact(xa).unsafeRunSync
-    logger.info(s"Retrieved export: ${export}")
+    logger.info(s"Retrieved export: ${export.id}")
     val platAndUserIO = for {
       ugr <- UserGroupRoleDao.query.filter(fr"user_id = ${export.owner}")
         .filter(fr"group_type = 'PLATFORM'").filter(fr"is_active = true").select
@@ -108,7 +108,7 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
 
     logger.info(s"Retrieving Platform and User")
     val (platform, user) = platAndUserIO.transact(xa).unsafeRunSync
-    logger.info(s"Retrieved platform (${platform})and user (${user})")
+    logger.info(s"Retrieved platform (${platform.name}) and user (${user.id})")
 
     (export.projectId, export.toolRunId) match {
       case (Some(projectId), None) =>
