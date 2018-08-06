@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def get_tempdir():
+def get_tempdir(debug=False):
     """Returns a temporary directory that is cleaned up after usage
 
     Returns:
@@ -23,7 +23,8 @@ def get_tempdir():
     try:
         yield temp_dir
     finally:
-        shutil.rmtree(temp_dir)
+        if not debug:
+            shutil.rmtree(temp_dir)
 
 
 def get_rf_image(rf_image_id):
