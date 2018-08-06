@@ -38,7 +38,7 @@ case class Project(
   isSingleBand: Boolean = false,
   singleBandOptions: Option[SingleBandOptions.Params],
   defaultAnnotationGroup: Option[UUID],
-  extras: Json
+  extras: Option[Json]
 )
 
 /** Case class for project creation */
@@ -83,7 +83,7 @@ object Project extends GeoJsonSupport {
     tags: List[String],
     isSingleBand: Boolean,
     singleBandOptions: Option[SingleBandOptions.Params],
-    extras: Json = "{}".asJson
+    extras: Option[Json] = Some("{}".asJson)
   ) extends OwnerCheck {
     def toProject(user: User): Project = {
       val now = new Timestamp((new java.util.Date()).getTime())
@@ -129,7 +129,7 @@ object Project extends GeoJsonSupport {
        c.downField("tags").as[List[String]],
        c.downField("isSingleBand").as[Option[Boolean]].map(_.getOrElse(false)),
        c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
-       c.downField("extras").as[Json]
+       c.downField("extras").as[Option[Json]]
       ).mapN(Create.apply)
     )
 
@@ -144,7 +144,7 @@ object Project extends GeoJsonSupport {
        c.downField("tags").as[List[String]],
        c.downField("isSingleBand").as[Option[Boolean]].map(_.getOrElse(false)),
        c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
-       c.downField("extras").as[Json]
+       c.downField("extras").as[Option[Json]]
       ).mapN(Create.apply)
     )
 
@@ -173,7 +173,7 @@ object Project extends GeoJsonSupport {
     manualOrder: Boolean,
     isSingleBand: Boolean,
     singleBandOptions: Option[SingleBandOptions.Params],
-    extras: Json = "{}".asJson
+    extras: Option[Json] = Some("{}".asJson)
   )
 
   object WithUser {
