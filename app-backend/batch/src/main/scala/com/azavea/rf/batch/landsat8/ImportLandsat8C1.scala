@@ -59,7 +59,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
             acquisition_date <= ${nextDay.toString}::timestamp AND
             acquisition_date >= ${previousDay.toString}::timestamp AND
             datasource = ${landsat8Config.datasourceUUID}::uuid
-      """.query[String].list
+      """.query[String].to[List]
   val existingSceneNames = sceneQuery.transact(xa).unsafeRunSync.toSet
 
   protected def rowsFromCsv: List[Map[String, String]] = {

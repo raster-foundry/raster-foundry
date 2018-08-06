@@ -169,7 +169,7 @@ object ExportDao extends Dao[Export] {
       stp.scene_id = scenes.id
     WHERE
       stp.project_id = ${projectId}
-  """.query[ExportLayerDefinition].list
+  """.query[ExportLayerDefinition].to[List]
 
     for {
       layerDefinitions <- exportLayerDefinitions
@@ -228,7 +228,7 @@ object ExportDao extends Dao[Export] {
       stp.scene_id = scenes.id
     """ ++ Fragments.whereAndOpt(projectIds.toList.toNel.map(ids => Fragments.in(fr"stp.project_id", ids))) ++ fr"GROUP BY stp.project_id"
     val projectSceneLocs = for {
-      stps <- sceneProjectSelect.query[(UUID, List[UUID], List[String])].list
+      stps <- sceneProjectSelect.query[(UUID, List[UUID], List[String])].to[List]
     } yield {
       stps.flatMap{ case (pID, sID, loc) =>
         if (loc.isEmpty) {

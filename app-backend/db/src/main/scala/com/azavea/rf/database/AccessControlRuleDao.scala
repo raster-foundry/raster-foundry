@@ -180,7 +180,7 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
       )
     """
     .query[String]
-    .list
+    .to[List]
 
   def deleteByObject(objectType: ObjectType, objectId: UUID): ConnectionIO[Int] =
     listedByObject(objectType, objectId).delete
