@@ -53,9 +53,8 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
       )
       x <- ExportDao.update(updatedExport, exportId, user)
       _ <- logger.info("Successfully wrote export definition").pure[ConnectionIO]
+      _ <- stop.pure[ConnectionIO]
     } yield {
-      logger.info(s"Wrote export definition: ${x}")
-      stop
       sys.exit(0)
     }
 
