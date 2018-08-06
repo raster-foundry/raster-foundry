@@ -78,7 +78,7 @@ object ExportDao extends Dao[Export] {
       case Right(eo) => eo
     }
 
-    logger.info("Decoded export options successfully")
+    logger.debug("Decoded export options successfully")
 
     val dropboxToken: ConnectionIO[Option[String]] = for {
       user <- UserDao.getUserById(export.owner)
@@ -115,11 +115,11 @@ object ExportDao extends Dao[Export] {
       _ <- logger.info("Creating input definition").pure[ConnectionIO]
       inputDefinition <- exportInput match {
         case Left(si) => {
-          logger.info("In the simple input branch")
+          logger.debug("In the simple input branch")
           si.map(s => InputDefinition(exportOptions.resolution, Left(s)))
         }
         case Right(asti) => {
-          logger.info("In the AST input branch")
+          logger.debug("In the AST input branch")
           asti.map(s => InputDefinition(exportOptions.resolution, Right(s)))
         }
       }
@@ -141,18 +141,18 @@ object ExportDao extends Dao[Export] {
   ): ConnectionIO[ASTInput] ={
     for {
       toolRun <- ToolRunDao.query.filter(toolRunId).select
-      _ <- logger.info("Got tool run").pure[ConnectionIO]
+      _ <- logger.debug("Got tool run").pure[ConnectionIO]
       ast <- {
         toolRun.executionParameters.as[MapAlgebraAST] match {
           case Left(e) => throw e
           case Right(mapAlgebraAST) => mapAlgebraAST.withMetadata(NodeMetadata())
         }
       }.pure[ConnectionIO]
-      _ <- logger.info("Fetched ast").pure[ConnectionIO]
+      _ <- logger.debug("Fetched ast").pure[ConnectionIO]
       sceneLocs <- sceneIngestLocs(ast, user)
-      _ <- logger.info("Found ingest locations for scenes").pure[ConnectionIO]
+      _ <- logger.debug("Found ingest locations for scenes").pure[ConnectionIO]
       projectLocs <- projectIngestLocs(ast, user)
-      _ <- logger.info("Found ingest locations for projects").pure[ConnectionIO]
+      _ <- logger.debug("Found ingest locations for projects").pure[ConnectionIO]
     } yield {
       ASTInput(ast, sceneLocs, projectLocs)
     }
@@ -209,7 +209,7 @@ object ExportDao extends Dao[Export] {
       case _ => None
     }
 
-    logger.info(s"Working with this many scenes: ${sceneIds.size}")
+    logger.debug(s"Working with this many scenes: ${sceneIds.size}")
 
     for {
       scenes <- sceneIds.toList.toNel match {
@@ -230,7 +230,7 @@ object ExportDao extends Dao[Export] {
       case _ => None
     }
 
-    logger.info(s"Working with this many projects: ${projectIds.size}")
+    logger.debug(s"Working with this many projects: ${projectIds.size}")
 
     val sceneProjectSelect = fr"""
     SELECT stp.project_id, array_agg(stp.scene_id), array_agg(scenes.ingest_location)
