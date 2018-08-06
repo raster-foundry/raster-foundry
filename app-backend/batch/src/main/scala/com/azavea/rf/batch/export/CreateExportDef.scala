@@ -40,11 +40,11 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
   }
 
   def run: Unit = {
-    val exportDefinitionWrite = for {
+    val exportDefinitionWrite: ConnectionIO[Unit] = for {
       user <- UserDao.unsafeGetUserById(systemUser)
       _ <- logger.info(s"Fetched user successfully: ${user.id}").pure[ConnectionIO]
       export <- ExportDao.query.filter(exportId).select
-      _ <- logger.info(s"Fetched export successfully: ${export.id}")
+      _ <- logger.info(s"Fetched export successfully: ${export.id}").pure[ConnectionIO]
       exportDef <- ExportDao.getExportDefinition(export, user)
       _ <- writeExportDefToS3(exportDef, bucket, key).pure[ConnectionIO]
       updatedExport = export.copy(
@@ -52,16 +52,16 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
         exportOptions = exportDef.asJson
       )
       x <- ExportDao.update(updatedExport, exportId, user)
-      _ <- logger.info("Successfully wrote export definition").pure[ConnectionIO]
-      _ <- stop.pure[ConnectionIO]
     } yield {
+      logger.info(s"Wrote export definition: ${x}")
+      stop
       sys.exit(0)
     }
 
     exportDefinitionWrite.transact(xa).handleErrorWith(
       (error: Throwable) => {
-        logger.error(e.stackTraceString)
-        sendError(e)
+        logger.error(error.stackTraceString)
+        sendError(error)
         stop
         sys.exit(1)
       }
