@@ -209,6 +209,8 @@ object ExportDao extends Dao[Export] {
       case _ => None
     }
 
+    logger.info(s"Working with this many scenes: ${sceneIds.size}")
+
     for {
       scenes <- SceneDao.query.filter(sceneIds.toList.toNel.map(ids => Fragments.in(fr"id", ids))).list
     } yield {
@@ -223,6 +225,8 @@ object ExportDao extends Dao[Export] {
       case s: ProjectRaster => Some(s.projId)
       case _ => None
     }
+
+    logger.info(s"Working with this many projects: ${projectIds.size}")
 
     val sceneProjectSelect = fr"""
     SELECT stp.project_id, array_agg(stp.scene_id), array_agg(scenes.ingest_location)
