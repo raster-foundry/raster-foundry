@@ -100,7 +100,7 @@ object ExportDao extends Dao[Export] {
       )
     }
 
-    val exportInput = (export.projectId, export.toolRunId) match {
+    val exportInput: Either[ConnectionIO[SimpleInput], ConnectionIO[ASTInput]] = (export.projectId, export.toolRunId) match {
       // Exporting a tool-run
       case (_, Some(toolRunId)) => Right(astInput(toolRunId, user))
       // Exporting a project
@@ -123,21 +123,11 @@ object ExportDao extends Dao[Export] {
           asti.map(s => InputDefinition(exportOptions.resolution, Right(s)))
         }
       }
-      _ <- logger.info("Created input definition").pure[ConnectionIO]
-    } yield ExportDefinition(export.id, inputDefinition, outDef)
-  }
-
-  def getExportStyle(export: Export, exportOptions: ExportOptions, user: User)(implicit xa: Transactor[IO]): ConnectionIO[Either[SimpleInput, ASTInput]] = {
-    (export.projectId, export.toolRunId) match {
-      // Exporting a tool-run
-      case (_, Some(toolRunId)) => astInput(toolRunId, user).map(Right(_))
-      // Exporting a project
-      case (Some(projectId), None) => simpleInput(projectId, export, user, exportOptions).map(Left(_))
-      // Invalid
-      case _ => throw new Exception("Invalid export configuration")
+    } yield {
+      logger.info("Created input definition")
+      ExportDefinition(export.id, inputDefinition, outDef)
     }
   }
-
 
   /**
     * An AST could include nodes that ask for scenes from the same
@@ -151,14 +141,18 @@ object ExportDao extends Dao[Export] {
   ): ConnectionIO[ASTInput] ={
     for {
       toolRun <- ToolRunDao.query.filter(toolRunId).select
+      _ <- logger.info("Got tool run").pure[ConnectionIO]
       ast <- {
         toolRun.executionParameters.as[MapAlgebraAST] match {
           case Left(e) => throw e
           case Right(mapAlgebraAST) => mapAlgebraAST.withMetadata(NodeMetadata())
         }
       }.pure[ConnectionIO]
+      _ <- logger.info("Fetched ast").pure[ConnectionIO]
       sceneLocs <- sceneIngestLocs(ast, user)
+      _ <- logger.info("Found ingest locations for scenes").pure[ConnectionIO]
       projectLocs <- projectIngestLocs(ast, user)
+      _ <- logger.info("Found ingest locations for projects").pure[ConnectionIO]
     } yield {
       ASTInput(ast, sceneLocs, projectLocs)
     }
