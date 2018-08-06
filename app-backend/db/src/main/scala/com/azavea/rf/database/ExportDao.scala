@@ -109,11 +109,19 @@ object ExportDao extends Dao[Export] {
     }
 
     for {
+      _ <- logger.info("Creating output definition").pure[ConnectionIO]
       outDef <- outputDefinition
       _ <- logger.info(s"Created output definition for ${outDef.source}").pure[ConnectionIO]
+      _ <- logger.info("Creating input definition").pure[ConnectionIO]
       inputDefinition <- exportInput match {
-        case Left(si) => si.map(s => InputDefinition(export.projectId, exportOptions.resolution, Left(s)))
-        case Right(asti) => asti.map(s => InputDefinition(export.projectId, exportOptions.resolution, Right(s)))
+        case Left(si) => {
+          logger.info("In the simple input branch")
+          si.map(s => InputDefinition(export.projectId, exportOptions.resolution, Left(s)))
+        }
+        case Right(asti) => {
+          logger.info("In the AST input branch")
+          asti.map(s => InputDefinition(export.toolRunId, exportOptions.resolution, Right(s)))
+        }
       }
       _ <- logger.info("Created input definition").pure[ConnectionIO]
     } yield ExportDefinition(export.id, inputDefinition, outDef)
