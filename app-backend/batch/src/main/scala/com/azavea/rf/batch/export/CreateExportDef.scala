@@ -60,6 +60,8 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
 
     exportDefinitionWrite.transact(xa).attempt.handleErrorWith(
       (error: Throwable) => {
+        println("Yeah definitely there was an error")
+        println(error)
         logger.error(error.stackTraceString)
         sendError(error)
         stop
