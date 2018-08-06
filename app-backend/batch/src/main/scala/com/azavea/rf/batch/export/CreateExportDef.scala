@@ -42,9 +42,9 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
   def run: Unit = {
     val exportDefinitionWrite: ConnectionIO[Unit] = for {
       user <- UserDao.unsafeGetUserById(systemUser)
-      _ <- logger.info(s"Fetched user successfully: ${user.id}").pure[ConnectionIO]
+      _ <- logger.debug(s"Fetched user successfully: ${user.id}").pure[ConnectionIO]
       export <- ExportDao.query.filter(exportId).select
-      _ <- logger.info(s"Fetched export successfully: ${export.id}").pure[ConnectionIO]
+      _ <- logger.debug(s"Fetched export successfully: ${export.id}").pure[ConnectionIO]
       exportDef <- ExportDao.getExportDefinition(export, user)
       updatedExport = export.copy(
         exportStatus = ExportStatus.Exporting,
@@ -60,8 +60,6 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
 
     exportDefinitionWrite.transact(xa).attempt.handleErrorWith(
       (error: Throwable) => {
-        println("Yeah definitely there was an error")
-        println(error)
         logger.error(error.stackTraceString)
         sendError(error)
         stop
