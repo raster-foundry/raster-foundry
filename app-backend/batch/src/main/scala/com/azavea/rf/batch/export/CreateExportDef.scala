@@ -40,35 +40,32 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
   }
 
   def run: Unit = {
-    val exportDefinitionWrite = for {
+    val exportDefinitionWrite: ConnectionIO[Unit] = for {
       user <- UserDao.unsafeGetUserById(systemUser)
+      _ <- logger.debug(s"Fetched user successfully: ${user.id}").pure[ConnectionIO]
       export <- ExportDao.query.filter(exportId).select
+      _ <- logger.debug(s"Fetched export successfully: ${export.id}").pure[ConnectionIO]
       exportDef <- ExportDao.getExportDefinition(export, user)
-      x <- {
-        writeExportDefToS3(exportDef, bucket, key)
-        val updatedExport = export.copy(
-          exportStatus = ExportStatus.Exporting,
-          exportOptions = exportDef.asJson
-        )
-        ExportDao.update(updatedExport, exportId, user)
-      }
+      updatedExport = export.copy(
+        exportStatus = ExportStatus.Exporting,
+        exportOptions = exportDef.asJson
+      )
+      x <- ExportDao.update(updatedExport, exportId, user)
     } yield {
+      writeExportDefToS3(exportDef, bucket, key)
       logger.info(s"Wrote export definition: ${x}")
+      stop
+      sys.exit(0)
     }
 
-    exportDefinitionWrite.transact(xa).unsafeToFuture onComplete {
-      case Success(export) => {
-        logger.info("Successfully wrote export definition")
-        stop
-        sys.exit(0)
-      }
-      case Failure(e) => {
-        logger.error(e.stackTraceString)
-        sendError(e)
+    exportDefinitionWrite.transact(xa).attempt.handleErrorWith(
+      (error: Throwable) => {
+        logger.error(error.stackTraceString)
+        sendError(error)
         stop
         sys.exit(1)
       }
-    }
+    ).unsafeRunSync
   }
 }
 

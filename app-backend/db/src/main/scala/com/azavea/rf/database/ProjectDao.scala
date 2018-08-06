@@ -184,7 +184,7 @@ object ProjectDao extends Dao[Project] {
       )
       AND """ ++ inClause
     for {
-      sceneQueryResult <- sceneIdWithDatasourceF.query[(UUID, Datasource)].list
+      sceneQueryResult <- sceneIdWithDatasourceF.query[(UUID, Datasource)].to[List]
       sceneToProjectInserts <- {
         val scenesToProject: List[SceneToProject] = sceneQueryResult.map { case (sceneId, datasource) =>
             createScenesToProject(sceneId, projectId, datasource, isAccepted)
@@ -248,7 +248,7 @@ object ProjectDao extends Dao[Project] {
     }
     for {
       orderedQuery <- orderFragment
-      pageResponse <- (selectClause ++ orderedQuery ++ fr"LIMIT ${page.limit} OFFSET ${page.offset * page.limit}").query[UUID].list
+      pageResponse <- (selectClause ++ orderedQuery ++ fr"LIMIT ${page.limit} OFFSET ${page.offset * page.limit}").query[UUID].to[List]
       countResponse <- (countClause ++ sceneQuery).query[Int].unique
     } yield {
       val hasPrevious = page.offset > 0

@@ -54,7 +54,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
             acquisition_date <= ${nextDay.toString}::timestamp AND
             acquisition_date >= ${previousDay.toString}::timestamp AND
             datasource = ${sentinel2Config.datasourceUUID}::uuid
-      """.query[String].list
+      """.query[String].to[List]
   val existingSceneNames = sceneQuery.transact(xa).unsafeRunSync.toSet
 
   val name = ImportSentinel2.name
