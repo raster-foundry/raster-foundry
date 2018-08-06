@@ -46,15 +46,14 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
       export <- ExportDao.query.filter(exportId).select
       _ <- logger.info(s"Fetched export successfully: ${export.id}").pure[ConnectionIO]
       exportDef <- ExportDao.getExportDefinition(export, user)
-      result <- writeExportDefToS3(exportDef, bucket, key).pure[ConnectionIO]
       updatedExport = export.copy(
         exportStatus = ExportStatus.Exporting,
         exportOptions = exportDef.asJson
       )
       x <- ExportDao.update(updatedExport, exportId, user)
     } yield {
+      writeExportDefToS3(exportDef, bucket, key)
       logger.info(s"Wrote export definition: ${x}")
-      result
       stop
       sys.exit(0)
     }
