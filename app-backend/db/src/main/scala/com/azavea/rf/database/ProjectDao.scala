@@ -41,7 +41,7 @@ object ProjectDao extends Dao[Project] {
       visibility, tile_visibility, is_aoi_project,
       aoi_cadence_millis, aois_last_checked, tags, extent,
       manual_order, is_single_band, single_band_options,
-      default_annotation_group
+      default_annotation_group, extras
     FROM
   """ ++ tableF
 
@@ -80,19 +80,23 @@ object ProjectDao extends Dao[Project] {
         modified_by, owner, name, slug_label, description,
         visibility, tile_visibility, is_aoi_project,
         aoi_cadence_millis, aois_last_checked, tags, extent,
-        manual_order, is_single_band, single_band_options, default_annotation_group)
+        manual_order, is_single_band, single_band_options, default_annotation_group,
+        extras)
       VALUES
         ($id, $now, $now, ${user.id},
         ${user.id}, $ownerId, ${newProject.name}, $slug, ${newProject.description},
         ${newProject.visibility}, ${newProject.tileVisibility}, ${newProject.isAOIProject},
         ${newProject.aoiCadenceMillis}, $now, ${newProject.tags}, null,
-        TRUE, ${newProject.isSingleBand}, ${newProject.singleBandOptions}, null)
+        TRUE, ${newProject.isSingleBand}, ${newProject.singleBandOptions}, null,
+        ${newProject.extras}
+      )
     """).update.withUniqueGeneratedKeys[Project](
       "id", "created_at", "modified_at", "created_by",
       "modified_by", "owner", "name", "slug_label", "description",
       "visibility", "tile_visibility", "is_aoi_project",
       "aoi_cadence_millis", "aois_last_checked", "tags", "extent",
-      "manual_order", "is_single_band", "single_band_options", "default_annotation_group"
+      "manual_order", "is_single_band", "single_band_options", "default_annotation_group",
+      "extras"
     )
   }
 
@@ -116,7 +120,8 @@ object ProjectDao extends Dao[Project] {
        manual_order = ${project.manualOrder},
        is_single_band = ${project.isSingleBand},
        single_band_options = ${project.singleBandOptions},
-       default_annotation_group = ${project.defaultAnnotationGroup}
+       default_annotation_group = ${project.defaultAnnotationGroup},
+       extras = ${project.extras}
     """ ++ Fragments.whereAndOpt(Some(idFilter))).update
     query
   }

@@ -12,6 +12,7 @@ import geotrellis.vector.io.json.GeoJsonSupport
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.generic.JsonCodec
+import io.circe.syntax._
 
 // --- //
 
@@ -36,7 +37,8 @@ case class Project(
   manualOrder: Boolean = true,
   isSingleBand: Boolean = false,
   singleBandOptions: Option[SingleBandOptions.Params],
-  defaultAnnotationGroup: Option[UUID]
+  defaultAnnotationGroup: Option[UUID],
+  extras: Json
 )
 
 /** Case class for project creation */
@@ -80,7 +82,8 @@ object Project extends GeoJsonSupport {
     owner: Option[String],
     tags: List[String],
     isSingleBand: Boolean,
-    singleBandOptions: Option[SingleBandOptions.Params]
+    singleBandOptions: Option[SingleBandOptions.Params],
+    extras: Json = "{}".asJson
   ) extends OwnerCheck {
     def toProject(user: User): Project = {
       val now = new Timestamp((new java.util.Date()).getTime())
@@ -107,7 +110,8 @@ object Project extends GeoJsonSupport {
         true,
         isSingleBand,
         singleBandOptions,
-        None
+        None,
+        extras
       )
     }
   }
@@ -124,7 +128,8 @@ object Project extends GeoJsonSupport {
        c.downField("owner").as[Option[String]],
        c.downField("tags").as[List[String]],
        c.downField("isSingleBand").as[Option[Boolean]].map(_.getOrElse(false)),
-       c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]]
+       c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
+       c.downField("extras").as[Json]
       ).mapN(Create.apply)
     )
 
@@ -138,7 +143,8 @@ object Project extends GeoJsonSupport {
        c.downField("owner").as[User.Create] map { usr: User.Create => Some(usr.id) },
        c.downField("tags").as[List[String]],
        c.downField("isSingleBand").as[Option[Boolean]].map(_.getOrElse(false)),
-       c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]]
+       c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
+       c.downField("extras").as[Json]
       ).mapN(Create.apply)
     )
 
@@ -166,7 +172,8 @@ object Project extends GeoJsonSupport {
     extent: Option[Projected[Geometry]],
     manualOrder: Boolean,
     isSingleBand: Boolean,
-    singleBandOptions: Option[SingleBandOptions.Params]
+    singleBandOptions: Option[SingleBandOptions.Params],
+    extras: Json = "{}".asJson
   )
 
   object WithUser {
@@ -190,7 +197,8 @@ object Project extends GeoJsonSupport {
         project.extent,
         project.manualOrder,
         project.isSingleBand,
-        project.singleBandOptions
+        project.singleBandOptions,
+        project.extras
       )
     }
 
