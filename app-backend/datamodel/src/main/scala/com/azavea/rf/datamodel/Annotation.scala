@@ -51,7 +51,9 @@ case class Annotation(
   confidence: Option[Float],
   quality: Option[AnnotationQuality],
   geometry: Option[Projected[Geometry]],
-  annotationGroup: UUID
+  annotationGroup: UUID,
+  labeledBy: Option[String],
+  verifiedBy: Option[String]
 ) extends GeoJSONSerializable[Annotation.GeoJSON] {
   def toGeoJSONFeature: Annotation.GeoJSON = {
     Annotation.GeoJSON(
@@ -69,7 +71,9 @@ case class Annotation(
         this.machineGenerated,
         this.confidence,
         this.quality,
-        this.annotationGroup
+        this.annotationGroup,
+        this.labeledBy,
+        this.verifiedBy
       ),
       "Feature"
     )
@@ -89,7 +93,9 @@ case class AnnotationProperties(
   machineGenerated: Option[Boolean],
   confidence: Option[Float],
   quality: Option[AnnotationQuality],
-  annotationGroup: UUID
+  annotationGroup: UUID,
+  labeledBy: Option[String] = None,
+  verifiedBy: Option[String] = None
 )
 
 @JsonCodec
@@ -100,7 +106,9 @@ case class AnnotationPropertiesCreate(
   machineGenerated: Option[Boolean],
   confidence: Option[Float],
   quality: Option[AnnotationQuality],
-  annotationGroup: Option[UUID]
+  annotationGroup: Option[UUID],
+  labeledBy: Option[String] = None,
+  verifiedBy: Option[String] = None
 )
 
 
@@ -208,7 +216,9 @@ object Annotation extends LazyLogging {
         properties.confidence,
         properties.quality,
         geometry,
-        properties.annotationGroup
+        properties.annotationGroup,
+        properties.labeledBy,
+        properties.verifiedBy
       )
     }
   }
@@ -222,7 +232,9 @@ object Annotation extends LazyLogging {
     confidence: Option[Float],
     quality: Option[AnnotationQuality],
     geometry: Option[Projected[Geometry]],
-    annotationGroup: Option[UUID]
+    annotationGroup: Option[UUID],
+    labeledBy: Option[String] = None,
+    verifiedBy: Option[String] = None
   ) extends OwnerCheck {
 
     def toAnnotation(projectId: UUID, user: User, defaultAnnotationGroup: UUID): Annotation = {
@@ -245,7 +257,9 @@ object Annotation extends LazyLogging {
         confidence,
         quality,
         geometry,
-        annotationGroup.getOrElse(defaultAnnotationGroup)
+        annotationGroup.getOrElse(defaultAnnotationGroup),
+        labeledBy,
+        verifiedBy
       )
     }
   }
@@ -264,7 +278,9 @@ object Annotation extends LazyLogging {
         properties.confidence,
         properties.quality,
         geometry,
-        properties.annotationGroup
+        properties.annotationGroup,
+        properties.labeledBy,
+        properties.verifiedBy
       )
     }
   }
