@@ -105,7 +105,6 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     val expected = ExportDefinition(
       id = UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57039"),
       input = InputDefinition(
-        projectId = Some(UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036")),
         resolution = 15,
         style = Left(SimpleInput(
           layers = Array(
@@ -135,7 +134,6 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     val ast: MapAlgebraAST = Addition(List(s0, s1), UUID.randomUUID, None)
 
     val inDef = InputDefinition(
-      Some(UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036")),
       15,
       Right(ASTInput(ast, ast.tileSources.map(_ => UUID.randomUUID -> "s3://foo/bar/").toMap, Map.empty))
     )
@@ -166,7 +164,6 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     }).toMap)
 
     val inDef = InputDefinition(
-      Some(UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57036")),
       15,
       Right(astIn)
     )

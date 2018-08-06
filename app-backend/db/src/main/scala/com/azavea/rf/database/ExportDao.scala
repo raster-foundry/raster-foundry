@@ -116,11 +116,11 @@ object ExportDao extends Dao[Export] {
       inputDefinition <- exportInput match {
         case Left(si) => {
           logger.info("In the simple input branch")
-          si.map(s => InputDefinition(export.projectId, exportOptions.resolution, Left(s)))
+          si.map(s => InputDefinition(exportOptions.resolution, Left(s)))
         }
         case Right(asti) => {
           logger.info("In the AST input branch")
-          asti.map(s => InputDefinition(export.toolRunId, exportOptions.resolution, Right(s)))
+          asti.map(s => InputDefinition(exportOptions.resolution, Right(s)))
         }
       }
       _ <- logger.info("Created input definition").pure[ConnectionIO]
