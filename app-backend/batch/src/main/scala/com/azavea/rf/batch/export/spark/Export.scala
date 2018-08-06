@@ -74,7 +74,7 @@ object Export extends SparkJob with Config with LazyLogging {
 
           /* Create GeoTiffs and output them */
           val singles: RDD[(SpatialKey, SinglebandGeoTiff)] =
-            rdd.map({ case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs)) })
+            targetRDD.map({ case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs)) })
 
           writeGeoTiffs[Tile, SinglebandGeoTiff](singles, ed, conf)
         } else {
