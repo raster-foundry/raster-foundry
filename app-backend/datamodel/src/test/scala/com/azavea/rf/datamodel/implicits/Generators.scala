@@ -286,7 +286,7 @@ object Generators extends ArbitraryInstances {
   } yield {
     Project.Create(
       name, description, visibility, tileVisibility, isAOIProject, aoiCadenceMillis,
-      owner, tags, isSingleBand, singleBandOptions, extras
+      owner, tags, isSingleBand, singleBandOptions, Some(extras)
     )
   }
 
