@@ -16,5 +16,6 @@ trait SparkJob {
         .setAppName(s"Raster Foundry $jobName")
         .set("spark.serializer", classOf[org.apache.spark.serializer.KryoSerializer].getName)
         .set("spark.kryo.registrator", classOf[geotrellis.spark.io.kryo.KryoRegistrator].getName)
+        .set("spark.kryoserializer.buffer.max", "512m")
         .setIfMissing("spark.master", "local[*]")
 }
