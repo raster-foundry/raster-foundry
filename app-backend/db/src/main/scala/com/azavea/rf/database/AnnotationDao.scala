@@ -26,7 +26,7 @@ object AnnotationDao extends Dao[Annotation] {
       SELECT
         id, project_id, created_at, created_by, modified_at, modified_by, owner,
         label, description, machine_generated, confidence,
-        quality, geometry, annotation_group
+        quality, geometry, annotation_group, labeled_by, verified_by
       FROM
     """ ++ tableF
 
@@ -39,7 +39,7 @@ fr"""
     SELECT
     id, project_id, created_at, created_by, modified_at, modified_by, owner,
     label, description, machine_generated, confidence,
-    quality, geometry, annotation_group
+    quality, geometry, annotation_group, labeled_by, verified_by
     FROM
 """
     (selectF ++ Fragments.whereAndOpt(fr"project_id = ${projectId}".some))
@@ -55,8 +55,8 @@ fr"""
     val updateSql = "INSERT INTO " ++ tableName ++ """
         (id, project_id, created_at, created_by, modified_at, modified_by, owner,
         label, description, machine_generated, confidence,
-        quality, geometry, annotation_group)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        quality, geometry, annotation_group, labeled_by, verified_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
@@ -73,7 +73,7 @@ fr"""
       insertedAnnotations <- Update[Annotation](updateSql).updateManyWithGeneratedKeys[Annotation](
         "id", "project_id", "created_at", "created_by", "modified_at", "modified_by", "owner",
         "label", "description", "machine_generated", "confidence",
-        "quality", "geometry", "annotation_group"
+        "quality", "geometry", "annotation_group", "labeled_by", "verified_by"
       )(annotations map { _.toAnnotation(projectId, user, defaultAnnotationGroup) }).compile.toList
     } yield insertedAnnotations
   }
@@ -88,7 +88,9 @@ fr"""
         confidence = ${annotation.confidence},
         quality = ${annotation.quality},
         geometry = ${annotation.geometry},
-        annotation_group = ${annotation.annotationGroup}
+        annotation_group = ${annotation.annotationGroup},
+        labeled_by = ${annotation.labeledBy},
+        verified_by = ${annotation.verifiedBy}
       WHERE
         id = ${annotation.id}
     """).update.run
