@@ -5,6 +5,7 @@ import subprocess
 import boto3
 
 import rf.uploads.geotiff.io as geotiff_io
+from rf.utils.io import s3_bucket_and_key_from_url
 from rf.models import Image
 from rf.uploads.landsat8.io import get_tempdir
 
@@ -29,7 +30,7 @@ def process_jp2000(scene_id, jp2_source):
     with get_tempdir() as temp_dir:
 
         s3client = boto3.client('s3')
-        in_bucket, in_key = geotiff_io.s3_bucket_and_key_from_url(jp2_source)
+        in_bucket, in_key = s3_bucket_and_key_from_url(jp2_source)
         in_bucket = in_bucket.replace(r'.s3.amazonaws.com', '')
         fname_part = os.path.split(in_key)[-1]
         out_bucket = os.getenv('DATA_BUCKET')
