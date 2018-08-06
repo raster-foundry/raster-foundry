@@ -15,6 +15,7 @@ import cats.data._
 import cats.effect.IO
 import cats.implicits._
 import io.circe._
+import io.circe.syntax._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 
 import scala.concurrent.Future
@@ -141,7 +142,7 @@ object ExportDao extends Dao[Export] {
       ast <- {
         toolRun.executionParameters.as[MapAlgebraAST] match {
           case Left(e) => throw e
-          case Right(mapAlgebraAST) => mapAlgebraAST
+          case Right(mapAlgebraAST) => mapAlgebraAST.withMetadata(NodeMetadata())
         }
       }.pure[ConnectionIO]
       sceneLocs <- sceneIngestLocs(ast, user)
@@ -198,7 +199,7 @@ object ExportDao extends Dao[Export] {
   ): ConnectionIO[Map[UUID, String]] = {
 
     val sceneIds: Set[UUID] = ast.tileSources.flatMap {
-      case s: SceneRaster => Some(s.id)
+      case s: SceneRaster => Some(s.sceneId)
       case _ => None
     }
 
@@ -213,7 +214,7 @@ object ExportDao extends Dao[Export] {
 
   private def projectIngestLocs(ast: MapAlgebraAST, user: User): ConnectionIO[Map[UUID, List[(UUID, String)]]] = {
     val projectIds: Set[UUID] = ast.tileSources.flatMap {
-      case s: ProjectRaster => Some(s.id)
+      case s: ProjectRaster => Some(s.projId)
       case _ => None
     }
 
