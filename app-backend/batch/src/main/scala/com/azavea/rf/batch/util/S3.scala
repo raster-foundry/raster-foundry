@@ -46,8 +46,8 @@ case class S3(
     client.listObjects(listObjectsRequest)
 
   /** Get S3Object */
-  def getObject(s3bucket: String, s3prefix: String): S3Object =
-    client.getObject(s3bucket, s3prefix)
+  def getObject(s3bucket: String, s3prefix: String, requesterPays: Boolean = false): S3Object =
+    client.getObject(new GetObjectRequest(s3bucket, s3prefix, requesterPays))
 
   def getObject(uri: URI): S3Object = {
     val s3uri = new AmazonS3URI(uri)
@@ -79,11 +79,12 @@ case class S3(
   }
 
   /** List the keys to files found within a given bucket */
-  def listKeys(s3bucket: String, s3prefix: String, ext: String, recursive: Boolean = false): Array[URI] = {
+  def listKeys(s3bucket: String, s3prefix: String, ext: String, recursive: Boolean = false, requesterPays: Boolean = false): Array[URI] = {
     val objectRequest = (new ListObjectsRequest)
       .withBucketName(s3bucket)
       .withPrefix(s3prefix)
       .withMaxKeys(1000)
+      .withRequesterPays(requesterPays)
 
     // Avoid digging into a deeper directory
     if (!recursive) objectRequest.withDelimiter("/")

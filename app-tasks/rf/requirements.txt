@@ -1,5 +1,5 @@
 numpy==1.14.3
-boto3==1.4.4
+boto3==1.7.71
 pytest==2.9.2
 pytest-runner==2.9
 rasterio==1.0a8
