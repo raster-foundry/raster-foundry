@@ -31,6 +31,7 @@ class DatasourceDeleteModalController {
     }
 
     checkUploadStatus() {
+        this.checkInProgress = true;
         this.uploadService.query({
             datasource: this.datasource.id,
             uploadStatus: this.uploadProgress
@@ -38,6 +39,7 @@ class DatasourceDeleteModalController {
             if (res.count === 0) {
                 this.checkSceneDatasource();
             } else {
+                this.checkInProgress = false;
                 this.allowDelete = false;
                 this.displayUploadMsg(res.count);
             }
@@ -48,6 +50,7 @@ class DatasourceDeleteModalController {
         this.sceneService.query({
             datasource: this.datasource.id
         }).then(scenes => {
+            this.checkInProgress = false;
             if (scenes.count !== 0) {
                 this.displaySceneMsg(scenes.count);
             } else {
