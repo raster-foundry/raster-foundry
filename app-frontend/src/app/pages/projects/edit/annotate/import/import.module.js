@@ -5,7 +5,7 @@ require('./import.scss');
 
 class AnnotateImportController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, $timeout
+        $log, $state, $scope, $timeout, $ngRedux
     ) {
         'ngInject';
         this.$log = $log;
@@ -13,6 +13,11 @@ class AnnotateImportController {
         this.$scope = $scope;
         this.$timeout = $timeout;
         this.$parent = $scope.$parent.$ctrl;
+
+        $ngRedux.subscribe(() => {
+            this.state = $ngRedux.getState();
+            this.uploadAnnotationsError = this.state.projects.uploadAnnotationsError;
+        });
     }
 
     $onInit() {

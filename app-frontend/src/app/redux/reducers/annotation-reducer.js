@@ -49,28 +49,35 @@ export const annotationReducer = typeToReducer({
     // error body in rejected.action.payload
     [ANNOTATIONS_UPLOAD_SHAPEFILE]: {
         PENDING: (state) => {
-            return Object.assign({}, state, {fetchingAnnotations: true});
+            return Object.assign({}, state, {
+                fetchingAnnotations: true,
+                uploadAnnotationsError: null
+            });
         },
         REJECTED: (state, action) => {
             return Object.assign(
-                {}, state, {fetchingAnnotationsError: action.payload}
+                {}, state, {uploadAnnotationsError: action.payload.response.data}
             );
         },
         FULFILLED: (state, action) => {
             let annotationShapefileProps = action.payload.data;
             return Object.assign({}, state, {
                 annotationShapefileProps,
-                fetchingAnnotations: false
+                fetchingAnnotations: false,
+                uploadAnnotationsError: null
             });
         }
     },
     [ANNOTATIONS_IMPORT_SHAPEFILE]: {
         PENDING: (state) => {
-            return Object.assign({}, state, {fetchingAnnotations: true});
+            return Object.assign({}, state, {
+                fetchingAnnotations: true,
+                uploadAnnotationsError: null
+            });
         },
         REJECTED: (state, action) => {
             return Object.assign(
-                {}, state, {fetchingAnnotationsError: action.payload}
+                {}, state, {uploadAnnotationsError: action.payload.response.data}
             );
         },
         FULFILLED: (state, action) => {
@@ -82,7 +89,8 @@ export const annotationReducer = typeToReducer({
             return Object.assign({}, state, {
                 annotations,
                 fetchingAnnotations: false,
-                annotationShapefileProps: []
+                annotationShapefileProps: [],
+                uploadAnnotationsError: null
             });
         }
     },

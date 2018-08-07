@@ -8,6 +8,9 @@
       <h5 class="sidebar-title">Import Annotations</h5>
     </div>
     <div class="list-group" ng-show="!$ctrl.uploadData">
+      <div class="color-danger font-700 text-center annotation-upload-error" ng-if="$ctrl.uploadAnnotationsError">
+        {{$ctrl.uploadAnnotationsError}}
+      </div>
       <div class="list-group-item">
         <label class="btn btn-primary btn-block btn-upload-label"
                for="geojson-btn-upload"
