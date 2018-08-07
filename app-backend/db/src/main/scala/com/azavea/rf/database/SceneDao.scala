@@ -130,9 +130,9 @@ object SceneDao extends Dao[Scene] with LazyLogging {
          boundary_status, ingest_status, scene_type
       )""" ++ fr"""VALUES (
         ${scene.id}, ${scene.createdAt}, ${scene.createdBy}, ${scene.modifiedAt}, ${scene.modifiedBy}, ${scene.owner},
-        ${scene.visibility}, ${scene.tags},
-        ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name}, ${scene.tileFootprint},
-        ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
+        ${scene.visibility}, ${scene.tags}, ${scene.datasource}, ${scene.sceneMetadata}, ${scene.name},
+        ST_MakeValid(${scene.tileFootprint}), ST_MakeValid(${scene.dataFootprint}), ${scene.metadataFiles},
+        ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
         ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(SceneType.Avro)}
