@@ -4,7 +4,8 @@ export default class NewExportController {
     constructor(
         $scope, $state, $timeout,
         projectService, analysisService, mapService,
-        projectEditService, exportService
+        projectEditService, exportService, authService,
+        modalService
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -121,7 +122,33 @@ export default class NewExportController {
     }
 
     updateTarget(target) {
-        this.exportTarget = target;
+        if (target.value === 'dropbox') {
+            let hasDropbox = this.authService.user.dropboxCredential &&
+                this.authService.user.dropboxCredential.length;
+            if (hasDropbox) {
+                this.exportTarget = target;
+                let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
+                this.exportOptions.source = `dropbox:///${appName}/analyses/${this.analysisId}`;
+            } else {
+                this.displayDropboxModal();
+            }
+        } else {
+            this.exportTarget = target;
+        }
+    }
+
+    displayDropboxModal() {
+        this.modalService.open({
+            component: 'rfConfirmationModal',
+            resolve: {
+                title: () => 'You don\'t have Dropbox credential set',
+                content: () => 'Go to your API connections page and set one?',
+                confirmText: () => 'Add Dropbox credential',
+                cancelText: () => 'Cancel'
+            }
+        }).result.then((resp) => {
+            this.$state.go('user.settings.connections');
+        });
     }
 
     handleOptionChange(state, option) {
