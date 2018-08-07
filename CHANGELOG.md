@@ -1,5 +1,24 @@
 # Change Log
 
+## [1.8.0](https://github.com/raster-foundry/raster-foundry/tree/1.8.0) (2018-08-07)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.7.1...1.8.0)
+
+**Merged pull requests:**
+
+- Enable requester pays for Sentinel-2 bucket access [\#3822](https://github.com/raster-foundry/raster-foundry/pull/3822)
+- UI improvements and frontend scene query fix [\#3817](https://github.com/raster-foundry/raster-foundry/pull/3817)
+- Correct scene geometry on insert [\#3816](https://github.com/raster-foundry/raster-foundry/pull/3816)
+- Don't list entire scenes table in export definition creation [\#3812](https://github.com/raster-foundry/raster-foundry/pull/3812)
+- Add Lab Async Exports [\#3809](https://github.com/raster-foundry/raster-foundry/pull/3809)
+- Hide location search button in maps when a modal is open [\#3806](https://github.com/raster-foundry/raster-foundry/pull/3806)
+- Fix select in permission modal cutting off text [\#3802](https://github.com/raster-foundry/raster-foundry/pull/3802)
+- Fix dependency conflicts [\#3798](https://github.com/raster-foundry/raster-foundry/pull/3798)
+- Fix preview changing when node histogram is opened [\#3790](https://github.com/raster-foundry/raster-foundry/pull/3790)
+- Remove ingestSizeBytes from scenes [\#3784](https://github.com/raster-foundry/raster-foundry/pull/3784)
+- Support lab analysis result async export [\#3782](https://github.com/raster-foundry/raster-foundry/pull/3782)
+- Select shapes from the aoi parameters panel [\#3780](https://github.com/raster-foundry/raster-foundry/pull/3780)
+
 ## [1.7.1](https://github.com/raster-foundry/raster-foundry/tree/1.7.1) (2018-08-02)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.7.0...1.7.1)
