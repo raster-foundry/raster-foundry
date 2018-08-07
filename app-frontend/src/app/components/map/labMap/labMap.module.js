@@ -451,7 +451,6 @@ class LabMapController {
                 cancelText: () => 'Cancel'
             }
         }).result.then((resp) => {
-            this.$log.log(resp);
             this.$state.go('user.settings.connections');
         });
     }

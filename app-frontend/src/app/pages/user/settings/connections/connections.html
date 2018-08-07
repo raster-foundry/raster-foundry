@@ -17,7 +17,7 @@
                tooltip-class="rf-tooltip" tooltip-side="bottom" ></span>
           </div>
           <button type="button"
-                  class="btn btn-tertiary btn-square"
+                  class="btn btn-tertiary"
                   ng-if="$ctrl.dropboxConnected"
                   ng-click="$ctrl.reconnectToDropbox()"
                   ng-mouseover="$ctrl.mouseOverDropbox = true"
@@ -36,7 +36,7 @@
 
           </button>
           <button type="button"
-                  class="btn btn-tertiary btn-square"
+                  class="btn btn-tertiary"
                   ng-click="$ctrl.connectToDropbox()"
                   ng-if="!$ctrl.dropboxConnected"
                   ng-disabled="!$ctrl.user">
@@ -63,7 +63,7 @@
             ></span>
           </div>
           <button type="button"
-                  class="btn btn-tertiary btn-square"
+                  class="btn btn-tertiary"
                   ng-click="$ctrl.connectToPlanet()"
                   ng-disabled="!$ctrl.user">
             Set Api Token

@@ -1,4 +1,4 @@
-/* global BUILDCONFIG */
+/* global BUILDCONFIG, HELPCONFIG */
 class RasterListController {
     constructor(authService, $uibModal, platform) {
         'ngInject';
@@ -9,6 +9,7 @@ class RasterListController {
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
+        this.HELPCONFIG = HELPCONFIG;
     }
 
     $onDestroy() {

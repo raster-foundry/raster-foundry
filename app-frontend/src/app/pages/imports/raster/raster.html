@@ -33,16 +33,14 @@
           <p class="font-size-small">
             Datasources are how {{$ctrl.BUILDCONFIG.APP_NAME}} stores common information about scenes that share similar structure - typically metadata such as band information that is useful to carry across scenes.
             <ul class="list-unstyled">
-              <li><a href="#">View your datasources</a></li>
-              <li><a href="#">Create a datasources</a></li>
+              <li><a ui-sref="imports.datasources.list">View your datasources</a></li>
             </ul>
           </p>
         </section>
         <section class="aside-footer">
           <h5>Have other questions?</h5>
           <ul class="list-unstyled">
-            <li><a>Getting started with imports</a></li>
-            <li><a>How to create a datasource</a></li>
+            <li><a ng-href="{{$ctrl.HELPCONFIG.HELP_HOME}}" target="_blank">Getting started with imports</a></li>
           </ul>
         </section>
       </div>

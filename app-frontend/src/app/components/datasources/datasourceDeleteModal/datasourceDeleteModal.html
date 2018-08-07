@@ -8,6 +8,12 @@
   </h4>
 </div>
 <div class="modal-body">
+	<div ng-if="$ctrl.checkInProgress">
+		<span class="icon-load animate-spin"
+					ng-class="{'stop': !$ctrl.checkInProgress}"
+		></span>
+		Checking for uploads and scenes associated with this datasource...
+	</div>
   <div ng-bind-html="$ctrl.deleteMsg"></div>
 </div>
 <div class="modal-footer">
