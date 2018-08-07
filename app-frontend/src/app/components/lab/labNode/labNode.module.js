@@ -30,16 +30,16 @@ class LabNodeController {
         });
         $scope.$watch('$ctrl.selectingNode', (selectingNode) => {
             if (selectingNode) {
-                this.$element.addClass('selectable');
+                this.$element.addClass('selectable-node');
             } else {
-                this.$element.removeClass('selectable');
+                this.$element.removeClass('selectable-node');
             }
         });
         $scope.$watch('$ctrl.selectedNode', (selectedNode) => {
             if (selectedNode === this.nodeId) {
-                this.$element.addClass('selected');
+                this.$element.addClass('selected-node');
             } else {
-                this.$element.removeClass('selected');
+                this.$element.removeClass('selected-node');
             }
         });
     }
@@ -51,6 +51,7 @@ class LabNodeController {
     mapStateToThis(state) {
         return {
             readonly: state.lab.readonly,
+            preventSelecting: state.lab.preventSelecting,
             analysis: state.lab.analysis,
             selectingNode: state.lab.selectingNode,
             selectedNode: state.lab.selectedNode,
@@ -152,7 +153,7 @@ class LabNodeController {
     }
 
     onNodeClick(event) {
-        if (this.selectingNode && this.selectedNode !== this.nodeId) {
+        if (this.selectingNode && this.selectedNode !== this.nodeId && !this.preventSelecting) {
             event.stopPropagation();
             this.selectNode(this.nodeId);
         }

@@ -50,12 +50,10 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     val updateF: Fragment =fr"""
       UPDATE scenes_to_projects
       SET accepted = true
-      WHERE
-        project_id = ${projectId}
-        AND
-        scene_id IN (""" ++
-      Fragment.const(sceneIds.map(_.show).foldSmash("'", "','", "'")) ++
-      fr")"
+    """ ++ Fragments.whereAnd(
+      fr"project_id = $projectId",
+      Fragments.in(fr"scene_id", sceneIds)
+    )
     updateF.update.run
   }
 

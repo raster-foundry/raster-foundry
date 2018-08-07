@@ -150,7 +150,7 @@ object Generators extends ArbitraryInstances {
     multiPolygonGen3857 map { Projected(_, 3857) }
 
   private def annotationGroupCreateGen: Gen[AnnotationGroup.Create] = for {
-    name <- arbitrary[String]
+    name <- nonEmptyStringGen
     defaultStyle <- Gen.const(Some(().asJson))
   } yield { AnnotationGroup.Create(name, defaultStyle)}
 
@@ -324,7 +324,6 @@ object Generators extends ArbitraryInstances {
 
   private def sceneCreateGen: Gen[Scene.Create] = for {
     sceneId <- uuidGen map { Some(_) }
-    ingestSizeBytes <- Gen.const(0)
     visibility <- Gen.const(Visibility.Private)
     tags <- stringListGen
     datasource <- uuidGen
@@ -341,7 +340,7 @@ object Generators extends ArbitraryInstances {
     statusFields <- sceneStatusFieldsGen
     sceneType <- Gen.option(sceneTypeGen)
   } yield {
-    Scene.Create(sceneId, ingestSizeBytes, visibility, tags,
+    Scene.Create(sceneId, visibility, tags,
                  datasource, sceneMetadata, name, owner, tileFootprint, dataFootprint,
                  metadataFiles, images, thumbnails, ingestLocation, filterFields, statusFields,
                  sceneType)

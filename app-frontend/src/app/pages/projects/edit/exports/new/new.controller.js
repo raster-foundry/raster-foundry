@@ -1,81 +1,21 @@
-const availableResolutions = [
-    {
-        label: '~300m',
-        value: 9
-    },
-    {
-        label: '~150m',
-        value: 10
-    },
-    {
-        label: '~75m',
-        value: 11
-    },
-    {
-        label: '~38m',
-        value: 12
-    },
-    {
-        label: '~19m',
-        value: 13
-    },
-    {
-        label: '~10m',
-        value: 14
-    },
-    {
-        label: '~5m',
-        value: 15
-    },
-    {
-        label: '~2m',
-        value: 16
-    },
-    {
-        label: '~1m',
-        value: 17
-    },
-    {
-        label: '~0.5m',
-        value: 18
-    },
-    {
-        label: '~0.3m',
-        value: 19
-    }
-];
-
-const availableTargets = [
-    {
-        label: 'Download',
-        value: 'internalS3',
-        default: true
-    }, {
-        label: 'S3 Bucket',
-        value: 'externalS3'
-    }, {
-        label: 'Dropbox',
-        value: 'dropbox'
-    }
-];
+/* globals BUILDCONFIG */
 
 export default class NewExportController {
     constructor(
         $scope, $state, $timeout,
         projectService, analysisService, mapService,
-        projectEditService
+        projectEditService, exportService, authService,
+        modalService
     ) {
         'ngInject';
-        this.$scope = $scope;
+        $scope.autoInject(this, arguments);
+
         this.$parent = this.$scope.$parent.$ctrl;
-        this.$state = $state;
-        this.$timeout = $timeout;
-        this.projectService = projectService;
-        this.projectEditService = projectEditService;
-        this.analysisService = analysisService;
-        this.availableResolutions = availableResolutions;
-        this.availableTargets = availableTargets;
+
+        this.availableResolutions = this.exportService.getAvailableResolutions();
+        this.availableTargets = this.exportService.getAvailableTargets();
         this.availableProcessingOptions = this.projectService.availableProcessingOptions;
+
         this.getMap = () => mapService.getMap('edit');
     }
 
@@ -94,7 +34,7 @@ export default class NewExportController {
         // Export defaults
         this.exportOptions = {
             resolution: 9,
-            stitch: false,
+            stitch: true,
             crop: false,
             raw: false
         };
@@ -182,7 +122,33 @@ export default class NewExportController {
     }
 
     updateTarget(target) {
-        this.exportTarget = target;
+        if (target.value === 'dropbox') {
+            let hasDropbox = this.authService.user.dropboxCredential &&
+                this.authService.user.dropboxCredential.length;
+            if (hasDropbox) {
+                this.exportTarget = target;
+                let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
+                this.exportOptions.source = `dropbox:///${appName}/analyses/${this.analysisId}`;
+            } else {
+                this.displayDropboxModal();
+            }
+        } else {
+            this.exportTarget = target;
+        }
+    }
+
+    displayDropboxModal() {
+        this.modalService.open({
+            component: 'rfConfirmationModal',
+            resolve: {
+                title: () => 'You don\'t have Dropbox credential set',
+                content: () => 'Go to your API connections page and set one?',
+                confirmText: () => 'Add Dropbox credential',
+                cancelText: () => 'Cancel'
+            }
+        }).result.then((resp) => {
+            this.$state.go('user.settings.connections');
+        });
     }
 
     handleOptionChange(state, option) {
@@ -230,7 +196,8 @@ export default class NewExportController {
         if (this.getCurrentTarget().value === 'externalS3') {
             this.exportOptions.source = this.exportTargetURI;
         } else if (this.getCurrentTarget().value === 'dropbox') {
-            this.exportOptions.source = `dropbox:///${this.project.id}`;
+            let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
+            this.exportOptions.source = `dropbox:///${appName}/projects/${this.project.id}`;
         }
     }
 

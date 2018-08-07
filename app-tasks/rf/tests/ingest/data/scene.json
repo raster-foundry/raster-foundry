@@ -40,7 +40,6 @@
     "Landsat 8",
     "GeoTIFF"
   ],
-  "ingestSizeBytes": 0,
   "statusFields": {
     "thumbnailStatus": "SUCCESS",
     "boundaryStatus": "SUCCESS",

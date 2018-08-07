@@ -29,6 +29,7 @@ const INITIAL_LAB_STATE = {
 
     // node state
     nodes: new Map(), previewNodes: [], selectingNode: null, selectedNode: null,
+    preventSelecting: false,
 
     // histogram & statistics state
     histograms: new Map(), statistics: new Map()

@@ -64,7 +64,7 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
   def layerExists(layerId: LayerId)(implicit xa: Transactor[IO]): ConnectionIO[Boolean] = {
     (fr"SELECT 1 FROM" ++ tableF ++ fr"""
       WHERE layer_name = ${layerId.name} LIMIT 1
-    """).query[Int].list.map(!_.isEmpty)
+    """).query[Int].to[List].map(!_.isEmpty)
   }
 
   def delete(layerId: LayerId)(implicit xa: Transactor[IO]) = {
@@ -84,26 +84,26 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
 
   def layerIds(implicit xa: Transactor[IO]): ConnectionIO[List[(String, Int)]] = {
     (fr"SELECT layer_name, zoom FROM" ++ tableF)
-      .query[(String, Int)].list
+      .query[(String, Int)].to[List]
   }
 
   def layerIds(layerNames: Set[String])(implicit xa: Transactor[IO]): ConnectionIO[List[(String, Int)]] = {
     val f1 = layerNames.toList.toNel.map(lns => in(fr"layer_name", lns))
                                         (fr"SELECT layer_name, zoom FROM" ++ tableF ++ whereAndOpt(f1))
-      .query[(String, Int)].list
+      .query[(String, Int)].to[List]
   }
 
   def maxZoomsForLayers(layerNames: Set[String])(implicit xa: Transactor[IO]): ConnectionIO[List[(String, Int)]] = {
     val f1 = layerNames.toList.toNel.map(lns => in(fr"layer_name", lns))
     (fr"SELECT layer_name, COALESCE(MAX(zoom), 0) as zoom FROM" ++ tableF  ++ whereAndOpt(f1) ++ fr"GROUP BY layer_name")
       .query[(String, Int)]
-      .list
+      .to[List]
   }
 
   def availableAttributes(layerId: LayerId)(implicit xa: Transactor[IO]): ConnectionIO[List[String]] = {
     val f1 = fr"layer_name = ${layerId.name}"
     val f2 = fr"zoom = ${layerId.zoom}"
-    (fr"SELECT name FROM" ++ tableF ++ whereAnd(f1, f2)).query[String].list
+    (fr"SELECT name FROM" ++ tableF ++ whereAnd(f1, f2)).query[String].to[List]
   }
 }
 

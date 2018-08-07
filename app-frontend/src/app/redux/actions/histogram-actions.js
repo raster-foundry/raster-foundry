@@ -1,38 +1,12 @@
 import {authedRequest} from '_api/authentication';
-import {colorStopsToRange} from '_redux/histogram-utils';
+import {colorStopsToRange, createRenderDefinition} from '_redux/histogram-utils';
 import {getNodeDefinition, astFromNodes} from '_redux/node-utils';
 import {NODE_UPDATE_HARD} from './node-actions';
-
-const { colorSchemes: colorSchemes } = require('../../services/projects/colorScheme.defaults.json');
 
 export const HISTOGRAM_FETCH = 'HISTOGRAM_FETCH';
 export const HISTOGRAM_UPDATE = 'HISTOGRAM_UPDATE';
 
 export const HISTOGRAM_ACTION_PREFIX = 'HISTOGRAM';
-
-function createRenderDefinition(histogram) {
-    let min = histogram.minimum;
-    let max = histogram.maximum;
-
-    let defaultColorScheme = colorSchemes.find(
-        s => s.label === 'Viridis'
-    );
-    let breakpoints = colorStopsToRange(defaultColorScheme.colors, min, max);
-    let renderDefinition = {clip: 'none', scale: 'SEQUENTIAL', breakpoints};
-    let histogramOptions = {range: {min, max}, baseScheme: {
-        colorScheme: Object.entries(defaultColorScheme.colors)
-            .map(([key, val]) => ({break: key, color: val}))
-            .sort((a, b) => a.break - b.break)
-            .map((c) => c.color),
-        dataType: 'SEQUENTIAL',
-        colorBins: 0
-    }};
-
-    return {
-        renderDefinition,
-        histogramOptions
-    };
-}
 
 // Histogram ActionCreators
 export function fetchHistogram(nodeId) {
@@ -75,7 +49,7 @@ export function fetchHistogram(nodeId) {
                                 })
                             }
                         );
-                        let updatedAnalysis = astFromNodes(callbackState.lab, newNodeDefinition);
+                        let updatedAnalysis = astFromNodes(callbackState.lab, [newNodeDefinition]);
                         let promise = authedRequest({
                             method: 'put',
                             url: `${callbackState.api.apiUrl}` +
@@ -119,7 +93,7 @@ export function updateRenderDefinition({nodeId, renderDefinition, histogramOptio
             })
         });
 
-        const updatedAnalysis = astFromNodes(state.lab, newNodeDefinition);
+        const updatedAnalysis = astFromNodes(state.lab, [newNodeDefinition]);
         dispatch({
             type: NODE_UPDATE_HARD,
             payload: authedRequest({

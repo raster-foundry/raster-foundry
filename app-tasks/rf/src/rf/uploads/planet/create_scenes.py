@@ -76,10 +76,8 @@ def create_planet_scene(planet_feature, datasource, planet_key,
     name = planet_feature['id']
     acquisitionDate = props['acquired']
     cloudCover = props['cloud_cover']
-    ingestSizeBytes = 0 # TODO
     visibility = visibility
     tags = tags
-    dataFootprint = planet_feature['geometry']['coordinates']
 
     scene_kwargs = {
         'sunAzimuth': props['sun_azimuth'],
@@ -105,7 +103,6 @@ def create_planet_scene(planet_feature, datasource, planet_key,
     )]
 
     scene = Scene(
-        ingestSizeBytes,
         visibility,
         tags,
         datasource,

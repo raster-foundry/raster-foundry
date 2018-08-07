@@ -1,4 +1,4 @@
-/* globals BUILDCONFIG, mathjs*/
+/* globals BUILDCONFIG, mathjs, _*/
 import angular from 'angular';
 import turfArea from '@turf/area';
 import turfDistance from '@turf/distance';
@@ -16,31 +16,45 @@ const LabMapComponent = {
     controller: 'LabMapController',
     bindings: {
         mapId: '@',
+        analysisId: '@?',
         options: '<?',
         initialCenter: '<?',
         onClose: '&',
         onCompareClick: '&',
-        comparing: '<'
+        comparing: '<',
+        enableNodeExport: '<?',
+        setDefaultExportNode: '&'
     }
 };
 
 class LabMapController {
     constructor(
-        $log, $document, $element, $scope, $timeout, $compile,
-        mapService
+        $rootScope, $log, $state, $document, $element, $scope, $timeout, $compile,
+        $window, $ngRedux, mapService, authService, exportService, modalService
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$document = $document;
-        this.$element = $element;
-        this.$scope = $scope;
-        this.$timeout = $timeout;
-        this.$compile = $compile;
-        this.mapService = mapService;
+        $rootScope.autoInject(this, arguments);
         this.getMap = () => this.mapService.getMap(this.mapId);
+
+        this.availableResolutions = this.exportService.getAvailableResolutions();
+        this.availableTargets = this.exportService.getAvailableTargets(false);
+
+        $ngRedux.subscribe(() => {
+            this.state = $ngRedux.getState();
+            this.nodes = this.state.lab.nodes;
+            if (this.nodes) {
+                let resultNode = this.nodes.toArray().find(node => node.args.length);
+                if (resultNode) {
+                    this.resultNodeId = resultNode.id;
+                }
+            }
+        });
     }
 
     $onInit() {
+        if (this.enableNodeExport) {
+            this.exportOptions = {};
+        }
         this.initMap();
     }
 
@@ -81,7 +95,11 @@ class LabMapController {
         }).setView(
             this.initialCenter ? this.initialCenter : [0, 0],
             this.initialZoom ? this.initialZoom : 2
-        );
+        ).on('zoom', () => {
+            this.zoomLevel = this.map.getZoom();
+            this.exportOptions.resolution = this.zoomLevel;
+            this.$scope.$evalAsync();
+        });
 
 
         this.$timeout(() => {
@@ -93,6 +111,15 @@ class LabMapController {
 
         this.basemapOptions = BUILDCONFIG.BASEMAPS.layers;
         this.basemapKeys = Object.keys(this.basemapOptions);
+    }
+
+    setDefaultExportOptions() {
+        this.exportOptions = {
+            resolution: this.map.getZoom(),
+            stitch: true,
+            crop: false,
+            raw: false
+        };
     }
 
     setDrawListeners() {
@@ -126,11 +153,13 @@ class LabMapController {
     zoomIn() {
         this.map.zoomIn();
         this.$timeout(() => {}, 500);
+        this.zoomLevel = this.map.getZoom();
     }
 
     zoomOut() {
         this.map.zoomOut();
         this.$timeout(()=> {}, 500);
+        this.zoomLevel = this.map.getZoom();
     }
 
     toggleLayerPicker(event) {
@@ -203,7 +232,12 @@ class LabMapController {
 
     createMeasureShape(e) {
         this.disableDrawHandlers();
-        this.addMeasureShapeToMap(e.layer, e.layerType);
+        if (e.layerType === 'rectangle') {
+            this.drawBboxRectangleHandler.disable();
+            this.addExportBboxToMap(e.layer);
+        } else {
+            this.addMeasureShapeToMap(e.layer, e.layerType);
+        }
     }
 
     disableDrawHandlers() {
@@ -282,6 +316,84 @@ class LabMapController {
         }
     }
 
+    toggleQuickExport(event) {
+        event.stopPropagation();
+        this.setDefaultExportOptions();
+        this.setDefaultTarget();
+        if (this.quickExportOpen) {
+            this.onExportCancel();
+        } else {
+            this.quickExportOpen = true;
+            this.setBboxDrawHandlers();
+            this.drawBboxRectangleHandler.enable();
+            if (this.resultNodeId !== this.lastResultNodeId) {
+                this.setDefaultExportNode({nodeId: this.resultNodeId});
+                this.lastResultNodeId = this.resultNodeId;
+            }
+        }
+    }
+
+    setBboxDrawHandlers() {
+        this.drawBboxRectangleHandler = new L.Draw.Rectangle(this.mapWrapper.map, {
+            allowIntersection: false,
+            shapeOptions: {
+                weight: 2,
+                fillOpacity: 0.2,
+                color: GREEN,
+                fillColor: GREEN
+            }
+        });
+    }
+
+    addExportBboxToMap(layer) {
+        this.exportOptions.mask = {
+            coordinates: [layer.toGeoJSON().geometry.coordinates],
+            type: 'MultiPolygon'
+        };
+        this.mapWrapper.setLayer('Export', layer, false);
+        this.hasExportBbox = true;
+        this.$scope.$evalAsync();
+    }
+
+    onExportCancel() {
+        delete this.hasExportBbox;
+        delete this.quickExportOpen;
+        delete this.exportConfirmed;
+        delete this.exportNotice;
+        delete this.isExportCreating;
+        delete this.isExportCreated;
+        this.drawBboxRectangleHandler.disable();
+        this.mapWrapper.deleteLayers('Export');
+    }
+
+    onExportConfirm() {
+        this.exportConfirmed = true;
+        this.isExportCreating = true;
+
+        let resolution = this.getCurrentResolution().value;
+
+        this.exportService
+            .exportLabNode(
+                this.analysisId,
+                this.exportTarget.value === 'dropbox' ? {exportType: 'DROPBOX'} : {},
+                Object.assign(this.exportOptions, {resolution}))
+            .then(() => {
+                this.exportNotice =
+                    'Your export job has been created. '
+                    + 'Please check it from your list of analyses later.';
+            }, err => {
+                this.$log.error(err);
+                this.exportNotice =
+                    'Your export job has failed to create. '
+                    + 'Please try again later.';
+            })
+            .finally(() => {
+                delete this.isExportCreating;
+                this.isExportCreated = true;
+            });
+    }
+
+
     toggleMeasure(shapeType) {
         if (shapeType === 'Polygon') {
             this.drawPolygonHandler.enable();
@@ -296,6 +408,51 @@ class LabMapController {
         this.mapWrapper.deleteLayers('Measurement');
         this.disableDrawHandlers();
         this.onClose();
+    }
+
+    updateResolution(res) {
+        this.exportOptions.resolution = res;
+    }
+
+    getCurrentResolution() {
+        const resolutionValue = this.exportOptions ? this.exportOptions.resolution : 9;
+        return this.availableResolutions
+            .find(r => r.value === resolutionValue) || this.availableResolutions[0];
+    }
+
+    setDefaultTarget() {
+        this.exportTarget = this.availableTargets.find(t => t.default) ||
+            this.availableTargets[0];
+    }
+
+    updateTarget(target) {
+        if (target.value === 'dropbox') {
+            let hasDropbox = this.authService.user.dropboxCredential &&
+                this.authService.user.dropboxCredential.length;
+            if (hasDropbox) {
+                this.exportTarget = target;
+                let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
+                this.exportOptions.source = `dropbox:///${appName}/analyses/${this.analysisId}`;
+            } else {
+                this.displayDropboxModal();
+            }
+        } else {
+            delete this.exportOptions.source;
+        }
+    }
+
+    displayDropboxModal() {
+        this.modalService.open({
+            component: 'rfConfirmationModal',
+            resolve: {
+                title: () => 'You don\'t have Dropbox credential set',
+                content: () => 'Go to your API connections page and set one?',
+                confirmText: () => 'Add Dropbox credential',
+                cancelText: () => 'Cancel'
+            }
+        }).result.then((resp) => {
+            this.$state.go('user.settings.connections');
+        });
     }
 }
 

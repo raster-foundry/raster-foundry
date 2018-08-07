@@ -11,7 +11,6 @@ import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.maml.serve._
 import com.azavea.maml.eval._
 import io.circe.parser._
 import io.circe.syntax._
@@ -75,7 +74,7 @@ object Export extends SparkJob with Config with LazyLogging {
 
           /* Create GeoTiffs and output them */
           val singles: RDD[(SpatialKey, SinglebandGeoTiff)] =
-            rdd.map({ case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs)) })
+            targetRDD.map({ case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs)) })
 
           writeGeoTiffs[Tile, SinglebandGeoTiff](singles, ed, conf)
         } else {
@@ -264,7 +263,8 @@ object Export extends SparkJob with Config with LazyLogging {
       writeGeoTiffS3[T, G](tiff, path(ed))
     }
     case "file" => {
-      tiff.write(ed.output.source.getPath)
+      logger.info(s"Writing File Output: ${path(ed)}")
+      tiff.write(path(ed))
     }
     case _ => throw new Exception(s"Unknown schema for output location ${ed.output.source}")
   }
@@ -275,8 +275,9 @@ object Export extends SparkJob with Config with LazyLogging {
     ed: ExportDefinition,
     conf: HadoopConfiguration
   ): Unit = {
+
     def path(key: SpatialKey): ExportDefinition => String = { ed =>
-      s"${ed.output.getURLDecodedSource}/${ed.input.resolution}-${key.col}-${key.row}-${ed.id}.tiff"
+      s"${ed.output.source.getPath}/${ed.input.resolution}-${key.col}-${key.row}-${ed.id}.tiff"
     }
 
     rdd.foreachPartition({ iter =>
@@ -300,7 +301,10 @@ object Export extends SparkJob with Config with LazyLogging {
     val exportDef =
       decode[ExportDefinition](readString(params.jobDefinition)) match {
         case Right(r) => r
-        case _ => throw new Exception("Incorrect ExportDefinition JSON")
+        case Left(e) => {
+          logger.error(e.stackTraceString)
+          throw new Exception("Incorrect ExportDefinition JSON")
+        }
       }
 
     implicit val sc = new SparkContext(conf)

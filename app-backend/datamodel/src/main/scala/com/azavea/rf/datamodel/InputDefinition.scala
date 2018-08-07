@@ -17,17 +17,15 @@ import io.circe.syntax._
   * cropping / stitching.
   */
 case class InputDefinition(
-  projectId: Option[UUID],  // TODO: Might not be necessary.
   resolution: Int,
   style: Either[SimpleInput, ASTInput]
 )
 
 object InputDefinition {
   implicit val dec: Decoder[InputDefinition] = Decoder.instance(c =>
-    (c.downField("projectId").as[Option[UUID]]
-      |@| c.downField("resolution").as[Int]
-      |@| c.downField("style").as[SimpleInput].map(Left(_))
-           .orElse(c.downField("style").as[ASTInput].map(Right(_)))
+      (c.downField("resolution").as[Int]
+       |@| c.downField("style").as[SimpleInput].map(Left(_))
+         .orElse(c.downField("style").as[ASTInput].map(Right(_)))
     ).map(InputDefinition.apply)
   )
 
@@ -39,9 +37,7 @@ object InputDefinition {
   }
 
   implicit val enc: Encoder[InputDefinition] =
-    Encoder.forProduct3("projectId", "resolution", "style")(u =>
-      (u.projectId, u.resolution, u.style)
-    )
+    Encoder.forProduct2("resolution", "style")(u => (u.resolution, u.style))
 }
 
 @JsonCodec

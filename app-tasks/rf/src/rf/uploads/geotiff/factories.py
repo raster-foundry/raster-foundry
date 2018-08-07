@@ -6,9 +6,8 @@ import boto3
 
 from .create_images import create_geotiff_image
 from .create_scenes import create_geotiff_scene
-from .io import s3_bucket_and_key_from_url
 from .utils import convert_to_cog
-from rf.utils.io import Visibility, IngestStatus, upload_tifs
+from rf.utils.io import Visibility, IngestStatus, upload_tifs, s3_bucket_and_key_from_url
 from rf.uploads.landsat8.io import get_tempdir
 
 import urllib

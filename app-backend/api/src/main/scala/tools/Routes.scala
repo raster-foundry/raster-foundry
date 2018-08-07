@@ -7,7 +7,6 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast._
 import com.azavea.rf.tool.ast.codec._
 import com.azavea.rf.database.filter.Filterables._
-import com.azavea.maml.serve._
 import io.circe._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
@@ -32,7 +31,6 @@ trait ToolRoutes extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with KamonTraceDirectives
-    with InterpreterExceptionHandling
     with UserErrorHandler {
 
   val xa: Transactor[IO]
@@ -193,7 +191,7 @@ trait ToolRoutes extends Authentication
 
   def validateAST: Route = authenticate { user =>
     entity(as[Json]) { jsonAst =>
-      handleExceptions(interpreterExceptionHandler) {
+      {
         complete {
           jsonAst.as[MapAlgebraAST] match {
             case Right(ast) =>

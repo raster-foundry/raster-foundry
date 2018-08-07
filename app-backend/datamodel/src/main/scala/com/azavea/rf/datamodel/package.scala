@@ -14,7 +14,7 @@ import io.circe.syntax._
 
 import com.azavea.rf.bridge._
 
-import geotrellis.vector._
+import geotrellis.vector.{Projected => _, _}
 import geotrellis.vector.io._
 import geotrellis.proj4._
 import geotrellis.slick._

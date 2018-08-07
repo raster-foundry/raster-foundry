@@ -1046,6 +1046,10 @@ rf-map-container:-webkit-full-screen {
     outline: transparent;
   }
   user-select: none;
+
+  &.export-dropdown-control {
+    width: 25em;
+  }
 }
 
 .layer-picker-title {
@@ -2985,7 +2989,7 @@ rf-reclassify-table {
     margin-bottom: 0;
 }
 
-.selectable {
+.selectable-node {
     pointer-events: auto;
     cursor: pointer;
     * {
@@ -2995,6 +2999,15 @@ rf-reclassify-table {
         /* outline: 2px solid $brand-secondary; */
         /* outline-radius: 5px; */
         box-shadow: 0 0 3pt 2pt $brand-secondary;
+    }
+}
+.selected-node {
+    pointer-events: auto;
+    cursor: not-allowed;
+    box-shadow: 0 0 3pt 2pt $brand-secondary;
+
+    * {
+        pointer-events: none;
     }
 }
 
@@ -3254,4 +3267,9 @@ rf-navbar-search {
     right: 0;
     bottom: 0;
     text-align: center;
+}
+
+// components/exports/exportAnalysisDownloadModal/exportAnalysisDownloadModal.html
+.export-modal-download-btn {
+  width: 155px;
 }

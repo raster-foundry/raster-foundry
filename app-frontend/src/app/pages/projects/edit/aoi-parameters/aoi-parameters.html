@@ -1,11 +1,4 @@
 <div class="sidebar-overlay" ng-show="$ctrl.drawing"></div>
-<rf-draw-toolbar
-  ng-if="$ctrl.drawing"
-  map-id="edit"
-  geom="$ctrl.aoiPolygons"
-  options="$ctrl.drawOptions"
-  on-save="$ctrl.onAoiSave(polygons)"
-  on-cancel="$ctrl.onAoiCancel()"></rf-draw-toolbar>
 <div class="sidebar-header">
   <a class="btn sidebar-header-nav-btn" ui-sref="projects.edit">
     <i class="icon-arrow-left"></i>
@@ -13,15 +6,13 @@
   <h5 class="sidebar-title">AOI Parameters</h5>
 </div>
 <ul class="sidebar-list" ng-if="$ctrl.project">
-  <li class="separator separator-primary">
-    <div class="label">
-      Area of Interest
-      <div class="info">Required</div>
-    </div>
-    <button class="btn btn-default fixedwidth"
-            ng-click="$ctrl.startDrawing()">
-      Edit Area of Interest
-    </button>
+  <li class="separator">
+    <rf-shape-filter
+        class="aoi-shape-filter"
+        data-filter="$ctrl.shapeParams"
+        data-shape="$ctrl.shape"
+        on-filter-change="$ctrl.onShapeChange(filter, filterParams)"
+    ></rf-shape-filter>
     <i class="icon-info"></i>
   </li>
   <li class="separator">
@@ -73,7 +64,7 @@
   <button class="btn btn-block"
           type="button"
           ng-click="$ctrl.saveParameters()"
-          ng-disabled="!$ctrl.aoiPolygons || $ctrl.isSavingParameters() || $ctrl.unsupportedAois"
+          ng-disabled="!$ctrl.shape || $ctrl.isSavingParameters() || $ctrl.unsupportedAois"
           ng-class="{
                  'btn-primary': !$ctrl.error,
                  'btn-warning': $ctrl.error

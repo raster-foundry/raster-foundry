@@ -235,12 +235,12 @@ object Dao {
     }
 
     def pageOffset[T: Composite](pageRequest: PageRequest): ConnectionIO[List[T]] =
-      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[T].list
+      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[T].to[List]
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
     def page[T: Composite](pageRequest: PageRequest, selectF: Fragment, countF: Fragment, orderClause: Fragment = fr""): ConnectionIO[PaginatedResponse[T]] = {
       for {
-        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ orderClause ++ Page(pageRequest)).query[T].list
+        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ orderClause ++ Page(pageRequest)).query[T].to[List]
         count <- (countF ++ Fragments.whereAndOpt(filters: _*)).query[Int].unique
       } yield {
         val hasPrevious = pageRequest.offset > 0
@@ -259,7 +259,7 @@ object Dao {
 
     /** Provide a list of responses */
     def list(pageRequest: PageRequest): ConnectionIO[List[Model]] = {
-      listQ(pageRequest).list
+      listQ(pageRequest).to[List]
     }
 
     /** Short circuit for quickly getting an approximate count for large queries (e.g. scenes) **/
@@ -284,7 +284,7 @@ object Dao {
 
     /** Provide a list of responses */
     def list(limit: Int): ConnectionIO[List[Model]] = {
-      listQ(limit).list
+      listQ(limit).to[List]
     }
 
     def listQ(offset: Int, limit: Int): Query0[Model] =
@@ -297,16 +297,16 @@ object Dao {
     def list: ConnectionIO[List[Model]] = {
       (selectF ++ Fragments.whereAndOpt(filters: _*))
         .query[Model]
-        .list
+        .to[List]
     }
 
     /** Provide a list of responses */
     def list(offset: Int, limit: Int): ConnectionIO[List[Model]] = {
-      listQ(offset, limit).list
+      listQ(offset, limit).to[List]
     }
 
     def list(offset: Int, limit: Int, orderClause: Fragment): ConnectionIO[List[Model]] = {
-      listQ(offset, limit, orderClause).list
+      listQ(offset, limit, orderClause).to[List]
     }
 
     def selectQ: Query0[Model] =
@@ -339,7 +339,7 @@ object Dao {
     def exists: ConnectionIO[Boolean] = {
       (existF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT 1")
         .query[Int]
-        .list
+        .to[List]
         .map(!_.isEmpty)
     }
 

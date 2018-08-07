@@ -54,7 +54,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
             acquisition_date <= ${nextDay.toString}::timestamp AND
             acquisition_date >= ${previousDay.toString}::timestamp AND
             datasource = ${sentinel2Config.datasourceUUID}::uuid
-      """.query[String].list
+      """.query[String].to[List]
   val existingSceneNames = sceneQuery.transact(xa).unsafeRunSync.toSet
 
   val name = ImportSentinel2.name
@@ -131,7 +131,8 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
         s3bucket  = sentinel2Config.bucketName,
         s3prefix  = s"products/${date.getYear}/${date.getMonthValue}/${date.getDayOfMonth}/",
         ext       = "productInfo.json",
-        recursive = true
+        recursive = true,
+        requesterPays = true
       ).toList
   }
 
@@ -152,7 +153,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     logger.info(s"Getting tile info for ${scenePath}")
     val tileinfo =
       s3Client
-        .getObject(sentinel2Config.bucketName, s"${scenePath}/tileInfo.json")
+        .getObject(sentinel2Config.bucketName, s"${scenePath}/tileInfo.json", true)
         .getObjectContent
         .toJson
         .getOrElse(Json.Null)
@@ -187,7 +188,6 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
     logger.info(s"${datasourcePrefix} - Creating scene case class ${scenePath}")
     val sceneCreate = Scene.Create(
       id = sceneId.some,
-      ingestSizeBytes = 0,
       visibility = Visibility.Public,
       tags = List("Sentinel-2", "JPEG2000"),
       datasource = datasourceUUID,
@@ -245,7 +245,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
   }
 
   def getScenePaths(uri: URI): List[String] = {
-    val json: Option[Json] = s3Client.getObject(uri.getHost, uri.getPath.tail).getObjectContent.toJson
+    val json: Option[Json] = s3Client.getObject(uri.getHost, uri.getPath.tail, true).getObjectContent.toJson
     val tilesJson: Option[List[Json]] = json flatMap {
       _.hcursor.downField("tiles").as[List[Json]].toOption
     }

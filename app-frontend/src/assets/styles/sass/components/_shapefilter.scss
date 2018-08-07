@@ -21,10 +21,14 @@
     display: flex;
     flex-direction: column;
     justify-content: space-around;
+    overflow: hidden;
 }
 
 .shapefilter-text {
     color: $white;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .shapefilter-input-actions {

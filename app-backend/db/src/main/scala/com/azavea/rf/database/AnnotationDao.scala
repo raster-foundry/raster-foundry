@@ -97,7 +97,7 @@ fr"""
   def listProjectLabels(projectId: UUID, user: User): ConnectionIO[List[String]] = {
     (fr"SELECT DISTINCT ON (label) label FROM" ++ tableF ++ Fragments.whereAndOpt(
       Some(fr"project_id = ${projectId}")
-    )).query[String].list
+    )).query[String].to[List]
   }
 
   def deleteByAnnotationGroup(annotationGroupId: UUID): ConnectionIO[Int] =

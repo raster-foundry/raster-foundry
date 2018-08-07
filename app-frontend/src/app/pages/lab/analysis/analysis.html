@@ -6,9 +6,13 @@
            ng-style="$ctrl.labLeftStyle" draggable="false">
         <rf-lab-map
             map-id="lab-preview"
+            analysis-id="{{$ctrl.analysisId}}"
+            enable-node-export="true"
             on-close="$ctrl.onPreviewClose()"
             comparing="$ctrl.frameControlAdded"
             on-compare-click="$ctrl.onCompareClick()"
+            on-node-export="$ctrl.onNodeExport(bbox, zoom, node)"
+            set-default-export-node="$ctrl.setDefaultExportNode(nodeId)"
         ></rf-lab-map>
         <rf-node-selector
             data-node-map="$ctrl.nodeMap"

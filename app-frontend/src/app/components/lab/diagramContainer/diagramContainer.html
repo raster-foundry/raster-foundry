@@ -22,6 +22,7 @@
   <button class="btn btn-default btn-square btn-small"
           type="button"
           title="Preview Node"
+          ng-disabled="$ctrl.preventSelecting"
           ng-click="$ctrl.onPreviewClick()"
           ng-class="{'btn-secondary': $ctrl.selectingNode === 'preview'}"
   >
@@ -31,6 +32,7 @@
           title="Compare Nodes"
           type="button"
           ng-click="$ctrl.onCompareClick()"
+          ng-disabled="$ctrl.preventSelecting"
           ng-class="{'btn-secondary': $ctrl.selectingNode === 'compare' || $ctrl.selectingNode === 'select'}"
   >
     <i class="icon-compare"></i>
@@ -53,7 +55,7 @@
   <button class="btn btn-default btn-square btn-small"
           title="Zoom Out"
           ng-click="$ctrl.zoomOut()">
-    <spam class="icon-minus"></span>
+    <span class="icon-minus"></span>
   </button>
   <div class="filler"></div>
   <button class="btn btn-default btn-square btn-small"

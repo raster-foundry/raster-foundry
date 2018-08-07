@@ -79,6 +79,7 @@ export default angular.module('index.components', [
     // export components
     require('./components/exports/exportItem/exportItem.module.js').name,
     require('./components/exports/exportDownloadModal/exportDownloadModal.module.js').name,
+    require('./components/exports/exportAnalysisDownloadModal/exportAnalysisDownloadModal.module.js').name,
 
     // filter components
     require('./components/filters/daterangeFilter/daterangeFilter.module.js').name,
