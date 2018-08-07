@@ -43,6 +43,10 @@ class FilterPaneController {
         });
     }
 
+    $onInit() {
+        this.onDebouncedFilterChange = _.debounce(this.onFilterChange, 250);
+    }
+
     $onChanges(changes) {
         if (changes.onRepositoryChange && changes.onRepositoryChange.currentValue) {
             if (this.currentRepository) {
@@ -112,25 +116,23 @@ class FilterPaneController {
             this.initializedFilters = this.initializedFilters.add(filter.label);
         }
 
-        if (this.initializedFilters.size === this.filterComponents.length) {
-            _.toPairs(this.filterParams).forEach(([param, val]) => {
-                if (val !== null && typeof val === 'object') {
-                    this.$location.search(param, val.id);
-                } else {
-                    this.$location.search(param, val);
-                }
-            });
-            this.onRepositoryChange({
-                fetchScenes: this.currentRepository.service.fetchScenes(this.filterParams),
-                repository: this.currentRepository
-            });
-        }
+        _.toPairs(this.filterParams).forEach(([param, val]) => {
+            if (val !== null && typeof val === 'object') {
+                this.$location.search(param, val.id);
+            } else {
+                this.$location.search(param, val);
+            }
+        });
+        this.onRepositoryChange({
+            fetchScenes: this.currentRepository.service.fetchScenes(this.filterParams),
+            repository: this.currentRepository
+        });
     }
 
     createFilterComponent(filter) {
         const componentScope = this.$scope.$new(true, this.$scope);
         componentScope.filter = filter;
-        componentScope.onFilterChange = this.onFilterChange.bind(this);
+        componentScope.onFilterChange = this.onDebouncedFilterChange.bind(this);
         const template = `<rf-${filter.type}-filter
                            class="filter-group"
                            data-filter="filter"
