@@ -64,7 +64,7 @@ def process_jp2000(scene_id, jp2_source):
         logger.info('Downloading JPEG2000 file locally (%s/%s => %s)',
                     in_bucket, in_key, jp2_fname)
         with open(jp2_fname, 'wb') as src:
-            body = s3client.get_object(Bucket=in_bucket, Key=in_key)['Body']
+            body = s3client.get_object(Bucket=in_bucket, Key=in_key, RequestPayer='requester')['Body']
             src.write(body.read())
 
         logger.info('Running translate command to convert to TIF')
