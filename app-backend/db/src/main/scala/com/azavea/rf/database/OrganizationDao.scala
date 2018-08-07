@@ -178,7 +178,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
       subjectId, GroupType.Organization, organizationId, groupRole
     )
 
-    createUserGroupRole(organizationId, actingUser, subjectId, userGroupRoleCreate, platformId)
+    createUserGroupRole(organizationId, actingUser, subjectId, userGroupRoleCreate, platformId, None)
   }
 
   def deactivateUserRoles(actingUser: User, subjectId: String, organizationId: UUID): ConnectionIO[List[UserGroupRole]] = {

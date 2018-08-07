@@ -82,8 +82,13 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
   @SuppressWarnings(Array("OptionGet"))
   def createWithGuard(adminCheckFunc: (User, UUID) => ConnectionIO[Boolean], groupType: GroupType)
                      (groupId: UUID, actingUser: User, subjectId: String, userGroupRoleCreate: UserGroupRole.Create,
-                      platformId: UUID):
+                      platformId: UUID, isSameOrganizationIOO: Option[ConnectionIO[Boolean]]):
       ConnectionIO[UserGroupRole] =
+  {
+    val isSameOrgIO: ConnectionIO[Boolean] = isSameOrganizationIOO match {
+      case Some(isSameOrganizationIO) => isSameOrganizationIO
+      case _ => false.pure[ConnectionIO]
+    }
     for {
       adminCheck <- adminCheckFunc(actingUser, groupId)
       existingRoleO <- {
@@ -100,6 +105,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       rolesMatch = existingRoleO.map(
         (ugr: UserGroupRole) => ugr.groupRole == userGroupRoleCreate.groupRole
       ).getOrElse(false)
+      isSameOrg <- isSameOrgIO
       createdOrReturned <- {
         (existingMembershipStatus, adminCheck, rolesMatch) match {
           // Only admins can change group roles, and only approved roles can have their group role changed
@@ -113,10 +119,14 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
             UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved))
           // rolesMatch will always be false when existingRoleO is None, so don't bother checking it
           case (None, true, _) =>
-            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Invited)) <*
-              Notify.sendGroupNotification(
-                platformId, groupId, groupType, actingUser.id, subjectId, MessageType.GroupInvitation
-              ).attempt
+            if (isSameOrg) {
+              UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved))
+            } else {
+              UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Invited)) <*
+                Notify.sendGroupNotification(
+                  platformId, groupId, groupType, actingUser.id, subjectId, MessageType.GroupInvitation
+                ).attempt
+            }
           case (None, false, _) => {
             UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Requested)) <*
               Notify.sendGroupNotification(
@@ -127,6 +137,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
         }
       }
     } yield { createdOrReturned }
+  }
 
   def getOption(id: UUID): ConnectionIO[Option[UserGroupRole]] = {
     query.filter(id).selectOption
