@@ -37,6 +37,7 @@ import org.apache.hadoop.fs.Path
 import spray.json.DefaultJsonProtocol._
 import org.apache.spark.rdd.RDD
 import org.apache.spark._
+import java.net.SocketTimeoutException
 import java.util.UUID
 
 import com.amazonaws.services.s3.AmazonS3URI
@@ -193,14 +194,7 @@ object Export extends SparkJob with Config with LazyLogging {
       writeGeoTiffs[MultibandTile, MultibandGeoTiff](result, ed, conf)
     } else {
       val md = rdds.map(_.metadata).reduce(_ combine _)
-      val raster: Raster[MultibandTile] =
-        rdds
-          .zipWithIndex
-          .map { case (rdd, i) => rdd.mapValues { value => i -> value } }
-          .foldLeft(ContextRDD(sc.emptyRDD[(SpatialKey, (Int, MultibandTile))], md))((acc, r) => acc.withContext { _.union(r) })
-          .withContext { _.combineByKey(createTiles[(Int, MultibandTile)], mergeTiles1[(Int, MultibandTile)], mergeTiles2[(Int, MultibandTile)]) }
-          .withContext { _.mapValues { _.sortBy(_._1).map(_._2).reduce(_ merge _) } }
-          .stitch
+      val raster: Raster[MultibandTile] = stitchRDDsWithRetry(rdds, md)
       val craster =
         if(ed.output.crop) mask.fold(raster)(mp => raster.crop(mp.envelope.reproject(LatLng, md.crs)))
         else raster
@@ -208,6 +202,25 @@ object Export extends SparkJob with Config with LazyLogging {
       writeGeoTiff[MultibandTile, MultibandGeoTiff](GeoTiff(craster, md.crs), ed, singlePath)
     }
   }
+
+  private def stitchRDDsWithRetry(
+    rdds: Array[_ <: org.apache.spark.rdd.RDD[(SpatialKey, MultibandTile)]], md: TileLayerMetadata[SpatialKey],
+    attempts: Int = 0, limit: Int = 10)(implicit sc: SparkContext): Raster[MultibandTile] =
+    try {
+      logger.info(s"Attempting to stitch together ${rdds.length} RDDs")
+      rdds
+        .zipWithIndex
+        .map { case (rdd, i) => rdd.mapValues { value => i -> value } }
+        .foldLeft(ContextRDD(sc.emptyRDD[(SpatialKey, (Int, MultibandTile))], md))((acc, r) => acc.withContext { _.union(r) })
+        .withContext { _.combineByKey(createTiles[(Int, MultibandTile)], mergeTiles1[(Int, MultibandTile)], mergeTiles2[(Int, MultibandTile)]) }
+        .withContext { _.mapValues { _.sortBy(_._1).map(_._2).reduce(_ merge _) } }
+        .stitch
+    } catch {
+      case (e: SocketTimeoutException) => {
+        logger.warn(s"Socker read timed out in attempt ${attempt + 1}. Maybe retrying")
+        if (attempts >= limit) throw e else stitchRDDsWithRetry(rdds, md, attempts + 1, limit)
+      }
+    }
 
   private def singlePath(ed: ExportDefinition): String =
     s"/${ed.output.getURLDecodedSource}/${ed.input.resolution}-${ed.id}-${UUID.randomUUID()}.tiff"
