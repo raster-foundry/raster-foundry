@@ -54,8 +54,8 @@ package object batch {
       LayerAttributes(
         blob.fields(AttributeStore.Fields.header).convertTo[H],
         blob.fields(AttributeStore.Fields.metadata).convertTo[M],
-        blob.fields(AttributeStore.AvroLayerFields.keyIndex).convertTo[KeyIndex[K]],
-        blob.fields(AttributeStore.AvroLayerFields.schema).convertTo[Schema]
+        blob.fields(AttributeStore.Fields.keyIndex).convertTo[KeyIndex[K]],
+        blob.fields(AttributeStore.Fields.schema).convertTo[Schema]
       )
     }
   }
