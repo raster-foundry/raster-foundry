@@ -165,7 +165,7 @@ object Ingest extends SparkJob with RollbarNotifier with Config {
         bucket = s3uri.getBucket,
         key = s3uri.getKey,
         client = S3Client.DEFAULT),
-      streaming = true, withOverviews = true, None)
+      decompress = false, streaming = true, withOverviews = true, None)
     }
 
     val info = readInfo

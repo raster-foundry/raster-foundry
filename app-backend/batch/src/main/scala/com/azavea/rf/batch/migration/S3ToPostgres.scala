@@ -39,8 +39,8 @@ case class S3ToPostgres(uri: AmazonS3URI, attributeTable: String = "layer_attrib
               val LayerAttributes(header, metadata, keyIndex, schema) = from.readLayerAttributesSafe[S3LayerHeader, TileLayerMetadata[SpatialKey], SpatialKey](layerId)
               to.write(layerId, AttributeStore.Fields.header, header)
               to.write(layerId, AttributeStore.Fields.metadata, metadata)
-              to.write(layerId, AttributeStore.AvroLayerFields.keyIndex, keyIndex)
-              to.write(layerId, AttributeStore.AvroLayerFields.schema, schema)
+              to.write(layerId, AttributeStore.Fields.keyIndex, keyIndex)
+              to.write(layerId, AttributeStore.Fields.schema, schema)
               to.write(layerId, "layerComplete", from.cacheReadSafe[Boolean](layerId, "layerComplete"))
             } else {
               to.write(layerId, "histogram", from.cacheReadSafe[Array[Histogram[Double]]](layerId, "histogram"))
