@@ -171,7 +171,7 @@ class ToolRoutes extends Authentication
               components.value.flatMap({ data =>
                 val result: Future[Option[Png]] = data match {
                   case Some((expression, metadata, cMap, updateTime)) =>
-                    val cacheKey = s"toolrun-tms-${toolRunId}-${nodeId}-$z-$x-$y-${updateTime.getTime}"
+                    val cacheKey = s"toolrun-tms-${toolRunId}-${nodeId.getOrElse("")}-$z-$x-$y-${updateTime.getTime}"
                     rfCache.cachingOptionT(cacheKey)({
                       val literalTree = tileResolver.resolveBuffered(expression)(z, x, y)
                       val interpretedTile: Future[Interpreted[Tile]] =
