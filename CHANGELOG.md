@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.8.1](https://github.com/raster-foundry/raster-foundry/tree/1.8.1) (2018-08-09)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.8.0...1.8.1)
+
+**Merged pull requests:**
+
+- Revert GeoTrellis Upgrade [\#3825](https://github.com/raster-foundry/raster-foundry/pull/3825)
+
 ## [1.8.0](https://github.com/raster-foundry/raster-foundry/tree/1.8.0) (2018-08-07)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.7.1...1.8.0)
