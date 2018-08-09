@@ -25,7 +25,6 @@ package object S3 {
 
   def clientWithRegion(region: Regions): AmazonS3 =
     AmazonS3ClientBuilder.standard()
-      .withCredentials(new DefaultAWSCredentialsProviderChain())
       .withRegion(region)
       .build()
 
