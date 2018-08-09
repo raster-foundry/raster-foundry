@@ -86,7 +86,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
         case (_, None) => true
         case (None, Some(coveredSoFar)) => !geom(pair).coveredBy(coveredSoFar)
         case (Some(targetCoverage), Some(coveredSoFar)) => {
-          !(geom(pair).coveredBy(coveredSoFar) || targetCoverage.coveredBy(coveredSoFar))
+          !(geom(pair).within(coveredSoFar) || targetCoverage.within(coveredSoFar))
         }
       }
 
