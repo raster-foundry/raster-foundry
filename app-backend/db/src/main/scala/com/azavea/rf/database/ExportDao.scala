@@ -145,7 +145,7 @@ object ExportDao extends Dao[Export] {
       ast <- {
         toolRun.executionParameters.as[MapAlgebraAST] match {
           case Left(e) => throw e
-          case Right(mapAlgebraAST) => mapAlgebraAST.withMetadata(NodeMetadata())
+          case Right(mapAlgebraAST) => stripMetadata(mapAlgebraAST)
         }
       }.pure[ConnectionIO]
       _ <- logger.debug("Fetched ast").pure[ConnectionIO]
@@ -189,6 +189,14 @@ object ExportDao extends Dao[Export] {
       }
       SimpleInput(modifiedLayerDefinitions.toArray, exportOptions.mask.map(_.geom))
     }
+  }
+
+  private def stripMetadata(ast: MapAlgebraAST): MapAlgebraAST = ast match {
+    case astLeaf: MapAlgebraAST.MapAlgebraLeaf =>
+      astLeaf.withMetadata(NodeMetadata())
+    case astNode: MapAlgebraAST =>
+      val args = ast.args.map(stripMetadata)
+      ast.withMetadata(NodeMetadata()).withArgs(args)
   }
 
   /** Obtain the ingest locations for all Scenes and Projects which are
@@ -255,4 +263,3 @@ object ExportDao extends Dao[Export] {
     projectSceneLocs
   }
 }
-
