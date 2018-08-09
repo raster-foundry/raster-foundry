@@ -3269,7 +3269,13 @@ rf-navbar-search {
     text-align: center;
 }
 
+
 // components/exports/exportAnalysisDownloadModal/exportAnalysisDownloadModal.html
 .export-modal-download-btn {
   width: 155px;
+}
+
+// pages/projects/edit/annotate/import/import.html
+.annotation-upload-error {
+  margin-top: 1em;
 }

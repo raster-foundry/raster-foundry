@@ -52,6 +52,7 @@ class AnnotateController {
         }
         let persistedLabels = state.projects.labels;
         let labels = [{name: 'All'}].concat(persistedLabels.map(label => ({name: label})));
+        let annotationShapefileProps = state.projects.annotationShapefileProps;
         return {
             user: state.api.user,
             annotations,
@@ -61,7 +62,8 @@ class AnnotateController {
             fetchingAnnotations: state.projects.fetchingAnnotations,
             fetchingAnnotationsError: state.projects.fetchingAnnotationsError,
             editingAnnotation: state.projects.editingAnnotation,
-            annotationTemplate: state.projects.annotationTemplate
+            annotationTemplate: state.projects.annotationTemplate,
+            annotationShapefileProps
         };
     }
 

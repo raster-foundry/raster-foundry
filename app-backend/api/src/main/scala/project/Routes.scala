@@ -7,6 +7,7 @@ import com.amazonaws.services.s3.AmazonS3URI
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
+import scala.io.Source._
 import akka.http.scaladsl.model.{Uri, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
@@ -169,7 +170,7 @@ trait ProjectRoutes extends Authentication
                     }
                   } ~
                   post {
-                    traceName("project-annotations-shapefile-import") {
+                    traceName("project-annotations-shapefile-upload") {
                       authenticate { user =>
                         val tempFile = ScalaFile.newTemporaryFile()
                         tempFile.deleteOnExit()
@@ -181,7 +182,24 @@ trait ProjectRoutes extends Authentication
                       }
                     }
                   }
-                }
+                } ~
+                  pathPrefix("import") {
+                    pathEndOrSingleSlash {
+                      (post & formFieldMap) { fields =>
+                        traceName("project-annotations-shapefile-import-with-fields") {
+                          authenticate { user =>
+                            val tempFile = ScalaFile.newTemporaryFile()
+                            tempFile.deleteOnExit()
+                            val response = storeUploadedFile("shapefile", (_) => tempFile.toJava) { (m, _) =>
+                              processShapefile(projectId, tempFile, m, Some(fields))
+                            }
+                            tempFile.delete()
+                            response
+                          }
+                        }
+                      }
+                    }
+                  }
               } ~
               pathPrefix(JavaUUID) { annotationId =>
                 pathEndOrSingleSlash {
@@ -939,37 +957,67 @@ trait ProjectRoutes extends Authentication
     }
   }
 
-  def processShapefile(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo): Route = authenticate { user =>
+  def processShapefile(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo, propsO: Option[Map[String, String]] = None): Route = authenticate { user =>
     {
       val unzipped = tempFile.unzip()
       val matches = unzipped.glob("*.shp")
-      matches.hasNext match {
-        case false =>
-          complete(StatusCodes.ClientError(400)("Bad Request", "No Shapefile Found in Archive"))
-        case true => {
-          val shapefilePath = matches.next.toString
-          val features = ShapeFileReader.readSimpleFeatures(shapefilePath)
-          val featureAccumulationResult =
-            Shapefile.accumulateFeatures(Annotation.fromSimpleFeature)(List(), List(), features.toList)
-          featureAccumulationResult match {
-            case Left(errorIndices) =>
-              complete(
-                StatusCodes.ClientError(400)(
-                  "Bad Request",
-                  s"Several features could not be translated to annotations. Indices: ${errorIndices}"
-                )
-              )
-            case Right(annotationCreates) => {
-              complete(
-                StatusCodes.Created,
-                (AnnotationDao.insertAnnotations(annotationCreates, projectId, user)
-                   map {(anns: List[Annotation]) => anns map { _.toGeoJSONFeature }}
-                ).transact(xa).unsafeToFuture
-              )
-            }
+      val prj = unzipped.glob("*.prj")
+      (matches.hasNext, prj.hasNext) match {
+        case (false, false) =>
+          complete(StatusCodes.ClientError(400)("Bad Request", "No .shp and .prj Files Found in Archive"))
+        case (true, false) =>
+          complete(StatusCodes.ClientError(400)("Bad Request", "No .prj File Found in Archive"))
+        case (false, true) =>
+          complete(StatusCodes.ClientError(400)("Bad Request", "No .shp File Found in Archive"))
+        case (true, true) => {
+          propsO match {
+            case Some(props) => processShapefileImport(matches, prj, props, user, projectId)
+            case _ => complete(StatusCodes.OK, processShapefileUpload(matches))
           }
         }
       }
     }
+  }
+
+  def processShapefileImport(matches: Iterator[File], prj: Iterator[File], props: Map[String, String], user: User, projectId: UUID): Route = {
+    val shapefilePath = matches.next.toString
+    val prjPath: String = prj.next.toString
+    val projectionSource = scala.io.Source.fromFile(prjPath)
+
+    val features = ShapeFileReader.readSimpleFeatures(shapefilePath)
+    val projection = try projectionSource.mkString finally projectionSource.close()
+
+    val featureAccumulationResult =
+      Shapefile.accumulateFeatures(Annotation.fromSimpleFeatureWithProps)(List(), List(), features.toList, props, user.id, projection)
+    featureAccumulationResult match {
+      case Left(errorIndices) =>
+        complete(
+          StatusCodes.ClientError(400)(
+            "Bad Request",
+            s"Several features could not be translated to annotations. Indices: ${errorIndices}"
+          )
+        )
+      case Right(annotationCreates) => {
+        complete(
+          StatusCodes.Created,
+          (AnnotationDao.insertAnnotations(annotationCreates, projectId, user)
+             map {(anns: List[Annotation]) => anns map { _.toGeoJSONFeature }}
+          ).transact(xa).unsafeToFuture
+        )
+      }
+    }
+  }
+
+
+  def processShapefileUpload(matches: Iterator[File]): List[String] = {
+    // shapefile should have same fields in the property table
+    // so it is fine to use toList(0)
+    ShapeFileReader.readSimpleFeatures(matches.next.toString)
+      .toList(0)
+      .toString
+      .split("SimpleFeatureImpl")
+      .filter(s => s != "" && s.contains(".Attribute: "))
+      .map(_.split(".Attribute: ")(1).split("<")(0))
+      .toList
   }
 }
