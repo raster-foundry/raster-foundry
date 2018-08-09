@@ -20,7 +20,7 @@ import doobie.Fragments._
 import doobie.Fragments._
 
 import scala.concurrent.Future
-
+import scala.util.Properties
 
 object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
 
@@ -135,9 +135,18 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
           .compile
           .toList
       }
-      count <- (countF ++ whereAndOpt(filters: _*)).query[Int].unique
+      // Depending on log level, count scenes in the project. Note that because this filters on the
+      // scenes table with a geometry query and because about 15 of these get launched for each request
+      // to the tile server, it's gonna hurt, so don't do this unless you _really_ need the debug output
+      // more than you need the server to stay alive.
+      countO <- Properties.envOrNone("RF_LOG_LEVEL") match {
+        case Some("DEBUG") => (countF ++ whereAndOpt(filters: _*)).query[Int].option
+        case _ => None.pure[ConnectionIO]
+      }
     } yield {
-      logger.info(s"Using ${stpsWithFootprints.length} scenes in project out of ${count}")
+      countO map {
+        (count: Int) => logger.debug(s"Using ${stpsWithFootprints.length} scenes in project out of $count")
+      }
       // "skimmed" in the sense that we're just taking the top layer of scenes for the mosaic
       // val skimmedStpsWithFootprints = stpsWithFootprints.filter(
       //   (pair: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => !(geom(pair).isEmpty)
