@@ -77,11 +77,26 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
   def getMosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]]): ConnectionIO[Seq[MosaicDefinition]] = {
 
     def geom(stpWithFootprint: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) = stpWithFootprint._2.get.geom
+
+    def maybeNotWorthless(
+      coveredByGeomO: Option[MultiPolygon],
+      targetCoverageO: Option[Polygon]
+    )(pair: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])): Boolean =
+      (coveredByGeomO, targetCoverageO) match {
+        case (_, None) => true
+        case (None, Some(coveredSoFar)) => !geom(pair).coveredBy(coveredSoFar)
+        case (Some(targetCoverage), Some(coveredSoFar)) => {
+          !(geom(pair).coveredBy(coveredSoFar) || targetCoverage.coveredBy(coveredSoFar))
+        }
+      }
+
     val filters = List(
       polygonOption.map(polygon => fr"ST_Intersects(scenes.tile_footprint, ${polygon})"),
       Some(fr"scenes_to_projects.project_id = ${projectId}"),
-      Some(fr"scenes.ingest_status = 'INGESTED'")
+      Some(fr"scenes.ingest_status = 'INGESTED'"),
+      Some(fr"data_footprint IS NOT NULL")
     )
+
     val select = fr"""
     SELECT
       scene_id, project_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location, data_footprint
@@ -91,33 +106,51 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       scenes
     ON scenes.id = scenes_to_projects.scene_id
       """
+
+    var coveredSoFar: Option[MultiPolygon] = None
+    val targetGeom: Option[Polygon] = polygonOption map { _.geom }
+
     for {
       stpsWithFootprints <- {
-        (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scene_order, coalesce(acquisition_date, scenes.created_at) DESC").query[(SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])].list
+        (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scene_order, coalesce(acquisition_date, scenes.created_at) DESC").query[(SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])]
+          .stream
+          .takeWhile(
+            (p: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => {
+              val notWorthless = maybeNotWorthless(coveredSoFar, targetGeom)(p)
+              coveredSoFar = Some(
+                coveredSoFar.map(mp => (geom(p) union mp).asMultiPolygon.get).getOrElse(geom(p))
+              )
+              notWorthless
+            }
+          )
+          .compile
+          .toList
       }
     } yield {
-      logger.debug(s"Found ${stpsWithFootprints.length} scenes in projects")
+      logger.info(s"Found ${stpsWithFootprints.length} scenes in projects")
       // "skimmed" in the sense that we're just taking the top layer of scenes for the mosaic
-      val skimmedStpsWithFootprints = stpsWithFootprints.filter(
-        (pair: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => !(geom(pair).isEmpty)
-      ) match {
-        case Nil => Nil
-        case h +: Nil => stpsWithFootprints
-        case h +: t => {
-          stpsWithFootprints.foldLeft(List(h)) {
-            (acc: List[(SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])], candidate: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => {
-              if(geom(candidate).coveredBy(geom(acc.last))) {
-                acc
-              } else {
-                acc :+ (candidate._1, Some(Projected((geom(candidate) union geom(acc.last)).asMultiPolygon.get, 3857)))
-              }
-            }
-          }
+      // val skimmedStpsWithFootprints = stpsWithFootprints.filter(
+      //   (pair: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => !(geom(pair).isEmpty)
+      // ) match {
+      //   case Nil => Nil
+      //   case h +: Nil => stpsWithFootprints
+      //   case h +: t => {
+      //     stpsWithFootprints.foldLeft(List(h)) {
+      //       (acc: List[(SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])], candidate: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => {
+      //         if(geom(candidate).coveredBy(geom(acc.last))) {
+      //           acc
+      //         } else {
+      //           acc :+ (candidate._1, Some(Projected((geom(candidate) union geom(acc.last)).asMultiPolygon.get, 3857)))
+      //         }
+      //       }
+      //     }
 
-        }
-      }
-      logger.debug(s"Wound up with ${skimmedStpsWithFootprints.length} scenes that contribute")
-      val md = MosaicDefinition.fromScenesToProjects(skimmedStpsWithFootprints map { _._1 })
+      //   }
+      // }
+      // skimmedStpsWithFootprints.asdf
+      // logger.debug(s"Wound up with ${skimmedStpsWithFootprints.length} scenes that contribute -- SHOULD MATCH")
+      // val md = MosaicDefinition.fromScenesToProjects(skimmedStpsWithFootprints map { _._1.get })
+      val md = MosaicDefinition.fromScenesToProjects(stpsWithFootprints map { _._1 })
       logger.debug(s"Mosaic Definition: ${md}")
       md
     }
