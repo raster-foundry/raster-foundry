@@ -121,7 +121,8 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
 
     for {
       stpsWithFootprints <- {
-        (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scene_order, coalesce(acquisition_date, scenes.created_at) DESC").query[(SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])]
+        (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scene_order, coalesce(acquisition_date, scenes.created_at) DESC")
+          .query[(SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])]
           .stream
           .takeWhile(
             (p: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => {
@@ -147,28 +148,6 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       countO map {
         (count: Int) => logger.debug(s"Using ${stpsWithFootprints.length} scenes in project out of $count")
       }
-      // "skimmed" in the sense that we're just taking the top layer of scenes for the mosaic
-      // val skimmedStpsWithFootprints = stpsWithFootprints.filter(
-      //   (pair: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => !(geom(pair).isEmpty)
-      // ) match {
-      //   case Nil => Nil
-      //   case h +: Nil => stpsWithFootprints
-      //   case h +: t => {
-      //     stpsWithFootprints.foldLeft(List(h)) {
-      //       (acc: List[(SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])], candidate: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => {
-      //         if(geom(candidate).coveredBy(geom(acc.last))) {
-      //           acc
-      //         } else {
-      //           acc :+ (candidate._1, Some(Projected((geom(candidate) union geom(acc.last)).asMultiPolygon.get, 3857)))
-      //         }
-      //       }
-      //     }
-
-      //   }
-      // }
-      // skimmedStpsWithFootprints.asdf
-      // logger.debug(s"Wound up with ${skimmedStpsWithFootprints.length} scenes that contribute -- SHOULD MATCH")
-      // val md = MosaicDefinition.fromScenesToProjects(skimmedStpsWithFootprints map { _._1.get })
       val md = MosaicDefinition.fromScenesToProjects(stpsWithFootprints map { _._1 })
       logger.debug(s"Mosaic Definition: ${md}")
       md
