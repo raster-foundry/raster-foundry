@@ -107,6 +107,15 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     ON scenes.id = scenes_to_projects.scene_id
       """
 
+    val countF = fr"""
+    SELECT count(1)
+    FROM
+      scenes_to_projects
+    LEFT JOIN
+      scenes
+    ON scenes.id = scenes_to_projects.scene_id
+    """
+
     var coveredSoFar: Option[MultiPolygon] = None
     val targetGeom: Option[Polygon] = polygonOption map { _.geom }
 
@@ -126,8 +135,9 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
           .compile
           .toList
       }
+      count <- (countF ++ whereAndOpt(filters: _*)).query[Int].unique
     } yield {
-      logger.info(s"Found ${stpsWithFootprints.length} scenes in projects")
+      logger.info(s"Using ${stpsWithFootprints.length} scenes in project out of ${count}")
       // "skimmed" in the sense that we're just taking the top layer of scenes for the mosaic
       // val skimmedStpsWithFootprints = stpsWithFootprints.filter(
       //   (pair: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => !(geom(pair).isEmpty)
