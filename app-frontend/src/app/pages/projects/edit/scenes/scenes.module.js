@@ -47,7 +47,7 @@ class ProjectsScenesController {
     removeSceneFromProject(scene, $event) {
         $event.stopPropagation();
         $event.preventDefault();
-        this.projectService.removeScenesFromProject(this.projectId, [scene.id]).then(
+        this.projectService.removeScenesFromProject(this.$parent.projectId, [scene.id]).then(
             () => {
                 this.$parent.removeHoveredScene();
                 this.$parent.getSceneList();
@@ -82,7 +82,7 @@ class ProjectsScenesController {
     }
 
     updateSceneOrder(orderedSceneIds) {
-        this.projectService.updateSceneOrder(this.projectId, orderedSceneIds).then(() => {
+        this.projectService.updateSceneOrder(this.$parent.projectId, orderedSceneIds).then(() => {
             this.$parent.layerFromProject();
         });
     }
