@@ -133,6 +133,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
               notWorthless
             }
           )
+          .zipWithNext
           .compile
           .toList
       }
@@ -148,7 +149,10 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       countO map {
         (count: Int) => logger.debug(s"Using ${stpsWithFootprints.length} scenes in project out of $count")
       }
-      val md = MosaicDefinition.fromScenesToProjects(stpsWithFootprints map { _._1 })
+      val stps = stpsWithFootprints map { _._1 } map { _._1 }
+      val nexts = stpsWithFootprints map { _._2 }
+      logger.info(s"Stopped streaming results before the end of the stream? ${!nexts.last.isEmpty}")
+      val md = MosaicDefinition.fromScenesToProjects(stps)
       logger.debug(s"Mosaic Definition: ${md}")
       md
     }
