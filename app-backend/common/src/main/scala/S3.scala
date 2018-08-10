@@ -116,7 +116,7 @@ package object S3 {
     val listObjectsRequest =
       new ListObjectsRequest()
         .withBucketName(bucket)
-        .withPrefix(prefix)
+        .withPrefix(s"${prefix}/")
         .withDelimiter("/")
 
     get(client.listObjects(listObjectsRequest), Nil)
