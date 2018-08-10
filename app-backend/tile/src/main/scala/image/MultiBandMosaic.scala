@@ -12,8 +12,7 @@ import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.raster.GridBounds
 import geotrellis.proj4._
-import geotrellis.slick.Projected
-import geotrellis.vector.{Extent, Point, Polygon}
+import geotrellis.vector.{Extent, Point, Polygon, Projected}
 import cats.data._
 import cats.implicits._
 import cats.effect.IO

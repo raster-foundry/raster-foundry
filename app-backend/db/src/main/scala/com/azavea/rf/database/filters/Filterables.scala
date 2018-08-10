@@ -15,7 +15,6 @@ import doobie.postgres.implicits._
 import cats._
 import cats.data._
 import cats.effect.IO
-import geotrellis.slick.Projected
 import geotrellis.vector._
 
 import com.typesafe.scalalogging.LazyLogging

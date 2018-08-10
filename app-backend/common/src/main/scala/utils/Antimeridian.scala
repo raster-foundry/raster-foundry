@@ -1,7 +1,6 @@
 package com.azavea.rf.common.utils
 
 import geotrellis.proj4._
-import geotrellis.slick.Projected
 import geotrellis.vector._
 import geotrellis.vector.io._
 

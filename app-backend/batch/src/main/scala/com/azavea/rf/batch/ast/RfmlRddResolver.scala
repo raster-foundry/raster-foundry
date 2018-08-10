@@ -20,7 +20,6 @@ import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
 import geotrellis.spark.tiling._
 import geotrellis.vector.{Extent, MultiPolygon}
-import geotrellis.slick.Projected
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -106,4 +105,3 @@ object RfmlRddResolver extends LazyLogging {
     ids.zip(stores)
   }
 }
-

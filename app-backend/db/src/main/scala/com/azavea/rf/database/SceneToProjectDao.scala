@@ -13,8 +13,7 @@ import cats.data._
 import cats.effect.IO
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.slick.Projected
-import geotrellis.vector.{MultiPolygon, Polygon}
+import geotrellis.vector.{MultiPolygon, Polygon, Projected}
 import geotrellis.raster.histogram._
 import doobie.Fragments._
 import doobie.Fragments._

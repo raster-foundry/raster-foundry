@@ -1,8 +1,7 @@
 package com.azavea.rf.datamodel
 
 import com.azavea.rf.bridge._
-import geotrellis.slick.Projected
-import geotrellis.vector.MultiPolygon
+import geotrellis.vector.{MultiPolygon, Projected}
 import geotrellis.proj4.CRS
 import io.circe.generic.extras.{Configuration, ConfiguredJsonCodec}
 

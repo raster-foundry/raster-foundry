@@ -12,8 +12,7 @@ import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.render.Png
 import geotrellis.proj4._
-import geotrellis.slick.Projected
-import geotrellis.vector.Extent
+import geotrellis.vector.{Extent, Projected}
 import geotrellis.raster.histogram._
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._

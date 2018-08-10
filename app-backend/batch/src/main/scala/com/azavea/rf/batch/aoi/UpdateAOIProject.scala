@@ -27,7 +27,6 @@ import io.circe.syntax._
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-import geotrellis.slick.Projected
 import geotrellis.vector._
 
 import com.azavea.rf.common.AWSBatch

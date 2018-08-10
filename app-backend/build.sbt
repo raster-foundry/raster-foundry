@@ -378,6 +378,7 @@ lazy val bridge = Project("bridge", file("bridge"))
       Dependencies.circeCore,
       Dependencies.circeGeneric,
       Dependencies.circeParser,
-      Dependencies.geotrellisVector
+      Dependencies.geotrellisVector,
+      Dependencies.scalaLogging
     )
   })
