@@ -5,8 +5,7 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import geotrellis.slick.Projected
-import geotrellis.vector.Polygon
+import geotrellis.vector.{Extent, Geometry, Polygon, Projected}
 import java.util.UUID
 import java.sql.{Date, Timestamp}
 
@@ -17,8 +16,6 @@ import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.color._
 import com.lonelyplanet.akka.http.extensions._
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.slick.Projected
-import geotrellis.vector.{Extent, Geometry}
 import io.circe._
 import io.circe.optics.JsonPath._
 import io.circe.generic.JsonCodec

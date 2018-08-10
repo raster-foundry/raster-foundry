@@ -13,8 +13,7 @@ import cats.data._
 import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
-import geotrellis.slick.Projected
-import geotrellis.vector.Polygon
+import geotrellis.vector.{Polygon, Projected}
 import geotrellis.raster.histogram._
 import io.circe._
 import io.circe.optics.JsonPath._

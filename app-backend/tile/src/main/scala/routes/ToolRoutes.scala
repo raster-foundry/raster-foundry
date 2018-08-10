@@ -23,8 +23,7 @@ import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.render.png._
 import geotrellis.raster.io.geotiff.SinglebandGeoTiff
-import geotrellis.vector.{Extent}
-import geotrellis.slick.Projected
+import geotrellis.vector.{Extent, Projected}
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, StatusCodes, HttpResponse}
 import akka.http.scaladsl.server._

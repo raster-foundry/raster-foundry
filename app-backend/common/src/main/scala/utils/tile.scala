@@ -2,8 +2,7 @@ package com.azavea.rf.common.utils
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.slick.Projected
-import geotrellis.vector.{Extent, Point, Polygon}
+import geotrellis.vector.{Extent, Point, Polygon, Projected}
 
 
 object TileUtils extends LazyLogging {

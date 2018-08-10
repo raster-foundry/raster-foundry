@@ -10,7 +10,6 @@ import com.github.tototoshi.csv._
 import io.circe._
 import io.circe.syntax._
 import geotrellis.proj4.CRS
-import geotrellis.slick.Projected
 import geotrellis.vector._
 import jp.ne.opt.chronoscala.Imports._
 import org.postgresql.util.PSQLException

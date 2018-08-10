@@ -23,7 +23,7 @@ import akka.http.scaladsl.server.directives.FileInfo
 import cats.effect.IO
 import com.azavea.rf.database.{AccessControlRuleDao, ShapeDao}
 import geotrellis.proj4.{CRS, LatLng, WebMercator}
-import geotrellis.slick.Projected
+import geotrellis.vector.Projected
 import geotrellis.vector.reproject.Reproject
 
 import doobie.util.transactor.Transactor

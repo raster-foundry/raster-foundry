@@ -24,8 +24,7 @@ import java.time.{LocalDate, ZoneOffset}
 import java.util.UUID
 import javax.imageio.ImageIO
 
-import geotrellis.vector.{Geometry, Point, Polygon, MultiPolygon}
-import geotrellis.slick.Projected
+import geotrellis.vector._
 import geotrellis.proj4.CRS
 
 import com.azavea.rf.database.{UserDao, SceneDao}

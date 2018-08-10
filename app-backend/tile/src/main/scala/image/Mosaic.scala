@@ -9,9 +9,8 @@ import com.azavea.rf.common.cache.CacheClient
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import geotrellis.raster._
 import geotrellis.raster.render.Png
-import geotrellis.slick.Projected
 import geotrellis.proj4._
-import geotrellis.vector.{Extent, Polygon}
+import geotrellis.vector.{Extent, Polygon, Projected}
 import cats.data._
 import cats.implicits._
 import cats.effect.IO
