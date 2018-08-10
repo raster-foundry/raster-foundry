@@ -98,6 +98,31 @@ case class Scene(
     this.statusFields,
     this.sceneType
   )
+
+  def withLessRelatedFromComponents(
+    thumbnails: List[Thumbnail],
+    datasource: Datasource
+  ): Scene.WithLessRelated = Scene.WithLessRelated(
+    this.id,
+    this.createdAt,
+    this.createdBy,
+    this.modifiedAt,
+    this.modifiedBy,
+    this.owner,
+    this.visibility,
+    this.tags,
+    datasource.toThin,
+    this.sceneMetadata,
+    this.name,
+    this.tileFootprint,
+    this.dataFootprint,
+    this.metadataFiles,
+    thumbnails.toList,
+    this.ingestLocation,
+    this.filterFields,
+    this.statusFields,
+    this.sceneType
+  )
 }
 
 
@@ -168,6 +193,51 @@ object Scene {
     dataFootprint: Option[Projected[MultiPolygon]],
     metadataFiles: List[String],
     images: List[Image.WithRelated],
+    thumbnails: List[Thumbnail],
+    ingestLocation: Option[String],
+    filterFields: SceneFilterFields = new SceneFilterFields(),
+    statusFields: SceneStatusFields,
+    sceneType: Option[SceneType] = None
+  ) {
+    def toScene: Scene =
+      Scene(
+        id,
+        createdAt,
+        createdBy,
+        modifiedAt,
+        modifiedBy,
+        owner,
+        visibility,
+        tags,
+        datasource.id,
+        sceneMetadata,
+        name,
+        tileFootprint,
+        dataFootprint,
+        metadataFiles,
+        ingestLocation,
+        filterFields,
+        statusFields,
+        sceneType
+      )
+  }
+
+  @JsonCodec
+  case class WithLessRelated(
+    id: UUID,
+    createdAt: Timestamp,
+    createdBy: String,
+    modifiedAt: Timestamp,
+    modifiedBy: String,
+    owner: String,
+    visibility: Visibility,
+    tags: List[String],
+    datasource: Datasource.Thin,
+    sceneMetadata: Json,
+    name: String,
+    tileFootprint: Option[Projected[MultiPolygon]],
+    dataFootprint: Option[Projected[MultiPolygon]],
+    metadataFiles: List[String],
     thumbnails: List[Thumbnail],
     ingestLocation: Option[String],
     filterFields: SceneFilterFields = new SceneFilterFields(),
