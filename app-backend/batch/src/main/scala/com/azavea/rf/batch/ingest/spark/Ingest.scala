@@ -179,8 +179,6 @@ object Ingest extends SparkJob with RollbarNotifier with Config {
     val partitions: Array[Array[GridBounds]] = info.segmentLayout.partitionWindowsBySegments(
       windows, partitionBytes / math.max(info.cellType.bytes, 1))
 
-    val kryoInfo = KryoWrapper(info)
-
     sc.parallelize(partitions, partitions.length).flatMap { bounds =>
       // re-constructing here to avoid serialization pit-falls
       val info = readInfo

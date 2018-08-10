@@ -13,6 +13,7 @@ import java.util.UUID
 @JsonCodec
 case class ExportLayerDefinition(
   layerId: UUID,
+  sceneType: SceneType,
   ingestLocation: URI,
   colorCorrections: Option[ColorCorrect.Params]
 )

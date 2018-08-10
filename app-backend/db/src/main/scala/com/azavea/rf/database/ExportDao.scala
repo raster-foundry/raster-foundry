@@ -166,7 +166,7 @@ object ExportDao extends Dao[Export] {
   ): ConnectionIO[SimpleInput] = {
 
     val exportLayerDefinitions = fr"""
-    SELECT scenes.id, scenes.ingest_location, stp.mosaic_definition
+    SELECT scenes.id, scenes.scene_type, scenes.ingest_location, stp.mosaic_definition
     FROM
       scenes
     LEFT JOIN

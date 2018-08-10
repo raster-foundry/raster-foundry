@@ -12,35 +12,40 @@ import com.azavea.rf.batch.util.conf._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.maml.eval._
-import io.circe.parser._
-import io.circe.syntax._
+
+import com.amazonaws.services.s3.AmazonS3URI
+import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 import cats.data.Validated._
 import cats.implicits._
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
 import com.typesafe.scalalogging.LazyLogging
+import io.circe.parser._
+import io.circe.syntax._
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io._
 import geotrellis.raster.io.geotiff.{GeoTiff, MultibandGeoTiff, SinglebandGeoTiff}
+import geotrellis.raster.io.geotiff.reader.GeoTiffReader
+import geotrellis.raster.resample.Bilinear
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.file._
 import geotrellis.spark.io.hadoop._
 import geotrellis.spark.io.s3._
+import geotrellis.spark.io.s3.util.S3RangeReader
 import geotrellis.spark.regrid._
 import geotrellis.spark.resample.ZoomResample
 import geotrellis.spark.tiling._
-import geotrellis.vector.MultiPolygon
+import geotrellis.spark.util._
+import geotrellis.vector._
 import org.apache.hadoop.fs.Path
 import spray.json.DefaultJsonProtocol._
 import org.apache.spark.rdd.RDD
 import org.apache.spark._
-import java.util.UUID
 
-import com.amazonaws.services.s3.AmazonS3URI
-import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
+import java.util.UUID
 
 
 object Export extends SparkJob with Config with LazyLogging {
@@ -105,6 +110,128 @@ object Export extends SparkJob with Config with LazyLogging {
     }
   }
 
+  def getAvroLayerRdd(ed: ExportDefinition, eld: ExportLayerDefinition, mask: Option[MultiPolygon])(implicit sc: SparkContext) = {
+    val (reader, store) = getRfLayerManagement(eld)
+    val requestedLayerId = LayerId(eld.layerId.toString, ed.input.resolution)
+
+    val maxAvailableZoom =
+      store
+        .layerIds
+        .filter { case LayerId(name, _) => name == requestedLayerId.name }
+        .map { _.zoom }
+        .max
+
+    val maxLayerId = requestedLayerId.copy(zoom = maxAvailableZoom)
+    val maxMetadata = store.readMetadata[TileLayerMetadata[SpatialKey]](maxLayerId)
+    val maxMapTransform = maxMetadata.mapTransform
+
+    val layoutScheme = ZoomedLayoutScheme(maxMetadata.crs, math.min(maxMetadata.tileCols, maxMetadata.tileRows))
+
+    val requestedMapTransform = layoutScheme.levelForZoom(requestedLayerId.zoom).layout.mapTransform
+
+    lazy val requestedQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](requestedLayerId)
+    lazy val maxQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](maxLayerId)
+
+    val hist =
+      eld
+        .colorCorrections
+        .map { _ => store.read[Array[Histogram[Double]]](requestedLayerId.copy(zoom = 0), "histogram") }
+
+    val queryLayer = (q: BoundLayerQuery[SpatialKey, TileLayerMetadata[SpatialKey], RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]) =>
+    mask
+      .fold(q)(mp => q.where(Intersects(mp)))
+      .result
+      .withContext(
+        {
+          rdd => rdd.mapValues(
+            {
+              tile =>
+              val ctile = (eld.colorCorrections |@| hist) map { _.colorCorrect(tile, _) } getOrElse tile
+
+              ed.output.render.flatMap(_.bands.map(_.toSeq)) match {
+                case Some(seq) if seq.nonEmpty => ctile.subsetBands(seq)
+                case _ => ctile
+              }
+            }
+          )
+        }
+      )
+
+    val query: MultibandTileLayerRDD[SpatialKey] =
+      if (requestedLayerId.zoom <= maxAvailableZoom)
+        queryLayer(requestedQuery)
+      else
+        ZoomResample(queryLayer(maxQuery), maxAvailableZoom, requestedLayerId.zoom)
+
+    val md = query.metadata
+
+    (ed.output.rasterSize, ed.output.crs) match {
+      case (Some(rs), Some(crs)) =>
+        query.reproject(ZoomedLayoutScheme(crs, rs))._2
+      case (None, Some(crs)) =>
+        query.reproject(ZoomedLayoutScheme(crs, defaultRasterSize))._2
+      case (Some(rs), None) =>
+        query.regrid(rs)
+      case (None, None) =>
+        query.regrid(defaultRasterSize)
+    }
+  }
+
+  def getCOGLayerRdd(eld: ExportLayerDefinition)(implicit sc: SparkContext) = {
+    val uri = eld.ingestLocation.toString
+    val maxTileSize = 256
+    val pixelBuffer = 16
+    val partitionBytes = pixelBuffer * 1024 * 1024
+    def readInfo = {
+      val s3uri = new AmazonS3URI(uri)
+      GeoTiffReader.readGeoTiffInfo(
+        S3RangeReader(
+          bucket = s3uri.getBucket,
+          key = s3uri.getKey,
+          client = S3Client.DEFAULT),
+        decompress = false, streaming = true, withOverviews = true, None)
+    }
+
+    val info = readInfo
+
+    // This listing can be masked by Geometry if desired
+    val windows: Array[GridBounds] = info
+      .segmentLayout
+      .listWindows(maxTileSize)
+      .map(_.buffer(pixelBuffer))
+
+    val partitions: Array[Array[GridBounds]] = info.segmentLayout.partitionWindowsBySegments(
+      windows, partitionBytes / math.max(info.cellType.bytes, 1))
+
+    val layoutScheme = FloatingLayoutScheme(maxTileSize)
+
+    val projectedExtentRDD: RDD[(ProjectedExtent, MultibandTile)] = sc.parallelize(partitions, partitions.length).flatMap { bounds =>
+      // re-constructing here to avoid serialization pit-falls
+      val info = readInfo
+      val geoTiff = GeoTiffReader.geoTiffMultibandTile(info)
+      val window = geoTiff.crop(bounds.filter(geoTiff.gridBounds.intersects))
+
+      window.map { case (bound, tile) =>
+        val extent = info.rasterExtent.extentFor(bound, clamp = false)
+        ProjectedExtent(extent, info.crs) -> tile
+      }
+    }
+
+    val (_: Int, metadata: TileLayerMetadata[SpatialKey]) =
+      projectedExtentRDD.collectMetadata[SpatialKey](layoutScheme)
+
+    val tilerOptions =
+      Tiler.Options(
+        resampleMethod = Bilinear,
+        partitioner = new HashPartitioner(projectedExtentRDD.partitions.length)
+      )
+
+    val tiledRdd =
+      projectedExtentRDD.tileToLayout[SpatialKey](metadata, tilerOptions)
+
+    ContextRDD(tiledRdd, metadata)
+  }
+
   def multibandExport(
     ed: ExportDefinition,
     layers: Array[ExportLayerDefinition],
@@ -112,63 +239,7 @@ object Export extends SparkJob with Config with LazyLogging {
     conf: HadoopConfiguration
   )(implicit @transient sc: SparkContext): Unit = {
     val rdds = layers.map { ld =>
-      val (reader, store) = getRfLayerManagement(ld)
-      val requestedLayerId = LayerId(ld.layerId.toString, ed.input.resolution)
-
-      val maxAvailableZoom =
-        store
-          .layerIds
-          .filter { case LayerId(name, _) => name == requestedLayerId.name }
-          .map { _.zoom }
-          .max
-
-      val maxLayerId = requestedLayerId.copy(zoom = maxAvailableZoom)
-      val maxMetadata = store.readMetadata[TileLayerMetadata[SpatialKey]](maxLayerId)
-      val maxMapTransform = maxMetadata.mapTransform
-
-      val layoutScheme = ZoomedLayoutScheme(maxMetadata.crs, math.min(maxMetadata.tileCols, maxMetadata.tileRows))
-
-      val requestedMapTransform = layoutScheme.levelForZoom(requestedLayerId.zoom).layout.mapTransform
-
-      lazy val requestedQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](requestedLayerId)
-      lazy val maxQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](maxLayerId)
-
-      val hist =
-        ld
-          .colorCorrections
-          .map { _ => store.read[Array[Histogram[Double]]](requestedLayerId.copy(zoom = 0), "histogram") }
-
-      val queryLayer = (q: BoundLayerQuery[SpatialKey, TileLayerMetadata[SpatialKey], RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]) =>
-        mask
-          .fold(q)(mp => q.where(Intersects(mp)))
-          .result
-          .withContext({ rdd => rdd.mapValues({ tile =>
-            val ctile = (ld.colorCorrections |@| hist) map { _.colorCorrect(tile, _) } getOrElse tile
-
-            ed.output.render.flatMap(_.bands.map(_.toSeq)) match {
-              case Some(seq) if seq.nonEmpty => ctile.subsetBands(seq)
-              case _ => ctile
-            }
-          })})
-
-      val query: MultibandTileLayerRDD[SpatialKey] =
-        if (requestedLayerId.zoom <= maxAvailableZoom)
-          queryLayer(requestedQuery)
-        else
-          ZoomResample(queryLayer(maxQuery), maxAvailableZoom, requestedLayerId.zoom)
-
-      val md = query.metadata
-
-      (ed.output.rasterSize, ed.output.crs) match {
-        case (Some(rs), Some(crs)) =>
-          query.reproject(ZoomedLayoutScheme(crs, rs))._2
-        case (None, Some(crs)) =>
-          query.reproject(ZoomedLayoutScheme(crs, defaultRasterSize))._2
-        case (Some(rs), None) =>
-          query.regrid(rs)
-        case (None, None) =>
-          query.regrid(defaultRasterSize)
-      }
+      if (ld.sceneType == SceneType.Avro) getAvroLayerRdd(ed, ld, mask) else getCOGLayerRdd(ld)
     }
 
     /** Tile merge with respect to layer initial ordering */
