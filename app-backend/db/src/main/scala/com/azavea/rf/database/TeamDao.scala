@@ -215,13 +215,13 @@ object TeamDao extends Dao[Team] {
     val userGroupRoleCreate = UserGroupRole.Create(
       subjectId, GroupType.Team, teamId, groupRole
     )
-    val isSameOrganizationIO: ConnectionIO[Boolean] = for {
+    val isSameOrgIO: ConnectionIO[Boolean] = for {
       team <- unsafeGetTeamById(teamId)
       orgId = team.organizationId
       userToAdd <- UserDao.unsafeGetUserById(subjectId)
       userIsOrgMember <- OrganizationDao.userIsMember(userToAdd, orgId)
     } yield { userIsOrgMember }
-    createUserGroupRole(teamId, actingUser, subjectId, userGroupRoleCreate, platformId, Some(isSameOrganizationIO))
+    createUserGroupRole(teamId, actingUser, subjectId, userGroupRoleCreate, platformId, isSameOrgIO)
   }
 
   def deactivateUserRoles(actingUser: User, subjectId: String, teamId: UUID): ConnectionIO[List[UserGroupRole]] = {
