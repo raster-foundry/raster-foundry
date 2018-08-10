@@ -327,7 +327,8 @@ export default (app) => {
             return firstRequest.then((res) => {
                 const count = res.count;
                 const scenes = res.results;
-                const requests = Array(Math.floor(count / pageSize) - 1)
+                let arraySize = Math.max(Math.floor(count / pageSize) - 1, 0);
+                const requests = Array(arraySize)
                       .fill().map((x, page) => {
                           return this.getProjectScenes(Object.assign({}, params, {
                               pageSize,
@@ -499,7 +500,7 @@ export default (app) => {
                 .$promise.then((res) => {
                     const scenes = res.results;
                     const count = res.count;
-                    let promises = Array(Math.floor(count / pageSize) - 1).fill().map((x, page) => {
+                    let promises = Array(Math.floor(count / pageSize) + 1).fill().map((x, page) => {
                         return this.Project.sceneOrder({
                             projectId,
                             pageSize,
