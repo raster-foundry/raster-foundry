@@ -3,13 +3,20 @@
     <div class="column-8">
 
       <!-- Dashboard Header -->
+      <h3>Projects</h3>
       <div class="dashboard-header">
-        <h1 class="h3">Projects</h1>
-        <div class="flex-fill"></div>
         <rf-search on-search="$ctrl.search(value)"
-                   placeholder="Search for projects"
-                   auto-focus="true">
+          placeholder="Search for projects"
+          auto-focus="true">
         </rf-search>
+        <select class="form-control"
+                ng-model="$ctrl.currentOwnershipFilter"
+                ng-change="$ctrl.handleOwnershipFilterChange()"
+                feature-flag="project-list-sharing-filter">
+          <option value="owned">Owned by me</option>
+          <option value="shared">Shared with me</option>
+        </select>
+        <div class="flex-fill"></div>
         <a class="btn btn-primary" ng-click="$ctrl.createNewProject()">
           New project
         </a>
@@ -25,7 +32,7 @@
       <!-- Loading indicator -->
 
       <!-- No project placeholder -->
-      <div ng-if="!$ctrl.loading && $ctrl.projectList.length === 0">
+      <div ng-if="!$ctrl.loading && $ctrl.projectList.length === 0 && $ctrl.currentOwnershipFilter === 'owned'">
         <rf-call-to-action-item title="You haven't created any projects yet" class="panel panel-off-white">
           <p class="pb-25">
             You can create a new project by <strong>importing</strong> your own earth observation
@@ -37,6 +44,14 @@
           <a class="btn btn-primary" ng-click="$ctrl.createNewProject()">New project</a>
           <p>
             <a>Getting started with Projects</a>
+          </p>
+        </rf-call-to-action-item>
+      </div>
+
+      <div ng-if="!$ctrl.loading && $ctrl.projectList.length === 0 && $ctrl.currentOwnershipFilter === 'shared'">
+        <rf-call-to-action-item title="No projects have been shared with you yet" class="panel panel-off-white">
+          <p class="pb-25">
+            When other users share projects with you, or a team or organization you are a member of, you'll see them here.
           </p>
         </rf-call-to-action-item>
       </div>
@@ -64,6 +79,7 @@
               class="panel panel-off-white project-item"
               project="project"
               platform="$ctrl.platform"
+              hide-options="$ctrl.currentOwnershipFilter === 'shared' && project.owner.id != $ctrl.user.id"
           >
           </rf-project-item>
         </div>

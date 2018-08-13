@@ -81,7 +81,9 @@ abstract class Dao[Model: Composite] extends Filterables {
       // shared to the requesting user directly, across platform, or due to group membership
       case Some(ownershipType) if ownershipType == "shared" =>
         fr"INNER JOIN (" ++ sharedF ++ fr"UNION ALL" ++ inheritedF ++ fr") as object_ids ON" ++
-          Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id"
+          Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id" ++
+          fr"WHERE owner <> ${user.id}"
+
       // shared to the requesting user due to group membership
       case Some(ownershipType) if ownershipType == "inherited" =>
         fr"INNER JOIN (" ++ inheritedF ++ fr") as object_ids ON" ++
