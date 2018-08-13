@@ -91,7 +91,7 @@ class ProjectsScenesController {
         this.$parent.getMap().then(mapWrapper => {
             const bbox = mapWrapper.map.getBounds();
             this.$state.go('projects.edit.browse', {sceneid: null, bbox: bbox.toBBoxString()});
-        })
+        });
     }
 }
 
