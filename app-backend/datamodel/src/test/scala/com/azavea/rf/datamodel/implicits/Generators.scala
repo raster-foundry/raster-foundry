@@ -2,8 +2,7 @@ package com.azavea.rf.datamodel
 
 import com.azavea.rf.datamodel._
 
-import geotrellis.slick.Projected
-import geotrellis.vector.{MultiPolygon, Point, Polygon}
+import geotrellis.vector.{MultiPolygon, Point, Polygon, Projected}
 import geotrellis.vector.testkit.Rectangle
 
 import io.circe.Json
