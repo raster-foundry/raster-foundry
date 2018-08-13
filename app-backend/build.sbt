@@ -44,6 +44,7 @@ lazy val commonSettings = Seq(
     DefaultMavenRepository,
     Resolver.sonatypeRepo("snapshots"),
     Resolver.bintrayRepo("azavea", "maven"),
+    Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.bintrayRepo("lonelyplanet", "maven"),
     Resolver.bintrayRepo("guizmaii", "maven"),
     Resolver.bintrayRepo("kwark", "maven"), // Required for Slick 3.1.1.2, see https://github.com/azavea/raster-foundry/pull/1576
@@ -426,3 +427,13 @@ lazy val bridge = Project("bridge", file("bridge"))
       Dependencies.scalaLogging
     )
   })
+
+// maml / better-abstracted tile server
+lazy val backsplash = Project("backsplash", file("backsplash"))
+  .settings(commonSettings:_*)
+  .settings({ libraryDependencies ++= Seq(
+               Dependencies.geotrellisServer,
+               Dependencies.http4sBlaze,
+               Dependencies.http4sCirce,
+               Dependencies.http4sDSL
+             ) })
