@@ -1,5 +1,23 @@
 # Change Log
 
+## [1.9.0](https://github.com/raster-foundry/raster-foundry/tree/1.9.0) (2018-08-13)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.8.1...1.9.0)
+
+**Merged pull requests:**
+
+- Fix lab analysis export metadata [\#3836](https://github.com/raster-foundry/raster-foundry/pull/3836)
+- Revert change to COPY in Dockerfile.api [\#3835](https://github.com/raster-foundry/raster-foundry/pull/3835)
+- Don't return scene images in scene list queries [\#3832](https://github.com/raster-foundry/raster-foundry/pull/3832)
+- Add proxy for sentinel thumbnails to handle requester-pays [\#3831](https://github.com/raster-foundry/raster-foundry/pull/3831)
+- Add fields and filters to projects and annotations [\#3813](https://github.com/raster-foundry/raster-foundry/pull/3813)
+- Remove worthless access control rule creation from importers [\#3811](https://github.com/raster-foundry/raster-foundry/pull/3811)
+- Fix annotation shapefile export and import [\#3808](https://github.com/raster-foundry/raster-foundry/pull/3808)
+- Prevent container build failure when copying nginx/srv/dist before it exists [\#3800](https://github.com/raster-foundry/raster-foundry/pull/3800)
+- Fix pagination on project scenes [\#3796](https://github.com/raster-foundry/raster-foundry/pull/3796)
+- Add sbt-sonatype plugin to support publishing to Maven Central [\#3794](https://github.com/raster-foundry/raster-foundry/pull/3794)
+- Upgrade Nginx to latest stable release [\#3648](https://github.com/raster-foundry/raster-foundry/pull/3648)
+
 ## [1.8.1](https://github.com/raster-foundry/raster-foundry/tree/1.8.1) (2018-08-09)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.8.0...1.8.1)
