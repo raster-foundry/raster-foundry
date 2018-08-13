@@ -138,3 +138,29 @@ services:
       - "-Dcom.sun.management.jmxremote.authenticate=false"
       - "-Dcom.sun.management.jmxremote.local.only=false"
       - "-Djava.rmi.server.hostname=localhost"
+
+  backsplash:
+    image: openjdk:8-jre
+    links:
+      - postgres:database.service.rasterfoundry.internal
+      - memcached:tile-cache.service.rasterfoundry.internal
+    env_file: .env
+    ports:
+      - "8080:8080"
+      - "9030:9020"
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./.sbt:/root/.sbt
+      - ./.bintray:/root/.bintray
+      - $HOME/.aws:/root/.aws:ro
+    working_dir: /opt/raster-foundry/app-backend/
+    entrypoint: ./sbt
+    command:
+      - "backsplash/run"
+      - "-Dcom.sun.management.jmxremote.rmi.port=9020"
+      - "-Dcom.sun.management.jmxremote=true"
+      - "-Dcom.sun.management.jmxremote.port=9020"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
+      - "-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-Dcom.sun.management.jmxremote.local.only=false"
+      - "-Djava.rmi.server.hostname=localhost"
