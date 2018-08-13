@@ -13,6 +13,7 @@ class ProjectsScenesController {
 
     $onInit() {
         this.$parent = this.$scope.$parent.$ctrl;
+        this.projectId = this.$parent.projectId;
         this.repository = {
             name: 'Raster Foundry',
             service: this.RasterFoundryRepository

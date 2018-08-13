@@ -14,13 +14,13 @@ import cats.effect.IO
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.slick.Projected
-import geotrellis.vector.Polygon
+import geotrellis.vector.{MultiPolygon, Polygon}
 import geotrellis.raster.histogram._
 import doobie.Fragments._
 import doobie.Fragments._
 
 import scala.concurrent.Future
-
+import scala.util.Properties
 
 object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
 
@@ -71,28 +71,87 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
   }
 
   // Check swagger spec for appropriate return type
+  // we filter to make sure the list only includes non-None geometries, and then perform unions of
+  // multipolygons that we know are stored in the same projection in the database
+  @SuppressWarnings(Array("OptionGet"))
   def getMosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]]): ConnectionIO[Seq[MosaicDefinition]] = {
+
+    def geom(stpWithFootprint: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) = stpWithFootprint._2.get.geom
+
+    def maybeNotWorthless(coveredByGeomO: Option[MultiPolygon], targetCoverageO: Option[Polygon]): Boolean =
+      (coveredByGeomO, targetCoverageO) match {
+        case (Some(targetCoverage), Some(coveredSoFar)) => {
+          !targetCoverage.within(coveredSoFar)
+        }
+        case _ => true
+      }
 
     val filters = List(
       polygonOption.map(polygon => fr"ST_Intersects(scenes.tile_footprint, ${polygon})"),
       Some(fr"scenes_to_projects.project_id = ${projectId}"),
-      Some(fr"scenes.ingest_status = 'INGESTED'")
+      Some(fr"scenes.ingest_status = 'INGESTED'"),
+      Some(fr"data_footprint IS NOT NULL")
     )
+
     val select = fr"""
     SELECT
-      scene_id, project_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location
+      scene_id, project_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location, data_footprint
     FROM
       scenes_to_projects
     LEFT JOIN
       scenes
     ON scenes.id = scenes_to_projects.scene_id
       """
+
+    val countF = fr"""
+    SELECT count(1)
+    FROM
+      scenes_to_projects
+    LEFT JOIN
+      scenes
+    ON scenes.id = scenes_to_projects.scene_id
+    """
+
+    var coveredSoFar: Option[MultiPolygon] = None
+    val targetGeom: Option[Polygon] = polygonOption map { _.geom }
+
     for {
-      stps <- {
-        (select ++ whereAndOpt(filters: _*)).query[SceneToProjectwithSceneType].list
+      stpsWithFootprints <- {
+        (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scene_order, coalesce(acquisition_date, scenes.created_at) DESC")
+          .query[(SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])]
+          .stream
+          .takeWhile(
+            (p: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => {
+              val notWorthless = maybeNotWorthless(coveredSoFar, targetGeom)
+              coveredSoFar = Some(
+                coveredSoFar.map(mp => (geom(p) union mp).asMultiPolygon.get).getOrElse(geom(p))
+              )
+              notWorthless
+            }
+          )
+          .filter(
+            (p: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) =>
+               !(coveredSoFar.map(mp => !geom(p).within(mp)).getOrElse(false))
+          )
+          .zipWithNext
+          .compile
+          .toList
+      }
+      // Depending on log level, count scenes in the project. Note that because this filters on the
+      // scenes table with a geometry query and because about 15 of these get launched for each request
+      // to the tile server, it's gonna hurt, so don't do this unless you _really_ need the debug output
+      // more than you need the server to stay alive.
+      countO <- Properties.envOrNone("RF_LOG_LEVEL") match {
+        case Some("DEBUG") => (countF ++ whereAndOpt(filters: _*)).query[Int].option
+        case _ => None.pure[ConnectionIO]
       }
     } yield {
-      logger.debug(s"Found ${stps.length} scenes in projects")
+      countO map {
+        (count: Int) => logger.debug(s"Using ${stpsWithFootprints.length} scenes in project out of $count")
+      }
+      val stps = stpsWithFootprints map { _._1 } map { _._1 }
+      val nexts = stpsWithFootprints map { _._2 }
+      logger.info(s"Stopped streaming results before the end of the stream? ${!nexts.last.isEmpty}")
       val md = MosaicDefinition.fromScenesToProjects(stps)
       logger.debug(s"Mosaic Definition: ${md}")
       md
