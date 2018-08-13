@@ -48,6 +48,7 @@ object Dependencies {
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
   val geotrellisRasterTestkit = "org.locationtech.geotrellis" %% "geotrellis-raster-testkit" % Version.geotrellis
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
+  val geotrellisServer = "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer
   val geotrellisShapefile = "org.locationtech.geotrellis" %% "geotrellis-shapefile" % Version.geotrellis
   val geotrellisSlick = "org.locationtech.geotrellis" %% "geotrellis-slick" % Version.geotrellis
   val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
@@ -57,6 +58,11 @@ object Dependencies {
   val geotrellisVectorTestkit = "org.locationtech.geotrellis" %% "geotrellis-vector-testkit" % Version.geotrellis % "test"
   val hadoopAws = "org.apache.hadoop" % "hadoop-aws" % Version.hadoop
   val hikariCP = "com.typesafe.slick" %% "slick-hikaricp" % Version.hikariCP
+  val http4sBlaze = "org.http4s" %% "http4s-blaze-server" % Version.http4s
+  val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client" % Version.http4s
+  val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
+  val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
+  val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
   val kamonAkka = "io.kamon" %% "kamon-akka" % Version.kamon
   val kamonAkkaHttp = "io.kamon" %% "kamon-akka-http" % Version.kamonAkkaHttp
   val kamonCore = "io.kamon" %% "kamon-core" % Version.kamon

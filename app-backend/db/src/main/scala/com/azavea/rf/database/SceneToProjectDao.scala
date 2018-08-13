@@ -117,7 +117,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       """
     for {
       stps <- {
-        (select ++ whereAndOpt(filters: _*))
+        (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scenes_to_projects.scene_order ASC")
           .query[SceneToProjectwithSceneType]
           .to[List]
       }

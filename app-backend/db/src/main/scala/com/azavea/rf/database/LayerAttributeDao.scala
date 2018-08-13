@@ -1,6 +1,5 @@
 package com.azavea.rf.database
 
-import cats.effect.IO
 import cats.implicits._
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.LayerAttribute
@@ -47,7 +46,7 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
   }
 
   def insertLayerAttribute(
-      layerAttribute: LayerAttribute): ConnectionIO[Int] = {
+      layerAttribute: LayerAttribute): ConnectionIO[LayerAttribute] = {
     // This insert includes conflict handling, because if we re-ingest a scene, its layerattributes should already
     // be in the db.
     val insertStatement = fr"INSERT into" ++ tableF ++
@@ -57,7 +56,10 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
           (${layerAttribute.layerName}, ${layerAttribute.zoom}, ${layerAttribute.name}, ${layerAttribute.value})
       ON CONFLICT (layer_name, zoom, name) DO UPDATE set value = ${layerAttribute.value}
       """
-    insertStatement.update.run
+    insertStatement.update.withUniqueGeneratedKeys[LayerAttribute]("layer_name",
+                                                                   "zoom",
+                                                                   "name",
+                                                                   "value")
   }
 
   def layerExists(layerId: LayerId): ConnectionIO[Boolean] = {
@@ -102,6 +104,15 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
     ) ++ fr"GROUP BY layer_name")
       .query[(String, Int)]
       .to[List]
+  }
+
+  def unsafeMaxZoomForLayer(layerName: String): ConnectionIO[(String, Int)] = {
+    maxZoomsForLayers(Set(layerName)) map {
+      case h :: Nil => h
+      case _ =>
+        throw new Exception(
+          s"Several or zero max zooms found for layer $layerName")
+    }
   }
 
   def availableAttributes(layerId: LayerId): ConnectionIO[List[String]] = {
