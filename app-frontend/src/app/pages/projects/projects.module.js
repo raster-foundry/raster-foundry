@@ -5,10 +5,7 @@ const ProjectsModule = angular.module('pages.projects', []);
 
 ProjectsModule.resolve = {
     user: ($stateParams, authService) => {
-        if ($stateParams.userId === 'me') {
-            return authService.getCurrentUser();
-        }
-        return false;
+        return authService.getCurrentUser();
     },
     userRoles: (authService) => {
         return authService.fetchUserRoles();

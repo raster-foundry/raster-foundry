@@ -2,7 +2,7 @@
 
 class ProjectsListController {
     constructor( // eslint-disable-line max-params
-        $log, $state, modalService, $scope, projectService, userService, authService, platform
+        $log, $state, modalService, $scope, projectService, userService, authService, platform, user
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -10,8 +10,10 @@ class ProjectsListController {
 
     $onInit() {
         this.projectList = [];
-        this.populateProjectList(this.$state.params.page || 1);
         this.BUILDCONFIG = BUILDCONFIG;
+        // Can be one of {owned, shared}
+        this.currentOwnershipFilter = 'owned';
+        this.populateProjectList(this.$state.params.page || 1);
     }
 
     populateProjectList(page = 1) {
@@ -25,7 +27,7 @@ class ProjectsListController {
                 sort: 'createdAt,desc',
                 pageSize: 10,
                 page: page - 1,
-                owner: this.authService.getProfile().sub
+                ownershipType: this.currentOwnershipFilter
             }
         ).then(
             (projectResult) => {
@@ -100,6 +102,10 @@ class ProjectsListController {
                 this.populateProjectList(1);
             }
         });
+    }
+
+    handleOwnershipFilterChange(newFilterValue) {
+        this.populateProjectList(1);
     }
 }
 
