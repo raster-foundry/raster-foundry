@@ -78,16 +78,12 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
 
     def geom(stpWithFootprint: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) = stpWithFootprint._2.get.geom
 
-    def maybeNotWorthless(
-      coveredByGeomO: Option[MultiPolygon],
-      targetCoverageO: Option[Polygon]
-    )(pair: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])): Boolean =
+    def maybeNotWorthless(coveredByGeomO: Option[MultiPolygon], targetCoverageO: Option[Polygon]): Boolean =
       (coveredByGeomO, targetCoverageO) match {
-        case (_, None) => true
-        case (None, Some(coveredSoFar)) => !geom(pair).coveredBy(coveredSoFar)
         case (Some(targetCoverage), Some(coveredSoFar)) => {
-          !(geom(pair).within(coveredSoFar) || targetCoverage.within(coveredSoFar))
+          !targetCoverage.within(coveredSoFar)
         }
+        case _ => true
       }
 
     val filters = List(
@@ -126,12 +122,16 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
           .stream
           .takeWhile(
             (p: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) => {
-              val notWorthless = maybeNotWorthless(coveredSoFar, targetGeom)(p)
+              val notWorthless = maybeNotWorthless(coveredSoFar, targetGeom)
               coveredSoFar = Some(
                 coveredSoFar.map(mp => (geom(p) union mp).asMultiPolygon.get).getOrElse(geom(p))
               )
               notWorthless
             }
+          )
+          .filter(
+            (p: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) =>
+               !(coveredSoFar.map(mp => !geom(p).within(mp)).getOrElse(false))
           )
           .zipWithNext
           .compile
