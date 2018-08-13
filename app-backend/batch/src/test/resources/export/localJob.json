@@ -47,7 +47,8 @@
             "autoBalance": {
               "enabled": false
             }
-          }
+          },
+          "sceneType": "AVRO"
         }
       ],
       "mask": {
