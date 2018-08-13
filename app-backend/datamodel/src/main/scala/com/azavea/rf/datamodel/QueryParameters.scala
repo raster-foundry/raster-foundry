@@ -57,24 +57,7 @@ case class SceneQueryParameters(
   pending: Option[Boolean] = None,
   shape: Option[UUID] = None
 ) {
-  val bboxPolygon: Option[Seq[Projected[Polygon]]] = try {
-    bbox match {
-      case Nil => None
-      case b: Seq[String] => Option[Seq[Projected[Polygon]]](
-        b.map(
-          _.split(";")
-            .map(Extent.fromString)
-            .map(_.toPolygon)
-            .map(Projected(_, 4326))
-            .map(_.reproject(LatLng, WebMercator)(3857))
-        ).flatten
-      )
-    }
-  } catch {
-    case e: Exception => throw new IllegalArgumentException(
-      "Four comma separated coordinates must be given for bbox"
-    ).initCause(e)
-  }
+  val bboxPolygon: Option[Seq[Projected[Polygon]]] = BboxUtil.toBboxPolygon(bbox)
 
   val pointGeom: Option[Projected[Point]] = try {
     point.map { s =>
@@ -136,7 +119,8 @@ case class ProjectQueryParameters(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
   searchParams: SearchQueryParameters = SearchQueryParameters(),
   ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
-  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
+  tagQueryParameters: TagQueryParameters = TagQueryParameters()
 )
 
 @JsonCodec
@@ -302,8 +286,11 @@ case class AnnotationQueryParameters(
   minConfidence: Option[Double] = None,
   maxConfidence: Option[Double] = None,
   quality: Option[String] = None,
-  annotationGroup: Option[UUID] = None
-)
+  annotationGroup: Option[UUID] = None,
+  bbox: Iterable[String] = Seq[String]()
+) {
+  val bboxPolygon: Option[Seq[Projected[Polygon]]] = BboxUtil.toBboxPolygon(bbox)
+}
 
 @JsonCodec
 case class ShapeQueryParameters(
@@ -369,3 +356,30 @@ case class SceneThumbnailQueryParameters(
   blue: Option[Int],
   floor: Option[Int]
 )
+
+@JsonCodec
+case class TagQueryParameters(
+  tagsInclude: Iterable[String] = Seq[String](),
+  tagsExclude: Iterable[String] = Seq[String]()
+)
+
+object BboxUtil {
+  def toBboxPolygon(boundingBox: Iterable[String]): Option[Seq[Projected[Polygon]]] = try {
+    boundingBox match {
+      case Nil => None
+      case b: Seq[String] => Option[Seq[Projected[Polygon]]](
+        b.map(
+          _.split(";")
+            .map(Extent.fromString)
+            .map(_.toPolygon)
+            .map(Projected(_, 4326))
+            .map(_.reproject(LatLng, WebMercator)(3857))
+        ).flatten
+      )
+    }
+  } catch {
+    case e: Exception => throw new IllegalArgumentException(
+      "Four comma separated coordinates must be given for bbox"
+    ).initCause(e)
+  }
+}

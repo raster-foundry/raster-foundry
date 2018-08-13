@@ -1,3 +1,7 @@
+// For sbt 1.1.x, and 0.13.x
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.3")
+addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0")
+
 addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.1")
 
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.3.3")

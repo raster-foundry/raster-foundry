@@ -136,13 +136,6 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       ).toList
   }
 
-  protected def insertAcrForScene(swr: Scene.WithRelated, user: User): ConnectionIO[AccessControlRule] =
-    AccessControlRuleDao.create(
-      AccessControlRule.Create(
-        true, SubjectType.All, None, ActionType.View
-      ).toAccessControlRule(user, ObjectType.Scene, swr.id)
-    )
-
   /** Because it makes scenes -- get it? */
   def riot(scenePath: String, datasourceUUID: UUID, user: User): IO[Option[Scene.WithRelated]] = {
     logger.info(s"Attempting to import ${scenePath}")
@@ -214,13 +207,7 @@ case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))
       sceneType = SceneType.Avro.some
     )
 
-    val sceneInsertIO = for {
-      sceneInsert <- SceneDao.insertMaybe(sceneCreate, user).transact(xa)
-      _ <- sceneInsert match {
-        case Some(swr) => insertAcrForScene(swr, user).transact(xa)
-        case _ => ().pure[IO]
-      }
-    } yield { sceneInsert }
+    val sceneInsertIO = SceneDao.insertMaybe(sceneCreate, user).transact(xa)
 
     IO.shift(SceneCreationIOContext) *> sceneInsertIO
   }

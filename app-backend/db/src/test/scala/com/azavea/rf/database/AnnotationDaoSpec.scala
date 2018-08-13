@@ -34,6 +34,29 @@ class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTest
     }
   }
 
+  test("insert annotations created by a labeler") {
+    check {
+      forAll {
+        (user: User.Create, org: Organization.Create, project: Project.Create, annotations: List[Annotation.Create], labelerC: User.Create) => {
+          val annotationsInsertIO = for {
+            oupInsert <- insertUserOrgProject(user, org, project)
+            (dbOrg, dbUser, dbProject) = oupInsert
+            labeler <- UserDao.create(labelerC)
+            insertedAnnotations <- AnnotationDao.insertAnnotations(
+              annotations.map(annotationCreate => annotationCreate.copy(labeledBy = Some(labeler.id))),
+              dbProject.id,
+              dbUser)
+          } yield (insertedAnnotations, labeler)
+
+          val (insertedAnnotations, labeler) = annotationsInsertIO.transact(xa).unsafeRunSync
+
+          insertedAnnotations.length == annotations.length &&
+          insertedAnnotations.flatMap(_.labeledBy).distinct(0) === labeler.id
+        }
+      }
+    }
+  }
+
   test("list annotations") {
     AnnotationDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
@@ -67,38 +90,39 @@ class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTest
     }
   }
 
-  test("update an annotation") {
+  test("update an annotation verified by a verifier") {
     check {
       forAll {
         (user: User.Create, org: Organization.Create, project: Project.Create,
-         annotationInsert: Annotation.Create, annotationUpdate: Annotation.Create) => {
-          val annotationInsertWithUserAndProjectIO = insertUserOrgProject(user, org, project) flatMap {
-            case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-              AnnotationDao.insertAnnotations(List(annotationInsert), dbProject.id, dbUser) map {
-                (_, dbUser, dbProject)
-              }
-            }
-          }
+         annotationInsert: Annotation.Create, annotationUpdate: Annotation.Create,
+         verifierCreate: User.Create
+       ) => {
+          val annotationInsertWithUserAndProjectIO = for {
+            oupInsert <- insertUserOrgProject(user, org, project)
+            (dbOrg, dbUser, dbProject) = oupInsert
+            annotations <- AnnotationDao.insertAnnotations(List(annotationInsert), dbProject.id, dbUser)
+            verifier <- UserDao.create(verifierCreate)
+          } yield (annotations, dbUser, dbProject, verifier)
 
           val annotationsUpdateWithAnnotationIO = annotationInsertWithUserAndProjectIO flatMap {
-            case (annotations: List[Annotation], dbUser: User, dbProject: Project) => {
+            case (annotations: List[Annotation], dbUser: User, dbProject: Project, verifier: User) => {
               // safe because it's coming from inserting an annotation above
               val firstAnnotation = annotations.head
               val annotationId = firstAnnotation.id
-              val newAnnotation = annotationUpdate.toAnnotation(
+              val newAnnotation = annotationUpdate.copy(verifiedBy = Some(verifier.id)).toAnnotation(
                 dbProject.id, dbUser, firstAnnotation.annotationGroup
               ).copy(id=annotationId)
               AnnotationDao.updateAnnotation(newAnnotation, annotationId, dbUser) flatMap {
                 (affectedRows: Int) => {
                   AnnotationDao.unsafeGetAnnotationById(annotationId, dbUser) map {
-                    (affectedRows, _)
+                    (affectedRows, _, verifier)
                   }
                 }
               }
             }
           }
 
-          val (affectedRows, updatedAnnotation) = annotationsUpdateWithAnnotationIO.transact(xa).unsafeRunSync
+          val (affectedRows, updatedAnnotation, verifier) = annotationsUpdateWithAnnotationIO.transact(xa).unsafeRunSync
 
           affectedRows == 1 &&
             updatedAnnotation.label == annotationUpdate.label &&
@@ -106,7 +130,8 @@ class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTest
             updatedAnnotation.machineGenerated == annotationUpdate.machineGenerated &&
             updatedAnnotation.confidence == annotationUpdate.confidence &&
             updatedAnnotation.quality == annotationUpdate.quality &&
-            updatedAnnotation.geometry == annotationUpdate.geometry
+            updatedAnnotation.geometry == annotationUpdate.geometry &&
+            updatedAnnotation.verifiedBy == Some(verifier.id)
         }
       }
     }

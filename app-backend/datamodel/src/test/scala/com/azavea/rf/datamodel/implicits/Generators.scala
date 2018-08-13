@@ -282,10 +282,11 @@ object Generators extends ArbitraryInstances {
     tags <- stringListGen
     isSingleBand <- arbitrary[Boolean]
     singleBandOptions <- singleBandOptionsParamsGen map { Some(_) }
+    extras <- Gen.const(().asJson)
   } yield {
     Project.Create(
       name, description, visibility, tileVisibility, isAOIProject, aoiCadenceMillis,
-      owner, tags, isSingleBand, singleBandOptions
+      owner, tags, isSingleBand, singleBandOptions, Some(extras)
     )
   }
 

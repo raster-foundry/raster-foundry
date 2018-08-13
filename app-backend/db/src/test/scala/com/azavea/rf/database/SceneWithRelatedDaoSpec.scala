@@ -81,7 +81,7 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
 
           val (insertedScenes, listedScenes) = scenesIO.transact(xa).unsafeRunSync
           val insertedNamesSet = insertedScenes.toSet map { (scene: Scene.WithRelated) => scene.name }
-          val listedNamesSet = listedScenes.results.toSet map { (scene: Scene.WithRelated) => scene.name }
+          val listedNamesSet = listedScenes.results.toSet map { (scene: Scene.WithLessRelated) => scene.name }
           assert(listedNamesSet.intersect(insertedNamesSet) == listedNamesSet,
                  "listed scenes should be a strict subset of inserted scenes by user 1")
           true

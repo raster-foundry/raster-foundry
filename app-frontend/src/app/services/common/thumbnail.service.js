@@ -15,6 +15,10 @@ export default (app) => {
             }).url;
             if (url.startsWith('/')) {
                 url = `${BUILDCONFIG.API_HOST}/api${url}?token=${this.authService.token()}`;
+            } else if (url.startsWith('https://sentinel-s2')) {
+                url =
+                    `${BUILDCONFIG.API_HOST}/api/thumbnails/sentinel/` +
+                    `${encodeURIComponent(url)}?token=${this.authService.token()}`;
             }
             return url;
         }

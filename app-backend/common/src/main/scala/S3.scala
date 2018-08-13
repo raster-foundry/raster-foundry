@@ -4,7 +4,7 @@ import jp.ne.opt.chronoscala.Imports._
 import org.apache.commons.io.IOUtils
 import com.amazonaws.auth._
 import com.amazonaws.regions._
-import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
 import com.amazonaws.services.s3.model.{ListObjectsRequest, ObjectListing, ObjectMetadata, S3Object}
 import com.amazonaws.HttpMethod
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
@@ -23,6 +23,11 @@ package object S3 {
     .withRegion(Regions.US_EAST_1)
     .build()
 
+  def clientWithRegion(region: Regions): AmazonS3 =
+    AmazonS3ClientBuilder.standard()
+      .withRegion(region)
+      .build()
+
   // we want to ignore here, because uri.getHost returns null instead of an Option[String] -- thanks Java
   @SuppressWarnings(Array("NullParameter"))
   def bucketAndPrefixFromURI(uri: URI): (String, String) = {
@@ -39,7 +44,7 @@ package object S3 {
       case _ => throw new IllegalStateException(s"Ambiguous bucket parse: $uri")
     }
 
-    (bucket, prefix)
+    (bucket.replace(".s3.amazonaws.com", ""), prefix.replaceAll("/\\z", ""))
   }
 
   def getObject(uri: URI): S3Object = {
@@ -111,7 +116,7 @@ package object S3 {
     val listObjectsRequest =
       new ListObjectsRequest()
         .withBucketName(bucket)
-        .withPrefix(prefix)
+        .withPrefix(s"${prefix}/")
         .withDelimiter("/")
 
     get(client.listObjects(listObjectsRequest), Nil)

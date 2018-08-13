@@ -56,7 +56,21 @@ trait Filterables extends RFMeta with LazyLogging {
   implicit val projectQueryParametersFilter = Filterable[Any, ProjectQueryParameters] { projectParams: ProjectQueryParameters =>
     Filters.timestampQP(projectParams.timestampParams) ++
       Filters.userQP(projectParams.userParams) ++
-      Filters.searchQP(projectParams.searchParams, List("name"))
+      Filters.searchQP(projectParams.searchParams, List("name")) ++
+      List(
+        projectParams.tagQueryParameters.tagsInclude.toList.toNel.map({ tags =>
+          val tagsIncludeF = tags.map({tag =>
+            fr"${tag} = ANY (projects.tags)"
+          }).toList
+          fr"(" ++ Fragments.or(tagsIncludeF: _*) ++ fr")"
+        }),
+        projectParams.tagQueryParameters.tagsExclude.toList.toNel.map({ tags =>
+          val tagsIncludeF = tags.map({tag =>
+            fr"${tag} = ANY (projects.tags)"
+          }).toList
+          fr"(NOT (" ++ Fragments.or(tagsIncludeF: _*) ++ fr"))"
+        })
+      )
   }
 
   implicit val CombinedToolQueryParametersFilter = Filterable[Any, CombinedToolQueryParameters] { toolParams: CombinedToolQueryParameters =>
@@ -66,13 +80,21 @@ trait Filterables extends RFMeta with LazyLogging {
   }
 
   implicit val annotationQueryparamsFilter = Filterable[Any, AnnotationQueryParameters] { annotParams: AnnotationQueryParameters =>
-    Filters.userQP(annotParams.userParams) ++ List(
+    Filters.userQP(annotParams.userParams) ++
+    List(
       annotParams.label.map({ label => fr"label = $label" }),
       annotParams.machineGenerated.map({ mg => fr"machine_generated = $mg" }),
       annotParams.minConfidence.map({ minc => fr"min_confidence = $minc" }),
       annotParams.maxConfidence.map({ maxc => fr"max_confidence = $maxc" }),
       annotParams.quality.map({ quality => fr"quality = $quality" }),
-      annotParams.annotationGroup.map({ ag => fr"annotation_group = $ag" })
+      annotParams.annotationGroup.map({ ag => fr"annotation_group = $ag" }),
+      annotParams.bboxPolygon match {
+        case Some(bboxPolygons) =>
+          val fragments = bboxPolygons.map(bbox =>
+            fr"(_ST_Intersects(geometry, ${bbox}) AND geometry && ${bbox})")
+          Some(fr"(" ++ Fragments.or(fragments: _*) ++ fr")")
+        case _ => None
+      }
     )
   }
 

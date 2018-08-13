@@ -85,7 +85,7 @@ class InputNodeController {
                     projectId: projectId,
                     pending: false
                 }
-            ).then(scenes => {
+            ).then(({scenes})=> {
                 const datasourcesP = this.$q.all(
                     _.map(
                         _.uniqBy(scenes, scene => scene.datasource.id),
