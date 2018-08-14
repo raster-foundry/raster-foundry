@@ -133,7 +133,6 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
             (p: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) =>
                !(coveredSoFar.map(mp => !geom(p).coveredBy(mp)).getOrElse(false))
           )
-          .zipWithNext
           .compile
           .toList
       }
@@ -149,9 +148,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       countO map {
         (count: Int) => logger.debug(s"Using ${stpsWithFootprints.length} scenes in project out of $count")
       }
-      val stps = stpsWithFootprints map { _._1 } map { _._1 }
-      val nexts = stpsWithFootprints map { _._2 }
-      logger.debug(s"Stopped streaming results before the end of the stream? ${!nexts.last.isEmpty}")
+      val stps = stpsWithFootprints map { _._1 }
       val md = MosaicDefinition.fromScenesToProjects(stps)
       logger.debug(s"Mosaic Definition: ${md}")
       md
