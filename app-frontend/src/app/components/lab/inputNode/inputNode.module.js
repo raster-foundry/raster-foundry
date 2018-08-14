@@ -153,10 +153,14 @@ class InputNodeController {
 
     onBandChange(index) {
         this.selectedBand = index;
+        if (!Number.isFinite(index) || index < 0) {
+            delete this.selectedBand;
+            this.manualBand = '';
+        }
         this.checkValidity();
         this.updateNode({
             payload: Object.assign({}, this.node, {
-                band: index
+                band: this.selectedBand
             }),
             hard: !this.analysisErrors.size
         });
