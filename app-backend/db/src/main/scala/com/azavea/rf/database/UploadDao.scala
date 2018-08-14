@@ -82,19 +82,23 @@ object UploadDao extends Dao[Upload] {
       owner <- UserDao.unsafeGetUserById(oldUpload.owner)
      } yield (oldUpload, newStatus, nAffected, userPlatform, owner)) flatMap {
       case (oldUpload: Upload, newStatus: UploadStatus, nAffected: Int, platform: Platform, owner: User) => {
-        (oldUpload.uploadStatus, newStatus, platform.publicSettings.emailIngestNotification, owner.emailNotifications) match {
-          case (UploadStatus.Processing, UploadStatus.Failed, true, true) => {
+        (oldUpload.uploadStatus, newStatus, platform.publicSettings.emailIngestNotification, owner.getEmail) match {
+          case (_, _, _, "") | (_, _, false, _) => {
+            logger.info(s"Upload complete, but user ${owner.id} or platform ${platform.name} has not requested email notifications")
+            nAffected.pure[ConnectionIO]
+          }
+          case (UploadStatus.Processing, UploadStatus.Failed, true, s) => {
             logger.info(s"notifying user ${owner.id} that their upload failed")
             UploadNotifier(platform.id, id, MessageType.UploadFailed).send *>
               nAffected.pure[ConnectionIO]
           }
-          case (UploadStatus.Processing, UploadStatus.Complete, true, true) => {
+          case (UploadStatus.Processing, UploadStatus.Complete, true, s) => {
             logger.info(s"Notifying user ${owner.id} that their upload succeeded")
             UploadNotifier(platform.id, id, MessageType.UploadSucceeded).send *>
               nAffected.pure[ConnectionIO]
           }
           case _ => {
-            logger.info(s"Upload complete, but user ${owner.id} or platform ${platform.name} has not requested email notifications")
+            logger.info("No need to send notifications, status transition isn't something users care about")
             nAffected.pure[ConnectionIO]
           }
         }
