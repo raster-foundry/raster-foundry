@@ -151,7 +151,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       }
       val stps = stpsWithFootprints map { _._1 } map { _._1 }
       val nexts = stpsWithFootprints map { _._2 }
-      logger.info(s"Stopped streaming results before the end of the stream? ${!nexts.last.isEmpty}")
+      logger.debug(s"Stopped streaming results before the end of the stream? ${!nexts.last.isEmpty}")
       val md = MosaicDefinition.fromScenesToProjects(stps)
       logger.debug(s"Mosaic Definition: ${md}")
       md
