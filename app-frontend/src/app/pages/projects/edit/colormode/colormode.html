@@ -2,7 +2,7 @@
   <div class="sidebar-header">
     <h5 class="sidebar-title">Color Mode</h5>
     <div class="header-controls">
-      <a ng-hide="$ctrl.projectBuffer.isSingleBand" ui-sref="projects.edit.advancedcolor"
+      <a ng-hide="($ctrl.projectBuffer && $ctrl.projectBuffer.isSingleBand) || !$ctrl.projectBuffer" ui-sref="projects.edit.advancedcolor"
         class="btn btn-primary">Corrections</a>
     </div>
   </div>
@@ -35,10 +35,10 @@
         </div>
     </div>
     <div class="list-group-item list-group-item-stacked"
-         ng-class="{'active': $ctrl.projectBuffer.isSingleBand}">
+         ng-class="{'active': $ctrl.projectBuffer && $ctrl.projectBuffer.isSingleBand}">
       <div class="list-group-item-row">
         <span class="font-600">Single band</span>
-        <div class="list-group-right" ng-if="$ctrl.$parent.bands.length">
+        <div class="list-group-right" ng-if="$ctrl.$parent.bands.length && $ctrl.projectBuffer">
           <rf-toggle radio="true" value="$ctrl.projectBuffer.isSingleBand" on-change="$ctrl.setActiveColorMode('singleband')">
           </rf-toggle>
         </div>
