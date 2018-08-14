@@ -171,7 +171,7 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
                      .copy(subjectType = SubjectType.Team, subjectId = Some(teamInsert.id.toString()))
             accessControlRule <- AccessControlRuleDao.create(acr)
             deactivateTeam <- TeamDao.deactivate(teamInsert.id)
-            deactivatedTeams <- TeamDao.query.filter(fr"is_active = false").list
+            deactivatedTeams <- TeamDao.query.filter(fr"is_active = false").filter(fr"modified_by=${userInsert.id}").list
             deactivatedACRs <- AccessControlRuleDao.query.filter(fr"is_active = false").list
             activatedTeams <- TeamDao.listOrgTeams(orgInsert.id, PageRequest(0, 30, Map.empty))
           } yield (deactivatedTeams, deactivatedACRs, activatedTeams)

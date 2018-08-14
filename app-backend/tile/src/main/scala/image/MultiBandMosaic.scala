@@ -24,7 +24,7 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-import com.azavea.rf.common.utils.{CogUtils, RangeReaderUtils, TileUtils}
+import com.azavea.rf.common.utils.{CogUtils, CryptoUtils, RangeReaderUtils, TileUtils}
 import com.azavea.rf.database.util.RFTransactor
 
 import scala.concurrent._
@@ -344,8 +344,8 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     }
 
     val cacheKey = extent match {
-      case Some(e) => s"scene-bbox-${sceneId}-${zoom}-${e.xmin}-${e.ymin}-${e.xmax}-${e.ymax}-${colorCorrectParams.hashCode()}"
-      case _ => s"scene-bbox-${sceneId}-${zoom}-no-extent-${colorCorrectParams.hashCode()}"
+      case Some(e) => s"scene-bbox-${sceneId}-${zoom}-${e.xmin}-${e.ymin}-${e.xmax}-${e.ymax}-${CryptoUtils.sha1(colorCorrectParams.toString)}"
+      case _ => s"scene-bbox-${sceneId}-${zoom}-no-extent-${CryptoUtils.sha1(colorCorrectParams.toString)}"
     }
 
 

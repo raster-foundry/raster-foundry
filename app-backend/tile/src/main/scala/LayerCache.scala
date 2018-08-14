@@ -10,7 +10,7 @@ import com.azavea.rf.tool.maml._
 import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import com.azavea.rf.common.{Config => CommonConfig}
-import com.azavea.rf.common.utils.CogUtils
+import com.azavea.rf.common.utils.{CogUtils, CryptoUtils}
 import com.azavea.maml.eval._
 import com.azavea.maml.ast.Expression
 import com.azavea.maml.eval.directive.SourceDirectives._
@@ -36,7 +36,6 @@ import java.sql.Timestamp
 
 import com.azavea.rf.database.util.RFTransactor
 import doobie.util.transactor.Transactor
-
 import doobie._
 import doobie.implicits._
 import doobie.Fragments.in
@@ -68,7 +67,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   val cacheConfig = CommonConfig.memcached
 
   def maxZoomForLayers(layerIds: Set[UUID])(implicit ec: ExecutionContext): OptionT[Future, Map[String, Int]] = {
-    val cacheKey = s"max-zoom-for-layer-${layerIds}"
+    val cacheKey = s"max-zoom-for-layer-${CryptoUtils.sha1(layerIds.mkString)}"
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.layerAttributes.enabled)(
       OptionT(
         timedFuture("layer-max-zoom-store")(store.maxZoomsForLayers(layerIds.map(_.toString)))
@@ -157,7 +156,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
                                  user: User,
                                  voidCache: Boolean = false
                                ): OptionT[Future, Histogram[Double]] = {
-    val cacheKey = s"histogram-${toolRunId}-${subNode}-${user.id}"
+    val cacheKey = s"histogram-${toolRunId}-${subNode.getOrElse("")}-${user.id}"
 
     if (voidCache) rfCache.delete(cacheKey)
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
@@ -216,7 +215,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     colorRamp: ColorRamp,
     colorRampName: String
   ): OptionT[Future, ColorMap] = traceName("LayerCache.toolRunColorMap") {
-    val cacheKey = s"colormap-$toolRunId-${subNode}-${user.id}-${colorRampName}"
+    val cacheKey = s"colormap-$toolRunId-${subNode.getOrElse("")}-${user.id}-${colorRampName}"
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
       traceName("LayerCache.toolRunColorMap (no cache)") {
         for {

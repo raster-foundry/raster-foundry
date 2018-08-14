@@ -50,7 +50,7 @@ object HealthCheckRoute extends LazyLogging {
     * the Try will return a Failure
     */
   def checkCacheReadHealth: Option[String] = {
-    val cacheKey = Random.nextString(8)
+    val cacheKey = "health-check-${Random.nextString(8)}"
     Try { memcachedClient.get(cacheKey) } match {
       case Success(_) => None
       case Failure(_) =>
@@ -67,7 +67,7 @@ object HealthCheckRoute extends LazyLogging {
     * memcached sent back about the failure
     */
   def checkCacheWriteHealth: Option[String] = {
-    val cacheKey = Random.nextString(8)
+    val cacheKey = "health-check-${Random.nextString(8)}"
     val cacheValue = Random.nextInt(1000)
     Try { memcachedClient.set(cacheKey, cacheValue, 5).getStatus } match {
       case Success(x) if x.isSuccess => None
