@@ -14,11 +14,6 @@
       <div class="list-group">
         <rf-shape-item shape="shape" ng-repeat="shape in $ctrl.shapeList track by shape.id">
           <div class="btn-group">
-            <!-- <button type="button" -->
-            <!-- class="btn btn-square btn-outline" -->
-            <!-- > -->
-            <!-- <i class="icon-pencil"></i> -->
-            <!-- </button> -->
             <button type="button"
                     class="btn btn-square btn-danger"
                     ng-click="$ctrl.deleteShape(shape)"
@@ -73,13 +68,6 @@
             Currently we can import files that are up to 20mb in size.
             This number may change in the future as we examine usage scenarios.
           </p>
-        </section>
-        <section class="aside-footer">
-          <h5>Have other questions?</h5>
-          <ul class="list-unstyled">
-            <li><a>How to create a Shape</a></li>
-            <li><a>How to use Shapes</a></li>
-          </ul>
         </section>
       </div>
     </div>
