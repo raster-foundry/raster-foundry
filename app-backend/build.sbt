@@ -386,10 +386,12 @@ lazy val bridge = Project("bridge", file("bridge"))
 
 // maml / better-abstracted tile server
 lazy val backsplash = Project("backsplash", file("backsplash"))
+  .dependsOn(authentication, geotrellis, db)
   .settings(commonSettings:_*)
   .settings({ libraryDependencies ++= Seq(
                Dependencies.geotrellisServer,
                Dependencies.http4sBlaze,
+               Dependencies.http4sBlazeClient,
                Dependencies.http4sCirce,
                Dependencies.http4sDSL
              ) })

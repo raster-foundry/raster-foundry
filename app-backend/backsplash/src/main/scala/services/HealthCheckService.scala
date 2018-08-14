@@ -1,6 +1,6 @@
 package com.azavea.rf.backsplash.services
 
-import cats.effect.{Effect, IO}
+import cats.effect.Effect
 import io.circe.Json
 import org.http4s.HttpService
 import org.http4s.circe._

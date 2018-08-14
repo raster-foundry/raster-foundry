@@ -145,6 +145,9 @@ services:
       - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
     env_file: .env
+    environment:
+      - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
+      - RF_LOG_LEVEL=INFO
     ports:
       - "8080:8080"
       - "9030:9020"
