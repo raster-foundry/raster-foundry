@@ -81,7 +81,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     def maybeNotWorthless(coveredByGeomO: Option[MultiPolygon], targetCoverageO: Option[Polygon]): Boolean =
       (coveredByGeomO, targetCoverageO) match {
         case (Some(targetCoverage), Some(coveredSoFar)) => {
-          !targetCoverage.within(coveredSoFar)
+          !targetCoverage.coveredBy(coveredSoFar)
         }
         case _ => true
       }
@@ -131,7 +131,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
           )
           .filter(
             (p: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) =>
-               !(coveredSoFar.map(mp => !geom(p).within(mp)).getOrElse(false))
+               !(coveredSoFar.map(mp => !geom(p).coveredBy(mp)).getOrElse(false))
           )
           .zipWithNext
           .compile
@@ -151,7 +151,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       }
       val stps = stpsWithFootprints map { _._1 } map { _._1 }
       val nexts = stpsWithFootprints map { _._2 }
-      logger.info(s"Stopped streaming results before the end of the stream? ${!nexts.last.isEmpty}")
+      logger.debug(s"Stopped streaming results before the end of the stream? ${!nexts.last.isEmpty}")
       val md = MosaicDefinition.fromScenesToProjects(stps)
       logger.debug(s"Mosaic Definition: ${md}")
       md
