@@ -14,4 +14,16 @@ object MosaicDefinition {
       MosaicDefinition(sceneId, colorCorrection, sceneType, ingestLocation)
     }
   }
+  def fromScenesToProjects(scenesToProjects: Seq[SceneToProjectwithSceneType], redBand: Int, greenBand: Int, blueBand: Int): Seq[MosaicDefinition] = {
+    scenesToProjects.map {
+      case SceneToProjectwithSceneType(sceneId, _, _, _, colorCorrection, sceneType, ingestLocation) => {
+        val ccp = colorCorrection.copy(
+          redBand = redBand,
+          greenBand = greenBand,
+          blueBand = blueBand
+        )
+        MosaicDefinition(sceneId, ccp, sceneType, ingestLocation)
+      }
+    }
+  }
 }

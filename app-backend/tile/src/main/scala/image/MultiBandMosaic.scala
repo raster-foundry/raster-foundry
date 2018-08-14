@@ -78,6 +78,11 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     )
   }
 
+  def mosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]], redBand: Int, greenBand: Int, blueBand: Int)(
+    implicit xa: Transactor[IO]): Future[Seq[MosaicDefinition]] = {
+    SceneToProjectDao.getMosaicDefinition(projectId, polygonOption, Some(redBand, greenBand, blueBand)).transact(xa).unsafeToFuture
+  }
+
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
   def fetch(id: UUID, zoom: Int, col: Int, row: Int, sceneType: Option[SceneType], ingestLocation: Option[String])(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = {
     (sceneType, ingestLocation) match {
@@ -266,6 +271,26 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     } else {
       apply(id, zoom, col, row)
     }
+  }
+
+  def apply(
+      projectId: UUID,
+      zoom: Int,
+      col: Int,
+      row: Int,
+      redBand: Int,
+      greenBand: Int,
+      blueBand: Int
+  )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = traceName(s"MultiBandMosaic.apply($projectId)") {
+    logger.debug(s"Creating mosaic (project: $projectId, zoom: $zoom, col: $col, row: $row)")
+
+    val polygonBbox: Projected[Polygon] = TileUtils.getTileBounds(zoom, col, row)
+    val md: Future[Seq[MosaicDefinition]] = mosaicDefinition(projectId, Option(polygonBbox), redBand, greenBand, blueBand)
+    OptionT(
+      mergeTiles(
+        renderForBbox(md, Some(polygonBbox), zoom, Some(s"${zoom}-${col}-${row}"))
+      )
+    )
   }
 
   def renderForBbox(
