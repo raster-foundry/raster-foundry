@@ -154,7 +154,9 @@ export default class ProjectsEditColormode {
 
     toggleProjectSingleBandMode(state) {
         this.initSingleBandDefaults();
-        if (typeof state !== 'undefined') {
+        if (!this.projectBuffer) {
+            return;
+        } else if (typeof state !== 'undefined') {
             this.projectBuffer.isSingleBand = state;
         } else {
             this.projectBuffer.isSingleBand = !this.projectBuffer.isSingleBand;
@@ -277,7 +279,7 @@ export default class ProjectsEditColormode {
     }
 
     isActiveColorMode(key) {
-        if (!this.isLoading) {
+        if (!this.isLoading && this.projectBuffer) {
             return (
                 !this.projectBuffer.isSingleBand &&
                 key === this.activeColorModeKey
