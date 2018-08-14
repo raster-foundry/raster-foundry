@@ -81,7 +81,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     def maybeNotWorthless(coveredByGeomO: Option[MultiPolygon], targetCoverageO: Option[Polygon]): Boolean =
       (coveredByGeomO, targetCoverageO) match {
         case (Some(targetCoverage), Some(coveredSoFar)) => {
-          !targetCoverage.within(coveredSoFar)
+          !targetCoverage.coveredBy(coveredSoFar)
         }
         case _ => true
       }
@@ -131,7 +131,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
           )
           .filter(
             (p: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) =>
-               !(coveredSoFar.map(mp => !geom(p).within(mp)).getOrElse(false))
+               !(coveredSoFar.map(mp => !geom(p).coveredBy(mp)).getOrElse(false))
           )
           .zipWithNext
           .compile
