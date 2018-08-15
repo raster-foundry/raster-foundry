@@ -102,7 +102,7 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
     logger.info('Creating image')
     ingest_location = 's3://{}/{}'.format(data_bucket, urllib.quote(s3_location))
     scene = Scene(
-        0, 'PRIVATE', [], datasource, {}, landsat_id, 'SUCCESS', 'SUCCESS',
+        'PRIVATE', [], datasource, {}, landsat_id, 'SUCCESS', 'SUCCESS',
         'INGESTED', [io.make_path_for_mtl(gcs_prefix, landsat_id)], ingestLocation=ingest_location,
         cloudCover=filter_metadata['cloud_cover'],
         acquisitionDate=filter_metadata['acquisition_date'],
