@@ -64,15 +64,13 @@ object CogUtils {
     val maxTileSize = 256
     val pixelBuffer = 16
     val partitionBytes = pixelBuffer * 1024 * 1024
-    println(uri)
     def readInfo = {
-      val s3uri = new AmazonS3URI(URLDecoder.decode(uri))
       GeoTiffReader.readGeoTiffInfo(
-        S3RangeReader(
-          bucket = s3uri.getBucket,
-          key = s3uri.getKey,
-          client = S3Client.DEFAULT),
-        streaming = true, withOverviews = true, None)
+        RangeReaderUtils.fromUri(uri).getOrElse(
+          throw new IllegalArgumentException(s"Unable to create range reader for uri $uri")
+        ),
+        streaming = true, withOverviews = true
+      )
     }
 
     val info = readInfo
