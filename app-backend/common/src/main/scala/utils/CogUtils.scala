@@ -69,7 +69,7 @@ object CogUtils {
           bucket = s3uri.getBucket,
           key = s3uri.getKey,
           client = S3Client.DEFAULT),
-        decompress = false, streaming = true, withOverviews = true, None)
+        streaming = true, withOverviews = true, None)
     }
 
     val info = readInfo
