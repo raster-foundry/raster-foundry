@@ -9,6 +9,8 @@ import com.azavea.rf.batch.dropbox._
 import com.azavea.rf.batch.export._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf._
+import com.azavea.rf.common.utils.CogUtils
+import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.maml.eval._
@@ -16,10 +18,12 @@ import com.azavea.maml.eval._
 import com.amazonaws.services.s3.AmazonS3URI
 import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 import cats.data.Validated._
+import cats.effect.IO
 import cats.implicits._
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
 import com.typesafe.scalalogging.LazyLogging
+import doobie.Transactor
 import io.circe.parser._
 import io.circe.syntax._
 import geotrellis.proj4.{CRS, LatLng}
@@ -62,8 +66,8 @@ object Export extends SparkJob with Config with LazyLogging {
     sceneLocs: Map[UUID, String],
     projLocs: Map[UUID, List[(UUID, String)]],
     conf: HadoopConfiguration
-  )(implicit sc: SparkContext): Unit = {
-    interpretRDD(ast, ed.input.resolution, sceneLocs, projLocs) match {
+  )(implicit sc: SparkContext, xa: Transactor[IO]): IO[Unit] = {
+    interpretRDD(ast, ed.input.resolution, sceneLocs, projLocs) map {
       case Invalid(errs) => throw InterpreterException(errs)
       case Valid(rdd) => {
         val crs: CRS = rdd.metadata.crs
@@ -177,60 +181,8 @@ object Export extends SparkJob with Config with LazyLogging {
     }
   }
 
-  def getCOGLayerRdd(eld: ExportLayerDefinition)(implicit sc: SparkContext) = {
-    val uri = eld.ingestLocation.toString
-    val maxTileSize = 256
-    val pixelBuffer = 16
-    val partitionBytes = pixelBuffer * 1024 * 1024
-    def readInfo = {
-      val s3uri = new AmazonS3URI(uri)
-      GeoTiffReader.readGeoTiffInfo(
-        S3RangeReader(
-          bucket = s3uri.getBucket,
-          key = s3uri.getKey,
-          client = S3Client.DEFAULT),
-        decompress = false, streaming = true, withOverviews = true, None)
-    }
-
-    val info = readInfo
-
-    // This listing can be masked by Geometry if desired
-    val windows: Array[GridBounds] = info
-      .segmentLayout
-      .listWindows(maxTileSize)
-      .map(_.buffer(pixelBuffer))
-
-    val partitions: Array[Array[GridBounds]] = info.segmentLayout.partitionWindowsBySegments(
-      windows, partitionBytes / math.max(info.cellType.bytes, 1))
-
-    val layoutScheme = FloatingLayoutScheme(maxTileSize)
-
-    val projectedExtentRDD: RDD[(ProjectedExtent, MultibandTile)] = sc.parallelize(partitions, partitions.length).flatMap { bounds =>
-      // re-constructing here to avoid serialization pit-falls
-      val info = readInfo
-      val geoTiff = GeoTiffReader.geoTiffMultibandTile(info)
-      val window = geoTiff.crop(bounds.filter(geoTiff.gridBounds.intersects))
-
-      window.map { case (bound, tile) =>
-        val extent = info.rasterExtent.extentFor(bound, clamp = false)
-        ProjectedExtent(extent, info.crs) -> tile
-      }
-    }
-
-    val (_: Int, metadata: TileLayerMetadata[SpatialKey]) =
-      projectedExtentRDD.collectMetadata[SpatialKey](layoutScheme)
-
-    val tilerOptions =
-      Tiler.Options(
-        resampleMethod = Bilinear,
-        partitioner = new HashPartitioner(projectedExtentRDD.partitions.length)
-      )
-
-    val tiledRdd =
-      projectedExtentRDD.tileToLayout[SpatialKey](metadata, tilerOptions)
-
-    ContextRDD(tiledRdd, metadata)
-  }
+  def getCOGLayerRdd(eld: ExportLayerDefinition)(implicit sc: SparkContext) =
+    CogUtils.fromUriAsRdd(eld.ingestLocation.toString)
 
   def multibandExport(
     ed: ExportDefinition,
@@ -362,6 +314,8 @@ object Export extends SparkJob with Config with LazyLogging {
     * @param args Arguments to be parsed by the tooling defined in [[CommandLine]]
     */
   def main(args: Array[String]): Unit = {
+    implicit val xa = RFTransactor.xa
+
     val params = CommandLine.parser.parse(args, CommandLine.Params()) match {
       case Some(params) =>
         params
@@ -391,7 +345,7 @@ object Export extends SparkJob with Config with LazyLogging {
         case Left(SimpleInput(layers, mask)) =>
           multibandExport(exportDef, layers, mask, conf)
         case Right(ASTInput(ast, sceneLocs, projLocs)) =>
-          astExport(exportDef, ast, sceneLocs, projLocs, conf)
+          astExport(exportDef, ast, sceneLocs, projLocs, conf).unsafeRunSync
       }
 
       logger.info(s"Writing status into the ${params.statusURI}")

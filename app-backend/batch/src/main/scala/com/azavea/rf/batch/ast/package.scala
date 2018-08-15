@@ -9,7 +9,9 @@ import com.azavea.maml.spark.eval._
 import com.azavea.maml.eval._
 import cats.data.NonEmptyList
 import cats.data.Validated._
+import cats.effect.IO
 import cats.implicits._
+import doobie.Transactor
 import geotrellis.raster._
 import geotrellis.raster.mapalgebra.local.{Pow => GTPow, Xor => GTXor, Or => GTOr, And => GTAnd}
 import geotrellis.raster.mapalgebra.local.{Less => GTLess, LessOrEqual => GTLessOrEqual}
@@ -35,11 +37,12 @@ package object ast {
     zoom: Int,
     sceneLocs: Map[UUID, String],
     projLocs: Map[UUID, List[(UUID, String)]]
-  )(implicit sc: SparkContext): Interpreted[TileLayerRDD[SpatialKey]] = {
+  )(implicit sc: SparkContext, xa: Transactor[IO]): IO[Interpreted[TileLayerRDD[SpatialKey]]] = {
 
     /* Guarantee correctness before performing Map Algebra */
-    RfmlRddResolver.resolveRdd(ast.asMaml._1, zoom, sceneLocs, projLocs)
-      .andThen(RDDInterpreter.DEFAULT(_))
-      .andThen(_.as[ContextRDD[SpatialKey, Tile, TileLayerMetadata[SpatialKey]]])
+    RfmlRddResolver.resolveRdd(ast.asMaml._1, zoom, sceneLocs, projLocs) map {
+      _.andThen(RDDInterpreter.DEFAULT(_))
+        .andThen(_.as[ContextRDD[SpatialKey, Tile, TileLayerMetadata[SpatialKey]]])
+    }
   }
 }

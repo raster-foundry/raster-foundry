@@ -4,6 +4,7 @@ import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo._
 import com.azavea.rf.common.{Config => CommonConfig}
 
+import com.amazonaws.services.s3.AmazonS3URI
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.crop._
@@ -14,8 +15,15 @@ import geotrellis.raster.io.geotiff._
 import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 import geotrellis.util._
 import geotrellis.proj4._
+import geotrellis.spark._
+import geotrellis.spark.io._
+import geotrellis.spark.io.s3._
+import geotrellis.spark.io.s3.util._
 import geotrellis.spark.tiling._
 import geotrellis.vector.Projected
+
+import org.apache.spark.{HashPartitioner, SparkContext}
+import org.apache.spark.rdd.RDD
 
 import scala.concurrent._
 import cats.data._
@@ -48,6 +56,60 @@ object CogUtils {
         GeoTiffReader.readMultiband(crr, streaming = true)
       }
     }
+  }
+
+  def fromUriAsRdd(uri: String)(implicit sc: SparkContext) = {
+    val maxTileSize = 256
+    val pixelBuffer = 16
+    val partitionBytes = pixelBuffer * 1024 * 1024
+    def readInfo = {
+      val s3uri = new AmazonS3URI(uri)
+      GeoTiffReader.readGeoTiffInfo(
+        S3RangeReader(
+          bucket = s3uri.getBucket,
+          key = s3uri.getKey,
+          client = S3Client.DEFAULT),
+        decompress = false, streaming = true, withOverviews = true, None)
+    }
+
+    val info = readInfo
+
+    // This listing can be masked by Geometry if desired
+    val windows: Array[GridBounds] = info
+      .segmentLayout
+      .listWindows(maxTileSize)
+      .map(_.buffer(pixelBuffer))
+
+    val partitions: Array[Array[GridBounds]] = info.segmentLayout.partitionWindowsBySegments(
+      windows, partitionBytes / math.max(info.cellType.bytes, 1))
+
+    val layoutScheme = FloatingLayoutScheme(maxTileSize)
+
+    val projectedExtentRDD: RDD[(ProjectedExtent, MultibandTile)] = sc.parallelize(partitions, partitions.length).flatMap { bounds =>
+      // re-constructing here to avoid serialization pit-falls
+      val info = readInfo
+      val geoTiff = GeoTiffReader.geoTiffMultibandTile(info)
+      val window = geoTiff.crop(bounds.filter(geoTiff.gridBounds.intersects))
+
+      window.map { case (bound, tile) =>
+        val extent = info.rasterExtent.extentFor(bound, clamp = false)
+        ProjectedExtent(extent, info.crs) -> tile
+      }
+    }
+
+    val (_: Int, metadata: TileLayerMetadata[SpatialKey]) =
+      projectedExtentRDD.collectMetadata[SpatialKey](layoutScheme)
+
+    val tilerOptions =
+      Tiler.Options(
+        resampleMethod = Bilinear,
+        partitioner = new HashPartitioner(projectedExtentRDD.partitions.length)
+      )
+
+    val tiledRdd =
+      projectedExtentRDD.tileToLayout[SpatialKey](metadata, tilerOptions)
+
+    ContextRDD(tiledRdd, metadata)
   }
 
   def fetch(uri: String, zoom: Int, x: Int, y: Int)(implicit ec: ExecutionContext): OptionT[Future, MultibandTile] =
