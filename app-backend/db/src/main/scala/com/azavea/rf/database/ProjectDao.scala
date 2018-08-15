@@ -1,6 +1,7 @@
 package com.azavea.rf.database
 
 import com.azavea.rf.datamodel._
+import com.azavea.rf.database.util.Page
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -237,25 +238,27 @@ object ProjectDao extends Dao[Project] {
     )
   }
 
-  def listProjectSceneOrder(projectId: UUID, page: PageRequest, user: User): ConnectionIO[PaginatedResponse[UUID]] = {
+  def listProjectSceneOrder(projectId: UUID, pr: PageRequest, user: User): ConnectionIO[PaginatedResponse[UUID]] = {
     val projectQuery = query.filter(projectId).select
-    val selectClause = fr"SELECT scene_id "
-    val countClause = fr"SELECT count(*) "
-    val sceneQuery = fr"FROM scenes_to_projects INNER JOIN scenes ON scene_id = scenes.id WHERE project_id = ${projectId}"
-    val orderFragment = projectQuery.map{ project =>
+    val selectIdF = fr"SELECT scene_id "
+    val countIdF = fr"SELECT count(*) "
+    val joinF = fr"FROM scenes_to_projects INNER JOIN scenes ON scene_id = scenes.id WHERE project_id = ${projectId}"
+    val orderQ = projectQuery.map{ project =>
       project.manualOrder match {
-        case true => sceneQuery ++ fr"ORDER BY scene_order DESC, scene_id ASC"
-        case _ => sceneQuery ++ fr"ORDER BY acquisition_date DESC, cloud_cover ASC"
+        case true => joinF ++ fr"ORDER BY scene_order ASC, scene_id ASC"
+        case _ => joinF ++ fr"ORDER BY acquisition_date ASC, cloud_cover ASC"
       }
     }
+
     for {
-      orderedQuery <- orderFragment
-      pageResponse <- (selectClause ++ orderedQuery ++ fr"LIMIT ${page.limit} OFFSET ${page.offset * page.limit}").query[UUID].to[List]
-      countResponse <- (countClause ++ sceneQuery).query[Int].unique
+      ordered <- orderQ
+      page <- (selectIdF ++ ordered ++ Page(pr)).query[UUID].to[List]
+      count <- (countIdF ++ joinF).query[Int].unique
     } yield {
-      val hasPrevious = page.offset > 0
-      val hasNext = ((page.offset + 1) * page.limit) < countResponse
-      PaginatedResponse[UUID](countResponse, hasPrevious, hasNext, page.offset, page.limit, pageResponse)
+      val hasPrevious = pr.offset > 0
+      val hasNext = (pr.offset * pr.limit) + 1 < count
+
+      PaginatedResponse[UUID](count, hasPrevious, hasNext, pr.offset, pr.limit, page)
     }
   }
 

@@ -78,7 +78,7 @@ class ProjectsEditController {
     getAndReorderSceneList() {
         this.projectService.getSceneOrder(this.projectId).then(
             (res) => {
-                this.orderedSceneId = res.results;
+                this.orderedSceneIds = res.results;
             },
             () => {
                 this.$log.log('error getting ordered scene IDs');
@@ -116,9 +116,9 @@ class ProjectsEditController {
                 ));
                 return this.projectService.getSceneOrder(this.projectId).then(
                     (orderedIds) => {
-                        this.orderedSceneId = orderedIds;
+                        this.orderedSceneIds = orderedIds;
                         this.sceneList = _(
-                          this.orderedSceneId.map((id) => _.find(allScenes, {id}))
+                          this.orderedSceneIds.map((id) => _.find(allScenes, {id}))
                         ).uniqBy('id').compact().value();
 
                         this.fetchDatasources().then(datasources => {
