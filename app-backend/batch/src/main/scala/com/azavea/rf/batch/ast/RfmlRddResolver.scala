@@ -104,13 +104,16 @@ object RfmlRddResolver extends LazyLogging {
     eval(fullExp)
   }
 
-    private def cogSceneSourceAsRDD(source: CogRaster)(implicit sc: SparkContext): Either[NEL[NonEvaluableNode], TileLayerRDD[SpatialKey]] = {
-      val tileRdd = CogUtils.fromUriAsRdd(source.location)
-        .withContext( { rdd =>
-          rdd.mapValues({ mbtile => mbtile.band(source.band.get).interpretAs(source.celltype.getOrElse(mbtile.cellType)) })
-      })
-      Right(tileRdd)
-    }
+  // This method is private, so can't wander off to be called somewehre with a source
+  // that hasn't been constructed _always_ after ensuring that the band is a Some(b)
+  @SuppressWarnings(Array("OptionGet"))
+  private def cogSceneSourceAsRDD(source: CogRaster)(implicit sc: SparkContext): Either[NEL[NonEvaluableNode], TileLayerRDD[SpatialKey]] = {
+    val tileRdd = CogUtils.fromUriAsRdd(source.location)
+      .withContext( { rdd =>
+                     rdd.mapValues({ mbtile => mbtile.band(source.band.get).interpretAs(source.celltype.getOrElse(mbtile.cellType)) })
+                   })
+    Right(tileRdd)
+  }
 
   private def avroSceneSourceAsRDD(source: SceneRaster, zoom: Int)(implicit sc: SparkContext): Either[NEL[NonEvaluableNode], TileLayerRDD[SpatialKey]] = {
     val storeO = S3InputFormat.S3UrlRx.findFirstMatchIn(source.location) map {
@@ -125,8 +128,8 @@ object RfmlRddResolver extends LazyLogging {
         val rdd = S3LayerReader(store)
           .read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](LayerId(source.sceneId.toString, zoom))
           .withContext({ rdd =>
-            rdd.mapValues({ tile => tile.band(source.band.get).interpretAs(source.celltype.getOrElse(tile.cellType)) })
-          })
+                         rdd.mapValues({ tile => tile.band(source.band.get).interpretAs(source.celltype.getOrElse(tile.cellType)) })
+                       })
         Right(rdd)
     }
   }
