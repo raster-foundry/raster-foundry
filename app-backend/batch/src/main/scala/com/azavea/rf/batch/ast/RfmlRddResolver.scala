@@ -97,9 +97,9 @@ object RfmlRddResolver extends LazyLogging {
           }
         }
         case _ =>
-          IO(
-            throw new IllegalArgumentException("Only project sources can be resolved")
-          )
+          exp.children
+            .traverse(eval)
+            .map (_.toList.sequence.map(exp.withChildren(_)))
       }
     eval(fullExp)
   }

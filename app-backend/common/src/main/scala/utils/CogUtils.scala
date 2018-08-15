@@ -25,9 +25,11 @@ import geotrellis.vector.Projected
 import org.apache.spark.{HashPartitioner, SparkContext}
 import org.apache.spark.rdd.RDD
 
-import scala.concurrent._
 import cats.data._
 import cats.implicits._
+
+import scala.concurrent._
+import java.net.URLDecoder
 
 object CogUtils {
   lazy val cacheConfig = CommonConfig.memcached
@@ -62,8 +64,9 @@ object CogUtils {
     val maxTileSize = 256
     val pixelBuffer = 16
     val partitionBytes = pixelBuffer * 1024 * 1024
+    println(uri)
     def readInfo = {
-      val s3uri = new AmazonS3URI(uri)
+      val s3uri = new AmazonS3URI(URLDecoder.decode(uri))
       GeoTiffReader.readGeoTiffInfo(
         S3RangeReader(
           bucket = s3uri.getBucket,
