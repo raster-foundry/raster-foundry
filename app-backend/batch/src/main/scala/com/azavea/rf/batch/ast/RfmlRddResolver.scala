@@ -115,6 +115,9 @@ object RfmlRddResolver extends LazyLogging {
     Right(tileRdd)
   }
 
+  // This method is private, so can't wander off to be called somewehre with a source
+  // that hasn't been constructed _always_ after ensuring that the band is a Some(b)
+  @SuppressWarnings(Array("OptionGet"))
   private def avroSceneSourceAsRDD(source: SceneRaster, zoom: Int)(implicit sc: SparkContext): Either[NEL[NonEvaluableNode], TileLayerRDD[SpatialKey]] = {
     val storeO = S3InputFormat.S3UrlRx.findFirstMatchIn(source.location) map {
       regexResult => {
