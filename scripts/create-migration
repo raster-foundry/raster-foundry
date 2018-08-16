@@ -1,0 +1,48 @@
+#!/bin/bash
+
+function usage() {
+    echo -n \
+"
+Create a new migration with the given number
+
+Usage: $(basename "$0") migration_number
+"
+}
+
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ] || [ "$1" = "" ]
+    then
+        usage
+    else
+        MIGRATION_LINKS=app-backend/migrations/src/main/scala/migrations
+        MIGRATIONS=app-backend/migrations/src_migrations/main/scala
+        MIGRATIONS_REL=../../../../src_migrations/main/scala
+
+        TARGET_MIGRATION=${1}
+        if [ -f "${MIGRATIONS}/${TARGET_MIGRATION}.scala" ]; then
+            echo "Command would overwrite existing migration. Aborting."
+            exit 1
+        fi
+        sed -i "s/}/M${TARGET_MIGRATION}/" "${MIGRATION_LINKS}/Summary.scala"
+        echo "}" >> ${MIGRATION_LINKS}/Summary.scala
+        cat > "${MIGRATIONS}/${TARGET_MIGRATION}.scala" <<EOF
+
+import slick.jdbc.PostgresProfile.api._
+import com.liyaos.forklift.slick.SqlMigration
+
+object M${1} {
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(${1})(List(
+    sqlu"""
+
+    """
+  ))
+}
+
+EOF
+
+        ln -s "${MIGRATIONS_REL}/${TARGET_MIGRATION}.scala" "${MIGRATION_LINKS}/${TARGET_MIGRATION}.scala"
+    fi
+    exit
+fi
