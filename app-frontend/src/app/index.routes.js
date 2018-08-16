@@ -494,7 +494,7 @@ function importStates($stateProvider) {
         })
         .state('imports.datasources.list', {
             title: 'Datasources',
-            url: '/list?:page',
+            url: '/list?:page&:search',
             templateUrl: importsDatasourcesListTpl,
             controller: 'DatasourceListController',
             controllerAs: '$ctrl'

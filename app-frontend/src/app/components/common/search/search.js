@@ -72,7 +72,7 @@ class SearchController {
 
     clearSearch() {
         this.searchText = '';
-        this.onSearch();
+        this.onSearch(null);
     }
 
     handleSuggestionSelect(suggestion) {
