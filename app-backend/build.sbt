@@ -1,9 +1,9 @@
 addCommandAlias("mg", "migrations/run")
 
-// Add the default sonatype repository setting
-publishTo := sonatypePublishTo.value
-
 lazy val commonSettings = Seq(
+  // Add the default sonatype repository setting
+  publishTo := sonatypePublishTo.value,
+
   organization := "com.rasterfoundry",
   organizationName := "Raster Foundry",
   organizationHomepage := Some(new URL("https://www.rasterfoundry.com")),
