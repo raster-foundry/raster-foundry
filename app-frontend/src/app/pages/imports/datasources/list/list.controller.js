@@ -1,45 +1,33 @@
 /* global BUILDCONFIG */
 
 class DatasourceListController {
-    constructor($state, datasourceService, modalService, $filter) {
+    constructor(
+        $scope, $state, $stateParams, $filter,
+        datasourceService, modalService, paginationService
+    ) {
         'ngInject';
-        this.$state = $state;
-        this.$filter = $filter;
-        this.datasourceService = datasourceService;
-        this.modalService = modalService;
+        $scope.autoInject(this, arguments);
+        this.pageSize = 10;
     }
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
-        this.datasources = {};
-        this.currentPage = 1;
-        this.pageSize = 10;
-        this.loadDatasources();
-    }
-
-    $onDestroy() {
-
+        this.fetchPage();
     }
 
     shouldShowPlaceholder() {
-        return !this.isLoadingDatasources &&
-            this.datasources.count &&
-            this.datasources.count === 0;
+        return !this.currentQuery &&
+            !this.fetchError &&
+            (!this.search || !this.search.length) &&
+            this.datasources &&
+            this.datasources.length === 0;
     }
 
-    shouldShowList() {
-        return !this.isLoadingDatasources &&
-            this.datasources.count &&
-            this.datasources.count > 0 &&
-            !this.searchString;
-    }
-
-    shouldShowPagination() {
-        return !this.isLoadingDatasources &&
-            !this.isErrorLoadingDatasources &&
-            this.datasources.count &&
-            this.datasources.count > this.pageSize &&
-            !this.searchString;
+    shouldShowEmptySearch() {
+        return !this.currentQuery &&
+            !this.fetchError &&
+            this.search && this.search.length &&
+            this.datasources && !this.datasources.length;
     }
 
     updateQueryParameters() {
@@ -56,26 +44,31 @@ class DatasourceListController {
         );
     }
 
-    loadDatasources(page = 1) {
-        this.isLoadingDatasources = true;
-        this.isErrorLoadingDatasources = false;
-        this.datasourceService.query({
+    fetchPage(page = this.$stateParams.page || 1, search = this.$stateParams.search) {
+        this.search = search;
+        delete this.fetchError;
+        let currentQuery = this.datasourceService.query({
             sort: 'createdAt,desc',
             pageSize: this.pageSize,
-            page: page - 1
-        }).then(
-            datasourceResponse => {
-                this.datasources = datasourceResponse;
-                this.currentPage = datasourceResponse.page + 1;
-                this.updateQueryParameters();
-            },
-            () => {
-                this.isErrorLoadingDatasources = true;
-            })
-            .finally(() => {
-                this.isLoadingDatasources = false;
+            page: page - 1,
+            search
+        }).then(paginatedResponse => {
+            this.datasources = paginatedResponse.results;
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page, search);
+            if (this.currentQuery === currentQuery) {
+                delete this.fetchError;
             }
-        );
+        }, (e) => {
+            if (this.currentQuery === currentQuery) {
+                this.fetchError = e;
+            }
+        }).finally(() => {
+            if (this.currentQuery === currentQuery) {
+                delete this.currentQuery;
+            }
+        });
+        this.currentQuery = currentQuery;
     }
 
     createDatasourceModal() {
@@ -88,71 +81,6 @@ class DatasourceListController {
             this.loadDatasources();
             this.searchString = '';
         });
-    }
-
-    loadAllDatasources() {
-        if (this.isLoadingDatasources) {
-            return;
-        }
-        this.isLoadingDatasources = true;
-        this.isErrorLoadingDatasources = false;
-        this.datasourceService.query({
-            sort: 'createdAt,desc',
-            pageSize: this.pageSize,
-            page: 0
-        }).then((result) => {
-            this.cachedDatasources = result.results;
-            let currentCache = this.cachedDatasources;
-            this.updateFilter();
-            if (result.count > this.pageSize) {
-                let pages = Math.ceil(result.count / this.pageSize) - 1;
-                for (let i = 1; i <= pages; i = i + 1) {
-                    this.datasourceService.query({
-                        sort: 'createdAt,desc',
-                        pageSize: this.pageSize,
-                        page: i
-                    }).then((pageresult) => {
-                        if (currentCache === this.cachedDatasources) {
-                            this.cachedDatasources = this.cachedDatasources.concat(
-                                pageresult.results
-                            );
-                            this.updateFilter(pageresult.results);
-                            if (this.cachedDatasources.length === result.count) {
-                                this.isLoadingDatasources = false;
-                                this.isErrorLoadingDatasources = false;
-                            }
-                        }
-                    }, () => {
-                        if (currentCache === this.cachedDatasources) {
-                            this.isErrorLoadingDatasources = true;
-                        }
-                    });
-                }
-            } else if (this.cachedDatasources.length === result.count) {
-                this.isLoadingDatasources = false;
-                this.isErrorLoadingDatasources = false;
-            }
-        });
-    }
-
-    updateFilter(datasources) {
-        if (datasources) {
-            let filteredNewSources = this.$filter('filter')(datasources, {name: this.searchString});
-            this.filteredSources = this.filteredSources ?
-                this.filteredSources.concat(filteredNewSources) : filteredNewSources;
-        } else {
-            this.filteredSources = this.$filter('filter')(
-                this.cachedDatasources, {name: this.searchString}
-            );
-        }
-    }
-
-    search(searchString) {
-        this.searchString = searchString;
-        if (!this.cachedDatasources || this.isErrorLoadingDatasources) {
-            this.loadAllDatasources();
-        }
-        this.updateFilter();
     }
 }
 

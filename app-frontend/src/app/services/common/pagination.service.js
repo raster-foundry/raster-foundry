@@ -33,11 +33,11 @@ export default (app) => {
             };
         }
 
-        updatePageParam(page) {
+        updatePageParam(page, search) {
             let replace = !this.$state.params.page;
             this.$state.go(
                 this.$state.$current.name,
-                { page },
+                { page, search },
                 {
                     location: replace ? 'replace' : true,
                     notify: false
