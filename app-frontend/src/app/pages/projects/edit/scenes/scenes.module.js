@@ -77,7 +77,8 @@ class ProjectsScenesController {
         this.modalService.open({
             component: 'rfSceneImportModal',
             resolve: {
-                project: () => this.$parent.project
+                project: () => this.$parent.project,
+                origin: () => 'project'
             }
         });
     }

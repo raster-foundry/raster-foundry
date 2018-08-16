@@ -396,7 +396,14 @@
       <p>
         Your scenes are importing into {{$ctrl.BUILDCONFIG.APP_NAME}} now.
         This may take some time and we will notify you when the process is complete.
-        In the meantime checkout your Notification Center for up to date information on all of your projects.
+        <span ng-if="$ctrl.resolve.origin">
+          <a ng-click="$ctrl.linkToStatus()">
+            Click here to check the status of your import.
+          </a>
+        </span>
+        <span ng-if="!$ctrl.resolve.origin">
+          You may check the status of your import later.
+        </span>
       </p>
     </div>
   </div>

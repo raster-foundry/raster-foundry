@@ -23,7 +23,9 @@ class RasterListController {
 
         this.activeModal = this.$uibModal.open({
             component: 'rfSceneImportModal',
-            resolve: {}
+            resolve: {
+                origin: () => 'raster'
+            }
         });
     }
 
