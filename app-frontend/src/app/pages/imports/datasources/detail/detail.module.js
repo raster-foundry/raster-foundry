@@ -159,7 +159,8 @@ class DatasourceDetailController {
         this.modalService.open({
             component: 'rfSceneImportModal',
             resolve: {
-                datasource: () => this.datasource
+                datasource: () => this.datasource,
+                origin: () => 'datasource'
             }
         });
     }
