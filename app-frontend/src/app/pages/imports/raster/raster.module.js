@@ -1,15 +1,19 @@
 /* global BUILDCONFIG, HELPCONFIG */
 class RasterListController {
-    constructor(authService, $uibModal, platform) {
+    constructor(
+        $scope, $uibModal,
+        authService, uploadService,
+        platform
+    ) {
         'ngInject';
-        this.authService = authService;
-        this.$uibModal = $uibModal;
-        this.platform = platform;
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
         this.HELPCONFIG = HELPCONFIG;
+        this.pendingImports = 0;
+        this.checkPendingImports();
     }
 
     $onDestroy() {
@@ -26,6 +30,14 @@ class RasterListController {
             resolve: {
                 origin: () => 'raster'
             }
+        });
+    }
+
+    checkPendingImports() {
+        this.uploadService.query({
+            uploadStatus: 'UPLOADED'
+        }).then(uploads => {
+            this.pendingImports = uploads.results.length;
         });
     }
 

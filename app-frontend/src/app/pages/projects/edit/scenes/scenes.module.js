@@ -4,7 +4,7 @@ import angular from 'angular';
 class ProjectsScenesController {
     constructor( // eslint-disable-line max-params
         $log, $state, $scope, $timeout,
-        modalService, projectService, RasterFoundryRepository,
+        modalService, projectService, RasterFoundryRepository, uploadService,
         platform
     ) {
         'ngInject';
@@ -18,6 +18,8 @@ class ProjectsScenesController {
             name: 'Raster Foundry',
             service: this.RasterFoundryRepository
         };
+        this.pendingImports = 0;
+        this.checkPendingImports();
         // eslint-disable-next-line
         let thisItem = this;
         this.treeOptions = {
@@ -99,6 +101,16 @@ class ProjectsScenesController {
     sceneOrderTracker(scene) {
         Object.assign(scene, {'$$hashKey': scene.id});
         return scene.$$hashKey;
+
+    }
+
+    checkPendingImports() {
+        this.uploadService.query({
+            uploadStatus: 'UPLOADED',
+            projectId: this.projectId
+        }).then(uploads => {
+            this.pendingImports = uploads.results.length;
+        });
     }
 }
 
