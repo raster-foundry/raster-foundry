@@ -250,33 +250,39 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       case _ => fr""
     }
     for {
-      scene <- SceneDao.query.filter(sceneId).filter(polygonF).select
-      datasource <- DatasourceDao.query.filter(scene.datasource).select
+      sceneO <- SceneDao.query.filter(sceneId).filter(polygonF).selectOption
+      datasourceO <- sceneO match {
+        case Some(s: Scene) => DatasourceDao.query.filter(s.datasource).selectOption
+        case _ => None.pure[ConnectionIO]
+      }
     } yield {
-      val composites = datasource.composites
-      val redBandPath = root.natural.selectDynamic("value").redBand.int
-      val greenBandPath = root.natural.selectDynamic("value").greenBand.int
-      val blueBandPath = root.natural.selectDynamic("value").blueBand.int
+      (sceneO, datasourceO) match {
+        case (Some(scene: Scene), Some(datasource: Datasource)) =>
+          val composites = datasource.composites
+          val redBandPath = root.natural.selectDynamic("value").redBand.int
+          val greenBandPath = root.natural.selectDynamic("value").greenBand.int
+          val blueBandPath = root.natural.selectDynamic("value").blueBand.int
 
-      Seq(MosaicDefinition(
-        scene.id,
-        ColorCorrect.Params(
-          redBandPath.getOption(composites).getOrElse(0),
-          greenBandPath.getOption(composites).getOrElse(1),
-          blueBandPath.getOption(composites).getOrElse(2),
-          BandGamma(false, None, None, None),
-          PerBandClipping(false, None, None, None,
-            None, None, None),
-          MultiBandClipping(false, None, None),
-          SigmoidalContrast(false, None, None),
-          Saturation(false, None),
-          Equalization(false),
-          AutoWhiteBalance(false)
-        ),
-        scene.sceneType,
-        scene.ingestLocation)
-      )
+          Seq(MosaicDefinition(
+                scene.id,
+                ColorCorrect.Params(
+                  redBandPath.getOption(composites).getOrElse(0),
+                  greenBandPath.getOption(composites).getOrElse(1),
+                  blueBandPath.getOption(composites).getOrElse(2),
+                  BandGamma(false, None, None, None),
+                  PerBandClipping(false, None, None, None,
+                                  None, None, None),
+                  MultiBandClipping(false, None, None),
+                  SigmoidalContrast(false, None, None),
+                  Saturation(false, None),
+                  Equalization(false),
+                  AutoWhiteBalance(false)
+                ),
+                scene.sceneType,
+                scene.ingestLocation)
+          )
+        case _ => Seq.empty
+      }
     }
   }
-
 }
