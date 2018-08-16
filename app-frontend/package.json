@@ -1,8 +1,8 @@
 {
   "name": "raster-foundry",
   "version": "0.0.1",
-  "description": "",
   "homepage": "https://github.com/azavea/raster-foundry",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/azavea/raster-foundry/issues"
   },
@@ -16,7 +16,6 @@
     "clean": "rimraf dist/*",
     "build-nginx": "rimraf ../nginx/srv/dist/* && yarn run build && cp -R dist/* ../nginx/srv/dist/",
     "dev": "cross-env NODE_ENV=development webpack-dev-server --verbose",
-    "postinstall": "npm rebuild node-sass",
     "sort-packages": "sort-package-json",
     "start": "yarn run dev",
     "test": "karma start karma.conf.js",
@@ -62,7 +61,7 @@
     "leaflet-draw-drag": "~0.4.5",
     "leaflet-path-transform": "1.1.0",
     "loam": "1.0.0-alpha.6",
-    "lodash": "~4.5.0",
+    "lodash": "~4.17.5",
     "mathjs": "^3.14.2",
     "moment": "^2.18.1",
     "ng-file-upload": "^12.2.13",
@@ -121,7 +120,7 @@
     "manifest-revision-webpack-plugin": "~0.4.0",
     "ng-annotate-loader": "0.0.10",
     "ngtemplate-loader": "~1.3.1",
-    "node-sass": "^3.4.2",
+    "node-sass": "~4.9.3",
     "null-loader": "~0.1.1",
     "oclazyload": "~1.0.9",
     "packageify": "~1.0.0",
