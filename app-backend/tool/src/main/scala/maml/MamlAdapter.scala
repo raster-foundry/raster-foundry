@@ -21,7 +21,7 @@ trait MamlAdapter {
       val args = ast.args.map(eval)
       ast match {
         case MapAlgebraAST.Source(id, _) => TileSource(id.toString)
-        case MapAlgebraAST.SceneRaster(_, sceneId, band, celltype, _) => SceneRaster(sceneId, band, celltype)
+        case MapAlgebraAST.SceneRaster(_, sceneId, band, celltype, _) => SceneRaster(sceneId, band, celltype, "")
         case MapAlgebraAST.ProjectRaster(_, projId, band, celltype, _) => ProjectRaster(projId, band, celltype)
         case MapAlgebraAST.CogRaster(_, sceneId, band, celltype, _, location) => CogRaster(sceneId, band, celltype, location)
         case MapAlgebraAST.Constant(_, const, _) => DoubleLiteral(const)

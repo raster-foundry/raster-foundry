@@ -439,6 +439,7 @@ object MapAlgebraAST {
     def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List(this)
     def substitute(substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST] = Some(this)
     def withMetadata(newMd: NodeMetadata): MapAlgebraAST = copy(metadata = Some(newMd))
+
   }
 
   case class ToolReference(id: UUID, toolId: UUID) extends MapAlgebraLeaf {

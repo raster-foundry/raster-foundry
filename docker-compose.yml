@@ -117,6 +117,7 @@ services:
       - statsd
     env_file: .env
     environment:
+      - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
       - RF_LOG_LEVEL=INFO
     ports:
       - "9900:9900"

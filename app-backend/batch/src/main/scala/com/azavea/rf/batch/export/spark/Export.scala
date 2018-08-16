@@ -9,38 +9,47 @@ import com.azavea.rf.batch.dropbox._
 import com.azavea.rf.batch.export._
 import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf._
+import com.azavea.rf.common.utils.CogUtils
+import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
 import com.azavea.maml.eval._
-import io.circe.parser._
-import io.circe.syntax._
+
+import com.amazonaws.services.s3.AmazonS3URI
+import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 import cats.data.Validated._
+import cats.effect.IO
 import cats.implicits._
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
 import com.typesafe.scalalogging.LazyLogging
+import doobie.Transactor
+import io.circe.parser._
+import io.circe.syntax._
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io._
 import geotrellis.raster.io.geotiff.{GeoTiff, MultibandGeoTiff, SinglebandGeoTiff}
+import geotrellis.raster.io.geotiff.reader.GeoTiffReader
+import geotrellis.raster.resample.Bilinear
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.file._
 import geotrellis.spark.io.hadoop._
 import geotrellis.spark.io.s3._
+import geotrellis.spark.io.s3.util.S3RangeReader
 import geotrellis.spark.regrid._
 import geotrellis.spark.resample.ZoomResample
 import geotrellis.spark.tiling._
-import geotrellis.vector.MultiPolygon
+import geotrellis.spark.util._
+import geotrellis.vector._
 import org.apache.hadoop.fs.Path
 import spray.json.DefaultJsonProtocol._
 import org.apache.spark.rdd.RDD
 import org.apache.spark._
-import java.util.UUID
 
-import com.amazonaws.services.s3.AmazonS3URI
-import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
+import java.util.UUID
 
 
 object Export extends SparkJob with Config with LazyLogging {
@@ -57,8 +66,8 @@ object Export extends SparkJob with Config with LazyLogging {
     sceneLocs: Map[UUID, String],
     projLocs: Map[UUID, List[(UUID, String)]],
     conf: HadoopConfiguration
-  )(implicit sc: SparkContext): Unit = {
-    interpretRDD(ast, ed.input.resolution, sceneLocs, projLocs) match {
+  )(implicit sc: SparkContext, xa: Transactor[IO]): IO[Unit] = {
+    interpretRDD(ast, ed.input.resolution, sceneLocs, projLocs) map {
       case Invalid(errs) => throw InterpreterException(errs)
       case Valid(rdd) => {
         val crs: CRS = rdd.metadata.crs
@@ -105,6 +114,76 @@ object Export extends SparkJob with Config with LazyLogging {
     }
   }
 
+  def getAvroLayerRdd(ed: ExportDefinition, eld: ExportLayerDefinition, mask: Option[MultiPolygon])(implicit sc: SparkContext) = {
+    val (reader, store) = getRfLayerManagement(eld)
+    val requestedLayerId = LayerId(eld.layerId.toString, ed.input.resolution)
+
+    val maxAvailableZoom =
+      store
+        .layerIds
+        .filter { case LayerId(name, _) => name == requestedLayerId.name }
+        .map { _.zoom }
+        .max
+
+    val maxLayerId = requestedLayerId.copy(zoom = maxAvailableZoom)
+    val maxMetadata = store.readMetadata[TileLayerMetadata[SpatialKey]](maxLayerId)
+    val maxMapTransform = maxMetadata.mapTransform
+
+    val layoutScheme = ZoomedLayoutScheme(maxMetadata.crs, math.min(maxMetadata.tileCols, maxMetadata.tileRows))
+
+    val requestedMapTransform = layoutScheme.levelForZoom(requestedLayerId.zoom).layout.mapTransform
+
+    lazy val requestedQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](requestedLayerId)
+    lazy val maxQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](maxLayerId)
+
+    val hist =
+      eld
+        .colorCorrections
+        .map { _ => store.read[Array[Histogram[Double]]](requestedLayerId.copy(zoom = 0), "histogram") }
+
+    val queryLayer = (q: BoundLayerQuery[SpatialKey, TileLayerMetadata[SpatialKey], RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]) =>
+    mask
+      .fold(q)(mp => q.where(Intersects(mp)))
+      .result
+      .withContext(
+        {
+          rdd => rdd.mapValues(
+            {
+              tile =>
+              val ctile = (eld.colorCorrections |@| hist) map { _.colorCorrect(tile, _) } getOrElse tile
+
+              ed.output.render.flatMap(_.bands.map(_.toSeq)) match {
+                case Some(seq) if seq.nonEmpty => ctile.subsetBands(seq)
+                case _ => ctile
+              }
+            }
+          )
+        }
+      )
+
+    val query: MultibandTileLayerRDD[SpatialKey] =
+      if (requestedLayerId.zoom <= maxAvailableZoom)
+        queryLayer(requestedQuery)
+      else
+        ZoomResample(queryLayer(maxQuery), maxAvailableZoom, requestedLayerId.zoom)
+
+    val md = query.metadata
+
+    (ed.output.rasterSize, ed.output.crs) match {
+      case (Some(rs), Some(crs)) =>
+        query.reproject(ZoomedLayoutScheme(crs, rs))._2
+      case (None, Some(crs)) =>
+        query.reproject(ZoomedLayoutScheme(crs, defaultRasterSize))._2
+      case (Some(rs), None) =>
+        query.regrid(rs)
+      case (None, None) =>
+        query.regrid(defaultRasterSize)
+    }
+  }
+
+  def getCOGLayerRdd(eld: ExportLayerDefinition)(implicit sc: SparkContext) =
+    CogUtils.fromUriAsRdd(eld.ingestLocation.toString)
+
   def multibandExport(
     ed: ExportDefinition,
     layers: Array[ExportLayerDefinition],
@@ -112,63 +191,7 @@ object Export extends SparkJob with Config with LazyLogging {
     conf: HadoopConfiguration
   )(implicit @transient sc: SparkContext): Unit = {
     val rdds = layers.map { ld =>
-      val (reader, store) = getRfLayerManagement(ld)
-      val requestedLayerId = LayerId(ld.layerId.toString, ed.input.resolution)
-
-      val maxAvailableZoom =
-        store
-          .layerIds
-          .filter { case LayerId(name, _) => name == requestedLayerId.name }
-          .map { _.zoom }
-          .max
-
-      val maxLayerId = requestedLayerId.copy(zoom = maxAvailableZoom)
-      val maxMetadata = store.readMetadata[TileLayerMetadata[SpatialKey]](maxLayerId)
-      val maxMapTransform = maxMetadata.mapTransform
-
-      val layoutScheme = ZoomedLayoutScheme(maxMetadata.crs, math.min(maxMetadata.tileCols, maxMetadata.tileRows))
-
-      val requestedMapTransform = layoutScheme.levelForZoom(requestedLayerId.zoom).layout.mapTransform
-
-      lazy val requestedQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](requestedLayerId)
-      lazy val maxQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](maxLayerId)
-
-      val hist =
-        ld
-          .colorCorrections
-          .map { _ => store.read[Array[Histogram[Double]]](requestedLayerId.copy(zoom = 0), "histogram") }
-
-      val queryLayer = (q: BoundLayerQuery[SpatialKey, TileLayerMetadata[SpatialKey], RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]) =>
-        mask
-          .fold(q)(mp => q.where(Intersects(mp)))
-          .result
-          .withContext({ rdd => rdd.mapValues({ tile =>
-            val ctile = (ld.colorCorrections |@| hist) map { _.colorCorrect(tile, _) } getOrElse tile
-
-            ed.output.render.flatMap(_.bands.map(_.toSeq)) match {
-              case Some(seq) if seq.nonEmpty => ctile.subsetBands(seq)
-              case _ => ctile
-            }
-          })})
-
-      val query: MultibandTileLayerRDD[SpatialKey] =
-        if (requestedLayerId.zoom <= maxAvailableZoom)
-          queryLayer(requestedQuery)
-        else
-          ZoomResample(queryLayer(maxQuery), maxAvailableZoom, requestedLayerId.zoom)
-
-      val md = query.metadata
-
-      (ed.output.rasterSize, ed.output.crs) match {
-        case (Some(rs), Some(crs)) =>
-          query.reproject(ZoomedLayoutScheme(crs, rs))._2
-        case (None, Some(crs)) =>
-          query.reproject(ZoomedLayoutScheme(crs, defaultRasterSize))._2
-        case (Some(rs), None) =>
-          query.regrid(rs)
-        case (None, None) =>
-          query.regrid(defaultRasterSize)
-      }
+      if (ld.sceneType == SceneType.Avro) getAvroLayerRdd(ed, ld, mask) else getCOGLayerRdd(ld)
     }
 
     /** Tile merge with respect to layer initial ordering */
@@ -291,6 +314,8 @@ object Export extends SparkJob with Config with LazyLogging {
     * @param args Arguments to be parsed by the tooling defined in [[CommandLine]]
     */
   def main(args: Array[String]): Unit = {
+    implicit val xa = RFTransactor.xa
+
     val params = CommandLine.parser.parse(args, CommandLine.Params()) match {
       case Some(params) =>
         params
@@ -320,7 +345,7 @@ object Export extends SparkJob with Config with LazyLogging {
         case Left(SimpleInput(layers, mask)) =>
           multibandExport(exportDef, layers, mask, conf)
         case Right(ASTInput(ast, sceneLocs, projLocs)) =>
-          astExport(exportDef, ast, sceneLocs, projLocs, conf)
+          astExport(exportDef, ast, sceneLocs, projLocs, conf).unsafeRunSync
       }
 
       logger.info(s"Writing status into the ${params.statusURI}")

@@ -104,7 +104,7 @@ def create_scene(hdf_url, temp_directory, user_id, datasource):
     name = '.'.join(granule_parts[:-1])
     id = str(uuid.uuid4())
 
-    scene = Scene(0, Visibility.PRIVATE, [], datasource, {}, name,
+    scene = Scene(Visibility.PRIVATE, [], datasource, {}, name,
                   JobStatus.SUCCESS, JobStatus.SUCCESS, IngestStatus.INGESTED, [], owner=user_id, id=id,
                   acquisitionDate=acquisition_datetime.isoformat() + 'Z', cloudCover=0)
 
