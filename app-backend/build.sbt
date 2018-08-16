@@ -1,5 +1,14 @@
 addCommandAlias("mg", "migrations/run")
 
+enablePlugins(GitVersioning)
+
+git.gitTagToVersionNumber in ThisBuild := { tag: String =>
+  if(tag matches "[0-9]+\\..*") Some(tag)
+  else None
+}
+
+git.useGitDescribe := true
+
 lazy val commonSettings = Seq(
   // Add the default sonatype repository setting
   publishTo := sonatypePublishTo.value,
