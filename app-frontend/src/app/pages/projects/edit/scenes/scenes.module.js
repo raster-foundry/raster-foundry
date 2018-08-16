@@ -95,7 +95,7 @@ class ProjectsScenesController {
         });
     }
 
-    sceneTracker(scene) {
+    sceneOrderTracker(scene) {
         Object.assign(scene, {'$$hashKey': scene.id});
         return scene.$$hashKey;
     }
