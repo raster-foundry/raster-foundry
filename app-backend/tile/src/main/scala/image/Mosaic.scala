@@ -70,6 +70,18 @@ object Mosaic extends LazyLogging with KamonTrace {
     }
   }
 
+  def apply(
+      projectId: UUID,
+      zoom: Int,
+      col: Int,
+      row: Int,
+      redBand: Int,
+      greenBand: Int,
+      blueBand: Int
+  )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = traceName(s"Mosaic.apply($projectId)") {
+    MultiBandMosaic(projectId, zoom, col, row, redBand, greenBand, blueBand)
+  }
+
   def render(
     projectId: UUID,
     zoomOption: Option[Int],
