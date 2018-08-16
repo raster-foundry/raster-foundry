@@ -55,3 +55,22 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
+
+  build:
+    image: raster-foundry-build:${GIT_COMMIT:-latest}
+    build:
+      context: ./app-backend
+      dockerfile: Dockerfile.build
+    env_file: .env
+    environment:
+       - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./scratch/:/opt/raster-foundry/scratch/
+      - ./.sbt:/root/.sbt
+      - ./.git:/opt/raster-foundry/.git
+      - ./.bintray:/root/.bintray
+      - $HOME/.aws:/root/.aws:ro
+      - $HOME/.gnupg:/root/.gnupg
+    working_dir: /opt/raster-foundry/app-backend/
+    entrypoint: ./sbt
