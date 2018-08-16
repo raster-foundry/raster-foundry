@@ -79,7 +79,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
 
   def mosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]], redBand: Int, greenBand: Int, blueBand: Int)(
     implicit xa: Transactor[IO]): Future[Seq[MosaicDefinition]] = {
-    SceneToProjectDao.getMosaicDefinition(projectId, polygonOption, Some(redBand, greenBand, blueBand)).transact(xa).unsafeToFuture
+    SceneToProjectDao.getMosaicDefinition(projectId, polygonOption, Some(redBand), Some(greenBand), Some(blueBand)).transact(xa).unsafeToFuture
   }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */

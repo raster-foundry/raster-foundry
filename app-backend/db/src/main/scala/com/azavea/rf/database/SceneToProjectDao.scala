@@ -73,7 +73,13 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
   // we filter to make sure the list only includes non-None geometries, and then perform unions of
   // multipolygons that we know are stored in the same projection in the database
   @SuppressWarnings(Array("OptionGet"))
-  def getMosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]], compositeOption: Option[(Int, Int, Int)] = None): ConnectionIO[Seq[MosaicDefinition]] = {
+  def getMosaicDefinition(
+    projectId: UUID,
+    polygonOption: Option[Projected[Polygon]],
+    redBand: Option[Int] = None,
+    greenBand: Option[Int] = None,
+    blueBand: Option[Int] = None
+  ): ConnectionIO[Seq[MosaicDefinition]] = {
 
     def geom(stpWithFootprint: (SceneToProjectwithSceneType, Option[Projected[MultiPolygon]])) = stpWithFootprint._2.get.geom
 
@@ -147,11 +153,11 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       countO map {
         (count: Int) => logger.debug(s"Using ${stpsWithFootprints.length} scenes in project out of $count")
       }
-      
+
       val stps = stpsWithFootprints map { _._1 }
-      
-      val md = compositeOption match {
-        case Some((redBand, greenBand, blueBand)) => MosaicDefinition.fromScenesToProjects(stps, redBand, greenBand, blueBand)
+
+      val md = (redBand, greenBand, blueBand).tupled match {
+        case Some((r, g, b)) => MosaicDefinition.fromScenesToProjects(stps, r, g, b)
         case _ => MosaicDefinition.fromScenesToProjects(stps)
       }
       logger.debug(s"Mosaic Definition: ${md}")
