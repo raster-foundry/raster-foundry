@@ -39,40 +39,28 @@ object Notify extends RollbarNotifier {
     } yield { () }
   }
 
-  def sendGroupNotification(
-    platformId: UUID, groupId: UUID, groupType: GroupType, initiatorId: String, subjectId: String, messageType: MessageType
-  ): ConnectionIO[Unit] =
+  def sendNotification(platformId: UUID, messageType: MessageType,
+                       builder: MessageType => ConnectionIO[EmailData],
+                       userFinder: MessageType => ConnectionIO[List[User]]): ConnectionIO[Unit] = {
     for {
       platform <- PlatformDao.unsafeGetPlatformById(platformId)
       publicSettings = platform.publicSettings
       privateSettings = platform.privateSettings
       platformHost = publicSettings.platformHost.getOrElse("app.rasterfoundry.com")
-      _ <- logger.debug("Constructing message").pure[ConnectionIO]
-      emailData <- messageType match {
-        case MessageType.GroupRequest =>
-          PlainGroupRequest(groupId, groupType, initiatorId, platform).build
-        case MessageType.GroupInvitation =>
-          PlainGroupInvitation(groupId, groupType, initiatorId, platform).build
-      }
+      emailData <- builder(messageType)
       _ <- logger.debug("Fetching users").pure[ConnectionIO]
-      users <- messageType match {
-        case MessageType.GroupRequest =>
-          UserGroupRoleDao.listByGroupAndRole(groupType, groupId, GroupRole.Admin) flatMap {
-            (userGroupRoles: List[UserGroupRole]) => UserDao.getUsersByIds(userGroupRoles.map((ugr: UserGroupRole) => ugr.userId))
-          }
-        case MessageType.GroupInvitation =>
-          UserDao.unsafeGetUserById(subjectId).map((usr: User) => List(usr))
-      }
-      emails = users map { user =>
+      recipients <- userFinder(messageType)
+      emails = recipients map { user =>
         (user.personalInfo.email, user.email) match {
           case ("", loginEmail) => loginEmail
           case (contactEmail, _) => contactEmail
         }
       }
-      _ <- logger.debug(s"Sending emails to ${users.length} admins").pure[ConnectionIO]
+      _ <- logger.debug(s"Sending emails to ${recipients.length} admins").pure[ConnectionIO]
       result <- emails.map(
         sendEmail(publicSettings, privateSettings, _,
                   emailData.subject, emailData.richBody, emailData.plainBody)
       ).sequence
     } yield { () }
+  }
 }
