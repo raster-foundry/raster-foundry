@@ -19,11 +19,10 @@ import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.GridBounds
 import geotrellis.raster.histogram._
-import geotrellis.slick.Projected
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.postgres.PostgresAttributeStore
-import geotrellis.vector.{Extent, Polygon}
+import geotrellis.vector.{Extent, Polygon, Projected}
 
 import scala.concurrent._
 import java.util.UUID

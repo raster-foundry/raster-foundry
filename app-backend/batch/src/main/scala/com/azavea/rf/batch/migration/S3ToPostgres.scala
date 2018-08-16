@@ -1,5 +1,7 @@
 package com.azavea.rf.batch.migration
 
+import java.net.URI
+
 import cats.effect.IO
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.util._
@@ -17,7 +19,9 @@ import com.amazonaws.services.s3.AmazonS3URI
 import com.azavea.rf.database.util.RFTransactor
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import doobie.util.transactor.Transactor
+import geotrellis.spark.io.s3.S3AttributeStore.SEP
 import spray.json.DefaultJsonProtocol._
+import com.azavea.rf.common.S3
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -27,25 +31,37 @@ case class S3ToPostgres(uri: AmazonS3URI, attributeTable: String = "layer_attrib
 
   private implicit val cache: Cache[(LayerId, String), Any] = Scaffeine().softValues().build()
 
+  def getLayerIds: List[LayerId] = {
+    val attributeURI = new URI(s"${uri.toString}/_attributes")
+    S3.getObjectKeys(attributeURI).map { os: String =>
+        val List(zoomStr, name) = os.split(SEP).reverse.take(2).toList
+        LayerId(name, zoomStr.replace(".json", "").toInt)
+      }
+      .distinct
+  }
+
+  val store = S3AttributeStore(uri.getBucket, uri.getKey)
+
   def run: Unit = {
-    val (from, to) = S3AttributeStore(uri.getBucket, uri.getKey) -> PostgresAttributeStore(attributeTable)
+    val from = getLayerIds
+    val to = PostgresAttributeStore(attributeTable)
 
     Future
-      .sequence(layerName.fold(from.layerIds)(name => from.layerIds.filter(_.name == name))
+      .sequence(layerName.fold(from)(name => from.filter(_.name == name))
         .map { layerId => Future {
           logger.info(s"Processing layer: $layerId...")
           try {
             if (layerId.zoom > 0) {
-              val LayerAttributes(header, metadata, keyIndex, schema) = from.readLayerAttributesSafe[S3LayerHeader, TileLayerMetadata[SpatialKey], SpatialKey](layerId)
+              val LayerAttributes(header, metadata, keyIndex, schema) = store.readLayerAttributesSafe[S3LayerHeader, TileLayerMetadata[SpatialKey], SpatialKey](layerId)
               to.write(layerId, AttributeStore.Fields.header, header)
               to.write(layerId, AttributeStore.Fields.metadata, metadata)
-              to.write(layerId, AttributeStore.Fields.keyIndex, keyIndex)
-              to.write(layerId, AttributeStore.Fields.schema, schema)
-              to.write(layerId, "layerComplete", from.cacheReadSafe[Boolean](layerId, "layerComplete"))
+              to.write(layerId, AttributeStore.AvroLayerFields.keyIndex, keyIndex)
+              to.write(layerId, AttributeStore.AvroLayerFields.schema, schema)
+              to.write(layerId, "layerComplete", store.cacheReadSafe[Boolean](layerId, "layerComplete"))
             } else {
-              to.write(layerId, "histogram", from.cacheReadSafe[Array[Histogram[Double]]](layerId, "histogram"))
-              to.write(layerId, "extent", from.cacheReadSafe[Extent](layerId, "extent")(ExtentJsonFormat, cache))(ExtentJsonFormat)
-              to.write(layerId, "crs", from.cacheReadSafe[CRS](layerId, "crs")(CRSJsonFormat, cache))(CRSJsonFormat)
+              to.write(layerId, "histogram", store.cacheReadSafe[Array[Histogram[Double]]](layerId, "histogram"))
+              to.write(layerId, "extent", store.cacheReadSafe[Extent](layerId, "extent")(ExtentJsonFormat, cache))(ExtentJsonFormat)
+              to.write(layerId, "crs", store.cacheReadSafe[CRS](layerId, "crs")(CRSJsonFormat, cache))(CRSJsonFormat)
             }
             layerId
           } catch {

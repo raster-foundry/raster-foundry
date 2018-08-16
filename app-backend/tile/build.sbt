@@ -16,8 +16,7 @@ initialCommands in console := """
   |import akka.actor.ActorSystem
   |import akka.stream.ActorMaterializer
   |val publicOrgId = UUID.fromString("dfac6307-b5ef-43f7-beda-b9f208bb7726")
-  |import geotrellis.vector.{MultiPolygon, Polygon, Point, Geometry}
-  |import geotrellis.slick.Projected
+  |import geotrellis.vector.{MultiPolygon, Polygon, Point, Geometry, Projected}
   |object Rollbar extends com.azavea.rf.common.RollbarNotifier {
   |  implicit val system = ActorSystem("rf-system")
   |  implicit val materializer = ActorMaterializer()

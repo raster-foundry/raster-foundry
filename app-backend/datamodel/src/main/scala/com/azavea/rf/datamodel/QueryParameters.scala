@@ -2,8 +2,7 @@ package com.azavea.rf.datamodel
 
 import io.circe.generic.JsonCodec
 import geotrellis.proj4._
-import geotrellis.slick.Projected
-import geotrellis.vector.{Extent, Point, Polygon}
+import geotrellis.vector.{Extent, Point, Polygon, Projected}
 
 import java.util.UUID
 import java.sql.Timestamp

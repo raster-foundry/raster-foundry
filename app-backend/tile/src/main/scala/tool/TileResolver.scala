@@ -23,8 +23,7 @@ import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
 import geotrellis.spark.tiling._
-import geotrellis.vector.{Extent, MultiPolygon}
-import geotrellis.slick.Projected
+import geotrellis.vector.{Extent, MultiPolygon, Projected}
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 
 import scala.util.{Failure, Success, Try}

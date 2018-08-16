@@ -1,7 +1,6 @@
 package com.azavea.rf.datamodel.stac
 
-import geotrellis.vector.Geometry
-import geotrellis.slick.Projected
+import geotrellis.vector.{Geometry, Projected}
 
 import io.circe._
 import io.circe.generic.JsonCodec

@@ -69,7 +69,11 @@ node{
             dir('raster-foundry-deployment') {
               wrap([$class: 'AnsiColorBuildWrapper']) {
                 sh 'docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm terraform ./scripts/infra plan'
-                sh 'docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm terraform ./scripts/infra apply'
+                withCredentials([[$class: 'StringBinding',
+                                  credentialsId: 'ROLLBAR_ACCESS_TOKEN',
+                                  variable: 'ROLLBAR_ACCESS_TOKEN']]) {
+                    sh 'docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm terraform ./scripts/infra apply'
+                }
               }
             }
 

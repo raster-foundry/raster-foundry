@@ -13,7 +13,6 @@ import io.circe._
 import io.circe.syntax._
 import cats.implicits._
 import geotrellis.proj4._
-import geotrellis.slick.Projected
 import geotrellis.vector._
 import geotrellis.vector.io._
 import com.vividsolutions.jts.geom.LineString

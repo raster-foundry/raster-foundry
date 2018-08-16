@@ -3,8 +3,7 @@ package com.azavea.rf.datamodel.stac
 import java.sql.Timestamp
 
 import com.azavea.rf.bridge._
-import geotrellis.vector.Geometry
-import geotrellis.slick.Projected
+import geotrellis.vector.{Geometry, Projected}
 
 import io.circe._
 import io.circe.generic.JsonCodec

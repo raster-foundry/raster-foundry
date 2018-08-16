@@ -11,7 +11,6 @@ import doobie.postgres._, doobie.postgres.implicits._
 import doobie.scalatest.imports._
 import org.scalatest._
 import geotrellis.vector._
-import geotrellis.slick.Projected
 
 
 class GtVectorMetaSpec extends FunSpec with Matchers with DBTestConfig {
@@ -78,4 +77,3 @@ class GtVectorMetaSpec extends FunSpec with Matchers with DBTestConfig {
     results.multipoly shouldBe mpoly
   }
 }
-

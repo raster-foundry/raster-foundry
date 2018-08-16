@@ -9,8 +9,7 @@ import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import io.circe._
-import geotrellis.slick.Projected
-import geotrellis.vector.MultiPolygon
+import geotrellis.vector.{MultiPolygon, Projected}
 
 import com.lonelyplanet.akka.http.extensions.PageRequest
 
@@ -106,4 +105,3 @@ object AoiDao extends Dao[AOI] {
     }
   } yield { projectAuthed }
 }
-

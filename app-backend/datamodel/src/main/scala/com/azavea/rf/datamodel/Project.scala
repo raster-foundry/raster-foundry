@@ -6,8 +6,7 @@ import java.util.UUID
 import com.azavea.rf.bridge._
 import cats.implicits._
 import cats.syntax.either._
-import geotrellis.slick.Projected
-import geotrellis.vector.Geometry
+import geotrellis.vector.{Geometry, Projected}
 import geotrellis.vector.io.json.GeoJsonSupport
 import io.circe._
 import io.circe.generic.semiauto._

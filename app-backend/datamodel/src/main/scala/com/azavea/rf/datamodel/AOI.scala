@@ -5,8 +5,7 @@ import java.time.Instant
 import java.util.{Date, UUID}
 
 import com.azavea.rf.bridge._
-import geotrellis.slick.Projected
-import geotrellis.vector.Geometry
+import geotrellis.vector.{Geometry, Projected}
 import io.circe._
 import io.circe.generic.JsonCodec
 
