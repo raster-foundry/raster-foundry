@@ -126,7 +126,7 @@ trait ShapeRoutes extends Authentication
                 complete(StatusCodes.Created, ShapeDao.insertShapes(Seq(shape), user).transact(xa).unsafeToFuture)
               }
               case _ => {
-                val reason = "No valid MultiPolygons found, please ensure coordinates are in EPSG:4326 before uploading"
+                val reason = "No valid MultiPolygons found, please ensure coordinates are in EPSG:4326 before uploading."
                 complete(StatusCodes.ClientError(400)("Bad Request", reason))
               }
             }
