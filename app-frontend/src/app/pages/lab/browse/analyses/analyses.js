@@ -152,8 +152,7 @@ class LabBrowseAnalysesController {
         this.modalService.open({
             component: 'rfExportAnalysisDownloadModal',
             resolve: {
-                analysis: () => analysis,
-                exports: () => this.analysesExports[analysis.id].results
+                analysis: () => analysis
             }
         });
     }
@@ -174,7 +173,7 @@ class LabBrowseAnalysesController {
             }
         ).then(firstPageExports => {
             if (firstPageExports.results.find(r => r.toolRunId === analysisId)) {
-                this.analysesExports[analysisId] = firstPageExports;
+                this.analysesExports[analysisId] = firstPageExports.count;
             }
         });
     }
