@@ -94,6 +94,11 @@ class ProjectsScenesController {
             this.$state.go('projects.edit.browse', {sceneid: null, bbox: bbox.toBBoxString()});
         });
     }
+
+    sceneOrderTracker(scene) {
+        Object.assign(scene, {'$$hashKey': scene.id});
+        return scene.$$hashKey;
+    }
 }
 
 const ProjectsScenesModule = angular.module('pages.projects.edit.scenes', ['ui.tree']);

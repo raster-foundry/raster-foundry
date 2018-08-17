@@ -57,7 +57,7 @@
         repository="$ctrl.repository"
         ng-mouseover="$ctrl.$parent.setHoveredScene(scene)"
         ng-mouseleave="$ctrl.$parent.removeHoveredScene()"
-        ng-repeat="scene in $ctrl.$parent.sceneList track by scene.id"
+        ng-repeat="scene in $ctrl.$parent.sceneList track by $ctrl.sceneOrderTracker(scene)"
         ui-tree-node>
       <button class="btn btn-tiny" ng-click="$ctrl.removeSceneFromProject(scene, $event)">
         <i class="icon-trash"></i>
