@@ -23,90 +23,95 @@ class PermissionModalController {
     }
 
     $onInit() {
-        this.loading = false;
-        this.rawPermissions = [];
-        this.actionsBuffer = {};
-        this.entityCache = {
-            organization: {},
-            team: {},
-            user: {}
-        };
+        this.objectOwnerId = this.resolve.object.owner.id || this.resolve.object.owner;
+        this.userId = this.authService.user.id;
 
-        this.actionTypes = [{
-            tag: 'view',
-            label: 'Can view',
-            applies: () => true,
-            actions: ['VIEW'],
-            default: true
-        }, {
-            tag: 'annotate',
-            label: 'Can annotate',
-            applies: (o) => o.toLowerCase() === 'project',
-            actions: ['VIEW', 'ANNOTATE'].sort()
-        }, {
-            tag: 'editNonProject',
-            label: 'Can edit',
-            applies: (o) => o.toLowerCase() !== 'project',
-            actions: ['VIEW', 'EDIT'].sort()
-        }, {
-            tag: 'editProject',
-            label: 'Can edit',
-            applies: (o) => o.toLowerCase() === 'project',
-            actions: ['VIEW', 'ANNOTATE', 'EDIT'].sort()
-        }, {
-            tag: 'deleteNonProject',
-            label: 'Can delete',
-            applies: (o) => o.toLowerCase() !== 'project',
-            actions: ['VIEW', 'EDIT', 'DELETE'].sort()
-        }, {
-            tag: 'deleteProject',
-            label: 'Can delete',
-            applies: (o) => o.toLowerCase() === 'project',
-            actions: ['VIEW', 'ANNOTATE', 'EDIT', 'DELETE'].sort()
-        }];
+        if (this.objectOwnerId === this.userId) {
+            this.loading = false;
+            this.rawPermissions = [];
+            this.actionsBuffer = {};
+            this.entityCache = {
+                organization: {},
+                team: {},
+                user: {}
+            };
 
-        this.subjectTypes = [
-            {
-                name: 'Everyone',
-                target: 'PLATFORM',
-                id: 0,
-                applies: () =>
-                    !this.actionsBuffer.PLATFORM ||
-                    !Object.keys(this.actionsBuffer.PLATFORM).length
+            this.actionTypes = [{
+                tag: 'view',
+                label: 'Can view',
+                applies: () => true,
+                actions: ['VIEW'],
+                default: true
             }, {
-                name: 'An organization',
-                singular: 'organization',
-                plural: 'organizations',
-                target: 'ORGANIZATION',
-                id: 1,
-                applies: () => true
+                tag: 'annotate',
+                label: 'Can annotate',
+                applies: (o) => o.toLowerCase() === 'project',
+                actions: ['VIEW', 'ANNOTATE'].sort()
             }, {
-                name: 'A team',
-                singular: 'team',
-                plural: 'teams',
-                target: 'TEAM',
-                id: 2,
-                applies: () => true
+                tag: 'editNonProject',
+                label: 'Can edit',
+                applies: (o) => o.toLowerCase() !== 'project',
+                actions: ['VIEW', 'EDIT'].sort()
             }, {
-                name: 'A user',
-                singular: 'user',
-                plural: 'users',
-                target: 'USER',
-                id: 3,
-                applies: () => true
-            }
-        ];
+                tag: 'editProject',
+                label: 'Can edit',
+                applies: (o) => o.toLowerCase() === 'project',
+                actions: ['VIEW', 'ANNOTATE', 'EDIT'].sort()
+            }, {
+                tag: 'deleteNonProject',
+                label: 'Can delete',
+                applies: (o) => o.toLowerCase() !== 'project',
+                actions: ['VIEW', 'EDIT', 'DELETE'].sort()
+            }, {
+                tag: 'deleteProject',
+                label: 'Can delete',
+                applies: (o) => o.toLowerCase() === 'project',
+                actions: ['VIEW', 'ANNOTATE', 'EDIT', 'DELETE'].sort()
+            }];
 
-        this.defaultAction = this.actionTypes.find(a => a.default);
+            this.subjectTypes = [
+                {
+                    name: 'Everyone',
+                    target: 'PLATFORM',
+                    id: 0,
+                    applies: () =>
+                        !this.actionsBuffer.PLATFORM ||
+                        !Object.keys(this.actionsBuffer.PLATFORM).length
+                }, {
+                    name: 'An organization',
+                    singular: 'organization',
+                    plural: 'organizations',
+                    target: 'ORGANIZATION',
+                    id: 1,
+                    applies: () => true
+                }, {
+                    name: 'A team',
+                    singular: 'team',
+                    plural: 'teams',
+                    target: 'TEAM',
+                    id: 2,
+                    applies: () => true
+                }, {
+                    name: 'A user',
+                    singular: 'user',
+                    plural: 'users',
+                    target: 'USER',
+                    id: 3,
+                    applies: () => true
+                }
+            ];
 
-        this.authTarget = {
-            permissionsBase: this.resolve.permissionsBase,
-            objectType: this.resolve.objectType,
-            objectId: this.resolve.object.id
-        };
+            this.defaultAction = this.actionTypes.find(a => a.default);
 
-        this.applicableActions = this.getApplicableActions(this.resolve.objectType);
-        this.fetchPermissions();
+            this.authTarget = {
+                permissionsBase: this.resolve.permissionsBase,
+                objectType: this.resolve.objectType,
+                objectId: this.resolve.object.id
+            };
+
+            this.applicableActions = this.getApplicableActions(this.resolve.objectType);
+            this.fetchPermissions();
+        }
     }
 
     fetchPermissions() {
