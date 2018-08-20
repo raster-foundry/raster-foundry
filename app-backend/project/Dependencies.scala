@@ -61,6 +61,7 @@ object Dependencies {
   val http4sBlazeClient       = "org.http4s"                  %% "http4s-blaze-client"               % Version.http4s
   val http4sCirce             = "org.http4s"                  %% "http4s-circe"                      % Version.http4s
   val http4sDSL               = "org.http4s"                  %% "http4s-dsl"                        % Version.http4s
+  val http4sServer            = "org.http4s"                  %% "http4s-server"                     % Version.http4s
   val hikariCP                = "com.typesafe.slick"          %% "slick-hikaricp"                    % Version.hikariCP
   val kamonAkka               = "io.kamon"                    %% "kamon-akka"                        % Version.kamon
   val kamonAkkaHttp           = "io.kamon"                    %% "kamon-akka-http"                   % Version.kamonAkkaHttp

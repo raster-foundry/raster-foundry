@@ -410,7 +410,7 @@ export default (app) => {
             queryParams.tag = new Date().getTime();
             let formattedParams = L.Util.getParamString(queryParams);
 
-            return `${this.tileServer}/${projectId}/{z}/{x}/{y}/${formattedParams}`;
+            return `http://localhost:8080/mosaic/${projectId}/{z}/{x}/{y}${formattedParams}`;
         }
 
         getProjectShareLayerURL(project, token) {

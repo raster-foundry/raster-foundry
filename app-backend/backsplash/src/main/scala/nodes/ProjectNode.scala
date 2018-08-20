@@ -60,7 +60,6 @@ object ProjectNode {
           val normalized = (subset.mapBands {
             (i: Int, tile: Tile) => tile.rescale(0, 255)
           }).color
-          println(normalized.toArray.take(10).toList)
           Raster(
             normalized,
             extent

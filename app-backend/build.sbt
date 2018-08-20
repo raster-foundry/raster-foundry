@@ -393,5 +393,7 @@ lazy val backsplash = Project("backsplash", file("backsplash"))
                Dependencies.http4sBlaze,
                Dependencies.http4sBlazeClient,
                Dependencies.http4sCirce,
-               Dependencies.http4sDSL
+               Dependencies.http4sDSL,
+               Dependencies.http4sServer
              ) })
+  .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))

@@ -148,6 +148,7 @@ services:
     environment:
       - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
       - RF_LOG_LEVEL=INFO
+      - SBT_OPTS="-Xmx2G -XX:MaxPermSize=2G"
     ports:
       - "8080:8080"
       - "9030:9020"
