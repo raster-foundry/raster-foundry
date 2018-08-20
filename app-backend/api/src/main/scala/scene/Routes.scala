@@ -7,6 +7,7 @@ import akka.http.scaladsl.server.Route
 import cats.effect.IO
 import cats.implicits._
 import com.amazonaws.services.s3.AmazonS3URI
+import java.net.URLDecoder
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common.utils.CogUtils
@@ -207,12 +208,8 @@ trait SceneRoutes extends Authentication
             val downloadUri: String = {
               image.sourceUri match {
                 case uri if uri.startsWith(s"s3://$dataBucket") => {
-                  val s3Uri = new AmazonS3URI(image.sourceUri)
+                  val s3Uri = new AmazonS3URI(URLDecoder.decode(image.sourceUri, "utf-8"))
                   S3.getSignedUrl(s3Uri.getBucket, s3Uri.getKey).toString
-                }
-                case uri if uri.startsWith("s3://") => {
-                  val s3Uri = new AmazonS3URI(image.sourceUri)
-                  s"https://${s3Uri.getBucket}.s3.amazonaws.com/${s3Uri.getKey}"
                 }
                 case _ => image.sourceUri
               }
