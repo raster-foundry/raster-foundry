@@ -13,9 +13,10 @@ const SceneDownloadModalComponent = {
 };
 
 class SceneDownloadModalController {
-    constructor(sceneService) {
+    constructor(sceneService, $timeout) {
         'ngInject';
         this.sceneService = sceneService;
+        this.$timeout = $timeout;
     }
 
     $onInit() {
@@ -40,6 +41,15 @@ class SceneDownloadModalController {
 
                 this.isLoading = false;
             });
+        }
+    }
+
+    onCopyClick(e, url, type) {
+        if (url && url.length) {
+            this.copyType = type;
+            this.$timeout(() => {
+                delete this.copyType;
+            }, 1000);
         }
     }
 }
