@@ -14,16 +14,17 @@ const ProjectAddScenesModalComponent = {
 };
 
 class ProjectAddScenesModalController {
-    constructor($log, $state, $q, projectService, modalService) {
+    constructor($rootScope, $log, $state, $q, projectService, modalService) {
         'ngInject';
-        this.$log = $log;
-        this.$state = $state;
-        this.$q = $q;
-        this.projectService = projectService;
-        this.modalService = modalService;
+        $rootScope.autoInject(this, arguments);
+
         this.scenes = this.resolve.scenes;
         this.selectedScenes = this.scenes;
         this.project = this.resolve.project;
+    }
+
+    $onInit() {
+        this.addSceneMsg = '';
     }
 
     isSelected(scene) {
@@ -48,6 +49,7 @@ class ProjectAddScenesModalController {
                 return repository.label;
             }
         );
+        this.getSceneImportMsg(repositoryScenes);
         let repositories = _.map(repositoryScenes, (scenes, label) => {
             return {label, repository: _.first(scenes).repository};
         });
@@ -69,6 +71,31 @@ class ProjectAddScenesModalController {
                 err
             );
         });
+    }
+
+    getSceneImportMsg(repositoryScenes) {
+        let rfScenes = repositoryScenes['Raster Foundry'];
+        let nonRfScenes = _.omit(repositoryScenes, ['Raster Foundry']);
+
+        let uningestedNonCogCount = rfScenes && rfScenes.length ?
+        rfScenes.filter(rfScene => {
+            return rfScene.scene.sceneType !== 'COG' &&
+                   rfScene.scene.statusFields.ingestStatus !== 'INGESTED';
+        }).length : 0;
+
+        this.addSceneMsg = uningestedNonCogCount ?
+            `There are ${uningestedNonCogCount} non-COG Raster Foundry scenes being ingested.` :
+            this.addSceneMsg;
+
+        let nonRfScenesMsg = !_.isEmpty(nonRfScenes) ? _.map(nonRfScenes, (vals, key) => {
+            return `${vals.length} ${key} scenes`;
+        }).join(', ') + ' being imported' : '';
+
+        this.addSceneMsg += nonRfScenesMsg.length ? `There are ${nonRfScenesMsg}.` : '';
+    }
+
+    linkToStatus() {
+        this.$state.go('projects.edit.scenes', {projectid: this.project.id});
     }
 }
 

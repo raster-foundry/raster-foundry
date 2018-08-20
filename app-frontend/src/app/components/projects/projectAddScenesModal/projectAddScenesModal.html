@@ -57,6 +57,11 @@
       <div class="repository-count">
         Added {{result.sceneCount}} scenes to project
       </div>
+    </div><br>
+    <div ng-if="$ctrl.addSceneMsg && $ctrl.addSceneMsg.length">
+      <strong>Import/Ingest Statuses:</strong><br>
+      {{$ctrl.addSceneMsg}}
+      <a ng-click="$ctrl.linkToStatus()">Click here to check their statuses.</a>
     </div>
   </div>
   <div class="modal-footer" ng-if="$ctrl.finished">
