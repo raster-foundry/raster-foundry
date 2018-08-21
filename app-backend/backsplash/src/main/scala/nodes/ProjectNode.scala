@@ -48,126 +48,6 @@ object ProjectNode extends RollbarNotifier {
     new MamlTmsReification[ProjectNode] {
       def kind(self: ProjectNode): MamlKind = MamlKind.Tile
 
-      def tileLayerMetadata(id: UUID, zoom: Int): IO[(Int, TileLayerMetadata[SpatialKey])] = {
-
-        logger.debug(s"Requesting tile layer metadata (layer: $id, zoom: $zoom")
-        val layerName = id.toString
-        LayerAttributeDao.unsafeMaxZoomForLayer(layerName).transact(xa) map {
-          case (_, maxZoom) =>
-            val z = if (zoom > maxZoom) maxZoom else zoom
-            z -> store.readMetadata[TileLayerMetadata[SpatialKey]](LayerId(layerName, z))
-        }
-      }
-
-      def layerHistogram(id: UUID): IO[Array[HistogramAttribute]] = {
-        logger.debug(s"Fetching histogram for scene id $id")
-        LayerAttributeDao.unsafeGetAttribute(LayerId(name=id.toString, zoom=0), "histogram")
-          .transact(xa)
-          .map(
-            (la: LayerAttribute) => decode[Array[HistogramAttribute]](la.value.noSpaces).right.get
-          )
-      }
-
-      // TODO: don't do this. get COG histograms into the attribute store on import.
-      def cogLayerHistogram(uri: String): IO[Array[Histogram[Int]]] = {
-        logger.debug(s"Fetching histogram for cog at $uri")
-        for {
-          geotiff <- CogUtils.getTiff(uri)
-        } yield geotiff.tile.histogram
-      }
-
-      def avroLayerTile(id: UUID, zoom: Int, key: SpatialKey): IO[MultibandTile] = {
-        val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(id.toString, zoom))
-        IO(reader.read(key))
-      }
-
-      def fetchAvroTile(md: MosaicDefinition, zoom: Int, col: Int, row: Int)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
-        logger.debug(s"Fetching avro tile for scene id ${md.sceneId}")
-        OptionT(
-          for {
-            metadata <- IO.shift(t) *> tileLayerMetadata(md.sceneId, zoom)
-            (sourceZoom, tlm) = metadata
-            zoomDiff = zoom - sourceZoom
-            resolutionDiff = 1 << zoomDiff
-            sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
-            histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
-            mbTileE <- {
-              if (tlm.bounds.includes(sourceKey))
-                avroLayerTile(md.sceneId, sourceZoom, sourceKey).attempt
-              else IO(
-                Left(
-                  new Exception(s"Source key outside of tile layer bounds for scene ${md.sceneId}, key ${sourceKey}")
-                )
-              )
-            }
-          } yield {
-            val coloredTileE = mbTileE map {
-              (mbTile: MultibandTile) => {
-                val extent = CogUtils.tmsLevels(zoom).mapTransform.keyToExtent(col, row)
-                val innerCol = col % resolutionDiff
-                val innerRow = row % resolutionDiff
-                val cols = mbTile.cols / resolutionDiff
-                val rows = mbTile.rows / resolutionDiff
-                val bandOrder = List(
-                  md.colorCorrections.redBand,
-                  md.colorCorrections.greenBand,
-                  md.colorCorrections.blueBand
-                )
-                val subset = mbTile.crop(
-                  GridBounds(
-                    colMin = innerCol * cols,
-                    rowMin = innerRow * rows,
-                    colMax = (innerCol + 1) * cols - 1,
-                    rowMax = (innerRow + 1) * rows - 1
-                  )
-                ).resample(256, 256).subsetBands(bandOrder: _*)
-                val normalized = subset.mapBands {
-                  (i: Int, tile: Tile) => {
-                    // If we can't calculate a histogram, just sort of be sad and don't
-                    // do any normalization
-                    val hist = histograms(bandOrder(i))
-                    tile.normalize(hist.minimum, hist.maximum, 0, 255)
-                  }
-                }
-                Raster(normalized.color, extent).resample(256, 256)
-              }
-            }
-            coloredTileE.toOption
-          }
-        )
-      }
-
-      def fetchCogTile(md: MosaicDefinition, extent: Extent)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
-        logger.debug(s"Fetching COG tile for scene ID ${md.sceneId}")
-        val tileIO = for {
-          rasterTile <- IO.shift(t) *> CogUtils.fetch(md.ingestLocation.getOrElse("Cannot fetch scene with no ingest location"), extent
-          )
-          histograms <- IO.shift(t) *> cogLayerHistogram(md.ingestLocation.getOrElse(""))
-        } yield {
-          val bandOrder = List(
-            md.colorCorrections.redBand,
-            md.colorCorrections.greenBand,
-            md.colorCorrections.blueBand
-          )
-          val subset = rasterTile.tile.subsetBands(bandOrder: _*)
-          val normalized = (
-            subset.mapBands {
-              (i: Int, tile: Tile) => {
-                val (minValue, maxValue) = histograms(bandOrder(i)).minMaxValues.getOrElse(
-                  {
-                    logger.debug(s"Histogram lacks min/max values for scene id ${md.sceneId}")
-                    (0, 255)
-                  }
-                )
-                tile.normalize(minValue, maxValue, 0, 255)
-              }
-            }
-          ).color
-          Raster(normalized, extent).resample(256, 256)
-        }
-        OptionT(tileIO.attempt.map(_.toOption))
-      }
-
       def tmsReification(self: ProjectNode, buffer: Int)(implicit t: Timer[IO]): (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
           val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
@@ -196,4 +76,129 @@ object ProjectNode extends RollbarNotifier {
           }
         }
     }
+
+  def tileLayerMetadata(id: UUID, zoom: Int): IO[(Int, TileLayerMetadata[SpatialKey])] = {
+
+    logger.debug(s"Requesting tile layer metadata (layer: $id, zoom: $zoom")
+    val layerName = id.toString
+    LayerAttributeDao.unsafeMaxZoomForLayer(layerName).transact(xa) map {
+      case (_, maxZoom) =>
+        val z = if (zoom > maxZoom) maxZoom else zoom
+        z -> store.readMetadata[TileLayerMetadata[SpatialKey]](LayerId(layerName, z))
+    }
+  }
+
+  def layerHistogram(id: UUID): IO[Array[HistogramAttribute]] = {
+    logger.debug(s"Fetching histogram for scene id $id")
+    LayerAttributeDao.unsafeGetAttribute(LayerId(name=id.toString, zoom=0), "histogram")
+      .transact(xa)
+      .map(
+        (la: LayerAttribute) => decode[Array[HistogramAttribute]](la.value.noSpaces).right.get
+      )
+  }
+
+  // TODO: don't do this. get COG histograms into the attribute store on import then just use
+  // layerHistogram
+  def cogLayerHistogram(uri: String): IO[Array[Histogram[Int]]] = {
+    logger.debug(s"Fetching histogram for cog at $uri")
+    for {
+      geotiff <- CogUtils.getTiff(uri)
+    } yield geotiff.tile.histogram
+  }
+
+  def avroLayerTile(id: UUID, zoom: Int, key: SpatialKey): IO[MultibandTile] = {
+    val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(id.toString, zoom))
+    IO(reader.read(key))
+  }
+
+  // TODO: this essentially inlines a bunch of logic from LayerCache, which isn't super cool
+  // it would be nice to get that logic somewhere more appropriate, especially since a lot of
+  // it is grid <-> geometry math, but I'm not certain where it should go.
+  def fetchAvroTile(md: MosaicDefinition, zoom: Int, col: Int, row: Int)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+    logger.debug(s"Fetching avro tile for scene id ${md.sceneId}")
+    OptionT(
+      for {
+        metadata <- IO.shift(t) *> tileLayerMetadata(md.sceneId, zoom)
+                                                    (sourceZoom, tlm) = metadata
+        zoomDiff = zoom - sourceZoom
+        resolutionDiff = 1 << zoomDiff
+        sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
+        histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
+        mbTileE <- {
+          if (tlm.bounds.includes(sourceKey))
+            avroLayerTile(md.sceneId, sourceZoom, sourceKey).attempt
+          else IO(
+            Left(
+              new Exception(s"Source key outside of tile layer bounds for scene ${md.sceneId}, key ${sourceKey}")
+            )
+          )
+        }
+      } yield {
+        val coloredTileE = mbTileE map {
+          (mbTile: MultibandTile) => {
+            val extent = CogUtils.tmsLevels(zoom).mapTransform.keyToExtent(col, row)
+            val innerCol = col % resolutionDiff
+            val innerRow = row % resolutionDiff
+            val cols = mbTile.cols / resolutionDiff
+            val rows = mbTile.rows / resolutionDiff
+            val bandOrder = List(
+              md.colorCorrections.redBand,
+              md.colorCorrections.greenBand,
+              md.colorCorrections.blueBand
+            )
+            val subset = mbTile.crop(
+              GridBounds(
+                colMin = innerCol * cols,
+                rowMin = innerRow * rows,
+                colMax = (innerCol + 1) * cols - 1,
+                rowMax = (innerRow + 1) * rows - 1
+              )
+            ).resample(256, 256).subsetBands(bandOrder: _*)
+            val normalized = subset.mapBands {
+              (i: Int, tile: Tile) => {
+                // If we can't calculate a histogram, just sort of be sad and don't
+                // do any normalization
+                val hist = histograms(bandOrder(i))
+                tile.normalize(hist.minimum, hist.maximum, 0, 255)
+              }
+            }
+            Raster(normalized.color, extent).resample(256, 256)
+          }
+        }
+        coloredTileE.toOption
+      }
+    )
+  }
+
+  def fetchCogTile(md: MosaicDefinition, extent: Extent)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+    logger.debug(s"Fetching COG tile for scene ID ${md.sceneId}")
+    val tileIO = for {
+      rasterTile <- IO.shift(t) *> CogUtils.fetch(md.ingestLocation.getOrElse("Cannot fetch scene with no ingest location"), extent
+      )
+      histograms <- IO.shift(t) *> cogLayerHistogram(md.ingestLocation.getOrElse(""))
+    } yield {
+      val bandOrder = List(
+        md.colorCorrections.redBand,
+        md.colorCorrections.greenBand,
+        md.colorCorrections.blueBand
+      )
+      val subset = rasterTile.tile.subsetBands(bandOrder: _*)
+      val normalized = (
+        subset.mapBands {
+          (i: Int, tile: Tile) => {
+            val (minValue, maxValue) = histograms(bandOrder(i)).minMaxValues.getOrElse(
+              {
+                logger.debug(s"Histogram lacks min/max values for scene id ${md.sceneId}")
+                (0, 255)
+              }
+            )
+            tile.normalize(minValue, maxValue, 0, 255)
+          }
+        }
+      ).color
+      Raster(normalized, extent).resample(256, 256)
+    }
+    OptionT(tileIO.attempt.map(_.toOption))
+  }
+
 }
