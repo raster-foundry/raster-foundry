@@ -234,6 +234,7 @@ export default class SceneImportModalController {
 
     handleDone() {
         this.close();
+        this.$state.reload();
     }
 
     validateS3Config() {
@@ -355,7 +356,7 @@ export default class SceneImportModalController {
     }
 
     finishUpload() {
-        this.upload.uploadStatus = this.importType === 'COG' ?
+        this.upload.uploadStatus = this.isCog ?
             'COMPLETE' :
             'UPLOADED';
         this.uploadService.update(this.upload).then(() => {
