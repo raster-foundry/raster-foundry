@@ -8,7 +8,7 @@ package object uploads {
     implicit def stringAsJavaURI(uri: String): URI = new URI(uri)
 
     def listAllowedFilesInS3Source(source: String): List[String] = {
-        S3.getObjectPaths(source)
+        S3.getObjectPaths(source, false)
             .filter { p =>
                 val _p = p.toLowerCase
                 _p.endsWith(".tif") ||
