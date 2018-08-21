@@ -1,53 +1,38 @@
 package com.azavea.rf.api.scene
 
-import com.azavea.rf.api.utils.Config
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{AWSBatch, CommonHandlers, S3, UserErrorHandler}
-import com.azavea.rf.datamodel._
-import akka.http.scaladsl.model.{HttpEntity, MediaTypes, StatusCodes}
-import akka.http.scaladsl.server.Route
-import akka.util.ByteString
-import com.amazonaws.services.s3.AmazonS3URI
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import geotrellis.raster.{IntArrayTile, MultibandTile}
-import io.circe._
-import io.circe.syntax._
-import io.circe.parser._
-import kamon.akka.http.KamonTraceDirectives
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Success}
-import java.net._
 import java.util.UUID
 
+import akka.http.scaladsl.model.{HttpEntity, MediaTypes, StatusCodes}
+import akka.http.scaladsl.server.Route
 import cats.effect.IO
-import com.azavea.rf.database._
-import doobie.util.transactor.Transactor
-import com.azavea.rf.datamodel._
-import com.azavea.rf.database.filter.Filterables._
 import cats.implicits._
+import com.amazonaws.services.s3.AmazonS3URI
+import com.azavea.rf.api.utils.Config
+import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common.utils.CogUtils
-import doobie._
+import com.azavea.rf.common.{AWSBatch, CommonHandlers, S3, UserErrorHandler}
+import com.azavea.rf.database._
+import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.datamodel._
+import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
-import doobie.Fragments.in
-import doobie.postgres._
-import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
+import geotrellis.raster.{IntArrayTile, MultibandTile}
+import kamon.akka.http.KamonTraceDirectives
 
-import com.lonelyplanet.akka.http.extensions.PageRequest
-import com.azavea.rf.database.util.Page
-
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 trait SceneRoutes extends Authentication
-    with Config
-    with SceneQueryParameterDirective
-    with ThumbnailQueryParameterDirective
-    with PaginationDirectives
-    with CommonHandlers
-    with AWSBatch
-    with UserErrorHandler
-    with KamonTraceDirectives {
+  with Config
+  with SceneQueryParameterDirective
+  with ThumbnailQueryParameterDirective
+  with PaginationDirectives
+  with CommonHandlers
+  with AWSBatch
+  with UserErrorHandler
+  with KamonTraceDirectives {
 
   val xa: Transactor[IO]
 
@@ -283,20 +268,21 @@ trait SceneRoutes extends Authentication
         .filter(sceneId)
         .exists
         .transact(xa).unsafeToFuture
-    } { user.isSuperuser match {
-      case true => complete(List("*"))
-      case false =>
-        onSuccess(
-          SceneWithRelatedDao.unsafeGetScene(sceneId, user).transact(xa).unsafeToFuture
-      ) { scene =>
-        scene.owner == user.id match {
-          case true => complete(List("*"))
-          case false => complete {
-            AccessControlRuleDao.listUserActions(user, ObjectType.Scene, sceneId)
-              .transact(xa).unsafeToFuture
+    } {
+      user.isSuperuser match {
+        case true => complete(List("*"))
+        case false =>
+          onSuccess(
+            SceneWithRelatedDao.unsafeGetScene(sceneId, user).transact(xa).unsafeToFuture
+          ) { scene =>
+            scene.owner == user.id match {
+              case true => complete(List("*"))
+              case false => complete {
+                AccessControlRuleDao.listUserActions(user, ObjectType.Scene, sceneId)
+                  .transact(xa).unsafeToFuture
+              }
             }
           }
-        }
       }
     }
   }
@@ -328,8 +314,8 @@ trait SceneRoutes extends Authentication
   // Safe to `bands.head`, since construction of a MultibandTile requires at least one band, so it's
   // impossible to have an empty one
   @SuppressWarnings(Array("TraversableHead"))
-  def getSceneThumbnail(sceneId: UUID): Route = authenticateWithParameter { user =>
-    {
+  def getSceneThumbnail(sceneId: UUID): Route = authenticateWithParameter {
+    user => {
       thumbnailQueryParameters {
         thumbnailParams => {
           authorizeAsync {
@@ -340,31 +326,27 @@ trait SceneRoutes extends Authentication
               .unsafeToFuture
           } {
             complete {
-              SceneDao.unsafeGetSceneById(sceneId).transact(xa).unsafeToFuture >>=
-                { (scene: Scene) =>
-                  (scene.ingestLocation, scene.sceneType) match {
-                    case (Some(uri), Some(SceneType.COG)) => {
-                      CogUtils.thumbnail(
-                        uri, thumbnailParams.width, thumbnailParams.height,
-                        thumbnailParams.red, thumbnailParams.green, thumbnailParams.blue,
-                        thumbnailParams.floor
-                      ).map(
-                        (tile: MultibandTile) => {
-                          tile match {
-                            case t if t.bands.length >= 3 =>
-                              HttpEntity(MediaTypes.`image/png`, tile.renderPng.bytes)
-                            case t if t.bands.length > 0 =>
-                              HttpEntity(MediaTypes.`image/png`, tile.bands.head.renderPng.bytes)
-                            case t =>
-                              HttpEntity(MediaTypes.`image/png`, IntArrayTile.fill(0, 256, 256).renderPng.bytes)
-                          }
-                        }
-                      ).value
+              SceneDao.unsafeGetSceneById(sceneId).transact(xa).unsafeToFuture >>= {
+                case Scene(_, _, _, _, _, _, _, _, _, _, _, _, _, _, Some(ingestLocation), _, _, Some(SceneType.COG)) =>
+                  CogUtils.thumbnail(
+                    ingestLocation, thumbnailParams.width, thumbnailParams.height,
+                    thumbnailParams.red, thumbnailParams.green, thumbnailParams.blue,
+                    thumbnailParams.floor
+                  ).map(
+                    (tile: MultibandTile) => {
+                      tile match {
+                        case t if t.bands.length >= 3 =>
+                          HttpEntity(MediaTypes.`image/png`, tile.renderPng.bytes)
+                        case t if t.bands.nonEmpty =>
+                          HttpEntity(MediaTypes.`image/png`, tile.bands.head.renderPng.bytes)
+                        case t =>
+                          HttpEntity(MediaTypes.`image/png`, IntArrayTile.fill(0, 256, 256).renderPng.bytes)
+                      }
                     }
-                    case _ =>
-                      Future.successful(None)
-                  }
-                }
+                  ).value
+                case _ =>
+                  Future.successful(None)
+              }
             }
           }
         }

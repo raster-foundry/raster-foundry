@@ -1,17 +1,13 @@
 package com.azavea.rf.api.config
 
-import cats.effect.IO
 import com.azavea.rf.api.utils.Config
 import com.azavea.rf.database.FeatureFlagDao
 import com.azavea.rf.datamodel.FeatureFlag
 import doobie.free.connection.ConnectionIO
-import doobie.util.transactor.Transactor
 import io.circe.generic.JsonCodec
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 @JsonCodec
-case class AngularConfig(
+final case class AngularConfig(
                           clientId: String,
                           clientEnvironment: String,
                           auth0Domain: String,

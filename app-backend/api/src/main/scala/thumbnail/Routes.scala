@@ -1,41 +1,27 @@
 package com.azavea.rf.api.thumbnail
 
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{UserErrorHandler, S3, CommonHandlers}
-import com.azavea.rf.database.ThumbnailDao
-import com.azavea.rf.datamodel._
-import com.azavea.rf.api.utils.Config
+import java.net.{URI, URLDecoder}
 
-import io.circe._
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.model.{StatusCodes, ContentType, HttpEntity, HttpResponse, MediaType, MediaTypes}
-import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import kamon.akka.http.KamonTraceDirectives
-
-import java.util.UUID
-import java.net.{ URI, URLDecoder }
-
 import cats.effect.IO
-import doobie.util.transactor.Transactor
-import com.azavea.rf.database.filter.Filterables._
 import com.amazonaws.regions._
 import com.amazonaws.services.s3.model.GetObjectRequest
-import cats.implicits._
-import doobie._
-import doobie.implicits._
-import doobie.Fragments.in
-import doobie.postgres._
-import doobie.postgres.implicits._
+import com.azavea.rf.api.utils.Config
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{CommonHandlers, S3, UserErrorHandler}
+import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import doobie.util.transactor.Transactor
+import kamon.akka.http.KamonTraceDirectives
 
 
 trait ThumbnailRoutes extends Authentication
-    with ThumbnailQueryParameterDirective
-    with PaginationDirectives
-    with CommonHandlers
-    with UserErrorHandler
-    with Config
-    with KamonTraceDirectives {
+  with ThumbnailQueryParameterDirective
+  with PaginationDirectives
+  with CommonHandlers
+  with UserErrorHandler
+  with Config
+  with KamonTraceDirectives {
 
   val xa: Transactor[IO]
 
@@ -56,6 +42,7 @@ trait ThumbnailRoutes extends Authentication
     }
   }
 
+  @SuppressWarnings(Array("AsInstanceOf"))
   def getThumbnailImage(thumbnailPath: String): Route = authenticateWithParameter { _ =>
     var uriString = s"http://s3.amazonaws.com/${thumbnailBucket}/${thumbnailPath}"
     val uri = new URI(uriString)
@@ -70,6 +57,7 @@ trait ThumbnailRoutes extends Authentication
     ))
   }
 
+  @SuppressWarnings(Array("AsInstanceOf"))
   def getProxiedThumbnailImage(thumbnailUri: String): Route = authenticateWithParameter { _ =>
     val bucketAndPrefix = S3.bucketAndPrefixFromURI(new URI(URLDecoder.decode(thumbnailUri)))
     val s3Object = sentinelS3client.getObject(new GetObjectRequest(bucketAndPrefix._1, bucketAndPrefix._2, true))

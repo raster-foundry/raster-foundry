@@ -2,40 +2,33 @@ package com.azavea.rf.api.shape
 
 import java.util.UUID
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
-import com.typesafe.scalalogging.LazyLogging
-import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import io.circe._
-import io.circe.generic.JsonCodec
-import io.circe.syntax._
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.directives.FileInfo
+import better.files.{File => ScalaFile}
+import cats.effect.IO
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common._
-import com.azavea.rf.datamodel._
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.GeoJsonCodec._
-import geotrellis.shapefile.ShapeFileReader
-import better.files.{File => ScalaFile, _}
-import akka.http.scaladsl.server.directives.FileInfo
-import cats.effect.IO
 import com.azavea.rf.database.{AccessControlRuleDao, ShapeDao}
-import geotrellis.proj4.{CRS, LatLng, WebMercator}
+import com.azavea.rf.datamodel.GeoJsonCodec._
+import com.azavea.rf.datamodel._
+import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
+import com.typesafe.scalalogging.LazyLogging
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import doobie.implicits._
+import doobie.util.transactor.Transactor
+import geotrellis.proj4.{LatLng, WebMercator}
+import geotrellis.shapefile.ShapeFileReader
 import geotrellis.vector.Projected
 import geotrellis.vector.reproject.Reproject
+import io.circe.generic.JsonCodec
 
-import doobie.util.transactor.Transactor
-import cats.implicits._
-import doobie._
-import doobie.implicits._
-import doobie.Fragments.in
-import doobie.postgres._
-import doobie.postgres.implicits._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 @JsonCodec
-case class ShapeFeatureCollectionCreate (
+final case class ShapeFeatureCollectionCreate (
   features: Seq[Shape.GeoJSONFeatureCreate]
 )
 

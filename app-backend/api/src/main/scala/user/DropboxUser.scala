@@ -1,14 +1,15 @@
 package com.azavea.rf.api.user
 
+import java.util.Base64
+
 import com.dropbox.core.DbxSessionStore
 import io.circe.generic.JsonCodec
 
 import scala.beans.BeanProperty
 import scala.util.Random
-import java.util.Base64
 
 @JsonCodec
-case class DropboxAuthRequest(
+final case class DropboxAuthRequest(
   authorizationCode: String,
   redirectURI: String
 )
@@ -43,5 +44,5 @@ class DummySessionStore extends DbxSessionStore {
     }
   }
   def set(s: String): Unit = this.setToken(s)
-  def clear: Unit = ()
+  def clear(): Unit = this.clear
 }

@@ -1,18 +1,11 @@
 package com.azavea.rf.api.healthcheck
 
-import cats.free.Free
 import com.azavea.rf.api.Codec._
-import io.circe.generic.JsonCodec
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.Fragments.in
-import doobie.free.connection
-import doobie.postgres._
-import doobie.postgres.implicits._
 
+import io.circe.generic.JsonCodec
 
 /**
   * Available healthcheck values
@@ -35,7 +28,7 @@ object HealthCheckStatus extends Enumeration {
   *
   */
 @JsonCodec
-case class HealthCheck(status: HealthCheckStatus.Status, services: Seq[ServiceCheck])
+final case class HealthCheck(status: HealthCheckStatus.Status, services: Seq[ServiceCheck])
 
 /**
   * Individual service check for a component (database, cache, etc.)
@@ -44,14 +37,14 @@ case class HealthCheck(status: HealthCheckStatus.Status, services: Seq[ServiceCh
   * @param status  status of service (e.g. OK, UNHEALTHY)
   */
 @JsonCodec
-case class ServiceCheck(service: String, status: HealthCheckStatus.Status)
+final case class ServiceCheck(service: String, status: HealthCheckStatus.Status)
 
 /**
   * Exception for database errors
   *
   * @param description description of error
   */
-case class DatabaseException(description:String) extends Exception
+final case class DatabaseException(description: String) extends Exception
 
 object HealthCheckService {
 
