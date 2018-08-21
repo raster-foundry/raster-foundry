@@ -130,7 +130,7 @@
       </div>
 
       <!-- Import config for S3 -->
-      <div ng-if="$ctrl.importType === 'S3'">
+      <div ng-if="$ctrl.importType === 'S3' && !$ctrl.isCog">
           <p>
             Enter the the S3 URI that points to where imagery is located.
             The import process will import any imagery found in that location into {{$ctrl.BUILDCONFIG.APP_NAME}}.
@@ -148,7 +148,7 @@
             </div>
           </form>
         </div>
-      <div ng-if="$ctrl.importType === 'COG'">
+      <div ng-if="$ctrl.importType === 'COG' && $ctrl.isCog">
         <p>
           Enter the the HTTP or S3 URI that points to where COG imagery is located.
         </p>
@@ -161,7 +161,7 @@
         </form>
       </div>
 
-      <div ng-if="$ctrl.importType === 'Planet'">
+      <div ng-if="$ctrl.importType === 'Planet' && !$ctrl.isCog">
         <p>
           Enter a list of comma-separated Planet Scene IDs into the text box for import.
           Note these should match the datasource selected in the previous screen.
