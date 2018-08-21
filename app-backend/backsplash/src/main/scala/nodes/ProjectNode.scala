@@ -3,9 +3,9 @@ package com.azavea.rf.backsplash.nodes
 import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
 import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.database._
-import com.azavea.rf.datamodel.{MosaicDefinition, SceneType}
+import com.azavea.rf.datamodel.{HistogramAttribute, LayerAttribute, MosaicDefinition, SceneType}
 
-import cats.data.OptionT
+import cats.data.{OptionT, EitherT}
 import cats.effect.{IO, Timer}
 import cats.implicits._
 import doobie.implicits._
@@ -24,6 +24,7 @@ import geotrellis.spark.io.s3.S3ValueReader
 import geotrellis.vector.{Extent, Projected}
 
 import io.circe._
+import io.circe.parser._
 import io.circe.generic.semiauto._
 
 import java.net.URI
@@ -58,11 +59,16 @@ object ProjectNode extends RollbarNotifier {
         }
       }
 
-      def avroLayerHistogram(id: UUID): IO[Array[Histogram[Int]]] = {
+      def layerHistogram(id: UUID): IO[Array[HistogramAttribute]] = {
         logger.debug(s"Fetching histogram for scene id $id")
-        ???
+        LayerAttributeDao.unsafeGetAttribute(LayerId(name=id.toString, zoom=0), "histogram")
+          .transact(xa)
+          .map(
+            (la: LayerAttribute) => decode[Array[HistogramAttribute]](la.value.noSpaces).right.get
+          )
       }
 
+      // TODO: don't do this. get COG histograms into the attribute store on import.
       def cogLayerHistogram(uri: String): IO[Array[Histogram[Int]]] = {
         logger.debug(s"Fetching histogram for cog at $uri")
         for {
@@ -84,7 +90,7 @@ object ProjectNode extends RollbarNotifier {
             zoomDiff = zoom - sourceZoom
             resolutionDiff = 1 << zoomDiff
             sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
-            histograms <- IO.shift(t) *> avroLayerHistogram(md.sceneId)
+            histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
             mbTileE <- {
               if (tlm.bounds.includes(sourceKey))
                 avroLayerTile(md.sceneId, sourceZoom, sourceKey).attempt
@@ -119,8 +125,8 @@ object ProjectNode extends RollbarNotifier {
                   (i: Int, tile: Tile) => {
                     // If we can't calculate a histogram, just sort of be sad and don't
                     // do any normalization
-                    val (minValue, maxValue) = histograms(bandOrder(i)).minMaxValues.getOrElse(0, 255)
-                    tile.normalize(minValue, maxValue, 0, 255)
+                    val hist = histograms(bandOrder(i))
+                    tile.normalize(hist.minimum, hist.maximum, 0, 255)
                   }
                 }
                 Raster(normalized.color, extent).resample(256, 256)

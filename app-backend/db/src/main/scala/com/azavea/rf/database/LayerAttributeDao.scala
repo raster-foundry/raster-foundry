@@ -108,8 +108,6 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
     }
   }
 
-  def unsafeGetLayerHistogram(layerName: String)(implicit xa: Transactor[IO]): ConnectionIO[(String, Histogram[Int])] = ???
-
   def availableAttributes(layerId: LayerId)(implicit xa: Transactor[IO]): ConnectionIO[List[String]] = {
     val f1 = fr"layer_name = ${layerId.name}"
     val f2 = fr"zoom = ${layerId.zoom}"
