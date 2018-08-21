@@ -3,31 +3,30 @@ package com.azavea.rf.api.token
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.HttpMethods._
-import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.Uri.{Path, Query}
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{Authorization, GenericHttpCredentials}
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.Future
+import com.azavea.rf.api.utils.{Auth0Exception, Config, ManagementBearerToken}
 import com.azavea.rf.datamodel.User
-import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.utils.{Auth0Exception, ManagementBearerToken}
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import de.heikoseeberger.akkahttpcirce._
 import io.circe.generic.JsonCodec
 import io.circe.generic.auto._
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
 // TODO: this sort of case class definition should live in datamodel
 @JsonCodec
-case class RefreshToken(refresh_token: String)
+final case class RefreshToken(refresh_token: String)
 @JsonCodec
-case class DeviceCredential(id: String, device_name: String)
+final case class DeviceCredential(id: String, device_name: String)
 @JsonCodec
-case class AuthorizedToken(id_token: String, access_token: String, expires_in: Int, token_type: String)
+final case class AuthorizedToken(id_token: String, access_token: String, expires_in: Int, token_type: String)
 @JsonCodec
-case class RefreshTokenRequest(grant_type: String, client_id: String, refresh_token: String)
+final case class RefreshTokenRequest(grant_type: String, client_id: String, refresh_token: String)
 
 object TokenService extends Config with ErrorAccumulatingCirceSupport {
 

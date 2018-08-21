@@ -1,72 +1,59 @@
 package com.azavea.rf.api.project
 
-import java.sql.Timestamp
-import java.util.{Calendar, Date, UUID}
+import java.util.{Calendar, UUID}
 
-import com.amazonaws.services.s3.AmazonS3URI
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
-import scala.io.Source._
-import akka.http.scaladsl.model.{Uri, StatusCodes}
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
-import akka.http.scaladsl.unmarshalling._
-import better.files.{File => ScalaFile, _}
+import better.files.{File => ScalaFile}
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits._
+import com.amazonaws.services.s3.AmazonS3URI
 import com.azavea.rf.api.scene._
-import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.api.utils.Config
+import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{CommonHandlers, RollbarNotifier, UserErrorHandler}
-import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.common.S3._
 import com.azavea.rf.common.utils.Shapefile
+import com.azavea.rf.common.{AWSBatch, CommonHandlers, RollbarNotifier, UserErrorHandler}
 import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.GeoJsonCodec._
-import com.azavea.rf.datamodel.Annotation
-import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.shapefile.ShapeFileReader
-import io.circe._
-import io.circe.Json
-import io.circe.generic.JsonCodec
-import io.circe.optics.JsonPath._
-import kamon.akka.http.KamonTraceDirectives
-import better.files._
-
-import com.typesafe.scalalogging.LazyLogging
-import doobie.util.transactor.Transactor
 import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.datamodel.GeoJsonCodec._
+import com.azavea.rf.datamodel.{Annotation, _}
+import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
+import com.typesafe.scalalogging.LazyLogging
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
+import geotrellis.shapefile.ShapeFileReader
+import io.circe.generic.JsonCodec
+import kamon.akka.http.KamonTraceDirectives
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Success
 
 
 @JsonCodec
-case class BulkAcceptParams(sceneIds: List[UUID])
+final case class BulkAcceptParams(sceneIds: List[UUID])
 
 @JsonCodec
-case class AnnotationFeatureCollectionCreate (
+final case class AnnotationFeatureCollectionCreate (
   features: Seq[Annotation.GeoJSONFeatureCreate]
 )
 
 trait ProjectRoutes extends Authentication
-    with Config
-    with QueryParametersCommon
-    with SceneQueryParameterDirective
-    with PaginationDirectives
-    with CommonHandlers
-    with AWSBatch
-    with UserErrorHandler
-    with RollbarNotifier
-    with KamonTraceDirectives
-    with LazyLogging {
+  with Config
+  with QueryParametersCommon
+  with SceneQueryParameterDirective
+  with PaginationDirectives
+  with CommonHandlers
+  with AWSBatch
+  with UserErrorHandler
+  with RollbarNotifier
+  with KamonTraceDirectives
+  with LazyLogging {
 
   val xa: Transactor[IO]
 
@@ -555,19 +542,17 @@ trait ProjectRoutes extends Authentication
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa).unsafeToFuture
     } {
-      onSuccess(AnnotationDao.query.filter(fr"project_id=$projectId").list.transact(xa).unsafeToFuture) { annotations =>
-        annotations match {
-          case annotation: List[Annotation] => {
-            val zipfile: File = AnnotationShapefileService.annotationsToShapefile(annotations)
-            val cal:Calendar = Calendar.getInstance()
-            cal.add(Calendar.DAY_OF_YEAR, 1)
-            val key:AmazonS3URI = new AmazonS3URI(user.getDefaultAnnotationShapefileSource(dataBucket))
-            putObject(dataBucket, key.toString(), zipfile.toJava).setExpirationTime(cal.getTime())
-            zipfile.delete(true)
-            complete(getSignedUrl(dataBucket, key.toString).toString())
-          }
-          case _ => complete(throw new Exception("Annotations do not exist or are not accessible by this user"))
+      onSuccess(AnnotationDao.query.filter(fr"project_id=$projectId").list.transact(xa).unsafeToFuture) {
+        case annotations@(annotation: List[Annotation]) => {
+          val zipfile: ScalaFile = AnnotationShapefileService.annotationsToShapefile(annotations)
+          val cal: Calendar = Calendar.getInstance()
+          cal.add(Calendar.DAY_OF_YEAR, 1)
+          val key: AmazonS3URI = new AmazonS3URI(user.getDefaultAnnotationShapefileSource(dataBucket))
+          putObject(dataBucket, key.toString, zipfile.toJava).setExpirationTime(cal.getTime)
+          zipfile.delete(true)
+          complete(getSignedUrl(dataBucket, key.toString).toString())
         }
+        case _ => complete(throw new Exception("Annotations do not exist or are not accessible by this user"))
       }
     }
   }
@@ -807,7 +792,7 @@ trait ProjectRoutes extends Authentication
           scenes <- scenesToIngest
         } yield {
           logger.info(s"Kicking off ${scenes.size} scene ingests")
-          scenes.map(_.id).map(kickoffSceneIngest)
+          scenes.map(_.id).foreach(kickoffSceneIngest)
           scenes
         }
 
@@ -826,19 +811,15 @@ trait ProjectRoutes extends Authentication
         onSuccess(ProjectDao.addScenesToProjectFromQuery(combinedSceneQueryParams, projectId, user).transact(xa).unsafeToFuture()) {
           scenesAdded => {
             val ingestsKickoff = SceneWithRelatedDao.getScenesToIngest(projectId) map {
-              (toIngest: List[Scene.WithRelated]) => {
+              toIngest: List[Scene.WithRelated] => {
                 logger.info(s"Kicking off ${toIngest.length} scene ingests from query parameter add")
-                toIngest map { (scene: Scene.WithRelated) => kickoffSceneIngest(scene.id) }
+                toIngest foreach { scene: Scene.WithRelated => kickoffSceneIngest(scene.id) }
               }
             }
-            ingestsKickoff.transact(xa).unsafeRunAsync(
-              (result: Either[Throwable, List[Unit]]) => {
-                result match {
-                  case Left(error) => sendError(error)
-                  case _ => ()
-                }
-              }
-            )
+            ingestsKickoff.transact(xa).unsafeRunAsync {
+              case Left(error) => sendError(error)
+              case _ => ()
+            }
             complete((StatusCodes.Created, scenesAdded))
           }
         }
@@ -912,37 +893,38 @@ trait ProjectRoutes extends Authentication
   }
 
   def addProjectPermission(projectId: UUID): Route = authenticate { user =>
-      authorizeAsync {
-        ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
-      } {
-        entity(as[AccessControlRule.Create]) { acrCreate =>
-          complete {
-            AccessControlRuleDao.createWithResults(
-              acrCreate.toAccessControlRule(user, ObjectType.Project, projectId)
-            ).transact(xa).unsafeToFuture
-          }
+    authorizeAsync {
+      ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[AccessControlRule.Create]) { acrCreate =>
+        complete {
+          AccessControlRuleDao.createWithResults(
+            acrCreate.toAccessControlRule(user, ObjectType.Project, projectId)
+          ).transact(xa).unsafeToFuture
         }
       }
     }
+  }
 
   def listUserProjectActions(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao.query.authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa).unsafeToFuture
-    } { user.isSuperuser match {
-      case true => complete(List("*"))
-      case false =>
-        onSuccess(
-          ProjectDao.unsafeGetProjectById(projectId).transact(xa).unsafeToFuture
-        ) { project =>
-          project.owner == user.id match {
-            case true => complete(List("*"))
-            case false => complete {
-              AccessControlRuleDao.listUserActions(user, ObjectType.Project, projectId)
-                .transact(xa).unsafeToFuture
+    } {
+      user.isSuperuser match {
+        case true => complete(List("*"))
+        case false =>
+          onSuccess(
+            ProjectDao.unsafeGetProjectById(projectId).transact(xa).unsafeToFuture
+          ) { project =>
+            project.owner == user.id match {
+              case true => complete(List("*"))
+              case false => complete {
+                AccessControlRuleDao.listUserActions(user, ObjectType.Project, projectId)
+                  .transact(xa).unsafeToFuture
+              }
             }
           }
-        }
       }
     }
   }
@@ -957,29 +939,28 @@ trait ProjectRoutes extends Authentication
     }
   }
 
-  def processShapefile(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo, propsO: Option[Map[String, String]] = None): Route = authenticate { user =>
-    {
-      val unzipped = tempFile.unzip()
-      val matches = unzipped.glob("*.shp")
-      val prj = unzipped.glob("*.prj")
-      (matches.hasNext, prj.hasNext) match {
-        case (false, false) =>
-          complete(StatusCodes.ClientError(400)("Bad Request", "No .shp and .prj Files Found in Archive"))
-        case (true, false) =>
-          complete(StatusCodes.ClientError(400)("Bad Request", "No .prj File Found in Archive"))
-        case (false, true) =>
-          complete(StatusCodes.ClientError(400)("Bad Request", "No .shp File Found in Archive"))
-        case (true, true) => {
-          propsO match {
-            case Some(props) => processShapefileImport(matches, prj, props, user, projectId)
-            case _ => complete(StatusCodes.OK, processShapefileUpload(matches))
-          }
+  def processShapefile(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo, propsO: Option[Map[String, String]] = None): Route = authenticate { user => {
+    val unzipped = tempFile.unzip()
+    val matches = unzipped.glob("*.shp")
+    val prj = unzipped.glob("*.prj")
+    (matches.hasNext, prj.hasNext) match {
+      case (false, false) =>
+        complete(StatusCodes.ClientError(400)("Bad Request", "No .shp and .prj Files Found in Archive"))
+      case (true, false) =>
+        complete(StatusCodes.ClientError(400)("Bad Request", "No .prj File Found in Archive"))
+      case (false, true) =>
+        complete(StatusCodes.ClientError(400)("Bad Request", "No .shp File Found in Archive"))
+      case (true, true) => {
+        propsO match {
+          case Some(props) => processShapefileImport(matches, prj, props, user, projectId)
+          case _ => complete(StatusCodes.OK, processShapefileUpload(matches))
         }
       }
     }
   }
+  }
 
-  def processShapefileImport(matches: Iterator[File], prj: Iterator[File], props: Map[String, String], user: User, projectId: UUID): Route = {
+  def processShapefileImport(matches: Iterator[ScalaFile], prj: Iterator[ScalaFile], props: Map[String, String], user: User, projectId: UUID): Route = {
     val shapefilePath = matches.next.toString
     val prjPath: String = prj.next.toString
     val projectionSource = scala.io.Source.fromFile(prjPath)
@@ -1009,7 +990,7 @@ trait ProjectRoutes extends Authentication
   }
 
 
-  def processShapefileUpload(matches: Iterator[File]): List[String] = {
+  def processShapefileUpload(matches: Iterator[ScalaFile]): List[String] = {
     // shapefile should have same fields in the property table
     // so it is fine to use toList(0)
     ShapeFileReader.readSimpleFeatures(matches.next.toString)

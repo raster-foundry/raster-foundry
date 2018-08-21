@@ -1,32 +1,27 @@
 package com.azavea.rf.api.exports
 
-import akka.http.scaladsl.server.{PathMatcher, Route}
-import akka.http.scaladsl.model.{StatusCodes, Uri}
-import com.typesafe.scalalogging.LazyLogging
-import cats.data._
-import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import io.circe._
-import io.circe.syntax._
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common._
-import com.azavea.rf.datamodel._
 import java.net.URL
 import java.util.UUID
 
+import akka.http.scaladsl.model.{StatusCodes, Uri}
+import akka.http.scaladsl.server.Route
+import cats.data._
 import cats.effect.IO
+import cats.implicits._
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common._
 import com.azavea.rf.database.ExportDao
-
-import doobie.util.transactor.Transactor
 import com.azavea.rf.database.filter.Filterables._
-import doobie._
+import com.azavea.rf.datamodel._
+import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
+import com.typesafe.scalalogging.LazyLogging
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
+import io.circe._
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.Success
 
 trait ExportRoutes extends Authentication
@@ -108,7 +103,7 @@ trait ExportRoutes extends Authentication
   def createExport: Route = authenticate { user =>
     entity(as[Export.Create]) { newExport =>
       newExport.exportOptions.as[ExportOptions] match {
-        case Left(df:DecodingFailure) => complete((StatusCodes.BadRequest, s"JSON decoder exception: ${df.show}"))
+        case Left(df: DecodingFailure) => complete((StatusCodes.BadRequest, s"JSON decoder exception: ${df.show}"))
         case Right(x) => {
           val updatedExport = user.updateDefaultExportSource(newExport.toExport(user))
           onSuccess(ExportDao.insert(updatedExport, user).transact(xa).unsafeToFuture) { export =>
@@ -181,11 +176,9 @@ trait ExportRoutes extends Authentication
         OptionT(ExportDao.query.filter(exportId).selectOption.transact(xa).unsafeToFuture)
           .flatMap { y: Export => { OptionT.fromOption[Future]{y.getExportOptions.map(_.getSignedUrl(objectKey): Uri)}}}.value
 
-      onComplete(x) { y =>
-        y match {
-          case Success(Some(z)) => redirect(z, StatusCodes.TemporaryRedirect)
-          case _ => throw new Exception
-        }
+      onComplete(x) {
+        case Success(Some(z)) => redirect(z, StatusCodes.TemporaryRedirect)
+        case _ => throw new Exception
       }
     }
   }
