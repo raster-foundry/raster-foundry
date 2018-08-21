@@ -1,13 +1,11 @@
 addCommandAlias("mg", "migrations/run")
 
-enablePlugins(GitVersioning)
+addCommandAlias("gitSnapshots", ";set version in ThisBuild := git.gitDescribedVersion.value.get + \"-SNAPSHOT\"")
 
 git.gitTagToVersionNumber in ThisBuild := { tag: String =>
   if(tag matches "[0-9]+\\..*") Some(tag)
   else None
 }
-
-git.useGitDescribe := true
 
 lazy val commonSettings = Seq(
   // Add the default sonatype repository setting

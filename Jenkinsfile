@@ -36,7 +36,19 @@ node {
         // Jenkins. In includes the Amazon ECR registry endpoint.
         withCredentials([[$class: 'StringBinding',
                           credentialsId: 'AWS_ECR_ENDPOINT',
-                          variable: 'AWS_ECR_ENDPOINT']]) {
+                          variable: 'AWS_ECR_ENDPOINT'], 
+                          [$class: 'StringBinding',
+                          credentialsId: 'SONATYPE_USERNAME',
+                          variable: 'SONATYPE_USERNAME'],
+                          [$class: 'StringBinding',
+                          credentialsId: 'SONATYPE_PASSWORD',
+                          variable: 'SONATYPE_PASSWORD'],
+                          [$class: 'StringBinding',
+                          credentialsId: 'PGP_HEX_KEY',
+                          variable: 'PGP_HEX_KEY'],
+                          [$class: 'StringBinding',
+                          credentialsId: 'PGP_PASSPHRASE',
+                          variable: 'PGP_PASSPHRASE']]) {
           wrap([$class: 'AnsiColorBuildWrapper']) {
             sh './scripts/cipublish'
           }
