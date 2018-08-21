@@ -13,6 +13,7 @@ import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
 
+import geotrellis.raster.histogram.Histogram
 import geotrellis.spark.LayerId
 
 import scala.concurrent.Future
@@ -106,6 +107,8 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       case _ => throw new Exception(s"Several or zero max zooms found for layer $layerName")
     }
   }
+
+  def unsafeGetLayerHistogram(layerName: String)(implicit xa: Transactor[IO]): ConnectionIO[(String, Histogram[Int])] = ???
 
   def availableAttributes(layerId: LayerId)(implicit xa: Transactor[IO]): ConnectionIO[List[String]] = {
     val f1 = fr"layer_name = ${layerId.name}"
