@@ -1,24 +1,23 @@
 package com.azavea.rf.batch
 
-import io.circe.parser.parse
-import cats.implicits._
-import com.typesafe.scalalogging.LazyLogging
+import java.io._
+import java.net._
+import java.util.Scanner
 
+import cats.implicits._
+import com.amazonaws.auth._
+import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3Client => AWSAmazonS3Client}
+import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff.reader.TiffTagsReader
 import geotrellis.raster.io.geotiff.tags.TiffTags
 import geotrellis.spark.io.s3.AmazonS3Client
 import geotrellis.spark.io.s3.util.S3RangeReader
-
-import com.amazonaws.auth._
-import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3Client => AWSAmazonS3Client}
+import io.circe.parser.parse
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 
-import java.util.Scanner
-import java.io._
-import java.net._
-
 package object util extends LazyLogging {
+
   implicit class ConfigurationMethods(conf: Configuration) {
     @SuppressWarnings(Array("NullParameter"))
     def isKeyUnset(key: String): Boolean = conf.get(key) == null
@@ -78,7 +77,7 @@ package object util extends LazyLogging {
     targetName.getScheme match {
       case "file" | "http" | "https" | "s3" => targetName
       case _ => if (prefix.toString.endsWith("/")) new URI(prefix.toString + targetName.toString)
-                else new URI(prefix.toString + "/" + targetName.toString)
+      else new URI(prefix.toString + "/" + targetName.toString)
     }
   }
 

@@ -27,20 +27,22 @@ final case class DropboxCopy(source: URI, target: URI, accessToken: String, regi
           .asScala
           .toList
           .filterNot(_.getKey.endsWith("/"))
-          .map { os => Future {
-            val (bucket, key) = os.getBucketName -> os.getKey
-            logger.info(s"Uploading: $key")
-            val obj = s3Client.client.getObject(bucket, key)
-            is(obj.getObjectContent, key)
-          } } ::: accumulator
+          .map { os =>
+            Future {
+              val (bucket, key) = os.getBucketName -> os.getKey
+              logger.info(s"Uploading: $key")
+              val obj = s3Client.client.getObject(bucket, key)
+              is(obj.getObjectContent, key)
+            }
+          } ::: accumulator
 
-      if(!listing.isTruncated) getObjects
+      if (!listing.isTruncated) getObjects
       else copy(s3Client.client.listNextBatchOfObjects(listing), getObjects)
     }
 
     val prefix = {
       val p = source.getPath.tail
-      if(!p.endsWith("/")) s"$p/" else p
+      if (!p.endsWith("/")) s"$p/" else p
     }
 
     val listObjectsRequest =

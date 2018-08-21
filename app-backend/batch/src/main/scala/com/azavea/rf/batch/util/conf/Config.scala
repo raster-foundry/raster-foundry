@@ -1,20 +1,20 @@
 package com.azavea.rf.batch.util.conf
 
-import com.azavea.rf.datamodel.Band
-
-import geotrellis.proj4.CRS
-import shapeless.syntax.typeable._
-import com.typesafe.config.ConfigFactory
-import net.ceedubs.ficus.Ficus
-import net.ceedubs.ficus.readers.ArbitraryTypeReader
-import com.dropbox.core.v2.DbxClientV2
-import com.dropbox.core.{DbxAppInfo, DbxRequestConfig}
-
 import java.util.UUID
 
+import com.azavea.rf.datamodel.Band
+import com.dropbox.core.v2.DbxClientV2
+import com.dropbox.core.{DbxAppInfo, DbxRequestConfig}
+import com.typesafe.config.ConfigFactory
+import geotrellis.proj4.CRS
+import net.ceedubs.ficus.Ficus
+import net.ceedubs.ficus.readers.ArbitraryTypeReader
+import shapeless.syntax.typeable._
+
 trait Config {
-  import Ficus._
+
   import ArbitraryTypeReader._
+  import Ficus._
 
   protected final case class Landsat8Bands(
     `15m`: List[Band.Create],
@@ -32,8 +32,9 @@ trait Config {
     awsLandsatBaseC1: String,
     bucketName: String
   ) {
-    def organizationUUID = UUID.fromString(organization)
-    def datasourceUUID = UUID.fromString(datasourceId)
+    def organizationUUID: UUID = UUID.fromString(organization)
+
+    def datasourceUUID: UUID = UUID.fromString(datasourceId)
   }
 
   protected final case class ExportDef(
@@ -74,9 +75,12 @@ trait Config {
     bucketName: String,
     targetProj: String
   ) {
-    def organizationUUID = UUID.fromString(organization)
-    def datasourceUUID = UUID.fromString(datasourceId)
-    def targetProjCRS = CRS.fromName(targetProj)
+    def organizationUUID: UUID = UUID.fromString(organization)
+
+    def datasourceUUID: UUID = UUID.fromString(datasourceId)
+
+    def targetProjCRS: CRS = CRS.fromName(targetProj)
+
     def bandByName(key: String): Option[Band.Create] =
       bandLookup.getClass.getDeclaredFields.toList.filter(_.getName == key).map { field =>
         field.setAccessible(true)
@@ -86,7 +90,7 @@ trait Config {
 
   final case class Dropbox(appKey: String, appSecret: String) {
     lazy val appInfo = new DbxAppInfo(appKey, appSecret)
-    lazy val config  = new DbxRequestConfig("azavea/rf-dropbox-test")
+    lazy val config = new DbxRequestConfig("azavea/rf-dropbox-test")
 
     def client(accessToken: String) = new DbxClientV2(config, accessToken)
   }
@@ -100,11 +104,11 @@ trait Config {
 
 
   private lazy val config = ConfigFactory.load()
-  protected lazy val landsat8Config = config.as[Landsat8]("landsat8")
-  protected lazy val sentinel2Config = config.as[Sentinel2]("sentinel2")
-  protected lazy val systemUser = config.as[String]("auth0.systemUser")
-  protected lazy val auth0Config = config.as[Auth0]("auth0")
-  protected lazy val exportDefConfig = config.as[ExportDef]("export-def")
-  protected lazy val dropboxConfig = config.as[Dropbox]("dropbox")
+  protected lazy val landsat8Config: Landsat8 = config.as[Landsat8]("landsat8")
+  protected lazy val sentinel2Config: Sentinel2 = config.as[Sentinel2]("sentinel2")
+  protected lazy val systemUser: String = config.as[String]("auth0.systemUser")
+  protected lazy val auth0Config: Auth0 = config.as[Auth0]("auth0")
+  protected lazy val exportDefConfig: ExportDef = config.as[ExportDef]("export-def")
+  protected lazy val dropboxConfig: Dropbox = config.as[Dropbox]("dropbox")
   val jarPath = "s3://us-east-1.elasticmapreduce/libs/script-runner/script-runner.jar"
 }

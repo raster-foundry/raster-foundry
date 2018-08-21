@@ -3,25 +3,21 @@ package com.azavea.rf.batch.export
 import java.net.URI
 import java.util.UUID
 
-import cats.data._
 import cats.effect.IO
 import cats.implicits._
 import com.azavea.rf.batch._
 import com.azavea.rf.batch.export.json.S3ExportStatus
 import com.azavea.rf.batch.util._
-import com.azavea.rf.datamodel._
 import com.azavea.rf.common.notification.Email.NotificationEmail
-import io.circe.parser.decode
+import com.azavea.rf.database.Implicits._
+import com.azavea.rf.database.util.RFTransactor
+import com.azavea.rf.database._
+import com.azavea.rf.datamodel._
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
-import Fragments._
 import doobie.util.transactor.Transactor
-import com.azavea.rf.database.{ExportDao, UserGroupRoleDao, ProjectDao, UserDao, PlatformDao, ToolRunDao}
-import com.azavea.rf.database.Implicits._
+import io.circe.parser.decode
 import org.apache.commons.mail.Email
-import com.azavea.rf.database.util.RFTransactor
 
 import scala.concurrent.duration._
 import scala.io.Source
@@ -85,10 +81,10 @@ final case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duratio
         val (pub, pri) = (platform.publicSettings, platform.privateSettings)
         (pub.emailSmtpHost, pub.emailSmtpPort, pub.emailSmtpEncryption, pub.emailUser, pri.emailPassword, emailAddress) match {
           case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
-             email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
-             val (subject, html, plain) = exportEmailContent(status, user, platform, name, id, exportType)
-             email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, subject, html, plain).map((configuredEmail: Email) => configuredEmail.send)
-             logger.info(s"Notified owner ${user.id} about export ${exportId}.")
+          email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
+            val (subject, html, plain) = exportEmailContent(status, user, platform, name, id, exportType)
+            email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, subject, html, plain).map((configuredEmail: Email) => configuredEmail.send)
+            logger.info(s"Notified owner ${user.id} about export ${exportId}.")
           case _ => logger.warn(email.insufficientSettingsWarning(platform.id.toString(), user.id))
         }
       case (_, false) => logger.warn(email.platformNotSubscribedWarning(platform.id.toString()))

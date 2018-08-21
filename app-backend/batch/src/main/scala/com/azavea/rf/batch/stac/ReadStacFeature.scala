@@ -1,50 +1,40 @@
 package com.azavea.rf.batch.stac
 
-import scala.util._
-import scala.io.Source
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await}
-import scala.concurrent.duration._
-import com.typesafe.scalalogging.LazyLogging
-
-import io.circe.parser._
-import io.circe._
-import io.circe.generic.JsonCodec
-import io.circe.syntax._
+import java.net.URI
+import java.sql.Timestamp
+import java.util.UUID
 
 import cats.effect.IO
-
+import com.azavea.rf.batch.util._
+import com.azavea.rf.batch.util.conf.Config
+import com.azavea.rf.database.util.RFTransactor
+import com.azavea.rf.database.{SceneDao, UserDao}
+import com.azavea.rf.datamodel.{stac, _}
+import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
 import doobie.implicits._
 import doobie.util.transactor.Transactor
-
-import java.sql.Timestamp
-import java.net.URI
-import java.time.{LocalDate, ZoneOffset}
-import java.util.UUID
+import geotrellis.proj4.CRS
+import io.circe.generic.JsonCodec
+import io.circe.parser._
+import io.circe.syntax._
+import geotrellis.vector._
 import javax.imageio.ImageIO
 
-import geotrellis.vector._
-import geotrellis.proj4.CRS
-
-import com.azavea.rf.database.{UserDao, SceneDao}
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.stac
-import com.azavea.rf.batch.util._
-import com.azavea.rf.batch.Job
-import com.azavea.rf.batch.util.conf.Config
+import scala.io.Source
+import scala.util._
 
 @JsonCodec
-case class MetadataWithStartStop(start: Timestamp, end: Timestamp)
+final case class MetadataWithStartStop(start: Timestamp, end: Timestamp)
 
 object CommandLine {
+
   final case class Params(
-    path: String = "",
-    testRun: Boolean = false,
-    // Default will never be used because parameter is required
-    datasource: UUID = UUID.randomUUID()
-  )
+                           path: String = "",
+                           testRun: Boolean = false,
+                           // Default will never be used because parameter is required
+                           datasource: UUID = UUID.randomUUID()
+                         )
 
   val parser = new scopt.OptionParser[Params]("raster-foundry-stac-conversion") {
     // for debugging; prevents exit from sbt console
@@ -55,14 +45,14 @@ object CommandLine {
     opt[Unit]('t', "test")
       .action(
         (_, conf) =>
-        conf.copy(testRun = true)
+          conf.copy(testRun = true)
       ).text("Dry run stac conversion to scene to verify output")
 
     opt[String]('p', "path")
       .required()
       .action(
         (p, conf) =>
-        conf.copy(path = p)
+          conf.copy(path = p)
       ).text("STAC geojson URI. ex: 'file:///opt/raster-foundry/app-backend/stac.geojson' 's3://{uri}' 'http://{uri}'")
 
     opt[String]('d', "datasource")
@@ -78,6 +68,7 @@ object CommandLine {
 object ReadStacFeature extends Config with LazyLogging {
   val name = "read_stac_feature"
   implicit val xa = RFTransactor.xa
+
   def main(args: Array[String]): Unit = {
     val params = CommandLine.parser.parse(args, CommandLine.Params()) match {
       case Some(params) =>
@@ -86,12 +77,12 @@ object ReadStacFeature extends Config with LazyLogging {
         return
     }
     val path = params.path
-    val rootUri = new URI(path.split("/").iterator.sliding(2).map(_.headOption).flatten.mkString("/"))
+    val rootUri = new URI(path.split("/").iterator.sliding(2).flatMap(_.headOption).mkString("/"))
     val geojson = Source.fromInputStream(getStream(new URI(path))).getLines.mkString
     val decoded = decode[stac.Feature](geojson)
     decoded match {
       case Right(stacFeature) =>
-        val scene = stacFeatureToScene(stacFeature, params.datasource, params, rootUri)
+        val scene = stacFeatureToScene(stacFeature, params.datasource, rootUri)
         params.testRun match {
           case true =>
             logger.info(s"Test run, so scene was not actually created:\n${scene}")
@@ -104,11 +95,10 @@ object ReadStacFeature extends Config with LazyLogging {
   }
 
   protected def stacFeatureToScene(
-    feature: stac.Feature,
-    datasource: UUID,
-    params: CommandLine.Params,
-    rootUri: URI
-  ): Scene.Create = {
+                                    feature: stac.Feature,
+                                    datasource: UUID,
+                                    rootUri: URI
+                                  ): Scene.Create = {
     val thumbnailLinks = feature.links.filter(_.`type` == "thumbnail")
 
 
@@ -135,7 +125,7 @@ object ReadStacFeature extends Config with LazyLogging {
       dataFootprint = dataFootprint,
       metadataFiles = metadataFiles.map(asset => asset.href).toList, // assets that are not the primary image
       images = images,
-      thumbnails = thumbnailLinks.map(thumbnailFromLink(_, sceneId, rootUri)).flatten.toList,
+      thumbnails = thumbnailLinks.flatMap(thumbnailFromLink(_, sceneId, rootUri)).toList,
       ingestLocation = None,
       filterFields = SceneFilterFields(
         cloudCover = Some(0), // required for search in the frontend
@@ -155,7 +145,7 @@ object ReadStacFeature extends Config with LazyLogging {
     )
   }
 
-  protected def writeSceneToDb(scene : Scene.Create)(implicit xa: Transactor[IO]): Scene.WithRelated = {
+  protected def writeSceneToDb(scene: Scene.Create)(implicit xa: Transactor[IO]): Scene.WithRelated = {
     val sceneInsertIO: ConnectionIO[Scene.WithRelated] =
       UserDao.getUserById(systemUser) flatMap { (mbUser: Option[User]) =>
         mbUser match {
@@ -171,7 +161,7 @@ object ReadStacFeature extends Config with LazyLogging {
 
   protected def getBandedImages(imageAssets: Seq[stac.Asset], sceneId: UUID, rootUri: URI): List[Image.Banded] = {
     // get product
-    imageAssets.map(imageAsset =>
+    imageAssets.flatMap(imageAsset =>
       imageAsset.product match {
         case Some(href) =>
           // get product from file
@@ -185,13 +175,12 @@ object ReadStacFeature extends Config with LazyLogging {
               None
           }
         case _ => None
-      }
-    ).flatten.toList
+      }).toList
   }
 
   protected def createImage(
-    product: stac.Product, imageAsset: stac.Asset, sceneId: UUID, rootUri: URI
-  ): Image.Banded = {
+                             product: stac.Product, imageAsset: stac.Asset, sceneId: UUID, rootUri: URI
+                           ): Image.Banded = {
     Image.Banded(
       rawDataBytes = 0, // sizeFromPath(params.path),
       visibility = Visibility.Public,
@@ -204,11 +193,11 @@ object ReadStacFeature extends Config with LazyLogging {
       metadataFiles = List(),
       bands = product.bands.map(
         band =>
-        Band.Create(
-          name = band.commonName,
-          number = band.imageBandIndex,
-          wavelength = List(band.centerWavelength.toInt)
-        )
+          Band.Create(
+            name = band.commonName,
+            number = band.imageBandIndex,
+            wavelength = List(band.centerWavelength.toInt)
+          )
       )
     )
   }
@@ -238,6 +227,7 @@ object ReadStacFeature extends Config with LazyLogging {
     combineUris(path, base)
   }
 
+  @SuppressWarnings(Array("CatchException"))
   protected def thumbnailFromLink(link: stac.Link, sceneId: UUID, rootUri: URI): Option[Thumbnail.Identified] = {
     // fetch thumbnail, get width/height
     try {
@@ -246,13 +236,13 @@ object ReadStacFeature extends Config with LazyLogging {
       val width = thumb.getWidth
       val height = thumb.getHeight
       Some(Thumbnail.Identified(
-             id = None,
-             thumbnailSize = if (width < 500) ThumbnailSize.Small else ThumbnailSize.Large,
-             widthPx = thumb.getWidth,
-             heightPx = thumb.getHeight,
-             sceneId = sceneId,
-             url = createThumbnailUrl(new URI(link.href), rootUri).toString
-           ))
+        id = None,
+        thumbnailSize = if (width < 500) ThumbnailSize.Small else ThumbnailSize.Large,
+        widthPx = thumb.getWidth,
+        heightPx = thumb.getHeight,
+        sceneId = sceneId,
+        url = createThumbnailUrl(new URI(link.href), rootUri).toString
+      ))
     } catch {
       case e: Exception =>
         logger.error(s"Error fetching thumbnail with URI: ${link.href}, ${rootUri}")

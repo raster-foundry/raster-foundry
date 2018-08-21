@@ -1,19 +1,17 @@
 package com.azavea.rf.batch.util
 
-import geotrellis.spark.io.s3.S3InputFormat
-
-import com.amazonaws.auth.{AWSCredentialsProvider, DefaultAWSCredentialsProviderChain}
-import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
-import com.amazonaws.services.s3.model._
-import com.amazonaws.regions.Regions
-import org.apache.hadoop.conf.Configuration
-import org.apache.commons.io.IOUtils
-
 import java.net.URI
 
-import scala.collection.mutable
-import scala.collection.JavaConverters._
+import com.amazonaws.auth.{AWSCredentialsProvider, DefaultAWSCredentialsProviderChain}
+import com.amazonaws.services.s3.model._
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
+import geotrellis.spark.io.s3.S3InputFormat
+import org.apache.commons.io.IOUtils
+import org.apache.hadoop.conf.Configuration
+
 import scala.annotation.tailrec
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 final case class S3(
   credentialsProviderChain: AWSCredentialsProvider = new DefaultAWSCredentialsProviderChain,
@@ -85,7 +83,7 @@ final case class S3(
       .withPrefix(s3prefix)
       .withMaxKeys(1000)
       .withRequesterPays(requesterPays)
-    
+
     // Avoid digging into a deeper directory
     if (!recursive) objectRequest.withDelimiter("/")
 
@@ -94,7 +92,7 @@ final case class S3(
   }
 
   /** List the keys to files found within a given bucket.
-    *  (copied from GeoTrellis codebase)
+    * (copied from GeoTrellis codebase)
     */
   @SuppressWarnings(Array("NullAssignment")) // copied from GeoTrellis so ignoring null assignment
   def listKeys(listObjectsRequest: ListObjectsRequest): Seq[String] = {
@@ -125,8 +123,8 @@ object S3 {
       * Identify whether function is called on EMR
       * fs.AbstractFileSystem.s3a.impl is a specific key which should be set on EMR
       *
-      * */
-    if(conf.isKeyUnset("fs.AbstractFileSystem.s3a.impl")) {
+      **/
+    if (conf.isKeyUnset("fs.AbstractFileSystem.s3a.impl")) {
       conf.set("fs.s3.impl", classOf[org.apache.hadoop.fs.s3native.NativeS3FileSystem].getName)
       conf.set("fs.s3.awsAccessKeyId", credentialsProviderChain.getCredentials.getAWSAccessKeyId)
       conf.set("fs.s3.awsSecretAccessKey", credentialsProviderChain.getCredentials.getAWSSecretKey)
