@@ -100,6 +100,13 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       .to[List]
   }
 
+  def unsafeMaxZoomForLayer(layerName: String)(implicit xa: Transactor[IO]): ConnectionIO[(String, Int)] = {
+    maxZoomsForLayers(Set(layerName)) map {
+      case h :: Nil => h
+      case _ => throw new Exception(s"Several or zero max zooms found for layer $layerName")
+    }
+  }
+
   def availableAttributes(layerId: LayerId)(implicit xa: Transactor[IO]): ConnectionIO[List[String]] = {
     val f1 = fr"layer_name = ${layerId.name}"
     val f2 = fr"zoom = ${layerId.zoom}"

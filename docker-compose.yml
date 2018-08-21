@@ -143,7 +143,6 @@ services:
     image: openjdk:8-jre
     links:
       - postgres:database.service.rasterfoundry.internal
-      - memcached:tile-cache.service.rasterfoundry.internal
     env_file: .env
     environment:
       - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
