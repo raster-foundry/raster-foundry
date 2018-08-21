@@ -4,7 +4,7 @@ publishMavenStyle := true
 
 pgpPassphrase := Some(System.getenv().getOrDefault("PGP_PASSPHRASE", "").toCharArray())
 pgpSecretRing := file("/root/.gnupg/secring.gpg")
-usePgpKeyHex(System.getenv().getOrDefault("PGP_KEY_HEX", "0"))
+usePgpKeyHex(System.getenv().getOrDefault("PGP_HEX_KEY", "0"))
 
 sonatypeProfileName := "com.rasterfoundry"
 sonatypeProjectHosting := Some(GitHubHosting(user="raster-foundry", repository="raster-foundry", email="info@rasterfoundry.com"))
