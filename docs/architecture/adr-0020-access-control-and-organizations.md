@@ -2,6 +2,8 @@
 
 ## Context
 
+This ADR has been superseded by `ADR-0023` concerning the implementation of Access Control Rules(ACRs).
+
 We have a very basic implementation of organizations. In essence there are only two organizations - the root organization, and the default public organization. This was not how the feature was initially envisioned; a change of priorities and lack of data pushed it’s full implementation down the road to a point where we would have a better understanding of usage patterns and requirements. We now find ourselves at that point.
 
 ### Target Feature Set

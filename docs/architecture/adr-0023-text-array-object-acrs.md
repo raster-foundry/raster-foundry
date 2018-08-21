@@ -2,6 +2,8 @@
 
 ## Context
 
+This ADR supersedes `ADR-0020` concerning the implementation of Access Control Rules(ACRs).
+
 In Raster Foundry, we implemented a mechanism called "Access Control Rules" (ACRs) to determine, manage, and update a user's access to some first-class objects -- projects, scenes, datasources, shapes, workspaces, templates, and analyses. Such ACRs are stored in a table so that the access to an object is determined by a user's ownership, membership of a team or an organization or a platform, directly granted access, etc.
 
 The ACRs worked fine at the beginning of this mechanism. But as the quantity of these objects grows, especially the number of scenes, the ACRs table has quickly expanded to a giant one. This has resulted in slow to timed-out queries, especially for scenes, due to `JOIN`s and `UNION`s on a giant ACR table, object table, and "User Group Roles" (UGRs) table.
@@ -24,7 +26,7 @@ The ACRs formerly consist of three types of information: object (type and id of 
 
 Doobie supports mappings between single-dimensional `text[]` and `List[String]`. To construct `"<subject type>;<optional subject id>;<action type>"` strings, we will create a data model to transform a list of access control rules to strings conforming to this structure before inserting to database, which can be easily tested using property based tests.
 
-Text array ACRs should not be returned on any listing endpoints for first class objects. Only object owners are able to access ACRs through `<fist class object>/<object id>/permissions` endpoints, which we have been using, and which will need some adaptions.
+Text array ACRs should not be returned on any listing endpoints for first class objects. Only object owners are able to access ACRs through `api/<fist class object>/<object id>/permissions` endpoints, which we have been using, and which will need some adaptions.
 
 ### ACR-related actions
 
@@ -142,6 +144,8 @@ def exampleListQuery(user: User, actionType: ActionType, tableF: Fragment): Frag
   """
 }
 ```
+
+A note for `inheritedF`: it could be better practice to get a set of user group roles up front with a separate query. It would be easier to extend some of the practices here if we assumed the function `exampleListQuery` either took a function `(user => UserGroupRoles)` or a list of `UserGroupRoles` which would allow us to rely on caching or parsing user group roles from the JWT. It also seems less magical in a way to avoid the SQL around array formation.
 
 #### List user actions
 
