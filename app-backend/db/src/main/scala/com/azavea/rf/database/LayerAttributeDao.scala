@@ -1,8 +1,6 @@
 package com.azavea.rf.database
 
-import cats.effect.IO
 import cats.implicits._
-import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.LayerAttribute
 import doobie.Fragments._
 import doobie._
@@ -94,6 +92,13 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
     ) ++ fr"GROUP BY layer_name")
       .query[(String, Int)]
       .to[List]
+  }
+
+  def unsafeMaxZoomForLayer(layerName: String): ConnectionIO[(String, Int)] = {
+    maxZoomsForLayers(Set(layerName)) map {
+      case h :: Nil => h
+      case _ => throw new Exception(s"Several or zero max zooms found for layer $layerName")
+    }
   }
 
   def availableAttributes(layerId: LayerId): ConnectionIO[List[String]] = {
