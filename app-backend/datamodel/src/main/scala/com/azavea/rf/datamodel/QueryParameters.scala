@@ -260,7 +260,8 @@ case class CombinedMapTokenQueryParameters(
 @JsonCodec
 case class UploadQueryParameters(
   datasource: Option[UUID] = None,
-  uploadStatus: Option[String] = None
+  uploadStatus: Option[String] = None,
+  projectId: Option[UUID] = None
 )
 
 @JsonCodec
