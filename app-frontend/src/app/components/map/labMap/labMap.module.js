@@ -427,15 +427,15 @@ class LabMapController {
 
     updateTarget(target) {
         if (target.value === 'dropbox') {
-            let hasDropbox = this.authService.user.dropboxCredential &&
-                this.authService.user.dropboxCredential.length;
-            if (hasDropbox) {
-                this.exportTarget = target;
-                let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
-                this.exportOptions.source = `dropbox:///${appName}/analyses/${this.analysisId}`;
-            } else {
-                this.displayDropboxModal();
-            }
+            this.authService.getCurrentUser().then(user => {
+                if (user.dropboxCredential && user.dropboxCredential.length) {
+                    this.exportTarget = target;
+                    let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
+                    this.exportOptions.source = `dropbox:///${appName}/analyses/${this.analysisId}`;
+                } else {
+                    this.displayDropboxModal();
+                }
+            });
         } else {
             delete this.exportOptions.source;
         }

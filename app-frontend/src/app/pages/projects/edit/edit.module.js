@@ -64,6 +64,7 @@ class ProjectsEditController {
         this.resetAnnotations();
         if (this.projectId) {
             this.setProjectId(this.projectId);
+            this.setPermissionsTab();
         }
     }
 
@@ -73,6 +74,13 @@ class ProjectsEditController {
                 this.fitProjectExtent();
             }
         }
+    }
+
+    setPermissionsTab() {
+        this.projectService.fetchProject(this.projectId).then(thisProject => {
+            this.projectOwnerId = thisProject.owner.id || thisProject.owner;
+            this.actingUserId = this.authService.user.id;
+        });
     }
 
     getAndReorderSceneList() {

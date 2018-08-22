@@ -11,7 +11,7 @@
         ng-click="$ctrl.dismiss()"
     ></span>
   </div>
-  <div class="modal-body">
+  <div class="modal-body" ng-if="$ctrl.objectOwnerId === $ctrl.userId">
     <form class="add-permission-form" ng-if="!$ctrl.loading">
       <label>Grant permissions to</label>
       <div class="permission-all-in-one">
@@ -149,7 +149,13 @@
       </rf-permission-item>
   </div>
 </div>
-<div class="modal-footer">
+<div class="modal-body add-permission-form color-danger" ng-if="$ctrl.objectOwnerId !== $ctrl.userId">
+  Only owner of this {{ $ctrl.resolve.objectType.toLowerCase() }} may grant permissions.
+</div>
+<div class="modal-footer" ng-if="$ctrl.objectOwnerId === $ctrl.userId">
   <button type="button" class="btn btn-light pull-left" ng-click="$ctrl.dismiss()">Cancel</button>
   <button type="button" class="btn btn-primary" ng-click="$ctrl.onSave()">Save Changes</button>
+</div>
+<div class="modal-footer" ng-if="$ctrl.objectOwnerId !== $ctrl.userId">
+  <button type="button" class="btn btn-light" ng-click="$ctrl.dismiss()">Cancel</button>
 </div>
