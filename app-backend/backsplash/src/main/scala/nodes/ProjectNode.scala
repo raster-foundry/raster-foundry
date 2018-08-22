@@ -165,7 +165,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     val tileIO = for {
       rasterTile <- IO.shift(t) *> CogUtils.fetch(md.ingestLocation.getOrElse("Cannot fetch scene with no ingest location"), extent
       )
-      histograms <- IO.shift(t) *> cogLayerHistogram(md.ingestLocation.getOrElse(""))
+      histograms <- IO.shift(t) *> cogLayerMinMax(md.ingestLocation.getOrElse(""))
     } yield {
       val bandOrder = List(
         md.colorCorrections.redBand,
@@ -176,12 +176,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       val normalized = (
         subset.mapBands {
           (i: Int, tile: Tile) => {
-            val (minValue, maxValue) = histograms(bandOrder(i)).minMaxValues.getOrElse(
-              {
-                logger.debug(s"Histogram lacks min/max values for scene id ${md.sceneId}")
-                (0, 255)
-              }
-            )
+            val (minValue, maxValue) = histograms
             tile.normalize(minValue, maxValue, 0, 255)
           }
         }
