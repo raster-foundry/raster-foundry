@@ -217,6 +217,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       data_footprint = ${scene.dataFootprint},
       tile_footprint = ${scene.tileFootprint},
       ingest_location = ${scene.ingestLocation},
+      scene_type = ${scene.sceneType},
       cloud_cover = ${scene.filterFields.cloudCover},
       acquisition_date = ${scene.filterFields.acquisitionDate},
       sun_azimuth = ${scene.filterFields.sunAzimuth},
