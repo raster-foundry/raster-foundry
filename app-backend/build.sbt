@@ -393,10 +393,14 @@ lazy val bridge = Project("bridge", file("bridge"))
 
 // maml / better-abstracted tile server
 lazy val backsplash = Project("backsplash", file("backsplash"))
+  .dependsOn(authentication, geotrellis, db)
   .settings(commonSettings:_*)
   .settings({ libraryDependencies ++= Seq(
                Dependencies.geotrellisServer,
                Dependencies.http4sBlaze,
+               Dependencies.http4sBlazeClient,
                Dependencies.http4sCirce,
-               Dependencies.http4sDSL
+               Dependencies.http4sDSL,
+               Dependencies.http4sServer
              ) })
+  .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
