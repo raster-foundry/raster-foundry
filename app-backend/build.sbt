@@ -452,4 +452,3 @@ lazy val backsplash = Project("backsplash", file("backsplash"))
   })
   .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
   .settings(test in assembly := {})
-
