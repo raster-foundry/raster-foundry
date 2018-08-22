@@ -154,7 +154,7 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
 )
 
 lazy val root = Project("root", file("."))
-  .aggregate(api, db, common, migrations, datamodel, batch, tile, tool, bridge)
+  .aggregate(api, db, common, migrations, datamodel, batch, tile, tool, bridge, backsplash)
   .settings(commonSettings:_*)
 
 lazy val api = Project("api", file("api"))
