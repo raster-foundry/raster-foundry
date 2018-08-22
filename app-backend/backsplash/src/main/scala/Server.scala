@@ -1,25 +1,27 @@
 package com.azavea.rf.backsplash
 
-import com.azavea.rf.backsplash.services._
+import com.azavea.rf.backsplash.nodes._
+import com.azavea.rf.backsplash.services.{HealthCheckService, MultibandMosaicService}
 
 import cats.effect.{Effect, IO}
 import fs2.StreamApp
 import org.http4s.server.blaze.BlazeBuilder
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object BacksplashServer extends StreamApp[IO] {
-  import scala.concurrent.ExecutionContext.Implicits.global
 
-  def stream(args: List[String], requestShutdown: IO[Unit]) = ServerStream.stream[IO]
+  def stream(args: List[String], requestShutdown: IO[Unit]) = ServerStream.stream
 }
 
 object ServerStream {
-  def healthCheckService[F[_]: Effect] = new HealthCheckService[F].service
+  def healthCheckService = new HealthCheckService[IO].service
+  def multibandMosaicService = new MultibandMosaicService().service
 
-  def stream[F[_]: Effect](implicit ec: ExecutionContext) =
-    BlazeBuilder[F]
+  def stream =
+    BlazeBuilder[IO]
       .bindHttp(8080, "0.0.0.0")
       .mountService(healthCheckService, "/")
+      .mountService(multibandMosaicService, "/mosaic")
       .serve
 }
