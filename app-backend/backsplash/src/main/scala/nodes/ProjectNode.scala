@@ -10,13 +10,14 @@ import cats.effect.{IO, Timer}
 import cats.implicits._
 import doobie.implicits._
 import geotrellis.raster.{CellSize, CellType, Raster}
-import geotrellis.raster.histogram.Histogram
 import geotrellis.server.core.cog.CogUtils
 import geotrellis.server.core.maml.CogNode
 import geotrellis.server.core.maml.persistence._
 import geotrellis.server.core.maml.metadata._
 import geotrellis.server.core.maml.reification._
 import geotrellis.raster.{io => _, _}
+import geotrellis.raster.io.json.HistogramJsonFormats
+import geotrellis.raster.histogram._
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 import geotrellis.spark.{io => _, _}
 import geotrellis.spark.io._
@@ -27,6 +28,9 @@ import io.circe._
 import io.circe.parser._
 import io.circe.generic.semiauto._
 
+import spray.json._
+import DefaultJsonProtocol._
+
 import java.net.URI
 import java.util.UUID
 
@@ -34,7 +38,7 @@ case class ProjectNode(
   projectId: UUID
 )
 
-object ProjectNode extends RollbarNotifier {
+object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
 
   // imported here so import ...backsplash.nodes._ doesn't import a transactor
   import com.azavea.rf.database.util.RFTransactor.xa
@@ -88,22 +92,28 @@ object ProjectNode extends RollbarNotifier {
     }
   }
 
-  def layerHistogram(id: UUID): IO[Array[HistogramAttribute]] = {
+  def avroLayerHistogram(id: UUID): IO[Array[Histogram[Double]]] = {
     logger.debug(s"Fetching histogram for scene id $id")
-    LayerAttributeDao.unsafeGetAttribute(LayerId(name=id.toString, zoom=0), "histogram")
-      .transact(xa)
-      .map(
-        (la: LayerAttribute) => decode[Array[HistogramAttribute]](la.value.noSpaces).right.get
-      )
+    val layerId = LayerId(name = id.toString, zoom = 0)
+    LayerAttributeDao.unsafeGetAttribute(layerId, "histogram").transact(xa) map {
+      attribute => attribute.value.noSpaces.parseJson.convertTo[Array[Histogram[Double]]]
+    }
   }
 
   // TODO: don't do this. get COG histograms into the attribute store on import then just use
   // layerHistogram
-  def cogLayerHistogram(uri: String): IO[Array[Histogram[Int]]] = {
+  def cogLayerMinMax(uri: String): IO[(Int, Int)] = {
     logger.debug(s"Fetching histogram for cog at $uri")
     for {
       geotiff <- CogUtils.getTiff(uri)
-    } yield geotiff.tile.histogram
+    } yield {
+      val cellType = geotiff.cellType
+      val signed = cellType.toString.startsWith("u")
+      val max = if (signed) 1 << cellType.bits / 2 else 1 << cellType.bits
+      val min = if (signed) -max else 0
+      logger.debug(s"Fetched min and max for cog at $uri: $max, $min")
+      (min, max)
+    }
   }
 
   def avroLayerTile(id: UUID, zoom: Int, key: SpatialKey): IO[MultibandTile] = {
@@ -123,7 +133,7 @@ object ProjectNode extends RollbarNotifier {
         zoomDiff = zoom - sourceZoom
         resolutionDiff = 1 << zoomDiff
         sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
-        histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
+        histograms <- IO.shift(t) *> avroLayerHistogram(md.sceneId)
         mbTileE <- {
           if (tlm.bounds.includes(sourceKey))
             avroLayerTile(md.sceneId, sourceZoom, sourceKey).attempt
@@ -141,28 +151,8 @@ object ProjectNode extends RollbarNotifier {
             val innerRow = row % resolutionDiff
             val cols = mbTile.cols / resolutionDiff
             val rows = mbTile.rows / resolutionDiff
-            val bandOrder = List(
-              md.colorCorrections.redBand,
-              md.colorCorrections.greenBand,
-              md.colorCorrections.blueBand
-            )
-            val subset = mbTile.crop(
-              GridBounds(
-                colMin = innerCol * cols,
-                rowMin = innerRow * rows,
-                colMax = (innerCol + 1) * cols - 1,
-                rowMax = (innerRow + 1) * rows - 1
-              )
-            ).resample(256, 256).subsetBands(bandOrder: _*)
-            val normalized = subset.mapBands {
-              (i: Int, tile: Tile) => {
-                // If we can't calculate a histogram, just sort of be sad and don't
-                // do any normalization
-                val hist = histograms(bandOrder(i))
-                tile.normalize(hist.minimum, hist.maximum, 0, 255)
-              }
-            }
-            Raster(normalized.color, extent).resample(256, 256)
+            val corrected = md.colorCorrections.colorCorrect(mbTile, histograms.toSeq)
+            Raster(corrected.color, extent).resample(256, 256)
           }
         }
         coloredTileE.toOption
