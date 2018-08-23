@@ -1,6 +1,7 @@
 import tpl from './paginationCount.html';
 
 const PaginationCountComponent = {
+    transclude: true,
     bindings: {
         startIndex: '<',
         endIndex: '<',
