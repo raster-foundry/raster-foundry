@@ -30,32 +30,19 @@ class DatasourceListController {
             this.datasources && !this.datasources.length;
     }
 
-    updateQueryParameters() {
-        const replace = !this.$state.params.page;
-        this.$state.transitionTo(
-            this.$state.$current.name,
-            {
-                page: this.currentPage
-            },
-            {
-                location: replace ? 'replace' : true,
-                notify: false
-            }
-        );
-    }
-
-    fetchPage(page = this.$stateParams.page || 1, search = this.$stateParams.search) {
-        this.search = search;
+    fetchPage(page = this.$state.params.page || 1, search = this.$state.params.search) {
+        this.search = search && search.length ? search : null;
         delete this.fetchError;
+        this.datasources = [];
         let currentQuery = this.datasourceService.query({
             sort: 'createdAt,desc',
             pageSize: this.pageSize,
             page: page - 1,
-            search
+            search: this.search
         }).then(paginatedResponse => {
             this.datasources = paginatedResponse.results;
             this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page, search);
+            this.paginationService.updatePageParam(page, this.search);
             if (this.currentQuery === currentQuery) {
                 delete this.fetchError;
             }
@@ -75,11 +62,8 @@ class DatasourceListController {
         this.modalService.open({
             component: 'rfDatasourceCreateModal'
         }).result.then(() => {
-            this.loadDatasources();
-            this.searchString = '';
-        }, () => {
-            this.loadDatasources();
-            this.searchString = '';
+            this.search = '';
+            this.fetchPage(1, '');
         });
     }
 }

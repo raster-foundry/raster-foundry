@@ -1,10 +1,10 @@
 <div class="app-width-container">
   <div class="row content stack-sm">
     <div class="column">
-        <rf-search on-search="$ctrl.search(value)"
+        <rf-search on-search="$ctrl.fetchPage(1, value)"
+                   value="$ctrl.search"
                    placeholder="Search for analyses"
-                   auto-focus="true"
-                   disabled="true">
+                   auto-focus="true">
         </rf-search>
         <div class="aside aside-filters">
           <section>
@@ -20,27 +20,54 @@
     <div class="column-spacer"></div>
     <div class="column-9">
       <!-- Loading indicator -->
-      <div ng-show="$ctrl.loading">
+      <div class="text-center" ng-show="$ctrl.currentQuery">
+        <div>Loading Analyses</div>
         <span class="list-placeholder h3">
-          <i class="icon-load animate-spin" ng-class="{'stop': !$ctrl.loading}"></i>
+          <i class="icon-load animate-spin" ng-class="{'stop': !$ctrl.currentQuery}"></i>
         </span>
       </div>
       <!-- Loading indicator -->
 
-      <div class="font-size-small pagination-count"
-         ng-if="!$ctrl.searchString"
-      >
-        Showing <strong>{{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}}</strong> of <strong>{{$ctrl.pagination.count}}</strong> analyses
-      </div>
+      <rf-pagination-count
+          ng-if="!$ctrl.currentQuery && $ctrl.analyses && $ctrl.analyses.length"
+          start-index="$ctrl.pagination.startingItem"
+          end-index="$ctrl.pagination.endingItem"
+          total="$ctrl.pagination.count"
+          item-name="analyses">
+        <span ng-if="$ctrl.search">while searching for <strong>{{$ctrl.search}}</strong></span>
+      </rf-pagination-count>
 
-      <div class="font-size-small pagination-count"
-         ng-if="$ctrl.searchString"
-      >
-         Showing results for "<strong>{{$ctrl.searchString}}</strong>"
+      <div ng-if="!$ctrl.currentRequest && !$ctrl.fetchError &&
+                  $ctrl.pagination && !$ctrl.pagination.count && !$ctrl.search">
+        <rf-call-to-action-item title="You have not created any analyses" class="panel panel-off-white">
+          <p class="pb-25">
+            Create a new analyses from a template to begin
+          </p>
+        </rf-call-to-action-item>
+      </div>
+      <div ng-show="!$ctrl.currentRequest && !$ctrl.fetchError && !$ctrl.pagination.count && $ctrl.search">
+        <rf-call-to-action-item
+            title="Your search didn't return any analyses"
+            class="panel panel-off-white">
+          <p class="pb-25">
+            Unable to find any analyses matching "<strong>{{$ctrl.search}}</strong>".
+          </p>
+        </rf-call-to-action-item>
+      </div>
+      <div class="cta-row" ng-show="$ctrl.fetchError">
+        <rf-call-to-action-item
+            title="There was an error fetching analyses."
+            class="panel panel-off-white">
+          <div class="pb-25">
+            Please refresh the page and try again.<br />
+            If the problem persists, please contact {{$ctrl.BUILDCONFIG.APP_NAME}} support.
+          </div>
+        </rf-call-to-action-item>
       </div>
 
       <!-- Temporarily removed ng-click until after demo done and detail page designed. -->
-      <table class="paginated-results-table" ng-show="!$ctrl.loading">
+      <table class="paginated-results-table"
+             ng-if="!$ctrl.currentQuery && $ctrl.pagination && $ctrl.pagination.count">
         <tr class="header">
           <th>
             <rf-sorting-header direction="$ctrl.sortingDirection"
@@ -64,7 +91,7 @@
             >Delete selected</button>
           </th>
         </tr>
-        <tr ng-repeat="analysis in $ctrl.analysesList | filter: {title: $ctrl.searchString}" class="row-hover-controls">
+        <tr ng-repeat="analysis in $ctrl.analyses" class="row-hover-controls">
           <td><a ui-sref="lab.analysis({analysisid: analysis.id, analysis: analysis})">
             {{analysis.name || 'Untitled analysis'}}
           </a></td>
@@ -88,21 +115,12 @@
       </table>
 
       <!-- Pagination -->
-      <div class="list-group text-center"
-           ng-show="!$ctrl.loading && $ctrl.lastAnalysisResponse &&
-                    $ctrl.pagination.show && !$ctrl.errorMsg &&
-                    !$ctrl.searchString">
-        <ul uib-pagination
-            items-per-page="$ctrl.lastAnalysisResponse.pageSize"
-            total-items="$ctrl.pagination.count"
-            ng-model="$ctrl.currentPage"
-            max-size="4"
-            rotate="true"
-            boundary-link-numbers="true"
-            force-ellipses="true"
-            ng-change="$ctrl.fetchAnalysesList($ctrl.currentPage)">
-        </ul>
-      </div>
+      <rf-pagination-controls
+          ng-show="!$ctrl.fetchError"
+          pagination="$ctrl.pagination"
+          is-loading="$ctrl.currentQuery"
+          on-change="$ctrl.fetchPage(value)"
+      ></rf-pagination-controls>
       <!-- Pagination -->
     </div>
 </div>

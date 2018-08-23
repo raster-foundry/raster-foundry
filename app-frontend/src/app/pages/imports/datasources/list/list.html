@@ -7,6 +7,7 @@
         <h1 class="h3">Datasources</h1>
         <div class="flex-fill"></div>
         <rf-search on-search="$ctrl.fetchPage(1, value)"
+                   value="$ctrl.search"
                    placeholder="Search for datasources"
                    auto-focus="true">
         </rf-search>
@@ -16,17 +17,19 @@
       </div>
       <!-- Dashboard Header -->
       <rf-pagination-count
-          ng-if="$ctrl.datasources.length"
+          ng-if="$ctrl.datasources.length && !$ctrl.currentQuery"
           start-index="$ctrl.pagination.startingItem"
           end-index="$ctrl.pagination.endingItem"
           total="$ctrl.pagination.count"
-          item-name="datasources"></rf-pagination-count>
+          item-name="datasources">
+        <span ng-if="$ctrl.search">while searching for <strong>{{$ctrl.search}}</strong></span>
+      </rf-pagination-count>
 
       <!-- Loading Indicator, show only when loading datasources-->
-      <div class="text-center" ng-show="$ctrl.isLoadingDatasources">
+      <div class="text-center" ng-show="$ctrl.currentQuery">
         <div>Loading Datasources</div>
         <span class="list-placeholder h3">
-          <i class="icon-load animate-spin" ng-class="{'stop': !$ctrl.isLoadingDatasources}"></i>
+          <i class="icon-load animate-spin" ng-class="{'stop': !$ctrl.currentQuery}"></i>
         </span>
       </div>
       <!-- Loading indicator -->
@@ -57,6 +60,16 @@
           </div>
         </rf-call-to-action-item>
       </div>
+      <div class="cta-row" ng-show="$ctrl.fetchError">
+        <rf-call-to-action-item
+            title="There was an error fetching your datasources."
+            class="panel panel-off-white">
+          <div class="cta-flex-text">
+            Please refresh the page and try again.<br />
+            If the problem persists, please contact {{$ctrl.BUILDCONFIG.APP_NAME}} support.
+          </div>
+        </rf-call-to-action-item>
+      </div>
       <!-- Datasources empty state -->
 
       <!-- Datasource List -->
@@ -72,23 +85,11 @@
 
       <!-- Datasource pagination -->
       <rf-pagination-controls
+          ng-show="!$ctrl.fetchError"
           pagination="$ctrl.pagination"
           is-loading="$ctrl.currentQuery"
           on-change="$ctrl.fetchPage(value)"
       ></rf-pagination-controls>
-      <div class="list-group text-center"
-          ng-show="$ctrl.shouldShowPagination()">
-        <ul uib-pagination
-            items-per-page="$ctrl.pageSize"
-            total-items="$ctrl.datasources.count"
-            ng-model="$ctrl.currentPage"
-            max-size="4"
-            rotate="true"
-            boundary-link-numbers="true"
-            force-ellipses="true"
-            ng-change="$ctrl.loadDatasources($ctrl.currentPage)">
-        </ul>
-      </div>
 
       <!-- Placeholder, show only when loading is complete and no datasources were found-->
       <div class="cta-row" ng-if="$ctrl.shouldShowPlaceholder()">

@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 class OrganizationProjectsController {
     constructor(
-        $scope, $stateParams, $log, $window,
+        $scope, $state, $log, $window,
         modalService, authService, projectService, paginationService,
         platform, organization, members, teams
     ) {
@@ -12,10 +12,6 @@ class OrganizationProjectsController {
     }
 
     $onInit() {
-        this.searchTerm = '';
-        this.loading = false;
-        this.onSearch = this.paginationService.buildPagedSearch(this);
-
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
             this.platform.id,
             this.organization.id
@@ -24,25 +20,35 @@ class OrganizationProjectsController {
         this.fetchPage();
     }
 
-    fetchPage(page = this.$stateParams.page || 1) {
-        this.loading = true;
-        this.projectService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                ownershipType: 'inherited',
-                groupType: 'organization',
-                groupId: this.organization.id,
-                search: this.searchTerm,
-                page: page - 1
-            }
-        ).then(paginatedResponse => {
+    fetchPage(page = this.$state.page || 1, search = this.$state.params.search) {
+        this.search = search && search.length ? search : null;
+        delete this.fetchError;
+        this.results = [];
+        const currentQuery = this.projectService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            ownershipType: 'inherited',
+            groupType: 'organization',
+            groupId: this.organization.id,
+            search: this.search,
+            page: page - 1
+        }).then(paginatedResponse => {
             this.results = paginatedResponse.results;
             this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page);
+            this.paginationService.updatePageParam(page, this.search);
+            if (this.currentQuery === currentQuery) {
+                delete this.fetchError;
+            }
+        }, (e) => {
+            if (this.currentQuery === currentQuery) {
+                this.fetchError = e;
+            }
         }).finally(() => {
-            this.loading = false;
+            if (this.currentQuery === currentQuery) {
+                delete this.currentQuery;
+            }
         });
+        this.currentQuery = currentQuery;
     }
 }
 

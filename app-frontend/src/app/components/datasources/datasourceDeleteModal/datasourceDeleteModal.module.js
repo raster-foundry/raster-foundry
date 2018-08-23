@@ -55,7 +55,7 @@ class DatasourceDeleteModalController {
                 this.displaySceneMsg(scenes.count);
             } else {
                 this.deleteMsg = '<div class="color-danger">'
-                    + 'You are about to delete this scene. '
+                    + 'You are about to delete this datasource. '
                     + 'This action is not reversible. '
                     + 'Are you sure you wish to continue?'
                     + '</div>';
