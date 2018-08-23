@@ -173,7 +173,7 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
             deactivateTeam <- TeamDao.deactivate(teamInsert.id)
             deactivatedTeams <- TeamDao.query.filter(fr"is_active = false").filter(fr"modified_by=${userInsert.id}").list
             deactivatedACRs <- AccessControlRuleDao.query.filter(fr"is_active = false").list
-            activatedTeams <- TeamDao.listOrgTeams(orgInsert.id, PageRequest(0, 30, Map.empty))
+            activatedTeams <- TeamDao.listOrgTeams(orgInsert.id, PageRequest(0, 30, Map.empty), TeamQueryParameters())
           } yield (deactivatedTeams, deactivatedACRs, activatedTeams)
           val (deactivatedTeams, deactivatedACRs, activatedTeams) = createTeamIO.transact(xa).unsafeRunSync
 

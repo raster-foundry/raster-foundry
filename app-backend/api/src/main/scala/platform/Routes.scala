@@ -442,9 +442,9 @@ trait PlatformRoutes extends Authentication
     authorizeAsync {
       OrganizationDao.userIsMember(user, organizationId).transact(xa).unsafeToFuture
     } {
-      withPagination { page =>
+      (withPagination & teamQueryParameters) { (page, teamQueryParams) =>
         complete {
-          TeamDao.listOrgTeams(organizationId, page).transact(xa).unsafeToFuture
+          TeamDao.listOrgTeams(organizationId, page, teamQueryParams).transact(xa).unsafeToFuture
         }
       }
     }

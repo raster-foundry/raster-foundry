@@ -71,10 +71,11 @@ object TeamDao extends Dao[Team] {
       )
   }
 
-  def listOrgTeams(organizationId: UUID, page: PageRequest): ConnectionIO[PaginatedResponse[Team]] = {
+  def listOrgTeams(organizationId: UUID, page: PageRequest, qp: TeamQueryParameters): ConnectionIO[PaginatedResponse[Team]] = {
     TeamDao.query
       .filter(fr"organization_id = ${organizationId}")
       .filter(fr"is_active = true")
+      .filter(qp)
       .page(page)
   }
 

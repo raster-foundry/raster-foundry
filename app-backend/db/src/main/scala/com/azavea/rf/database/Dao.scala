@@ -35,14 +35,17 @@ abstract class Dao[Model: Composite] extends Filterables {
     if (user.isSuperuser) {
       Dao.QueryBuilder[Model](selectF, tableF, List.empty)
     } else {
-      Dao.QueryBuilder[Model](
-        selectF ++ authTableF(user, objectType, ownershipTypeO, groupTypeO, groupIdO),
-        tableF ++ authTableF(user, objectType, ownershipTypeO, groupTypeO, groupIdO),
-        List.empty)
+      authTableF(user, objectType, ownershipTypeO, groupTypeO, groupIdO) match {
+        case (authFragment: Option[Fragment], filters: List[Option[Fragment]]) =>
+          Dao.QueryBuilder[Model](
+            selectF ++ authFragment.getOrElse(fr""),
+            tableF ++ authFragment.getOrElse(fr""),
+            filters)
+      }
     }
 
   def authTableF(user: User, objectType: ObjectType, ownershipTypeO: Option[String],
-    groupTypeO: Option[GroupType], groupIdO: Option[UUID]): Fragment = {
+    groupTypeO: Option[GroupType], groupIdO: Option[UUID]): (Option[Fragment], List[Option[Fragment]]) = {
     val ownedF: Fragment = fr"""
       SELECT id as object_id FROM""" ++ tableF ++ fr"""WHERE owner = ${user.id}
     """
@@ -77,22 +80,24 @@ abstract class Dao[Model: Composite] extends Filterables {
     ownershipTypeO match {
       // owned by the requesting user only
       case Some(ownershipType) if ownershipType == "owned" =>
-        fr"WHERE owner = ${user.id}"
+        (None, List(Some(fr"owner = ${user.id}")))
       // shared to the requesting user directly, across platform, or due to group membership
       case Some(ownershipType) if ownershipType == "shared" =>
-        fr"INNER JOIN (" ++ sharedF ++ fr"UNION ALL" ++ inheritedF ++ fr") as object_ids ON" ++
-          Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id" ++
-          fr"WHERE owner <> ${user.id}"
+        (Some(fr"INNER JOIN (" ++ sharedF ++ fr"UNION ALL" ++ inheritedF ++ fr") as object_ids ON" ++
+          Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id"),
+          List(Some(fr"owner <> ${user.id}")))
 
       // shared to the requesting user due to group membership
       case Some(ownershipType) if ownershipType == "inherited" =>
-        fr"INNER JOIN (" ++ inheritedF ++ fr") as object_ids ON" ++
-          Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id"
+        (Some(fr"INNER JOIN (" ++ inheritedF ++ fr") as object_ids ON" ++
+                Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id"),
+         List.empty)
       // the default
       case _ =>
-        fr"INNER JOIN (" ++ ownedF ++ fr"UNION ALL" ++ sharedF ++ fr"UNION ALL" ++
+        (Some(fr"INNER JOIN (" ++ ownedF ++ fr"UNION ALL" ++ sharedF ++ fr"UNION ALL" ++
           inheritedF ++ fr") as object_ids ON" ++ Fragment.const(s"${tableName}.id") ++
-          fr"= object_ids.object_id"
+                fr"= object_ids.object_id"),
+         List.empty)
     }
   }
 }
