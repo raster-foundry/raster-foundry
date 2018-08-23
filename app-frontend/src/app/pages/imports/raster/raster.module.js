@@ -31,6 +31,10 @@ class RasterListController {
                 origin: () => 'raster'
             }
         });
+
+        this.activeModal.result.then(() => {
+            this.checkPendingImports();
+        });
     }
 
     checkPendingImports() {
@@ -48,10 +52,6 @@ class RasterListController {
 
         this.activeModal = this.$uibModal.open({
             component: 'rfDatasourceCreateModal'
-        });
-
-        this.activeModal.result.then(() => {
-
         });
 
         return this.activeModal;
