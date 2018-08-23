@@ -11,7 +11,8 @@ const searchComponent = {
         onSearch: '&',
         suggestions: '<',
         onSuggestionSelect: '&',
-        showSuggestionAvatars: '<'
+        showSuggestionAvatars: '<',
+        value: '<?'
     }
 };
 
@@ -26,6 +27,9 @@ class SearchController {
     }
 
     $postLink() {
+        if (this.value) {
+            this.searchText = this.value;
+        }
         if (this.autoFocus) {
             this.claimFocus();
         }
@@ -38,6 +42,9 @@ class SearchController {
         }
         if (_.get(changes, 'suggestions.currentValue') && !this.searchText) {
             this.suggestions = [];
+        }
+        if (changes.value && changes.value.currentValue !== this.searchText) {
+            this.searchText = changes.currentValue;
         }
     }
 
@@ -72,7 +79,7 @@ class SearchController {
 
     clearSearch() {
         this.searchText = '';
-        this.onSearch(null);
+        this.onSearch({value: null});
     }
 
     handleSuggestionSelect(suggestion) {
