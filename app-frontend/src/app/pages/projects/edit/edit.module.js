@@ -119,6 +119,9 @@ class ProjectsEditController {
         ).then(
             ({count: sceneCount, scenes: allScenes}) => {
                 this.sceneCount = sceneCount;
+                if (!this.sceneCount) {
+                    return this.$q.resolve();
+                }
                 this.addUningestedScenesToMap(allScenes.filter(
                     (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
                 ));

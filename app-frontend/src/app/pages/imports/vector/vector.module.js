@@ -1,17 +1,13 @@
+/* global BUILDCONFIG */
 class VectorListController {
-    constructor(authService, modalService, shapesService) {
+    constructor($scope, $state, paginationService, authService, modalService, shapesService) {
         'ngInject';
-        this.authService = authService;
-        this.modalService = modalService;
-        this.shapesService = shapesService;
+        $scope.autoInject(this, arguments);
+        this.BUILDCONFIG = BUILDCONFIG;
     }
 
     $onInit() {
-        this.getShapes(0);
-    }
-
-    $onDestroy() {
-
+        this.fetchPage();
     }
 
     shouldShowShapeList() {
@@ -24,23 +20,36 @@ class VectorListController {
             this.lastShapeResult.count === 0 && !this.errorMsg;
     }
 
-    getShapes(page) {
-        this.loading = true;
-        this.shapesService.fetchShapes({
-            page: page ? page - 1 : 0, pageSize: 10
-        }).then((response) => {
-            this.loading = false;
-            this.lastShapeResult = response;
-            this.shapeList = response.features;
-        }, () => {
-            this.loading = false;
-            this.errorMsg = 'There was an error fetching your shapes from the API.';
+    fetchPage(page = this.$state.params.page || 1, search = this.$state.params.search) {
+        this.search = search && search.length ? search : null;
+        delete this.fetchError;
+        this.results = [];
+        const currentQuery = this.shapesService.fetchShapes({
+            page: page ? page - 1 : 0,
+            pageSize: 10,
+            search: this.search
+        }).then((paginatedResponse) => {
+            this.results = paginatedResponse.features;
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page, this.search);
+            if (this.currentQuery === currentQuery) {
+                delete this.fetchError;
+            }
+        }, (e) => {
+            if (this.currentQuery === currentQuery) {
+                this.fetchError = e;
+            }
+        }).finally(() => {
+            if (this.currentQuery === currentQuery) {
+                delete this.currentQuery;
+            }
         });
+        this.currentQuery = currentQuery;
     }
 
     deleteShape(shape) {
         this.shapesService.deleteShape({id: shape.id}).then(() => {
-            this.getShapes(this.currentPage);
+            this.fetchPage();
         });
     }
 
@@ -50,7 +59,7 @@ class VectorListController {
             resolve: {}
         });
         modal.result.then(() => {
-            this.getShapes();
+            this.fetchPage();
         });
     }
 }

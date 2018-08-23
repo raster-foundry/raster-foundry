@@ -2,103 +2,58 @@
 
 class LabBrowseTemplatesController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $state, analysisService, modalService
+        $log, $scope, $state, analysisService, modalService, paginationService
     ) {
         'ngInject';
-        this.analysisService = analysisService;
-        this.$scope = $scope;
-        this.$state = $state;
-        this.$log = $log;
-        this.modalService = modalService;
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
-        this.initFilters();
-        this.initSearchTerms();
-        this.fetchTemplateList(this.$state.params.page);
-        this.searchString = '';
+        this.fetchPage();
     }
 
-    initFilters() {
-        this.queryParams = _.mapValues(this.$state.params, v => {
-            return v || null;
-        });
-        this.filters = Object.assign({}, this.queryParams);
-    }
-
-    initSearchTerms() {
-        this.searchTerms = [];
-        if (this.queryParams.query) {
-            this.searchTerms = this.queryParams.query.trim().split(' ');
-        }
-    }
-
-    fetchTemplateList(page = 1) {
-        this.loadingTemplates = true;
-        this.analysisService.fetchTemplates(
-            {
-                pageSize: 10,
-                page: page - 1,
-                sort: 'createdAt,desc'
+    fetchPage(page = this.$state.params.page || 1, search = this.$state.params.search) {
+        this.search = search && search.length ? search : null;
+        delete this.fetchError;
+        this.results = [];
+        let currentQuery = this.analysisService.fetchTemplates({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: page - 1,
+            search: this.search
+        }).then(paginatedResponse => {
+            this.results = paginatedResponse.results;
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page, this.search);
+            if (this.currentQuery === currentQuery) {
+                delete this.fetchError;
             }
-        ).then(d => {
-            this.currentPage = page;
-            this.updatePagination(d);
-            let replace = !this.$state.params.page;
-            this.$state.transitionTo(
-                this.$state.$current.name,
-                {page: this.currentPage},
-                {
-                    location: replace ? 'replace' : true,
-                    notify: false
-                }
-            );
-            this.lastTemplateResponse = d;
-            this.templateList = d.results;
-            this.loadingTemplates = false;
+        }, (e) => {
+            if (this.currentQuery === currentQuery) {
+                this.fetchError = e;
+            }
+        }).finally(() => {
+            if (this.currentQuery === currentQuery) {
+                delete this.currentQuery;
+            }
         });
+        this.currentQuery = currentQuery;
     }
 
-    updatePagination(data) {
-        this.pagination = {
-            show: data.count > data.pageSize,
-            count: data.count,
-            currentPage: data.page + 1,
-            startingItem: data.page * data.pageSize + 1,
-            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious
-        };
-    }
+    // initFilters() {
+    //     this.queryParams = _.mapValues(this.$state.params, v => {
+    //         return v || null;
+    //     });
+    //     this.filters = Object.assign({}, this.queryParams);
+    // }
 
-    removeSearchTerm(index) {
-        this.searchTerms.splice(index, 1);
-        this.search();
-    }
+    // toggleTag(index) {
+    //     this.tags[index].selected = !this.tags[index].selected;
+    // }
 
-    clearSearch() {
-        this.searchTerms = [];
-        this.search();
-    }
-
-    search(value) {
-        this.searchString = value;
-        if (this.searchString) {
-            this.analysisService.searchQuery().then(templates => {
-                this.templateList = templates;
-            });
-        } else {
-            this.fetchTemplateList();
-        }
-    }
-
-    toggleTag(index) {
-        this.tags[index].selected = !this.tags[index].selected;
-    }
-
-    toggleCategory(index) {
-        this.categories[index].selected = !this.categories[index].selected;
-    }
+    // toggleCategory(index) {
+    //     this.categories[index].selected = !this.categories[index].selected;
+    // }
 
     openTemplateCreateModal() {
         this.modalService.open({
@@ -107,5 +62,5 @@ class LabBrowseTemplatesController {
     }
 }
 
-export default angular.module('pages.lab.browse.templates', [])
+export default angular.module('pages.lab.browse.results', [])
     .controller('LabBrowseTemplatesController', LabBrowseTemplatesController);

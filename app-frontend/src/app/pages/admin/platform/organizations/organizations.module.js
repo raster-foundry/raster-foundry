@@ -12,28 +12,34 @@ class PlatformOrganizationsController {
     }
 
     $onInit() {
-        this.searchTerm = '';
-        this.loading = false;
-        this.onSearch = this.paginationService.buildPagedSearch(this);
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin(this.platform.id);
         this.fetchPage();
     }
 
-    fetchPage(page = this.$stateParams.page || 1) {
-        this.loading = true;
-        this.platformService
+    fetchPage(page = this.$state.params.page || 1, search = this.$state.params.search) {
+        this.search = search && search.length ? search : null;
+        delete this.fetchError;
+        this.results = [];
+        const currentQuery = this.platformService
             .getOrganizations(
                 this.$stateParams.platformId,
                 page - 1,
-                this.searchTerm
+                this.search
             ).then(paginatedResponse => {
                 this.results = paginatedResponse.results;
                 this.pagination = this.paginationService.buildPagination(paginatedResponse);
-                this.paginationService.updatePageParam(page);
+                this.paginationService.updatePageParam(page, this.search);
                 this.buildOptions();
+            }, (e) => {
+                if (this.currentQuery === currentQuery) {
+                    this.fetchError = e;
+                }
             }).finally(() => {
-                this.loading = false;
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
             });
+        this.currentQuery = currentQuery;
     }
 
     buildOptions() {

@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 class OrganizationTeamsController {
     constructor(
-        $scope, $stateParams, $log, $window,
+        $scope, $state, $log, $window,
         modalService, organizationService, teamService, authService, paginationService,
         platform, organization, user, userRoles
     ) {
@@ -12,8 +12,6 @@ class OrganizationTeamsController {
     }
 
     $onInit() {
-        this.onSearch = this.paginationService.buildPagedSearch(this);
-
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
             this.organization.id,
             this.platform.id
@@ -22,19 +20,31 @@ class OrganizationTeamsController {
         this.fetchPage();
     }
 
-    fetchPage(page = this.$stateParams.page || 1) {
-        this.loading = true;
-        this.organizationService
-            .getTeams(this.platform.id, this.organization.id, page - 1, this.searchTerm)
+    fetchPage(page = this.$state.params.page || 1, search = this.$state.params.search) {
+        this.search = search && search.length ? search : null;
+        delete this.fetchError;
+        this.results = [];
+        const currentQuery = this.organizationService
+            .getTeams(this.platform.id, this.organization.id, page - 1, this.search)
             .then(paginatedResponse => {
                 this.results = paginatedResponse.results;
                 this.pagination = this.paginationService.buildPagination(paginatedResponse);
-                this.paginationService.updatePageParam(page);
+                this.paginationService.updatePageParam(page, this.search);
                 this.buildOptions();
                 this.fetchTeamUsers();
+                if (this.currentQuery === currentQuery) {
+                    delete this.fetchError;
+                }
+            }, (e) => {
+                if (this.currentQuery === currentQuery) {
+                    this.fetchError = e;
+                }
             }).finally(() => {
-                this.loading = false;
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
             });
+        this.currentQuery = currentQuery;
     }
 
     buildOptions() {

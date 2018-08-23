@@ -500,7 +500,9 @@ export default (app) => {
                 .$promise.then((res) => {
                     const scenes = res.results;
                     const count = res.count;
-                    let promises = Array(Math.ceil(count / pageSize) - 1).fill().map((x, page) => {
+                    let promises = Array(
+                        Math.ceil(count || 1 / pageSize) - 1
+                    ).fill().map((x, page) => {
                         return this.Project.sceneOrder({
                             projectId,
                             pageSize,
