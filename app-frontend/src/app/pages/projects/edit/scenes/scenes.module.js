@@ -86,7 +86,7 @@ class ProjectsScenesController {
 
         activeModal.result.then(results => {
             this.checkPendingImports();
-        })
+        });
     }
 
     updateSceneOrder(orderedSceneIds) {
