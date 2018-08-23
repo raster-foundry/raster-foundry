@@ -84,7 +84,7 @@ class ProjectAddScenesModalController {
         }).length : 0;
 
         this.addSceneMsg = uningestedNonCogCount ?
-            `There are ${uningestedNonCogCount} non-COG Raster Foundry scenes being ingested.` :
+            `There are ${uningestedNonCogCount} scenes importing.` :
             this.addSceneMsg;
 
         let nonRfScenesMsg = !_.isEmpty(nonRfScenes) ? _.map(nonRfScenes, (vals, key) => {
