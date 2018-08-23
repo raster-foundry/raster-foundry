@@ -70,7 +70,10 @@ def create_geotiffs(modis_path, output_directory):
 
     # Create final tif with overviews
     translate_cog_command = ['gdal_translate', warped_tif_path, '-a_nodata', '-28672',
-                             '-co', 'TILED=YES', '-co', 'COMPRESS=LZW', '-co', 'COPY_SRC_OVERVIEWS=YES',
+                             '-co', 'TILED=YES',
+                             '-co', 'COMPRESS=LZW',
+                             '-co', 'COPY_SRC_OVERVIEWS=YES',
+                             '-co', 'INTERLEAVE=BAND',
                              cog_tif_filepath]
 
     logger.info('Creating tifs for Subdatasets: %s', ' '.join(translate_command))

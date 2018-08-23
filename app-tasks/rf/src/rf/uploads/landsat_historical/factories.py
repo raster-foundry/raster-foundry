@@ -141,7 +141,7 @@ def convert_to_cog(prefix, stacked_tif_path, cog_tif_path, config, landsat_id):
     cog_cmd = [
         'gdal_translate', os.path.join(prefix, 'translated.tif'), cog_tif_path,
         '-co', 'TILED=YES', '-co', 'COMPRESS=DEFLATE',
-        '-co', 'COPY_SRC_OVERVIEWS=YES'
+        '-co', 'COPY_SRC_OVERVIEWS=YES', '-co', 'INTERLEAVE=BAND'
     ]
 
     logger.info('Tiling input tif')

@@ -27,7 +27,7 @@ def convert_to_cog(prefix, fname):
     cog_cmd = [
         'gdal_translate', os.path.join(prefix, 'translated.tif'), cog_path,
         '-co', 'TILED=YES', '-co', 'COMPRESS=DEFLATE',
-        '-co', 'COPY_SRC_OVERVIEWS=YES'
+        '-co', 'COPY_SRC_OVERVIEWS=YES', '-co', 'INTERLEAVE=BAND'
     ]
 
     logger.info('Tiling input tif')

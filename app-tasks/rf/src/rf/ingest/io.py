@@ -52,6 +52,8 @@ def convert_to_cog(tif_with_overviews_path, local_dir):
         'COPY_SRC_OVERVIEWS=YES',
         '-co',
         'BIGTIFF=YES',
+        '-co',
+        'INTERLEAVE=BAND',
         out_path
     ]
     subprocess.check_call(cog_command)
