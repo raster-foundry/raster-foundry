@@ -9,6 +9,7 @@ from ..utils.exception_reporting import wrap_rollbar
 
 logger = logging.getLogger(__name__)
 
+
 @click.command(name='ingest-scene')
 @click.argument('scene_id')
 @wrap_rollbar
@@ -22,10 +23,8 @@ def ingest_scene(scene_id):
     scene = Scene.from_id(scene_id)
     scene.ingestStatus = 'INGESTING'
     scene.update()
-    image_locations = [
-        (x.sourceUri, x.filename) for x in
-        sorted(scene.images, key=lambda x: x.bands[0].name.split(' - ')[1])
-    ]
+    image_locations = [(x.sourceUri, x.filename) for x in sorted(
+        scene.images, key=lambda x: io.sort_key(scene.datasource, x.bands[0]))]
     io.create_cog(image_locations, scene)
 
 
@@ -40,19 +39,16 @@ def metadata_to_postgres(uri, scene_id):
     # TODO: this will need to change once there's a command for generating the histogram
     # for a COG scene
     bash_cmd = [
-        'java', '-cp',
-        '/opt/raster-foundry/jars/rf-batch.jar',
-        'com.azavea.rf.batch.Main',
-        'SOME NEW JOB NAME',
-        uri,
-        'layer_attributes',
-        scene_id
+        'java', '-cp', '/opt/raster-foundry/jars/rf-batch.jar',
+        'com.azavea.rf.batch.Main', 'SOME NEW JOB NAME', uri,
+        'layer_attributes', scene_id
     ]
 
     logger.debug('Bash command to store histogram: %s', ' '.join(bash_cmd))
     running_cmd = subprocess.Popen(bash_cmd)
     running_cmd.communicate()
-    logger.info('Successfully completed metadata postgres write for scene %s', scene_id)
+    logger.info('Successfully completed metadata postgres write for scene %s',
+                scene_id)
     return True
 
 
@@ -65,11 +61,8 @@ def notify_for_scene_ingest_status(scene_id):
     """
 
     bash_cmd = [
-        'java', '-cp',
-        '/opt/raster-foundry/jars/rf-batch.jar',
-        'com.azavea.rf.batch.Main',
-        'notify_ingest_status',
-        scene_id
+        'java', '-cp', '/opt/raster-foundry/jars/rf-batch.jar',
+        'com.azavea.rf.batch.Main', 'notify_ingest_status', scene_id
     ]
     running_process = subprocess.Popen(bash_cmd)
     running_process.communicate()

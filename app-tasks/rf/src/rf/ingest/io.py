@@ -1,12 +1,15 @@
 """Utilities for transforming public scenes into COGs"""
 
+from rf.ingest.settings import (landsat8_band_order, sentinel2_band_order,
+                                landsat8_datasource_id,
+                                sentinel2_datasource_id)
 from rf.uploads.landsat8.io import get_tempdir
 from rf.utils.io import s3_bucket_and_key_from_url
 
 import boto3
 
 import logging
-from multiprocessing import Pool
+from multiprocessing import (cpu_count, Pool)
 import os
 import subprocess
 
@@ -54,7 +57,7 @@ def convert_to_cog(tif_with_overviews_path, local_dir):
 
 
 def fetch_imagery(image_locations, local_dir):
-    pool = Pool(8)
+    pool = Pool(cpu_count())
     tupled = [(loc[0], loc[1], local_dir) for loc in image_locations]
     try:
         pool.map(fetch_imagery_uncurried, tupled)
@@ -125,3 +128,14 @@ def upload_tif(tif_path, scene):
     scene.sceneType = 'COG'
     scene.ingestStatus = 'INGESTED'
     return scene
+
+
+def sort_key(datasource_id, band):
+    if datasource_id == sentinel2_datasource_id:
+        sentinel2_band_order[band.name]
+    elif datasource_id == landsat8_datasource_id:
+        landsat8_band_order[band.name]
+    else:
+        raise ValueError(
+            'Trying to run public COG ingest for scene with mysterious datasource',
+            datasource_id)
