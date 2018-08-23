@@ -87,9 +87,11 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
     logger.info('Fetching all bands')
     for band in config.bands.keys():
         fetch_band(prefix, gcs_prefix, band, landsat_id)
-    filter_metadata = extract_metadata(
-        requests.get(io.make_path_for_mtl(gcs_prefix, landsat_id)).content
-    )
+    metadata_resp = requests.get(io.make_path_for_mtl(gcs_prefix, landsat_id))
+    if metadata_resp.status_code == 404:
+        logger.error('Landsat scene %s is not available yet in GCS', landsat_id)
+        raise Exception('Could not find landsat scene %s', landsat_id)
+    filter_metadata = extract_metadata(metadata_resp.content)
     cog_fname = '{}_COG.tif'.format(landsat_id)
     stacked_fname = '{}_STACKED.tif'.format(landsat_id)
     filenames = {
