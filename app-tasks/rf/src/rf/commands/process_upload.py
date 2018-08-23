@@ -87,5 +87,5 @@ def process_upload(upload_id):
     except:
         logger.error('Failed to process upload (%s) for user %s with files %s',
                      upload.id, upload.owner, upload.files)
-        upload.update_upload_status('Failed')
+        upload.update_upload_status('FAILED')
         raise

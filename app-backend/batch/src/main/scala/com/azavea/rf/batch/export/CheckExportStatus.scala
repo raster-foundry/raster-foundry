@@ -97,7 +97,7 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
 
   def notifyExportOwner(status: String): Unit = {
     logger.info(s"Preparing to notify export owners of status: ${status}")
-    val export = ExportDao.query.filter(fr"id = ${exportId}").select.transact(xa).unsafeRunSync
+    val export = ExportDao.query.filter(exportId).select.transact(xa).unsafeRunSync
     logger.info(s"Retrieved export: ${export.id}")
     val platAndUserIO = for {
       ugr <- UserGroupRoleDao.query.filter(fr"user_id = ${export.owner}")
@@ -148,9 +148,9 @@ case class CheckExportStatus(exportId: UUID, statusURI: URI, time: Duration = 60
         }
       }
 
-    def updateIo(exportId: UUID, exportStatus: ExportStatus): ConnectionIO[ExportStatus] =
-      sql"update exports set export_status = ${exportStatus} where id = ${exportId}"
-        .update.withUniqueGeneratedKeys("export_status")
+    def updateIo(exportId: UUID, exportStatus: ExportStatus): ConnectionIO[Int] =
+      sql"update exports set export_status = ${exportStatus} where id = ${exportId}::uuid"
+        .update.run
 
     updateIo(exportId, s3ExportStatus.exportStatus).transact(xa).unsafeRunSync()
     s3ExportStatus.exportStatus match {
