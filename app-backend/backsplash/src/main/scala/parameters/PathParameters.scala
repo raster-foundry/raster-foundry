@@ -12,4 +12,10 @@ object PathParameters {
       if (!s.isEmpty) Try(ProjectNode(UUID.fromString(s))).toOption else None
     }
   }
+
+  object UUIDWrapper {
+    def unapply(s: String): Option[UUID] = {
+      if (!s.isEmpty) Try(UUID.fromString(s)).toOption else None
+    }
+  }
 }

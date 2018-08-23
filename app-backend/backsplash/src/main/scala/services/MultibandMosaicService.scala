@@ -44,19 +44,30 @@ class MultibandMosaicService(
   final val eval = MamlTms.identity[ProjectNode](interpreter)
 
   object TokenQueryParamMatcher extends QueryParamDecoderMatcher[String]("token")
+  object RedBandOptionalQueryParamMatcher extends OptionalQueryParamDecoderMatcher[Int]("redBand")
+  object GreenBandOptionalQueryParamMatcher extends OptionalQueryParamDecoderMatcher[Int]("greenBand")
+  object BlueBandOptionalQueryParamMatcher extends OptionalQueryParamDecoderMatcher[Int]("blueBand")
 
   val service: HttpService[IO] =
     HttpService {
-      case GET -> Root / ProjectNodeWrapper(projectNode) / IntVar(z) / IntVar(x) / IntVar(y) :? TokenQueryParamMatcher(token) =>
+      case GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(y)
+          :? TokenQueryParamMatcher(token)
+          :? RedBandOptionalQueryParamMatcher(redOverride)
+          :? GreenBandOptionalQueryParamMatcher(greenOverride)
+          :? BlueBandOptionalQueryParamMatcher(blueOverride) =>
         val authIO: IO[Either[Throwable, Boolean]] = (
           for {
             user <- verifyJWT(token) match {
               case Right((_, jwtClaims)) => UserDao.unsafeGetUserById(jwtClaims.getStringClaim("sub")).transact(xa)
               case Left(e) => IO(throw new Exception("Failed to validate user from JWT"))
             }
-            authorized <- ProjectDao.query.authorized(user, ObjectType.Project, projectNode.projectId, ActionType.View).transact(xa)
+            authorized <- ProjectDao.query.authorized(user, ObjectType.Project, projectId, ActionType.View).transact(xa)
           } yield authorized
         ).attempt
+        val projectNode = (redOverride, greenOverride, blueOverride).tupled match {
+          case Some((red: Int, green: Int, blue: Int)) => ProjectNode(projectId, Some(red), Some(green), Some(blue))
+          case _ => ProjectNode(projectId)
+        }
         val paramMap = Map("identity" -> projectNode)
         val result = eval(paramMap, z, x, y).attempt
         IO.shift(t) *> (authIO, result).tupled flatMap {

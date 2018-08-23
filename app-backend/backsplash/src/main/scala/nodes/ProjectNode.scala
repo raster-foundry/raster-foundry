@@ -35,8 +35,14 @@ import java.net.URI
 import java.util.UUID
 
 case class ProjectNode(
-  projectId: UUID
-)
+  projectId: UUID,
+  redBandOverride: Option[Int] = None,
+  greenBandOverride: Option[Int] = None,
+  blueBandOverride: Option[Int] = None
+) {
+  def getBandOverrides: Option[(Int, Int, Int)] =
+    (redBandOverride, greenBandOverride, blueBandOverride).tupled
+}
 
 object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
 
@@ -55,9 +61,15 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       def tmsReification(self: ProjectNode, buffer: Int)(implicit t: Timer[IO]): (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
           val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
-          val mdIO = SceneToProjectDao.getMosaicDefinition(
-            self.projectId, Some(Projected(extent, 3857))
-          ).transact(xa)
+          val mdIO = self.getBandOverrides match {
+            case Some((red, green, blue)) =>
+              SceneToProjectDao.getMosaicDefinition(
+                self.projectId, Some(Projected(extent, 3857)), Some(red), Some(green), Some(blue)
+              ).transact(xa)
+            case None =>
+              SceneToProjectDao.getMosaicDefinition(self.projectId, Some(Projected(extent, 3857)))
+                .transact(xa)
+          }
           for {
             mds <- mdIO
             mbTiles <- mds.toList.parTraverse(
