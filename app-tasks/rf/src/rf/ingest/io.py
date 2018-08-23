@@ -32,9 +32,10 @@ def create_cog(image_locations, scene):
 
 def add_overviews(tif_path):
     logger.info('Adding overviews to %s', tif_path)
-    overviews_command = ['gdaladdo', tif_path,
-                         '--config', 'COMPRESS_OVERVIEW=DEFLATE',
-                         '--config', 'INTERLEAVE_OVERVIEW=BAND']
+    overviews_command = ['gdaladdo',
+                         '--config', 'COMPRESS_OVERVIEW', 'DEFLATE',
+                         '--config', 'INTERLEAVE_OVERVIEW', 'BAND',
+                         tif_path]
     subprocess.check_call(overviews_command)
 
 
@@ -111,8 +112,6 @@ def merge_tifs(local_tif_paths, local_dir):
         'gdal_merge.py',
         '-o',
         merged_path,
-        '-a_nodata',
-        '0',
         '-separate'
     ] + local_tif_paths
     subprocess.check_call(merge_command)
