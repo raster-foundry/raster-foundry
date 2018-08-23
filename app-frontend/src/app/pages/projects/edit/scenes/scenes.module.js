@@ -111,9 +111,10 @@ class ProjectsScenesController {
     checkPendingImports() {
         this.uploadService.query({
             uploadStatus: 'UPLOADED',
-            projectId: this.projectId
+            projectId: this.projectId,
+            pageSize: 0
         }).then(uploads => {
-            this.pendingImports = uploads.results.length;
+            this.pendingImports = uploads.count;
         });
     }
 }

@@ -13,8 +13,8 @@
         <div class="alert-message">
           {{$ctrl.pendingImports}}
           <ng-pluralize count="$ctrl.pendingImports"
-                    when="{'one': 'import is',
-                          'other': 'imports are'
+                    when="{'one': '{} import is',
+                          'other': '{} imports are'
                           }">
           </ng-pluralize> being processed
         </div>

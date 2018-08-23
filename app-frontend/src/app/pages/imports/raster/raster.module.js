@@ -39,9 +39,10 @@ class RasterListController {
 
     checkPendingImports() {
         this.uploadService.query({
-            uploadStatus: 'UPLOADED'
+            uploadStatus: 'UPLOADED',
+            pageSize: 0
         }).then(uploads => {
-            this.pendingImports = uploads.results.length;
+            this.pendingImports = uploads.count;
         });
     }
 
