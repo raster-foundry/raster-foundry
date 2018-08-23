@@ -1,20 +1,26 @@
 import angular from 'angular';
 
 class LoginController {
-    constructor($state, $location, authService) {
+    constructor($state, $location, authService, localStorage) {
         'ngInject';
         this.$state = $state;
         this.$location = $location;
         this.authService = authService;
+        this.localStorage = localStorage;
     }
 
     $onInit() {
         const hash = this.$location.hash();
         if (hash) {
             this.authService.onRedirectComplete(hash);
-        }
-        if (this.authService.verifyAuthCache()) {
-            this.$state.go('home');
+        } else if (this.authService.verifyAuthCache()) {
+            const restore = this.localStorage.get('authUrlRestore');
+            if (restore) {
+                this.$location.path(restore.path).search(restore.search);
+                this.localStorage.remove('authUrlRestore');
+            } else {
+                this.$state.go('home');
+            }
         } else {
             this.authService.clearAuthStorage();
             this.authService.login();
