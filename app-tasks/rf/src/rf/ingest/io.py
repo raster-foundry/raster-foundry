@@ -134,9 +134,9 @@ def upload_tif(tif_path, scene):
 
 def sort_key(datasource_id, band):
     if datasource_id == sentinel2_datasource_id:
-        sentinel2_band_order[band.name]
+        return sentinel2_band_order[band.name]
     elif datasource_id == landsat8_datasource_id:
-        landsat8_band_order[band.name]
+        return landsat8_band_order[band.name]
     else:
         raise ValueError(
             'Trying to run public COG ingest for scene with mysterious datasource',
