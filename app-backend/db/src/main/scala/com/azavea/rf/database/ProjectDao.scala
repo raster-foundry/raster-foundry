@@ -61,6 +61,18 @@ object ProjectDao extends Dao[Project] {
       .option
   }
 
+  def listProjects(page: PageRequest, params: ProjectQueryParameters, user: User): ConnectionIO[PaginatedResponse[Project.WithUser]] = {
+    authQuery(
+      user,
+      ObjectType.Project,
+      params.ownershipTypeParams.ownershipType,
+      params.groupQueryParameters.groupType,
+      params.groupQueryParameters.groupId
+    ).filter(params)
+      .page(page)
+      .flatMap(projectsToProjectsWithRelated)
+  }
+
   def isProjectPublic(projectId: UUID): ConnectionIO[Boolean] = {
     this.query
       .filter(projectId)

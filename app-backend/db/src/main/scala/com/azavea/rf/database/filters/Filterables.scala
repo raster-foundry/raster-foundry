@@ -153,6 +153,7 @@ trait Filterables extends RFMeta with LazyLogging {
   implicit val combinedToolRunQueryParameters =
     Filterable[Any, CombinedToolRunQueryParameters] { combinedToolRunParams: CombinedToolRunQueryParameters =>
       Filters.userQP(combinedToolRunParams.userParams) ++
+        Filters.searchQP(combinedToolRunParams.searchParams, List("name")) ++
         Filters.timestampQP(combinedToolRunParams.timestampParams) ++
         List(
           combinedToolRunParams.toolRunParams.createdBy.map({createdBy => fr"created_by = ${createdBy}"}),
@@ -212,7 +213,9 @@ trait Filterables extends RFMeta with LazyLogging {
 
   implicit val shapeQueryparamsFilter = Filterable[Any, ShapeQueryParameters] { shapeParams: ShapeQueryParameters =>
     Filters.timestampQP(shapeParams.timestampParams) ++
-      Filters.userQP(shapeParams.userParams)
+      Filters.userQP(shapeParams.userParams) ++
+      Filters.searchQP(shapeParams.searchParams, List("name"))
+
   }
 
   implicit val combinedImageQueryparamsFilter = Filterable[Any, CombinedImageQueryParams] { cips: CombinedImageQueryParams =>

@@ -103,7 +103,8 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     userQueryParameters &
     timestampQueryParameters &
     ownershipTypeQueryParameters &
-    groupQueryParameters
+    groupQueryParameters &
+    searchParams
   ).as(ShapeQueryParameters.apply _)
 
   def searchParams = parameters(
@@ -122,4 +123,12 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
     'tagsInclude.as[String].*,
     'tagsExclude.as[String].*
   ).as(TagQueryParameters.apply _)
+
+  def teamQueryParameters = (
+    timestampQueryParameters &
+      orgQueryParams &
+      userAuditQueryParameters &
+      searchParams &
+      activationParams
+  ).as(TeamQueryParameters.apply _)
 }
