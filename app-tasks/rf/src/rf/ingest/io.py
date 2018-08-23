@@ -50,6 +50,8 @@ def convert_to_cog(tif_with_overviews_path, local_dir):
         'COMPRESS=LZW',
         '-co',
         'COPY_SRC_OVERVIEWS=YES',
+        '-co',
+        'BIGTIFF=YES',
         out_path
     ]
     subprocess.check_call(cog_command)
