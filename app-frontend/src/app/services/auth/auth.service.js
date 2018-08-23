@@ -209,6 +209,7 @@ export default (app) => {
                     }
                 } else if (!this.jwtHelper.isTokenExpired(accessToken)) {
                     this.onLogin({accessToken, idToken});
+                    this.localStorage.remove('authUrlRestore');
                 } else if (this.jwtHelper.isTokenExpired(accessToken)) {
                     this.localStorage.remove('accessToken');
                     this.$state.go('login');
@@ -316,7 +317,14 @@ export default (app) => {
                 this.promise.resolve(authResult);
                 delete this.promise;
             }
-            this.$state.go('home');
+            // Doesn't store url parameters, but they matter less
+            const restore = this.localStorage.get('authUrlRestore');
+            if (restore) {
+                this.$location.path(restore.path).search(restore.search);
+                this.localStorage.remove('authUrlRestore');
+            } else {
+                this.$state.go('home');
+            }
             this.intercomService.bootWithUser(this.profile);
         }
 
@@ -352,8 +360,8 @@ export default (app) => {
             return this.profile;
         }
 
-        token() {
-            if (!this.idToken) {
+        token(force = false) {
+            if (!this.idToken || force) {
                 this.idToken = this.localStorage.get('idToken');
             }
             return this.idToken;
@@ -402,7 +410,7 @@ export default (app) => {
 
         verifyAuthCache() {
             try {
-                const token = this.token();
+                const token = this.token(true);
                 this.isLoggedIn = Boolean(
                     token && this.getProfile() && !this.jwtHelper.isTokenExpired(token)
                 );
