@@ -102,6 +102,16 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
 
           val (affectedRows, updatedScene, shouldKickoffIngest) = sceneUpdateWithSceneIO.transact(xa).unsafeRunSync
 
+          val kickoffIngestCheck = (insertScene.statusFields.ingestStatus, updatedScene.statusFields.ingestStatus) match {
+            case (IngestStatus.ToBeIngested, IngestStatus.ToBeIngested) =>
+              shouldKickoffIngest == true
+            case (IngestStatus.Ingesting, IngestStatus.Ingesting) =>
+              // we know this is false because ingest status does not hang at Ingesting for a day in this test
+              shouldKickoffIngest == false
+            case _ =>
+              shouldKickoffIngest == false
+          }
+
           affectedRows == 1 &&
             updatedScene.visibility == updateScene.visibility &&
             updatedScene.tags == updateScene.tags &&
@@ -112,7 +122,7 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             updatedScene.ingestLocation == updateScene.ingestLocation &&
             updatedScene.filterFields == updateScene.filterFields &&
             updatedScene.statusFields == updateScene.statusFields &&
-            (updatedScene.statusFields.ingestStatus == IngestStatus.ToBeIngested) == shouldKickoffIngest
+            kickoffIngestCheck
         }
       }
     }
