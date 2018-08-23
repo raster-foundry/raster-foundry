@@ -32,7 +32,9 @@ def create_cog(image_locations, scene):
 
 def add_overviews(tif_path):
     logger.info('Adding overviews to %s', tif_path)
-    overviews_command = ['gdaladdo', tif_path]
+    overviews_command = ['gdaladdo', tif_path,
+                         '--config', 'COMPRESS_OVERVIEW=DEFLATE',
+                         '--config', 'INTERLEAVE_OVERVIEW=BAND']
     subprocess.check_call(overviews_command)
 
 
@@ -42,8 +44,6 @@ def convert_to_cog(tif_with_overviews_path, local_dir):
     cog_command = [
         'gdal_translate',
         tif_with_overviews_path,
-        # may need to add nodata, not sure yet
-        # '-a_nodata', '255'
         '-co',
         'TILED=YES',
         '-co',
@@ -52,8 +52,6 @@ def convert_to_cog(tif_with_overviews_path, local_dir):
         'COPY_SRC_OVERVIEWS=YES',
         '-co',
         'BIGTIFF=YES',
-        '-co',
-        'INTERLEAVE=BAND',
         out_path
     ]
     subprocess.check_call(cog_command)
@@ -113,8 +111,8 @@ def merge_tifs(local_tif_paths, local_dir):
         'gdal_merge.py',
         '-o',
         merged_path,
-        # may need to add nodata, not sure yet
-        # '-a_nodata', '255',
+        '-a_nodata',
+        '0',
         '-separate'
     ] + local_tif_paths
     subprocess.check_call(merge_command)

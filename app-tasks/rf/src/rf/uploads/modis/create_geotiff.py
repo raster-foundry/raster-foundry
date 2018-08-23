@@ -66,7 +66,8 @@ def create_geotiffs(modis_path, output_directory):
                      '-separate']
 
     # Generate overviews
-    overview_command = ['gdaladdo', warped_tif_path, '2', '4', '8', '16', '32']
+    overview_command = ['gdaladdo', warped_tif_path, '--config', 'INTERLEAVE_OVERVIEW=BAND',
+                        '--config', 'COMPRESS_OVERVIEW=DEFLATE']
 
     # Create final tif with overviews
     translate_cog_command = ['gdal_translate', warped_tif_path, '-a_nodata', '-28672',

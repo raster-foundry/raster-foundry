@@ -20,7 +20,7 @@ def convert_to_cog(prefix, fname):
     # Add overviews to the tiled tif
     overviews_cmd = [
         'gdaladdo', '-r', 'average', os.path.join(prefix, 'translated.tif'),
-        '2', '4', '8', '16', '32'
+        '--config', 'INTERLEAVE_OVERVIEW=BAND', '--config', 'COMPRESS_OVERVIEW=DEFLATE'
     ]
 
     # convert the tif with overviews to a COG
