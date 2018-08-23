@@ -20,7 +20,7 @@
   <div class="content">
     <div>
       <!-- Alert -->
-      <div class="alert alert-primary">
+      <div class="alert alert-primary" ng-if="$ctrl.pendingImports">
         <div class="alert-message">
           {{$ctrl.pendingImports}}
           <ng-pluralize count="$ctrl.pendingImports"
@@ -30,7 +30,7 @@
           </ng-pluralize> being processed
         </div>
       </div>
-      <div class="alert alert-secondary"  ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneCount">
+      <div class="alert alert-secondary" ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneCount">
         <div class="alert-message">{{$ctrl.$parent.pendingSceneCount}} scenes awaiting approval</div>
         <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
       </div>

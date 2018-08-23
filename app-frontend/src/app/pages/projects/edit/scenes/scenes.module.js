@@ -76,13 +76,17 @@ class ProjectsScenesController {
     }
 
     openImportModal() {
-        this.modalService.open({
+        const activeModal = this.modalService.open({
             component: 'rfSceneImportModal',
             resolve: {
                 project: () => this.$parent.project,
                 origin: () => 'project'
             }
         });
+
+        activeModal.result.then(results => {
+            this.checkPendingImports();
+        })
     }
 
     updateSceneOrder(orderedSceneIds) {
