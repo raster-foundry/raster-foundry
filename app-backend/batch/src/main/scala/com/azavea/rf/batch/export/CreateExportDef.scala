@@ -12,6 +12,7 @@ import com.azavea.rf.database.{ExportDao, UserDao}
 import com.azavea.rf.datamodel._
 import doobie._
 import doobie.implicits._
+import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import io.circe.syntax._
 

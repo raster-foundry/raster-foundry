@@ -18,6 +18,7 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
+import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.shapefile.ShapeFileReader

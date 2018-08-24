@@ -11,6 +11,7 @@ import com.azavea.rf.api.utils.Config
 import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common.{CommonHandlers, S3, UserErrorHandler}
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
+import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import kamon.akka.http.KamonTraceDirectives
 

@@ -16,6 +16,7 @@ import com.azavea.rf.datamodel._
 import com.github.tototoshi.csv._
 import doobie.free.connection.ConnectionIO
 import doobie.implicits._
+import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.proj4.CRS
 import io.circe._

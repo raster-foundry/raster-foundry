@@ -15,6 +15,7 @@ import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
 import doobie._
 import doobie.implicits._
+import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import io.circe.parser.decode
 import org.apache.commons.mail.Email
