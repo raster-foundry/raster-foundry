@@ -16,12 +16,14 @@ trait Config {
   import ArbitraryTypeReader._
   import Ficus._
 
-  protected final case class Landsat8Bands(
+  @SuppressWarnings(Array("FinalModifierOnCaseClass"))
+  protected case class Landsat8Bands(
     `15m`: List[Band.Create],
     `30m`: List[Band.Create]
   )
 
-  protected final case class Landsat8(
+  @SuppressWarnings(Array("FinalModifierOnCaseClass"))
+  protected case class Landsat8(
     organization: String,
     bandLookup: Landsat8Bands,
     datasourceId: String,
@@ -37,7 +39,8 @@ trait Config {
     def datasourceUUID: UUID = UUID.fromString(datasourceId)
   }
 
-  protected final case class ExportDef(
+  @SuppressWarnings(Array("FinalModifierOnCaseClass"))
+  protected case class ExportDef(
     awsRegion: Option[String],
     bucketName: String,
     awsDataproc: String,
@@ -47,7 +50,8 @@ trait Config {
     sparkMemory: String
   )
 
-  protected final case class Sentinel2Bands(
+  @SuppressWarnings(Array("FinalModifierOnCaseClass"))
+  protected case class Sentinel2Bands(
     // 10m
     B02: Band.Create,
     B03: Band.Create,
@@ -66,7 +70,8 @@ trait Config {
     B10: Band.Create
   )
 
-  protected final case class Sentinel2(
+  @SuppressWarnings(Array("FinalModifierOnCaseClass"))
+  protected case class Sentinel2(
     organization: String,
     bandLookup: Sentinel2Bands,
     datasourceId: String,
@@ -88,14 +93,16 @@ trait Config {
       }.headOption.flatten
   }
 
-  final case class Dropbox(appKey: String, appSecret: String) {
+  @SuppressWarnings(Array("FinalModifierOnCaseClass"))
+  case class Dropbox(appKey: String, appSecret: String) {
     lazy val appInfo = new DbxAppInfo(appKey, appSecret)
     lazy val config = new DbxRequestConfig("azavea/rf-dropbox-test")
 
     def client(accessToken: String) = new DbxClientV2(config, accessToken)
   }
 
-  final case class Auth0(
+  @SuppressWarnings(Array("FinalModifierOnCaseClass"))
+  case class Auth0(
     clientId: String,
     clientSecret: String,
     systemUser: String,

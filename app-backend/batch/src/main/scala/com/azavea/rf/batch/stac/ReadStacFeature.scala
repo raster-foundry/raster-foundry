@@ -147,14 +147,12 @@ object ReadStacFeature extends Config with LazyLogging {
 
   protected def writeSceneToDb(scene: Scene.Create)(implicit xa: Transactor[IO]): Scene.WithRelated = {
     val sceneInsertIO: ConnectionIO[Scene.WithRelated] =
-      UserDao.getUserById(systemUser) flatMap { (mbUser: Option[User]) =>
-        mbUser match {
-          case Some(user) =>
-            logger.info(s"\nuser: ${user.id}\ninserting scene: \n${scene.name}")
-            SceneDao.insert(scene, user)
-          case _ =>
-            throw new RuntimeException("System user not found. Make sure migrations have been run, and that batch config is correct")
-        }
+      UserDao.getUserById(systemUser) flatMap {
+        case Some(user) =>
+          logger.info(s"\nuser: ${user.id}\ninserting scene: \n${scene.name}")
+          SceneDao.insert(scene, user)
+        case _ =>
+          throw new RuntimeException("System user not found. Make sure migrations have been run, and that batch config is correct")
       }
     sceneInsertIO.transact(xa).unsafeRunSync
   }
