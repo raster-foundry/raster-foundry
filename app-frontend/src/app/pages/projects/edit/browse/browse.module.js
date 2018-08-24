@@ -263,10 +263,11 @@ class ProjectsSceneBrowserController {
                 scene,
                 repository: this.currentRepository
             });
+            console.log('in selection', this.selectedScenes);
             mapP.then(m => m.setThumbnail(scene, this.currentRepository, {persist: true}));
         } else {
             this.selectedScenes = this.selectedScenes.delete(scene.id);
-            console.log(this.selectedScenes);
+            console.log('in unselection', this.selectedScenes);
             mapP.then(m => m.deleteThumbnail(scene));
         }
     }
@@ -293,10 +294,10 @@ class ProjectsSceneBrowserController {
 
     selectNoScenes() {
         this.selectedScenes.forEach(s => this.setSelected(s, false));
+        this.selectedScenes.clear();
     }
 
     sceneModal() {
-        console.log(this.setSelected);
         this.modalService.open({
             component: 'rfProjectAddScenesModal',
             resolve: {
@@ -310,8 +311,8 @@ class ProjectsSceneBrowserController {
             backdrop: 'static'
         }).result.then((sceneIds) => {
             this.projectSceneIds = this.projectSceneIds.concat(sceneIds);
-            this.selectNoScenes();
         }).finally(() => {
+            this.selectNoScenes();
             this.$parent.getSceneList().then(() => {
                 this.$parent.fetchDatasources(true);
             });

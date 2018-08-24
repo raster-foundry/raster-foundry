@@ -1,4 +1,4 @@
-<div class="modal-scrollable-body modal-sidebar-header">
+<div class="modal-scrollable-body">
   <div class="modal-header" ng-if="!$ctrl.finished">
   	<button type="button" class="close" aria-label="Close"
             ng-click="$ctrl.dismiss()">
@@ -7,14 +7,14 @@
   	<h4 class="modal-title">
       You have
       <ng-pluralize count="$ctrl.resolve.scenes.size"
-                    when="{'0': 'no Scenes',
-                          'one': '1 Scene',
-                          'other': '{} Scenes'
+                    when="{'0': 'no scenes',
+                          'one': '1 scene',
+                          'other': '{} scenes'
                           }">
       </ng-pluralize>
       selected
     </h4>
-  	<p>Review your selections, add them to projects, or open them in the editor.</p>
+  	<p>Review your selections before adding them to this project</p>
   </div>
   <div class="modal-body" ng-if="!$ctrl.finished">
   	<div class="list-group">
@@ -24,7 +24,7 @@
           selected="$ctrl.isSelected(selection.scene)"
           on-select="$ctrl.resolve.selectScene(selection.scene, selected)"
           data-repository="selection.repository"
-          ng-click="$ctrl.viewSceneDetail(selection)"
+          ng-click="$ctrl.resolve.selectScene(selection.scene, selected)"
           ng-repeat="selection in $ctrl.scenes.valueSeq().toArray()">
       </rf-scene-item>
   	</div>
@@ -38,7 +38,7 @@
   	</div>
       <button type="button"
               class="btn btn-secondary"
-              ng-disabled="!$ctrl.selectedScenes || $ctrl.selectedScenes.size === 0"
+              ng-disabled="$ctrl.getSelectedScenes().size === 0"
               ng-click="$ctrl.addScenesToProject()">
         <i class="icon-bucket"></i>
         Add to <strong>{{$ctrl.resolve.project.name}}</strong>
