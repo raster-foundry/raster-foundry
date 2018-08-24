@@ -62,7 +62,9 @@
       ng-mouseleave="$ctrl.removeHoveredScene()"
       ng-click="$ctrl.setSelected(scene, !$ctrl.isSelected(scene))"
       ng-repeat="scene in $ctrl.sceneList track by scene.id">
-      <button class="btn-tiny btn"><i class="icon-plus"></i></button>
+      <button class="btn-tiny btn" ng-if="!$ctrl.isInProject(scene)">
+        <i class="icon-plus" ng-if="!$ctrl.isInProject(scene)"></i>
+      </button>
   </rf-scene-item>
   <img ng-attr-src="{{$ctrl.base64Uri}}">
   <div class="sidebar-content">
