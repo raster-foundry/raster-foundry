@@ -6,6 +6,7 @@ import com.azavea.rf.backsplash.services.{HealthCheckService, MultibandMosaicSer
 import cats.effect.{Effect, IO}
 import fs2.StreamApp
 import org.http4s.server.blaze.BlazeBuilder
+import org.http4s.server.middleware.AutoSlash
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -21,7 +22,7 @@ object ServerStream {
   def stream =
     BlazeBuilder[IO]
       .bindHttp(8080, "0.0.0.0")
-      .mountService(healthCheckService, "/")
-      .mountService(multibandMosaicService, "/mosaic")
+      .mountService(AutoSlash(multibandMosaicService), "/")
+      .mountService(AutoSlash(healthCheckService), "/healthcheck")
       .serve
 }
