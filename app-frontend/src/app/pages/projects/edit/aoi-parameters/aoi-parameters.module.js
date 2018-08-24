@@ -221,7 +221,10 @@ class AOIParametersController {
                 return this.projectService.updateProject(projectToSave);
             })
             .then(() => {
-                return this.updateProjectAOI(this.aoiPolygons, this.aoiParameters, true);
+                return this.updateProjectAOI(
+                    this.aoiPolygons, this.aoiParameters,
+                    this.projectAoi ? this.projectAoi.isActive : true
+                );
             })
             .then(()=>{
                 this.saveSuccessful = true;
@@ -247,6 +250,12 @@ class AOIParametersController {
 
     onCloseFilterPane(showFilterPane) {
         this.showFilters = showFilterPane;
+    }
+
+    toggleAoiActive() {
+        if (this.projectAoi) {
+            this.projectAoi.isActive = !this.projectAoi.isActive;
+        }
     }
 }
 
