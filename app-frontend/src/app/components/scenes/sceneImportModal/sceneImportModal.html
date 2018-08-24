@@ -24,6 +24,11 @@
         <div class="list-group-item" ng-repeat="datasource in $ctrl.datasources.results | filter: {name: $ctrl.searchString}">
           <div class="list-group-overflow">
             <strong class="color-dark">{{datasource.name}}</strong><br>
+            <ng-pluralize count="datasource.bands.length"
+                          when="{'one': '{} band',
+                                'other': '{} bands'
+                                }">
+            </ng-pluralize>
           </div>
           <div class="list-group-right">
             <button class="btn" ng-click="$ctrl.handleDatasourceSelect(datasource)">

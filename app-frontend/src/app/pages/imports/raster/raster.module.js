@@ -1,15 +1,19 @@
 /* global BUILDCONFIG, HELPCONFIG */
 class RasterListController {
-    constructor(authService, $uibModal, platform) {
+    constructor(
+        $scope, $uibModal,
+        authService, uploadService,
+        platform
+    ) {
         'ngInject';
-        this.authService = authService;
-        this.$uibModal = $uibModal;
-        this.platform = platform;
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
         this.HELPCONFIG = HELPCONFIG;
+        this.pendingImports = 0;
+        this.checkPendingImports();
     }
 
     $onDestroy() {
@@ -27,6 +31,19 @@ class RasterListController {
                 origin: () => 'raster'
             }
         });
+
+        this.activeModal.result.then(() => {
+            this.checkPendingImports();
+        });
+    }
+
+    checkPendingImports() {
+        this.uploadService.query({
+            uploadStatus: 'UPLOADED',
+            pageSize: 0
+        }).then(uploads => {
+            this.pendingImports = uploads.count;
+        });
     }
 
     openCreateDatasourceModal() {
@@ -36,10 +53,6 @@ class RasterListController {
 
         this.activeModal = this.$uibModal.open({
             component: 'rfDatasourceCreateModal'
-        });
-
-        this.activeModal.result.then(() => {
-
         });
 
         return this.activeModal;
