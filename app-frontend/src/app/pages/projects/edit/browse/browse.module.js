@@ -257,18 +257,22 @@ class ProjectsSceneBrowserController {
     }
 
     setSelected(scene, selected) {
-        this.getMap().then((map) => {
-            if (selected) {
-                this.selectedScenes = this.selectedScenes.set(scene.id, {
-                    scene,
-                    repository: this.currentRepository
-                });
-                map.setThumbnail(scene, this.currentRepository, {persist: true});
-            } else {
-                this.selectedScenes = this.selectedScenes.delete(scene.id);
-                map.deleteThumbnail(scene);
-            }
-        });
+        const mapP = this.getMap();
+        if (selected) {
+            this.selectedScenes = this.selectedScenes.set(scene.id, {
+                scene,
+                repository: this.currentRepository
+            });
+            mapP.then(m => m.setThumbnail(scene, this.currentRepository, {persist: true}));
+        } else {
+            this.selectedScenes = this.selectedScenes.delete(scene.id);
+            console.log(this.selectedScenes);
+            mapP.then(m => m.deleteThumbnail(scene));
+        }
+    }
+
+    getSelectedScenes() {
+        return this.selectedScenes;
     }
 
     isSelected(scene) {
@@ -292,12 +296,14 @@ class ProjectsSceneBrowserController {
     }
 
     sceneModal() {
+        console.log(this.setSelected);
         this.modalService.open({
             component: 'rfProjectAddScenesModal',
             resolve: {
                 scenes: () => this.selectedScenes,
                 selectScene: () => this.setSelected.bind(this),
                 selectNoScenes: () => this.selectNoScenes.bind(this),
+                getSelectedScenes: () => this.getSelectedScenes.bind(this),
                 repository: () => this.currentRepository,
                 project: () => this.project
             },

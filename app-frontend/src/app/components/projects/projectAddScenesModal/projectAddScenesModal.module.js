@@ -42,9 +42,9 @@ class ProjectAddScenesModalController {
     }
 
     addScenesToProject() {
-        this.sceneIds = Array.from(this.selectedScenes.keys());
+        this.sceneIds = Array.from(this.resolve.getSelectedScenes().keys());
         let repositoryScenes = _.groupBy(
-            this.selectedScenes.valueSeq().toArray(),
+            this.resolve.getSelectedScenes().valueSeq().toArray(),
             ({repository}) => {
                 return repository.label;
             }
@@ -56,6 +56,7 @@ class ProjectAddScenesModalController {
 
         let projectRequests = repositories.map(({label, repository}) => {
             let scenes = repositoryScenes[label].map(({scene}) => scene);
+            console.log(scenes);
             return repository
                 .service
                 .addToProject(this.resolve.project.id, scenes)
