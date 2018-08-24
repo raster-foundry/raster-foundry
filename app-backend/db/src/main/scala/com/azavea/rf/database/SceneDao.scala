@@ -200,9 +200,9 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     val idFilter = fr"id = ${id}".some
     val now = new Date()
 
-    val lastModifiedIO: ConnectionIO[Timestamp] =
-      (fr"select modified_at from scenes" ++ Fragments.whereAndOpt(idFilter))
-        .query[Timestamp]
+    val lastModifiedAndIngestIO: ConnectionIO[(Timestamp, IngestStatus)] =
+      (fr"select modified_at, ingest_status from scenes" ++ Fragments.whereAndOpt(idFilter))
+        .query[(Timestamp, IngestStatus)]
         .unique
     val updateIO: ConnectionIO[Int] = (sql"""
     UPDATE scenes
@@ -229,14 +229,14 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       .update
       .run
 
-    lastModifiedIO flatMap {
-      case ts: Timestamp =>
+    lastModifiedAndIngestIO flatMap {
+      case (ts: Timestamp, prevIngestStatus: IngestStatus) =>
         updateIO map {
           case n =>
-            scene.statusFields.ingestStatus match {
-              case IngestStatus.ToBeIngested =>
+            (prevIngestStatus, scene.statusFields.ingestStatus) match {
+              case (IngestStatus.ToBeIngested, IngestStatus.ToBeIngested) =>
                 (n, true)
-              case IngestStatus.Ingesting =>
+              case (IngestStatus.Ingesting, IngestStatus.Ingesting) =>
                 (n, ts.getTime < now.getTime - (24 hours).toMillis)
               case _ =>
                 (n, false)
