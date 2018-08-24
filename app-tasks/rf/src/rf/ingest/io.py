@@ -34,7 +34,6 @@ def add_overviews(tif_path):
     logger.info('Adding overviews to %s', tif_path)
     overviews_command = ['gdaladdo',
                          '--config', 'COMPRESS_OVERVIEW', 'DEFLATE',
-                         '--config', 'INTERLEAVE_OVERVIEW', 'BAND',
                          tif_path]
     subprocess.check_call(overviews_command)
 
