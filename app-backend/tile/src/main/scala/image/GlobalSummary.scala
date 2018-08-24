@@ -1,29 +1,26 @@
 package com.azavea.rf.tile.image
 
-import com.azavea.rf.tile._
-import com.azavea.rf.datamodel.{MosaicDefinition, SceneType}
+import java.util.UUID
+
+import cats.data._
+import cats.effect.IO
+import cats.implicits._
+import com.azavea.rf.common.utils.CogUtils
 import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.common.utils.{RangeReaderUtils, CogUtils}
-import geotrellis.raster._
-import geotrellis.vector.io._
-import geotrellis.spark.io._
-import geotrellis.spark._
+import com.azavea.rf.datamodel.{MosaicDefinition, SceneType}
+import com.azavea.rf.tile._
+import com.typesafe.scalalogging.LazyLogging
+import doobie.util.transactor.Transactor
 import geotrellis.proj4._
-import geotrellis.vector.Extent
-import geotrellis.raster.io.geotiff._
+import geotrellis.raster._
 import geotrellis.raster.reproject._
-import geotrellis.raster.io.geotiff.reader.GeoTiffReader
+import geotrellis.spark._
+import geotrellis.spark.io._
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 import geotrellis.spark.tiling._
-import com.typesafe.scalalogging.LazyLogging
-import cats.data._
-import cats.implicits._
-import cats.effect.IO
-import doobie.util.transactor.Transactor
+import geotrellis.vector.Extent
+import geotrellis.vector.io._
 
-import java.net.URI
-import java.util.UUID
-import scala.math
 import scala.concurrent._
 import scala.util._
 
@@ -46,7 +43,7 @@ object GlobalSummary extends LazyLogging {
   }
 
   /** Get the minimum zoom level for a single scene from which a histogram can be constructed without
-    *  losing too much information (too much being defined by the 'size' threshold)
+    * losing too much information (too much being defined by the 'size' threshold)
     */
   def minAcceptableSceneZoom(sceneId: UUID, store: AttributeStore, size: Int): Option[(Extent, Int)] = {
     def startZoom(zoom: Int): Option[(Extent, Int)] = {
@@ -60,17 +57,19 @@ object GlobalSummary extends LazyLogging {
         else startZoom(zoom + 1).orElse(Some(meta.extent, currentId.zoom))
       }
     }
+
     startZoom(1)
   }
+
   /** Get the minimum zoom level for a single scene from which a histogram can be constructed without
-    *  losing too much information (too much being defined by the 'size' threshold)
+    * losing too much information (too much being defined by the 'size' threshold)
     */
   def minAcceptableCogZoom(uri: String, size: Int): OptionT[Future, (Extent, Int)] = {
     // This is currently somewhat hacky because Tiffs are quite different than fleshed out layers
     // In particular, the `int` here is not a zoom but an index to this Cog's least resolute overview
     for {
       tiff <- CogUtils.fromUri(uri)
-      minOverview <- OptionT.fromOption[Future]{
+      minOverview <- OptionT.fromOption[Future] {
         tiff.overviews.headOption.map { _ =>
           tiff.overviews.maxBy(_.cellSize.resolution)
         }
@@ -88,7 +87,7 @@ object GlobalSummary extends LazyLogging {
   }
 
   /** Get the minimum zoom level for a project from which a histogram can be constructed without
-    *  losing too much information (too much being defined by the 'size' threshold)
+    * losing too much information (too much being defined by the 'size' threshold)
     */
   def minAcceptableProjectZoom(
     projId: UUID,
@@ -109,7 +108,7 @@ object GlobalSummary extends LazyLogging {
         }
       )
     }).map({ zoomsAndExtents =>
-      println(s"ZOOMANDEXTENTS: ${zoomsAndExtents}")
+      logger.debug(s"ZOOMANDEXTENTS: $zoomsAndExtents")
       zoomsAndExtents.flatten.reduce({ (agg, next) =>
         val e1 = agg._1
         val e2 = next._1
