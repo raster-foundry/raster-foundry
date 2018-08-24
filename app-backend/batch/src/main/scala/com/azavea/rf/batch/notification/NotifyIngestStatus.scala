@@ -14,6 +14,7 @@ import com.azavea.rf.datamodel._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
+import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import org.apache.commons.mail.Email
 

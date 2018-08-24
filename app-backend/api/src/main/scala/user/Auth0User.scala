@@ -14,6 +14,7 @@ import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
+import doobie.postgres.implicits._
 import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.syntax._

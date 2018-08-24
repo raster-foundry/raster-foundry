@@ -15,6 +15,7 @@ import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.datamodel._
 import doobie._
 import doobie.implicits._
+import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import io.circe.Decoder.Result
 import io.circe._
