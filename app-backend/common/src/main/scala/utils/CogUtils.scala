@@ -33,7 +33,7 @@ import java.net.URLDecoder
 
 object CogUtils {
   lazy val cacheConfig = CommonConfig.memcached
-  lazy val memcachedClient = KryoMemcachedClient.DEFAULT
+  lazy val memcachedClient = KryoMemcachedClient.default
   lazy val rfCache = new CacheClient(memcachedClient)
 
   private val TmsLevels: Array[LayoutDefinition] = {

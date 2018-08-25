@@ -32,7 +32,7 @@ case class TagWithTTL(tag: String, ttl: Duration)
 object Mosaic extends LazyLogging with KamonTrace {
   implicit lazy val xa = RFTransactor.xa
 
-  lazy val memcachedClient = KryoMemcachedClient.DEFAULT
+  lazy val memcachedClient = KryoMemcachedClient.default
   val rfCache = new CacheClient(memcachedClient)
 
   def apply(

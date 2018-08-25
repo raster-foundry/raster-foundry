@@ -13,7 +13,7 @@ object KryoMemcachedClient {
   def apply(addrs: InetSocketAddress): KryoMemcachedClient =
     new KryoMemcachedClient(addrs)
 
-  def DEFAULT: KryoMemcachedClient =
+  def default: KryoMemcachedClient =
     KryoMemcachedClient(new InetSocketAddress(Config.memcached.host, Config.memcached.port))
 }
 
