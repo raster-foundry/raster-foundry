@@ -60,6 +60,7 @@ class ProjectsSceneBrowserController {
         this.sceneList = [];
         this.sceneCount = null;
         this.planetThumbnailUrls = new Map();
+        this.scenesBeingAdded = [];
 
         this.setBboxParam = _.debounce((bbox) => {
             this.$location.search('bbox', bbox).replace();
@@ -330,6 +331,26 @@ class ProjectsSceneBrowserController {
     gotoProjectScenes() {
         this.selectNoScenes();
         this.$state.go('projects.edit.scenes');
+    }
+
+    addSceneToProject(scene) {
+        this.scenesBeingAdded.push(scene.id);
+        return this.currentRepository
+            .service
+            .addToProject(this.project.id, [scene])
+            .then(() => {
+                this.$scope.$evalAsync(() => {
+                    this.scenesBeingAdded = this.scenesBeingAdded.filter(s => s !== scene.id);
+                    this.projectSceneIds.push(scene.id);
+                });
+            })
+            .finally(() => {
+                this.$parent.getAndReorderSceneList();
+            });
+    }
+
+    isAddingScene(scene) {
+        return this.scenesBeingAdded.includes(scene.id);
     }
 }
 
