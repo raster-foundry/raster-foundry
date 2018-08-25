@@ -8,7 +8,7 @@ import geotrellis.vector.{Extent, Point, Polygon, Projected}
 object TileUtils extends LazyLogging {
   private val tileSize = 256.0
 
-  case class TileCoordinates(z: Int, x: Int, y: Int) {
+  final case class TileCoordinates(z: Int, x: Int, y: Int) {
     lazy val children: Seq[TileCoordinates] =
       Seq(
         TileCoordinates(z + 1, x * 2, y * 2),

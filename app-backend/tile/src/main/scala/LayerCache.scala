@@ -59,7 +59,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
   val system = AkkaSystem.system
   implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
 
-  lazy val memcachedClient = KryoMemcachedClient.DEFAULT
+  lazy val memcachedClient = KryoMemcachedClient.default
 
   val rfCache = new CacheClient(memcachedClient)
   val store = PostgresAttributeStore()

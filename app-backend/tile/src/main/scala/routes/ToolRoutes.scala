@@ -51,7 +51,7 @@ class ToolRoutes extends Authentication
 
   implicit lazy val xa = RFTransactor.xa
 
-  lazy val memcachedClient = KryoMemcachedClient.DEFAULT
+  lazy val memcachedClient = KryoMemcachedClient.default
   val rfCache = new CacheClient(memcachedClient)
 
   val providedRamps = Map(

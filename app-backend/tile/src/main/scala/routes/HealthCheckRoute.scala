@@ -17,7 +17,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Random, Success, Try}
 
 object HealthCheckRoute extends LazyLogging {
-  lazy val memcachedClient: KryoMemcachedClient = KryoMemcachedClient.DEFAULT
+  lazy val memcachedClient: KryoMemcachedClient = KryoMemcachedClient.default
   implicit val xa: HikariTransactor[IO] = RFTransactor.xa
 
   def root: Route =
