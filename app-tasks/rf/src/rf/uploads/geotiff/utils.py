@@ -22,7 +22,7 @@ def convert_to_cog(prefix, fname):
 
     # Add overviews to the tiled tif
     overviews_cmd = [
-        'gdaladdo', '-r', 'average', '--config', 'INTERLEAVE_OVERVIEW', 'BAND',
+        'gdaladdo', '-r', 'average',
         '--config', 'COMPRESS_OVERVIEW', 'DEFLATE',
         os.path.join(prefix, 'translated.tif')
     ]
@@ -31,8 +31,7 @@ def convert_to_cog(prefix, fname):
     cog_cmd = [
         'gdal_translate',
         os.path.join(prefix, 'translated.tif'), cog_path, '-co', 'TILED=YES',
-        '-co', 'COMPRESS=DEFLATE', '-co', 'COPY_SRC_OVERVIEWS=YES', '-co',
-        'INTERLEAVE=BAND'
+        '-co', 'COMPRESS=DEFLATE', '-co', 'COPY_SRC_OVERVIEWS=YES'
     ]
 
     logger.info('Tiling input tif')

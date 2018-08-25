@@ -59,6 +59,11 @@
        tooltip-class="rf-tooltip" tooltip-side="bottom">
     </i>
   </li>
+  <li class="separator" ng-if="$ctrl.projectAoi">
+    <span class="label">AOI is active</span>
+    <rf-toggle value="$ctrl.projectAoi.isActive" on-change="$ctrl.toggleAoiActive()">
+    </rf-toggle>
+  </li>
 </ul>
 <div class="sidebar-content" ng-if="$ctrl.project">
   <button class="btn btn-block"

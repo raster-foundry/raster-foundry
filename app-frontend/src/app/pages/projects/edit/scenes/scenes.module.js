@@ -105,7 +105,6 @@ class ProjectsScenesController {
     sceneOrderTracker(scene) {
         Object.assign(scene, {'$$hashKey': scene.id});
         return scene.$$hashKey;
-
     }
 
     checkPendingImports() {

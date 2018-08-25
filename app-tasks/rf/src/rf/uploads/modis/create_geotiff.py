@@ -73,7 +73,7 @@ def create_geotiffs(modis_path, output_directory):
 
     # Generate overviews
     overview_command = [
-        'gdaladdo', '--config', 'INTERLEAVE_OVERVIEW', 'BAND', '--config',
+        'gdaladdo', '--config',
         'COMPRESS_OVERVIEW', 'DEFLATE', warped_tif_path
     ]
 
@@ -81,7 +81,7 @@ def create_geotiffs(modis_path, output_directory):
     translate_cog_command = [
         'gdal_translate', warped_tif_path, '-a_nodata', '-28672', '-co',
         'TILED=YES', '-co', 'COMPRESS=LZW', '-co', 'COPY_SRC_OVERVIEWS=YES',
-        '-co', 'INTERLEAVE=BAND', cog_tif_filepath
+        cog_tif_filepath
     ]
 
     logger.info('Creating tifs for Subdatasets: %s',
