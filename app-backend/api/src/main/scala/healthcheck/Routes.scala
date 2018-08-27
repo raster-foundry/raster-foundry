@@ -11,7 +11,6 @@ import doobie.util.transactor.Transactor
 import org.postgresql.util.PSQLException
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
