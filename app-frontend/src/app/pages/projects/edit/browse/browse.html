@@ -12,22 +12,30 @@
   </div>
 </div>
 <div class="list-group" ng-if="!$ctrl.fetchingScenes">
-  <ul class="sidebar-list">
-    <li ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneList.length">
-      <div class="alert alert-secondary">
-        <div class="alert-message">{{$ctrl.$parent.pendingSceneList.length}} scenes awaiting approval</div>
-        <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
-      </div>
-      <div class="alert alert-secondary" ng-if="$ctrl.currentRepository.external">
-        <div class="alert-message">Any scenes added from this repository will be added to </div>
-        <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
-      </div>
-    </li>
-  </ul>
+  <div class="list-group-item no-border"
+       ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneList.length"
+  >
+    <div class="alert alert-secondary">
+      <div class="alert-message">{{$ctrl.$parent.pendingSceneList.length}} scenes awaiting approval</div>
+      <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
+    </div>
+  </div>
+  <div class="list-group-item"
+       ng-if="$ctrl.currentRepository && !$ctrl.currentRepository.service.defaultRepository"
+  >
+    <div class="alert alert-default">
+      <div class="alert-message">Any scenes added from this repository will also appear in your imports</div>
+    </div>
+  </div>
   <div class="list-group-item" ng-if="$ctrl.sceneCount">
     <strong class="color-dark">
-      {{$ctrl.sceneCount}} scenes found. Showing {{$ctrl.sceneList.length}}.
+      1 - {{$ctrl.sceneList.length}} of {{$ctrl.sceneCount}} scenes
     </strong>
+    <div class="list-group-right">
+      <button class="btn btn-tiny"
+              ng-click="$ctrl.addVisibleScenesToProject()"
+      >Add all listed scenes</button>
+    </div>
   </div>
   <div class="list-group-item" ng-if="$ctrl.fetchError">
     <strong class="color-danger">
@@ -65,8 +73,18 @@
       ng-mouseleave="$ctrl.removeHoveredScene()"
       ng-repeat="scene in $ctrl.sceneList track by scene.id"
   >
+    <div class="scene-item-lock"
+         tooltips
+         tooltip-template="This imagery requires additional access {{$ctrl.currentRepository.service.permissionSource}}."
+         tooltip-size="small"
+         tooltip-class="rf-tooltip"
+         tooltip-side="left"
+         ng-if="!$ctrl.hasDownloadPermission(scene)"
+    >
+      <span class="icon-locked"></span>
+    </div>
     <button class="btn-tiny btn"
-            ng-if="!$ctrl.isInProject(scene) && !$ctrl.scenesBeingAdded.includes(scene.id)"
+            ng-if="!$ctrl.isInProject(scene) && !$ctrl.scenesBeingAdded.includes(scene.id) && $ctrl.hasDownloadPermission(scene)"
             ng-click="$ctrl.addSceneToProject(scene)"
     >
       <i class="icon-plus"></i>
