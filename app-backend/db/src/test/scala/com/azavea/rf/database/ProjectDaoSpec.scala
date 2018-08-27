@@ -108,8 +108,8 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
 
           val projDeleteIO = projInsertWithUserIO flatMap {
             case (dbProject: Project, dbUser: User) => {
-              ProjectDao.deleteProject(dbProject.id, dbUser) flatMap {
-                _ => ProjectDao.getProjectById(dbProject.id, Some(dbUser))
+              ProjectDao.deleteProject(dbProject.id) flatMap {
+                _ => ProjectDao.getProjectById(dbProject.id)
               }
             }
           }
@@ -174,7 +174,6 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
                 // this.get is safe because the arbitrary instance only produces NELs
                 (dbScenes map {_.id}).toNel.get,
                 dbProject.id,
-                dbUser,
                 true
               )
             }
@@ -208,7 +207,7 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
 
           val addScenesWithProjectAndUserAndScenesIO = projAndScenesInsertWithUserIO flatMap {
             case (dbProject: Project, dbScenes: List[Scene.WithRelated], dbUser: User) => {
-              ProjectDao.addScenesToProject(dbScenes map { _.id }, dbProject.id, dbUser) map {
+              ProjectDao.addScenesToProject(dbScenes map { _.id }, dbProject.id) map {
                 _ => (dbProject, dbUser, dbScenes)
               }
             }
@@ -216,7 +215,7 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
 
           val listAddedSceneIDsIO = addScenesWithProjectAndUserAndScenesIO flatMap {
             case (dbProject: Project, dbUser: User, dbScenes: List[Scene.WithRelated]) => {
-              ProjectDao.listProjectSceneOrder(dbProject.id, pageRequest, dbUser) map {
+              ProjectDao.listProjectSceneOrder(dbProject.id, pageRequest) map {
                 (resp: PaginatedResponse[UUID]) => (resp.results, dbScenes map { _.id })
               }
             }
@@ -254,7 +253,7 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
               val sceneIds = dbScenes map {_.id}
               ProjectDao.addScenesToProject(
                 // this.get is safe because the arbitrary instance only produces NELs
-                (dbScenes map {_.id}).toNel.get, dbProject.id, dbUser, true) flatMap {
+                (dbScenes map {_.id}).toNel.get, dbProject.id, true) flatMap {
                 _ => ProjectDao.deleteScenesFromProject(dbScenes map {_.id}, dbProject.id) map {
                   _ => (dbProject, dbUser)
                 }
@@ -264,7 +263,7 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
 
           val listAddedSceneIDsIO = addAndDeleteScenesWithProjectAndUserIO flatMap {
             case (dbProject: Project, dbUser: User) => {
-              ProjectDao.listProjectSceneOrder(dbProject.id, pageRequest, dbUser) map {
+              ProjectDao.listProjectSceneOrder(dbProject.id, pageRequest) map {
                 (resp: PaginatedResponse[UUID]) => resp.results
               }
             }

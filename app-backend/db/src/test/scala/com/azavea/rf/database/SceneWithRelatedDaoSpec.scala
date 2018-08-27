@@ -34,9 +34,9 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
 
           val scenesListIO = scenesInsertWithUserProjectIO flatMap {
             case (dbScenes: List[Scene.WithRelated], dbUser: User, dbProject: Project) => {
-              ProjectDao.addScenesToProject(dbScenes map { _.id }, dbProject.id, dbUser) flatMap {
+              ProjectDao.addScenesToProject(dbScenes map { _.id }, dbProject.id) flatMap {
                 _ => {
-                  SceneWithRelatedDao.listProjectScenes(dbProject.id, page, csq, dbUser) map {
+                  SceneWithRelatedDao.listProjectScenes(dbProject.id, page, csq) map {
                     (paginatedResponse: PaginatedResponse[Scene.WithRelated]) => (dbScenes, paginatedResponse.results)
                   }
                 }
@@ -105,7 +105,7 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
 
           val scenesToIngestIO = scenesInsertWithUserProjectIO flatMap {
             case (dbScenes: List[Scene.WithRelated], dbUser: User, dbProject: Project) => {
-              ProjectDao.addScenesToProject(dbScenes map { _.id }, dbProject.id, dbUser) flatMap {
+              ProjectDao.addScenesToProject(dbScenes map { _.id }, dbProject.id) flatMap {
                 _ => SceneWithRelatedDao.getScenesToIngest(dbProject.id) map {
                   (ingestableScenes: List[Scene.WithRelated]) => {
                     (dbScenes, ingestableScenes)

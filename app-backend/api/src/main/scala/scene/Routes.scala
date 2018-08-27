@@ -152,7 +152,7 @@ trait SceneRoutes extends Authentication
 
   def getScene(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.authViewQuery(user, ObjectType.Scene)
+      SceneDao.authViewQuery(user)
         .filter(sceneId)
         .exists
         .transact(xa)
@@ -160,7 +160,7 @@ trait SceneRoutes extends Authentication
     } {
       rejectEmptyResponse {
         complete {
-          SceneWithRelatedDao.getScene(sceneId, user).transact(xa).unsafeToFuture
+          SceneWithRelatedDao.getScene(sceneId).transact(xa).unsafeToFuture
         }
       }
     }
@@ -202,7 +202,7 @@ trait SceneRoutes extends Authentication
         .transact(xa)
         .unsafeToFuture
     } {
-      onSuccess(SceneWithRelatedDao.getScene(sceneId, user).transact(xa).unsafeToFuture) { scene =>
+      onSuccess(SceneWithRelatedDao.getScene(sceneId).transact(xa).unsafeToFuture) { scene =>
         complete {
           scene.getOrElse {
             throw new Exception("Scene does not exist or is not accessible by this user")
@@ -263,7 +263,7 @@ trait SceneRoutes extends Authentication
 
   def listUserSceneActions(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.authViewQuery(user, ObjectType.Scene)
+      SceneDao.authViewQuery(user)
         .filter(sceneId)
         .exists
         .transact(xa).unsafeToFuture
@@ -272,7 +272,7 @@ trait SceneRoutes extends Authentication
         case true => complete(List("*"))
         case false =>
           onSuccess(
-            SceneWithRelatedDao.unsafeGetScene(sceneId, user).transact(xa).unsafeToFuture
+            SceneWithRelatedDao.unsafeGetScene(sceneId).transact(xa).unsafeToFuture
           ) { scene =>
             scene.owner == user.id match {
               case true => complete(List("*"))
@@ -298,7 +298,7 @@ trait SceneRoutes extends Authentication
 
   def getSceneDatasource(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.authViewQuery(user, ObjectType.Scene)
+      SceneDao.authViewQuery(user)
         .filter(sceneId)
         .exists
         .transact(xa)
@@ -318,7 +318,7 @@ trait SceneRoutes extends Authentication
       thumbnailQueryParameters {
         thumbnailParams => {
           authorizeAsync {
-            SceneDao.authViewQuery(user, ObjectType.Scene)
+            SceneDao.authViewQuery(user)
               .filter(sceneId)
               .exists
               .transact(xa)

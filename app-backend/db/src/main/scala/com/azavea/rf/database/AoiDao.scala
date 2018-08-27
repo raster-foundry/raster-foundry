@@ -1,28 +1,23 @@
 package com.azavea.rf.database
 
+import java.util.UUID
+
+import cats.implicits._
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util._
 import com.azavea.rf.datamodel._
-
 import com.lonelyplanet.akka.http.extensions.PageRequest
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-import io.circe._
-import geotrellis.vector.{MultiPolygon, Projected}
-
-import com.lonelyplanet.akka.http.extensions.PageRequest
-
-import scala.concurrent.Future
-import java.sql.Timestamp
-import java.util.{Date, UUID}
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 
 object AoiDao extends Dao[AOI] {
 
   val tableName = "aois"
 
-  val selectF =
+  val selectF: Fragment =
     sql"""
       SELECT
         id, created_at, modified_at,
@@ -37,7 +32,7 @@ object AoiDao extends Dao[AOI] {
   def getAoiById(id: UUID): ConnectionIO[Option[AOI]] =
     query.filter(id).selectOption
 
-  def updateAOI(aoi: AOI, id: UUID, user: User): ConnectionIO[Int] = {
+  def updateAOI(aoi: AOI, user: User): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
         modified_at = NOW(),
         modified_by = ${user.id},
@@ -71,7 +66,7 @@ object AoiDao extends Dao[AOI] {
   }
 
   // TODO embed shape into aoi
-  def listAOIs(projectId: UUID, user: User, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] =
+  def listAOIs(projectId: UUID, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] =
     query.filter(fr"project_id = ${projectId}").page(page)
 
   def listAuthorizedAois(user: User, aoiQueryParams: AoiQueryParameters, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] = {
@@ -91,7 +86,7 @@ object AoiDao extends Dao[AOI] {
     } yield { aois }
   }
 
-  def deleteAOI(id: UUID, user: User): ConnectionIO[Int]= {
+  def deleteAOI(id: UUID): ConnectionIO[Int]= {
     (
       fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(Some(fr"id = ${id}"))
     ).update.run

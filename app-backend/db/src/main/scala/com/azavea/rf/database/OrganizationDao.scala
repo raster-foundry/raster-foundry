@@ -1,44 +1,41 @@
 package com.azavea.rf.database
 
+import java.io.ByteArrayInputStream
+import java.sql.Timestamp
+import java.util.UUID
+
+import cats.implicits._
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+import com.amazonaws.services.s3.model.{CannedAccessControlList, ObjectMetadata}
+import com.amazonaws.services.s3.{AmazonS3Client => AWSAmazonS3Client}
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
-import geotrellis.spark.io.s3.AmazonS3Client
-import com.amazonaws.services.s3.{AmazonS3Client => AWSAmazonS3Client}
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-import com.amazonaws.services.s3.model.{ObjectMetadata, CannedAccessControlList}
-
+import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
-import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.PageRequest
-
-import java.util.UUID
-import java.sql.Timestamp
+import geotrellis.spark.io.s3.AmazonS3Client
 import org.apache.commons.codec.binary.{Base64 => ApacheBase64}
-import java.io.ByteArrayInputStream
-
-import scala.concurrent.Future
-import com.typesafe.scalalogging.LazyLogging
-import scala.util.Properties
 
 
 object OrganizationDao extends Dao[Organization] with LazyLogging {
 
   val tableName = "organizations"
 
-  val selectF = sql"""
+  val selectF: Fragment = sql"""
     SELECT
       id, created_at, modified_at, name, platform_id, status,
       dropbox_credential, planet_credential, logo_uri, visibility
     FROM
   """ ++ tableF
 
-  def createUserGroupRole = UserGroupRoleDao.createWithGuard(userIsAdmin, GroupType.Organization) _
+  def createUserGroupRole
+    : (UUID,
+       User, String, UserGroupRole.Create,
+       UUID,
+       ConnectionIO[Boolean]) => ConnectionIO[UserGroupRole] = UserGroupRoleDao.createWithGuard(userIsAdmin, GroupType.Organization)
 
   def create(org: Organization): ConnectionIO[Organization] = {
 
@@ -63,7 +60,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     create(newOrg.toOrganization(true))
 
   def update(org: Organization, id: UUID): ConnectionIO[Int] = {
-    val updateTime = new Timestamp((new java.util.Date()).getTime)
+    val updateTime = new Timestamp(new java.util.Date().getTime)
 
     (fr"UPDATE" ++ tableF ++ fr"""SET
          modified_at = ${updateTime},
@@ -82,11 +79,10 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     }
     usersPage <- UserGroupRoleDao.listUsersByGroup(GroupType.Organization, organizationId,
       page, searchParams, actingUser, Some(fr"ORDER BY ugr.membership_status, ugr.group_role"))
-    maybeSanitized = isDefaultOrg match {
-      case true => usersPage.copy(
-        results = usersPage.results map { _.copy(email = "") }
-      )
-      case false => usersPage
+    maybeSanitized = if (isDefaultOrg) {
+      usersPage.copy(results = usersPage.results map { _.copy(email = "") })
+    } else {
+      usersPage
     }
   } yield { maybeSanitized }
 
@@ -103,7 +99,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     """).query[Boolean].option.map(_.getOrElse(false))
 
 
-  def userIsMemberF(user: User, organizationId: UUID ) = fr"""
+  def userIsMemberF(user: User, organizationId: UUID ): Fragment = fr"""
     SELECT (
         SELECT is_superuser
         FROM """ ++ UserDao.tableF ++ fr"""
@@ -135,7 +131,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
   def userIsMember(user: User, organizationId: UUID): ConnectionIO[Boolean] =
     userIsMemberF(user, organizationId).query[Boolean].option.map(_.getOrElse(false))
 
-  def userIsAdminF(user: User, organizationId: UUID) = fr"""
+  def userIsAdminF(user: User, organizationId: UUID): Fragment = fr"""
     SELECT (
         SELECT is_superuser
         FROM """ ++ UserDao.tableF ++ fr"""
@@ -190,7 +186,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
 
   def addLogo(logoBase64: String, orgID: UUID, dataBucket: String): ConnectionIO[Organization] = {
     val prefix = "org-logos"
-    val key = s"${orgID.toString()}.png"
+    val key = s"${orgID.toString}.png"
     val logoByte = ApacheBase64.decodeBase64(logoBase64)
     val logoStream = new ByteArrayInputStream(logoByte)
     val md = new ObjectMetadata()
@@ -204,7 +200,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     s3.setObjectAcl(dataBucket, s"${prefix}/${key}", CannedAccessControlList.PublicRead)
 
     val uri = s"https://s3.amazonaws.com/${dataBucket}/${prefix}/${key}"
-    val updateTime = new Timestamp((new java.util.Date()).getTime)
+    val updateTime = new Timestamp(new java.util.Date().getTime)
     (fr"UPDATE" ++ tableF ++ fr"""SET
          modified_at = ${updateTime},
          logo_uri = ${uri}
@@ -215,15 +211,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
      )
   }
 
-  def setVisibility(visibility: Visibility, organizationId: UUID): ConnectionIO[Int] = {
-    val updateTime = new Timestamp((new java.util.Date()).getTime)
-    (fr"UPDATE" ++ tableF ++ fr"""
-        modified_at = ${updateTime},
-        visibility = ${visibility}
-        """).update.run
-  }
-
-  def activateOrganization(actingUser: User, organizationId: UUID) = {
+  def activateOrganization(organizationId: UUID): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"""SET
        status = 'ACTIVE'::org_status,
        modified_at = now()
@@ -231,7 +219,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
       """).update.run
   }
 
-  def deactivateOrganization(actingUser: User, organizationId: UUID) = {
+  def deactivateOrganization(organizationId: UUID): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"""SET
        status = 'INACTIVE'::org_status,
        modified_at = now()
@@ -247,11 +235,10 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
    */
   def viewFilter(user: User): Dao.QueryBuilder[Organization] =
     Dao.QueryBuilder[Organization](
-      user.isSuperuser match {
-        case true =>
-          selectF
-        case _ =>
-          (selectF ++ fr"""
+      if (user.isSuperuser) {
+        selectF
+      } else {
+        selectF ++ fr"""
         JOIN (
           -- user is member or admin of org
           SELECT ugr1.group_id as org_id
@@ -276,7 +263,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
             WHERE ugr3.user_id = ${user.id}
           ) AS platformids ON org2.platform_id = platformids.pid
           WHERE org2.visibility = 'PUBLIC'
-        ) AS org_ids ON """ ++ Fragment.const(s"${tableName}.id") ++ fr"= org_ids.org_id")
+        ) AS org_ids ON """ ++ Fragment.const(s"${tableName}.id") ++ fr"= org_ids.org_id"
       }, tableF, List.empty
     )
 

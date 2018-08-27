@@ -76,7 +76,7 @@ class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTest
           }
           val annotationsListForProjectIO = annotationsInsertWithUserAndProjectIO flatMap {
             case (dbUser: User, dbProject: Project, annotations: List[Annotation]) => {
-              AnnotationDao.listAnnotationsForProject(dbProject.id, dbUser) map {
+              AnnotationDao.listAnnotationsForProject(dbProject.id) map {
                 (annotations, _)
               }
             }
@@ -112,9 +112,9 @@ class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTest
               val newAnnotation = annotationUpdate.copy(verifiedBy = Some(verifier.id)).toAnnotation(
                 dbProject.id, dbUser, firstAnnotation.annotationGroup
               ).copy(id=annotationId)
-              AnnotationDao.updateAnnotation(newAnnotation, annotationId, dbUser) flatMap {
+              AnnotationDao.updateAnnotation(newAnnotation, dbUser) flatMap {
                 (affectedRows: Int) => {
-                  AnnotationDao.unsafeGetAnnotationById(annotationId, dbUser) map {
+                  AnnotationDao.unsafeGetAnnotationById(annotationId) map {
                     (affectedRows, _, verifier)
                   }
                 }
@@ -147,7 +147,7 @@ class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTest
               AnnotationDao.insertAnnotations(
                 annotations, dbProject.id, dbUser
               ) flatMap {
-                _ => AnnotationDao.listProjectLabels(dbProject.id, dbUser)
+                _ => AnnotationDao.listProjectLabels(dbProject.id)
               }
             }
           }

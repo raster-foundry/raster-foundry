@@ -413,7 +413,7 @@ trait ProjectRoutes extends Authentication
         .authorized(user, ObjectType.Project, projectId, ActionType.Delete)
         .transact(xa).unsafeToFuture
     } {
-      onSuccess(ProjectDao.deleteProject(projectId, user).transact(xa).unsafeToFuture) {
+      onSuccess(ProjectDao.deleteProject(projectId).transact(xa).unsafeToFuture) {
         completeSingleOrNotFound
       }
     }
@@ -426,7 +426,7 @@ trait ProjectRoutes extends Authentication
         .transact(xa).unsafeToFuture
     } {
       complete {
-        AnnotationDao.listProjectLabels(projectId, user).transact(xa).unsafeToFuture
+        AnnotationDao.listProjectLabels(projectId).transact(xa).unsafeToFuture
       }
     }
   }
@@ -573,7 +573,7 @@ trait ProjectRoutes extends Authentication
         .transact(xa).unsafeToFuture
     } {
       entity(as[Annotation.GeoJSON]) { updatedAnnotation: Annotation.GeoJSON =>
-        onSuccess(AnnotationDao.updateAnnotation(updatedAnnotation.toAnnotation, annotationId, user).transact(xa).unsafeToFuture) { count =>
+        onSuccess(AnnotationDao.updateAnnotation(updatedAnnotation.toAnnotation, user).transact(xa).unsafeToFuture) { count =>
           completeSingleOrNotFound(count)
         }
       }
@@ -612,7 +612,7 @@ trait ProjectRoutes extends Authentication
     } {
       withPagination { page =>
         complete {
-          AoiDao.listAOIs(projectId, user, page).transact(xa).unsafeToFuture
+          AoiDao.listAOIs(projectId, page).transact(xa).unsafeToFuture
         }
       }
     }
@@ -670,7 +670,7 @@ trait ProjectRoutes extends Authentication
     } {
       (withPagination & sceneQueryParameters) { (page, sceneParams) =>
         complete {
-          SceneWithRelatedDao.listProjectScenes(projectId, page, sceneParams, user).transact(xa).unsafeToFuture
+          SceneWithRelatedDao.listProjectScenes(projectId, page, sceneParams).transact(xa).unsafeToFuture
         }
       }
     }
@@ -685,7 +685,7 @@ trait ProjectRoutes extends Authentication
     } {
       withPagination { page =>
         complete {
-          ProjectDao.listProjectSceneOrder(projectId, page, user).transact(xa).unsafeToFuture
+          ProjectDao.listProjectSceneOrder(projectId, page).transact(xa).unsafeToFuture
         }
       }
     }
@@ -778,7 +778,7 @@ trait ProjectRoutes extends Authentication
         if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
           complete(StatusCodes.RequestEntityTooLarge)
         }
-        val scenesAdded = ProjectDao.addScenesToProject(sceneIds, projectId, user, true)
+        val scenesAdded = ProjectDao.addScenesToProject(sceneIds, projectId, true)
         val scenesToIngest = SceneWithRelatedDao.getScenesToIngest(projectId)
         val x: ConnectionIO[List[Scene.WithRelated]] = for {
           _ <- scenesAdded
@@ -801,7 +801,7 @@ trait ProjectRoutes extends Authentication
         .transact(xa).unsafeToFuture
     } {
       entity(as[CombinedSceneQueryParams]) { combinedSceneQueryParams =>
-        onSuccess(ProjectDao.addScenesToProjectFromQuery(combinedSceneQueryParams, projectId, user).transact(xa).unsafeToFuture()) {
+        onSuccess(ProjectDao.addScenesToProjectFromQuery(combinedSceneQueryParams, projectId).transact(xa).unsafeToFuture()) {
           scenesAdded => {
             val ingestsKickoff = SceneWithRelatedDao.getScenesToIngest(projectId) map {
               toIngest: List[Scene.WithRelated] => {
@@ -834,7 +834,7 @@ trait ProjectRoutes extends Authentication
         sceneIds.toList.toNel match {
           case Some(ids) => {
             complete {
-              ProjectDao.replaceScenesInProject(ids, projectId, user).transact(xa).unsafeToFuture()
+              ProjectDao.replaceScenesInProject(ids, projectId).transact(xa).unsafeToFuture()
             }
           }
           case _ => complete(StatusCodes.BadRequest)

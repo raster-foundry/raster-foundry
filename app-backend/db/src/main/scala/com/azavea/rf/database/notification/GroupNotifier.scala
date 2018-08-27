@@ -1,15 +1,14 @@
 package com.azavea.rf.database.notification
 
-import com.azavea.rf.database.notification.templates._
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
-
-import cats.implicits._
-import doobie.ConnectionIO
-
 import java.util.UUID
 
-case class GroupNotifier(
+import cats.implicits._
+import com.azavea.rf.database._
+import com.azavea.rf.database.notification.templates._
+import com.azavea.rf.datamodel._
+import doobie.ConnectionIO
+
+final case class GroupNotifier(
   platformId: UUID,
   groupId: UUID,
   groupType: GroupType,
@@ -31,7 +30,10 @@ case class GroupNotifier(
     messageType match {
       case MessageType.GroupRequest =>
         UserGroupRoleDao.listByGroupAndRole(groupType, groupId, GroupRole.Admin) flatMap {
-          (userGroupRoles: List[UserGroupRole]) => UserDao.getUsersByIds(userGroupRoles.map((ugr: UserGroupRole) => ugr.userId))
+          userGroupRoles: List[UserGroupRole] =>
+            UserDao.getUsersByIds(
+              userGroupRoles.map((ugr: UserGroupRole) => ugr.userId)
+            )
         }
       case MessageType.GroupInvitation =>
         UserDao.unsafeGetUserById(subjectId).map((usr: User) => List(usr))

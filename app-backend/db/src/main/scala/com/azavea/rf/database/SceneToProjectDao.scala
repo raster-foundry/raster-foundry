@@ -2,30 +2,23 @@ package com.azavea.rf.database
 
 import java.util.UUID
 
+import cats.data._
+import cats.implicits._
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.{BatchParams, ColorCorrect, MosaicDefinition, SceneToProject, SceneToProjectwithSceneType}
+import com.typesafe.scalalogging.LazyLogging
+import doobie.Fragments._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
-import cats.implicits._
-import com.typesafe.scalalogging.LazyLogging
-import geotrellis.vector.{MultiPolygon, Polygon, Projected}
-import geotrellis.raster.histogram._
-import doobie.Fragments._
-import doobie.Fragments._
-
-import scala.concurrent.Future
-import scala.util.Properties
+import geotrellis.vector.{Polygon, Projected}
 
 object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
 
   val tableName = "scenes_to_projects"
 
-  val selectF = sql"""
+  val selectF: Fragment = sql"""
     SELECT
       scene_id, project_id, accepted, scene_order, mosaic_definition
     FROM
@@ -41,12 +34,12 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
   def acceptScenes(projectId: UUID, sceneIds: List[UUID]): ConnectionIO[Int] = {
     sceneIds.toNel match {
       case Some(ids) => acceptScenes(projectId, ids)
-      case _ => 0.pure[ConnectionIO]
+      case _         => 0.pure[ConnectionIO]
     }
   }
 
   def acceptScenes(projectId: UUID, sceneIds: NonEmptyList[UUID]): ConnectionIO[Int] = {
-    val updateF: Fragment =fr"""
+    val updateF: Fragment = fr"""
       UPDATE scenes_to_projects
       SET accepted = true
     """ ++ Fragments.whereAnd(

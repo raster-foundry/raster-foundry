@@ -31,7 +31,7 @@ class SceneToProjectDaoSpec extends FunSuite with Matchers with Checkers with DB
             scenesInsert <- (scenes map { fixupSceneCreate(dbUser, datasource, _) }).traverse(
               (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
             )
-            _ <- ProjectDao.addScenesToProject(scenesInsert map { _.id }, dbProject.id, dbUser, false)
+            _ <- ProjectDao.addScenesToProject(scenesInsert map { _.id }, dbProject.id, false)
             acceptedSceneCount <- SceneToProjectDao.acceptScenes(dbProject.id, scenesInsert map { _.id })
             stps <- SceneToProjectDao.query.filter(fr"project_id = ${dbProject.id}").list
           } yield (acceptedSceneCount, stps)
