@@ -148,7 +148,17 @@ object ProjectDao extends Dao[Project] {
   def updateProject(project: Project,
                     id: UUID,
                     user: User): ConnectionIO[Int] = {
-    updateProjectQ(project, id, user).run
+    for {
+      // User must have access to the project by the time they get here, so it exists
+      dbProject <- unsafeGetProjectById(id)
+      updateSceneOrder <- (project.manualOrder, dbProject.manualOrder) match {
+        case (true, false) =>
+          SceneToProjectDao.addSceneOrdering(id)
+        case _ =>
+          0.pure[ConnectionIO]
+      }
+      updateProject <- updateProjectQ(project, id, user).run
+    } yield updateProject
   }
 
   def deleteProject(id: UUID): ConnectionIO[Int] = {
@@ -283,39 +293,6 @@ object ProjectDao extends Dao[Project] {
           .asJson
       )
     )
-  }
-
-  def listProjectSceneOrder(
-      projectId: UUID,
-      pr: PageRequest): ConnectionIO[PaginatedResponse[UUID]] = {
-    val projectQuery = query.filter(projectId).select
-    val selectIdF = fr"SELECT scene_id "
-    val countIdF = fr"SELECT count(*) "
-    val joinF =
-      fr"FROM scenes_to_projects INNER JOIN scenes ON scene_id = scenes.id WHERE project_id = ${projectId}"
-    val orderQ = projectQuery.map { project =>
-      if (project.manualOrder) {
-        joinF ++ fr"ORDER BY scene_order ASC, scene_id ASC"
-      } else {
-        joinF ++ fr"ORDER BY acquisition_date ASC, cloud_cover ASC"
-      }
-    }
-
-    for {
-      ordered <- orderQ
-      page <- (selectIdF ++ ordered ++ Page(pr)).query[UUID].to[List]
-      count <- (countIdF ++ joinF).query[Int].unique
-    } yield {
-      val hasPrevious = pr.offset > 0
-      val hasNext = (pr.offset * pr.limit) + 1 < count
-
-      PaginatedResponse[UUID](count,
-                              hasPrevious,
-                              hasNext,
-                              pr.offset,
-                              pr.limit,
-                              page)
-    }
   }
 
   def replaceScenesInProject(sceneIds: NonEmptyList[UUID],

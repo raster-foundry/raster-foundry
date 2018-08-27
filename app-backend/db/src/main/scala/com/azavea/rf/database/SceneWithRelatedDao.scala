@@ -2,6 +2,7 @@ package com.azavea.rf.database
 
 import java.util.UUID
 
+import cats.data._
 import cats.implicits._
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.{Scene, User, _}
@@ -17,42 +18,10 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
 
   val selectF: doobie.Fragment = SceneDao.selectF
 
-  def listProjectScenes(projectId: UUID,
-                        pageRequest: PageRequest,
-                        sceneParams: CombinedSceneQueryParams)
-    : ConnectionIO[PaginatedResponse[Scene.WithRelated]] = {
-    val andPendingF: Fragment = sceneParams.sceneParams.pending match {
-      case Some(true) => fr"AND accepted = false"
-      case _          => fr"AND accepted = true"
-    }
-    val projectFilterFragment: Fragment = fr"""
-      id IN (
-        SELECT scene_id
-        FROM scenes_to_projects
-        WHERE
-          project_id = ${projectId}""" ++ andPendingF ++ fr")"
-    val queryFilters = makeFilters(List(sceneParams)).flatten ++ List(
-      Some(projectFilterFragment))
-    SceneDao.query.filter(queryFilters).page(pageRequest) flatMap {
-      pr: PaginatedResponse[Scene] =>
-        scenesToScenesWithRelated(pr.results.toList).map(
-          scenesWithRelated =>
-            PaginatedResponse[Scene.WithRelated](
-              pr.count,
-              pr.hasPrevious,
-              pr.hasNext,
-              pr.page,
-              pr.pageSize,
-              scenesWithRelated
-          )
-        )
-    }
-  }
-
   def listAuthorizedScenes(
       pageRequest: PageRequest,
       sceneParams: CombinedSceneQueryParams,
-      user: User): ConnectionIO[PaginatedResponse[Scene.WithLessRelated]] =
+      user: User): ConnectionIO[PaginatedResponse[Scene.Browse]] =
     for {
       shapeO <- sceneParams.sceneParams.shape match {
         case Some(shpId) => ShapeDao.getShapeById(shpId)
@@ -74,18 +43,19 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
         pageRequest.limit,
         fr"ORDER BY coalesce (acquisition_date, created_at) DESC, id DESC"
       )
-      withRelateds <- scenesToScenesWithLessRelated(scenes)
+      sceneBrowses <- scenesToSceneBrowse(scenes,
+                                          sceneParams.sceneParams.project)
       count <- sceneSearchBuilder.sceneCountIO
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
-      PaginatedResponse[Scene.WithLessRelated](
+      PaginatedResponse[Scene.Browse](
         count,
         hasPrevious,
         hasNext,
         pageRequest.offset,
         pageRequest.limit,
-        withRelateds
+        sceneBrowses
       )
     }
 
@@ -96,6 +66,14 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
         DatasourceDao.query.filter(Fragments.in(fr"id", ids)).list
       case _ => List.empty[Datasource].pure[ConnectionIO]
     }
+
+  def getScenesInProject(sceneIds: NonEmptyList[UUID], projectId: UUID) =
+    (fr"""SELECT id, CASE WHEN sp.project_id IS NULL THEN false ELSE true END as in_project
+             FROM scenes LEFT OUTER JOIN scenes_to_projects sp
+             ON scenes.id = sp.scene_id""" ++
+      Fragments.whereAnd(
+        Fragments.in(fr"scenes.id", sceneIds),
+        fr"sp.project_id = $projectId")).query[(UUID, Boolean)].list
 
   def getScenesImages(
       sceneIds: List[UUID]): ConnectionIO[List[Image.WithRelated]] =
@@ -116,26 +94,46 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
         List.empty[Thumbnail].pure[ConnectionIO]
     }
 
+  def getSceneToProjects(sceneIds: List[UUID],
+                         projectId: UUID): ConnectionIO[List[SceneToProject]] =
+    sceneIds.toNel match {
+      case Some(ids) =>
+        SceneToProjectDao.query
+          .filter(Fragments.in(fr"scene_id", ids))
+          .filter(fr"project_id=$projectId")
+          .list
+      case _ =>
+        List.empty[SceneToProject].pure[ConnectionIO]
+    }
+
   // We know the datasources list head exists because of the foreign key relationship
   @SuppressWarnings(Array("FilterDotHead", "TraversableHead"))
-  def scenesToScenesWithLessRelated(
-      scenes: List[Scene]): ConnectionIO[List[Scene.WithLessRelated]] = {
+  def scenesToSceneBrowse(
+      scenes: List[Scene],
+      projectIdO: Option[UUID]): ConnectionIO[List[Scene.Browse]] = {
     // "The astute among you will note that we don’t actually need a monad to do this;
     // an applicative functor is all we need here."
     // let's roll, doobie
-    val componentsIO: ConnectionIO[(List[Thumbnail], List[Datasource])] = {
+    val componentsIO: ConnectionIO[
+      (List[Thumbnail], List[Datasource], List[(UUID, Boolean)])] = {
       val thumbnails = getScenesThumbnails(scenes map { _.id })
       val datasources = getScenesDatasources(scenes map { _.datasource })
-      (thumbnails, datasources).tupled
+      val inProjects = (scenes.toNel, projectIdO) match {
+        case (Some(s), Some(p)) =>
+          getScenesInProject(s map { _.id }, p)
+        case _ => List.empty[(UUID, Boolean)].pure[ConnectionIO]
+      }
+      (thumbnails, datasources, inProjects).tupled
     }
 
     componentsIO map {
-      case (thumbnails, datasources) =>
+      case (thumbnails, datasources, inProjects) =>
         val groupedThumbs = thumbnails.groupBy(_.sceneId)
         scenes map { scene: Scene =>
-          scene.withLessRelatedFromComponents(
+          scene.browseFromComponents(
             groupedThumbs.getOrElse(scene.id, List.empty[Thumbnail]),
-            datasources.filter(_.id == scene.datasource).head
+            datasources.filter(_.id == scene.datasource).head,
+            inProjects.filter(_._1 == scene.id).headOption.map(_._2)
           )
         }
     }
@@ -237,5 +235,4 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     : List[List[Option[Fragment]]] = {
     myList.map(filterable.toFilters(_))
   }
-
 }

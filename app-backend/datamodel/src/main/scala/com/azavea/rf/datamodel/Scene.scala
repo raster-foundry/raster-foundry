@@ -81,10 +81,11 @@ final case class Scene(
       this.sceneType
     )
 
-  def withLessRelatedFromComponents(
+  def browseFromComponents(
       thumbnails: List[Thumbnail],
-      datasource: Datasource
-  ): Scene.WithLessRelated = Scene.WithLessRelated(
+      datasource: Datasource,
+      inProject: Option[Boolean]
+  ): Scene.Browse = Scene.Browse(
     this.id,
     this.createdAt,
     this.createdBy,
@@ -103,7 +104,35 @@ final case class Scene(
     this.ingestLocation,
     this.filterFields,
     this.statusFields,
-    this.sceneType
+    this.sceneType,
+    inProject
+  )
+
+  def projectSceneFromComponents(
+      thumbnails: List[Thumbnail],
+      datasource: Datasource,
+      sceneToProject: Option[SceneToProject]
+  ): Scene.ProjectScene = Scene.ProjectScene(
+    this.id,
+    this.createdAt,
+    this.createdBy,
+    this.modifiedAt,
+    this.modifiedBy,
+    this.owner,
+    this.visibility,
+    this.tags,
+    datasource.toThin,
+    this.sceneMetadata,
+    this.name,
+    this.tileFootprint,
+    this.dataFootprint,
+    this.metadataFiles,
+    thumbnails.toList,
+    this.ingestLocation,
+    this.filterFields,
+    this.statusFields,
+    this.sceneType,
+    sceneToProject.map(_.sceneOrder).flatten
   )
 }
 
@@ -203,7 +232,7 @@ object Scene {
   }
 
   @JsonCodec
-  final case class WithLessRelated(
+  final case class Browse(
       id: UUID,
       createdAt: Timestamp,
       createdBy: String,
@@ -222,7 +251,8 @@ object Scene {
       ingestLocation: Option[String],
       filterFields: SceneFilterFields = new SceneFilterFields(),
       statusFields: SceneStatusFields,
-      sceneType: Option[SceneType] = None
+      sceneType: Option[SceneType] = None,
+      inProject: Option[Boolean] = None
   ) {
     def toScene: Scene =
       Scene(
@@ -246,4 +276,28 @@ object Scene {
         sceneType
       )
   }
+
+  @JsonCodec
+  case class ProjectScene(
+      id: UUID,
+      createdAt: Timestamp,
+      createdBy: String,
+      modifiedAt: Timestamp,
+      modifiedBy: String,
+      owner: String,
+      visibility: Visibility,
+      tags: List[String],
+      datasource: Datasource.Thin,
+      sceneMetadata: Json,
+      name: String,
+      tileFootprint: Option[Projected[MultiPolygon]],
+      dataFootprint: Option[Projected[MultiPolygon]],
+      metadataFiles: List[String],
+      thumbnails: List[Thumbnail],
+      ingestLocation: Option[String],
+      filterFields: SceneFilterFields = new SceneFilterFields(),
+      statusFields: SceneStatusFields,
+      sceneType: Option[SceneType] = None,
+      sceneOrder: Option[Int]
+  )
 }

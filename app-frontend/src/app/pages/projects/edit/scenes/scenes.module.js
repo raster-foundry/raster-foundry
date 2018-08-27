@@ -5,6 +5,7 @@ class ProjectsScenesController {
     constructor( // eslint-disable-line max-params
         $log, $state, $scope, $timeout,
         modalService, projectService, RasterFoundryRepository, uploadService,
+        sceneService, authService,
         platform
     ) {
         'ngInject';
@@ -43,8 +44,40 @@ class ProjectsScenesController {
     }
 
     onSceneDropped(orderedScenes) {
+        // get order using paginator
+        const pagination = this.$parent.pagination;
+        this.$parent.sceneList = this.$parent.sceneList.map(
+            (scene, index) => Object.assign(scene, {sceneOrder: index})
+        );
         let orderedSceneIds = orderedScenes.map(s => s.id);
         this.updateSceneOrder(orderedSceneIds);
+    }
+
+    onMove(scene, position) {
+        function arrayMove(arr, oldIndex, newIndex) {
+            if (newIndex >= arr.length) {
+                let k = newIndex - arr.length + 1;
+                // eslint-disable-next-line
+                while (k--) {
+                    // eslint-disable-next-line
+                    arr.push(undefined);
+                }
+            }
+            arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0]);
+        }
+        let p = position;
+        if (p < 0) {
+            p = 0;
+        } else if (p > this.$parent.pagination.count - 1) {
+            p = this.$parent.pagination.count - 1;
+        }
+
+        arrayMove(
+            this.$parent.sceneList,
+            this.$parent.sceneList.findIndex((s) => s.id === scene.id),
+            p
+        );
+        this.onSceneDropped(this.$parent.sceneList);
     }
 
     removeSceneFromProject(scene, $event) {
@@ -53,7 +86,8 @@ class ProjectsScenesController {
         this.projectService.removeScenesFromProject(this.$parent.projectId, [scene.id]).then(
             () => {
                 this.$parent.removeHoveredScene();
-                this.$parent.getSceneList();
+                this.$parent.fetchPage();
+                this.$parent.layerFromProject();
             },
             () => {
                 this.$log.log('error removing scene from project');
@@ -114,6 +148,31 @@ class ProjectsScenesController {
             pageSize: 0
         }).then(uploads => {
             this.pendingImports = uploads.count;
+        });
+    }
+
+    setHoveredScene(scene) {
+        if (scene !== this.hoveredScene) {
+            this.hoveredScene = scene;
+            this.$parent.getMap().then((map) => {
+                if (scene.sceneType !== 'COG' && scene.statusFields.ingestStatus === 'INGESTED') {
+                    this.$parent.setHoveredScene(scene);
+                } else {
+                    map.setThumbnail(scene, this.repository);
+                }
+            });
+        }
+    }
+
+    removeHoveredScene() {
+        this.$parent.getMap().then((map) => {
+            if (this.hoveredScene.sceneType !== 'COG' &&
+                this.hoveredScene.statusFields.ingestStatus === 'INGESTED') {
+                this.$parent.removeHoveredScene();
+            } else {
+                map.deleteThumbnail();
+            }
+            delete this.hoveredScene;
         });
     }
 }

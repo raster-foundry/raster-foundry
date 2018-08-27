@@ -215,8 +215,11 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
 
           val listAddedSceneIDsIO = addScenesWithProjectAndUserAndScenesIO flatMap {
             case (dbProject: Project, dbUser: User, dbScenes: List[Scene.WithRelated]) => {
-              ProjectDao.listProjectSceneOrder(dbProject.id, pageRequest) map {
-                (resp: PaginatedResponse[UUID]) => (resp.results, dbScenes map { _.id })
+              // TODO test the normal list endpoint here
+              ProjectScenesDao.listProjectScenes(dbProject.id, pageRequest, CombinedSceneQueryParams()) map {
+                (resp: PaginatedResponse[Scene.ProjectScene]) => (
+                  resp.results map { _.id }, dbScenes map { _.id }
+                )
               }
             }
           }
@@ -263,8 +266,8 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
 
           val listAddedSceneIDsIO = addAndDeleteScenesWithProjectAndUserIO flatMap {
             case (dbProject: Project, dbUser: User) => {
-              ProjectDao.listProjectSceneOrder(dbProject.id, pageRequest) map {
-                (resp: PaginatedResponse[UUID]) => resp.results
+              ProjectScenesDao.listProjectScenes(dbProject.id, pageRequest, CombinedSceneQueryParams()) map {
+                (resp: PaginatedResponse[Scene.ProjectScene]) => resp.results
               }
             }
           }

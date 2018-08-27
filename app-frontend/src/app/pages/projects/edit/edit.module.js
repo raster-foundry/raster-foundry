@@ -11,7 +11,7 @@ class ProjectsEditController {
         authService, projectService, projectEditService,
         mapService, mapUtilsService, layerService,
         datasourceService, imageOverlayService, thumbnailService, sceneService,
-        platform
+        platform, paginationService
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -46,7 +46,10 @@ class ProjectsEditController {
                         this.projectUpdateListeners.forEach((wait) => {
                             wait.resolve(project);
                         });
-                        this.getAndReorderSceneList();
+                        this.fetchPage();
+                        this.initColorComposites();
+                        this.layerFromProject();
+
                         if (this.project.isAOIProject) {
                             this.getPendingSceneList();
                         }
@@ -83,19 +86,6 @@ class ProjectsEditController {
         });
     }
 
-    getAndReorderSceneList() {
-        this.projectService.getSceneOrder(this.projectId).then(
-            (res) => {
-                this.orderedSceneIds = res.results;
-            },
-            () => {
-                this.$log.log('error getting ordered scene IDs');
-            }
-        ).finally(() => {
-            this.getSceneList();
-        });
-    }
-
     waitForProject() {
         return this.$q((resolve, reject) => {
             this.projectUpdateListeners.push({resolve, reject});
@@ -108,63 +98,36 @@ class ProjectsEditController {
         });
     }
 
-    getSceneList() {
-        this.sceneRequestState = {loading: true};
-
-        this.sceneListQuery = this.projectService.getAllProjectScenes(
+    fetchPage(page = this.$state.params.page || 1) {
+        this.getIngestingSceneCount();
+        delete this.fetchError;
+        this.sceneList = [];
+        const currentQuery = this.projectService.getProjectScenes(
+            this.projectId,
             {
-                projectId: this.projectId,
-                pending: false
+                pageSize: 30,
+                page: page - 1
             }
-        ).then(
-            ({count: sceneCount, scenes: allScenes}) => {
-                this.sceneCount = sceneCount;
-                if (!this.sceneCount) {
-                    this.orderedSceneIds = [];
-                    this.sceneList = [];
-                    this.sceneLayers = new Map();
-                    this.getMap().then(m => {
-                        m.deleteLayers('Ingested Scenes');
-                        m.deleteLayers('Uningested Scenes');
-                    });
-                    return this.$q.resolve();
-                }
-                this.addUningestedScenesToMap(allScenes.filter(
-                    (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
-                ));
-                return this.projectService.getSceneOrder(this.projectId).then(
-                    (orderedIds) => {
-                        this.orderedSceneIds = orderedIds;
-                        this.sceneList = _(
-                          this.orderedSceneIds.map((id) => _.find(allScenes, {id}))
-                        ).uniqBy('id').compact().value();
-
-
-                        this.sceneLayers = this.sceneList.map(scene => ({
-                            id: scene.id,
-                            layer: this.layerService.layerFromScene(scene, this.projectId)
-                        })).reduce((sceneLayers, {id, layer}) => {
-                            return sceneLayers.set(id, layer);
-                        }, new Map());
-
-                        this.layerFromProject();
-                        this.initColorComposites();
-                        return this.fetchDatasources();
-                    },
-                    (err) => {
-                        this.$log.error('Error while adding scenes to projects', err);
-                    }
-                );
-            },
-            (error) => {
-                this.sceneRequestState.errorMsg = error;
+        ).then((paginatedResponse) => {
+            this.sceneList = paginatedResponse.results;
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page);
+            if (this.currentQuery === currentQuery) {
+                delete this.fetchError;
             }
-        ).finally(() => {
-            this.sceneRequestState.loading = false;
+        }, (e) => {
+            if (this.currentQuery === currentQuery) {
+                this.fetchError = e;
+            }
+        }).finally(() => {
+            if (this.currentQuery === currentQuery) {
+                delete this.currentQuery;
+            }
         });
-
-        return this.sceneListQuery;
+        this.currentQuery = currentQuery;
+        return currentQuery;
     }
+
 
     addUningestedScenesToMap(scenes) {
         this.getMap().then((mapWrapper) => {
@@ -201,16 +164,29 @@ class ProjectsEditController {
 
     getPendingSceneList() {
         if (!this.pendingSceneRequest) {
-            this.pendingSceneRequest = this.projectService.getAllProjectScenes({
-                projectId: this.projectId,
-                pending: true
+            this.pendingSceneRequest = this.projectService.getProjectScenes(this.projectId, {
+                pending: true,
+                pageSize: 30
             });
-            this.pendingSceneRequest.then(({count, scenes: pendingScenes}) => {
-                this.pendingSceneCount = count;
-                this.pendingSceneList = _(pendingScenes).uniqBy('id').compact().value();
+            this.pendingSceneRequest.then((paginatedResponse) => {
+                this.pendingSceneList = paginatedResponse.results;
+                this.pendingScenePagination =
+                    this.paginationService.buildPagination(paginatedResponse);
             });
         }
         return this.pendingSceneRequest;
+    }
+
+    getIngestingSceneCount() {
+        if (!this.pendingIngestingRequest) {
+            this.pendingIngestRequest = this.projectService.getProjectScenes(this.projectId, {
+                ingested: false,
+                pageSize: 0
+            });
+            this.pendingIngestRequest.then((paginatedResponse) => {
+                this.ingesting = this.paginationService.buildPagination(paginatedResponse);
+            });
+        }
     }
 
     layerFromProject() {
@@ -252,7 +228,7 @@ class ProjectsEditController {
     }
 
     initColorComposites() {
-        this.fetchUnifiedComposites(true).then(
+        return this.fetchUnifiedComposites(true).then(
             composites => {
                 this.unifiedComposites = composites;
             }
@@ -261,12 +237,11 @@ class ProjectsEditController {
 
     fetchDatasources(force = false) {
         if (!this.datasourceRequest || force) {
-            this.datasourceRequest = this.$q.all(
-                this.sceneList.map(s => this.sceneService.datasource(s))
-            ).then((datasources) => {
-                this.bands = this.datasourceService.getUnifiedBands(datasources);
-                return datasources;
-            });
+            this.datasourceRequest = this.projectService.getProjectDatasources(this.projectId)
+                .then((datasources) => {
+                    this.bands = this.datasourceService.getUnifiedBands(datasources);
+                    return datasources;
+                });
         }
         return this.datasourceRequest;
     }

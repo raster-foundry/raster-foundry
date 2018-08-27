@@ -184,7 +184,8 @@ trait Filterables extends RFMeta with LazyLogging {
               case _    => fr"ingest_status != 'INGESTED'"
             }),
             sceneParams.ingestStatus.toList.toNel.map({ statuses =>
-              Fragments.in(fr"ingest_status", statuses)
+              Fragments.in(fr"ingest_status",
+                           statuses.map(IngestStatus.fromString(_)))
             }),
             (sceneParams.bboxPolygon, sceneParams.shape) match {
               case (_, Some(shpId)) => None

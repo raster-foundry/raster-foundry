@@ -2,25 +2,35 @@
   <div class="sidebar-header">
     <h5 class="sidebar-title">Color Mode</h5>
     <div class="header-controls">
-      <a ng-hide="($ctrl.projectBuffer && $ctrl.projectBuffer.isSingleBand) || !$ctrl.projectBuffer" ui-sref="projects.edit.advancedcolor"
-        class="btn btn-primary">Corrections</a>
+      <button type="button" class="btn btn-primary"
+              ng-disabled="$ctrl.correctionsDisabled()"
+              ng-click="$ctrl.navToCorrections()">
+        Corrections
+        <span class="icon-info"
+              tooltips
+              tooltip-template="Projects with more than 30 scenes are not currently supported."
+              tooltip-size="small"
+              tooltip-class="rf-tooltip" tooltip-side="left"
+              ng-if="$ctrl.correctionsDisabled()"
+        ></span>
+      </button>
     </div>
   </div>
   <div class="content">
-    <div class="sidebar-actions-group" ng-if="$ctrl.$parent.sceneLayers.size">
+    <div class="sidebar-actions-group" ng-if="$ctrl.$parent.pagination.count">
       <label>Change the visual output</label>
     </div>
-    <div class="sidebar-actions-group" ng-if="!$ctrl.loading && $ctrl.$parent.sceneLayers && !$ctrl.$parent.sceneLayers.size">
+    <div class="sidebar-actions-group" ng-if="!$ctrl.$parent.currentRequest && $ctrl.$parent.pagination && !$ctrl.$parent.pagination.count">
       <label>You must add scenes to this project in order to set a color mapping</label>
     </div>
   </div>
 </div>
-<div class="sidebar-overlay" ng-show="(!$ctrl.corrections || $ctrl.isLoading) && ($ctrl.$parent.sceneLayers && !$ctrl.$parent.sceneLayers.size)">
+<div class="sidebar-overlay" ng-show="(!$ctrl.corrections || $ctrl.$parent.currentRequest) && ($ctrl.$parent.pagination && !$ctrl.$parent.pagination.count)">
   <div class="sidebar-loading">
     <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.isLoading}"></span>
   </div>
 </div>
-<div class="sidebar-scrollable" ng-show="$ctrl.$parent.sceneLayers && $ctrl.$parent.sceneLayers.size">
+<div class="sidebar-scrollable" ng-show="$ctrl.$parent.pagination && $ctrl.$parent.pagination.count">
   <div class="list-group" ng-if="!$ctrl.isLoading">
     <div class="list-group-item flex-column" ng-if="!$ctrl.$parent.bands.length">
         There are currently no bands defined for one or more datasources used in this project.

@@ -21,7 +21,7 @@ const SceneFilterPaneComponent = {
 
 class FilterPaneController {
     constructor(
-        $log, $q, $scope, $rootScope, $compile, $element, $timeout, $location
+        $log, $q, $scope, $rootScope, $compile, $element, $timeout, $location, $state
     ) {
         'ngInject';
         this.$log = $log;
@@ -35,6 +35,7 @@ class FilterPaneController {
         this.filterComponents = [];
         this.initializedFilters = new Set();
         this.firstReset = true;
+        this.$state = $state;
 
         this.$scope.$watch('$ctrl.opened', (opened) => {
             if (opened) {
@@ -126,7 +127,9 @@ class FilterPaneController {
         });
 
         this.debouncedOnRepositoryChange({
-            fetchScenes: this.currentRepository.service.fetchScenes(this.filterParams),
+            fetchScenes: this.currentRepository.service.fetchScenes(
+                this.filterParams, this.$state.params.projectid
+            ),
             repository: this.currentRepository
         });
     }

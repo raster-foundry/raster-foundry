@@ -115,7 +115,7 @@ function projectEditStates($stateProvider) {
     $stateProvider
         .state('projects.edit', {
             title: 'Project: Edit',
-            url: '/edit/:projectid',
+            url: '/edit/:projectid?page',
             params: {project: null},
             views: {
                 'navmenu@root': {
