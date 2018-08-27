@@ -70,17 +70,23 @@ class MultibandMosaicService(
         }
         val paramMap = Map("identity" -> projectNode)
         val result = eval(paramMap, z, x, y).attempt
-        IO.shift(t) *> (authIO, result).tupled flatMap {
-          case (authed, result) =>
-            (authed, result) match {
-              case (Right(true), Right(Valid(tile))) =>
-                Ok(tile.renderPng.bytes)
-              case (Right(true), Right(Invalid(e))) =>
-                BadRequest(e.toString)
-              case (Right(true), Left(e)) =>
-                BadRequest(e.getMessage)
-              case (Left(_), _) | (Right(false), _) =>
+        IO.shift(t) *> authIO flatMap {
+          case authed =>
+            authed match {
+              case (Left(_) | Right(false)) =>
                 Forbidden("get outta here")
+              case Right(true) =>
+                result flatMap {
+                  case result =>
+                    result match {
+                      case Right(Valid(tile)) =>
+                        Ok(tile.renderPng.bytes)
+                      case Right(Invalid(e)) =>
+                        BadRequest(e.toString)
+                      case Left(e) =>
+                        BadRequest(e.getMessage)
+                    }
+                }
             }
         }
     }
