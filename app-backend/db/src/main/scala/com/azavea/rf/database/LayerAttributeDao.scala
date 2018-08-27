@@ -50,7 +50,7 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
           (${layerAttribute.layerName}, ${layerAttribute.zoom}, ${layerAttribute.name}, ${layerAttribute.value})
       ON CONFLICT (layer_name, zoom, name) DO UPDATE set value = ${layerAttribute.value}
       """
-    insertStatement.update.run
+    insertStatement.update.withUniqueGeneratedKeys[LayerAttribute]("layer_name", "zoom", "name", "value")
   }
 
   def layerExists(layerId: LayerId): ConnectionIO[Boolean] = {
