@@ -137,7 +137,7 @@ export default (app) => {
           Function chain:
           (filters) => (bbox) => () => Future(next page of scenes)
         */
-        fetchScenes(filters) {
+        fetchScenes(filters, projectId) {
             if (filters.shape && typeof filters.shape === 'object') {
                 filters.shape = filters.shape.id;
             }
@@ -159,7 +159,8 @@ export default (app) => {
                                 pageSize: '20',
                                 page,
                                 bbox,
-                                maxCreateDatetime: requestTime
+                                maxCreateDatetime: requestTime,
+                                project: projectId
                             }, params)
                         ).then((response) => {
                             // We aren't supporting concurrent scene paged requests

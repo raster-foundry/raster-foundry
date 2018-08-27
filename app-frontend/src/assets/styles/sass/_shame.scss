@@ -3152,3 +3152,22 @@ rf-navbar-search {
 .annotation-upload-error {
   margin-top: 1em;
 }
+
+.list-item-left-actions {
+    a {
+        color: $brand-primary;
+    }
+    a.invert {
+        background-color: $brand-primary;
+        color: $white;
+    }
+}
+
+.scene-item-ordering {position: absolute;
+    .form-control {
+        width: 5em;
+    }
+    .btn {
+        padding: 0.5em;
+    }
+}

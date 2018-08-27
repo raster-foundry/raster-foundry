@@ -86,13 +86,21 @@ export default (app) => {
                         },
                         isArray: true
                     },
+                    projectDatasources: {
+                        method: 'GET',
+                        cache: false,
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/datasources`,
+                        params: {
+                            projectId: '@projectId'
+                        },
+                        isArray: true
+                    },
                     projectScenes: {
                         method: 'GET',
                         cache: false,
                         url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/scenes`,
                         params: {
-                            projectId: '@projectId',
-                            pending: '@pending'
+                            projectId: '@projectId'
                         }
                     },
                     projectAois: {
@@ -147,6 +155,13 @@ export default (app) => {
                     updateSceneOrder: {
                         method: 'PUT',
                         url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/order/`,
+                        params: {
+                            projectId: '@projectId'
+                        }
+                    },
+                    colorMode: {
+                        method: 'POST',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/project-color-mode/`,
                         params: {
                             projectId: '@projectId'
                         }
@@ -275,10 +290,6 @@ export default (app) => {
             ).$promise;
         }
 
-        getProjectScenes(params) {
-            return this.Project.projectScenes(params).$promise;
-        }
-
         getProjectCorners(projectId) {
             return this.getAllProjectScenes({projectId: projectId}).then(({scenes}) => {
                 let corners = {
@@ -310,60 +321,79 @@ export default (app) => {
             });
         }
 
+        getProjectScenes(projectId, params = {}) {
+            return this.Project.projectScenes(
+                Object.assign({}, {
+                    projectId,
+                    pending: false,
+                    page: 0,
+                    pageSize: 30
+                }, params)
+            ).$promise;
+        }
+
+        getProjectDatasources(projectId) {
+            return this.Project.projectDatasources({projectId}).$promise;
+        }
+
+
         /** Return all scenes in a single collection, making multiple requests if necessary
          *
          * @param {object} params to pass as query params
          * @return {Promise} promise that will resolve when all scenes are available
          */
-        getAllProjectScenes(params) {
-            let pageSize = 30;
-            let firstPageParams = Object.assign({}, params, {
-                pageSize: pageSize,
-                page: 0,
-                sort: 'createdAt,desc'
-            });
-            let firstRequest = this.getProjectScenes(firstPageParams);
+        // getAllProjectScenes(params) {
+        //     let pageSize = 30;
+        //     let firstPageParams = Object.assign({}, params, {
+        //         pageSize: pageSize,
+        //         page: 0
+        //         // sort: 'createdAt,desc'
+        //     });
+        //     let firstRequest = this.getProjectScenes(firstPageParams);
 
-            return firstRequest.then((res) => {
-                const count = res.count;
-                const scenes = res.results;
-                let arraySize = Math.max(Math.floor(count / pageSize) - 1, 0);
-                const requests = Array(arraySize)
-                      .fill().map((x, page) => {
-                          return this.getProjectScenes(Object.assign({}, params, {
-                              pageSize,
-                              page: page + 1,
-                              sort: 'createdAt,desc'
-                          })).then((pageResponse) => pageResponse.results);
-                      });
-                return this.$q.all(requests).then((sceneChunks) => {
-                    return {count, scenes: scenes.concat(_.flatten(sceneChunks))};
-                });
-            });
-        }
+        //     return firstRequest.then((res) => {
+        //         const count = res.count;
+        //         const scenes = res.results;
+        //         let arraySize = Math.max(Math.floor(count / pageSize) - 1, 0);
+        //         const requests = Array(arraySize)
+        //               .fill().map((x, page) => {
+        //                   return this.getProjectScenes(Object.assign({}, params, {
+        //                       pageSize,
+        //                       page: page + 1,
+        //                       sort: 'createdAt,desc'
+        //                   })).then((pageResponse) => pageResponse.results);
+        //               });
+        //         return this.$q.all(requests).then((sceneChunks) => {
+        //             return {count, scenes: scenes.concat(_.flatten(sceneChunks))};
+        //         });
+        //     });
+        // }
 
         getProjectStatus(projectId) {
-            return this.getAllProjectScenes({ projectId }).then(({scenes}) => {
-                if (scenes) {
-                    const counts = scenes.reduce((acc, scene) => {
-                        const ingestStatus = scene.statusFields.ingestStatus;
-                        acc[ingestStatus] = acc[ingestStatus] + 1 || 1;
-                        return acc;
-                    }, {});
-                    if (counts.FAILED) {
-                        return 'FAILED';
-                    } else if (counts.NOTINGESTING || counts.TOBEINGESTED || counts.INGESTING) {
-                        return 'PARTIAL';
-                    } else if (counts.INGESTED) {
-                        return 'CURRENT';
-                    }
+            return this.$q.all({
+                allScenes: this.getProjectScenes(
+                    projectId, {page: 0, pageSize: 0}
+                ),
+                failedScenes: this.getProjectScenes(
+                    projectId, {page: 0, pageSize: 0, ingestStatus: 'FAILED'}
+                ),
+                successScenes: this.getProjectScenes(
+                    projectId, {page: 0, pageSize: 0, ingestStatus: 'INGESTED'}
+                )
+            }).then(({allScenes, failedScenes, successScenes}) => {
+                if (failedScenes.count > 0) {
+                    return 'FAILED';
+                } else if (successScenes.count < allScenes.count) {
+                    return 'PARTIAL';
+                } else if (successScenes.count === allScenes.count && allScenes.count > 0) {
+                    return 'CURRENT';
                 }
                 return 'NOSCENES';
             });
         }
 
         getProjectSceneCount(params) {
-            let countParams = Object.assign({}, params, {pageSize: 1, page: 0});
+            let countParams = Object.assign({}, params, {pageSize: 0, page: 0});
             return this.Project.projectScenes(countParams).$promise;
         }
 
@@ -492,16 +522,16 @@ export default (app) => {
 
         getSceneOrder(projectId) {
             const pageSize = 30;
-            const firtPageParams = {
+            const firstPageParams = {
                 pageSize,
                 page: 0
             };
-            return this.Project.sceneOrder({projectId: projectId})
+            return this.Project.sceneOrder({projectId: projectId}, firstPageParams)
                 .$promise.then((res) => {
                     const scenes = res.results;
                     const count = res.count;
                     let promises = Array(
-                        Math.ceil(count || 1 / pageSize) - 1
+                        Math.ceil((count || 1) / pageSize) - 1
                     ).fill().map((x, page) => {
                         return this.Project.sceneOrder({
                             projectId,
@@ -528,6 +558,10 @@ export default (app) => {
                 method: 'GET',
                 url: `${BUILDCONFIG.API_HOST}/api/projects/${projectId}/annotations/shapefile`
             });
+        }
+
+        setProjectColorMode(projectId, bands) {
+            return this.Project.colorMode({projectId}, bands).$promise;
         }
     }
 

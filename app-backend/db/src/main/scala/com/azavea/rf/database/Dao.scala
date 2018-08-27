@@ -281,7 +281,7 @@ object Dao {
         pageRequest: PageRequest,
         selectF: Fragment,
         countF: Fragment,
-        orderClause: Fragment = fr""): ConnectionIO[PaginatedResponse[T]] = {
+        orderClause: Fragment): ConnectionIO[PaginatedResponse[T]] = {
       for {
         page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ orderClause ++ Page(
           pageRequest)).query[T].to[List]
@@ -302,8 +302,10 @@ object Dao {
     }
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page(pageRequest: PageRequest): ConnectionIO[PaginatedResponse[Model]] =
-      page(pageRequest, selectF, countF)
+    def page(
+        pageRequest: PageRequest,
+        orderClause: Fragment = fr""): ConnectionIO[PaginatedResponse[Model]] =
+      page(pageRequest, selectF, countF, orderClause)
 
     def listQ(pageRequest: PageRequest): Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(Some(pageRequest)))

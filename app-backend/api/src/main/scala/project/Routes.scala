@@ -95,6 +95,15 @@ trait ProjectRoutes
               }
             }
         } ~
+          pathPrefix("project-color-mode") {
+            pathEndOrSingleSlash {
+              post {
+                traceName("project-set-color-mode") {
+                  setProjectColorMode(projectId)
+                }
+              }
+            }
+          } ~
           pathPrefix("labels") {
             pathEndOrSingleSlash {
               get {
@@ -237,6 +246,15 @@ trait ProjectRoutes
                 }
             }
           } ~
+          pathPrefix("datasources") {
+            pathEndOrSingleSlash {
+              get {
+                traceName("project-list-datasources") {
+                  listProjectDatasources(projectId)
+                }
+              }
+            }
+          } ~
           pathPrefix("scenes") {
             pathEndOrSingleSlash {
               get {
@@ -318,17 +336,21 @@ trait ProjectRoutes
           } ~
           pathPrefix("order") {
             pathEndOrSingleSlash {
-              get {
-                traceName("projects-get-scene-order") {
-                  listProjectSceneOrder(projectId)
+              put {
+                traceName("projects-set-scene-order") {
+                  setProjectSceneOrder(projectId)
                 }
-              } ~
-                put {
-                  traceName("projects-set-scene-order") {
-                    setProjectSceneOrder(projectId)
-                  }
-                }
-            }
+              }
+            } // ~
+            // pathPrefix("move") {
+            //   pathPrefix(IntNumber) { from =>
+            //     pathPrefix(IntNumber) { to =>
+            //       traceName("projects-move-scene-order") {
+            //         moveProjectScene(projectId, from, to)
+            //       }
+            //     }
+            //   }
+            // }
           } ~
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
@@ -803,7 +825,7 @@ trait ProjectRoutes
     } {
       (withPagination & sceneQueryParameters) { (page, sceneParams) =>
         complete {
-          SceneWithRelatedDao
+          ProjectScenesDao
             .listProjectScenes(projectId, page, sceneParams)
             .transact(xa)
             .unsafeToFuture
@@ -812,24 +834,39 @@ trait ProjectRoutes
     }
   }
 
-  /** List a project's scenes according to their manually defined ordering */
-  def listProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
+  def listProjectDatasources(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
     } {
-      withPagination { page =>
-        complete {
-          ProjectDao
-            .listProjectSceneOrder(projectId, page)
-            .transact(xa)
-            .unsafeToFuture
-        }
+      complete {
+        ProjectDatasourcesDao
+          .listProjectDatasources(projectId)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
+
+  def moveProjectScene(projectId: UUID, from: Int, to: Int): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        onSuccess(
+          SceneToProjectDao
+            .moveSceneOrder(projectId, from, to)
+            .transact(xa)
+            .unsafeToFuture) { _ =>
+          complete(StatusCodes.NoContent)
+        }
+      }
+    }
 
   /** Set the manually defined z-ordering for scenes within a given project */
   def setProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
@@ -893,6 +930,25 @@ trait ProjectRoutes
         }
       }
     }
+
+  def setProjectColorMode(projectId: UUID) = authenticate { user =>
+    authorizeAsync {
+      ProjectDao.query
+        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      entity(as[ProjectColorModeParams]) { colorBands =>
+        onSuccess(
+          SceneToProjectDao
+            .setProjectColorBands(projectId, colorBands)
+            .transact(xa)
+            .unsafeToFuture) { _ =>
+          complete(StatusCodes.NoContent)
+        }
+      }
+    }
+  }
 
   /** Set color correction parameters for a list of scenes */
   def setProjectScenesColorCorrectParams(projectId: UUID) = authenticate {

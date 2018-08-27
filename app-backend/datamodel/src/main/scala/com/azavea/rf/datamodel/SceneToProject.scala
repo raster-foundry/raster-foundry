@@ -33,3 +33,7 @@ final case class SceneCorrectionParams(sceneId: UUID,
                                        params: ColorCorrect.Params)
 @JsonCodec
 final case class BatchParams(items: List[SceneCorrectionParams])
+@JsonCodec
+final case class ProjectColorModeParams(redBand: Int,
+                                        greenBand: Int,
+                                        blueBand: Int)

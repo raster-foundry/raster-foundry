@@ -2,57 +2,62 @@
   <a ng-if="$ctrl.$parent.project.isAOIProject"
      class="aoi-tag"
      ui-sref="projects.edit.aoi-parameters">
-     <i class="icon-pencil"></i>
-     <span>Edit</span>
-     AOI Parameters
+    <i class="icon-pencil"></i>
+    <span>Edit</span>
+    AOI Parameters
   </a>
   <h5 class="sidebar-title">
     Scenes
-    <ng-pluralize count="$ctrl.$parent.sceneCount"
-                  when="{'0': '(0)',
-                        'one': '(1)',
-                        'other': '({})'
-                        }">
-    </ng-pluralize>
+    (
+    <span ng-show="$ctrl.$parent.pagination.count && $ctrl.$parent.ingesting.count">
+      <ng-pluralize count="$ctrl.$parent.pagination.count - $ctrl.$parent.ingesting.count"
+                    when="{'0': '0 /',
+                           'one': '1 /',
+                           'other': '{} /'
+                           }">
+      </ng-pluralize>
+    </span>
+    {{$ctrl.$parent.pagination.count}}
+    <span ng-if="$ctrl.$parent.ingesting.count && $ctrl.$parent.pagination.count">
+      ingested
+    </span>
+    )
   </h5>
 </div>
 <div class="list-group">
-  <div class="list-group-item no-border"
-       ng-if="$ctrl.pendingImports"
-  >
+  <div class="list-group-item no-border" ng-if="$ctrl.pendingImports ">
     <div class="alert alert-default">
       <div class="alert-message">
         <ng-pluralize count="$ctrl.pendingImports"
-                  when="{'one': '{} import is',
-                        'other': '{} imports are'
-                        }">
+                      when="{'one': '{} import is',
+                             'other': '{} imports are'
+                             }">
         </ng-pluralize> being processed
       </div>
     </div>
   </div>
   <div class="list-group-item no-border"
-       ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneCount"
-  >
+       ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneCount">
     <div class="alert alert-secondary">
       <div class="alert-message">{{$ctrl.$parent.pendingSceneCount}} scenes awaiting approval</div>
       <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
     </div>
   </div>
-  <div class="list-group-item sidebar-actions-group">
-      <label>Add scenes</label>
-      <div class="column-6 nogutter btn-group">
-        <button type="button"
-                class="btn btn-primary"
-                ng-click="$ctrl.gotoBrowse()">
-          Browse
-        </button>
-        <button type="button"
-                ng-click="$ctrl.openImportModal()"
-                class="btn btn-primary">
-          Import
-        </button>
-      </div>
-    </div>
+</div>
+<div class="list-group-item sidebar-actions-group">
+  <label>Add scenes</label>
+  <div class="column-6 nogutter btn-group">
+    <button type="button"
+            class="btn btn-primary"
+            ng-click="$ctrl.gotoBrowse()">
+      Browse
+    </button>
+    <button type="button"
+            ng-click="$ctrl.openImportModal()"
+            class="btn btn-primary">
+      Import
+    </button>
+  </div>
 </div>
 <div class="sidebar-scrollable"
      ui-tree="$ctrl.treeOptions"
@@ -63,16 +68,38 @@
     ui-tree-nodes>
     <rf-scene-item
         previewable
+        scene="scene"
+        repository="$ctrl.repository"
+        ng-mouseover="$ctrl.setHoveredScene(scene)"
+        ng-mouseleave="$ctrl.removeHoveredScene()"
+        ng-repeat="scene in $ctrl.$parent.sceneList track by $ctrl.sceneOrderTracker(scene)"
+        on-move="$ctrl.onMove(scene, position)"
+        ng-if="$ctrl.$parent.pagination.count > 30"
+        ui-tree-node>
+      <button class="btn btn-tiny" ng-click="$ctrl.removeSceneFromProject(scene, $event)">
+        <i class="icon-trash"></i>
+      </button>
+    </rf-scene-item>
+    <rf-scene-item
+        previewable
         draggable
         scene="scene"
         repository="$ctrl.repository"
-        ng-mouseover="$ctrl.$parent.setHoveredScene(scene)"
-        ng-mouseleave="$ctrl.$parent.removeHoveredScene()"
+        ng-mouseover="$ctrl.setHoveredScene(scene)"
+        ng-mouseleave="$ctrl.removeHoveredScene()"
         ng-repeat="scene in $ctrl.$parent.sceneList track by $ctrl.sceneOrderTracker(scene)"
+        on-move="$ctrl.onMove(scene, position)"
+        ng-if="$ctrl.$parent.pagination.count <= 30"
         ui-tree-node>
       <button class="btn btn-tiny" ng-click="$ctrl.removeSceneFromProject(scene, $event)">
         <i class="icon-trash"></i>
       </button>
     </rf-scene-item>
   </div>
+  <rf-pagination-controls
+      pagination="$ctrl.$parent.pagination"
+      is-loading="$ctrl.$parent.currentQuery"
+      on-change="$ctrl.$parent.fetchPage(value)"
+      ng-show="!$ctrl.$parent.currentQuery && !$ctrl.$parent.fetchError"
+  ></rf-pagination-controls>
 </div>

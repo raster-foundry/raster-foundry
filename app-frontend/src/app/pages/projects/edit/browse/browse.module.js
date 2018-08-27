@@ -70,13 +70,11 @@ class ProjectsSceneBrowserController {
             this.$parent.waitForProject().then((project) => {
                 this.project = project;
                 this.initParams();
-                this.getProjectSceneIds();
                 this.initMap();
             });
         } else {
             this.project = this.$parent.project;
             this.initParams();
-            this.getProjectSceneIds();
             this.initMap();
         }
 
@@ -140,14 +138,6 @@ class ProjectsSceneBrowserController {
                 );
             });
         });
-    }
-
-    getProjectSceneIds() {
-        this.projectService.getAllProjectScenes({ projectId: this.project.id })
-            .then(({scenes}) => {
-                this.projectSceneIds = scenes.map(s => s.id);
-                this.projectScenesReady = true;
-            });
     }
 
     onRepositoryChange(bboxFetchFactory, repository) {
@@ -254,11 +244,7 @@ class ProjectsSceneBrowserController {
     }
 
     isInProject(scene) {
-        if (scene && scene.id && this.projectScenesReady) {
-            const index = this.projectSceneIds.indexOf(scene.id);
-            return index >= 0;
-        }
-        return false;
+        return scene && scene.inProject;
     }
 
     gotoProjectScenes() {
@@ -271,10 +257,11 @@ class ProjectsSceneBrowserController {
             .service
             .addToProject(this.project.id, [scene])
             .then(() => {
-                this.projectSceneIds = [...this.projectSceneIds, scene.id];
+                scene.inProject = true;
             })
             .finally(() => {
-                this.$parent.getAndReorderSceneList();
+                this.$parent.fetchPage();
+                this.$parent.layerFromProject();
                 this.scenesBeingAdded = this.scenesBeingAdded.filter(s => s !== scene.id);
             });
     }
@@ -287,17 +274,16 @@ class ProjectsSceneBrowserController {
             .service
             .addToProject(this.project.id, scenesToAdd)
             .then(() => {
-                this.projectSceneIds = [...this.projectSceneIds, ...sceneIdsToAdd];
+                scenesToAdd.forEach(scene => {
+                    scene.inProject = true;
+                });
             })
             .finally(() => {
-                this.$parent.getAndReorderSceneList();
+                this.$parent.fetchPage();
+                this.$parent.layerFromProject();
                 this.scenesBeingAdded =
                     this.scenesBeingAdded.filter(s => sceneIdsToAdd.includes(s));
             });
-    }
-
-    isAddingScene(scene) {
-        return this.scenesBeingAdded.includes(scene.id);
     }
 
     hasDownloadPermission(scene) {

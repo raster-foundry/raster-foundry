@@ -14,6 +14,7 @@ import com.azavea.rf.datamodel.{
 }
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Fragments._
+import com.azavea.rf.datamodel._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -54,6 +55,27 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       Fragments.in(fr"scene_id", sceneIds)
     )
     updateF.update.run
+  }
+
+  def addSceneOrdering(projectId: UUID): ConnectionIO[Int] = {
+    val updateF = fr"""
+    UPDATE scenes_to_projects
+    SET scene_order = rnum
+    (
+    SELECT id, row_number() over (ORDER BY scene_order ASC, acquisition_date ASC, cloud_cover ASC) as rnum,
+    FROM scenes_to_projects join scenes on scenes.id = scene_id where project_id = $projectId
+    ) s
+    WHERE id = s.id
+    """
+    updateF.update.run
+  }
+
+  def moveSceneOrder(projectId: UUID, from: Int, to: Int): ConnectionIO[Int] = {
+    // TODO implement this. Route is currently commented out
+    // val updateF = fr"""
+    // """
+    // updateF.update.run
+    ???
   }
 
   def setManualOrder(projectId: UUID,
@@ -148,5 +170,21 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
         setColorCorrectParams(projectId, params.sceneId, params.params))
       .sequence
     updates
+  }
+
+  def setProjectColorBands(
+      projectId: UUID,
+      colorBands: ProjectColorModeParams): ConnectionIO[Int] = {
+    // TODO support setting color band by datasource instead of project wide
+    // if there is not a mosaic definition at this point, then the scene_to_project row was not created correctly
+    (fr"""
+    UPDATE scenes_to_projects
+    SET mosaic_definition = (mosaic_definition || '{"redBand":""" ++ Fragment
+      .const(s"${colorBands.redBand}") ++
+      fr""", "blueBand":""" ++ Fragment.const(s"${colorBands.blueBand}") ++
+      fr""", "greenBand":""" ++ Fragment.const(s"${colorBands.greenBand}") ++
+      fr"""}'::jsonb)
+    WHERE project_id = $projectId
+    """).update.run
   }
 }
