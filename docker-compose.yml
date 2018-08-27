@@ -102,6 +102,7 @@ services:
     env_file: .env
     environment:
       - RF_HOST=http://rasterfoundry.com:9000
+      - TILE_SERVER_LOCATION=http://localhost:8080
       - LOCAL_INGEST_CORES=2
       - LOCAL_INGEST_MEM_GB=4
     command: rf
