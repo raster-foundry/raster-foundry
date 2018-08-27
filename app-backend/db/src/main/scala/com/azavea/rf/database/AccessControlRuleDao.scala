@@ -1,19 +1,21 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel._
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import doobie.util.transactor.Transactor
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-import io.circe._
-
 import java.util.UUID
 
+import cats.implicits._
+import com.azavea.rf.database.Implicits._
+import com.azavea.rf.datamodel._
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+
+
 object AccessControlRuleDao extends Dao[AccessControlRule] {
+
   val tableName = "access_control_rules"
 
-  val selectF = fr"""
+  val selectF: Fragment = fr"""
         SELECT
             id, created_at, created_by,
             is_active,
@@ -22,7 +24,7 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
         FROM
     """ ++ tableF
 
-  def createF(ac: AccessControlRule) =
+  def createF(ac: AccessControlRule): Fragment =
     fr"INSERT INTO" ++ tableF ++ fr"""(
             id, created_at, created_by,
             is_active,
@@ -39,6 +41,7 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
   def listedByObject(objectType: ObjectType, objectId: UUID): Dao.QueryBuilder[AccessControlRule] =
     query.filter(fr"object_type = ${objectType}").filter(fr"object_id = ${objectId}")
 
+  @SuppressWarnings(Array("ProductWithSerializableInferred"))
   def create(ac: AccessControlRule): ConnectionIO[AccessControlRule] = {
     val objectDao = ac.objectType match {
       case ObjectType.Project    => ProjectDao
@@ -99,7 +102,7 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
 
   def createMany(acrs: List[AccessControlRule]): ConnectionIO[Int] = {
     val acrFragments = acrs map {
-      (acr: AccessControlRule) => fr"""
+      acr: AccessControlRule => fr"""
       (${acr.id}, ${acr.createdAt}, ${acr.createdBy}, ${acr.isActive},
       ${acr.objectType}, ${acr.objectId}, ${acr.subjectType}, ${acr.subjectId},
       ${acr.actionType})
@@ -115,7 +118,7 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
     val insertManyFragment = {
       fr"INSERT INTO" ++ tableF ++
         fr"(id, created_at, created_by, is_active, object_type, object_id, subject_type, subject_id, action_type) VALUES" ++
-       acrValues
+        acrValues
     }
 
     insertManyFragment.update.run
@@ -123,7 +126,7 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
 
   def createWithResults(acr: AccessControlRule): ConnectionIO[List[AccessControlRule]] = {
     create(acr) >>= {
-      (dbAcr: AccessControlRule) => {
+      dbAcr: AccessControlRule => {
         listByObject(dbAcr.objectType, dbAcr.objectId)
       }
     }

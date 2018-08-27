@@ -1,15 +1,14 @@
 package com.azavea.rf.database.notification
 
-import com.azavea.rf.database.notification.templates._
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
-
-import cats.implicits._
-import doobie.ConnectionIO
-
 import java.util.UUID
 
-case class UploadNotifier(
+import cats.implicits._
+import com.azavea.rf.database._
+import com.azavea.rf.database.notification.templates._
+import com.azavea.rf.datamodel._
+import doobie.ConnectionIO
+
+final case class UploadNotifier(
   platformId: UUID,
   uploadId: UUID,
   messageType: MessageType
@@ -23,10 +22,11 @@ case class UploadNotifier(
     }
   }
 
-  def userFinder(messageType: MessageType): ConnectionIO[List[User]] = for {
-    upload <- UploadDao.unsafeGetUploadById(uploadId)
-    owner <- UserDao.unsafeGetUserById(upload.owner)
-  } yield { List(owner) }
+  def userFinder(messageType: MessageType): ConnectionIO[List[User]] =
+    for {
+      upload <- UploadDao.unsafeGetUploadById(uploadId)
+      owner <- UserDao.unsafeGetUserById(upload.owner)
+    } yield { List(owner) }
 
   def send: ConnectionIO[Either[Throwable, Unit]] =
     Notify.sendNotification(platformId, messageType, builder, userFinder).attempt

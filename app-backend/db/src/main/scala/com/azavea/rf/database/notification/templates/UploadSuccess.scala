@@ -1,18 +1,14 @@
 package com.azavea.rf.database.notification.templates
 
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
+import java.util.UUID
 
 import cats.implicits._
+import com.azavea.rf.database._
+import com.azavea.rf.datamodel._
 import doobie.ConnectionIO
 import doobie.implicits._
 
-import java.util.UUID
-
-case class UploadSuccess(
-  uploadId: UUID,
-  platformId: UUID
-) {
+final case class UploadSuccess(uploadId: UUID, platformId: UUID) {
   def build: ConnectionIO[EmailData] = {
     for {
       platform <- PlatformDao.unsafeGetPlatformById(platformId)
@@ -20,8 +16,8 @@ case class UploadSuccess(
       upload <- UploadDao.unsafeGetUploadById(uploadId)
       owner <- UserDao.unsafeGetUserById(upload.owner)
       uploadProject <- upload.projectId match {
-        case Some(id) => ProjectDao.getProjectById(id, Some(owner))
-        case _ => None.pure[ConnectionIO]
+        case Some(id) => ProjectDao.getProjectById(id)
+        case _        => None.pure[ConnectionIO]
       }
     } yield {
       val signature = s"- The ${platform.name} Team"

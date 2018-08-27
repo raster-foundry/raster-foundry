@@ -67,7 +67,7 @@ trait AoiRoutes extends Authentication
       AoiDao.authorize(id, user, ActionType.Edit).transact(xa).unsafeToFuture
     } {
       entity(as[AOI]) { aoi =>
-        onSuccess(AoiDao.updateAOI(aoi, id, user).transact(xa).unsafeToFuture) {
+        onSuccess(AoiDao.updateAOI(aoi, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -78,7 +78,7 @@ trait AoiRoutes extends Authentication
     authorizeAsync {
       AoiDao.authorize(id, user, ActionType.Edit).transact(xa).unsafeToFuture
     } {
-      onSuccess(AoiDao.deleteAOI(id, user).transact(xa).unsafeToFuture) {
+      onSuccess(AoiDao.deleteAOI(id).transact(xa).unsafeToFuture) {
         completeSingleOrNotFound
       }
     }

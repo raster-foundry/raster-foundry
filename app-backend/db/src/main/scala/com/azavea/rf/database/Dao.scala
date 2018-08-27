@@ -1,22 +1,21 @@
 package com.azavea.rf.database
 
+import java.util.UUID
+
+import cats.implicits._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.filter.Filterables
 import com.azavea.rf.database.util._
 import com.azavea.rf.datamodel._
-import com.azavea.rf.database.Implicits._
-
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PageRequest
-
-import scala.concurrent.Future
-import java.util.UUID
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 /**
- * This is abstraction over the listing of arbitrary types from the DB with filters/pagination
- */
+  * This is abstraction over the listing of arbitrary types from the DB with filters/pagination
+  */
 abstract class Dao[Model: Composite] extends Filterables {
 
   val tableName: String
@@ -104,11 +103,11 @@ abstract class Dao[Model: Composite] extends Filterables {
 
 object Dao {
 
-  case class QueryBuilder[Model: Composite](selectF: Fragment, tableF: Fragment, filters: List[Option[Fragment]]) {
+  final case class QueryBuilder[Model: Composite](selectF: Fragment, tableF: Fragment, filters: List[Option[Fragment]]) {
 
-    val countF = fr"SELECT count(distinct(id)) FROM" ++ tableF
-    val deleteF = fr"DELETE FROM" ++ tableF
-    val existF = fr"SELECT 1 FROM" ++ tableF
+    val countF: Fragment = fr"SELECT count(distinct(id)) FROM" ++ tableF
+    val deleteF: Fragment = fr"DELETE FROM" ++ tableF
+    val existF: Fragment = fr"SELECT 1 FROM" ++ tableF
 
     /** Add another filter to the query being constructed */
     def filter[M >: Model, T](thing: T)(implicit filterable: Filterable[M, T]): QueryBuilder[Model] =
@@ -117,14 +116,14 @@ object Dao {
     def filter[M >: Model](thing: Fragment)(implicit filterable: Filterable[M, Fragment]): QueryBuilder[Model] =
       thing match {
         case Fragment.empty => this
-        case _ => this.copy(filters = filters ++ filterable.toFilters(thing))
+        case _              => this.copy(filters = filters ++ filterable.toFilters(thing))
       }
 
     def filter[M >: Model](id: UUID)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
       this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
     }
 
-    def filter[M >: Model](fragments: List[Option[Fragment]])(implicit filterable: Filterable[M, List[Option[Fragment]]]): QueryBuilder[Model] = {
+    def filter[M >: Model](fragments: List[Option[Fragment]]): QueryBuilder[Model] = {
       this.copy(filters = filters ::: fragments)
     }
 
@@ -141,12 +140,11 @@ object Dao {
     }
 
     // Filter to validate access on an object type
-    def authorizeF[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): Option[Fragment] = {
+    def authorizeF[M >: Model](user: User, objectType: ObjectType, actionType: ActionType): Option[Fragment] = {
       if (user.isSuperuser) {
         Some(fr"true")
       } else {
-        Some(
-          fr"""id IN (
+        Some(fr"""id IN (
             -- Collect objects owned by the user
             SELECT A.id
             FROM""" ++ tableF ++ fr"""AS A
@@ -178,8 +176,7 @@ object Dao {
               ugr.user_id = ${user.id} AND
               acr.object_type = ${objectType} AND
               acr.action_type = ${actionType}
-          )"""
-        )
+          )""")
       }
     }
 
@@ -197,8 +194,9 @@ object Dao {
           visibility = 'PUBLIC' OR"""
         case _ => fr""
       }
-      this.copy(filters = filters ++ filterable.toFilters(Some(
-        fr"(" ++ scenePublicF ++ fr"""
+      this.copy(
+        filters = filters ++ filterable
+          .toFilters(Some(fr"(" ++ scenePublicF ++ fr"""
           -- Match if the user owns the object
           owner = ${user.id} OR
           -- Match if the user is a super user
@@ -237,8 +235,8 @@ object Dao {
               acr.action_type = ${actionType}
             LIMIT 1
           )
-        )"""
-      )))
+        )"""))
+      )
     }
 
     def pageOffset[T: Composite](pageRequest: PageRequest): ConnectionIO[List[T]] =
@@ -277,11 +275,9 @@ object Dao {
           .query[Boolean]
           .unique
       over100IO flatMap {
-        (exists: Boolean) => {
-          exists match {
-            case true => 100.pure[ConnectionIO]
-            case false => countQuery.query[Int].unique
-          }
+        {
+          case true  => 100.pure[ConnectionIO]
+          case false => countQuery.query[Int].unique
         }
       }
     }
@@ -336,7 +332,6 @@ object Dao {
       }
     }
 
-
     def delete: ConnectionIO[Int] = {
       deleteQOption
         .getOrElse(throw new Exception("Unsafe delete - delete requires filters"))
@@ -347,7 +342,7 @@ object Dao {
       (existF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT 1")
         .query[Int]
         .to[List]
-        .map(!_.isEmpty)
+        .map(_.nonEmpty)
     }
 
     def authorized(user: User, objectType: ObjectType, objectId: UUID, actionType: ActionType): ConnectionIO[Boolean] = {

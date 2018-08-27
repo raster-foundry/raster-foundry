@@ -1,26 +1,22 @@
 package com.azavea.rf.database
 
+import java.util.UUID
+
+import cats.implicits._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util._
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-import geotrellis.vector.Geometry
-import com.lonelyplanet.akka.http.extensions.PageRequest
-
-import scala.concurrent.Future
-import java.sql.Timestamp
-import java.util.{Date, UUID}
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 
 object AnnotationDao extends Dao[Annotation] {
 
   val tableName = "annotations"
 
-  val selectF =
+  val selectF: Fragment =
     fr"""
       SELECT
         id, project_id, created_at, created_by, modified_at, modified_by, owner,
@@ -29,11 +25,11 @@ object AnnotationDao extends Dao[Annotation] {
       FROM
     """ ++ tableF
 
-  def unsafeGetAnnotationById(annotationId: UUID, user: User): ConnectionIO[Annotation] = {
+  def unsafeGetAnnotationById(annotationId: UUID): ConnectionIO[Annotation] = {
     query.filter(annotationId).select
   }
 
-  def listAnnotationsForProject(projectId: UUID, user: User): ConnectionIO[List[Annotation]] = {
+  def listAnnotationsForProject(projectId: UUID): ConnectionIO[List[Annotation]] = {
 fr"""
     SELECT
     id, project_id, created_at, created_by, modified_at, modified_by, owner,
@@ -77,7 +73,7 @@ fr"""
     } yield insertedAnnotations
   }
 
-  def updateAnnotation(annotation: Annotation, id: UUID, user: User): ConnectionIO[Int] = {
+  def updateAnnotation(annotation: Annotation, user: User): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
         modified_at = NOW(),
         modified_by = ${user.id},
@@ -95,7 +91,7 @@ fr"""
     """).update.run
   }
 
-  def listProjectLabels(projectId: UUID, user: User): ConnectionIO[List[String]] = {
+  def listProjectLabels(projectId: UUID): ConnectionIO[List[String]] = {
     (fr"SELECT DISTINCT ON (label) label FROM" ++ tableF ++ Fragments.whereAndOpt(
       Some(fr"project_id = ${projectId}")
     )).query[String].to[List]

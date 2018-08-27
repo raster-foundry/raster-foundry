@@ -62,7 +62,7 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
             shape <- ShapeDao.insertShape(shapeInsert, dbUser)
             dbAoi <- AoiDao.createAOI(fixupAoiCreate(dbUser, dbProject, aoiInsert, shape), dbUser)
             newShape <- ShapeDao.insertShape(shapeUpdate, dbUser)
-            updatedRows <- AoiDao.updateAOI(fixupAoiCreate(dbUser, dbProject, aoiUpdate, newShape).copy(id=dbAoi.id), dbAoi.id, dbUser)
+            updatedRows <- AoiDao.updateAOI(fixupAoiCreate(dbUser, dbProject, aoiUpdate, newShape).copy(id=dbAoi.id), dbUser)
             updatedAoi <- AoiDao.unsafeGetAoiById(dbAoi.id)
           } yield (dbAoi, shape, updatedRows, updatedAoi, newShape) //shape, aoi, dbOrg, dbUser, dbProject, update, updatedRows, updatedAoi)
           val (originalAoi, originalShape, affectedRows, updatedAoi, updatedShape) =
@@ -89,7 +89,7 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
               for {
                 dbShape <- ShapeDao.insertShape(shape, dbUser)
                 dbAoi <- AoiDao.createAOI(fixupAoiCreate(dbUser, dbProject, aoi, dbShape), dbUser)
-                deletedShapes <- AoiDao.deleteAOI(dbAoi.id, dbUser)
+                deletedShapes <- AoiDao.deleteAOI(dbAoi.id)
               } yield deletedShapes
             }
           }
@@ -125,7 +125,7 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
 
           val aoisForProject = aoisInsertWithProjectUserIO flatMap {
             case (dbAois: List[AOI], dbProject: Project, dbUser: User) => {
-              AoiDao.listAOIs(dbProject.id, dbUser, PageRequest(0, 1000, Map.empty)) map {
+              AoiDao.listAOIs(dbProject.id, PageRequest(0, 1000, Map.empty)) map {
                 (dbAois, _)
               }
             }

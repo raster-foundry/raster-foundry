@@ -1,32 +1,21 @@
 package com.azavea.rf.database
 
+import java.sql.Timestamp
+import java.util.{Date, UUID}
+
+import cats.implicits._
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.color._
-import com.azavea.rf.datamodel.{Scene, SceneFilterFields, SceneStatusFields, User, Visibility}
+import com.azavea.rf.datamodel.{Scene, User, _}
+import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
-import cats.implicits._
-import java.util.UUID
 import geotrellis.vector.{Polygon, Projected}
-import geotrellis.raster.histogram._
-import io.circe._
 import io.circe.optics.JsonPath._
-import io.circe.generic.JsonCodec
-import io.circe.syntax._
 
 import scala.concurrent.duration._
-import java.sql.Timestamp
-import java.util.Date
-
-
-import com.typesafe.scalalogging.LazyLogging
-
 
 object SceneDao extends Dao[Scene] with LazyLogging {
 
@@ -34,8 +23,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
 
   val tableName = "scenes"
 
-
-  val selectF = sql"""
+  val selectF: Fragment = sql"""
     SELECT
       id, created_at, created_by, modified_at, modified_by, owner,
       visibility, tags,
@@ -46,13 +34,13 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     FROM
   """ ++ tableF
 
-  def authViewQuery(user: User, objectType: ObjectType, ownershipTypeO: Option[String] = None,
+  def authViewQuery(user: User, ownershipTypeO: Option[String] = None,
     groupTypeO: Option[GroupType] = None, groupIdO: Option[UUID] = None): Dao.QueryBuilder[Scene] = {
     if (user.isSuperuser) {
       Dao.QueryBuilder[Scene](selectF, tableF, List.empty)
     } else {
       val ownedF: Fragment = fr"owner = ${user.id}"
-      val visibilityF: Fragment= fr"visibility = 'PUBLIC'"
+      val visibilityF: Fragment = fr"visibility = 'PUBLIC'"
       val sharedF: Fragment = fr"""
         SELECT acr.object_id
         FROM access_control_rules acr
@@ -75,13 +63,13 @@ object SceneDao extends Dao[Scene] with LazyLogging {
          AND ugr.group_type = ${groupType}
          AND ugr.group_id = ${groupId}
       """
-        case _ => inheritedBaseF
+        case _                                => inheritedBaseF
       }
 
       val authFilter = ownershipTypeO match {
         // owned by the requesting user only
         case Some(ownershipType) if ownershipType == "owned" =>
-          fr"("++ ownedF ++ fr")"
+          fr"(" ++ ownedF ++ fr")"
         // shared to the requesting user directly, across platform, or due to group membership
         case Some(ownershipType) if ownershipType == "shared" =>
           fr"(" ++ visibilityF ++
@@ -89,7 +77,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
             fr"OR id in(" ++ inheritedF ++ fr"))"
         // shared to the requesting user due to group membership
         case Some(ownershipType) if ownershipType == "inherited" =>
-          fr"(id in("++ inheritedF  ++ fr"))"
+          fr"(id in(" ++ inheritedF ++ fr"))"
         // the default
         case _ =>
           fr"(" ++ ownedF ++
@@ -108,10 +96,11 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     query.filter(id).select
 
   def getSceneDatasource(sceneId: UUID): ConnectionIO[Datasource] =
-    unsafeGetSceneById(sceneId) flatMap {
-      (scene: Scene) => DatasourceDao.unsafeGetDatasourceById(scene.datasource)
+    unsafeGetSceneById(sceneId) flatMap { scene: Scene =>
+      DatasourceDao.unsafeGetDatasourceById(scene.datasource)
     }
 
+  @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
   def insert(sceneCreate: Scene.Create, user: User): ConnectionIO[Scene.WithRelated] = {
     val scene = sceneCreate.toScene(user)
     val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id))
@@ -141,7 +130,6 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     val thumbnailInsert = ThumbnailDao.insertMany(thumbnails)
     val imageInsert = ImageDao.insertManyImages(images.map(_._1))
     val bandInsert = BandDao.createMany(bands.flatten)
-    val sceneWithRelatedquery = SceneWithRelatedDao.query.filter(scene.id).select
 
     for {
       sceneId <- sceneInsertId
@@ -149,10 +137,11 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       _ <- imageInsert
       _ <- bandInsert
       // It's fine to do this unsafely, since we know we the prior insert succeeded
-      sceneWithRelated <- SceneWithRelatedDao.unsafeGetScene(sceneId, user)
+      sceneWithRelated <- SceneWithRelatedDao.unsafeGetScene(sceneId)
     } yield sceneWithRelated
   }
 
+  @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
   def insertMaybe(sceneCreate: Scene.Create, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
     val scene = sceneCreate.toScene(user)
     val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id))
@@ -180,11 +169,10 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       )
     """).update.run
 
-
     val thumbnailInsert = ThumbnailDao.insertMany(thumbnails)
     val imageInsert = ImageDao.insertManyImages(images.map(_._1))
     val bandInsert = BandDao.createMany(bands.flatten)
-    val sceneWithRelatedquery = SceneWithRelatedDao.getScene(scene.id, user)
+    val sceneWithRelatedquery = SceneWithRelatedDao.getScene(scene.id)
 
     for {
       _ <- sceneInsert
@@ -231,16 +219,15 @@ object SceneDao extends Dao[Scene] with LazyLogging {
 
     lastModifiedAndIngestIO flatMap {
       case (ts: Timestamp, prevIngestStatus: IngestStatus) =>
-        updateIO map {
-          case n =>
-            (prevIngestStatus, scene.statusFields.ingestStatus) match {
-              case (IngestStatus.ToBeIngested, IngestStatus.ToBeIngested) =>
-                (n, true)
-              case (IngestStatus.Ingesting, IngestStatus.Ingesting) =>
-                (n, ts.getTime < now.getTime - (24 hours).toMillis)
-              case _ =>
-                (n, false)
-            }
+        updateIO map { n =>
+          (prevIngestStatus, scene.statusFields.ingestStatus) match {
+            case (IngestStatus.ToBeIngested, IngestStatus.ToBeIngested) =>
+              (n, true)
+            case (IngestStatus.Ingesting, IngestStatus.Ingesting) =>
+              (n, ts.getTime < now.getTime - (24 hours).toMillis)
+            case _ =>
+              (n, false)
+          }
         }
     }
   }
@@ -248,7 +235,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
   def getMosaicDefinition(sceneId: UUID, polygonO: Option[Projected[Polygon]]): ConnectionIO[Seq[MosaicDefinition]] = {
     val polygonF: Fragment = polygonO match {
       case Some(polygon) => fr"ST_Intersects(tile_footprint, ${polygon})"
-      case _ => fr""
+      case _             => fr""
     }
     for {
       sceneO <- SceneDao.query.filter(sceneId).filter(polygonF).selectOption
@@ -270,12 +257,12 @@ object SceneDao extends Dao[Scene] with LazyLogging {
                   redBandPath.getOption(composites).getOrElse(0),
                   greenBandPath.getOption(composites).getOrElse(1),
                   blueBandPath.getOption(composites).getOrElse(2),
-                  BandGamma(false, None, None, None),
-                  PerBandClipping(false, None, None, None,
+                  BandGamma(enabled = false, None, None, None),
+                  PerBandClipping(enabled = false, None, None, None,
                                   None, None, None),
-                  MultiBandClipping(false, None, None),
-                  SigmoidalContrast(false, None, None),
-                  Saturation(false, None),
+                  MultiBandClipping(enabled = false, None, None),
+                  SigmoidalContrast(enabled = false, None, None),
+                  Saturation(enabled = false, None),
                   Equalization(false),
                   AutoWhiteBalance(false)
                 ),

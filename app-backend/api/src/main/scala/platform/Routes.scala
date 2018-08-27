@@ -286,7 +286,7 @@ trait PlatformRoutes extends Authentication
     } {
       entity(as[Platform]) { platformToUpdate =>
         completeWithOneOrFail {
-          PlatformDao.update(platformToUpdate, platformId, user).transact(xa).unsafeToFuture
+          PlatformDao.update(platformToUpdate, platformId).transact(xa).unsafeToFuture
         }
       }
     }
@@ -592,7 +592,7 @@ trait PlatformRoutes extends Authentication
     PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
   } {
     complete {
-      OrganizationDao.activateOrganization(user, organizationId).transact(xa).unsafeToFuture
+      OrganizationDao.activateOrganization(organizationId).transact(xa).unsafeToFuture
     }
   }
 
@@ -600,7 +600,7 @@ trait PlatformRoutes extends Authentication
     OrganizationDao.userIsAdmin(user, organizationId).transact(xa).unsafeToFuture
   } {
     complete {
-      OrganizationDao.deactivateOrganization(user, organizationId).transact(xa).unsafeToFuture
+      OrganizationDao.deactivateOrganization(organizationId).transact(xa).unsafeToFuture
     }
   }
 }

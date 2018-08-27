@@ -139,7 +139,7 @@ final case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[I
           )
         )
       SceneDao
-        .authViewQuery(user, ObjectType.Scene)
+        .authViewQuery(user)
         .filter(geom)
         .filter(augmentedQueryParams)
         .list
@@ -154,7 +154,7 @@ final case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[I
         sceneIds <- fetchProjectScenes(user, g, startTime, lastChecked, qp.toOption)
         _ <- logger.info(s"Found ${sceneIds.length} scenes").pure[ConnectionIO]
         _ <- updateProjectIO(user, projectId)
-        _ <- ProjectDao.addScenesToProject(sceneIds, projectId, user, false)
+        _ <- ProjectDao.addScenesToProject(sceneIds, projectId, false)
       } yield { projectId }
     }
 

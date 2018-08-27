@@ -1,27 +1,22 @@
 package com.azavea.rf.database
 
+import java.sql.Timestamp
+import java.util.UUID
+
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import doobie.util.transactor.Transactor
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-import io.circe._
-import geotrellis.vector.MultiPolygon
 import com.lonelyplanet.akka.http.extensions.PageRequest
-
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import java.sql.Timestamp
-import java.util.{Date, UUID}
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 
 object DatasourceDao extends Dao[Datasource] {
 
   val tableName = "datasources"
 
-  val selectF = sql"""
+  val selectF: Fragment = sql"""
       SELECT
         distinct(id), created_at, created_by, modified_at, modified_by, owner,
         name, visibility, composites, extras, bands, license_name
@@ -34,15 +29,12 @@ object DatasourceDao extends Dao[Datasource] {
   def getDatasourceById(datasourceId: UUID): ConnectionIO[Option[Datasource]] =
     query.filter(datasourceId).selectOption
 
-  def listDatasources(page: PageRequest, params: DatasourceQueryParameters, user: User): ConnectionIO[PaginatedResponse[Datasource]] = {
+  def listDatasources(page: PageRequest, params: DatasourceQueryParameters): ConnectionIO[PaginatedResponse[Datasource]] = {
     DatasourceDao.query.filter(params)
       .page(page)
   }
 
-  def create(
-    datasource: Datasource,
-    user: User
-  ): ConnectionIO[Datasource] = {
+  def create(datasource: Datasource, user: User): ConnectionIO[Datasource] = {
     val ownerId = util.Ownership.checkOwner(user, Some(datasource.owner))
     (fr"INSERT INTO" ++ tableF ++ fr"""
       (id, created_at, created_by, modified_at, modified_by, owner,
@@ -60,7 +52,7 @@ object DatasourceDao extends Dao[Datasource] {
 
   def updateDatasource(datasource: Datasource, id: UUID, user: User): ConnectionIO[Int] = {
     // fetch datasource so we can check if user is allowed to update (access control)
-    val now = new Timestamp((new java.util.Date()).getTime())
+    val now = new Timestamp(new java.util.Date().getTime)
     val updateQuery =
       fr"UPDATE" ++ this.tableF ++ fr"SET" ++
       fr"""
@@ -77,10 +69,8 @@ object DatasourceDao extends Dao[Datasource] {
     updateQuery.update.run
   }
 
-  def deleteDatasource(id: UUID, user: User): ConnectionIO[Int] = {
-    (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE id = ${id}")
-      .update
-      .run
+  def deleteDatasource(id: UUID): ConnectionIO[Int] = {
+    (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE id = ${id}").update.run
   }
 
   def createDatasource(dsCreate: Datasource.Create, user: User): ConnectionIO[Datasource] = {
@@ -96,21 +86,28 @@ object DatasourceDao extends Dao[Datasource] {
       datasourceO <- DatasourceDao.getDatasourceById(datasourceId)
       isOwner = datasourceO match {
         case Some(datasource) if datasource.owner == user.id => true
-        case _ => false
+        case _                                               => false
       }
       isShared <- AccessControlRuleDao.query
         .filter(fr"object_type = ${objectType}::object_type")
         .filter(fr"object_id = ${datasourceId}")
         .filter(fr"is_active = true")
         .exists
-      hasUpload <- UploadDao.query.filter(fr"datasource = ${datasourceId}").filter(fr"(" ++ Fragments.or(statusF: _*) ++ fr")").exists
-    } yield (isOwner && !isShared && !hasUpload)
+      hasUpload <- UploadDao.query
+        .filter(fr"datasource = ${datasourceId}")
+        .filter(fr"(" ++ Fragments.or(statusF: _*) ++ fr")")
+        .exists
+    } yield isOwner && !isShared && !hasUpload
   }
 
   def deleteDatasourceWithRelated(datasourceId: UUID): ConnectionIO[List[Int]] = {
     for {
-      uDeleteCount <- UploadDao.query.filter(fr"datasource = ${datasourceId}").delete
-      sDeleteCount <- SceneDao.query.filter(fr"datasource = ${datasourceId}").delete
+      uDeleteCount <- UploadDao.query
+        .filter(fr"datasource = ${datasourceId}")
+        .delete
+      sDeleteCount <- SceneDao.query
+        .filter(fr"datasource = ${datasourceId}")
+        .delete
       dDeleteCount <- DatasourceDao.query.filter(datasourceId).delete
     } yield { List(uDeleteCount, sDeleteCount, dDeleteCount) }
 

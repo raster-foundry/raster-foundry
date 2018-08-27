@@ -1,38 +1,28 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.datamodel._
+import java.sql.Timestamp
+import java.util.UUID
+
+import cats.data._
+import cats.implicits._
 import com.azavea.rf.database.util.Page
+import com.azavea.rf.database.Implicits._
+import com.azavea.rf.datamodel._
+import com.azavea.rf.datamodel.color._
+import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import geotrellis.vector.{Extent, Geometry, Polygon, Projected}
-import java.util.UUID
-import java.sql.{Date, Timestamp}
-
-import com.lonelyplanet.akka.http.extensions.PageRequest
-import scala.concurrent.Future
-
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.color._
-import com.lonelyplanet.akka.http.extensions._
-import com.typesafe.scalalogging.LazyLogging
 import io.circe._
 import io.circe.optics.JsonPath._
-import io.circe.generic.JsonCodec
 import io.circe.syntax._
-
-import cats._
-import cats.data._
-import cats.effect.IO
-import cats.implicits._
-
 
 object ProjectDao extends Dao[Project] {
 
   val tableName = "projects"
 
-  val selectF = sql"""
+  val selectF: Fragment = sql"""
     SELECT
       distinct(id), created_at, modified_at, created_by,
       modified_by, owner, name, slug_label, description,
@@ -53,7 +43,7 @@ object ProjectDao extends Dao[Project] {
       .unique
   }
 
-  def getProjectById(projectId: UUID, user: Option[User]): ConnectionIO[Option[Project]] = {
+  def getProjectById(projectId: UUID): ConnectionIO[Option[Project]] = {
     val idFilter = Some(fr"id = ${projectId}")
 
     (selectF ++ Fragments.whereAndOpt(idFilter))
@@ -82,7 +72,7 @@ object ProjectDao extends Dao[Project] {
 
   def insertProject(newProject: Project.Create, user: User): ConnectionIO[Project] = {
     val id = UUID.randomUUID()
-    val now = new Timestamp((new java.util.Date()).getTime())
+    val now = new Timestamp(new java.util.Date().getTime)
     val ownerId = util.Ownership.checkOwner(user, newProject.owner)
     val slug = Project.slugify(newProject.name)
     (fr"INSERT INTO" ++ tableF ++ fr"""
@@ -111,7 +101,7 @@ object ProjectDao extends Dao[Project] {
   }
 
   def updateProjectQ(project: Project, id: UUID, user: User): Update0 = {
-    val updateTime = new Timestamp((new java.util.Date()).getTime)
+    val updateTime = new Timestamp(new java.util.Date().getTime)
     val idFilter = fr"id = ${id}"
 
     val query = (fr"UPDATE" ++ tableF ++ fr"""SET
@@ -140,7 +130,7 @@ object ProjectDao extends Dao[Project] {
     updateProjectQ(project, id, user).run
   }
 
-  def deleteProject(id: UUID, user: User): ConnectionIO[Int] = {
+  def deleteProject(id: UUID): ConnectionIO[Int] = {
 
     val aoiDeleteQuery = sql"DELETE FROM aois where aois.project_id = ${id}"
     for {
@@ -166,15 +156,15 @@ object ProjectDao extends Dao[Project] {
     updateStatusQuery.update.run
   }
 
-  def addScenesToProject(sceneIds: List[UUID], projectId: UUID, user: User, isAccepted: Boolean = true): ConnectionIO[Int] = {
+  def addScenesToProject(sceneIds: List[UUID], projectId: UUID, isAccepted: Boolean = true): ConnectionIO[Int] = {
     sceneIds.toNel match {
-      case Some(ids) => addScenesToProject(ids, projectId, user, isAccepted)
-      case _ => 0.pure[ConnectionIO]
+      case Some(ids) => addScenesToProject(ids, projectId, isAccepted)
+      case _         => 0.pure[ConnectionIO]
     }
   }
 
-  def addScenesToProject(sceneIds: NonEmptyList[UUID], projectId: UUID, user: User, isAccepted: Boolean): ConnectionIO[Int] = {
-    val inClause = Fragments.in(fr"scenes.id",  sceneIds)
+  def addScenesToProject(sceneIds: NonEmptyList[UUID], projectId: UUID, isAccepted: Boolean): ConnectionIO[Int] = {
+    val inClause = Fragments.in(fr"scenes.id", sceneIds)
     val sceneIdWithDatasourceF = fr"""
       SELECT scenes.id,
             datasources.id,
@@ -207,7 +197,7 @@ object ProjectDao extends Dao[Project] {
         val inserts = "INSERT INTO scenes_to_projects (scene_id, project_id, accepted, scene_order, mosaic_definition) VALUES (?, ?, ?, ?, ?)"
         Update[SceneToProject](inserts).updateMany(scenesToProject)
       }
-      _ <- {sql"""
+      _ <- { sql"""
                UPDATE projects
                SET extent = subquery.extent
                FROM
@@ -218,7 +208,7 @@ object ProjectDao extends Dao[Project] {
                   WHERE projects.id = ${projectId}
                   GROUP BY projects.id) AS subquery
                WHERE projects.id = ${projectId};
-              """.update.run}
+              """.update.run }
       _ <- updateSceneIngestStatus(projectId)
     } yield sceneToProjectInserts
   }
@@ -237,12 +227,13 @@ object ProjectDao extends Dao[Project] {
         ColorCorrect.Params(
           redBand, greenBand, blueBand,             // Bands
           // Color corrections; everything starts out disabled (false) and null for now
-          BandGamma(false, None, None, None),       // Gamma
-          PerBandClipping(false, None, None, None,  // Clipping Max: R,G,B
+          BandGamma(enabled = false, None, None, None),       // Gamma
+          PerBandClipping(
+            enabled = false, None, None, None,  // Clipping Max: R,G,B
             None, None, None), // Clipping Min: R,G,B
-          MultiBandClipping(false, None, None),     // Min, Max
-          SigmoidalContrast(false, None, None),     // Alpha, Beta
-          Saturation(false, None),                  // Saturation
+          MultiBandClipping(enabled = false, None, None),     // Min, Max
+          SigmoidalContrast(enabled = false, None, None),     // Alpha, Beta
+          Saturation(enabled = false, None),                  // Saturation
           Equalization(false),                      // Equalize
           AutoWhiteBalance(false)                    // Auto White Balance
         ).asJson
@@ -250,15 +241,16 @@ object ProjectDao extends Dao[Project] {
     )
   }
 
-  def listProjectSceneOrder(projectId: UUID, pr: PageRequest, user: User): ConnectionIO[PaginatedResponse[UUID]] = {
+  def listProjectSceneOrder(projectId: UUID, pr: PageRequest): ConnectionIO[PaginatedResponse[UUID]] = {
     val projectQuery = query.filter(projectId).select
     val selectIdF = fr"SELECT scene_id "
     val countIdF = fr"SELECT count(*) "
     val joinF = fr"FROM scenes_to_projects INNER JOIN scenes ON scene_id = scenes.id WHERE project_id = ${projectId}"
     val orderQ = projectQuery.map{ project =>
-      project.manualOrder match {
-        case true => joinF ++ fr"ORDER BY scene_order ASC, scene_id ASC"
-        case _ => joinF ++ fr"ORDER BY acquisition_date ASC, cloud_cover ASC"
+      if (project.manualOrder) {
+        joinF ++ fr"ORDER BY scene_order ASC, scene_id ASC"
+      } else {
+        joinF ++ fr"ORDER BY acquisition_date ASC, cloud_cover ASC"
       }
     }
 
@@ -274,9 +266,9 @@ object ProjectDao extends Dao[Project] {
     }
   }
 
-  def replaceScenesInProject(sceneIds: NonEmptyList[UUID], projectId: UUID, user: User): ConnectionIO[Iterable[Scene]] = {
+  def replaceScenesInProject(sceneIds: NonEmptyList[UUID], projectId: UUID): ConnectionIO[Iterable[Scene]] = {
     val deleteQuery = sql"DELETE FROM scenes_to_projects WHERE project_id = ${projectId}".update.run
-    val scenesAdded = addScenesToProject(sceneIds, projectId, user, true)
+    val scenesAdded = addScenesToProject(sceneIds, projectId, isAccepted = true)
     val projectScenes = SceneDao
       .query
       .filter(fr"scenes.id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId}")
@@ -290,17 +282,16 @@ object ProjectDao extends Dao[Project] {
   }
 
   def deleteScenesFromProject(sceneIds: List[UUID], projectId: UUID): ConnectionIO[Int] = {
-    val f:Option[Fragment] = sceneIds.toList.toNel.map(Fragments.in(fr"scene_id", _))
+    val f:Option[Fragment] = sceneIds.toNel.map(Fragments.in(fr"scene_id", _))
     val deleteQuery = fr"DELETE FROM scenes_to_projects" ++
       Fragments.whereAndOpt(f, Some(fr"project_id = ${projectId}"))
     deleteQuery.update.run
   }
 
-  def addScenesToProjectFromQuery(sceneParams: CombinedSceneQueryParams, projectId: UUID, user: User): ConnectionIO[Int] = {
-
+  def addScenesToProjectFromQuery(sceneParams: CombinedSceneQueryParams, projectId: UUID): ConnectionIO[Int] = {
     for {
       scenes <- SceneDao.query.filter(sceneParams).list
-      scenesAdded <- addScenesToProject(scenes.map(_.id), projectId, user)
+      scenesAdded <- addScenesToProject(scenes.map(_.id), projectId)
     } yield scenesAdded
   }
 
@@ -311,15 +302,15 @@ object ProjectDao extends Dao[Project] {
   @SuppressWarnings(Array("TraversableHead"))
   def projectsToProjectsWithRelated(projectsPage: PaginatedResponse[Project]): ConnectionIO[PaginatedResponse[Project.WithUser]] =
     projectsPage.results.toList.toNel match {
-      case Some(nelProjects) => {
+      case Some(nelProjects) =>
         val usersIO: ConnectionIO[List[User]] =
           UserDao.query.filter(Fragments.in(fr"id", nelProjects map { _.owner })).list
         usersIO map {
-          (users: List[User]) => {
+          users: List[User] => {
             val groupedUsers = users.groupBy(_.id)
             val withUsers =
               projectsPage.results map {
-                (project: Project) => Project.WithUser(
+                project: Project => Project.WithUser(
                   project,
                   groupedUsers.getOrElse(
                     project.owner,
@@ -330,9 +321,7 @@ object ProjectDao extends Dao[Project] {
             projectsPage.copy(results = withUsers)
           }
         }
-      }
-      case _ => {
+      case _ =>
         projectsPage.copy(results = List.empty[Project.WithUser]).pure[ConnectionIO]
-      }
     }
 }

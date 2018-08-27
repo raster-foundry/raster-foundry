@@ -23,7 +23,7 @@ trait CirceJsonbMeta {
       a => {
         Credential.fromString(a)
       },
-      a => a.token.getOrElse("").toString
+      a => a.token.getOrElse("")
     )
 
   implicit val membershipStatusMeta: Meta[MembershipStatus] =

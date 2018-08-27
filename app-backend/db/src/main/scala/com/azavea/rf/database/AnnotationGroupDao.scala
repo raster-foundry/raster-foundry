@@ -1,27 +1,26 @@
 package com.azavea.rf.database
 
+import java.sql.Timestamp
+import java.util.UUID
+
+import cats.implicits._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util._
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-import geotrellis.vector.Geometry
-import com.lonelyplanet.akka.http.extensions.PageRequest
-
-import scala.concurrent.Future
-import java.sql.Timestamp
-import java.util.{Date, UUID}
 
 object AnnotationGroupDao extends Dao[AnnotationGroup] {
 
   val tableName = "annotation_groups"
-  val selectF =
+
+  val selectF: Fragment =
     fr"SELECT id, name, created_at, created_by, modified_at, modified_by, project_id, default_style from" ++ tableF
 
-  def unsafeGetAnnotationGroupById(groupId: UUID, user: User): ConnectionIO[AnnotationGroup] = {
+  def unsafeGetAnnotationGroupById(groupId: UUID): ConnectionIO[AnnotationGroup] = {
     query.filter(groupId).select
   }
 
