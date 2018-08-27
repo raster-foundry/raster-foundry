@@ -55,39 +55,43 @@ class MultibandMosaicService(
           :? RedBandOptionalQueryParamMatcher(redOverride)
           :? GreenBandOptionalQueryParamMatcher(greenOverride)
           :? BlueBandOptionalQueryParamMatcher(blueOverride) =>
-        val authIO: IO[Either[Throwable, Boolean]] = (
+        val authIO: EitherT[IO, Throwable, Boolean] =
           for {
-            user <- verifyJWT(token) match {
-              case Right((_, jwtClaims)) => UserDao.unsafeGetUserById(jwtClaims.getStringClaim("sub")).transact(xa)
-              case Left(e) => IO(throw new Exception("Failed to validate user from JWT"))
-            }
-            authorized <- ProjectDao.query.authorized(user, ObjectType.Project, projectId, ActionType.View).transact(xa)
+            user <- (
+              verifyJWT(token) match {
+                case Right((_, jwtClaims)) => EitherT.liftF(
+                  UserDao.unsafeGetUserById(jwtClaims.getStringClaim("sub")).transact(xa)
+                )
+                case Left(e) => EitherT.leftT[IO, User](
+                  new Exception("Failed to validate user from JWT")
+                )
+              }
+            )
+            authorized <- EitherT.liftF(
+              ProjectDao.query.authorized(user, ObjectType.Project, projectId, ActionType.View).transact(xa)
+            )
           } yield authorized
-        ).attempt
         val projectNode = (redOverride, greenOverride, blueOverride).tupled match {
           case Some((red: Int, green: Int, blue: Int)) => ProjectNode(projectId, Some(red), Some(green), Some(blue))
           case _ => ProjectNode(projectId)
         }
         val paramMap = Map("identity" -> projectNode)
-        val result = eval(paramMap, z, x, y).attempt
-        IO.shift(t) *> authIO flatMap {
-          case authed =>
-            authed match {
-              case (Left(_) | Right(false)) =>
-                Forbidden("get outta here")
-              case Right(true) =>
-                result flatMap {
-                  case result =>
-                    result match {
-                      case Right(Valid(tile)) =>
-                        Ok(tile.renderPng.bytes)
-                      case Right(Invalid(e)) =>
-                        BadRequest(e.toString)
-                      case Left(e) =>
-                        BadRequest(e.getMessage)
-                    }
-                }
+        val result = EitherT(eval(paramMap, z, x, y).attempt)
+        IO.shift(t) *> (
+          for {
+            authed <- authIO
+            res <- result
+          } yield {
+            res match {
+              case Valid(tile) =>
+                Ok(tile.renderPng.bytes)
+              case Invalid(e) =>
+                BadRequest(e.toString)
             }
+          }
+        ).value flatMap {
+          case Left(e) => BadRequest(e.getMessage)
+          case Right(resp) => resp
         }
     }
 }
