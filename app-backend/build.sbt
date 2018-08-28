@@ -403,3 +403,15 @@ lazy val backsplash = Project("backsplash", file("backsplash"))
                Dependencies.http4sServer
              ) })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
+  .settings(assemblyMergeStrategy in assembly := {
+    case m if m.toLowerCase.endsWith("manifest.mf") => MergeStrategy.discard
+    case m if m.toLowerCase.matches("meta-inf.*\\.sf$") => MergeStrategy.discard
+    case "reference.conf" => MergeStrategy.concat
+    case "application.conf" => MergeStrategy.concat
+    case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") => MergeStrategy.discard
+    case PathList("META-INF", "aop.xml") => aopMerge
+    case _ => MergeStrategy.first
+  })
+  .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
+  .settings(test in assembly := {})
+
