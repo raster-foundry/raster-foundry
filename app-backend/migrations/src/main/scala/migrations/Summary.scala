@@ -148,4 +148,5 @@ object MigrationSummary {
   M147
   M148
   M149
+  M150
 }
