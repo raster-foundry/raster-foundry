@@ -44,6 +44,12 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 -f "${DIR}/../docker-compose.test.yml" \
                 run --rm --no-deps \
                 build tile/assembly
+                
+            echo "Building backsplash JAR"
+            docker-compose \
+                -f "${DIR}/../docker-compose.test.yml" \
+                run --rm --no-deps \
+                build backsplash/assembly
 
             # Build these projects as SNAPSHOT artifacts and publish to
             # Sonatype OSSRH (Snapshot Repository). 
@@ -76,7 +82,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             GIT_COMMIT="${GIT_COMMIT}" docker-compose \
                       -f "${DIR}/../docker-compose.yml" \
                       -f "${DIR}/../docker-compose.test.yml"\
-                      build nginx-api api-server nginx-tiler tile-server
+                      build nginx-api api-server nginx-tiler tile-server nginx-backsplash backsplash
 
             # Evaluate the return value of the get-login subcommand, which
             # is a docker login command with temporarily ECR credentials.
@@ -95,7 +101,12 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                    "${AWS_ECR_ENDPOINT}/raster-foundry-batch:${GIT_COMMIT}"
             docker tag "raster-foundry-app-migrations:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
-
+        
+            docker tag "raster-foundry-nginx-backsplash:${GIT_COMMIT}" \
+                    "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-backsplash:${GIT_COMMIT}"
+            docker tag "raster-foundry-backsplash:${GIT_COMMIT}" \
+                    "${AWS_ECR_ENDPOINT}/raster-foundry-backsplash:${GIT_COMMIT}"
+           
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-api:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-tiler:${GIT_COMMIT}"
 
@@ -103,6 +114,9 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-tile-server:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-batch:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
+   
+            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-backsplash:${GIT_COMMIT}"
+            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-backsplash:${GIT_COMMIT}"
 
             echo "Uploading Spark Batch JAR to S3"
             aws s3 cp \
