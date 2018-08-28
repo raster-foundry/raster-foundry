@@ -10,7 +10,7 @@ addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.6")
 
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.9.1")
 
-addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.0.7")
+addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.0.9")
 
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.9.0")
 
