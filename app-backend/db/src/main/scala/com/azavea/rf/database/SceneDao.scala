@@ -103,7 +103,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
   @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
   def insert(sceneCreate: Scene.Create, user: User): ConnectionIO[Scene.WithRelated] = {
     val scene = sceneCreate.toScene(user)
-    val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id))
+    val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail)
     val images = (sceneCreate.images map { im: Image.Banded => im.toImage(user) }).zipWithIndex
     val bands = images map { case (im: Image, ind: Int) =>
       sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
@@ -144,7 +144,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
   @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
   def insertMaybe(sceneCreate: Scene.Create, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
     val scene = sceneCreate.toScene(user)
-    val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail(user.id))
+    val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail)
     val images = (sceneCreate.images map { im: Image.Banded => im.toImage(user) }).zipWithIndex
     val bands = images map { case (im: Image, ind: Int) =>
       sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }

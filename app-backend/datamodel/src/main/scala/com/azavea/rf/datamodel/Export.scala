@@ -1,28 +1,27 @@
 package com.azavea.rf.datamodel
 
+import java.sql.Timestamp
+import java.util.UUID
+
+import cats.implicits._
 import io.circe._
 import io.circe.generic.JsonCodec
-import cats.implicits._
-
-import java.util.UUID
-import java.sql.Timestamp
 
 @JsonCodec
-case class Export(
-  id: UUID,
-  createdAt: Timestamp,
-  createdBy: String,
-  modifiedAt: Timestamp,
-  modifiedBy: String,
-  owner: String,
-  projectId: Option[UUID],
-  exportStatus: ExportStatus,
-  exportType: ExportType,
-  visibility: Visibility,
-  toolRunId: Option[UUID],
-  exportOptions: Json
-) {
-  def getExportOptions: Option[ExportOptions] = exportOptions.as[ExportOptions].toOption
+final case class Export(id: UUID,
+                        createdAt: Timestamp,
+                        createdBy: String,
+                        modifiedAt: Timestamp,
+                        modifiedBy: String,
+                        owner: String,
+                        projectId: Option[UUID],
+                        exportStatus: ExportStatus,
+                        exportType: ExportType,
+                        visibility: Visibility,
+                        toolRunId: Option[UUID],
+                        exportOptions: Json) {
+  def getExportOptions: Option[ExportOptions] =
+    exportOptions.as[ExportOptions].toOption
 }
 
 object Export {
@@ -32,19 +31,18 @@ object Export {
   def create = Export.apply _
 
   @JsonCodec
-  case class Create(
-    projectId: Option[UUID],
-    exportStatus: ExportStatus,
-    exportType: ExportType,
-    visibility: Visibility,
-    owner: Option[String],
-    toolRunId: Option[UUID],
-    exportOptions: Json
-  ) extends OwnerCheck {
+  final case class Create(projectId: Option[UUID],
+                          exportStatus: ExportStatus,
+                          exportType: ExportType,
+                          visibility: Visibility,
+                          owner: Option[String],
+                          toolRunId: Option[UUID],
+                          exportOptions: Json)
+      extends OwnerCheck {
 
     def toExport(user: User): Export = {
       val id = UUID.randomUUID()
-      val now = new Timestamp((new java.util.Date()).getTime())
+      val now = new Timestamp(new java.util.Date().getTime)
 
       val ownerId = checkOwner(user, this.owner)
 

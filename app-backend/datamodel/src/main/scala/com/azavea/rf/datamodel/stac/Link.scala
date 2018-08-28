@@ -1,15 +1,10 @@
 package com.azavea.rf.datamodel.stac
 
-import geotrellis.vector.{Geometry, Projected}
-
-import io.circe._
 import io.circe.generic.JsonCodec
 
 @JsonCodec
-case class Link(
-  `type`: String, // "self" or "thumbnail"
-  href: String
-)
+final case class Link(`type`: String, // "self" or "thumbnail"
+                      href: String)
 
 object Link {
   def validate(link: Link): Either[String, Link] = {

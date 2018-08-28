@@ -14,14 +14,12 @@ import io.circe.generic.JsonCodec
   * @param category String Category that is displayed to user
   */
 @JsonCodec
-case class ToolCategory(
-    slugLabel: String,
-    createdAt: Timestamp,
-    modifiedAt: Timestamp,
-    createdBy: String,
-    modifiedBy: String,
-    category: String
-)
+final case class ToolCategory(slugLabel: String,
+                              createdAt: Timestamp,
+                              modifiedAt: Timestamp,
+                              createdBy: String,
+                              modifiedBy: String,
+                              category: String)
 
 object ToolCategory {
 
@@ -30,36 +28,34 @@ object ToolCategory {
   def tupled = (ToolCategory.apply _).tupled
 
   @JsonCodec
-  case class Create(
-      category: String
-  ) {
+  final case class Create(category: String) {
 
     def toToolCategory(userId: String): ToolCategory = {
       def toSlugLabel(category: String): String = {
-        def decompose(s: String): String = java.text.Normalizer.normalize(
-          s, java.text.Normalizer.Form.NFD
-        ).replaceAll("\\p{InCombiningDiacriticalMarks}+", "").trim.toLowerCase()
+        def decompose(s: String): String =
+          java.text.Normalizer
+            .normalize(s, java.text.Normalizer.Form.NFD)
+            .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+            .trim
+            .toLowerCase()
         val replaceWhitespace = (s: String) => "[\\s]+".r.replaceAllIn(s, "-")
         val removeUnallowed = (s: String) => "[^\\w-]+".r.replaceAllIn(s, "")
         val collapseDashes = (s: String) => "[-]+".r.replaceAllIn(s, "-")
 
-        val slugified = collapseDashes(removeUnallowed(replaceWhitespace(decompose(category))))
+        val slugified = collapseDashes(
+          removeUnallowed(replaceWhitespace(decompose(category)))
+        )
         if (slugified.length() > 0) {
           slugified
         } else {
-          throw new IllegalArgumentException(s"Invalid category: $category. Cannot slugify")
+          throw new IllegalArgumentException(
+            s"Invalid category: $category. Cannot slugify"
+          )
         }
       }
 
-      val now = new Timestamp((new java.util.Date()).getTime())
-      ToolCategory(
-        toSlugLabel(category),
-        now,
-        now,
-        userId,
-        userId,
-        category
-      )
+      val now = new Timestamp(new java.util.Date().getTime)
+      ToolCategory(toSlugLabel(category), now, now, userId, userId, category)
     }
   }
 }

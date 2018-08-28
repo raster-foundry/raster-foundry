@@ -1,7 +1,6 @@
 package com.azavea.rf.datamodel
 
 import com.azavea.rf.datamodel.color._
-
 import io.circe.generic.JsonCodec
 import geotrellis.raster._
 import geotrellis.raster.equalization.HistogramEqualization
@@ -16,42 +15,62 @@ import spire.syntax.cfor._
 object ColorCorrect {
   import functions.SaturationAdjust._
   import functions.SigmoidalContrast._
-  // import functions.Approximations
 
-  case class LayerClipping(redMin: Int, redMax: Int, greenMin: Int, greenMax: Int, blueMin: Int, blueMax: Int)
+  final case class LayerClipping(redMin: Int,
+                                 redMax: Int,
+                                 greenMin: Int,
+                                 greenMax: Int,
+                                 blueMin: Int,
+                                 blueMax: Int)
   sealed trait ClipValue
-  case class ClipBounds(min: Int, max: Int) extends ClipValue
-  case class MaybeClipBounds(maybeMin: Option[Int], maybeMax: Option[Int]) extends ClipValue
-  case class ClippingParams(band: Int, bounds: ClipValue)
+  final case class ClipBounds(min: Int, max: Int) extends ClipValue
+  final case class MaybeClipBounds(maybeMin: Option[Int], maybeMax: Option[Int])
+      extends ClipValue
+  final case class ClippingParams(band: Int, bounds: ClipValue)
 
   @JsonCodec
-  case class Params(
-    redBand: Int, greenBand: Int, blueBand: Int,
-    gamma: BandGamma,
-    bandClipping: PerBandClipping,
-    tileClipping: MultiBandClipping,
-    sigmoidalContrast: SigmoidalContrast,
-    saturation: Saturation,
-    equalize: Equalization,
-    autoBalance: AutoWhiteBalance
-  ) {
+  final case class Params(redBand: Int,
+                          greenBand: Int,
+                          blueBand: Int,
+                          gamma: BandGamma,
+                          bandClipping: PerBandClipping,
+                          tileClipping: MultiBandClipping,
+                          sigmoidalContrast: SigmoidalContrast,
+                          saturation: Saturation,
+                          equalize: Equalization,
+                          autoBalance: AutoWhiteBalance) {
     def getGamma: Map[Int, Option[Double]] = Map(
       0 -> (if (gamma.enabled) gamma.redGamma else None),
       1 -> (if (gamma.enabled) gamma.greenGamma else None),
       2 -> (if (gamma.enabled) gamma.blueGamma else None)
     )
 
-    def reorderBands(tile: MultibandTile, hist: Seq[Histogram[Double]]): (MultibandTile, Array[Histogram[Double]]) =
-      (tile.subsetBands(redBand, greenBand, blueBand), Array(hist(redBand), hist(greenBand), hist(blueBand)))
+    @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
+    def reorderBands(
+      tile: MultibandTile,
+      hist: Seq[Histogram[Double]]
+    ): (MultibandTile, Array[Histogram[Double]]) =
+      (
+        tile.subsetBands(redBand, greenBand, blueBand),
+        Array(hist(redBand), hist(greenBand), hist(blueBand))
+      )
 
-    def colorCorrect(tile: MultibandTile, hist: Seq[Histogram[Double]]): MultibandTile = {
+    def colorCorrect(tile: MultibandTile,
+                     hist: Seq[Histogram[Double]]): MultibandTile = {
       val (rgbTile, rgbHist) = reorderBands(tile, hist)
       ColorCorrect(rgbTile, rgbHist, this)
     }
   }
 
-  @inline def normalizeAndClampAndGammaCorrectPerPixel(z: Int, oldMin: Int, oldMax: Int, newMin: Int, newMax: Int, gammaOpt: Option[Double]): Int = {
-    if(isData(z)) {
+  @inline def normalizeAndClampAndGammaCorrectPerPixel(
+    z: Int,
+    oldMin: Int,
+    oldMax: Int,
+    newMin: Int,
+    newMax: Int,
+    gammaOpt: Option[Double]
+  ): Int = {
+    if (isData(z)) {
       val dNew = newMax - newMin
       val dOld = oldMax - oldMin
 
@@ -65,12 +84,11 @@ object ColorCorrect {
 
         gammaOpt match {
           case None => v
-          case Some(gamma) => {
+          case Some(gamma) =>
             clampColor {
               val gammaCorrection = 1 / gamma
               (255 * FastMath.pow(v / 255.0, gammaCorrection)).toInt
             }
-          }
         }
       } else {
         val v = {
@@ -83,25 +101,27 @@ object ColorCorrect {
 
         gammaOpt match {
           case None => v
-          case Some(gamma) => {
+          case Some(gamma) =>
             clampColor {
               val gammaCorrection = 1 / gamma
               (255 * FastMath.pow(v / 255.0, gammaCorrection)).toInt
             }
-          }
         }
       }
     } else z
   }
 
-  val rgbBand =
+  val rgbBand: (Option[Int], Option[Int], Int) => Some[Int] =
     (specificBand: Option[Int], allBands: Option[Int], tileDefault: Int) =>
       specificBand.fold(allBands)(Some(_)).fold(Some(tileDefault))(x => Some(x))
 
-  def complexColorCorrect(rgbTile: MultibandTile, saturation: Saturation)
-                         (layerNormalizeArgs: Map[Int, ClipBounds], gammas: Map[Int, Option[Double]])
-                         (sigmoidalContrast: SigmoidalContrast)
-                         (colorCorrectArgs: Map[Int, MaybeClipBounds], tileClipping: MultiBandClipping): MultibandTile = {
+  def complexColorCorrect(rgbTile: MultibandTile, saturation: Saturation)(
+    layerNormalizeArgs: Map[Int, ClipBounds],
+    gammas: Map[Int, Option[Double]]
+  )(sigmoidalContrast: SigmoidalContrast)(
+    colorCorrectArgs: Map[Int, MaybeClipBounds],
+    tileClipping: MultiBandClipping
+  ): MultibandTile = {
     val (red, green, blue) = (rgbTile.band(0), rgbTile.band(1), rgbTile.band(2))
     val (gr, gg, gb) = (gammas(0), gammas(1), gammas(2))
     val (nred, ngreen, nblue) = (
@@ -119,9 +139,13 @@ object ColorCorrect {
     val (bclipMin, bclipMax, bnewMin, bnewMax) = (bmin, bmax, 0, 255)
 
     val sigmoidal: Double => Double =
-      (sigmoidalContrast.enabled, sigmoidalContrast.alpha, sigmoidalContrast.beta) match {
+      (
+        sigmoidalContrast.enabled,
+        sigmoidalContrast.alpha,
+        sigmoidalContrast.beta
+      ) match {
         case (true, Some(a), Some(b)) => localTransform(rgbTile.cellType, a, b)
-        case _ => identity
+        case _                        => identity
       }
 
     val (clipr, clipg, clipb): (Int => Int, Int => Int, Int => Int) = {
@@ -129,9 +153,18 @@ object ColorCorrect {
       val MaybeClipBounds(mgmin, mgmax) = colorCorrectArgs(1)
       val MaybeClipBounds(mbmin, mbmax) = colorCorrectArgs(2)
 
-      val (mrclipMin, mrclipMax) = (rgbBand(mrmin, tileClipping.min, 0).get, rgbBand(mrmax, tileClipping.max, 255).get)
-      val (mgclipMin, mgclipMax) = (rgbBand(mgmin, tileClipping.min, 0).get, rgbBand(mgmax, tileClipping.max, 255).get)
-      val (mbclipMin, mbclipMax) = (rgbBand(mbmin, tileClipping.min, 0).get, rgbBand(mbmax, tileClipping.max, 255).get)
+      val (mrclipMin, mrclipMax) = (
+        rgbBand(mrmin, tileClipping.min, 0).get,
+        rgbBand(mrmax, tileClipping.max, 255).get
+      )
+      val (mgclipMin, mgclipMax) = (
+        rgbBand(mgmin, tileClipping.min, 0).get,
+        rgbBand(mgmax, tileClipping.max, 255).get
+      )
+      val (mbclipMin, mbclipMax) = (
+        rgbBand(mbmin, tileClipping.min, 0).get,
+        rgbBand(mbmax, tileClipping.max, 255).get
+      )
 
       @inline def clipBands(z: Int, min: Int, max: Int): Int = {
         if (isData(z) && z > max) 255
@@ -139,7 +172,11 @@ object ColorCorrect {
         else z
       }
 
-      (clipBands(_, mrclipMin, mrclipMax), clipBands(_, mgclipMin, mgclipMax), clipBands(_, mbclipMin, mbclipMax))
+      (
+        clipBands(_, mrclipMin, mrclipMax),
+        clipBands(_, mgclipMin, mgclipMax),
+        clipBands(_, mbclipMin, mbclipMax)
+      )
     }
 
     /** In this case for some reason with this func wrap it works faster ¯\_(ツ)_/¯ (it was micro benchmarked) */
@@ -147,17 +184,39 @@ object ColorCorrect {
       cfor(0)(_ < rgbTile.cols, _ + 1) { col =>
         cfor(0)(_ < rgbTile.rows, _ + 1) { row =>
           val (r, g, b) =
-            (ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(red.get(col, row), rclipMin, rclipMax, rnewMin, rnewMax, gr),
-              ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(green.get(col, row), gclipMin, gclipMax, gnewMin, gnewMax, gg),
-              ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(blue.get(col, row), bclipMin, bclipMax, bnewMin, bnewMax, gb))
+            (
+              ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
+                red.get(col, row),
+                rclipMin,
+                rclipMax,
+                rnewMin,
+                rnewMax,
+                gr
+              ),
+              ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
+                green.get(col, row),
+                gclipMin,
+                gclipMax,
+                gnewMin,
+                gnewMax,
+                gg
+              ),
+              ColorCorrect.normalizeAndClampAndGammaCorrectPerPixel(
+                blue.get(col, row),
+                bclipMin,
+                bclipMax,
+                bnewMin,
+                bnewMax,
+                gb
+              )
+            )
 
           val (nr, ng, nb) = (saturation.enabled, saturation.saturation) match {
-            case (true, Some(cf)) => {
-              val (hue, chroma, luma) = RGBToHCLuma(r, g, b)
+            case (true, Some(cf)) =>
+              val (hue, chroma, luma) = rgbToHcluma(r, g, b)
               val newChroma = scaleChroma(chroma, cf)
-              val (nr, ng, nb) = HCLumaToRGB(hue, newChroma, luma)
+              val (nr, ng, nb) = hclumaToRgb(hue, newChroma, luma)
               (nr, ng, nb)
-            }
 
             case _ => (r, g, b)
           }
@@ -172,7 +231,9 @@ object ColorCorrect {
     MultibandTile(nred, ngreen, nblue)
   }
 
-  def apply(rgbTile: MultibandTile, rgbHist: Array[Histogram[Double]], params: Params): MultibandTile = {
+  def apply(rgbTile: MultibandTile,
+            rgbHist: Array[Histogram[Double]],
+            params: Params): MultibandTile = {
     var _rgbTile = rgbTile
     var _rgbHist = rgbHist
     val gammas = params.getGamma
@@ -192,7 +253,8 @@ object ColorCorrect {
         iMaxMin(index) = (imin, imax)
         isCorrected &&= {
           if (range.contains(hst.minValue().map(_.toInt).getOrElse(0))) true
-          else if (range.contains(hst.maxValue().map(_.toInt).getOrElse(255))) true
+          else if (range.contains(hst.maxValue().map(_.toInt).getOrElse(255)))
+            true
           else false
         }
       }
@@ -212,12 +274,24 @@ object ColorCorrect {
     )
 
     val colorCorrectArgs: Map[Int, MaybeClipBounds] = Map(
-      0 -> MaybeClipBounds(params.bandClipping.redMin, params.bandClipping.redMax),
-      1 -> MaybeClipBounds(params.bandClipping.greenMin, params.bandClipping.greenMax),
-      2 -> MaybeClipBounds(params.bandClipping.blueMin, params.bandClipping.blueMax)
+      0 -> MaybeClipBounds(
+        params.bandClipping.redMin,
+        params.bandClipping.redMax
+      ),
+      1 -> MaybeClipBounds(
+        params.bandClipping.greenMin,
+        params.bandClipping.greenMax
+      ),
+      2 -> MaybeClipBounds(
+        params.bandClipping.blueMin,
+        params.bandClipping.blueMax
+      )
     )
 
-    complexColorCorrect(_rgbTile, params.saturation)(layerNormalizeArgs, gammas)(params.sigmoidalContrast)(colorCorrectArgs, params.tileClipping)
+    complexColorCorrect(_rgbTile, params.saturation)(
+      layerNormalizeArgs,
+      gammas
+    )(params.sigmoidalContrast)(colorCorrectArgs, params.tileClipping)
   }
 
   @inline def clampColor(z: Int): Int = {
