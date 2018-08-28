@@ -74,6 +74,8 @@ class AnnotateController {
 
         this.bindHotkeys();
 
+        this.panToAnnotation = false;
+
         this.$element.on('click', () => {
             this.deleteClickedHighlight();
         });
@@ -110,6 +112,10 @@ class AnnotateController {
             mapWrapper.deleteLayers('draw');
             mapWrapper.deleteLayers('highlight');
         });
+    }
+
+    toggleAnnotationPanning() {
+        this.panToAnnotation = !this.panToAnnotation;
     }
 
     retryFetches() {
@@ -169,7 +175,9 @@ class AnnotateController {
                         }
                     }).on('click', (e) => {
                         this.getMap().then((mapWrapper) => {
-                            mapWrapper.map.panTo(e.target.getBounds().getCenter());
+                            if (this.panToAnnotation) {
+                                mapWrapper.map.panTo(e.target.getBounds().getCenter());
+                            }
                             if (!this.sidebarDisabled && !this.editingAnnotation) {
                                 delete this.hoveredId;
                                 if (this.clickedId !== feature.id) {
@@ -275,7 +283,7 @@ class AnnotateController {
                 description
             })
         );
-        this.createAnnotations(annotationCollection, !this.annotationTemplate);
+        this.createAnnotations(annotationCollection, !this.annotationTemplate, this.panToAnnotation);
     }
 
     onShapeCreated(shapeLayer) {
@@ -323,7 +331,9 @@ class AnnotateController {
                     }
                 }).on('click', (e) => {
                     this.getMap().then((mapWrapper) => {
-                        mapWrapper.map.panTo(e.target.getBounds().getCenter());
+                        if (this.panToAnnotation) {
+                            mapWrapper.map.panTo(e.target.getBounds().getCenter());
+                        }
                         if (!this.sidebarDisabled) {
                             delete this.hoveredId;
                             if (this.clickedId !== feature.id) {
@@ -382,7 +392,7 @@ class AnnotateController {
             delete this.hoveredId;
             if (this.clickedId !== annotation.id) {
                 this.clickedId = annotation.id;
-                this.addAndPanToHighlightLayer(annotation, true);
+                this.addAndPanToHighlightLayer(annotation, this.panToAnnotation);
             } else {
                 this.deleteClickedHighlight();
             }
@@ -392,7 +402,7 @@ class AnnotateController {
     onSidebarItemMouseIn(annotation) {
         if (!this.sidebarDisabled && !this.clickedId) {
             this.hoveredId = annotation.id;
-            this.addAndPanToHighlightLayer(annotation, true);
+            this.addAndPanToHighlightLayer(annotation, this.panToAnnotation);
         }
     }
 

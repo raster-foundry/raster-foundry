@@ -9,13 +9,13 @@
     <div class="sidebar-header">
       <h5 class="sidebar-title">Annotations</h5>
       <div class="header-controls">
-        <button class="btn btn-default btn-small"
+        <button class="btn btn-small"
                 type="button"
                 ng-click="$ctrl.showHotkeyTips()">Hotkeys</button>
       </div>
     </div>
-    <div class="content">
-      <div class="sidebar-actions-group">
+    <div class="list-group">
+      <div class="list-group-item sidebar-actions-group">
         <label>Add notes and highlight your imagery</label>
         <div class="column-6 nogutter btn-group">
           <button class="btn btn-primary btn-block"
@@ -31,6 +31,11 @@
             Export
           </button>
         </div>
+      </div>
+      <div class="list-group-item sidebar-actions-group">
+          <label>Pan to new annotations</label>
+          <rf-toggle value="$ctrl.panToAnnotation" on-change="$ctrl.toggleAnnotationPanning()">
+          </rf-toggle>
       </div>
     </div>
   </div>
@@ -56,14 +61,13 @@
     <div class="content"
          ng-if="$ctrl.fetchingAnnotationsError">
       <div class="alert alert-default">
-        <p class="">There was an error fetching your annotations</p>
+        <div class="alert-message">There was an error fetching your annotations</div>
+        <button class="alert-action"
+                ng-click="$ctrl.retryFetches()"
+        >
+          Retry
+        </button>
       </div>
-      <button
-          ng-click="$ctrl.retryFetches()"
-          type="button"
-          class="btn btn-primary">
-        Retry
-      </button>
     </div>
     <div class="list-group"
          ng-if="$ctrl.annotations.size">
