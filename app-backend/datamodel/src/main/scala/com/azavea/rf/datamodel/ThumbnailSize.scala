@@ -13,7 +13,9 @@ object ThumbnailSize {
     Encoder.encodeString.contramap[ThumbnailSize](_.toString)
   implicit val thumbnailSizeDecoder: Decoder[ThumbnailSize] =
     Decoder.decodeString.emap { str =>
-      Either.catchNonFatal(ThumbnailSize.fromString(str)).leftMap(_ => "ThumbnailSize")
+      Either
+        .catchNonFatal(ThumbnailSize.fromString(str))
+        .leftMap(_ => "ThumbnailSize")
     }
 
   case object Small extends ThumbnailSize("SMALL")
@@ -21,8 +23,8 @@ object ThumbnailSize {
   case object Square extends ThumbnailSize("SQUARE")
 
   def fromString(s: String): ThumbnailSize = s.toUpperCase match {
-    case "SMALL" => Small
-    case "LARGE" => Large
+    case "SMALL"  => Small
+    case "LARGE"  => Large
     case "SQUARE" => Square
   }
 }

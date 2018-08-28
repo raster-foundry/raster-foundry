@@ -11,13 +11,17 @@ import geotrellis.raster.render.{ColorRamp, ColorMap}
   * Band 1 = Near Infrared
   */
 object NDVI extends (MultibandTile => Tile) {
-  val colorRamp = ColorRamp(Array[Int](0xffffe5aa, 0xf7fcb9ff, 0xd9f0a3ff, 0xaddd8eff, 0x78c679ff, 0x41ab5dff, 0x238443ff, 0x006837ff, 0x004529ff))
+  val colorRamp = ColorRamp(
+    Array[Int](0xffffe5aa, 0xf7fcb9ff, 0xd9f0a3ff, 0xaddd8eff, 0x78c679ff,
+      0x41ab5dff, 0x238443ff, 0x006837ff, 0x004529ff))
   val breaks = Array[Double](0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0)
 
   def colorMap(b: Option[Array[Double]], r: Option[ColorRamp]): ColorMap =
     ColorMap(b.getOrElse(breaks), r.getOrElse(colorRamp))
 
   def apply(tile: MultibandTile): Tile = {
-    tile.interpretAs(DoubleCellType).combineDouble(0, 1) { (r, nir) => (nir - r) / (nir + r) }
+    tile.interpretAs(DoubleCellType).combineDouble(0, 1) { (r, nir) =>
+      (nir - r) / (nir + r)
+    }
   }
 }

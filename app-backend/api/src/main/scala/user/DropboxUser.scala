@@ -10,8 +10,8 @@ import scala.util.Random
 
 @JsonCodec
 final case class DropboxAuthRequest(
-  authorizationCode: String,
-  redirectURI: String
+    authorizationCode: String,
+    redirectURI: String
 )
 
 /** Mock a DbxSessionStore.
@@ -29,7 +29,7 @@ final case class DropboxAuthRequest(
 class DummySessionStore extends DbxSessionStore {
 
   @BeanProperty
-  var token:String = ""
+  var token: String = ""
 
   def get: String = {
     val s = this.getToken()

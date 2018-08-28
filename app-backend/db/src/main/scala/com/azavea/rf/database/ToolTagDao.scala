@@ -14,7 +14,6 @@ import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
 
-
 object ToolTagDao extends Dao[ToolTag] {
 
   val tableName = "tool_tags"
@@ -32,12 +31,17 @@ object ToolTagDao extends Dao[ToolTag] {
     val ownerId = util.Ownership.checkOwner(user, newTag.owner)
 
     (fr"INSERT INTO" ++ tableF ++
-     fr"""
+      fr"""
           (id, created_at, modified_at, created_by, modified_by, tag, owner)
         VALUES
           (${id}, ${now}, ${now}, ${user.id}, ${user.id}, ${newTag.tag}, ${ownerId})
-     """).update.withUniqueGeneratedKeys[ToolTag](
-      "id", "created_at", "modified_at", "created_by", "modified_by", "owner", "tag")
+     """).update.withUniqueGeneratedKeys[ToolTag]("id",
+                                                  "created_at",
+                                                  "modified_at",
+                                                  "created_by",
+                                                  "modified_by",
+                                                  "owner",
+                                                  "tag")
   }
 
   def update(toolTag: ToolTag, id: UUID, user: User): ConnectionIO[Int] = {
@@ -54,4 +58,3 @@ object ToolTagDao extends Dao[ToolTag] {
 
   }
 }
-

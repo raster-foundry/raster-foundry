@@ -22,9 +22,8 @@ import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
-
-trait DatasourceRoutes extends Authentication
+trait DatasourceRoutes
+    extends Authentication
     with DatasourceQueryParameterDirective
     with PaginationDirectives
     with UserErrorHandler
@@ -34,54 +33,57 @@ trait DatasourceRoutes extends Authentication
   val datasourceRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get { listDatasources } ~
-      post { createDatasource }
+        post { createDatasource }
     } ~
-    pathPrefix(JavaUUID) { datasourceId =>
-      pathEndOrSingleSlash {
-        get { getDatasource(datasourceId) } ~
-          put { updateDatasource(datasourceId) } ~
-          delete { deleteDatasource(datasourceId) }
-      } ~
-        pathPrefix("permissions") {
-          pathEndOrSingleSlash {
-            put {
-              replaceDatasourcePermissions(datasourceId)
-            }
-          } ~
-            post {
-              addDatasourcePermission(datasourceId)
-            } ~
-            get {
-              listDatasourcePermissions(datasourceId)
-            } ~
-            delete {
-              deleteDatasourcePermissions(datasourceId)
-            }
+      pathPrefix(JavaUUID) { datasourceId =>
+        pathEndOrSingleSlash {
+          get { getDatasource(datasourceId) } ~
+            put { updateDatasource(datasourceId) } ~
+            delete { deleteDatasource(datasourceId) }
         } ~
-        pathPrefix("actions") {
-          pathEndOrSingleSlash {
-            get {
-              listUserDatasourceActions(datasourceId)
+          pathPrefix("permissions") {
+            pathEndOrSingleSlash {
+              put {
+                replaceDatasourcePermissions(datasourceId)
+              }
+            } ~
+              post {
+                addDatasourcePermission(datasourceId)
+              } ~
+              get {
+                listDatasourcePermissions(datasourceId)
+              } ~
+              delete {
+                deleteDatasourcePermissions(datasourceId)
+              }
+          } ~
+          pathPrefix("actions") {
+            pathEndOrSingleSlash {
+              get {
+                listUserDatasourceActions(datasourceId)
+              }
             }
           }
-        }
-    }
+      }
   }
 
   def listDatasources: Route = authenticate { user =>
-    (withPagination & datasourceQueryParams) { (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
-      complete {
-        DatasourceDao
-          .authQuery(
-            user,
-            ObjectType.Datasource,
-            datasourceParams.ownershipTypeParams.ownershipType,
-            datasourceParams.groupQueryParameters.groupType,
-            datasourceParams.groupQueryParameters.groupId)
-          .filter(datasourceParams)
-          .page(page)
-          .transact(xa).unsafeToFuture
-      }
+    (withPagination & datasourceQueryParams) {
+      (page: PageRequest, datasourceParams: DatasourceQueryParameters) =>
+        complete {
+          DatasourceDao
+            .authQuery(
+              user,
+              ObjectType.Datasource,
+              datasourceParams.ownershipTypeParams.ownershipType,
+              datasourceParams.groupQueryParameters.groupType,
+              datasourceParams.groupQueryParameters.groupId
+            )
+            .filter(datasourceParams)
+            .page(page)
+            .transact(xa)
+            .unsafeToFuture
+        }
     }
   }
 
@@ -89,11 +91,15 @@ trait DatasourceRoutes extends Authentication
     authorizeAsync {
       DatasourceDao.query
         .authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       rejectEmptyResponse {
         complete {
-          DatasourceDao.getDatasourceById(datasourceId).transact(xa).unsafeToFuture
+          DatasourceDao
+            .getDatasourceById(datasourceId)
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
@@ -101,20 +107,29 @@ trait DatasourceRoutes extends Authentication
 
   def createDatasource: Route = authenticate { user =>
     entity(as[Datasource.Create]) { newDatasource =>
-      onSuccess(DatasourceDao.createDatasource(newDatasource, user).transact(xa).unsafeToFuture) { datasource =>
+      onSuccess(
+        DatasourceDao
+          .createDatasource(newDatasource, user)
+          .transact(xa)
+          .unsafeToFuture) { datasource =>
         complete((StatusCodes.Created, datasource))
       }
     }
   }
 
   def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
-    authorizeAsync (
+    authorizeAsync(
       DatasourceDao.query
         .authorized(user, ObjectType.Datasource, datasourceId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     ) {
       entity(as[Datasource]) { updateDatasource =>
-        onSuccess(DatasourceDao.updateDatasource(updateDatasource, datasourceId, user).transact(xa).unsafeToFuture) {
+        onSuccess(
+          DatasourceDao
+            .updateDatasource(updateDatasource, datasourceId, user)
+            .transact(xa)
+            .unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -123,82 +138,141 @@ trait DatasourceRoutes extends Authentication
 
   def deleteDatasource(datasourceId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      DatasourceDao.isDeletable(datasourceId, user, ObjectType.Datasource)
-        .transact(xa).unsafeToFuture
+      DatasourceDao
+        .isDeletable(datasourceId, user, ObjectType.Datasource)
+        .transact(xa)
+        .unsafeToFuture
     } {
-      onSuccess(DatasourceDao.deleteDatasourceWithRelated(datasourceId).transact(xa).unsafeToFuture) { counts: List[Int] =>
-        complete(StatusCodes.OK -> s"${counts(1)} uploads deleted, ${counts(2)} scenes deleted. ${counts(0)} datasources deleted.")
+      onSuccess(
+        DatasourceDao
+          .deleteDatasourceWithRelated(datasourceId)
+          .transact(xa)
+          .unsafeToFuture) { counts: List[Int] =>
+        complete(
+          StatusCodes.OK -> s"${counts(1)} uploads deleted, ${counts(2)} scenes deleted. ${counts(0)} datasources deleted.")
       }
     }
   }
 
-  def listDatasourcePermissions(datasourceId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      DatasourceDao.query.ownedBy(user, datasourceId).exists.transact(xa).unsafeToFuture
-    } {
-      complete {
-        AccessControlRuleDao.listByObject(ObjectType.Datasource, datasourceId).transact(xa).unsafeToFuture
-      }
-    }
-  }
-
-  def replaceDatasourcePermissions(datasourceId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      DatasourceDao.query.ownedBy(user, datasourceId).exists.transact(xa).unsafeToFuture
-    } {
-      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+  def listDatasourcePermissions(datasourceId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        DatasourceDao.query
+          .ownedBy(user, datasourceId)
+          .exists
+          .transact(xa)
+          .unsafeToFuture
+      } {
         complete {
-          AccessControlRuleDao.replaceWithResults(
-            user, ObjectType.Datasource, datasourceId, acrCreates
-          ).transact(xa).unsafeToFuture
+          AccessControlRuleDao
+            .listByObject(ObjectType.Datasource, datasourceId)
+            .transact(xa)
+            .unsafeToFuture
         }
       }
-    }
   }
 
-  def addDatasourcePermission(datasourceId: UUID): Route = authenticate { user =>
+  def replaceDatasourcePermissions(datasourceId: UUID): Route = authenticate {
+    user =>
       authorizeAsync {
-        DatasourceDao.query.ownedBy(user, datasourceId).exists.transact(xa).unsafeToFuture
+        DatasourceDao.query
+          .ownedBy(user, datasourceId)
+          .exists
+          .transact(xa)
+          .unsafeToFuture
       } {
-        entity(as[AccessControlRule.Create]) { acrCreate =>
+        entity(as[List[AccessControlRule.Create]]) { acrCreates =>
           complete {
-            AccessControlRuleDao.createWithResults(
-              acrCreate.toAccessControlRule(user, ObjectType.Datasource, datasourceId)
-            ).transact(xa).unsafeToFuture
+            AccessControlRuleDao
+              .replaceWithResults(
+                user,
+                ObjectType.Datasource,
+                datasourceId,
+                acrCreates
+              )
+              .transact(xa)
+              .unsafeToFuture
           }
         }
       }
-    }
-
-  def listUserDatasourceActions(datasourceId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      DatasourceDao.query.authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
-        .transact(xa).unsafeToFuture
-    } { user.isSuperuser match {
-         case true => complete(List("*"))
-         case false =>
-           onSuccess(
-             DatasourceDao.unsafeGetDatasourceById(datasourceId).transact(xa).unsafeToFuture
-           ) { datasource =>
-             datasource.owner == user.id match {
-               case true => complete(List("*"))
-               case false => complete {
-                 AccessControlRuleDao.listUserActions(user, ObjectType.Datasource, datasourceId)
-                   .transact(xa).unsafeToFuture
-               }
-             }
-           }
-       }
-    }
   }
 
-  def deleteDatasourcePermissions(datasourceId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      DatasourceDao.query.ownedBy(user, datasourceId).exists.transact(xa).unsafeToFuture
-    } {
-      complete {
-        AccessControlRuleDao.deleteByObject(ObjectType.Analysis, datasourceId).transact(xa).unsafeToFuture
+  def addDatasourcePermission(datasourceId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        DatasourceDao.query
+          .ownedBy(user, datasourceId)
+          .exists
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[AccessControlRule.Create]) { acrCreate =>
+          complete {
+            AccessControlRuleDao
+              .createWithResults(
+                acrCreate.toAccessControlRule(user,
+                                              ObjectType.Datasource,
+                                              datasourceId)
+              )
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
       }
-    }
+  }
+
+  def listUserDatasourceActions(datasourceId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        DatasourceDao.query
+          .authorized(user,
+                      ObjectType.Datasource,
+                      datasourceId,
+                      ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        user.isSuperuser match {
+          case true => complete(List("*"))
+          case false =>
+            onSuccess(
+              DatasourceDao
+                .unsafeGetDatasourceById(datasourceId)
+                .transact(xa)
+                .unsafeToFuture
+            ) { datasource =>
+              datasource.owner == user.id match {
+                case true => complete(List("*"))
+                case false =>
+                  complete {
+                    AccessControlRuleDao
+                      .listUserActions(user,
+                                       ObjectType.Datasource,
+                                       datasourceId)
+                      .transact(xa)
+                      .unsafeToFuture
+                  }
+              }
+            }
+        }
+      }
+  }
+
+  def deleteDatasourcePermissions(datasourceId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        DatasourceDao.query
+          .ownedBy(user, datasourceId)
+          .exists
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          AccessControlRuleDao
+            .deleteByObject(ObjectType.Analysis, datasourceId)
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
   }
 }

@@ -22,11 +22,10 @@ import doobie.Fragments
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
 import scala.concurrent.Future
 
-
-trait MapTokenRoutes extends Authentication
+trait MapTokenRoutes
+    extends Authentication
     with MapTokensQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
@@ -37,20 +36,22 @@ trait MapTokenRoutes extends Authentication
   val mapTokenRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get { listMapTokens } ~
-      post { createMapToken }
+        post { createMapToken }
     } ~
-    pathPrefix(JavaUUID) { mapTokenId =>
-      get { getMapToken(mapTokenId) } ~
-      put { updateMapToken(mapTokenId) } ~
-      delete { deleteMapToken(mapTokenId) }
-    }
+      pathPrefix(JavaUUID) { mapTokenId =>
+        get { getMapToken(mapTokenId) } ~
+          put { updateMapToken(mapTokenId) } ~
+          delete { deleteMapToken(mapTokenId) }
+      }
   }
-
 
   def listMapTokens: Route = authenticate { user =>
     (withPagination & mapTokenQueryParams) { (page, mapTokenParams) =>
       complete {
-        MapTokenDao.listAuthorizedMapTokens(user, mapTokenParams, page).transact(xa).unsafeToFuture
+        MapTokenDao
+          .listAuthorizedMapTokens(user, mapTokenParams, page)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
@@ -60,14 +61,24 @@ trait MapTokenRoutes extends Authentication
       authorizeAsync {
         val authIO = (newMapToken.project, newMapToken.toolRun) match {
           case (None, None) => false.pure[ConnectionIO]
-          case (Some(projectId), None) => ProjectDao.query.authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-          case (None, Some(toolRunId)) => ToolRunDao.query.authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
+          case (Some(projectId), None) =>
+            ProjectDao.query.authorized(user,
+                                        ObjectType.Project,
+                                        projectId,
+                                        ActionType.Edit)
+          case (None, Some(toolRunId)) =>
+            ToolRunDao.query.authorized(user,
+                                        ObjectType.Analysis,
+                                        toolRunId,
+                                        ActionType.Edit)
           case _ => false.pure[ConnectionIO]
         }
         authIO.transact(xa).unsafeToFuture
       } {
-        onSuccess(MapTokenDao.insert(newMapToken, user).transact(xa).unsafeToFuture) { mapToken =>
-          complete((StatusCodes.Created, mapToken))
+        onSuccess(
+          MapTokenDao.insert(newMapToken, user).transact(xa).unsafeToFuture) {
+          mapToken =>
+            complete((StatusCodes.Created, mapToken))
         }
       }
     }
@@ -75,12 +86,19 @@ trait MapTokenRoutes extends Authentication
 
   def getMapToken(mapTokenId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      MapTokenDao.authorize(mapTokenId, user, ActionType.View).transact(xa).unsafeToFuture
+      MapTokenDao
+        .authorize(mapTokenId, user, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
     } {
       get {
         rejectEmptyResponse {
           complete {
-            MapTokenDao.query.filter(mapTokenId).selectOption.transact(xa).unsafeToFuture
+            MapTokenDao.query
+              .filter(mapTokenId)
+              .selectOption
+              .transact(xa)
+              .unsafeToFuture
           }
         }
       }
@@ -89,10 +107,17 @@ trait MapTokenRoutes extends Authentication
 
   def updateMapToken(mapTokenId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      MapTokenDao.authorize(mapTokenId, user, ActionType.Edit).transact(xa).unsafeToFuture
+      MapTokenDao
+        .authorize(mapTokenId, user, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[MapToken]) { updatedMapToken =>
-        onSuccess(MapTokenDao.update(updatedMapToken, mapTokenId, user).transact(xa).unsafeToFuture) {
+        onSuccess(
+          MapTokenDao
+            .update(updatedMapToken, mapTokenId, user)
+            .transact(xa)
+            .unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -101,9 +126,17 @@ trait MapTokenRoutes extends Authentication
 
   def deleteMapToken(mapTokenId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      MapTokenDao.authorize(mapTokenId, user, ActionType.Edit).transact(xa).unsafeToFuture
+      MapTokenDao
+        .authorize(mapTokenId, user, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
     } {
-      onSuccess(MapTokenDao.query.filter(mapTokenId).delete.transact(xa).unsafeToFuture) {
+      onSuccess(
+        MapTokenDao.query
+          .filter(mapTokenId)
+          .delete
+          .transact(xa)
+          .unsafeToFuture) {
         completeSingleOrNotFound
       }
     }

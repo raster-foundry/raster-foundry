@@ -6,7 +6,10 @@ import java.util.Scanner
 
 import cats.implicits._
 import com.amazonaws.auth._
-import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3Client => AWSAmazonS3Client}
+import com.amazonaws.services.s3.{
+  AmazonS3URI,
+  AmazonS3Client => AWSAmazonS3Client
+}
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff.reader.TiffTagsReader
 import geotrellis.raster.io.geotiff.tags.TiffTags
@@ -44,8 +47,10 @@ package object util extends LazyLogging {
     case "file" =>
       TiffTagsReader.read(uri.toString)
     case "s3" | "https" | "http" =>
-      val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri.toString, "UTF-8"))
-      val s3Client = new AmazonS3Client(new AWSAmazonS3Client(new DefaultAWSCredentialsProviderChain))
+      val s3Uri = new AmazonS3URI(
+        java.net.URLDecoder.decode(uri.toString, "UTF-8"))
+      val s3Client = new AmazonS3Client(
+        new AWSAmazonS3Client(new DefaultAWSCredentialsProviderChain))
       val s3RangeReader = S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client)
       TiffTagsReader.read(s3RangeReader)
     case _ =>
@@ -76,8 +81,10 @@ package object util extends LazyLogging {
   def combineUris(targetName: URI, prefix: URI): URI = {
     targetName.getScheme match {
       case "file" | "http" | "https" | "s3" => targetName
-      case _ => if (prefix.toString.endsWith("/")) new URI(prefix.toString + targetName.toString)
-      else new URI(prefix.toString + "/" + targetName.toString)
+      case _ =>
+        if (prefix.toString.endsWith("/"))
+          new URI(prefix.toString + targetName.toString)
+        else new URI(prefix.toString + "/" + targetName.toString)
     }
   }
 

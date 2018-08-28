@@ -12,7 +12,6 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
 object AoiDao extends Dao[AOI] {
 
   val tableName = "aois"
@@ -58,25 +57,39 @@ object AoiDao extends Dao[AOI] {
         ${user.id}, ${user.id}, ${ownerId}, ${aoi.shape}, ${aoi.filters}, ${aoi.isActive},
         ${aoi.approvalRequired}, ${aoi.startTime}, ${aoi.projectId})
     """).update.withUniqueGeneratedKeys[AOI](
-      "id", "created_at", "modified_at",
-      "created_by", "modified_by", "owner", "shape", "filters", "is_active",
-      "start_time", "approval_required", "project_id"
+      "id",
+      "created_at",
+      "modified_at",
+      "created_by",
+      "modified_by",
+      "owner",
+      "shape",
+      "filters",
+      "is_active",
+      "start_time",
+      "approval_required",
+      "project_id"
     )
     aoiCreate
   }
 
   // TODO embed shape into aoi
-  def listAOIs(projectId: UUID, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] =
+  def listAOIs(projectId: UUID,
+               page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] =
     query.filter(fr"project_id = ${projectId}").page(page)
 
-  def listAuthorizedAois(user: User, aoiQueryParams: AoiQueryParameters, page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] = {
+  def listAuthorizedAois(
+      user: User,
+      aoiQueryParams: AoiQueryParameters,
+      page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] = {
     val authedProjectsIO = ProjectDao.authQuery(user, ObjectType.Project).list
     for {
       authedProjects <- authedProjectsIO
       authedProjectIdsF = (authedProjects map { _.id }).toNel map {
         Fragments.in(fr"project_id", _)
       }
-      authFilterF = Fragments.orOpt(authedProjectIdsF, Some(fr"owner = ${user.id}"))
+      authFilterF = Fragments.orOpt(authedProjectIdsF,
+                                    Some(fr"owner = ${user.id}"))
       aois <- {
         AoiDao.query
           .filter(aoiQueryParams)
@@ -86,17 +99,24 @@ object AoiDao extends Dao[AOI] {
     } yield { aois }
   }
 
-  def deleteAOI(id: UUID): ConnectionIO[Int]= {
+  def deleteAOI(id: UUID): ConnectionIO[Int] = {
     (
       fr"DELETE FROM" ++ tableF ++ Fragments.whereAndOpt(Some(fr"id = ${id}"))
     ).update.run
   }
 
-  def authorize(aoiId: UUID, user: User, actionType: ActionType): ConnectionIO[Boolean] = for {
-    aoiO <- AoiDao.query.filter(aoiId).selectOption
-    projectAuthed <- aoiO map { _.projectId } match {
-      case Some(projectId) => ProjectDao.query.authorized(user, ObjectType.Project, projectId, actionType)
-      case _ => false.pure[ConnectionIO]
-    }
-  } yield { projectAuthed }
+  def authorize(aoiId: UUID,
+                user: User,
+                actionType: ActionType): ConnectionIO[Boolean] =
+    for {
+      aoiO <- AoiDao.query.filter(aoiId).selectOption
+      projectAuthed <- aoiO map { _.projectId } match {
+        case Some(projectId) =>
+          ProjectDao.query.authorized(user,
+                                      ObjectType.Project,
+                                      projectId,
+                                      actionType)
+        case _ => false.pure[ConnectionIO]
+      }
+    } yield { projectAuthed }
 }

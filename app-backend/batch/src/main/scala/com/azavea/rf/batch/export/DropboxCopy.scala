@@ -13,19 +13,21 @@ import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.util._
 
-final case class DropboxCopy(source: URI, target: URI, accessToken: String, region: Option[String] = None) extends Job {
+final case class DropboxCopy(source: URI,
+                             target: URI,
+                             accessToken: String,
+                             region: Option[String] = None)
+    extends Job {
   val name: String = DropboxCopy.name
 
   lazy val s3Client = S3(region = region)
 
   def copyListing(is: (InputStream, String) => String): List[Future[String]] = {
     @tailrec
-    def copy(listing: ObjectListing, accumulator: List[Future[String]]): List[Future[String]] = {
+    def copy(listing: ObjectListing,
+             accumulator: List[Future[String]]): List[Future[String]] = {
       def getObjects: List[Future[String]] =
-        listing
-          .getObjectSummaries
-          .asScala
-          .toList
+        listing.getObjectSummaries.asScala.toList
           .filterNot(_.getKey.endsWith("/"))
           .map { os =>
             Future {
@@ -59,8 +61,7 @@ final case class DropboxCopy(source: URI, target: URI, accessToken: String, regi
     val client = dropboxConfig.client(accessToken)
 
     try {
-      client
-        .files
+      client.files
         .createFolder(target.getPath)
     } catch {
       case e: CreateFolderErrorException =>
@@ -68,19 +69,21 @@ final case class DropboxCopy(source: URI, target: URI, accessToken: String, regi
     }
 
     Future.sequence(
-      copyListing({ case (is, key) => try {
-        logger.info(s"${key}".trim)
-        logger.info(s"${target.getPath}/${key.split("/").last}")
+      copyListing({
+        case (is, key) =>
+          try {
+            logger.info(s"${key}".trim)
+            logger.info(s"${target.getPath}/${key.split("/").last}")
 
-        client
-          .files
-          .uploadBuilder(s"${target.getPath}/${key.split("/").last}")
-          .withMode(WriteMode.OVERWRITE)
-          .uploadAndFinish(is)
-          .getId
-          .split("id:")
-          .last
-      } finally is.close() })
+            client.files
+              .uploadBuilder(s"${target.getPath}/${key.split("/").last}")
+              .withMode(WriteMode.OVERWRITE)
+              .uploadAndFinish(is)
+              .getId
+              .split("id:")
+              .last
+          } finally is.close()
+      })
     ) onComplete {
       case Success(list) => {
         logger.info(s"Dropbox copy finished with IDs: ${list.mkString(", ")}")
@@ -101,10 +104,16 @@ object DropboxCopy {
 
   def main(args: Array[String]): Unit = {
     val job = args.toList match {
-      case List(source, target, accessToken, targetRegion) => DropboxCopy(new URI(source), new URI(target), accessToken, Some(targetRegion))
-      case List(source, target, accessToken) => DropboxCopy(new URI(source), new URI(target), accessToken)
+      case List(source, target, accessToken, targetRegion) =>
+        DropboxCopy(new URI(source),
+                    new URI(target),
+                    accessToken,
+                    Some(targetRegion))
+      case List(source, target, accessToken) =>
+        DropboxCopy(new URI(source), new URI(target), accessToken)
       case list =>
-        throw new IllegalArgumentException(s"Arguments could not be parsed: $list")
+        throw new IllegalArgumentException(
+          s"Arguments could not be parsed: $list")
     }
 
     job.run

@@ -13,8 +13,7 @@ object AkkaSystem {
   implicit val materializer = ActorMaterializer()
 }
 
-object Main extends App
-  with Config {
+object Main extends App with Config {
 
   Kamon.start()
 

@@ -25,11 +25,11 @@ import doobie.postgres.implicits._
 
 import kamon.akka.http.KamonTraceDirectives
 
-
 /**
   * Routes for Organizations
   */
-trait TeamRoutes extends Authentication
+trait TeamRoutes
+    extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler
@@ -50,15 +50,18 @@ trait TeamRoutes extends Authentication
   def getTeam(teamId: UUID): Route = authenticate { user =>
     authorizeAsync {
       val authIO = for {
-        teamMember <- OptionT.liftF[ConnectionIO, Boolean](TeamDao.userIsMember(user, teamId))
+        teamMember <- OptionT.liftF[ConnectionIO, Boolean](
+          TeamDao.userIsMember(user, teamId))
         team <- OptionT[ConnectionIO, Team](TeamDao.getTeamById(teamId))
         organization <- OptionT[ConnectionIO, Organization](
           OrganizationDao.getOrganizationById(team.organizationId)
         )
-        platformAdmin <- OptionT.liftF[ConnectionIO, Boolean](PlatformDao.userIsAdmin(user, organization.platformId))
-        organizationMember <- OptionT.liftF[ConnectionIO, Boolean](OrganizationDao.userIsMember(user, organization.id))
+        platformAdmin <- OptionT.liftF[ConnectionIO, Boolean](
+          PlatformDao.userIsAdmin(user, organization.platformId))
+        organizationMember <- OptionT.liftF[ConnectionIO, Boolean](
+          OrganizationDao.userIsMember(user, organization.id))
       } yield { teamMember || organizationMember || platformAdmin }
-      authIO.value.map( _.getOrElse(false) ).transact(xa).unsafeToFuture
+      authIO.value.map(_.getOrElse(false)).transact(xa).unsafeToFuture
     } {
       rejectEmptyResponse {
         complete {

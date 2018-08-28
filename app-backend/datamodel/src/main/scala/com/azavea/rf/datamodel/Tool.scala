@@ -23,9 +23,9 @@ final case class Tool(id: UUID,
                       stars: Float = 0.0f,
                       definition: Json) {
   def withRelatedFromComponents(
-    toolTags: Seq[ToolTag],
-    toolCategories: Seq[ToolCategory],
-    organization: Option[Organization]
+      toolTags: Seq[ToolTag],
+      toolCategories: Seq[ToolCategory],
+      organization: Option[Organization]
   ): Tool.WithRelated = Tool.WithRelated(
     this.id,
     this.createdAt,
@@ -47,8 +47,8 @@ final case class Tool(id: UUID,
   )
 
   def withRelatedFromComponentUUIDs(
-    toolTagIds: Seq[UUID],
-    toolCategorySlugs: Seq[String]
+      toolTagIds: Seq[UUID],
+      toolCategorySlugs: Seq[String]
   ): Tool.WithRelatedUUIDs = Tool.WithRelatedUUIDs(
     this.id,
     this.createdAt,
@@ -89,7 +89,7 @@ object Tool {
                           categories: Seq[String])
       extends OwnerCheck {
     def toToolWithRelatedTuple(
-      user: User
+        user: User
     ): (Tool, Seq[ToolTagToTool], Seq[ToolCategoryToTool]) = {
       val now = new Timestamp(new java.util.Date().getTime)
       val toolId = UUID.randomUUID
@@ -153,9 +153,9 @@ object Tool {
 
   object WithRelated {
     def fromRecords(
-      records: Seq[
-        (Tool, Option[ToolTag], Option[ToolCategory], Option[Organization])
-      ]
+        records: Seq[
+          (Tool, Option[ToolTag], Option[ToolCategory], Option[Organization])
+        ]
     ): Iterable[Tool.WithRelated] = {
       val distinctTools = records.map(_._1).distinct
       val groupedTools = records.groupBy(_._1)

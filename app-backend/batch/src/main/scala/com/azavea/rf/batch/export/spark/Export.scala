@@ -33,7 +33,11 @@ import io.circe.syntax._
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io._
-import geotrellis.raster.io.geotiff.{GeoTiff, MultibandGeoTiff, SinglebandGeoTiff}
+import geotrellis.raster.io.geotiff.{
+  GeoTiff,
+  MultibandGeoTiff,
+  SinglebandGeoTiff
+}
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.file._
@@ -45,7 +49,6 @@ import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import spray.json.DefaultJsonProtocol._
 
-
 object Export extends SparkJob with Config with RollbarNotifier {
 
   val jobName = "Export"
@@ -55,10 +58,10 @@ object Export extends SparkJob with Config with RollbarNotifier {
   def s3Client = S3()
 
   def astExport(
-                 ed: ExportDefinition,
-                 ast: MapAlgebraAST,
-                 projLocs: Map[UUID, List[(UUID, String)]]
-               )(implicit sc: SparkContext, xa: Transactor[IO]): IO[Unit] = {
+      ed: ExportDefinition,
+      ast: MapAlgebraAST,
+      projLocs: Map[UUID, List[(UUID, String)]]
+  )(implicit sc: SparkContext, xa: Transactor[IO]): IO[Unit] = {
     interpretRDD(ast, ed.input.resolution, projLocs) map {
       case Invalid(errs) => throw InterpreterException(errs)
       case Valid(rdd) => {
@@ -67,14 +70,16 @@ object Export extends SparkJob with Config with RollbarNotifier {
         val targetRDD: TileLayerRDD[SpatialKey] =
           ed.output.rasterSize match {
             case Some(size) => rdd.regrid(size)
-            case None => rdd.regrid(defaultRasterSize)
+            case None       => rdd.regrid(defaultRasterSize)
           }
 
         val mt: MapKeyTransform = targetRDD.metadata.layout.mapTransform
 
         /* Create GeoTiffs and output them */
         val singles: RDD[(SpatialKey, SinglebandGeoTiff)] =
-          targetRDD.map({ case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs)) })
+          targetRDD.map({
+            case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs))
+          })
 
         writeGeoTiffs[Tile, SinglebandGeoTiff](singles, ed)
       }
@@ -86,8 +91,9 @@ object Export extends SparkJob with Config with RollbarNotifier {
     * @param ed export job's layer definition
     */
   def getRfLayerManagement(
-    ed: ExportLayerDefinition
-  )(implicit @transient sc: SparkContext): (FilteringLayerReader[LayerId], AttributeStore) = {
+      ed: ExportLayerDefinition
+  )(implicit @transient sc: SparkContext)
+    : (FilteringLayerReader[LayerId], AttributeStore) = {
     ed.ingestLocation.getScheme match {
       case "s3" | "s3a" | "s3n" =>
         val (bucket, prefix) = S3.parse(ed.ingestLocation)
@@ -99,61 +105,76 @@ object Export extends SparkJob with Config with RollbarNotifier {
     }
   }
 
-  def getAvroLayerRdd(ed: ExportDefinition, eld: ExportLayerDefinition, mask: Option[MultiPolygon])(implicit sc: SparkContext) = {
+  def getAvroLayerRdd(ed: ExportDefinition,
+                      eld: ExportLayerDefinition,
+                      mask: Option[MultiPolygon])(implicit sc: SparkContext) = {
     val (reader, store) = getRfLayerManagement(eld)
     val requestedLayerId = LayerId(eld.layerId.toString, ed.input.resolution)
 
     val maxAvailableZoom =
-      store
-        .layerIds
+      store.layerIds
         .filter { case LayerId(name, _) => name == requestedLayerId.name }
         .map { _.zoom }
         .max
 
     val maxLayerId = requestedLayerId.copy(zoom = maxAvailableZoom)
-    val maxMetadata = store.readMetadata[TileLayerMetadata[SpatialKey]](maxLayerId)
+    val maxMetadata =
+      store.readMetadata[TileLayerMetadata[SpatialKey]](maxLayerId)
     val maxMapTransform = maxMetadata.mapTransform
 
-    val layoutScheme = ZoomedLayoutScheme(maxMetadata.crs, math.min(maxMetadata.tileCols, maxMetadata.tileRows))
+    val layoutScheme = ZoomedLayoutScheme(
+      maxMetadata.crs,
+      math.min(maxMetadata.tileCols, maxMetadata.tileRows))
 
-    val requestedMapTransform = layoutScheme.levelForZoom(requestedLayerId.zoom).layout.mapTransform
+    val requestedMapTransform =
+      layoutScheme.levelForZoom(requestedLayerId.zoom).layout.mapTransform
 
-    lazy val requestedQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](requestedLayerId)
-    lazy val maxQuery = reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](maxLayerId)
+    lazy val requestedQuery =
+      reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](
+        requestedLayerId)
+    lazy val maxQuery =
+      reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](
+        maxLayerId)
 
     val hist =
-      eld
-        .colorCorrections
-        .map { _ => store.read[Array[Histogram[Double]]](requestedLayerId.copy(zoom = 0), "histogram") }
+      eld.colorCorrections
+        .map { _ =>
+          store.read[Array[Histogram[Double]]](requestedLayerId.copy(zoom = 0),
+                                               "histogram")
+        }
 
-    val queryLayer = (q: BoundLayerQuery[SpatialKey, TileLayerMetadata[SpatialKey], RDD[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]]]) =>
-      mask
-        .fold(q)(mp => q.where(Intersects(mp)))
-        .result
-        .withContext(
-          {
-            rdd =>
+    val queryLayer =
+      (q: BoundLayerQuery[SpatialKey,
+                          TileLayerMetadata[SpatialKey],
+                          RDD[(SpatialKey, MultibandTile)] with Metadata[
+                            TileLayerMetadata[SpatialKey]]]) =>
+        mask
+          .fold(q)(mp => q.where(Intersects(mp)))
+          .result
+          .withContext(
+            { rdd =>
               rdd.mapValues(
-                {
-                  tile =>
-                    val ctile = (eld.colorCorrections, hist) mapN {
-                      _.colorCorrect(tile, _)
-                    } getOrElse tile
+                { tile =>
+                  val ctile = (eld.colorCorrections, hist) mapN {
+                    _.colorCorrect(tile, _)
+                  } getOrElse tile
 
-                    ed.output.render.flatMap(_.bands.map(_.toSeq)) match {
-                      case Some(seq) if seq.nonEmpty => ctile.subsetBands(seq)
-                      case _ => ctile
-                    }
+                  ed.output.render.flatMap(_.bands.map(_.toSeq)) match {
+                    case Some(seq) if seq.nonEmpty => ctile.subsetBands(seq)
+                    case _                         => ctile
+                  }
                 }
               )
-          }
+            }
         )
 
     val query: MultibandTileLayerRDD[SpatialKey] =
       if (requestedLayerId.zoom <= maxAvailableZoom)
         queryLayer(requestedQuery)
       else
-        ZoomResample(queryLayer(maxQuery), maxAvailableZoom, requestedLayerId.zoom)
+        ZoomResample(queryLayer(maxQuery),
+                     maxAvailableZoom,
+                     requestedLayerId.zoom)
 
     val md = query.metadata
 
@@ -173,24 +194,30 @@ object Export extends SparkJob with Config with RollbarNotifier {
     CogUtils.fromUriAsRdd(eld.ingestLocation.toString)
 
   def multibandExport(
-    ed: ExportDefinition,
-    layers: Array[ExportLayerDefinition],
-    mask: Option[MultiPolygon]
+      ed: ExportDefinition,
+      layers: Array[ExportLayerDefinition],
+      mask: Option[MultiPolygon]
   )(implicit @transient sc: SparkContext): Unit = {
     val rdds = layers.map { ld =>
-      if (ld.sceneType == SceneType.Avro) getAvroLayerRdd(ed, ld, mask) else getCOGLayerRdd(ld)
+      if (ld.sceneType == SceneType.Avro) getAvroLayerRdd(ed, ld, mask)
+      else getCOGLayerRdd(ld)
     }
 
     /** Tile merge with respect to layer initial ordering */
     val result: RDD[(SpatialKey, MultibandGeoTiff)] =
-      rdds
-        .zipWithIndex
-        .map { case (rdd, i) =>
-          val md = rdd.metadata
-          rdd.map { case (key, tile) => (key, i -> GeoTiff(tile, md.mapTransform(key), md.crs)) }
+      rdds.zipWithIndex
+        .map {
+          case (rdd, i) =>
+            val md = rdd.metadata
+            rdd.map {
+              case (key, tile) =>
+                (key, i -> GeoTiff(tile, md.mapTransform(key), md.crs))
+            }
         }
         .reduce(_ union _)
-        .combineByKey(createTiles[(Int, MultibandGeoTiff)], mergeTiles1[(Int, MultibandGeoTiff)], mergeTiles2[(Int, MultibandGeoTiff)])
+        .combineByKey(createTiles[(Int, MultibandGeoTiff)],
+                      mergeTiles1[(Int, MultibandGeoTiff)],
+                      mergeTiles2[(Int, MultibandGeoTiff)])
         .mapValues { seq =>
           val sorted = seq.sortBy(_._1).map(_._2)
           sorted.headOption map { head =>
@@ -214,7 +241,8 @@ object Export extends SparkJob with Config with RollbarNotifier {
     val metadata = new ObjectMetadata()
     metadata.setContentLength(tiffBytes.length)
     metadata.setContentType("image/tiff")
-    val putObjectRequest = new PutObjectRequest(bucket, key, inputStream, metadata)
+    val putObjectRequest =
+      new PutObjectRequest(bucket, key, inputStream, metadata)
 
     logger.info(s"Writing Geotiff to S3 s3://${bucket}/${key}")
 
@@ -223,12 +251,13 @@ object Export extends SparkJob with Config with RollbarNotifier {
 
   /** Write a single GeoTiff to some target. */
   private def writeGeoTiff[T <: CellGrid, G <: GeoTiff[T]](
-    tiff: G,
-    ed: ExportDefinition,
-    path: ExportDefinition => String
+      tiff: G,
+      ed: ExportDefinition,
+      path: ExportDefinition => String
   ): Unit = ed.output.source.getScheme match {
     case "dropbox" if ed.output.dropboxCredential.isDefined => {
-      val client: DbxClientV2 = dropboxConfig.client(ed.output.dropboxCredential.getOrElse(""))
+      val client: DbxClientV2 =
+        dropboxConfig.client(ed.output.dropboxCredential.getOrElse(""))
 
       try {
         client.files.createFolder(ed.output.source.getPath)
@@ -238,8 +267,7 @@ object Export extends SparkJob with Config with RollbarNotifier {
       }
       tiff.dropboxWrite { is =>
         try {
-          client
-            .files
+          client.files
             .uploadBuilder(path(ed))
             .withMode(WriteMode.OVERWRITE)
             .uploadAndFinish(is)
@@ -259,13 +287,15 @@ object Export extends SparkJob with Config with RollbarNotifier {
       logger.info(s"Writing File Output: ${path(ed)}")
       tiff.write(path(ed))
     }
-    case _ => throw new Exception(s"Unknown schema for output location ${ed.output.source}")
+    case _ =>
+      throw new Exception(
+        s"Unknown schema for output location ${ed.output.source}")
   }
 
   /** Write a layer of GeoTiffs. */
   private def writeGeoTiffs[T <: CellGrid, G <: GeoTiff[T]](
-    rdd: RDD[(SpatialKey, G)],
-    ed: ExportDefinition
+      rdd: RDD[(SpatialKey, G)],
+      ed: ExportDefinition
   ): Unit = {
 
     def path(key: SpatialKey): ExportDefinition => String = { ed =>
@@ -273,7 +303,9 @@ object Export extends SparkJob with Config with RollbarNotifier {
     }
 
     rdd.foreachPartition({ iter =>
-      iter.foreach({ case (key, tile) => writeGeoTiff[T, G](tile, ed, path(key)) })
+      iter.foreach({
+        case (key, tile) => writeGeoTiff[T, G](tile, ed, path(key))
+      })
     })
   }
 

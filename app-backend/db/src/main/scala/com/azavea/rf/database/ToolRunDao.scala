@@ -16,7 +16,6 @@ import java.util.UUID
 
 import scala.concurrent.Future
 
-
 object ToolRunDao extends Dao[ToolRun] {
 
   val tableName = "tool_runs"
@@ -28,7 +27,8 @@ object ToolRunDao extends Dao[ToolRun] {
     FROM
   """ ++ tableF
 
-  def insertToolRun(newRun: ToolRun.Create, user: User): ConnectionIO[ToolRun] = {
+  def insertToolRun(newRun: ToolRun.Create,
+                    user: User): ConnectionIO[ToolRun] = {
     val now = new Timestamp(new java.util.Date().getTime())
     val id = UUID.randomUUID()
 
@@ -37,14 +37,24 @@ object ToolRunDao extends Dao[ToolRun] {
             (id, name, created_at, created_by, modified_at, modified_by, owner, visibility,
              execution_parameters)
           VALUES
-            (${id}, ${newRun.name}, ${now}, ${user.id}, ${now}, ${user.id}, ${newRun.owner.getOrElse(user.id)}, ${newRun.visibility}, ${newRun.executionParameters})
+            (${id}, ${newRun.name}, ${now}, ${user.id}, ${now}, ${user.id}, ${newRun.owner
+      .getOrElse(user.id)}, ${newRun.visibility}, ${newRun.executionParameters})
        """.update.withUniqueGeneratedKeys[ToolRun](
-      "id", "name", "created_at", "created_by", "modified_at", "modified_by", "owner", "visibility",
+      "id",
+      "name",
+      "created_at",
+      "created_by",
+      "modified_at",
+      "modified_by",
+      "owner",
+      "visibility",
       "execution_parameters"
     )
   }
 
-  def updateToolRun(updatedRun: ToolRun, id: UUID, user: User): ConnectionIO[Int] = {
+  def updateToolRun(updatedRun: ToolRun,
+                    id: UUID,
+                    user: User): ConnectionIO[Int] = {
     val now = new Timestamp(new java.util.Date().getTime())
     val idFilter = fr"id = ${id}"
 
@@ -59,4 +69,3 @@ object ToolRunDao extends Dao[ToolRun] {
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 }
-

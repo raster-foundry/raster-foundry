@@ -26,15 +26,16 @@ import kamon.akka.http.KamonTraceDirectives
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-trait SceneRoutes extends Authentication
-  with Config
-  with SceneQueryParameterDirective
-  with ThumbnailQueryParameterDirective
-  with PaginationDirectives
-  with CommonHandlers
-  with AWSBatch
-  with UserErrorHandler
-  with KamonTraceDirectives {
+trait SceneRoutes
+    extends Authentication
+    with Config
+    with SceneQueryParameterDirective
+    with ThumbnailQueryParameterDirective
+    with PaginationDirectives
+    with CommonHandlers
+    with AWSBatch
+    with UserErrorHandler
+    with KamonTraceDirectives {
 
   val xa: Transactor[IO]
 
@@ -42,94 +43,104 @@ trait SceneRoutes extends Authentication
     pathEndOrSingleSlash {
       get {
         traceName("scenes-list") {
-        listScenes }
-      } ~
-      post {
-        traceName("scenes-create") {
-        createScene }
-      }
-    } ~
-    pathPrefix(JavaUUID) { sceneId =>
-      pathEndOrSingleSlash {
-        get {
-          traceName("scenes-detail") {
-          getScene(sceneId)
-          }
-        } ~
-        put { traceName("scenes-update") {
-          updateScene(sceneId) }
-        } ~
-        delete { traceName("scenes-delete") {
-          deleteScene(sceneId) }
+          listScenes
         }
       } ~
-      pathPrefix("download") {
-        pathEndOrSingleSlash {
-          get {
-            traceName("scene-download-url") {
-              getDownloadUrl(sceneId)
-            }
-          }
-        }
-      } ~
-      pathPrefix("permissions") {
-        pathEndOrSingleSlash {
-          put {
-            traceName("replace-scene-permissions") {
-              replaceScenePermissions(sceneId)
-            }
-          }
-        } ~
         post {
-          traceName("add-scene-permission") {
-            addScenePermission(sceneId)
+          traceName("scenes-create") {
+            createScene
           }
-        } ~
-        get {
-          traceName("list-scene-permissions") {
-            listScenePermissions(sceneId)
-          }
-        } ~
-        delete {
-          deleteScenePermissions(sceneId)
         }
-      } ~
-      pathPrefix("actions") {
+    } ~
+      pathPrefix(JavaUUID) { sceneId =>
         pathEndOrSingleSlash {
           get {
-            traceName("list-user-allowed-actions") {
-              listUserSceneActions(sceneId)
+            traceName("scenes-detail") {
+              getScene(sceneId)
             }
+          } ~
+            put {
+              traceName("scenes-update") {
+                updateScene(sceneId)
+              }
+            } ~
+            delete {
+              traceName("scenes-delete") {
+                deleteScene(sceneId)
+              }
+            }
+        } ~
+          pathPrefix("download") {
+            pathEndOrSingleSlash {
+              get {
+                traceName("scene-download-url") {
+                  getDownloadUrl(sceneId)
+                }
+              }
+            }
+          } ~
+          pathPrefix("permissions") {
+            pathEndOrSingleSlash {
+              put {
+                traceName("replace-scene-permissions") {
+                  replaceScenePermissions(sceneId)
+                }
+              }
+            } ~
+              post {
+                traceName("add-scene-permission") {
+                  addScenePermission(sceneId)
+                }
+              } ~
+              get {
+                traceName("list-scene-permissions") {
+                  listScenePermissions(sceneId)
+                }
+              } ~
+              delete {
+                deleteScenePermissions(sceneId)
+              }
+          } ~
+          pathPrefix("actions") {
+            pathEndOrSingleSlash {
+              get {
+                traceName("list-user-allowed-actions") {
+                  listUserSceneActions(sceneId)
+                }
+              }
+            }
+          } ~
+          pathPrefix("datasource") {
+            pathEndOrSingleSlash { getSceneDatasource(sceneId) }
+          } ~
+          pathPrefix("thumbnail") {
+            pathEndOrSingleSlash { getSceneThumbnail(sceneId) }
           }
-        }
-      } ~
-      pathPrefix("datasource") {
-        pathEndOrSingleSlash { getSceneDatasource(sceneId) }
-      } ~
-      pathPrefix("thumbnail") {
-        pathEndOrSingleSlash { getSceneThumbnail(sceneId) }
       }
-    }
   }
 
   def listScenes: Route = authenticate { user =>
     (withPagination & sceneQueryParameters) { (page, sceneParams) =>
       complete {
-        SceneWithRelatedDao.listAuthorizedScenes(page, sceneParams, user).transact(xa).unsafeToFuture
+        SceneWithRelatedDao
+          .listAuthorizedScenes(page, sceneParams, user)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
 
   def createScene: Route = authenticate { user =>
     entity(as[Scene.Create]) { newScene =>
-
-      val tileFootprint = (newScene.sceneType, newScene.ingestLocation, newScene.tileFootprint) match {
+      val tileFootprint = (newScene.sceneType,
+                           newScene.ingestLocation,
+                           newScene.tileFootprint) match {
         case (Some(SceneType.COG), Some(ingestLocation), None) => {
           logger.debug(s"Ingest location is: $ingestLocation")
           logger.info(s"Generating Footprint for Newly Added COG")
           CogUtils.getTiffExtent(ingestLocation)
         }
-        case (_, _, tf@Some(_)) => {
+        case (_, _, tf @ Some(_)) => {
           logger.info("Not generating footprint, already exists")
           tf
         }
@@ -138,21 +149,25 @@ trait SceneRoutes extends Authentication
 
       val dataFootprint = (tileFootprint, newScene.dataFootprint) match {
         case (Some(tf), None) => tileFootprint
-        case _ => newScene.dataFootprint
+        case _                => newScene.dataFootprint
       }
 
-      val updatedScene = newScene.copy(dataFootprint = dataFootprint, tileFootprint = tileFootprint)
+      val updatedScene = newScene.copy(dataFootprint = dataFootprint,
+                                       tileFootprint = tileFootprint)
 
-      onSuccess(SceneDao.insert(updatedScene, user).transact(xa).unsafeToFuture) { scene =>
-        if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested) kickoffSceneIngest(scene.id)
-        complete((StatusCodes.Created, scene))
+      onSuccess(SceneDao.insert(updatedScene, user).transact(xa).unsafeToFuture) {
+        scene =>
+          if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested)
+            kickoffSceneIngest(scene.id)
+          complete((StatusCodes.Created, scene))
       }
     }
   }
 
   def getScene(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.authViewQuery(user)
+      SceneDao
+        .authViewQuery(user)
         .filter(sceneId)
         .exists
         .transact(xa)
@@ -174,9 +189,14 @@ trait SceneRoutes extends Authentication
         .unsafeToFuture
     } {
       entity(as[Scene]) { updatedScene =>
-        onSuccess(SceneDao.update(updatedScene, sceneId, user).transact(xa).unsafeToFuture) { case (result, kickoffIngest) =>
-          if (kickoffIngest) kickoffSceneIngest(sceneId)
-          completeSingleOrNotFound(result)
+        onSuccess(
+          SceneDao
+            .update(updatedScene, sceneId, user)
+            .transact(xa)
+            .unsafeToFuture) {
+          case (result, kickoffIngest) =>
+            if (kickoffIngest) kickoffSceneIngest(sceneId)
+            completeSingleOrNotFound(result)
         }
       }
     }
@@ -189,7 +209,8 @@ trait SceneRoutes extends Authentication
         .transact(xa)
         .unsafeToFuture
     } {
-      onSuccess(SceneDao.query.filter(sceneId).delete.transact(xa).unsafeToFuture) {
+      onSuccess(
+        SceneDao.query.filter(sceneId).delete.transact(xa).unsafeToFuture) {
         completeSingleOrNotFound
       }
     }
@@ -202,23 +223,27 @@ trait SceneRoutes extends Authentication
         .transact(xa)
         .unsafeToFuture
     } {
-      onSuccess(SceneWithRelatedDao.getScene(sceneId).transact(xa).unsafeToFuture) { scene =>
-        complete {
-          scene.getOrElse {
-            throw new Exception("Scene does not exist or is not accessible by this user")
-          }.images map { image =>
-            val downloadUri: String = {
-              image.sourceUri match {
-                case uri if uri.startsWith(s"s3://$dataBucket") => {
-                  val s3Uri = new AmazonS3URI(URLDecoder.decode(image.sourceUri, "utf-8"))
-                  S3.getSignedUrl(s3Uri.getBucket, s3Uri.getKey).toString
+      onSuccess(
+        SceneWithRelatedDao.getScene(sceneId).transact(xa).unsafeToFuture) {
+        scene =>
+          complete {
+            scene.getOrElse {
+              throw new Exception(
+                "Scene does not exist or is not accessible by this user")
+            }.images map { image =>
+              val downloadUri: String = {
+                image.sourceUri match {
+                  case uri if uri.startsWith(s"s3://$dataBucket") => {
+                    val s3Uri = new AmazonS3URI(
+                      URLDecoder.decode(image.sourceUri, "utf-8"))
+                    S3.getSignedUrl(s3Uri.getBucket, s3Uri.getKey).toString
+                  }
+                  case _ => image.sourceUri
                 }
-                case _ => image.sourceUri
               }
+              image.toDownloadable(downloadUri)
             }
-            image.toDownloadable(downloadUri)
           }
-        }
       }
     }
   }
@@ -228,7 +253,10 @@ trait SceneRoutes extends Authentication
       SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao.listByObject(ObjectType.Scene, sceneId).transact(xa).unsafeToFuture
+        AccessControlRuleDao
+          .listByObject(ObjectType.Scene, sceneId)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
@@ -239,9 +267,15 @@ trait SceneRoutes extends Authentication
     } {
       entity(as[List[AccessControlRule.Create]]) { acrCreates =>
         complete {
-          AccessControlRuleDao.replaceWithResults(
-            user, ObjectType.Scene, sceneId, acrCreates
-          ).transact(xa).unsafeToFuture
+          AccessControlRuleDao
+            .replaceWithResults(
+              user,
+              ObjectType.Scene,
+              sceneId,
+              acrCreates
+            )
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
@@ -253,9 +287,12 @@ trait SceneRoutes extends Authentication
     } {
       entity(as[AccessControlRule.Create]) { acrCreate =>
         complete {
-          AccessControlRuleDao.createWithResults(
-            acrCreate.toAccessControlRule(user, ObjectType.Scene, sceneId)
-          ).transact(xa).unsafeToFuture
+          AccessControlRuleDao
+            .createWithResults(
+              acrCreate.toAccessControlRule(user, ObjectType.Scene, sceneId)
+            )
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
@@ -263,23 +300,31 @@ trait SceneRoutes extends Authentication
 
   def listUserSceneActions(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.authViewQuery(user)
+      SceneDao
+        .authViewQuery(user)
         .filter(sceneId)
         .exists
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       user.isSuperuser match {
         case true => complete(List("*"))
         case false =>
           onSuccess(
-            SceneWithRelatedDao.unsafeGetScene(sceneId).transact(xa).unsafeToFuture
+            SceneWithRelatedDao
+              .unsafeGetScene(sceneId)
+              .transact(xa)
+              .unsafeToFuture
           ) { scene =>
             scene.owner == user.id match {
               case true => complete(List("*"))
-              case false => complete {
-                AccessControlRuleDao.listUserActions(user, ObjectType.Scene, sceneId)
-                  .transact(xa).unsafeToFuture
-              }
+              case false =>
+                complete {
+                  AccessControlRuleDao
+                    .listUserActions(user, ObjectType.Scene, sceneId)
+                    .transact(xa)
+                    .unsafeToFuture
+                }
             }
           }
       }
@@ -291,21 +336,27 @@ trait SceneRoutes extends Authentication
       SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao.deleteByObject(ObjectType.Scene, sceneId).transact(xa).unsafeToFuture
+        AccessControlRuleDao
+          .deleteByObject(ObjectType.Scene, sceneId)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
 
   def getSceneDatasource(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.authViewQuery(user)
+      SceneDao
+        .authViewQuery(user)
         .filter(sceneId)
         .exists
         .transact(xa)
         .unsafeToFuture
     } {
-      onSuccess(SceneDao.getSceneDatasource(sceneId).transact(xa).unsafeToFuture) { datasourceO =>
-        complete { datasourceO }
+      onSuccess(
+        SceneDao.getSceneDatasource(sceneId).transact(xa).unsafeToFuture) {
+        datasourceO =>
+          complete { datasourceO }
       }
     }
   }
@@ -314,42 +365,75 @@ trait SceneRoutes extends Authentication
   // impossible to have an empty one
   @SuppressWarnings(Array("TraversableHead"))
   def getSceneThumbnail(sceneId: UUID): Route = authenticateWithParameter {
-    user => {
-      thumbnailQueryParameters {
-        thumbnailParams => {
-          authorizeAsync {
-            SceneDao.authViewQuery(user)
-              .filter(sceneId)
-              .exists
-              .transact(xa)
-              .unsafeToFuture
-          } {
-            complete {
-              SceneDao.unsafeGetSceneById(sceneId).transact(xa).unsafeToFuture >>= {
-                case Scene(_, _, _, _, _, _, _, _, _, _, _, _, _, _, Some(ingestLocation), _, _, Some(SceneType.COG)) =>
-                  CogUtils.thumbnail(
-                    ingestLocation, thumbnailParams.width, thumbnailParams.height,
-                    thumbnailParams.red, thumbnailParams.green, thumbnailParams.blue,
-                    thumbnailParams.floor
-                  ).map(
-                    (tile: MultibandTile) => {
-                      tile match {
-                        case t if t.bands.length >= 3 =>
-                          HttpEntity(MediaTypes.`image/png`, tile.renderPng.bytes)
-                        case t if t.bands.nonEmpty =>
-                          HttpEntity(MediaTypes.`image/png`, tile.bands.head.renderPng.bytes)
-                        case t =>
-                          HttpEntity(MediaTypes.`image/png`, IntArrayTile.fill(0, 256, 256).renderPng.bytes)
-                      }
-                    }
-                  ).value
-                case _ =>
-                  Future.successful(None)
+    user =>
+      {
+        thumbnailQueryParameters { thumbnailParams =>
+          {
+            authorizeAsync {
+              SceneDao
+                .authViewQuery(user)
+                .filter(sceneId)
+                .exists
+                .transact(xa)
+                .unsafeToFuture
+            } {
+              complete {
+                SceneDao
+                  .unsafeGetSceneById(sceneId)
+                  .transact(xa)
+                  .unsafeToFuture >>= {
+                  case Scene(_,
+                             _,
+                             _,
+                             _,
+                             _,
+                             _,
+                             _,
+                             _,
+                             _,
+                             _,
+                             _,
+                             _,
+                             _,
+                             _,
+                             Some(ingestLocation),
+                             _,
+                             _,
+                             Some(SceneType.COG)) =>
+                    CogUtils
+                      .thumbnail(
+                        ingestLocation,
+                        thumbnailParams.width,
+                        thumbnailParams.height,
+                        thumbnailParams.red,
+                        thumbnailParams.green,
+                        thumbnailParams.blue,
+                        thumbnailParams.floor
+                      )
+                      .map(
+                        (tile: MultibandTile) => {
+                          tile match {
+                            case t if t.bands.length >= 3 =>
+                              HttpEntity(MediaTypes.`image/png`,
+                                         tile.renderPng.bytes)
+                            case t if t.bands.nonEmpty =>
+                              HttpEntity(MediaTypes.`image/png`,
+                                         tile.bands.head.renderPng.bytes)
+                            case t =>
+                              HttpEntity(
+                                MediaTypes.`image/png`,
+                                IntArrayTile.fill(0, 256, 256).renderPng.bytes)
+                          }
+                        }
+                      )
+                      .value
+                  case _ =>
+                    Future.successful(None)
+                }
               }
             }
           }
         }
       }
-    }
   }
 }

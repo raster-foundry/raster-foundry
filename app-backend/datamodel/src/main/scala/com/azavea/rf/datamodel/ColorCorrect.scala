@@ -47,8 +47,8 @@ object ColorCorrect {
 
     @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
     def reorderBands(
-      tile: MultibandTile,
-      hist: Seq[Histogram[Double]]
+        tile: MultibandTile,
+        hist: Seq[Histogram[Double]]
     ): (MultibandTile, Array[Histogram[Double]]) =
       (
         tile.subsetBands(redBand, greenBand, blueBand),
@@ -63,12 +63,12 @@ object ColorCorrect {
   }
 
   @inline def normalizeAndClampAndGammaCorrectPerPixel(
-    z: Int,
-    oldMin: Int,
-    oldMax: Int,
-    newMin: Int,
-    newMax: Int,
-    gammaOpt: Option[Double]
+      z: Int,
+      oldMin: Int,
+      oldMax: Int,
+      newMin: Int,
+      newMax: Int,
+      gammaOpt: Option[Double]
   ): Int = {
     if (isData(z)) {
       val dNew = newMax - newMin
@@ -116,11 +116,11 @@ object ColorCorrect {
       specificBand.fold(allBands)(Some(_)).fold(Some(tileDefault))(x => Some(x))
 
   def complexColorCorrect(rgbTile: MultibandTile, saturation: Saturation)(
-    layerNormalizeArgs: Map[Int, ClipBounds],
-    gammas: Map[Int, Option[Double]]
+      layerNormalizeArgs: Map[Int, ClipBounds],
+      gammas: Map[Int, Option[Double]]
   )(sigmoidalContrast: SigmoidalContrast)(
-    colorCorrectArgs: Map[Int, MaybeClipBounds],
-    tileClipping: MultiBandClipping
+      colorCorrectArgs: Map[Int, MaybeClipBounds],
+      tileClipping: MultiBandClipping
   ): MultibandTile = {
     val (red, green, blue) = (rgbTile.band(0), rgbTile.band(1), rgbTile.band(2))
     val (gr, gg, gb) = (gammas(0), gammas(1), gammas(2))

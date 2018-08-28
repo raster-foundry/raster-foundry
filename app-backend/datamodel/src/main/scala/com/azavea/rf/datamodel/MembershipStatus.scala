@@ -1,6 +1,5 @@
 package com.azavea.rf.datamodel
 
-
 import io.circe._
 import cats.syntax.either._
 
@@ -17,9 +16,10 @@ object MembershipStatus {
 
   def fromString(s: String): MembershipStatus = s.toUpperCase match {
     case "REQUESTED" => Requested
-    case "INVITED" => Invited
-    case "APPROVED" => Approved
-    case _ => throw new InvalidParameterException(s"Invalid membership status: $s")
+    case "INVITED"   => Invited
+    case "APPROVED"  => Approved
+    case _ =>
+      throw new InvalidParameterException(s"Invalid membership status: $s")
   }
 
   implicit val membershipStatusEncoder: Encoder[MembershipStatus] =

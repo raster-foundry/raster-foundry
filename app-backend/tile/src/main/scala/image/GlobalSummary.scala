@@ -24,10 +24,10 @@ import geotrellis.vector.io._
 import scala.concurrent._
 import scala.util._
 
-
 object GlobalSummary extends LazyLogging {
   val system = AkkaSystem.system
-  implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
+  implicit val blockingDispatcher =
+    system.dispatchers.lookup("blocking-dispatcher")
   implicit lazy val xa = RFTransactor.xa
 
   val store = PostgresAttributeStore()
@@ -35,9 +35,8 @@ object GlobalSummary extends LazyLogging {
   /** Get the [[RasterExtent]] which describes the meaningful subset of a layer from metadata */
   private def getDefinedRasterExtent(md: TileLayerMetadata[_]): RasterExtent = {
     val re = RasterExtent(md.layout.extent,
-      md.layout.tileLayout.totalCols.toInt,
-      md.layout.tileLayout.totalRows.toInt
-    )
+                          md.layout.tileLayout.totalCols.toInt,
+                          md.layout.tileLayout.totalRows.toInt)
     val gb = re.gridBoundsFor(md.extent)
     re.rasterExtentFor(gb).toRasterExtent
   }
@@ -45,15 +44,21 @@ object GlobalSummary extends LazyLogging {
   /** Get the minimum zoom level for a single scene from which a histogram can be constructed without
     * losing too much information (too much being defined by the 'size' threshold)
     */
-  def minAcceptableSceneZoom(sceneId: UUID, store: AttributeStore, size: Int): Option[(Extent, Int)] = {
+  def minAcceptableSceneZoom(sceneId: UUID,
+                             store: AttributeStore,
+                             size: Int): Option[(Extent, Int)] = {
     def startZoom(zoom: Int): Option[(Extent, Int)] = {
       val currentId = LayerId(sceneId.toString, zoom)
-      val metadata = Try { store.readMetadata[TileLayerMetadata[SpatialKey]](currentId) }.toOption
+      val metadata = Try {
+        store.readMetadata[TileLayerMetadata[SpatialKey]](currentId)
+      }.toOption
       metadata.flatMap { meta =>
         val re = getDefinedRasterExtent(meta)
-        logger.debug(s"Data Extent: ${meta.extent.reproject(WebMercator, LatLng).toGeoJson()}")
+        logger.debug(
+          s"Data Extent: ${meta.extent.reproject(WebMercator, LatLng).toGeoJson()}")
         logger.debug(s"$currentId has (${re.cols},${re.rows}) pixels")
-        if (re.cols >= size || re.rows >= size) Some((meta.extent, currentId.zoom))
+        if (re.cols >= size || re.rows >= size)
+          Some((meta.extent, currentId.zoom))
         else startZoom(zoom + 1).orElse(Some(meta.extent, currentId.zoom))
       }
     }
@@ -64,7 +69,8 @@ object GlobalSummary extends LazyLogging {
   /** Get the minimum zoom level for a single scene from which a histogram can be constructed without
     * losing too much information (too much being defined by the 'size' threshold)
     */
-  def minAcceptableCogZoom(uri: String, size: Int): OptionT[Future, (Extent, Int)] = {
+  def minAcceptableCogZoom(uri: String,
+                           size: Int): OptionT[Future, (Extent, Int)] = {
     // This is currently somewhat hacky because Tiffs are quite different than fleshed out layers
     // In particular, the `int` here is not a zoom but an index to this Cog's least resolute overview
     for {
@@ -79,7 +85,9 @@ object GlobalSummary extends LazyLogging {
       val extent = minOverview.extent
       val poly = extent.toPolygon().reproject(minOverview.crs, WebMercator)
       val latlngpoly = extent.toPolygon().reproject(minOverview.crs, LatLng)
-      val wmRE = ReprojectRasterExtent(minOverview.rasterExtent, minOverview.crs, WebMercator)
+      val wmRE = ReprojectRasterExtent(minOverview.rasterExtent,
+                                       minOverview.crs,
+                                       WebMercator)
       val scheme = ZoomedLayoutScheme(WebMercator, 256)
       val zoom = scheme.levelFor(wmRE.extent, wmRE.cellSize).zoom
       (wmRE.extent, zoom)
@@ -90,35 +98,42 @@ object GlobalSummary extends LazyLogging {
     * losing too much information (too much being defined by the 'size' threshold)
     */
   def minAcceptableProjectZoom(
-    projId: UUID,
-    size: Int = 512
+      projId: UUID,
+      size: Int = 512
   )(implicit xa: Transactor[IO], ec: ExecutionContext): Future[(Extent, Int)] =
     // TODO this should be updated to handle both multi band and single band mosaics
-    MultiBandMosaic.mosaicDefinition(projId).flatMap({ mosaic =>
-      Future.sequence(
-        mosaic.map {
-          case MosaicDefinition(sceneId, _, maybeSceneType, Some(ingestLocation)) =>
-            maybeSceneType match {
-              case Some(SceneType.COG) =>
-                minAcceptableCogZoom(ingestLocation, 256).value
-              case _ =>
-                Future { minAcceptableSceneZoom(sceneId, store, 256) }
-            }
-          case _ => Future { None }
-        }
-      )
-    }).map({ zoomsAndExtents =>
-      logger.debug(s"ZOOMANDEXTENTS: $zoomsAndExtents")
-      zoomsAndExtents.flatten.reduce({ (agg, next) =>
-        val e1 = agg._1
-        val e2 = next._1
-        (Extent(
-          e1.xmin min e2.xmin,
-          e1.ymin min e2.ymin,
-          e1.xmax max e2.xmax,
-          e1.ymax max e2.ymax
-        ), agg._2 max next._2)
+    MultiBandMosaic
+      .mosaicDefinition(projId)
+      .flatMap({ mosaic =>
+        Future.sequence(
+          mosaic.map {
+            case MosaicDefinition(sceneId,
+                                  _,
+                                  maybeSceneType,
+                                  Some(ingestLocation)) =>
+              maybeSceneType match {
+                case Some(SceneType.COG) =>
+                  minAcceptableCogZoom(ingestLocation, 256).value
+                case _ =>
+                  Future { minAcceptableSceneZoom(sceneId, store, 256) }
+              }
+            case _ => Future { None }
+          }
+        )
       })
-    })
+      .map({ zoomsAndExtents =>
+        logger.debug(s"ZOOMANDEXTENTS: $zoomsAndExtents")
+        zoomsAndExtents.flatten.reduce({ (agg, next) =>
+          val e1 = agg._1
+          val e2 = next._1
+          (Extent(
+             e1.xmin min e2.xmin,
+             e1.ymin min e2.ymin,
+             e1.xmax max e2.xmax,
+             e1.ymax max e2.ymax
+           ),
+           agg._2 max next._2)
+        })
+      })
 
 }

@@ -11,7 +11,6 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
 object ImageDao extends Dao[Image] {
 
   val tableName = "images"
@@ -36,16 +35,31 @@ object ImageDao extends Dao[Image] {
          ${image.filename}, ${image.sourceUri}, ${image.scene},
          ${image.imageMetadata}, ${image.resolutionMeters}, ${image.metadataFiles})
     """).update.withUniqueGeneratedKeys[Image](
-        "id", "created_at", "modified_at", "created_by", "modified_by",
-        "owner", "raw_data_bytes", "visibility", "filename", "sourceuri", "scene",
-        "image_metadata", "resolution_meters", "metadata_files"
+      "id",
+      "created_at",
+      "modified_at",
+      "created_by",
+      "modified_by",
+      "owner",
+      "raw_data_bytes",
+      "visibility",
+      "filename",
+      "sourceuri",
+      "scene",
+      "image_metadata",
+      "resolution_meters",
+      "metadata_files"
     )
   }
 
-  def insertImage(imageBanded: Image.Banded, user: User): ConnectionIO[Option[Image.WithRelated]] = {
+  def insertImage(imageBanded: Image.Banded,
+                  user: User): ConnectionIO[Option[Image.WithRelated]] = {
     val image = imageBanded.toImage(user)
-    val bands: List[Band] = (imageBanded.bands map { band: Band.Create => band.toBand(image.id) }).toList
-    val imageWithRelated = Image.WithRelated.fromRecords(bands.map((image, _))).headOption
+    val bands: List[Band] = (imageBanded.bands map { band: Band.Create =>
+      band.toBand(image.id)
+    }).toList
+    val imageWithRelated =
+      Image.WithRelated.fromRecords(bands.map((image, _))).headOption
     val transaction = for {
       _ <- this.create(image, user)
       _ <- BandDao.createMany(bands)

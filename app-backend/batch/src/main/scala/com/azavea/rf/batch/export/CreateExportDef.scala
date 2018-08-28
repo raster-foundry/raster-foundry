@@ -16,21 +16,27 @@ import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import io.circe.syntax._
 
-final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit val xa: Transactor[IO]) extends Job {
+final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
+    implicit val xa: Transactor[IO])
+    extends Job {
   val name = CreateExportDef.name
 
   /** Get S3 client per each call */
   def s3Client = S3(region = None)
 
   @SuppressWarnings(Array("CatchThrowable"))
-  protected def writeExportDefToS3(exportDef: ExportDefinition, bucket: String, key: String): Unit = {
-    logger.info(s"Uploading export definition ${exportDef.id.toString} to S3 at s3://${bucket}/${key}")
+  protected def writeExportDefToS3(exportDef: ExportDefinition,
+                                   bucket: String,
+                                   key: String): Unit = {
+    logger.info(
+      s"Uploading export definition ${exportDef.id.toString} to S3 at s3://${bucket}/${key}")
 
     try {
       s3Client.putObject(bucket, key, exportDef.asJson.toString)
     } catch {
       case e: Throwable => {
-        logger.error(s"Failed to put export definition ${exportDef.id} => ${bucket}/${key}")
+        logger.error(
+          s"Failed to put export definition ${exportDef.id} => ${bucket}/${key}")
         throw e
       }
     }
@@ -39,9 +45,13 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(im
   def run(): Unit = {
     val exportDefinitionWrite: ConnectionIO[Unit] = for {
       user <- UserDao.unsafeGetUserById(systemUser)
-      _ <- logger.debug(s"Fetched user successfully: ${user.id}").pure[ConnectionIO]
+      _ <- logger
+        .debug(s"Fetched user successfully: ${user.id}")
+        .pure[ConnectionIO]
       export <- ExportDao.query.filter(exportId).select
-      _ <- logger.debug(s"Fetched export successfully: ${export.id}").pure[ConnectionIO]
+      _ <- logger
+        .debug(s"Fetched export successfully: ${export.id}")
+        .pure[ConnectionIO]
       exportDef <- ExportDao.getExportDefinition(export, user)
       updatedExport = export.copy(
         exportStatus = ExportStatus.Exporting,
@@ -55,14 +65,18 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(im
       sys.exit(0)
     }
 
-    exportDefinitionWrite.transact(xa).attempt.handleErrorWith(
-      (error: Throwable) => {
-        logger.error(error.stackTraceString)
-        sendError(error)
-        stop
-        sys.exit(1)
-      }
-    ).unsafeRunSync
+    exportDefinitionWrite
+      .transact(xa)
+      .attempt
+      .handleErrorWith(
+        (error: Throwable) => {
+          logger.error(error.stackTraceString)
+          sendError(error)
+          stop
+          sys.exit(1)
+        }
+      )
+      .unsafeRunSync
   }
 }
 
@@ -73,9 +87,11 @@ object CreateExportDef {
     implicit val xa = RFTransactor.xa
 
     val job = args.toList match {
-      case List(exportId, bucket, key) => CreateExportDef(UUID.fromString(exportId), bucket, key)
+      case List(exportId, bucket, key) =>
+        CreateExportDef(UUID.fromString(exportId), bucket, key)
       case _ =>
-        throw new IllegalArgumentException("Argument could not be parsed to UUID and URI")
+        throw new IllegalArgumentException(
+          "Argument could not be parsed to UUID and URI")
     }
 
     job.run

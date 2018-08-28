@@ -27,15 +27,18 @@ object ImageWithRelatedDao extends Dao[Image.WithRelated] {
     BandDao.query.filter(Fragments.in(fr"image_id", imageIds)).list
   }
 
-  def imagesAndBandsToImagesWithRelated(images: List[Image], bands: List[Band]): List[Image.WithRelated] = {
+  def imagesAndBandsToImagesWithRelated(
+      images: List[Image],
+      bands: List[Band]): List[Image.WithRelated] = {
     val grouped = bands.groupBy(_.image)
     images map { im: Image =>
       im.withRelatedFromComponents(grouped.getOrElse(im.id, List.empty[Band]))
     }
   }
 
-  def imagesToImagesWithRelated(images: List[Image]): ConnectionIO[List[Image.WithRelated]] = {
-    (images map { _.id  }).toNel match {
+  def imagesToImagesWithRelated(
+      images: List[Image]): ConnectionIO[List[Image.WithRelated]] = {
+    (images map { _.id }).toNel match {
       case Some(ids) => {
         val allBandsIO = bandsForImages(ids)
         allBandsIO map { imagesAndBandsToImagesWithRelated(images, _) }

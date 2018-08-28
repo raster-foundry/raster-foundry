@@ -7,7 +7,6 @@ import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 import cats._, cats.data._, cats.effect.IO, cats.implicits._
 
-
 object OrganizationFeatureDao extends Dao[OrgFeatures] {
 
   val tableName = "organization_features"
@@ -18,4 +17,3 @@ object OrganizationFeatureDao extends Dao[OrgFeatures] {
     FROM
   """ ++ tableF
 }
-

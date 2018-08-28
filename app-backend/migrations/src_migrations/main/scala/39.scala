@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M39 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(39)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(39)(
+    List(
+      sqlu"""
 INSERT INTO tools (
   id, created_at, modified_at, created_by, modified_by, organization_id,
   title, description, requirements, license, visibility, compatible_data_sources,
@@ -24,5 +25,5 @@ INSERT INTO tools (
   '5.0'
 )
     """
-  ))
+    ))
 }

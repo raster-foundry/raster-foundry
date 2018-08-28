@@ -3,7 +3,8 @@ package com.azavea.rf.api.utils
 import akka.http.scaladsl.model.StatusCode
 
 class Auth0Exception(code: StatusCode, message: String, cause: Throwable)
-  extends RuntimeException(Auth0Exception.defaultMessage(message, cause), cause) {
+    extends RuntimeException(Auth0Exception.defaultMessage(message, cause),
+                             cause) {
 
   @SuppressWarnings(Array("NullParameter"))
   def this(code: StatusCode, message: String) = this(code, message, null)

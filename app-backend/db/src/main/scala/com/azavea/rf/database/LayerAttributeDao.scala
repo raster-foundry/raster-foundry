@@ -21,7 +21,9 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       FROM
     """ ++ tableF
 
-  def unsafeGetAttribute(layerId: LayerId, attributeName: String): ConnectionIO[LayerAttribute] = {
+  def unsafeGetAttribute(
+      layerId: LayerId,
+      attributeName: String): ConnectionIO[LayerAttribute] = {
     query
       .filter(fr"name = ${attributeName}")
       .filter(fr"zoom = ${layerId.zoom}")
@@ -29,7 +31,9 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       .select
   }
 
-  def getAttribute(layerId: LayerId, attributeName: String): ConnectionIO[Option[LayerAttribute]] = {
+  def getAttribute(
+      layerId: LayerId,
+      attributeName: String): ConnectionIO[Option[LayerAttribute]] = {
     query
       .filter(fr"name = ${attributeName}")
       .filter(fr"zoom = ${layerId.zoom}")
@@ -37,11 +41,13 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       .selectOption
   }
 
-  def listAllAttributes(attributeName: String): ConnectionIO[List[LayerAttribute]] = {
+  def listAllAttributes(
+      attributeName: String): ConnectionIO[List[LayerAttribute]] = {
     query.filter(fr"name = ${attributeName}").list
   }
 
-  def insertLayerAttribute(layerAttribute: LayerAttribute): ConnectionIO[Int] = {
+  def insertLayerAttribute(
+      layerAttribute: LayerAttribute): ConnectionIO[Int] = {
     // This insert includes conflict handling, because if we re-ingest a scene, its layerattributes should already
     // be in the db.
     val insertStatement = fr"INSERT into" ++ tableF ++
@@ -77,7 +83,8 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
 
   def layerIds: ConnectionIO[List[(String, Int)]] = {
     (fr"SELECT layer_name, zoom FROM" ++ tableF)
-      .query[(String, Int)].to[List]
+      .query[(String, Int)]
+      .to[List]
   }
 
   def layerIds(layerNames: Set[String]): ConnectionIO[List[(String, Int)]] = {
@@ -87,7 +94,8 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       .to[List]
   }
 
-  def maxZoomsForLayers(layerNames: Set[String]): ConnectionIO[List[(String, Int)]] = {
+  def maxZoomsForLayers(
+      layerNames: Set[String]): ConnectionIO[List[(String, Int)]] = {
     val f1 = layerNames.toList.toNel.map(lns => in(fr"layer_name", lns))
     (fr"SELECT layer_name, COALESCE(MAX(zoom), 0) as zoom FROM" ++ tableF ++ whereAndOpt(
       f1

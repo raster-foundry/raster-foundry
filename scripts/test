@@ -39,6 +39,10 @@ then
 
         echo "Linting Scala source code"
         docker-compose \
+            run --rm --no-deps api-server scalafmtCheck
+        docker-compose \
+            run --rm --no-deps api-server scalafmtSbtCheck
+        docker-compose \
             run --rm --no-deps api-server scapegoat
 
         echo "Preparing the database for testing"

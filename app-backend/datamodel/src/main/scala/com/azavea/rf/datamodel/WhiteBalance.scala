@@ -145,16 +145,20 @@ object WhiteBalance {
       adjustments
     } else {
       // convert tile to YUV
-      val tileYuv = mapBands(rgbTile, rgb => {
-        val bands = rgb.toList.map((i: Int) => if (isData(i)) Some(i) else None)
-        val r :: g :: b :: xs = bands
-        val rgbs = (r, g, b)
-        val yuv = rgbs match {
-          case (Some(rd), Some(gr), Some(bl)) => Some(RgbToYuv(rd, gr, bl))
-          case _                              => None
+      val tileYuv = mapBands(
+        rgbTile,
+        rgb => {
+          val bands =
+            rgb.toList.map((i: Int) => if (isData(i)) Some(i) else None)
+          val r :: g :: b :: xs = bands
+          val rgbs = (r, g, b)
+          val yuv = rgbs match {
+            case (Some(rd), Some(gr), Some(bl)) => Some(RgbToYuv(rd, gr, bl))
+            case _                              => None
+          }
+          yuv
         }
-        yuv
-      })
+      )
 
       // find grey chromaticity
       val offGrey = (yuv: YUV) => (abs(yuv.u) + abs(yuv.v)) / yuv.y

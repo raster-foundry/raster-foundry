@@ -1,6 +1,11 @@
 package com.azavea.rf.batch.dropbox
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataOutputStream, InputStream}
+import java.io.{
+  ByteArrayInputStream,
+  ByteArrayOutputStream,
+  DataOutputStream,
+  InputStream
+}
 
 import geotrellis.raster.CellGrid
 import geotrellis.raster.io.geotiff.GeoTiff
@@ -13,7 +18,8 @@ import org.apache.spark.SparkContext
 trait Implicits {
 
   trait HadoopRasterMethods[T] extends MethodExtensions[T] {
-    def write(path: Path)(implicit sc: SparkContext): Unit = write(path, sc.hadoopConfiguration)
+    def write(path: Path)(implicit sc: SparkContext): Unit =
+      write(path, sc.hadoopConfiguration)
 
     def write(path: Path, conf: Configuration): Unit
   }

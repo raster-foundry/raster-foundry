@@ -3,7 +3,13 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.{User, UserRole, Credential, UserVisibility, OrganizationType}
+import com.azavea.rf.datamodel.{
+  User,
+  UserRole,
+  Credential,
+  UserVisibility,
+  OrganizationType
+}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -34,25 +40,30 @@ object UserDao extends Dao[User] {
     query.filter(fr"id = ${id}")
   }
 
-  def unsafeGetUserById(id: String, isOwn: Option[Boolean] = Some(true)): ConnectionIO[User] = isOwn match {
+  def unsafeGetUserById(
+      id: String,
+      isOwn: Option[Boolean] = Some(true)): ConnectionIO[User] = isOwn match {
     case Some(true) => filterById(id).select
-    case _ => filterById(id).select map {
-      (user: User) => {
-        user.copy(planetCredential = Credential(Some("")), dropboxCredential = Credential(Some("")))
+    case _ =>
+      filterById(id).select map { (user: User) =>
+        {
+          user.copy(planetCredential = Credential(Some("")),
+                    dropboxCredential = Credential(Some("")))
+        }
       }
-    }
   }
 
-  def unsafeGetUserPlatform(id: String): ConnectionIO[Platform] = for {
-    platformRole <- {
-      UserGroupRoleDao.query
-        .filter(fr"group_type = 'PLATFORM' :: group_type")
-        .filter(fr"user_id = $id")
-        .filter(fr"is_active = true")
-        .select
-    }
-    platform <- PlatformDao.unsafeGetPlatformById(platformRole.groupId)
-  } yield platform
+  def unsafeGetUserPlatform(id: String): ConnectionIO[Platform] =
+    for {
+      platformRole <- {
+        UserGroupRoleDao.query
+          .filter(fr"group_type = 'PLATFORM' :: group_type")
+          .filter(fr"user_id = $id")
+          .filter(fr"is_active = true")
+          .select
+      }
+      platform <- PlatformDao.unsafeGetPlatformById(platformRole.groupId)
+    } yield platform
 
   def getUserById(id: String): ConnectionIO[Option[User]] = {
     filterById(id).selectOption
@@ -67,7 +78,8 @@ object UserDao extends Dao[User] {
     }
   }
 
-  def getUserAndActiveRolesById(id: String): ConnectionIO[UserOptionAndRoles] = {
+  def getUserAndActiveRolesById(
+      id: String): ConnectionIO[UserOptionAndRoles] = {
     for {
       user <- getUserById(id)
       roles <- {
@@ -81,15 +93,22 @@ object UserDao extends Dao[User] {
     } yield UserOptionAndRoles(user, roles)
   }
 
-  def createUserWithJWT(creatingUser: User, jwtUser: User.JwtFields): ConnectionIO[(User, List[UserGroupRole])] = {
+  def createUserWithJWT(
+      creatingUser: User,
+      jwtUser: User.JwtFields): ConnectionIO[(User, List[UserGroupRole])] = {
     for {
-      organization <- OrganizationDao.query.filter(jwtUser.organizationId).selectOption
+      organization <- OrganizationDao.query
+        .filter(jwtUser.organizationId)
+        .selectOption
       createdUser <- {
         organization match {
           case Some(o) =>
             val newUser = User.Create(
-              jwtUser.id, Viewer, jwtUser.email,
-              jwtUser.name, jwtUser.picture
+              jwtUser.id,
+              Viewer,
+              jwtUser.email,
+              jwtUser.name,
+              jwtUser.picture
             )
             create(newUser)
           case None =>
@@ -99,22 +118,29 @@ object UserDao extends Dao[User] {
         }
       }
       platformRole <- UserGroupRoleDao.create(
-        UserGroupRole.Create(
-          createdUser.id,
-          GroupType.Platform,
-          jwtUser.platformId,
-          GroupRole.Member
-        ).toUserGroupRole(creatingUser, MembershipStatus.Approved)
+        UserGroupRole
+          .Create(
+            createdUser.id,
+            GroupType.Platform,
+            jwtUser.platformId,
+            GroupRole.Member
+          )
+          .toUserGroupRole(creatingUser, MembershipStatus.Approved)
       )
       organizationRole <- UserGroupRoleDao.create(
-        UserGroupRole.Create(
-          createdUser.id,
-          GroupType.Organization,
-          organization.getOrElse(
-            throw new RuntimeException("Tried to create a user role using a non-existent organization ID")
-          ).id,
-          GroupRole.Member
-        ).toUserGroupRole(creatingUser, MembershipStatus.Approved)
+        UserGroupRole
+          .Create(
+            createdUser.id,
+            GroupType.Organization,
+            organization
+              .getOrElse(
+                throw new RuntimeException(
+                  "Tried to create a user role using a non-existent organization ID")
+              )
+              .id,
+            GroupRole.Member
+          )
+          .toUserGroupRole(creatingUser, MembershipStatus.Approved)
       )
     } yield (createdUser, List(platformRole, organizationRole))
   }
@@ -138,7 +164,8 @@ object UserDao extends Dao[User] {
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
-  def storeDropboxAccessToken(userId: String, accessToken: Credential): ConnectionIO[Int] = {
+  def storeDropboxAccessToken(userId: String,
+                              accessToken: Credential): ConnectionIO[Int] = {
     sql"""UPDATE users
           SET dropbox_credential = ${accessToken}
           WHERE id = ${userId}
@@ -156,8 +183,20 @@ object UserDao extends Dao[User] {
           (${newUser.id}, ${UserRole.toString(newUser.role)}, ${now}, ${now}, false,
           ${newUser.email}, ${newUser.name}, ${newUser.profileImageUri}, false, true, ${UserVisibility.Private.toString}::user_visibility)
        """.update.withUniqueGeneratedKeys[User](
-      "id", "role", "created_at", "modified_at", "dropbox_credential", "planet_credential", "email_notifications",
-      "email", "name", "profile_image_uri", "is_superuser", "is_active", "visibility", "personal_info"
+      "id",
+      "role",
+      "created_at",
+      "modified_at",
+      "dropbox_credential",
+      "planet_credential",
+      "email_notifications",
+      "email",
+      "name",
+      "profile_image_uri",
+      "is_superuser",
+      "is_active",
+      "visibility",
+      "personal_info"
     )
   }
 
@@ -219,12 +258,18 @@ object UserDao extends Dao[User] {
           WHERE
           requesting_ugr4.group_type = 'TEAM' AND
           requesting_ugr4.user_id = ${user.id}
-        ) AS search ON""" ++ Fragment.const(s"${tableName}.id") ++ fr"= search.user_id")
-      }, tableF, List.empty
+        ) AS search ON""" ++ Fragment
+            .const(s"${tableName}.id") ++ fr"= search.user_id")
+      },
+      tableF,
+      List.empty
     )
 
-  def searchUsers(user: User, searchParams: SearchQueryParameters): ConnectionIO[List[User]] = {
-    UserDao.viewFilter(user)
+  def searchUsers(
+      user: User,
+      searchParams: SearchQueryParameters): ConnectionIO[List[User]] = {
+    UserDao
+      .viewFilter(user)
       .filter(searchParams)
       .list(0, 5, fr"order by name")
   }
@@ -241,7 +286,7 @@ object UserDao extends Dao[User] {
           visibility = ${user.visibility},
           personal_info = ${user.personalInfo}
           """ ++
-      Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
-     ).update.run
+        Fragments.whereAndOpt(Some(fr"id = ${user.id}"))
+    ).update.run
   }
 }

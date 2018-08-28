@@ -1,5 +1,5 @@
-// For sbt 1.1.x, and 0.13.x
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.3")
+
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0")
 
 addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.1")
@@ -17,6 +17,7 @@ addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.9.0")
 addSbtPlugin("io.gatling" % "gatling-sbt" % "2.2.2")
 
 addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.3")
-// addSbtPlugin("io.kamon" % "sbt-aspectj-runner" % "1.0.1")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
+
+addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")

@@ -29,7 +29,10 @@ import scala.collection.parallel.immutable.ParSeq
 import scala.concurrent.ExecutionContext
 import scala.concurrent.forkjoin.ForkJoinPool
 
-final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC))(implicit val xa: Transactor[IO]) extends Job {
+final case class ImportSentinel2(startDate: LocalDate =
+                                   LocalDate.now(ZoneOffset.UTC))(
+    implicit val xa: Transactor[IO])
+    extends Job {
 
   // To resolve an ambiguous implicit
   import ImportSentinel2._
@@ -55,9 +58,12 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset
   /** Get S3 client per each call */
   def s3Client = S3(region = sentinel2Config.awsRegion)
 
-  def createImages(sceneId: UUID, infoPath: Option[String], resolution: Float): List[Image.Banded] = {
+  def createImages(sceneId: UUID,
+                   infoPath: Option[String],
+                   resolution: Float): List[Image.Banded] = {
     val tileInfoPath = infoPath.getOrElse("")
-    logger.info(s"Creating images for $tileInfoPath with resolution $resolution")
+    logger.info(
+      s"Creating images for $tileInfoPath with resolution $resolution")
 
     val keys = resolution match {
       case 10f =>
@@ -83,7 +89,8 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset
           s"${tileInfoPath}/B10.jp2"
         )
       case _ =>
-        throw new InvalidParameterException(s"Unable to create images for $tileInfoPath at resolution $resolution")
+        throw new InvalidParameterException(
+          s"Unable to create images for $tileInfoPath at resolution $resolution")
     }
 
     keys.map { obj =>
@@ -104,7 +111,8 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset
     }
   }
 
-  def createThumbnails(sceneId: UUID, tilePath: String): List[Thumbnail.Identified] = {
+  def createThumbnails(sceneId: UUID,
+                       tilePath: String): List[Thumbnail.Identified] = {
     val keyPath: String = s"$tilePath/preview.jpg"
     val thumbnailUrl = s"${sentinel2Config.baseHttpPath}$keyPath"
 
@@ -122,24 +130,32 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset
     s3Client
       .listKeys(
         s3bucket = sentinel2Config.bucketName,
-        s3prefix = s"products/${date.getYear}/${date.getMonthValue}/${date.getDayOfMonth}/",
+        s3prefix =
+          s"products/${date.getYear}/${date.getMonthValue}/${date.getDayOfMonth}/",
         ext = "productInfo.json",
         recursive = true,
         requesterPays = true
-      ).toList
+      )
+      .toList
   }
 
   /** Because it makes scenes -- get it? */
-  def riot(scenePath: String, datasourceUUID: UUID, user: User): IO[Option[Scene.WithRelated]] = {
+  def riot(scenePath: String,
+           datasourceUUID: UUID,
+           user: User): IO[Option[Scene.WithRelated]] = {
     logger.info(s"Attempting to import ${scenePath}")
     val sceneId = UUID.randomUUID()
-    val images = List(10f, 20f, 60f).map(createImages(sceneId, scenePath.some, _)).reduce(_ ++ _)
+    val images = List(10f, 20f, 60f)
+      .map(createImages(sceneId, scenePath.some, _))
+      .reduce(_ ++ _)
     val sceneName = s"S2 ${scenePath}"
     logger.info(s"Starting scene creation: ${scenePath}- ${sceneName}")
     logger.info(s"Getting tile info for ${scenePath}")
     val tileinfo =
       s3Client
-        .getObject(sentinel2Config.bucketName, s"${scenePath}/tileInfo.json", true)
+        .getObject(sentinel2Config.bucketName,
+                   s"${scenePath}/tileInfo.json",
+                   true)
         .getObjectContent
         .toJson
         .getOrElse(Json.Null)
@@ -147,14 +163,22 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset
     val sceneMetadata: Map[String, String] = getSceneMetadata(tileinfo)
     val datasourcePrefix = "S2"
     logger.info(s"${datasourcePrefix} - Extracting polygons for ${scenePath}")
-    val tileFootprint = multiPolygonFromJson(tileinfo, "tileGeometry", sentinel2Config.targetProjCRS)
-    val dataFootprint = multiPolygonFromJson(tileinfo, "tileDataGeometry", sentinel2Config.targetProjCRS)
+    val tileFootprint = multiPolygonFromJson(tileinfo,
+                                             "tileGeometry",
+                                             sentinel2Config.targetProjCRS)
+    val dataFootprint = multiPolygonFromJson(tileinfo,
+                                             "tileDataGeometry",
+                                             sentinel2Config.targetProjCRS)
     val intersects = dataFootprint.exists(AntimeridianUtils.crossesAntimeridian)
     val correctedDataFootprint = AntimeridianUtils.correctDataFootprint(
-      intersects, dataFootprint, sentinel2Config.targetProjCRS
+      intersects,
+      dataFootprint,
+      sentinel2Config.targetProjCRS
     )
     val correctedTileFootprint = AntimeridianUtils.correctTileFootprint(
-      intersects, tileFootprint, sentinel2Config.targetProjCRS
+      intersects,
+      tileFootprint,
+      sentinel2Config.targetProjCRS
     )
     val awsBase = s"https://${sentinel2Config.bucketName}.s3.amazonaws.com"
     val metadataFiles = List(
@@ -180,9 +204,10 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset
       sceneMetadata = sceneMetadata.asJson,
       name = sceneName,
       owner = systemUser.some,
-      tileFootprint = (sentinel2Config.targetProjCRS.epsgCode, tileFootprint).mapN {
-        case (code, mp) => Projected(mp, code)
-      },
+      tileFootprint =
+        (sentinel2Config.targetProjCRS.epsgCode, tileFootprint).mapN {
+          case (code, mp) => Projected(mp, code)
+        },
       dataFootprint = correctedDataFootprint,
       metadataFiles = metadataFiles,
       images = images,
@@ -205,7 +230,9 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset
     IO.shift(SceneCreationIOContext) *> sceneInsertIO
   }
 
-  def insertSceneFromURI(uri: URI, datasourceUUID: UUID, user: User): ParSeq[IO[Option[Scene.WithRelated]]] = {
+  def insertSceneFromURI(uri: URI,
+                         datasourceUUID: UUID,
+                         user: User): ParSeq[IO[Option[Scene.WithRelated]]] = {
     val paths: ParSeq[String] = getScenePaths(uri).par
     paths.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(16))
     logger.info(s"Found ${paths.length} tiles for ${uri}")
@@ -225,7 +252,10 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset
   }
 
   def getScenePaths(uri: URI): List[String] = {
-    val json: Option[Json] = s3Client.getObject(uri.getHost, uri.getPath.tail, true).getObjectContent.toJson
+    val json: Option[Json] = s3Client
+      .getObject(uri.getHost, uri.getPath.tail, true)
+      .getObjectContent
+      .toJson
     val tilesJson: Option[List[Json]] = json flatMap {
       _.hcursor.downField("tiles").as[List[Json]].toOption
     }
@@ -244,33 +274,43 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(ZoneOffset
     logger.info(s"Importing Sentinel 2 scenes for ${startDate}")
     val keys = getSentinel2Products(startDate).par
     keys.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(16))
-    val user = UserDao.getUserById(systemUser).transact(xa).unsafeRunSync.getOrElse(
-      throw new Exception(s"${systemUser} could not be found -- probably the database is borked")
-    )
+    val user = UserDao
+      .getUserById(systemUser)
+      .transact(xa)
+      .unsafeRunSync
+      .getOrElse(
+        throw new Exception(
+          s"${systemUser} could not be found -- probably the database is borked")
+      )
     val insertedScenes: ParSeq[Option[Scene.WithRelated]] = keys flatMap {
-      (key: URI) => {
-        insertSceneFromURI(key, sentinel2Config.datasourceUUID, user) map {
-          (sceneIO: IO[Option[Scene.WithRelated]]) =>
-            sceneIO.handleErrorWith(
-              (error: Throwable) => {
-                sendError(error)
-                IO.pure(None)
-              }
-            ).unsafeRunSync
+      (key: URI) =>
+        {
+          insertSceneFromURI(key, sentinel2Config.datasourceUUID, user) map {
+            (sceneIO: IO[Option[Scene.WithRelated]]) =>
+              sceneIO
+                .handleErrorWith(
+                  (error: Throwable) => {
+                    sendError(error)
+                    IO.pure(None)
+                  }
+                )
+                .unsafeRunSync
+          }
         }
-      }
     }
     cachedThreadPool.shutdown()
     stop
   }
 }
 
-
 object ImportSentinel2 extends RollbarNotifier {
   val name = "import_sentinel2"
 
   @SuppressWarnings(Array("CatchThrowable"))
-  def multiPolygonFromJson(tileinfo: Json, key: String, targetCrs: CRS = CRS.fromName("EPSG:3857")): Option[MultiPolygon] = {
+  def multiPolygonFromJson(
+      tileinfo: Json,
+      key: String,
+      targetCrs: CRS = CRS.fromName("EPSG:3857")): Option[MultiPolygon] = {
     val geom = tileinfo.hcursor.downField(key)
     val polygon = try {
       geom.focus.map(_.noSpaces.parseGeoJson[Polygon])
@@ -288,29 +328,44 @@ object ImportSentinel2 extends RollbarNotifier {
         .downField("name")
         .focus
         .flatMap(_.as[String].toOption)
-        .map { crs => CRS.fromName(s"EPSG:${crs.split(":").last}") }
+        .map { crs =>
+          CRS.fromName(s"EPSG:${crs.split(":").last}")
+        }
 
-    (srcProj, polygon).mapN { case (sourceProjCRS, poly) =>
-      MultiPolygon(poly.reproject(sourceProjCRS, targetCrs))
+    (srcProj, polygon).mapN {
+      case (sourceProjCRS, poly) =>
+        MultiPolygon(poly.reproject(sourceProjCRS, targetCrs))
     }
   }
 
   def getSceneMetadata(tileinfo: Json): Map[String, String] = {
+
     /** Required for sceneMetadata collection, to unbox Options */
     implicit def optionToString(opt: Option[String]): String = opt.getOrElse("")
 
-    implicit def optionTToString[T](opt: Option[T]): String = opt.map(_.toString)
+    implicit def optionTToString[T](opt: Option[T]): String =
+      opt.map(_.toString)
 
     Map(
       ("path", tileinfo.hcursor.downField("path").as[String].toOption),
-      ("timeStamp", tileinfo.hcursor.downField("timestamp").as[String].toOption),
+      ("timeStamp",
+       tileinfo.hcursor.downField("timestamp").as[String].toOption),
       ("utmZone", tileinfo.hcursor.downField("utmZone").as[Int].toOption),
-      ("latitudeBand", tileinfo.hcursor.downField("latitudeBand").as[String].toOption),
-      ("gridSquare", tileinfo.hcursor.downField("gridSquare").as[String].toOption),
-      ("dataCoveragePercentage", tileinfo.hcursor.downField("dataCoveragePercentage").as[Double].toOption),
-      ("cloudyPixelPercentage", tileinfo.hcursor.downField("cloudyPixelPercentage").as[Double].toOption),
-      ("productName", tileinfo.hcursor.downField("productName").as[String].toOption),
-      ("productPath", tileinfo.hcursor.downField("productPath").as[String].toOption)
+      ("latitudeBand",
+       tileinfo.hcursor.downField("latitudeBand").as[String].toOption),
+      ("gridSquare",
+       tileinfo.hcursor.downField("gridSquare").as[String].toOption),
+      ("dataCoveragePercentage",
+       tileinfo.hcursor
+         .downField("dataCoveragePercentage")
+         .as[Double]
+         .toOption),
+      ("cloudyPixelPercentage",
+       tileinfo.hcursor.downField("cloudyPixelPercentage").as[Double].toOption),
+      ("productName",
+       tileinfo.hcursor.downField("productName").as[String].toOption),
+      ("productPath",
+       tileinfo.hcursor.downField("productPath").as[String].toOption)
     )
   }
 
@@ -318,7 +373,7 @@ object ImportSentinel2 extends RollbarNotifier {
     implicit val xa = RFTransactor.xa
     val job = args.toList match {
       case List(date) => ImportSentinel2(LocalDate.parse(date))
-      case _ => ImportSentinel2()
+      case _          => ImportSentinel2()
     }
     logger.info(s"Preparing to run job")
     job.run

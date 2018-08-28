@@ -2,7 +2,8 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M25 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(25)(List(sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(25)(
+    List(sqlu"""
        CREATE TABLE model_tags (
          id UUID PRIMARY KEY NOT NULL,
          created_at TIMESTAMP NOT NULL,

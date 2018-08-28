@@ -34,24 +34,24 @@ object SceneStatusFields {
 
 @JsonCodec
 final case class Scene(
-  id: UUID,
-  createdAt: java.sql.Timestamp,
-  createdBy: String,
-  modifiedAt: java.sql.Timestamp,
-  modifiedBy: String,
-  owner: String,
-  visibility: Visibility,
-  tags: List[String],
-  datasource: UUID,
-  sceneMetadata: Json,
-  name: String,
-  tileFootprint: Option[Projected[MultiPolygon]] = None,
-  dataFootprint: Option[Projected[MultiPolygon]] = None,
-  metadataFiles: List[String],
-  ingestLocation: Option[String] = None,
-  filterFields: SceneFilterFields = new SceneFilterFields(),
-  statusFields: SceneStatusFields,
-  sceneType: Option[SceneType] = None
+    id: UUID,
+    createdAt: java.sql.Timestamp,
+    createdBy: String,
+    modifiedAt: java.sql.Timestamp,
+    modifiedBy: String,
+    owner: String,
+    visibility: Visibility,
+    tags: List[String],
+    datasource: UUID,
+    sceneMetadata: Json,
+    name: String,
+    tileFootprint: Option[Projected[MultiPolygon]] = None,
+    dataFootprint: Option[Projected[MultiPolygon]] = None,
+    metadataFiles: List[String],
+    ingestLocation: Option[String] = None,
+    filterFields: SceneFilterFields = new SceneFilterFields(),
+    statusFields: SceneStatusFields,
+    sceneType: Option[SceneType] = None
 ) {
   def toScene: Scene = this
 
@@ -82,8 +82,8 @@ final case class Scene(
     )
 
   def withLessRelatedFromComponents(
-    thumbnails: List[Thumbnail],
-    datasource: Datasource
+      thumbnails: List[Thumbnail],
+      datasource: Datasource
   ): Scene.WithLessRelated = Scene.WithLessRelated(
     this.id,
     this.createdAt,
@@ -204,25 +204,25 @@ object Scene {
 
   @JsonCodec
   final case class WithLessRelated(
-    id: UUID,
-    createdAt: Timestamp,
-    createdBy: String,
-    modifiedAt: Timestamp,
-    modifiedBy: String,
-    owner: String,
-    visibility: Visibility,
-    tags: List[String],
-    datasource: Datasource.Thin,
-    sceneMetadata: Json,
-    name: String,
-    tileFootprint: Option[Projected[MultiPolygon]],
-    dataFootprint: Option[Projected[MultiPolygon]],
-    metadataFiles: List[String],
-    thumbnails: List[Thumbnail],
-    ingestLocation: Option[String],
-    filterFields: SceneFilterFields = new SceneFilterFields(),
-    statusFields: SceneStatusFields,
-    sceneType: Option[SceneType] = None
+      id: UUID,
+      createdAt: Timestamp,
+      createdBy: String,
+      modifiedAt: Timestamp,
+      modifiedBy: String,
+      owner: String,
+      visibility: Visibility,
+      tags: List[String],
+      datasource: Datasource.Thin,
+      sceneMetadata: Json,
+      name: String,
+      tileFootprint: Option[Projected[MultiPolygon]],
+      dataFootprint: Option[Projected[MultiPolygon]],
+      metadataFiles: List[String],
+      thumbnails: List[Thumbnail],
+      ingestLocation: Option[String],
+      filterFields: SceneFilterFields = new SceneFilterFields(),
+      statusFields: SceneStatusFields,
+      sceneType: Option[SceneType] = None
   ) {
     def toScene: Scene =
       Scene(

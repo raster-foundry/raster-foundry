@@ -174,7 +174,7 @@ object Image {
       * @param records result of join query to return image with related information
       */
     def fromRecords(
-      records: List[(Image, Band)]
+        records: List[(Image, Band)]
     ): Iterable[Image.WithRelated] = {
       val distinctImages = records.map(_._1)
       val bands = records.map(_._2)

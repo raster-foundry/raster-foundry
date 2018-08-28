@@ -12,7 +12,7 @@ object FileType {
   case object GeotiffWithMetadata extends FileType("GEOTIFF_WITH_METADATA")
 
   def fromString(s: String): FileType = s.toUpperCase match {
-    case "GEOTIFF" => Geotiff
+    case "GEOTIFF"               => Geotiff
     case "GEOTIFF_WITH_METADATA" => GeotiffWithMetadata
   }
 

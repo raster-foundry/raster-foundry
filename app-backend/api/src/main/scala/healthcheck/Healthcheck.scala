@@ -15,7 +15,7 @@ object HealthCheckStatus extends Enumeration {
   val OK, Failing = Value
 
   def fromString(str: String): Status = str match {
-    case "OK" => OK
+    case "OK"      => OK
     case "Failing" => Failing
   }
 }
@@ -28,7 +28,8 @@ object HealthCheckStatus extends Enumeration {
   *
   */
 @JsonCodec
-final case class HealthCheck(status: HealthCheckStatus.Status, services: Seq[ServiceCheck])
+final case class HealthCheck(status: HealthCheckStatus.Status,
+                             services: Seq[ServiceCheck])
 
 /**
   * Individual service check for a component (database, cache, etc.)

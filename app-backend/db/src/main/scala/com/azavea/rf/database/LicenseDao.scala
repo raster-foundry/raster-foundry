@@ -14,7 +14,6 @@ import scala.concurrent.Future
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 
-
 object LicenseDao extends Dao[License] {
 
   val tableName = "licenses"

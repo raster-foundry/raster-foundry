@@ -9,7 +9,8 @@ import akka.http.scaladsl.model.StatusCodes
 import spray.json.{SerializationException, DeserializationException}
 import com.typesafe.scalalogging.LazyLogging
 
-trait TileErrorHandler extends Directives
+trait TileErrorHandler
+    extends Directives
     with RollbarNotifier
     with LazyLogging {
   val tileExceptionHandler = ExceptionHandler {
@@ -28,11 +29,12 @@ trait TileErrorHandler extends Directives
       complete(StatusCodes.ServerError(500)("Encoding Error", e.getMessage))
     case e: LayerIOError =>
       logger.error(RfStackTrace(e))
-      complete(StatusCodes.ClientError(404)("Scene or Scene tile data not found", e.getMessage))
+      complete(
+        StatusCodes.ClientError(404)("Scene or Scene tile data not found",
+                                     e.getMessage))
     case e: Exception =>
       logger.error(RfStackTrace(e))
       sendError(e)
       complete(StatusCodes.ServerError(500)("An unknown error occurred", ""))
   }
 }
-

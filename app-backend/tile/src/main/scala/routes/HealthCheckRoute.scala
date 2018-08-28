@@ -72,11 +72,13 @@ object HealthCheckRoute extends LazyLogging {
     } match {
       case Success(x) if x.isSuccess => None
       case Success(x) =>
-        val message = s"Failed writing to memcached client. Message: ${x.getMessage}"
+        val message =
+          s"Failed writing to memcached client. Message: ${x.getMessage}"
         logger.error(message)
         Some(message)
       case Failure(x) =>
-        val message = s"Failed writing to memcached client. Mesage: ${x.getMessage}"
+        val message =
+          s"Failed writing to memcached client. Mesage: ${x.getMessage}"
         logger.error(message)
         Some(message)
     }
@@ -92,7 +94,8 @@ object HealthCheckRoute extends LazyLogging {
   def checkDatabaseConn: Option[String] = {
     Try {
       Await.result(
-        UserDao.query.list(1).transact(xa).unsafeToFuture, 3 seconds
+        UserDao.query.list(1).transact(xa).unsafeToFuture,
+        3 seconds
       )
     } match {
       case Success(List(_)) => None

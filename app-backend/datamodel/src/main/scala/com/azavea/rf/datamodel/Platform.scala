@@ -43,17 +43,17 @@ object Platform {
 
 @JsonCodec
 final case class PlatformWithUsersSceneProjects(
-  platId: UUID,
-  platName: String,
-  uId: String,
-  uName: String,
-  pubSettings: Platform.PublicSettings,
-  priSettings: Platform.PrivateSettings,
-  email: String,
-  emailNotifications: Boolean,
-  projectId: UUID,
-  projectName: String,
-  personalInfo: User.PersonalInfo
+    platId: UUID,
+    platName: String,
+    uId: String,
+    uName: String,
+    pubSettings: Platform.PublicSettings,
+    priSettings: Platform.PrivateSettings,
+    email: String,
+    emailNotifications: Boolean,
+    projectId: UUID,
+    projectName: String,
+    personalInfo: User.PersonalInfo
 ) {
   def getUserEmail: String =
     (emailNotifications, personalInfo.emailNotifications) match {

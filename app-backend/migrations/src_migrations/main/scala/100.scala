@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M100 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(100)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(100)(
+    List(
+      sqlu"""
 
 ALTER TABLE
  annotations
@@ -89,5 +90,5 @@ ALTER COLUMN
 SET
  NOT NULL;
 """ // your sql code goes here
-  ))
+    ))
 }

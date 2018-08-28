@@ -14,7 +14,6 @@ import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
 trait ConfigRoutes extends Authentication {
   val xa: Transactor[IO]
   val configRoutes: Route = {

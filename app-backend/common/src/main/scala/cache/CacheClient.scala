@@ -1,6 +1,5 @@
 package com.azavea.rf.common.cache
 
-
 import java.util.concurrent.Executors
 
 import cats.data._
@@ -24,7 +23,9 @@ object CacheClientThreadPool extends RollbarNotifier {
     )
 }
 
-class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNotifier {
+class CacheClient(client: => MemcachedClient)
+    extends LazyLogging
+    with RollbarNotifier {
 
   import CacheClientThreadPool._
 
@@ -71,12 +72,14 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
   @SuppressWarnings(Array("AsInstanceOf"))
   @tailrec
   final def localGetOrElse[CachedType](
-    cacheKey: String,
-    expensiveOperation: => Future[Option[CachedType]],
-    doCache: Boolean = true,
-    depth: Int = 0)(
-    fallbackFunction: (String, => Future[Option[CachedType]], Boolean) => Future[Option[CachedType]]
-    ): Future[Option[CachedType]] = {
+      cacheKey: String,
+      expensiveOperation: => Future[Option[CachedType]],
+      doCache: Boolean = true,
+      depth: Int = 0)(
+      fallbackFunction: (String,
+                         => Future[Option[CachedType]],
+                         Boolean) => Future[Option[CachedType]]
+  ): Future[Option[CachedType]] = {
     // in order not to break tailrec
     val key = abbreviateKey(cacheKey)
 
@@ -84,7 +87,8 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
       // Signal to other cache reads that the operation in already in progress
       localCache.put(key, Some("AWAIT"))
       // Use the fallback function to retrieve the value and cache it
-      val fallbackFuture: Future[Option[CachedType]] = fallbackFunction(key, expensiveOperation, doCache)
+      val fallbackFuture: Future[Option[CachedType]] =
+        fallbackFunction(key, expensiveOperation, doCache)
       fallbackFuture.onComplete {
         case Success(cachedValueO) =>
           localCache.put(key, cachedValueO)
@@ -102,7 +106,8 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
           // The requested key is already being computed, try again
           case Some("AWAIT") if depth < maxRetryDepth =>
             Thread.sleep(retrySleepMillis)
-            localGetOrElse(key, expensiveOperation, doCache, depth + 1)(fallbackFunction)
+            localGetOrElse(key, expensiveOperation, doCache, depth + 1)(
+              fallbackFunction)
           case Some(cachedValue) if depth < maxRetryDepth =>
             logger.debug(s"Local Cache Hit: $key")
             Future.successful(Some(cachedValue.asInstanceOf[CachedType]))
@@ -120,10 +125,10 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
   // eliminated by type erasure
   @SuppressWarnings(Array("AsInstanceOf"))
   def getOrElseUpdateMemcached[CachedType](
-    cacheKey: String,
-    expensiveOperation: => Future[Option[CachedType]],
-    doCache: Boolean = true
-    ): Future[Option[CachedType]] = withAbbreviatedKey(cacheKey) { cacheKey =>
+      cacheKey: String,
+      expensiveOperation: => Future[Option[CachedType]],
+      doCache: Boolean = true
+  ): Future[Option[CachedType]] = withAbbreviatedKey(cacheKey) { cacheKey =>
     val futureCached = Future { client.asyncGet(cacheKey).get() }
     futureCached.flatMap(
       {
@@ -133,12 +138,14 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
           futureCached.onComplete {
             case Success(cachedValue) =>
               cachedValue match {
-                case Some(v) => if (doCache) {
-                  setValue(cacheKey, cachedValue)
-                }
-                case None => if (doCache) {
-                  setValue(cacheKey, cachedValue, ttlSeconds = 300)
-                }
+                case Some(v) =>
+                  if (doCache) {
+                    setValue(cacheKey, cachedValue)
+                  }
+                case None =>
+                  if (doCache) {
+                    setValue(cacheKey, cachedValue, ttlSeconds = 300)
+                  }
               }
             case Failure(e) =>
               sendError(RfStackTrace(e))
@@ -153,31 +160,33 @@ class CacheClient(client: => MemcachedClient) extends LazyLogging with RollbarNo
   }
 
   def getOrElseUpdate[CachedType](
-    cacheKey: String,
-    expensiveOperation: => Future[Option[CachedType]],
-    doCache: Boolean = true
-    ): Future[Option[CachedType]] = withAbbreviatedKey(cacheKey) { cacheKey =>
+      cacheKey: String,
+      expensiveOperation: => Future[Option[CachedType]],
+      doCache: Boolean = true
+  ): Future[Option[CachedType]] = withAbbreviatedKey(cacheKey) { cacheKey =>
     (doCache, cacheEnabled, localCacheEnabled) match {
-      case (true, true, true) => localGetOrElse[CachedType](cacheKey, expensiveOperation, doCache)(getOrElseUpdateMemcached[CachedType])
-      case (true, true, false) => getOrElseUpdateMemcached[CachedType](cacheKey, expensiveOperation, doCache)
+      case (true, true, true) =>
+        localGetOrElse[CachedType](cacheKey, expensiveOperation, doCache)(
+          getOrElseUpdateMemcached[CachedType])
+      case (true, true, false) =>
+        getOrElseUpdateMemcached[CachedType](cacheKey,
+                                             expensiveOperation,
+                                             doCache)
       case _ => expensiveOperation
     }
   }
 
-  def caching[T](
-    cacheKey: String,
-    doCache: Boolean = true)(
-    mappingFunction: => Future[Option[T]]
-    ): Future[Option[T]] = {
+  def caching[T](cacheKey: String, doCache: Boolean = true)(
+      mappingFunction: => Future[Option[T]]
+  ): Future[Option[T]] = {
     getOrElseUpdate[T](cacheKey, mappingFunction, doCache)
   }
 
-  def cachingOptionT[T](
-    cacheKey: String,
-    doCache: Boolean = true)(
-    mappingFunction: => OptionT[Future, T]
-    ): OptionT[Future, T] = {
-    val futureOption = getOrElseUpdate[T](cacheKey, mappingFunction.value, doCache)
+  def cachingOptionT[T](cacheKey: String, doCache: Boolean = true)(
+      mappingFunction: => OptionT[Future, T]
+  ): OptionT[Future, T] = {
+    val futureOption =
+      getOrElseUpdate[T](cacheKey, mappingFunction.value, doCache)
     OptionT(futureOption)
   }
 

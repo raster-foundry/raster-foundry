@@ -9,12 +9,12 @@ import com.azavea.rf.datamodel._
 import doobie.ConnectionIO
 
 final case class GroupNotifier(
-  platformId: UUID,
-  groupId: UUID,
-  groupType: GroupType,
-  initiatorId: String,
-  subjectId: String,
-  messageType: MessageType
+    platformId: UUID,
+    groupId: UUID,
+    groupType: GroupType,
+    initiatorId: String,
+    subjectId: String,
+    messageType: MessageType
 ) extends Notifier {
   def builder(messageType: MessageType): ConnectionIO[EmailData] = {
     messageType match {
@@ -22,7 +22,9 @@ final case class GroupNotifier(
         PlainGroupRequest(groupId, groupType, initiatorId, platformId).build
       case MessageType.GroupInvitation =>
         PlainGroupInvitation(groupId, groupType, initiatorId, platformId).build
-      case _ => throw new Exception(s"Tried to send a group request message with invalid message type ${messageType}")
+      case _ =>
+        throw new Exception(
+          s"Tried to send a group request message with invalid message type ${messageType}")
     }
   }
 
@@ -37,10 +39,14 @@ final case class GroupNotifier(
         }
       case MessageType.GroupInvitation =>
         UserDao.unsafeGetUserById(subjectId).map((usr: User) => List(usr))
-      case _ => throw new Exception(s"Tried to send a group request message with invalid message type ${messageType}")
+      case _ =>
+        throw new Exception(
+          s"Tried to send a group request message with invalid message type ${messageType}")
     }
   }
 
   def send: ConnectionIO[Either[Throwable, Unit]] =
-    Notify.sendNotification(platformId, messageType, builder, userFinder).attempt
+    Notify
+      .sendNotification(platformId, messageType, builder, userFinder)
+      .attempt
 }

@@ -8,18 +8,19 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.queryparams._
 
 trait ToolRunQueryParametersDirective extends QueryParametersCommon {
-  val toolRunSpecificQueryParams = parameters((
-    'createdBy.as[String].?,
-    'projectId.as[UUID].?,
-    'toolId.as[UUID].?
-  )).as(ToolRunQueryParameters.apply _)
+  val toolRunSpecificQueryParams = parameters(
+    (
+      'createdBy.as[String].?,
+      'projectId.as[UUID].?,
+      'toolId.as[UUID].?
+    )).as(ToolRunQueryParameters.apply _)
 
   val toolRunQueryParameters = (
     toolRunSpecificQueryParams &
-    timestampQueryParameters &
-    ownershipTypeQueryParameters &
-    groupQueryParameters &
-    userQueryParameters &
-    searchParams
+      timestampQueryParameters &
+      ownershipTypeQueryParameters &
+      groupQueryParameters &
+      userQueryParameters &
+      searchParams
   ).as(CombinedToolRunQueryParameters.apply _)
 }

@@ -22,26 +22,34 @@ import scala.util.Either
 
 package object batch {
 
-  implicit class HasCellSize[A <: {def rows : Int; def cols : Int; def extent : Extent}](obj: A) {
-    def cellSize: CellSize = CellSize(obj.extent.width / obj.cols, obj.extent.height / obj.rows)
+  implicit class HasCellSize[A <: {
+    def rows: Int; def cols: Int; def extent: Extent
+  }](obj: A) {
+    def cellSize: CellSize =
+      CellSize(obj.extent.width / obj.cols, obj.extent.height / obj.rows)
   }
 
   @SuppressWarnings(Array("ClassNames"))
-  implicit class withRasterFoundryTilerKeyMethods(val self: (ProjectedExtent, Int))
-    extends TilerKeyMethods[(ProjectedExtent, Int), (SpatialKey, Int)] {
+  implicit class withRasterFoundryTilerKeyMethods(
+      val self: (ProjectedExtent, Int))
+      extends TilerKeyMethods[(ProjectedExtent, Int), (SpatialKey, Int)] {
     def extent = self._1.extent
 
     def translate(spatialKey: SpatialKey) = (spatialKey, self._2)
   }
 
   implicit val rfSpatialKeyIntComponent =
-    Component[(SpatialKey, Int), SpatialKey](from => from._1, (from, to) => (to, from._2))
+    Component[(SpatialKey, Int), SpatialKey](from => from._1,
+                                             (from, to) => (to, from._2))
 
   implicit val rfProjectedExtentIntComponent =
-    Component[(ProjectedExtent, Int), ProjectedExtent](from => from._1, (from, to) => (to, from._2))
+    Component[(ProjectedExtent, Int), ProjectedExtent](
+      from => from._1,
+      (from, to) => (to, from._2))
 
   @SuppressWarnings(Array("ClassNames"))
-  implicit class withMultibandTileSplitMethods(val self: MultibandTile) extends MultibandTileSplitMethods
+  implicit class withMultibandTileSplitMethods(val self: MultibandTile)
+      extends MultibandTileSplitMethods
 
   /**
     * Custom cache implemented to allow safe multithreading.
@@ -49,15 +57,24 @@ package object batch {
     **/
   @SuppressWarnings(Array("ClassNames", "asInstanceOf"))
   implicit class withAttributeStoreMethods(that: AttributeStore) {
-    def cacheReadSafe[T: JsonFormat](layerId: LayerId, attributeName: String)(implicit cache: Cache[(LayerId, String), Any]): T =
-      cache.get(layerId -> attributeName, _ => that.read[T](layerId, attributeName)).asInstanceOf[T]
+    def cacheReadSafe[T: JsonFormat](layerId: LayerId, attributeName: String)(
+        implicit cache: Cache[(LayerId, String), Any]): T =
+      cache
+        .get(layerId -> attributeName,
+             _ => that.read[T](layerId, attributeName))
+        .asInstanceOf[T]
 
-    def readLayerAttributesSafe[H: JsonFormat, M: JsonFormat, K: ClassTag](id: LayerId)(implicit cache: Cache[(LayerId, String), Any]): LayerAttributes[H, M, K] = {
-      val blob = cacheReadSafe[JsValue](id, AttributeStore.Fields.metadataBlob).asJsObject
+    def readLayerAttributesSafe[H: JsonFormat, M: JsonFormat, K: ClassTag](
+        id: LayerId)(implicit cache: Cache[(LayerId, String), Any])
+      : LayerAttributes[H, M, K] = {
+      val blob =
+        cacheReadSafe[JsValue](id, AttributeStore.Fields.metadataBlob).asJsObject
       LayerAttributes(
         blob.fields(AttributeStore.Fields.header).convertTo[H],
         blob.fields(AttributeStore.Fields.metadata).convertTo[M],
-        blob.fields(AttributeStore.AvroLayerFields.keyIndex).convertTo[KeyIndex[K]],
+        blob
+          .fields(AttributeStore.AvroLayerFields.keyIndex)
+          .convertTo[KeyIndex[K]],
         blob.fields(AttributeStore.AvroLayerFields.schema).convertTo[Schema]
       )
     }
@@ -66,7 +83,8 @@ package object batch {
   /** Borrowed from Cats.
     * TODO: Use /their/ implementation once cats 1.0.0 comes out.
     */
-  def fromOptionF[F[_], E, A](fopt: F[Option[A]], ifNone: => E)(implicit F: Functor[F]): EitherT[F, E, A] =
+  def fromOptionF[F[_], E, A](fopt: F[Option[A]], ifNone: => E)(
+      implicit F: Functor[F]): EitherT[F, E, A] =
     EitherT(F.map(fopt)(opt => Either.fromOption(opt, ifNone)))
 
   def retry[A](time: Duration, pause: Duration)(code: => A): A = {
