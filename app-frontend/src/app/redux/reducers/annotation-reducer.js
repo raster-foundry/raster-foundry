@@ -164,7 +164,8 @@ export const annotationReducer = typeToReducer({
             if (newAnnotations.length === 1 && action.meta.edit) {
                 action.asyncDispatch({
                     type: `${ANNOTATIONS_EDIT}_START`,
-                    payload: newAnnotations[0].id
+                    payload: newAnnotations[0].id,
+                    meta: action.meta
                 });
             }
             return Object.assign(
@@ -250,7 +251,8 @@ export const annotationReducer = typeToReducer({
                 type: `${PROJECT_EDIT_LAYER}_START`,
                 payload: {
                     geometry: annotation.geometry,
-                    options: {}
+                    options: {},
+                    meta: action.meta
                 }
             });
 
