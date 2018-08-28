@@ -33,6 +33,7 @@ def create_cog(image_locations, scene):
 def add_overviews(tif_path):
     logger.info('Adding overviews to %s', tif_path)
     overviews_command = ['gdaladdo',
+                         '-r', 'average',
                          '--config', 'COMPRESS_OVERVIEW', 'DEFLATE',
                          tif_path]
     subprocess.check_call(overviews_command)
