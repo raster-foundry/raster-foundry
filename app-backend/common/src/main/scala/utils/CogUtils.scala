@@ -123,7 +123,7 @@ object CogUtils {
           cols = 256, rows = 256
         )
         val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
-        val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, AutoHigherResolution)
+        val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(1))
         cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
           raster.reproject(tmsTileRE, transform, inverseTransform).tile
         }
@@ -155,7 +155,7 @@ object CogUtils {
     rfCache.cachingOptionT(s"cog-thumbnail-${width}-${height}-${URIUtils.withNoParams(uri)}-${red}-${green}-${blue}-${floor}")(
       CogUtils.fromUri(uri).mapFilter { tiff =>
         val cellSize = CellSize(tiff.extent, width, height)
-        val overview = closestTiffOverview(tiff, cellSize, AutoHigherResolution)
+        val overview = closestTiffOverview(tiff, cellSize, Auto(0))
         val overviewRasterCellSize = overview.raster.cellSize
         val overviewExtentWidth = overview.extent.width
         val overviewExtentHeight = overview.extent.height
@@ -196,7 +196,7 @@ object CogUtils {
     val actualExtent = extent.getOrElse(tiff.extent.reproject(tiff.crs, WebMercator))
     val tmsTileRE = RasterExtent(extent = actualExtent, cellSize = TmsLevels(zoom).cellSize)
     val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
-    val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, AutoHigherResolution)
+    val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(1))
 
     OptionT(Future(cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
       raster.reproject(tmsTileRE, transform, inverseTransform).tile
