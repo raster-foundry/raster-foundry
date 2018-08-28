@@ -16,13 +16,13 @@ object JobStatus {
   case object Processing extends JobStatus("PROCESSING")
 
   def fromString(s: String): JobStatus = s.toUpperCase match {
-    case "UPLOADING" => Uploading
-    case "SUCCESS" => Success
-    case "FAILURE" => Failure
+    case "UPLOADING"      => Uploading
+    case "SUCCESS"        => Success
+    case "FAILURE"        => Failure
     case "PARTIALFAILURE" => PartialFailure
-    case "QUEUED" => Queued
-    case "PROCESSING" => Processing
-    case _ => throw new Exception(s"Invalid string: $s")
+    case "QUEUED"         => Queued
+    case "PROCESSING"     => Processing
+    case _                => throw new Exception(s"Invalid string: $s")
   }
 
   implicit val jobStatusEncoder: Encoder[JobStatus] =

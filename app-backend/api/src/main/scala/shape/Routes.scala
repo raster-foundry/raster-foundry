@@ -29,24 +29,24 @@ import io.circe.generic.JsonCodec
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @JsonCodec
-final case class ShapeFeatureCollectionCreate (
-  features: Seq[Shape.GeoJSONFeatureCreate]
+final case class ShapeFeatureCollectionCreate(
+    features: Seq[Shape.GeoJSONFeatureCreate]
 )
 
-
-trait ShapeRoutes extends Authentication
-  with QueryParametersCommon
-  with PaginationDirectives
-  with CommonHandlers
-  with UserErrorHandler
-  with LazyLogging {
+trait ShapeRoutes
+    extends Authentication
+    with QueryParametersCommon
+    with PaginationDirectives
+    with CommonHandlers
+    with UserErrorHandler
+    with LazyLogging {
 
   val xa: Transactor[IO]
 
   val shapeRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get { listShapes } ~
-      post { createShape }
+        post { createShape }
     } ~
       post {
         pathPrefix("upload") {
@@ -54,8 +54,9 @@ trait ShapeRoutes extends Authentication
             authenticate { user =>
               val tempFile = ScalaFile.newTemporaryFile()
               tempFile.deleteOnExit()
-              val response = storeUploadedFile("name", (_) => tempFile.toJava) { (m, _) =>
-                processShapefile(user, tempFile, m)
+              val response = storeUploadedFile("name", (_) => tempFile.toJava) {
+                (m, _) =>
+                  processShapefile(user, tempFile, m)
               }
               tempFile.delete()
               response
@@ -95,20 +96,28 @@ trait ShapeRoutes extends Authentication
       }
   }
 
-  def processShapefile(user: User, tempFile: ScalaFile, fileMetadata: FileInfo) = {
+  def processShapefile(user: User,
+                       tempFile: ScalaFile,
+                       fileMetadata: FileInfo) = {
     val unzipped = tempFile.unzip()
     val matches = unzipped.glob("*.shp")
     matches.hasNext match {
       case true => {
         val shapeFile = matches.next()
-        val features = ShapeFileReader.readMultiPolygonFeatures(shapeFile.toString)
+        val features =
+          ShapeFileReader.readMultiPolygonFeatures(shapeFile.toString)
 
         // Only reads first feature
         features match {
-          case Nil => complete(StatusCodes.ClientError(400)("Bad Request", "No MultiPolygons detected in Shapefile"))
+          case Nil =>
+            complete(
+              StatusCodes.ClientError(400)(
+                "Bad Request",
+                "No MultiPolygons detected in Shapefile"))
           case feature +: _ => {
             val geometry = feature.geom
-            val reprojectedGeometry = Projected(Reproject(geometry, LatLng, WebMercator), 3857)
+            val reprojectedGeometry =
+              Projected(Reproject(geometry, LatLng, WebMercator), 3857)
             reprojectedGeometry.isValid match {
               case true => {
                 val shape = Shape.Create(
@@ -117,37 +126,50 @@ trait ShapeRoutes extends Authentication
                   None,
                   reprojectedGeometry
                 )
-                complete(StatusCodes.Created, ShapeDao.insertShapes(Seq(shape), user).transact(xa).unsafeToFuture)
+                complete(StatusCodes.Created,
+                         ShapeDao
+                           .insertShapes(Seq(shape), user)
+                           .transact(xa)
+                           .unsafeToFuture)
               }
               case _ => {
-                val reason = "No valid MultiPolygons found, please ensure coordinates are in EPSG:4326 before uploading."
+                val reason =
+                  "No valid MultiPolygons found, please ensure coordinates are in EPSG:4326 before uploading."
                 complete(StatusCodes.ClientError(400)("Bad Request", reason))
               }
             }
           }
         }
       }
-      case _ => complete(StatusCodes.ClientError(400)("Bad Request", "No Shapefile Found in Archive"))
+      case _ =>
+        complete(
+          StatusCodes.ClientError(400)("Bad Request",
+                                       "No Shapefile Found in Archive"))
     }
   }
 
   def listShapes: Route = authenticate { user =>
-    (withPagination & shapeQueryParams) { (page: PageRequest, queryParams: ShapeQueryParameters) =>
-      complete {
-        ShapeDao
-          .authQuery(
-            user,
-            ObjectType.Shape,
-            queryParams.ownershipTypeParams.ownershipType,
-            queryParams.groupQueryParameters.groupType,
-            queryParams.groupQueryParameters.groupId)
-          .filter(queryParams)
-          .page(page)
-          .transact(xa).unsafeToFuture().map { p => {
-            fromPaginatedResponseToGeoJson[Shape, Shape.GeoJSON](p)
-          }
+    (withPagination & shapeQueryParams) {
+      (page: PageRequest, queryParams: ShapeQueryParameters) =>
+        complete {
+          ShapeDao
+            .authQuery(
+              user,
+              ObjectType.Shape,
+              queryParams.ownershipTypeParams.ownershipType,
+              queryParams.groupQueryParameters.groupType,
+              queryParams.groupQueryParameters.groupId
+            )
+            .filter(queryParams)
+            .page(page)
+            .transact(xa)
+            .unsafeToFuture()
+            .map { p =>
+              {
+                fromPaginatedResponseToGeoJson[Shape, Shape.GeoJSON](p)
+              }
+            }
         }
-      }
     }
   }
 
@@ -155,13 +177,19 @@ trait ShapeRoutes extends Authentication
     authorizeAsync {
       ShapeDao.query
         .authorized(user, ObjectType.Shape, shapeId, ActionType.View)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       rejectEmptyResponse {
         complete {
-          ShapeDao.query.filter(shapeId).selectOption.transact(xa).unsafeToFuture().map {
-            _ map { _.toGeoJSONFeature }
-          }
+          ShapeDao.query
+            .filter(shapeId)
+            .selectOption
+            .transact(xa)
+            .unsafeToFuture()
+            .map {
+              _ map { _.toGeoJSONFeature }
+            }
         }
       }
     }
@@ -180,10 +208,15 @@ trait ShapeRoutes extends Authentication
     authorizeAsync {
       ShapeDao.query
         .authorized(user, ObjectType.Shape, shapeId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[Shape.GeoJSON]) { updatedShape: Shape.GeoJSON =>
-        onSuccess(ShapeDao.updateShape(updatedShape, shapeId, user).transact(xa).unsafeToFuture()) {
+        onSuccess(
+          ShapeDao
+            .updateShape(updatedShape, shapeId, user)
+            .transact(xa)
+            .unsafeToFuture()) {
           completeSingleOrNotFound
         }
       }
@@ -194,9 +227,11 @@ trait ShapeRoutes extends Authentication
     authorizeAsync {
       ShapeDao.query
         .authorized(user, ObjectType.Shape, shapeId, ActionType.Delete)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
-      onSuccess(ShapeDao.query.filter(shapeId).delete.transact(xa).unsafeToFuture) {
+      onSuccess(
+        ShapeDao.query.filter(shapeId).delete.transact(xa).unsafeToFuture) {
         completeSingleOrNotFound
       }
     }
@@ -207,7 +242,10 @@ trait ShapeRoutes extends Authentication
       ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao.listByObject(ObjectType.Shape, shapeId).transact(xa).unsafeToFuture
+        AccessControlRuleDao
+          .listByObject(ObjectType.Shape, shapeId)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
@@ -218,46 +256,61 @@ trait ShapeRoutes extends Authentication
     } {
       entity(as[List[AccessControlRule.Create]]) { acrCreates =>
         complete {
-          AccessControlRuleDao.replaceWithResults(
-            user, ObjectType.Shape, shapeId, acrCreates
-          ).transact(xa).unsafeToFuture
+          AccessControlRuleDao
+            .replaceWithResults(
+              user,
+              ObjectType.Shape,
+              shapeId,
+              acrCreates
+            )
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
   }
 
   def addShapePermission(shapeId: UUID): Route = authenticate { user =>
-      authorizeAsync {
-        ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
-      } {
-        entity(as[AccessControlRule.Create]) { acrCreate =>
-          complete {
-            AccessControlRuleDao.createWithResults(
+    authorizeAsync {
+      ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
+    } {
+      entity(as[AccessControlRule.Create]) { acrCreate =>
+        complete {
+          AccessControlRuleDao
+            .createWithResults(
               acrCreate.toAccessControlRule(user, ObjectType.Shape, shapeId)
-            ).transact(xa).unsafeToFuture
-          }
+            )
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
+  }
 
   def listUserShapeActions(shapeId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ShapeDao.query.authorized(user, ObjectType.Shape, shapeId, ActionType.View)
-        .transact(xa).unsafeToFuture
-    } { user.isSuperuser match {
-      case true => complete(List("*"))
-      case false =>
-        onSuccess(
-          ShapeDao.unsafeGetShapeById(shapeId).transact(xa).unsafeToFuture
-        ) { shape =>
-          shape.owner == user.id match {
-            case true => complete(List("*"))
-            case false => complete {
-              AccessControlRuleDao.listUserActions(user, ObjectType.Shape, shapeId)
-                .transact(xa).unsafeToFuture
+      ShapeDao.query
+        .authorized(user, ObjectType.Shape, shapeId, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      user.isSuperuser match {
+        case true => complete(List("*"))
+        case false =>
+          onSuccess(
+            ShapeDao.unsafeGetShapeById(shapeId).transact(xa).unsafeToFuture
+          ) { shape =>
+            shape.owner == user.id match {
+              case true => complete(List("*"))
+              case false =>
+                complete {
+                  AccessControlRuleDao
+                    .listUserActions(user, ObjectType.Shape, shapeId)
+                    .transact(xa)
+                    .unsafeToFuture
+                }
             }
           }
-        }
       }
     }
   }
@@ -267,7 +320,10 @@ trait ShapeRoutes extends Authentication
       ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao.deleteByObject(ObjectType.Shape, shapeId).transact(xa).unsafeToFuture
+        AccessControlRuleDao
+          .deleteByObject(ObjectType.Shape, shapeId)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }

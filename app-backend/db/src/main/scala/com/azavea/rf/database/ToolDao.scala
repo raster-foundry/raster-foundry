@@ -41,8 +41,20 @@ object ToolDao extends Dao[Tool] {
           ${newTool.description}, ${newTool.requirements}, ${newTool.license}, ${newTool.visibility},
           ${newTool.compatibleDataSources}, ${newTool.stars}, ${newTool.definition})
        """.update.withUniqueGeneratedKeys[Tool](
-      "id", "created_at", "modified_at", "created_by", "modified_by", "owner", "title",
-      "description", "requirements", "license", "visibility", "compatible_data_sources", "stars", "definition"
+      "id",
+      "created_at",
+      "modified_at",
+      "created_by",
+      "modified_by",
+      "owner",
+      "title",
+      "description",
+      "requirements",
+      "license",
+      "visibility",
+      "compatible_data_sources",
+      "stars",
+      "definition"
     )
   }
 

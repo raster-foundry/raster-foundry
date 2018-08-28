@@ -15,11 +15,13 @@ import scala.reflect.runtime.universe.TypeTag
 
 trait GtWktMeta {
 
-  implicit val pgMeta: meta.AdvancedMeta[PGgeometry] = Meta.other[PGgeometry]("geometry")
+  implicit val pgMeta: meta.AdvancedMeta[PGgeometry] =
+    Meta.other[PGgeometry]("geometry")
 
   // Constructor for geometry types via WKT reading/writing
   @SuppressWarnings(Array("AsInstanceOf"))
-  private def geometryType[A >: Null <: Geometry: TypeTag](implicit A: ClassTag[A]): Meta[Projected[A]] =
+  private def geometryType[A >: Null <: Geometry: TypeTag](
+      implicit A: ClassTag[A]): Meta[Projected[A]] =
     PGgeometryType.xmap[Projected[A]](
       pgGeom => {
         val split = PGgeometry.splitSRID(pgGeom.getValue)
@@ -27,7 +29,9 @@ trait GtWktMeta {
         val geom = WKT.read(split(1))
         try Projected[A](A.runtimeClass.cast(geom).asInstanceOf[A], srid)
         catch {
-          case _: ClassCastException => throw InvalidObjectMapping(A.runtimeClass, pgGeom.getGeometry.getClass)
+          case _: ClassCastException =>
+            throw InvalidObjectMapping(A.runtimeClass,
+                                       pgGeom.getGeometry.getClass)
         }
       },
       geom => {
@@ -38,13 +42,18 @@ trait GtWktMeta {
     )
 
   implicit val GeometryType: Meta[Projected[Geometry]] = geometryType[Geometry]
-  implicit val GeometryCollectionType: Meta[Projected[GeometryCollection]] = geometryType[GeometryCollection]
-  implicit val MultiLineStringType: Meta[Projected[MultiLine]] = geometryType[MultiLine]
-  implicit val MultiPolygonType: Meta[Projected[MultiPolygon]] = geometryType[MultiPolygon]
+  implicit val GeometryCollectionType: Meta[Projected[GeometryCollection]] =
+    geometryType[GeometryCollection]
+  implicit val MultiLineStringType: Meta[Projected[MultiLine]] =
+    geometryType[MultiLine]
+  implicit val MultiPolygonType: Meta[Projected[MultiPolygon]] =
+    geometryType[MultiPolygon]
   implicit val LineStringType: Meta[Projected[Line]] = geometryType[Line]
-  implicit val MultiPointType: Meta[Projected[MultiPoint]] = geometryType[MultiPoint]
+  implicit val MultiPointType: Meta[Projected[MultiPoint]] =
+    geometryType[MultiPoint]
   implicit val PolygonType: Meta[Projected[Polygon]] = geometryType[Polygon]
   implicit val PointType: Meta[Projected[Point]] = geometryType[Point]
-  implicit val ComposedGeomType: Meta[Projected[GeometryCollection]] = geometryType[GeometryCollection]
+  implicit val ComposedGeomType: Meta[Projected[GeometryCollection]] =
+    geometryType[GeometryCollection]
 
 }

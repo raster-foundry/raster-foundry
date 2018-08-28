@@ -22,23 +22,24 @@ object GeoJsonCodec {
 
   @ConfiguredJsonCodec
   final case class GeoJsonFeatureCollection[T <: GeoJSONFeature](
-    features: Iterable[T],
-    _type: String = "FeatureCollection"
+      features: Iterable[T],
+      _type: String = "FeatureCollection"
   )
 
   @ConfiguredJsonCodec
   final case class PaginatedGeoJsonResponse[T <: GeoJSONFeature](
-    count: Int,
-    hasPrevious: Boolean,
-    hasNext: Boolean,
-    page: Int,
-    pageSize: Int,
-    features: Iterable[T],
-    _type: String = "FeatureCollection"
+      count: Int,
+      hasPrevious: Boolean,
+      hasNext: Boolean,
+      page: Int,
+      pageSize: Int,
+      features: Iterable[T],
+      _type: String = "FeatureCollection"
   )
 
-  def fromSeqToFeatureCollection[T1 <: GeoJSONSerializable[T2], T2 <: GeoJSONFeature](
-    features: Iterable[T1]
+  def fromSeqToFeatureCollection[T1 <: GeoJSONSerializable[T2],
+                                 T2 <: GeoJSONFeature](
+      features: Iterable[T1]
   ): GeoJsonFeatureCollection[T2] = {
     GeoJsonFeatureCollection[T2](
       features map { _.toGeoJSONFeature },
@@ -46,8 +47,9 @@ object GeoJsonCodec {
     )
   }
 
-  def fromPaginatedResponseToGeoJson[T1 <: GeoJSONSerializable[T2], T2 <: GeoJSONFeature](
-    resp: PaginatedResponse[T1]
+  def fromPaginatedResponseToGeoJson[T1 <: GeoJSONSerializable[T2],
+                                     T2 <: GeoJSONFeature](
+      resp: PaginatedResponse[T1]
   ): PaginatedGeoJsonResponse[T2] = {
     PaginatedGeoJsonResponse[T2](
       resp.count,

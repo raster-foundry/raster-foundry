@@ -22,4 +22,3 @@ class KryoTranscoder extends Transcoder[AnyRef] {
     kryo.fromBytes(d.getData)
   }
 }
-

@@ -58,9 +58,12 @@ object SaturationAdjust {
     val hueSextant = (chroma, max) match {
       case (0, _) =>
         0 // Technically, undefined, but we'll ignore this value in this case.
-      case (_, x) if ~=(x, r, precision = 0.0001) => ((g - b) / chroma.toDouble) % 6
-      case (_, x) if ~=(x, g, precision = 0.0001) => ((b - r) / chroma.toDouble) + 2
-      case (_, x) if ~=(x, b, precision = 0.0001) => ((r - g) / chroma.toDouble) + 4
+      case (_, x) if ~=(x, r, precision = 0.0001) =>
+        ((g - b) / chroma.toDouble) % 6
+      case (_, x) if ~=(x, g, precision = 0.0001) =>
+        ((b - r) / chroma.toDouble) + 2
+      case (_, x) if ~=(x, b, precision = 0.0001) =>
+        ((r - g) / chroma.toDouble) + 4
     }
     // Wrap degrees
     val hue = (hueSextant * 60d) % 360 match {

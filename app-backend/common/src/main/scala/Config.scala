@@ -76,10 +76,13 @@ object Config {
   object geotrellis {
     private lazy val geotrellisConfig = config.getConfig("geotrellis")
 
-    lazy val postgresAttributeStoreThreads: Int = geotrellisConfig.getInt("attributeStore.postgres.threads")
+    lazy val postgresAttributeStoreThreads: Int =
+      geotrellisConfig.getInt("attributeStore.postgres.threads")
 
     lazy val postgresAttributeStoreTimeout: FiniteDuration =
-      FiniteDuration(geotrellisConfig.getDuration("attributeStore.postgres.timeout").toNanos, TimeUnit.NANOSECONDS)
+      FiniteDuration(
+        geotrellisConfig.getDuration("attributeStore.postgres.timeout").toNanos,
+        TimeUnit.NANOSECONDS)
   }
 
 }

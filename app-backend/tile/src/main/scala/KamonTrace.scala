@@ -26,7 +26,7 @@ trait KamonTrace {
 
   def timed[T](name: String)(f: => T): T = {
     val start = System.currentTimeMillis()
-    val result = f    // call-by-name
+    val result = f // call-by-name
     val h = Kamon.metrics.histogram(name, Time.Milliseconds)
     h.record(System.currentTimeMillis() - start)
     result

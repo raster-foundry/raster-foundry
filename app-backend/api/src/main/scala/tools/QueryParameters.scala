@@ -7,12 +7,13 @@ import com.azavea.rf.datamodel._
 import com.azavea.rf.api.utils.queryparams._
 
 trait ToolQueryParameterDirective extends QueryParametersCommon {
-  def combinedToolQueryParams = (
-    orgQueryParams &
-    userQueryParameters &
-    timestampQueryParameters &
-    searchParams &
-    ownershipTypeQueryParameters &
-    groupQueryParameters
-  ).as(CombinedToolQueryParameters.apply _)
+  def combinedToolQueryParams =
+    (
+      orgQueryParams &
+        userQueryParameters &
+        timestampQueryParameters &
+        searchParams &
+        ownershipTypeQueryParameters &
+        groupQueryParameters
+    ).as(CombinedToolQueryParameters.apply _)
 }

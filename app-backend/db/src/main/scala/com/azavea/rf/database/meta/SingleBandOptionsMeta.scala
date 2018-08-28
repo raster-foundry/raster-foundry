@@ -16,15 +16,13 @@ import io.circe.syntax._
 import scala.reflect.runtime.universe.TypeTag
 import scala.reflect.ClassTag
 
-
 trait SingleBandOptionsMeta extends CirceJsonbMeta {
   implicit val singleBandOptionsMeta: Meta[SingleBandOptions.Params] =
     Meta[Json].xmap[SingleBandOptions.Params](
       _.as[SingleBandOptions.Params] match {
         case Right(ast) => ast
-        case Left(e) => throw e
+        case Left(e)    => throw e
       },
       _.asJson
     )
 }
-

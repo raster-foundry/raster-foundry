@@ -15,10 +15,16 @@ import io.circe.parser._
 import geotrellis.vector.{Geometry, Projected, _}
 import geotrellis.vector.reproject.Reproject
 import org.geotools.data.DefaultTransaction
-import org.geotools.data.shapefile.{ShapefileDataStore, ShapefileDataStoreFactory}
+import org.geotools.data.shapefile.{
+  ShapefileDataStore,
+  ShapefileDataStoreFactory
+}
 import org.geotools.data.simple.SimpleFeatureStore
 import org.geotools.feature.DefaultFeatureCollection
-import org.geotools.feature.simple.{SimpleFeatureBuilder, SimpleFeatureTypeBuilder}
+import org.geotools.feature.simple.{
+  SimpleFeatureBuilder,
+  SimpleFeatureTypeBuilder
+}
 import org.geotools.referencing.crs.DefaultGeographicCRS
 import org.geotools.referencing.{CRS => geotoolsCRS}
 import org.opengis.feature.Property

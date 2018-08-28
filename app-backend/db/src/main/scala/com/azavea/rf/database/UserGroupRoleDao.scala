@@ -1,4 +1,4 @@
-  package com.azavea.rf.database
+package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.filter.Filters._
@@ -17,7 +17,6 @@ import java.util.UUID
 
 object UserGroupRoleDao extends Dao[UserGroupRole] {
   val tableName = "user_group_roles"
-
 
   val selectF =
     fr"""
@@ -51,85 +50,129 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           where id = ${id}
         """
 
-  def getUserGroupRoleById(ugrId: UUID, user: User): ConnectionIO[Option[UserGroupRole]] =
+  def getUserGroupRoleById(ugrId: UUID,
+                           user: User): ConnectionIO[Option[UserGroupRole]] =
     query.filter(ugrId).filter(fr"user_id = ${user.id}").selectOption
 
-  def unsafeGetUserGroupRoleById(ugrId: UUID, user: User): ConnectionIO[UserGroupRole] =
+  def unsafeGetUserGroupRoleById(ugrId: UUID,
+                                 user: User): ConnectionIO[UserGroupRole] =
     query.filter(ugrId).filter(fr"user_id = ${user.id}").select
 
   def create(ugr: UserGroupRole): ConnectionIO[UserGroupRole] = {
     val isValidGroupIO = ugr.groupType match {
       case GroupType.Platform => PlatformDao.query.filter(ugr.groupId).exists
-      case GroupType.Organization => OrganizationDao.query.filter(ugr.groupId).exists
+      case GroupType.Organization =>
+        OrganizationDao.query.filter(ugr.groupId).exists
       case GroupType.Team => TeamDao.query.filter(ugr.groupId).exists
     }
 
     val create = createF(ugr).update.withUniqueGeneratedKeys[UserGroupRole](
-      "id", "created_at", "created_by",
-      "modified_at", "modified_by", "is_active",
-      "user_id", "group_type", "group_id", "group_role", "membership_status"
+      "id",
+      "created_at",
+      "created_by",
+      "modified_at",
+      "modified_by",
+      "is_active",
+      "user_id",
+      "group_type",
+      "group_id",
+      "group_role",
+      "membership_status"
     )
 
     for {
       isValid <- isValidGroupIO
       createUGR <- {
         if (isValid) create
-        else throw new Exception(s"Invalid group: ${ugr.groupType}(${ugr.groupId})")
+        else
+          throw new Exception(
+            s"Invalid group: ${ugr.groupType}(${ugr.groupId})")
       }
     } yield createUGR
   }
 
   @SuppressWarnings(Array("OptionGet"))
-  def createWithGuard(adminCheckFunc: (User, UUID) => ConnectionIO[Boolean], groupType: GroupType)
-                     (groupId: UUID, actingUser: User, subjectId: String, userGroupRoleCreate: UserGroupRole.Create,
-                      platformId: UUID, isSameOrgIO: ConnectionIO[Boolean]): ConnectionIO[UserGroupRole] = for {
-    adminCheck <- adminCheckFunc(actingUser, groupId)
-    existingRoleO <- {
-      query
-        .filter(fr"user_id = ${subjectId}")
-        .filter(fr"group_id = ${groupId}")
-        .filter(fr"group_type = ${groupType.toString} :: group_type")
-        .filter(fr"is_active = true")
-        .selectOption
-    }
-    roleTargetEmail <- UserDao.unsafeGetUserById(subjectId) map { _.email }
-    roleCreatorEmail <- UserDao.unsafeGetUserById(actingUser.id) map { _.email }
-    existingMembershipStatus = existingRoleO map { _.membershipStatus }
-    rolesMatch = existingRoleO.map(
-      (ugr: UserGroupRole) => ugr.groupRole == userGroupRoleCreate.groupRole
-    ).getOrElse(false)
-    isSameOrg <- isSameOrgIO
-    createdOrReturned <- {
-      (existingMembershipStatus, adminCheck, rolesMatch) match {
-        // Only admins can change group roles, and only approved roles can have their group role changed
-        case (Some(MembershipStatus.Approved), true, false) =>
-          UserGroupRoleDao.deactivate(existingRoleO.map( _.id ).get, actingUser) *>
-          UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved))
-        // Accepting a role requires agreement about what the groupRole should be -- users can't cheat
-        // and become admins by accepting a MEMBER role by posting an ADMIN role
-        case (Some(MembershipStatus.Requested), true, true) | (Some(MembershipStatus.Invited), _, true) =>
-          UserGroupRoleDao.deactivate(existingRoleO.map( _.id).get, actingUser) *>
-          UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved))
-        // rolesMatch will always be false when existingRoleO is None, so don't bother checking it
-        case (None, true, _) =>
-          if (isSameOrg) {
-            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved))
-          } else {
-            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Invited)) <*
-              GroupNotifier(
-                platformId, groupId, groupType, actingUser.id, subjectId, MessageType.GroupInvitation
-              ).send
-          }
-          case (None, false, _) => {
-            UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Requested)) <*
-              GroupNotifier(
-                platformId, groupId, groupType, subjectId, subjectId, MessageType.GroupRequest
-              ).send
-          }
-        case (Some(_), _, _) => existingRoleO.get.pure[ConnectionIO]
+  def createWithGuard(adminCheckFunc: (User, UUID) => ConnectionIO[Boolean],
+                      groupType: GroupType)(
+      groupId: UUID,
+      actingUser: User,
+      subjectId: String,
+      userGroupRoleCreate: UserGroupRole.Create,
+      platformId: UUID,
+      isSameOrgIO: ConnectionIO[Boolean]): ConnectionIO[UserGroupRole] =
+    for {
+      adminCheck <- adminCheckFunc(actingUser, groupId)
+      existingRoleO <- {
+        query
+          .filter(fr"user_id = ${subjectId}")
+          .filter(fr"group_id = ${groupId}")
+          .filter(fr"group_type = ${groupType.toString} :: group_type")
+          .filter(fr"is_active = true")
+          .selectOption
       }
-    }
-  } yield { createdOrReturned }
+      roleTargetEmail <- UserDao.unsafeGetUserById(subjectId) map { _.email }
+      roleCreatorEmail <- UserDao.unsafeGetUserById(actingUser.id) map {
+        _.email
+      }
+      existingMembershipStatus = existingRoleO map { _.membershipStatus }
+      rolesMatch = existingRoleO
+        .map(
+          (ugr: UserGroupRole) => ugr.groupRole == userGroupRoleCreate.groupRole
+        )
+        .getOrElse(false)
+      isSameOrg <- isSameOrgIO
+      createdOrReturned <- {
+        (existingMembershipStatus, adminCheck, rolesMatch) match {
+          // Only admins can change group roles, and only approved roles can have their group role changed
+          case (Some(MembershipStatus.Approved), true, false) =>
+            UserGroupRoleDao.deactivate(existingRoleO.map(_.id).get, actingUser) *>
+              UserGroupRoleDao.create(
+                userGroupRoleCreate.toUserGroupRole(actingUser,
+                                                    MembershipStatus.Approved))
+          // Accepting a role requires agreement about what the groupRole should be -- users can't cheat
+          // and become admins by accepting a MEMBER role by posting an ADMIN role
+          case (Some(MembershipStatus.Requested), true, true) |
+              (Some(MembershipStatus.Invited), _, true) =>
+            UserGroupRoleDao.deactivate(existingRoleO.map(_.id).get, actingUser) *>
+              UserGroupRoleDao.create(
+                userGroupRoleCreate.toUserGroupRole(actingUser,
+                                                    MembershipStatus.Approved))
+          // rolesMatch will always be false when existingRoleO is None, so don't bother checking it
+          case (None, true, _) =>
+            if (isSameOrg) {
+              UserGroupRoleDao.create(
+                userGroupRoleCreate.toUserGroupRole(actingUser,
+                                                    MembershipStatus.Approved))
+            } else {
+              UserGroupRoleDao.create(
+                userGroupRoleCreate
+                  .toUserGroupRole(actingUser, MembershipStatus.Invited)) <*
+                GroupNotifier(
+                  platformId,
+                  groupId,
+                  groupType,
+                  actingUser.id,
+                  subjectId,
+                  MessageType.GroupInvitation
+                ).send
+            }
+          case (None, false, _) => {
+            UserGroupRoleDao.create(
+              userGroupRoleCreate
+                .toUserGroupRole(actingUser, MembershipStatus.Requested)) <*
+              GroupNotifier(
+                platformId,
+                groupId,
+                groupType,
+                subjectId,
+                subjectId,
+                MessageType.GroupRequest
+              ).send
+          }
+          case (Some(_), _, _) => existingRoleO.get.pure[ConnectionIO]
+        }
+      }
+    } yield { createdOrReturned }
 
   def getOption(id: UUID): ConnectionIO[Option[UserGroupRole]] = {
     query.filter(id).selectOption
@@ -143,7 +186,9 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       .list
   }
 
-  def listByUserAndGroupType(user: User, groupType: GroupType): ConnectionIO[List[UserGroupRole]] = {
+  def listByUserAndGroupType(
+      user: User,
+      groupType: GroupType): ConnectionIO[List[UserGroupRole]] = {
     query
       .filter(fr"user_id = ${user.id}")
       .filter(fr"group_type = ${groupType}")
@@ -157,25 +202,39 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       .filter(fr"is_active = true")
 
   // List roles that have been given to users for a group
-  def listByGroup(groupType: GroupType, groupId: UUID): ConnectionIO[List[UserGroupRole]] =
-      listByGroupQ(groupType, groupId).list
+  def listByGroup(groupType: GroupType,
+                  groupId: UUID): ConnectionIO[List[UserGroupRole]] =
+    listByGroupQ(groupType, groupId).list
 
   // List roles that have been given to users for a group of a specific type
-  def listByGroupAndRole(groupType: GroupType, groupId: UUID, groupRole: GroupRole): ConnectionIO[List[UserGroupRole]] = {
-    listByGroupQ(groupType, groupId).filter(fr"group_role = ${groupRole.toString} :: group_role").list
+  def listByGroupAndRole(
+      groupType: GroupType,
+      groupId: UUID,
+      groupRole: GroupRole): ConnectionIO[List[UserGroupRole]] = {
+    listByGroupQ(groupType, groupId)
+      .filter(fr"group_role = ${groupRole.toString} :: group_role")
+      .list
   }
 
   // List a user's roles in a group
-  def listUserGroupRoles(groupType: GroupType, groupId: UUID, userId: String): ConnectionIO[List[UserGroupRole]] = {
-    query.filter(fr"group_type = ${groupType}")
+  def listUserGroupRoles(groupType: GroupType,
+                         groupId: UUID,
+                         userId: String): ConnectionIO[List[UserGroupRole]] = {
+    query
+      .filter(fr"group_type = ${groupType}")
       .filter(fr"group_id = ${groupId}")
       .filter(fr"user_id = ${userId}")
       .filter(fr"is_active = true")
       .list
   }
 
-  def listUsersByGroup(groupType: GroupType, groupId: UUID, page: PageRequest,
-      searchParams: SearchQueryParameters, actingUser: User, orderClauseO: Option[Fragment] = None): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
+  def listUsersByGroup(groupType: GroupType,
+                       groupId: UUID,
+                       page: PageRequest,
+                       searchParams: SearchQueryParameters,
+                       actingUser: User,
+                       orderClauseO: Option[Fragment] = None)
+    : ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
     // PUBLIC users can be seen by anyone within the same platform
     // PRIVATE users can be seen by anyone within the same organization
     // PRIVATE users can be seen by anyone within the same team (even if orgs are different)
@@ -239,14 +298,14 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           .filter(fr"ugr.is_active = true")
           .filter(searchQP(searchParams, List("u.name", "u.email", "u.id")))
           .filter(
-            ( userIsPlatformAdmin || isSuperUser) match {
-              case true => None
+            (userIsPlatformAdmin || isSuperUser) match {
+              case true  => None
               case false => Some(ff)
             }
           )
           .page[User.WithGroupRole](page, sf, cf, orderClauseO match {
             case Some(orderClause) => orderClause
-            case None => fr""
+            case None              => fr""
           })
       }
     } yield { result }
@@ -265,7 +324,9 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
         """).update.run
   }
 
-  def deactivateUserGroupRoles(ugr: UserGroupRole.UserGroup, user: User): ConnectionIO[List[UserGroupRole]] = {
+  def deactivateUserGroupRoles(
+      ugr: UserGroupRole.UserGroup,
+      user: User): ConnectionIO[List[UserGroupRole]] = {
     (fr"UPDATE" ++ tableF ++ fr"""SET
         modified_at = NOW(),
         modified_by = ${user.id},
@@ -275,25 +336,28 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       fr"group_type = ${ugr.groupType}",
       fr"group_id = ${ugr.groupId}",
       fr"is_active = true"
-     )
-    ).update.withGeneratedKeys[UserGroupRole](
-      "id",
-      "created_at",
-      "created_by",
-      "modified_at",
-      "modified_by",
-      "is_active",
-      "user_id",
-      "group_type",
-      "group_id",
-      "group_role",
-      "membership_status"
-    ).compile.toList
+    )).update
+      .withGeneratedKeys[UserGroupRole](
+        "id",
+        "created_at",
+        "created_by",
+        "modified_at",
+        "modified_by",
+        "is_active",
+        "user_id",
+        "group_type",
+        "group_id",
+        "group_role",
+        "membership_status"
+      )
+      .compile
+      .toList
   }
 
   def deactivateByGroup(groupType: GroupType, groupId: UUID) = {
     (fr"UPDATE" ++ tableF ++ fr"""SET
         is_active = false
-        """ ++ Fragments.whereAnd(fr"group_type = ${groupType}", fr"group_id = ${groupId}")).update.run
+        """ ++ Fragments.whereAnd(fr"group_type = ${groupType}",
+                                  fr"group_id = ${groupId}")).update.run
   }
 }

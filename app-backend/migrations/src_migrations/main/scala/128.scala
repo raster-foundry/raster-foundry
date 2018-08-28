@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M128 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(128)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(128)(
+    List(
+      sqlu"""
 UPDATE scenes
 SET data_footprint = (
   SELECT ST_UNION(
@@ -43,5 +44,5 @@ AND scenes.datasource IN (
  '55735945-9da5-47c3-8ae4-572b5e11205b', 'eb34ce6d-acf5-49a3-ae43-5b4480a3ff7a'
 );
 """
-  ))
+    ))
 }

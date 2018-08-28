@@ -30,18 +30,18 @@ trait JsonCodecs {
 
   implicit val uuidEncoder: Encoder[UUID] =
     Encoder.encodeString.contramap[UUID](_.toString)
-  val withUUIDFieldUUIDDecoder
-    : Decoder[UUID] = Decoder[JsonObject] map { js => {
-    val path = root.id.string
-    path.getOption(js.asJson) match {
-      case Some(id) => UUID.fromString(id)
-      case None =>
-        throw DecodingFailure(
-          "no id field found in a related object",
-          List.empty
-        )
+  val withUUIDFieldUUIDDecoder: Decoder[UUID] = Decoder[JsonObject] map { js =>
+    {
+      val path = root.id.string
+      path.getOption(js.asJson) match {
+        case Some(id) => UUID.fromString(id)
+        case None =>
+          throw DecodingFailure(
+            "no id field found in a related object",
+            List.empty
+          )
+      }
     }
-  }
   }
   val directUUIDDecoder: Decoder[UUID] =
     Decoder.decodeString.emap { str =>
@@ -129,7 +129,7 @@ package object datamodel extends JsonCodecs {
     }
 
   def applyWithNonEmptyString[T](
-    s: Option[String]
+      s: Option[String]
   )(f: Option[String] => T): T = {
     s map { _.filter(_ != '\u0000') } match {
       case Some("") =>

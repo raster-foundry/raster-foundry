@@ -12,7 +12,7 @@ final case class MosaicDefinition(sceneId: UUID,
 
 object MosaicDefinition {
   def fromScenesToProjects(
-    scenesToProjects: Seq[SceneToProjectwithSceneType]
+      scenesToProjects: Seq[SceneToProjectwithSceneType]
   ): Seq[MosaicDefinition] = {
     scenesToProjects.map {
       case SceneToProjectwithSceneType(

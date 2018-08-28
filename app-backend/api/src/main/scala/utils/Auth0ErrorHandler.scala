@@ -10,6 +10,8 @@ trait Auth0ErrorHandler extends Directives with LazyLogging {
   val auth0ExceptionHandler = ExceptionHandler {
     case e: Auth0Exception =>
       logger.error(RfStackTrace(e))
-      complete(StatusCodes.ServerError(500)("Authentication Service Error", e.getClientMessage))
+      complete(
+        StatusCodes.ServerError(500)("Authentication Service Error",
+                                     e.getClientMessage))
   }
 }

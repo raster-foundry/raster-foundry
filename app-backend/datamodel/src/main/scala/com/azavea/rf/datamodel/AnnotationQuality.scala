@@ -14,11 +14,13 @@ object AnnotationQuality {
   case object Unsure extends AnnotationQuality("UNSURE")
 
   def fromString(s: String): AnnotationQuality = s.toUpperCase match {
-    case "YES" => Yes
-    case "NO" => No
-    case "MISS" => Miss
+    case "YES"    => Yes
+    case "NO"     => No
+    case "MISS"   => Miss
     case "UNSURE" => Unsure
-    case _ => throw new IllegalArgumentException(s"Argument $s cannot be mapped to AnnotationQuality")
+    case _ =>
+      throw new IllegalArgumentException(
+        s"Argument $s cannot be mapped to AnnotationQuality")
   }
 
   implicit val annotationQualityEncoder: Encoder[AnnotationQuality] =

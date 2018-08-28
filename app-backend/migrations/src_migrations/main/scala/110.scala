@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M110 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(110)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(110)(
+    List(
+      sqlu"""
 CREATE TEMPORARY TABLE aois_tmp AS (
   SELECT
     id, created_at, modified_at, organization_id, created_by, modified_by,
@@ -30,5 +31,5 @@ INSERT INTO aois (
 );
 
 """
-  ))
+    ))
 }

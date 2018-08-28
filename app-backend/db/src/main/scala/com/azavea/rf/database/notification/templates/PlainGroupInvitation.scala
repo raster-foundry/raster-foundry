@@ -7,22 +7,28 @@ import com.azavea.rf.datamodel._
 import doobie.ConnectionIO
 
 final case class PlainGroupInvitation(
-  groupId: UUID,
-  groupType: GroupType,
-  subjectId: String,
-  platformId: UUID
+    groupId: UUID,
+    groupType: GroupType,
+    subjectId: String,
+    platformId: UUID
 ) {
   def build: ConnectionIO[EmailData] = {
     for {
       platform <- PlatformDao.unsafeGetPlatformById(platformId)
-      platformHost = platform.publicSettings.platformHost.getOrElse("app.rasterfoundry.com")
-      subjectEmail <- UserDao.unsafeGetUserById(subjectId).map((usr: User) => usr.email)
+      platformHost = platform.publicSettings.platformHost
+        .getOrElse("app.rasterfoundry.com")
+      subjectEmail <- UserDao
+        .unsafeGetUserById(subjectId)
+        .map((usr: User) => usr.email)
       groupName <- groupType match {
         case GroupType.Team =>
-          TeamDao.unsafeGetTeamById(groupId) map { (team: Team) => team.name }
+          TeamDao.unsafeGetTeamById(groupId) map { (team: Team) =>
+            team.name
+          }
         case GroupType.Organization =>
           OrganizationDao.unsafeGetOrganizationById(groupId) map {
-            (org: Organization) => org.name
+            (org: Organization) =>
+              org.name
           }
         case _ =>
           throw new IllegalArgumentException(

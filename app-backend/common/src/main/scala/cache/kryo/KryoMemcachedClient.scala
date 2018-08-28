@@ -14,6 +14,6 @@ object KryoMemcachedClient {
     new KryoMemcachedClient(addrs)
 
   def default: KryoMemcachedClient =
-    KryoMemcachedClient(new InetSocketAddress(Config.memcached.host, Config.memcached.port))
+    KryoMemcachedClient(
+      new InetSocketAddress(Config.memcached.host, Config.memcached.port))
 }
-

@@ -18,19 +18,33 @@ import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import org.apache.commons.mail.Email
 
-final case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) extends Job
-  with RollbarNotifier {
+final case class NotifyIngestStatus(sceneId: UUID)(
+    implicit val xa: Transactor[IO])
+    extends Job
+    with RollbarNotifier {
 
   val name = NotifyIngestStatus.name
 
   def getSceneConsumers(sceneId: UUID): ConnectionIO[List[String]] = {
     for {
-      projects <- ProjectDao.query.filter(fr"id IN (SELECT project_id FROM scenes_to_projects WHERE scene_id = ${sceneId})").list
-    } yield projects.map(_.owner).distinct.filter(_ != auth0Config.systemUser).map(_.mkString)
+      projects <- ProjectDao.query
+        .filter(
+          fr"id IN (SELECT project_id FROM scenes_to_projects WHERE scene_id = ${sceneId})")
+        .list
+    } yield
+      projects
+        .map(_.owner)
+        .distinct
+        .filter(_ != auth0Config.systemUser)
+        .map(_.mkString)
   }
 
-  def createIngestEmailContentForConsumers(pU: PlatformWithUsersSceneProjects, scene: Scene, ingestStatus: String): (String, String, String) = {
-    val platformHost = pU.pubSettings.platformHost.getOrElse("app.rasterfoundry.com")
+  def createIngestEmailContentForConsumers(
+      pU: PlatformWithUsersSceneProjects,
+      scene: Scene,
+      ingestStatus: String): (String, String, String) = {
+    val platformHost =
+      pU.pubSettings.platformHost.getOrElse("app.rasterfoundry.com")
     ingestStatus match {
       case status: String if status == "INGESTED" =>
         (
@@ -78,8 +92,12 @@ final case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[I
     }
   }
 
-  def createIngestEmailContentForOwner(pO: PlatformWithSceneOwner, scene: Scene, ingestStatus: String): (String, String, String) = {
-    val platformHost = pO.pubSettings.platformHost.getOrElse("app.rasterfoundry.com")
+  def createIngestEmailContentForOwner(
+      pO: PlatformWithSceneOwner,
+      scene: Scene,
+      ingestStatus: String): (String, String, String) = {
+    val platformHost =
+      pO.pubSettings.platformHost.getOrElse("app.rasterfoundry.com")
     ingestStatus match {
       case status: String if status == "INGESTED" =>
         (
@@ -119,59 +137,131 @@ final case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[I
     }
   }
 
-  def sendIngestStatusEmailToConsumers(platformsWithConsumers: List[PlatformWithUsersSceneProjects], scene: Scene, ingestStatus: String) =
+  def sendIngestStatusEmailToConsumers(
+      platformsWithConsumers: List[PlatformWithUsersSceneProjects],
+      scene: Scene,
+      ingestStatus: String) =
     platformsWithConsumers.map(pU => {
       val email = new NotificationEmail
 
       (pU.getUserEmail, pU.pubSettings.emailIngestNotification) match {
-        case ("", true) => logger.warn(email.userEmailNotificationDisabledWarning(pU.uId))
-        case ("", false) => logger.warn(
-          email.userEmailNotificationDisabledWarning(pU.uId) ++ " " ++ email.platformNotSubscribedWarning(pU.platId.toString()))
+        case ("", true) =>
+          logger.warn(email.userEmailNotificationDisabledWarning(pU.uId))
+        case ("", false) =>
+          logger.warn(
+            email.userEmailNotificationDisabledWarning(pU.uId) ++ " " ++ email
+              .platformNotSubscribedWarning(pU.platId.toString()))
         case (userEmailAddress, true) =>
-          (pU.pubSettings.emailSmtpHost, pU.pubSettings.emailSmtpPort, pU.pubSettings.emailSmtpEncryption,
-            pU.pubSettings.emailUser, pU.priSettings.emailPassword, userEmailAddress) match {
-            case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
-            email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
-              val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForConsumers(pU, scene, ingestStatus)
-              email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).map((configuredEmail: Email) => configuredEmail.send)
+          (pU.pubSettings.emailSmtpHost,
+           pU.pubSettings.emailSmtpPort,
+           pU.pubSettings.emailSmtpEncryption,
+           pU.pubSettings.emailUser,
+           pU.priSettings.emailPassword,
+           userEmailAddress) match {
+            case (host: String,
+                  port: Int,
+                  encryption: String,
+                  platUserEmail: String,
+                  pw: String,
+                  userEmail: String)
+                if email.isValidEmailSettings(host,
+                                              port,
+                                              encryption,
+                                              platUserEmail,
+                                              pw,
+                                              userEmail) =>
+              val (ingestEmailSubject, htmlBody, plainBody) =
+                createIngestEmailContentForConsumers(pU, scene, ingestStatus)
+              email
+                .setEmail(host,
+                          port,
+                          encryption,
+                          platUserEmail,
+                          pw,
+                          userEmail,
+                          ingestEmailSubject,
+                          htmlBody,
+                          plainBody)
+                .map((configuredEmail: Email) => configuredEmail.send)
               logger.info(s"Notified project owner ${pU.uId}.")
-            case _ => logger.warn(email.insufficientSettingsWarning(pU.platId.toString(), pU.uId))
+            case _ =>
+              logger.warn(
+                email.insufficientSettingsWarning(pU.platId.toString(), pU.uId))
           }
-        case (_, false) => logger.warn(email.platformNotSubscribedWarning(pU.platId.toString()))
+        case (_, false) =>
+          logger.warn(email.platformNotSubscribedWarning(pU.platId.toString()))
       }
     })
 
-  def sendIngestStatusEmailToOwner(pO: PlatformWithSceneOwner, scene: Scene, ingestStatus: String) = {
+  def sendIngestStatusEmailToOwner(pO: PlatformWithSceneOwner,
+                                   scene: Scene,
+                                   ingestStatus: String) = {
     val email = new NotificationEmail
 
     (pO.getUserEmail, pO.pubSettings.emailIngestNotification) match {
-      case ("", true) => logger.warn(email.userEmailNotificationDisabledWarning(pO.uId))
-      case ("", false) => logger.warn(
-        email.userEmailNotificationDisabledWarning(pO.uId) ++ " " ++ email.platformNotSubscribedWarning(pO.platId.toString()))
+      case ("", true) =>
+        logger.warn(email.userEmailNotificationDisabledWarning(pO.uId))
+      case ("", false) =>
+        logger.warn(
+          email.userEmailNotificationDisabledWarning(pO.uId) ++ " " ++ email
+            .platformNotSubscribedWarning(pO.platId.toString()))
       case (userEmailAddress, true) =>
-        (pO.pubSettings.emailSmtpHost, pO.pubSettings.emailSmtpPort, pO.pubSettings.emailSmtpEncryption,
-          pO.pubSettings.emailUser, pO.priSettings.emailPassword, userEmailAddress) match {
-          case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
-          email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
-            val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForOwner(pO, scene, ingestStatus)
-            email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).map((configuredEmail: Email) => configuredEmail.send)
+        (pO.pubSettings.emailSmtpHost,
+         pO.pubSettings.emailSmtpPort,
+         pO.pubSettings.emailSmtpEncryption,
+         pO.pubSettings.emailUser,
+         pO.priSettings.emailPassword,
+         userEmailAddress) match {
+          case (host: String,
+                port: Int,
+                encryption: String,
+                platUserEmail: String,
+                pw: String,
+                userEmail: String)
+              if email.isValidEmailSettings(host,
+                                            port,
+                                            encryption,
+                                            platUserEmail,
+                                            pw,
+                                            userEmail) =>
+            val (ingestEmailSubject, htmlBody, plainBody) =
+              createIngestEmailContentForOwner(pO, scene, ingestStatus)
+            email
+              .setEmail(host,
+                        port,
+                        encryption,
+                        platUserEmail,
+                        pw,
+                        userEmail,
+                        ingestEmailSubject,
+                        htmlBody,
+                        plainBody)
+              .map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified scene owner ${pO.uId}.")
-          case _ => logger.warn(email.insufficientSettingsWarning(pO.platId.toString(), pO.uId))
+          case _ =>
+            logger.warn(
+              email.insufficientSettingsWarning(pO.platId.toString(), pO.uId))
         }
-      case (_, false) => logger.warn(email.platformNotSubscribedWarning(pO.platId.toString()))
+      case (_, false) =>
+        logger.warn(email.platformNotSubscribedWarning(pO.platId.toString()))
     }
   }
 
   def notifyConsumers(scene: Scene, ingestStatus: String): Unit = {
     logger.info("Notifying Consumers...")
 
-    val consumerIdsO: List[String] = getSceneConsumers(sceneId).transact(xa).unsafeRunSync()
+    val consumerIdsO: List[String] =
+      getSceneConsumers(sceneId).transact(xa).unsafeRunSync()
 
     consumerIdsO match {
       case consumerIds: List[String] if consumerIds.nonEmpty =>
-        val platformsWithConsumers = PlatformDao.getPlatUsersAndProjByConsumerAndSceneID(
-          consumerIds, sceneId).transact(xa).unsafeRunSync()
-        sendIngestStatusEmailToConsumers(platformsWithConsumers, scene, ingestStatus)
+        val platformsWithConsumers = PlatformDao
+          .getPlatUsersAndProjByConsumerAndSceneID(consumerIds, sceneId)
+          .transact(xa)
+          .unsafeRunSync()
+        sendIngestStatusEmailToConsumers(platformsWithConsumers,
+                                         scene,
+                                         ingestStatus)
       case _ => logger.warn(s"Scene ${sceneId} is not in any project yet.")
     }
   }
@@ -180,17 +270,21 @@ final case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[I
     logger.info("Notifying owner...")
 
     if (scene.owner == auth0Config.systemUser) {
-      logger.warn(s"Owner of scene ${sceneId} is a system user. Email not sent.")
+      logger.warn(
+        s"Owner of scene ${sceneId} is a system user. Email not sent.")
     } else {
-      val platformsWithSceneOwner = PlatformDao.getPlatAndUsersBySceneOwnerId(scene.owner)
-        .transact(xa).unsafeRunSync()
+      val platformsWithSceneOwner = PlatformDao
+        .getPlatAndUsersBySceneOwnerId(scene.owner)
+        .transact(xa)
+        .unsafeRunSync()
       sendIngestStatusEmailToOwner(platformsWithSceneOwner, scene, ingestStatus)
     }
   }
 
   def run(): Unit = {
 
-    logger.info(s"Notifying owner and consumer about ingest status for scene ${sceneId}...")
+    logger.info(
+      s"Notifying owner and consumer about ingest status for scene ${sceneId}...")
 
     val sceneIO = for {
       sceneO <- SceneDao.getSceneById(sceneId)
@@ -201,10 +295,13 @@ final case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[I
     sceneO match {
       case Some(scene) =>
         scene.statusFields.ingestStatus.toString match {
-          case ingestStatus: String if ingestStatus == "INGESTED" || ingestStatus == "FAILED" =>
+          case ingestStatus: String
+              if ingestStatus == "INGESTED" || ingestStatus == "FAILED" =>
             notifyOwners(scene, ingestStatus)
             notifyConsumers(scene, ingestStatus)
-          case _ => logger.warn(s"Won't send an email unless the scene ${sceneId} is ingested or failed.")
+          case _ =>
+            logger.warn(
+              s"Won't send an email unless the scene ${sceneId} is ingested or failed.")
         }
       case _ => logger.warn(s"No matched scene of id: ${sceneId}")
     }

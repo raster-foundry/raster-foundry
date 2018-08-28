@@ -4,7 +4,6 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.vector.{Extent, Point, Polygon, Projected}
 
-
 object TileUtils extends LazyLogging {
   private val tileSize = 256.0
 
@@ -25,16 +24,20 @@ object TileUtils extends LazyLogging {
   def fromPointToLatLng(pointCoords: Point): Point = {
     Point(
       x = (pointCoords.x - 128.0) / (tileSize / 360.0),
-      y = (2 * math.atan(math.exp((pointCoords.y - 128.0) / - ( tileSize / (2 * math.Pi)))) - math.Pi / 2.0) / (math.Pi / 180.0)
+      y = (2 * math.atan(math.exp(
+        (pointCoords.y - 128.0) / -(tileSize / (2 * math.Pi)))) - math.Pi / 2.0) / (math.Pi / 180.0)
     )
   }
 
   def fromLatLngToPoint(lngLatCoords: Point): Point = {
-    val sinY = math.min(math.max(math.sin(lngLatCoords.y * (math.Pi / 180)), -.9999), .9999)
+    val sinY = math.min(
+      math.max(math.sin(lngLatCoords.y * (math.Pi / 180)), -.9999),
+      .9999)
 
     Point(
-      x = 128.0 + lngLatCoords.x * (tileSize/360.0),
-      y = 128.0 + 0.5 * math.log((1+sinY) / (1-sinY)) * -(tileSize / (2 * math.Pi))
+      x = 128.0 + lngLatCoords.x * (tileSize / 360.0),
+      y = 128.0 + 0.5 * math
+        .log((1 + sinY) / (1 - sinY)) * -(tileSize / (2 * math.Pi))
     )
   }
 
@@ -42,7 +45,7 @@ object TileUtils extends LazyLogging {
     val scale = math.pow(2, tile.z)
     val x = ((tile.x % scale) + scale) % scale
     val y = ((tile.y % scale) + scale) % scale
-    TileCoordinates(x=x.toInt, y=y.toInt, z=tile.z)
+    TileCoordinates(x = x.toInt, y = y.toInt, z = tile.z)
   }
 
   def getTileBounds(z: Int, x: Int, y: Int): Projected[Polygon] = {
@@ -53,7 +56,8 @@ object TileUtils extends LazyLogging {
     val normalizedTile = this.normalizeTile(tile)
     val scale = tileSize / math.pow(2, tile.z)
     val se = this.fromPointToLatLng(
-      Point(x = normalizedTile.x.toDouble * scale, y = normalizedTile.y.toDouble * scale)
+      Point(x = normalizedTile.x.toDouble * scale,
+            y = normalizedTile.y.toDouble * scale)
     )
     val nw = this.fromPointToLatLng(
       Point(
@@ -68,6 +72,8 @@ object TileUtils extends LazyLogging {
   def getTileAtLatLng(lngLatCoords: Point, zoom: Int): TileCoordinates = {
     val scale = tileSize / math.pow(2, zoom)
     val point = this.fromLatLngToPoint(lngLatCoords)
-    TileCoordinates(x=math.floor(point.x/scale).toInt, y=math.floor(point.y/scale).toInt, z=zoom)
+    TileCoordinates(x = math.floor(point.x / scale).toInt,
+                    y = math.floor(point.y / scale).toInt,
+                    z = zoom)
   }
 }

@@ -7,7 +7,6 @@ import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 import cats._, cats.data._, cats.effect.IO, cats.implicits._
 
-
 object ToolCategoryToToolDao extends Dao[ToolCategoryToTool] {
 
   val tableName = "tool_categories_to_tools"
@@ -18,4 +17,3 @@ object ToolCategoryToToolDao extends Dao[ToolCategoryToTool] {
     FROM
   """ ++ tableF
 }
-

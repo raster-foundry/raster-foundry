@@ -36,30 +36,31 @@ import scala.collection.immutable.Seq
   * Actual routes should be written in the relevant feature as much as is feasible
   *
   */
-trait Router extends HealthCheckRoutes
-  with UserRoutes
-  with OrganizationRoutes
-  with SceneRoutes
-  with ProjectRoutes
-  with AoiRoutes
-  with TokenRoutes
-  with ThumbnailRoutes
-  with ToolRoutes
-  with ToolTagRoutes
-  with ConfigRoutes
-  with ToolCategoryRoutes
-  with ToolRunRoutes
-  with DatasourceRoutes
-  with MapTokenRoutes
-  with FeedRoutes
-  with UploadRoutes
-  with ExportRoutes
-  with Config
-  with FeatureFlagRoutes
-  with ShapeRoutes
-  with LicenseRoutes
-  with TeamRoutes
-  with PlatformRoutes {
+trait Router
+    extends HealthCheckRoutes
+    with UserRoutes
+    with OrganizationRoutes
+    with SceneRoutes
+    with ProjectRoutes
+    with AoiRoutes
+    with TokenRoutes
+    with ThumbnailRoutes
+    with ToolRoutes
+    with ToolTagRoutes
+    with ConfigRoutes
+    with ToolCategoryRoutes
+    with ToolRunRoutes
+    with DatasourceRoutes
+    with MapTokenRoutes
+    with FeedRoutes
+    with UploadRoutes
+    with ExportRoutes
+    with Config
+    with FeatureFlagRoutes
+    with ShapeRoutes
+    with LicenseRoutes
+    with TeamRoutes
+    with PlatformRoutes {
 
   val settings = CorsSettings.defaultSettings.copy(
     allowedMethods = Seq(GET, POST, PUT, HEAD, OPTIONS, DELETE))
@@ -68,76 +69,76 @@ trait Router extends HealthCheckRoutes
     pathPrefix("healthcheck") {
       healthCheckRoutes
     } ~
-    pathPrefix("api") {
-      pathPrefix("projects") {
-        projectRoutes
+      pathPrefix("api") {
+        pathPrefix("projects") {
+          projectRoutes
+        } ~
+          pathPrefix("platforms") {
+            platformRoutes
+          } ~
+          pathPrefix("areas-of-interest") {
+            aoiRoutes
+          } ~
+          pathPrefix("organizations") {
+            organizationRoutes
+          } ~
+          pathPrefix("scenes") {
+            sceneRoutes
+          } ~
+          pathPrefix("tokens") {
+            tokenRoutes
+          } ~
+          pathPrefix("users") {
+            userRoutes
+          } ~
+          pathPrefix("tools") {
+            toolRoutes
+          } ~
+          pathPrefix("tool-tags") {
+            toolTagRoutes
+          } ~
+          pathPrefix("tool-categories") {
+            toolCategoryRoutes
+          } ~
+          pathPrefix("tool-runs") {
+            toolRunRoutes
+          } ~
+          pathPrefix("datasources") {
+            datasourceRoutes
+          } ~
+          pathPrefix("thumbnails") {
+            thumbnailImageRoutes
+          } ~
+          pathPrefix("map-tokens") {
+            mapTokenRoutes
+          } ~
+          pathPrefix("feed") {
+            feedRoutes
+          } ~
+          pathPrefix("uploads") {
+            uploadRoutes
+          } ~
+          pathPrefix("exports") {
+            exportRoutes
+          } ~
+          pathPrefix("shapes") {
+            shapeRoutes
+          } ~
+          pathPrefix("licenses") {
+            licenseRoutes
+          } ~
+          pathPrefix("teams") {
+            teamRoutes
+          }
       } ~
-      pathPrefix("platforms") {
-        platformRoutes
+      pathPrefix("config") {
+        configRoutes
       } ~
-      pathPrefix("areas-of-interest") {
-        aoiRoutes
-      } ~
-      pathPrefix("organizations") {
-        organizationRoutes
-      } ~
-      pathPrefix("scenes") {
-        sceneRoutes
-      } ~
-      pathPrefix("tokens") {
-        tokenRoutes
-      } ~
-      pathPrefix("users") {
-        userRoutes
-      } ~
-      pathPrefix("tools") {
-        toolRoutes
-      } ~
-      pathPrefix("tool-tags") {
-        toolTagRoutes
-      } ~
-      pathPrefix("tool-categories") {
-        toolCategoryRoutes
-      } ~
-      pathPrefix("tool-runs") {
-        toolRunRoutes
-      } ~
-      pathPrefix("datasources") {
-        datasourceRoutes
+      pathPrefix("feature-flags") {
+        featureFlagRoutes
       } ~
       pathPrefix("thumbnails") {
         thumbnailImageRoutes
-      } ~
-      pathPrefix("map-tokens") {
-        mapTokenRoutes
-      } ~
-      pathPrefix("feed") {
-        feedRoutes
-      } ~
-      pathPrefix("uploads") {
-        uploadRoutes
-      } ~
-      pathPrefix("exports") {
-        exportRoutes
-      } ~
-      pathPrefix("shapes") {
-        shapeRoutes
-      } ~
-      pathPrefix("licenses") {
-        licenseRoutes
-      } ~
-      pathPrefix("teams") {
-        teamRoutes
       }
-    } ~
-    pathPrefix("config") {
-      configRoutes
-    } ~
-    pathPrefix("feature-flags") {
-      featureFlagRoutes
-    } ~
-    pathPrefix("thumbnails") {
-      thumbnailImageRoutes
-    }
   }
 }

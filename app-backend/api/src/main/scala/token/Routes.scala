@@ -8,25 +8,27 @@ import akka.http.scaladsl.server.Route
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
-
 /**
   * Routes for tokens
   */
-trait TokenRoutes extends Authentication
-  with UserErrorHandler
-  with Auth0ErrorHandler {
+trait TokenRoutes
+    extends Authentication
+    with UserErrorHandler
+    with Auth0ErrorHandler {
 
-  val tokenRoutes: Route = (handleExceptions(auth0ExceptionHandler) & handleExceptions(userExceptionHandler)) {
-    pathEndOrSingleSlash {
-      get { listRefreshTokens } ~
-      post { getAuthorizedToken }
-    } ~
-    pathPrefix(Segment) { deviceId =>
+  val tokenRoutes: Route =
+    (handleExceptions(auth0ExceptionHandler) & handleExceptions(
+      userExceptionHandler)) {
       pathEndOrSingleSlash {
-        delete { revokeRefreshToken(deviceId) }
-      }
+        get { listRefreshTokens } ~
+          post { getAuthorizedToken }
+      } ~
+        pathPrefix(Segment) { deviceId =>
+          pathEndOrSingleSlash {
+            delete { revokeRefreshToken(deviceId) }
+          }
+        }
     }
-  }
 
   def listRefreshTokens: Route = authenticate { user =>
     complete {

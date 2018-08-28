@@ -9,16 +9,18 @@ trait RollbarNotifier extends LazyLogging {
   val rollbarApiToken: String = sys.env.get("ROLLBAR_SERVER_TOKEN") match {
     case Some(t) => t
     case _ =>
-      throw new RuntimeException("Rollbar API token must be present to notify rollbar")
+      throw new RuntimeException(
+        "Rollbar API token must be present to notify rollbar")
   }
 
   val environment: String = sys.env.get("ENVIRONMENT") match {
     case Some(env) => env
-    case _ => "staging"
+    case _         => "staging"
   }
 
   val rollbarClient: Rollbar = Rollbar.init(
-    ConfigBuilder.withAccessToken(rollbarApiToken)
+    ConfigBuilder
+      .withAccessToken(rollbarApiToken)
       .language("scala")
       .environment(environment)
       .build())

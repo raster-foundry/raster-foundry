@@ -24,13 +24,11 @@ object AkkaSystem {
   implicit val materializer = ActorMaterializer()
 }
 
-object Main extends App
-  with Config
-  with Router {
+object Main extends App with Config with Router {
 
   Kamon.start()
 
-    implicit val system = AkkaSystem.system
+  implicit val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
 
   val xa = RFTransactor.xa

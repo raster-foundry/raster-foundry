@@ -12,7 +12,6 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
 object AnnotationGroupDao extends Dao[AnnotationGroup] {
 
   val tableName = "annotation_groups"
@@ -20,18 +19,22 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
   val selectF: Fragment =
     fr"SELECT id, name, created_at, created_by, modified_at, modified_by, project_id, default_style from" ++ tableF
 
-  def unsafeGetAnnotationGroupById(groupId: UUID): ConnectionIO[AnnotationGroup] = {
+  def unsafeGetAnnotationGroupById(
+      groupId: UUID): ConnectionIO[AnnotationGroup] = {
     query.filter(groupId).select
   }
 
-  def listAnnotationGroupsForProject(projectId: UUID): ConnectionIO[List[AnnotationGroup]] = {
+  def listAnnotationGroupsForProject(
+      projectId: UUID): ConnectionIO[List[AnnotationGroup]] = {
     (selectF ++ Fragments.whereAndOpt(fr"project_id = ${projectId}".some))
       .query[AnnotationGroup]
-      .stream.compile.toList
+      .stream
+      .compile
+      .toList
   }
 
   def insertAnnotationGroup(
-    ag: AnnotationGroup
+      ag: AnnotationGroup
   ): ConnectionIO[AnnotationGroup] = {
     fr"""
     INSERT INTO annotation_groups (
@@ -41,11 +44,19 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
     (${ag.id}, ${ag.name}, ${ag.createdAt}, ${ag.createdBy}, ${ag.modifiedAt},
      ${ag.modifiedBy}, ${ag.projectId}, ${ag.defaultStyle})
     """.update.withUniqueGeneratedKeys[AnnotationGroup](
-      "id", "name", "created_at", "created_by", "modified_at", "modified_by",
-      "project_id", "default_style"
+      "id",
+      "name",
+      "created_at",
+      "created_by",
+      "modified_at",
+      "modified_by",
+      "project_id",
+      "default_style"
     )
   }
-  def updateAnnotationGroupQ(annotationGroup: AnnotationGroup, id: UUID, user: User): Update0 = {
+  def updateAnnotationGroupQ(annotationGroup: AnnotationGroup,
+                             id: UUID,
+                             user: User): Update0 = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
     val idFilter = fr"id = ${id}"
 
@@ -59,19 +70,28 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
   }
 
   def createAnnotationGroup(
-    projectId: UUID, agCreate: AnnotationGroup.Create, user: User
-  ): ConnectionIO[AnnotationGroup] = insertAnnotationGroup(agCreate.toAnnotationGroup(projectId, user))
+      projectId: UUID,
+      agCreate: AnnotationGroup.Create,
+      user: User
+  ): ConnectionIO[AnnotationGroup] =
+    insertAnnotationGroup(agCreate.toAnnotationGroup(projectId, user))
 
-  def getAnnotationGroup(projectId: UUID, agId: UUID): ConnectionIO[Option[AnnotationGroup]] =
+  def getAnnotationGroup(projectId: UUID,
+                         agId: UUID): ConnectionIO[Option[AnnotationGroup]] =
     query.filter(fr"project_id = $projectId").filter(agId).selectOption
 
   def deleteAnnotationGroup(projectId: UUID, agId: UUID): ConnectionIO[Int] =
     for {
       _ <- AnnotationDao.deleteByAnnotationGroup(agId)
-      deleteCount <-  query.filter(fr"project_id = $projectId").filter(agId).delete
+      deleteCount <- query
+        .filter(fr"project_id = $projectId")
+        .filter(agId)
+        .delete
     } yield deleteCount
 
-  def updateAnnotationGroup(ag: AnnotationGroup, agId: UUID, user: User): ConnectionIO[Int] = {
+  def updateAnnotationGroup(ag: AnnotationGroup,
+                            agId: UUID,
+                            user: User): ConnectionIO[Int] = {
     updateAnnotationGroupQ(ag, agId, user).run
   }
 

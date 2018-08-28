@@ -23,9 +23,9 @@ object MapToken {
 
   @JsonCodec
   final case class Create(name: String,
-                    project: Option[UUID],
-                    toolRun: Option[UUID],
-                    owner: Option[String])
+                          project: Option[UUID],
+                          toolRun: Option[UUID],
+                          owner: Option[String])
       extends OwnerCheck {
     def toMapToken(user: User): MapToken = {
 

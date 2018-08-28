@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M114 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(114)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(114)(
+    List(
+      sqlu"""
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -49,5 +50,5 @@ ALTER TABLE tools DROP COLUMN organization_id;
 ALTER TABLE uploads DROP COLUMN organization_id;
 ALTER TABLE users DROP COLUMN organization_id;
 """
-  ))
+    ))
 }

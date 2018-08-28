@@ -28,8 +28,10 @@ import scala.collection.parallel.immutable.ParSeq
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.sys.process._
 
-
-final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), threshold: Int = 10)(implicit val xa: Transactor[IO]) extends Job {
+final case class ImportLandsat8C1(
+    startDate: LocalDate = LocalDate.now(ZoneOffset.UTC),
+    threshold: Int = 10)(implicit val xa: Transactor[IO])
+    extends Job {
   val name = ImportLandsat8C1.name
 
   /** Get S3 client per each call */
@@ -62,10 +64,9 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
      * interpret the awk script correctly.
      */
     s"wget -q -O - ${landsat8Config.usgsLandsatUrlC1}.gz" #|
-        "zcat" #|
-        s"""awk -F, {if($$33=="${startDate}"||/acquisitionDate/){print}}""" #>
-        new File("/tmp/landsat.csv") !
-
+      "zcat" #|
+      s"""awk -F, {if($$33=="${startDate}"||/acquisitionDate/){print}}""" #>
+      new File("/tmp/landsat.csv") !
 
     logger.info("CSV downloaded and filtered successfully")
 
@@ -84,7 +85,8 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
   }
 
   protected def getLandsatUrl(productId: String): String = {
-    val rootUrl = s"${landsat8Config.awsLandsatBaseC1}${getLandsatPath(productId)}"
+    val rootUrl =
+      s"${landsat8Config.awsLandsatBaseC1}${getLandsatPath(productId)}"
     logger.debug(s"Constructed Root URL: $rootUrl")
     rootUrl
   }
@@ -92,7 +94,9 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
   // Getting the image size is the only place where the s3 object
   // is required to exist -- so handle the missing object by returning
   // a -1 for the image's size
-  protected def createThumbnails(sceneId: UUID, productId: String): List[Thumbnail.Identified] = {
+  protected def createThumbnails(
+      sceneId: UUID,
+      productId: String): List[Thumbnail.Identified] = {
     val path = getLandsatUrl(productId)
     val smallUrl = s"$path/${productId}_thumb_small.jpg"
     val largeUrl = s"$path/${productId}_thumb_large.jpg"
@@ -115,9 +119,11 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
   }
 
   @SuppressWarnings(Array("TraversableHead"))
-  protected def csvRowToScene(
-    row: Map[String, String], user: User, srcProj: CRS = CRS.fromName("EPSG:4326"),
-    targetProj: CRS = CRS.fromName("EPSG:3857"))(implicit xa: Transactor[IO]): IO[Option[Scene.WithRelated]] = {
+  protected def csvRowToScene(row: Map[String, String],
+                              user: User,
+                              srcProj: CRS = CRS.fromName("EPSG:4326"),
+                              targetProj: CRS = CRS.fromName("EPSG:3857"))(
+      implicit xa: Transactor[IO]): IO[Option[Scene.WithRelated]] = {
 
     val sceneId = UUID.randomUUID()
     val productId = row("LANDSAT_PRODUCT_ID")
@@ -133,9 +139,14 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
             None.pure[ConnectionIO]
           }
           case _ => {
-            createSceneFromRow(row, srcProj, targetProj, sceneId, productId, landsatPath) match {
+            createSceneFromRow(row,
+                               srcProj,
+                               targetProj,
+                               sceneId,
+                               productId,
+                               landsatPath) match {
               case Some(scene) => SceneDao.insertMaybe(scene, user)
-              case _ => None.pure[ConnectionIO]
+              case _           => None.pure[ConnectionIO]
             }
           }
         }
@@ -148,9 +159,15 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
 
   // All of the heads here are from a locally constructed list that we know has members
   @SuppressWarnings(Array("TraversableHead"))
-  private def createSceneFromRow(row: Map[String, String], srcProj: CRS, targetProj: CRS, sceneId: UUID, productId: String, landsatPath: String) = {
+  private def createSceneFromRow(row: Map[String, String],
+                                 srcProj: CRS,
+                                 targetProj: CRS,
+                                 sceneId: UUID,
+                                 productId: String,
+                                 landsatPath: String) = {
 
-    val (tileFootprint, dataFootprint) = getRowFootprints(row, srcProj, targetProj)
+    val (tileFootprint, dataFootprint) =
+      getRowFootprints(row, srcProj, targetProj)
 
     val s3Url = s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/index.html"
 
@@ -179,7 +196,8 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
         * and never want to see them again
         */
       if (cloudCover.map(_ < 0).getOrElse(false)) {
-        logger.info(s"Skipping import for ${landsatPath} since cloud_cover was ${cloudCover}")
+        logger.info(
+          s"Skipping import for ${landsatPath} since cloud_cover was ${cloudCover}")
         None
       } else {
         val sunElevation = row.get("sunElevation").map(_.toFloat)
@@ -197,7 +215,7 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
             val b = band.name.split(" - ").last
             (30f, s"${productId}_B${b}.TIF", band)
           }
-          ).map {
+        ).map {
           case (resolution, tiffPath, band) =>
             Image.Banded(
               rawDataBytes = 0,
@@ -223,7 +241,8 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
           owner = Some(systemUser),
           tileFootprint = tileFootprint,
           dataFootprint = dataFootprint,
-          metadataFiles = List(s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/${productId}_MTL.txt"),
+          metadataFiles = List(
+            s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/${productId}_MTL.txt"),
           images = images,
           thumbnails = createThumbnails(sceneId, productId),
           ingestLocation = None,
@@ -246,12 +265,16 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
   }
 
   @SuppressWarnings(Array("ListAppend", "TraversableHead", "TraversableLast"))
-  def getRowFootprints(row: Map[String, String], srcProj: CRS, targetProj: CRS):
-  (Option[Projected[MultiPolygon]], Option[Projected[MultiPolygon]]) = {
-    val ll = row("lowerLeftCornerLongitude").toDouble -> row("lowerLeftCornerLatitude").toDouble
-    val lr = row("lowerRightCornerLongitude").toDouble -> row("lowerRightCornerLatitude").toDouble
-    val ul = row("upperLeftCornerLongitude").toDouble -> row("upperLeftCornerLatitude").toDouble
-    val ur = row("upperRightCornerLongitude").toDouble -> row("upperRightCornerLatitude").toDouble
+  def getRowFootprints(row: Map[String, String], srcProj: CRS, targetProj: CRS)
+    : (Option[Projected[MultiPolygon]], Option[Projected[MultiPolygon]]) = {
+    val ll = row("lowerLeftCornerLongitude").toDouble -> row(
+      "lowerLeftCornerLatitude").toDouble
+    val lr = row("lowerRightCornerLongitude").toDouble -> row(
+      "lowerRightCornerLatitude").toDouble
+    val ul = row("upperLeftCornerLongitude").toDouble -> row(
+      "upperLeftCornerLatitude").toDouble
+    val ur = row("upperRightCornerLongitude").toDouble -> row(
+      "upperRightCornerLatitude").toDouble
 
     val srcCoords = ll :: ul :: ur :: lr :: Nil
     val srcPolygon = Polygon(Line(srcCoords :+ srcCoords.head))
@@ -268,7 +291,10 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
 
     val (transformedCoords, transformedExtent) = {
       if (srcProj.equals(targetProj)) srcPolygon -> extent
-      else srcPolygon.reproject(srcProj, targetProj) -> extent.reproject(srcProj, targetProj)
+      else
+        srcPolygon.reproject(srcProj, targetProj) -> extent.reproject(
+          srcProj,
+          targetProj)
     }
 
     val dataFootprint = MultiPolygon(transformedCoords)
@@ -276,8 +302,14 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
 
     val intersects = AntimeridianUtils.crossesAntimeridian(tileFootprint)
 
-    val correctedDataFootprint = AntimeridianUtils.correctDataFootprint(intersects, Some(dataFootprint), targetProj)
-    val correctedTileFootprint = AntimeridianUtils.correctTileFootprint(intersects, Some(tileFootprint), targetProj)
+    val correctedDataFootprint = AntimeridianUtils.correctDataFootprint(
+      intersects,
+      Some(dataFootprint),
+      targetProj)
+    val correctedTileFootprint = AntimeridianUtils.correctTileFootprint(
+      intersects,
+      Some(tileFootprint),
+      targetProj)
 
     (correctedTileFootprint, correctedDataFootprint)
   }
@@ -289,14 +321,17 @@ final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffse
     val rows = rowsFromCsv.par
     rows.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(16))
     val insertedScenes: ParSeq[Option[Scene.WithRelated]] = rows map {
-      (row: Map[String, String]) => {
-        csvRowToScene(row, user).handleErrorWith(
-          (error: Throwable) => {
-            sendError(error)
-            IO.pure(None)
-          }
-        ).unsafeRunSync
-      }
+      (row: Map[String, String]) =>
+        {
+          csvRowToScene(row, user)
+            .handleErrorWith(
+              (error: Throwable) => {
+                sendError(error)
+                IO.pure(None)
+              }
+            )
+            .unsafeRunSync
+        }
     }
     stop
   }
@@ -309,9 +344,10 @@ object ImportLandsat8C1 {
     implicit val xa = RFTransactor.xa
 
     val job = args.toList match {
-      case List(date, threshold) => ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
+      case List(date, threshold) =>
+        ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
       case List(date) => ImportLandsat8C1(LocalDate.parse(date))
-      case _ => ImportLandsat8C1()
+      case _          => ImportLandsat8C1()
     }
 
     job.run

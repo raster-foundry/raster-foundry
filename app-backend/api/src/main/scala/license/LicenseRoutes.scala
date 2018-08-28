@@ -18,11 +18,11 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
-trait LicenseRoutes extends Authentication
-  with PaginationDirectives
-  with CommonHandlers
-  with UserErrorHandler {
+trait LicenseRoutes
+    extends Authentication
+    with PaginationDirectives
+    with CommonHandlers
+    with UserErrorHandler {
 
   val xa: Transactor[IO]
 
@@ -42,7 +42,12 @@ trait LicenseRoutes extends Authentication
 
   def getLicense(shortName: String): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(LicenseDao.query.filter(fr"short_name = ${shortName}").selectOption.transact(xa).unsafeToFuture)
+      complete(
+        LicenseDao.query
+          .filter(fr"short_name = ${shortName}")
+          .selectOption
+          .transact(xa)
+          .unsafeToFuture)
     }
   }
 }

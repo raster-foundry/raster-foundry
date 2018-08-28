@@ -8,11 +8,12 @@ import com.azavea.rf.api.utils.queryparams._
 
 trait OrganizationQueryParameterDirective extends QueryParametersCommon {
 
-  def organizationQueryParameters = (
-    timestampQueryParameters &
-    searchParams &
-    activationParams &
-    platformIdParams
-  ).as(OrganizationQueryParameters.apply _)
+  def organizationQueryParameters =
+    (
+      timestampQueryParameters &
+        searchParams &
+        activationParams &
+        platformIdParams
+    ).as(OrganizationQueryParameters.apply _)
 
 }

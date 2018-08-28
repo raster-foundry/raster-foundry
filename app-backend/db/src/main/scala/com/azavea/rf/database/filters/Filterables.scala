@@ -49,7 +49,8 @@ trait Filterables extends RFMeta with LazyLogging {
   implicit val timestampQueryParamsFilter
     : Filterable[Any, TimestampQueryParameters] =
     Filterable[Any, TimestampQueryParameters] {
-      tsParams: TimestampQueryParameters => Filters.timestampQP(tsParams)
+      tsParams: TimestampQueryParameters =>
+        Filters.timestampQP(tsParams)
     }
 
   implicit val imageQueryparamsFilter: Filterable[Any, ImageQueryParameters] =
@@ -68,7 +69,8 @@ trait Filterables extends RFMeta with LazyLogging {
             projectParams.tagQueryParameters.tagsInclude.toList.toNel.map({
               tags =>
                 val tagsIncludeF = tags
-                  .map({ tag => fr"${tag} = ANY (projects.tags)"
+                  .map({ tag =>
+                    fr"${tag} = ANY (projects.tags)"
                   })
                   .toList
                 fr"(" ++ Fragments.or(tagsIncludeF: _*) ++ fr")"
@@ -76,7 +78,8 @@ trait Filterables extends RFMeta with LazyLogging {
             projectParams.tagQueryParameters.tagsExclude.toList.toNel.map({
               tags =>
                 val tagsIncludeF = tags
-                  .map({ tag => fr"${tag} = ANY (projects.tags)"
+                  .map({ tag =>
+                    fr"${tag} = ANY (projects.tags)"
                   })
                   .toList
                 fr"(NOT (" ++ Fragments.or(tagsIncludeF: _*) ++ fr"))"
@@ -102,17 +105,23 @@ trait Filterables extends RFMeta with LazyLogging {
       annotParams: AnnotationQueryParameters =>
         Filters.userQP(annotParams.userParams) ++
           List(
-            annotParams.label.map({ label => fr"label = $label"
+            annotParams.label.map({ label =>
+              fr"label = $label"
             }),
-            annotParams.machineGenerated.map({ mg => fr"machine_generated = $mg"
+            annotParams.machineGenerated.map({ mg =>
+              fr"machine_generated = $mg"
             }),
-            annotParams.minConfidence.map({ minc => fr"min_confidence = $minc"
+            annotParams.minConfidence.map({ minc =>
+              fr"min_confidence = $minc"
             }),
-            annotParams.maxConfidence.map({ maxc => fr"max_confidence = $maxc"
+            annotParams.maxConfidence.map({ maxc =>
+              fr"max_confidence = $maxc"
             }),
-            annotParams.quality.map({ quality => fr"quality = $quality"
+            annotParams.quality.map({ quality =>
+              fr"quality = $quality"
             }),
-            annotParams.annotationGroup.map({ ag => fr"annotation_group = $ag"
+            annotParams.annotationGroup.map({ ag =>
+              fr"annotation_group = $ag"
             }),
             annotParams.bboxPolygon match {
               case Some(bboxPolygons) =>
@@ -134,9 +143,11 @@ trait Filterables extends RFMeta with LazyLogging {
         Filters.userQP(combineSceneParams.userParams) ++
           Filters.timestampQP(combineSceneParams.timestampParams) ++
           List(
-            sceneParams.maxCloudCover.map({ mcc => fr"cloud_cover <= $mcc"
+            sceneParams.maxCloudCover.map({ mcc =>
+              fr"cloud_cover <= $mcc"
             }),
-            sceneParams.minCloudCover.map({ mcc => fr"cloud_cover >= $mcc"
+            sceneParams.minCloudCover.map({ mcc =>
+              fr"cloud_cover >= $mcc"
             }),
             sceneParams.minAcquisitionDatetime.map({ mac =>
               fr"acquisition_date >= $mac"
@@ -156,13 +167,17 @@ trait Filterables extends RFMeta with LazyLogging {
             sceneParams.maxDayOfMonth.map({ day =>
               fr"date_part('day', acquisition_date) >= $day"
             }),
-            sceneParams.maxSunAzimuth.map({ msa => fr"sun_azimuth <= ${msa}"
+            sceneParams.maxSunAzimuth.map({ msa =>
+              fr"sun_azimuth <= ${msa}"
             }),
-            sceneParams.minSunAzimuth.map({ msa => fr"sun_azimuth >= ${msa}"
+            sceneParams.minSunAzimuth.map({ msa =>
+              fr"sun_azimuth >= ${msa}"
             }),
-            sceneParams.maxSunElevation.map({ mse => fr"sun_elevation <= ${mse}"
+            sceneParams.maxSunElevation.map({ mse =>
+              fr"sun_elevation <= ${mse}"
             }),
-            sceneParams.minSunElevation.map({ mse => fr"sun_elevation >= ${mse}"
+            sceneParams.minSunElevation.map({ mse =>
+              fr"sun_elevation >= ${mse}"
             }),
             sceneParams.ingested.map({
               case true => fr"ingest_status = 'INGESTED'"
@@ -223,24 +238,26 @@ trait Filterables extends RFMeta with LazyLogging {
     }
 
   implicit val fragmentFilter: Filterable[Any, doobie.Fragment] =
-    Filterable[Any, Fragment] { fragment: Fragment => List(Some(fragment))
+    Filterable[Any, Fragment] { fragment: Fragment =>
+      List(Some(fragment))
     }
 
   implicit def maybeTFilter[T](
-    implicit filterable: Filterable[Any, T]
+      implicit filterable: Filterable[Any, T]
   ): Filterable[Any, Option[T]] = Filterable[Any, Option[T]] {
     case None        => List.empty[Option[Fragment]]
     case Some(thing) => filterable.toFilters(thing)
   }
 
   implicit def listTFilter[T](
-    implicit filterable: Filterable[Any, T]
+      implicit filterable: Filterable[Any, T]
   ): Filterable[Any, List[T]] = Filterable[Any, List[T]] {
-    someFilterables: List[T] => {
-      someFilterables
-        .map(filterable.toFilters)
-        .foldLeft(List.empty[Option[Fragment]])(_ ++ _)
-    }
+    someFilterables: List[T] =>
+      {
+        someFilterables
+          .map(filterable.toFilters)
+          .foldLeft(List.empty[Option[Fragment]])(_ ++ _)
+      }
   }
 
   implicit val datasourceQueryparamsFilter
@@ -255,9 +272,11 @@ trait Filterables extends RFMeta with LazyLogging {
     Filterable[Any, UploadQueryParameters] {
       uploadParams: UploadQueryParameters =>
         List(
-          uploadParams.datasource.map({ ds => fr"datasource = ${ds}"
+          uploadParams.datasource.map({ ds =>
+            fr"datasource = ${ds}"
           }),
-          uploadParams.projectId.map({ pid => fr"project_id = ${pid}"
+          uploadParams.projectId.map({ pid =>
+            fr"project_id = ${pid}"
           }),
           uploadParams.uploadStatus.map({ uploadStatus =>
             val statusF: List[Fragment] = uploadStatus
@@ -274,11 +293,14 @@ trait Filterables extends RFMeta with LazyLogging {
     Filterable[Any, ExportQueryParameters] {
       exportParams: ExportQueryParameters =>
         List(
-          exportParams.organization.map({ orgId => fr"organization = $orgId"
+          exportParams.organization.map({ orgId =>
+            fr"organization = $orgId"
           }),
-          exportParams.project.map({ projId => fr"project_id = $projId"
+          exportParams.project.map({ projId =>
+            fr"project_id = $projId"
           }),
-          exportParams.analysis.map({ analysisId => fr"toolrun_id = $analysisId"
+          exportParams.analysis.map({ analysisId =>
+            fr"toolrun_id = $analysisId"
           }),
           exportParams.exportStatus.toList.toNel.map({ statuses =>
             val exportStatuses = statuses.map({ status =>
@@ -315,7 +337,8 @@ trait Filterables extends RFMeta with LazyLogging {
   implicit val thumbnailParamsFilter
     : Filterable[Any, ThumbnailQueryParameters] =
     Filterable[Any, ThumbnailQueryParameters] {
-      params: ThumbnailQueryParameters => Filters.thumbnailQP(params)
+      params: ThumbnailQueryParameters =>
+        Filters.thumbnailQP(params)
     }
 
   implicit val teamQueryparamsFilter: Filterable[Any, TeamQueryParameters] =
@@ -349,7 +372,8 @@ trait Filterables extends RFMeta with LazyLogging {
   implicit val orgSearchQueryParamsFilter
     : Filterable[Organization, SearchQueryParameters] =
     Filterable[Organization, SearchQueryParameters] {
-      params: SearchQueryParameters => Filters.searchQP(params, List("name"))
+      params: SearchQueryParameters =>
+        Filters.searchQP(params, List("name"))
     }
 
   implicit val userSearchQueryParamsFilter

@@ -11,7 +11,6 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
 object DatasourceDao extends Dao[Datasource] {
 
   val tableName = "datasources"
@@ -29,8 +28,10 @@ object DatasourceDao extends Dao[Datasource] {
   def getDatasourceById(datasourceId: UUID): ConnectionIO[Option[Datasource]] =
     query.filter(datasourceId).selectOption
 
-  def listDatasources(page: PageRequest, params: DatasourceQueryParameters): ConnectionIO[PaginatedResponse[Datasource]] = {
-    DatasourceDao.query.filter(params)
+  def listDatasources(page: PageRequest, params: DatasourceQueryParameters)
+    : ConnectionIO[PaginatedResponse[Datasource]] = {
+    DatasourceDao.query
+      .filter(params)
       .page(page)
   }
 
@@ -45,17 +46,29 @@ object DatasourceDao extends Dao[Datasource] {
       ${datasource.visibility}, ${datasource.composites},
       ${datasource.extras}, ${datasource.bands}, ${datasource.licenseName})
     """).update.withUniqueGeneratedKeys[Datasource](
-      "id", "created_at", "created_by", "modified_at", "modified_by", "owner",
-      "name", "visibility", "composites", "extras", "bands", "license_name"
+      "id",
+      "created_at",
+      "created_by",
+      "modified_at",
+      "modified_by",
+      "owner",
+      "name",
+      "visibility",
+      "composites",
+      "extras",
+      "bands",
+      "license_name"
     )
   }
 
-  def updateDatasource(datasource: Datasource, id: UUID, user: User): ConnectionIO[Int] = {
+  def updateDatasource(datasource: Datasource,
+                       id: UUID,
+                       user: User): ConnectionIO[Int] = {
     // fetch datasource so we can check if user is allowed to update (access control)
     val now = new Timestamp(new java.util.Date().getTime)
     val updateQuery =
       fr"UPDATE" ++ this.tableF ++ fr"SET" ++
-      fr"""
+        fr"""
       modified_at = ${now},
       modified_by = ${user.id},
       name = ${datasource.name},
@@ -73,14 +86,18 @@ object DatasourceDao extends Dao[Datasource] {
     (fr"DELETE FROM " ++ this.tableF ++ fr"WHERE id = ${id}").update.run
   }
 
-  def createDatasource(dsCreate: Datasource.Create, user: User): ConnectionIO[Datasource] = {
+  def createDatasource(dsCreate: Datasource.Create,
+                       user: User): ConnectionIO[Datasource] = {
     val datasource = dsCreate.toDatasource(user)
     this.create(datasource, user)
   }
 
-  def isDeletable(datasourceId: UUID, user: User, objectType: ObjectType): ConnectionIO[Boolean] = {
-    val statusF: List[Fragment] = List("CREATED", "UPLOADING", "UPLOADED", "QUEUED", "PROCESSING")
-      .map(status => fr"upload_status = ${status}::upload_status")
+  def isDeletable(datasourceId: UUID,
+                  user: User,
+                  objectType: ObjectType): ConnectionIO[Boolean] = {
+    val statusF: List[Fragment] =
+      List("CREATED", "UPLOADING", "UPLOADED", "QUEUED", "PROCESSING")
+        .map(status => fr"upload_status = ${status}::upload_status")
 
     for {
       datasourceO <- DatasourceDao.getDatasourceById(datasourceId)
@@ -100,7 +117,8 @@ object DatasourceDao extends Dao[Datasource] {
     } yield isOwner && !isShared && !hasUpload
   }
 
-  def deleteDatasourceWithRelated(datasourceId: UUID): ConnectionIO[List[Int]] = {
+  def deleteDatasourceWithRelated(
+      datasourceId: UUID): ConnectionIO[List[Int]] = {
     for {
       uDeleteCount <- UploadDao.query
         .filter(fr"datasource = ${datasourceId}")

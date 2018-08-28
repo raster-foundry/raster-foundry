@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M118 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(118)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(118)(
+    List(
+      sqlu"""
 ----
 -- everyone can view and download public scenes, but can't do anything else to them
 ----
@@ -106,5 +107,5 @@ INSERT INTO access_control_rules (
 );
 
 """
-  ))
+    ))
 }

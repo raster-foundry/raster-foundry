@@ -34,8 +34,10 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     FROM
   """ ++ tableF
 
-  def authViewQuery(user: User, ownershipTypeO: Option[String] = None,
-    groupTypeO: Option[GroupType] = None, groupIdO: Option[UUID] = None): Dao.QueryBuilder[Scene] = {
+  def authViewQuery(user: User,
+                    ownershipTypeO: Option[String] = None,
+                    groupTypeO: Option[GroupType] = None,
+                    groupIdO: Option[UUID] = None): Dao.QueryBuilder[Scene] = {
     if (user.isSuperuser) {
       Dao.QueryBuilder[Scene](selectF, tableF, List.empty)
     } else {
@@ -101,12 +103,18 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     }
 
   @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
-  def insert(sceneCreate: Scene.Create, user: User): ConnectionIO[Scene.WithRelated] = {
+  def insert(sceneCreate: Scene.Create,
+             user: User): ConnectionIO[Scene.WithRelated] = {
     val scene = sceneCreate.toScene(user)
     val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail)
-    val images = (sceneCreate.images map { im: Image.Banded => im.toImage(user) }).zipWithIndex
-    val bands = images map { case (im: Image, ind: Int) =>
-      sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
+    val images = (sceneCreate.images map { im: Image.Banded =>
+      im.toImage(user)
+    }).zipWithIndex
+    val bands = images map {
+      case (im: Image, ind: Int) =>
+        sceneCreate.images(ind).bands map { bd =>
+          bd.toBand(im.id)
+        }
     }
 
     val sceneInsertId = (fr"INSERT INTO" ++ tableF ++ fr"""(
@@ -123,7 +131,8 @@ object SceneDao extends Dao[Scene] with LazyLogging {
         ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
-        ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(SceneType.Avro)}
+        ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(
+      SceneType.Avro)}
       )
     """).update.withUniqueGeneratedKeys[UUID]("id")
 
@@ -142,12 +151,18 @@ object SceneDao extends Dao[Scene] with LazyLogging {
   }
 
   @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
-  def insertMaybe(sceneCreate: Scene.Create, user: User): ConnectionIO[Option[Scene.WithRelated]] = {
+  def insertMaybe(sceneCreate: Scene.Create,
+                  user: User): ConnectionIO[Option[Scene.WithRelated]] = {
     val scene = sceneCreate.toScene(user)
     val thumbnails = sceneCreate.thumbnails.map(_.toThumbnail)
-    val images = (sceneCreate.images map { im: Image.Banded => im.toImage(user) }).zipWithIndex
-    val bands = images map { case (im: Image, ind: Int) =>
-      sceneCreate.images(ind).bands map { bd => bd.toBand(im.id) }
+    val images = (sceneCreate.images map { im: Image.Banded =>
+      im.toImage(user)
+    }).zipWithIndex
+    val bands = images map {
+      case (im: Image, ind: Int) =>
+        sceneCreate.images(ind).bands map { bd =>
+          bd.toBand(im.id)
+        }
     }
 
     val sceneInsert = (Fragment.const(s"""
@@ -165,7 +180,8 @@ object SceneDao extends Dao[Scene] with LazyLogging {
         ${scene.dataFootprint}, ${scene.metadataFiles}, ${scene.ingestLocation}, ${scene.filterFields.cloudCover},
         ${scene.filterFields.acquisitionDate}, ${scene.filterFields.sunAzimuth}, ${scene.filterFields.sunElevation},
         ${scene.statusFields.thumbnailStatus}, ${scene.statusFields.boundaryStatus},
-        ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(SceneType.Avro)}
+        ${scene.statusFields.ingestStatus}, ${scene.sceneType.getOrElse(
+      SceneType.Avro)}
       )
     """).update.run
 
@@ -183,13 +199,15 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     } yield sceneWithRelated
   }
 
-
-  def update(scene: Scene, id: UUID, user: User): ConnectionIO[(Int, KickoffIngest)] = {
+  def update(scene: Scene,
+             id: UUID,
+             user: User): ConnectionIO[(Int, KickoffIngest)] = {
     val idFilter = fr"id = ${id}".some
     val now = new Date()
 
     val lastModifiedAndIngestIO: ConnectionIO[(Timestamp, IngestStatus)] =
-      (fr"select modified_at, ingest_status from scenes" ++ Fragments.whereAndOpt(idFilter))
+      (fr"select modified_at, ingest_status from scenes" ++ Fragments
+        .whereAndOpt(idFilter))
         .query[(Timestamp, IngestStatus)]
         .unique
     val updateIO: ConnectionIO[Int] = (sql"""
@@ -213,9 +231,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       thumbnail_status = ${scene.statusFields.thumbnailStatus},
       boundary_status = ${scene.statusFields.boundaryStatus},
       ingest_status = ${scene.statusFields.ingestStatus}
-    """ ++ Fragments.whereAndOpt(idFilter))
-      .update
-      .run
+    """ ++ Fragments.whereAndOpt(idFilter)).update.run
 
     lastModifiedAndIngestIO flatMap {
       case (ts: Timestamp, prevIngestStatus: IngestStatus) =>
@@ -232,7 +248,8 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     }
   }
 
-  def getMosaicDefinition(sceneId: UUID, polygonO: Option[Projected[Polygon]]): ConnectionIO[Seq[MosaicDefinition]] = {
+  def getMosaicDefinition(sceneId: UUID, polygonO: Option[Projected[Polygon]])
+    : ConnectionIO[Seq[MosaicDefinition]] = {
     val polygonF: Fragment = polygonO match {
       case Some(polygon) => fr"ST_Intersects(tile_footprint, ${polygon})"
       case _             => fr""
@@ -240,7 +257,8 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     for {
       sceneO <- SceneDao.query.filter(sceneId).filter(polygonF).selectOption
       datasourceO <- sceneO match {
-        case Some(s: Scene) => DatasourceDao.query.filter(s.datasource).selectOption
+        case Some(s: Scene) =>
+          DatasourceDao.query.filter(s.datasource).selectOption
         case _ => None.pure[ConnectionIO]
       }
     } yield {
@@ -251,24 +269,30 @@ object SceneDao extends Dao[Scene] with LazyLogging {
           val greenBandPath = root.natural.selectDynamic("value").greenBand.int
           val blueBandPath = root.natural.selectDynamic("value").blueBand.int
 
-          Seq(MosaicDefinition(
-                scene.id,
-                ColorCorrect.Params(
-                  redBandPath.getOption(composites).getOrElse(0),
-                  greenBandPath.getOption(composites).getOrElse(1),
-                  blueBandPath.getOption(composites).getOrElse(2),
-                  BandGamma(enabled = false, None, None, None),
-                  PerBandClipping(enabled = false, None, None, None,
-                                  None, None, None),
-                  MultiBandClipping(enabled = false, None, None),
-                  SigmoidalContrast(enabled = false, None, None),
-                  Saturation(enabled = false, None),
-                  Equalization(false),
-                  AutoWhiteBalance(false)
-                ),
-                scene.sceneType,
-                scene.ingestLocation)
-          )
+          Seq(
+            MosaicDefinition(
+              scene.id,
+              ColorCorrect.Params(
+                redBandPath.getOption(composites).getOrElse(0),
+                greenBandPath.getOption(composites).getOrElse(1),
+                blueBandPath.getOption(composites).getOrElse(2),
+                BandGamma(enabled = false, None, None, None),
+                PerBandClipping(enabled = false,
+                                None,
+                                None,
+                                None,
+                                None,
+                                None,
+                                None),
+                MultiBandClipping(enabled = false, None, None),
+                SigmoidalContrast(enabled = false, None, None),
+                Saturation(enabled = false, None),
+                Equalization(false),
+                AutoWhiteBalance(false)
+              ),
+              scene.sceneType,
+              scene.ingestLocation
+            ))
         case _ => Seq.empty
       }
     }

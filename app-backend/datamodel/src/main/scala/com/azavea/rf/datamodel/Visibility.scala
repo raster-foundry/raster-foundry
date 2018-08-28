@@ -13,9 +13,9 @@ object Visibility {
   case object Private extends Visibility("PRIVATE")
 
   def fromString(s: String): Visibility = s.toUpperCase match {
-    case "PUBLIC" => Public
+    case "PUBLIC"       => Public
     case "ORGANIZATION" => Organization
-    case "PRIVATE" => Private
+    case "PRIVATE"      => Private
   }
 
   implicit val visibilityEncoder: Encoder[Visibility] =
@@ -26,10 +26,3 @@ object Visibility {
       Either.catchNonFatal(fromString(str)).leftMap(t => "Visibility")
     }
 }
-
-
-
-
-
-
-

@@ -14,7 +14,6 @@ import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
 
-
 object ShapeDao extends Dao[Shape] {
 
   val tableName = "shapes"
@@ -32,7 +31,8 @@ object ShapeDao extends Dao[Shape] {
   def getShapeById(shapeId: UUID): ConnectionIO[Option[Shape]] =
     query.filter(shapeId).selectOption
 
-  def insertShape(shapeCreate: Shape.Create, user: User): ConnectionIO[Shape] = {
+  def insertShape(shapeCreate: Shape.Create,
+                  user: User): ConnectionIO[Shape] = {
     val shape = shapeCreate.toShape(user)
     sql"""
       INSERT INTO shapes
@@ -43,13 +43,22 @@ object ShapeDao extends Dao[Shape] {
       ${shape.owner}, ${shape.name}, ${shape.description}, ${shape.geometry}
       )
     """.update.withUniqueGeneratedKeys[Shape](
-      "id", "created_at", "created_by", "modified_at", "modified_by", "owner",
-      "name", "description", "geometry"
+      "id",
+      "created_at",
+      "created_by",
+      "modified_at",
+      "modified_by",
+      "owner",
+      "name",
+      "description",
+      "geometry"
     )
   }
 
-  def insertShapes(shapes: Seq[Shape.Create], user: User): ConnectionIO[Seq[Shape.GeoJSON]] = {
-    val insertSql = """
+  def insertShapes(shapes: Seq[Shape.Create],
+                   user: User): ConnectionIO[Seq[Shape.GeoJSON]] = {
+    val insertSql =
+      """
        INSERT INTO shapes
          (id, created_at, created_by, modified_at, modified_by, owner,
          name, description, geometry)
@@ -57,14 +66,27 @@ object ShapeDao extends Dao[Shape] {
 
     val insertValues = shapes.map(_.toShape(user))
 
-    Update[Shape](insertSql).updateManyWithGeneratedKeys[Shape](
-      "id", "created_at", "created_by", "modified_at", "modified_by",
-      "owner", "name", "description", "geometry"
-    )(insertValues.toList).compile.toList.map(_.map(_.toGeoJSONFeature))
+    Update[Shape](insertSql)
+      .updateManyWithGeneratedKeys[Shape](
+        "id",
+        "created_at",
+        "created_by",
+        "modified_at",
+        "modified_by",
+        "owner",
+        "name",
+        "description",
+        "geometry"
+      )(insertValues.toList)
+      .compile
+      .toList
+      .map(_.map(_.toGeoJSONFeature))
 
   }
 
-  def updateShape(updatedShape: Shape.GeoJSON, id: UUID, user: User): ConnectionIO[Int] = {
+  def updateShape(updatedShape: Shape.GeoJSON,
+                  id: UUID,
+                  user: User): ConnectionIO[Int] = {
     val updateTime = new Timestamp(new java.util.Date().getTime())
     val shape = updatedShape.toShape
 
@@ -81,4 +103,3 @@ object ShapeDao extends Dao[Shape] {
   }
 
 }
-

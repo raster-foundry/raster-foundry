@@ -12,8 +12,8 @@ import io.circe.generic.JsonCodec
   */
 @JsonCodec
 final case class ExportLayerDefinition(
-  layerId: UUID,
-  sceneType: SceneType,
-  ingestLocation: URI,
-  colorCorrections: Option[ColorCorrect.Params]
+    layerId: UUID,
+    sceneType: SceneType,
+    ingestLocation: URI,
+    colorCorrections: Option[ColorCorrect.Params]
 )

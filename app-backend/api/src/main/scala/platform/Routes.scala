@@ -2,7 +2,13 @@ package com.azavea.rf.api.platform
 
 import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common.{UserErrorHandler, CommonHandlers}
-import com.azavea.rf.database.{PlatformDao, OrganizationDao, TeamDao, UserDao, UserGroupRoleDao}
+import com.azavea.rf.database.{
+  PlatformDao,
+  OrganizationDao,
+  TeamDao,
+  UserDao,
+  UserGroupRoleDao
+}
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
@@ -26,12 +32,13 @@ import scala.util.{Failure, Success}
 
 import java.util.UUID
 
-trait PlatformRoutes extends Authentication
-  with PaginationDirectives
-  with CommonHandlers
-  with KamonTraceDirectives
-  with UserErrorHandler
-  with QueryParametersCommon {
+trait PlatformRoutes
+    extends Authentication
+    with PaginationDirectives
+    with CommonHandlers
+    with KamonTraceDirectives
+    with UserErrorHandler
+    with QueryParametersCommon {
 
   val xa: Transactor[IO]
 
@@ -42,204 +49,229 @@ trait PlatformRoutes extends Authentication
           listPlatforms
         }
       } ~
-      post {
-        traceName("platforms-create") {
-          createPlatform
-        }
-      }
-    } ~
-    pathPrefix(JavaUUID) { platformId =>
-      pathEndOrSingleSlash {
-        get {
-          traceName("platforms-get") {
-            getPlatform(platformId)
-          }
-        } ~
-        put {
-          traceName("platforms-update") {
-            updatePlatform(platformId)
-          }
-        } ~
-        delete {
-          traceName("platforms-delete") {
-            deletePlatform(platformId)
-          }
-        } ~
         post {
-          traceName("platforms-set-active-status") {
-            setPlatformStatus(platformId)
+          traceName("platforms-create") {
+            createPlatform
           }
         }
-      } ~
-      pathPrefix("members") {
-        validate (
-          PlatformDao.validatePath(platformId).transact(xa).unsafeRunSync,
-          "Resource path invalid"
-        ) {
-          pathEndOrSingleSlash {
-            get {
-              traceName("platforms-members-list") {
-                listPlatformMembers(platformId)
-              }
-            }
-          }
-        }
-      } ~
-      pathPrefix("teams") {
-        validate (
-          PlatformDao.validatePath(platformId).transact(xa).unsafeRunSync,
-          "Resource path invalid"
-        ) {
-          pathPrefix("search") {
-            pathEndOrSingleSlash {
-              get {
-                traceName("platforms-teams-search") {
-                  listPlatformUserTeams(platformId)
-                }
-              }
-            }
-          }
-        }
-      } ~
-      pathPrefix("organizations") {
+    } ~
+      pathPrefix(JavaUUID) { platformId =>
         pathEndOrSingleSlash {
-          validate (
-            PlatformDao.validatePath(platformId).transact(xa).unsafeRunSync,
-            "Resource path invalid"
-          ) {
-            get {
-              traceName("platforms-organizations-list") {
-                listPlatformOrganizations(platformId)
+          get {
+            traceName("platforms-get") {
+              getPlatform(platformId)
+            }
+          } ~
+            put {
+              traceName("platforms-update") {
+                updatePlatform(platformId)
+              }
+            } ~
+            delete {
+              traceName("platforms-delete") {
+                deletePlatform(platformId)
               }
             } ~
             post {
-              traceName("platforms-organizations-create") {
-                createOrganization(platformId)
+              traceName("platforms-set-active-status") {
+                setPlatformStatus(platformId)
               }
             }
-          }
         } ~
-        pathPrefix(JavaUUID) { orgId =>
-          pathEndOrSingleSlash {
-            validate (
-              OrganizationDao.validatePath(platformId, orgId).transact(xa).unsafeRunSync,
+          pathPrefix("members") {
+            validate(
+              PlatformDao.validatePath(platformId).transact(xa).unsafeRunSync,
               "Resource path invalid"
             ) {
-              get {
-                traceName("platforms-organizations-get") {
-                  getOrganization(platformId, orgId)
-                }
-              } ~
-              put {
-                traceName("platforms-organizations-update") {
-                  updateOrganization(platformId, orgId)
-                }
-              } ~
-              post {
-                traceName("platform-organization-set-active-status") {
-                  setOrganizationStatus(platformId, orgId)
-                }
-              }
-            }
-          } ~
-          pathPrefix("members") {
-            pathEndOrSingleSlash {
-              validate (
-                OrganizationDao.validatePath(platformId, orgId).transact(xa).unsafeRunSync,
-                "Resource path invalid"
-              ) {
+              pathEndOrSingleSlash {
                 get {
-                  traceName("platforms-organizations-members-list") {
-                    listOrganizationMembers(platformId, orgId)
+                  traceName("platforms-members-list") {
+                    listPlatformMembers(platformId)
                   }
-                } ~
-                post {
-                  traceName("platform-organizations-member-add") {
-                    addUserToOrganization(platformId, orgId)
-                  }
-                }
-              }
-            } ~
-            pathPrefix(Segment) { userId =>
-              delete {
-                traceName("platform-organizations-member-remove") {
-                  removeUserFromOrganization(platformId, orgId, userId)
                 }
               }
             }
           } ~
           pathPrefix("teams") {
-            pathEndOrSingleSlash {
-              validate (
-                OrganizationDao.validatePath(platformId, orgId).transact(xa).unsafeRunSync,
-                "Resource path invalid"
-              ) {
-                get {
-                  traceName("platforms-organizations-teams-list") {
-                    listTeams(platformId, orgId)
-                  }
-                } ~
-                post {
-                  traceName("platforms-organizations-teams-create") {
-                    createTeam(platformId, orgId)
-                  }
-                }
-              }
-            } ~
-            pathPrefix(JavaUUID) { teamId =>
-              pathEndOrSingleSlash {
-                validate (
-                  TeamDao.validatePath(platformId, orgId, teamId).transact(xa).unsafeRunSync,
-                  "Resource path invalid"
-                ) {
+            validate(
+              PlatformDao.validatePath(platformId).transact(xa).unsafeRunSync,
+              "Resource path invalid"
+            ) {
+              pathPrefix("search") {
+                pathEndOrSingleSlash {
                   get {
-                    traceName("platforms-organizations-teams-get") {
-                      getTeam(platformId, orgId, teamId)
-                    }
-                  } ~
-                  put {
-                    traceName("platforms-organizations-teams-update") {
-                      updateTeam(platformId, orgId, teamId)
-                    }
-                  } ~
-                  delete {
-                    traceName("platforms-organizations-teams-delete") {
-                      deleteTeam(platformId, orgId, teamId)
-                    }
-                  }
-                }
-              } ~
-              pathPrefix("members") {
-                validate (
-                  TeamDao.validatePath(platformId, orgId, teamId).transact(xa).unsafeRunSync,
-                  "Resource path invalid"
-                ) {
-                  pathEndOrSingleSlash {
-                    get {
-                      traceName("platforms-organizations-teams-members-list") {
-                        listTeamMembers(platformId, orgId, teamId)
-                      }
-                    } ~
-                    post {
-                      traceName("platform-organizations-teams-member-add") {
-                        addUserToTeam(platformId, orgId, teamId)
-                      }
-                    }
-                  } ~
-                  pathPrefix(Segment) { userId =>
-                    delete {
-                      traceName("platform-organizations-teams-member-remove") {
-                        removeUserFromTeam(platformId, orgId, teamId, userId)
-                      }
+                    traceName("platforms-teams-search") {
+                      listPlatformUserTeams(platformId)
                     }
                   }
                 }
               }
             }
+          } ~
+          pathPrefix("organizations") {
+            pathEndOrSingleSlash {
+              validate(
+                PlatformDao.validatePath(platformId).transact(xa).unsafeRunSync,
+                "Resource path invalid"
+              ) {
+                get {
+                  traceName("platforms-organizations-list") {
+                    listPlatformOrganizations(platformId)
+                  }
+                } ~
+                  post {
+                    traceName("platforms-organizations-create") {
+                      createOrganization(platformId)
+                    }
+                  }
+              }
+            } ~
+              pathPrefix(JavaUUID) { orgId =>
+                pathEndOrSingleSlash {
+                  validate(
+                    OrganizationDao
+                      .validatePath(platformId, orgId)
+                      .transact(xa)
+                      .unsafeRunSync,
+                    "Resource path invalid"
+                  ) {
+                    get {
+                      traceName("platforms-organizations-get") {
+                        getOrganization(platformId, orgId)
+                      }
+                    } ~
+                      put {
+                        traceName("platforms-organizations-update") {
+                          updateOrganization(platformId, orgId)
+                        }
+                      } ~
+                      post {
+                        traceName("platform-organization-set-active-status") {
+                          setOrganizationStatus(platformId, orgId)
+                        }
+                      }
+                  }
+                } ~
+                  pathPrefix("members") {
+                    pathEndOrSingleSlash {
+                      validate(
+                        OrganizationDao
+                          .validatePath(platformId, orgId)
+                          .transact(xa)
+                          .unsafeRunSync,
+                        "Resource path invalid"
+                      ) {
+                        get {
+                          traceName("platforms-organizations-members-list") {
+                            listOrganizationMembers(platformId, orgId)
+                          }
+                        } ~
+                          post {
+                            traceName("platform-organizations-member-add") {
+                              addUserToOrganization(platformId, orgId)
+                            }
+                          }
+                      }
+                    } ~
+                      pathPrefix(Segment) { userId =>
+                        delete {
+                          traceName("platform-organizations-member-remove") {
+                            removeUserFromOrganization(platformId,
+                                                       orgId,
+                                                       userId)
+                          }
+                        }
+                      }
+                  } ~
+                  pathPrefix("teams") {
+                    pathEndOrSingleSlash {
+                      validate(
+                        OrganizationDao
+                          .validatePath(platformId, orgId)
+                          .transact(xa)
+                          .unsafeRunSync,
+                        "Resource path invalid"
+                      ) {
+                        get {
+                          traceName("platforms-organizations-teams-list") {
+                            listTeams(platformId, orgId)
+                          }
+                        } ~
+                          post {
+                            traceName("platforms-organizations-teams-create") {
+                              createTeam(platformId, orgId)
+                            }
+                          }
+                      }
+                    } ~
+                      pathPrefix(JavaUUID) { teamId =>
+                        pathEndOrSingleSlash {
+                          validate(
+                            TeamDao
+                              .validatePath(platformId, orgId, teamId)
+                              .transact(xa)
+                              .unsafeRunSync,
+                            "Resource path invalid"
+                          ) {
+                            get {
+                              traceName("platforms-organizations-teams-get") {
+                                getTeam(platformId, orgId, teamId)
+                              }
+                            } ~
+                              put {
+                                traceName(
+                                  "platforms-organizations-teams-update") {
+                                  updateTeam(platformId, orgId, teamId)
+                                }
+                              } ~
+                              delete {
+                                traceName(
+                                  "platforms-organizations-teams-delete") {
+                                  deleteTeam(platformId, orgId, teamId)
+                                }
+                              }
+                          }
+                        } ~
+                          pathPrefix("members") {
+                            validate(
+                              TeamDao
+                                .validatePath(platformId, orgId, teamId)
+                                .transact(xa)
+                                .unsafeRunSync,
+                              "Resource path invalid"
+                            ) {
+                              pathEndOrSingleSlash {
+                                get {
+                                  traceName(
+                                    "platforms-organizations-teams-members-list") {
+                                    listTeamMembers(platformId, orgId, teamId)
+                                  }
+                                } ~
+                                  post {
+                                    traceName(
+                                      "platform-organizations-teams-member-add") {
+                                      addUserToTeam(platformId, orgId, teamId)
+                                    }
+                                  }
+                              } ~
+                                pathPrefix(Segment) { userId =>
+                                  delete {
+                                    traceName(
+                                      "platform-organizations-teams-member-remove") {
+                                      removeUserFromTeam(platformId,
+                                                         orgId,
+                                                         teamId,
+                                                         userId)
+                                    }
+                                  }
+                                }
+                            }
+                          }
+                      }
+                  }
+              }
           }
-        }
       }
-    }
   }
 
   // @TODO: most platform API interactions should be highly restricted -- only 'super-users' should
@@ -281,12 +313,15 @@ trait PlatformRoutes extends Authentication
   }
 
   def updatePlatform(platformId: UUID): Route = authenticate { user =>
-   authorizeAsync {
+    authorizeAsync {
       PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
     } {
       entity(as[Platform]) { platformToUpdate =>
         completeWithOneOrFail {
-          PlatformDao.update(platformToUpdate, platformId).transact(xa).unsafeToFuture
+          PlatformDao
+            .update(platformToUpdate, platformId)
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
@@ -309,7 +344,10 @@ trait PlatformRoutes extends Authentication
     } {
       (withPagination & searchParams) { (page, searchParams) =>
         complete {
-          PlatformDao.listMembers(platformId, page, searchParams, user).transact(xa).unsafeToFuture
+          PlatformDao
+            .listMembers(platformId, page, searchParams, user)
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
@@ -326,27 +364,32 @@ trait PlatformRoutes extends Authentication
     } {
       (searchParams) { (searchParams) =>
         complete {
-          PlatformDao.listPlatformUserTeams(user, searchParams).transact(xa).unsafeToFuture
+          PlatformDao
+            .listPlatformUserTeams(user, searchParams)
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
   }
 
-  def listPlatformOrganizations(platformId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
-    } {
-      (withPagination & searchParams) { (page, search) =>
-        complete {
-          OrganizationDao.listPlatformOrganizations(page, search, platformId, user)
-            .transact(xa).unsafeToFuture
+  def listPlatformOrganizations(platformId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
+      } {
+        (withPagination & searchParams) { (page, search) =>
+          complete {
+            OrganizationDao
+              .listPlatformOrganizations(page, search, platformId, user)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
-    }
   }
 
   def createOrganization(platformId: UUID): Route = authenticate { user =>
-
     entity(as[Organization.Create]) { orgToCreate =>
       completeOrFail {
         val createdOrg = for {
@@ -358,96 +401,125 @@ trait PlatformRoutes extends Authentication
     }
   }
 
-  def getOrganization(platformId: UUID, orgId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
-    } {
-      rejectEmptyResponse {
-        complete {
-          OrganizationDao.query.filter(orgId).selectOption.transact(xa).unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def updateOrganization(platformId: UUID, orgId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
-    } {
-      entity(as[Organization]) { orgToUpdate =>
-        completeWithOneOrFail {
-          OrganizationDao.update(orgToUpdate, orgId).transact(xa).unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def deleteOrganization(platformId: UUID, orgId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
-    } {
-      completeWithOneOrFail {
-        ???
-      }
-    }
-  }
-
-  def listOrganizationMembers(platformId: UUID, orgId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      // QUESTION: should this be open to members of the same platform?
-      OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
-    } {
-      (withPagination & searchParams) { (page, searchParams) =>
-        complete {
-          OrganizationDao.listMembers(orgId, page, searchParams, user).transact(xa).unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def addUserToOrganization(platformId: UUID, orgId: UUID): Route = authenticate { user =>
-    entity(as[UserGroupRole.UserRole]) { ur =>
+  def getOrganization(platformId: UUID, orgId: UUID): Route = authenticate {
+    user =>
       authorizeAsync {
-        val authCheck = (
-          OrganizationDao.userIsAdmin(user, orgId),
-          PlatformDao.userIsMember(user, platformId),
-          (user.id == ur.userId).pure[ConnectionIO]
-        ).tupled.map(
-          {
-            case (true, _, _) | (_, true, true) => true
-            case _ => false
-          }
-        )
-        authCheck.transact(xa).unsafeToFuture
+        PlatformDao.userIsMember(user, platformId).transact(xa).unsafeToFuture
       } {
-        complete {
-          OrganizationDao.addUserRole(platformId, user, ur.userId, orgId, ur.groupRole)
-            .transact(xa).unsafeToFuture
+        rejectEmptyResponse {
+          complete {
+            OrganizationDao.query
+              .filter(orgId)
+              .selectOption
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+  }
+
+  def updateOrganization(platformId: UUID, orgId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
+      } {
+        entity(as[Organization]) { orgToUpdate =>
+          completeWithOneOrFail {
+            OrganizationDao
+              .update(orgToUpdate, orgId)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+  }
+
+  def deleteOrganization(platformId: UUID, orgId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
+      } {
+        completeWithOneOrFail {
+          ???
+        }
+      }
+  }
+
+  def listOrganizationMembers(platformId: UUID, orgId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        // QUESTION: should this be open to members of the same platform?
+        OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
+      } {
+        (withPagination & searchParams) { (page, searchParams) =>
+          complete {
+            OrganizationDao
+              .listMembers(orgId, page, searchParams, user)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
     }
-  }
 
-  def removeUserFromOrganization(platformId: UUID, orgId: UUID, userId: String): Route = authenticate { user =>
+  def addUserToOrganization(platformId: UUID, orgId: UUID): Route =
+    authenticate { user =>
+      entity(as[UserGroupRole.UserRole]) { ur =>
+        authorizeAsync {
+          val authCheck = (
+            OrganizationDao.userIsAdmin(user, orgId),
+            PlatformDao.userIsMember(user, platformId),
+            (user.id == ur.userId).pure[ConnectionIO]
+          ).tupled.map(
+            {
+              case (true, _, _) | (_, true, true) => true
+              case _                              => false
+            }
+          )
+          authCheck.transact(xa).unsafeToFuture
+        } {
+          complete {
+            OrganizationDao
+              .addUserRole(platformId, user, ur.userId, orgId, ur.groupRole)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+
+  def removeUserFromOrganization(platformId: UUID,
+                                 orgId: UUID,
+                                 userId: String): Route = authenticate { user =>
     authorizeAsync {
       OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
     } {
       complete {
-        OrganizationDao.deactivateUserRoles(user, userId, orgId).transact(xa).unsafeToFuture
+        OrganizationDao
+          .deactivateUserRoles(user, userId, orgId)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
 
-  def listTeams(platformId: UUID, organizationId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      OrganizationDao.userIsMember(user, organizationId).transact(xa).unsafeToFuture
-    } {
-      (withPagination & teamQueryParameters) { (page, teamQueryParams) =>
-        complete {
-          TeamDao.listOrgTeams(organizationId, page, teamQueryParams).transact(xa).unsafeToFuture
+  def listTeams(platformId: UUID, organizationId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        OrganizationDao
+          .userIsMember(user, organizationId)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        (withPagination & teamQueryParameters) { (page, teamQueryParams) =>
+          complete {
+            TeamDao
+              .listOrgTeams(organizationId, page, teamQueryParams)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
-    }
   }
 
   def createTeam(platformId: UUID, orgId: UUID): Route = authenticate { user =>
@@ -456,96 +528,124 @@ trait PlatformRoutes extends Authentication
       OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
     } {
       entity(as[Team.Create]) { newTeamCreate =>
-        onSuccess(TeamDao.create(newTeamCreate.toTeam(user)).transact(xa).unsafeToFuture) { team =>
+        onSuccess(
+          TeamDao
+            .create(newTeamCreate.toTeam(user))
+            .transact(xa)
+            .unsafeToFuture) { team =>
           complete(StatusCodes.Created, team)
         }
       }
     }
   }
 
-  def getTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
-    } {
-      rejectEmptyResponse {
-        complete {
-          TeamDao.query.filter(teamId).selectOption.transact(xa).unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def updateTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
-    } {
-      entity(as[Team]) { updatedTeam =>
-        onSuccess {
-          TeamDao.update(updatedTeam, teamId, user).transact(xa).unsafeToFuture
-        } { team =>
-          complete(StatusCodes.OK, team)
-        }
-      }
-    }
-  }
-
-  def deleteTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
-    } {
-      completeWithOneOrFail {
-        TeamDao.deactivate(teamId).transact(xa).unsafeToFuture
-      }
-    }
-  }
-
-  def listTeamMembers(platformId: UUID, orgId: UUID, teamId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      // The authorization here is necessary to allow users within cross-organizational teams to view
-      // the members within those teams
-      val decisionIO = for {
-        isTeamMember <- TeamDao.userIsMember(user, teamId)
-        isOrganizationMember <- OrganizationDao.userIsMember(user, orgId)
-      } yield { isTeamMember || isOrganizationMember }
-
-      decisionIO.transact(xa).unsafeToFuture
-    } {
-      (withPagination & searchParams) { (page, searchParams) =>
-        complete {
-          TeamDao.listMembers(teamId, page, searchParams, user).transact(xa).unsafeToFuture
-        }
-      }
-    }
-  }
-
-  def addUserToTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route = authenticate { user =>
-    entity(as[UserGroupRole.UserRole]) { ur =>
+  def getTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route =
+    authenticate { user =>
       authorizeAsync {
-        val authCheck = (
-          TeamDao.userIsAdmin(user, teamId),
-          PlatformDao.userIsMember(user, platformId),
-          (user.id == ur.userId).pure[ConnectionIO]
-        ).tupled.map(
-          {
-            case (true, _, _) | (_, true, true) => true
-            case _ => false
-          }
-        )
-        authCheck.transact(xa).unsafeToFuture
+        OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
       } {
-        complete {
-          TeamDao.addUserRole(platformId, user, ur.userId, teamId, ur.groupRole).transact(xa).unsafeToFuture
+        rejectEmptyResponse {
+          complete {
+            TeamDao.query
+              .filter(teamId)
+              .selectOption
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
     }
-  }
 
-  def removeUserFromTeam(platformId: UUID, orgId: UUID, teamId: UUID, userId: String): Route = authenticate { user =>
+  def updateTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
+      } {
+        entity(as[Team]) { updatedTeam =>
+          onSuccess {
+            TeamDao
+              .update(updatedTeam, teamId, user)
+              .transact(xa)
+              .unsafeToFuture
+          } { team =>
+            complete(StatusCodes.OK, team)
+          }
+        }
+      }
+    }
+
+  def deleteTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
+      } {
+        completeWithOneOrFail {
+          TeamDao.deactivate(teamId).transact(xa).unsafeToFuture
+        }
+      }
+    }
+
+  def listTeamMembers(platformId: UUID, orgId: UUID, teamId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        // The authorization here is necessary to allow users within cross-organizational teams to view
+        // the members within those teams
+        val decisionIO = for {
+          isTeamMember <- TeamDao.userIsMember(user, teamId)
+          isOrganizationMember <- OrganizationDao.userIsMember(user, orgId)
+        } yield { isTeamMember || isOrganizationMember }
+
+        decisionIO.transact(xa).unsafeToFuture
+      } {
+        (withPagination & searchParams) { (page, searchParams) =>
+          complete {
+            TeamDao
+              .listMembers(teamId, page, searchParams, user)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+
+  def addUserToTeam(platformId: UUID, orgId: UUID, teamId: UUID): Route =
+    authenticate { user =>
+      entity(as[UserGroupRole.UserRole]) { ur =>
+        authorizeAsync {
+          val authCheck = (
+            TeamDao.userIsAdmin(user, teamId),
+            PlatformDao.userIsMember(user, platformId),
+            (user.id == ur.userId).pure[ConnectionIO]
+          ).tupled.map(
+            {
+              case (true, _, _) | (_, true, true) => true
+              case _                              => false
+            }
+          )
+          authCheck.transact(xa).unsafeToFuture
+        } {
+          complete {
+            TeamDao
+              .addUserRole(platformId, user, ur.userId, teamId, ur.groupRole)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+
+  def removeUserFromTeam(platformId: UUID,
+                         orgId: UUID,
+                         teamId: UUID,
+                         userId: String): Route = authenticate { user =>
     authorizeAsync {
       TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
     } {
       complete {
-        TeamDao.deactivateUserRoles(user, userId, teamId).transact(xa).unsafeToFuture
+        TeamDao
+          .deactivateUserRoles(user, userId, teamId)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
@@ -563,44 +663,64 @@ trait PlatformRoutes extends Authentication
     }
   }
 
-  def activatePlatform(platformId: UUID, user: User): Route = authorizeAsync {
-    UserDao.isSuperUser(user).transact(xa).unsafeToFuture
-  } {
-    complete {
-      PlatformDao.activatePlatform(platformId).transact(xa).unsafeToFuture
+  def activatePlatform(platformId: UUID, user: User): Route =
+    authorizeAsync {
+      UserDao.isSuperUser(user).transact(xa).unsafeToFuture
+    } {
+      complete {
+        PlatformDao.activatePlatform(platformId).transact(xa).unsafeToFuture
+      }
     }
-  }
 
   def deactivatePlatform(platformId: UUID): Route = complete {
     PlatformDao.deactivatePlatform(platformId).transact(xa).unsafeToFuture
   }
 
-  def setOrganizationStatus(platformId: UUID, organizationId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      OrganizationDao.userIsAdmin(user, organizationId).transact(xa).unsafeToFuture
-    } {
-      entity(as[String]) {
-        case status: String if status == OrgStatus.Active.toString =>
-          activateOrganization(platformId, organizationId, user)
-        case status: String if status == OrgStatus.Inactive.toString =>
-          deactivateOrganization(platformId, organizationId, user)
+  def setOrganizationStatus(platformId: UUID, organizationId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        OrganizationDao
+          .userIsAdmin(user, organizationId)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[String]) {
+          case status: String if status == OrgStatus.Active.toString =>
+            activateOrganization(platformId, organizationId, user)
+          case status: String if status == OrgStatus.Inactive.toString =>
+            deactivateOrganization(platformId, organizationId, user)
+        }
       }
     }
-  }
 
-  def activateOrganization(platformId: UUID, organizationId: UUID, user: User): Route = authorizeAsync {
-    PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
-  } {
-    complete {
-      OrganizationDao.activateOrganization(organizationId).transact(xa).unsafeToFuture
+  def activateOrganization(platformId: UUID,
+                           organizationId: UUID,
+                           user: User): Route =
+    authorizeAsync {
+      PlatformDao.userIsAdmin(user, platformId).transact(xa).unsafeToFuture
+    } {
+      complete {
+        OrganizationDao
+          .activateOrganization(organizationId)
+          .transact(xa)
+          .unsafeToFuture
+      }
     }
-  }
 
-  def deactivateOrganization(platformId: UUID, organizationId: UUID, user: User): Route = authorizeAsync {
-    OrganizationDao.userIsAdmin(user, organizationId).transact(xa).unsafeToFuture
-  } {
-    complete {
-      OrganizationDao.deactivateOrganization(organizationId).transact(xa).unsafeToFuture
+  def deactivateOrganization(platformId: UUID,
+                             organizationId: UUID,
+                             user: User): Route =
+    authorizeAsync {
+      OrganizationDao
+        .userIsAdmin(user, organizationId)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      complete {
+        OrganizationDao
+          .deactivateOrganization(organizationId)
+          .transact(xa)
+          .unsafeToFuture
+      }
     }
-  }
 }
