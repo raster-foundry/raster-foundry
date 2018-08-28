@@ -1,73 +1,75 @@
 package com.azavea.rf.datamodel
 
 import com.typesafe.scalalogging.LazyLogging
-
 import geotrellis.raster._
 import geotrellis.raster.histogram._
-import geotrellis.raster.render._
-import geotrellis.raster.render.{ColorRamp, ColorMap}
-
+import geotrellis.raster.render.{ColorMap, ColorRamp, _}
 
 object ColorRampMosaic extends LazyLogging {
 
   def parseColor(color: String): Int = {
     Integer.parseUnsignedInt(
-      color.replaceFirst("#", "").replaceAll("\"", "").reverse.padTo(6, "0").reverse.padTo(8, "f").mkString,
+      color
+        .replaceFirst("#", "")
+        .replaceAll("\"", "")
+        .reverse
+        .padTo(6, "0")
+        .reverse
+        .padTo(8, "f")
+        .mkString,
       16
     )
   }
 
-  def colorMapFromMap(
-    colorMap: Map[String, String], options: SingleBandOptions.Params, hist: Histogram[Double]
-  ) : ColorMap = {
+  @SuppressWarnings(Array("CatchThrowable", "TraversableLast"))
+  def colorMapFromMap(colorMap: Map[String, String]): ColorMap = {
     var fallbackColor: Option[Int] = None
     var noDataColor: Option[Int] = None
-    val (breaks, colors) = colorMap
-      .toVector
-      .map(
-        {
-          case (break, color) =>
-            try {
-              break match {
-                case "NODATA" =>
-                  noDataColor = Some(parseColor(color))
-                  None
-                case "FALLBACK" =>
-                  fallbackColor = Some(parseColor(color))
-                  None
-                case _ =>
-                  Some((break.toDouble, parseColor(color)))
-              }
-            } catch {
-              case e : Throwable =>
-                val message = s"Error parsing color map"
-                logger.error(message)
-                throw new IllegalArgumentException(message).initCause(e)
+    val (breaks, colors) = colorMap.toVector
+      .flatMap {
+        case (break, color) =>
+          try {
+            break match {
+              case "NODATA" =>
+                noDataColor = Some(parseColor(color))
+                None
+              case "FALLBACK" =>
+                fallbackColor = Some(parseColor(color))
+                None
+              case _ =>
+                Some((break.toDouble, parseColor(color)))
             }
-        })
-      .flatten.sortWith({ case ((b1: Double, _), (b2: Double, _)) => b1 < b2 }).unzip
+          } catch {
+            case e: Throwable =>
+              val message = "Error parsing color map"
+              logger.error(message)
+              throw new IllegalArgumentException(message).initCause(e)
+          }
+      }
+      .sortWith({ case ((b1: Double, _), (b2: Double, _)) => b1 < b2 })
+      .unzip
 
     val colorRamp = ColorRamp(colors)
     ColorMap(breaks, colorRamp)
       .withNoDataColor(noDataColor.getOrElse(0))
-      .withFallbackColor(
-        fallbackColor match {
-          case Some(color) =>
-            color
-          case _ => colors.last
-        }
-      )
+      .withFallbackColor(fallbackColor match {
+        case Some(color) =>
+          color
+        case _ => colors.last
+      })
   }
 
-  def colorMapFromVector(
-    colors: Vector[String], options: SingleBandOptions.Params, hist: Histogram[Double]
-  ) : ColorMap = {
+  @SuppressWarnings(Array("CatchThrowable", "TraversableLast"))
+  def colorMapFromVector(colors: Vector[String],
+                         options: SingleBandOptions.Params,
+                         hist: Histogram[Double]): ColorMap = {
     val cleanedColors = colors map { color =>
       try {
         parseColor(color)
       } catch {
-        case e : Throwable =>
-          val message = s"Color in color scheme could not be parsed: $color ; ${e.getLocalizedMessage}"
+        case e: Throwable =>
+          val message =
+            s"Color in color scheme could not be parsed: $color ; ${e.getLocalizedMessage}"
           logger.error(message)
           throw new IllegalArgumentException(message)
       }
@@ -87,19 +89,20 @@ object ColorRampMosaic extends LazyLogging {
     }
 
     val steps = options.colorBins match {
-      case 0 => 255
+      case 0    => 255
       case bins => bins
     }
 
     val step = (max - min) / steps
-    val breaks = for (j <- 0 until steps  ) yield (min + j * step)
+    val breaks = for (j <- 0 until steps) yield min + j * step
 
     // as an optimization, we could cache the color maps, but I'm not sure it's worth it
-    ColorMap(breaks.toArray, colorRamp.stops(steps)).withFallbackColor(lastColor)
+    ColorMap(breaks.toArray, colorRamp.stops(steps))
+      .withFallbackColor(lastColor)
   }
 
-  def apply(tiles: List[(MultibandTile, Array[Histogram[Double]])], options: SingleBandOptions.Params)
-      : Option[MultibandTile] = {
+  def apply(tiles: List[(MultibandTile, Array[Histogram[Double]])],
+            options: SingleBandOptions.Params): Option[MultibandTile] = {
     val band: Int = options.band
     val singleBandTiles = tiles map {
       case (tile: MultibandTile, _) =>
@@ -109,20 +112,24 @@ object ColorRampMosaic extends LazyLogging {
     if (singleBandTiles.isEmpty) {
       None
     } else {
-      val hist: Histogram[Double] = tiles.map{
-        case (_, histograms: Array[Histogram[Double]]) =>
-          histograms.head
-      }.reduce(_ merge _)
-      val cmap = (options.colorScheme.asArray, options.colorScheme.asObject) match {
-        case (Some(a), None) =>
-          colorMapFromVector(a.map(e => e.noSpaces), options, hist)
-        case (None, Some(o)) =>
-          colorMapFromMap(o.toMap map { case (k, v) => (k, v.noSpaces)}, options, hist)
-        case _ =>
-          val message = "Invalid color scheme format. Color schemes must be defined as an array of hex colors or a mapping of raster values to hex colors."
-          logger.error(message)
-          throw new IllegalArgumentException(message)
-      }
+      val hist: Histogram[Double] = tiles
+        .map {
+          case (_, histograms: Array[Histogram[Double]]) =>
+            histograms.head
+        }
+        .reduce(_ merge _)
+      val cmap =
+        (options.colorScheme.asArray, options.colorScheme.asObject) match {
+          case (Some(a), None) =>
+            colorMapFromVector(a.map(e => e.noSpaces), options, hist)
+          case (None, Some(o)) =>
+            colorMapFromMap(o.toMap map { case (k, v) => (k, v.noSpaces) })
+          case _ =>
+            val message =
+              "Invalid color scheme format. Color schemes must be defined as an array of hex colors or a mapping of raster values to hex colors."
+            logger.error(message)
+            throw new IllegalArgumentException(message)
+        }
       val tile = cmap.render(singleBandTiles.reduce(_ merge _))
       val r = tile.map(_.red).interpretAs(UByteCellType)
       val g = tile.map(_.green).interpretAs(UByteCellType)

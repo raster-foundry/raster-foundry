@@ -17,7 +17,6 @@ lazy val commonSettings = Seq(
   description := "A platform to find, combine and analyze earth imagery at any scale.",
   cancelable in Global := true,
   scapegoatVersion in ThisBuild := Version.scapegoat,
-  scapegoatIgnoredFiles := Seq(".*/datamodel/.*"),
   scalaVersion in ThisBuild := Version.scala,
   scalacOptions := Seq(
     "-deprecation",

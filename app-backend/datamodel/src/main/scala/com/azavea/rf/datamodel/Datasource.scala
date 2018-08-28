@@ -1,26 +1,24 @@
 package com.azavea.rf.datamodel
 
-import io.circe._
-import java.util.UUID
 import java.sql.Timestamp
+import java.util.UUID
 
+import io.circe._
 import io.circe.generic.JsonCodec
 
 @JsonCodec
-case class Datasource(
-  id: UUID,
-  createdAt: java.sql.Timestamp,
-  createdBy: String,
-  modifiedAt: java.sql.Timestamp,
-  modifiedBy: String,
-  owner: String,
-  name: String,
-  visibility: Visibility,
-  composites: Json,
-  extras: Json,
-  bands: Json,
-  licenseName: Option[String]
-) {
+final case class Datasource(id: UUID,
+                            createdAt: java.sql.Timestamp,
+                            createdBy: String,
+                            modifiedAt: java.sql.Timestamp,
+                            modifiedBy: String,
+                            owner: String,
+                            name: String,
+                            visibility: Visibility,
+                            composites: Json,
+                            extras: Json,
+                            bands: Json,
+                            licenseName: Option[String]) {
   def toThin: Datasource.Thin = Datasource.Thin(this.bands, this.name, this.id)
 }
 
@@ -31,25 +29,20 @@ object Datasource {
   def create = Create.apply _
 
   @JsonCodec
-  case class Thin (
-    bands: Json,
-    name: String,
-    id: UUID
-  )
+  final case class Thin(bands: Json, name: String, id: UUID)
 
   @JsonCodec
-  case class Create (
-    name: String,
-    visibility: Visibility,
-    owner: Option[String],
-    composites: Json,
-    extras: Json,
-    bands: Json,
-    licenseName: Option[String]
-  ) extends OwnerCheck  {
+  final case class Create(name: String,
+                          visibility: Visibility,
+                          owner: Option[String],
+                          composites: Json,
+                          extras: Json,
+                          bands: Json,
+                          licenseName: Option[String])
+      extends OwnerCheck {
     def toDatasource(user: User): Datasource = {
       val id = java.util.UUID.randomUUID()
-      val now = new Timestamp((new java.util.Date()).getTime())
+      val now = new Timestamp(new java.util.Date().getTime)
 
       val ownerId = checkOwner(user, this.owner)
 

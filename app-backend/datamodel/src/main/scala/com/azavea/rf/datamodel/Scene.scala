@@ -3,54 +3,37 @@ package com.azavea.rf.datamodel
 import java.sql.Timestamp
 import java.util.UUID
 
-import com.azavea.rf.bridge._
-import geotrellis.vector.MultiPolygon
-import geotrellis.vector.Projected
-
+import geotrellis.vector.{MultiPolygon, Projected}
 import io.circe._
 import io.circe.generic.JsonCodec
-import io.circe.syntax._
-import io.circe.parser._
-
 
 @JsonCodec
-case class SceneFilterFields(
-  cloudCover: Option[Float] = None,
-  acquisitionDate: Option[java.sql.Timestamp] = None,
-  sunAzimuth: Option[Float] = None,
-  sunElevation: Option[Float] = None
-)
+final case class SceneFilterFields(cloudCover: Option[Float] = None,
+                                   acquisitionDate: Option[java.sql.Timestamp] =
+                                     None,
+                                   sunAzimuth: Option[Float] = None,
+                                   sunElevation: Option[Float] = None)
 
 object SceneFilterFields {
   def tupled = (SceneFilterFields.apply _).tupled
 
-  type TupleType = (
-    Option[Float],
-    Option[java.sql.Timestamp],
-    Option[Float],
-    Option[Float]
-  )
+  type TupleType =
+    (Option[Float], Option[java.sql.Timestamp], Option[Float], Option[Float])
 }
 
 @JsonCodec
-case class SceneStatusFields(
-  thumbnailStatus: JobStatus,
-  boundaryStatus: JobStatus,
-  ingestStatus: IngestStatus
-)
+final case class SceneStatusFields(thumbnailStatus: JobStatus,
+                                   boundaryStatus: JobStatus,
+                                   ingestStatus: IngestStatus)
 
 object SceneStatusFields {
   def tupled = (SceneStatusFields.apply _).tupled
 
-  type TupleType = (
-    JobStatus,
-    JobStatus,
-    IngestStatus
-  )
+  type TupleType = (JobStatus, JobStatus, IngestStatus)
 }
 
 @JsonCodec
-case class Scene(
+final case class Scene(
   id: UUID,
   createdAt: java.sql.Timestamp,
   createdBy: String,
@@ -70,34 +53,33 @@ case class Scene(
   statusFields: SceneStatusFields,
   sceneType: Option[SceneType] = None
 ) {
-  def toScene = this
+  def toScene: Scene = this
 
-  def withRelatedFromComponents(
-    images: List[Image.WithRelated],
-    thumbnails: List[Thumbnail],
-    datasource: Datasource
-  ): Scene.WithRelated = Scene.WithRelated(
-    this.id,
-    this.createdAt,
-    this.createdBy,
-    this.modifiedAt,
-    this.modifiedBy,
-    this.owner,
-    this.visibility,
-    this.tags,
-    datasource.toThin,
-    this.sceneMetadata,
-    this.name,
-    this.tileFootprint,
-    this.dataFootprint,
-    this.metadataFiles,
-    images.toList,
-    thumbnails.toList,
-    this.ingestLocation,
-    this.filterFields,
-    this.statusFields,
-    this.sceneType
-  )
+  def withRelatedFromComponents(images: List[Image.WithRelated],
+                                thumbnails: List[Thumbnail],
+                                datasource: Datasource): Scene.WithRelated =
+    Scene.WithRelated(
+      this.id,
+      this.createdAt,
+      this.createdBy,
+      this.modifiedAt,
+      this.modifiedBy,
+      this.owner,
+      this.visibility,
+      this.tags,
+      datasource.toThin,
+      this.sceneMetadata,
+      this.name,
+      this.tileFootprint,
+      this.dataFootprint,
+      this.metadataFiles,
+      images,
+      thumbnails,
+      this.ingestLocation,
+      this.filterFields,
+      this.statusFields,
+      this.sceneType
+    )
 
   def withLessRelatedFromComponents(
     thumbnails: List[Thumbnail],
@@ -117,7 +99,7 @@ case class Scene(
     this.tileFootprint,
     this.dataFootprint,
     this.metadataFiles,
-    thumbnails.toList,
+    thumbnails,
     this.ingestLocation,
     this.filterFields,
     this.statusFields,
@@ -125,31 +107,30 @@ case class Scene(
   )
 }
 
-
 object Scene {
 
   /** Case class extracted from a POST request */
   @JsonCodec
-  case class Create(
-    id: Option[UUID],
-    visibility: Visibility,
-    tags: List[String],
-    datasource: UUID,
-    sceneMetadata: Json,
-    name: String,
-    owner: Option[String],
-    tileFootprint: Option[Projected[MultiPolygon]],
-    dataFootprint: Option[Projected[MultiPolygon]],
-    metadataFiles: List[String],
-    images: List[Image.Banded],
-    thumbnails: List[Thumbnail.Identified],
-    ingestLocation: Option[String],
-    filterFields: SceneFilterFields = new SceneFilterFields(),
-    statusFields: SceneStatusFields,
-    sceneType: Option[SceneType] = None
- ) extends OwnerCheck {
+  final case class Create(id: Option[UUID],
+                          visibility: Visibility,
+                          tags: List[String],
+                          datasource: UUID,
+                          sceneMetadata: Json,
+                          name: String,
+                          owner: Option[String],
+                          tileFootprint: Option[Projected[MultiPolygon]],
+                          dataFootprint: Option[Projected[MultiPolygon]],
+                          metadataFiles: List[String],
+                          images: List[Image.Banded],
+                          thumbnails: List[Thumbnail.Identified],
+                          ingestLocation: Option[String],
+                          filterFields: SceneFilterFields =
+                            new SceneFilterFields(),
+                          statusFields: SceneStatusFields,
+                          sceneType: Option[SceneType] = None)
+      extends OwnerCheck {
     def toScene(user: User): Scene = {
-      val now = new Timestamp((new java.util.Date()).getTime())
+      val now = new Timestamp(new java.util.Date().getTime)
 
       val ownerId = checkOwner(user, this.owner)
 
@@ -177,28 +158,27 @@ object Scene {
   }
 
   @JsonCodec
-  case class WithRelated(
-    id: UUID,
-    createdAt: Timestamp,
-    createdBy: String,
-    modifiedAt: Timestamp,
-    modifiedBy: String,
-    owner: String,
-    visibility: Visibility,
-    tags: List[String],
-    datasource: Datasource.Thin,
-    sceneMetadata: Json,
-    name: String,
-    tileFootprint: Option[Projected[MultiPolygon]],
-    dataFootprint: Option[Projected[MultiPolygon]],
-    metadataFiles: List[String],
-    images: List[Image.WithRelated],
-    thumbnails: List[Thumbnail],
-    ingestLocation: Option[String],
-    filterFields: SceneFilterFields = new SceneFilterFields(),
-    statusFields: SceneStatusFields,
-    sceneType: Option[SceneType] = None
-  ) {
+  final case class WithRelated(id: UUID,
+                               createdAt: Timestamp,
+                               createdBy: String,
+                               modifiedAt: Timestamp,
+                               modifiedBy: String,
+                               owner: String,
+                               visibility: Visibility,
+                               tags: List[String],
+                               datasource: Datasource.Thin,
+                               sceneMetadata: Json,
+                               name: String,
+                               tileFootprint: Option[Projected[MultiPolygon]],
+                               dataFootprint: Option[Projected[MultiPolygon]],
+                               metadataFiles: List[String],
+                               images: List[Image.WithRelated],
+                               thumbnails: List[Thumbnail],
+                               ingestLocation: Option[String],
+                               filterFields: SceneFilterFields =
+                                 new SceneFilterFields(),
+                               statusFields: SceneStatusFields,
+                               sceneType: Option[SceneType] = None) {
     def toScene: Scene =
       Scene(
         id,
@@ -223,7 +203,7 @@ object Scene {
   }
 
   @JsonCodec
-  case class WithLessRelated(
+  final case class WithLessRelated(
     id: UUID,
     createdAt: Timestamp,
     createdBy: String,
