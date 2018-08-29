@@ -120,6 +120,9 @@ class ProjectsEditController {
             ({count: sceneCount, scenes: allScenes}) => {
                 this.sceneCount = sceneCount;
                 if (!this.sceneCount) {
+                    this.orderedSceneIds = [];
+                    this.sceneList = [];
+                    this.sceneLayers = new Map();
                     return this.$q.resolve();
                 }
                 this.addUningestedScenesToMap(allScenes.filter(
