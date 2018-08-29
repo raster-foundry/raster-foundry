@@ -162,6 +162,7 @@ export default class NewExportController {
     }
 
     onOutputProcessingChange(option) {
+        this.exportProcessingOption = option;
         if (!option.default) {
             this.exportOptions = Object.assign(this.exportOptions, option.exportOptions);
         }
