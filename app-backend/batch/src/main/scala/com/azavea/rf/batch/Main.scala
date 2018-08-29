@@ -2,7 +2,7 @@ package com.azavea.rf.batch
 
 import com.azavea.rf.batch.aoi.FindAOIProjects
 import com.azavea.rf.batch.export.spark.Export
-import com.azavea.rf.batch.export.{CheckExportStatus, CreateExportDef, DropboxCopy, S3Copy}
+import com.azavea.rf.batch.export.{CreateExportDef, DropboxCopy, S3Copy, UpdateExportStatus}
 import com.azavea.rf.batch.healthcheck.HealthCheck
 import com.azavea.rf.batch.aoi.UpdateAOIProject
 import com.azavea.rf.batch.landsat8.{ImportLandsat8, ImportLandsat8C1}
@@ -21,10 +21,10 @@ object Main {
     S3Copy.name             -> (S3Copy.main(_)),
     DropboxCopy.name        -> (DropboxCopy.main(_)),
     ImportLandsat8C1.name   -> (ImportLandsat8C1.main(_)),
-    CheckExportStatus.name  -> (CheckExportStatus.main(_)),
     HealthCheck.name        -> (HealthCheck.main(_)),
     ReadStacFeature.name    -> (ReadStacFeature.main(_)),
-    NotifyIngestStatus.name -> (NotifyIngestStatus.main(_))
+    NotifyIngestStatus.name -> (NotifyIngestStatus.main(_)),
+    UpdateExportStatus.name -> (UpdateExportStatus.main(_))
   )
 
   def main(args: Array[String]): Unit = {
