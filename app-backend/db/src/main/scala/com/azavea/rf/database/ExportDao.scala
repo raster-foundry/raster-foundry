@@ -96,7 +96,6 @@ object ExportDao extends Dao[Export] {
         rasterSize = exportOptions.rasterSize,
         render = Some(exportOptions.render),
         crop = exportOptions.crop,
-        stitch = exportOptions.stitch,
         source = exportOptions.source,
         dropboxCredential = dbxToken
       )

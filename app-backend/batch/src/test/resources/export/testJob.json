@@ -30,7 +30,6 @@
     },
     "output":{
         "source":"s3://rasterfoundry-test/daunnc-test",
-        "stitch":false,
         "render":{
             "operation":"id",
             "bands":[0, 1, 2]

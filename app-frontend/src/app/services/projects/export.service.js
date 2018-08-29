@@ -52,7 +52,6 @@ export default (app) => {
         exportLabNode(toolRunId, settings = {}, options = {}) {
             const defaultOptions = {
                 resolution: 9,
-                stitch: true,
                 crop: false
             };
 

@@ -64,26 +64,19 @@ object Export extends SparkJob with Config with RollbarNotifier {
       case Valid(rdd) => {
         val crs: CRS = rdd.metadata.crs
 
-        if (!ed.output.stitch) {
-          val targetRDD: TileLayerRDD[SpatialKey] =
-            ed.output.rasterSize match {
-              case Some(size) => rdd.regrid(size)
-              case None => rdd.regrid(defaultRasterSize)
-            }
+        val targetRDD: TileLayerRDD[SpatialKey] =
+          ed.output.rasterSize match {
+            case Some(size) => rdd.regrid(size)
+            case None => rdd.regrid(defaultRasterSize)
+          }
 
-          val mt: MapKeyTransform = targetRDD.metadata.layout.mapTransform
+        val mt: MapKeyTransform = targetRDD.metadata.layout.mapTransform
 
-          /* Create GeoTiffs and output them */
-          val singles: RDD[(SpatialKey, SinglebandGeoTiff)] =
-            targetRDD.map({ case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs)) })
+        /* Create GeoTiffs and output them */
+        val singles: RDD[(SpatialKey, SinglebandGeoTiff)] =
+          targetRDD.map({ case (key, tile) => (key, SinglebandGeoTiff(tile, mt(key), crs)) })
 
-          writeGeoTiffs[Tile, SinglebandGeoTiff](singles, ed)
-        } else {
-          /* Stitch the Layer into a single GeoTiff and output it */
-          val single: SinglebandGeoTiff = GeoTiff(rdd.stitch, crs)
-
-          writeGeoTiff[Tile, SinglebandGeoTiff](single, ed, singlePath)
-        }
+        writeGeoTiffs[Tile, SinglebandGeoTiff](singles, ed)
       }
     }
   }
@@ -189,49 +182,24 @@ object Export extends SparkJob with Config with RollbarNotifier {
     }
 
     /** Tile merge with respect to layer initial ordering */
-    if (!ed.output.stitch) {
-      val result: RDD[(SpatialKey, MultibandGeoTiff)] =
-        rdds
-          .zipWithIndex
-          .map { case (rdd, i) =>
-            val md = rdd.metadata
-            rdd.map { case (key, tile) => (key, i -> GeoTiff(tile, md.mapTransform(key), md.crs)) }
+    val result: RDD[(SpatialKey, MultibandGeoTiff)] =
+      rdds
+        .zipWithIndex
+        .map { case (rdd, i) =>
+          val md = rdd.metadata
+          rdd.map { case (key, tile) => (key, i -> GeoTiff(tile, md.mapTransform(key), md.crs)) }
+        }
+        .reduce(_ union _)
+        .combineByKey(createTiles[(Int, MultibandGeoTiff)], mergeTiles1[(Int, MultibandGeoTiff)], mergeTiles2[(Int, MultibandGeoTiff)])
+        .mapValues { seq =>
+          val sorted = seq.sortBy(_._1).map(_._2)
+          sorted.headOption map { head =>
+            GeoTiff(sorted.map(_.tile).reduce(_ merge _), head.extent, head.crs)
           }
-          .reduce(_ union _)
-          .combineByKey(createTiles[(Int, MultibandGeoTiff)], mergeTiles1[(Int, MultibandGeoTiff)], mergeTiles2[(Int, MultibandGeoTiff)])
-          .mapValues { seq =>
-            val sorted = seq.sortBy(_._1).map(_._2)
-            sorted.headOption map { head =>
-              GeoTiff(sorted.map(_.tile).reduce(_ merge _), head.extent, head.crs)
-            }
-          }
-          .flatMapValues(v => v)
+        }
+        .flatMapValues(v => v)
 
-      writeGeoTiffs[MultibandTile, MultibandGeoTiff](result, ed)
-    } else {
-      val md = rdds.map(_.metadata).reduce(_ combine _)
-      val raster: Raster[MultibandTile] =
-        rdds
-          .zipWithIndex
-          .map { case (rdd, i) => rdd.mapValues { value => i -> value } }
-          .foldLeft(ContextRDD(sc.emptyRDD[(SpatialKey, (Int, MultibandTile))], md))((acc, r) => acc.withContext {
-            _.union(r)
-          })
-          .withContext {
-            _.combineByKey(createTiles[(Int, MultibandTile)], mergeTiles1[(Int, MultibandTile)], mergeTiles2[(Int, MultibandTile)])
-          }
-          .withContext {
-            _.mapValues {
-              _.sortBy(_._1).map(_._2).reduce(_ merge _)
-            }
-          }
-          .stitch
-      val craster =
-        if (ed.output.crop) mask.fold(raster)(mp => raster.crop(mp.envelope.reproject(LatLng, md.crs)))
-        else raster
-
-      writeGeoTiff[MultibandTile, MultibandGeoTiff](GeoTiff(craster, md.crs), ed, singlePath)
-    }
+    writeGeoTiffs[MultibandTile, MultibandGeoTiff](result, ed)
   }
 
   private def singlePath(ed: ExportDefinition): String =

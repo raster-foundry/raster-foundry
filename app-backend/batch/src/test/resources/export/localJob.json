@@ -84,7 +84,6 @@
   },
   "output": {
     "source": "s3://test/",
-    "stitch": false,
     "render": {
       "operation": "id",
       "bands": [

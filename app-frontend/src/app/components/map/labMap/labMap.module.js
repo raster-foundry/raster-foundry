@@ -116,7 +116,6 @@ class LabMapController {
     setDefaultExportOptions() {
         this.exportOptions = {
             resolution: this.map.getZoom(),
-            stitch: true,
             crop: false,
             raw: false
         };

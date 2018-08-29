@@ -31,7 +31,6 @@
     },
     "output":{
         "source":"file:///tmp",
-        "stitch":false,
         "crop":false,
         "render":{
             "operation":"id",
