@@ -9,7 +9,7 @@ import org.http4s.dsl.Http4sDsl
 class HealthCheckService[F[_]: Effect] extends Http4sDsl[F] {
   val service: HttpService[F] = {
     HttpService[F] {
-      case GET -> Root / "healthcheck" => {
+      case GET -> Root => {
         Ok(Json.obj("message" -> Json.fromString("Healthy"), "reason" -> Json.fromString("A-ok")))
       }
     }
