@@ -69,6 +69,7 @@
 
   &.last-of-type {
     border-radius: 0 0 $border-radius-base $border-radius-base;
+    border-bottom: none;
   }
   
   > i {
