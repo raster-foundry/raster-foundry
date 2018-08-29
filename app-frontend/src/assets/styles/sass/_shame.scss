@@ -985,136 +985,8 @@ div.lab-workspace.is-dragging {
   }
 }
 
-.map-container-controls {
-  position: absolute;
-  top: .5rem;
-
-  right: .5rem;
-  z-index: 1025;
-  display: flex;
-  flex-direction: column;
-  background: $shade-dark;
-  padding: .5em;
-  border-radius: 3px;
-  &.is-dragging {
-      pointer-events: none;
-      * {
-          pointer-events: none;
-      }
-  }
-  &.align-left {
-      left: 0.5rem;
-      right: auto; // ie11 fix
-      right: initial;
-  }
-}
-
-.map-zoom {
-  text-align: center;
-  padding: .25em;
-  font-weight: bold;
-  font-size: smaller;
-  user-select: none;
-  cursor: auto;
-}
-
-.filler {
-  height: .5em;
-}
-
-rf-map-container:-webkit-full-screen {
-  width: 100%;
-  height: 100%;
-}
-
-.map-control {
-  position: relative;
-}
-
-.dropdown-control {
-  position: absolute;
-  transform: translateX(-100%);
-  left: -1em;
-  top: -2.25em;
-}
-
-.layer-picker {
-  width: 15em;
-  background: $shade-dark;
-  z-index: 1025;
-  &:focus {
-    outline: transparent;
-  }
-  user-select: none;
-
-  &.export-dropdown-control {
-    width: 25em;
-  }
-}
-
-.layer-picker-title {
-  color: $white;
-  font-weight: bold;
-  padding: .5em;
-  text-align: center;
-  border-bottom: 1px solid $shade-normal;
-}
-
-.layer-picker-body {
-  margin: 0.75em;
-}
-
-.layer-picker-option {
-  display: flex;
-  cursor: pointer;
-  width: 100%;
-  height: 30px;
-  margin: 0 0 0.25em 0;
-  border-radius: 5px;
-  border: 2px solid $shade-normal;
-  .btn.btn-square {
-    height: 100%;
-    padding: .25em;
-    border: 1px solid $shade-normal;
-    border-radius: 0;
-  }
-  &:hover {
-    border: 2px solid $shade-light;
-    .btn.btn-square {
-      border: 1px solid $shade-light;
-      background: $shade-light;
-    }
-  }
-  &:focus {
-    outline: transparent;
-  }
-}
-.layer-picker-divider {
-  border-bottom: 1px solid $shade-normal;
-  margin-bottom: .5em;
-  padding-top: .25em;
-}
-.layer-picker-label{
-  flex: 1;
-  text-align: center;
-  color: $white;
-}
-
 .hide-icon {
   visibility: hidden;
-}
-
-.dropdown-arrow {
-  position: absolute;
-  margin: 0;
-  width: 0;
-  height: 0;
-  border-top: .5em solid transparent;
-  border-bottom: .5em solid transparent;
-  border-left: .5em solid $shade-dark;
-  right: 0;
-  transform: translateX(100%);
-  top: 2.9em;
 }
 
 .opacity-slider {
@@ -1949,6 +1821,10 @@ rf-node-statistics {
   position: relative;
   height: 100%;
   overflow: hidden;
+
+  .map-container-controls {
+    right: 20px;
+  }
 }
 
 .resize-separator {
@@ -3147,9 +3023,6 @@ rf-reclassify-table {
         .btn {
             margin: 1em;
         }
-    }
-    &.stationary {
-
     }
     .expand {
         flex: 1;
