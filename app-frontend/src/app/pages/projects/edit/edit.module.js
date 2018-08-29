@@ -123,6 +123,10 @@ class ProjectsEditController {
                     this.orderedSceneIds = [];
                     this.sceneList = [];
                     this.sceneLayers = new Map();
+                    this.getMap().then(m => {
+                        m.deleteLayers('Ingested Scenes');
+                        m.deleteLayers('Uningested Scenes');
+                    });
                     return this.$q.resolve();
                 }
                 this.addUningestedScenesToMap(allScenes.filter(
