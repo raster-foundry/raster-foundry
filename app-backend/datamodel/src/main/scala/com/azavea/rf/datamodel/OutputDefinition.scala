@@ -12,7 +12,6 @@ import java.net.{URI, URLDecoder}
   * @param rasterSize output size of each raster chunk
   * @param render [[Render]] options
   * @param crop crop result rasters
-  * @param stitch stitch result raster into one
   * @param source output source [[URI]]
   * @param dropboxCredential dropbox token
   */
@@ -22,7 +21,6 @@ final case class OutputDefinition(
   rasterSize: Option[Int],
   render: Option[Render],
   crop: Boolean,
-  stitch: Boolean,
   source: URI,
   dropboxCredential: Option[String]
 ) {

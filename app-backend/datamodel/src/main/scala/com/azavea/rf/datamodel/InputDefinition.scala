@@ -14,7 +14,7 @@ import io.circe.syntax._
   * There are two varieties Export - those that involve an AST, which
   * performs Map Algebra and produces [[SinglebandGeoTiff]]s, and as-ingested
   * [[MultibandTile]] exports which can perform colour correction and do simple
-  * cropping / stitching.
+  * cropping
   */
 case class InputDefinition(
   resolution: Int,
