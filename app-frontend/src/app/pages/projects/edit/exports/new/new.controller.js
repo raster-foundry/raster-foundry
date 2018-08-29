@@ -14,7 +14,7 @@ export default class NewExportController {
 
         this.availableResolutions = this.exportService.getAvailableResolutions();
         this.availableTargets = this.exportService.getAvailableTargets();
-        this.availableProcessingOptions = this.projectService.availableProcessingOptions;
+        this.availableProcessingOptions = this.projectService.availableProcessingOptionsThin;
 
         this.getMap = () => mapService.getMap('edit');
     }
@@ -158,6 +158,13 @@ export default class NewExportController {
             if (option.templateId) {
                 this.loadTemplate(option.templateId);
             }
+        }
+    }
+
+    onOutputProcessingChange(option) {
+        this.exportProcessingOption = option;
+        if (!option.default) {
+            this.exportOptions = Object.assign(this.exportOptions, option.exportOptions);
         }
     }
 

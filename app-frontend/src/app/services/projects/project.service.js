@@ -49,6 +49,7 @@ export default (app) => {
             this.$location = $location;
             this.$q = $q;
             this.availableProcessingOptions = availableProcessingOptions;
+            this.availableProcessingOptionsThin = this.availableProcessingOptions.slice(0, 2);
 
             this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
