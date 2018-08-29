@@ -125,6 +125,7 @@ trait SceneRoutes extends Authentication
 
       val tileFootprint = (newScene.sceneType, newScene.ingestLocation, newScene.tileFootprint) match {
         case (Some(SceneType.COG), Some(ingestLocation), None) => {
+          logger.debug(s"Ingest location is: $ingestLocation")
           logger.info(s"Generating Footprint for Newly Added COG")
           CogUtils.getTiffExtent(ingestLocation)
         }

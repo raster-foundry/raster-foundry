@@ -73,8 +73,10 @@ def create_geotiffs(modis_path, output_directory):
 
     # Generate overviews
     overview_command = [
-        'gdaladdo', '--config',
-        'COMPRESS_OVERVIEW', 'DEFLATE', warped_tif_path
+        'gdaladdo',
+        '-r', 'average',
+        '--config', 'COMPRESS_OVERVIEW', 'DEFLATE',
+        warped_tif_path
     ]
 
     # Create final tif with overviews
