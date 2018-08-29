@@ -1,50 +1,30 @@
 .map-container-controls {
-  background-color: $off-white;
-}
-
-.layer-picker {
   background-color: $white;
+  border: 1px solid $shade-light;
 }
 
-.layer-picker-title {
+.zoom-level {
+  background-color: $off-white;
   color: $text-base;
-  border-color: $border-color-default;
-  padding: 1rem;
-  text-transform: uppercase;
-  font-size: 1.2rem;
 }
 
-.layer-picker-option {
-  border: 1px solid $border-color-default;
-  border-radius: $border-radius-base;
-  align-items: center;
+.map-control-btn {
+  color: $text-base;
+  border-bottom-color: $shade-light;
 
   &:hover,
-  &:focus {
-    border: 1px solid $brand-primary;
-  }
-
-  &:focus {
-    box-shadow: $focus-shadow;
-  }
-
-  &,
-  &:hover,
-  &:focus {
-
-    // Will be deprecated in future
-    .btn.btn-default {
-      @extend .btn-default;
-      border: none;
-      //margin: -1px;
-      height: auto;
-      align-self: stretch;
-      border-radius: 0 $border-radius-base $border-radius-base 0;
-      padding: 0 1rem;
-    }
+  &.active {
+    background-color: $off-white;
   }
 }
 
 .layer-picker-label {
   color: $text-base;
+}
+
+.layer-picker-toggle {
+
+  .toggle {
+    background-color: $white;
+  }
 }
