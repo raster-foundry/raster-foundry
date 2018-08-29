@@ -147,7 +147,7 @@ export default (app) => {
                                     this.incomingSceneAdapter(s, filters.datasource)
                                 ),
                                 hasNext: true,
-                                count: 'Unknown'
+                                count: 'unknown'
                             });
                         }, err => {
                             reject(err);

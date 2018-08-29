@@ -18,6 +18,7 @@ export default (app) => {
             this.datasourceCache = new Map();
             this.previewOnMap = true;
             this.cogThumbnailCache = [];
+            this.defaultRepository = true;
         }
 
         initRepository() {
@@ -168,7 +169,7 @@ export default (app) => {
                                 scenes: response.results,
                                 hasNext,
                                 count: response.count >= 100 ?
-                                    'At least 100' : this.$filter('number')(response.count)
+                                    'at least 100' : this.$filter('number')(response.count)
                             });
                         }, (error) => {
                             reject({

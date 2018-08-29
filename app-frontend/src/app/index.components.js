@@ -28,7 +28,6 @@ export default angular.module('index.components', [
     // project components
     require('./components/projects/projectItem/projectItem.module.js').name,
     require('./components/projects/projectPublishModal/projectPublishModal.module.js').name,
-    require('./components/projects/projectAddScenesModal/projectAddScenesModal.module.js').name,
     require('./components/projects/projectSelectModal/projectSelectModal.module.js').name,
     require('./components/projects/projectCreateModal/projectCreateModal.module.js').name,
     require('./components/projects/projectExportModal/projectExportModal.module.js').name,
