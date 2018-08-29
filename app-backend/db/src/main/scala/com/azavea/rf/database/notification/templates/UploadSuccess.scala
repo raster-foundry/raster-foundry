@@ -24,44 +24,52 @@ case class UploadSuccess(
         case _ => None.pure[ConnectionIO]
       }
     } yield {
-      val plainUploadLocation = uploadProject.map(project =>
-        s"| View this upload in your project ${project.name} at https://${platformHost}/projects/${project.id}"
-      ).getOrElse(
-        s"| View your uploads at https://${platformHost}/imports/rasters"
-      )
+      val signature = s"- The ${platform.name} Team"
+      val importsUrl = s"https://${platformHost}/imports/rasters?page=1"
+      val sceneAddedMsg = "A scene has successfully been added to your project"
+      val statusMsg = "You can check the status of all of your processing scenes any time"
+      val withImportIDMsg = s"with Import ID ${upload.id}"
+      val newSceneMsg = "A new scene has been added to your project"
 
-      val richUploadLocation = uploadProject.map(project =>
-        s"""
-<p>View this upload in your project
-  <a href="https://${platformHost}/projects/${project.id}">${project.name}</a>
-</p>
-      """
-      ).getOrElse(
-        s"""
-<p>You can view your uploads
-  <a href="https://${platformHost}/imports/rasters>here</a>.
-</p>
-      """
-      )
-      val plainBody = s"""
-      | Your upload ${upload.id} has been processed successfully.
-      |
-      ${plainUploadLocation}
-      |
-      | -- The ${platform.name} Team
-      """.trim.stripMargin
-      val richBody = s"""
+      uploadProject.map(project => {
+        val projectUrl = s"https://${platformHost}/projects/${project.id}"
+        val subject = s"""${newSceneMsg} "${project.name}""""
+        val plainBody = s"""
+          | ${sceneAddedMsg} at ${projectUrl} ${withImportIDMsg}. ${statusMsg} at: ${importsUrl}.
+          |
+          | ${signature}
+          """.trim.stripMargin
+        val richBody = s"""
 <html>
-  <p>Your upload ${upload.id} has been processed successfully.</p>
-  ${richUploadLocation}
   <p>
-    -- The ${platform.name} Team
+    ${sceneAddedMsg} <a href="${projectUrl}>${project.name}</a> ${withImportIDMsg}. ${statusMsg} on the <a href="${importsUrl}>Imports Page</a>.
   </p>
-</html>
-      """.trim.stripMargin
-      val subject = s"Upload ${upload.id} completed successfully"
-
-      EmailData(subject, plainBody, richBody)
+  <p>
+    ${signature}
+  </p>
+</html>""".trim.stripMargin
+          (subject, plainBody, richBody)
+      }).getOrElse({
+        val subject = s"${newSceneMsg} ${withImportIDMsg}"
+        val plainBody = s"""
+          | ${sceneAddedMsg} ${withImportIDMsg}. ${statusMsg} at: ${importsUrl}
+          |
+          | ${signature}
+          """.trim.stripMargin
+        val richBody = s"""
+<html>
+  <p>
+    ${sceneAddedMsg} ${withImportIDMsg}. ${statusMsg} on the <a href="${importsUrl}>Imports Page</a>.
+  </p>
+  <p>
+    ${signature}
+  </p>
+</html>""".trim.stripMargin
+        (subject, plainBody, richBody)
+      }) match {
+        case (subject, plainBody, richBody) =>
+          EmailData(subject, plainBody, richBody)
+      }
     }
   }
 }
