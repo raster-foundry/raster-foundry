@@ -16,7 +16,9 @@ import com.azavea.rf.batch.export._
 import com.azavea.rf.batch.export.json.S3ExportStatus
 import com.azavea.rf.batch.util._
 import com.azavea.rf.batch.util.conf._
+import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.common.utils.CogUtils
+import com.azavea.rf.database._
 import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.datamodel._
 import com.azavea.rf.tool.ast.MapAlgebraAST
@@ -24,6 +26,7 @@ import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Transactor
+import doobie.implicits._
 import geotrellis.proj4.{CRS, LatLng}
 import io.circe.parser._
 import io.circe.syntax._
@@ -43,7 +46,7 @@ import org.apache.spark.rdd.RDD
 import spray.json.DefaultJsonProtocol._
 
 
-object Export extends SparkJob with Config with LazyLogging {
+object Export extends SparkJob with Config with RollbarNotifier {
 
   val jobName = "Export"
 
@@ -333,26 +336,35 @@ object Export extends SparkJob with Config with LazyLogging {
 
     implicit val sc = new SparkContext(conf)
 
-
     implicit def asS3Payload(status: ExportStatus): String =
       S3ExportStatus(exportDef.id, status).asJson.noSpaces
 
-    try {
-      exportDef.input.style match {
+    // Note: these logs don't actually work independent of log level and I have no idea why
+    // You can set them to info and check 'Output from export command' in the logs from
+    // running `rf export`, and you'll get nothing. It's pretty annoying!
+    val runIO: IO[Unit] = for {
+      _ <- logger.debug("Fetching system user").pure[IO]
+      user <- UserDao.unsafeGetUserById(systemUser).transact(xa)
+      _ <- logger.debug(s"Fetching export ${exportDef.id}").pure[IO]
+      export <- ExportDao.unsafeGetExportById(exportDef.id).transact(xa)
+      _ <- logger.debug(s"Performing export").pure[IO]
+      result <- exportDef.input.style match {
         case Left(SimpleInput(layers, mask)) =>
-          multibandExport(exportDef, layers, mask)
+          IO(multibandExport(exportDef, layers, mask)).attempt
         case Right(ASTInput(ast, _, projLocs)) =>
-          astExport(exportDef, ast, projLocs).unsafeRunSync
+          IO(astExport(exportDef, ast, projLocs).unsafeRunSync).attempt
       }
+    } yield {
+      result match {
+        case Right(_) => ()
+        case Left(throwable) =>
+          sendError(throwable)
+          throw throwable
+      }
+    }
 
-      logger.info(s"Writing status into the ${params.statusURI}")
-      s3Client.putObject(params.statusURI, ExportStatus.Exported)
-
-    } catch {
-      case t: Throwable =>
-        logger.info(s"Writing status into the ${params.statusURI}")
-        logger.error(t.stackTraceString)
-        s3Client.putObject(params.statusURI, ExportStatus.Exported)
+    try {
+      runIO.unsafeRunSync
     } finally {
       sc.stop
     }
