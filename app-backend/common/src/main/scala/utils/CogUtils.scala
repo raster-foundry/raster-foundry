@@ -123,7 +123,7 @@ object CogUtils {
           cols = 256, rows = 256
         )
         val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
-        val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(1))
+        val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(0))
         cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
           raster.reproject(tmsTileRE, transform, inverseTransform).tile
         }
@@ -196,7 +196,7 @@ object CogUtils {
     val actualExtent = extent.getOrElse(tiff.extent.reproject(tiff.crs, WebMercator))
     val tmsTileRE = RasterExtent(extent = actualExtent, cellSize = TmsLevels(zoom).cellSize)
     val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
-    val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(1))
+    val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(0))
 
     OptionT(Future(cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
       raster.reproject(tmsTileRE, transform, inverseTransform).tile
