@@ -32,10 +32,10 @@ def create_cog(image_locations, scene):
 
 def add_overviews(tif_path):
     logger.info('Adding overviews to %s', tif_path)
-    overviews_command = ['gdaladdo',
-                         '-r', 'average',
-                         '--config', 'COMPRESS_OVERVIEW', 'DEFLATE',
-                         tif_path]
+    overviews_command = [
+        'gdaladdo', '-r', 'average', '--config', 'COMPRESS_OVERVIEW',
+        'DEFLATE', tif_path
+    ]
     subprocess.check_call(overviews_command)
 
 
@@ -43,16 +43,8 @@ def convert_to_cog(tif_with_overviews_path, local_dir):
     logger.info('Converting %s to a cog', tif_with_overviews_path)
     out_path = os.path.join(local_dir, 'cog.tif')
     cog_command = [
-        'gdal_translate',
-        tif_with_overviews_path,
-        '-co',
-        'TILED=YES',
-        '-co',
-        'COMPRESS=LZW',
-        '-co',
-        'COPY_SRC_OVERVIEWS=YES',
-        '-co',
-        'BIGTIFF=YES',
+        'gdal_translate', tif_with_overviews_path, '-co', 'TILED=YES', '-co',
+        'COMPRESS=LZW', '-co', 'COPY_SRC_OVERVIEWS=YES', '-co', 'BIGTIFF=YES',
         out_path
     ]
     subprocess.check_call(cog_command)
@@ -108,12 +100,8 @@ def merge_tifs(local_tif_paths, local_dir):
     logger.info('Merging {} tif paths'.format(len(local_tif_paths)))
     logger.debug('The files are:\n%s', '\n'.join(local_tif_paths))
     merged_path = os.path.join(local_dir, 'merged.tif')
-    merge_command = [
-        'gdal_merge.py',
-        '-o',
-        merged_path,
-        '-separate'
-    ] + local_tif_paths
+    merge_command = ['gdal_merge.py', '-o', merged_path, '-separate'
+                     ] + local_tif_paths
     subprocess.check_call(merge_command)
     return merged_path
 
