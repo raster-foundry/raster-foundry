@@ -66,6 +66,7 @@ services:
     environment:
       - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
       - RF_LOG_LEVEL=INFO
+      - TILE_SERVER_LOCATION=http://localhost:8080
     ports:
       - "9000:9000"
       - "9010:9010"
@@ -102,7 +103,6 @@ services:
     env_file: .env
     environment:
       - RF_HOST=http://rasterfoundry.com:9000
-      - TILE_SERVER_LOCATION=http://localhost:8080
       - LOCAL_INGEST_CORES=2
       - LOCAL_INGEST_MEM_GB=4
     command: rf
