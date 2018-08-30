@@ -7,6 +7,7 @@ from rf.uploads.landsat8.io import get_tempdir
 from rf.utils.io import s3_bucket_and_key_from_url
 
 import boto3
+import rasterio
 
 import logging
 from multiprocessing import (cpu_count, Pool)
@@ -23,7 +24,8 @@ def create_cog(image_locations, scene):
     with get_tempdir() as local_dir:
         dsts = [os.path.join(local_dir, fname) for _, fname in image_locations]
         fetch_imagery(image_locations, local_dir)
-        merged_tif = merge_tifs(dsts, local_dir)
+        warped_paths = warp_tifs(dsts, local_dir)
+        merged_tif = merge_tifs(warped_paths, local_dir)
         add_overviews(merged_tif)
         cog_path = convert_to_cog(merged_tif, local_dir)
         updated_scene = upload_tif(cog_path, scene)
@@ -33,8 +35,8 @@ def create_cog(image_locations, scene):
 def add_overviews(tif_path):
     logger.info('Adding overviews to %s', tif_path)
     overviews_command = [
-        'gdaladdo', '-r', 'average', '--config', 'COMPRESS_OVERVIEW',
-        'DEFLATE', tif_path
+        'gdaladdo', '-r', 'average', '--config', 'COMPRESS_OVERVIEW', 'LZW',
+        tif_path
     ]
     subprocess.check_call(overviews_command)
 
@@ -45,7 +47,7 @@ def convert_to_cog(tif_with_overviews_path, local_dir):
     cog_command = [
         'gdal_translate', tif_with_overviews_path, '-co', 'TILED=YES', '-co',
         'COMPRESS=LZW', '-co', 'COPY_SRC_OVERVIEWS=YES', '-co', 'BIGTIFF=YES',
-        out_path
+        '-co', 'PREDICTOR=2', out_path
     ]
     subprocess.check_call(cog_command)
     return out_path
@@ -58,24 +60,6 @@ def fetch_imagery(image_locations, local_dir):
         pool.map(fetch_imagery_uncurried, tupled)
     finally:
         pool.close()
-
-
-def fetch_imagery_uncurried(tup):
-    """Fetch imagery using a (location, filename, output_directory) tuple
-
-    This function exists so that something can be pickled and passed to pool.map,
-    since downloads are costly, functions are only pickleable if they're
-    defined at the top level of a module, and pool.map takes functions of one
-    argument.
-
-    Uncurried from:
-
-    uncurried :: (a -> b -> c) -> (a, b) -> c
-
-    in Haskell-land
-    """
-
-    fetch_image(tup[0], tup[1], tup[2])
 
 
 def fetch_image(location, filename, local_dir):
@@ -100,8 +84,10 @@ def merge_tifs(local_tif_paths, local_dir):
     logger.info('Merging {} tif paths'.format(len(local_tif_paths)))
     logger.debug('The files are:\n%s', '\n'.join(local_tif_paths))
     merged_path = os.path.join(local_dir, 'merged.tif')
-    merge_command = ['gdal_merge.py', '-o', merged_path, '-separate'
-                     ] + local_tif_paths
+    merge_command = [
+        'gdal_merge.py', '-o', merged_path, '-separate', '-co', 'COMPRESS=LZW',
+        '-co', 'PREDICTOR=2', '-a_nodata', '0', '-co', 'BIGTIFF=YES'
+    ] + local_tif_paths
     subprocess.check_call(merge_command)
     return merged_path
 
@@ -128,3 +114,95 @@ def sort_key(datasource_id, band):
         raise ValueError(
             'Trying to run public COG ingest for scene with mysterious datasource',
             datasource_id)
+
+
+def resample_tif(src_path, local_dir, src_x, dst_x, src_y, dst_y):
+    src_fname = os.path.split(src_path)[-1]
+    src_fname_ext = src_fname.split('.')[-1]
+    dst_fname = src_fname.replace(src_fname_ext, 'warped.tif')
+    dst_path = os.path.join(local_dir, dst_fname)
+    if src_x == dst_x and src_y == dst_y:
+        logger.info(
+            'No need to reproject for %s, already in target resolution',
+            src_path)
+        subprocess.check_call(
+            ['gdal_translate', '-co', 'COMPRESS=LZW', src_path, dst_path])
+    # if there are any resolution difference, including if they're weird, like a
+    # greater x resolution and lesser y resolution, reproject to the same size
+    else:
+        # Landsat 8 / Sentinel-2 images have a bunch of single band components
+        x_rat = int(src_x / dst_x)
+        y_rat = int(src_y / dst_y)
+        logger.info('Resampling %s', src_fname)
+        logger.info('Increasing x resolution by %sx, y resolution by %sx',
+                    x_rat, y_rat)
+        # No need to throw in -wo for the compression options, since we're doing all
+        # of the bands at once
+        subprocess.check_call([
+            'gdalwarp', '-co', 'COMPRESS=LZW', '-co', 'PREDICTOR=2',
+            '-dstnodata', '0', '-tr',
+            str(dst_x),
+            str(dst_y), src_path, dst_path
+        ])
+    return dst_path
+
+
+def warp_tifs(local_tif_paths, local_dir):
+    sources = [rasterio.open(p) for p in local_tif_paths]
+    # a is x resoution, e is y resolution
+    paths_with_resolutions = [
+        (path, source.meta['transform'].a, source.meta['transform'].e)
+        for path, source in zip(local_tif_paths, sources)
+    ]
+    # assume cells are square to find the minimum -- this could be wrong, but isn't for any
+    # of the imagery we know we're using
+    min_resolution = sorted(paths_with_resolutions, key=lambda x: x[1])[0]
+    tupled = [(src_path, local_dir, src_x, min_resolution[1], src_y,
+               min_resolution[2])
+              for src_path, src_x, src_y in paths_with_resolutions]
+    pool = Pool(cpu_count())
+    try:
+        warped_paths = pool.map(resample_tif_uncurried, tupled)
+    finally:
+        pool.close()
+    return warped_paths
+
+
+def resample_tif_uncurried(tup):
+    """Resample a tif from a tuple containing all the resample_tif arguments
+
+    The tuple is:
+
+    (src_path, local_dir, src_x, dst_x, src_y, dst_y)
+
+    This function exists so that something can be pickled and passed to pool.map,
+    since resampling is costly, functions are only pickleable if they're
+    defined at the top level of a module, and pool.map takes functions of one
+    argument.
+
+    Uncurried from:
+
+    uncurried :: (a -> b -> c) -> (a, b) -> c
+
+    in Haskell-land
+    """
+
+    return resample_tif(tup[0], tup[1], tup[2], tup[3], tup[4], tup[5])
+
+
+def fetch_imagery_uncurried(tup):
+    """Fetch imagery using a (location, filename, output_directory) tuple
+
+    This function exists so that something can be pickled and passed to pool.map,
+    since downloads are costly, functions are only pickleable if they're
+    defined at the top level of a module, and pool.map takes functions of one
+    argument.
+
+    Uncurried from:
+
+    uncurried :: (a -> b -> c) -> (a, b) -> c
+
+    in Haskell-land
+    """
+
+    fetch_image(tup[0], tup[1], tup[2])
