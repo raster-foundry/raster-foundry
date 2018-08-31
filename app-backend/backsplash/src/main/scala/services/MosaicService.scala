@@ -81,7 +81,7 @@ class MosaicService(
               }
             )
             authorized <- EitherT.liftF(
-              ProjectDao.query
+              ProjectDao
                 .authorized(user,
                             ObjectType.Project,
                             projectId,

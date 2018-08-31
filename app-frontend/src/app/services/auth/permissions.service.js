@@ -36,16 +36,16 @@ export default (app) => {
             return this.Permissions.query({permissionsBase, objectId});
         }
 
-        create({permissionsBase, objectId}, accessControlRuleCreate) {
+        create({permissionsBase, objectId}, objectAccessControlRule) {
             return this.Permissions.create(
-                Object.assign(accessControlRuleCreate, {permissionsBase, objectId})
+                Object.assign(objectAccessControlRule, {permissionsBase, objectId})
             ).$promise;
         }
 
-        update({permissionsBase, objectId}, accessControlRuleCreates) {
+        update({permissionsBase, objectId}, objectAccessControlRuleList) {
             return this.Permissions.update(
                 Object.assign(
-                    {rules: accessControlRuleCreates},
+                    {rules: objectAccessControlRuleList},
                     {permissionsBase, objectId}
                 )
             ).$promise;

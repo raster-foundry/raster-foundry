@@ -228,10 +228,9 @@ object TeamDao extends Dao[Team] {
   def delete(teamId: UUID): ConnectionIO[Int] =
     TeamDao.query.filter(teamId).delete
 
+  // TODO: ACR deactivation needs to be reconsidered in issue 4020
   def deactivate(teamId: UUID): ConnectionIO[Int] = {
     for {
-      acrs <- AccessControlRuleDao.deactivateBySubject(SubjectType.Team,
-                                                       teamId.toString())
       roles <- UserGroupRoleDao.deactivateByGroup(GroupType.Team, teamId)
       teamUpdate <- (fr"UPDATE" ++ tableF ++ fr"""SET
                       is_active = false

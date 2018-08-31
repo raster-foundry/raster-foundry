@@ -7,4 +7,5 @@ package object meta {
       with SingleBandOptionsMeta
       with EnumMeta
       with BatchMeta
+      with PermissionsMeta
 }
