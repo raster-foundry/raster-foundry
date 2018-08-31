@@ -86,7 +86,7 @@ def merge_tifs(local_tif_paths, local_dir):
     merged_path = os.path.join(local_dir, 'merged.tif')
     merge_command = [
         'gdal_merge.py', '-o', merged_path, '-separate', '-co', 'COMPRESS=LZW',
-        '-co', 'PREDICTOR=2', '-a_nodata', '0', '-co', 'BIGTIFF=YES'
+        '-co', 'PREDICTOR=2', '-co', 'BIGTIFF=YES'
     ] + local_tif_paths
     subprocess.check_call(merge_command)
     return merged_path
