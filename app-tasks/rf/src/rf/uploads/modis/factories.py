@@ -108,13 +108,9 @@ def create_scene(hdf_url, temp_directory, user_id, datasource):
                   JobStatus.SUCCESS, JobStatus.SUCCESS, IngestStatus.INGESTED, [], owner=user_id, id=id,
                   acquisitionDate=acquisition_datetime.isoformat() + 'Z', cloudCover=0)
 
-    hdf_directory = os.path.join(temp_directory, 'hdf')
-    os.mkdir(hdf_directory)
-    hdf_filepath = download_hdf(hdf_url, hdf_directory)
+    hdf_filepath = download_hdf(hdf_url, temp_directory)
 
-    tiff_directory = os.path.join(temp_directory, 'tiffs')
-    os.mkdir(tiff_directory)
-    tifs = create_geotiffs(hdf_filepath, tiff_directory)
+    tifs = create_geotiffs(hdf_filepath, temp_directory)
 
     s3_uris = upload_tifs(tifs, user_id, scene.id)
 

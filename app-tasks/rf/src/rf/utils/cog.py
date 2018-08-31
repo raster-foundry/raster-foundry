@@ -121,7 +121,8 @@ def resample_tif(src_path, local_dir, src_x, dst_x, src_y, dst_y):
     return dst_path
 
 
-def warp_tifs(local_tif_paths, local_dir):
+def warp_tifs(local_tif_paths, local_dir, parallel=True):
+    logger.info('Getting metadata for tifs')
     sources = [rasterio.open(p) for p in local_tif_paths]
     # a is x resoution, e is y resolution
     paths_with_resolutions = [
@@ -134,6 +135,7 @@ def warp_tifs(local_tif_paths, local_dir):
     tupled = [(src_path, local_dir, src_x, min_resolution[1], src_y,
                min_resolution[2])
               for src_path, src_x, src_y in paths_with_resolutions]
+    logger.info('Resampling to maximum available resolution')
     pool = Pool(cpu_count())
     try:
         warped_paths = pool.map(resample_tif_uncurried, tupled)
