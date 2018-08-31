@@ -50,7 +50,7 @@ services:
       - ./nginx/srv/dist/:/srv/dist/
       - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
-      - ./nginx/etc/nginx/conf.d/tiler.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/etc/nginx/conf.d/backsplash.conf:/etc/nginx/conf.d/default.conf
 
   nginx-tiler:
     image: raster-foundry-nginx-tiler
@@ -166,7 +166,6 @@ services:
       - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
       - RF_LOG_LEVEL=INFO
       - SBT_OPTS="-Xmx2G -XX:MaxPermSize=2G"
-      - "9030:9020"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./.sbt:/root/.sbt
