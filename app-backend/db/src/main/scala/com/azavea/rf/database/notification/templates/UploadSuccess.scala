@@ -42,7 +42,7 @@ case class UploadSuccess(
         val richBody = s"""
 <html>
   <p>
-    ${sceneAddedMsg} <a href="${projectUrl}>${project.name}</a> ${withImportIDMsg}. ${statusMsg} on the <a href="${importsUrl}>Imports Page</a>.
+    ${sceneAddedMsg} <a href="${projectUrl}">${project.name}</a> ${withImportIDMsg}. ${statusMsg} on the <a href="${importsUrl}">Imports Page</a>.
   </p>
   <p>
     ${signature}
@@ -59,7 +59,7 @@ case class UploadSuccess(
         val richBody = s"""
 <html>
   <p>
-    ${sceneAddedMsg} ${withImportIDMsg}. ${statusMsg} on the <a href="${importsUrl}>Imports Page</a>.
+    ${sceneAddedMsg} ${withImportIDMsg}. ${statusMsg} on the <a href="${importsUrl}">Imports Page</a>.
   </p>
   <p>
     ${signature}
