@@ -1,3 +1,6 @@
+from rf.utils import cog
+
+import glob
 import logging
 import os
 import subprocess
@@ -11,6 +14,7 @@ logger = logging.getLogger(__name__)
 def warp_tif(combined_tif_path, warped_tif_path, dst_crs={
         'init': 'EPSG:3857'
 }):
+    logger.info('Warping tif to web mercator: %s', combined_tif_path)
     with rasterio.open(combined_tif_path) as src:
         meta = src.meta
         new_meta = meta.copy()
@@ -20,7 +24,8 @@ def warp_tif(combined_tif_path, warped_tif_path, dst_crs={
             'crs': dst_crs,
             'transform': transform,
             'width': width,
-            'height': height
+            'height': height,
+            'nodata': -28762
         })
         with rasterio.open(
                 warped_tif_path, 'w', compress='LZW', tiled=True,
@@ -33,10 +38,23 @@ def warp_tif(combined_tif_path, warped_tif_path, dst_crs={
                     src_crs=src.crs,
                     dst_transform=transform,
                     dst_crs=dst_crs,
-                    resampling=Resampling.nearest)
+                    resampling=Resampling.nearest,
+                    src_nodata=-28762
+                )
 
 
-def create_geotiffs(modis_path, output_directory):
+def hdf_to_geotiffs(modis_path, local_dir):
+    # Separate out into tifs for each band
+    logger.info('Splitting MODIS bands from SDS %s', modis_path)
+    split_base_path = os.path.join(local_dir, 'split.tif')
+    translate_command = [
+        'gdal_translate', '-sds', modis_path, split_base_path
+    ]
+    subprocess.check_call(translate_command)
+    return glob.glob('{}/split*'.format(local_dir))
+
+
+def create_geotiffs(modis_path, local_dir):
     """Create geotiffs from MODIS HDF
 
     1. Create separate tifs for each band
@@ -46,67 +64,17 @@ def create_geotiffs(modis_path, output_directory):
 
     Args:
         modis_path (str): path to modis HDF file
-        output_directory (str): directory to output tiffs to
+        local_dir (str): directory to output tiffs to
     """
     logger.info('Preparing to create geotiffs')
 
-    # Set up directories/paths for created files
-    pre_warp_directory = os.path.join(output_directory, 'modis-separated')
-    os.mkdir(pre_warp_directory)
-    pre_warp_output_path = os.path.join(pre_warp_directory, 'B.tif')
-    combined_tif_filepath = os.path.join(output_directory, 'combined-tif.tif')
-    warped_tif_path = os.path.join(output_directory, 'warped-combined.tif')
-    cog_filename = '.'.join(
-        os.path.basename(modis_path).split('.')[:-1]) + '.tif'
-    cog_tif_filepath = os.path.join(output_directory, cog_filename)
+    post_web_mercator_path = os.path.join(local_dir, 'warp2.tif')
 
-    # Separate out into tifs for each band
-    translate_command = [
-        'gdal_translate', '-sds', modis_path, pre_warp_output_path
-    ]
-
-    # Combine into single tif (assign nodata value)
-    merge_command = [
-        'gdal_merge.py', '-o', combined_tif_filepath, '-a_nodata', '-28672',
-        '-separate'
-    ]
-
-    # Generate overviews
-    overview_command = [
-        'gdaladdo',
-        '-r', 'average',
-        '--config', 'COMPRESS_OVERVIEW', 'DEFLATE',
-        warped_tif_path
-    ]
-
-    # Create final tif with overviews
-    translate_cog_command = [
-        'gdal_translate', warped_tif_path, '-a_nodata', '-28672', '-co',
-        'TILED=YES', '-co', 'COMPRESS=LZW', '-co', 'COPY_SRC_OVERVIEWS=YES',
-        cog_tif_filepath
-    ]
-
-    logger.info('Creating tifs for Subdatasets: %s',
-                ' '.join(translate_command))
-    subprocess.check_call(translate_command)
-
-    tifs = [
-        os.path.join(pre_warp_directory, f)
-        for f in os.listdir(pre_warp_directory)
-    ]
-    # Sort so that band order is correct
-    tifs.sort()
-
-    logger.info('Running Merge Command: %s', ' '.join(merge_command + tifs))
-    subprocess.check_call(merge_command + tifs)
-
-    # Warp combined tif
-    logger.info('Warping tif %s => %s', combined_tif_filepath, warped_tif_path)
-    warp_tif(combined_tif_filepath, warped_tif_path)
-    logger.info('Running Overview Command: %s', ' '.join(overview_command))
-    subprocess.check_call(overview_command)
-    logger.info('Running COG translate Command: %s',
-                ' '.join(translate_cog_command))
-    subprocess.check_call(translate_cog_command)
-
-    return [cog_tif_filepath]
+    tifs = sorted(hdf_to_geotiffs(modis_path, local_dir))
+    logger.info('Tifs: %s', '\n'.join(tifs))
+    warped_paths = cog.warp_tifs(tifs, local_dir)
+    merged_tif = cog.merge_tifs(warped_paths, local_dir)
+    warp_tif(merged_tif, post_web_mercator_path)
+    cog.add_overviews(post_web_mercator_path)
+    cog_path = cog.convert_to_cog(post_web_mercator_path, local_dir)
+    return [cog_path]
