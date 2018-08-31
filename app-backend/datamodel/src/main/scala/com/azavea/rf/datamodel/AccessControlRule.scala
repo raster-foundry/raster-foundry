@@ -51,14 +51,14 @@ object AccessControlRule {
 @JsonCodec
 case class ObjectAccessControlRule(
   subjectType: SubjectType,
-  subjectIdO: Option[String],
+  subjectId: Option[String],
   actionType: ActionType
 ) {
-  def toObjAcrString: String = (subjectType, subjectIdO) match {
+  def toObjAcrString: String = (subjectType, subjectId) match {
     case (SubjectType.All, None) => s"ALL;;${actionType}"
-    case (SubjectType.All, Some(subjectId)) => throw new Exception(s"Invalid subjectId for subjectType All: ${subjectId}")
+    case (SubjectType.All, Some(subjectIdString)) => throw new Exception(s"Invalid subjectId for subjectType All: ${subjectIdString}")
     case (_, None) => throw new Exception(s"No subject Id provided for subject type: ${subjectType}")
-    case (_, Some(subjectId)) => s"${subjectType};${subjectId};${actionType}"
+    case (_, Some(subjectIdString)) => s"${subjectType};${subjectIdString};${actionType}"
   }
 }
 
