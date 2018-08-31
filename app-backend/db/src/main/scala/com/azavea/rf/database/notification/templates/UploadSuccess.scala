@@ -32,7 +32,7 @@ case class UploadSuccess(
       val newSceneMsg = "A new scene has been added to your project"
 
       uploadProject.map(project => {
-        val projectUrl = s"https://${platformHost}/projects/${project.id}"
+        val projectUrl = s"https://${platformHost}/projects/edit/${project.id}"
         val subject = s"""${newSceneMsg} "${project.name}""""
         val plainBody = s"""
           | ${sceneAddedMsg} at ${projectUrl} ${withImportIDMsg}. ${statusMsg} at: ${importsUrl}.
