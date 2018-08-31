@@ -1,46 +1,28 @@
 package com.azavea.rf.batch.aoi
 
-import com.auth0.client.mgmt._
-import com.auth0.client.mgmt.filter.UserFilter
-import com.auth0.client.auth._
-import com.auth0.json.auth.TokenHolder
-import com.azavea.rf.batch.Job
-import com.azavea.rf.datamodel._
-import java.sql.Timestamp
-import java.time.ZonedDateTime
-import java.util.UUID
-
-import cats._
-import cats.data._
-import cats.implicits._
-import cats.syntax._
-import cats.effect.IO
-import doobie._
-import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
-import doobie.util.transactor.Transactor
-import io.circe._
-import io.circe.Decoder.Result
-import io.circe.syntax._
-
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
-
-import geotrellis.slick.Projected
-import geotrellis.vector._
-
-import com.azavea.rf.common.AWSBatch
-import com.azavea.rf.common.notification.Email.NotificationEmail
-import com.azavea.rf.database._
-import com.azavea.rf.database.Implicits._
-import org.apache.commons.mail.Email
-import com.azavea.rf.database.util.RFTransactor
-
 import java.sql.Timestamp
 import java.time.Instant
+import java.util.UUID
 
-case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) extends Job with AWSBatch {
+import cats.effect.IO
+import cats.implicits._
+import com.azavea.rf.batch.Job
+import com.azavea.rf.common.AWSBatch
+import com.azavea.rf.common.notification.Email.NotificationEmail
+import com.azavea.rf.database.Implicits._
+import com.azavea.rf.database._
+import com.azavea.rf.database.util.RFTransactor
+import com.azavea.rf.datamodel._
+import doobie._
+import doobie.implicits._
+import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
+import io.circe.Decoder.Result
+import io.circe._
+import geotrellis.vector._
+import org.apache.commons.mail.Email
+
+final case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) extends Job with AWSBatch {
   val name = FindAOIProjects.name
 
   type LastChecked = Timestamp
@@ -83,7 +65,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
         val (pub, pri) = (platform.publicSettings, platform.privateSettings)
         (pub.emailSmtpHost, pub.emailSmtpPort, pub.emailSmtpEncryption, pub.emailUser, pri.emailPassword, userEmailAddress) match {
           case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
-            email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
+          email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
             val (subject, html, plain) = aoiEmailContent(project, platform, user, sceneCount)
             email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, subject, html, plain).map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified project owner ${user.id} about AOI updates")
@@ -114,8 +96,9 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
     }
   }
 
-  def run: Unit = {
+  def run(): Unit = {
     logger.info(s"Updating project ${projectId}")
+
     /** Fetch the project, AOI area, last checked time, start time, and AOI scene query parameters */
     def fetchBaseData: ConnectionIO[
       (String, Projected[MultiPolygon], StartTime, LastChecked, Result[CombinedSceneQueryParams])] = {
@@ -136,7 +119,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
         .query[(String, Projected[MultiPolygon], StartTime, LastChecked, Json)]
         .unique
         .map(
-          { case (projOwner: String, g: Projected[MultiPolygon], startTime: StartTime, lastChecked: LastChecked, f:Json) => (projOwner, g, startTime, lastChecked, f.as[CombinedSceneQueryParams])
+          { case (projOwner: String, g: Projected[MultiPolygon], startTime: StartTime, lastChecked: LastChecked, f: Json) => (projOwner, g, startTime, lastChecked, f.as[CombinedSceneQueryParams])
           }
         )
     }
@@ -148,11 +131,11 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
       val baseParams = queryParams.getOrElse(CombinedSceneQueryParams())
       val augmentedQueryParams =
         baseParams.copy(
-          sceneParams=baseParams.sceneParams.copy(
-            minAcquisitionDatetime=Some(startTime)
+          sceneParams = baseParams.sceneParams.copy(
+            minAcquisitionDatetime = Some(startTime)
           ),
-          timestampParams=baseParams.timestampParams.copy(
-            minCreateDatetime=Some(lastChecked)
+          timestampParams = baseParams.timestampParams.copy(
+            minCreateDatetime = Some(lastChecked)
           )
         )
       SceneDao
@@ -177,7 +160,7 @@ case class UpdateAOIProject(projectId: UUID)(implicit val xa: Transactor[IO]) ex
 
     def updateProjectIO(user: User, projectId: UUID): ConnectionIO[Int] = for {
       proj <- ProjectDao.unsafeGetProjectById(projectId)
-      newProject = proj.copy(aoisLastChecked=Timestamp.from(Instant.now))
+      newProject = proj.copy(aoisLastChecked = Timestamp.from(Instant.now))
       affectedRows <- ProjectDao.updateProject(newProject, proj.id, user)
     } yield affectedRows
 
@@ -203,11 +186,11 @@ object UpdateAOIProject {
   def main(args: Array[String]): Unit = {
 
     val job = args.toList match {
-     case List(projectId) => UpdateAOIProject(UUID.fromString(projectId))
-     case _ =>
-       throw new IllegalArgumentException("Argument could not be parsed to UUID")
-   }
+      case List(projectId) => UpdateAOIProject(UUID.fromString(projectId))
+      case _ =>
+        throw new IllegalArgumentException("Argument could not be parsed to UUID")
+    }
 
-   job.run
+    job.run
   }
 }

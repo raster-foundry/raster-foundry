@@ -56,7 +56,7 @@ object StitchLayer extends LazyLogging with Config {
         .stitch
         .crop(re.extent)
     } match {
-      case Success(tile) => Some(tile)
+      case Success(raster) => Some(raster.tile)
       case Failure(_) => None
     }
   }

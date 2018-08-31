@@ -22,7 +22,8 @@
     </button>
     <i class="icon-info"></i>
   </li>
-  <li class="separator">
+  <!-- Opens the output processing panel -->
+  <!-- <li class="separator">
     <div class="label">
       Output Processing
     </div>
@@ -33,6 +34,26 @@
       <button type="button" class="btn btn-default dropdown-toggle">
         <i class="icon-settings"></i>
       </button>
+    </div>
+    <i class="icon-info"></i>
+  </li> -->
+  <!-- Dropdown for output processing -->
+  <li class="separator">
+    <span class="label">Output Processing</span>
+    <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+      <a class="btn dropdown-label">
+        {{$ctrl.getCurrentProcessingOption().label}}
+      </a>
+      <button type="button" class="btn btn-default dropdown-toggle">
+        <i class="icon-caret-down"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+        <li ng-repeat="option in $ctrl.availableProcessingOptions" role="menuitem">
+          <a ng-click="$ctrl.onOutputProcessingChange(option)">
+            {{option.label}}
+          </a>
+        </li>
+      </ul>
     </div>
     <i class="icon-info"></i>
   </li>
@@ -86,7 +107,9 @@
     Starting export...
   </button>
 </div>
-<div class="sidebar sidebar-extended sidebar-dark"
+
+<!-- Output processing panel -->
+<!-- <div class="sidebar sidebar-extended sidebar-dark"
      ng-show="$ctrl.showParameters">
   <div class="sidebar-header dark">
     <h5>Output Processing</h5>
@@ -130,4 +153,4 @@
       </li>
     </ul>
   </div>
-</div>
+</div> -->

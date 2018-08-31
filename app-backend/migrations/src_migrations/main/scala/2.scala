@@ -1,7 +1,7 @@
 import com.liyaos.forklift.slick.{SqlMigration, DBIOMigration}
 import java.sql.Timestamp
 import java.util.{Calendar, Date, UUID}
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 
 /**
   * Data migration that adds a root organization

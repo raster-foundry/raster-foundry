@@ -13,14 +13,13 @@ import cats.data._
 import cats.effect.IO
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.slick.Projected
-import geotrellis.vector.Polygon
+import geotrellis.vector.{MultiPolygon, Polygon, Projected}
 import geotrellis.raster.histogram._
 import doobie.Fragments._
 import doobie.Fragments._
 
 import scala.concurrent.Future
-
+import scala.util.Properties
 
 object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
 
@@ -70,8 +69,11 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     } yield sceneIds
   }
 
-  // Check swagger spec for appropriate return type
-  def getMosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]]): ConnectionIO[Seq[MosaicDefinition]] = {
+  def getMosaicDefinition(projectId: UUID,
+                          polygonOption: Option[Projected[Polygon]],
+                          redBand: Option[Int] = None,
+                          greenBand: Option[Int] = None,
+                          blueBand: Option[Int] = None): ConnectionIO[Seq[MosaicDefinition]] = {
 
     val filters = List(
       polygonOption.map(polygon => fr"ST_Intersects(scenes.tile_footprint, ${polygon})"),
@@ -89,11 +91,14 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       """
     for {
       stps <- {
-        (select ++ whereAndOpt(filters: _*)).query[SceneToProjectwithSceneType].list
+        (select ++ whereAndOpt(filters: _*)).query[SceneToProjectwithSceneType].to[List]
       }
     } yield {
       logger.debug(s"Found ${stps.length} scenes in projects")
-      val md = MosaicDefinition.fromScenesToProjects(stps)
+      val md = (redBand, greenBand, blueBand).tupled match {
+        case Some((r, g, b)) => MosaicDefinition.fromScenesToProjects(stps, r, g, b)
+        case _ => MosaicDefinition.fromScenesToProjects(stps)
+      }
       logger.debug(s"Mosaic Definition: ${md}")
       md
     }

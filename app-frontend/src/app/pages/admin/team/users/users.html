@@ -1,18 +1,23 @@
 <div class="admin-list-content column-stretch">
-  <div class="admin-list-actions" ng-if="$ctrl.results.length">
+  <div class="admin-list-actions">
     <div>
-      <rf-search on-search="$ctrl.onSearch(value)" placeholder="Search for users" auto-focus="true"></rf-search>
       <rf-pagination-count
         start-index="$ctrl.pagination.startingItem"
         end-index="$ctrl.pagination.endingItem"
         total="$ctrl.pagination.count"
         item-name="users"
-        ng-if="!$ctrl.loading && $ctrl.results.length && !$ctrl.searchTerm"
-      ></rf-pagination-count>
+        ng-if="!$ctrl.currentQuery && $ctrl.results.length"
+      >
+        <span ng-if="$ctrl.search">while searching for <strong>{{$ctrl.search}}</strong></span>
+      </rf-pagination-count>
     </div>
     <div class="actions-right">
+      <rf-search on-search="$ctrl.fetchPage(1, value)"
+                 value="$ctrl.search"
+                 placeholder="Search for users"
+                 auto-focus="true"></rf-search>
       <button type="button" class="btn btn-primary"
-              ng-click="$ctrl.addUser()" ng-disabled="$ctrl.loading">
+              ng-click="$ctrl.addUser()" ng-disabled="$ctrl.currentQuery">
         Invite Users
       </button>
     </div>
@@ -20,8 +25,8 @@
   <rf-call-to-action-item
     title="No users are in this team yet"
     class="panel panel-off-white"
-    ng-if="!$ctrl.results.length && !$ctrl.loading">
-    <p class="pb-25">
+    ng-if="!$ctrl.results.length && !$ctrl.currentQuery && !$ctrl.search">
+    <p class="pb-25" ng-show="!$ctrl.search">
       The {{$ctrl.team.name}} team does not have any users yet.
       When it does, they'll be shown here.
     </p>
@@ -32,8 +37,14 @@
       Add Users
     </button>
   </rf-call-to-action-item>
+  <rf-call-to-action-item
+      title="No users were found"
+      class="panel panel-off-white"
+      ng-if="!$ctrl.currentQuery && !$ctrl.results.length && $ctrl.search">
+    Unable to find any users matching: <strong>{{$ctrl.search}}</strong>
+  </rf-call-to-action-item>
 
-  <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.loading && $ctrl.results.length">
+  <table class="admin-table admin-platform-user-table" ng-if="!$ctrl.currentQuery && $ctrl.results.length">
     <tbody>
       <tr ng-repeat="user in $ctrl.results">
         <td class="username">
@@ -75,12 +86,13 @@
       </tr>
     </tbody>
   </table>
-  <div class="table-loading" ng-if="$ctrl.loading">
-    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.loading}"></span>
+  <div class="table-loading" ng-if="$ctrl.currentQuery">
+    <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.currentQuery}"></span>
   </div>
   <rf-pagination-controls
     pagination="$ctrl.pagination"
-    is-loading="$ctrl.loading"
+    is-loading="$ctrl.currentQuery"
     on-change="$ctrl.fetchPage(value)"
+    ng-show="!$ctrl.currentQuery && !$ctrl.fetchError"
   ></rf-pagination-controls>
 </div>

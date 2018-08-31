@@ -1,9 +1,16 @@
 addCommandAlias("mg", "migrations/run")
 
-// Add the default sonatype repository setting
-publishTo := sonatypePublishTo.value
+addCommandAlias("gitSnapshots", ";set version in ThisBuild := git.gitDescribedVersion.value.get + \"-SNAPSHOT\"")
+
+git.gitTagToVersionNumber in ThisBuild := { tag: String =>
+  if(tag matches "[0-9]+\\..*") Some(tag)
+  else None
+}
 
 lazy val commonSettings = Seq(
+  // Add the default sonatype repository setting
+  publishTo := sonatypePublishTo.value,
+
   organization := "com.rasterfoundry",
   organizationName := "Raster Foundry",
   organizationHomepage := Some(new URL("https://www.rasterfoundry.com")),
@@ -378,6 +385,7 @@ lazy val bridge = Project("bridge", file("bridge"))
       Dependencies.circeCore,
       Dependencies.circeGeneric,
       Dependencies.circeParser,
-      Dependencies.geotrellisVector
+      Dependencies.geotrellisVector,
+      Dependencies.scalaLogging
     )
   })

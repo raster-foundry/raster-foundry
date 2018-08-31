@@ -12,8 +12,7 @@ import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.raster.GridBounds
 import geotrellis.proj4._
-import geotrellis.slick.Projected
-import geotrellis.vector.{Extent, Point, Polygon}
+import geotrellis.vector.{Extent, Point, Polygon, Projected}
 import cats.data._
 import cats.implicits._
 import cats.effect.IO
@@ -24,7 +23,7 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-import com.azavea.rf.common.utils.{CogUtils, RangeReaderUtils, TileUtils}
+import com.azavea.rf.common.utils.{CogUtils, CryptoUtils, RangeReaderUtils, TileUtils}
 import com.azavea.rf.database.util.RFTransactor
 
 import scala.concurrent._
@@ -76,6 +75,11 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     } else (
       mosaicDefinition(id, polygonOption)
     )
+  }
+
+  def mosaicDefinition(projectId: UUID, polygonOption: Option[Projected[Polygon]], redBand: Int, greenBand: Int, blueBand: Int)(
+    implicit xa: Transactor[IO]): Future[Seq[MosaicDefinition]] = {
+    SceneToProjectDao.getMosaicDefinition(projectId, polygonOption, Some(redBand), Some(greenBand), Some(blueBand)).transact(xa).unsafeToFuture
   }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */
@@ -268,6 +272,26 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     }
   }
 
+  def apply(
+      projectId: UUID,
+      zoom: Int,
+      col: Int,
+      row: Int,
+      redBand: Int,
+      greenBand: Int,
+      blueBand: Int
+  )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = traceName(s"MultiBandMosaic.apply($projectId)") {
+    logger.debug(s"Creating mosaic (project: $projectId, zoom: $zoom, col: $col, row: $row)")
+
+    val polygonBbox: Projected[Polygon] = TileUtils.getTileBounds(zoom, col, row)
+    val md: Future[Seq[MosaicDefinition]] = mosaicDefinition(projectId, Option(polygonBbox), redBand, greenBand, blueBand)
+    OptionT(
+      mergeTiles(
+        renderForBbox(md, Some(polygonBbox), zoom, Some(s"${zoom}-${col}-${row}"))
+      )
+    )
+  }
+
   def renderForBbox(
     mds: Future[Seq[MosaicDefinition]],
     bbox: Option[Projected[Polygon]],
@@ -319,8 +343,8 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     }
 
     val cacheKey = extent match {
-      case Some(e) => s"scene-bbox-${sceneId}-${zoom}-${e.xmin}-${e.ymin}-${e.xmax}-${e.ymax}-${colorCorrectParams.hashCode()}"
-      case _ => s"scene-bbox-${sceneId}-${zoom}-no-extent-${colorCorrectParams.hashCode()}"
+      case Some(e) => s"scene-bbox-${sceneId}-${zoom}-${e.xmin}-${e.ymin}-${e.xmax}-${e.ymax}-${CryptoUtils.sha1(colorCorrectParams.toString)}"
+      case _ => s"scene-bbox-${sceneId}-${zoom}-no-extent-${CryptoUtils.sha1(colorCorrectParams.toString)}"
     }
 
 

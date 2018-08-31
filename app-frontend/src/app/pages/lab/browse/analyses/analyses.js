@@ -3,7 +3,7 @@ import {Set} from 'immutable';
 class LabBrowseAnalysesController {
     constructor(
         $scope, $state, $log,
-        analysisService, authService, localStorage, modalService, exportService
+        analysisService, authService, localStorage, modalService, exportService, paginationService
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -15,7 +15,7 @@ class LabBrowseAnalysesController {
         this.defaultSortingDirection = 'desc';
         this.defaultSortingField = 'modifiedAt';
         this.initSorting();
-        this.fetchAnalysesList(this.$state.params.page);
+        this.fetchPage();
         this.selected = new Set();
     }
 
@@ -31,44 +31,52 @@ class LabBrowseAnalysesController {
         }
     }
 
-    fetchAnalysesList(page = 1) {
-        this.loadingAnalyses = true;
-        this.analysisService.fetchAnalyses(
-            {
-                pageSize: 10,
-                page: page - 1,
-                sort: this.serializeSort()
+    fetchPage(
+        page = this.$state.params.page || 1,
+        search = this.$state.params.search,
+        sort = this.deserializeSort(this.$state.params.sort)
+    ) {
+        this.search = search && search.length ? search : null;
+        delete this.fetchError;
+        this.analyses = [];
+        const currentQuery = this.analysisService.fetchAnalyses({
+            pageSize: 10,
+            page: page - 1,
+            sort: this.serializeSort(),
+            search: this.search
+        }).then(paginatedResponse => {
+            this.analyses = paginatedResponse.results;
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page, search, this.serializeSort());
+            this.checkAnalysesExports(this.analyses);
+            if (this.currentQuery) {
+                delete this.fetchError;
             }
-        ).then(d => {
-            this.currentPage = page;
-            this.updatePagination(d);
-            let replace = !this.$state.params.page;
-            this.$state.transitionTo(
-                this.$state.$current.name,
-                {page: this.currentPage},
-                {
-                    location: replace ? 'replace' : true,
-                    notify: false
-                }
-            );
-            this.lastAnalysisResponse = d;
-            this.analysesList = d.results;
-            this.loadingAnalyses = false;
-
-            this.checkAnalysesExports(this.analysesList);
+        }, (e) => {
+            if (this.currentQuery === currentQuery) {
+                this.fetchError = e;
+            }
+        }).finally(() => {
+            if (this.currentQuery === currentQuery) {
+                delete this.currentQuery;
+            }
         });
+        this.currentQuery = currentQuery;
     }
 
-    updatePagination(data) {
-        this.pagination = {
-            show: data.count > data.pageSize,
-            count: data.count,
-            currentPage: data.page + 1,
-            startingItem: data.page * data.pageSize + 1,
-            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious
-        };
+    shouldShowPlaceholder() {
+        return !this.currentQuery &&
+            !this.fetchError &&
+            (!this.search || !this.search.length) &&
+            this.analyses &&
+            this.analyses.length === 0;
+    }
+
+    shouldShowEmptySearch() {
+        return !this.currentQuery &&
+            !this.fetchError &&
+            this.search && this.search.length &&
+            this.analyses && !this.analyses.length;
     }
 
     formatAnalysisVisibility(visibility) {
@@ -83,7 +91,7 @@ class LabBrowseAnalysesController {
         return `${this.sortingField},${this.sortingDirection}`;
     }
 
-    deserializeSort(sortString) {
+    deserializeSort(sortString = `${this.defaultSortingField},${this.defaultSortingDirection}`) {
         const splitSortString = sortString.split(',');
         return {
             field: splitSortString[0],
@@ -111,7 +119,7 @@ class LabBrowseAnalysesController {
             this.sortingDirection = this.defaultSortingDirection;
         }
         this.storeSorting();
-        this.fetchAnalysesList(this.currentPage);
+        this.fetchPage(this.currentPage);
     }
 
     deleteSelected() {
@@ -127,14 +135,15 @@ class LabBrowseAnalysesController {
         });
 
         modal.result.then(() => {
+            // TODO: use $q.all instead
             this.selected.forEach((id) => {
                 this.analysisService.deleteAnalysis(id).then(() => {
                     this.selected = this.selected.delete(id);
                     if (this.selected.size === 0) {
-                        this.fetchAnalysesList();
+                        this.fetchPage();
                     }
                 }, () => {
-                    this.fetchAnalysesList();
+                    this.fetchPage();
                 });
             });
         });
@@ -152,8 +161,7 @@ class LabBrowseAnalysesController {
         this.modalService.open({
             component: 'rfExportAnalysisDownloadModal',
             resolve: {
-                analysis: () => analysis,
-                exports: () => this.analysesExports[analysis.id].results
+                analysis: () => analysis
             }
         });
     }
@@ -174,7 +182,7 @@ class LabBrowseAnalysesController {
             }
         ).then(firstPageExports => {
             if (firstPageExports.results.find(r => r.toolRunId === analysisId)) {
-                this.analysesExports[analysisId] = firstPageExports;
+                this.analysesExports[analysisId] = firstPageExports.count;
             }
         });
     }

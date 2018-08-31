@@ -35,11 +35,42 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
             echo "Building application JAR"
             docker-compose \
-                run --rm --no-deps api-server api/assembly
+                -f "${DIR}/../docker-compose.test.yml" \
+                run --rm --no-deps \
+                build api/assembly
 
             echo "Building tile server JAR"
             docker-compose \
-                run --rm --no-deps tile-server tile/assembly
+                -f "${DIR}/../docker-compose.test.yml" \
+                run --rm --no-deps \
+                build tile/assembly
+
+            # Build these projects as SNAPSHOT artifacts and publish to
+            # Sonatype OSSRH (Snapshot Repository). 
+            if [ "$(whoami)" == "jenkins" ]; then
+                projects=( \
+                    "api" \
+                    "authentication" \
+                    "batch" \
+                    "datamodel" \
+                    "db" \
+                    "tile" \
+                )
+
+                for project in "${projects[@]}"
+                do
+                    echo "Publishing ${project} artifact"
+
+#                     docker-compose \
+#                        -f "${DIR}/../docker-compose.test.yml" \
+#                        run --rm --no-deps \
+#                        -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
+#                        -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
+#                        -e PGP_HEX_KEY="${PGP_HEX_KEY}" \
+#                        -e PGP_PASSPHRASE="${PGP_PASSPHRASE}" \
+#                        build gitSnapshots "${project}/publishSigned"
+                done
+            fi
 
             echo "Building container images"
             GIT_COMMIT="${GIT_COMMIT}" docker-compose \

@@ -9,6 +9,15 @@
           Import scenes
         </a>
       </div>
+      <div class="alert alert-primary" ng-if="$ctrl.pendingImports">
+        <div class="alert-message">
+          <ng-pluralize count="$ctrl.pendingImports"
+                    when="{'one': '{} import is',
+                          'other': '{} imports are'
+                          }">
+          </ng-pluralize> being processed
+        </div>
+      </div>
       <!-- Dashboard Header -->
       <!-- Imports list -->
       <rf-import-list

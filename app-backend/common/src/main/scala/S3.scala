@@ -8,7 +8,6 @@ import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder, AmazonS3URI}
 import com.amazonaws.services.s3.model.{ListObjectsRequest, ObjectListing, ObjectMetadata, S3Object}
 import com.amazonaws.HttpMethod
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
-
 import java.io._
 import java.net._
 import java.time.{Duration, ZoneOffset}
@@ -30,7 +29,7 @@ package object S3 {
 
   // we want to ignore here, because uri.getHost returns null instead of an Option[String] -- thanks Java
   @SuppressWarnings(Array("NullParameter"))
-  def bucketAndPrefixFromURI(uri: URI): (String, String) = {
+  def bucketAndPrefixFromURI(uri: URI, stripSlash: Boolean = true): (String, String) = {
     val prefix = uri.getPath match {
       case "" => ""
       case "/" => ""
@@ -44,7 +43,9 @@ package object S3 {
       case _ => throw new IllegalStateException(s"Ambiguous bucket parse: $uri")
     }
 
-    (bucket.replace(".s3.amazonaws.com", ""), prefix.replaceAll("/\\z", ""))
+    val prefixSanitized = if (stripSlash) prefix.replaceAll("/\\z", "") else prefix
+
+    (bucket.replace(".s3.amazonaws.com", ""), prefixSanitized)
   }
 
   def getObject(uri: URI): S3Object = {
@@ -67,7 +68,7 @@ package object S3 {
     client.generatePresignedUrl(generatePresignedUrlRequest)
   }
 
-  def getSignedUrls(source: URI, duration: Duration = Duration.ofDays(1)): List[URL] = {
+  def getSignedUrls(source: URI, duration: Duration = Duration.ofDays(1), stripSlash: Boolean = true): List[URL] = {
     @tailrec
     def get(listing: ObjectListing, accumulator: List[URL]): List[URL] = {
       def getObjects: List[URL] =
@@ -85,7 +86,7 @@ package object S3 {
       else get(client.listNextBatchOfObjects(listing), getObjects)
     }
 
-    val (bucket, prefix) = bucketAndPrefixFromURI(source)
+    val (bucket, prefix) = bucketAndPrefixFromURI(source, stripSlash)
 
     val listObjectsRequest =
       new ListObjectsRequest()
@@ -96,7 +97,7 @@ package object S3 {
     get(client.listObjects(listObjectsRequest), Nil)
   }
 
-  def getObjectKeys(source: URI): List[String] = {
+  def getObjectKeys(source: URI, stripSlash: Boolean = true): List[String] = {
     @tailrec
     def get(listing: ObjectListing, accumulator: List[String]): List[String] = {
       def getObjects: List[String] =
@@ -111,7 +112,7 @@ package object S3 {
       else get(client.listNextBatchOfObjects(listing), getObjects)
     }
 
-    val (bucket, prefix) = bucketAndPrefixFromURI(source)
+    val (bucket, prefix) = bucketAndPrefixFromURI(source, stripSlash)
 
     val listObjectsRequest =
       new ListObjectsRequest()
@@ -122,7 +123,7 @@ package object S3 {
     get(client.listObjects(listObjectsRequest), Nil)
   }
 
-  def getObjectPaths(source: URI): List[String] = {
+  def getObjectPaths(source: URI, stripSlash: Boolean = true): List[String] = {
     @tailrec
     def get(listing: ObjectListing, accumulator: List[String]): List[String] = {
       def getObjects: List[String] =
@@ -137,7 +138,7 @@ package object S3 {
       else get(client.listNextBatchOfObjects(listing), getObjects)
     }
 
-    val (bucket, prefix) = bucketAndPrefixFromURI(source)
+    val (bucket, prefix) = bucketAndPrefixFromURI(source, stripSlash)
 
     val listObjectsRequest =
       new ListObjectsRequest()

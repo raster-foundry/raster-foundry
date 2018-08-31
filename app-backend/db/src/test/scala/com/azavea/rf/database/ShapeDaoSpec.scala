@@ -14,7 +14,6 @@ import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
 
-import geotrellis.slick.Projected
 import geotrellis.vector.{MultiPolygon, Polygon, Point}
 
 
@@ -100,4 +99,3 @@ class ShapeDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
     }
   }
 }
-

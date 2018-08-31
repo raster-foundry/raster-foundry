@@ -63,7 +63,6 @@
       ]
     },
     "crop": false,
-    "stitch": true,
     "source": "s3://rasterfoundry-test/colin-test-stitch/"
   }
 }

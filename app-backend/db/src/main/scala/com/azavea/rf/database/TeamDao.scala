@@ -71,10 +71,11 @@ object TeamDao extends Dao[Team] {
       )
   }
 
-  def listOrgTeams(organizationId: UUID, page: PageRequest): ConnectionIO[PaginatedResponse[Team]] = {
+  def listOrgTeams(organizationId: UUID, page: PageRequest, qp: TeamQueryParameters): ConnectionIO[PaginatedResponse[Team]] = {
     TeamDao.query
       .filter(fr"organization_id = ${organizationId}")
       .filter(fr"is_active = true")
+      .filter(qp)
       .page(page)
   }
 
@@ -215,7 +216,13 @@ object TeamDao extends Dao[Team] {
     val userGroupRoleCreate = UserGroupRole.Create(
       subjectId, GroupType.Team, teamId, groupRole
     )
-    createUserGroupRole(teamId, actingUser, subjectId, userGroupRoleCreate, platformId)
+    val isSameOrgIO: ConnectionIO[Boolean] = for {
+      team <- unsafeGetTeamById(teamId)
+      orgId = team.organizationId
+      userToAdd <- UserDao.unsafeGetUserById(subjectId)
+      userIsOrgMember <- OrganizationDao.userIsMember(userToAdd, orgId)
+    } yield { userIsOrgMember }
+    createUserGroupRole(teamId, actingUser, subjectId, userGroupRoleCreate, platformId, isSameOrgIO)
   }
 
   def deactivateUserRoles(actingUser: User, subjectId: String, teamId: UUID): ConnectionIO[List[UserGroupRole]] = {

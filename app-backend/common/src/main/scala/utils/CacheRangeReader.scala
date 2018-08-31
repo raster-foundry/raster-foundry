@@ -2,8 +2,8 @@ package com.azavea.rf.common.utils
 
 import geotrellis.util._
 
-case class CacheRangeReader(rr: RangeReader, cachedBytes: Array[Byte])
-    extends RangeReader {
+final case class CacheRangeReader(rr: RangeReader, cachedBytes: Array[Byte])
+  extends RangeReader {
   def totalLength: Long = rr.totalLength
 
   override def readRange(start: Long, length: Int): Array[Byte] = {

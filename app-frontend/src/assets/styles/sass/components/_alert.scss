@@ -1,33 +1,56 @@
 .alert {
-  padding: .5rem 1rem;
+  padding: .8rem 1rem;
   border-radius: $border-radius-base;
+  border: 1px solid;
   flex: 1;
+  font-weight: 600;
   text-align: center;
-  color: #fff;
-  background-color: $shade-normal;
-  margin-bottom: 1rem;
+  * + .alert {
+    margin-top: 1rem;
+  }
+}
+
+.alert-action {
+  @extend .btn;
+  @extend .btn-ghost;
+  @extend .btn-small;
+  margin-top: .5rem;
+  background: transparent !important;
 }
 
 @mixin alert-state($color) {
-  background-color: $color;
+  background-color: rgba($color, .1);
+  border-color: rgba($color, .4);
+  color: desaturate(darken($color, 30%), 30%);
+
+  hr {
+    border-color: rgba($color, .4);
+  }
+
+  .alert-action {
+    border: 1px solid $color !important;
+    color: desaturate(darken($color, 30%), 30%) !important;
+  }
 }
 
 .alert-default {
-  @include alert-state($off-white);
-  color: $text-base;
-  border: 1px solid darken($off-white, 10%);
+  @include alert-state($shade-light);
+
 }
 
 .alert-primary {
   @include alert-state($brand-primary);
+
 }
 
 .alert-secondary {
   @include alert-state($brand-secondary);
+
 }
 
 .alert-warning {
   @include alert-state($warning);
+
 }
 
 .alert-danger {
@@ -36,10 +59,5 @@
 
 .alert-message {
   @extend .p;
-  margin-top: 0;
-}
-
-.alert-action {
-  @extend .btn;
-  @extend .btn-ghost-white
+  margin: 0;
 }

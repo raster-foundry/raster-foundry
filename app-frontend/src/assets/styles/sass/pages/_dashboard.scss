@@ -19,6 +19,10 @@
   .form-group {
     margin: 0 1rem;
   }
+
+  & > .form-control {
+    width: auto;
+  }
 }
 
 .dashboard-header-reveal {

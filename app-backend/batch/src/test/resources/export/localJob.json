@@ -47,7 +47,8 @@
             "autoBalance": {
               "enabled": false
             }
-          }
+          },
+          "sceneType": "AVRO"
         }
       ],
       "mask": {
@@ -83,7 +84,6 @@
   },
   "output": {
     "source": "s3://test/",
-    "stitch": false,
     "render": {
       "operation": "id",
       "bands": [

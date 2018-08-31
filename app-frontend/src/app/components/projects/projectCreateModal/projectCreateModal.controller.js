@@ -106,7 +106,8 @@ export default class ProjectCreateModalController {
             backdrop: 'static',
             keyboard: false,
             resolve: {
-                project: () => this.project
+                project: () => this.project,
+                origin: () => 'projectCreate'
             }
         });
     }

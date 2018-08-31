@@ -7,8 +7,7 @@ import io.circe._
 import io.circe.generic.JsonCodec
 import io.circe.generic.extras._
 
-import geotrellis.slick.Projected
-import geotrellis.vector.Geometry
+import geotrellis.vector.{Geometry, Projected}
 import java.security.InvalidParameterException
 
 @JsonCodec

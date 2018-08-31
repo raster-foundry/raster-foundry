@@ -26,7 +26,6 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     rasterSize = Some(256),
     render = Some(Render(operation = "id", bands = Some(Array(1, 2, 3)))),
     crop = false,
-    stitch = false,
     source = new URI("s3://test/"),
     dropboxCredential = None
   )
@@ -111,7 +110,8 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
             ExportLayerDefinition(
               layerId = UUID.fromString("8436f7e9-b7f7-4d4f-bda8-76b32c356cff"),
               ingestLocation = new URI("s3://test/"),
-              colorCorrections = Some(cc)
+              colorCorrections = Some(cc),
+              sceneType = SceneType.Avro
             )),
           mask = Some(mask)
         ))

@@ -4,6 +4,7 @@ import com.azavea.rf.common.cache._
 import com.azavea.rf.common.cache.kryo._
 import com.azavea.rf.common.{Config => CommonConfig}
 
+import com.amazonaws.services.s3.AmazonS3URI
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.crop._
@@ -14,16 +15,25 @@ import geotrellis.raster.io.geotiff._
 import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 import geotrellis.util._
 import geotrellis.proj4._
+import geotrellis.spark._
+import geotrellis.spark.io._
+import geotrellis.spark.io.s3._
+import geotrellis.spark.io.s3.util._
 import geotrellis.spark.tiling._
+import geotrellis.vector.Projected
 
-import scala.concurrent._
+import org.apache.spark.{HashPartitioner, SparkContext}
+import org.apache.spark.rdd.RDD
+
 import cats.data._
 import cats.implicits._
-import geotrellis.slick.Projected
+
+import scala.concurrent._
+import java.net.URLDecoder
 
 object CogUtils {
   lazy val cacheConfig = CommonConfig.memcached
-  lazy val memcachedClient = KryoMemcachedClient.DEFAULT
+  lazy val memcachedClient = KryoMemcachedClient.default
   lazy val rfCache = new CacheClient(memcachedClient)
 
   private val TmsLevels: Array[LayoutDefinition] = {
@@ -45,9 +55,62 @@ object CogUtils {
     }.mapFilter { headerBytes =>
       RangeReaderUtils.fromUri(uri).map { rr =>
         val crr = CacheRangeReader(rr, headerBytes)
-        GeoTiffReader.readMultiband(crr, decompress = false, streaming = true)
+        GeoTiffReader.readMultiband(crr, streaming = true)
       }
     }
+  }
+
+  def fromUriAsRdd(uri: String)(implicit sc: SparkContext) = {
+    val maxTileSize = 256
+    val pixelBuffer = 16
+    val partitionBytes = pixelBuffer * 1024 * 1024
+    def readInfo = {
+      GeoTiffReader.readGeoTiffInfo(
+        RangeReaderUtils.fromUri(uri).getOrElse(
+          throw new IllegalArgumentException(s"Unable to create range reader for uri $uri")
+        ),
+        streaming = true, withOverviews = true
+      )
+    }
+
+    val info = readInfo
+
+    // This listing can be masked by Geometry if desired
+    val windows: Array[GridBounds] = info
+      .segmentLayout
+      .listWindows(maxTileSize)
+      .map(_.buffer(pixelBuffer))
+
+    val partitions: Array[Array[GridBounds]] = info.segmentLayout.partitionWindowsBySegments(
+      windows, partitionBytes / math.max(info.cellType.bytes, 1))
+
+    val layoutScheme = FloatingLayoutScheme(maxTileSize)
+
+    val projectedExtentRDD: RDD[(ProjectedExtent, MultibandTile)] = sc.parallelize(partitions, partitions.length).flatMap { bounds =>
+      // re-constructing here to avoid serialization pit-falls
+      val info = readInfo
+      val geoTiff = GeoTiffReader.geoTiffMultibandTile(info)
+      val window = geoTiff.crop(bounds.filter(geoTiff.gridBounds.intersects))
+
+      window.map { case (bound, tile) =>
+        val extent = info.rasterExtent.extentFor(bound, clamp = false)
+        ProjectedExtent(extent, info.crs) -> tile
+      }
+    }
+
+    val (_: Int, metadata: TileLayerMetadata[SpatialKey]) =
+      projectedExtentRDD.collectMetadata[SpatialKey](layoutScheme)
+
+    val tilerOptions =
+      Tiler.Options(
+        resampleMethod = Bilinear,
+        partitioner = new HashPartitioner(projectedExtentRDD.partitions.length)
+      )
+
+    val tiledRdd =
+      projectedExtentRDD.tileToLayout[SpatialKey](metadata, tilerOptions)
+
+    ContextRDD(tiledRdd, metadata)
   }
 
   def fetch(uri: String, zoom: Int, x: Int, y: Int)(implicit ec: ExecutionContext): OptionT[Future, MultibandTile] =
@@ -149,7 +212,7 @@ object CogUtils {
   def getTiffExtent(uri: String): Option[Projected[MultiPolygon]] = {
     for {
       rr <- RangeReaderUtils.fromUri(uri)
-      tiff = GeoTiffReader.readMultiband(rr, decompress = false, streaming = true)
+      tiff = GeoTiffReader.readMultiband(rr, streaming = true)
     } yield {
       val crs = tiff.crs
       Projected(MultiPolygon(tiff.extent.reproject(crs, WebMercator).toPolygon()), 3857)

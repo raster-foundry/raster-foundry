@@ -12,11 +12,11 @@ import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.render.Png
 import geotrellis.proj4._
-import geotrellis.slick.Projected
-import geotrellis.vector.Extent
+import geotrellis.vector.{Extent, Projected}
 import geotrellis.raster.histogram._
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 import akka.http.scaladsl.model.{ContentType, HttpEntity, HttpResponse, MediaTypes, StatusCodes}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
@@ -46,6 +46,12 @@ object MosaicRoutes extends LazyLogging with KamonTrace {
 
   def tiffAsHttpResponse(tiff: MultibandGeoTiff): HttpResponse =
     HttpResponse(entity = HttpEntity(ContentType(MediaTypes.`image/tiff`), tiff.toByteArray))
+
+  def mosaicQueryParameters = parameters(
+    'redBand.as[Int].?,
+    'greenBand.as[Int].?,
+    'blueBand.as[Int].?
+  )
 
   def mosaicProject(projectId: UUID)(implicit xa: Transactor[IO]): Route =
     pathPrefix("export") {
@@ -93,22 +99,30 @@ object MosaicRoutes extends LazyLogging with KamonTrace {
       }
     } ~ pathPrefix (IntNumber / IntNumber / IntNumber ) { (zoom, x, y) =>
       get {
-        complete {
-          val future =
-            timedFuture("tile-zxy") (
-              Mosaic(projectId, zoom, x, y)
-                .map(_.renderPng)
-                .getOrElse(emptyTilePng)
-                .map(pngAsHttpResponse)
-            )
+        parameters(
+          'redBand.as[Int].?,
+          'greenBand.as[Int].?,
+          'blueBand.as[Int].?
+        ) { (redband, greenBand, blueBand) =>
+          complete {
+            val mosaic = (redband, greenBand, blueBand) match {
+              case (Some(red), Some(green), Some(blue)) => Mosaic(projectId, zoom, x, y, red, green, blue)
+              case _ => Mosaic(projectId, zoom, x, y)
+            }
+            val future = mosaic
+              .map(_.renderPng)
+              .getOrElse(emptyTilePng)
+              .map(pngAsHttpResponse)
 
-          future onComplete {
-            case Success(s) => s
-            case Failure(e) =>
-              logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+
+            future onComplete {
+              case Success(s) => s
+              case Failure(e) =>
+                logger.error(s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+            }
+
+            future
           }
-
-          future
         }
       }
     }

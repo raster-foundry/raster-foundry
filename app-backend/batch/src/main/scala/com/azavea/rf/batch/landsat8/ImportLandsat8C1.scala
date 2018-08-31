@@ -1,49 +1,35 @@
 package com.azavea.rf.batch.landsat8
 
-import com.azavea.rf.batch.Job
-import com.azavea.rf.batch.util.{isUriExists, S3}
-import com.azavea.rf.database._
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.datamodel._
-import com.azavea.rf.common.utils.AntimeridianUtils
-import com.github.tototoshi.csv._
-import io.circe._
-import io.circe.syntax._
-import geotrellis.proj4.CRS
-import geotrellis.slick.Projected
-import geotrellis.vector._
-import jp.ne.opt.chronoscala.Imports._
-import org.postgresql.util.PSQLException
-
-import cats.implicits._
-import cats.effect.IO
-import com.azavea.rf.database.util.RFTransactor
-import doobie.free.connection.ConnectionIO
-import doobie.util.transactor.Transactor
-import doobie._
-import doobie.Fragments._
-import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
-import cats.free.Free
-import doobie.free.connection
-
-import scala.collection.mutable.ListBuffer
-import scala.collection.parallel.ForkJoinTaskSupport
-import scala.collection.parallel.immutable.ParSeq
-import scala.concurrent.Future
-import scala.concurrent.forkjoin.ForkJoinPool
-import scala.util.{Failure, Success, Try}
-import scala.util.control.Breaks._
-
-import java.io.{File, FileInputStream}
+import java.io.File
 import java.time.{LocalDate, ZoneOffset}
 import java.util.UUID
 
-import sys.process._
+import cats.effect.IO
+import cats.implicits._
+import com.azavea.rf.batch.Job
+import com.azavea.rf.batch.util.{S3, isUriExists}
+import com.azavea.rf.common.utils.AntimeridianUtils
+import com.azavea.rf.database._
+import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.database.util.RFTransactor
+import com.azavea.rf.datamodel._
+import com.github.tototoshi.csv._
+import doobie.free.connection.ConnectionIO
+import doobie.implicits._
+import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
+import geotrellis.proj4.CRS
+import io.circe._
+import io.circe.syntax._
+import geotrellis.vector._
+
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.immutable.ParSeq
+import scala.concurrent.forkjoin.ForkJoinPool
+import scala.sys.process._
 
 
-case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), threshold: Int = 10)(implicit val xa: Transactor[IO]) extends Job {
+final case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), threshold: Int = 10)(implicit val xa: Transactor[IO]) extends Job {
   val name = ImportLandsat8C1.name
 
   /** Get S3 client per each call */
@@ -147,7 +133,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
             None.pure[ConnectionIO]
           }
           case _ => {
-            createSceneFromRow(row, user, srcProj, targetProj, sceneId, productId, landsatPath) match {
+            createSceneFromRow(row, srcProj, targetProj, sceneId, productId, landsatPath) match {
               case Some(scene) => SceneDao.insertMaybe(scene, user)
               case _ => None.pure[ConnectionIO]
             }
@@ -162,7 +148,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
 
   // All of the heads here are from a locally constructed list that we know has members
   @SuppressWarnings(Array("TraversableHead"))
-  private def createSceneFromRow(row: Map[String, String], user: User, srcProj: CRS, targetProj: CRS, sceneId: UUID, productId: String, landsatPath: String) = {
+  private def createSceneFromRow(row: Map[String, String], srcProj: CRS, targetProj: CRS, sceneId: UUID, productId: String, landsatPath: String) = {
 
     val (tileFootprint, dataFootprint) = getRowFootprints(row, srcProj, targetProj)
 
@@ -187,80 +173,81 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
         }
 
       val cloudCover = row.get("cloudCoverFull").map(_.toFloat)
+
       /** Some Landsat 8 scenes have negative cloud cover, indicating that they're bad
         * or non-imagery data in some way. We don't know what they are. But we dislike them
         * and never want to see them again
         */
-      if (cloudCover.map( _ < 0 ).getOrElse(false) ) {
+      if (cloudCover.map(_ < 0).getOrElse(false)) {
         logger.info(s"Skipping import for ${landsatPath} since cloud_cover was ${cloudCover}")
         None
       } else {
-      val sunElevation = row.get("sunElevation").map(_.toFloat)
-      val sunAzimuth = row.get("sunAzimuth").map(_.toFloat)
-      val bands15m = landsat8Config.bandLookup.`15m`
-      val bands30m = landsat8Config.bandLookup.`30m`
-      val tags = List("Landsat 8", "GeoTIFF")
-      val sceneMetadata = row.filter { case (_, v) => v.nonEmpty }
+        val sunElevation = row.get("sunElevation").map(_.toFloat)
+        val sunAzimuth = row.get("sunAzimuth").map(_.toFloat)
+        val bands15m = landsat8Config.bandLookup.`15m`
+        val bands30m = landsat8Config.bandLookup.`30m`
+        val tags = List("Landsat 8", "GeoTIFF")
+        val sceneMetadata = row.filter { case (_, v) => v.nonEmpty }
 
-      val images = (
-        bands15m.map { band =>
-          val b = band.name.split(" - ").last
-          (15f, s"${productId}_B${b}.TIF", band)
-        } ++ bands30m.map { band =>
-          val b = band.name.split(" - ").last
-          (30f, s"${productId}_B${b}.TIF", band)
+        val images = (
+          bands15m.map { band =>
+            val b = band.name.split(" - ").last
+            (15f, s"${productId}_B${b}.TIF", band)
+          } ++ bands30m.map { band =>
+            val b = band.name.split(" - ").last
+            (30f, s"${productId}_B${b}.TIF", band)
+          }
+          ).map {
+          case (resolution, tiffPath, band) =>
+            Image.Banded(
+              rawDataBytes = 0,
+              visibility = Visibility.Public,
+              filename = tiffPath,
+              sourceUri = s"${getLandsatUrl(productId)}/${tiffPath}",
+              owner = Some(systemUser),
+              scene = sceneId,
+              imageMetadata = Json.Null,
+              resolutionMeters = resolution,
+              metadataFiles = List(),
+              bands = List(band)
+            )
         }
-        ).map {
-        case (resolution, tiffPath, band) =>
-          Image.Banded(
-            rawDataBytes = 0,
-            visibility = Visibility.Public,
-            filename = tiffPath,
-            sourceUri = s"${getLandsatUrl(productId)}/${tiffPath}",
-            owner = Some(systemUser),
-            scene = sceneId,
-            imageMetadata = Json.Null,
-            resolutionMeters = resolution,
-            metadataFiles = List(),
-            bands = List(band)
-          )
-      }
 
-      val scene = Scene.Create(
-        id = Some(sceneId),
-        visibility = Visibility.Public,
-        tags = tags,
-        datasource = landsat8Config.datasourceUUID,
-        sceneMetadata = sceneMetadata.asJson,
-        name = landsatPath,
-        owner = Some(systemUser),
-        tileFootprint = tileFootprint,
-        dataFootprint = dataFootprint,
-        metadataFiles = List(s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/${productId}_MTL.txt"),
-        images = images,
-        thumbnails = createThumbnails(sceneId, productId),
-        ingestLocation = None,
-        filterFields = SceneFilterFields(
-          cloudCover = cloudCover,
-          sunAzimuth = sunAzimuth,
-          sunElevation = sunElevation,
-          acquisitionDate = acquisitionDate
-        ),
-        statusFields = SceneStatusFields(
-          thumbnailStatus = JobStatus.Success,
-          boundaryStatus = JobStatus.Success,
-          ingestStatus = IngestStatus.NotIngested
-        ),
-        sceneType = Some(SceneType.Avro)
-      )
-      Some(scene)
+        val scene = Scene.Create(
+          id = Some(sceneId),
+          visibility = Visibility.Public,
+          tags = tags,
+          datasource = landsat8Config.datasourceUUID,
+          sceneMetadata = sceneMetadata.asJson,
+          name = landsatPath,
+          owner = Some(systemUser),
+          tileFootprint = tileFootprint,
+          dataFootprint = dataFootprint,
+          metadataFiles = List(s"${landsat8Config.awsLandsatBaseC1}${landsatPath}/${productId}_MTL.txt"),
+          images = images,
+          thumbnails = createThumbnails(sceneId, productId),
+          ingestLocation = None,
+          filterFields = SceneFilterFields(
+            cloudCover = cloudCover,
+            sunAzimuth = sunAzimuth,
+            sunElevation = sunElevation,
+            acquisitionDate = acquisitionDate
+          ),
+          statusFields = SceneStatusFields(
+            thumbnailStatus = JobStatus.Success,
+            boundaryStatus = JobStatus.Success,
+            ingestStatus = IngestStatus.NotIngested
+          ),
+          sceneType = Some(SceneType.Avro)
+        )
+        Some(scene)
       }
     }
   }
 
-  @SuppressWarnings(Array("TraversableHead"))
+  @SuppressWarnings(Array("ListAppend", "TraversableHead", "TraversableLast"))
   def getRowFootprints(row: Map[String, String], srcProj: CRS, targetProj: CRS):
-      (Option[Projected[MultiPolygon]], Option[Projected[MultiPolygon]]) = {
+  (Option[Projected[MultiPolygon]], Option[Projected[MultiPolygon]]) = {
     val ll = row("lowerLeftCornerLongitude").toDouble -> row("lowerLeftCornerLatitude").toDouble
     val lr = row("lowerRightCornerLongitude").toDouble -> row("lowerRightCornerLatitude").toDouble
     val ul = row("upperLeftCornerLongitude").toDouble -> row("upperLeftCornerLatitude").toDouble
@@ -295,7 +282,7 @@ case class ImportLandsat8C1(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC)
     (correctedTileFootprint, correctedDataFootprint)
   }
 
-  def run: Unit = {
+  def run(): Unit = {
     logger.info("Importing scenes...")
 
     val user = UserDao.unsafeGetUserById(systemUser).transact(xa).unsafeRunSync

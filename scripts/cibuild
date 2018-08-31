@@ -42,9 +42,14 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
         echo "Building batch JAR"
         docker-compose \
-            run --rm --no-deps api-server batch/clean
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm --no-deps \
+            build batch/clean
+
         docker-compose \
-            run --rm --no-deps api-server batch/assembly
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm --no-deps \
+            build batch/assembly
 
         cp "${DIR}/../app-backend/batch/target/scala-2.11/rf-batch.jar" \
            "${DIR}/../app-tasks/jars/rf-batch.jar"

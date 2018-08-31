@@ -4,7 +4,7 @@ import angular from 'angular';
 class ProjectsScenesController {
     constructor( // eslint-disable-line max-params
         $log, $state, $scope, $timeout,
-        modalService, projectService, RasterFoundryRepository,
+        modalService, projectService, RasterFoundryRepository, uploadService,
         platform
     ) {
         'ngInject';
@@ -13,10 +13,13 @@ class ProjectsScenesController {
 
     $onInit() {
         this.$parent = this.$scope.$parent.$ctrl;
+        this.projectId = this.$parent.projectId;
         this.repository = {
             name: 'Raster Foundry',
             service: this.RasterFoundryRepository
         };
+        this.pendingImports = 0;
+        this.checkPendingImports();
         // eslint-disable-next-line
         let thisItem = this;
         this.treeOptions = {
@@ -73,17 +76,44 @@ class ProjectsScenesController {
     }
 
     openImportModal() {
-        this.modalService.open({
+        const activeModal = this.modalService.open({
             component: 'rfSceneImportModal',
             resolve: {
-                project: () => this.$parent.project
+                project: () => this.$parent.project,
+                origin: () => 'project'
             }
+        });
+
+        activeModal.result.then(results => {
+            this.checkPendingImports();
         });
     }
 
     updateSceneOrder(orderedSceneIds) {
         this.projectService.updateSceneOrder(this.$parent.projectId, orderedSceneIds).then(() => {
             this.$parent.layerFromProject();
+        });
+    }
+
+    gotoBrowse() {
+        this.$parent.getMap().then(mapWrapper => {
+            const bbox = mapWrapper.map.getBounds();
+            this.$state.go('projects.edit.browse', {sceneid: null, bbox: bbox.toBBoxString()});
+        });
+    }
+
+    sceneOrderTracker(scene) {
+        Object.assign(scene, {'$$hashKey': scene.id});
+        return scene.$$hashKey;
+    }
+
+    checkPendingImports() {
+        this.uploadService.query({
+            uploadStatus: 'UPLOADED',
+            projectId: this.projectId,
+            pageSize: 0
+        }).then(uploads => {
+            this.pendingImports = uploads.count;
         });
     }
 }

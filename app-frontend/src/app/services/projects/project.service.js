@@ -49,6 +49,7 @@ export default (app) => {
             this.$location = $location;
             this.$q = $q;
             this.availableProcessingOptions = availableProcessingOptions;
+            this.availableProcessingOptionsThin = this.availableProcessingOptions.slice(0, 2);
 
             this.tileServer = `${APP_CONFIG.tileServerLocation}`;
 
@@ -217,7 +218,6 @@ export default (app) => {
         export(project, settings = {}, options = {}) {
             const defaultOptions = {
                 resolution: 9,
-                stitch: true,
                 crop: false
             };
 
@@ -500,7 +500,9 @@ export default (app) => {
                 .$promise.then((res) => {
                     const scenes = res.results;
                     const count = res.count;
-                    let promises = Array(Math.floor(count / pageSize) + 1).fill().map((x, page) => {
+                    let promises = Array(
+                        Math.ceil(count || 1 / pageSize) - 1
+                    ).fill().map((x, page) => {
                         return this.Project.sceneOrder({
                             projectId,
                             pageSize,

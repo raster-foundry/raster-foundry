@@ -28,7 +28,7 @@ trait TileAuthentication extends Authentication
   // Default auth setting to true
   private val tileAuthSetting: String = sys.env.getOrElse("RF_TILE_AUTH_REQUIRED", "true")
 
-  lazy val memcachedClient = KryoMemcachedClient.DEFAULT
+  lazy val memcachedClient = KryoMemcachedClient.default
   val rfCache = new CacheClient(memcachedClient)
 
   /** Check optional tile authentication

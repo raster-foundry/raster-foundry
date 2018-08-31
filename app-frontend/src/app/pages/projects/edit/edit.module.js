@@ -64,6 +64,7 @@ class ProjectsEditController {
         this.resetAnnotations();
         if (this.projectId) {
             this.setProjectId(this.projectId);
+            this.setPermissionsTab();
         }
     }
 
@@ -75,10 +76,17 @@ class ProjectsEditController {
         }
     }
 
+    setPermissionsTab() {
+        this.projectService.fetchProject(this.projectId).then(thisProject => {
+            this.projectOwnerId = thisProject.owner.id || thisProject.owner;
+            this.actingUserId = this.authService.user.id;
+        });
+    }
+
     getAndReorderSceneList() {
         this.projectService.getSceneOrder(this.projectId).then(
             (res) => {
-                this.orderedSceneId = res.results;
+                this.orderedSceneIds = res.results;
             },
             () => {
                 this.$log.log('error getting ordered scene IDs');
@@ -111,19 +119,26 @@ class ProjectsEditController {
         ).then(
             ({count: sceneCount, scenes: allScenes}) => {
                 this.sceneCount = sceneCount;
+                if (!this.sceneCount) {
+                    this.orderedSceneIds = [];
+                    this.sceneList = [];
+                    this.sceneLayers = new Map();
+                    this.getMap().then(m => {
+                        m.deleteLayers('Ingested Scenes');
+                        m.deleteLayers('Uningested Scenes');
+                    });
+                    return this.$q.resolve();
+                }
                 this.addUningestedScenesToMap(allScenes.filter(
                     (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
                 ));
                 return this.projectService.getSceneOrder(this.projectId).then(
                     (orderedIds) => {
-                        this.orderedSceneId = orderedIds;
+                        this.orderedSceneIds = orderedIds;
                         this.sceneList = _(
-                          this.orderedSceneId.map((id) => _.find(allScenes, {id}))
+                          this.orderedSceneIds.map((id) => _.find(allScenes, {id}))
                         ).uniqBy('id').compact().value();
 
-                        this.fetchDatasources().then(datasources => {
-                            this.bands = this.datasourceService.getUnifiedBands(datasources);
-                        });
 
                         this.sceneLayers = this.sceneList.map(scene => ({
                             id: scene.id,
@@ -134,6 +149,7 @@ class ProjectsEditController {
 
                         this.layerFromProject();
                         this.initColorComposites();
+                        return this.fetchDatasources();
                     },
                     (err) => {
                         this.$log.error('Error while adding scenes to projects', err);
@@ -247,7 +263,10 @@ class ProjectsEditController {
         if (!this.datasourceRequest || force) {
             this.datasourceRequest = this.$q.all(
                 this.sceneList.map(s => this.sceneService.datasource(s))
-            );
+            ).then((datasources) => {
+                this.bands = this.datasourceService.getUnifiedBands(datasources);
+                return datasources;
+            });
         }
         return this.datasourceRequest;
     }

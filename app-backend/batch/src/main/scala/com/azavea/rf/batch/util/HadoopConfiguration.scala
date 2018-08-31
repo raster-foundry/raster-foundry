@@ -1,15 +1,15 @@
 package com.azavea.rf.batch.util
 
-import org.apache.hadoop.conf.Configuration
-
 import java.io.{ObjectInputStream, ObjectOutputStream}
+
+import org.apache.hadoop.conf.Configuration
 
 /**
   * Serializable [[Configuration]] wrapper
   * @param conf Hadoop Configuration
   */
 
-case class HadoopConfiguration(var conf: Configuration) extends Serializable {
+final case class HadoopConfiguration(var conf: Configuration) extends Serializable {
   def get: Configuration = conf
 
   private def writeObject(out: ObjectOutputStream): Unit =

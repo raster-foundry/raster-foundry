@@ -1,29 +1,20 @@
 package com.azavea.rf.api.uploads
 
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{AWSBatch, CommonHandlers, S3, UserErrorHandler}
-import com.azavea.rf.datamodel._
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.model.StatusCodes
-import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
-import io.circe._
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import java.net.URI
 import java.util.UUID
 
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Route
 import cats.effect.IO
-
-import scala.util.{Success, Failure}
-import scala.concurrent.ExecutionContext.Implicits.global
-import doobie.util.transactor.Transactor
-import cats.implicits._
+import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.common.{AWSBatch, CommonHandlers, UserErrorHandler}
 import com.azavea.rf.database.UploadDao
-import doobie._
-import doobie.implicits._
-import doobie.Fragments.in
-import doobie.postgres._
-import doobie.postgres.implicits._
 import com.azavea.rf.database.filter.Filterables._
+import com.azavea.rf.datamodel._
+import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import doobie.implicits._
+import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
 
 
 trait UploadRoutes extends Authentication
@@ -148,7 +139,7 @@ trait UploadRoutes extends Authentication
     } {
       extractTokenHeader { jwt =>
         onSuccess(UploadDao.query.filter(uploadId).selectOption.transact(xa).unsafeToFuture) {
-          case Some(_) => complete(CredentialsService.getCredentials(user, uploadId, jwt.toString))
+          case Some(_) => complete(CredentialsService.getCredentials(user, uploadId, jwt))
           case None => complete(StatusCodes.NotFound)
         }
       }

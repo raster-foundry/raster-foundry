@@ -12,54 +12,51 @@
   </div>
   <div class="modal-body">
     <div class="text-right">
-      <rf-search on-search="$ctrl.search(value)"
+      <rf-search on-search="$ctrl.fetchPage(1, value)"
+                 value="$ctrl.search"
                  placeholder="Search for projects"
-                 auto-focus="true">
-      </rf-search>
+                 auto-focus="true"></rf-search>
     </div>
-    <p class="font-size-small"
-       ng-if="!$ctrl.searchString"
+    <rf-pagination-count
+        start-index="$ctrl.pagination.startingItem"
+        end-index="$ctrl.pagination.endingItem"
+        total="$ctrl.pagination.count"
+        item-name="users"
+        ng-if="!$ctrl.currentQuery && $ctrl.pagination.count"
     >
-      Showing {{$ctrl.pagination.startingItem}} - {{$ctrl.pagination.endingItem}} of {{$ctrl.pagination.count}} projects
-    </p>
-
-    <p class="font-size-small"
-       ng-if="$ctrl.searchString"
-    >
-      Showing results for "{{$ctrl.searchString}}"
-    </p>
+      <span ng-if="$ctrl.search">while searching for <strong>{{$ctrl.search}}</strong></span>
+    </rf-pagination-count>
     <div class="list-group">
       <rf-project-item
           project="project"
-          ng-repeat="project in $ctrl.projectList | filter: {name: $ctrl.searchString}"
+          ng-repeat="project in $ctrl.results"
           slim="true">
           <button class="btn btn-default" ng-click="$ctrl.setSelected(project)">Select</button>
       </rf-project-item>
     </div>
-    <div class="list-group" ng-show="$ctrl.loading">
+    <div class="list-group" ng-show="$ctrl.currentQuery">
       <span class="list-placeholder">
-        <i class="icon-load animate-spin" ng-class="{'stop': !$ctrl.loading}"></i>
+        <i class="icon-load animate-spin" ng-class="{'stop': !$ctrl.currentQuery}"></i>
       </span>
     </div>
-    <div ng-if="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.lastProjectResult.count === 0"
+    <div ng-if="!$ctrl.currentQuery && !$ctrl.results.length && !$ctrl.search"
           class="list-group">
       <span class="list-placeholder">
         You have not created any Projects.
       </span>
     </div>
-    <div class="list-group text-center"
-          ng-show="!$ctrl.loading && $ctrl.lastProjectResult && $ctrl.pagination.show && !$ctrl.errorMsg && !$ctrl.searchString">
-      <ul uib-pagination
-          items-per-page="$ctrl.lastProjectResult.pageSize"
-          total-items="$ctrl.lastProjectResult.count"
-          ng-model="$ctrl.currentPage"
-          max-size="4"
-          rotate="true"
-          boundary-link-numbers="true"
-          force-ellipses="true"
-          ng-change="$ctrl.populateProjectList($ctrl.currentPage)">
-      </ul>
+    <div ng-if="!$ctrl.currentQuery && !$ctrl.results.length && $ctrl.search"
+         class="list-group">
+      <span class="list-placeholder">
+        Unable to find any projects matching: <strong>{{$ctrl.search}}</strong>
+      </span>
     </div>
+    <rf-pagination-controls
+        pagination="$ctrl.pagination"
+        is-loading="$ctrl.currentQuery"
+        on-change="$ctrl.fetchPage(value)"
+        ng-show="!$ctrl.currentQuery && !ctrl.fetchError"
+    ></rf-pagination-controls>
   </div>
   <div class="modal-footer">
     <button type="button" class="btn"

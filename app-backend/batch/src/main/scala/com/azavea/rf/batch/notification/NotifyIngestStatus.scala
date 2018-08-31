@@ -1,28 +1,24 @@
 package com.azavea.rf.batch.notification
 
-import com.typesafe.scalalogging.LazyLogging
 import java.util.UUID
 
 import cats.effect.IO
 import cats.implicits._
-
-import scala.concurrent.Future
 import com.azavea.rf.batch.Job
+import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.common.notification.Email.NotificationEmail
-import com.azavea.rf.datamodel._
 import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.common.{RollbarNotifier, S3}
-import com.azavea.rf.database.{ProjectDao, SceneDao, PlatformDao}
-import doobie.util.transactor.Transactor
+import com.azavea.rf.database.util.RFTransactor
+import com.azavea.rf.database.{PlatformDao, ProjectDao, SceneDao}
+import com.azavea.rf.datamodel._
+import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
-import Fragments._
+import doobie.util.transactor.Transactor
 import org.apache.commons.mail.Email
-import com.azavea.rf.database.util.RFTransactor
 
-case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) extends Job
+final case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) extends Job
   with RollbarNotifier {
 
   val name = NotifyIngestStatus.name
@@ -30,7 +26,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
   def getSceneConsumers(sceneId: UUID): ConnectionIO[List[String]] = {
     for {
       projects <- ProjectDao.query.filter(fr"id IN (SELECT project_id FROM scenes_to_projects WHERE scene_id = ${sceneId})").list
-    } yield projects.map(_.owner).distinct.filter(_ != auth0Config.systemUser).map(_.toString)
+    } yield projects.map(_.owner).distinct.filter(_ != auth0Config.systemUser).map(_.mkString)
   }
 
   def createIngestEmailContentForConsumers(pU: PlatformWithUsersSceneProjects, scene: Scene, ingestStatus: String): (String, String, String) = {
@@ -50,12 +46,12 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           </html>
           """,
           s"""
-          | ${pU.uName}: The scene "${scene.name}" has been successfully ingested into your project: ${pU.projectName}!
-          | You can access this project at here: https://${platformHost}/projects/edit/${pU.projectId}/scenes or
-          | any past projects you've created at any time here: https://${platformHost}/projects/ . If you have
-          | questions, support is available via in-app chat at ${platformHost} or less quickly via email to
-          | ${pU.pubSettings.emailUser}.
-          | - The ${pU.platName} Team
+             | ${pU.uName}: The scene "${scene.name}" has been successfully ingested into your project: ${pU.projectName}!
+             | You can access this project at here: https://${platformHost}/projects/edit/${pU.projectId}/scenes or
+             | any past projects you've created at any time here: https://${platformHost}/projects/ . If you have
+             | questions, support is available via in-app chat at ${platformHost} or less quickly via email to
+             | ${pU.pubSettings.emailUser}.
+             | - The ${pU.platName} Team
           """.trim.stripMargin
         )
       case status: String if status == "FAILED" =>
@@ -72,11 +68,11 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           </html>
           """,
           s"""
-          | ${pU.uName}: The scene "${scene.name}" in your project: ${pU.projectName} has failed to ingest. But you can
-          | access this project at here: https://${platformHost}/projects/edit/${pU.projectId}/scenes or
-          | any past projects you've created at any time here: https://${platformHost}/projects/ . If you have
-          | questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailUser}.
-          | - The ${pU.platName} Team
+             | ${pU.uName}: The scene "${scene.name}" in your project: ${pU.projectName} has failed to ingest. But you can
+             | access this project at here: https://${platformHost}/projects/edit/${pU.projectId}/scenes or
+             | any past projects you've created at any time here: https://${platformHost}/projects/ . If you have
+             | questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailUser}.
+             | - The ${pU.platName} Team
           """.trim.stripMargin
         )
     }
@@ -97,9 +93,9 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           </html>
           """,
           s"""
-          | ${pO.uName}: The scene "${scene.name}" has been successfully ingested!
-          | If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.
-          | - The ${pO.platName} Team
+             | ${pO.uName}: The scene "${scene.name}" has been successfully ingested!
+             | If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.
+             | - The ${pO.platName} Team
           """.trim.stripMargin
         )
       case status: String if status == "FAILED" =>
@@ -114,10 +110,10 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           </html>
           """,
           s"""
-          | ${pO.uName}: The scene "${scene.name}" has failed to ingest.
-          | If you have questions,
-          | support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.
-          | - The ${pO.platName} Team
+             | ${pO.uName}: The scene "${scene.name}" has failed to ingest.
+             | If you have questions,
+             | support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.
+             | - The ${pO.platName} Team
           """.trim.stripMargin
         )
     }
@@ -135,7 +131,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
           (pU.pubSettings.emailSmtpHost, pU.pubSettings.emailSmtpPort, pU.pubSettings.emailSmtpEncryption,
             pU.pubSettings.emailUser, pU.priSettings.emailPassword, userEmailAddress) match {
             case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
-              email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
+            email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
               val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForConsumers(pU, scene, ingestStatus)
               email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).map((configuredEmail: Email) => configuredEmail.send)
               logger.info(s"Notified project owner ${pU.uId}.")
@@ -156,7 +152,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
         (pO.pubSettings.emailSmtpHost, pO.pubSettings.emailSmtpPort, pO.pubSettings.emailSmtpEncryption,
           pO.pubSettings.emailUser, pO.priSettings.emailPassword, userEmailAddress) match {
           case (host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String) if
-            email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
+          email.isValidEmailSettings(host, port, encryption, platUserEmail, pw, userEmail) =>
             val (ingestEmailSubject, htmlBody, plainBody) = createIngestEmailContentForOwner(pO, scene, ingestStatus)
             email.setEmail(host, port, encryption, platUserEmail, pw, userEmail, ingestEmailSubject, htmlBody, plainBody).map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified scene owner ${pO.uId}.")
@@ -165,13 +161,14 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
       case (_, false) => logger.warn(email.platformNotSubscribedWarning(pO.platId.toString()))
     }
   }
-  def notifyConsumers(scene: Scene, ingestStatus: String) = {
+
+  def notifyConsumers(scene: Scene, ingestStatus: String): Unit = {
     logger.info("Notifying Consumers...")
 
     val consumerIdsO: List[String] = getSceneConsumers(sceneId).transact(xa).unsafeRunSync()
 
     consumerIdsO match {
-      case consumerIds: List[String] if consumerIds.length != 0 =>
+      case consumerIds: List[String] if consumerIds.nonEmpty =>
         val platformsWithConsumers = PlatformDao.getPlatUsersAndProjByConsumerAndSceneID(
           consumerIds, sceneId).transact(xa).unsafeRunSync()
         sendIngestStatusEmailToConsumers(platformsWithConsumers, scene, ingestStatus)
@@ -179,7 +176,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
     }
   }
 
-  def notifyOwners(scene: Scene, ingestStatus: String) = {
+  def notifyOwners(scene: Scene, ingestStatus: String): Unit = {
     logger.info("Notifying owner...")
 
     if (scene.owner == auth0Config.systemUser) {
@@ -191,7 +188,7 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
     }
   }
 
-  def run: Unit = {
+  def run(): Unit = {
 
     logger.info(s"Notifying owner and consumer about ingest status for scene ${sceneId}...")
 
@@ -205,8 +202,8 @@ case class NotifyIngestStatus(sceneId: UUID)(implicit val xa: Transactor[IO]) ex
       case Some(scene) =>
         scene.statusFields.ingestStatus.toString match {
           case ingestStatus: String if ingestStatus == "INGESTED" || ingestStatus == "FAILED" =>
-              notifyOwners(scene, ingestStatus)
-              notifyConsumers(scene, ingestStatus)
+            notifyOwners(scene, ingestStatus)
+            notifyConsumers(scene, ingestStatus)
           case _ => logger.warn(s"Won't send an email unless the scene ${sceneId} is ingested or failed.")
         }
       case _ => logger.warn(s"No matched scene of id: ${sceneId}")
@@ -222,7 +219,7 @@ object NotifyIngestStatus extends LazyLogging {
     implicit val xa = RFTransactor.xa
 
     val job = args.toList match {
-      case List(id:String) => NotifyIngestStatus(UUID.fromString(id))
+      case List(id: String) => NotifyIngestStatus(UUID.fromString(id))
     }
 
     job.run

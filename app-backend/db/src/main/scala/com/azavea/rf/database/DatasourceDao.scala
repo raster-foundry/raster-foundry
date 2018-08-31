@@ -8,7 +8,6 @@ import doobie.postgres._, doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import io.circe._
-import geotrellis.slick.Projected
 import geotrellis.vector.MultiPolygon
 import com.lonelyplanet.akka.http.extensions.PageRequest
 

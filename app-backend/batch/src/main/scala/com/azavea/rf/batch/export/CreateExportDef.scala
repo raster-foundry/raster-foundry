@@ -2,7 +2,6 @@ package com.azavea.rf.batch.export
 
 import java.util.UUID
 
-import cats.data._
 import cats.effect.IO
 import cats.implicits._
 import com.azavea.rf.batch._
@@ -11,21 +10,19 @@ import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.database.{ExportDao, UserDao}
 import com.azavea.rf.datamodel._
-import doobie.util.transactor.Transactor
-import io.circe.syntax._
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
+import io.circe.syntax._
 
-import scala.util._
-
-case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit val xa: Transactor[IO]) extends Job {
+final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit val xa: Transactor[IO]) extends Job {
   val name = CreateExportDef.name
 
   /** Get S3 client per each call */
   def s3Client = S3(region = None)
 
+  @SuppressWarnings(Array("CatchThrowable"))
   protected def writeExportDefToS3(exportDef: ExportDefinition, bucket: String, key: String): Unit = {
     logger.info(s"Uploading export definition ${exportDef.id.toString} to S3 at s3://${bucket}/${key}")
 
@@ -39,7 +36,7 @@ case class CreateExportDef(exportId: UUID, bucket: String, key: String)(implicit
     }
   }
 
-  def run: Unit = {
+  def run(): Unit = {
     val exportDefinitionWrite: ConnectionIO[Unit] = for {
       user <- UserDao.unsafeGetUserById(systemUser)
       _ <- logger.debug(s"Fetched user successfully: ${user.id}").pure[ConnectionIO]

@@ -8,7 +8,9 @@ from rasterio.warp import calculate_default_transform, reproject, Resampling
 logger = logging.getLogger(__name__)
 
 
-def warp_tif(combined_tif_path, warped_tif_path, dst_crs={'init': 'EPSG:3857'}):
+def warp_tif(combined_tif_path, warped_tif_path, dst_crs={
+        'init': 'EPSG:3857'
+}):
     with rasterio.open(combined_tif_path) as src:
         meta = src.meta
         new_meta = meta.copy()
@@ -20,7 +22,9 @@ def warp_tif(combined_tif_path, warped_tif_path, dst_crs={'init': 'EPSG:3857'}):
             'width': width,
             'height': height
         })
-        with rasterio.open(warped_tif_path, 'w', compress='LZW', tiled=True, **new_meta) as dst:
+        with rasterio.open(
+                warped_tif_path, 'w', compress='LZW', tiled=True,
+                **new_meta) as dst:
             for i in range(1, src.count):
                 reproject(
                     source=rasterio.band(src, i),
@@ -29,8 +33,7 @@ def warp_tif(combined_tif_path, warped_tif_path, dst_crs={'init': 'EPSG:3857'}):
                     src_crs=src.crs,
                     dst_transform=transform,
                     dst_crs=dst_crs,
-                    resampling=Resampling.nearest
-                )
+                    resampling=Resampling.nearest)
 
 
 def create_geotiffs(modis_path, output_directory):
@@ -53,30 +56,44 @@ def create_geotiffs(modis_path, output_directory):
     pre_warp_output_path = os.path.join(pre_warp_directory, 'B.tif')
     combined_tif_filepath = os.path.join(output_directory, 'combined-tif.tif')
     warped_tif_path = os.path.join(output_directory, 'warped-combined.tif')
-    cog_filename = '.'.join(os.path.basename(modis_path).split('.')[:-1]) + '.tif'
+    cog_filename = '.'.join(
+        os.path.basename(modis_path).split('.')[:-1]) + '.tif'
     cog_tif_filepath = os.path.join(output_directory, cog_filename)
 
     # Separate out into tifs for each band
-    translate_command = ['gdal_translate', '-sds', modis_path, pre_warp_output_path]
+    translate_command = [
+        'gdal_translate', '-sds', modis_path, pre_warp_output_path
+    ]
 
     # Combine into single tif (assign nodata value)
-    merge_command = ['gdal_merge.py',
-                     '-o', combined_tif_filepath,
-                     '-a_nodata', '-28672',
-                     '-separate']
+    merge_command = [
+        'gdal_merge.py', '-o', combined_tif_filepath, '-a_nodata', '-28672',
+        '-separate'
+    ]
 
     # Generate overviews
-    overview_command = ['gdaladdo', warped_tif_path, '2', '4', '8', '16', '32']
+    overview_command = [
+        'gdaladdo',
+        '-r', 'average',
+        '--config', 'COMPRESS_OVERVIEW', 'DEFLATE',
+        warped_tif_path
+    ]
 
     # Create final tif with overviews
-    translate_cog_command = ['gdal_translate', warped_tif_path, '-a_nodata', '-28672',
-                             '-co', 'TILED=YES', '-co', 'COMPRESS=LZW', '-co', 'COPY_SRC_OVERVIEWS=YES',
-                             cog_tif_filepath]
+    translate_cog_command = [
+        'gdal_translate', warped_tif_path, '-a_nodata', '-28672', '-co',
+        'TILED=YES', '-co', 'COMPRESS=LZW', '-co', 'COPY_SRC_OVERVIEWS=YES',
+        cog_tif_filepath
+    ]
 
-    logger.info('Creating tifs for Subdatasets: %s', ' '.join(translate_command))
+    logger.info('Creating tifs for Subdatasets: %s',
+                ' '.join(translate_command))
     subprocess.check_call(translate_command)
 
-    tifs = [os.path.join(pre_warp_directory, f) for f in os.listdir(pre_warp_directory)]
+    tifs = [
+        os.path.join(pre_warp_directory, f)
+        for f in os.listdir(pre_warp_directory)
+    ]
     # Sort so that band order is correct
     tifs.sort()
 
@@ -88,7 +105,8 @@ def create_geotiffs(modis_path, output_directory):
     warp_tif(combined_tif_filepath, warped_tif_path)
     logger.info('Running Overview Command: %s', ' '.join(overview_command))
     subprocess.check_call(overview_command)
-    logger.info('Running COG translate Command: %s', ' '.join(translate_cog_command))
+    logger.info('Running COG translate Command: %s',
+                ' '.join(translate_cog_command))
     subprocess.check_call(translate_cog_command)
 
     return [cog_tif_filepath]

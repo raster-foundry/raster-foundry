@@ -6,17 +6,6 @@ export default (app) => {
             this.$state = $state;
         }
 
-        buildPagedSearch(context) {
-            const searchFn = function (search) {
-                this.searchTerm = search;
-                this.fetchPage();
-            };
-            return _.debounce(searchFn.bind(context), 500, {
-                leading: false,
-                trailing: true
-            });
-        }
-
         buildPagination(paginatedResponse) {
             return {
                 pageSize: paginatedResponse.pageSize,
@@ -33,11 +22,12 @@ export default (app) => {
             };
         }
 
-        updatePageParam(page) {
-            let replace = !this.$state.params.page;
+        updatePageParam(page, search, sort) {
+            let replace = !this.$state.params.page ||
+                !this.$state.params.search || !this.$state.params.search;
             this.$state.go(
                 this.$state.$current.name,
-                { page },
+                { page, search, sort },
                 {
                     location: replace ? 'replace' : true,
                     notify: false

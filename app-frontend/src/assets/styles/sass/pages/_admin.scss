@@ -258,7 +258,12 @@
 }
 
 .actions-right {
-  margin-left: auto;
+    display: flex;
+    flex-direction: row;
+    margin-left: auto;
+    > *  {
+        margin-left: 1em;
+    }
 }
 
 .admin-search {

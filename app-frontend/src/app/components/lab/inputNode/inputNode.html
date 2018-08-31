@@ -21,10 +21,17 @@
     <div ng-if="!$ctrl.bands.length && $ctrl.fetchingDatasources">
       Loading band data
     </div>
-    <div ng-if="$ctrl.selectedProject && !$ctrl.bands.length && !$ctrl.fetchingDatasources">
-      <a class="btn btn-flat btn-block" ui-sref="imports.datasources.detail({
-        datasourceid: $ctrl.firstDatasourceWithoutBands().id
-      })">Requires defined bands</a>
+    <div ng-if="$ctrl.selectedProject && !$ctrl.bands.length && !$ctrl.fetchingDatasources"
+         class="form-group search-form">
+      <input class="form-control" type="number" min="0"
+             placeholder="Enter a 0 indexed band"
+             ng-model="$ctrl.manualBand"
+             ng-model-options="{updateOn: 'default', debounce: 500, allowInvalid: true}"
+             ng-change="$ctrl.onBandChange($ctrl.manualBand)">
+      <button disabled title="The datasources on this project do not have bands defined"
+              class="btn-link">
+        <i class="icon-help"></i>
+      </button>
     </div>
   </div>
 </div>

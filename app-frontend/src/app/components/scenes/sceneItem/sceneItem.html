@@ -46,7 +46,7 @@
       tooltip-size="small"
       tooltip-class="rf-tooltip"
       tooltip-side="left"
-      ng-if="!$ctrl.hasDownloadPermission()">
+      ng-if="$ctrl.onSelect && !$ctrl.hasDownloadPermission()">
       <span class="icon-locked"></span>
     </div>
     <ng-transclude>

@@ -1,31 +1,28 @@
 package com.azavea.rf.authentication
 
+import java.net.URL
+import java.util.UUID
+
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
 import akka.http.scaladsl.server._
+import cats.effect.IO
+import cats.implicits._
+import com.azavea.rf.database._
 import com.azavea.rf.datamodel._
-import com.guizmaii.scalajwt.JwtToken
-import com.guizmaii.scalajwt.ConfigurableJwtValidator
+import com.guizmaii.scalajwt.{ConfigurableJwtValidator, JwtToken}
 import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.proc.BadJWTException
 import com.typesafe.config.ConfigFactory
-
-import scala.concurrent.Future
-import java.net.URL
-import java.util.UUID
-
-import cats.effect.IO
-import cats.implicits._
-import com.azavea.rf.database._
-import doobie.util.transactor.Transactor
+import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
 
-import com.typesafe.scalalogging.LazyLogging
+import scala.concurrent.Future
 
 trait Authentication extends Directives with LazyLogging {
 
@@ -38,7 +35,7 @@ trait Authentication extends Directives with LazyLogging {
   private val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(new URL(jwksURL))
 
   // Default user returned when no credentials are provided
-  lazy val anonymousUser:Future[Option[User]] = UserDao.getUserById("default").transact(xa).unsafeToFuture
+  lazy val anonymousUser: Future[Option[User]] = UserDao.getUserById("default").transact(xa).unsafeToFuture
 
   // HTTP Challenge to use for Authentication failures
   lazy val challenge = HttpChallenge("Bearer", "https://rasterfoundry.com")
@@ -80,7 +77,7 @@ trait Authentication extends Directives with LazyLogging {
         val email = getStringClaimOrBlank(jwtClaims, "email")
         val name = getStringClaimOrBlank(jwtClaims, "name")
         val picture = getStringClaimOrBlank(jwtClaims, "picture")
-        case class MembershipAndUser(platform: Option[Platform], user: User)
+        final case class MembershipAndUser(platform: Option[Platform], user: User)
         // All users will have a platform role, either added by a migration or created with the user if they are new
         val query = for {
           userAndRoles <- UserDao.getUserAndActiveRolesById(userId).flatMap {
@@ -88,7 +85,7 @@ trait Authentication extends Directives with LazyLogging {
             case UserOptionAndRoles(None, _) => createUserWithRoles(userId, email, name, picture, jwtClaims)
           }
           (user, roles) = userAndRoles
-          platformRole = roles.filter(role => role.groupType == GroupType.Platform).headOption
+          platformRole = roles.find(role => role.groupType == GroupType.Platform)
           plat <- platformRole match {
             case Some(role) => PlatformDao.getPlatformById(role.groupId)
             case _ =>

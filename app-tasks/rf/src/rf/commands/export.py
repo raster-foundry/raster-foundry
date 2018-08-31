@@ -36,15 +36,20 @@ def export(export_id):
         logger.info('Rewriting Export Definition')
         local_path = write_export_definition(export_definition, local_dir)
         logger.info('Rewrote export definition to %s', local_path)
+        logger.info('Preparing to Run Export')
+        final_status = 'EXPORTED'
         try:
-            logger.info('Preparing to Run Export')
-            status_uri = run_export('file://' + local_path, export_id)
+            run_export('file://' + local_path, export_id)
             logger.info('Post Processing Tiffs')
             merged_tiff_path = post_process_exports(export_definition, local_dir)
             logger.info('Uploading Processed Tiffs')
             upload_processed_tif(merged_tiff_path, export_definition)
+        except subprocess.CalledProcessError as e:
+            logger.error('Output from failed command: %s', e.output)
+            final_status = 'FAILED'
+            raise e
         finally:
-            wait_for_status(export_id, status_uri)
+            update_export_status(export_id, final_status)
 
 
 def create_export_definition(export_id):
@@ -166,24 +171,28 @@ def run_export(export_s3_uri, export_id):
                '--class', 'com.azavea.rf.batch.export.spark.Export',
                '/opt/raster-foundry/jars/rf-batch.jar',
                '-j', export_s3_uri, '-b', status_uri]
-    subprocess.check_call(command)
+    output = subprocess.check_output(command)
+    logger.info('Output from export command was:\n%s', output)
     logger.info('Finished exporting %s in spark local', export_s3_uri)
     return status_uri
 
 
-def wait_for_status(export_id, status_uri):
-    """Wait for a result from the Spark job
+def update_export_status(export_id, export_status):
+    """Update an export's status based on export result
 
     Args:
-        status_uri (str): location of job status URI
-        export_id (str): run command to wait for status of export
+        export_id (str): ID of the export to update
+        export_status (str): The status this export ended with
     """
 
-    bash_cmd = ['java', '-cp', '/opt/raster-foundry/jars/rf-batch.jar',
-                'com.azavea.rf.batch.Main',
-                'check_export_status',
-                export_id, status_uri]
-
-    logger.info('Updating %s\'s export status after successful EMR status', export_id)
-    subprocess.check_call(bash_cmd)
-    logger.info('Successfully completed export %s', export_id)
+    command = [
+        'java', '-cp',
+        '/opt/raster-foundry/jars/rf-batch.jar',
+        'com.azavea.rf.batch.Main',
+        'update_export_status',
+        export_id,
+        export_status
+    ]
+    logger.info('Preparing to update export status with command: %s', command)
+    output = subprocess.check_output(command)
+    logger.info('Output from update command was: %s', output)

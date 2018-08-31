@@ -54,12 +54,11 @@ class ProjectsSceneBrowserController {
 
     $onInit() {
         this.projectScenesReady = false;
-        this.allSelected = false;
         this.registerClick = true;
-        this.selectedScenes = new Map();
         this.sceneList = [];
         this.sceneCount = null;
         this.planetThumbnailUrls = new Map();
+        this.scenesBeingAdded = [];
 
         this.setBboxParam = _.debounce((bbox) => {
             this.$location.search('bbox', bbox).replace();
@@ -84,10 +83,8 @@ class ProjectsSceneBrowserController {
         this.$scope.$on('$destroy', () => {
             this.getMap().then(browseMap => {
                 browseMap.deleteLayers('filterBboxLayer');
-                browseMap.deleteLayers('Selected Scenes');
                 browseMap.deleteThumbnail();
             });
-            this.selectNoScenes();
         });
     }
 
@@ -256,60 +253,6 @@ class ProjectsSceneBrowserController {
         });
     }
 
-    setSelected(scene, selected) {
-        this.getMap().then((map) => {
-            if (selected) {
-                this.selectedScenes = this.selectedScenes.set(scene.id, {
-                    scene,
-                    repository: this.currentRepository
-                });
-                map.setThumbnail(scene, this.currentRepository, {persist: true});
-            } else {
-                this.selectedScenes = this.selectedScenes.delete(scene.id);
-                map.deleteThumbnail(scene);
-            }
-        });
-    }
-
-    isSelected(scene) {
-        return scene && scene.id && this.selectedScenes.has(scene.id);
-    }
-
-    selectAllScenes() {
-        if (this.allSelected && this.sceneList.length) {
-            this.sceneList.map((scene) => this.setSelected(scene, false));
-            this.getMap().then((map) => {
-                map.deleteThumbnail();
-            });
-        } else if (this.sceneList.length) {
-            this.sceneList.map((scene) => this.setSelected(scene, true));
-        }
-        this.allSelected = !this.allSelected;
-    }
-
-    selectNoScenes() {
-        this.selectedScenes.forEach(s => this.setSelected(s, false));
-    }
-
-    sceneModal() {
-        this.modalService.open({
-            component: 'rfProjectAddScenesModal',
-            resolve: {
-                scenes: () => this.selectedScenes,
-                selectScene: () => this.setSelected.bind(this),
-                selectNoScenes: () => this.selectNoScenes.bind(this),
-                repository: () => this.currentRepository,
-                project: () => this.project
-            },
-            backdrop: 'static'
-        }).result.then((sceneIds) => {
-            this.projectSceneIds = this.projectSceneIds.concat(sceneIds);
-            this.selectNoScenes();
-        }).finally(() => {
-            this.$parent.getSceneList();
-        });
-    }
-
     isInProject(scene) {
         if (scene && scene.id && this.projectScenesReady) {
             const index = this.projectSceneIds.indexOf(scene.id);
@@ -319,8 +262,49 @@ class ProjectsSceneBrowserController {
     }
 
     gotoProjectScenes() {
-        this.selectNoScenes();
         this.$state.go('projects.edit.scenes');
+    }
+
+    addSceneToProject(scene) {
+        this.scenesBeingAdded = [...this.scenesBeingAdded, scene.id];
+        return this.currentRepository
+            .service
+            .addToProject(this.project.id, [scene])
+            .then(() => {
+                this.projectSceneIds = [...this.projectSceneIds, scene.id];
+            })
+            .finally(() => {
+                this.$parent.getAndReorderSceneList();
+                this.scenesBeingAdded = this.scenesBeingAdded.filter(s => s !== scene.id);
+            });
+    }
+
+    addVisibleScenesToProject() {
+        const scenesToAdd = this.sceneList.filter(s => !this.isInProject(s));
+        const sceneIdsToAdd = scenesToAdd.map(s => s.id);
+        this.scenesBeingAdded = [...this.scenesBeingAdded, ...sceneIdsToAdd];
+        return this.currentRepository
+            .service
+            .addToProject(this.project.id, scenesToAdd)
+            .then(() => {
+                this.projectSceneIds = [...this.projectSceneIds, ...sceneIdsToAdd];
+            })
+            .finally(() => {
+                this.$parent.getAndReorderSceneList();
+                this.scenesBeingAdded =
+                    this.scenesBeingAdded.filter(s => sceneIdsToAdd.includes(s));
+            });
+    }
+
+    isAddingScene(scene) {
+        return this.scenesBeingAdded.includes(scene.id);
+    }
+
+    hasDownloadPermission(scene) {
+        if (this.currentRepository.service.getScenePermissions(scene).includes('download')) {
+            return true;
+        }
+        return false;
     }
 }
 

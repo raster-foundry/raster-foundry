@@ -13,8 +13,7 @@ import cats.data._
 import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
-import geotrellis.slick.Projected
-import geotrellis.vector.Polygon
+import geotrellis.vector.{Polygon, Projected}
 import geotrellis.raster.histogram._
 import io.circe._
 import io.circe.optics.JsonPath._
@@ -201,9 +200,9 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     val idFilter = fr"id = ${id}".some
     val now = new Date()
 
-    val lastModifiedIO: ConnectionIO[Timestamp] =
-      (fr"select modified_at from scenes" ++ Fragments.whereAndOpt(idFilter))
-        .query[Timestamp]
+    val lastModifiedAndIngestIO: ConnectionIO[(Timestamp, IngestStatus)] =
+      (fr"select modified_at, ingest_status from scenes" ++ Fragments.whereAndOpt(idFilter))
+        .query[(Timestamp, IngestStatus)]
         .unique
     val updateIO: ConnectionIO[Int] = (sql"""
     UPDATE scenes
@@ -218,6 +217,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       data_footprint = ${scene.dataFootprint},
       tile_footprint = ${scene.tileFootprint},
       ingest_location = ${scene.ingestLocation},
+      scene_type = ${scene.sceneType},
       cloud_cover = ${scene.filterFields.cloudCover},
       acquisition_date = ${scene.filterFields.acquisitionDate},
       sun_azimuth = ${scene.filterFields.sunAzimuth},
@@ -229,14 +229,14 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       .update
       .run
 
-    lastModifiedIO flatMap {
-      case ts: Timestamp =>
+    lastModifiedAndIngestIO flatMap {
+      case (ts: Timestamp, prevIngestStatus: IngestStatus) =>
         updateIO map {
           case n =>
-            scene.statusFields.ingestStatus match {
-              case IngestStatus.ToBeIngested =>
+            (prevIngestStatus, scene.statusFields.ingestStatus) match {
+              case (IngestStatus.ToBeIngested, IngestStatus.ToBeIngested) =>
                 (n, true)
-              case IngestStatus.Ingesting =>
+              case (IngestStatus.Ingesting, IngestStatus.Ingesting) =>
                 (n, ts.getTime < now.getTime - (24 hours).toMillis)
               case _ =>
                 (n, false)
@@ -251,33 +251,39 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       case _ => fr""
     }
     for {
-      scene <- SceneDao.query.filter(sceneId).filter(polygonF).select
-      datasource <- DatasourceDao.query.filter(scene.datasource).select
+      sceneO <- SceneDao.query.filter(sceneId).filter(polygonF).selectOption
+      datasourceO <- sceneO match {
+        case Some(s: Scene) => DatasourceDao.query.filter(s.datasource).selectOption
+        case _ => None.pure[ConnectionIO]
+      }
     } yield {
-      val composites = datasource.composites
-      val redBandPath = root.natural.selectDynamic("value").redBand.int
-      val greenBandPath = root.natural.selectDynamic("value").greenBand.int
-      val blueBandPath = root.natural.selectDynamic("value").blueBand.int
+      (sceneO, datasourceO) match {
+        case (Some(scene: Scene), Some(datasource: Datasource)) =>
+          val composites = datasource.composites
+          val redBandPath = root.natural.selectDynamic("value").redBand.int
+          val greenBandPath = root.natural.selectDynamic("value").greenBand.int
+          val blueBandPath = root.natural.selectDynamic("value").blueBand.int
 
-      Seq(MosaicDefinition(
-        scene.id,
-        ColorCorrect.Params(
-          redBandPath.getOption(composites).getOrElse(0),
-          greenBandPath.getOption(composites).getOrElse(1),
-          blueBandPath.getOption(composites).getOrElse(2),
-          BandGamma(false, None, None, None),
-          PerBandClipping(false, None, None, None,
-            None, None, None),
-          MultiBandClipping(false, None, None),
-          SigmoidalContrast(false, None, None),
-          Saturation(false, None),
-          Equalization(false),
-          AutoWhiteBalance(false)
-        ),
-        scene.sceneType,
-        scene.ingestLocation)
-      )
+          Seq(MosaicDefinition(
+                scene.id,
+                ColorCorrect.Params(
+                  redBandPath.getOption(composites).getOrElse(0),
+                  greenBandPath.getOption(composites).getOrElse(1),
+                  blueBandPath.getOption(composites).getOrElse(2),
+                  BandGamma(false, None, None, None),
+                  PerBandClipping(false, None, None, None,
+                                  None, None, None),
+                  MultiBandClipping(false, None, None),
+                  SigmoidalContrast(false, None, None),
+                  Saturation(false, None),
+                  Equalization(false),
+                  AutoWhiteBalance(false)
+                ),
+                scene.sceneType,
+                scene.ingestLocation)
+          )
+        case _ => Seq.empty
+      }
     }
   }
-
 }

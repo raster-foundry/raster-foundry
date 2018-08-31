@@ -23,12 +23,15 @@ function runBlock(
     }
 
     $rootScope.$on('$stateChangeStart', function (e, toState, params) {
-        function setupState() {
+        function setupState(route) {
             let appName = BUILDCONFIG.APP_NAME;
             $window.document.title = toState.title ?
                 `${appName} - ${toState.title}` : appName;
             if (APP_CONFIG.error && toState.name !== 'error') {
                 e.preventDefault();
+                if (!localStorage.get('authUrlRestore')) {
+                    localStorage.set('authUrlRestore', route);
+                }
                 $state.go('error');
             } else if (toState.bypassAuth && !authService.verifyAuthCache()) {
                 rollbarWrapperService.init();
@@ -36,6 +39,9 @@ function runBlock(
                 e.preventDefault();
                 rollbarWrapperService.init();
                 intercomService.shutdown();
+                if (!localStorage.get('authUrlRestore')) {
+                    localStorage.set('authUrlRestore', route);
+                }
                 $state.go('login');
             } else if (!toState.bypassAuth && toState.name !== 'callback') {
                 rollbarWrapperService.init(authService.getProfile());
@@ -51,9 +57,11 @@ function runBlock(
         // is easier, or refactor FeatureFlags to deal in promises.
         // Note that on initial login, the feature flags get populated in the AuthService.
         if (flagsPromise) {
-            flagsPromise.then(setupState);
+            flagsPromise.then(
+                () => setupState({path: $location.path(), search: $location.search()})
+            );
         } else {
-            setupState();
+            setupState({path: $location.path(), search: $location.search()});
         }
     });
 
@@ -62,28 +70,35 @@ function runBlock(
     });
 
     $rootScope.$on('$locationChangeStart', function () {
-        function setupState() {
+        function setupState(route) {
             let idToken = localStorage.get('idToken');
             let accessToken = localStorage.get('accessToken');
 
             if (idToken && accessToken) {
                 if (!authService.verifyAuthCache()) {
                     rollbarWrapperService.init();
+                    if (!localStorage.get('authUrlRestore')) {
+                        localStorage.set('authUrlRestore', route);
+                    }
                     authService.login(accessToken, idToken);
                 }
-            } else {
+            } else if (!route.path.includes('login')) {
                 intercomService.shutdown();
                 rollbarWrapperService.init();
+                if (!localStorage.get('authUrlRestore')) {
+                    localStorage.set('authUrlRestore', route);
+                }
                 $state.go('login');
             }
         }
         if (flagsPromise) {
-            flagsPromise.then(setupState);
+            flagsPromise.then(
+                () => setupState({path: $location.path(), search: $location.search()})
+            );
         } else {
-            setupState();
+            setupState({path: $location.path(), search: $location.search()});
         }
     });
-
     $rootScope.autoInject = function (context, args) {
         context.constructor.$inject.forEach((injectable, idx) => {
             context[injectable] = args[idx];

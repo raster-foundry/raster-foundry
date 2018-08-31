@@ -23,10 +23,6 @@ import java.sql.Timestamp
 import java.util.{Date, UUID}
 import java.net.URI
 
-import cats.free.Free
-import doobie.free.connection
-
-
 object ExportDao extends Dao[Export] {
 
   val tableName = "exports"
@@ -38,6 +34,12 @@ object ExportDao extends Dao[Export] {
       visibility, toolrun_id, export_options
     FROM
   """ ++ tableF
+
+  def unsafeGetExportById(exportId: UUID): ConnectionIO[Export] =
+    query.filter(exportId).select
+
+  def getExportById(exportId: UUID): ConnectionIO[Option[Export]] =
+    query.filter(exportId).selectOption
 
   def insert(export: Export, user: User): ConnectionIO[Export] = {
     val insertF: Fragment = Fragment.const(s"INSERT INTO ${tableName} (")
@@ -64,7 +66,7 @@ object ExportDao extends Dao[Export] {
         modified_by = ${user.id},
         export_status = ${export.exportStatus},
         visibility = ${export.visibility}
-      WHERE id = ${id} AND owner = ${user.id}
+      WHERE id = ${id}
     """).update.run
   }
 
@@ -94,7 +96,6 @@ object ExportDao extends Dao[Export] {
         rasterSize = exportOptions.rasterSize,
         render = Some(exportOptions.render),
         crop = exportOptions.crop,
-        stitch = exportOptions.stitch,
         source = exportOptions.source,
         dropboxCredential = dbxToken
       )
@@ -166,7 +167,7 @@ object ExportDao extends Dao[Export] {
   ): ConnectionIO[SimpleInput] = {
 
     val exportLayerDefinitions = fr"""
-    SELECT scenes.id, scenes.ingest_location, stp.mosaic_definition
+    SELECT scenes.id, scenes.scene_type, scenes.ingest_location, stp.mosaic_definition
     FROM
       scenes
     LEFT JOIN

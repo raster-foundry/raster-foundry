@@ -51,6 +51,7 @@ class BaseModel(object):
         except:
             logger.exception('Unable to create object via API: %s', response.text)
             logger.exception('Attempted to POST: \n%s\n', self.to_json())
+            logger.exception('Response was: %s', response.content)
             raise
         return self.from_dict(response.json())
 

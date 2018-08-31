@@ -14,14 +14,30 @@ const ExportAnalysisDownloadModalComponent = {
 };
 
 class ExportAnalysisDownloadModalController {
-    constructor($rootScope, $log, modalService) {
+    constructor($rootScope, $log, modalService, exportService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
 
     $postLink() {
         this.analysis = this.resolve.analysis;
-        this.exports = this.resolve.exports;
+        this.getExportsByAnalysisId();
+    }
+
+    getExportsByAnalysisId() {
+        // TODO: in a future card, implement paginated exports
+        this.exportService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: '20',
+                page: 0,
+                analysis: this.analysis.id
+            }
+        ).then(firstPageExports => {
+            if (firstPageExports.results.find(r => r.toolRunId === this.analysis.id)) {
+                this.exports = firstPageExports.results;
+            }
+        });
     }
 
     isDownloadAllowed(thisExport) {

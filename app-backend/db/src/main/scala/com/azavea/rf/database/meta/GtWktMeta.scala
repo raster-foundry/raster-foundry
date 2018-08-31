@@ -7,7 +7,6 @@ import doobie.postgres._, doobie.postgres.implicits._, doobie.postgres.pgisimpli
 import doobie.util.invariant.InvalidObjectMapping
 import geotrellis.vector.io.wkt.WKT
 import geotrellis.vector._
-import geotrellis.slick.Projected
 import org.postgis.PGgeometry
 
 import scala.reflect.runtime.universe.TypeTag
@@ -51,4 +50,3 @@ trait GtWktMeta {
   implicit val ComposedGeomType       = geometryType[GeometryCollection]
 
 }
-

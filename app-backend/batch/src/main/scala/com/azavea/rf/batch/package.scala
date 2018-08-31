@@ -1,35 +1,36 @@
 package com.azavea.rf
 
-import geotrellis.raster.split._
-import geotrellis.raster.{CellSize, MultibandTile}
-import geotrellis.spark._
-import geotrellis.spark.io._
-import geotrellis.spark.io.LayerAttributes
-import geotrellis.spark.tiling._
-import geotrellis.util.Component
-import geotrellis.vector._
-import geotrellis.spark.io.index.KeyIndex
-
-import org.apache.avro.Schema
 import cats._
 import cats.data._
 import cats.implicits._
-import com.github.blemale.scaffeine.{Cache, Scaffeine}
-import spray.json._
+import com.github.blemale.scaffeine.Cache
+import geotrellis.raster.split._
+import geotrellis.raster.{CellSize, MultibandTile}
+import geotrellis.spark._
+import geotrellis.spark.io.{LayerAttributes, _}
+import geotrellis.spark.io.index.KeyIndex
+import geotrellis.spark.tiling._
+import geotrellis.util.Component
+import geotrellis.vector._
+import org.apache.avro.Schema
 import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 import scala.concurrent.duration._
 import scala.reflect.ClassTag
 import scala.util.Either
 
 package object batch {
-  implicit class HasCellSize[A <: { def rows: Int; def cols: Int; def extent: Extent }](obj: A) {
+
+  implicit class HasCellSize[A <: {def rows : Int; def cols : Int; def extent : Extent}](obj: A) {
     def cellSize: CellSize = CellSize(obj.extent.width / obj.cols, obj.extent.height / obj.rows)
   }
 
+  @SuppressWarnings(Array("ClassNames"))
   implicit class withRasterFoundryTilerKeyMethods(val self: (ProjectedExtent, Int))
-      extends TilerKeyMethods[(ProjectedExtent, Int), (SpatialKey, Int)] {
+    extends TilerKeyMethods[(ProjectedExtent, Int), (SpatialKey, Int)] {
     def extent = self._1.extent
+
     def translate(spatialKey: SpatialKey) = (spatialKey, self._2)
   }
 
@@ -39,12 +40,14 @@ package object batch {
   implicit val rfProjectedExtentIntComponent =
     Component[(ProjectedExtent, Int), ProjectedExtent](from => from._1, (from, to) => (to, from._2))
 
+  @SuppressWarnings(Array("ClassNames"))
   implicit class withMultibandTileSplitMethods(val self: MultibandTile) extends MultibandTileSplitMethods
 
   /**
     * Custom cache implemented to allow safe multithreading.
     * Can be removed after GeoTrellis 1.2 release.
-    * */
+    **/
+  @SuppressWarnings(Array("ClassNames", "asInstanceOf"))
   implicit class withAttributeStoreMethods(that: AttributeStore) {
     def cacheReadSafe[T: JsonFormat](layerId: LayerId, attributeName: String)(implicit cache: Cache[(LayerId, String), Any]): T =
       cache.get(layerId -> attributeName, _ => that.read[T](layerId, attributeName)).asInstanceOf[T]
@@ -54,8 +57,8 @@ package object batch {
       LayerAttributes(
         blob.fields(AttributeStore.Fields.header).convertTo[H],
         blob.fields(AttributeStore.Fields.metadata).convertTo[M],
-        blob.fields(AttributeStore.Fields.keyIndex).convertTo[KeyIndex[K]],
-        blob.fields(AttributeStore.Fields.schema).convertTo[Schema]
+        blob.fields(AttributeStore.AvroLayerFields.keyIndex).convertTo[KeyIndex[K]],
+        blob.fields(AttributeStore.AvroLayerFields.schema).convertTo[Schema]
       )
     }
   }

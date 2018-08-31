@@ -2,8 +2,7 @@ package com.azavea.rf.datamodel
 
 import io.circe.generic.JsonCodec
 import geotrellis.proj4._
-import geotrellis.slick.Projected
-import geotrellis.vector.{Extent, Point, Polygon}
+import geotrellis.vector.{Extent, Point, Polygon, Projected}
 
 import java.util.UUID
 import java.sql.Timestamp
@@ -227,7 +226,8 @@ case class CombinedToolRunQueryParameters(
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
   ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
   groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
-  userParams: UserQueryParameters = UserQueryParameters()
+  userParams: UserQueryParameters = UserQueryParameters(),
+  searchParams: SearchQueryParameters = SearchQueryParameters()
 )
 
 @JsonCodec
@@ -261,7 +261,8 @@ case class CombinedMapTokenQueryParameters(
 @JsonCodec
 case class UploadQueryParameters(
   datasource: Option[UUID] = None,
-  uploadStatus: Option[String] = None
+  uploadStatus: Option[String] = None,
+  projectId: Option[UUID] = None
 )
 
 @JsonCodec
@@ -298,7 +299,8 @@ case class ShapeQueryParameters(
   userParams: UserQueryParameters = UserQueryParameters(),
   timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
   ownershipTypeParams: OwnershipTypeQueryParameters = OwnershipTypeQueryParameters(),
-  groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
+  groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
+  searchParams: SearchQueryParameters = SearchQueryParameters()
 )
 
 @JsonCodec

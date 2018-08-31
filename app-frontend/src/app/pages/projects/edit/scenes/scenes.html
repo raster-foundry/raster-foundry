@@ -1,37 +1,49 @@
-<div class="sidebar-static">
-  <div class="sidebar-header">
-    <a ng-if="$ctrl.$parent.project.isAOIProject"
-       class="aoi-tag"
-       ui-sref="projects.edit.aoi-parameters">
-       <i class="icon-pencil"></i>
-       <span>Edit</span>
-       AOI Parameters
-    </a>
-    <h5 class="sidebar-title">
-      Scenes
-      <ng-pluralize count="$ctrl.$parent.sceneCount"
-                    when="{'0': '(0)',
-                          'one': '(1)',
-                          'other': '({})'
-                          }">
-      </ng-pluralize>
-    </h5>
-  </div>
-  <div class="content">
-    <div ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneCount">
-      <!-- Alert -->
-      <div class="alert alert-secondary">
-        <div class="alert-message">{{$ctrl.$parent.pendingSceneCount}} scenes awaiting approval</div>
-        <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
+<div class="sidebar-header">
+  <a ng-if="$ctrl.$parent.project.isAOIProject"
+     class="aoi-tag"
+     ui-sref="projects.edit.aoi-parameters">
+     <i class="icon-pencil"></i>
+     <span>Edit</span>
+     AOI Parameters
+  </a>
+  <h5 class="sidebar-title">
+    Scenes
+    <ng-pluralize count="$ctrl.$parent.sceneCount"
+                  when="{'0': '(0)',
+                        'one': '(1)',
+                        'other': '({})'
+                        }">
+    </ng-pluralize>
+  </h5>
+</div>
+<div class="list-group">
+  <div class="list-group-item no-border"
+       ng-if="$ctrl.pendingImports"
+  >
+    <div class="alert alert-default">
+      <div class="alert-message">
+        <ng-pluralize count="$ctrl.pendingImports"
+                  when="{'one': '{} import is',
+                        'other': '{} imports are'
+                        }">
+        </ng-pluralize> being processed
       </div>
-      <!-- Alert -->
     </div>
-    <div class="sidebar-actions-group">
+  </div>
+  <div class="list-group-item no-border"
+       ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneCount"
+  >
+    <div class="alert alert-secondary">
+      <div class="alert-message">{{$ctrl.$parent.pendingSceneCount}} scenes awaiting approval</div>
+      <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
+    </div>
+  </div>
+  <div class="list-group-item sidebar-actions-group">
       <label>Add scenes</label>
       <div class="column-6 nogutter btn-group">
         <button type="button"
                 class="btn btn-primary"
-                ui-sref="projects.edit.browse({sceneid: null})">
+                ng-click="$ctrl.gotoBrowse()">
           Browse
         </button>
         <button type="button"
@@ -41,7 +53,6 @@
         </button>
       </div>
     </div>
-  </div>
 </div>
 <div class="sidebar-scrollable"
      ui-tree="$ctrl.treeOptions"
@@ -57,7 +68,7 @@
         repository="$ctrl.repository"
         ng-mouseover="$ctrl.$parent.setHoveredScene(scene)"
         ng-mouseleave="$ctrl.$parent.removeHoveredScene()"
-        ng-repeat="scene in $ctrl.$parent.sceneList track by scene.id"
+        ng-repeat="scene in $ctrl.$parent.sceneList track by $ctrl.sceneOrderTracker(scene)"
         ui-tree-node>
       <button class="btn btn-tiny" ng-click="$ctrl.removeSceneFromProject(scene, $event)">
         <i class="icon-trash"></i>

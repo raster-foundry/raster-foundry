@@ -69,14 +69,14 @@
 }
 
 .list-group-item {
-  padding: 1.5rem;
+  padding: 1rem;
   border-bottom: 1px solid $border-color-default;
   display: flex;
   align-items: center;
   position: relative;
 
-  > * {
-    margin: 0 5px;
+  & > :not(:first-child) {
+    margin-left: 1rem;
   }
 
   p {
@@ -123,6 +123,10 @@
 
   &.active {
     background-color: $off-white;
+  }
+
+  &.no-border {
+    border: none;
   }
 }
 

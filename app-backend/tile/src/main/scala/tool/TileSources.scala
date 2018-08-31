@@ -16,7 +16,6 @@ import cats.data.{NonEmptyList => NEL, _}
 import cats.data.Validated._
 import cats.implicits._
 import geotrellis.raster._
-import geotrellis.slick.Projected
 import geotrellis.spark._
 import geotrellis.spark.io.s3._
 import geotrellis.spark.io._

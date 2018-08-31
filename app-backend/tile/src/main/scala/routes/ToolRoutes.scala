@@ -23,8 +23,7 @@ import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.render.png._
 import geotrellis.raster.io.geotiff.SinglebandGeoTiff
-import geotrellis.vector.{Extent}
-import geotrellis.slick.Projected
+import geotrellis.vector.{Extent, Projected}
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model.{ContentType, HttpEntity, MediaTypes, StatusCodes, HttpResponse}
 import akka.http.scaladsl.server._
@@ -52,7 +51,7 @@ class ToolRoutes extends Authentication
 
   implicit lazy val xa = RFTransactor.xa
 
-  lazy val memcachedClient = KryoMemcachedClient.DEFAULT
+  lazy val memcachedClient = KryoMemcachedClient.default
   val rfCache = new CacheClient(memcachedClient)
 
   val providedRamps = Map(
@@ -171,7 +170,7 @@ class ToolRoutes extends Authentication
               components.value.flatMap({ data =>
                 val result: Future[Option[Png]] = data match {
                   case Some((expression, metadata, cMap, updateTime)) =>
-                    val cacheKey = s"toolrun-tms-${toolRunId}-${nodeId}-$z-$x-$y-${updateTime.getTime}"
+                    val cacheKey = s"toolrun-tms-${toolRunId}-${nodeId.getOrElse("")}-$z-$x-$y-${updateTime.getTime}"
                     rfCache.cachingOptionT(cacheKey)({
                       val literalTree = tileResolver.resolveBuffered(expression)(z, x, y)
                       val interpretedTile: Future[Interpreted[Tile]] =

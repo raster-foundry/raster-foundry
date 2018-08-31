@@ -23,8 +23,7 @@ import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
 import geotrellis.spark.tiling._
-import geotrellis.vector.{Extent, MultiPolygon}
-import geotrellis.slick.Projected
+import geotrellis.vector.{Extent, MultiPolygon, Projected}
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 
 import scala.util.{Failure, Success, Try}
@@ -150,9 +149,9 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
             }
           })
 
-        case sr@SceneRaster(sceneId, None, celltype) =>
+        case sr@SceneRaster(sceneId, None, celltype, _) =>
           Future.successful(Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
-        case sr@SceneRaster(sceneId, Some(band), celltype) =>
+        case sr@SceneRaster(sceneId, Some(band), celltype, _) =>
           lazy val ndtile = celltype match {
             case Some(ct) => intNdTile.convert(ct)
             case None => intNdTile
@@ -224,9 +223,9 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext) extends LazyLoggin
 
   def resolveForExtent(fullExp: Expression, zoom: Int, extent: Extent): Future[Interpreted[Expression]] = {
     fullExp match {
-      case sr@SceneRaster(sceneId, None, celltype) =>
+      case sr@SceneRaster(sceneId, None, celltype, _) =>
         Future.successful(Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
-      case sr@SceneRaster(sceneId, Some(band), celltype) =>
+      case sr@SceneRaster(sceneId, Some(band), celltype, _) =>
         Future.successful({
           Try {
             val layerId = LayerId(sceneId.toString, zoom)

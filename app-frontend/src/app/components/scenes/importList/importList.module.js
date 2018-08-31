@@ -92,7 +92,9 @@ class ImportListController {
     importModal() {
         this.modalService.open({
             component: 'rfSceneImportModal',
-            resolve: {}
+            resolve: {
+                origin: () => 'raster'
+            }
         });
     }
 
@@ -189,4 +191,3 @@ ImportListModule.component('rfImportList', ImportListComponent);
 ImportListModule.controller('ImportListController', ImportListController);
 
 export default ImportListModule;
-

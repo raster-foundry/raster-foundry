@@ -5,7 +5,7 @@ import java.util.UUID
 
 import com.azavea.rf.bridge._
 import geotrellis.vector.MultiPolygon
-import geotrellis.slick.Projected
+import geotrellis.vector.Projected
 
 import io.circe._
 import io.circe.generic.JsonCodec

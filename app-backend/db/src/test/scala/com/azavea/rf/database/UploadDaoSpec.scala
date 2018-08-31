@@ -44,10 +44,11 @@ class UploadDaoSpec extends FunSuite with Matchers with Checkers with DBTestConf
   test("update an upload") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, project: Project.Create, insertUpload: Upload.Create, updateUpload: Upload.Create) => {
+        (user: User.Create, org: Organization.Create, platform: Platform, project: Project.Create,
+         insertUpload: Upload.Create, updateUpload: Upload.Create) => {
           val uploadInsertWithUserOrgProjectDatasourceIO = for {
-            orgUserProject <- insertUserOrgProject(user, org, project)
-            (dbOrg, dbUser, dbProject) = orgUserProject
+            userOrgPlatProject <- insertUserOrgPlatProject(user, org, platform, project)
+            (dbUser, dbOrg, dbPlatform, dbProject) = userOrgPlatProject
             datasource <- unsafeGetRandomDatasource
             insertedUpload <- UploadDao.insert(fixupUploadCreate(dbUser, dbProject, datasource, insertUpload), dbUser)
           } yield (insertedUpload, dbUser, dbOrg, dbProject, datasource)

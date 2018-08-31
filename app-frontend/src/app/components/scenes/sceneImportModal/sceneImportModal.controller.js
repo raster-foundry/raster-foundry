@@ -15,26 +15,16 @@ const availableImportTypes = ['local', 'S3', 'Planet', 'COG'];
 
 export default class SceneImportModalController {
     constructor(
-        $scope, $state, $q,
+        $rootScope, $scope, $state, $q, $log,
         projectService, Upload, uploadService, authService,
         rollbarWrapperService, datasourceService, userService,
-        sceneService
+        sceneService, APP_CONFIG
     ) {
         'ngInject';
-        this.BUILDCONFIG = BUILDCONFIG;
-        this.$scope = $scope;
-        this.$state = $state;
-        this.$q = $q;
-        this.projectService = projectService;
-        this.Upload = Upload;
-        this.uploadService = uploadService;
-        this.authService = authService;
-        this.rollbarWrapperService = rollbarWrapperService;
-        this.datasourceService = datasourceService;
-        this.availableImportTypes = availableImportTypes;
-        this.userService = userService;
-        this.sceneService = sceneService;
+        $rootScope.autoInject(this, arguments);
 
+        this.BUILDCONFIG = BUILDCONFIG;
+        this.availableImportTypes = availableImportTypes;
         this.planetLogo = planetLogo;
         this.awsS3Logo = awsS3Logo;
         this.dropboxIcon = dropboxIcon;
@@ -244,6 +234,7 @@ export default class SceneImportModalController {
 
     handleDone() {
         this.close();
+        this.$state.reload();
     }
 
     validateS3Config() {
@@ -365,7 +356,7 @@ export default class SceneImportModalController {
     }
 
     finishUpload() {
-        this.upload.uploadStatus = this.importType === 'COG' ?
+        this.upload.uploadStatus = this.isCog ?
             'COMPLETE' :
             'UPLOADED';
         this.uploadService.update(this.upload).then(() => {
@@ -656,6 +647,22 @@ export default class SceneImportModalController {
         if (this.locationChangeCanceller) {
             this.locationChangeCanceller();
             delete this.locationChangeCanceller;
+        }
+    }
+
+    linkToStatus() {
+        this.handleDone();
+        if (this.resolve.origin === 'project' || this.resolve.origin === 'raster') {
+            this.$state.reload();
+        }
+        if (this.resolve.origin === 'projectCreate') {
+            this.$state.go(
+                'projects.edit.scenes',
+                { projectid: this.resolve.project.id}
+            );
+        }
+        if (this.resolve.origin === 'datasource') {
+            this.$state.go('imports.rasters');
         }
     }
 }

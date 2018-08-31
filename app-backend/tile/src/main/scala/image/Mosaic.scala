@@ -9,9 +9,8 @@ import com.azavea.rf.common.cache.CacheClient
 import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
 import geotrellis.raster._
 import geotrellis.raster.render.Png
-import geotrellis.slick.Projected
 import geotrellis.proj4._
-import geotrellis.vector.{Extent, Polygon}
+import geotrellis.vector.{Extent, Polygon, Projected}
 import cats.data._
 import cats.implicits._
 import cats.effect.IO
@@ -33,7 +32,7 @@ case class TagWithTTL(tag: String, ttl: Duration)
 object Mosaic extends LazyLogging with KamonTrace {
   implicit lazy val xa = RFTransactor.xa
 
-  lazy val memcachedClient = KryoMemcachedClient.DEFAULT
+  lazy val memcachedClient = KryoMemcachedClient.default
   val rfCache = new CacheClient(memcachedClient)
 
   def apply(
@@ -69,6 +68,18 @@ object Mosaic extends LazyLogging with KamonTrace {
     } else {
       apply(id, zoom, col, row)
     }
+  }
+
+  def apply(
+      projectId: UUID,
+      zoom: Int,
+      col: Int,
+      row: Int,
+      redBand: Int,
+      greenBand: Int,
+      blueBand: Int
+  )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = traceName(s"Mosaic.apply($projectId)") {
+    MultiBandMosaic(projectId, zoom, col, row, redBand, greenBand, blueBand)
   }
 
   def render(

@@ -3,7 +3,7 @@ package com.azavea.rf.datamodel
 import io.circe._
 import cats.syntax.either._
 
-sealed abstract class SceneType(val repr: String) {
+sealed abstract class SceneType(val repr: String) extends Serializable {
   override def toString = repr
 }
 
