@@ -32,4 +32,5 @@ RUN set -ex \
 COPY jars/ /opt/raster-foundry/jars/
 
 COPY rf/ /tmp/rf
-RUN (cd /tmp/rf && python setup.py install)
+COPY completion.bash /tmp/rf/completion.bash
+RUN (cat /tmp/rf/completion.bash | tee -a /root/.bashrc && cd /tmp/rf && python setup.py install)
