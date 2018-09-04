@@ -26,7 +26,7 @@ export default class AOIApproveController {
     $onInit() {
         this.pendingSceneList = [];
         this.$parent.getPendingSceneList().then(pendingScenes => {
-            this.pendingSceneList = _(pendingScenes).uniqBy('id').compact().value();
+            this.pendingSceneList = _(pendingScenes.scenes).uniqBy('id').compact().value();
             this.resetAllScenes();
             this.sceneStatusCounts = this.getSceneStatusCount();
         });
