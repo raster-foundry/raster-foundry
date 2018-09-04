@@ -12,19 +12,10 @@ const BLUE = '#3388FF';
 class AnnotateController {
     constructor( // eslint-disable-line max-params
         $log, $state, $scope, $rootScope, $anchorScroll, $timeout, $element, $window, $ngRedux,
-        mapService, hotkeys
+        mapService, hotkeys, localStorage
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$state = $state;
-
-        this.$scope = $scope;
-        this.$rootScope = $rootScope;
-        this.$anchorScroll = $anchorScroll;
-        this.$timeout = $timeout;
-        this.$element = $element;
-        this.$window = $window;
-        this.hotkeys = hotkeys;
+        $scope.autoInject(this, arguments);
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis,
@@ -74,7 +65,7 @@ class AnnotateController {
 
         this.bindHotkeys();
 
-        this.panToAnnotation = false;
+        this.panToAnnotation = this.getPanToAnnotation();
 
         this.$element.on('click', () => {
             this.deleteClickedHighlight();
@@ -114,8 +105,17 @@ class AnnotateController {
         });
     }
 
+    getPanToAnnotation() {
+        return this.localStorage.getString('pan-to-annotation') === 'true';
+    }
+
+    setPanToAnnotation(value) {
+        this.localStorage.setString('pan-to-annotation', value);
+    }
+
     toggleAnnotationPanning() {
         this.panToAnnotation = !this.panToAnnotation;
+        this.setPanToAnnotation(this.panToAnnotation);
     }
 
     retryFetches() {
