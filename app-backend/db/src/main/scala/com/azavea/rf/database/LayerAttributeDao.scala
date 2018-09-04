@@ -1,6 +1,7 @@
 package com.azavea.rf.database
 
 import cats.implicits._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.LayerAttribute
 import doobie.Fragments._
 import doobie._
