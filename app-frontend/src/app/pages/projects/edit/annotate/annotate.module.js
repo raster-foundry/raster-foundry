@@ -1,6 +1,7 @@
 /* globals L, _, $ */
 import angular from 'angular';
 import { Set } from 'immutable';
+import turfCenter from '@turf/center';
 require('./annotate.scss');
 
 import AnnotationActions from '_redux/actions/annotation-actions';
@@ -65,8 +66,6 @@ class AnnotateController {
 
         this.bindHotkeys();
 
-        this.panToAnnotation = this.getPanToAnnotation();
-
         this.$element.on('click', () => {
             this.deleteClickedHighlight();
         });
@@ -103,19 +102,6 @@ class AnnotateController {
             mapWrapper.deleteLayers('draw');
             mapWrapper.deleteLayers('highlight');
         });
-    }
-
-    getPanToAnnotation() {
-        return this.localStorage.getString('pan-to-annotation') === 'true';
-    }
-
-    setPanToAnnotation(value) {
-        this.localStorage.setString('pan-to-annotation', value);
-    }
-
-    toggleAnnotationPanning() {
-        this.panToAnnotation = !this.panToAnnotation;
-        this.setPanToAnnotation(this.panToAnnotation);
     }
 
     retryFetches() {
@@ -175,9 +161,7 @@ class AnnotateController {
                         }
                     }).on('click', (e) => {
                         this.getMap().then((mapWrapper) => {
-                            if (this.panToAnnotation) {
-                                mapWrapper.map.panTo(e.target.getBounds().getCenter());
-                            }
+                            mapWrapper.map.panTo(e.target.getBounds().getCenter());
                             if (!this.sidebarDisabled && !this.editingAnnotation) {
                                 delete this.hoveredId;
                                 if (this.clickedId !== feature.id) {
@@ -283,7 +267,7 @@ class AnnotateController {
                 description
             })
         );
-        this.createAnnotations(annotationCollection, !this.annotationTemplate, this.panToAnnotation);
+        this.createAnnotations(annotationCollection, !this.annotationTemplate, false);
     }
 
     onShapeCreated(shapeLayer) {
@@ -331,9 +315,7 @@ class AnnotateController {
                     }
                 }).on('click', (e) => {
                     this.getMap().then((mapWrapper) => {
-                        if (this.panToAnnotation) {
-                            mapWrapper.map.panTo(e.target.getBounds().getCenter());
-                        }
+                        mapWrapper.map.panTo(e.target.getBounds().getCenter());
                         if (!this.sidebarDisabled) {
                             delete this.hoveredId;
                             if (this.clickedId !== feature.id) {
@@ -386,56 +368,17 @@ class AnnotateController {
         }
     }
 
-    toggleSidebarItemClick($event, annotation) {
-        $event.stopPropagation();
+    doPanToAnnotation(annotation) {
         if (!this.sidebarDisabled) {
-            delete this.hoveredId;
-            if (this.clickedId !== annotation.id) {
-                this.clickedId = annotation.id;
-                this.addAndPanToHighlightLayer(annotation, this.panToAnnotation);
-            } else {
-                this.deleteClickedHighlight();
-            }
-        }
-    }
-
-    onSidebarItemMouseIn(annotation) {
-        if (!this.sidebarDisabled && !this.clickedId) {
-            this.hoveredId = annotation.id;
-            this.addAndPanToHighlightLayer(annotation, this.panToAnnotation);
-        }
-    }
-
-    onSidebarItemMouseOut() {
-        if (!this.sidebarDisabled && !this.clickedId) {
-            this.deleteClickedHighlight();
-        }
-    }
-
-    createHighlightLayer(data) {
-        return L.geoJSON(data, {
-            style: () => {
-                return {'color': RED, 'weight': 2, 'opacity': 0.8, 'fillOpacity': 0};
-            },
-            pointToLayer: (geoJsonPoint, latlng) => {
-                return L.marker(latlng, {
-                    'icon': L.divIcon({'className': 'annotate-highlight-marker'})
-                });
-            }
-        });
-    }
-
-    addAndPanToHighlightLayer(annotation, panToAnnotation) {
-        if (!this.sidebarDisabled) {
-            this.getMap().then((mapWrapper) => {
-                let highlightLayer = this.createHighlightLayer(annotation);
-                mapWrapper.setLayer('highlight', highlightLayer, false);
-                if (panToAnnotation) {
-                    mapWrapper.map.panTo(
-                        highlightLayer.getBounds().getCenter(),
-                        {'duration': 0.75}
-                    );
+            this.getMap().then(mapWrapper => {
+                let panTo = annotation;
+                if (annotation.geometry.type === 'Polygon') {
+                    panTo = turfCenter(annotation);
                 }
+                mapWrapper.map.panTo([
+                    panTo.geometry.coordinates[1],
+                    panTo.geometry.coordinates[0]
+                ]);
             });
         }
     }

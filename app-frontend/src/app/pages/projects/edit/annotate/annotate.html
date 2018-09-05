@@ -9,33 +9,42 @@
     <div class="sidebar-header">
       <h5 class="sidebar-title">Annotations</h5>
       <div class="header-controls">
-        <button class="btn btn-small"
-                type="button"
-                ng-click="$ctrl.showHotkeyTips()">Hotkeys</button>
+        <div uib-dropdown class="dropdown">
+          <button class="btn btn-tiny btn-ghost" uib-dropdown-toggle>
+            <i class="icon-menu"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-light dropdown-menu-right" uib-dropdown-menu role="menu">
+            <li >
+              <a ui-sref="projects.edit.annotate.import">Import</a>
+            </li>
+            <li >
+              <a ui-sref="projects.edit.annotate.export">Export</a>
+            </li>
+            <li >
+              <a ng-click="$ctrl.showHotkeyTips()">Hotkeys</a>
+            </li>
+            <li class="divider">
+            </li>
+            <li>
+              <a class="color-danger" ng-click="$ctrl.onClearAnnotation()">Delete all annotations</a>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
     <div class="list-group">
       <div class="list-group-item sidebar-actions-group">
-        <label>Add notes and highlight your imagery</label>
-        <div class="column-6 nogutter btn-group">
-          <button class="btn btn-primary btn-block"
-                  type="button"
-                  ui-sref="projects.edit.annotate.import"
+        <div class="label" for="annotate-filter">Filter by label</div>
+        <div class="fixedwidth">
+          <select class="form-control"
+                  id="annotate-filter"
+                  ng-init="$ctrl.filterLabel = {'name': 'All'}"
+                  ng-model="$ctrl.filterLabel"
+                  ng-change="$ctrl.onFilterChange($ctrl.filterLabel)"
+                  ng-options="label.name for label in $ctrl.labels track by label.name"
                   ng-disabled="$ctrl.editingAnnotation || $ctrl.sidebarDisabled">
-            Import
-          </button>
-          <button class="btn btn-primary btn-block"
-                  type="button"
-                  ui-sref="projects.edit.annotate.export"
-                  ng-disabled="$ctrl.editingAnnotation || $ctrl.sidebarDisabled">
-            Export
-          </button>
+          </select>
         </div>
-      </div>
-      <div class="list-group-item sidebar-actions-group">
-          <label>Pan to new annotations</label>
-          <rf-toggle value="$ctrl.panToAnnotation" on-change="$ctrl.toggleAnnotationPanning()">
-          </rf-toggle>
       </div>
     </div>
   </div>
@@ -69,30 +78,6 @@
         </button>
       </div>
     </div>
-    <div class="list-group"
-         ng-if="$ctrl.annotations.size">
-      <div class="list-group-item">
-        <div class="list-group-left column-6 no-padding no-margin column-bottom">
-          <label for="annotate-filter">Filter by label</label>
-          <select class="form-control"
-                  id="annotate-filter"
-                  ng-init="$ctrl.filterLabel = {'name': 'All'}"
-                  ng-model="$ctrl.filterLabel"
-                  ng-change="$ctrl.onFilterChange($ctrl.filterLabel)"
-                  ng-options="label.name for label in $ctrl.labels track by label.name"
-                  ng-disabled="$ctrl.editingAnnotation || $ctrl.sidebarDisabled">
-          </select>
-        </div>
-        <div class="list-group-right column-6 no-padding no-margin column-bottom">
-          <button class="btn btn-ghost-danger"
-                  type="button"
-                  ng-disabled="$ctrl.editingAnnotation || $ctrl.sidebarDisabled"
-                  ng-click="$ctrl.onClearAnnotation()">
-           Clear Annotations
-          </button>
-        </div>
-      </div>
-    </div>
     <div class="content"
          ng-if="$ctrl.fetchingAnnotations">
       <div class="alert alert-default">
@@ -101,17 +86,11 @@
         </p>
       </div>
     </div>
-    <div class="list-group"
-         ng-repeat="annotation in $ctrl.visibleAnnotations"
+    <div class="list-group selectable"
          ng-if="$ctrl.visibleAnnotations.length">
-        <rf-annotate-sidebar-item ng-attr-id="{{'anchor' + annotation.id}}"
-                                  ng-mouseenter="$ctrl.onSidebarItemMouseIn(annotation)"
-                                  ng-mouseleave="$ctrl.onSidebarItemMouseOut()"
-                                  ng-click="$ctrl.toggleSidebarItemClick($event, annotation)"
-                                  ng-class="{
-                                      'sidebar-item-hover': $ctrl.hoveredId === annotation.id,
-                                      'sidebar-item-click': $ctrl.clickedId === annotation.id
-                                  }"
+        <rf-annotate-sidebar-item ng-repeat="annotation in $ctrl.visibleAnnotations"
+                                  ng-attr-id="{{'anchor' + annotation.id}}"
+                                  ng-click="$ctrl.doPanToAnnotation(annotation)"
                                   annotation-id="annotation.id"
         </rf-annotate-sidebar-item>
       </div>

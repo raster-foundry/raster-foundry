@@ -1,19 +1,22 @@
 @import "../../../../assets/styles/sass/settings/_colors.scss";
+@import "../../../../assets/styles/sass/settings/_variables.scss";
 
 div.list-group-item.list-sidebar-drawn-annotations {
   padding-left: 10px;
   padding-right: 10px;
 }
-.sidebar-item.annotation-item {
-  height: 100%;
-  width: 100%;
-}
-
-.sidebar-item.annotation-item:before {
-  content: "";
-  display: inline-block;
-  vertical-align: top;
-  height: 100%;
+.annotation-item {
+  display: flex;
+  align-items: center;
+  & > *:not(:first-child) {
+    margin-left: 1em;
+  }
+  .annotation-type-icon-container {
+    font-size: 1.6rem;
+    padding: 0.5em;
+    background: lighten($gray-lightest, 7.5%);
+    border-radius: $border-radius-base;
+  }
 }
 
 .inner {

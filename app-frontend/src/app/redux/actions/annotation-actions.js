@@ -141,7 +141,6 @@ export function clearAnnotations() {
 }
 
 export function editAnnotation(annotationId) {
-    console.log(arguments);
     return {
         type: `${ANNOTATIONS_EDIT}_START`,
         payload: annotationId

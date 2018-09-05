@@ -19,7 +19,6 @@ export const projectReducer = typeToReducer({
     },
     [PROJECT_EDIT_LAYER]: {
         START: (state, action) => {
-            console.log(action);
             const geometry = action.payload.geometry;
             const options = Object.assign({
                 draggable: true,
