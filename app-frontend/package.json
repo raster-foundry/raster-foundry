@@ -25,6 +25,7 @@
     "@turf/area": "^4.7.3",
     "@turf/bbox": "^4.7.3",
     "@turf/bbox-polygon": "^4.7.3",
+    "@turf/center": "^6.0.1",
     "@turf/distance": "^4.7.3",
     "angular": "~1.5.8",
     "angular-animate": "~1.5.8",
