@@ -27,16 +27,21 @@ trait ObjectPermissions {
   def getPermissionsF(id: UUID): Fragment =
     Fragment.const(s"SELECT acrs FROM ${tableName}") ++ Fragments.whereAndOpt(Some(fr"id = ${id}"))
 
-  def addPermissionF(id: UUID, acr: ObjectAccessControlRule): Fragment = Fragment.const(s"""
+  def appendPermissionF(id: UUID, acr: ObjectAccessControlRule): Fragment = Fragment.const(s"""
     UPDATE ${tableName}
     SET acrs = array_append(acrs, '${acr.toObjAcrString}'::text)
   """) ++ Fragments.whereAndOpt((Some(fr"id = ${id}")))
 
-  def addPermissionsManyF(id: UUID, acrList: List[ObjectAccessControlRule]): Fragment = {
-    val acrTextArray: String = s"ARRAY[${acrList.map("'" ++ _.toObjAcrString ++ "'").mkString(",")}]"
+  def updatePermissionsF(id: UUID, acrList: List[ObjectAccessControlRule], replace: Boolean = false): Fragment = {
+    val newAcrs: String = acrList.length match {
+      case 0 => "'{}'::text[]"
+      case _ =>
+        val acrTextArray: String = s"ARRAY[${acrList.map("'" ++ _.toObjAcrString ++ "'").mkString(",")}]"
+        if (replace) acrTextArray else s"array_cat(acrs, ${acrTextArray})"
+    }
     Fragment.const(s"""
       UPDATE ${tableName}
-      SET acrs = array_cat(acrs, ${acrTextArray})
+      SET acrs = ${newAcrs}
     """) ++ Fragments.whereAndOpt((Some(fr"id = ${id}")))
   }
 
@@ -56,7 +61,7 @@ trait ObjectPermissions {
     permExists = permissions.contains(Some(acr))
     addPermission <- permExists match {
       case true => throw new Exception(s"${acr.toObjAcrString} exists for ${tableName} ${id}")
-      case false => addPermissionF(id, acr).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
+      case false => appendPermissionF(id, acr).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
     }
   } yield { addPermission }
 
@@ -65,7 +70,13 @@ trait ObjectPermissions {
     acrListFiltered = acrList.filter(acr => !permissions.contains(Some(acr)))
     addPermissionsMany <- acrListFiltered.length match {
       case 0 => throw new Exception(s"All permissions exist for ${tableName} ${id}")
-      case _ => addPermissionsManyF(id, acrListFiltered).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
+      case _ => updatePermissionsF(id, acrListFiltered).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
     }
   } yield { addPermissionsMany }
+
+  def replacePermissions(id: UUID, acrList: List[ObjectAccessControlRule]): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
+    updatePermissionsF(id, acrList, true).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
+
+  def deletePermissions(id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
+    replacePermissions(id, List[ObjectAccessControlRule]())
 }
