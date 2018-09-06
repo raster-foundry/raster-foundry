@@ -39,11 +39,14 @@ trait ObjectPermissions {
         val acrTextArray: String = s"ARRAY[${acrList.map("'" ++ _.toObjAcrString ++ "'").mkString(",")}]"
         if (replace) acrTextArray else s"array_cat(acrs, ${acrTextArray})"
     }
-    Fragment.const(s"""
-      UPDATE ${tableName}
-      SET acrs = ${newAcrs}
-    """) ++ Fragments.whereAndOpt((Some(fr"id = ${id}")))
+    Fragment.const(s"UPDATE ${tableName} SET acrs = ${newAcrs}") ++
+      Fragments.whereAndOpt((Some(fr"id = ${id}")))
   }
+
+  def listUserActionsF(user: User, id: UUID, groupIdsF: String): Fragment =
+    Fragment.const(s"SELECT a.acrs from (SELECT UNNEST(acrs) acrs from ${tableName}") ++
+      Fragments.whereAndOpt(Some(fr"id=${id}")) ++ Fragment.const(") a") ++
+      Fragment.const(s"WHERE a.acrs LIKE '%${user.id}%' OR a.acrs LIKE '%ALL%' OR ${groupIdsF}")
 
   def acrStringsToList(acrs: List[String]): List[Option[ObjectAccessControlRule]] =
     acrs.map(ObjectAccessControlRule.fromObjAcrString)
@@ -79,4 +82,17 @@ trait ObjectPermissions {
 
   def deletePermissions(id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
     replacePermissions(id, List[ObjectAccessControlRule]())
+
+  def listUserActions(user: User, id: UUID): ConnectionIO[List[String]] = for {
+    ugrs <- UserGroupRoleDao.listByUser(user)
+    groupIdString = ugrs.map((urg: UserGroupRole) => s"a.acrs LIKE '%${urg.groupId.toString}%'").mkString(" OR ")
+    listUserActions <- listUserActionsF(user, id, groupIdString).query[String].to[List]
+    actions = acrStringsToList(listUserActions).flatten.map(_.actionType.toString).distinct
+  } yield { actions }
+
+  // function not used anywhere
+  // def listBySubject(subjectType: SubjectType, subjectId: String)
+
+  // todo in a future card
+  // def deactivateBySubject(subjectType: SubjectType, subjectId: String)
 }

@@ -28,7 +28,7 @@ import cats.effect.IO
 import cats.implicits._
 
 
-object ProjectDao extends Dao[Project] with ObjectPermissions {
+object ProjectDao extends Dao[Project]{
 
   val tableName = "projects"
 
