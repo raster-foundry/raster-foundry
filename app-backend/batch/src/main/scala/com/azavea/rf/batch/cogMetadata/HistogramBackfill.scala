@@ -95,13 +95,14 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
         // If we don't have any ids, just get all the COG scenes without histograms
         case Nil => getScenesToBackfill
         // If we do have some ids, go get those scenes. Assume the user has picked scenes correctly
-        case ids => ids traverse {
-          id => {
-            SceneDao.unsafeGetSceneById(id).transact(xa) map {
-              scene => (scene.id, scene.ingestLocation)
+        case ids =>
+          ids traverse { id =>
+            {
+              SceneDao.unsafeGetSceneById(id).transact(xa) map { scene =>
+                (scene.id, scene.ingestLocation)
+              }
             }
-          }
-        } map { _.grouped(8).toList }
+          } map { _.grouped(8).toList }
       }
       inserts <- (chunkedTuples parTraverse { sceneList =>
         sceneList traverse { scene =>
