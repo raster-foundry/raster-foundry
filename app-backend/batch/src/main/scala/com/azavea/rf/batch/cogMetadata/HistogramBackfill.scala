@@ -5,7 +5,7 @@ import com.azavea.rf.common.utils.CogUtils
 import com.azavea.rf.datamodel.{LayerAttribute, Scene, SceneType}
 import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.LayerAttributeDao
+import com.azavea.rf.database.{LayerAttributeDao, SceneDao}
 
 import cats.data._
 import cats.effect.IO
@@ -89,9 +89,20 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
     )
   }
 
-  def run: IO[Unit] =
+  def run(sceneIds: Array[UUID]): IO[Unit] =
     for {
-      chunkedTuples <- getScenesToBackfill
+      chunkedTuples <- sceneIds.toList match {
+        // If we don't have any ids, just get all the COG scenes without histograms
+        case Nil => getScenesToBackfill
+        // If we do have some ids, go get those scenes. Assume the user has picked scenes correctly
+        case ids => ids traverse {
+          id => {
+            SceneDao.unsafeGetSceneById(id).transact(xa) map {
+              scene => (scene.id, scene.ingestLocation)
+            }
+          }
+        } map { _.grouped(8).toList }
+      }
       inserts <- (chunkedTuples parTraverse { sceneList =>
         sceneList traverse { scene =>
           insertHistogramLayerAttribute(scene)
@@ -110,13 +121,14 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
     }
 
   def main(args: Array[String]): Unit =
-    run
+    run(args map { UUID.fromString(_) })
       .recoverWith(
         {
           case t: Throwable =>
             IO {
               sendError(t)
               logger.error(t.getMessage, t)
+              sys.exit(1)
             }
         }
       )
