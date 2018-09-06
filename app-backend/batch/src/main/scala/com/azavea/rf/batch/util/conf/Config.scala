@@ -102,12 +102,7 @@ trait Config {
   }
 
   @SuppressWarnings(Array("FinalModifierOnCaseClass"))
-  case class Auth0(
-    clientId: String,
-    clientSecret: String,
-    systemUser: String,
-    domain: String
-  )
+  case class Auth0(systemUser: String)
 
 
   private lazy val config = ConfigFactory.load()
