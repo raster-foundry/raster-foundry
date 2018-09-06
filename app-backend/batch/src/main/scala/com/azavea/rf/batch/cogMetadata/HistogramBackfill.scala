@@ -38,11 +38,12 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
     fr"""select
            id, ingest_location
          from
-           scenes
+           scenes left join layer_attributes on
+             cast(scenes.id as varchar(255)) = layer_attributes.layer_name
          where
            scene_type = 'COG' and
            ingest_location is not null and
-           cast(id as varchar(255)) not in (select layer_name from layer_attributes);
+           layer_attributes.layer_name is null;
        """.query[CogTuple].to[List].transact(xa) map { tuples =>
       {
         logger.info(s"Found ${tuples.length} scenes to create histograms for")

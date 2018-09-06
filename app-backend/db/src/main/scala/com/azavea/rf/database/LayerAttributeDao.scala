@@ -40,7 +40,7 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
     query.filter(fr"name = ${attributeName}").list
   }
 
-  def insertLayerAttribute(layerAttribute: LayerAttribute): ConnectionIO[Int] = {
+  def insertLayerAttribute(layerAttribute: LayerAttribute): ConnectionIO[LayerAttribute] = {
     // This insert includes conflict handling, because if we re-ingest a scene, its layerattributes should already
     // be in the db.
     val insertStatement = fr"INSERT into" ++ tableF ++

@@ -13,7 +13,6 @@ import com.azavea.rf.batch.notification.NotifyIngestStatus
 
 object Main {
   val modules = Map[String, Array[String] => Unit](
-    CheckExportStatus.name  -> (CheckExportStatus.main(_)),
     CreateExportDef.name    -> (CreateExportDef.main(_)),
     DropboxCopy.name        -> (DropboxCopy.main(_)),
     Export.name             -> (Export.main(_)),
