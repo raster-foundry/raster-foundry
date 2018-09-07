@@ -275,4 +275,27 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
       }
     }
   }
+
+  test("add a permission to a project") {
+    check {
+      forAll {
+        (userTeamOrgPlat: (User.Create, Team.Create, Organization.Create, Platform), acr: ObjectAccessControlRule, project: Project.Create) => {
+          val (user, team, org, platform) = userOrgPlat
+          val projectPermissionsIO = for {
+            userOrgPlat <- insertUserOrgPlatform(user, org, platform)
+            (dbUser, dbOrg, dbPlat) = userOrgPlat
+            project <- ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser)
+            projectPermissions <- ProjectDao.addPermission(project.id, acr)
+          } yield { projectPermissions }
+
+          val projectPermissions = projectPermissionsIO.transact(xa).unsafeRunSync
+
+          println(projectPermissions.flatten)
+          println(acr)
+          true
+          // projectPermissions.flatten(0) == acr
+        }
+      }
+    }
+  }
 }
