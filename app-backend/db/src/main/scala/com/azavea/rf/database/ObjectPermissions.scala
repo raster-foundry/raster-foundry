@@ -90,9 +90,6 @@ trait ObjectPermissions {
     actions = acrStringsToList(listUserActions).flatten.map(_.actionType.toString).distinct
   } yield { actions }
 
-  // function not used anywhere
-  // def listBySubject(subjectType: SubjectType, subjectId: String)
-
-  // todo in a future card
+  // todo in card #4020
   // def deactivateBySubject(subjectType: SubjectType, subjectId: String)
 }
