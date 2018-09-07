@@ -24,6 +24,19 @@ trait ObjectPermissions {
       throw new Exception(s"${tableName} not yet supported")
   }).query.filter(id).exists
 
+  def isValidPermission(acr: ObjectAccessControlRule): ConnectionIO[Boolean] = (acr.subjectType, acr.subjectId) match {
+    case (SubjectType.All, _) => true.pure[ConnectionIO]
+    case (SubjectType.Platform, Some(sid)) =>
+      PlatformDao.query.filter(UUID.fromString(sid)).exists
+    case (SubjectType.Organization, Some(sid)) =>
+      OrganizationDao.query.filter(UUID.fromString(sid)).exists
+    case (SubjectType.Team, Some(sid)) =>
+      TeamDao.query.filter(UUID.fromString(sid)).exists
+    case (SubjectType.User, Some(sid)) =>
+      UserDao.filterById(sid).exists
+    case _ => throw new Exception("Subject id required and but not provided in")
+  }
+
   def getPermissionsF(id: UUID): Fragment =
     Fragment.const(s"SELECT acrs FROM ${tableName}") ++ Fragments.whereAndOpt(Some(fr"id = ${id}"))
 
@@ -59,14 +72,19 @@ trait ObjectPermissions {
     }
   } yield { getPermissions }
 
-  def addPermission(id: UUID, acr: ObjectAccessControlRule): ConnectionIO[List[Option[ObjectAccessControlRule]]] = for {
-    permissions <- getPermissions(id)
-    permExists = permissions.contains(Some(acr))
-    addPermission <- permExists match {
-      case true => throw new Exception(s"${acr.toObjAcrString} exists for ${tableName} ${id}")
-      case false => appendPermissionF(id, acr).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
+  def addPermission(id: UUID, acr: ObjectAccessControlRule): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
+    isValidPermission(acr) flatMap { isValidPermission => isValidPermission match {
+      case false => throw new Exception(s"${acr.toObjAcrString} is invalid!")
+      case true => for {
+        permissions <- getPermissions(id)
+        permExists = permissions.contains(Some(acr))
+        addPermission <- permExists match {
+          case true => throw new Exception(s"${acr.toObjAcrString} exists for ${tableName} ${id}")
+          case false => appendPermissionF(id, acr).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
+        }
+      } yield { addPermission }
     }
-  } yield { addPermission }
+  }
 
   def addPermissionsMany(id: UUID, acrList: List[ObjectAccessControlRule]): ConnectionIO[List[Option[ObjectAccessControlRule]]] = for {
     permissions <- getPermissions(id)
