@@ -276,24 +276,34 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
     }
   }
 
-  test("add a permission to a project") {
+  test("add a permission to a project and get it back") {
     check {
       forAll {
         (userTeamOrgPlat: (User.Create, Team.Create, Organization.Create, Platform), acr: ObjectAccessControlRule, project: Project.Create) => {
-          val (user, team, org, platform) = userOrgPlat
+          val (user, team, org, platform) = userTeamOrgPlat
+          val projectInsertIO = for {
+            dbUser <- UserDao.create(user)
+            dbPlatform <- PlatformDao.create(platform)
+            orgInsert <- OrganizationDao.createOrganization(org)
+            dbOrg = orgInsert.copy(platformId = dbPlatform.id)
+            dbTeam <- TeamDao.create(team.copy(organizationId = dbOrg.id).toTeam(dbUser))
+            projectInsert <- ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser)
+            dbUserTeamOrgPlat = (dbUser, dbTeam, dbOrg, dbPlatform)
+            acrInsert = fixUpObjectAcr(acr, dbUserTeamOrgPlat)
+          } yield { (projectInsert, acrInsert) }
+
           val projectPermissionsIO = for {
-            userOrgPlat <- insertUserOrgPlatform(user, org, platform)
-            (dbUser, dbOrg, dbPlat) = userOrgPlat
-            project <- ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser)
-            projectPermissions <- ProjectDao.addPermission(project.id, acr)
-          } yield { projectPermissions }
+            projAcr <- projectInsertIO
+            (projectInsert, acrInsert) = projAcr
+            perms <- ProjectDao.addPermission(projectInsert.id, acrInsert)
+            permissions <- ProjectDao.getPermissions(projectInsert.id)
+          } yield { (permissions, acrInsert) }
 
-          val projectPermissions = projectPermissionsIO.transact(xa).unsafeRunSync
+          val (permissions, acrInsert) = projectPermissionsIO.transact(xa).unsafeRunSync
 
-          println(projectPermissions.flatten)
-          println(acr)
+          assert(permissions.flatten.headOption == Some(acrInsert),
+            "Inserting a permission to a project and get it back should return the granted permission")
           true
-          // projectPermissions.flatten(0) == acr
         }
       }
     }

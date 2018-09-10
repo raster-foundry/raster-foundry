@@ -157,4 +157,18 @@ trait PropTestHelpers {
     case Some(teamName) if teamName.length != 0 => teamCreate.copy(name = teamName)
     case _ => teamCreate
   }
+
+  def fixUpObjectAcr(
+    acr: ObjectAccessControlRule,
+    userTeamOrgPlat: (User, Team, Organization, Platform)
+  ): ObjectAccessControlRule = {
+    val (user, team, org, platform) = userTeamOrgPlat
+    acr.subjectType match {
+    case SubjectType.All => acr
+    case SubjectType.Platform => acr.copy(subjectId = Some(platform.id.toString))
+    case SubjectType.Organization => acr.copy(subjectId = Some(org.id.toString))
+    case SubjectType.Team => acr.copy(subjectId = Some(team.id.toString))
+    case SubjectType.User => acr.copy(subjectId = Some(user.id))
+    }
+  }
 }
