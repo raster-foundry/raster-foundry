@@ -279,11 +279,17 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
   test("add a permission to a project and get it back") {
     check {
       forAll {
-        (userTeamOrgPlat: (User.Create, Team.Create, Organization.Create, Platform), acr: ObjectAccessControlRule, project: Project.Create) => {
+        ( userTeamOrgPlat: (User.Create, Team.Create, Organization.Create, Platform),
+          acr: ObjectAccessControlRule,
+          project: Project.Create,
+          grantedUser: User.Create
+        ) => {
           val projectPermissionIO = for {
             projMiscInsert <- fixUpProjMiscInsert(userTeamOrgPlat, project)
             (projectInsert, dbUserTeamOrgPlat) = projMiscInsert
-            acrInsert = fixUpObjectAcr(acr, dbUserTeamOrgPlat)
+            dbGrantedUser <- UserDao.create(grantedUser)
+            dbUserGrantedTeamOrgPlat = dbUserTeamOrgPlat.copy(_1 = dbGrantedUser)
+            acrInsert = fixUpObjectAcr(acr, dbUserGrantedTeamOrgPlat)
             perms <- ProjectDao.addPermission(projectInsert.id, acrInsert)
             permissions <- ProjectDao.getPermissions(projectInsert.id)
           } yield { (permissions, acrInsert) }
@@ -306,14 +312,17 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
           acr1: ObjectAccessControlRule,
           acr2: ObjectAccessControlRule,
           acr3: ObjectAccessControlRule,
-          project: Project.Create
+          project: Project.Create,
+          grantedUser: User.Create
         ) => {
           val projectPermissionsIO = for {
             projMiscInsert <- fixUpProjMiscInsert(userTeamOrgPlat, project)
             (projectInsert, dbUserTeamOrgPlat) = projMiscInsert
-            acrInsert1 = fixUpObjectAcr(acr1, dbUserTeamOrgPlat)
-            acrInsert2 = fixUpObjectAcr(acr2, dbUserTeamOrgPlat)
-            acrInsert3 = fixUpObjectAcr(acr3, dbUserTeamOrgPlat)
+            dbGrantedUser <- UserDao.create(grantedUser)
+            dbUserGrantedTeamOrgPlat = dbUserTeamOrgPlat.copy(_1 = dbGrantedUser)
+            acrInsert1 = fixUpObjectAcr(acr1, dbUserGrantedTeamOrgPlat)
+            acrInsert2 = fixUpObjectAcr(acr2, dbUserGrantedTeamOrgPlat)
+            acrInsert3 = fixUpObjectAcr(acr3, dbUserGrantedTeamOrgPlat)
             permissions <- ProjectDao.addPermissionsMany(projectInsert.id, List(
               acrInsert1,
               acrInsert2,
@@ -339,15 +348,18 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
           acr1: ObjectAccessControlRule,
           acr2: ObjectAccessControlRule,
           acr3: ObjectAccessControlRule,
-          project: Project.Create
+          project: Project.Create,
+          grantedUser: User.Create
         ) => {
           val projectReplacePermissionsIO = for {
             projMiscInsert <- fixUpProjMiscInsert(userTeamOrgPlat, project)
             (projectInsert, dbUserTeamOrgPlat) = projMiscInsert
-            acrInsert1 = fixUpObjectAcr(acr1, dbUserTeamOrgPlat)
+            dbGrantedUser <- UserDao.create(grantedUser)
+            dbUserGrantedTeamOrgPlat = dbUserTeamOrgPlat.copy(_1 = dbGrantedUser)
+            acrInsert1 = fixUpObjectAcr(acr1, dbUserGrantedTeamOrgPlat)
             permAdded <- ProjectDao.addPermission(projectInsert.id, acrInsert1)
-            acrInsert2 = fixUpObjectAcr(acr2, dbUserTeamOrgPlat)
-            acrInsert3 = fixUpObjectAcr(acr3, dbUserTeamOrgPlat)
+            acrInsert2 = fixUpObjectAcr(acr2, dbUserGrantedTeamOrgPlat)
+            acrInsert3 = fixUpObjectAcr(acr3, dbUserGrantedTeamOrgPlat)
             permReplaced <- ProjectDao.replacePermissions(projectInsert.id, List(
               acrInsert2,
               acrInsert3
@@ -373,19 +385,22 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
   }
 
   // deletePermissions
-  test("add a permission to a project and delete it") {
+  test("add permissions to a project and delete them") {
     check {
       forAll {
         ( userTeamOrgPlat: (User.Create, Team.Create, Organization.Create, Platform),
           acr1: ObjectAccessControlRule,
           acr2: ObjectAccessControlRule,
-          project: Project.Create
+          project: Project.Create,
+          grantedUser: User.Create
         ) => {
           val projectDeletePermissionsIO = for {
             projMiscInsert <- fixUpProjMiscInsert(userTeamOrgPlat, project)
             (projectInsert, dbUserTeamOrgPlat) = projMiscInsert
-            acrInsert1 = fixUpObjectAcr(acr1, dbUserTeamOrgPlat)
-            acrInsert2 = fixUpObjectAcr(acr2, dbUserTeamOrgPlat)
+            dbGrantedUser <- UserDao.create(grantedUser)
+            dbUserGrantedTeamOrgPlat = dbUserTeamOrgPlat.copy(_1 = dbGrantedUser)
+            acrInsert1 = fixUpObjectAcr(acr1, dbUserGrantedTeamOrgPlat)
+            acrInsert2 = fixUpObjectAcr(acr2, dbUserGrantedTeamOrgPlat)
             permsAdded <- ProjectDao.addPermissionsMany(projectInsert.id, List(
               acrInsert1,
               acrInsert2
@@ -394,10 +409,60 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
           } yield { (permsAdded, List(acrInsert1, acrInsert2).map(Some(_)), permsDeleted) }
 
           val (permsAdded, acrsAdded, permsDeleted) = projectDeletePermissionsIO.transact(xa).unsafeRunSync
+
           assert(permsAdded.diff(acrsAdded).length == 0,
             "Inserting permissions to a project should get them back")
           assert(permsDeleted.length == 0,
             "Deleting project permissions should get an empty list back")
+          true
+        }
+      }
+    }
+  }
+
+  // listUserActions
+  test("add permissions to a project and list user actions") {
+    check {
+      forAll {
+        ( userTeamOrgPlat: (User.Create, Team.Create, Organization.Create, Platform),
+          acr1: ObjectAccessControlRule,
+          acr2: ObjectAccessControlRule,
+          acr3: ObjectAccessControlRule,
+          project: Project.Create,
+          grantedUser: User.Create
+        ) => {
+          val userActionsIO = for {
+            projMiscInsert <- fixUpProjMiscInsert(userTeamOrgPlat, project)
+            (projectInsert, dbUserTeamOrgPlat) = projMiscInsert
+            (dbUser, dbTeam, dbOrg, dbPlatform) = dbUserTeamOrgPlat
+            dbGrantedUser <- UserDao.create(grantedUser)
+            dbUserGrantedTeamOrgPlat = dbUserTeamOrgPlat.copy(_1 = dbGrantedUser)
+            _ <- {
+              UserGroupRoleDao.create(UserGroupRole.Create(dbGrantedUser.id, GroupType.Platform, dbPlatform.id, GroupRole.Member)
+                .toUserGroupRole(dbUser, MembershipStatus.Approved)) >>
+              UserGroupRoleDao.create(UserGroupRole.Create(dbGrantedUser.id, GroupType.Organization, dbOrg.id, GroupRole.Member)
+                .toUserGroupRole(dbUser, MembershipStatus.Approved)) >>
+              UserGroupRoleDao.create(UserGroupRole.Create(dbGrantedUser.id, GroupType.Team, dbTeam.id, GroupRole.Member)
+                .toUserGroupRole(dbUser, MembershipStatus.Approved))
+            }
+            acrInsert1 = fixUpObjectAcr(acr1, dbUserGrantedTeamOrgPlat)
+            acrInsert2 = fixUpObjectAcr(acr2, dbUserGrantedTeamOrgPlat)
+            acrInsert3 = fixUpObjectAcr(acr3, dbUserGrantedTeamOrgPlat)
+            permissions <- ProjectDao.addPermissionsMany(projectInsert.id, List(
+              acrInsert1,
+              acrInsert2,
+              acrInsert3
+            ))
+            actions <- ProjectDao.listUserActions(dbGrantedUser, projectInsert.id)
+          } yield { (actions, List(acrInsert1, acrInsert2, acrInsert3)) }
+
+          val (userActions, acrsList) = userActionsIO.transact(xa).unsafeRunSync
+
+          val acrActionsDistinct = acrsList.map(_.actionType.toString).distinct
+
+          assert(
+            acrActionsDistinct.diff(userActions).length == 0,
+            "Listing actions granted to a user on a project should return all action string")
           true
         }
       }
