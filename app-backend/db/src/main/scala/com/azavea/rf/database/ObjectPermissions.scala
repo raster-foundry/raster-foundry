@@ -103,7 +103,7 @@ trait ObjectPermissions {
         }}
       addPermissionsMany <- acrListFiltered.length match {
         case 0 if !replace => throw new Exception(s"All permissions exist for ${tableName} ${id}")
-        case 0 if replace => throw new Exception(s"List of permissions do not have valid subjects")
+        case 0 if replace => throw new Exception("List of permissions do not have valid subjects")
         case _ => updatePermissionsF(id, acrListFiltered, replace).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
       }
     } yield { addPermissionsMany }
