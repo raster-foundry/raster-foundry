@@ -113,7 +113,7 @@ trait ObjectPermissions {
     addPermissionsMany(id, acrList, true)
 
   def deletePermissions(id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
-    replacePermissions(id, List[ObjectAccessControlRule]())
+    updatePermissionsF(id, List[ObjectAccessControlRule]()).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
 
   def listUserActions(user: User, id: UUID): ConnectionIO[List[String]] = for {
     ugrs <- UserGroupRoleDao.listByUser(user)
