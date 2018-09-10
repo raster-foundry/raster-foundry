@@ -171,4 +171,20 @@ trait PropTestHelpers {
     case SubjectType.User => acr.copy(subjectId = Some(user.id))
     }
   }
+
+  def fixUpProjMiscInsert(
+    userTeamOrgPlat: (User.Create, Team.Create, Organization.Create, Platform),
+    project: Project.Create
+  ): ConnectionIO[(Project, (User, Team, Organization, Platform))] = {
+    val (user, team, org, platform) = userTeamOrgPlat
+    for {
+      dbUser <- UserDao.create(user)
+      dbPlatform <- PlatformDao.create(platform)
+      orgInsert <- OrganizationDao.createOrganization(org)
+      dbOrg = orgInsert.copy(platformId = dbPlatform.id)
+      dbTeam <- TeamDao.create(team.copy(organizationId = dbOrg.id).toTeam(dbUser))
+      projectInsert <- ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser)
+      dbUserTeamOrgPlat = (dbUser, dbTeam, dbOrg, dbPlatform)
+    } yield { (projectInsert, dbUserTeamOrgPlat) }
+  }
 }
