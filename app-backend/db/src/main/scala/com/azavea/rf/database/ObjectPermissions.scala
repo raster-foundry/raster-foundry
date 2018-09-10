@@ -86,17 +86,31 @@ trait ObjectPermissions {
     }
   }
 
-  def addPermissionsMany(id: UUID, acrList: List[ObjectAccessControlRule]): ConnectionIO[List[Option[ObjectAccessControlRule]]] = for {
-    permissions <- getPermissions(id)
-    acrListFiltered = acrList.filter(acr => !permissions.contains(Some(acr)))
-    addPermissionsMany <- acrListFiltered.length match {
-      case 0 => throw new Exception(s"All permissions exist for ${tableName} ${id}")
-      case _ => updatePermissionsF(id, acrListFiltered).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
-    }
-  } yield { addPermissionsMany }
+  def addPermissionsMany(id: UUID, acrList: List[ObjectAccessControlRule], replace: Boolean = false): ConnectionIO[List[Option[ObjectAccessControlRule]]] = {
+    val isAcrListPermittedIO: ConnectionIO[List[Boolean]] = acrList.traverse(isValidPermission(_))
+    for {
+      isAcrListPermitted <- isAcrListPermittedIO
+      permissions <- getPermissions(id)
+      acrListFiltered: List[ObjectAccessControlRule] = isAcrListPermitted.zipWithIndex
+        .foldLeft(List[ObjectAccessControlRule]()) { (acc, perm) => {
+          val (permitted, idx): (Boolean, Int) = perm
+          (replace, permitted) match {
+            case (true, true) => acrList(perm._2)::acc
+            case (false, true) if !permissions.contains(Some(acrList(perm._2))) => acrList(perm._2)::acc
+            case _ =>
+              acc
+          }
+        }}
+      addPermissionsMany <- acrListFiltered.length match {
+        case 0 if !replace => throw new Exception(s"All permissions exist for ${tableName} ${id}")
+        case 0 if replace => throw new Exception(s"List of permissions do not have valid subjects")
+        case _ => updatePermissionsF(id, acrListFiltered, replace).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
+      }
+    } yield { addPermissionsMany }
+  }
 
   def replacePermissions(id: UUID, acrList: List[ObjectAccessControlRule]): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
-    updatePermissionsF(id, acrList, true).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
+    addPermissionsMany(id, acrList, true)
 
   def deletePermissions(id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
     replacePermissions(id, List[ObjectAccessControlRule]())
