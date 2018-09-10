@@ -1,0 +1,127 @@
+package com.azavea.rf.database
+
+import com.azavea.rf.datamodel._
+import com.azavea.rf.database.Implicits._
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import cats._
+import cats.data._
+import cats.effect.IO
+import cats.implicits._
+import java.util.UUID
+
+trait ObjectPermissions {
+  def tableName: String
+
+  def isValidObject(id: UUID): ConnectionIO[Boolean] = (tableName match {
+    case "projects"    => ProjectDao
+    case "scenes"      => SceneDao
+    case "datasources" => DatasourceDao
+    case "shapes"      => ShapeDao
+    case "workspaces" | "templates" | "analyses" =>
+      throw new Exception(s"${tableName} not yet supported")
+  }).query.filter(id).exists
+
+  def isValidPermission(acr: ObjectAccessControlRule): ConnectionIO[Boolean] = (acr.subjectType, acr.subjectId) match {
+    case (SubjectType.All, _) => true.pure[ConnectionIO]
+    case (SubjectType.Platform, Some(sid)) =>
+      PlatformDao.query.filter(UUID.fromString(sid)).exists
+    case (SubjectType.Organization, Some(sid)) =>
+      OrganizationDao.query.filter(UUID.fromString(sid)).exists
+    case (SubjectType.Team, Some(sid)) =>
+      TeamDao.query.filter(UUID.fromString(sid)).exists
+    case (SubjectType.User, Some(sid)) =>
+      UserDao.filterById(sid).exists
+    case _ => throw new Exception("Subject id required and but not provided in")
+  }
+
+  def getPermissionsF(id: UUID): Fragment =
+    Fragment.const(s"SELECT acrs FROM ${tableName}") ++ Fragments.whereAndOpt(Some(fr"id = ${id}"))
+
+  def appendPermissionF(id: UUID, acr: ObjectAccessControlRule): Fragment = Fragment.const(s"""
+    UPDATE ${tableName}
+    SET acrs = array_append(acrs, '${acr.toObjAcrString}'::text)
+  """) ++ Fragments.whereAndOpt((Some(fr"id = ${id}")))
+
+  def updatePermissionsF(id: UUID, acrList: List[ObjectAccessControlRule], replace: Boolean = false): Fragment = {
+    val newAcrs: String = acrList.length match {
+      case 0 => "'{}'::text[]"
+      case _ =>
+        val acrTextArray: String = s"ARRAY[${acrList.map("'" ++ _.toObjAcrString ++ "'").mkString(",")}]"
+        if (replace) acrTextArray else s"array_cat(acrs, ${acrTextArray})"
+    }
+    Fragment.const(s"UPDATE ${tableName} SET acrs = ${newAcrs}") ++
+      Fragments.whereAndOpt((Some(fr"id = ${id}")))
+  }
+
+  def listUserActionsF(user: User, id: UUID, groupIdsF: String): Fragment =
+    Fragment.const(s"SELECT a.acrs from (SELECT UNNEST(acrs) acrs from ${tableName}") ++
+      Fragments.whereAndOpt(Some(fr"id=${id}")) ++ Fragment.const(") a") ++
+      Fragment.const(s"WHERE a.acrs LIKE '%${user.id}%' OR a.acrs LIKE '%ALL%' OR ${groupIdsF}")
+
+  def acrStringsToList(acrs: List[String]): List[Option[ObjectAccessControlRule]] =
+    acrs.map(ObjectAccessControlRule.fromObjAcrString)
+
+  def getPermissions(id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] = for {
+    isValidObject <- isValidObject(id)
+    getPermissions <- isValidObject match {
+      case false => throw new Exception(s"Invalid ${tableName} object ${id}")
+      case true => getPermissionsF(id).query[List[String]].unique.map(acrStringsToList(_))
+    }
+  } yield { getPermissions }
+
+  def addPermission(id: UUID, acr: ObjectAccessControlRule): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
+    isValidPermission(acr) flatMap { isValidPermission => isValidPermission match {
+      case false => throw new Exception(s"${acr.toObjAcrString} is invalid!")
+      case true => for {
+        permissions <- getPermissions(id)
+        permExists = permissions.contains(Some(acr))
+        addPermission <- permExists match {
+          case true => throw new Exception(s"${acr.toObjAcrString} exists for ${tableName} ${id}")
+          case false => appendPermissionF(id, acr).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
+        }
+      } yield { addPermission }
+    }
+  }
+
+  def addPermissionsMany(id: UUID, acrList: List[ObjectAccessControlRule], replace: Boolean = false): ConnectionIO[List[Option[ObjectAccessControlRule]]] = {
+    val isAcrListPermittedIO: ConnectionIO[List[Boolean]] = acrList.traverse(isValidPermission(_))
+    for {
+      isAcrListPermitted <- isAcrListPermittedIO
+      permissions <- getPermissions(id)
+      acrListFiltered: List[ObjectAccessControlRule] = isAcrListPermitted.zipWithIndex
+        .foldLeft(List[ObjectAccessControlRule]()) { (acc, perm) => {
+          val (permitted, idx): (Boolean, Int) = perm
+          (replace, permitted) match {
+            case (true, true) => acrList(perm._2)::acc
+            case (false, true) if !permissions.contains(Some(acrList(perm._2))) => acrList(perm._2)::acc
+            case _ =>
+              acc
+          }
+        }}
+      addPermissionsMany <- acrListFiltered.length match {
+        case 0 if !replace => throw new Exception(s"All permissions exist for ${tableName} ${id}")
+        case 0 if replace => throw new Exception("List of permissions do not have valid subjects")
+        case _ => updatePermissionsF(id, acrListFiltered, replace).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
+      }
+    } yield { addPermissionsMany }
+  }
+
+  def replacePermissions(id: UUID, acrList: List[ObjectAccessControlRule]): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
+    addPermissionsMany(id, acrList, true)
+
+  def deletePermissions(id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
+    updatePermissionsF(id, List[ObjectAccessControlRule]()).update.withUniqueGeneratedKeys[List[String]]("acrs").map(acrStringsToList(_))
+
+  def listUserActions(user: User, id: UUID): ConnectionIO[List[String]] = for {
+    ugrs <- UserGroupRoleDao.listByUser(user)
+    groupIdString = ugrs.map((urg: UserGroupRole) => s"a.acrs LIKE '%${urg.groupId.toString}%'").mkString(" OR ")
+    listUserActions <- listUserActionsF(user, id, groupIdString).query[String].to[List]
+    actions = acrStringsToList(listUserActions).flatten.map(_.actionType.toString).distinct
+  } yield { actions }
+
+  // todo in card #4020
+  // def deactivateBySubject(subjectType: SubjectType, subjectId: String)
+}
