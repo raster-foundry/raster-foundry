@@ -26,14 +26,14 @@ trait ObjectPermissions {
 
   def isValidPermission(acr: ObjectAccessControlRule): ConnectionIO[Boolean] = (acr.subjectType, acr.subjectId) match {
     case (SubjectType.All, _) => true.pure[ConnectionIO]
-    case (SubjectType.Platform, Some(sid)) =>
-      PlatformDao.query.filter(UUID.fromString(sid)).exists
-    case (SubjectType.Organization, Some(sid)) =>
-      OrganizationDao.query.filter(UUID.fromString(sid)).exists
-    case (SubjectType.Team, Some(sid)) =>
-      TeamDao.query.filter(UUID.fromString(sid)).exists
-    case (SubjectType.User, Some(sid)) =>
-      UserDao.filterById(sid).exists
+    case (SubjectType.Platform, Some(subjectId)) =>
+      PlatformDao.query.filter(UUID.fromString(subjectId)).exists
+    case (SubjectType.Organization, Some(subjectId)) =>
+      OrganizationDao.query.filter(UUID.fromString(subjectId)).exists
+    case (SubjectType.Team, Some(subjectId)) =>
+      TeamDao.query.filter(UUID.fromString(subjectId)).exists
+    case (SubjectType.User, Some(subjectId)) =>
+      UserDao.filterById(subjectId).exists
     case _ => throw new Exception("Subject id required and but not provided in")
   }
 
