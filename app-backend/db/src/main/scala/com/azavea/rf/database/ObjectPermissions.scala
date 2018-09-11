@@ -12,8 +12,13 @@ import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
 
-trait ObjectPermissions {
+trait ObjectPermissions[Model] {
   def tableName: String
+
+  def authObjectQuery(user: User,
+                      ownershipTypeO: Option[String] = None,
+                      groupTypeO: Option[GroupType] = None,
+                      groupIdO: Option[UUID] = None): Dao.QueryBuilder[Model]
 
   def isValidObject(id: UUID): ConnectionIO[Boolean] =
     (tableName match {
@@ -173,4 +178,58 @@ trait ObjectPermissions {
 
   // todo in card #4020
   // def deactivateBySubject(subjectType: SubjectType, subjectId: String)
+
+  def listViewableObjectsF(user: User,
+                           ownershipTypeO: Option[String],
+                           groupTypeO: Option[GroupType],
+                           groupIdO: Option[UUID]): List[Option[Fragment]] = {
+    val ownedF: Fragment =
+      Fragment.const(s"owner = '${user.id}'")
+    val visibilityF: Fragment =
+      fr"visibility = 'PUBLIC'"
+    val sharedF: Fragment =
+      Fragment.const(s"ARRAY['ALL;;VIEW', 'USER;${user.id};VIEW']")
+    val inheritedF: Fragment =
+      fr"""ARRAY(
+      SELECT concat_ws(';', group_type, group_id, 'VIEW')
+      FROM user_group_roles
+      WHERE user_id = ${user.id}
+      """ ++
+        (
+          (groupTypeO, groupIdO) match {
+            case (Some(groupType), Some(groupId)) =>
+              fr"AND group_type = ${groupType.toString}::group_type AND group_id = ${groupId})"
+            case _ =>
+              fr")"
+          }
+        )
+    ownershipTypeO match {
+      // owned by the requesting user only
+      case Some(ownershipType) if ownershipType == "owned" =>
+        List(Some(ownedF))
+      // shared to the requesting user directly, across platform, or due to group membership
+      case Some(ownershipType) if ownershipType == "shared" =>
+        List(
+          Some(
+            fr"(" ++ visibilityF ++
+              fr"OR array_cat(" ++
+              sharedF ++ fr"," ++
+              inheritedF ++ fr") && acrs)"),
+          Some(fr"owner <> ${user.id}")
+        )
+      // shared to the requesting user due to group membership
+      case Some(ownershipType) if ownershipType == "inherited" =>
+        List(Some(inheritedF ++ fr"&& acrs"))
+      // the default
+      case _ =>
+        List(
+          Some(
+            fr"(" ++ ownedF ++
+              fr"OR" ++ visibilityF ++
+              fr"OR array_cat(" ++
+              sharedF ++ fr"," ++
+              inheritedF ++ fr") && acrs)")
+        )
+    }
+  }
 }

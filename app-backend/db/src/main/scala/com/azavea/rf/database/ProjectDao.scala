@@ -18,7 +18,7 @@ import io.circe._
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
 
-object ProjectDao extends Dao[Project] with ObjectPermissions {
+object ProjectDao extends Dao[Project] with ObjectPermissions[Project] {
 
   val tableName = "projects"
 
@@ -387,5 +387,19 @@ object ProjectDao extends Dao[Project] with ObjectPermissions {
         projectsPage
           .copy(results = List.empty[Project.WithUser])
           .pure[ConnectionIO]
+    }
+
+  def authObjectQuery(
+      user: User,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None): Dao.QueryBuilder[Project] =
+    if (user.isSuperuser) {
+      Dao.QueryBuilder[Project](selectF, tableF, List.empty)
+    } else {
+      Dao.QueryBuilder[Project](
+        selectF,
+        tableF,
+        listViewableObjectsF(user, ownershipTypeO, groupTypeO, groupIdO))
     }
 }
