@@ -117,6 +117,7 @@ services:
     external_links:
       - postgres:database.service.rasterfoundry.internal
       - api-server:rasterfoundry.com
+      - memcached:tile-cache.service.rasterfoundry.internal
     env_file: .env
     environment:
       - RF_HOST=http://rasterfoundry.com:9000
