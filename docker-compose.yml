@@ -41,7 +41,7 @@ services:
       context: ./nginx
       dockerfile: Dockerfile.backsplash
     ports:
-      - "8080:443"
+      - "8081:443"
     extra_hosts:
       - "api-server:127.0.0.1"
     links:
@@ -83,7 +83,7 @@ services:
     environment:
       - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
       - RF_LOG_LEVEL=INFO
-      - TILE_SERVER_LOCATION=http://localhost:8080
+      - TILE_SERVER_LOCATION=http://localhost:8081
     ports:
       - "9000:9000"
       - "9010:9010"
