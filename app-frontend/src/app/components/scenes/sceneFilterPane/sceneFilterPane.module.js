@@ -44,12 +44,13 @@ class FilterPaneController {
     }
 
     $onInit() {
-        this.onDebouncedFilterChange = _.debounce(this.onFilterChange, 250);
+        this.debouncedOnRepositoryChange = _.debounce(this.onRepositoryChange, 250);
     }
 
     $onChanges(changes) {
         if (changes.onRepositoryChange && changes.onRepositoryChange.currentValue) {
             if (this.currentRepository) {
+                this.debouncedOnRepositoryChange = _.debounce(this.onRepositoryChange, 250);
                 this.onFilterChange();
             }
         }
@@ -123,7 +124,8 @@ class FilterPaneController {
                 this.$location.search(param, val);
             }
         });
-        this.onRepositoryChange({
+
+        this.debouncedOnRepositoryChange({
             fetchScenes: this.currentRepository.service.fetchScenes(this.filterParams),
             repository: this.currentRepository
         });
@@ -132,7 +134,7 @@ class FilterPaneController {
     createFilterComponent(filter) {
         const componentScope = this.$scope.$new(true, this.$scope);
         componentScope.filter = filter;
-        componentScope.onFilterChange = this.onDebouncedFilterChange.bind(this);
+        componentScope.onFilterChange = this.onFilterChange.bind(this);
         const template = `<rf-${filter.type}-filter
                            class="filter-group"
                            data-filter="filter"
