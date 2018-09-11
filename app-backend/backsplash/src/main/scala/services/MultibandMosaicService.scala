@@ -35,46 +35,65 @@ import java.net.URI
 import java.util.UUID
 
 class MultibandMosaicService(
-  interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit t: Timer[IO]) extends Http4sDsl[IO] with RollbarNotifier with Authentication {
+    interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
+)(implicit t: Timer[IO])
+    extends Http4sDsl[IO]
+    with RollbarNotifier
+    with Authentication {
 
   implicit val xa = RFTransactor.xa
 
   // final val eval = MamlTms.curried(RasterVar("identity"), interpreter)
   final val eval = MamlTms.identity[ProjectNode](interpreter)
 
-  object TokenQueryParamMatcher extends QueryParamDecoderMatcher[String]("token")
-  object RedBandOptionalQueryParamMatcher extends OptionalQueryParamDecoderMatcher[Int]("redBand")
-  object GreenBandOptionalQueryParamMatcher extends OptionalQueryParamDecoderMatcher[Int]("greenBand")
-  object BlueBandOptionalQueryParamMatcher extends OptionalQueryParamDecoderMatcher[Int]("blueBand")
+  object TokenQueryParamMatcher
+      extends QueryParamDecoderMatcher[String]("token")
+  object RedBandOptionalQueryParamMatcher
+      extends OptionalQueryParamDecoderMatcher[Int]("redBand")
+  object GreenBandOptionalQueryParamMatcher
+      extends OptionalQueryParamDecoderMatcher[Int]("greenBand")
+  object BlueBandOptionalQueryParamMatcher
+      extends OptionalQueryParamDecoderMatcher[Int]("blueBand")
 
   val service: HttpService[IO] =
     HttpService {
-      case GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(y)
-          :? TokenQueryParamMatcher(token)
-          :? RedBandOptionalQueryParamMatcher(redOverride)
-          :? GreenBandOptionalQueryParamMatcher(greenOverride)
-          :? BlueBandOptionalQueryParamMatcher(blueOverride) =>
+      case GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
+            y)
+            :? TokenQueryParamMatcher(token)
+            :? RedBandOptionalQueryParamMatcher(redOverride)
+            :? GreenBandOptionalQueryParamMatcher(greenOverride)
+            :? BlueBandOptionalQueryParamMatcher(blueOverride) =>
         val authIO: EitherT[IO, Throwable, Boolean] =
           for {
             user <- (
               verifyJWT(token) match {
-                case Right((_, jwtClaims)) => EitherT.liftF(
-                  UserDao.unsafeGetUserById(jwtClaims.getStringClaim("sub")).transact(xa)
-                )
-                case Left(e) => EitherT.leftT[IO, User](
-                  new Exception("Failed to validate user from JWT")
-                )
+                case Right((_, jwtClaims)) =>
+                  EitherT.liftF(
+                    UserDao
+                      .unsafeGetUserById(jwtClaims.getStringClaim("sub"))
+                      .transact(xa)
+                  )
+                case Left(e) =>
+                  EitherT.leftT[IO, User](
+                    new Exception("Failed to validate user from JWT")
+                  )
               }
             )
             authorized <- EitherT.liftF(
-              ProjectDao.query.authorized(user, ObjectType.Project, projectId, ActionType.View).transact(xa)
+              ProjectDao.query
+                .authorized(user,
+                            ObjectType.Project,
+                            projectId,
+                            ActionType.View)
+                .transact(xa)
             )
           } yield authorized
-        val projectNode = (redOverride, greenOverride, blueOverride).tupled match {
-          case Some((red: Int, green: Int, blue: Int)) => ProjectNode(projectId, Some(red), Some(green), Some(blue))
-          case _ => ProjectNode(projectId)
-        }
+        val projectNode =
+          (redOverride, greenOverride, blueOverride).tupled match {
+            case Some((red: Int, green: Int, blue: Int)) =>
+              ProjectNode(projectId, Some(red), Some(green), Some(blue))
+            case _ => ProjectNode(projectId)
+          }
         val paramMap = Map("identity" -> projectNode)
         val result = EitherT(eval(paramMap, z, x, y).attempt)
         IO.shift(t) *> (
@@ -90,7 +109,7 @@ class MultibandMosaicService(
             }
           }
         ).value flatMap {
-          case Left(e) => BadRequest(e.getMessage)
+          case Left(e)     => BadRequest(e.getMessage)
           case Right(resp) => resp
         }
     }

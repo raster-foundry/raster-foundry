@@ -21,21 +21,24 @@ object TileAuthentication extends authentication.Authentication {
 
   val authUser: Kleisli[IO, Request[IO], Either[String, IO[User]]] =
     Kleisli(
-      req => IO(
-        for {
-          message <- req.headers.get(Authorization).toRight("Couldn't find an auth header")
-          jwtResult <- {
-            verifyJWT(
-              message.toString.replace("Authorization: Bearer ", "")).left map {
-              _ => "Failed to verify jwt"
+      req =>
+        IO(
+          for {
+            message <- req.headers
+              .get(Authorization)
+              .toRight("Couldn't find an auth header")
+            jwtResult <- {
+              verifyJWT(message.toString.replace("Authorization: Bearer ", "")).left map {
+                _ =>
+                  "Failed to verify jwt"
+              }
             }
+          } yield {
+            val (_, jwtClaims) = jwtResult
+            val userId = jwtClaims.getStringClaim("sub")
+            println(s"User id: $userId")
+            UserDao.unsafeGetUserById(userId).transact(xa)
           }
-        } yield {
-          val (_, jwtClaims) = jwtResult
-          val userId = jwtClaims.getStringClaim("sub")
-          println(s"User id: $userId")
-          UserDao.unsafeGetUserById(userId).transact(xa)
-        }
       )
     )
 

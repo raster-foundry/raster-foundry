@@ -59,8 +59,10 @@ object Dependencies {
   val hadoopAws = "org.apache.hadoop" % "hadoop-aws" % Version.hadoop
   val hikariCP = "com.typesafe.slick" %% "slick-hikaricp" % Version.hikariCP
   val http4sBlaze = "org.http4s" %% "http4s-blaze-server" % Version.http4s
+  val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client" % Version.http4s
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
+  val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
   val kamonAkka = "io.kamon" %% "kamon-akka" % Version.kamon
   val kamonAkkaHttp = "io.kamon" %% "kamon-akka-http" % Version.kamonAkkaHttp
   val kamonCore = "io.kamon" %% "kamon-core" % Version.kamon

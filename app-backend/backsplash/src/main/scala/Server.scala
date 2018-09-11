@@ -1,7 +1,10 @@
 package com.azavea.rf.backsplash
 
 import com.azavea.rf.backsplash.nodes._
-import com.azavea.rf.backsplash.services.{HealthCheckService, MultibandMosaicService}
+import com.azavea.rf.backsplash.services.{
+  HealthCheckService,
+  MultibandMosaicService
+}
 
 import cats.effect.{Effect, IO}
 import fs2.StreamApp
@@ -12,7 +15,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object BacksplashServer extends StreamApp[IO] {
 
-  def stream(args: List[String], requestShutdown: IO[Unit]) = ServerStream.stream
+  def stream(args: List[String], requestShutdown: IO[Unit]) =
+    ServerStream.stream
 }
 
 object ServerStream {

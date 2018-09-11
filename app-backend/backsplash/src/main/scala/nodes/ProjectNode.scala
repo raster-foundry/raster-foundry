@@ -3,7 +3,12 @@ package com.azavea.rf.backsplash.nodes
 import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
 import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.database._
-import com.azavea.rf.datamodel.{HistogramAttribute, LayerAttribute, MosaicDefinition, SceneType}
+import com.azavea.rf.datamodel.{
+  HistogramAttribute,
+  LayerAttribute,
+  MosaicDefinition,
+  SceneType
+}
 
 import cats.data.{OptionT, EitherT}
 import cats.effect.{IO, Timer}
@@ -35,10 +40,10 @@ import java.net.URI
 import java.util.UUID
 
 case class ProjectNode(
-  projectId: UUID,
-  redBandOverride: Option[Int] = None,
-  greenBandOverride: Option[Int] = None,
-  blueBandOverride: Option[Int] = None
+    projectId: UUID,
+    redBandOverride: Option[Int] = None,
+    greenBandOverride: Option[Int] = None,
+    blueBandOverride: Option[Int] = None
 ) {
   def getBandOverrides: Option[(Int, Int, Int)] =
     (redBandOverride, greenBandOverride, blueBandOverride).tupled
@@ -58,57 +63,71 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     new MamlTmsReification[ProjectNode] {
       def kind(self: ProjectNode): MamlKind = MamlKind.Tile
 
-      def tmsReification(self: ProjectNode, buffer: Int)(implicit t: Timer[IO]): (Int, Int, Int) => IO[Literal] =
+      def tmsReification(self: ProjectNode, buffer: Int)(
+          implicit t: Timer[IO]): (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
           val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
           val mdIO = self.getBandOverrides match {
             case Some((red, green, blue)) =>
-              SceneToProjectDao.getMosaicDefinition(
-                self.projectId, Some(Projected(extent, 3857)), Some(red), Some(green), Some(blue)
-              ).transact(xa)
+              SceneToProjectDao
+                .getMosaicDefinition(
+                  self.projectId,
+                  Some(Projected(extent, 3857)),
+                  Some(red),
+                  Some(green),
+                  Some(blue)
+                )
+                .transact(xa)
             case None =>
-              SceneToProjectDao.getMosaicDefinition(self.projectId, Some(Projected(extent, 3857)))
+              SceneToProjectDao
+                .getMosaicDefinition(self.projectId,
+                                     Some(Projected(extent, 3857)))
                 .transact(xa)
           }
           for {
             mds <- mdIO
             mbTiles <- mds.toList.parTraverse(
               {
-                case md@MosaicDefinition(_, _, Some(SceneType.COG), _) =>
+                case md @ MosaicDefinition(_, _, Some(SceneType.COG), _) =>
                   IO.shift(t) *> fetchCogTile(md, extent).value
-                case md@MosaicDefinition(_, _, Some(SceneType.Avro), _) =>
+                case md @ MosaicDefinition(_, _, Some(SceneType.Avro), _) =>
                   IO.shift(t) *> fetchAvroTile(md, z, x, y).value
                 case MosaicDefinition(_, _, None, _) =>
-                  throw new Exception("Unable to fetch tiles with unknown scene type")
+                  throw new Exception(
+                    "Unable to fetch tiles with unknown scene type")
               }
             )
           } yield {
             RasterLit(
               mbTiles.flatten match {
-                case Nil => Raster(IntArrayTile.fill(NODATA, 256, 256), extent)
-                case tiles@(h :: _) => tiles reduce { _ merge _ }
+                case Nil              => Raster(IntArrayTile.fill(NODATA, 256, 256), extent)
+                case tiles @ (h :: _) => tiles reduce { _ merge _ }
               }
             )
           }
         }
     }
 
-  def tileLayerMetadata(id: UUID, zoom: Int): IO[(Int, TileLayerMetadata[SpatialKey])] = {
+  def tileLayerMetadata(id: UUID,
+                        zoom: Int): IO[(Int, TileLayerMetadata[SpatialKey])] = {
 
     logger.debug(s"Requesting tile layer metadata (layer: $id, zoom: $zoom")
     val layerName = id.toString
     LayerAttributeDao.unsafeMaxZoomForLayer(layerName).transact(xa) map {
       case (_, maxZoom) =>
         val z = if (zoom > maxZoom) maxZoom else zoom
-        z -> store.readMetadata[TileLayerMetadata[SpatialKey]](LayerId(layerName, z))
+        z -> store.readMetadata[TileLayerMetadata[SpatialKey]](
+          LayerId(layerName, z))
     }
   }
 
   def avroLayerHistogram(id: UUID): IO[Array[Histogram[Double]]] = {
     logger.debug(s"Fetching histogram for scene id $id")
     val layerId = LayerId(name = id.toString, zoom = 0)
-    LayerAttributeDao.unsafeGetAttribute(layerId, "histogram").transact(xa) map {
-      attribute => attribute.value.noSpaces.parseJson.convertTo[Array[Histogram[Double]]]
+    LayerAttributeDao
+      .unsafeGetAttribute(layerId, "histogram")
+      .transact(xa) map { attribute =>
+      attribute.value.noSpaces.parseJson.convertTo[Array[Histogram[Double]]]
     }
   }
 
@@ -129,19 +148,21 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
   }
 
   def avroLayerTile(id: UUID, zoom: Int, key: SpatialKey): IO[MultibandTile] = {
-    val reader = new S3ValueReader(store).reader[SpatialKey, MultibandTile](LayerId(id.toString, zoom))
+    val reader = new S3ValueReader(store)
+      .reader[SpatialKey, MultibandTile](LayerId(id.toString, zoom))
     IO(reader.read(key))
   }
 
   // TODO: this essentially inlines a bunch of logic from LayerCache, which isn't super cool
   // it would be nice to get that logic somewhere more appropriate, especially since a lot of
   // it is grid <-> geometry math, but I'm not certain where it should go.
-  def fetchAvroTile(md: MosaicDefinition, zoom: Int, col: Int, row: Int)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+  def fetchAvroTile(md: MosaicDefinition, zoom: Int, col: Int, row: Int)(
+      implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
     logger.debug(s"Fetching avro tile for scene id ${md.sceneId}")
     OptionT(
       for {
         metadata <- IO.shift(t) *> tileLayerMetadata(md.sceneId, zoom)
-                                                    (sourceZoom, tlm) = metadata
+        (sourceZoom, tlm) = metadata
         zoomDiff = zoom - sourceZoom
         resolutionDiff = 1 << zoomDiff
         sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
@@ -149,35 +170,44 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         mbTileE <- {
           if (tlm.bounds.includes(sourceKey))
             avroLayerTile(md.sceneId, sourceZoom, sourceKey).attempt
-          else IO(
-            Left(
-              new Exception(s"Source key outside of tile layer bounds for scene ${md.sceneId}, key ${sourceKey}")
+          else
+            IO(
+              Left(
+                new Exception(
+                  s"Source key outside of tile layer bounds for scene ${md.sceneId}, key ${sourceKey}")
+              )
             )
-          )
         }
       } yield {
         val coloredTileE = mbTileE map {
-          (mbTile: MultibandTile) => {
-            val extent = CogUtils.tmsLevels(zoom).mapTransform.keyToExtent(col, row)
-            val innerCol = col % resolutionDiff
-            val innerRow = row % resolutionDiff
-            val cols = mbTile.cols / resolutionDiff
-            val rows = mbTile.rows / resolutionDiff
-            val corrected = md.colorCorrections.colorCorrect(mbTile, histograms.toSeq)
-            Raster(corrected.color, extent).resample(256, 256)
-          }
+          (mbTile: MultibandTile) =>
+            {
+              val extent =
+                CogUtils.tmsLevels(zoom).mapTransform.keyToExtent(col, row)
+              val innerCol = col % resolutionDiff
+              val innerRow = row % resolutionDiff
+              val cols = mbTile.cols / resolutionDiff
+              val rows = mbTile.rows / resolutionDiff
+              val corrected =
+                md.colorCorrections.colorCorrect(mbTile, histograms.toSeq)
+              Raster(corrected.color, extent).resample(256, 256)
+            }
         }
         coloredTileE.toOption
       }
     )
   }
 
-  def fetchCogTile(md: MosaicDefinition, extent: Extent)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+  def fetchCogTile(md: MosaicDefinition, extent: Extent)(
+      implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
     logger.debug(s"Fetching COG tile for scene ID ${md.sceneId}")
     val tileIO = for {
-      rasterTile <- IO.shift(t) *> CogUtils.fetch(md.ingestLocation.getOrElse("Cannot fetch scene with no ingest location"), extent
-      )
-      histograms <- IO.shift(t) *> cogLayerMinMax(md.ingestLocation.getOrElse(""))
+      rasterTile <- IO.shift(t) *> CogUtils.fetch(
+        md.ingestLocation.getOrElse(
+          "Cannot fetch scene with no ingest location"),
+        extent)
+      histograms <- IO.shift(t) *> cogLayerMinMax(
+        md.ingestLocation.getOrElse(""))
     } yield {
       val bandOrder = List(
         md.colorCorrections.redBand,
@@ -186,8 +216,8 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       )
       val subset = rasterTile.tile.subsetBands(bandOrder: _*)
       val normalized = (
-        subset.mapBands {
-          (i: Int, tile: Tile) => {
+        subset.mapBands { (i: Int, tile: Tile) =>
+          {
             val (minValue, maxValue) = histograms
             tile.normalize(minValue, maxValue, 0, 255)
           }

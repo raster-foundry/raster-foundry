@@ -4,10 +4,10 @@ import io.circe.generic.JsonCodec
 import io.circe.generic.semiauto._
 
 case class HistogramAttribute(
-  buckets: List[(Float, Int)],
-  maximum: Float,
-  minimum: Float,
-  maxBucketCount: Int
+    buckets: List[(Float, Int)],
+    maximum: Float,
+    minimum: Float,
+    maxBucketCount: Int
 )
 
 object HistogramAttribute {
