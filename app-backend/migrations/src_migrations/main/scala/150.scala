@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M150 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(150)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(150)(
+    List(
+      sqlu"""
     -- Delete some 'ALL' ACR records which we used visibility = 'PUBLIC' to populate in migration 118
     -- we will rely on visibility = 'PUBLIC' again in future commits in this anchored PR
     DELETE FROM access_control_rules
@@ -99,5 +100,5 @@ object M150 {
     CREATE INDEX IF NOT EXISTS tool_runs_acrs on "tool_runs" USING GIN ("acrs");
     CREATE INDEX IF NOT EXISTS shapes_acrs on "shapes" USING GIN ("acrs");
     """
-  ))
+    ))
 }
