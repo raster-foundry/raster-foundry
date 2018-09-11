@@ -119,6 +119,7 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
       logger.warn(
         s"Failed to create histograms for ${errors.length} scenes"
       )
+      sys.exit(0)
     }
 
   def main(args: Array[String]): Unit =
