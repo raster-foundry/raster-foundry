@@ -1,10 +1,7 @@
 package com.azavea.rf.backsplash
 
 import com.azavea.rf.backsplash.nodes._
-import com.azavea.rf.backsplash.services.{
-  HealthCheckService,
-  MosaicService
-}
+import com.azavea.rf.backsplash.services.{HealthCheckService, MosaicService}
 
 import cats.effect.{Effect, IO}
 import fs2.StreamApp

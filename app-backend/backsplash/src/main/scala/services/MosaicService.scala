@@ -7,6 +7,7 @@ import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.database.{ProjectDao, SceneToProjectDao, UserDao}
 import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.datamodel._
+import com.azavea.maml.error.Interpreted
 import com.azavea.maml.eval.BufferingInterpreter
 
 import cats._
@@ -88,20 +89,38 @@ class MosaicService(
                 .transact(xa)
             )
           } yield authorized
-        val projectNode =
-          (redOverride, greenOverride, blueOverride).tupled match {
-            case Some((red: Int, green: Int, blue: Int)) =>
-              ProjectNode(projectId, Some(red), Some(green), Some(blue))
-            case _ => ProjectNode(projectId)
-          }
-        val paramMap = Map("identity" -> projectNode)
-        val result = EitherT(eval(paramMap, z, x, y).attempt)
+
+        def getTileResult(
+            project: Project): EitherT[IO, Throwable, Interpreted[Tile]] = {
+          val projectNode =
+            (redOverride, greenOverride, blueOverride).tupled match {
+              case Some((red: Int, green: Int, blue: Int)) =>
+                ProjectNode(projectId,
+                            Some(red),
+                            Some(green),
+                            Some(blue),
+                            project.isSingleBand,
+                            project.singleBandOptions)
+              case _ =>
+                ProjectNode(projectId,
+                            None,
+                            None,
+                            None,
+                            project.isSingleBand,
+                            project.singleBandOptions)
+            }
+          val paramMap = Map("identity" -> projectNode)
+          EitherT(eval(paramMap, z, x, y).attempt)
+        }
+
         IO.shift(t) *> (
           for {
             authed <- authIO
-            res <- result
+            project <- EitherT(
+              ProjectDao.unsafeGetProjectById(projectId).transact(xa).attempt)
+            result <- getTileResult(project)
           } yield {
-            res match {
+            result match {
               case Valid(tile) =>
                 Ok(tile.renderPng.bytes)
               case Invalid(e) =>

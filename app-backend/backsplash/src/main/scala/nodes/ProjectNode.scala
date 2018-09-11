@@ -4,10 +4,12 @@ import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
 import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.database._
 import com.azavea.rf.datamodel.{
+  ColorRampMosaic,
   HistogramAttribute,
   LayerAttribute,
   MosaicDefinition,
-  SceneType
+  SceneType,
+  SingleBandOptions
 }
 
 import cats.data.{OptionT, EitherT}
@@ -15,6 +17,7 @@ import cats.effect.{IO, Timer}
 import cats.implicits._
 import doobie.implicits._
 import geotrellis.raster.{CellSize, CellType, Raster}
+import geotrellis.raster.render.{ColorMap, ColorRamps}
 import geotrellis.server.core.cog.CogUtils
 import geotrellis.server.core.maml.CogNode
 import geotrellis.server.core.maml.persistence._
@@ -43,7 +46,9 @@ case class ProjectNode(
     projectId: UUID,
     redBandOverride: Option[Int] = None,
     greenBandOverride: Option[Int] = None,
-    blueBandOverride: Option[Int] = None
+    blueBandOverride: Option[Int] = None,
+    isSingleBand: Boolean = false,
+    singleBandOptions: Option[SingleBandOptions.Params] = None
 ) {
   def getBandOverrides: Option[(Int, Int, Int)] =
     (redBandOverride, greenBandOverride, blueBandOverride).tupled
@@ -86,17 +91,18 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
           }
           for {
             mds <- mdIO
-            mbTiles <- mds.toList.parTraverse(
-              {
-                case md @ MosaicDefinition(_, _, Some(SceneType.COG), _) =>
-                  IO.shift(t) *> fetchCogTile(md, extent).value
-                case md @ MosaicDefinition(_, _, Some(SceneType.Avro), _) =>
-                  IO.shift(t) *> fetchAvroTile(md, z, x, y).value
-                case MosaicDefinition(_, _, None, _) =>
+            mbTiles <- mds.toList.parTraverse(if (self.isSingleBand)
+              getSingleBandTileFromMosaic(
+                z,
+                x,
+                y,
+                extent,
+                self.singleBandOptions getOrElse {
                   throw new Exception(
-                    "Unable to fetch tiles with unknown scene type")
-              }
-            )
+                    "No single-band options found for single-band visualization")
+                })
+            else
+              getMultiBandTileFromMosaic(z, x, y, extent))
           } yield {
             RasterLit(
               mbTiles.flatten match {
@@ -108,10 +114,34 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         }
     }
 
+  def getSingleBandTileFromMosaic(z: Int,
+                                  x: Int,
+                                  y: Int,
+                                  extent: Extent,
+                                  singleBandOptions: SingleBandOptions.Params)(
+      md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
+    md match {
+      case md @ MosaicDefinition(_, _, Some(SceneType.COG), _) =>
+        IO.shift(t) *> fetchSingleBandCogTile(md, extent, singleBandOptions).value
+      case md @ MosaicDefinition(_, _, Some(SceneType.Avro), _) =>
+        IO.shift(t) *> fetchSingleBandAvroTile(md, z, x, y, singleBandOptions).value
+      case MosaicDefinition(_, _, None, _) =>
+        throw new Exception("Unable to fetch tiles with unknown scene type")
+    }
+
+  def getMultiBandTileFromMosaic(z: Int, x: Int, y: Int, extent: Extent)(
+      md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
+    md match {
+      case md @ MosaicDefinition(_, _, Some(SceneType.COG), _) =>
+        IO.shift(t) *> fetchMultiBandCogTile(md, extent).value
+      case md @ MosaicDefinition(_, _, Some(SceneType.Avro), _) =>
+        IO.shift(t) *> fetchMultiBandAvroTile(md, z, x, y).value
+      case MosaicDefinition(_, _, None, _) =>
+        throw new Exception("Unable to fetch tiles with unknown scene type")
+    }
+
   def tileLayerMetadata(id: UUID,
                         zoom: Int): IO[(Int, TileLayerMetadata[SpatialKey])] = {
-
-    logger.debug(s"Requesting tile layer metadata (layer: $id, zoom: $zoom")
     val layerName = id.toString
     LayerAttributeDao.unsafeMaxZoomForLayer(layerName).transact(xa) map {
       case (_, maxZoom) =>
@@ -122,7 +152,6 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
   }
 
   def avroLayerHistogram(id: UUID): IO[Array[Histogram[Double]]] = {
-    logger.debug(s"Fetching histogram for scene id $id")
     val layerId = LayerId(name = id.toString, zoom = 0)
     LayerAttributeDao
       .unsafeGetAttribute(layerId, "histogram")
@@ -134,15 +163,14 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
   // TODO: don't do this. get COG histograms into the attribute store on import then just use
   // layerHistogram
   def cogLayerMinMax(uri: String): IO[(Int, Int)] = {
-    logger.debug(s"Fetching histogram for cog at $uri")
     for {
+      _ <- IO.pure(logger.info(s"Fetching histogram for cog at $uri"))
       geotiff <- CogUtils.getTiff(uri)
     } yield {
       val cellType = geotiff.cellType
       val signed = cellType.toString.startsWith("u")
       val max = if (signed) 1 << cellType.bits / 2 else 1 << cellType.bits
       val min = if (signed) -max else 0
-      logger.debug(s"Fetched min and max for cog at $uri: $max, $min")
       (min, max)
     }
   }
@@ -156,11 +184,16 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
   // TODO: this essentially inlines a bunch of logic from LayerCache, which isn't super cool
   // it would be nice to get that logic somewhere more appropriate, especially since a lot of
   // it is grid <-> geometry math, but I'm not certain where it should go.
-  def fetchAvroTile(md: MosaicDefinition, zoom: Int, col: Int, row: Int)(
-      implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
-    logger.debug(s"Fetching avro tile for scene id ${md.sceneId}")
+  def fetchMultiBandAvroTile(
+      md: MosaicDefinition,
+      zoom: Int,
+      col: Int,
+      row: Int)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
     OptionT(
       for {
+        _ <- IO.pure(
+          logger.info(
+            s"Fetching multi-band avro tile for scene id ${md.sceneId}"))
         metadata <- IO.shift(t) *> tileLayerMetadata(md.sceneId, zoom)
         (sourceZoom, tlm) = metadata
         zoomDiff = zoom - sourceZoom
@@ -198,10 +231,12 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     )
   }
 
-  def fetchCogTile(md: MosaicDefinition, extent: Extent)(
+  def fetchMultiBandCogTile(md: MosaicDefinition, extent: Extent)(
       implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
-    logger.debug(s"Fetching COG tile for scene ID ${md.sceneId}")
+
     val tileIO = for {
+      _ <- IO.pure(
+        logger.info(s"Fetching multi-band COG tile for scene ID ${md.sceneId}"))
       rasterTile <- IO.shift(t) *> CogUtils.fetch(
         md.ingestLocation.getOrElse(
           "Cannot fetch scene with no ingest location"),
@@ -223,8 +258,105 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
           }
         }
       ).color
+
       Raster(normalized, extent).resample(256, 256)
     }
+    OptionT(tileIO.attempt.map(_.toOption))
+  }
+
+  def fetchSingleBandAvroTile(md: MosaicDefinition,
+                              zoom: Int,
+                              col: Int,
+                              row: Int,
+                              singleBandOptions: SingleBandOptions.Params)(
+      implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+    OptionT(
+      for {
+        _ <- IO.pure(
+          logger.info(
+            s"Fetching single-band avro tile for scene id ${md.sceneId}"))
+        metadata <- IO.shift(t) *> tileLayerMetadata(md.sceneId, zoom)
+        (sourceZoom, tlm) = metadata
+        zoomDiff = zoom - sourceZoom
+        resolutionDiff = 1 << zoomDiff
+        sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
+        histograms <- IO.shift(t) *> avroLayerHistogram(md.sceneId)
+        mbTileE <- {
+          if (tlm.bounds.includes(sourceKey))
+            avroLayerTile(md.sceneId, sourceZoom, sourceKey).attempt
+          else
+            IO(
+              Left(
+                new Exception(
+                  s"Source key outside of tile layer bounds for scene ${md.sceneId}, key ${sourceKey}")
+              )
+            )
+        }
+      } yield {
+        val coloredTileE = mbTileE map {
+          (mbTile: MultibandTile) =>
+            {
+              val extent =
+                CogUtils.tmsLevels(zoom).mapTransform.keyToExtent(col, row)
+              val tile = mbTile.bands.lift(singleBandOptions.band) getOrElse {
+                throw new Exception("No band found in single-band options")
+              }
+              val histogram = histograms
+                .lift(singleBandOptions.band) getOrElse {
+                throw new Exception("No histogram found for band")
+              }
+              colorSingleBandTile(tile, extent, histogram, singleBandOptions)
+            }
+        }
+        coloredTileE.toOption
+      }
+    )
+  }
+
+  def colorSingleBandTile(
+      tile: Tile,
+      extent: Extent,
+      histogram: Histogram[Double],
+      singleBandOptions: SingleBandOptions.Params): Raster[Tile] = {
+    val colorMap =
+      (singleBandOptions.colorScheme.asArray,
+       singleBandOptions.colorScheme.asObject) match {
+        case (Some(a), None) =>
+          ColorRampMosaic.colorMapFromVector(a.map(e => e.noSpaces),
+                                             singleBandOptions,
+                                             histogram)
+        case (None, Some(o)) =>
+          ColorRampMosaic.colorMapFromMap(o.toMap map {
+            case (k, v) => (k, v.noSpaces)
+          })
+        case _ =>
+          val message =
+            "Invalid color scheme format. Color schemes must be defined as an array of hex colors or a mapping of raster values to hex colors."
+          throw new IllegalArgumentException(message)
+      }
+
+    val colored = tile.color(colorMap)
+    Raster(colored, extent)
+  }
+
+  def fetchSingleBandCogTile(md: MosaicDefinition,
+                             extent: Extent,
+                             singleBandOptions: SingleBandOptions.Params)(
+      implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+    val tileIO = for {
+      _ <- IO.pure(
+        logger.info(
+          s"Fetching single-band COG tile for scene ID ${md.sceneId}"))
+      raster <- IO.shift(t) *> CogUtils.fetch(
+        md.ingestLocation.getOrElse(
+          "Cannot fetch scene with no ingest location"),
+        extent)
+    } yield
+      Raster(raster.tile.bands.lift(singleBandOptions.band) getOrElse {
+        throw new Exception("No band found in single-band options")
+      }, extent).resample(256, 256)
+
+    // TODO: use singleBandOptions to appropriately color the tile
     OptionT(tileIO.attempt.map(_.toOption))
   }
 
