@@ -34,7 +34,7 @@ import org.http4s.server._
 import java.net.URI
 import java.util.UUID
 
-class MultibandMosaicService(
+class MosaicService(
     interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
 )(implicit t: Timer[IO])
     extends Http4sDsl[IO]
