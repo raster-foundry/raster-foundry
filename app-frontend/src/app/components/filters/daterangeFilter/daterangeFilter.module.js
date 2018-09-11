@@ -63,22 +63,39 @@ class DaterangeFilterController {
             const startMoment = this.moment(start);
             const end = paramValues[this.filter.params.max];
             const endMoment = this.moment(end);
+            this.usingUTC = true;
 
             if (start && startMoment.isValid()) {
-                this.datefilter.start = startMoment;
                 this.dateFilterPreset = null;
+                if (this.onDatetimeBorder(startMoment)) {
+                    startMoment.utc().utcOffset(this.moment().utcOffset(), true).local();
+                } else {
+                    this.usingUTC = false;
+                }
+                this.datefilter.start = startMoment;
             }
             if (end && endMoment.isValid()) {
-                this.datefilter.end = endMoment;
                 this.dateFilterPreset = null;
+                if (!this.onDatetimeBorder(endMoment)) {
+                    this.usingUTC = false;
+                } else {
+                    endMoment.utc().utcOffset(this.moment().utcOffset(), true).local();
+                }
+                this.datefilter.end = endMoment;
             }
 
             this.setDateRange(
-                this.datefilter.start.startOf('day'),
-                this.datefilter.end.endOf('day'),
+                this.datefilter.start,
+                this.datefilter.end,
                 this.dateFilterPreset
             );
         }
+    }
+
+    onDatetimeBorder(m) {
+        const start = m.clone().utc().startOf('day');
+        const end = m.clone().utc().endOf('day');
+        return m.isSame(start) || m.isSame(end);
     }
 
     openDateRangePickerModal() {
@@ -92,12 +109,14 @@ class DaterangeFilterController {
             }
         }).result.then((range) => {
             if (range) {
+                this.lastRange = range;
                 this.setDateRange(range.start, range.end, range.preset);
             }
         });
     }
 
     setDateRange(start, end, preset) {
+        this.lastSetting = {start, end, preset};
         if (_.isEmpty({start}) || _.isEmpty(end)) {
             this.clearDateFilter(false);
         } else {
@@ -106,8 +125,19 @@ class DaterangeFilterController {
             this.datefilterPreset = preset || false;
             this.hasDatetimeFilter = true;
             const filterParams = {};
-            filterParams[this.filter.params.min] = start.toISOString();
-            filterParams[this.filter.params.max] = end.toISOString();
+            const min = start.clone();
+            const max = end.clone();
+            if (this.usingUTC) {
+                min.utcOffset('+00:00', true).startOf('day');
+                max.utcOffset('+00:00', true).endOf('day');
+            }
+            if (preset === 'None') {
+                filterParams[this.filter.params.min] = null;
+                filterParams[this.filter.params.max] = null;
+            } else {
+                filterParams[this.filter.params.min] = min.toISOString();
+                filterParams[this.filter.params.max] = max.toISOString();
+            }
             this.onFilterChange({
                 filter: this.filter,
                 filterParams
@@ -124,6 +154,11 @@ class DaterangeFilterController {
                 maxAcquisitionDatetime: null
             });
         }
+    }
+    onSetUTC(value) {
+        this.usingUTC = value;
+        let {start, end, preset} = this.lastSetting;
+        this.setDateRange(start, end, preset);
     }
 }
 

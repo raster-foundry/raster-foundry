@@ -4,6 +4,11 @@
     <span ng-if="$ctrl.datefilterPreset">{{$ctrl.datefilterPreset}}</span>
     <span ng-if="!$ctrl.datefilterPreset">{{$ctrl.datefilter.start.calendar()}} to {{$ctrl.datefilter.end.calendar()}}</span>
   </div>
+  <span>
+    <rf-toggle value="$ctrl.usingUTC" on-change="$ctrl.onSetUTC(value)">
+      &nbsp;<strong>Use UTC dates</strong>
+    </rf-toggle>
+  </span>
 </div>
 <div class="filter">
   <label></label>
