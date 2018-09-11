@@ -18,7 +18,7 @@ import io.circe._
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
 
-object ProjectDao extends Dao[Project] {
+object ProjectDao extends Dao[Project] with ObjectPermissions {
 
   val tableName = "projects"
 
