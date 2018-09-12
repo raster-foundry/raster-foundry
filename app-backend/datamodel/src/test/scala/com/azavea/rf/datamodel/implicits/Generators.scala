@@ -696,6 +696,18 @@ object Generators extends ArbitraryInstances {
       searchName <- possiblyEmptyStringGen
     } yield { SearchQueryParameters(Some(searchName)) }
 
+  private def objectAccessControlRuleGen: Gen[ObjectAccessControlRule] = for {
+    subjectType <- subjectTypeGen
+    subjectId <- uuidGen
+    actionType <- actionTypeGen
+  } yield { ObjectAccessControlRule(
+    subjectType,
+    subjectType match {
+      case SubjectType.All => None
+      case _ => Some(subjectId.toString)
+    },
+    actionType) }
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
       credentialGen
@@ -829,5 +841,14 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbSearchQueryParameters: Arbitrary[SearchQueryParameters] =
       Arbitrary { searchQueryParametersGen }
+
+
+    implicit def arbObjectAccessControlRule : Arbitrary[ObjectAccessControlRule] =
+      Arbitrary { objectAccessControlRuleGen }
+
+    implicit def arbListObjectAccessControlRule: Arbitrary[List[ObjectAccessControlRule]] =
+      Arbitrary {
+        Gen.listOfN(10, arbitrary[ObjectAccessControlRule])
+      }
   }
 }
