@@ -15,7 +15,7 @@ Format changed scala files.
 }
 
 function format_changed_scala_files() {
-    files=$(git diff --name-only | grep '.scala')
+    files=$(git diff --name-only develop..HEAD | grep '\.scala')
     echo ${files}
     scalafmt ${files}
 }
