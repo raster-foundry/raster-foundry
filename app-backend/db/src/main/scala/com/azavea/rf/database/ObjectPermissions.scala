@@ -15,11 +15,16 @@ import java.util.UUID
 trait ObjectPermissions[Model] {
   def tableName: String
 
-  def authObjectQuery(user: User,
-                      actionType: ActionType,
+  def authQueryObject(user: User,
+                      objectType: ObjectType,
                       ownershipTypeO: Option[String] = None,
                       groupTypeO: Option[GroupType] = None,
                       groupIdO: Option[UUID] = None): Dao.QueryBuilder[Model]
+
+  def authorizedObject(user: User,
+                       objectType: ObjectType,
+                       objectId: UUID,
+                       actionType: ActionType): ConnectionIO[Boolean]
 
   def isValidObject(id: UUID): ConnectionIO[Boolean] =
     (tableName match {
@@ -180,11 +185,13 @@ trait ObjectPermissions[Model] {
   // todo in card #4020
   // def deactivateBySubject(subjectType: SubjectType, subjectId: String)
 
-  def createVisibilityF(actionType: ActionType): Fragment =
-    (tableName, actionType) match {
-      case (_, ActionType.View) | ("scenes", ActionType.Download) |
-          ("projects", ActionType.Export) | ("projects", ActionType.Annotate) |
-          ("analyses", ActionType.Export) =>
+  def createVisibilityF(objectType: ObjectType,
+                        actionType: ActionType): Fragment =
+    (objectType, actionType) match {
+      case (_, ActionType.View) | (ObjectType.Scene, ActionType.Download) |
+          (ObjectType.Project, ActionType.Export) |
+          (ObjectType.Project, ActionType.Annotate) |
+          (ObjectType.Analysis, ActionType.Export) =>
         Fragment.const("visibility = 'PUBLIC' OR")
       case _ =>
         Fragment.const("")
@@ -208,14 +215,15 @@ trait ObjectPermissions[Model] {
     )
 
   def queryObjectsF(user: User,
+                    objectType: ObjectType,
                     actionType: ActionType,
-                    ownershipTypeO: Option[String],
-                    groupTypeO: Option[GroupType],
-                    groupIdO: Option[UUID]): List[Option[Fragment]] = {
+                    ownershipTypeO: Option[String] = None,
+                    groupTypeO: Option[GroupType] = None,
+                    groupIdO: Option[UUID] = None): Option[Fragment] = {
     val ownedF: Fragment =
       Fragment.const(s"owner = '${user.id}'")
     val visibilityF: Fragment =
-      createVisibilityF(actionType)
+      createVisibilityF(objectType, actionType)
     val sharedF: Fragment =
       Fragment.const(
         s"""ARRAY['ALL;;${actionType.toString}', 'USER;${user.id};${actionType.toString}']""")
@@ -227,20 +235,17 @@ trait ObjectPermissions[Model] {
     ownershipTypeO match {
       // owned by the requesting user only
       case Some(ownershipType) if ownershipType == "owned" =>
-        List(Some(ownedF))
+        Some(ownedF)
       // shared to the requesting user directly, across platform, or due to group membership
       case Some(ownershipType) if ownershipType == "shared" =>
-        List(
-          Some(fr"(" ++ visibilityF ++ acrFilterF ++ fr")"),
-          Some(fr"owner <> ${user.id}")
-        )
+        Some(
+          fr"(" ++ visibilityF ++ acrFilterF ++ fr") AND owner <> ${user.id}")
       // shared to the requesting user due to group membership
       case Some(ownershipType) if ownershipType == "inherited" =>
-        List(Some(inheritedF ++ fr"&& acrs"))
+        Some(inheritedF ++ fr"&& acrs")
       // the default
       case _ =>
-        List(
-          Some(fr"(" ++ ownedF ++ fr"OR" ++ visibilityF ++ acrFilterF ++ fr")"))
+        Some(fr"(" ++ ownedF ++ fr"OR" ++ visibilityF ++ acrFilterF ++ fr")")
     }
   }
 }

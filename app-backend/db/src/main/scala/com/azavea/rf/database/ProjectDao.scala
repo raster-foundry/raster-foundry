@@ -55,7 +55,7 @@ object ProjectDao extends Dao[Project] with ObjectPermissions[Project] {
       page: PageRequest,
       params: ProjectQueryParameters,
       user: User): ConnectionIO[PaginatedResponse[Project.WithUser]] = {
-    authQuery(
+    authQueryObject(
       user,
       ObjectType.Project,
       params.ownershipTypeParams.ownershipType,
@@ -389,18 +389,38 @@ object ProjectDao extends Dao[Project] with ObjectPermissions[Project] {
           .pure[ConnectionIO]
     }
 
-  def authObjectQuery(
+  def authQueryObject(
       user: User,
-      actionType: ActionType,
+      objectType: ObjectType,
       ownershipTypeO: Option[String] = None,
       groupTypeO: Option[GroupType] = None,
       groupIdO: Option[UUID] = None): Dao.QueryBuilder[Project] =
-    if (user.isSuperuser) {
-      Dao.QueryBuilder[Project](selectF, tableF, List.empty)
-    } else {
-      Dao.QueryBuilder[Project](
-        selectF,
-        tableF,
-        queryObjectsF(user, actionType, ownershipTypeO, groupTypeO, groupIdO))
+    user.isSuperuser match {
+      case true =>
+        Dao.QueryBuilder[Project](selectF, tableF, List.empty)
+      case false =>
+        Dao.QueryBuilder[Project](selectF,
+                                  tableF,
+                                  List(
+                                    queryObjectsF(user,
+                                                  objectType,
+                                                  ActionType.View,
+                                                  ownershipTypeO,
+                                                  groupTypeO,
+                                                  groupIdO)))
     }
+
+  def authorizedObject(user: User,
+                       objectType: ObjectType,
+                       objectId: UUID,
+                       actionType: ActionType): ConnectionIO[Boolean] =
+    this.query
+      .filter(user.isSuperuser match {
+        case true =>
+          Some(fr"true")
+        case false =>
+          queryObjectsF(user, objectType, actionType)
+      })
+      .filter(objectId)
+      .exists
 }
