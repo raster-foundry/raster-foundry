@@ -214,7 +214,7 @@ final case class UpdateAOIProject(projectId: UUID)(
         }
     }
 
-    def addScenesToProjectWithProjectIO: ConnectionIO[UUID] = {
+    def addScenesToProjectWithProjectIO: ConnectionIO[(UUID, List[UUID])] = {
       for {
         baseData <- fetchBaseData
         (userId, g, startTime, lastChecked, qp) = baseData
@@ -227,7 +227,7 @@ final case class UpdateAOIProject(projectId: UUID)(
         _ <- logger.info(s"Found ${sceneIds.length} scenes").pure[ConnectionIO]
         _ <- updateProjectIO(user, projectId)
         _ <- ProjectDao.addScenesToProject(sceneIds, projectId, false)
-      } yield { projectId }
+      } yield { (projectId, sceneIds) }
     }
 
     def updateProjectIO(user: User, projectId: UUID): ConnectionIO[Int] =
@@ -237,19 +237,10 @@ final case class UpdateAOIProject(projectId: UUID)(
         affectedRows <- ProjectDao.updateProject(newProject, proj.id, user)
       } yield affectedRows
 
-    def kickoffIngestsIO: ConnectionIO[(UUID, List[UUID])] =
-      for {
-        projId <- addScenesToProjectWithProjectIO
-        sceneIds <- SceneWithRelatedDao.getScenesToIngest(projId) map {
-          (scenes: List[Scene.WithRelated]) =>
-            scenes map { _.id }
-        }
-      } yield (projId, sceneIds)
+    val (projId, nNewScenes) =
+      addScenesToProjectWithProjectIO.transact(xa).unsafeRunSync
 
-    val (projId, sceneIds) = kickoffIngestsIO.transact(xa).unsafeRunSync
-    sceneIds map { kickoffSceneIngest }
-
-    notifyProjectOwner(projId, sceneIds.length)
+    notifyProjectOwner(projId, nNewScenes.length)
   }
 }
 

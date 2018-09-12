@@ -221,8 +221,9 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
       projectId: UUID): ConnectionIO[List[Scene.WithRelated]] = {
     val fragments = List(
       Some(
-        fr"""(ingest_status = ${IngestStatus.ToBeIngested.toString} :: ingest_status
-           OR (ingest_status = ${IngestStatus.Ingesting.toString} :: ingest_status AND (now() - modified_at) > '1 day'::interval))
+        fr"""(ingest_status = ${IngestStatus.Queued.toString} :: ingest_status
+           OR (ingest_status = ${IngestStatus.Ingesting.toString} :: ingest_status AND (now() - modified_at) > '1 day'::interval)
+           OR (ingest_status = ${IngestStatus.Failed.toString} :: ingest_status))
         """),
       Some(
         fr"scenes.id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})")

@@ -950,11 +950,20 @@ trait ProjectRoutes
         val scenesToIngest = SceneWithRelatedDao.getScenesToIngest(projectId)
         val x: ConnectionIO[List[Scene.WithRelated]] = for {
           _ <- scenesAdded
-          scenes <- scenesToIngest
+          toIngest <- scenesToIngest
+          _ <- logger
+            .info(s"Kicking off ${toIngest.size} scene ingests")
+            .pure[ConnectionIO]
+          _ <- toIngest traverse { (scene: Scene.WithRelated) =>
+            SceneDao.update(
+              scene.toScene.copy(statusFields =
+                scene.statusFields.copy(ingestStatus = IngestStatus.Queued)),
+              scene.id,
+              user
+            )
+          }
         } yield {
-          logger.info(s"Kicking off ${scenes.size} scene ingests")
-          scenes.map(_.id).foreach(kickoffSceneIngest)
-          scenes
+          toIngest
         }
 
         complete { x.transact(xa).unsafeToFuture }
@@ -976,23 +985,7 @@ trait ProjectRoutes
               .addScenesToProjectFromQuery(combinedSceneQueryParams, projectId)
               .transact(xa)
               .unsafeToFuture()) { scenesAdded =>
-            {
-              val ingestsKickoff = SceneWithRelatedDao.getScenesToIngest(
-                projectId) map { toIngest: List[Scene.WithRelated] =>
-                {
-                  logger.info(
-                    s"Kicking off ${toIngest.length} scene ingests from query parameter add")
-                  toIngest foreach { scene: Scene.WithRelated =>
-                    kickoffSceneIngest(scene.id)
-                  }
-                }
-              }
-              ingestsKickoff.transact(xa).unsafeRunAsync {
-                case Left(error) => sendError(error)
-                case _           => ()
-              }
-              complete((StatusCodes.Created, scenesAdded))
-            }
+            complete((StatusCodes.Created, scenesAdded))
           }
         }
       }

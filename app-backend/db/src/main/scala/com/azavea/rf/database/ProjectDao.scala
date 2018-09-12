@@ -5,6 +5,7 @@ import java.util.UUID
 
 import cats.data._
 import cats.implicits._
+import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.database.util.Page
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
@@ -18,7 +19,7 @@ import io.circe._
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
 
-object ProjectDao extends Dao[Project] {
+object ProjectDao extends Dao[Project] with AWSBatch {
 
   val tableName = "projects"
 
@@ -164,14 +165,16 @@ object ProjectDao extends Dao[Project] {
     val updateStatusQuery =
       sql"""
            UPDATE scenes
-           SET ingest_status = ${IngestStatus.ToBeIngested.toString} :: ingest_status
+           SET ingest_status = ${IngestStatus.Queued.toString} :: ingest_status
            FROM
              (SELECT scene_id
               FROM scenes
               INNER JOIN scenes_to_projects ON scene_id = scenes.id
               WHERE project_id = ${projectId}) sub
            WHERE (scenes.ingest_status = ${IngestStatus.NotIngested.toString} :: ingest_status OR
-                  scenes.ingest_status = ${IngestStatus.Failed.toString} :: ingest_status )
+                  scenes.ingest_status = ${IngestStatus.Failed.toString} :: ingest_status OR
+                  (scene.ingest_status = ${IngestStatus.Ingesting.toString} :: ingest_status AND
+                   (now() - modified_at) > '1 day'::interval))
            AND sub.scene_id = scenes.id
          """
     updateStatusQuery.update.run
@@ -214,6 +217,8 @@ object ProjectDao extends Dao[Project] {
       )
       AND """ ++ inClause
     for {
+      project <- ProjectDao.unsafeGetProjectById(projectId)
+      user <- UserDao.unsafeGetUserById(project.owner)
       sceneQueryResult <- sceneIdWithDatasourceF
         .query[(UUID, Datasource)]
         .to[List]
@@ -239,6 +244,18 @@ object ProjectDao extends Dao[Project] {
                WHERE projects.id = ${projectId};
               """.update.run }
       _ <- updateSceneIngestStatus(projectId)
+      scenesToIngest <- SceneWithRelatedDao.getScenesToIngest(projectId)
+      _ <- scenesToIngest traverse { (swr: Scene.WithRelated) =>
+        logger.info(
+          s"Kicking off ingest for scene ${swr.id} with ingest status ${swr.statusFields.ingestStatus}")
+        kickoffSceneIngest(swr.id).pure[ConnectionIO] <* SceneDao.update(
+          swr.toScene.copy(
+            statusFields =
+              swr.statusFields.copy(ingestStatus = IngestStatus.ToBeIngested)),
+          swr.id,
+          user
+        )
+      }
     } yield sceneToProjectInserts
   }
 
