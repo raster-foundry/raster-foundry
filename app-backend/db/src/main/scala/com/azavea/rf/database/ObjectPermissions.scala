@@ -208,10 +208,10 @@ trait ObjectPermissions[Model] {
     )
 
   def queryObjectsF(user: User,
-                   actionType: ActionType,
-                   ownershipTypeO: Option[String],
-                   groupTypeO: Option[GroupType],
-                   groupIdO: Option[UUID]): List[Option[Fragment]] = {
+                    actionType: ActionType,
+                    ownershipTypeO: Option[String],
+                    groupTypeO: Option[GroupType],
+                    groupIdO: Option[UUID]): List[Option[Fragment]] = {
     val ownedF: Fragment =
       Fragment.const(s"owner = '${user.id}'")
     val visibilityF: Fragment =
