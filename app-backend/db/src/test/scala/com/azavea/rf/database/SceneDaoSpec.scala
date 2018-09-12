@@ -92,25 +92,13 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
               val fixedUpUpdateScene = fixupSceneCreate(dbUser, dbDatasource, updateScene)
                 .toScene(dbUser)
                 .copy(id = dbScene.id)
-              SceneDao.update(fixedUpUpdateScene, sceneId, dbUser) flatMap {
-                case (affectedRows: Int, shouldKickoffIngest: Boolean) => {
-                  SceneDao.unsafeGetSceneById(sceneId) map { (affectedRows, _, shouldKickoffIngest) }
-                }
+              SceneDao.update(fixedUpUpdateScene, sceneId, dbUser) flatMap { (affectedRows: Int) =>
+                SceneDao.unsafeGetSceneById(sceneId) map { (affectedRows, _) }
               }
             }
           }
 
-          val (affectedRows, updatedScene, shouldKickoffIngest) = sceneUpdateWithSceneIO.transact(xa).unsafeRunSync
-
-          val kickoffIngestCheck = (insertScene.statusFields.ingestStatus, updatedScene.statusFields.ingestStatus) match {
-            case (IngestStatus.ToBeIngested, IngestStatus.ToBeIngested) =>
-              shouldKickoffIngest == true
-            case (IngestStatus.Ingesting, IngestStatus.Ingesting) =>
-              // we know this is false because ingest status does not hang at Ingesting for a day in this test
-              shouldKickoffIngest == false
-            case _ =>
-              shouldKickoffIngest == false
-          }
+          val (affectedRows, updatedScene) = sceneUpdateWithSceneIO.transact(xa).unsafeRunSync
 
           affectedRows == 1 &&
             updatedScene.visibility == updateScene.visibility &&
@@ -121,8 +109,7 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             updatedScene.dataFootprint == updateScene.dataFootprint &&
             updatedScene.ingestLocation == updateScene.ingestLocation &&
             updatedScene.filterFields == updateScene.filterFields &&
-            updatedScene.statusFields == updateScene.statusFields &&
-            kickoffIngestCheck
+            updatedScene.statusFields == updateScene.statusFields
         }
       }
     }
