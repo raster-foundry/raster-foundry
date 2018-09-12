@@ -17,15 +17,17 @@ sealed abstract class IngestStatus(val repr: String) {
     */
   def toInt: Int = repr.toUpperCase match {
     case "NOTINGESTED"  => 1
-    case "TOBEINGESTED" => 2
-    case "INGESTING"    => 3
-    case "INGESTED"     => 4
+    case "QUEUED"       => 2
+    case "TOBEINGESTED" => 3
+    case "INGESTING"    => 4
+    case "INGESTED"     => 5
     case "FAILED"       => 0
   }
 }
 
 object IngestStatus {
   case object NotIngested extends IngestStatus("NOTINGESTED")
+  case object Queued extends IngestStatus("QUEUED")
   case object ToBeIngested extends IngestStatus("TOBEINGESTED")
   case object Ingesting extends IngestStatus("INGESTING")
   case object Ingested extends IngestStatus("INGESTED")

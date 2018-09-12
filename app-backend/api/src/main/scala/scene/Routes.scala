@@ -157,8 +157,6 @@ trait SceneRoutes
 
       onSuccess(SceneDao.insert(updatedScene, user).transact(xa).unsafeToFuture) {
         scene =>
-          if (scene.statusFields.ingestStatus == IngestStatus.ToBeIngested)
-            kickoffSceneIngest(scene.id)
           complete((StatusCodes.Created, scene))
       }
     }
@@ -194,9 +192,7 @@ trait SceneRoutes
             .update(updatedScene, sceneId, user)
             .transact(xa)
             .unsafeToFuture) {
-          case (result, kickoffIngest) =>
-            if (kickoffIngest) kickoffSceneIngest(sceneId)
-            completeSingleOrNotFound(result)
+          completeSingleOrNotFound(_)
         }
       }
     }
