@@ -168,7 +168,7 @@ object SceneDao extends Dao[Scene] with LazyLogging with AWSBatch {
       } else {
         ().pure[ConnectionIO]
       }
-    } yield sceneWithRelated
+    } yield copied
   }
 
   @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
