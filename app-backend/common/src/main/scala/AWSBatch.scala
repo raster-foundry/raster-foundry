@@ -41,7 +41,6 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
       try {
         val submitJobResult = batchClient.submitJob(jobRequest)
         logger.info(s"Submit Job Result: ${submitJobResult}")
-        // submitJobResult
       } catch {
         case e: Exception =>
           logger.error(
