@@ -1,6 +1,7 @@
 package com.azavea.rf.database
 
 import java.sql.Timestamp
+import scala.util.Random
 
 import com.azavea.rf.datamodel._
 import com.azavea.rf.datamodel.Generators.Implicits._
@@ -489,6 +490,59 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
               paginatedProjects.results.map(_.id).diff(List(projectInsert2.id)).length == 0
             case _ =>
               paginatedProjects.results.length == 0
+          }
+        }
+      }
+    }
+  }
+
+  // authorized -- a function for checking a permission of a user on an object
+  test("check if a user can have a certain action on a project") {
+    check {
+      forAll {
+        ( userTeamOrgPlat: (User.Create, Team.Create, Organization.Create, Platform),
+          acrList: List[ObjectAccessControlRule],
+          project1: Project.Create,
+          project2: Project.Create,
+          grantedUser: User.Create
+        ) => {
+          val projectCreateIO = for {
+            projMiscInsert <- fixUpProjMiscInsert(userTeamOrgPlat, project1)
+            (projectInsert1, dbUserTeamOrgPlat) = projMiscInsert
+            (dbUser, dbTeam, dbOrg, dbPlatform) = dbUserTeamOrgPlat
+            projectInsert2 <- ProjectDao.insertProject(fixupProjectCreate(dbUser, project2), dbUser)
+            dbGrantedUserInsert <- UserDao.create(grantedUser)
+            dbGrantedUser = dbGrantedUserInsert.copy(isSuperuser = false)
+            dbUserGrantedTeamOrgPlat = dbUserTeamOrgPlat.copy(_1 = dbGrantedUser)
+            _ <- {
+              UserGroupRoleDao.create(UserGroupRole.Create(dbGrantedUser.id, GroupType.Platform, dbPlatform.id, GroupRole.Member)
+                .toUserGroupRole(dbUser, MembershipStatus.Approved)) >>
+              UserGroupRoleDao.create(UserGroupRole.Create(dbGrantedUser.id, GroupType.Organization, dbOrg.id, GroupRole.Member)
+                .toUserGroupRole(dbUser, MembershipStatus.Approved)) >>
+              UserGroupRoleDao.create(UserGroupRole.Create(dbGrantedUser.id, GroupType.Team, dbTeam.id, GroupRole.Member)
+                .toUserGroupRole(dbUser, MembershipStatus.Approved))
+            }
+          } yield { (projectInsert1, projectInsert2, dbUserGrantedTeamOrgPlat, dbGrantedUser) }
+
+          val isUserPermittedIO = for {
+            projectCreate <- projectCreateIO
+            (projectInsert1, projectInsert2, dbUserGrantedTeamOrgPlat, dbGrantedUser) = projectCreate
+            acrListToInsert = acrList.map(fixUpObjectAcr(_, dbUserGrantedTeamOrgPlat))
+            _ <- ProjectDao.addPermissionsMany(projectInsert1.id, acrListToInsert)
+            action = Random.shuffle(acrListToInsert.map(_.actionType)).head
+            isPermitted1 <- ProjectDao.authorizedObject(dbGrantedUser, ObjectType.Project, projectInsert1.id, action)
+            isPermitted2 <- ProjectDao.authorizedObject(dbGrantedUser, ObjectType.Project, projectInsert2.id, action)
+          } yield { (action, projectInsert2, isPermitted1, isPermitted2) }
+
+          val (action, projectInsert2, isPermitted1, isPermitted2) = isUserPermittedIO.transact(xa).unsafeRunSync
+
+          if (projectInsert2.visibility == Visibility.Public) {
+            (action) match {
+              case ActionType.View | ActionType.Export | ActionType.Annotate => isPermitted1 && isPermitted2
+              case _ => isPermitted1 && !isPermitted2
+            }
+          } else {
+            isPermitted1
           }
         }
       }
