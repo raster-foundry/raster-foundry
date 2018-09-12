@@ -391,6 +391,7 @@ object ProjectDao extends Dao[Project] with ObjectPermissions[Project] {
 
   def authObjectQuery(
       user: User,
+      actionType: ActionType,
       ownershipTypeO: Option[String] = None,
       groupTypeO: Option[GroupType] = None,
       groupIdO: Option[UUID] = None): Dao.QueryBuilder[Project] =
@@ -400,6 +401,6 @@ object ProjectDao extends Dao[Project] with ObjectPermissions[Project] {
       Dao.QueryBuilder[Project](
         selectF,
         tableF,
-        listViewableObjectsF(user, ownershipTypeO, groupTypeO, groupIdO))
+        queryObjectsF(user, actionType, ownershipTypeO, groupTypeO, groupIdO))
     }
 }

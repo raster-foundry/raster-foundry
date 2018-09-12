@@ -16,6 +16,7 @@ trait ObjectPermissions[Model] {
   def tableName: String
 
   def authObjectQuery(user: User,
+                      actionType: ActionType,
                       ownershipTypeO: Option[String] = None,
                       groupTypeO: Option[GroupType] = None,
                       groupIdO: Option[UUID] = None): Dao.QueryBuilder[Model]
@@ -179,30 +180,50 @@ trait ObjectPermissions[Model] {
   // todo in card #4020
   // def deactivateBySubject(subjectType: SubjectType, subjectId: String)
 
-  def listViewableObjectsF(user: User,
-                           ownershipTypeO: Option[String],
-                           groupTypeO: Option[GroupType],
-                           groupIdO: Option[UUID]): List[Option[Fragment]] = {
+  def createVisibilityF(actionType: ActionType): Fragment =
+    (tableName, actionType) match {
+      case (_, ActionType.View) | ("scenes", ActionType.Download) |
+          ("projects", ActionType.Export) | ("projects", ActionType.Annotate) |
+          ("analyses", ActionType.Export) =>
+        Fragment.const("visibility = 'PUBLIC' OR")
+      case _ =>
+        Fragment.const("")
+    }
+
+  def createInheritedF(user: User,
+                       actionType: ActionType,
+                       groupTypeO: Option[GroupType],
+                       groupIdO: Option[UUID]): Fragment =
+    Fragment.const(s"""ARRAY(
+    SELECT concat_ws(';', group_type, group_id, '${actionType.toString}')
+    FROM user_group_roles
+    WHERE user_id = '${user.id}'
+    """) ++ (
+      (groupTypeO, groupIdO) match {
+        case (Some(groupType), Some(groupId)) =>
+          fr"AND group_type = ${groupType.toString}::group_type AND group_id = ${groupId})"
+        case _ =>
+          fr")"
+      }
+    )
+
+  def queryObjectsF(user: User,
+                   actionType: ActionType,
+                   ownershipTypeO: Option[String],
+                   groupTypeO: Option[GroupType],
+                   groupIdO: Option[UUID]): List[Option[Fragment]] = {
     val ownedF: Fragment =
       Fragment.const(s"owner = '${user.id}'")
     val visibilityF: Fragment =
-      fr"visibility = 'PUBLIC'"
+      createVisibilityF(actionType)
     val sharedF: Fragment =
-      Fragment.const(s"ARRAY['ALL;;VIEW', 'USER;${user.id};VIEW']")
+      Fragment.const(
+        s"""ARRAY['ALL;;${actionType.toString}', 'USER;${user.id};${actionType.toString}']""")
     val inheritedF: Fragment =
-      fr"""ARRAY(
-      SELECT concat_ws(';', group_type, group_id, 'VIEW')
-      FROM user_group_roles
-      WHERE user_id = ${user.id}
-      """ ++
-        (
-          (groupTypeO, groupIdO) match {
-            case (Some(groupType), Some(groupId)) =>
-              fr"AND group_type = ${groupType.toString}::group_type AND group_id = ${groupId})"
-            case _ =>
-              fr")"
-          }
-        )
+      createInheritedF(user, actionType, groupTypeO, groupIdO)
+    val acrFilterF
+      : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") && acrs"
+
     ownershipTypeO match {
       // owned by the requesting user only
       case Some(ownershipType) if ownershipType == "owned" =>
@@ -210,11 +231,7 @@ trait ObjectPermissions[Model] {
       // shared to the requesting user directly, across platform, or due to group membership
       case Some(ownershipType) if ownershipType == "shared" =>
         List(
-          Some(
-            fr"(" ++ visibilityF ++
-              fr"OR array_cat(" ++
-              sharedF ++ fr"," ++
-              inheritedF ++ fr") && acrs)"),
+          Some(fr"(" ++ visibilityF ++ acrFilterF ++ fr")"),
           Some(fr"owner <> ${user.id}")
         )
       // shared to the requesting user due to group membership
@@ -223,13 +240,7 @@ trait ObjectPermissions[Model] {
       // the default
       case _ =>
         List(
-          Some(
-            fr"(" ++ ownedF ++
-              fr"OR" ++ visibilityF ++
-              fr"OR array_cat(" ++
-              sharedF ++ fr"," ++
-              inheritedF ++ fr") && acrs)")
-        )
+          Some(fr"(" ++ ownedF ++ fr"OR" ++ visibilityF ++ acrFilterF ++ fr")"))
     }
   }
 }
