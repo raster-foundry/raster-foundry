@@ -438,4 +438,60 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
       }
     }
   }
+
+  // authQuery -- a function for listing viewable objects
+  test("list projects a user can view") {
+    check {
+      forAll {
+        ( userTeamOrgPlat: (User.Create, Team.Create, Organization.Create, Platform),
+          acrList: List[ObjectAccessControlRule],
+          project1: Project.Create,
+          project2: Project.Create,
+          grantedUser: User.Create,
+          page: PageRequest
+        ) => {
+          val listProjectsIO = for {
+            projMiscInsert <- fixUpProjMiscInsert(userTeamOrgPlat, project1)
+            (projectInsert1, dbUserTeamOrgPlat) = projMiscInsert
+            (dbUser, dbTeam, dbOrg, dbPlatform) = dbUserTeamOrgPlat
+            projectInsert2 <- ProjectDao.insertProject(fixupProjectCreate(dbUser, project2), dbUser)
+            dbGrantedUserInsert <- UserDao.create(grantedUser)
+            dbGrantedUser = dbGrantedUserInsert.copy(isSuperuser = false)
+            dbUserGrantedTeamOrgPlat = dbUserTeamOrgPlat.copy(_1 = dbGrantedUser)
+            _ <- {
+              UserGroupRoleDao.create(UserGroupRole.Create(dbGrantedUser.id, GroupType.Platform, dbPlatform.id, GroupRole.Member)
+                .toUserGroupRole(dbUser, MembershipStatus.Approved)) >>
+              UserGroupRoleDao.create(UserGroupRole.Create(dbGrantedUser.id, GroupType.Organization, dbOrg.id, GroupRole.Member)
+                .toUserGroupRole(dbUser, MembershipStatus.Approved)) >>
+              UserGroupRoleDao.create(UserGroupRole.Create(dbGrantedUser.id, GroupType.Team, dbTeam.id, GroupRole.Member)
+                .toUserGroupRole(dbUser, MembershipStatus.Approved))
+            }
+            acrListToInsert = acrList.map(fixUpObjectAcr(_, dbUserGrantedTeamOrgPlat))
+            _ <- ProjectDao.addPermissionsMany(projectInsert1.id, acrListToInsert)
+            permissionsBack <- ProjectDao.getPermissions(projectInsert1.id)
+            paginatedProjects <- ProjectDao.authQueryObject(dbGrantedUser, ObjectType.Project).filter(fr"owner=${dbUser.id}").page(page)
+          } yield { (projectInsert1, projectInsert2, permissionsBack, paginatedProjects) }
+
+          val (projectInsert1, projectInsert2, permissionsBack, paginatedProjects) = listProjectsIO.transact(xa).unsafeRunSync
+
+          val hasViewPermission = permissionsBack.flatten.exists(_.actionType == ActionType.View)
+
+          (hasViewPermission, projectInsert1.visibility, projectInsert2.visibility) match {
+            case (true, _, Visibility.Public) =>
+              paginatedProjects.results.map(_.id).diff(List(projectInsert1.id, projectInsert2.id)).length == 0
+            case (true, _, _) =>
+              paginatedProjects.results.map(_.id).diff(List(projectInsert1.id)).length == 0
+            case (false, Visibility.Public, Visibility.Public) =>
+              paginatedProjects.results.map(_.id).diff(List(projectInsert1.id, projectInsert2.id)).length == 0
+            case (false, Visibility.Public, _) =>
+              paginatedProjects.results.map(_.id).diff(List(projectInsert1.id)).length == 0
+            case (false, _, Visibility.Public) =>
+              paginatedProjects.results.map(_.id).diff(List(projectInsert2.id)).length == 0
+            case _ =>
+              paginatedProjects.results.length == 0
+          }
+        }
+      }
+    }
+  }
 }
