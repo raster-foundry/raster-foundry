@@ -12,8 +12,12 @@ import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
 
-
-class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
+class SceneDaoSpec
+    extends FunSuite
+    with Matchers
+    with Checkers
+    with DBTestConfig
+    with PropTestHelpers {
   test("list scenes") {
     SceneDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
@@ -21,16 +25,20 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
   test("insert a scene") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, scene: Scene.Create) => {
-          val sceneInsertIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (dbOrg, dbUser) = orgAndUser
-            datasource <- unsafeGetRandomDatasource
-            sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, datasource, scene), dbUser)
-          } yield sceneInsert
-          val insertedScene = sceneInsertIO.transact(xa).unsafeRunSync
+        (user: User.Create, org: Organization.Create, scene: Scene.Create) =>
+          {
+            val sceneInsertIO = for {
+              orgAndUser <- insertUserAndOrg(user, org)
+              (dbOrg, dbUser) = orgAndUser
+              datasource <- unsafeGetRandomDatasource
+              sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser,
+                                                              datasource,
+                                                              scene),
+                                             dbUser)
+            } yield sceneInsert
+            val insertedScene = sceneInsertIO.transact(xa).unsafeRunSync
 
-          insertedScene.visibility == scene.visibility &&
+            insertedScene.visibility == scene.visibility &&
             insertedScene.tags == scene.tags &&
             insertedScene.sceneMetadata == scene.sceneMetadata &&
             insertedScene.name == scene.name &&
@@ -40,7 +48,7 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             insertedScene.ingestLocation == scene.ingestLocation &&
             insertedScene.filterFields == scene.filterFields &&
             insertedScene.statusFields == scene.statusFields
-        }
+          }
       }
     }
   }
@@ -48,19 +56,23 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
   test("maybe insert a scene") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, scene: Scene.Create) => {
-          val sceneInsertIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (dbOrg, dbUser) = orgAndUser
-            datasource <- unsafeGetRandomDatasource
-            sceneInsert <- SceneDao.insertMaybe(fixupSceneCreate(dbUser, datasource, scene), dbUser)
-          } yield sceneInsert
-          val insertedSceneO = sceneInsertIO.transact(xa).unsafeRunSync
-          // our expectation is that this should succeed so this should be safe -- if it fails that indicates
-          // something else was wrong
-          val insertedScene = insertedSceneO.get
+        (user: User.Create, org: Organization.Create, scene: Scene.Create) =>
+          {
+            val sceneInsertIO = for {
+              orgAndUser <- insertUserAndOrg(user, org)
+              (dbOrg, dbUser) = orgAndUser
+              datasource <- unsafeGetRandomDatasource
+              sceneInsert <- SceneDao.insertMaybe(fixupSceneCreate(dbUser,
+                                                                   datasource,
+                                                                   scene),
+                                                  dbUser)
+            } yield sceneInsert
+            val insertedSceneO = sceneInsertIO.transact(xa).unsafeRunSync
+            // our expectation is that this should succeed so this should be safe -- if it fails that indicates
+            // something else was wrong
+            val insertedScene = insertedSceneO.get
 
-          insertedScene.visibility == scene.visibility &&
+            insertedScene.visibility == scene.visibility &&
             insertedScene.tags == scene.tags &&
             insertedScene.sceneMetadata == scene.sceneMetadata &&
             insertedScene.name == scene.name &&
@@ -70,7 +82,7 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             insertedScene.ingestLocation == scene.ingestLocation &&
             insertedScene.filterFields == scene.filterFields &&
             insertedScene.statusFields == scene.statusFields
-        }
+          }
       }
     }
   }
@@ -78,29 +90,44 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
   test("update a scene") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, insertScene: Scene.Create, updateScene: Scene.Create) => {
-          val sceneInsertWithUserOrgDatasourceIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (dbOrg, dbUser) = orgAndUser
-            datasource <- unsafeGetRandomDatasource
-            sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, datasource, insertScene), dbUser)
-          } yield (sceneInsert, dbUser, dbOrg, datasource)
+        (user: User.Create,
+         org: Organization.Create,
+         insertScene: Scene.Create,
+         updateScene: Scene.Create) =>
+          {
+            val sceneInsertWithUserOrgDatasourceIO = for {
+              orgAndUser <- insertUserAndOrg(user, org)
+              (dbOrg, dbUser) = orgAndUser
+              datasource <- unsafeGetRandomDatasource
+              sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser,
+                                                              datasource,
+                                                              insertScene),
+                                             dbUser)
+            } yield (sceneInsert, dbUser, dbOrg, datasource)
 
-          val sceneUpdateWithSceneIO = sceneInsertWithUserOrgDatasourceIO flatMap {
-            case (dbScene: Scene.WithRelated, dbUser: User, dbOrg: Organization, dbDatasource: Datasource) => {
-              val sceneId = dbScene.id
-              val fixedUpUpdateScene = fixupSceneCreate(dbUser, dbDatasource, updateScene)
-                .toScene(dbUser)
-                .copy(id = dbScene.id)
-              SceneDao.update(fixedUpUpdateScene, sceneId, dbUser) flatMap { (affectedRows: Int) =>
-                SceneDao.unsafeGetSceneById(sceneId) map { (affectedRows, _) }
+            val sceneUpdateWithSceneIO = sceneInsertWithUserOrgDatasourceIO flatMap {
+              case (dbScene: Scene.WithRelated,
+                    dbUser: User,
+                    dbOrg: Organization,
+                    dbDatasource: Datasource) => {
+                val sceneId = dbScene.id
+                val fixedUpUpdateScene =
+                  fixupSceneCreate(dbUser, dbDatasource, updateScene)
+                    .toScene(dbUser)
+                    .copy(id = dbScene.id)
+                SceneDao.update(fixedUpUpdateScene, sceneId, dbUser) flatMap {
+                  (affectedRows: Int) =>
+                    SceneDao.unsafeGetSceneById(sceneId) map {
+                      (affectedRows, _)
+                    }
+                }
               }
             }
-          }
 
-          val (affectedRows, updatedScene) = sceneUpdateWithSceneIO.transact(xa).unsafeRunSync
+            val (affectedRows, updatedScene) =
+              sceneUpdateWithSceneIO.transact(xa).unsafeRunSync
 
-          affectedRows == 1 &&
+            affectedRows == 1 &&
             updatedScene.visibility == updateScene.visibility &&
             updatedScene.tags == updateScene.tags &&
             updatedScene.sceneMetadata == updateScene.sceneMetadata &&
@@ -110,7 +137,7 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             updatedScene.ingestLocation == updateScene.ingestLocation &&
             updatedScene.filterFields == updateScene.filterFields &&
             updatedScene.statusFields == updateScene.statusFields
-        }
+          }
       }
     }
   }
