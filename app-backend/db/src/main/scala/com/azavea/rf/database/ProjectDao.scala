@@ -183,7 +183,7 @@ object ProjectDao extends Dao[Project] with AWSBatch {
               WHERE project_id = ${projectId}) sub
            WHERE (scenes.ingest_status = ${IngestStatus.NotIngested.toString} :: ingest_status OR
                   scenes.ingest_status = ${IngestStatus.Failed.toString} :: ingest_status OR
-                  (scene.ingest_status = ${IngestStatus.Ingesting.toString} :: ingest_status AND
+                  (scenes.ingest_status = ${IngestStatus.Ingesting.toString} :: ingest_status AND
                    (now() - modified_at) > '1 day'::interval))
            AND sub.scene_id = scenes.id
          """

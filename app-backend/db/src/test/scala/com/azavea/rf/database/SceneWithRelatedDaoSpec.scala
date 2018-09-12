@@ -68,20 +68,19 @@ class SceneWithRelatedDaoSpec extends FunSuite with Matchers with Checkers with 
             )
           } yield (scenesInsert, dbUser, dbProject)
 
-          val scenesToIngestIO = scenesInsertWithUserProjectIO flatMap {
-            case (dbScenes: List[Scene.WithRelated], dbUser: User, dbProject: Project) => {
-              ProjectDao.addScenesToProject(dbScenes map { _.id }, dbProject.id) flatMap {
-                _ => SceneWithRelatedDao.getScenesToIngest(dbProject.id) map {
-                  (ingestableScenes: List[Scene.WithRelated]) => {
-                    (dbScenes, ingestableScenes)
-                  }
-                }
-              }
+          val scenesToIngestIO = for {
+            scenesUserProject <- scenesInsertWithUserProjectIO
+            (dbScenes, _, dbProject) = scenesUserProject
+            _ <- ProjectDao.addScenesToProject(dbScenes map { _.id }, dbProject.id)
+            retrievedScenes <- dbScenes traverse {
+              scene => SceneDao.unsafeGetSceneById(scene.id)
             }
-          }
+          } yield { (dbScenes, retrievedScenes) }
 
-          val (insertedScenes, ingestableScenes) = scenesToIngestIO.transact(xa).unsafeRunSync
-          val ingestableScenesIds = ingestableScenes map { _.id }
+          val (insertedScenes, scenesInProject) = scenesToIngestIO.transact(xa).unsafeRunSync
+          val ingestableScenesIds = scenesInProject filter {
+            _.statusFields.ingestStatus == IngestStatus.ToBeIngested
+          } map { _.id }
           val ingestableIdsFromInserted = insertedScenes.filter(
             (scene: Scene.WithRelated) => {
               val staleModified =

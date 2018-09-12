@@ -95,7 +95,13 @@ trait PropTestHelpers {
       },
       thumbnails = sceneCreate.thumbnails map {
         _.copy(sceneId = sceneCreate.id.get)
-      }
+      },
+      statusFields = sceneCreate.statusFields.copy(
+        ingestStatus = sceneCreate.statusFields.ingestStatus match {
+          case status@(IngestStatus.Ingested | IngestStatus.Ingesting) => status
+          case _ => IngestStatus.NotIngested
+        }
+      )
     )
   }
 

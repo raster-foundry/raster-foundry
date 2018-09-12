@@ -35,6 +35,7 @@ object IngestStatus {
 
   def fromString(s: String): IngestStatus = s.toUpperCase match {
     case "NOTINGESTED"  => NotIngested
+    case "QUEUED"       => Queued
     case "TOBEINGESTED" => ToBeIngested
     case "INGESTING"    => Ingesting
     case "INGESTED"     => Ingested
