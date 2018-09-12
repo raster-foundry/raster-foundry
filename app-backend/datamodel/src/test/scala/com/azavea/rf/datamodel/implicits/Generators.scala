@@ -845,5 +845,10 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbObjectAccessControlRule : Arbitrary[ObjectAccessControlRule] =
       Arbitrary { objectAccessControlRuleGen }
+
+    implicit def arbListObjectAccessControlRule: Arbitrary[List[ObjectAccessControlRule]] =
+      Arbitrary {
+        Gen.listOfN(10, arbitrary[ObjectAccessControlRule])
+      }
   }
 }
