@@ -26,23 +26,21 @@ def ingest_scene(scene_id):
     image_locations = [(x.sourceUri, x.filename) for x in sorted(
         scene.images, key=lambda x: io.sort_key(scene.datasource, x.bands[0]))]
     io.create_cog(image_locations, scene)
+    metadata_to_postgres(scene.id)
     notify_for_scene_ingest_status(scene.id)
 
 
-def metadata_to_postgres(uri, scene_id):
+def metadata_to_postgres(scene_id):
     """Save histogram for the generated COG in the database
 
     Args:
-        uri (str): remote location of layer
         scene_id (str): ID of scene to save metadata for
     """
 
-    # TODO: this will need to change once there's a command for generating the histogram
-    # for a COG scene
     bash_cmd = [
         'java', '-cp', '/opt/raster-foundry/jars/rf-batch.jar',
-        'com.azavea.rf.batch.Main', 'SOME NEW JOB NAME', uri,
-        'layer_attributes', scene_id
+        'com.azavea.rf.batch.Main', 'cog-histogram-backfill',
+        scene_id
     ]
 
     logger.debug('Bash command to store histogram: %s', ' '.join(bash_cmd))
