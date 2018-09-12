@@ -1,0 +1,33 @@
+#!/bin/bash
+set -e
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
+
+function usage() {
+
+    echo -n \
+"Usage: $(basename "$0")
+
+Format changed scala files.
+"
+}
+
+function format_changed_scala_files() {
+    files=$(git diff --name-only | grep '.scala')
+    echo ${files}
+    scalafmt ${files}
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+        format_changed_scala_files
+    fi
+    exit
+fi
+
