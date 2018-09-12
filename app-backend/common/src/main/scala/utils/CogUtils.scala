@@ -136,7 +136,8 @@ object CogUtils {
           rows = 256
         )
         val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
-        val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(0))
+        val overview =
+          closestTiffOverview(tiff, tiffTileRE.cellSize, AutoHigherResolution)
         cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
           raster.reproject(tmsTileRE, transform, inverseTransform).tile
         }
@@ -174,7 +175,8 @@ object CogUtils {
       CogUtils.fromUri(uri).mapFilter {
         tiff =>
           val cellSize = CellSize(tiff.extent, width, height)
-          val overview = closestTiffOverview(tiff, cellSize, Auto(0))
+          val overview =
+            closestTiffOverview(tiff, cellSize, AutoHigherResolution)
           val overviewRasterCellSize = overview.raster.cellSize
           val overviewExtentWidth = overview.extent.width
           val overviewExtentHeight = overview.extent.height
@@ -228,7 +230,8 @@ object CogUtils {
     val tmsTileRE =
       RasterExtent(extent = actualExtent, cellSize = TmsLevels(zoom).cellSize)
     val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
-    val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(0))
+    val overview =
+      closestTiffOverview(tiff, tiffTileRE.cellSize, AutoHigherResolution)
 
     OptionT(Future(cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
       raster.reproject(tmsTileRE, transform, inverseTransform).tile
