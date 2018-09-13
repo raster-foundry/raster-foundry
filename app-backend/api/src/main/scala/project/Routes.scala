@@ -1057,8 +1057,8 @@ trait ProjectRoutes
         .unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao
-          .listByObject(ObjectType.Project, projectId)
+        ProjectDao
+          .getPermissions(projectId)
           .transact(xa)
           .unsafeToFuture
       }
@@ -1073,15 +1073,10 @@ trait ProjectRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+      entity(as[List[ObjectAccessControlRule]]) { acrList =>
         complete {
-          AccessControlRuleDao
-            .replaceWithResults(
-              user,
-              ObjectType.Project,
-              projectId,
-              acrCreates
-            )
+          ProjectDao
+            .replacePermissions(projectId, acrList)
             .transact(xa)
             .unsafeToFuture
         }
@@ -1097,12 +1092,10 @@ trait ProjectRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      entity(as[AccessControlRule.Create]) { acrCreate =>
+      entity(as[ObjectAccessControlRule]) { acr =>
         complete {
-          AccessControlRuleDao
-            .createWithResults(
-              acrCreate.toAccessControlRule(user, ObjectType.Project, projectId)
-            )
+          ProjectDao
+            .addPermission(projectId, acr)
             .transact(xa)
             .unsafeToFuture
         }
@@ -1130,8 +1123,8 @@ trait ProjectRoutes
               case true => complete(List("*"))
               case false =>
                 complete {
-                  AccessControlRuleDao
-                    .listUserActions(user, ObjectType.Project, projectId)
+                  ProjectDao
+                    .listUserActions(user, projectId)
                     .transact(xa)
                     .unsafeToFuture
                 }
@@ -1150,8 +1143,8 @@ trait ProjectRoutes
         .unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao
-          .deleteByObject(ObjectType.Project, projectId)
+        ProjectDao
+          .deletePermissions(projectId)
           .transact(xa)
           .unsafeToFuture
       }
