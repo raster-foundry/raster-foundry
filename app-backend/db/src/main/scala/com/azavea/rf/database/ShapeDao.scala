@@ -14,7 +14,7 @@ import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
 
-object ShapeDao extends Dao[Shape] {
+object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape]  {
 
   val tableName = "shapes"
 
@@ -102,4 +102,32 @@ object ShapeDao extends Dao[Shape] {
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
+  def authQuery(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None): Dao.QueryBuilder[Shape] =
+    user.isSuperuser match {
+      case true =>
+        Dao.QueryBuilder[Shape](selectF, tableF, List.empty)
+      case false =>
+        Dao.QueryBuilder[Shape](selectF,
+                                tableF,
+                                List(
+                                  queryObjectsF(user,
+                                                objectType,
+                                                ActionType.View,
+                                                ownershipTypeO,
+                                                groupTypeO,
+                                                groupIdO)))
+
+  def authorized(user: User,
+                 objectType: ObjectType,
+                 objectId: UUID,
+                 actionType: ActionType): ConnectionIO[Boolean] =
+    this.query
+      .filter(authorizedF(user, objectType, actionType))
+      .filter(objectId)
+      .exists
 }

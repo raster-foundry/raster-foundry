@@ -175,7 +175,7 @@ trait ShapeRoutes
 
   def getShape(shapeId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ShapeDao.query
+      ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -206,7 +206,7 @@ trait ShapeRoutes
 
   def updateShape(shapeId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ShapeDao.query
+      ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -225,7 +225,7 @@ trait ShapeRoutes
 
   def deleteShape(shapeId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ShapeDao.query
+      ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.Delete)
         .transact(xa)
         .unsafeToFuture
@@ -289,7 +289,7 @@ trait ShapeRoutes
 
   def listUserShapeActions(shapeId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ShapeDao.query
+      ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
