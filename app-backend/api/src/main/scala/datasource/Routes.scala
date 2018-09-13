@@ -89,7 +89,7 @@ trait DatasourceRoutes
 
   def getDatasource(datasourceId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      DatasourceDao.query
+      DatasourceDao
         .authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -119,7 +119,7 @@ trait DatasourceRoutes
 
   def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
     authorizeAsync(
-      DatasourceDao.query
+      DatasourceDao
         .authorized(user, ObjectType.Datasource, datasourceId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -224,11 +224,8 @@ trait DatasourceRoutes
   def listUserDatasourceActions(datasourceId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        DatasourceDao.query
-          .authorized(user,
-                      ObjectType.Datasource,
-                      datasourceId,
-                      ActionType.View)
+        DatasourceDao
+          .authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
           .transact(xa)
           .unsafeToFuture
       } {

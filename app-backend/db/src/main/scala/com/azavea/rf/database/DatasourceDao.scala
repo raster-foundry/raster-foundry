@@ -11,7 +11,7 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-object DatasourceDao extends Dao[Datasource] {
+object DatasourceDao extends Dao[Datasource] extends ObjectPermissions[Datasource] {
 
   val tableName = "datasources"
 
@@ -128,6 +128,35 @@ object DatasourceDao extends Dao[Datasource] {
         .delete
       dDeleteCount <- DatasourceDao.query.filter(datasourceId).delete
     } yield { List(uDeleteCount, sDeleteCount, dDeleteCount) }
-
   }
+
+  def authQuery(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None): Dao.QueryBuilder[Datasource] =
+    user.isSuperuser match {
+      case true =>
+        Dao.QueryBuilder[Datasource](selectF, tableF, List.empty)
+      case false =>
+        Dao.QueryBuilder[Datasource](selectF,
+                                     tableF,
+                                     List(
+                                       queryObjectsF(user,
+                                         objectType,
+                                         ActionType.View,
+                                         ownershipTypeO,
+                                         groupTypeO,
+                                         groupIdO)))
+    }
+
+  def authorized(user: User,
+                 objectType: ObjectType,
+                 objectId: UUID,
+                 actionType: ActionType): ConnectionIO[Boolean] =
+    this.query
+      .filter(authorizedF(user, objectType, actionType))
+      .filter(objectId)
+      .exists
 }
