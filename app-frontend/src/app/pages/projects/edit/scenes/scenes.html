@@ -76,6 +76,9 @@
         on-move="$ctrl.onMove(scene, position)"
         ng-if="$ctrl.$parent.pagination.count > 30"
         ui-tree-node>
+      <button class="btn btn-tiny" ng-click="$ctrl.downloadSceneModal(scene)" title="Download scene data">
+        <i class="icon-download"></i>
+      </button>
       <button class="btn btn-tiny" ng-click="$ctrl.removeSceneFromProject(scene, $event)">
         <i class="icon-trash"></i>
       </button>
@@ -91,6 +94,9 @@
         on-move="$ctrl.onMove(scene, position)"
         ng-if="$ctrl.$parent.pagination.count <= 30"
         ui-tree-node>
+      <button class="btn btn-tiny" ng-click="$ctrl.downloadSceneModal(scene)" title="Download scene data">
+        <i class="icon-download"></i>
+      </button>
       <button class="btn btn-tiny" ng-click="$ctrl.removeSceneFromProject(scene, $event)">
         <i class="icon-trash"></i>
       </button>
