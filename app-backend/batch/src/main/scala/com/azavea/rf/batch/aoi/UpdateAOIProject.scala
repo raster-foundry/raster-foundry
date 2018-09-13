@@ -205,7 +205,7 @@ final case class UpdateAOIProject(projectId: UUID)(
           )
         )
       SceneDao
-        .authViewQuery(user)
+        .authQuery(user, ObjectType.Scene)
         .filter(geom)
         .filter(augmentedQueryParams)
         .list

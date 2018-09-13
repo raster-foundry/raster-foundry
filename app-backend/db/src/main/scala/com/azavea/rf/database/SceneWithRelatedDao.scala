@@ -11,7 +11,7 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
+object SceneWithRelatedDao extends Dao[Scene.WithRelated] with ObjectPermissions[Scene.WithRelated]  {
 
   val tableName = "scenes"
 
@@ -60,8 +60,9 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
       }
       sceneSearchBuilder = {
         SceneDao
-          .authViewQuery(
+          .authQuery(
             user,
+            ObjectType.Scene
             sceneParams.ownershipTypeParams.ownershipType,
             sceneParams.groupQueryParameters.groupType,
             sceneParams.groupQueryParameters.groupId
@@ -237,5 +238,14 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     : List[List[Option[Fragment]]] = {
     myList.map(filterable.toFilters(_))
   }
+
+  def authorized(user: User,
+                 objectType: ObjectType,
+                 objectId: UUID,
+                 actionType: ActionType): ConnectionIO[Boolean] =
+    this.query
+      .filter(authorizedF(user, objectType, actionType))
+      .filter(objectId)
+      .exists
 
 }

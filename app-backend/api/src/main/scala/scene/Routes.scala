@@ -167,7 +167,7 @@ trait SceneRoutes
   def getScene(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
       SceneDao
-        .authViewQuery(user)
+        .authQuery(user, ObjectType.Scene)
         .filter(sceneId)
         .exists
         .transact(xa)
@@ -183,7 +183,7 @@ trait SceneRoutes
 
   def updateScene(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.query
+      SceneDao
         .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -204,7 +204,7 @@ trait SceneRoutes
 
   def deleteScene(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.query
+      SceneDao
         .authorized(user, ObjectType.Scene, sceneId, ActionType.Delete)
         .transact(xa)
         .unsafeToFuture
@@ -218,7 +218,7 @@ trait SceneRoutes
 
   def getDownloadUrl(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneWithRelatedDao.query
+      SceneWithRelatedDao
         .authorized(user, ObjectType.Scene, sceneId, ActionType.Download)
         .transact(xa)
         .unsafeToFuture
@@ -301,7 +301,7 @@ trait SceneRoutes
   def listUserSceneActions(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
       SceneDao
-        .authViewQuery(user)
+        .authQuery(user, ObjectType.Scene)
         .filter(sceneId)
         .exists
         .transact(xa)
@@ -347,7 +347,7 @@ trait SceneRoutes
   def getSceneDatasource(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
       SceneDao
-        .authViewQuery(user)
+        .authQuery(user, ObjectType.Scene)
         .filter(sceneId)
         .exists
         .transact(xa)
@@ -371,7 +371,7 @@ trait SceneRoutes
           {
             authorizeAsync {
               SceneDao
-                .authViewQuery(user)
+                .authQuery(user, ObjectType.Scene)
                 .filter(sceneId)
                 .exists
                 .transact(xa)

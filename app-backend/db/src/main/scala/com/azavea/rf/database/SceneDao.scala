@@ -17,7 +17,7 @@ import io.circe.optics.JsonPath._
 
 import scala.concurrent.duration._
 
-object SceneDao extends Dao[Scene] with LazyLogging {
+object SceneDao extends Dao[Scene] with LazyLogging with ObjectPermissions[Scene] {
 
   type KickoffIngest = Boolean
 
@@ -34,62 +34,62 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     FROM
   """ ++ tableF
 
-  def authViewQuery(user: User,
-                    ownershipTypeO: Option[String] = None,
-                    groupTypeO: Option[GroupType] = None,
-                    groupIdO: Option[UUID] = None): Dao.QueryBuilder[Scene] = {
-    if (user.isSuperuser) {
-      Dao.QueryBuilder[Scene](selectF, tableF, List.empty)
-    } else {
-      val ownedF: Fragment = fr"owner = ${user.id}"
-      val visibilityF: Fragment = fr"visibility = 'PUBLIC'"
-      val sharedF: Fragment = fr"""
-        SELECT acr.object_id
-        FROM access_control_rules acr
-        WHERE acr.object_type = 'SCENE'
-        AND acr.action_type = 'VIEW'
-        AND (acr.subject_type = 'ALL' OR (acr.subject_type = 'USER'
-           AND acr.subject_id = ${user.id}))
-      """
-      val inheritedBaseF: Fragment = fr"""
-        SELECT acr.object_id
-        FROM access_control_rules acr
-        JOIN user_group_roles ugr ON acr.subject_type::text = ugr.group_type::text
-        AND acr.subject_id::text = ugr.group_id::text
-        WHERE ugr.user_id = ${user.id}
-          AND acr.object_type = 'SCENE'
-          AND acr.action_type = 'VIEW'
-      """
-      val inheritedF: Fragment = (groupTypeO, groupIdO) match {
-        case (Some(groupType), Some(groupId)) => inheritedBaseF ++ fr"""
-         AND ugr.group_type = ${groupType}
-         AND ugr.group_id = ${groupId}
-      """
-        case _                                => inheritedBaseF
-      }
-
-      val authFilter = ownershipTypeO match {
-        // owned by the requesting user only
-        case Some(ownershipType) if ownershipType == "owned" =>
-          fr"(" ++ ownedF ++ fr")"
-        // shared to the requesting user directly, across platform, or due to group membership
-        case Some(ownershipType) if ownershipType == "shared" =>
-          fr"(" ++ visibilityF ++
-            fr"OR id in(" ++ sharedF ++ fr")" ++
-            fr"OR id in(" ++ inheritedF ++ fr"))"
-        // shared to the requesting user due to group membership
-        case Some(ownershipType) if ownershipType == "inherited" =>
-          fr"(id in(" ++ inheritedF ++ fr"))"
-        // the default
-        case _ =>
-          fr"(" ++ ownedF ++
-            fr"OR" ++ visibilityF ++
-            fr"OR id in(" ++ sharedF ++ fr")" ++
-            fr"OR id in(" ++ inheritedF ++ fr"))"
-      }
-      Dao.QueryBuilder[Scene](selectF, tableF, List(Some(authFilter)))
-    }
-  }
+  // def authViewQuery(user: User,
+  //                   ownershipTypeO: Option[String] = None,
+  //                   groupTypeO: Option[GroupType] = None,
+  //                   groupIdO: Option[UUID] = None): Dao.QueryBuilder[Scene] = {
+  //   if (user.isSuperuser) {
+  //     Dao.QueryBuilder[Scene](selectF, tableF, List.empty)
+  //   } else {
+  //     val ownedF: Fragment = fr"owner = ${user.id}"
+  //     val visibilityF: Fragment = fr"visibility = 'PUBLIC'"
+  //     val sharedF: Fragment = fr"""
+  //       SELECT acr.object_id
+  //       FROM access_control_rules acr
+  //       WHERE acr.object_type = 'SCENE'
+  //       AND acr.action_type = 'VIEW'
+  //       AND (acr.subject_type = 'ALL' OR (acr.subject_type = 'USER'
+  //          AND acr.subject_id = ${user.id}))
+  //     """
+  //     val inheritedBaseF: Fragment = fr"""
+  //       SELECT acr.object_id
+  //       FROM access_control_rules acr
+  //       JOIN user_group_roles ugr ON acr.subject_type::text = ugr.group_type::text
+  //       AND acr.subject_id::text = ugr.group_id::text
+  //       WHERE ugr.user_id = ${user.id}
+  //         AND acr.object_type = 'SCENE'
+  //         AND acr.action_type = 'VIEW'
+  //     """
+  //     val inheritedF: Fragment = (groupTypeO, groupIdO) match {
+  //       case (Some(groupType), Some(groupId)) => inheritedBaseF ++ fr"""
+  //        AND ugr.group_type = ${groupType}
+  //        AND ugr.group_id = ${groupId}
+  //     """
+  //       case _                                => inheritedBaseF
+  //     }
+  //
+  //     val authFilter = ownershipTypeO match {
+  //       // owned by the requesting user only
+  //       case Some(ownershipType) if ownershipType == "owned" =>
+  //         fr"(" ++ ownedF ++ fr")"
+  //       // shared to the requesting user directly, across platform, or due to group membership
+  //       case Some(ownershipType) if ownershipType == "shared" =>
+  //         fr"(" ++ visibilityF ++
+  //           fr"OR id in(" ++ sharedF ++ fr")" ++
+  //           fr"OR id in(" ++ inheritedF ++ fr"))"
+  //       // shared to the requesting user due to group membership
+  //       case Some(ownershipType) if ownershipType == "inherited" =>
+  //         fr"(id in(" ++ inheritedF ++ fr"))"
+  //       // the default
+  //       case _ =>
+  //         fr"(" ++ ownedF ++
+  //           fr"OR" ++ visibilityF ++
+  //           fr"OR id in(" ++ sharedF ++ fr")" ++
+  //           fr"OR id in(" ++ inheritedF ++ fr"))"
+  //     }
+  //     Dao.QueryBuilder[Scene](selectF, tableF, List(Some(authFilter)))
+  //   }
+  // }
 
   def getSceneById(id: UUID): ConnectionIO[Option[Scene]] =
     query.filter(id).selectOption
@@ -297,4 +297,34 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       }
     }
   }
+
+  def authQuery(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None): Dao.QueryBuilder[Scene] =
+    user.isSuperuser match {
+      case true =>
+        Dao.QueryBuilder[Scene](selectF, tableF, List.empty)
+      case false =>
+        Dao.QueryBuilder[Scene](selectF,
+                                tableF,
+                                List(
+                                  queryObjectsF(user,
+                                                objectType,
+                                                ActionType.View,
+                                                ownershipTypeO,
+                                                groupTypeO,
+                                                groupIdO)))
+    }
+
+  def authorized(user: User,
+                 objectType: ObjectType,
+                 objectId: UUID,
+                 actionType: ActionType): ConnectionIO[Boolean] =
+    this.query
+      .filter(authorizedF(user, objectType, actionType))
+      .filter(objectId)
+      .exists
 }
