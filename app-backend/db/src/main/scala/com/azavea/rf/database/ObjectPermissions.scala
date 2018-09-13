@@ -32,6 +32,8 @@ trait ObjectPermissions[Model] {
       case "scenes"      => SceneDao
       case "datasources" => DatasourceDao
       case "shapes"      => ShapeDao
+      case "tool_runs"   => ToolRunDao
+      case "tools"       => ToolDao
       case "workspaces" | "templates" | "analyses" =>
         throw new Exception(s"${tableName} not yet supported")
     }).query.filter(id).exists
