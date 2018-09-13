@@ -105,7 +105,7 @@ trait ToolRunRoutes
 
   def getToolRun(runId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolRunDao.query
+      ToolRunDao
         .authorized(user, ObjectType.Analysis, runId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -123,7 +123,7 @@ trait ToolRunRoutes
 
   def updateToolRun(runId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolRunDao.query
+      ToolRunDao
         .authorized(user, ObjectType.Analysis, runId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -142,7 +142,7 @@ trait ToolRunRoutes
 
   def deleteToolRun(runId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolRunDao.query
+      ToolRunDao
         .authorized(user, ObjectType.Analysis, runId, ActionType.Delete)
         .transact(xa)
         .unsafeToFuture
@@ -220,7 +220,7 @@ trait ToolRunRoutes
 
   def listUserAnalysisActions(analysisId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolRunDao.query
+      ToolRunDao
         .authorized(user, ObjectType.Analysis, analysisId, ActionType.View)
         .transact(xa)
         .unsafeToFuture

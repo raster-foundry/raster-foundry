@@ -16,7 +16,7 @@ import java.util.UUID
 
 import scala.concurrent.Future
 
-object ToolRunDao extends Dao[ToolRun] {
+object ToolRunDao extends Dao[ToolRun] extends ObjectPermissions[ToolRun] {
 
   val tableName = "tool_runs"
 
@@ -68,4 +68,34 @@ object ToolRunDao extends Dao[ToolRun] {
          execution_parameters = ${updatedRun.executionParameters}
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
+
+  def authQuery(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None): Dao.QueryBuilder[ToolRun] =
+    user.isSuperuser match {
+      case true =>
+        Dao.QueryBuilder[ToolRun](selectF, tableF, List.empty)
+      case false =>
+        Dao.QueryBuilder[ToolRun](selectF,
+                                  tableF,
+                                  List(
+                                    queryObjectsF(user,
+                                                  objectType,
+                                                  ActionType.View,
+                                                  ownershipTypeO,
+                                                  groupTypeO,
+                                                  groupIdO)))
+    }
+
+  def authorized(user: User,
+                 objectType: ObjectType,
+                 objectId: UUID,
+                 actionType: ActionType): ConnectionIO[Boolean] =
+    this.query
+      .filter(authorizedF(user, objectType, actionType))
+      .filter(objectId)
+      .exists
 }
