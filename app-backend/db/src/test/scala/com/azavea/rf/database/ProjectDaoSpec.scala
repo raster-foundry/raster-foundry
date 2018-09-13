@@ -470,7 +470,7 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
             acrListToInsert = acrList.map(fixUpObjectAcr(_, dbUserGrantedTeamOrgPlat))
             _ <- ProjectDao.addPermissionsMany(projectInsert1.id, acrListToInsert)
             permissionsBack <- ProjectDao.getPermissions(projectInsert1.id)
-            paginatedProjects <- ProjectDao.authQueryObject(dbGrantedUser, ObjectType.Project).filter(fr"owner=${dbUser.id}").page(page)
+            paginatedProjects <- ProjectDao.authQuery(dbGrantedUser, ObjectType.Project).filter(fr"owner=${dbUser.id}").page(page)
           } yield { (projectInsert1, projectInsert2, permissionsBack, paginatedProjects) }
 
           val (projectInsert1, projectInsert2, permissionsBack, paginatedProjects) = listProjectsIO.transact(xa).unsafeRunSync
@@ -530,8 +530,8 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
             acrListToInsert = acrList.map(fixUpObjectAcr(_, dbUserGrantedTeamOrgPlat))
             _ <- ProjectDao.addPermissionsMany(projectInsert1.id, acrListToInsert)
             action = Random.shuffle(acrListToInsert.map(_.actionType)).head
-            isPermitted1 <- ProjectDao.authorizedObject(dbGrantedUser, ObjectType.Project, projectInsert1.id, action)
-            isPermitted2 <- ProjectDao.authorizedObject(dbGrantedUser, ObjectType.Project, projectInsert2.id, action)
+            isPermitted1 <- ProjectDao.authorized(dbGrantedUser, ObjectType.Project, projectInsert1.id, action)
+            isPermitted2 <- ProjectDao.authorized(dbGrantedUser, ObjectType.Project, projectInsert2.id, action)
           } yield { (action, projectInsert2, isPermitted1, isPermitted2) }
 
           val (action, projectInsert2, isPermitted1, isPermitted2) = isUserPermittedIO.transact(xa).unsafeRunSync
