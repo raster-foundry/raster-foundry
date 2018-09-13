@@ -122,7 +122,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
     md match {
       case md @ MosaicDefinition(_, _, Some(SceneType.COG), _) =>
-        IO.shift(t) *> fetchSingleBandCogTile(md, extent, singleBandOptions).value
+        IO.shift(t) *> fetchSingleBandCogTile(md, z, x, y, singleBandOptions).value
       case md @ MosaicDefinition(_, _, Some(SceneType.Avro), _) =>
         IO.shift(t) *> fetchSingleBandAvroTile(md, z, x, y, singleBandOptions).value
       case MosaicDefinition(_, _, None, _) =>
@@ -225,7 +225,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     val tileIO = for {
       _ <- IO.pure(
         logger.info(s"Fetching multi-band COG tile for scene ID ${md.sceneId}"))
-      rasterTile <- IO.shift(t) *> CogUtils.fetch(
+      raster <- IO.shift(t) *> CogUtils.fetch(
         md.ingestLocation.getOrElse(
           "Cannot fetch scene with no ingest location"),
         zoom,
@@ -238,7 +238,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         md.colorCorrections.greenBand,
         md.colorCorrections.blueBand
       )
-      val subsetBands = rasterTile.tile.subsetBands(bandOrder)
+      val subsetBands = raster.tile.subsetBands(bandOrder)
       val subsetHistograms = bandOrder map histograms
       val normalized = (
         subsetBands.mapBands { (i: Int, tile: Tile) =>
@@ -307,34 +307,10 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     )
   }
 
-  def colorSingleBandTile(
-      tile: Tile,
-      extent: Extent,
-      histogram: Histogram[Double],
-      singleBandOptions: SingleBandOptions.Params): Raster[Tile] = {
-    val colorMap =
-      (singleBandOptions.colorScheme.asArray,
-       singleBandOptions.colorScheme.asObject) match {
-        case (Some(a), None) =>
-          ColorRampMosaic.colorMapFromVector(a.map(e => e.noSpaces),
-                                             singleBandOptions,
-                                             histogram)
-        case (None, Some(o)) =>
-          ColorRampMosaic.colorMapFromMap(o.toMap map {
-            case (k, v) => (k, v.noSpaces)
-          })
-        case _ =>
-          val message =
-            "Invalid color scheme format. Color schemes must be defined as an array of hex colors or a mapping of raster values to hex colors."
-          throw new IllegalArgumentException(message)
-      }
-
-    val colored = tile.color(colorMap)
-    Raster(colored, extent)
-  }
-
   def fetchSingleBandCogTile(md: MosaicDefinition,
-                             extent: Extent,
+                             zoom: Int,
+                             col: Int,
+                             row: Int,
                              singleBandOptions: SingleBandOptions.Params)(
       implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
     val tileIO = for {
@@ -344,14 +320,48 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       raster <- IO.shift(t) *> CogUtils.fetch(
         md.ingestLocation.getOrElse(
           "Cannot fetch scene with no ingest location"),
-        extent)
-    } yield
-      Raster(raster.tile.bands.lift(singleBandOptions.band) getOrElse {
+        zoom,
+        col,
+        row)
+      histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
+    } yield {
+      val extent = CogUtils.tmsLevels(zoom).mapTransform.keyToExtent(col, row)
+      val tile = raster.tile.bands.lift(singleBandOptions.band) getOrElse {
         throw new Exception("No band found in single-band options")
-      }, extent).resample(256, 256)
-
-    // TODO: use singleBandOptions to appropriately color the tile
+      }
+      val histogram = histograms
+        .lift(singleBandOptions.band) getOrElse {
+        throw new Exception("No histogram found for band")
+      }
+      val colored =
+        colorSingleBandTile(tile, extent, histogram, singleBandOptions)
+      colored
+    }
     OptionT(tileIO.attempt.map(_.toOption))
   }
 
+  def colorSingleBandTile(
+      tile: Tile,
+      extent: Extent,
+      histogram: Histogram[Double],
+      singleBandOptions: SingleBandOptions.Params): Raster[Tile] = {
+    val colorScheme = singleBandOptions.colorScheme
+    val colorMap = (colorScheme.asArray, colorScheme.asObject) match {
+      case (Some(a), None) =>
+        ColorRampMosaic.colorMapFromVector(a.map(_.noSpaces),
+                                           singleBandOptions,
+                                           histogram)
+      case (None, Some(o)) =>
+        ColorRampMosaic.colorMapFromMap(o.toMap map {
+          case (k, v) => (k, v.noSpaces)
+        })
+      case _ =>
+        val message =
+          "Invalid color scheme format. Color schemes must be defined as an array of hex colors or a mapping of raster values to hex colors."
+        throw new IllegalArgumentException(message)
+    }
+
+    val colored = tile.color(colorMap)
+    Raster(colored, extent)
+  }
 }
