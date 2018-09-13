@@ -11,7 +11,9 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-object SceneWithRelatedDao extends Dao[Scene.WithRelated] with ObjectPermissions[Scene.WithRelated]  {
+object SceneWithRelatedDao
+    extends Dao[Scene.WithRelated]
+    with ObjectPermissions[Scene.WithRelated] {
 
   val tableName = "scenes"
 
@@ -250,14 +252,14 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] with ObjectPermissions
         Dao.QueryBuilder[Scene.WithRelated](selectF, tableF, List.empty)
       case false =>
         Dao.QueryBuilder[Scene.WithRelated](selectF,
-                                tableF,
-                                List(
-                                  queryObjectsF(user,
-                                                objectType,
-                                                ActionType.View,
-                                                ownershipTypeO,
-                                                groupTypeO,
-                                                groupIdO)))
+                                            tableF,
+                                            List(
+                                              queryObjectsF(user,
+                                                            objectType,
+                                                            ActionType.View,
+                                                            ownershipTypeO,
+                                                            groupTypeO,
+                                                            groupIdO)))
     }
 
   def authorized(user: User,

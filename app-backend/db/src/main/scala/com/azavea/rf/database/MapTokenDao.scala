@@ -62,9 +62,9 @@ object MapTokenDao extends Dao[MapToken] {
         mapTokenO flatMap { _.project } map { (projectId: UUID) =>
           {
             ProjectDao.authorized(user,
-                                        ObjectType.Project,
-                                        projectId,
-                                        actionType)
+                                  ObjectType.Project,
+                                  projectId,
+                                  actionType)
           }
         }
       ).getOrElse(false.pure[ConnectionIO])
@@ -72,9 +72,9 @@ object MapTokenDao extends Dao[MapToken] {
         mapTokenO flatMap { _.toolRun } map { (toolRunId: UUID) =>
           {
             ToolRunDao.authorized(user,
-                                        ObjectType.Analysis,
-                                        toolRunId,
-                                        actionType)
+                                  ObjectType.Analysis,
+                                  toolRunId,
+                                  actionType)
           }
         }
       ).getOrElse(false.pure[ConnectionIO])

@@ -251,7 +251,9 @@ trait ObjectPermissions[Model] {
     }
   }
 
-  def authorizedF(user: User, objectType: ObjectType, actionType: ActionType): Option[Fragment] =
+  def authorizedF(user: User,
+                  objectType: ObjectType,
+                  actionType: ActionType): Option[Fragment] =
     user.isSuperuser match {
       case true =>
         Some(fr"true")

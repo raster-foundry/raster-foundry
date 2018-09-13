@@ -389,12 +389,11 @@ object ProjectDao extends Dao[Project] with ObjectPermissions[Project] {
           .pure[ConnectionIO]
     }
 
-  def authQuery(
-      user: User,
-      objectType: ObjectType,
-      ownershipTypeO: Option[String] = None,
-      groupTypeO: Option[GroupType] = None,
-      groupIdO: Option[UUID] = None): Dao.QueryBuilder[Project] =
+  def authQuery(user: User,
+                objectType: ObjectType,
+                ownershipTypeO: Option[String] = None,
+                groupTypeO: Option[GroupType] = None,
+                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Project] =
     user.isSuperuser match {
       case true =>
         Dao.QueryBuilder[Project](selectF, tableF, List.empty)

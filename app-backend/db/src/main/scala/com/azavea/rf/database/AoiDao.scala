@@ -112,10 +112,7 @@ object AoiDao extends Dao[AOI] {
       aoiO <- AoiDao.query.filter(aoiId).selectOption
       projectAuthed <- aoiO map { _.projectId } match {
         case Some(projectId) =>
-          ProjectDao.authorized(user,
-                                ObjectType.Project,
-                                projectId,
-                                actionType)
+          ProjectDao.authorized(user, ObjectType.Project, projectId, actionType)
         case _ => false.pure[ConnectionIO]
       }
     } yield { projectAuthed }

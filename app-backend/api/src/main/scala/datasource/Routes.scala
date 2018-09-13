@@ -184,7 +184,7 @@ trait DatasourceRoutes
         entity(as[List[ObjectAccessControlRule]]) { acrList =>
           complete {
             DatasourceDao
-              .replacePermissions(datasourceId,acrList)
+              .replacePermissions(datasourceId, acrList)
               .transact(xa)
               .unsafeToFuture
           }
@@ -216,7 +216,10 @@ trait DatasourceRoutes
     user =>
       authorizeAsync {
         DatasourceDao
-          .authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
+          .authorized(user,
+                      ObjectType.Datasource,
+                      datasourceId,
+                      ActionType.View)
           .transact(xa)
           .unsafeToFuture
       } {

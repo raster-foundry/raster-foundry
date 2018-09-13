@@ -3,7 +3,13 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{ToolRun, User, ObjectType, GroupType, ActionType}
+import com.azavea.rf.datamodel.{
+  ToolRun,
+  User,
+  ObjectType,
+  GroupType,
+  ActionType
+}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -77,12 +83,11 @@ object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
      """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
-  def authQuery(
-      user: User,
-      objectType: ObjectType,
-      ownershipTypeO: Option[String] = None,
-      groupTypeO: Option[GroupType] = None,
-      groupIdO: Option[UUID] = None): Dao.QueryBuilder[Tool] =
+  def authQuery(user: User,
+                objectType: ObjectType,
+                ownershipTypeO: Option[String] = None,
+                groupTypeO: Option[GroupType] = None,
+                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Tool] =
     user.isSuperuser match {
       case true =>
         Dao.QueryBuilder[Tool](selectF, tableF, List.empty)

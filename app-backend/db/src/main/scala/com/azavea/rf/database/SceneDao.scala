@@ -17,7 +17,10 @@ import io.circe.optics.JsonPath._
 
 import scala.concurrent.duration._
 
-object SceneDao extends Dao[Scene] with LazyLogging with ObjectPermissions[Scene] {
+object SceneDao
+    extends Dao[Scene]
+    with LazyLogging
+    with ObjectPermissions[Scene] {
 
   type KickoffIngest = Boolean
 
@@ -298,12 +301,11 @@ object SceneDao extends Dao[Scene] with LazyLogging with ObjectPermissions[Scene
     }
   }
 
-  def authQuery(
-      user: User,
-      objectType: ObjectType,
-      ownershipTypeO: Option[String] = None,
-      groupTypeO: Option[GroupType] = None,
-      groupIdO: Option[UUID] = None): Dao.QueryBuilder[Scene] =
+  def authQuery(user: User,
+                objectType: ObjectType,
+                ownershipTypeO: Option[String] = None,
+                groupTypeO: Option[GroupType] = None,
+                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Scene] =
     user.isSuperuser match {
       case true =>
         Dao.QueryBuilder[Scene](selectF, tableF, List.empty)

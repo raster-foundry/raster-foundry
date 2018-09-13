@@ -63,14 +63,14 @@ trait MapTokenRoutes
           case (None, None) => false.pure[ConnectionIO]
           case (Some(projectId), None) =>
             ProjectDao.authorized(user,
-                                        ObjectType.Project,
-                                        projectId,
-                                        ActionType.Edit)
+                                  ObjectType.Project,
+                                  projectId,
+                                  ActionType.Edit)
           case (None, Some(toolRunId)) =>
             ToolRunDao.authorized(user,
-                                        ObjectType.Analysis,
-                                        toolRunId,
-                                        ActionType.Edit)
+                                  ObjectType.Analysis,
+                                  toolRunId,
+                                  ActionType.Edit)
           case _ => false.pure[ConnectionIO]
         }
         authIO.transact(xa).unsafeToFuture
