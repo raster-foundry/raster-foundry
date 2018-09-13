@@ -175,6 +175,15 @@ class ProjectsScenesController {
             delete this.hoveredScene;
         });
     }
+
+    downloadSceneModal(scene) {
+        this.modalService.open({
+            component: 'rfSceneDownloadModal',
+            resolve: {
+                scene: () => scene
+            }
+        });
+    }
 }
 
 const ProjectsScenesModule = angular.module('pages.projects.edit.scenes', ['ui.tree']);
