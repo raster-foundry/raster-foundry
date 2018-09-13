@@ -230,8 +230,10 @@ object TeamDao extends Dao[Team] {
 
   def deactivate(teamId: UUID): ConnectionIO[Int] = {
     for {
-      acrs <- AccessControlRuleDao.deactivateBySubject(SubjectType.Team,
-                                                       teamId.toString())
+      // ACR deactivation needs to be reconsidered in issue 4020
+      // not running below line this won't affect uses of text array acrs
+      // acrs <- AccessControlRuleDao.deactivateBySubject(SubjectType.Team,
+      //                                                  teamId.toString())
       roles <- UserGroupRoleDao.deactivateByGroup(GroupType.Team, teamId)
       teamUpdate <- (fr"UPDATE" ++ tableF ++ fr"""SET
                       is_active = false
