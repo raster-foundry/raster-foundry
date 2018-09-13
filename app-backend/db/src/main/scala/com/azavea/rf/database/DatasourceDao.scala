@@ -105,10 +105,9 @@ object DatasourceDao extends Dao[Datasource] extends ObjectPermissions[Datasourc
         case Some(datasource) if datasource.owner == user.id => true
         case _                                               => false
       }
-      isShared <- AccessControlRuleDao.query
-        .filter(fr"object_type = ${objectType}::object_type")
-        .filter(fr"object_id = ${datasourceId}")
-        .filter(fr"is_active = true")
+      isShared <- DatasourceDao.query
+        .filter(datasourceId)
+        .filter(fr"acrs <> '{}':text[]")
         .exists
       hasUpload <- UploadDao.query
         .filter(fr"datasource = ${datasourceId}")
