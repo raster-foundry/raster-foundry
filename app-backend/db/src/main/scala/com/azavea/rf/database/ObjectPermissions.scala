@@ -190,6 +190,8 @@ trait ObjectPermissions[Model] {
   def createVisibilityF(objectType: ObjectType,
                         actionType: ActionType): Fragment =
     (objectType, actionType) match {
+      case (ObjectType.Shape, ActionType.View) =>
+        Fragment.const("")
       case (_, ActionType.View) | (ObjectType.Scene, ActionType.Download) |
           (ObjectType.Project, ActionType.Export) |
           (ObjectType.Project, ActionType.Annotate) |
