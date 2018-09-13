@@ -18,7 +18,7 @@ import scala.concurrent.Future
 
 import com.azavea.rf.datamodel.Tool
 
-object ToolDao extends Dao[Tool] {
+object ToolDao extends Dao[Tool] extend ObjectPermissions[Tool] {
   val tableName = "tools"
 
   val selectF = sql"""
@@ -76,4 +76,34 @@ object ToolDao extends Dao[Tool] {
          definition = ${tool.definition}
      """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
+
+  def authQuery(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None): Dao.QueryBuilder[Tool] =
+    user.isSuperuser match {
+      case true =>
+        Dao.QueryBuilder[Tool](selectF, tableF, List.empty)
+      case false =>
+        Dao.QueryBuilder[Tool](selectF,
+                               tableF,
+                               List(
+                                 queryObjectsF(user,
+                                               objectType,
+                                               ActionType.View,
+                                               ownershipTypeO,
+                                               groupTypeO,
+                                               groupIdO)))
+    }
+
+  def authorized(user: User,
+                 objectType: ObjectType,
+                 objectId: UUID,
+                 actionType: ActionType): ConnectionIO[Boolean] =
+    this.query
+      .filter(authorizedF(user, objectType, actionType))
+      .filter(objectId)
+      .exists
 }

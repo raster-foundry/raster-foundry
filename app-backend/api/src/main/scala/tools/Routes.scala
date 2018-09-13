@@ -117,7 +117,7 @@ trait ToolRoutes
 
   def getToolSources(toolId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolDao.query
+      ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -168,7 +168,7 @@ trait ToolRoutes
 
   def getTool(toolId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolDao.query
+      ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -182,7 +182,7 @@ trait ToolRoutes
 
   def updateTool(toolId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolDao.query
+      ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -201,7 +201,7 @@ trait ToolRoutes
 
   def deleteTool(toolId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolDao.query
+      ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.Delete)
         .transact(xa)
         .unsafeToFuture
@@ -280,7 +280,7 @@ trait ToolRoutes
 
   def listUserTemplateActions(templateId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolDao.query
+      ToolDao
         .authorized(user, ObjectType.Template, templateId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
