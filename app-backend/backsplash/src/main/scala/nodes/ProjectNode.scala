@@ -133,7 +133,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
     md match {
       case md @ MosaicDefinition(_, _, Some(SceneType.COG), _) =>
-        IO.shift(t) *> fetchMultiBandCogTile(md, extent).value
+        IO.shift(t) *> fetchMultiBandCogTile(md, z, x, y, extent).value
       case md @ MosaicDefinition(_, _, Some(SceneType.Avro), _) =>
         IO.shift(t) *> fetchMultiBandAvroTile(md, z, x, y).value
       case MosaicDefinition(_, _, None, _) =>
@@ -151,27 +151,12 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     }
   }
 
-  def avroLayerHistogram(id: UUID): IO[Array[Histogram[Double]]] = {
+  def layerHistogram(id: UUID): IO[Array[Histogram[Double]]] = {
     val layerId = LayerId(name = id.toString, zoom = 0)
     LayerAttributeDao
       .unsafeGetAttribute(layerId, "histogram")
       .transact(xa) map { attribute =>
       attribute.value.noSpaces.parseJson.convertTo[Array[Histogram[Double]]]
-    }
-  }
-
-  // TODO: don't do this. get COG histograms into the attribute store on import then just use
-  // layerHistogram
-  def cogLayerMinMax(uri: String): IO[(Int, Int)] = {
-    for {
-      _ <- IO.pure(logger.info(s"Fetching histogram for cog at $uri"))
-      geotiff <- CogUtils.getTiff(uri)
-    } yield {
-      val cellType = geotiff.cellType
-      val signed = cellType.toString.startsWith("u")
-      val max = if (signed) 1 << cellType.bits / 2 else 1 << cellType.bits
-      val min = if (signed) -max else 0
-      (min, max)
     }
   }
 
@@ -199,7 +184,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         zoomDiff = zoom - sourceZoom
         resolutionDiff = 1 << zoomDiff
         sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
-        histograms <- IO.shift(t) *> avroLayerHistogram(md.sceneId)
+        histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
         mbTileE <- {
           if (tlm.bounds.includes(sourceKey))
             avroLayerTile(md.sceneId, sourceZoom, sourceKey).attempt
@@ -231,30 +216,39 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     )
   }
 
-  def fetchMultiBandCogTile(md: MosaicDefinition, extent: Extent)(
-      implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
-
+  def fetchMultiBandCogTile(
+      md: MosaicDefinition,
+      zoom: Int,
+      col: Int,
+      row: Int,
+      extent: Extent)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
     val tileIO = for {
       _ <- IO.pure(
         logger.info(s"Fetching multi-band COG tile for scene ID ${md.sceneId}"))
       rasterTile <- IO.shift(t) *> CogUtils.fetch(
         md.ingestLocation.getOrElse(
           "Cannot fetch scene with no ingest location"),
-        extent)
-      histograms <- IO.shift(t) *> cogLayerMinMax(
-        md.ingestLocation.getOrElse(""))
+        zoom,
+        col,
+        row)
+      histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
     } yield {
       val bandOrder = List(
         md.colorCorrections.redBand,
         md.colorCorrections.greenBand,
         md.colorCorrections.blueBand
       )
-      val subset = rasterTile.tile.subsetBands(bandOrder: _*)
+      val subsetBands = rasterTile.tile.subsetBands(bandOrder)
+      val subsetHistograms = bandOrder map histograms
       val normalized = (
-        subset.mapBands { (i: Int, tile: Tile) =>
+        subsetBands.mapBands { (i: Int, tile: Tile) =>
           {
-            val (minValue, maxValue) = histograms
-            tile.normalize(minValue, maxValue, 0, 255)
+            (subsetHistograms(i).minValue, subsetHistograms(i).maxValue) match {
+              case (Some(min), Some(max)) => tile.normalize(min, max, 0, 255)
+              case _ =>
+                throw new Exception(
+                  "Histogram bands don't match up with tile bands")
+            }
           }
         }
       ).color
@@ -280,7 +274,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         zoomDiff = zoom - sourceZoom
         resolutionDiff = 1 << zoomDiff
         sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
-        histograms <- IO.shift(t) *> avroLayerHistogram(md.sceneId)
+        histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
         mbTileE <- {
           if (tlm.bounds.includes(sourceKey))
             avroLayerTile(md.sceneId, sourceZoom, sourceKey).attempt
