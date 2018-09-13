@@ -38,15 +38,12 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             users <- usersWithOrgOneIO
             (user1, user2, dbOrg1) = users
             project <- ProjectDao.insertProject(
-              fixupProjectCreate(user1, projectCreate), user1
+              fixupProjectCreate(user1, projectCreate).copy(visibility = Visibility.Private),
+              user1
             )
-            _ <- AccessControlRuleDao.create(
-              AccessControlRule.Create(
-                true, SubjectType.All, None, ActionType.View
-              ).toAccessControlRule(user1, ObjectType.Project, project.id)
-            )
-            user1Authorized <- ProjectDao.query.authorized(user1, ObjectType.Project, project.id, ActionType.View)
-            user2Authorized <- ProjectDao.query.authorized(user2, ObjectType.Project, project.id, ActionType.View)
+            _ <- ProjectDao.addPermission(project.id, ObjectAccessControlRule(SubjectType.All, None, ActionType.View))
+            user1Authorized <- ProjectDao.authorized(user1, ObjectType.Project, project.id, ActionType.View)
+            user2Authorized <- ProjectDao.authorized(user2, ObjectType.Project, project.id, ActionType.View)
           } yield (user1Authorized, user2Authorized)
 
           val (user1Authed, user2Authed) = usersAuthedIO.transact(xa).unsafeRunSync
@@ -78,18 +75,14 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             (dbUser2, _, _) = authGalaxy2
           } yield { (dbUser1, dbUser2, dbOrg1, dbPlatform1) }
 
-          val usersAuthedIO: ConnectionIO[(Boolean, Boolean)] = for {
+          val usersAuthedIO = for {
             usersOrgPlatform <- usersAndOrgOnePlatformOneIO
             (user1, user2, org1, platform1) = usersOrgPlatform
-            project <- ProjectDao.insertProject(fixupProjectCreate(user1, projectCreate), user1)
-            _ <- AccessControlRuleDao.create(
-              AccessControlRule.Create(
-                true, SubjectType.Platform, Some(platform1.id.toString), ActionType.View
-              ).toAccessControlRule(user1, ObjectType.Project, project.id)
-            )
-            user1Authorized <- ProjectDao.query.authorized(user1, ObjectType.Project, project.id, ActionType.View)
-            user2Authorized <- ProjectDao.query.authorized(user2, ObjectType.Project, project.id, ActionType.View)
-          } yield { (user1Authorized, user2Authorized) }
+            project <- ProjectDao.insertProject(fixupProjectCreate(user1, projectCreate).copy(visibility = Visibility.Private), user1)
+            _ <- ProjectDao.addPermission(project.id, ObjectAccessControlRule(SubjectType.Platform, Some(platform1.id.toString), ActionType.View))
+            user1Authorized <- ProjectDao.authorized(user1, ObjectType.Project, project.id, ActionType.View)
+            user2Authorized <- ProjectDao.authorized(user2, ObjectType.Project, project.id, ActionType.View)
+                      } yield { (user1Authorized, user2Authorized) }
 
           val (user1Authed, user2Authed) = usersAuthedIO.transact(xa).unsafeRunSync
 
@@ -113,14 +106,10 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             (org1, user1) = orgUser1
             orgUser2 <- insertUserAndOrg(userCreate2, orgCreate2.copy(platformId=dbPlatform.id))
             (_, user2) = orgUser2
-            project <- ProjectDao.insertProject(fixupProjectCreate(user1, projectCreate), user1)
-            _ <- AccessControlRuleDao.create(
-              AccessControlRule.Create(
-                true, SubjectType.Organization, Some(org1.id.toString), ActionType.View
-              ).toAccessControlRule(user1, ObjectType.Project, project.id)
-            )
-            user1Authorized <- ProjectDao.query.authorized(user1, ObjectType.Project, project.id, ActionType.View)
-            user2Authorized <- ProjectDao.query.authorized(user2, ObjectType.Project, project.id, ActionType.View)
+            project <- ProjectDao.insertProject(fixupProjectCreate(user1, projectCreate).copy(visibility = Visibility.Private), user1)
+            _ <- ProjectDao.addPermission(project.id, ObjectAccessControlRule(SubjectType.Organization, Some(org1.id.toString), ActionType.View))
+            user1Authorized <- ProjectDao.authorized(user1, ObjectType.Project, project.id, ActionType.View)
+            user2Authorized <- ProjectDao.authorized(user2, ObjectType.Project, project.id, ActionType.View)
           } yield { (user1Authorized, user2Authorized) }
 
           val (user1Authed, user2Authed) = usersAuthedIO.transact(xa).unsafeRunSync
@@ -148,19 +137,17 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             dbPlatform <- PlatformDao.create(platform)
             orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
             (org, user) = orgUser
-            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate).copy(visibility = Visibility.Private), user)
             acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
-              AccessControlRule.Create(true, SubjectType.All, None, _).toAccessControlRule(
-                user, ObjectType.Project, project.id
-              )
+              ObjectAccessControlRule(SubjectType.All, None, _)
             }
-            _ <- AccessControlRuleDao.createMany(acrs)
-            dbAcrs <- AccessControlRuleDao.listByObject(ObjectType.Project, project.id)
+            _ <- ProjectDao.addPermissionsMany(project.id, acrs)
+            dbAcrs <- ProjectDao.getPermissions(project.id)
           } yield { (acrs, dbAcrs) }
 
           val (acrs, dbAcrs) = insertManyAcrsIO.transact(xa).unsafeRunSync
 
-          assert(acrs.toSet == dbAcrs.toSet, "Inserting many ACRs should make those ACRs available to list")
+          assert(acrs.toSet == dbAcrs.flatten.toSet, "Inserting many ACRs should make those ACRs available to list")
           true
         }
       }
@@ -175,13 +162,12 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             dbPlatform <- PlatformDao.create(platform)
             orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
             (org, user) = orgUser
-            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate).copy(visibility = Visibility.Private), user)
             acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
-              AccessControlRule.Create(true, SubjectType.All, None, _).toAccessControlRule(
-                user, ObjectType.Project, project.id)
+              ObjectAccessControlRule(SubjectType.All, None, _)
             }
-            _ <- AccessControlRuleDao.createMany(acrs)
-            listOfActions <- AccessControlRuleDao.listUserActions(user, ObjectType.Project, project.id)
+            _ <- ProjectDao.addPermissionsMany(project.id, acrs)
+            listOfActions <- ProjectDao.listUserActions(user, project.id)
           } yield listOfActions
 
           val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
@@ -202,13 +188,12 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             dbPlatform <- PlatformDao.create(platform)
             orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
             (org, user) = orgUser
-            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate).copy(visibility = Visibility.Private), user)
             acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
-              AccessControlRule.Create(true, SubjectType.Platform, Some(dbPlatform.id.toString()), _).toAccessControlRule(
-                user, ObjectType.Project, project.id)
+              ObjectAccessControlRule(SubjectType.Platform, Some(dbPlatform.id.toString()), _)
             }
-            _ <- AccessControlRuleDao.createMany(acrs)
-            listOfActions <- AccessControlRuleDao.listUserActions(user, ObjectType.Project, project.id)
+            _ <- ProjectDao.addPermissionsMany(project.id, acrs)
+            listOfActions <- ProjectDao.listUserActions(user, project.id)
           } yield listOfActions
 
           val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
@@ -226,13 +211,12 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             dbPlatform <- PlatformDao.create(platform)
             orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
             (org, user) = orgUser
-            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate).copy(visibility = Visibility.Private), user)
             acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
-              AccessControlRule.Create(true, SubjectType.Organization, Some(org.id.toString()), _).toAccessControlRule(
-                user, ObjectType.Project, project.id)
+              ObjectAccessControlRule(SubjectType.Organization, Some(org.id.toString()), _)
             }
-            _ <- AccessControlRuleDao.createMany(acrs)
-            listOfActions <- AccessControlRuleDao.listUserActions(user, ObjectType.Project, project.id)
+            _ <- ProjectDao.addPermissionsMany(project.id, acrs)
+            listOfActions <- ProjectDao.listUserActions(user, project.id)
           } yield listOfActions
 
           val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
@@ -253,13 +237,12 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
             dbPlatform <- PlatformDao.create(platform)
             orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
             (org, user) = orgUser
-            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
+            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate).copy(visibility = Visibility.Private), user)
             acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
-              AccessControlRule.Create(true, SubjectType.User, Some(user.id.toString()), _).toAccessControlRule(
-                user, ObjectType.Project, project.id)
+              ObjectAccessControlRule(SubjectType.User, Some(user.id.toString()), _)
             }
-            _ <- AccessControlRuleDao.createMany(acrs)
-            listOfActions <- AccessControlRuleDao.listUserActions(user, ObjectType.Project, project.id)
+            _ <- ProjectDao.addPermissionsMany(project.id, acrs)
+            listOfActions <- ProjectDao.listUserActions(user, project.id)
           } yield listOfActions
 
           val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
@@ -272,33 +255,34 @@ class AuthorizationSpec extends FunSuite with Checkers with Matchers with DBTest
     }
   }
 
-  test("listing user actions with deactivated ACR should return an empty list") {
-    check {
-      forAll {
-        (platform: Platform, userCreate: User.Create, orgCreate: Organization.Create, projectCreate: Project.Create) => {
-          val listUserActionsIO = for {
-            dbPlatform <- PlatformDao.create(platform)
-            orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
-            (org, user) = orgUser
-            project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
-            acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
-              AccessControlRule.Create(true, SubjectType.User, Some(user.id.toString()), _).toAccessControlRule(
-                user, ObjectType.Project, project.id)
-            }
-            numCreatedAcrs <- AccessControlRuleDao.createMany(acrs)
-            numDetactivatedAcrs <- AccessControlRuleDao.deactivateBySubject(SubjectType.User, user.id.toString())
-            listOfActions <- AccessControlRuleDao.listUserActions(user, ObjectType.Project, project.id)
-          } yield (numCreatedAcrs, numDetactivatedAcrs, listOfActions)
-
-          val (numCreatedAcrs, numDetactivatedAcrs, listOfActions) = listUserActionsIO.transact(xa).unsafeRunSync
-          listOfActions.isEmpty
-          assert(listOfActions.isEmpty, "; List of permitted actions should be empty when an ACR is deactivated.")
-          assert(numCreatedAcrs == 3, "; Number of created ACRs should be 3.")
-          assert(numDetactivatedAcrs == 3, "; Number of deactivated ACRs should be 3.")
-          true
-        }
-      }
-    }
-  }
+  // commented out since issue 4020
+  // test("listing user actions with deactivated ACR should return an empty list") {
+  //   check {
+  //     forAll {
+  //       (platform: Platform, userCreate: User.Create, orgCreate: Organization.Create, projectCreate: Project.Create) => {
+  //         val listUserActionsIO = for {
+  //           dbPlatform <- PlatformDao.create(platform)
+  //           orgUser <- insertUserAndOrg(userCreate, orgCreate.copy(platformId=dbPlatform.id))
+  //           (org, user) = orgUser
+  //           project <- ProjectDao.insertProject(fixupProjectCreate(user, projectCreate), user)
+  //           acrs = List(ActionType.View, ActionType.Edit, ActionType.Delete) map {
+  //             AccessControlRule.Create(true, SubjectType.User, Some(user.id.toString()), _).toAccessControlRule(
+  //               user, ObjectType.Project, project.id)
+  //           }
+  //           numCreatedAcrs <- AccessControlRuleDao.createMany(acrs)
+  //           numDetactivatedAcrs <- AccessControlRuleDao.deactivateBySubject(SubjectType.User, user.id.toString())
+  //           listOfActions <- AccessControlRuleDao.listUserActions(user, ObjectType.Project, project.id)
+  //         } yield (numCreatedAcrs, numDetactivatedAcrs, listOfActions)
+  //
+  //         val (numCreatedAcrs, numDetactivatedAcrs, listOfActions) = listUserActionsIO.transact(xa).unsafeRunSync
+  //         listOfActions.isEmpty
+  //         assert(listOfActions.isEmpty, "; List of permitted actions should be empty when an ACR is deactivated.")
+  //         assert(numCreatedAcrs == 3, "; Number of created ACRs should be 3.")
+  //         assert(numDetactivatedAcrs == 3, "; Number of deactivated ACRs should be 3.")
+  //         true
+  //       }
+  //     }
+  //   }
+  // }
 
 }

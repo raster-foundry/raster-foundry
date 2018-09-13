@@ -3,7 +3,7 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{ToolRun, User}
+import com.azavea.rf.datamodel.{ToolRun, User, ObjectType, GroupType, ActionType}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -18,7 +18,7 @@ import scala.concurrent.Future
 
 import com.azavea.rf.datamodel.Tool
 
-object ToolDao extends Dao[Tool] extend ObjectPermissions[Tool] {
+object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
   val tableName = "tools"
 
   val selectF = sql"""

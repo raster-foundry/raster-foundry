@@ -61,7 +61,7 @@ object MapTokenDao extends Dao[MapToken] {
       projAuthed = (
         mapTokenO flatMap { _.project } map { (projectId: UUID) =>
           {
-            ProjectDao.query.authorized(user,
+            ProjectDao.authorized(user,
                                         ObjectType.Project,
                                         projectId,
                                         actionType)
@@ -71,7 +71,7 @@ object MapTokenDao extends Dao[MapToken] {
       toolRunAuthed = (
         mapTokenO flatMap { _.toolRun } map { (toolRunId: UUID) =>
           {
-            ToolRunDao.query.authorized(user,
+            ToolRunDao.authorized(user,
                                         ObjectType.Analysis,
                                         toolRunId,
                                         actionType)

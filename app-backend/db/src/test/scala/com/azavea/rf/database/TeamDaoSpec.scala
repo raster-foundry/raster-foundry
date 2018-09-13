@@ -157,6 +157,7 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
     }
   }
 
+  // commented out ACR deactivation realted lines since issue 4020
   test("Deactivated teams are not listed") {
     check {
       forAll (
@@ -172,13 +173,15 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
             accessControlRule <- AccessControlRuleDao.create(acr)
             deactivateTeam <- TeamDao.deactivate(teamInsert.id)
             deactivatedTeams <- TeamDao.query.filter(fr"is_active = false").filter(fr"modified_by=${userInsert.id}").list
-            deactivatedACRs <- AccessControlRuleDao.query.filter(fr"is_active = false").list
+            // deactivatedACRs <- AccessControlRuleDao.query.filter(fr"is_active = false").list
             activatedTeams <- TeamDao.listOrgTeams(orgInsert.id, PageRequest(0, 30, Map.empty), TeamQueryParameters())
-          } yield (deactivatedTeams, deactivatedACRs, activatedTeams)
-          val (deactivatedTeams, deactivatedACRs, activatedTeams) = createTeamIO.transact(xa).unsafeRunSync
+          // } yield (deactivatedTeams, deactivatedACRs, activatedTeams)
+          } yield (deactivatedTeams, activatedTeams)
+          // val (deactivatedTeams, deactivatedACRs, activatedTeams) = createTeamIO.transact(xa).unsafeRunSync
+          val (deactivatedTeams, activatedTeams) = createTeamIO.transact(xa).unsafeRunSync
 
           assert(deactivatedTeams.size == 1, "Deactivated team should exist")
-          assert(deactivatedACRs.size == 1, "Deactivated access control rules should exist")
+          // assert(deactivatedACRs.size == 1, "Deactivated access control rules should exist")
           assert(activatedTeams.results.size == 0, "No team is active")
           true
         }

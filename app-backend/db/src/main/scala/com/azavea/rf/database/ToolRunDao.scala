@@ -3,7 +3,7 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{ToolRun, User}
+import com.azavea.rf.datamodel.{ToolRun, User, ObjectType, GroupType, ActionType}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -16,7 +16,7 @@ import java.util.UUID
 
 import scala.concurrent.Future
 
-object ToolRunDao extends Dao[ToolRun] extends ObjectPermissions[ToolRun] {
+object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
 
   val tableName = "tool_runs"
 

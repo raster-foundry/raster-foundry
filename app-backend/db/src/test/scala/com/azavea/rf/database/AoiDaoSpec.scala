@@ -149,8 +149,8 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
           val aoisInsertAndListIO = for {
             dbUser1 <- UserDao.create(user1)
             dbUser2 <- UserDao.create(user2)
-            dbProject1 <- ProjectDao.insertProject(fixupProjectCreate(dbUser1, project1), dbUser1)
-            dbProject2 <- ProjectDao.insertProject(fixupProjectCreate(dbUser2, project2), dbUser2)
+            dbProject1 <- ProjectDao.insertProject(fixupProjectCreate(dbUser1, project1).copy(visibility = Visibility.Private), dbUser1)
+            dbProject2 <- ProjectDao.insertProject(fixupProjectCreate(dbUser2, project2).copy(visibility = Visibility.Private), dbUser2)
             dbShape <- ShapeDao.insertShape(shape, dbUser1)
             dbAois1 <- aois1 traverse {
               (aoi: AOI.Create) => {
@@ -177,4 +177,3 @@ class AoiDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig 
   }
 
 }
-

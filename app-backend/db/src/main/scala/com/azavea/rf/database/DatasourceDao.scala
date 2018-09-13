@@ -11,7 +11,7 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-object DatasourceDao extends Dao[Datasource] extends ObjectPermissions[Datasource] {
+object DatasourceDao extends Dao[Datasource] with ObjectPermissions[Datasource] {
 
   val tableName = "datasources"
 

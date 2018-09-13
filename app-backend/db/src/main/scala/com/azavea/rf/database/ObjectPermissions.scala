@@ -174,7 +174,7 @@ trait ObjectPermissions[Model] {
     for {
       ugrs <- UserGroupRoleDao.listByUser(user)
       groupIdString = ugrs
-        .map((urg: UserGroupRole) => s"a.acrs LIKE '%${urg.groupId.toString}%'")
+        .map((ugr: UserGroupRole) => s"a.acrs LIKE '%${ugr.groupId.toString}%'")
         .mkString(" OR ")
       listUserActions <- listUserActionsF(user, id, groupIdString)
         .query[String]

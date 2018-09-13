@@ -3,7 +3,7 @@ package com.azavea.rf.database
 import java.sql.Timestamp
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{Shape, User}
+import com.azavea.rf.datamodel.{Shape, User, ObjectType, GroupType, ActionType}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -121,6 +121,7 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape]  {
                                                 ownershipTypeO,
                                                 groupTypeO,
                                                 groupIdO)))
+    }
 
   def authorized(user: User,
                  objectType: ObjectType,

@@ -30,22 +30,22 @@ abstract class Dao[Model: Composite] extends Filterables {
   def query: Dao.QueryBuilder[Model] =
     Dao.QueryBuilder[Model](selectF, tableF, List.empty)
 
-  def authQuery(user: User,
-                objectType: ObjectType,
-                ownershipTypeO: Option[String] = None,
-                groupTypeO: Option[GroupType] = None,
-                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Model] =
-    if (user.isSuperuser) {
-      Dao.QueryBuilder[Model](selectF, tableF, List.empty)
-    } else {
-      authTableF(user, objectType, ownershipTypeO, groupTypeO, groupIdO) match {
-        case (authFragment: Option[Fragment],
-              filters: List[Option[Fragment]]) =>
-          Dao.QueryBuilder[Model](selectF ++ authFragment.getOrElse(fr""),
-                                  tableF ++ authFragment.getOrElse(fr""),
-                                  filters)
-      }
-    }
+  // def authQuery(user: User,
+  //               objectType: ObjectType,
+  //               ownershipTypeO: Option[String] = None,
+  //               groupTypeO: Option[GroupType] = None,
+  //               groupIdO: Option[UUID] = None): Dao.QueryBuilder[Model] =
+  //   if (user.isSuperuser) {
+  //     Dao.QueryBuilder[Model](selectF, tableF, List.empty)
+  //   } else {
+  //     authTableF(user, objectType, ownershipTypeO, groupTypeO, groupIdO) match {
+  //       case (authFragment: Option[Fragment],
+  //             filters: List[Option[Fragment]]) =>
+  //         Dao.QueryBuilder[Model](selectF ++ authFragment.getOrElse(fr""),
+  //                                 tableF ++ authFragment.getOrElse(fr""),
+  //                                 filters)
+  //     }
+  //   }
 
   def authTableF(
       user: User,
@@ -398,14 +398,14 @@ object Dao {
         .map(_.nonEmpty)
     }
 
-    def authorized(user: User,
-                   objectType: ObjectType,
-                   objectId: UUID,
-                   actionType: ActionType): ConnectionIO[Boolean] = {
-      this
-        .filter(objectId)
-        .authorize(user, objectType, objectId, actionType)
-        .exists
-    }
+    // def authorized(user: User,
+    //                objectType: ObjectType,
+    //                objectId: UUID,
+    //                actionType: ActionType): ConnectionIO[Boolean] = {
+    //   this
+    //     .filter(objectId)
+    //     .authorize(user, objectType, objectId, actionType)
+    //     .exists
+    // }
   }
 }
