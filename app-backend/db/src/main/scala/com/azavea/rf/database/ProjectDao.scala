@@ -55,7 +55,7 @@ object ProjectDao extends Dao[Project] with ObjectPermissions[Project] {
       page: PageRequest,
       params: ProjectQueryParameters,
       user: User): ConnectionIO[PaginatedResponse[Project.WithUser]] = {
-    authQueryObject(
+    authQuery(
       user,
       ObjectType.Project,
       params.ownershipTypeParams.ownershipType,
@@ -389,7 +389,7 @@ object ProjectDao extends Dao[Project] with ObjectPermissions[Project] {
           .pure[ConnectionIO]
     }
 
-  def authQueryObject(
+  def authQuery(
       user: User,
       objectType: ObjectType,
       ownershipTypeO: Option[String] = None,
@@ -410,17 +410,12 @@ object ProjectDao extends Dao[Project] with ObjectPermissions[Project] {
                                                   groupIdO)))
     }
 
-  def authorizedObject(user: User,
-                       objectType: ObjectType,
-                       objectId: UUID,
-                       actionType: ActionType): ConnectionIO[Boolean] =
+  def authorized(user: User,
+                 objectType: ObjectType,
+                 objectId: UUID,
+                 actionType: ActionType): ConnectionIO[Boolean] =
     this.query
-      .filter(user.isSuperuser match {
-        case true =>
-          Some(fr"true")
-        case false =>
-          queryObjectsF(user, objectType, actionType)
-      })
+      .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)
       .exists
 }

@@ -15,16 +15,16 @@ import java.util.UUID
 trait ObjectPermissions[Model] {
   def tableName: String
 
-  def authQueryObject(user: User,
-                      objectType: ObjectType,
-                      ownershipTypeO: Option[String] = None,
-                      groupTypeO: Option[GroupType] = None,
-                      groupIdO: Option[UUID] = None): Dao.QueryBuilder[Model]
+  def authQuery(user: User,
+                objectType: ObjectType,
+                ownershipTypeO: Option[String] = None,
+                groupTypeO: Option[GroupType] = None,
+                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Model]
 
-  def authorizedObject(user: User,
-                       objectType: ObjectType,
-                       objectId: UUID,
-                       actionType: ActionType): ConnectionIO[Boolean]
+  def authorized(user: User,
+                 objectType: ObjectType,
+                 objectId: UUID,
+                 actionType: ActionType): ConnectionIO[Boolean]
 
   def isValidObject(id: UUID): ConnectionIO[Boolean] =
     (tableName match {
@@ -248,4 +248,12 @@ trait ObjectPermissions[Model] {
         Some(fr"(" ++ ownedF ++ fr"OR" ++ visibilityF ++ acrFilterF ++ fr")")
     }
   }
+
+  def authorizedF(user: User, objectType: ObjectType, actionType: ActionType): Option[Fragment] =
+    user.isSuperuser match {
+      case true =>
+        Some(fr"true")
+      case false =>
+        queryObjectsF(user, objectType, actionType)
+    }
 }
