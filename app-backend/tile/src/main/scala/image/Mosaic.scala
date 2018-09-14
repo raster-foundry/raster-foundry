@@ -145,22 +145,23 @@ object Mosaic extends LazyLogging with KamonTrace {
   def rawForExtent(
       projectId: UUID,
       zoom: Int,
-      bbox: Option[Projected[Polygon]]
+      bbox: Option[Projected[Polygon]],
+      bandSelect: Option[Int] = None
   )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = {
-    bbox match {
-      case Some(polygon) => {
+    (bbox, bandSelect) match {
+      case (Some(polygon), None) =>
         val key = s"mosaic-extent-raw-$projectId-$zoom-${polygon.geom.envelope.xmax}-" +
           s"${polygon.geom.envelope.ymax}-${polygon.geom.envelope.xmin}-${polygon.geom.envelope.ymin}"
         rfCache.cachingOptionT(key) {
           MultiBandMosaic.rawForExtent(projectId, zoom, bbox, false)
         }
-      }
-      case _ => {
+      case (_, None) =>
         val key = s"mosaic-extent-raw-$projectId-$zoom-nobbox"
         rfCache.cachingOptionT(key) {
           MultiBandMosaic.rawForExtent(projectId, zoom, bbox, false)
         }
-      }
+      case (_, Some(band)) =>
+        SingleBandMosaic.rawWithBandOverride(projectId, Some(zoom), bbox, band)
     }
   }
 }
