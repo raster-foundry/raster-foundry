@@ -13,6 +13,7 @@ A virtual machine is used to encapsulate Docker dependencies. `docker-compose` i
 - AWS Account (to store artifacts, secrets)
 - [Auth0 Account](https://auth0.com/) (user management)
 - [Rollbar Account](https://rollbar.com/) (error reporting -- optional)
+- [Scalafmt](https://scalameta.org/scalafmt/docs/installation.html) (formatting scala code -- optional, but builds CI will fail if you introduce formatting that's not compliant with its results) 
 
 #### Setting Up AWS Account
 
