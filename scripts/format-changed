@@ -16,9 +16,11 @@ if your branch isn't rebased on develop / if your develop isn't up-to-date.
 }
 
 function format_changed_scala_files() {
-    files=$(git diff --name-only develop..HEAD | grep '\.scala')
+    files=$(git diff --name-only develop | grep '\.scala')
     echo "${files}"
-    scalafmt "${files}"
+    # scalafmt needs a space-separated list of files, so we can't quote
+    # shellcheck disable=SC2086
+    scalafmt ${files}
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]
