@@ -612,20 +612,6 @@ object Generators extends ArbitraryInstances {
       teamCreate.toTeam(user)
     }
 
-  private def accessControlRuleCreateGen: Gen[AccessControlRule.Create] =
-    for {
-      subjectType <- subjectTypeGen
-      subjectId <- uuidGen
-      actionType <- actionTypeGen
-    } yield {
-      AccessControlRule.Create(
-        isActive = true,
-        subjectType,
-        Some(subjectId.toString),
-        actionType
-      )
-    }
-
   private def userGroupRoleCreateGen: Gen[UserGroupRole.Create] =
     for {
       user <- userGen
@@ -829,11 +815,6 @@ object Generators extends ArbitraryInstances {
     implicit def arbUserJwtFields: Arbitrary[User.JwtFields] = Arbitrary {
       userJwtFieldsGen
     }
-
-    implicit def arbAccessControlRule: Arbitrary[AccessControlRule.Create] =
-      Arbitrary {
-        accessControlRuleCreateGen
-      }
 
     implicit def arbUserVisibility: Arbitrary[UserVisibility] = Arbitrary {
       userVisibilityGen

@@ -184,7 +184,7 @@ trait ObjectPermissions[Model] {
         .distinct
     } yield { actions }
 
-  // todo in card #4020
+  // TODO: in card #4020
   // def deactivateBySubject(subjectType: SubjectType, subjectId: String)
 
   def createVisibilityF(objectType: ObjectType,
