@@ -283,7 +283,9 @@ object CogUtils {
       val theOne = goldyLocksOverviews.minBy(diagonal)
       val hists = Array.fill(tiff.bandCount)(new StreamingHistogram(buckets))
       theOne.tile.foreachDouble { (band, v) =>
-        hists(band).countItem(v, 1)
+        if (!v.isNaN) {
+          hists(band).countItem(v, 1)
+        }
       }
       hists
     } else {
@@ -304,7 +306,9 @@ object CogUtils {
       val sample = theOne.crop(List(sampleBounds)).next._2
       val hists = Array.fill(tiff.bandCount)(new StreamingHistogram(buckets))
       sample.foreachDouble { (band, v) =>
-        hists(band).countItem(v, 1)
+        if (!v.isNaN) {
+          hists(band).countItem(v, 1)
+        }
       }
       hists
     }
@@ -313,6 +317,7 @@ object CogUtils {
   def geoTiffDoubleHistogram(tiff: GeoTiff[MultibandTile],
                              buckets: Int = 80,
                              size: Int = 128): Array[Histogram[Double]] = {
+
     def diagonal(tiff: GeoTiff[MultibandTile]): Int =
       math.sqrt(tiff.cols * tiff.cols + tiff.rows * tiff.rows).toInt
 
@@ -327,7 +332,9 @@ object CogUtils {
       val theOne = goldyLocksOverviews.minBy(diagonal)
       val hists = Array.fill(tiff.bandCount)(DoubleHistogram(buckets))
       theOne.tile.foreachDouble { (band, v) =>
-        hists(band).countItem(v, 1)
+        if (!v.isNaN) {
+          hists(band).countItem(v, 1)
+        }
       }
       hists.toArray
     } else {
@@ -348,7 +355,9 @@ object CogUtils {
       val sample = theOne.crop(List(sampleBounds)).next._2
       val hists = Array.fill(tiff.bandCount)(DoubleHistogram(buckets))
       sample.foreachDouble { (band, v) =>
-        hists(band).countItem(v, 1)
+        if (!v.isNaN) {
+          hists(band).countItem(v, 1)
+        }
       }
       hists.toArray
     }
