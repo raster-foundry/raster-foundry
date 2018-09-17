@@ -237,7 +237,7 @@ trait SceneRoutes
                 val signedUrl = S3.maybeSignUri(ingestLocation, whitelist)
                 List(
                   Image.Downloadable(
-                    s"$sceneId-cog.tif",
+                    s"${sceneId}_COG.tif",
                     s"$ingestLocation",
                     signedUrl
                   )
