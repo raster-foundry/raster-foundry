@@ -9,10 +9,6 @@
   notify:
     - Restart Jenkins
   with_items:
-    - { regexp: '(.*<useSecurity>).*(</useSecurity>.*)',
-        line: '\1false\2',
-        state: present,
-        backrefs: yes }
     - { regexp: '(.*<numExecutors>)\d+(</numExecutors>.*)',
         line: '\g<1>2\g<2>',
         state: present,
