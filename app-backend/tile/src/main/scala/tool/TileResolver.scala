@@ -19,6 +19,7 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
 import geotrellis.proj4.WebMercator
 import geotrellis.raster._
+import geotrellis.raster.resample._
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.s3._
@@ -436,16 +437,22 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
           Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
       case pr @ ProjectRaster(projId, Some(band), celltype) =>
         Mosaic
-          .rawForExtent(projId, zoom, Some(Projected(extent.toPolygon, 3857)))
+          .rawForExtent(projId,
+                        zoom,
+                        Some(Projected(extent.toPolygon, 3857)),
+                        Some(band))
           .value
           .map({ maybeTile =>
-            maybeTile match {
-              case Some(tile) =>
-                val t =
-                  tile.band(band).interpretAs(celltype.getOrElse(tile.cellType))
-                Valid(TileLiteral(t, RasterExtent(t, extent)))
-              case None =>
-                Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
+            {
+              println("got a tile")
+              maybeTile match {
+                case Some(tile) =>
+                  val t =
+                    tile.interpretAs(celltype.getOrElse(tile.cellType))
+                  Valid(TileLiteral(t.band(0), RasterExtent(t, extent)))
+                case None =>
+                  Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
+              }
             }
           })
 
@@ -464,11 +471,16 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
           }
           .value
           .map({ maybeTile =>
-            maybeTile match {
-              case Some(tile) =>
-                Valid(TileLiteral(tile, RasterExtent(tile, extent)))
-              case None =>
-                Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
+            {
+              val resampled = maybeTile map { tile =>
+                tile.resample(256, 256, Average)
+              }
+              resampled match {
+                case Some(tile) =>
+                  Valid(TileLiteral(tile, RasterExtent(tile, extent)))
+                case None =>
+                  Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
+              }
             }
           })
 

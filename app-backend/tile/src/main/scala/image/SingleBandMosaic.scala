@@ -25,6 +25,7 @@ import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.GridBounds
 import geotrellis.raster.histogram._
+import geotrellis.raster.resample._
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.postgres.PostgresAttributeStore
@@ -250,6 +251,63 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
           logger.error(message)
           throw new IllegalArgumentException(message)
       }
+    }
+
+  def rawWithBandOverride(
+      projectId: UUID,
+      zoomOption: Option[Int],
+      bboxPolygon: Option[Projected[Polygon]],
+      bandOverride: Int
+  )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] =
+    traceName(s"SingleBandMosaic.render(${projectId}-band-$bandOverride)") {
+      val zoom: Int = zoomOption.getOrElse(8)
+      val futureTiles
+        : Future[Seq[(MultibandTile, Array[Histogram[Double]])]] = {
+        SceneToProjectDao
+          .getMosaicDefinition(projectId, bboxPolygon)
+          .transact(xa)
+          .unsafeToFuture
+          .map { mds =>
+            val sceneIds = mds.map {
+              case MosaicDefinition(sceneId, _, _, _) => sceneId
+            }.toSet
+
+            Future
+              .sequence(mds.map { md =>
+                (md.sceneType, md.ingestLocation) match {
+                  case (Some(SceneType.COG), Some(loc)) => {
+                    fetchCogTileWithHist(bboxPolygon, zoom, md.sceneId, loc)
+                  }
+                  case _ => {
+                    OptionT(
+                      SingleBandMosaic
+                        .fetchRenderedExtent(md.sceneId, zoom, bboxPolygon)(
+                          xa,
+                          sceneIds)
+                        .value
+                        .zip(LayerCache.layerHistogram(md.sceneId, zoom).value)
+                        .map({
+                          case (tile, histogram) =>
+                            for (a <- tile; b <- histogram) yield (a._1, b)
+                        })).value
+                  }
+                }
+              })
+              .map(_.flatten)
+          }
+          .flatten
+      }
+
+      OptionT.liftF(
+        futureTiles map {
+          (tiles: Seq[(MultibandTile, Array[Histogram[Double]])]) =>
+            {
+              tiles map { _._1 }
+            } reduce {
+              _.resample(256, 256, Average) merge _.resample(256, 256, Average)
+            }
+        }
+      )
     }
 
   /** Fetch the tile for given resolution. If it is not present, use a tile from a lower zoom level */

@@ -113,9 +113,9 @@ object GlobalSummary extends LazyLogging {
                                   Some(ingestLocation)) =>
               maybeSceneType match {
                 case Some(SceneType.COG) =>
-                  minAcceptableCogZoom(ingestLocation, 256).value
+                  minAcceptableCogZoom(ingestLocation, size).value
                 case _ =>
-                  Future { minAcceptableSceneZoom(sceneId, store, 256) }
+                  Future { minAcceptableSceneZoom(sceneId, store, size) }
               }
             case _ => Future { None }
           }

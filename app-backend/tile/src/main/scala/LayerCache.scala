@@ -192,12 +192,16 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     rfCache.cachingOptionT(cacheKey, doCache = cacheConfig.tool.enabled) {
       for {
         toolRun <- LayerCache.toolRun(toolRunId, user, voidCache)
+        _ <- OptionT.liftF(logger.debug("Got tool run").pure[Future])
         (_, ast) <- LayerCache.toolEvalRequirements(toolRunId,
                                                     subNode,
                                                     user,
                                                     voidCache)
+        _ <- OptionT.liftF(logger.debug("Got ast").pure[Future])
         updatedAst <- OptionT(RelabelAst.cogScenes(ast))
+        _ <- OptionT.liftF(logger.debug("Updated ast").pure[Future])
         (extent, zoom) <- TileSources.fullDataWindow(updatedAst.tileSources)
+        _ <- OptionT.liftF(logger.debug("Got data extent").pure[Future])
         _ <- {
           OptionT.pure[Future](
             logger.debug(s"FOR EXTENT ZOOM: ${extent} ${zoom}"))
@@ -210,6 +214,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
               validatedAst.toOption
             })
         )
+        _ <- OptionT.liftF(logger.debug("Got literal AST").pure[Future])
         tile <- OptionT.fromOption[Future](
           NaiveInterpreter.DEFAULT(literalAst).andThen({ _.as[Tile] }) match {
             case Valid(tile) => Some(tile)
@@ -220,6 +225,7 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
               }
               None
           })
+        _ <- OptionT.liftF(logger.debug("Got tile").pure[Future])
       } yield {
         val hist = StreamingHistogram.fromTile(tile)
         hist
