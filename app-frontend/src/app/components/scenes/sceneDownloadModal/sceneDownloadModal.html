@@ -8,7 +8,7 @@
     Download scenes
   </h4>
 </div>
-<div class="modal-body">
+<div class="modal-body" ng-if="!$ctrl.rejectionMessage">
   <div class="list-group" ng-show="$ctrl.isLoading">
     <span class="list-placeholder">
       <i class="icon-load animate-spin"></i>
@@ -27,8 +27,8 @@
         <strong class="color-dark">Images</strong>
         <ng-pluralize count="downloadSet.images.length"
                       when="{'0': 'No images',
-                            'one': 'One image',
-                            'other': '{} images'}">
+                            'one': 'One image ',
+                            'other': '{} images '}">
         </ng-pluralize>
         available
       </div>
@@ -94,8 +94,8 @@
         <strong class="color-dark">Metadata</strong>
         <ng-pluralize count="downloadSet.metadata.length"
                       when="{'0': 'No metadata files',
-                            'one': 'One metadata file',
-                            'other': '{} metadata files'}">
+                            'one': 'One metadata file ',
+                            'other': '{} metadata files '}">
         </ng-pluralize>
         available
       </div>
@@ -111,4 +111,8 @@
       </div>
     </div>
   </div>
+</div>
+
+<div class="modal-body" ng-if="$ctrl.rejectionMessage">
+    <p>{{ $ctrl.rejectionMessage }}</p>
 </div>
