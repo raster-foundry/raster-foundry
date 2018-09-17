@@ -124,33 +124,33 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
                                   extent: Extent,
                                   singleBandOptions: SingleBandOptions.Params)(
       md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
-    md match {
-      case md @ MosaicDefinition(_, _, Some(SceneType.COG), _) =>
+    md.sceneType match {
+      case Some(SceneType.COG) =>
         IO.shift(t) *> fetchSingleBandCogTile(md,
                                               z,
                                               x,
                                               y,
                                               extent,
                                               singleBandOptions).value
-      case md @ MosaicDefinition(_, _, Some(SceneType.Avro), _) =>
+      case Some(SceneType.Avro) =>
         IO.shift(t) *> fetchSingleBandAvroTile(md,
                                                z,
                                                x,
                                                y,
                                                extent,
                                                singleBandOptions).value
-      case MosaicDefinition(_, _, None, _) =>
+      case None =>
         throw new Exception("Unable to fetch tiles with unknown scene type")
     }
 
   def getMultiBandTileFromMosaic(z: Int, x: Int, y: Int, extent: Extent)(
       md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
-    md match {
-      case md @ MosaicDefinition(_, _, Some(SceneType.COG), _) =>
+    md.sceneType match {
+      case Some(SceneType.COG) =>
         IO.shift(t) *> fetchMultiBandCogTile(md, z, x, y, extent).value
-      case md @ MosaicDefinition(_, _, Some(SceneType.Avro), _) =>
+      case Some(SceneType.Avro) =>
         IO.shift(t) *> fetchMultiBandAvroTile(md, z, x, y, extent).value
-      case MosaicDefinition(_, _, None, _) =>
+      case None =>
         throw new Exception("Unable to fetch tiles with unknown scene type")
     }
 
