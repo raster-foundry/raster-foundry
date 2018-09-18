@@ -70,8 +70,7 @@ class SceneWithRelatedDaoSpec
                 scene.name
             }
             val listedNamesSet = listedScenes.results.toSet map {
-              (scene: Scene.WithLessRelated) =>
-                scene.name
+              (scene: Scene.Browse) => scene.name
             }
             assert(
               listedNamesSet.intersect(insertedNamesSet) == listedNamesSet,
