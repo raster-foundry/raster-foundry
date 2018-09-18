@@ -44,7 +44,11 @@ trait ToolTagRoutes
   def listToolTags: Route = authenticate { user =>
     (withPagination) { (page) =>
       complete {
-        ToolTagDao.query.filter(user).page(page).transact(xa).unsafeToFuture()
+        ToolTagDao.query
+          .filter(user)
+          .page(page, fr"")
+          .transact(xa)
+          .unsafeToFuture()
       }
     }
   }

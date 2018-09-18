@@ -591,7 +591,7 @@ trait ProjectRoutes
             AnnotationDao.query
               .filter(fr"project_id=$projectId")
               .filter(queryParams)
-              .page(page)
+              .page(page, fr"")
               .transact(xa)
               .unsafeToFuture
               .map { p =>

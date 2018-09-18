@@ -82,7 +82,7 @@ trait ToolRunRoutes
                      runParams.groupQueryParameters.groupType,
                      runParams.groupQueryParameters.groupId)
           .filter(runParams)
-          .page(page)
+          .page(page, fr"")
           .transact(xa)
           .unsafeToFuture
       }
