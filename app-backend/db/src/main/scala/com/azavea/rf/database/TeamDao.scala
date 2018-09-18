@@ -92,7 +92,7 @@ object TeamDao extends Dao[Team] {
       .filter(fr"organization_id = ${organizationId}")
       .filter(fr"is_active = true")
       .filter(qp)
-      .page(page)
+      .page(page, fr"")
   }
 
   def listMembers(

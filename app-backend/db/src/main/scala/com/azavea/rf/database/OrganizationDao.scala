@@ -336,7 +336,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
         .viewFilter(user)
         .filter(fr"platform_id=${platformId}")
         .filter(searchParams)
-        .page(pageRequest)
+        .page(pageRequest, fr"")
     }
 
     for {

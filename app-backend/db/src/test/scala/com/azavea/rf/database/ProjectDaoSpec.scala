@@ -133,7 +133,7 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
               ProjectDao
                 .authQuery(dbUser, ObjectType.Project)
                 .filter(dbUser)
-                .page(pageRequest)
+                .page(pageRequest, fr"")
                 .flatMap(ProjectDao.projectsToProjectsWithRelated)
             }
           } yield { listedProjects }
