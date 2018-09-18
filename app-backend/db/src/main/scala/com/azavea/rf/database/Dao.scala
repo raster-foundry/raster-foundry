@@ -302,9 +302,8 @@ object Dao {
     }
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page(
-        pageRequest: PageRequest,
-        orderClause: Fragment): ConnectionIO[PaginatedResponse[Model]] =
+    def page(pageRequest: PageRequest,
+             orderClause: Fragment): ConnectionIO[PaginatedResponse[Model]] =
       page(pageRequest, selectF, countF, orderClause)
 
     def listQ(pageRequest: PageRequest): Query0[Model] =

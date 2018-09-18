@@ -23,20 +23,29 @@ import com.lonelyplanet.akka.http.extensions.PageRequest
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
+class ProjectDaoSpec
+    extends FunSuite
+    with Matchers
+    with Checkers
+    with DBTestConfig
+    with PropTestHelpers {
 
   // insertProject
   test("insert a project") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, project: Project.Create) => {
-          val projInsertIO = insertUserAndOrg(user, org) flatMap {
-            case (org: Organization, user: User) => {
-              ProjectDao.insertProject(fixupProjectCreate(user, project), user)
+        (user: User.Create,
+         org: Organization.Create,
+         project: Project.Create) =>
+          {
+            val projInsertIO = insertUserAndOrg(user, org) flatMap {
+              case (org: Organization, user: User) => {
+                ProjectDao.insertProject(fixupProjectCreate(user, project),
+                                         user)
+              }
             }
-          }
-          val insertedProject = projInsertIO.transact(xa).unsafeRunSync
-          insertedProject.name == project.name &&
+            val insertedProject = projInsertIO.transact(xa).unsafeRunSync
+            insertedProject.name == project.name &&
             insertedProject.description == project.description &&
             insertedProject.visibility == project.visibility &&
             insertedProject.tileVisibility == project.tileVisibility &&
@@ -45,7 +54,7 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
             insertedProject.tags == project.tags &&
             insertedProject.isSingleBand == project.isSingleBand &&
             insertedProject.singleBandOptions == project.singleBandOptions
-        }
+          }
       }
     }
   }
@@ -54,30 +63,41 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
   test("update a project") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, insertProject: Project.Create, updateProject: Project.Create) => {
-          val projInsertWithUserAndOrgIO = insertUserAndOrg(user, org) flatMap {
-            case (dbOrg: Organization, dbUser: User) => {
-              ProjectDao.insertProject(fixupProjectCreate(dbUser, insertProject), dbUser) map {
-                (_, dbUser, dbOrg)
-              }
-            }
-          }
-          val updateProjectWithUpdatedIO = projInsertWithUserAndOrgIO flatMap {
-            case (dbProject: Project, dbUser: User, dbOrg: Organization) => {
-              val fixedUpUpdateProject = fixupProjectCreate(dbUser, updateProject).toProject(dbUser)
-              ProjectDao.updateProject(fixedUpUpdateProject, dbProject.id, dbUser) flatMap {
-                (affectedRows: Int) => {
-                  ProjectDao.unsafeGetProjectById(dbProject.id) map {
-                    (affectedRows, _)
-                  }
+        (user: User.Create,
+         org: Organization.Create,
+         insertProject: Project.Create,
+         updateProject: Project.Create) =>
+          {
+            val projInsertWithUserAndOrgIO = insertUserAndOrg(user, org) flatMap {
+              case (dbOrg: Organization, dbUser: User) => {
+                ProjectDao.insertProject(fixupProjectCreate(dbUser,
+                                                            insertProject),
+                                         dbUser) map {
+                  (_, dbUser, dbOrg)
                 }
               }
             }
-          }
+            val updateProjectWithUpdatedIO = projInsertWithUserAndOrgIO flatMap {
+              case (dbProject: Project, dbUser: User, dbOrg: Organization) => {
+                val fixedUpUpdateProject =
+                  fixupProjectCreate(dbUser, updateProject).toProject(dbUser)
+                ProjectDao.updateProject(fixedUpUpdateProject,
+                                         dbProject.id,
+                                         dbUser) flatMap {
+                  (affectedRows: Int) =>
+                    {
+                      ProjectDao.unsafeGetProjectById(dbProject.id) map {
+                        (affectedRows, _)
+                      }
+                    }
+                }
+              }
+            }
 
-          val (affectedRows, updatedProject) = updateProjectWithUpdatedIO.transact(xa).unsafeRunSync
+            val (affectedRows, updatedProject) =
+              updateProjectWithUpdatedIO.transact(xa).unsafeRunSync
 
-          affectedRows == 1 &&
+            affectedRows == 1 &&
             updatedProject.owner == user.id &&
             updatedProject.name == updateProject.name &&
             updatedProject.description == updateProject.description &&
@@ -88,7 +108,7 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
             updatedProject.tags == updateProject.tags &&
             updatedProject.isSingleBand == updateProject.isSingleBand &&
             updatedProject.singleBandOptions == updateProject.singleBandOptions
-        }
+          }
       }
     }
   }
@@ -97,25 +117,29 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
   test("delete a project") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, project: Project.Create) => {
-          val projInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
-            case (dbOrg: Organization, dbUser: User) => {
-              ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser) map {
-                (_, dbUser)
+        (user: User.Create,
+         org: Organization.Create,
+         project: Project.Create) =>
+          {
+            val projInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
+              case (dbOrg: Organization, dbUser: User) => {
+                ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
+                                         dbUser) map {
+                  (_, dbUser)
+                }
               }
             }
-          }
 
-          val projDeleteIO = projInsertWithUserIO flatMap {
-            case (dbProject: Project, dbUser: User) => {
-              ProjectDao.deleteProject(dbProject.id) flatMap {
-                _ => ProjectDao.getProjectById(dbProject.id)
+            val projDeleteIO = projInsertWithUserIO flatMap {
+              case (dbProject: Project, dbUser: User) => {
+                ProjectDao.deleteProject(dbProject.id) flatMap { _ =>
+                  ProjectDao.getProjectById(dbProject.id)
+                }
               }
             }
-          }
 
-          projDeleteIO.transact(xa).unsafeRunSync == None
-        }
+            projDeleteIO.transact(xa).unsafeRunSync == None
+          }
       }
     }
   }
@@ -124,24 +148,32 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
   test("list projects") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, project: Project.Create, pageRequest: PageRequest) => {
-          val projectsListIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (dbOrg, dbUser) = orgAndUser
-            _ <- ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser)
-            listedProjects <- {
-              ProjectDao
-                .authQuery(dbUser, ObjectType.Project)
-                .filter(dbUser)
-                .page(pageRequest, fr"")
-                .flatMap(ProjectDao.projectsToProjectsWithRelated)
-            }
-          } yield { listedProjects }
+        (user: User.Create,
+         org: Organization.Create,
+         project: Project.Create,
+         pageRequest: PageRequest) =>
+          {
+            val projectsListIO = for {
+              orgAndUser <- insertUserAndOrg(user, org)
+              (dbOrg, dbUser) = orgAndUser
+              _ <- ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
+                                            dbUser)
+              listedProjects <- {
+                ProjectDao
+                  .authQuery(dbUser, ObjectType.Project)
+                  .filter(dbUser)
+                  .page(pageRequest, fr"")
+                  .flatMap(ProjectDao.projectsToProjectsWithRelated)
+              }
+            } yield { listedProjects }
 
-          val returnedThinUser = projectsListIO.transact(xa).unsafeRunSync.results.head.owner
-          assert(returnedThinUser.id == user.id, "Listed project's owner should be the same as the creating user")
-          true
-        }
+            val returnedThinUser =
+              projectsListIO.transact(xa).unsafeRunSync.results.head.owner
+            assert(
+              returnedThinUser.id == user.id,
+              "Listed project's owner should be the same as the creating user")
+            true
+          }
       }
     }
   }
@@ -151,35 +183,47 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
   test("add scenes to a project") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, scenes: List[Scene.Create], project: Project.Create) => {
-          val projAndScenesInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
-            case (dbOrg: Organization, dbUser: User) => {
-              val scenesInsertIO = unsafeGetRandomDatasource flatMap {
-                (dbDatasource: Datasource) => {
-                  scenes.traverse(
-                    (scene: Scene.Create) => {
-                      SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene), dbUser)
+        (user: User.Create,
+         org: Organization.Create,
+         scenes: List[Scene.Create],
+         project: Project.Create) =>
+          {
+            val projAndScenesInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
+              case (dbOrg: Organization, dbUser: User) => {
+                val scenesInsertIO = unsafeGetRandomDatasource flatMap {
+                  (dbDatasource: Datasource) =>
+                    {
+                      scenes.traverse(
+                        (scene: Scene.Create) => {
+                          SceneDao.insert(fixupSceneCreate(dbUser,
+                                                           dbDatasource,
+                                                           scene),
+                                          dbUser)
+                        }
+                      )
                     }
-                  )
                 }
+                val projectInsertIO =
+                  ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
+                                           dbUser)
+                (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
               }
-              val projectInsertIO = ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser)
-              (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
             }
-          }
 
-          val addScenesIO = projAndScenesInsertWithUserIO flatMap {
-            case (dbProject: Project, dbScenes: List[Scene.WithRelated], dbUser: User) => {
-              ProjectDao.addScenesToProject(
-                // this.get is safe because the arbitrary instance only produces NELs
-                (dbScenes map {_.id}).toNel.get,
-                dbProject.id,
-                true
-              )
+            val addScenesIO = projAndScenesInsertWithUserIO flatMap {
+              case (dbProject: Project,
+                    dbScenes: List[Scene.WithRelated],
+                    dbUser: User) => {
+                ProjectDao.addScenesToProject(
+                  // this.get is safe because the arbitrary instance only produces NELs
+                  (dbScenes map { _.id }).toNel.get,
+                  dbProject.id,
+                  true
+                )
+              }
             }
+            addScenesIO.transact(xa).unsafeRunSync == scenes.length
           }
-          addScenesIO.transact(xa).unsafeRunSync == scenes.length
-        }
       }
     }
   }
@@ -188,44 +232,66 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
   test("list project scenes order") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, scenes: List[Scene.Create], project: Project.Create, pageRequest: PageRequest) => {
-          val projAndScenesInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
-            case (dbOrg: Organization, dbUser: User) => {
-              val scenesInsertIO = unsafeGetRandomDatasource flatMap {
-                (dbDatasource: Datasource) => {
-                  scenes.traverse(
-                    (scene: Scene.Create) => {
-                      SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene), dbUser)
+        (user: User.Create,
+         org: Organization.Create,
+         scenes: List[Scene.Create],
+         project: Project.Create,
+         pageRequest: PageRequest) =>
+          {
+            val projAndScenesInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
+              case (dbOrg: Organization, dbUser: User) => {
+                val scenesInsertIO = unsafeGetRandomDatasource flatMap {
+                  (dbDatasource: Datasource) =>
+                    {
+                      scenes.traverse(
+                        (scene: Scene.Create) => {
+                          SceneDao.insert(fixupSceneCreate(dbUser,
+                                                           dbDatasource,
+                                                           scene),
+                                          dbUser)
+                        }
+                      )
                     }
-                  )
+                }
+                val projectInsertIO =
+                  ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
+                                           dbUser)
+                (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
+              }
+            }
+
+            val addScenesWithProjectAndUserAndScenesIO = projAndScenesInsertWithUserIO flatMap {
+              case (dbProject: Project,
+                    dbScenes: List[Scene.WithRelated],
+                    dbUser: User) => {
+                ProjectDao.addScenesToProject(dbScenes map { _.id },
+                                              dbProject.id) map { _ =>
+                  (dbProject, dbUser, dbScenes)
                 }
               }
-              val projectInsertIO = ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser)
-              (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
             }
-          }
 
-          val addScenesWithProjectAndUserAndScenesIO = projAndScenesInsertWithUserIO flatMap {
-            case (dbProject: Project, dbScenes: List[Scene.WithRelated], dbUser: User) => {
-              ProjectDao.addScenesToProject(dbScenes map { _.id }, dbProject.id) map {
-                _ => (dbProject, dbUser, dbScenes)
+            val listAddedSceneIDsIO = addScenesWithProjectAndUserAndScenesIO flatMap {
+              case (dbProject: Project,
+                    dbUser: User,
+                    dbScenes: List[Scene.WithRelated]) => {
+                // TODO test the normal list endpoint here
+                ProjectScenesDao.listProjectScenes(
+                  dbProject.id,
+                  pageRequest,
+                  CombinedSceneQueryParams()) map {
+                  (resp: PaginatedResponse[Scene.ProjectScene]) =>
+                    (
+                      resp.results map { _.id },
+                      dbScenes map { _.id }
+                    )
+                }
               }
             }
+            val (foundScenes, createdScenes) =
+              listAddedSceneIDsIO.transact(xa).unsafeRunSync
+            foundScenes.toSet == createdScenes.toSet
           }
-
-          val listAddedSceneIDsIO = addScenesWithProjectAndUserAndScenesIO flatMap {
-            case (dbProject: Project, dbUser: User, dbScenes: List[Scene.WithRelated]) => {
-              // TODO test the normal list endpoint here
-              ProjectScenesDao.listProjectScenes(dbProject.id, pageRequest, CombinedSceneQueryParams()) map {
-                (resp: PaginatedResponse[Scene.ProjectScene]) => (
-                  resp.results map { _.id }, dbScenes map { _.id }
-                )
-              }
-            }
-          }
-          val (foundScenes, createdScenes) = listAddedSceneIDsIO.transact(xa).unsafeRunSync
-          foundScenes.toSet == createdScenes.toSet
-        }
       }
     }
   }
@@ -234,46 +300,66 @@ class ProjectDaoSpec extends FunSuite with Matchers with Checkers with DBTestCon
   test("delete scenes from a project") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, scenes: List[Scene.Create], project: Project.Create, pageRequest: PageRequest) => {
-          val projAndScenesInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
-            case (dbOrg: Organization, dbUser: User) => {
-              val scenesInsertIO = unsafeGetRandomDatasource flatMap {
-                (dbDatasource: Datasource) => {
-                  scenes.traverse(
-                    (scene: Scene.Create) => {
-                      SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene), dbUser)
+        (user: User.Create,
+         org: Organization.Create,
+         scenes: List[Scene.Create],
+         project: Project.Create,
+         pageRequest: PageRequest) =>
+          {
+            val projAndScenesInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
+              case (dbOrg: Organization, dbUser: User) => {
+                val scenesInsertIO = unsafeGetRandomDatasource flatMap {
+                  (dbDatasource: Datasource) =>
+                    {
+                      scenes.traverse(
+                        (scene: Scene.Create) => {
+                          SceneDao.insert(fixupSceneCreate(dbUser,
+                                                           dbDatasource,
+                                                           scene),
+                                          dbUser)
+                        }
+                      )
                     }
-                  )
+                }
+                val projectInsertIO =
+                  ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
+                                           dbUser)
+                (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
+              }
+            }
+
+            val addAndDeleteScenesWithProjectAndUserIO = projAndScenesInsertWithUserIO flatMap {
+              case (dbProject: Project,
+                    dbScenes: List[Scene.WithRelated],
+                    dbUser: User) => {
+                val sceneIds = dbScenes map { _.id }
+                ProjectDao.addScenesToProject(
+                                              // this.get is safe because the arbitrary instance only produces NELs
+                                              (dbScenes map { _.id }).toNel.get,
+                                              dbProject.id,
+                                              true) flatMap { _ =>
+                  ProjectDao.deleteScenesFromProject(dbScenes map { _.id },
+                                                     dbProject.id) map { _ =>
+                    (dbProject, dbUser)
+                  }
                 }
               }
-              val projectInsertIO = ProjectDao.insertProject(fixupProjectCreate(dbUser, project), dbUser)
-              (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
             }
-          }
 
-          val addAndDeleteScenesWithProjectAndUserIO = projAndScenesInsertWithUserIO flatMap {
-            case (dbProject: Project, dbScenes: List[Scene.WithRelated], dbUser: User) => {
-              val sceneIds = dbScenes map {_.id}
-              ProjectDao.addScenesToProject(
-                // this.get is safe because the arbitrary instance only produces NELs
-                (dbScenes map {_.id}).toNel.get, dbProject.id, true) flatMap {
-                _ => ProjectDao.deleteScenesFromProject(dbScenes map {_.id}, dbProject.id) map {
-                  _ => (dbProject, dbUser)
+            val listAddedSceneIDsIO = addAndDeleteScenesWithProjectAndUserIO flatMap {
+              case (dbProject: Project, dbUser: User) => {
+                ProjectScenesDao.listProjectScenes(
+                  dbProject.id,
+                  pageRequest,
+                  CombinedSceneQueryParams()) map {
+                  (resp: PaginatedResponse[Scene.ProjectScene]) =>
+                    resp.results
                 }
               }
             }
-          }
 
-          val listAddedSceneIDsIO = addAndDeleteScenesWithProjectAndUserIO flatMap {
-            case (dbProject: Project, dbUser: User) => {
-              ProjectScenesDao.listProjectScenes(dbProject.id, pageRequest, CombinedSceneQueryParams()) map {
-                (resp: PaginatedResponse[Scene.ProjectScene]) => resp.results
-              }
-            }
+            listAddedSceneIDsIO.transact(xa).unsafeRunSync == List()
           }
-
-          listAddedSceneIDsIO.transact(xa).unsafeRunSync == List()
-        }
       }
     }
   }
