@@ -32,7 +32,7 @@ object DatasourceDao extends Dao[Datasource] {
     : ConnectionIO[PaginatedResponse[Datasource]] = {
     DatasourceDao.query
       .filter(params)
-      .page(page)
+      .page(page, fr"")
   }
 
   def create(datasource: Datasource, user: User): ConnectionIO[Datasource] = {

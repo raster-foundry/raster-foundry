@@ -41,7 +41,7 @@ object PlatformDao extends Dao[Platform] {
 
   def listPlatforms(
       page: PageRequest): ConnectionIO[PaginatedResponse[Platform]] =
-    query.page(page)
+    query.page(page, fr"")
 
   def listMembers(
       platformId: UUID,

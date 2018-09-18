@@ -62,7 +62,7 @@ object ProjectDao extends Dao[Project] {
       params.groupQueryParameters.groupType,
       params.groupQueryParameters.groupId
     ).filter(params)
-      .page(page)
+      .page(page, fr"")
       .flatMap(projectsToProjectsWithRelated)
   }
 
