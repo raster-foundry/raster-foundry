@@ -237,10 +237,10 @@ final case class UpdateAOIProject(projectId: UUID)(
         affectedRows <- ProjectDao.updateProject(newProject, proj.id, user)
       } yield affectedRows
 
-    val (projId, nNewScenes) =
+    val (projId, numberNewScenes) =
       addScenesToProjectWithProjectIO.transact(xa).unsafeRunSync
 
-    notifyProjectOwner(projId, nNewScenes.length)
+    notifyProjectOwner(projId, numberNewScenes.length)
   }
 }
 
