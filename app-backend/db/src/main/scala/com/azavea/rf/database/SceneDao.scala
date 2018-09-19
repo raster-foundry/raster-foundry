@@ -148,9 +148,6 @@ object SceneDao extends Dao[Scene] with LazyLogging with AWSBatch {
       _ <- bandInsert
       // It's fine to do this unsafely, since we know we the prior insert succeeded
       sceneWithRelated <- SceneWithRelatedDao.unsafeGetScene(sceneId)
-      // we should kickoff ingests if users create scenes with any ingest status other than ingested
-      // since status fields are required, and the link between ingest status and being able to view tiles
-      // is extremely not obvious, as we've learned several times
       kickoffIngest = sceneWithRelated.statusFields.ingestStatus == IngestStatus.Queued
       copied = if (kickoffIngest) {
         sceneWithRelated.copy(
