@@ -18,7 +18,7 @@ from .commands import (
 logger = logging.getLogger('rf')
 
 
-if os.getenv('AWS_BATCH_JOB_ATTEMPT', '') == '3':
+if int(os.getenv('AWS_BATCH_JOB_ATTEMPT', '-1')) > 3:
     raise Exception('Failing async task early after suspicious repeated failures')
 
 
