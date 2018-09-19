@@ -4,6 +4,7 @@ import java.sql.Timestamp
 import java.util.{Date, UUID}
 
 import cats.implicits._
+import com.azavea.rf.common.AWSBatch
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel.color._
 import com.azavea.rf.datamodel.{Scene, User, _}
@@ -17,7 +18,7 @@ import io.circe.optics.JsonPath._
 
 import scala.concurrent.duration._
 
-object SceneDao extends Dao[Scene] with LazyLogging {
+object SceneDao extends Dao[Scene] with LazyLogging with AWSBatch {
 
   type KickoffIngest = Boolean
 
@@ -147,7 +148,24 @@ object SceneDao extends Dao[Scene] with LazyLogging {
       _ <- bandInsert
       // It's fine to do this unsafely, since we know we the prior insert succeeded
       sceneWithRelated <- SceneWithRelatedDao.unsafeGetScene(sceneId)
-    } yield sceneWithRelated
+      kickoffIngest = sceneWithRelated.statusFields.ingestStatus == IngestStatus.Queued
+      copied = if (kickoffIngest) {
+        sceneWithRelated.copy(
+          statusFields = sceneWithRelated.statusFields.copy(
+            ingestStatus = IngestStatus.ToBeIngested))
+      } else {
+        sceneWithRelated
+      }
+      _ <- if (kickoffIngest) {
+        logger.info(
+          s"Kicking off ingest for newly created scene: ${sceneWithRelated.id} with ingest status ${sceneWithRelated.statusFields.ingestStatus}"
+        )
+        kickoffSceneIngest(sceneWithRelated.id).pure[ConnectionIO] <*
+          SceneDao.update(copied.toScene, sceneWithRelated.id, user)
+      } else {
+        ().pure[ConnectionIO]
+      }
+    } yield copied
   }
 
   @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
@@ -199,9 +217,7 @@ object SceneDao extends Dao[Scene] with LazyLogging {
     } yield sceneWithRelated
   }
 
-  def update(scene: Scene,
-             id: UUID,
-             user: User): ConnectionIO[(Int, KickoffIngest)] = {
+  def update(scene: Scene, id: UUID, user: User): ConnectionIO[Int] = {
     val idFilter = fr"id = ${id}".some
     val now = new Date()
 
@@ -235,14 +251,37 @@ object SceneDao extends Dao[Scene] with LazyLogging {
 
     lastModifiedAndIngestIO flatMap {
       case (ts: Timestamp, prevIngestStatus: IngestStatus) =>
-        updateIO map { n =>
+        updateIO flatMap { n =>
           (prevIngestStatus, scene.statusFields.ingestStatus) match {
-            case (IngestStatus.ToBeIngested, IngestStatus.ToBeIngested) =>
-              (n, true)
+            // update the scene, kickoff the ingest, return the n
+            case (IngestStatus.Queued, IngestStatus.Queued) =>
+              n.pure[ConnectionIO]
+            case (previous, IngestStatus.Queued) =>
+              logger.info(
+                s"Kicking off scene ingest for scene ${id} which entered state ${IngestStatus.Queued.toString} from ${previous.toString}")
+              n.pure[ConnectionIO] <*
+                kickoffSceneIngest(id).pure[ConnectionIO] <*
+                update(scene.copy(
+                         statusFields = scene.statusFields.copy(
+                           ingestStatus = IngestStatus.ToBeIngested)),
+                       id,
+                       user)
             case (IngestStatus.Ingesting, IngestStatus.Ingesting) =>
-              (n, ts.getTime < now.getTime - (24 hours).toMillis)
+              if (ts.getTime < now.getTime - (24 hours).toMillis) {
+                logger.info(
+                  s"Kicking off scene ingest for scene ${id} which has been ingesting for too long")
+                n.pure[ConnectionIO] <*
+                  kickoffSceneIngest(id).pure[ConnectionIO] <*
+                  update(scene.copy(
+                           statusFields = scene.statusFields.copy(
+                             ingestStatus = IngestStatus.ToBeIngested)),
+                         id,
+                         user)
+              } else {
+                n.pure[ConnectionIO]
+              }
             case _ =>
-              (n, false)
+              n.pure[ConnectionIO]
           }
         }
     }
