@@ -1003,26 +1003,8 @@ trait ProjectRoutes
         }
         val scenesAdded =
           ProjectDao.addScenesToProject(sceneIds, projectId, true)
-        val scenesToIngest = SceneWithRelatedDao.getScenesToIngest(projectId)
-        val x: ConnectionIO[List[Scene.WithRelated]] = for {
-          _ <- scenesAdded
-          toIngest <- scenesToIngest
-          _ <- logger
-            .info(s"Kicking off ${toIngest.size} scene ingests")
-            .pure[ConnectionIO]
-          _ <- toIngest traverse { (scene: Scene.WithRelated) =>
-            SceneDao.update(
-              scene.toScene.copy(statusFields =
-                scene.statusFields.copy(ingestStatus = IngestStatus.Queued)),
-              scene.id,
-              user
-            )
-          }
-        } yield {
-          toIngest
-        }
 
-        complete { x.transact(xa).unsafeToFuture }
+        complete { scenesAdded.transact(xa).unsafeToFuture }
       }
     }
   }
