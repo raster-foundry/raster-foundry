@@ -215,7 +215,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     OptionT(
       for {
         _ <- IO.pure(
-          logger.info(
+          logger.debug(
             s"Fetching multi-band avro tile for scene id ${md.sceneId}"))
         metadata <- IO.shift(t) *> tileLayerMetadata(md.sceneId, zoom)
         (sourceZoom, tlm) = metadata
@@ -259,7 +259,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       extent: Extent)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
     val tileIO = for {
       _ <- IO.pure(
-        logger.info(s"Fetching multi-band COG tile for scene ID ${md.sceneId}"))
+        logger.debug(s"Fetching multi-band COG tile for scene ID ${md.sceneId}"))
       raster <- IO.shift(t) *> CogUtils.fetch(
         md.ingestLocation.getOrElse(
           "Cannot fetch scene with no ingest location"),
@@ -303,7 +303,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     OptionT(
       for {
         _ <- IO.pure(
-          logger.info(
+          logger.debug(
             s"Fetching single-band avro tile for scene id ${md.sceneId}"))
         metadata <- IO.shift(t) *> tileLayerMetadata(md.sceneId, zoom)
         (sourceZoom, tlm) = metadata
@@ -349,7 +349,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
     val tileIO = for {
       _ <- IO.pure(
-        logger.info(
+        logger.debug(
           s"Fetching single-band COG tile for scene ID ${md.sceneId}"))
       raster <- IO.shift(t) *> CogUtils.fetch(
         md.ingestLocation.getOrElse(

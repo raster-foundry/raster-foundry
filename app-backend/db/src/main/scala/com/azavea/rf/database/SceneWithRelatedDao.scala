@@ -73,7 +73,7 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
              ON scenes.id = sp.scene_id""" ++
       Fragments.whereAnd(
         Fragments.in(fr"scenes.id", sceneIds),
-        fr"sp.project_id = $projectId")).query[(UUID, Boolean)].list
+        fr"sp.project_id = $projectId")).query[(UUID, Boolean)].to[List]
 
   def getScenesImages(
       sceneIds: List[UUID]): ConnectionIO[List[Image.WithRelated]] =
