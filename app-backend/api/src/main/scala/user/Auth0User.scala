@@ -128,23 +128,6 @@ object Auth0UserService extends Config with LazyLogging {
       }
   }
 
-  def getAuth0User(userId: String)(
-      implicit xa: Transactor[IO]): Future[UserWithOAuth] = {
-    val query: Future[Auth0User] = for {
-      bearerToken <- authBearerTokenCache.get(1)
-      auth0User <- requestAuth0User(userId, bearerToken)
-    } yield auth0User
-    query.flatMap { auth0User =>
-      UserDao.getUserById(userId).transact(xa).unsafeToFuture().map {
-        case Some(user: User) =>
-          UserWithOAuth(user, auth0User)
-        case _ =>
-          throw new Auth0Exception(StatusCodes.NotFound,
-                                   "Unable to find user in database.")
-      }
-    }
-  }
-
   def requestAuth0User(
       userId: String,
       bearerToken: ManagementBearerToken): Future[Auth0User] = {
