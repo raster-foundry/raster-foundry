@@ -54,8 +54,8 @@ def export(export_id):
         final_status = 'FAILED'
         raise e
     finally:
-        # The max number of retries is currently hardcoded in ../cli.py and batch.tf
-        # in the deployment repo. Please make sure that all 3 areas are updated if
+        # The max number of retries is currently hardcoded in batch.tf
+        # in the deployment repo. Please make sure that both areas are updated if
         # this needs to be changed to a configurable variable
         if final_status == 'EXPORTED' or int(RETRY) >= 3:
             logger.info('Sending email notifications for export %s on try: %s', export_id, RETRY)
