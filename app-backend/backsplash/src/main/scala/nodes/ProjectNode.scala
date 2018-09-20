@@ -259,7 +259,8 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       extent: Extent)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
     val tileIO = for {
       _ <- IO.pure(
-        logger.debug(s"Fetching multi-band COG tile for scene ID ${md.sceneId}"))
+        logger.debug(
+          s"Fetching multi-band COG tile for scene ID ${md.sceneId}"))
       raster <- IO.shift(t) *> CogUtils.fetch(
         md.ingestLocation.getOrElse(
           "Cannot fetch scene with no ingest location"),
