@@ -18,6 +18,9 @@ from .commands import (
 logger = logging.getLogger('rf')
 
 
+# The max number of retries is currently hardcoded in commands/export.py
+# and batch.tf in the deployment repo. Please make sure that all 3 areas are
+# updated if this needs to be changed to a configurable variable
 if int(os.getenv('AWS_BATCH_JOB_ATTEMPT', '-1')) > 3:
     raise Exception('Failing async task early after suspicious repeated failures')
 
