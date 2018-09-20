@@ -44,7 +44,7 @@ trait UserRoutes
           get { getUserRoles }
         } ~
         pathEndOrSingleSlash {
-          get { getAuth0User } ~
+          get { getDbOwnUser } ~
             patch { updateAuth0User } ~
             put { updateOwnUser }
         }
@@ -80,10 +80,8 @@ trait UserRoutes
     }
   }
 
-  def getAuth0User: Route = authenticate { user =>
-    complete {
-      Auth0UserService.getAuth0User(user.id)
-    }
+  def getDbOwnUser: Route = authenticate { user =>
+    complete(UserDao.unsafeGetUserById(user.id).transact(xa).unsafeToFuture())
   }
 
   def updateAuth0User: Route = authenticate { user =>
