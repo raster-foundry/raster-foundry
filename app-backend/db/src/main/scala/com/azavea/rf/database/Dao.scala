@@ -8,10 +8,13 @@ import com.azavea.rf.database.filter.Filterables
 import com.azavea.rf.database.util._
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest
-import doobie._
+import doobie.{LogHandler => _, _}
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
+import doobie.util.log._
+import com.typesafe.scalalogging.LazyLogging
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * This is abstraction over the listing of arbitrary types from the DB with filters/pagination
@@ -113,7 +116,59 @@ abstract class Dao[Model: Composite] extends Filterables {
   }
 }
 
-object Dao {
+object Dao extends LazyLogging {
+
+  implicit val logHandler: LogHandler = LogHandler {
+    case Success(s: String,
+                 a: List[Any],
+                 e1: FiniteDuration,
+                 e2: FiniteDuration) =>
+      val queryString = s.lines.dropWhile(_.trim.isEmpty).mkString("\n  ")
+      val logString = queryString
+        .split("\\?", -1)
+        .zip(a.map(s => "'" + s + "'"))
+        .flatMap({ case (t1, t2) => List(t1, t2) })
+        .mkString("")
+      logger.info(s"""Successful Statement Execution:
+        |
+        |  ${logString}
+        |
+        | arguments = [${a.mkString(", ")}]
+        |   elapsed = ${e1.toMillis} ms exec + ${e2.toMillis} ms processing (${(e1 + e2).toMillis} ms total)
+      """.stripMargin)
+
+    case ProcessingFailure(s, a, e1, e2, t) =>
+      val queryString = s.lines.dropWhile(_.trim.isEmpty).mkString("\n  ")
+      val logString = queryString
+        .split("\\?", -1)
+        .zip(a.map(s => "'" + s + "'"))
+        .flatMap({ case (t1, t2) => List(t1, t2) })
+        .mkString("")
+      logger.error(s"""Failed Resultset Processing:
+        |
+        |  ${logString}
+        |
+        | arguments = [${a.mkString(", ")}]
+        |   elapsed = ${e1.toMillis} ms exec + ${e2.toMillis} ms processing (failed) (${(e1 + e2).toMillis} ms total)
+        |   failure = ${t.getMessage}
+      """.stripMargin)
+
+    case ExecFailure(s, a, e1, t) =>
+      val queryString = s.lines.dropWhile(_.trim.isEmpty).mkString("\n  ")
+      val logString = queryString
+        .split("\\?", -1)
+        .zip(a.map(s => "'" + s + "'"))
+        .flatMap({ case (t1, t2) => List(t1, t2) })
+        .mkString("")
+      logger.error(s"""Failed Statement Execution:
+        |
+        |  ${logString}
+        |
+        | arguments = [${a.mkString(", ")}]
+        |   elapsed = ${e1.toMillis} ms exec (failed)
+        |   failure = ${t.getMessage}
+      """.stripMargin)
+  }
 
   final case class QueryBuilder[Model: Composite](
       selectF: Fragment,
