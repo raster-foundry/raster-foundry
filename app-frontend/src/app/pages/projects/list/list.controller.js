@@ -77,7 +77,7 @@ class ProjectsListController {
 
         modal.result.then((data) => {
             if (data && data.reloadProjectList) {
-                this.populateProjectList(1);
+                this.fetchPage(1);
             }
         });
     }
