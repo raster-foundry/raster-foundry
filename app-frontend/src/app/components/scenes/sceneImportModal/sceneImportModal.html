@@ -396,7 +396,7 @@
 
   <!--Body for IMPORT_SUCCESS-->
   <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')">
-    <div class="content">
+    <div class="content" ng-if="!$ctrl.error">
       <h3 class="no-margin">Success!</h3>
       <p>
         Your scenes are importing into {{$ctrl.BUILDCONFIG.APP_NAME}} now.
@@ -409,6 +409,15 @@
         <span ng-if="!$ctrl.resolve.origin">
           You may check the status of your import later.
         </span>
+      </p>
+    </div>
+    <div class="concent" ng-if="$ctrl.error">
+      <h3>Error</h3>
+      <p>
+        It looks like there was an error importing your scenes.
+      </p>
+      <p>
+        Please check to make sure that you selected the correct urls or files.
       </p>
     </div>
   </div>
