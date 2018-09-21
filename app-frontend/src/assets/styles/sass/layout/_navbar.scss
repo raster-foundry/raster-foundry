@@ -181,8 +181,8 @@
   justify-content: flex-start;
 
   &.secondary {
+    flex: none;
     align-items: center;
-    justify-content: flex-end;
     text-align: right;
   }
 }
