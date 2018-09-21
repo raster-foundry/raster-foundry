@@ -176,8 +176,10 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     )
   }
 
-  def layerSinglebandTileForExtent(layerId: UUID, zoom: Int, extent: Extent, band: Int):
-      OptionT[Future, Tile] = {
+  def layerSinglebandTileForExtent(layerId: UUID,
+                                   zoom: Int,
+                                   extent: Extent,
+                                   band: Int): OptionT[Future, Tile] = {
     val cacheKey =
       s"extent-tile-$layerId-$zoom-${extent.xmin}-${extent.ymin}-${extent.xmax}-${extent.ymax}-${band}"
     OptionT(
