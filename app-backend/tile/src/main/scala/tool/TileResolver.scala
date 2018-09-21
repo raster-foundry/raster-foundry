@@ -444,7 +444,6 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
           .value
           .map({ maybeTile =>
             {
-              println("got a tile")
               maybeTile match {
                 case Some(tile) =>
                   val t =

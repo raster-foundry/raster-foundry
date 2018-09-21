@@ -176,6 +176,42 @@ object LayerCache extends Config with LazyLogging with KamonTrace {
     )
   }
 
+  def layerSinglebandTileForExtent(layerId: UUID,
+                                   zoom: Int,
+                                   extent: Extent,
+                                   band: Int): OptionT[Future, Tile] = {
+    val cacheKey =
+      s"extent-tile-$layerId-$zoom-${extent.xmin}-${extent.ymin}-${extent.xmax}-${extent.ymax}-${band}"
+    OptionT(
+      timedFuture("layer-for-tile-extent-cache")(
+        rfCache.caching(cacheKey, doCache = cacheConfig.layerTile.enabled)(
+          timedFuture("layer-for-tile-extent-s3")(
+            Future {
+              Try {
+                S3CollectionLayerReader(store)
+                  .query[SpatialKey,
+                         MultibandTile,
+                         TileLayerMetadata[SpatialKey]](
+                    LayerId(layerId.toString, zoom))
+                  .where(Intersects(extent))
+                  .result
+                  .stitch
+                  .crop(extent)
+                  .tile
+                  .resample(256, 256)
+              } match {
+                case Success(tile) => Option(tile.band(band))
+                case Failure(e) =>
+                  logger.error(
+                    s"Query layer $layerId at zoom $zoom for $extent: ${e.getMessage}")
+                  None
+              }
+            }
+          ))
+      )
+    )
+  }
+
   val tileResolver =
     new TileResolver(implicitly[Transactor[IO]], implicitly[ExecutionContext])
 

@@ -83,8 +83,7 @@ export default (app) => {
                         url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/scenes/`,
                         params: {
                             projectId: '@projectId'
-                        },
-                        isArray: true
+                        }
                     },
                     projectDatasources: {
                         method: 'GET',
@@ -335,39 +334,6 @@ export default (app) => {
         getProjectDatasources(projectId) {
             return this.Project.projectDatasources({projectId}).$promise;
         }
-
-
-        /** Return all scenes in a single collection, making multiple requests if necessary
-         *
-         * @param {object} params to pass as query params
-         * @return {Promise} promise that will resolve when all scenes are available
-         */
-        // getAllProjectScenes(params) {
-        //     let pageSize = 30;
-        //     let firstPageParams = Object.assign({}, params, {
-        //         pageSize: pageSize,
-        //         page: 0
-        //         // sort: 'createdAt,desc'
-        //     });
-        //     let firstRequest = this.getProjectScenes(firstPageParams);
-
-        //     return firstRequest.then((res) => {
-        //         const count = res.count;
-        //         const scenes = res.results;
-        //         let arraySize = Math.max(Math.floor(count / pageSize) - 1, 0);
-        //         const requests = Array(arraySize)
-        //               .fill().map((x, page) => {
-        //                   return this.getProjectScenes(Object.assign({}, params, {
-        //                       pageSize,
-        //                       page: page + 1,
-        //                       sort: 'createdAt,desc'
-        //                   })).then((pageResponse) => pageResponse.results);
-        //               });
-        //         return this.$q.all(requests).then((sceneChunks) => {
-        //             return {count, scenes: scenes.concat(_.flatten(sceneChunks))};
-        //         });
-        //     });
-        // }
 
         getProjectStatus(projectId) {
             return this.$q.all({
