@@ -5,7 +5,7 @@ class ProjectsScenesController {
     constructor( // eslint-disable-line max-params
         $log, $state, $scope, $timeout,
         modalService, projectService, RasterFoundryRepository, uploadService,
-        sceneService, authService,
+        sceneService, authService, paginationService,
         platform
     ) {
         'ngInject';
@@ -21,6 +21,10 @@ class ProjectsScenesController {
         };
         this.pendingImports = 0;
         this.checkPendingImports();
+        if (!this.$parent.currentRequest) {
+            this.$parent.fetchPage();
+        }
+        this.getPendingSceneCount();
         // eslint-disable-next-line
         let thisItem = this;
         this.treeOptions = {
@@ -31,6 +35,20 @@ class ProjectsScenesController {
                 thisItem.onSceneDropped(e.source.nodesScope.$modelValue);
             }
         };
+    }
+
+    getPendingSceneCount() {
+        if (!this.pendingSceneRequest) {
+            this.pendingSceneRequest = this.projectService.getProjectScenes(this.projectId, {
+                pending: true,
+                pageSize: 0
+            });
+            this.pendingSceneRequest.then((paginatedResponse) => {
+                this.pendingSceneCount =
+                    this.paginationService.buildPagination(paginatedResponse).count;
+            });
+        }
+        return this.pendingSceneRequest;
     }
 
     onSceneDragStart(e) {
