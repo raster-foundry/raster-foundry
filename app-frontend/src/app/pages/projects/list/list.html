@@ -43,7 +43,7 @@
       <!-- Loading indicator -->
 
       <!-- No project placeholder -->
-      <div ng-if="$ctrl.shouldShowPlaceholder() && $ctrl.currentOwnershipFilter === 'owned'"
+      <div ng-if="$ctrl.shouldShowPlaceholder() && $ctrl.currentOwnershipFilter === 'owned'">
         <rf-call-to-action-item title="You haven't created any projects yet" class="panel panel-off-white">
           <p class="pb-25">
             You can create a new project by <strong>importing</strong> your own earth observation
@@ -54,7 +54,7 @@
 
           <a class="btn btn-primary" ng-click="$ctrl.createNewProject()">New project</a>
           <p>
-            <a>Getting started with Projects</a>
+            <a ng-href="{{$ctrl.HELPCONFIG.GETTING_STARTED_WITH_PROJECTS}}" target="_blank">Getting started with Projects</a>
           </p>
         </rf-call-to-action-item>
       </div>

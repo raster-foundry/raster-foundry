@@ -14,23 +14,11 @@
       </div>
     </div>
     <div class="filter-group">
-      <div class="filter"
-          ng-mouseleave="$ctrl.toggleDrag.toggle = false"
-          ng-mouseup="$ctrl.toggleDrag.toggle = false">
-        <label>Imagery sources</label>
-        <input type="text"
-               placeholder="All"
-               class="form-control input-dark image-source"
-               ng-model="$ctrl.selectedDatasource"
-               uib-typeahead="ds.name for ds in $ctrl.datasources | filter:$viewValue | limitTo:8"
-               typeahead-on-select="$ctrl.toggleSourceFilter($item)"
-               typeahead-min-length="0">
-        <div class="clear-image-source-filter"
-             ng-if="$ctrl.selectedDatasource"
-             ng-click="$ctrl.clearDatasourceFilter()">
-          <i class="icon-cross"></i>
-        </div>
-      </div>
+      <rf-search-select-filter
+        class="filter-group"
+        data-filter="$ctrl.datasourceFilter"
+        on-filter-change="$ctrl.onDatasourceFilterChange(filter, filterParams)">
+      </rf-search-select-filter>
     </div>
     <div class="filter-group">
       <div class="filter">
