@@ -49,10 +49,6 @@ class ProjectsEditController {
                         this.fetchPage();
                         this.initColorComposites();
                         this.layerFromProject();
-
-                        if (this.project.isAOIProject) {
-                            this.getPendingSceneList();
-                        }
                     },
                     () => {
                         this.loadingProject = false;
@@ -61,8 +57,6 @@ class ProjectsEditController {
             } else {
                 this.$state.go('projects.list');
             }
-        } else if (this.project.isAOIProject) {
-            this.getPendingSceneList();
         }
         this.resetAnnotations();
         if (this.projectId) {
@@ -160,21 +154,6 @@ class ProjectsEditController {
                 });
             });
         });
-    }
-
-    getPendingSceneList() {
-        if (!this.pendingSceneRequest) {
-            this.pendingSceneRequest = this.projectService.getProjectScenes(this.projectId, {
-                pending: true,
-                pageSize: 30
-            });
-            this.pendingSceneRequest.then((paginatedResponse) => {
-                this.pendingSceneList = paginatedResponse.results;
-                this.pendingScenePagination =
-                    this.paginationService.buildPagination(paginatedResponse);
-            });
-        }
-        return this.pendingSceneRequest;
     }
 
     getIngestingSceneCount() {

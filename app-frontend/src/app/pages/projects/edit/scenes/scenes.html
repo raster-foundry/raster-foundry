@@ -37,9 +37,9 @@
     </div>
   </div>
   <div class="list-group-item no-border"
-       ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneCount">
+       ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.pendingSceneCount">
     <div class="alert alert-secondary">
-      <div class="alert-message">{{$ctrl.$parent.pendingSceneCount}} scenes awaiting approval</div>
+      <div class="alert-message">{{$ctrl.pendingSceneCount}} scenes awaiting approval</div>
       <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
     </div>
   </div>
