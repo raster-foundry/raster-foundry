@@ -333,14 +333,17 @@ export default class SceneImportModalController {
                 this.uploadsDone();
                 return upload;
             }, err => {
+                this.handleNext();
                 this.uploadError(err);
-                this.handlePrevious();
+            }).finally(() => {
+                this.allowInterruptions();
             });
     }
 
     startCogImport() {
         this.preventInterruptions();
         this.handleNext();
+        let tries = 0;
         this.sceneService.createCogScene({
             metadata: this.sceneData,
             location: this.cogConfig.url,
@@ -349,7 +352,7 @@ export default class SceneImportModalController {
             this.handleNext();
         }, err => {
             this.uploadError(err);
-            this.handlePrevious();
+            this.handleNext();
         }).finally(() => {
             this.allowInterruptions();
         });
@@ -528,13 +531,15 @@ export default class SceneImportModalController {
     }
 
     uploadError(err, upload) {
-        if (!upload.aborted) {
+        if (upload && !upload.aborted) {
             Object.assign(upload, {error: err});
             this.$scope.$evalAsync(() => {
                 this.uploadProgressPct[upload.file.name] = 'Errored';
                 this.uploadProgressFlexString[upload.file.name] = '1 0';
             });
             this.$scope.$evalAsync();
+        } else {
+            this.error = err;
         }
     }
 
