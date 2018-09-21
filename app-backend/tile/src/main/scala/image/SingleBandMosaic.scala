@@ -67,7 +67,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
   def fetchCogTileWithHist(bbox: Option[Projected[Polygon]],
                            zoom: Int,
                            sceneId: UUID,
-                           ingestLocation: String) = {
+                           ingestLocation: String): Future[Option[(MultibandTile, Array[Histogram[Double]])]] = {
 
     val extent: Option[Extent] = bbox.map { poly =>
       poly.geom.envelope
@@ -205,7 +205,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
                       case _ => {
                         OptionT(
                           SingleBandMosaic
-                            .fetchRenderedExtent(md.sceneId, zoom, bboxPolygon)(
+                            .fetchRenderedExtent(md.sceneId, zoom, bboxPolygon, singleBandOptions.band)(
                               xa,
                               sceneIds)
                             .value
@@ -260,7 +260,6 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
       bandOverride: Int
   )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] =
     traceName(s"SingleBandMosaic.render(${projectId}-band-$bandOverride)") {
-      logger.info("Yeah definitely invoked")
       val zoom: Int = zoomOption.getOrElse(8)
       val futureTiles
         : Future[Seq[(MultibandTile, Array[Histogram[Double]])]] = {
@@ -277,12 +276,15 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
               .sequence(mds.map { md =>
                 (md.sceneType, md.ingestLocation) match {
                   case (Some(SceneType.COG), Some(loc)) => {
-                    fetchCogTileWithHist(bboxPolygon, zoom, md.sceneId, loc)
+                    fetchCogTileWithHist(bboxPolygon, zoom, md.sceneId, loc) map {
+                      case Some((mbTile, histArray)) => Some((MultibandTile(mbTile.band(bandOverride)), histArray))
+                      case _ => None
+                    }
                   }
                   case _ => {
                     OptionT(
                       SingleBandMosaic
-                        .fetchRenderedExtent(md.sceneId, zoom, bboxPolygon)(
+                        .fetchRenderedExtent(md.sceneId, zoom, bboxPolygon, bandOverride)(
                           xa,
                           sceneIds)
                         .value
@@ -351,7 +353,8 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
 
   def fetchRenderedExtent(id: UUID,
                           zoom: Int,
-                          bbox: Option[Projected[Polygon]])(
+                          bbox: Option[Projected[Polygon]],
+                          band: Int)(
       implicit xa: Transactor[IO],
       sceneIds: Set[UUID])
     : OptionT[Future, (MultibandTile, Array[Histogram[Double]])] =
@@ -365,10 +368,10 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
             }
             .getOrElse(tlm.layoutExtent)
         val hist = LayerCache.layerHistogram(id, sourceZoom)
-        val tile = LayerCache.layerTileForExtent(id, sourceZoom, extent)
+        val tile = LayerCache.layerSinglebandTileForExtent(id, sourceZoom, extent, band)
         for {
           t <- tile
           h <- hist
-        } yield (t, h)
+        } yield (MultibandTile(t), h)
     }
 }
