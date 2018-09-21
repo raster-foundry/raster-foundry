@@ -260,6 +260,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
       bandOverride: Int
   )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] =
     traceName(s"SingleBandMosaic.render(${projectId}-band-$bandOverride)") {
+      logger.info("Yeah definitely invoked")
       val zoom: Int = zoomOption.getOrElse(8)
       val futureTiles
         : Future[Seq[(MultibandTile, Array[Histogram[Double]])]] = {
