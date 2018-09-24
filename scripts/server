@@ -24,7 +24,7 @@ then
     elif [ "${1:-}" = "--quiet" ]
     then
         shift
-        docker-compose up -d && \
+        docker-compose up -d nginx-api nginx-backsplash memcached && \
             docker-compose logs -f --tail 20 api-server "$@"
     else
         docker-compose up --remove-orphans
