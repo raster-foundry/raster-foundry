@@ -46,7 +46,7 @@
   color: $white;
 
   &:hover,
-  &.active {
+  &.active:not(.disabled,:disabled) {
     color: $brand-primary;
     background-color: $shade-normal;
   }
@@ -57,10 +57,10 @@
     z-index: 1;
   }
 
-  &.disabled {
+  &.disabled, &:disabled {
     cursor: not-allowed;
     background: none !important;
-    
+
     > i {
       color: $white;
       opacity: .5;
@@ -71,7 +71,7 @@
     border-radius: 0 0 $border-radius-base $border-radius-base;
     border-bottom: none;
   }
-  
+
   > i {
     font-size: 1.4rem;
   }

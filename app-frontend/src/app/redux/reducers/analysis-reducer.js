@@ -4,14 +4,47 @@ import {
     ANALYSIS_LOAD, ANALYSIS_UPDATE_NAME, ANALYSIS_FETCH
 } from '../actions/lab-actions';
 
+const resetLabState = () => ({
+    lastAnalysisSave: new Date(),
+    lastAnalysisRefresh: new Date(),
+    analysis: null,
+    analysisErrors: new Map(),
+    updating: false, fetching: false, error: null,
+    readonly: false,
+
+    nodes: new Map(), previewNodes: [], selectingNode: null, selectedNode: null,
+    preventSelecting: false,
+
+    histograms: new Map(), statistics: new Map()
+});
+
 export const analysisReducer = typeToReducer({
     [ANALYSIS_LOAD]: (state, action) => {
-        return Object.assign({}, state, {
-            analysis: action.payload, lastAnalysisSave: new Date(),
-            readonly: action.readonly,
-            previewNodes: [], selectedNode: null, nodes: new Map(),
-            histograms: new Map()
+        return Object.assign({}, state, resetLabState(), {
+            analysis: action.payload,
+            readonly: action.readonly
         });
+    },
+    [ANALYSIS_FETCH]: {
+        PENDING: (state, action) => {
+            return Object.assign({}, state, resetLabState(), {
+                fetching: action.analysisId,
+                readonly: action.readonly
+            });
+        },
+        REJECTED: (state, action) => {
+            return Object.assign({}, state, {
+                fetching: false,
+                analysisErrors: state.analysisErrors.set('http', action.payload)
+            });
+        },
+        FULFILLED: (state, action) => {
+            return Object.assign({}, state, {
+                analysis: action.payload.data,
+                analysisErrors: new Map(),
+                fetching: false
+            });
+        }
     },
     [ANALYSIS_UPDATE_NAME]: {
         PENDING: (state, action) => {
@@ -35,28 +68,6 @@ export const analysisReducer = typeToReducer({
                     lastAnalysisSave: new Date()
                 }
             );
-        }
-    },
-    [ANALYSIS_FETCH]: {
-        PENDING: (state, action) => {
-            return Object.assign({}, state, {
-                fetching: action.analysisId, analysisErrors: state.analysisErrors.delete('http')
-            });
-        },
-        REJECTED: (state, action) => {
-            return Object.assign({}, state, {
-                fetching: false, analysisErrors: state.analysisErrors.set('http', action.payload)
-            });
-        },
-        FULFILLED: (state, action) => {
-            return Object.assign({}, state, {
-                fetching: false,
-                analysis: action.payload.data,
-                readonly: false,
-                lastAnalysisSave: new Date(),
-                histograms: new Map(),
-                analysisErrors: state.analysisErrors.delete('http')
-            });
         }
     }
 });

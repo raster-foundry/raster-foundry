@@ -69,7 +69,7 @@ export const nodeReducer = typeToReducer({
             });
         },
         ERROR: (state, action) => {
-            return Object.assign({
+            return Object.assign({}, state, {
                 preventSelecting: false,
                 selectingNode: null,
                 selectedNode: null,
