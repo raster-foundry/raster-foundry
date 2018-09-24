@@ -186,14 +186,21 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       histogram: Histogram[Double],
       singleBandOptions: SingleBandOptions.Params): Raster[Tile] = {
     val colorScheme = singleBandOptions.colorScheme
-    val colorMap = (colorScheme.asArray, colorScheme.asObject) match {
-      case (Some(a), None) =>
+    val colorMap = (colorScheme.asArray,
+                    colorScheme.asObject,
+                    singleBandOptions.extraNoData) match {
+      case (Some(a), None, _) =>
         ColorRampMosaic.colorMapFromVector(a.map(_.noSpaces),
                                            singleBandOptions,
                                            histogram)
-      case (None, Some(o)) =>
+      case (None, Some(o), Nil) =>
         ColorRampMosaic.colorMapFromMap(o.toMap map {
           case (k, v) => (k, v.noSpaces)
+        })
+      case (None, Some(o), masked @ (h +: t)) =>
+        ColorRampMosaic.colorMapFromMap(o.toMap map {
+          case (k, v) =>
+            (k, if (masked.contains(k.toInt)) "#00000000" else v.noSpaces)
         })
       case _ =>
         val message =
