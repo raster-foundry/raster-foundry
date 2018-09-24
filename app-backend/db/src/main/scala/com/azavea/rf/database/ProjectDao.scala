@@ -372,6 +372,7 @@ object ProjectDao extends Dao[Project] with AWSBatch {
                         "Somehow, a user id was lost to the aether")
                     )
                     .head
+                    .withScrubbedName
                 )
               }
             projectsPage.copy(results = withUsers)
