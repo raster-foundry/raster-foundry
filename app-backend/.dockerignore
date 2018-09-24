@@ -10,4 +10,5 @@ project/target/*
 target/*
 tile/target/*
 tool/target/*
+backsplash/target/*
 .idea/*
