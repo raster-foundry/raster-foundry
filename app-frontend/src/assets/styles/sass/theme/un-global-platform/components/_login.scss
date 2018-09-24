@@ -1,0 +1,28 @@
+.auth0-lock.auth0-lock .auth0-lock-cred-pane {
+  border-radius: 0 !important;
+}
+
+.auth0-lock.auth0-lock .auth0-lock-header {
+  border-radius: 0 !important;
+}
+
+.auth0-lock.auth0-lock .auth0-lock-submit {
+  padding: 0;
+  height: auto;
+  width: 90%;
+  margin: 10px auto;
+}
+
+.auth0-lock-header {
+  background-color: $white;
+}
+
+.auth0-lock-blur-support {
+  display: none;
+}
+
+#auth0-lock-container-1 .auth0-lock-widget, #auth0-lock-container-2 .auth0-lock-widget, #auth0-lock-container-3 .auth0-lock-widget {
+  box-shadow: none;
+  border-radius: 0 !important;
+  border: 1px solid $border-color-default;
+}

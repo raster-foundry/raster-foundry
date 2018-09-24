@@ -1,0 +1,41 @@
+.btn.sidebar-header-nav-btn {
+  padding: 4px 1px;
+}
+
+.sidebar-header {
+  background: $white;
+  border-color: $border-color-default;
+}
+
+.map-filters,
+.sidebar-dark {
+  background: $off-white;
+  box-shadow: -5px 0 5px 0px rgba($text-base, .2);
+  margin-left: 0;
+
+  h5, .h5,
+  p {
+    color: $text-base;
+  }
+
+  .sidebar-header {
+    background: $off-white;
+    border-color: $border-color-default;
+  }
+
+  .header-controls .btn-default {
+    @extend .btn-default;
+  }
+
+  .sidebar-list-item {
+    border-bottom-color: $border-color-default;
+
+    &.selected {
+      background-color: $off-white;
+    }
+
+    p.color-light {
+      color: $text-base !important;
+    }
+  }
+}

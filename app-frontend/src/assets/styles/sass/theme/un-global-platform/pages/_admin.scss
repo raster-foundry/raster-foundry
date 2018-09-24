@@ -1,0 +1,13 @@
+.admin-tabs {
+  border-color: $border-color-default;
+
+  .admin-tab {
+    color: $text-base;
+    border-radius: 0;
+    font-size: 1.4rem;
+
+    &.active:hover {
+      color: $brand-primary;
+    }
+  }
+}

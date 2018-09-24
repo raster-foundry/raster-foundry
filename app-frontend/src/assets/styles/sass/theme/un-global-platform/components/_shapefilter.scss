@@ -1,0 +1,23 @@
+.shapefilter-box {
+    background: $white;
+    border-color: $shade-light;
+    &:hover {
+        background: $shade-light;
+    }
+}
+
+.shapefilter-text {
+    color: $shade-dark;
+}
+
+.shapefilter-option {
+    &:hover {
+        background: $shade-light;
+    }
+}
+
+.shapefilter-actions {
+    :not(last-child) {
+        margin-left: 0.2em;
+    }
+}

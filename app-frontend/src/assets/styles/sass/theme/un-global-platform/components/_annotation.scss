@@ -1,0 +1,22 @@
+.annotate-toolbar {
+  background-color: $white;
+  box-shadow: 0 2px 3px 0 rgba(black, .2);
+  border-radius: 0;
+}
+
+.annotate-toolbar-header {
+  color: $text-base;
+}
+
+.leaflet-popup-content-wrapper, .leaflet-popup-content {
+  background-color: $white;
+  border-radius: 0 !important;
+}
+
+.leaflet-popup-tip {
+  background-color: $white;
+}
+
+.leaflet-popup-label {
+  color: $text-base;
+}
