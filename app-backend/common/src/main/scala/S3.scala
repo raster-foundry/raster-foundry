@@ -20,8 +20,10 @@ import java.util.Date
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
+import scala.util.Properties
 
 package object S3 {
+
   lazy val client = AmazonS3ClientBuilder
     .standard()
     .withCredentials(new DefaultAWSCredentialsProviderChain())
@@ -178,4 +180,14 @@ package object S3 {
 
   def doesObjectExist(bucket: String, key: String): Boolean =
     client.doesObjectExist(bucket, key)
+
+  def maybeSignUri(uriString: String,
+                   whitelist: List[String] = List()): String = {
+    val whitelisted =
+      whitelist.map(uriString.startsWith(_)).foldLeft(false)(_ || _)
+    if (whitelisted) {
+      val s3Uri = new AmazonS3URI(URLDecoder.decode(uriString, "utf-8"))
+      S3.getSignedUrl(s3Uri.getBucket, s3Uri.getKey).toString
+    } else uriString
+  }
 }

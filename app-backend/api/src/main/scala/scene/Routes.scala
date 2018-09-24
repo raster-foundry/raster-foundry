@@ -223,21 +223,27 @@ trait SceneRoutes
         SceneWithRelatedDao.getScene(sceneId).transact(xa).unsafeToFuture) {
         scene =>
           complete {
-            scene.getOrElse {
+            val retrievedScene = scene.getOrElse {
               throw new Exception(
                 "Scene does not exist or is not accessible by this user")
-            }.images map { image =>
-              val downloadUri: String = {
-                image.sourceUri match {
-                  case uri if uri.startsWith(s"s3://$dataBucket") => {
-                    val s3Uri = new AmazonS3URI(
-                      URLDecoder.decode(image.sourceUri, "utf-8"))
-                    S3.getSignedUrl(s3Uri.getBucket, s3Uri.getKey).toString
-                  }
-                  case _ => image.sourceUri
+            }
+            val whitelist = List(s"s3://$dataBucket")
+            (retrievedScene.sceneType, retrievedScene.ingestLocation) match {
+              case (Some(SceneType.COG), Some(ingestLocation)) =>
+                val signedUrl = S3.maybeSignUri(ingestLocation, whitelist)
+                List(
+                  Image.Downloadable(
+                    s"${sceneId}_COG.tif",
+                    s"$ingestLocation",
+                    signedUrl
+                  )
+                )
+              case _ =>
+                retrievedScene.images map { image =>
+                  val downloadUri: String =
+                    S3.maybeSignUri(image.sourceUri, whitelist)
+                  image.toDownloadable(downloadUri)
                 }
-              }
-              image.toDownloadable(downloadUri)
             }
           }
       }

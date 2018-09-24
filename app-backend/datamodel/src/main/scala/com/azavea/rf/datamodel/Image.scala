@@ -146,23 +146,10 @@ object Image {
       metadataFiles
     )
 
-    def toDownloadable(downloadUri: String): Image.WithRelatedDownladable =
-      Image.WithRelatedDownladable(
-        this.id,
-        this.createdAt,
-        this.modifiedAt,
-        this.createdBy,
-        this.modifiedBy,
-        this.owner,
-        this.rawDataBytes,
-        this.visibility,
+    def toDownloadable(downloadUri: String): Image.Downloadable =
+      Downloadable(
         this.filename,
         this.sourceUri,
-        this.scene,
-        this.imageMetadata,
-        this.resolutionMeters,
-        this.metadataFiles,
-        this.bands,
         downloadUri
       )
   }
@@ -185,20 +172,7 @@ object Image {
   }
 
   @JsonCodec
-  final case class WithRelatedDownladable(id: UUID,
-                                          createdAt: Timestamp,
-                                          modifiedAt: Timestamp,
-                                          createdBy: String,
-                                          modifiedBy: String,
-                                          owner: String,
-                                          rawDataBytes: Long,
-                                          visibility: Visibility,
-                                          filename: String,
-                                          sourceUri: String,
-                                          scene: UUID,
-                                          imageMetadata: Json,
-                                          resolutionMeters: Float,
-                                          metadataFiles: List[String],
-                                          bands: List[Band],
-                                          downloadUri: String)
+  final case class Downloadable(filename: String,
+                                sourceUri: String,
+                                downloadUri: String)
 }
