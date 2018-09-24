@@ -11,6 +11,12 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile.tiler
+      
+  nginx-backsplash:
+    image: raster-foundry-nginx-backsplash:${GIT_COMMIT:-latest}
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.backsplash
 
   app-frontend:
     image: node:6
@@ -40,6 +46,12 @@ services:
     image: raster-foundry-tile-server:${GIT_COMMIT:-latest}
     build:
       context: ./app-backend/tile
+      dockerfile: Dockerfile
+      
+  backsplash:
+    image: raster-foundry-backsplash:${GIT_COMMIT:-latest}
+    build:
+      context: ./app-backend/backsplash
       dockerfile: Dockerfile
 
   app-migrations:

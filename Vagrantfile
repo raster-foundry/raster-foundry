@@ -43,6 +43,10 @@ Vagrant.configure(2) do |config|
   config.vm.network :forwarded_port, guest: 9010, host: Integer(ENV.fetch("RF_PORT_9010", 9010))
   # jmx tile
   config.vm.network :forwarded_port, guest: 9020, host: Integer(ENV.fetch("RF_PORT_9020", 9020))
+  # backsplash tileserver
+  config.vm.network :forwarded_port, guest: 8080, host: Integer(ENV.fetch("RF_PORT_8080", 8080))
+  # nginx backsplash tileserver
+  config.vm.network :forwarded_port, guest: 8081, host: Integer(ENV.fetch("RF_PORT_8081", 8081))
 
   config.vm.provider :virtualbox do |vb|
     vb.memory = 8096

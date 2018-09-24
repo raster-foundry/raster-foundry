@@ -1,0 +1,16 @@
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>[%thread] %-5level - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="com.azavea.rf" level="${RF_LOG_LEVEL:-INFO}"/>
+
+  <!-- Prevents '[blaze-nio1-acceptor] INFO  - Connection to ...' logs -->
+  <logger name="org.http4s.blaze" level="WARN"/>
+
+  <root level="INFO">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>
