@@ -117,7 +117,7 @@ def post_process_exports(export_definition, tiff_directory):
     parsed_url = urlparse(root_url)
     api = API(api_token=jwt, host=parsed_url.netloc, scheme=parsed_url.scheme)
     logger.info('Retrieving Export: %s', export_definition['id'])
-    export_obj = api.client.Imagery.get_exports_uuid(uuid=export_definition['id']).result()
+    export_obj = api.client.Imagery.get_exports_exportID(exportID=export_definition['id']).result()
     temp_geojson = os.path.join(tiff_directory, 'cut.json')
     with open(temp_geojson, 'wb') as fh:
         geojson = {
