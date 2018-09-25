@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M48 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(48)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(48)(
+    List(
+      sqlu"""
 ALTER TABLE users
   ADD COLUMN
     organization_id
@@ -30,5 +31,5 @@ ALTER TABLE users
 
 DROP TABLE users_to_organizations;
 """
-  ))
+    ))
 }

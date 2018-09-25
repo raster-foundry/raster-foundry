@@ -13,14 +13,16 @@ import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import doobie.{ConnectionIO, Fragment, Fragments}
 
-final case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job with AWSBatch {
+final case class FindAOIProjects(implicit val xa: Transactor[IO])
+    extends Job
+    with AWSBatch {
   val name = FindAOIProjects.name
 
   def run(): Unit = {
-    def timeToEpoch(timeFunc: String): Fragment = Fragment.const(s"extract(epoch from ${timeFunc})")
+    def timeToEpoch(timeFunc: String): Fragment =
+      Fragment.const(s"extract(epoch from ${timeFunc})")
 
     val aoiProjectsToUpdate: ConnectionIO[List[UUID]] = {
-
 
       // get ids only
       val baseSelect: Fragment =
@@ -42,7 +44,9 @@ final case class FindAOIProjects(implicit val xa: Transactor[IO]) extends Job wi
           fr"+ aoi_cadence_millis / 1000"
       }.some
 
-      (baseSelect ++ Fragments.whereAndOpt(isAoi, nowGtLastCheckedPlusCadence, aoiActive))
+      (baseSelect ++ Fragments.whereAndOpt(isAoi,
+                                           nowGtLastCheckedPlusCadence,
+                                           aoiActive))
         .query[UUID]
         .to[List]
     }

@@ -6,12 +6,12 @@ import com.typesafe.scalalogging.LazyLogging
 import java.security.InvalidParameterException
 import org.postgresql.util.PSQLException
 
-
-trait UserErrorHandler extends Directives
+trait UserErrorHandler
+    extends Directives
     with RollbarNotifier
     with LazyLogging {
   val userExceptionHandler = ExceptionHandler {
-    case e: PSQLException if(e.getSQLState == "23505") =>
+    case e: PSQLException if (e.getSQLState == "23505") =>
       complete(StatusCodes.ClientError(409)("Duplicate Key", ""))
     case e: InvalidParameterException =>
       logger.error(RfStackTrace(e))

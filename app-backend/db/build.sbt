@@ -1,5 +1,5 @@
 initialCommands in console :=
-"""
+  """
 import com.azavea.rf.database._
 import com.azavea.rf.database.Implicits._
 
@@ -21,4 +21,3 @@ val y = xa.yolo; import y._
 """
 
 testOptions in Test += Tests.Argument("-oD")
-

@@ -5,8 +5,8 @@ import java.util.{Calendar, Date, UUID}
 
 object M8 {
 
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(8)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(8)(
+    List(sqlu"""
       INSERT INTO users_to_organizations (user_id, organization_id, role, created_at, modified_at)
       VALUES (
           'default',

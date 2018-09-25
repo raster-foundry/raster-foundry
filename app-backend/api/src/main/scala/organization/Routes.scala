@@ -23,7 +23,8 @@ import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-trait OrganizationRoutes extends Authentication
+trait OrganizationRoutes
+    extends Authentication
     with Config
     with PaginationDirectives
     with CommonHandlers
@@ -52,25 +53,37 @@ trait OrganizationRoutes extends Authentication
   def getOrganization(orgId: UUID): Route = authenticate { user =>
     rejectEmptyResponse {
       complete {
-        OrganizationDao.viewFilter(user).filter(orgId).selectOption.transact(xa).unsafeToFuture()
+        OrganizationDao
+          .viewFilter(user)
+          .filter(orgId)
+          .selectOption
+          .transact(xa)
+          .unsafeToFuture()
       }
     }
   }
 
   def searchOrganizations(): Route = authenticate { user =>
-    searchParams { (searchParams)  =>
+    searchParams { (searchParams) =>
       complete {
-        OrganizationDao.searchOrganizations(user, searchParams).transact(xa).unsafeToFuture
+        OrganizationDao
+          .searchOrganizations(user, searchParams)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
 
   def addOrganizationLogo(orgID: UUID): Route = authenticate { user =>
-    authorizeAsync (
+    authorizeAsync(
       OrganizationDao.userIsAdmin(user, orgID).transact(xa).unsafeToFuture()
     ) {
       entity(as[String]) { logoBase64 =>
-        onSuccess(OrganizationDao.addLogo(logoBase64, orgID, dataBucket).transact(xa).unsafeToFuture()) { organization =>
+        onSuccess(
+          OrganizationDao
+            .addLogo(logoBase64, orgID, dataBucket)
+            .transact(xa)
+            .unsafeToFuture()) { organization =>
           complete((StatusCodes.Created, organization))
         }
       }

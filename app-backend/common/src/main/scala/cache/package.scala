@@ -6,6 +6,6 @@ import net.spy.memcached._
 package object cache extends LazyLogging {
 
   implicit class WithMemcachedClientMethods(client: MemcachedClient)
-    extends MemcachedClientMethods(client)
+      extends MemcachedClientMethods(client)
 
 }

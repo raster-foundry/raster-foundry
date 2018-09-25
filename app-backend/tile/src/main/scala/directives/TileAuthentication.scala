@@ -9,7 +9,11 @@ import com.azavea.rf.datamodel.{User, Visibility}
 import com.azavea.rf.database.util.RFTransactor
 
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
-import akka.http.scaladsl.server.{AuthenticationFailedRejection, Directive1, Directives}
+import akka.http.scaladsl.server.{
+  AuthenticationFailedRejection,
+  Directive1,
+  Directives
+}
 import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
@@ -20,13 +24,13 @@ import scala.util.Try
 
 import java.util.UUID
 
-trait TileAuthentication extends Authentication
-  with Directives {
+trait TileAuthentication extends Authentication with Directives {
 
   implicit def xa: Transactor[IO]
 
   // Default auth setting to true
-  private val tileAuthSetting: String = sys.env.getOrElse("RF_TILE_AUTH_REQUIRED", "true")
+  private val tileAuthSetting: String =
+    sys.env.getOrElse("RF_TILE_AUTH_REQUIRED", "true")
 
   lazy val memcachedClient = KryoMemcachedClient.default
   val rfCache = new CacheClient(memcachedClient)
@@ -55,48 +59,57 @@ trait TileAuthentication extends Authentication
       ProjectDao.query
         .filter(id)
         .filter(fr"tile_visibility=${Visibility.Public.toString}::visibility")
-        .selectOption.transact(xa).unsafeToFuture
+        .selectOption
+        .transact(xa)
+        .unsafeToFuture
     ).flatMap {
       case Some(_) => provide(true)
-      case _ => provide(false)
+      case _       => provide(false)
     }
 
   def isProjectMapTokenValid(projectId: UUID): Directive1[Boolean] = {
     parameter('mapToken).flatMap { mapToken =>
       val mapTokenId = UUID.fromString(mapToken)
 
-      val doesTokenExist = rfCache.caching(s"project-$projectId-token-$mapToken") {
-        MapTokenDao.query
-          .filter(mapTokenId)
-          .filter(fr"project_id=${projectId}")
-          .selectOption
-          .transact(xa).unsafeToFuture
-      }
+      val doesTokenExist =
+        rfCache.caching(s"project-$projectId-token-$mapToken") {
+          MapTokenDao.query
+            .filter(mapTokenId)
+            .filter(fr"project_id=${projectId}")
+            .selectOption
+            .transact(xa)
+            .unsafeToFuture
+        }
 
       onSuccess(doesTokenExist).flatMap {
         case Some(_) => provide(true)
-        case _ => provide(false)
+        case _       => provide(false)
       }
     }
   }
 
   def authenticateToolTileRoutes(toolRunId: UUID): Directive1[User] = {
     parameters('mapToken.?, 'token.?).tflatMap {
-      case (Some(mapToken), _) => validateMapTokenParameters(toolRunId, mapToken)
+      case (Some(mapToken), _) =>
+        validateMapTokenParameters(toolRunId, mapToken)
       case (_, Some(token)) => authenticateWithToken(token)
-      case (_, _) => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
+      case (_, _) =>
+        reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
     }
   }
 
-  def validateMapTokenParameters(toolRunId: UUID, mapToken: String): Directive1[User] = {
+  def validateMapTokenParameters(toolRunId: UUID,
+                                 mapToken: String): Directive1[User] = {
     val mapTokenId = UUID.fromString(mapToken)
-    val mapTokenQuery = rfCache.caching(s"mapToken-$mapTokenId-toolRunId-$toolRunId") {
+    val mapTokenQuery =
+      rfCache.caching(s"mapToken-$mapTokenId-toolRunId-$toolRunId") {
         MapTokenDao.query
           .filter(mapTokenId)
           .filter(fr"toolrun_id=${toolRunId}")
           .selectOption
-          .transact(xa).unsafeToFuture
-    }
+          .transact(xa)
+          .unsafeToFuture
+      }
     onSuccess(mapTokenQuery).flatMap {
       case Some(token) => {
         val userId = token.owner.toString
@@ -105,10 +118,13 @@ trait TileAuthentication extends Authentication
         }
         onSuccess(userFromId).flatMap {
           case Some(user) => provide(user)
-          case _ => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
+          case _ =>
+            reject(
+              AuthenticationFailedRejection(CredentialsRejected, challenge))
         }
       }
-      case _ => reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
+      case _ =>
+        reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
     }
   }
 
@@ -126,5 +142,6 @@ trait TileAuthentication extends Authentication
     * This order guarantees that at most one database call is made in every case.
     */
   def projectTileAccessAuthorized(projectId: UUID): Directive1[Boolean] =
-    tileAuthenticateOption | isProjectMapTokenValid(projectId) | isProjectPublic(projectId)
+    tileAuthenticateOption | isProjectMapTokenValid(projectId) | isProjectPublic(
+      projectId)
 }

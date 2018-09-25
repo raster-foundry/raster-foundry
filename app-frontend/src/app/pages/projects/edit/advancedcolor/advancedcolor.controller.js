@@ -168,7 +168,7 @@ export default class ProjectsAdvancedColorController {
         if (selected) {
             this.selectedScenes = this.selectedScenes.set(scene.id, scene);
             this.selectedLayers = this.selectedLayers.set(
-                scene.id, this.$parent.sceneLayers.get(scene.id)
+                scene.id, this.layerService.layerFromScene(scene, this.$parent.projectId)
             );
             this.getMap().then((map) => {
                 map.setGeojson(scene.id, this.sceneService.getStyledFootprint(scene));

@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 HOST = os.getenv('RF_HOST')
 API_PATH = '/api/exports/'
+RETRY = os.getenv('AWS_BATCH_JOB_ATTEMPT', '-1')
 
 
 @click.command(name='export')
@@ -28,28 +29,39 @@ def export(export_id):
         export_id (str): ID of export job to process
     """
     logger.info('Creating Export Definition')
-    export_uri = create_export_definition(export_id)
-    logger.info('Retrieving Export Definition %s', export_uri)
-    export_definition = get_export_definition(export_uri)
-    with get_tempdir() as local_dir:
-        logger.info('Created Working Directory %s', local_dir)
-        logger.info('Rewriting Export Definition')
-        local_path = write_export_definition(export_definition, local_dir)
-        logger.info('Rewrote export definition to %s', local_path)
-        logger.info('Preparing to Run Export')
-        final_status = 'EXPORTED'
-        try:
+    final_status = 'EXPORTED'
+    try:
+        export_uri = create_export_definition(export_id)
+        logger.info('Retrieving Export Definition %s', export_uri)
+        export_definition = get_export_definition(export_uri)
+        with get_tempdir() as local_dir:
+            logger.info('Created Working Directory %s', local_dir)
+            logger.info('Rewriting Export Definition')
+            local_path = write_export_definition(export_definition, local_dir)
+            logger.info('Rewrote export definition to %s', local_path)
+            logger.info('Preparing to Run Export')
             run_export('file://' + local_path, export_id)
             logger.info('Post Processing Tiffs')
             merged_tiff_path = post_process_exports(export_definition, local_dir)
             logger.info('Uploading Processed Tiffs')
             upload_processed_tif(merged_tiff_path, export_definition)
-        except subprocess.CalledProcessError as e:
-            logger.error('Output from failed command: %s', e.output)
-            final_status = 'FAILED'
-            raise e
-        finally:
+    except subprocess.CalledProcessError as e:
+        logger.error('Output from failed command: %s', e.output)
+        final_status = 'FAILED'
+        raise e
+    except Exception as e:
+        logger.error('Wrapper error: %s', e)
+        final_status = 'FAILED'
+        raise e
+    finally:
+        # The max number of retries is currently hardcoded in batch.tf
+        # in the deployment repo. Please make sure that both areas are updated if
+        # this needs to be changed to a configurable variable
+        if final_status == 'EXPORTED' or int(RETRY) >= 3:
+            logger.info('Sending email notifications for export %s on try: %s', export_id, RETRY)
             update_export_status(export_id, final_status)
+        else:
+            logger.info('Export failed, on try %s/3', RETRY)
 
 
 def create_export_definition(export_id):

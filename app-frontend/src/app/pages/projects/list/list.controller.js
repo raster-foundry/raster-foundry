@@ -1,4 +1,4 @@
-/* global BUILDCONFIG */
+/* global BUILDCONFIG, HELPCONFIG */
 
 class ProjectsListController {
     constructor( // eslint-disable-line max-params
@@ -11,6 +11,7 @@ class ProjectsListController {
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
+        this.HELPCONFIG = HELPCONFIG;
         // Can be one of {owned, shared}
         this.currentOwnershipFilter = 'owned';
         this.fetchPage();
@@ -76,7 +77,7 @@ class ProjectsListController {
 
         modal.result.then((data) => {
             if (data && data.reloadProjectList) {
-                this.populateProjectList(1);
+                this.fetchPage(1);
             }
         });
     }

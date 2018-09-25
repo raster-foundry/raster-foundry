@@ -17,7 +17,7 @@ trait MapTokensQueryParameterDirective extends QueryParametersCommon {
 
   val mapTokenQueryParams = (
     orgQueryParams &
-    userQueryParameters &
-    mapTokenSpecificQueryParams
-    ).as(CombinedMapTokenQueryParameters.apply _)
+      userQueryParameters &
+      mapTokenSpecificQueryParams
+  ).as(CombinedMapTokenQueryParameters.apply _)
 }

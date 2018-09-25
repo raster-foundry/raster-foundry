@@ -1,19 +1,20 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel._
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import doobie.util.transactor.Transactor
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-import io.circe._
-
 import java.util.UUID
 
+import cats.implicits._
+import com.azavea.rf.database.Implicits._
+import com.azavea.rf.datamodel._
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+
 object AccessControlRuleDao extends Dao[AccessControlRule] {
+
   val tableName = "access_control_rules"
 
-  val selectF = fr"""
+  val selectF: Fragment = fr"""
         SELECT
             id, created_at, created_by,
             is_active,
@@ -22,7 +23,7 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
         FROM
     """ ++ tableF
 
-  def createF(ac: AccessControlRule) =
+  def createF(ac: AccessControlRule): Fragment =
     fr"INSERT INTO" ++ tableF ++ fr"""(
             id, created_at, created_by,
             is_active,
@@ -36,9 +37,13 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
         )
         """
 
-  def listedByObject(objectType: ObjectType, objectId: UUID): Dao.QueryBuilder[AccessControlRule] =
-    query.filter(fr"object_type = ${objectType}").filter(fr"object_id = ${objectId}")
+  def listedByObject(objectType: ObjectType,
+                     objectId: UUID): Dao.QueryBuilder[AccessControlRule] =
+    query
+      .filter(fr"object_type = ${objectType}")
+      .filter(fr"object_id = ${objectId}")
 
+  @SuppressWarnings(Array("ProductWithSerializableInferred"))
   def create(ac: AccessControlRule): ConnectionIO[AccessControlRule] = {
     val objectDao = ac.objectType match {
       case ObjectType.Project    => ProjectDao
@@ -98,8 +103,8 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
   }
 
   def createMany(acrs: List[AccessControlRule]): ConnectionIO[Int] = {
-    val acrFragments = acrs map {
-      (acr: AccessControlRule) => fr"""
+    val acrFragments = acrs map { acr: AccessControlRule =>
+      fr"""
       (${acr.id}, ${acr.createdAt}, ${acr.createdBy}, ${acr.isActive},
       ${acr.objectType}, ${acr.objectId}, ${acr.subjectType}, ${acr.subjectId},
       ${acr.actionType})
@@ -109,21 +114,23 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
     val acrValues = acrFragments.toNel match {
       case Some(fragments) => fragments.intercalate(fr",")
       case _ =>
-        throw new IllegalArgumentException("Can't replace ACRs from an empty list")
+        throw new IllegalArgumentException(
+          "Can't replace ACRs from an empty list")
     }
 
     val insertManyFragment = {
       fr"INSERT INTO" ++ tableF ++
         fr"(id, created_at, created_by, is_active, object_type, object_id, subject_type, subject_id, action_type) VALUES" ++
-       acrValues
+        acrValues
     }
 
     insertManyFragment.update.run
   }
 
-  def createWithResults(acr: AccessControlRule): ConnectionIO[List[AccessControlRule]] = {
-    create(acr) >>= {
-      (dbAcr: AccessControlRule) => {
+  def createWithResults(
+      acr: AccessControlRule): ConnectionIO[List[AccessControlRule]] = {
+    create(acr) >>= { dbAcr: AccessControlRule =>
+      {
         listByObject(dbAcr.objectType, dbAcr.objectId)
       }
     }
@@ -131,11 +138,18 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
 
   // Delay materializing the list of ACR creates to guarantee that everything inserted has
   // the same object type and id
-  def replaceWithResults(user: User, objectType: ObjectType, objectId: UUID, acrs: List[AccessControlRule.Create]):
-      ConnectionIO[List[AccessControlRule]] = {
-    val materialized = acrs map { _.toAccessControlRule(user, objectType, objectId) }
+  def replaceWithResults(user: User,
+                         objectType: ObjectType,
+                         objectId: UUID,
+                         acrs: List[AccessControlRule.Create])
+    : ConnectionIO[List[AccessControlRule]] = {
+    val materialized = acrs map {
+      _.toAccessControlRule(user, objectType, objectId)
+    }
 
-    listedByObject(objectType, objectId).delete >> createMany(materialized) >> listByObject(objectType, objectId)
+    listedByObject(objectType, objectId).delete >> createMany(materialized) >> listByObject(
+      objectType,
+      objectId)
   }
 
   // List rules that a given subject has applied to it
@@ -148,16 +162,21 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
       .list
   }
 
-  def listByObject(objectType: ObjectType, objectId: UUID): ConnectionIO[List[AccessControlRule]] =
+  def listByObject(objectType: ObjectType,
+                   objectId: UUID): ConnectionIO[List[AccessControlRule]] =
     listedByObject(objectType, objectId).list
 
-  def deactivateBySubject(subjectType: SubjectType, subjectId: String): ConnectionIO[Int] = {
+  def deactivateBySubject(subjectType: SubjectType,
+                          subjectId: String): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"""SET
       is_active = false
-    """ ++ Fragments.whereAnd(fr"subject_type = ${subjectType}", fr"subject_id = ${subjectId}")).update.run
+    """ ++ Fragments.whereAnd(fr"subject_type = ${subjectType}",
+                              fr"subject_id = ${subjectId}")).update.run
   }
 
-  def listUserActions(user: User, objectType: ObjectType, objectId: UUID): ConnectionIO[List[String]] =
+  def listUserActions(user: User,
+                      objectType: ObjectType,
+                      objectId: UUID): ConnectionIO[List[String]] =
     fr"""
     SELECT DISTINCT action_type
     FROM access_control_rules
@@ -179,9 +198,10 @@ object AccessControlRuleDao extends Dao[AccessControlRule] {
         subject_id = ${user.id}
       )
     """
-    .query[String]
-    .to[List]
+      .query[String]
+      .to[List]
 
-  def deleteByObject(objectType: ObjectType, objectId: UUID): ConnectionIO[Int] =
+  def deleteByObject(objectType: ObjectType,
+                     objectId: UUID): ConnectionIO[Int] =
     listedByObject(objectType, objectId).delete
 }

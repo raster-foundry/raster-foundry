@@ -1,9 +1,9 @@
 package com.azavea.rf.datamodel
 
-import io.circe.generic.JsonCodec
-
 import java.net.URI
 import java.util.UUID
+
+import io.circe.generic.JsonCodec
 
 /**
   * @param layerId The UUID of the Scene to be read.
@@ -11,9 +11,9 @@ import java.util.UUID
   * @param colorCorrections Settings for applying color correction to the Layer.
   */
 @JsonCodec
-case class ExportLayerDefinition(
-  layerId: UUID,
-  sceneType: SceneType,
-  ingestLocation: URI,
-  colorCorrections: Option[ColorCorrect.Params]
+final case class ExportLayerDefinition(
+    layerId: UUID,
+    sceneType: SceneType,
+    ingestLocation: URI,
+    colorCorrections: Option[ColorCorrect.Params]
 )

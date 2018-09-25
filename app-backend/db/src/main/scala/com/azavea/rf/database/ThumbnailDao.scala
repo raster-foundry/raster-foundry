@@ -9,7 +9,6 @@ import cats._, cats.data._, cats.effect.IO, cats.implicits._
 
 import java.util.UUID
 
-
 object ThumbnailDao extends Dao[Thumbnail] {
 
   val tableName = "thumbnails"
@@ -49,8 +48,14 @@ object ThumbnailDao extends Dao[Thumbnail] {
         ${thumbnail.heightPx}, ${thumbnail.sceneId}, ${thumbnail.url}, ${thumbnail.thumbnailSize}
       )
     """.update.withUniqueGeneratedKeys[Thumbnail](
-      "id", "created_at", "modified_at", "width_px",
-      "height_px", "scene", "url", "thumbnail_size"
+      "id",
+      "created_at",
+      "modified_at",
+      "width_px",
+      "height_px",
+      "scene",
+      "url",
+      "thumbnail_size"
     )
   }
 

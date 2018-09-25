@@ -8,14 +8,15 @@ import spire.syntax.cfor.cfor
 import scala.annotation.tailrec
 import scala.math.{abs, signum}
 
-case class Memo[I, K, O](f: I => O)(implicit ev: I => K) extends (I => O) {
+final case class Memo[I, K, O](f: I => O)(implicit ev: I => K)
+    extends (I => O) {
   import collection.mutable.{Map => Dict}
   type Input = I
   type Key = K
   type Output = O
 
-  val cache = Dict.empty[K, O]
-  override def apply(x: I) = cache.getOrElseUpdate(x, f(x))
+  val cache: Dict[K, O] = Dict.empty[K, O]
+  override def apply(x: I): O = cache.getOrElseUpdate(x, f(x))
 }
 
 object WhiteBalance {
@@ -27,36 +28,49 @@ object WhiteBalance {
   }
 
   def apply(rgbTiles: List[MultibandTile]): List[MultibandTile] = {
-    val tileAdjs = rgbTiles.par.map(t => tileRgbAdjustments(t)).toList.foldLeft((0.0, 0.0, 0.0))((acc, x) => {
-      (acc._1 + (x._1 / rgbTiles.length), acc._2 + (x._2 / rgbTiles.length), acc._3 + (x._3 / rgbTiles.length))
-    })
+    val tileAdjs = rgbTiles.par
+      .map(t => tileRgbAdjustments(t))
+      .toList
+      .foldLeft((0.0, 0.0, 0.0))((acc, x) => {
+        (
+          acc._1 + (x._1 / rgbTiles.length),
+          acc._2 + (x._2 / rgbTiles.length),
+          acc._3 + (x._3 / rgbTiles.length)
+        )
+      })
 
     val newTiles =
       rgbTiles
-        .map(t => MultibandTile(
-          t.band(0).mapIfSet(c => clamp8Bit((c * tileAdjs._1).toInt)),
-          t.band(1).mapIfSet(c => clamp8Bit((c * tileAdjs._2).toInt)),
-          t.band(2).mapIfSet(c => clamp8Bit((c * tileAdjs._3).toInt))))
+        .map(
+          t =>
+            MultibandTile(
+              t.band(0).mapIfSet(c => clamp8Bit((c * tileAdjs._1).toInt)),
+              t.band(1).mapIfSet(c => clamp8Bit((c * tileAdjs._2).toInt)),
+              t.band(2).mapIfSet(c => clamp8Bit((c * tileAdjs._3).toInt))
+          )
+        )
         .map(_.convert(UByteConstantNoDataCellType))
 
     newTiles
   }
 
+  @SuppressWarnings(Array("CatchException"))
   def tileRgbAdjustments(rgbTile: MultibandTile): (Double, Double, Double) = {
     try {
       val resampledTile = rgbTile.resample(128, 128)
-      val newTileAdjs = adjustGrey(resampledTile, (1.0, 1.0, 1.0), 0, false)
+      val newTileAdjs =
+        adjustGrey(resampledTile, (1.0, 1.0, 1.0), 0, converged = false)
       newTileAdjs
     } catch {
-      case ex:Exception => {
+      case ex: Exception =>
         val sw = new StringWriter
         ex.printStackTrace(new PrintWriter(sw))
         println(sw.toString)
         throw ex
-      }
     }
   }
 
+  @SuppressWarnings(Array("MethodNames"))
   def RgbToYuv(rByte: Int, gByte: Int, bByte: Int): YUV = {
     type I = (Int, Int, Int)
     type K = (Int, Int, Int)
@@ -64,7 +78,8 @@ object WhiteBalance {
 
     type MemoizedFn = Memo[I, K, O]
 
-    implicit def encode(input: MemoizedFn#Input): MemoizedFn#Key = (input._1, input._2, input._3)
+    implicit def encode(input: MemoizedFn#Input): MemoizedFn#Key =
+      (input._1, input._2, input._3)
 
     def rgbToYuv(rb: Int, gb: Int, bb: Int): YUV = {
       val (r, g, b) = (rb, gb, bb)
@@ -72,30 +87,39 @@ object WhiteBalance {
       val W_b = 0.114
       val W_g = 1 - W_r - W_b
 
-      val Y = W_r*r + W_g*g + W_b*b
-      val U = -0.168736*r + -0.331264*g + 0.5*b
-      val V = 0.5*r + -0.418688*g + -0.081312*b
+      val Y = W_r * r + W_g * g + W_b * b
+      val U = -0.168736 * r + -0.331264 * g + 0.5 * b
+      val V = 0.5 * r + -0.418688 * g + -0.081312 * b
 
-      YUV(Y,U,V)
+      YUV(Y, U, V)
     }
 
     lazy val f: MemoizedFn = Memo {
-      case (r, g, b) => rgbToYuv(r,g,b)
-      case _ => throw new IllegalArgumentException("Wrong number of arguments")
+      case (r, g, b) => rgbToYuv(r, g, b)
+      case _         => throw new IllegalArgumentException("Wrong number of arguments")
     }
 
     f((rByte, gByte, bByte))
   }
 
-  case class AutoBalanceParams (
-                                 maxIter: Int, gainIncr:Double, doubleStepThreshold:Double, convergenceThreshold:Double, greyThreshold:Double
-                               )
+  final case class AutoBalanceParams(maxIter: Int,
+                                     gainIncr: Double,
+                                     doubleStepThreshold: Double,
+                                     convergenceThreshold: Double,
+                                     greyThreshold: Double)
 
-  case class YUV (y: Double, u: Double, v: Double)
+  final case class YUV(y: Double, u: Double, v: Double)
 
-  val balanceParams = AutoBalanceParams(maxIter=1000, gainIncr=0.01, doubleStepThreshold=0.8, convergenceThreshold=0.001, greyThreshold=0.3)
+  val balanceParams = AutoBalanceParams(
+    maxIter = 1000,
+    gainIncr = 0.01,
+    doubleStepThreshold = 0.8,
+    convergenceThreshold = 0.001,
+    greyThreshold = 0.3
+  )
 
-  def mapBands(mbTile:MultibandTile, f: Array[Int] => Option[YUV]): List[List[Option[YUV]]]  = {
+  def mapBands(mbTile: MultibandTile,
+               f: Array[Int] => Option[YUV]): List[List[Option[YUV]]] = {
     val newTile = MultibandTile(mbTile.bands)
     val array = Array.ofDim[Option[YUV]](newTile.cols, newTile.rows)
 
@@ -113,64 +137,93 @@ object WhiteBalance {
   }
 
   @tailrec
-  def adjustGrey(rgbTile:MultibandTile, adjustments:(Double, Double, Double), iter:Int, converged:Boolean):(Double, Double, Double) = {
-    if (iter>=balanceParams.maxIter || converged) {
+  def adjustGrey(rgbTile: MultibandTile,
+                 adjustments: (Double, Double, Double),
+                 iter: Int,
+                 converged: Boolean): (Double, Double, Double) = {
+    if (iter >= balanceParams.maxIter || converged) {
       adjustments
     } else {
       // convert tile to YUV
-      val tileYuv = mapBands(rgbTile, (rgb) => {
-        val bands = rgb.toList.map((i:Int) => if (isData(i)) Some(i) else None)
-        val r :: g :: b :: xs = bands
-        val rgbs = (r, g, b)
-        val yuv = rgbs match {
-          case (Some(rd), Some(gr), Some(bl)) =>  Some(RgbToYuv(rd, gr, bl))
-          case _ => None
+      val tileYuv = mapBands(
+        rgbTile,
+        rgb => {
+          val bands =
+            rgb.toList.map((i: Int) => if (isData(i)) Some(i) else None)
+          val r :: g :: b :: xs = bands
+          val rgbs = (r, g, b)
+          val yuv = rgbs match {
+            case (Some(rd), Some(gr), Some(bl)) => Some(RgbToYuv(rd, gr, bl))
+            case _                              => None
+          }
+          yuv
         }
-        yuv
-      })
+      )
 
       // find grey chromaticity
-      val offGrey = (yuv:YUV) => (abs(yuv.u) + abs(yuv.v)) / yuv.y
-      val greys = tileYuv.map(lst => lst.map(yuv => {
-        for {
-          y <- yuv
-        } yield {
-          if (offGrey(y) < balanceParams.greyThreshold) Some(y) else None
-        }
-      })).flatten
+      val offGrey = (yuv: YUV) => (abs(yuv.u) + abs(yuv.v)) / yuv.y
+      val greys = tileYuv.flatMap(
+        lst =>
+          lst.map(yuv => {
+            for {
+              y <- yuv
+            } yield {
+              if (offGrey(y) < balanceParams.greyThreshold) Some(y) else None
+            }
+          })
+      )
 
       // calculate average "off-grey"-ness of U & V
-      val uBar = greys.map(yuvs => yuvs.map(mYuv => {
-        mYuv match {
-          case Some(yuv) => yuv.u
-          case _ => 0.0
-        }
-      })).flatten.sum / greys.length
+      val uBar = greys
+        .flatMap(
+          yuvs =>
+            yuvs.map {
+              case Some(yuv) => yuv.u
+              case _         => 0.0
+          }
+        )
+        .sum / greys.length
 
-      val vBar = greys.map(yuvs => yuvs.map(mYuv => {
-        mYuv match {
-          case Some(yuv) => yuv.v
-          case _ => 0.0
-        }
-      })).flatten.sum / greys.length
+      val vBar = greys
+        .flatMap(
+          yuvs =>
+            yuvs.map {
+              case Some(yuv) => yuv.v
+              case _         => 0.0
+          }
+        )
+        .sum / greys.length
 
       // adjust red & blue channels if convergence hasn't been reached
       val err = if (abs(uBar) > abs(vBar)) uBar else vBar
-      val gainVal = (err match {
+      val gainVal = err match {
         case x if x < balanceParams.convergenceThreshold => 0
-        case x if x > (balanceParams.doubleStepThreshold * 1) => 2 * balanceParams.gainIncr * signum(err)
+        case x if x > (balanceParams.doubleStepThreshold * 1) =>
+          2 * balanceParams.gainIncr * signum(err)
         case _ => balanceParams.gainIncr * err
-      })
+      }
 
-      val channelGain = if (abs(vBar) > abs(uBar)) List((1 - gainVal), 1, 1) else List(1, 1, (1 - gainVal))
-      val newAdjustments = (adjustments._1 * channelGain(0), adjustments._2 * channelGain(1), adjustments._3 * channelGain(2))
+      val channelGain =
+        if (abs(vBar) > abs(uBar)) List(1 - gainVal, 1, 1)
+        else List(1, 1, 1 - gainVal)
+      val newAdjustments = (
+        adjustments._1 * channelGain(0),
+        adjustments._2 * channelGain(1),
+        adjustments._3 * channelGain(2)
+      )
 
       val balancedTile = MultibandTile(
-        rgbTile.band(0).mapIfSet(c => clamp8Bit((c*channelGain(0)).toInt)),
-        rgbTile.band(1).mapIfSet(c => clamp8Bit((c*channelGain(1)).toInt)),
-        rgbTile.band(2).mapIfSet(c => clamp8Bit((c*channelGain(2)).toInt)))
+        rgbTile.band(0).mapIfSet(c => clamp8Bit((c * channelGain(0)).toInt)),
+        rgbTile.band(1).mapIfSet(c => clamp8Bit((c * channelGain(1)).toInt)),
+        rgbTile.band(2).mapIfSet(c => clamp8Bit((c * channelGain(2)).toInt))
+      )
 
-      adjustGrey(balancedTile, newAdjustments, iter + 1, if (gainVal == 0) true else false)
+      adjustGrey(
+        balancedTile,
+        newAdjustments,
+        iter + 1,
+        gainVal == 0
+      )
     }
   }
 

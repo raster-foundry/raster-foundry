@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M127 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(127)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(127)(
+    List(
+      sqlu"""
 -- Landsat 5 MSS -> Landsat 4 MSS
 UPDATE scenes
 SET datasource = 'b5d02569-11f7-473d-be82-d1d4e1ce45f3'
@@ -38,5 +39,5 @@ UPDATE datasources
 SET name = 'Landsat Tri-Decadal Multispectral Scanner (MSS)'
 WHERE id = 'b5d02569-11f7-473d-be82-d1d4e1ce45f3';
 """
-  ))
+    ))
 }

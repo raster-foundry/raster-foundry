@@ -7,8 +7,8 @@ import scala.util._
 object CommandLine {
 
   final case class Params(
-    jobDefinition: URI = new URI(""),
-    statusURI: URI = new URI("")
+      jobDefinition: URI = new URI(""),
+      statusURI: URI = new URI("")
   )
 
   // Used for reading text in as URI

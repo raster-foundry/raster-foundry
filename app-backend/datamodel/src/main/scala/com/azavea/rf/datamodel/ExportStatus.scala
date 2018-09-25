@@ -16,11 +16,11 @@ sealed abstract class ExportStatus(val repr: String) {
     * that aren't queued or currently ingesting.
     */
   def toInt: Int = repr.toUpperCase match {
-    case "NOTEXPORTED" => 1
+    case "NOTEXPORTED"  => 1
     case "TOBEEXPORTED" => 2
-    case "EXPORTING" => 3
-    case "EXPORTED" => 4
-    case "FAILED" => 0
+    case "EXPORTING"    => 3
+    case "EXPORTED"     => 4
+    case "FAILED"       => 0
   }
 }
 
@@ -32,12 +32,12 @@ object ExportStatus {
   case object Failed extends ExportStatus("FAILED")
 
   def fromString(s: String): ExportStatus = s.toUpperCase match {
-    case "NOTEXPORTED" => NotExported
+    case "NOTEXPORTED"  => NotExported
     case "TOBEEXPORTED" => ToBeExported
-    case "EXPORTING" => Exporting
-    case "EXPORTED" => Exported
-    case "FAILED" => Failed
-    case _ => throw new InvalidParameterException(s"Invalid ExportStatus: $s")
+    case "EXPORTING"    => Exporting
+    case "EXPORTED"     => Exported
+    case "FAILED"       => Failed
+    case _              => throw new InvalidParameterException(s"Invalid ExportStatus: $s")
   }
 
   implicit val ingestStatusEncoder: Encoder[ExportStatus] =

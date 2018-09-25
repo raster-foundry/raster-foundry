@@ -71,13 +71,14 @@ export function fetchLabels() {
     };
 }
 
-export function createAnnotations(annotations, edit) {
+export function createAnnotations(annotations, edit, panTo) {
     return (dispatch, getState) => {
         dispatch({
             type: ANNOTATIONS_CREATE,
             payload: createProjectAnnotationsRequest(getState(), annotations),
             meta: {
-                edit
+                edit,
+                panTo
             }
         });
     };

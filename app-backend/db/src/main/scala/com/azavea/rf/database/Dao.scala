@@ -1,22 +1,24 @@
 package com.azavea.rf.database
 
+import java.util.UUID
+
+import cats.implicits._
+import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.filter.Filterables
 import com.azavea.rf.database.util._
 import com.azavea.rf.datamodel._
-import com.azavea.rf.database.Implicits._
-
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PageRequest
-
-import scala.concurrent.Future
-import java.util.UUID
+import doobie.{LogHandler => _, _}
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import doobie.util.log._
+import com.typesafe.scalalogging.LazyLogging
+import scala.concurrent.duration.FiniteDuration
 
 /**
- * This is abstraction over the listing of arbitrary types from the DB with filters/pagination
- */
+  * This is abstraction over the listing of arbitrary types from the DB with filters/pagination
+  */
 abstract class Dao[Model: Composite] extends Filterables {
 
   val tableName: String
@@ -28,24 +30,32 @@ abstract class Dao[Model: Composite] extends Filterables {
   def selectF: Fragment
 
   /** Begin construction of a complex, filtered query */
-  def query: Dao.QueryBuilder[Model] = Dao.QueryBuilder[Model](selectF, tableF, List.empty)
+  def query: Dao.QueryBuilder[Model] =
+    Dao.QueryBuilder[Model](selectF, tableF, List.empty)
 
-  def authQuery(user: User, objectType: ObjectType, ownershipTypeO: Option[String]= None,
-    groupTypeO: Option[GroupType] = None, groupIdO: Option[UUID] = None): Dao.QueryBuilder[Model] =
+  def authQuery(user: User,
+                objectType: ObjectType,
+                ownershipTypeO: Option[String] = None,
+                groupTypeO: Option[GroupType] = None,
+                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Model] =
     if (user.isSuperuser) {
       Dao.QueryBuilder[Model](selectF, tableF, List.empty)
     } else {
       authTableF(user, objectType, ownershipTypeO, groupTypeO, groupIdO) match {
-        case (authFragment: Option[Fragment], filters: List[Option[Fragment]]) =>
-          Dao.QueryBuilder[Model](
-            selectF ++ authFragment.getOrElse(fr""),
-            tableF ++ authFragment.getOrElse(fr""),
-            filters)
+        case (authFragment: Option[Fragment],
+              filters: List[Option[Fragment]]) =>
+          Dao.QueryBuilder[Model](selectF ++ authFragment.getOrElse(fr""),
+                                  tableF ++ authFragment.getOrElse(fr""),
+                                  filters)
       }
     }
 
-  def authTableF(user: User, objectType: ObjectType, ownershipTypeO: Option[String],
-    groupTypeO: Option[GroupType], groupIdO: Option[UUID]): (Option[Fragment], List[Option[Fragment]]) = {
+  def authTableF(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String],
+      groupTypeO: Option[GroupType],
+      groupIdO: Option[UUID]): (Option[Fragment], List[Option[Fragment]]) = {
     val ownedF: Fragment = fr"""
       SELECT id as object_id FROM""" ++ tableF ++ fr"""WHERE owner = ${user.id}
     """
@@ -75,7 +85,7 @@ abstract class Dao[Model: Composite] extends Filterables {
        AND ugr.group_type = ${groupType}
        AND ugr.group_id = ${groupId}
      """
-     case _ => inheritedBaseF
+      case _                                => inheritedBaseF
     }
     ownershipTypeO match {
       // owned by the requesting user only
@@ -83,48 +93,112 @@ abstract class Dao[Model: Composite] extends Filterables {
         (None, List(Some(fr"owner = ${user.id}")))
       // shared to the requesting user directly, across platform, or due to group membership
       case Some(ownershipType) if ownershipType == "shared" =>
-        (Some(fr"INNER JOIN (" ++ sharedF ++ fr"UNION ALL" ++ inheritedF ++ fr") as object_ids ON" ++
-          Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id"),
-          List(Some(fr"owner <> ${user.id}")))
+        (Some(
+           fr"INNER JOIN (" ++ sharedF ++ fr"UNION ALL" ++ inheritedF ++ fr") as object_ids ON" ++
+             Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id"),
+         List(Some(fr"owner <> ${user.id}")))
 
       // shared to the requesting user due to group membership
       case Some(ownershipType) if ownershipType == "inherited" =>
-        (Some(fr"INNER JOIN (" ++ inheritedF ++ fr") as object_ids ON" ++
-                Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id"),
+        (Some(
+           fr"INNER JOIN (" ++ inheritedF ++ fr") as object_ids ON" ++
+             Fragment.const(s"${tableName}.id") ++ fr"= object_ids.object_id"),
          List.empty)
       // the default
       case _ =>
-        (Some(fr"INNER JOIN (" ++ ownedF ++ fr"UNION ALL" ++ sharedF ++ fr"UNION ALL" ++
-          inheritedF ++ fr") as object_ids ON" ++ Fragment.const(s"${tableName}.id") ++
-                fr"= object_ids.object_id"),
+        (Some(
+           fr"INNER JOIN (" ++ ownedF ++ fr"UNION ALL" ++ sharedF ++ fr"UNION ALL" ++
+             inheritedF ++ fr") as object_ids ON" ++ Fragment.const(
+             s"${tableName}.id") ++
+             fr"= object_ids.object_id"),
          List.empty)
     }
   }
 }
 
-object Dao {
+object Dao extends LazyLogging {
 
-  case class QueryBuilder[Model: Composite](selectF: Fragment, tableF: Fragment, filters: List[Option[Fragment]]) {
+  implicit val logHandler: LogHandler = LogHandler {
+    case Success(s: String,
+                 a: List[Any],
+                 e1: FiniteDuration,
+                 e2: FiniteDuration) =>
+      val queryString = s.lines.dropWhile(_.trim.isEmpty).mkString("\n  ")
+      val logString = queryString
+        .split("\\?", -1)
+        .zip(a.map(s => "'" + s + "'"))
+        .flatMap({ case (t1, t2) => List(t1, t2) })
+        .mkString("")
+      logger.debug(s"""Successful Statement Execution:
+        |
+        |  ${logString}
+        |
+        | arguments = [${a.mkString(", ")}]
+        |   elapsed = ${e1.toMillis} ms exec + ${e2.toMillis} ms processing (${(e1 + e2).toMillis} ms total)
+      """.stripMargin)
 
-    val countF = fr"SELECT count(distinct(id)) FROM" ++ tableF
-    val deleteF = fr"DELETE FROM" ++ tableF
-    val existF = fr"SELECT 1 FROM" ++ tableF
+    case ProcessingFailure(s, a, e1, e2, t) =>
+      val queryString = s.lines.dropWhile(_.trim.isEmpty).mkString("\n  ")
+      val logString = queryString
+        .split("\\?", -1)
+        .zip(a.map(s => "'" + s + "'"))
+        .flatMap({ case (t1, t2) => List(t1, t2) })
+        .mkString("")
+      logger.error(s"""Failed Resultset Processing:
+        |
+        |  ${logString}
+        |
+        | arguments = [${a.mkString(", ")}]
+        |   elapsed = ${e1.toMillis} ms exec + ${e2.toMillis} ms processing (failed) (${(e1 + e2).toMillis} ms total)
+        |   failure = ${t.getMessage}
+      """.stripMargin)
+
+    case ExecFailure(s, a, e1, t) =>
+      val queryString = s.lines.dropWhile(_.trim.isEmpty).mkString("\n  ")
+      val logString = queryString
+        .split("\\?", -1)
+        .zip(a.map(s => "'" + s + "'"))
+        .flatMap({ case (t1, t2) => List(t1, t2) })
+        .mkString("")
+      logger.error(s"""Failed Statement Execution:
+        |
+        |  ${logString}
+        |
+        | arguments = [${a.mkString(", ")}]
+        |   elapsed = ${e1.toMillis} ms exec (failed)
+        |   failure = ${t.getMessage}
+      """.stripMargin)
+  }
+
+  final case class QueryBuilder[Model: Composite](
+      selectF: Fragment,
+      tableF: Fragment,
+      filters: List[Option[Fragment]]) {
+
+    val countF: Fragment = fr"SELECT count(distinct(id)) FROM" ++ tableF
+    val deleteF: Fragment = fr"DELETE FROM" ++ tableF
+    val existF: Fragment = fr"SELECT 1 FROM" ++ tableF
 
     /** Add another filter to the query being constructed */
-    def filter[M >: Model, T](thing: T)(implicit filterable: Filterable[M, T]): QueryBuilder[Model] =
+    def filter[M >: Model, T](thing: T)(
+        implicit filterable: Filterable[M, T]): QueryBuilder[Model] =
       this.copy(filters = filters ++ filterable.toFilters(thing))
 
-    def filter[M >: Model](thing: Fragment)(implicit filterable: Filterable[M, Fragment]): QueryBuilder[Model] =
+    def filter[M >: Model](thing: Fragment)(
+        implicit filterable: Filterable[M, Fragment]): QueryBuilder[Model] =
       thing match {
         case Fragment.empty => this
-        case _ => this.copy(filters = filters ++ filterable.toFilters(thing))
+        case _              => this.copy(filters = filters ++ filterable.toFilters(thing))
       }
 
-    def filter[M >: Model](id: UUID)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+    def filter[M >: Model](id: UUID)(
+        implicit filterable: Filterable[M, Option[Fragment]])
+      : QueryBuilder[Model] = {
       this.copy(filters = filters ++ filterable.toFilters(Some(fr"id = ${id}")))
     }
 
-    def filter[M >: Model](fragments: List[Option[Fragment]])(implicit filterable: Filterable[M, List[Option[Fragment]]]): QueryBuilder[Model] = {
+    def filter[M >: Model](
+        fragments: List[Option[Fragment]]): QueryBuilder[Model] = {
       this.copy(filters = filters ::: fragments)
     }
 
@@ -132,7 +206,8 @@ object Dao {
     def ownedBy[M >: Model](user: User, objectId: UUID): QueryBuilder[Model] =
       this.filter(objectId).filter(user)
 
-    def ownedByOrSuperUser[M >: Model](user: User, objectId: UUID): QueryBuilder[Model] = {
+    def ownedByOrSuperUser[M >: Model](user: User,
+                                       objectId: UUID): QueryBuilder[Model] = {
       if (user.isSuperuser) {
         this.filter(objectId)
       } else {
@@ -141,12 +216,13 @@ object Dao {
     }
 
     // Filter to validate access on an object type
-    def authorizeF[M >: Model](user: User, objectType: ObjectType, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): Option[Fragment] = {
+    def authorizeF[M >: Model](user: User,
+                               objectType: ObjectType,
+                               actionType: ActionType): Option[Fragment] = {
       if (user.isSuperuser) {
         Some(fr"true")
       } else {
-        Some(
-          fr"""id IN (
+        Some(fr"""id IN (
             -- Collect objects owned by the user
             SELECT A.id
             FROM""" ++ tableF ++ fr"""AS A
@@ -178,27 +254,35 @@ object Dao {
               ugr.user_id = ${user.id} AND
               acr.object_type = ${objectType} AND
               acr.action_type = ${actionType}
-          )"""
-        )
+          )""")
       }
     }
 
     // Filter to validate access on an object type
-    def authorize[M >: Model](user: User, objectType: ObjectType, actionType: ActionType): QueryBuilder[Model] = {
+    def authorize[M >: Model](user: User,
+                              objectType: ObjectType,
+                              actionType: ActionType): QueryBuilder[Model] = {
       this.filter(authorizeF(user, objectType, actionType))
     }
 
     // Filter to validate access to a specific object
-    def authorize[M >: Model](user: User, objectType: ObjectType, objectId: UUID, actionType: ActionType)(implicit filterable: Filterable[M, Option[Fragment]]): QueryBuilder[Model] = {
+    def authorize[M >: Model](user: User,
+                              objectType: ObjectType,
+                              objectId: UUID,
+                              actionType: ActionType)(
+        implicit filterable: Filterable[M, Option[Fragment]])
+      : QueryBuilder[Model] = {
       val scenePublicF: Fragment = (objectType, actionType) match {
-        case (ObjectType.Scene, ActionType.View) | (ObjectType.Scene, ActionType.Download) =>
+        case (ObjectType.Scene, ActionType.View) |
+            (ObjectType.Scene, ActionType.Download) =>
           fr"""
           -- Match if scene is Public
           visibility = 'PUBLIC' OR"""
         case _ => fr""
       }
-      this.copy(filters = filters ++ filterable.toFilters(Some(
-        fr"(" ++ scenePublicF ++ fr"""
+      this.copy(
+        filters = filters ++ filterable
+          .toFilters(Some(fr"(" ++ scenePublicF ++ fr"""
           -- Match if the user owns the object
           owner = ${user.id} OR
           -- Match if the user is a super user
@@ -237,32 +321,49 @@ object Dao {
               acr.action_type = ${actionType}
             LIMIT 1
           )
-        )"""
-      )))
+        )"""))
+      )
     }
 
-    def pageOffset[T: Composite](pageRequest: PageRequest): ConnectionIO[List[T]] =
-      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest)).query[T].to[List]
+    def pageOffset[T: Composite](
+        pageRequest: PageRequest): ConnectionIO[List[T]] =
+      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest))
+        .query[T]
+        .to[List]
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page[T: Composite](pageRequest: PageRequest, selectF: Fragment, countF: Fragment, orderClause: Fragment = fr""): ConnectionIO[PaginatedResponse[T]] = {
+    def page[T: Composite](
+        pageRequest: PageRequest,
+        selectF: Fragment,
+        countF: Fragment,
+        orderClause: Fragment): ConnectionIO[PaginatedResponse[T]] = {
       for {
-        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ orderClause ++ Page(pageRequest)).query[T].to[List]
-        count <- (countF ++ Fragments.whereAndOpt(filters: _*)).query[Int].unique
+        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ orderClause ++ Page(
+          pageRequest)).query[T].to[List]
+        count <- (countF ++ Fragments.whereAndOpt(filters: _*))
+          .query[Int]
+          .unique
       } yield {
         val hasPrevious = pageRequest.offset > 0
         val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
 
-        PaginatedResponse[T](count, hasPrevious, hasNext, pageRequest.offset, pageRequest.limit, page)
+        PaginatedResponse[T](count,
+                             hasPrevious,
+                             hasNext,
+                             pageRequest.offset,
+                             pageRequest.limit,
+                             page)
       }
     }
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page(pageRequest: PageRequest): ConnectionIO[PaginatedResponse[Model]] =
-      page(pageRequest, selectF, countF)
+    def page(pageRequest: PageRequest,
+             orderClause: Fragment): ConnectionIO[PaginatedResponse[Model]] =
+      page(pageRequest, selectF, countF, orderClause)
 
     def listQ(pageRequest: PageRequest): Query0[Model] =
-      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(Some(pageRequest))).query[Model]
+      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(Some(pageRequest)))
+        .query[Model]
 
     /** Provide a list of responses */
     def list(pageRequest: PageRequest): ConnectionIO[List[Model]] = {
@@ -277,17 +378,16 @@ object Dao {
           .query[Boolean]
           .unique
       over100IO flatMap {
-        (exists: Boolean) => {
-          exists match {
-            case true => 100.pure[ConnectionIO]
-            case false => countQuery.query[Int].unique
-          }
+        {
+          case true  => 100.pure[ConnectionIO]
+          case false => countQuery.query[Int].unique
         }
       }
     }
 
     def listQ(limit: Int): Query0[Model] =
-      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT $limit").query[Model]
+      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT $limit")
+        .query[Model]
 
     /** Provide a list of responses */
     def list(limit: Int): ConnectionIO[List[Model]] = {
@@ -295,10 +395,12 @@ object Dao {
     }
 
     def listQ(offset: Int, limit: Int): Query0[Model] =
-      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"OFFSET $offset" ++ fr"LIMIT $limit").query[Model]
+      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"OFFSET $offset" ++ fr"LIMIT $limit")
+        .query[Model]
 
     def listQ(offset: Int, limit: Int, orderClause: Fragment): Query0[Model] =
-      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ orderClause ++ fr"OFFSET $offset" ++ fr"LIMIT $limit").query[Model]
+      (selectF ++ Fragments.whereAndOpt(filters: _*) ++ orderClause ++ fr"OFFSET $offset" ++ fr"LIMIT $limit")
+        .query[Model]
 
     /** Provide a list of responses */
     def list: ConnectionIO[List[Model]] = {
@@ -312,7 +414,9 @@ object Dao {
       listQ(offset, limit).to[List]
     }
 
-    def list(offset: Int, limit: Int, orderClause: Fragment): ConnectionIO[List[Model]] = {
+    def list(offset: Int,
+             limit: Int,
+             orderClause: Fragment): ConnectionIO[List[Model]] = {
       listQ(offset, limit, orderClause).to[List]
     }
 
@@ -336,10 +440,10 @@ object Dao {
       }
     }
 
-
     def delete: ConnectionIO[Int] = {
       deleteQOption
-        .getOrElse(throw new Exception("Unsafe delete - delete requires filters"))
+        .getOrElse(
+          throw new Exception("Unsafe delete - delete requires filters"))
         .run
     }
 
@@ -347,10 +451,13 @@ object Dao {
       (existF ++ Fragments.whereAndOpt(filters: _*) ++ fr"LIMIT 1")
         .query[Int]
         .to[List]
-        .map(!_.isEmpty)
+        .map(_.nonEmpty)
     }
 
-    def authorized(user: User, objectType: ObjectType, objectId: UUID, actionType: ActionType): ConnectionIO[Boolean] = {
+    def authorized(user: User,
+                   objectType: ObjectType,
+                   objectId: UUID,
+                   actionType: ActionType): ConnectionIO[Boolean] = {
       this
         .filter(objectId)
         .authorize(user, objectType, objectId, actionType)

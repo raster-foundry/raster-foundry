@@ -22,7 +22,7 @@ package object ast {
     */
   def validateTree[M: Monoid](ast: MapAlgebraAST): M =
     PureInterpreter.interpret[M](ast, true) match {
-      case Valid(a) => a
+      case Valid(a)     => a
       case Invalid(nel) => throw InterpreterException(nel)
     }
 
@@ -31,7 +31,7 @@ package object ast {
     */
   def validateTreeWithSources[M: Monoid](ast: MapAlgebraAST): M =
     PureInterpreter.interpret[M](ast, false) match {
-      case Valid(a) => a
+      case Valid(a)     => a
       case Invalid(nel) => throw InterpreterException(nel)
     }
 }

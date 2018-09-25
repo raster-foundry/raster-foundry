@@ -24,7 +24,6 @@ trait Config {
 
   val clientEnvironment = clientConfig.getString("clientEnvironment")
 
-
   val intercomAppId = intercomConfig.getString("appId")
   val rollbarClientToken = rollbarConfig.getString("clientToken")
 

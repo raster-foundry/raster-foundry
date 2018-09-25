@@ -22,56 +22,70 @@ import io.circe.syntax._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
-
-
 @JsonCodec
 final case class Auth0User(
-  email: Option[String], email_verified: Option[Boolean],
-  username: Option[String],
-  phone_number: Option[String], phone_verified: Option[String],
-  user_id: Option[String],
-  created_at: Option[String], updated_at: Option[String],
-  identities: Option[Json],
-  // app_metadata: Option[Json],
-  user_metadata: Option[Json],
-  picture: Option[String],
-  name: Option[String],
-  nickname: Option[String],
-  // multifactor: Option[Seq[String]],
-  // last_ip: Option[String],
-  // last_login: Option[String],
-  // logins_count: Option[Int],
-  // blocked: Option[Boolean],
-  given_name: Option[String],
-  family_name: Option[String]
+    email: Option[String],
+    email_verified: Option[Boolean],
+    username: Option[String],
+    phone_number: Option[String],
+    phone_verified: Option[String],
+    user_id: Option[String],
+    created_at: Option[String],
+    updated_at: Option[String],
+    identities: Option[Json],
+    // app_metadata: Option[Json],
+    user_metadata: Option[Json],
+    picture: Option[String],
+    name: Option[String],
+    nickname: Option[String],
+    // multifactor: Option[Seq[String]],
+    // last_ip: Option[String],
+    // last_login: Option[String],
+    // logins_count: Option[Int],
+    // blocked: Option[Boolean],
+    given_name: Option[String],
+    family_name: Option[String]
 )
 
 @JsonCodec
 final case class UserWithOAuth(
-  user: User,
-  oauth: Auth0User
+    user: User,
+    oauth: Auth0User
 )
 
 object UserWithOAuth {
   implicit val encodeUser: Encoder[User] = Encoder.forProduct8(
-    "id", "name", "email", "profileImageUri", "emailNotifications", "visibility",
-    "dropboxCredential", "planetCredential"
-  )(u => (u.id, u.name, u.email, u.profileImageUri, u.emailNotifications, u.visibility, u.dropboxCredential, u.planetCredential))
+    "id",
+    "name",
+    "email",
+    "profileImageUri",
+    "emailNotifications",
+    "visibility",
+    "dropboxCredential",
+    "planetCredential"
+  )(
+    u =>
+      (u.id,
+       u.name,
+       u.email,
+       u.profileImageUri,
+       u.emailNotifications,
+       u.visibility,
+       u.dropboxCredential,
+       u.planetCredential))
 }
-
-
 @JsonCodec
 final case class Auth0UserUpdate(
-  email: Option[String],
-  phone_number: Option[String],
-  user_metadata: Option[Json],
-  username: Option[String]
+    email: Option[String],
+    phone_number: Option[String],
+    user_metadata: Option[Json],
+    username: Option[String]
 )
 
 @JsonCodec
 final case class UserWithOAuthUpdate(
-  user: User.Create,
-  oauth: Auth0UserUpdate
+    user: User.Create,
+    oauth: Auth0UserUpdate
 )
 object Auth0UserService extends Config with LazyLogging {
 
@@ -100,11 +114,12 @@ object Auth0UserService extends Config with LazyLogging {
     ).toEntity
 
     Http()
-      .singleRequest(HttpRequest(
-        method = POST,
-        uri = bearerTokenUri,
-        entity = params
-      ))
+      .singleRequest(
+        HttpRequest(
+          method = POST,
+          uri = bearerTokenUri,
+          entity = params
+        ))
       .flatMap {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
           Unmarshal(entity).to[ManagementBearerToken]
@@ -113,30 +128,19 @@ object Auth0UserService extends Config with LazyLogging {
       }
   }
 
-  def getAuth0User(userId: String)(implicit xa: Transactor[IO]): Future[UserWithOAuth] = {
-    val query: Future[Auth0User] = for {
-      bearerToken <- authBearerTokenCache.get(1)
-      auth0User <- requestAuth0User(userId, bearerToken)
-    } yield auth0User
-    query.flatMap { auth0User =>
-      UserDao.getUserById(userId).transact(xa).unsafeToFuture().map {
-        case Some(user: User) =>
-          UserWithOAuth(user, auth0User)
-        case _ =>
-          throw new Auth0Exception(StatusCodes.NotFound, "Unable to find user in database.")
-      }
-    }
-  }
-
-  def requestAuth0User(userId: String, bearerToken: ManagementBearerToken): Future[Auth0User] = {
+  def requestAuth0User(
+      userId: String,
+      bearerToken: ManagementBearerToken): Future[Auth0User] = {
     val auth0UserBearerHeader = List(
       Authorization(GenericHttpCredentials("Bearer", bearerToken.access_token))
     )
-    Http().singleRequest(HttpRequest(
-      method = GET,
-      uri = s"$userUri/${userId}",
-      headers = auth0UserBearerHeader
-    ))
+    Http()
+      .singleRequest(
+        HttpRequest(
+          method = GET,
+          uri = s"$userUri/${userId}",
+          headers = auth0UserBearerHeader
+        ))
       .flatMap {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
           Unmarshal(entity).to[Auth0User]
@@ -152,32 +156,38 @@ object Auth0UserService extends Config with LazyLogging {
       }
   }
 
-  def updateAuth0User(userId: String, auth0UserUpdate: Auth0UserUpdate): Future[Auth0User] = {
+  def updateAuth0User(userId: String,
+                      auth0UserUpdate: Auth0UserUpdate): Future[Auth0User] = {
     for {
       bearerToken <- authBearerTokenCache.get(1)
       auth0User <- requestAuth0UserUpdate(userId, auth0UserUpdate, bearerToken)
     } yield auth0User
   }
 
-  def requestAuth0UserUpdate(userId: String, auth0UserUpdate: Auth0UserUpdate, bearerToken: ManagementBearerToken):
-  Future[Auth0User] = {
+  def requestAuth0UserUpdate(
+      userId: String,
+      auth0UserUpdate: Auth0UserUpdate,
+      bearerToken: ManagementBearerToken): Future[Auth0User] = {
     val auth0UserBearerHeader = List(
       Authorization(GenericHttpCredentials("Bearer", bearerToken.access_token))
     )
-    Http().singleRequest(HttpRequest(
-      method = PATCH,
-      uri = s"$userUri/${userId}",
-      headers = auth0UserBearerHeader,
-      entity = HttpEntity(
-        ContentTypes.`application/json`,
-        auth0UserUpdate.asJson.noSpaces
-      )
-    ))
+    Http()
+      .singleRequest(
+        HttpRequest(
+          method = PATCH,
+          uri = s"$userUri/${userId}",
+          headers = auth0UserBearerHeader,
+          entity = HttpEntity(
+            ContentTypes.`application/json`,
+            auth0UserUpdate.asJson.noSpaces
+          )
+        ))
       .flatMap {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
           Unmarshal(entity).to[Auth0User]
         case HttpResponse(StatusCodes.ClientError(400), _, error, _) =>
-          throw new IllegalArgumentException("Request must specify a valid field to update")
+          throw new IllegalArgumentException(
+            "Request must specify a valid field to update")
         case HttpResponse(StatusCodes.Unauthorized, _, error, _) =>
           if (error.toString.contains("invalid_refresh_token")) {
             throw new IllegalArgumentException("Refresh token not recognized")

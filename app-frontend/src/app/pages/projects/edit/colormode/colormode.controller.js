@@ -2,17 +2,12 @@
 
 export default class ProjectsEditColormode {
     constructor(
-        $scope, $q,
+        $scope, $q, $state,
         colorCorrectService, colorSchemeService, projectService, projectEditService
     ) {
         'ngInject';
-        this.$scope = $scope;
-        this.$q = $q;
+        $scope.autoInject(this, arguments);
         this.$parent = $scope.$parent.$ctrl;
-        this.colorCorrectService = colorCorrectService;
-        this.colorSchemeService = colorSchemeService;
-        this.projectService = projectService;
-        this.projectEditService = projectEditService;
     }
 
     $onInit() {
@@ -29,42 +24,45 @@ export default class ProjectsEditColormode {
                 }
             }
         };
-        this.initSceneLayers();
+        this.initColorModes();
     }
 
-    initSceneLayers() {
-        const sceneListQuery = this.$parent.sceneListQuery || this.$parent.getSceneList();
-        return sceneListQuery.then(() => {
-            let sceneLayers = Array.from(this.$parent.sceneLayers)
-                .map(([id, layer]) => ({id, layer}));
-            if (sceneLayers.length === 0) {
+    initColorModes() {
+        let sceneListQuery;
+        if (!this.$parent.sceneList) {
+            sceneListQuery = this.$parent.currentQuery || this.$parent.fetchPage();
+        } else {
+            sceneListQuery = this.$q.resolve(this.$parent.sceneList);
+        }
+        sceneListQuery.then(() => {
+            let projectScene = _.first(this.$parent.sceneList);
+            if (projectScene) {
+                return this.colorCorrectService.get(projectScene.id, this.$parent.projectId);
+            }
+            return this.$q.resolve();
+        }).then((correction) => {
+            if (!correction) {
                 this.isLoading = false;
                 return;
             }
-            this.fetchAllColorCorrections(sceneLayers);
-
-            let firstLayer = _.first(sceneLayers);
-            if (firstLayer && firstLayer.layer) {
-                firstLayer.layer.getColorCorrection().then((correction) => {
-                    this.currentBands = {
-                        redBand: correction.redBand,
-                        greenBand: correction.greenBand,
-                        blueBand: correction.blueBand,
-                        mode: correction.mode ? correction.mode : 'multi'
-                    };
-                    this.$parent.fetchUnifiedComposites().then(() => {
-                        this.unifiedComposites =
-                            Object.assign(
-                                {},
-                                this.$parent.unifiedComposites,
-                                this.defaultColorModes
-                            );
-                        this.initProjectBuffer();
-                        this.isLoading = false;
-                        this.activeColorModeKey = this.initActiveColorMode();
-                    });
+            this.currentBands = {
+                redBand: correction.redBand,
+                greenBand: correction.greenBand,
+                blueBand: correction.blueBand,
+                mode: correction.mode ? correction.mode : 'multi'
+            };
+            this.unifiedCompositesRequest = this.$parent.fetchUnifiedComposites(true)
+                .then((composites) => {
+                    this.unifiedComposites =
+                        Object.assign(
+                            {},
+                            composites,
+                            this.defaultColorModes
+                        );
+                    this.initProjectBuffer();
+                    this.isLoading = false;
+                    this.activeColorModeKey = this.initActiveColorMode();
                 });
-            }
         });
     }
 
@@ -136,17 +134,17 @@ export default class ProjectsEditColormode {
         return !datasource.bands.length;
     }
 
-    fetchAllColorCorrections(layers) {
-        let requests = layers.map(({id, layer}) => {
-            return layer.getColorCorrection().then(result => ({id: id, correction: result}));
-        });
-        this.correctionsRequest = this.$q.all(requests).then(results => {
-            this.corrections = results;
-            delete this.correctionsRequest;
-        }, error => {
-            this.$log.error('Error fetching color corrections', error);
-        });
-    }
+    // fetchAllColorCorrections(layers) {
+    //     let requests = layers.map(({id, layer}) => {
+    //         return layer.getColorCorrection().then(result => ({id: id, correction: result}));
+    //     });
+    //     this.correctionsRequest = this.$q.all(requests).then(results => {
+    //         this.corrections = results;
+    //         delete this.correctionsRequest;
+    //     }, error => {
+    //         this.$log.error('Error fetching color corrections', error);
+    //     });
+    // }
 
     getSerializedSingleBandOptions() {
         return angular.toJson(this.projectBuffer.singleBandOptions);
@@ -304,18 +302,17 @@ export default class ProjectsEditColormode {
 
     saveCorrection() {
         this.savingCorrection = true;
-        if (this.corrections) {
-            this.colorCorrectService.bulkUpdateColorMode(
+        if (this.unifiedComposites) {
+            this.projectService.setProjectColorMode(
                 this.projectEditService.currentProject.id,
-                this.corrections,
-                this.currentBands
+                _.pick(this.currentBands, ['redBand', 'greenBand', 'blueBand'])
             ).then(() => {
                 this.redrawMosaic();
             }).finally(() => {
                 this.savingCorrection = false;
             });
-        } else if (this.correctionsRequest) {
-            this.correctionsRequest.then(this.saveCorrection().bind(this), error => {
+        } else if (this.unifiedCompositesRequest) {
+            this.unifiedCompositesRequest.then(this.saveCorrection().bind(this), error => {
                 this.$log.error(error);
                 this.savingCorrection = false;
             });
@@ -346,5 +343,16 @@ export default class ProjectsEditColormode {
             );
             this.updateProjectFromBuffer();
         }
+    }
+
+    correctionsDisabled() {
+        return this.projectBuffer && this.projectBuffer.isSingleBand ||
+                !this.projectBuffer ||
+            this.$parent.pagination &&
+            this.$parent.pagination.count > this.$parent.pagination.pageSize;
+    }
+
+    navToCorrections() {
+        this.$state.go('projects.edit.advancedcolor');
     }
 }

@@ -105,7 +105,7 @@ class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTest
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
             dsInsert <- fixupDatasource(dsCreate, userInsert)
-            rowDeleted <- DatasourceDao.deleteDatasource(dsInsert.id, userInsert)
+            rowDeleted <- DatasourceDao.deleteDatasource(dsInsert.id)
           } yield rowDeleted
           val deleteDsRowCount = deleteDsIO.transact(xa).unsafeRunSync
           deleteDsRowCount == 1

@@ -13,8 +13,8 @@ object BandDataType {
   case object Categorical extends BandDataType("CATEGORICAL")
 
   def fromString(s: String): BandDataType = s.toUpperCase match {
-    case "DIVERGING" => Diverging
-    case "SEQUENTIAL" => Sequential
+    case "DIVERGING"   => Diverging
+    case "SEQUENTIAL"  => Sequential
     case "CATEGORICAL" => Categorical
   }
 

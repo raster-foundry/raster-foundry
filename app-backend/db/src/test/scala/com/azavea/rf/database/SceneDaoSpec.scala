@@ -12,8 +12,12 @@ import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
 
-
-class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
+class SceneDaoSpec
+    extends FunSuite
+    with Matchers
+    with Checkers
+    with DBTestConfig
+    with PropTestHelpers {
   test("list scenes") {
     SceneDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
@@ -21,26 +25,45 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
   test("insert a scene") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, scene: Scene.Create) => {
-          val sceneInsertIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (dbOrg, dbUser) = orgAndUser
-            datasource <- unsafeGetRandomDatasource
-            sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, datasource, scene), dbUser)
-          } yield sceneInsert
-          val insertedScene = sceneInsertIO.transact(xa).unsafeRunSync
+        (user: User.Create, org: Organization.Create, scene: Scene.Create) =>
+          {
+            val sceneInsertIO = for {
+              orgAndUser <- insertUserAndOrg(user, org)
+              (dbOrg, dbUser) = orgAndUser
+              datasource <- unsafeGetRandomDatasource
+              fixedUpSceneCreate = fixupSceneCreate(dbUser, datasource, scene)
+              sceneInsert <- SceneDao.insert(fixedUpSceneCreate, dbUser)
+            } yield (fixedUpSceneCreate, sceneInsert)
+            val (fixedUpSceneCreate, insertedScene) =
+              sceneInsertIO.transact(xa).unsafeRunSync
 
-          insertedScene.visibility == scene.visibility &&
-            insertedScene.tags == scene.tags &&
-            insertedScene.sceneMetadata == scene.sceneMetadata &&
-            insertedScene.name == scene.name &&
-            insertedScene.tileFootprint == scene.tileFootprint &&
-            insertedScene.dataFootprint == scene.dataFootprint &&
-            insertedScene.metadataFiles == scene.metadataFiles &&
-            insertedScene.ingestLocation == scene.ingestLocation &&
-            insertedScene.filterFields == scene.filterFields &&
-            insertedScene.statusFields == scene.statusFields
-        }
+            assert(insertedScene.visibility == fixedUpSceneCreate.visibility,
+                   "Visibilities match")
+            assert(insertedScene.tags == fixedUpSceneCreate.tags, "Tags match")
+            assert(
+              insertedScene.sceneMetadata == fixedUpSceneCreate.sceneMetadata,
+              "Scene metadatas match")
+            assert(insertedScene.name == fixedUpSceneCreate.name, "Names match")
+            assert(
+              insertedScene.tileFootprint == fixedUpSceneCreate.tileFootprint,
+              "Tile footprints match")
+            assert(
+              insertedScene.dataFootprint == fixedUpSceneCreate.dataFootprint,
+              "Data footprints match")
+            assert(
+              insertedScene.metadataFiles == fixedUpSceneCreate.metadataFiles,
+              "Metadata files match")
+            assert(
+              insertedScene.ingestLocation == fixedUpSceneCreate.ingestLocation,
+              "Ingest locations match")
+            assert(
+              insertedScene.filterFields == fixedUpSceneCreate.filterFields,
+              "Filter fields match")
+            assert(
+              insertedScene.statusFields == fixedUpSceneCreate.statusFields,
+              "Status fields match")
+            true
+          }
       }
     }
   }
@@ -48,29 +71,48 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
   test("maybe insert a scene") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, scene: Scene.Create) => {
-          val sceneInsertIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (dbOrg, dbUser) = orgAndUser
-            datasource <- unsafeGetRandomDatasource
-            sceneInsert <- SceneDao.insertMaybe(fixupSceneCreate(dbUser, datasource, scene), dbUser)
-          } yield sceneInsert
-          val insertedSceneO = sceneInsertIO.transact(xa).unsafeRunSync
-          // our expectation is that this should succeed so this should be safe -- if it fails that indicates
-          // something else was wrong
-          val insertedScene = insertedSceneO.get
+        (user: User.Create, org: Organization.Create, scene: Scene.Create) =>
+          {
+            val sceneInsertIO = for {
+              orgAndUser <- insertUserAndOrg(user, org)
+              (dbOrg, dbUser) = orgAndUser
+              datasource <- unsafeGetRandomDatasource
+              fixedUpSceneCreate = fixupSceneCreate(dbUser, datasource, scene)
+              sceneInsert <- SceneDao.insertMaybe(fixedUpSceneCreate, dbUser)
+            } yield (fixedUpSceneCreate, sceneInsert)
+            val (fixedUpSceneCreate, insertedSceneO) =
+              sceneInsertIO.transact(xa).unsafeRunSync
+            // our expectation is that this should succeed so this should be safe -- if it fails that indicates
+            // something else was wrong
+            val insertedScene = insertedSceneO.get
 
-          insertedScene.visibility == scene.visibility &&
-            insertedScene.tags == scene.tags &&
-            insertedScene.sceneMetadata == scene.sceneMetadata &&
-            insertedScene.name == scene.name &&
-            insertedScene.tileFootprint == scene.tileFootprint &&
-            insertedScene.dataFootprint == scene.dataFootprint &&
-            insertedScene.metadataFiles == scene.metadataFiles &&
-            insertedScene.ingestLocation == scene.ingestLocation &&
-            insertedScene.filterFields == scene.filterFields &&
-            insertedScene.statusFields == scene.statusFields
-        }
+            assert(insertedScene.visibility == fixedUpSceneCreate.visibility,
+                   "Visibilities match")
+            assert(insertedScene.tags == fixedUpSceneCreate.tags, "Tags match")
+            assert(
+              insertedScene.sceneMetadata == fixedUpSceneCreate.sceneMetadata,
+              "Scene metadatas match")
+            assert(insertedScene.name == fixedUpSceneCreate.name, "Names match")
+            assert(
+              insertedScene.tileFootprint == fixedUpSceneCreate.tileFootprint,
+              "Tile footprints match")
+            assert(
+              insertedScene.dataFootprint == fixedUpSceneCreate.dataFootprint,
+              "Data footprints match")
+            assert(
+              insertedScene.metadataFiles == fixedUpSceneCreate.metadataFiles,
+              "Metadata files match")
+            assert(
+              insertedScene.ingestLocation == fixedUpSceneCreate.ingestLocation,
+              "Ingest locations match")
+            assert(
+              insertedScene.filterFields == fixedUpSceneCreate.filterFields,
+              "Filter fields match")
+            assert(
+              insertedScene.statusFields == fixedUpSceneCreate.statusFields,
+              "Status fields match")
+            true
+          }
       }
     }
   }
@@ -78,52 +120,55 @@ class SceneDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
   test("update a scene") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, insertScene: Scene.Create, updateScene: Scene.Create) => {
-          val sceneInsertWithUserOrgDatasourceIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (dbOrg, dbUser) = orgAndUser
-            datasource <- unsafeGetRandomDatasource
-            sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, datasource, insertScene), dbUser)
-          } yield (sceneInsert, dbUser, dbOrg, datasource)
+        (user: User.Create,
+         org: Organization.Create,
+         insertScene: Scene.Create,
+         updateScene: Scene.Create) =>
+          {
+            val sceneUpdateIO = for {
+              orgAndUser <- insertUserAndOrg(user, org)
+              (dbOrg, dbUser) = orgAndUser
+              datasource <- unsafeGetRandomDatasource
+              fixedUpSceneCreate = fixupSceneCreate(dbUser,
+                                                    datasource,
+                                                    insertScene)
+              sceneInsert <- SceneDao.insert(fixedUpSceneCreate, dbUser)
+              fixedUpUpdateScene = fixupSceneCreate(
+                dbUser,
+                datasource,
+                updateScene).toScene(dbUser).copy(id = sceneInsert.id)
+              affectedRows <- SceneDao.update(fixedUpUpdateScene,
+                                              sceneInsert.id,
+                                              dbUser)
+              endScene <- SceneDao.unsafeGetSceneById(sceneInsert.id)
+            } yield (affectedRows, fixedUpUpdateScene, endScene)
 
-          val sceneUpdateWithSceneIO = sceneInsertWithUserOrgDatasourceIO flatMap {
-            case (dbScene: Scene.WithRelated, dbUser: User, dbOrg: Organization, dbDatasource: Datasource) => {
-              val sceneId = dbScene.id
-              val fixedUpUpdateScene = fixupSceneCreate(dbUser, dbDatasource, updateScene)
-                .toScene(dbUser)
-                .copy(id = dbScene.id)
-              SceneDao.update(fixedUpUpdateScene, sceneId, dbUser) flatMap {
-                case (affectedRows: Int, shouldKickoffIngest: Boolean) => {
-                  SceneDao.unsafeGetSceneById(sceneId) map { (affectedRows, _, shouldKickoffIngest) }
-                }
-              }
-            }
+            val (affectedRows, fixedUpUpdateScene, updatedScene) =
+              sceneUpdateIO.transact(xa).unsafeRunSync
+
+            assert(affectedRows == 1, "Number of affected rows is correct")
+            assert(updatedScene.visibility == fixedUpUpdateScene.visibility,
+                   "Visibilities match")
+            assert(updatedScene.tags == fixedUpUpdateScene.tags, "Tags match")
+            assert(
+              updatedScene.sceneMetadata == fixedUpUpdateScene.sceneMetadata,
+              "Metadatas match")
+            assert(updatedScene.name == fixedUpUpdateScene.name, "Names match")
+            assert(
+              updatedScene.tileFootprint == fixedUpUpdateScene.tileFootprint,
+              "Tile footprints match")
+            assert(
+              updatedScene.dataFootprint == fixedUpUpdateScene.dataFootprint,
+              "Data footprints match")
+            assert(
+              updatedScene.ingestLocation == fixedUpUpdateScene.ingestLocation,
+              "Ingest locations match")
+            assert(updatedScene.filterFields == fixedUpUpdateScene.filterFields,
+                   "Filter fields match")
+            assert(updatedScene.statusFields == fixedUpUpdateScene.statusFields,
+                   "Status fields match")
+            true
           }
-
-          val (affectedRows, updatedScene, shouldKickoffIngest) = sceneUpdateWithSceneIO.transact(xa).unsafeRunSync
-
-          val kickoffIngestCheck = (insertScene.statusFields.ingestStatus, updatedScene.statusFields.ingestStatus) match {
-            case (IngestStatus.ToBeIngested, IngestStatus.ToBeIngested) =>
-              shouldKickoffIngest == true
-            case (IngestStatus.Ingesting, IngestStatus.Ingesting) =>
-              // we know this is false because ingest status does not hang at Ingesting for a day in this test
-              shouldKickoffIngest == false
-            case _ =>
-              shouldKickoffIngest == false
-          }
-
-          affectedRows == 1 &&
-            updatedScene.visibility == updateScene.visibility &&
-            updatedScene.tags == updateScene.tags &&
-            updatedScene.sceneMetadata == updateScene.sceneMetadata &&
-            updatedScene.name == updateScene.name &&
-            updatedScene.tileFootprint == updateScene.tileFootprint &&
-            updatedScene.dataFootprint == updateScene.dataFootprint &&
-            updatedScene.ingestLocation == updateScene.ingestLocation &&
-            updatedScene.filterFields == updateScene.filterFields &&
-            updatedScene.statusFields == updateScene.statusFields &&
-            kickoffIngestCheck
-        }
       }
     }
   }

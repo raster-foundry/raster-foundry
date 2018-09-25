@@ -16,7 +16,12 @@ import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common.S3._
 import com.azavea.rf.common.utils.Shapefile
-import com.azavea.rf.common.{AWSBatch, CommonHandlers, RollbarNotifier, UserErrorHandler}
+import com.azavea.rf.common.{
+  AWSBatch,
+  CommonHandlers,
+  RollbarNotifier,
+  UserErrorHandler
+}
 import com.azavea.rf.database._
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.datamodel.GeoJsonCodec._
@@ -34,27 +39,26 @@ import kamon.akka.http.KamonTraceDirectives
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Success
-
-
 @JsonCodec
 final case class BulkAcceptParams(sceneIds: List[UUID])
 
 @JsonCodec
-final case class AnnotationFeatureCollectionCreate (
-  features: Seq[Annotation.GeoJSONFeatureCreate]
+final case class AnnotationFeatureCollectionCreate(
+    features: Seq[Annotation.GeoJSONFeatureCreate]
 )
 
-trait ProjectRoutes extends Authentication
-  with Config
-  with QueryParametersCommon
-  with SceneQueryParameterDirective
-  with PaginationDirectives
-  with CommonHandlers
-  with AWSBatch
-  with UserErrorHandler
-  with RollbarNotifier
-  with KamonTraceDirectives
-  with LazyLogging {
+trait ProjectRoutes
+    extends Authentication
+    with Config
+    with QueryParametersCommon
+    with SceneQueryParameterDirective
+    with PaginationDirectives
+    with CommonHandlers
+    with AWSBatch
+    with UserErrorHandler
+    with RollbarNotifier
+    with KamonTraceDirectives
+    with LazyLogging {
 
   val xa: Transactor[IO]
 
@@ -87,9 +91,19 @@ trait ProjectRoutes extends Authentication
             } ~
             delete {
               traceName("projects-delete") {
-                deleteProject(projectId) }
+                deleteProject(projectId)
+              }
             }
         } ~
+          pathPrefix("project-color-mode") {
+            pathEndOrSingleSlash {
+              post {
+                traceName("project-set-color-mode") {
+                  setProjectColorMode(projectId)
+                }
+              }
+            }
+          } ~
           pathPrefix("labels") {
             pathEndOrSingleSlash {
               get {
@@ -106,31 +120,31 @@ trait ProjectRoutes extends Authentication
                   listAnnotationGroups(projectId)
                 }
               } ~
-              post {
-                traceName("projects-create-annotation-group") {
-                  createAnnotationGroup(projectId)
+                post {
+                  traceName("projects-create-annotation-group") {
+                    createAnnotationGroup(projectId)
+                  }
                 }
-              }
             } ~
-            pathPrefix(JavaUUID) { annotationGroupId =>
-              pathEndOrSingleSlash {
-                get {
-                  traceName("projects-get-annotation-group") {
-                    getAnnotationGroup(projectId, annotationGroupId)
-                  }
-                } ~
-                put {
-                  traceName("projects-update-annotation-group") {
-                    updateAnnotationGroup(projectId, annotationGroupId)
-                  }
-                } ~
-                delete {
-                  traceName("projects-delete-annotation-group") {
-                    deleteAnnotationGroup(projectId, annotationGroupId)
-                  }
+              pathPrefix(JavaUUID) { annotationGroupId =>
+                pathEndOrSingleSlash {
+                  get {
+                    traceName("projects-get-annotation-group") {
+                      getAnnotationGroup(projectId, annotationGroupId)
+                    }
+                  } ~
+                    put {
+                      traceName("projects-update-annotation-group") {
+                        updateAnnotationGroup(projectId, annotationGroupId)
+                      }
+                    } ~
+                    delete {
+                      traceName("projects-delete-annotation-group") {
+                        deleteAnnotationGroup(projectId, annotationGroupId)
+                      }
+                    }
                 }
               }
-            }
           } ~
           pathPrefix("annotations") {
             pathEndOrSingleSlash {
@@ -157,30 +171,39 @@ trait ProjectRoutes extends Authentication
                       exportAnnotationShapefile(projectId)
                     }
                   } ~
-                  post {
-                    traceName("project-annotations-shapefile-upload") {
-                      authenticate { user =>
-                        val tempFile = ScalaFile.newTemporaryFile()
-                        tempFile.deleteOnExit()
-                        val response = storeUploadedFile("name", (_) => tempFile.toJava) { (m, _) =>
-                          processShapefile(projectId, tempFile, m)
+                    post {
+                      traceName("project-annotations-shapefile-upload") {
+                        authenticate { user =>
+                          val tempFile = ScalaFile.newTemporaryFile()
+                          tempFile.deleteOnExit()
+                          val response =
+                            storeUploadedFile("name", (_) => tempFile.toJava) {
+                              (m, _) =>
+                                processShapefile(projectId, tempFile, m)
+                            }
+                          tempFile.delete()
+                          response
                         }
-                        tempFile.delete()
-                        response
                       }
                     }
-                  }
                 } ~
                   pathPrefix("import") {
                     pathEndOrSingleSlash {
                       (post & formFieldMap) { fields =>
-                        traceName("project-annotations-shapefile-import-with-fields") {
+                        traceName(
+                          "project-annotations-shapefile-import-with-fields") {
                           authenticate { user =>
                             val tempFile = ScalaFile.newTemporaryFile()
                             tempFile.deleteOnExit()
-                            val response = storeUploadedFile("shapefile", (_) => tempFile.toJava) { (m, _) =>
-                              processShapefile(projectId, tempFile, m, Some(fields))
-                            }
+                            val response =
+                              storeUploadedFile("shapefile",
+                                                (_) => tempFile.toJava) {
+                                (m, _) =>
+                                  processShapefile(projectId,
+                                                   tempFile,
+                                                   m,
+                                                   Some(fields))
+                              }
                             tempFile.delete()
                             response
                           }
@@ -221,6 +244,15 @@ trait ProjectRoutes extends Authentication
                     createAOI(projectId)
                   }
                 }
+            }
+          } ~
+          pathPrefix("datasources") {
+            pathEndOrSingleSlash {
+              get {
+                traceName("project-list-datasources") {
+                  listProjectDatasources(projectId)
+                }
+              }
             }
           } ~
           pathPrefix("scenes") {
@@ -304,17 +336,21 @@ trait ProjectRoutes extends Authentication
           } ~
           pathPrefix("order") {
             pathEndOrSingleSlash {
-              get {
-                traceName("projects-get-scene-order") {
-                  listProjectSceneOrder(projectId)
+              put {
+                traceName("projects-set-scene-order") {
+                  setProjectSceneOrder(projectId)
                 }
-              } ~
-                put {
-                  traceName("projects-set-scene-order") {
-                    setProjectSceneOrder(projectId)
-                  }
-                }
-            }
+              }
+            } // ~
+            // pathPrefix("move") {
+            //   pathPrefix(IntNumber) { from =>
+            //     pathPrefix(IntNumber) { to =>
+            //       traceName("projects-move-scene-order") {
+            //         moveProjectScene(projectId, from, to)
+            //       }
+            //     }
+            //   }
+            // }
           } ~
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
@@ -351,18 +387,24 @@ trait ProjectRoutes extends Authentication
   }
 
   def listProjects: Route = authenticate { user =>
-    (withPagination & projectQueryParameters) { (page, projectQueryParameters) =>
-      complete {
-        ProjectDao
-          .listProjects(page, projectQueryParameters, user)
-          .transact(xa).unsafeToFuture
-      }
+    (withPagination & projectQueryParameters) {
+      (page, projectQueryParameters) =>
+        complete {
+          ProjectDao
+            .listProjects(page, projectQueryParameters, user)
+            .transact(xa)
+            .unsafeToFuture
+        }
     }
   }
 
   def createProject: Route = authenticate { user =>
     entity(as[Project.Create]) { newProject =>
-      onSuccess(ProjectDao.insertProject(newProject, user).transact(xa).unsafeToFuture) { project =>
+      onSuccess(
+        ProjectDao
+          .insertProject(newProject, user)
+          .transact(xa)
+          .unsafeToFuture) { project =>
         complete(StatusCodes.Created, project)
       }
     }
@@ -372,24 +414,35 @@ trait ProjectRoutes extends Authentication
     onComplete(
       ProjectDao.isProjectPublic(projectId).transact(xa).unsafeToFuture
     ) {
-      case Success(true) => rejectEmptyResponse {
-        complete {
-          ProjectDao.query.filter(projectId).selectOption.transact(xa).unsafeToFuture
+      case Success(true) =>
+        rejectEmptyResponse {
+          complete {
+            ProjectDao.query
+              .filter(projectId)
+              .selectOption
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
-      }
-      case _ => authenticate { user =>
-        authorizeAsync {
-          ProjectDao.query
-            .authorized(user, ObjectType.Project, projectId, ActionType.View)
-            .transact(xa).unsafeToFuture
-        } {
-          rejectEmptyResponse {
-            complete {
-              ProjectDao.query.filter(projectId).selectOption.transact(xa).unsafeToFuture
+      case _ =>
+        authenticate { user =>
+          authorizeAsync {
+            ProjectDao.query
+              .authorized(user, ObjectType.Project, projectId, ActionType.View)
+              .transact(xa)
+              .unsafeToFuture
+          } {
+            rejectEmptyResponse {
+              complete {
+                ProjectDao.query
+                  .filter(projectId)
+                  .selectOption
+                  .transact(xa)
+                  .unsafeToFuture
+              }
             }
           }
         }
-      }
     }
   }
 
@@ -397,10 +450,15 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[Project]) { updatedProject =>
-        onSuccess(ProjectDao.updateProject(updatedProject, projectId, user).transact(xa).unsafeToFuture) {
+        onSuccess(
+          ProjectDao
+            .updateProject(updatedProject, projectId, user)
+            .transact(xa)
+            .unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -411,9 +469,10 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.Delete)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
-      onSuccess(ProjectDao.deleteProject(projectId, user).transact(xa).unsafeToFuture) {
+      onSuccess(ProjectDao.deleteProject(projectId).transact(xa).unsafeToFuture) {
         completeSingleOrNotFound
       }
     }
@@ -423,10 +482,11 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       complete {
-        AnnotationDao.listProjectLabels(projectId, user).transact(xa).unsafeToFuture
+        AnnotationDao.listProjectLabels(projectId).transact(xa).unsafeToFuture
       }
     }
   }
@@ -435,10 +495,14 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       complete {
-        AnnotationGroupDao.listAnnotationGroupsForProject(projectId).transact(xa).unsafeToFuture
+        AnnotationGroupDao
+          .listAnnotationGroupsForProject(projectId)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
@@ -447,68 +511,96 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[AnnotationGroup.Create]) { agCreate =>
         complete {
-          AnnotationGroupDao.createAnnotationGroup(projectId, agCreate, user).transact(xa).unsafeToFuture
+          AnnotationGroupDao
+            .createAnnotationGroup(projectId, agCreate, user)
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
   }
 
-  def getAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
-    } {
-      complete {
-        AnnotationGroupDao.getAnnotationGroup(projectId, agId).transact(xa).unsafeToFuture
-      }
-    }
-  }
-
-  def updateAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-        .transact(xa).unsafeToFuture
-    } {
-      entity(as[AnnotationGroup]) { annotationGroup =>
+  def getAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
         complete {
-          AnnotationGroupDao.updateAnnotationGroup(annotationGroup, agId, user).transact(xa).unsafeToFuture
+          AnnotationGroupDao
+            .getAnnotationGroup(projectId, agId)
+            .transact(xa)
+            .unsafeToFuture
         }
       }
-    }
   }
 
-  def deleteAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-        .transact(xa).unsafeToFuture
-    } {
-      complete {
-        AnnotationGroupDao.deleteAnnotationGroup(projectId, agId).transact(xa).unsafeToFuture
+  def updateAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[AnnotationGroup]) { annotationGroup =>
+          complete {
+            AnnotationGroupDao
+              .updateAnnotationGroup(annotationGroup, agId, user)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
       }
-    }
+  }
+
+  def deleteAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          AnnotationGroupDao
+            .deleteAnnotationGroup(projectId, agId)
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
   }
 
   def listAnnotations(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
-      (withPagination & annotationQueryParams) { (page: PageRequest, queryParams: AnnotationQueryParameters) =>
-        complete {
-          AnnotationDao.query.filter(fr"project_id=$projectId").filter(queryParams).page(page).transact(xa).unsafeToFuture
-            .map { p => {
-              fromPaginatedResponseToGeoJson[Annotation, Annotation.GeoJSON](p)
-            }
+      (withPagination & annotationQueryParams) {
+        (page: PageRequest, queryParams: AnnotationQueryParameters) =>
+          complete {
+            AnnotationDao.query
+              .filter(fr"project_id=$projectId")
+              .filter(queryParams)
+              .page(page, fr"")
+              .transact(xa)
+              .unsafeToFuture
+              .map { p =>
+                {
+                  fromPaginatedResponseToGeoJson[Annotation,
+                                                 Annotation.GeoJSON](p)
+                }
+              }
           }
-        }
       }
     }
   }
@@ -517,13 +609,20 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[AnnotationFeatureCollectionCreate]) { fc =>
         val annotationsCreate = fc.features map { _.toAnnotationCreate }
         complete {
-          AnnotationDao.insertAnnotations(annotationsCreate.toList, projectId, user).transact(xa).unsafeToFuture
-            .map { annotations: List[Annotation] => fromSeqToFeatureCollection[Annotation, Annotation.GeoJSON](annotations) }
+          AnnotationDao
+            .insertAnnotations(annotationsCreate.toList, projectId, user)
+            .transact(xa)
+            .unsafeToFuture
+            .map { annotations: List[Annotation] =>
+              fromSeqToFeatureCollection[Annotation, Annotation.GeoJSON](
+                annotations)
+            }
         }
       }
     }
@@ -533,72 +632,111 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
-      onSuccess(AnnotationDao.query.filter(fr"project_id=$projectId").list.transact(xa).unsafeToFuture) {
-        case annotations@(annotation: List[Annotation]) => {
-          val zipfile: ScalaFile = AnnotationShapefileService.annotationsToShapefile(annotations)
+      onSuccess(
+        AnnotationDao.query
+          .filter(fr"project_id=$projectId")
+          .list
+          .transact(xa)
+          .unsafeToFuture) {
+        case annotations @ (annotation: List[Annotation]) => {
+          val zipfile: ScalaFile =
+            AnnotationShapefileService.annotationsToShapefile(annotations)
           val cal: Calendar = Calendar.getInstance()
           cal.add(Calendar.DAY_OF_YEAR, 1)
-          val key: AmazonS3URI = new AmazonS3URI(user.getDefaultAnnotationShapefileSource(dataBucket))
-          putObject(dataBucket, key.toString, zipfile.toJava).setExpirationTime(cal.getTime)
+          val key: AmazonS3URI = new AmazonS3URI(
+            user.getDefaultAnnotationShapefileSource(dataBucket))
+          putObject(dataBucket, key.toString, zipfile.toJava)
+            .setExpirationTime(cal.getTime)
           zipfile.delete(true)
           complete(getSignedUrl(dataBucket, key.toString).toString())
         }
-        case _ => complete(throw new Exception("Annotations do not exist or are not accessible by this user"))
+        case _ =>
+          complete(
+            throw new Exception(
+              "Annotations do not exist or are not accessible by this user"))
       }
     }
   }
 
-  def getAnnotation(projectId: UUID, annotationId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
-    } {
-      rejectEmptyResponse {
-        complete {
-          AnnotationDao.query.filter(annotationId).selectOption.transact(xa).unsafeToFuture.map {
-            _ map { _.toGeoJSONFeature }
+  def getAnnotation(projectId: UUID, annotationId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete {
+            AnnotationDao.query
+              .filter(annotationId)
+              .selectOption
+              .transact(xa)
+              .unsafeToFuture
+              .map {
+                _ map { _.toGeoJSONFeature }
+              }
           }
         }
       }
-    }
   }
 
-  def updateAnnotation(projectId: UUID, annotationId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-        .transact(xa).unsafeToFuture
-    } {
-      entity(as[Annotation.GeoJSON]) { updatedAnnotation: Annotation.GeoJSON =>
-        onSuccess(AnnotationDao.updateAnnotation(updatedAnnotation.toAnnotation, annotationId, user).transact(xa).unsafeToFuture) { count =>
-          completeSingleOrNotFound(count)
+  def updateAnnotation(projectId: UUID, annotationId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[Annotation.GeoJSON]) {
+          updatedAnnotation: Annotation.GeoJSON =>
+            onSuccess(
+              AnnotationDao
+                .updateAnnotation(updatedAnnotation.toAnnotation, user)
+                .transact(xa)
+                .unsafeToFuture) { count =>
+              completeSingleOrNotFound(count)
+            }
         }
       }
     }
-  }
 
-  def deleteAnnotation(projectId: UUID, annotationId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-        .transact(xa).unsafeToFuture
-    } {
-      onSuccess(AnnotationDao.query.filter(annotationId).delete.transact(xa).unsafeToFuture) {
-        completeSingleOrNotFound
+  def deleteAnnotation(projectId: UUID, annotationId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        onSuccess(
+          AnnotationDao.query
+            .filter(annotationId)
+            .delete
+            .transact(xa)
+            .unsafeToFuture) {
+          completeSingleOrNotFound
+        }
       }
     }
-  }
 
   def deleteProjectAnnotations(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
-      onSuccess(AnnotationDao.query.filter(fr"project_id = ${projectId}").delete.transact(xa).unsafeToFuture) {
+      onSuccess(
+        AnnotationDao.query
+          .filter(fr"project_id = ${projectId}")
+          .delete
+          .transact(xa)
+          .unsafeToFuture) {
         completeSomeOrNotFound
       }
     }
@@ -608,11 +746,12 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       withPagination { page =>
         complete {
-          AoiDao.listAOIs(projectId, user, page).transact(xa).unsafeToFuture
+          AoiDao.listAOIs(projectId, page).transact(xa).unsafeToFuture
         }
       }
     }
@@ -622,40 +761,55 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[AOI.Create]) { aoi =>
-        onSuccess(AoiDao.createAOI(aoi.toAOI(projectId, user), user: User).transact(xa).unsafeToFuture()) { a =>
+        onSuccess(
+          AoiDao
+            .createAOI(aoi.toAOI(projectId, user), user: User)
+            .transact(xa)
+            .unsafeToFuture()) { a =>
           complete(StatusCodes.Created, a)
         }
       }
     }
   }
 
-  def acceptScene(projectId: UUID, sceneId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
-    } {
-      complete {
-        SceneToProjectDao.acceptScene(projectId, sceneId).transact(xa).unsafeToFuture
+  def acceptScene(projectId: UUID, sceneId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          SceneToProjectDao
+            .acceptScene(projectId, sceneId)
+            .transact(xa)
+            .unsafeToFuture
+        }
       }
-    }
   }
 
   def acceptScenes(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[List[UUID]]) { sceneIds =>
         if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
           complete(StatusCodes.RequestEntityTooLarge)
         }
 
-        onSuccess(SceneToProjectDao.acceptScenes(projectId, sceneIds).transact(xa).unsafeToFuture) { updatedOrder =>
+        onSuccess(
+          SceneToProjectDao
+            .acceptScenes(projectId, sceneIds)
+            .transact(xa)
+            .unsafeToFuture) { updatedOrder =>
           complete(StatusCodes.NoContent)
         }
       }
@@ -666,44 +820,72 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       (withPagination & sceneQueryParameters) { (page, sceneParams) =>
         complete {
-          SceneWithRelatedDao.listProjectScenes(projectId, page, sceneParams, user).transact(xa).unsafeToFuture
+          ProjectScenesDao
+            .listProjectScenes(projectId, page, sceneParams)
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
   }
 
-  /** List a project's scenes according to their manually defined ordering */
-  def listProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
+  def listProjectDatasources(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
-      withPagination { page =>
-        complete {
-          ProjectDao.listProjectSceneOrder(projectId, page, user).transact(xa).unsafeToFuture
-        }
+      complete {
+        ProjectDatasourcesDao
+          .listProjectDatasources(projectId)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
+
+  def moveProjectScene(projectId: UUID, from: Int, to: Int): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        onSuccess(
+          SceneToProjectDao
+            .moveSceneOrder(projectId, from, to)
+            .transact(xa)
+            .unsafeToFuture) { _ =>
+          complete(StatusCodes.NoContent)
+        }
+      }
+    }
 
   /** Set the manually defined z-ordering for scenes within a given project */
   def setProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[Seq[UUID]]) { sceneIds =>
         if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
           complete(StatusCodes.RequestEntityTooLarge)
         }
 
-        onSuccess(SceneToProjectDao.setManualOrder(projectId, sceneIds).transact(xa).unsafeToFuture) { updatedOrder =>
+        onSuccess(
+          SceneToProjectDao
+            .setManualOrder(projectId, sceneIds)
+            .transact(xa)
+            .unsafeToFuture) { updatedOrder =>
           complete(StatusCodes.NoContent)
         }
       }
@@ -711,27 +893,57 @@ trait ProjectRoutes extends Authentication
   }
 
   /** Get the color correction paramters for a project/scene pairing */
-  def getProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
-    } {
-      complete {
-        SceneToProjectDao.getColorCorrectParams(projectId, sceneId).transact(xa).unsafeToFuture
+  def getProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          SceneToProjectDao
+            .getColorCorrectParams(projectId, sceneId)
+            .transact(xa)
+            .unsafeToFuture
+        }
       }
     }
-  }
 
   /** Set color correction parameters for a project/scene pairing */
-  def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) = authenticate { user =>
+  def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[ColorCorrect.Params]) { ccParams =>
+          onSuccess(
+            SceneToProjectDao
+              .setColorCorrectParams(projectId, sceneId, ccParams)
+              .transact(xa)
+              .unsafeToFuture) { sceneToProject =>
+            complete(StatusCodes.NoContent)
+          }
+        }
+      }
+    }
+
+  def setProjectColorMode(projectId: UUID) = authenticate { user =>
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
-      entity(as[ColorCorrect.Params]) { ccParams =>
-        onSuccess(SceneToProjectDao.setColorCorrectParams(projectId, sceneId, ccParams).transact(xa).unsafeToFuture) { sceneToProject =>
+      entity(as[ProjectColorModeParams]) { colorBands =>
+        onSuccess(
+          SceneToProjectDao
+            .setProjectColorBands(projectId, colorBands)
+            .transact(xa)
+            .unsafeToFuture) { _ =>
           complete(StatusCodes.NoContent)
         }
       }
@@ -739,18 +951,24 @@ trait ProjectRoutes extends Authentication
   }
 
   /** Set color correction parameters for a list of scenes */
-  def setProjectScenesColorCorrectParams(projectId: UUID) = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
-    } {
-      entity(as[BatchParams]) { params =>
-        onSuccess(SceneToProjectDao.setColorCorrectParamsBatch(projectId, params).transact(xa).unsafeToFuture) { scenesToProject =>
-          complete(StatusCodes.NoContent)
+  def setProjectScenesColorCorrectParams(projectId: UUID) = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[BatchParams]) { params =>
+          onSuccess(
+            SceneToProjectDao
+              .setColorCorrectParamsBatch(projectId, params)
+              .transact(xa)
+              .unsafeToFuture) { scenesToProject =>
+            complete(StatusCodes.NoContent)
+          }
         }
       }
-    }
   }
 
   /** Get the information which defines mosaicing behavior for each scene in a given project */
@@ -758,11 +976,15 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       rejectEmptyResponse {
         complete {
-          SceneToProjectDao.getMosaicDefinition(projectId).transact(xa).unsafeToFuture
+          SceneToProjectDao
+            .getMosaicDefinition(projectId)
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
@@ -772,59 +994,47 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[NonEmptyList[UUID]]) { sceneIds =>
         if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
           complete(StatusCodes.RequestEntityTooLarge)
         }
-        val scenesAdded = ProjectDao.addScenesToProject(sceneIds, projectId, user, true)
-        val scenesToIngest = SceneWithRelatedDao.getScenesToIngest(projectId)
-        val x: ConnectionIO[List[Scene.WithRelated]] = for {
-          _ <- scenesAdded
-          scenes <- scenesToIngest
-        } yield {
-          logger.info(s"Kicking off ${scenes.size} scene ingests")
-          scenes.map(_.id).foreach(kickoffSceneIngest)
-          scenes
-        }
+        val scenesAdded =
+          ProjectDao.addScenesToProject(sceneIds, projectId, true)
 
-        complete{ x.transact(xa).unsafeToFuture }
+        complete { scenesAdded.transact(xa).unsafeToFuture }
       }
     }
   }
 
-  def addProjectScenesFromQueryParams(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
-    } {
-      entity(as[CombinedSceneQueryParams]) { combinedSceneQueryParams =>
-        onSuccess(ProjectDao.addScenesToProjectFromQuery(combinedSceneQueryParams, projectId, user).transact(xa).unsafeToFuture()) {
-          scenesAdded => {
-            val ingestsKickoff = SceneWithRelatedDao.getScenesToIngest(projectId) map {
-              toIngest: List[Scene.WithRelated] => {
-                logger.info(s"Kicking off ${toIngest.length} scene ingests from query parameter add")
-                toIngest foreach { scene: Scene.WithRelated => kickoffSceneIngest(scene.id) }
-              }
-            }
-            ingestsKickoff.transact(xa).unsafeRunAsync {
-              case Left(error) => sendError(error)
-              case _ => ()
-            }
+  def addProjectScenesFromQueryParams(projectId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao.query
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[CombinedSceneQueryParams]) { combinedSceneQueryParams =>
+          onSuccess(
+            ProjectDao
+              .addScenesToProjectFromQuery(combinedSceneQueryParams, projectId)
+              .transact(xa)
+              .unsafeToFuture()) { scenesAdded =>
             complete((StatusCodes.Created, scenesAdded))
           }
         }
       }
-    }
   }
 
   def updateProjectScenes(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[Seq[UUID]]) { sceneIds =>
         if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
@@ -834,7 +1044,10 @@ trait ProjectRoutes extends Authentication
         sceneIds.toList.toNel match {
           case Some(ids) => {
             complete {
-              ProjectDao.replaceScenesInProject(ids, projectId, user).transact(xa).unsafeToFuture()
+              ProjectDao
+                .replaceScenesInProject(ids, projectId)
+                .transact(xa)
+                .unsafeToFuture()
             }
           }
           case _ => complete(StatusCodes.BadRequest)
@@ -847,15 +1060,20 @@ trait ProjectRoutes extends Authentication
     authorizeAsync {
       ProjectDao.query
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa).unsafeToFuture
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[Seq[UUID]]) { sceneIds =>
         if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
           complete(StatusCodes.RequestEntityTooLarge)
         }
 
-        onSuccess(ProjectDao.deleteScenesFromProject(sceneIds.toList, projectId).transact(xa).unsafeToFuture()) {
-          _ => complete(StatusCodes.NoContent)
+        onSuccess(
+          ProjectDao
+            .deleteScenesFromProject(sceneIds.toList, projectId)
+            .transact(xa)
+            .unsafeToFuture()) { _ =>
+          complete(StatusCodes.NoContent)
         }
       }
     }
@@ -863,23 +1081,40 @@ trait ProjectRoutes extends Authentication
 
   def listProjectPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
+      ProjectDao.query
+        .ownedBy(user, projectId)
+        .exists
+        .transact(xa)
+        .unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao.listByObject(ObjectType.Project, projectId).transact(xa).unsafeToFuture
+        AccessControlRuleDao
+          .listByObject(ObjectType.Project, projectId)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
 
   def replaceProjectPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
+      ProjectDao.query
+        .ownedBy(user, projectId)
+        .exists
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[List[AccessControlRule.Create]]) { acrCreates =>
         complete {
-          AccessControlRuleDao.replaceWithResults(
-            user, ObjectType.Project, projectId, acrCreates
-          ).transact(xa).unsafeToFuture
+          AccessControlRuleDao
+            .replaceWithResults(
+              user,
+              ObjectType.Project,
+              projectId,
+              acrCreates
+            )
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
@@ -887,13 +1122,20 @@ trait ProjectRoutes extends Authentication
 
   def addProjectPermission(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
+      ProjectDao.query
+        .ownedBy(user, projectId)
+        .exists
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[AccessControlRule.Create]) { acrCreate =>
         complete {
-          AccessControlRuleDao.createWithResults(
-            acrCreate.toAccessControlRule(user, ObjectType.Project, projectId)
-          ).transact(xa).unsafeToFuture
+          AccessControlRuleDao
+            .createWithResults(
+              acrCreate.toAccessControlRule(user, ObjectType.Project, projectId)
+            )
+            .transact(xa)
+            .unsafeToFuture
         }
       }
     }
@@ -901,21 +1143,29 @@ trait ProjectRoutes extends Authentication
 
   def listUserProjectActions(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query.authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa).unsafeToFuture
+      ProjectDao.query
+        .authorized(user, ObjectType.Project, projectId, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
     } {
       user.isSuperuser match {
         case true => complete(List("*"))
         case false =>
           onSuccess(
-            ProjectDao.unsafeGetProjectById(projectId).transact(xa).unsafeToFuture
+            ProjectDao
+              .unsafeGetProjectById(projectId)
+              .transact(xa)
+              .unsafeToFuture
           ) { project =>
             project.owner == user.id match {
               case true => complete(List("*"))
-              case false => complete {
-                AccessControlRuleDao.listUserActions(user, ObjectType.Project, projectId)
-                  .transact(xa).unsafeToFuture
-              }
+              case false =>
+                complete {
+                  AccessControlRuleDao
+                    .listUserActions(user, ObjectType.Project, projectId)
+                    .transact(xa)
+                    .unsafeToFuture
+                }
             }
           }
       }
@@ -924,45 +1174,77 @@ trait ProjectRoutes extends Authentication
 
   def deleteProjectPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query.ownedBy(user, projectId).exists.transact(xa).unsafeToFuture
+      ProjectDao.query
+        .ownedBy(user, projectId)
+        .exists
+        .transact(xa)
+        .unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao.deleteByObject(ObjectType.Project, projectId).transact(xa).unsafeToFuture
+        AccessControlRuleDao
+          .deleteByObject(ObjectType.Project, projectId)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
 
-  def processShapefile(projectId: UUID, tempFile: ScalaFile, fileMetadata: FileInfo, propsO: Option[Map[String, String]] = None): Route = authenticate { user => {
-    val unzipped = tempFile.unzip()
-    val matches = unzipped.glob("*.shp")
-    val prj = unzipped.glob("*.prj")
-    (matches.hasNext, prj.hasNext) match {
-      case (false, false) =>
-        complete(StatusCodes.ClientError(400)("Bad Request", "No .shp and .prj Files Found in Archive"))
-      case (true, false) =>
-        complete(StatusCodes.ClientError(400)("Bad Request", "No .prj File Found in Archive"))
-      case (false, true) =>
-        complete(StatusCodes.ClientError(400)("Bad Request", "No .shp File Found in Archive"))
-      case (true, true) => {
-        propsO match {
-          case Some(props) => processShapefileImport(matches, prj, props, user, projectId)
-          case _ => complete(StatusCodes.OK, processShapefileUpload(matches))
+  def processShapefile(projectId: UUID,
+                       tempFile: ScalaFile,
+                       fileMetadata: FileInfo,
+                       propsO: Option[Map[String, String]] = None): Route =
+    authenticate { user =>
+      {
+        val unzipped = tempFile.unzip()
+        val matches = unzipped.glob("*.shp")
+        val prj = unzipped.glob("*.prj")
+        (matches.hasNext, prj.hasNext) match {
+          case (false, false) =>
+            complete(
+              StatusCodes.ClientError(400)(
+                "Bad Request",
+                "No .shp and .prj Files Found in Archive"))
+          case (true, false) =>
+            complete(
+              StatusCodes.ClientError(400)("Bad Request",
+                                           "No .prj File Found in Archive"))
+          case (false, true) =>
+            complete(
+              StatusCodes.ClientError(400)("Bad Request",
+                                           "No .shp File Found in Archive"))
+          case (true, true) => {
+            propsO match {
+              case Some(props) =>
+                processShapefileImport(matches, prj, props, user, projectId)
+              case _ =>
+                complete(StatusCodes.OK, processShapefileUpload(matches))
+            }
+          }
         }
       }
     }
-  }
-  }
 
-  def processShapefileImport(matches: Iterator[ScalaFile], prj: Iterator[ScalaFile], props: Map[String, String], user: User, projectId: UUID): Route = {
+  def processShapefileImport(matches: Iterator[ScalaFile],
+                             prj: Iterator[ScalaFile],
+                             props: Map[String, String],
+                             user: User,
+                             projectId: UUID): Route = {
     val shapefilePath = matches.next.toString
     val prjPath: String = prj.next.toString
     val projectionSource = scala.io.Source.fromFile(prjPath)
 
     val features = ShapeFileReader.readSimpleFeatures(shapefilePath)
-    val projection = try projectionSource.mkString finally projectionSource.close()
+    val projection = try projectionSource.mkString
+    finally projectionSource.close()
 
     val featureAccumulationResult =
-      Shapefile.accumulateFeatures(Annotation.fromSimpleFeatureWithProps)(List(), List(), features.toList, props, user.id, projection)
+      Shapefile.accumulateFeatures(Annotation.fromSimpleFeatureWithProps)(
+        List(),
+        List(),
+        features.toList,
+        props,
+        user.id,
+        projection)
     featureAccumulationResult match {
       case Left(errorIndices) =>
         complete(
@@ -975,18 +1257,19 @@ trait ProjectRoutes extends Authentication
         complete(
           StatusCodes.Created,
           (AnnotationDao.insertAnnotations(annotationCreates, projectId, user)
-             map {(anns: List[Annotation]) => anns map { _.toGeoJSONFeature }}
-          ).transact(xa).unsafeToFuture
+            map { (anns: List[Annotation]) =>
+              anns map { _.toGeoJSONFeature }
+            }).transact(xa).unsafeToFuture
         )
       }
     }
   }
 
-
   def processShapefileUpload(matches: Iterator[ScalaFile]): List[String] = {
     // shapefile should have same fields in the property table
     // so it is fine to use toList(0)
-    ShapeFileReader.readSimpleFeatures(matches.next.toString)
+    ShapeFileReader
+      .readSimpleFeatures(matches.next.toString)
       .toList(0)
       .toString
       .split("SimpleFeatureImpl")

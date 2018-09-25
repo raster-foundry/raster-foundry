@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M145 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(145)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(145)(
+    List(
+      sqlu"""
 ALTER TABLE aois ADD COLUMN shape UUID REFERENCES shapes(id);
 
 ALTER TABLE shapes ALTER geometry SET NOT NULL;
@@ -25,5 +26,5 @@ ALTER TABLE aois ALTER shape SET NOT NULL;
 ALTER TABLE aois DROP COLUMN area;
 
 """
-  ))
+    ))
 }

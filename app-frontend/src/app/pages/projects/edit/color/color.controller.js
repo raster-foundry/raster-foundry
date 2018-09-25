@@ -1,6 +1,6 @@
 export default class ProjectsEditColorController {
     constructor( // eslint-disable-line max-params
-        $scope, projectService, projectEditService, colorCorrectService
+        $scope, projectService, projectEditService, colorCorrectService, $log
     ) {
         'ngInject';
         this.$scope = $scope;
@@ -8,27 +8,30 @@ export default class ProjectsEditColorController {
         this.projectService = projectService;
         this.projectEditService = projectEditService;
         this.colorCorrectService = colorCorrectService;
+        this.$log = $log;
     }
 
     $onInit() {
         this.currentBands = null;
         this.correction = {};
 
-        this.projectEditService.fetchCurrentProject().then(() => {
-            this.$parent.getSceneList().then(() => {
-                let layer = this.$parent.sceneLayers.values().next();
-                if (layer && layer.value) {
-                    layer.value.getColorCorrection().then((correction) => {
-                        this.currentBands = {
-                            redBand: correction.redBand,
-                            greenBand: correction.greenBand,
-                            blueBand: correction.blueBand
-                        };
-                        this.correction = correction;
-                    });
-                }
-            });
-        });
+        this.$log.error('color.controller has not been updated to use paginated scenes yet.' +
+                        'Update this controller before use.');
+        // this.projectEditService.fetchCurrentProject().then(() => {
+            // this.$parent.getSceneList().then(() => {
+            //     let layer = this.$parent.sceneLayers.values().next();
+            //     if (layer && layer.value) {
+            //         layer.value.getColorCorrection().then((correction) => {
+            //             this.currentBands = {
+            //                 redBand: correction.redBand,
+            //                 greenBand: correction.greenBand,
+            //                 blueBand: correction.blueBand
+            //             };
+            //             this.correction = correction;
+            //         });
+            //     }
+            // });
+        // });
     }
 
     isActiveAutoColorCorrection(correctionType) {

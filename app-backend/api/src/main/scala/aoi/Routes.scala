@@ -20,8 +20,8 @@ import doobie.postgres.implicits._
 
 import java.util.UUID
 
-
-trait AoiRoutes extends Authentication
+trait AoiRoutes
+    extends Authentication
     with UserErrorHandler
     with QueryParametersCommon
     with PaginationDirectives
@@ -33,19 +33,22 @@ trait AoiRoutes extends Authentication
     pathEndOrSingleSlash {
       get { listAOIs }
     } ~
-    pathPrefix(JavaUUID) { aoiId =>
-      pathEndOrSingleSlash {
-        get { getAOI(aoiId) } ~
-        put { updateAOI(aoiId) } ~
-        delete { deleteAOI(aoiId) }
+      pathPrefix(JavaUUID) { aoiId =>
+        pathEndOrSingleSlash {
+          get { getAOI(aoiId) } ~
+            put { updateAOI(aoiId) } ~
+            delete { deleteAOI(aoiId) }
+        }
       }
-    }
   }
 
   def listAOIs: Route = authenticate { user =>
     (withPagination & aoiQueryParameters) { (page, aoiQueryParams) =>
       complete {
-        AoiDao.listAuthorizedAois(user, aoiQueryParams, page).transact(xa).unsafeToFuture
+        AoiDao
+          .listAuthorizedAois(user, aoiQueryParams, page)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
@@ -67,7 +70,7 @@ trait AoiRoutes extends Authentication
       AoiDao.authorize(id, user, ActionType.Edit).transact(xa).unsafeToFuture
     } {
       entity(as[AOI]) { aoi =>
-        onSuccess(AoiDao.updateAOI(aoi, id, user).transact(xa).unsafeToFuture) {
+        onSuccess(AoiDao.updateAOI(aoi, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -78,7 +81,7 @@ trait AoiRoutes extends Authentication
     authorizeAsync {
       AoiDao.authorize(id, user, ActionType.Edit).transact(xa).unsafeToFuture
     } {
-      onSuccess(AoiDao.deleteAOI(id, user).transact(xa).unsafeToFuture) {
+      onSuccess(AoiDao.deleteAOI(id).transact(xa).unsafeToFuture) {
         completeSingleOrNotFound
       }
     }

@@ -6,9 +6,9 @@ import java.util.UUID
 import doobie._, doobie.implicits._
 
 trait BatchMeta {
-  implicit val localDateMeta:Meta[LocalDate] =
+  implicit val localDateMeta: Meta[LocalDate] =
     Meta[String].xmap(LocalDate.parse, _.toString)
 
-  implicit val uuidMeta:Meta[UUID] =
+  implicit val uuidMeta: Meta[UUID] =
     Meta[String].xmap(UUID.fromString, _.toString)
 }

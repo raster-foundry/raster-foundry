@@ -1,3 +1,4 @@
+/* global HELPCONFIG */
 import angular from 'angular';
 import _ from 'lodash';
 
@@ -9,6 +10,7 @@ class UserProjectsController {
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
+        this.HELPCONFIG = HELPCONFIG;
     }
 
     $onInit() {

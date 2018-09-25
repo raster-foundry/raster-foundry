@@ -14,8 +14,8 @@ object ExportType {
 
   def fromString(s: String): ExportType = s.toUpperCase match {
     case "DROPBOX" => Dropbox
-    case "S3" => S3
-    case "LOCAL" => Local
+    case "S3"      => S3
+    case "LOCAL"   => Local
   }
 
   implicit val uploadTypeEncoder: Encoder[ExportType] =

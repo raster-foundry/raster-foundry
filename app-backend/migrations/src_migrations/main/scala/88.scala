@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M88 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(88)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(88)(
+    List(
+      sqlu"""
 
 INSERT INTO datasources (
     id,
@@ -40,5 +41,5 @@ SET name = 'Sentinel-2A'
 WHERE id = '4a50cb75-815d-4fe5-8bc1-144729ce5b42';
 
 """
-  ))
+    ))
 }

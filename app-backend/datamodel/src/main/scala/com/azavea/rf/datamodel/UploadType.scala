@@ -16,11 +16,11 @@ object UploadType {
   case object LandsatHistorical extends UploadType("LANDSAT_HISTORICAL")
 
   def fromString(s: String): UploadType = s.toUpperCase match {
-    case "DROPBOX" => Dropbox
-    case "S3" => S3
-    case "LOCAL" => Local
-    case "PLANET" => Planet
-    case "MODIS_USGS" => Modis
+    case "DROPBOX"            => Dropbox
+    case "S3"                 => S3
+    case "LOCAL"              => Local
+    case "PLANET"             => Planet
+    case "MODIS_USGS"         => Modis
     case "LANDSAT_HISTORICAL" => LandsatHistorical
   }
 

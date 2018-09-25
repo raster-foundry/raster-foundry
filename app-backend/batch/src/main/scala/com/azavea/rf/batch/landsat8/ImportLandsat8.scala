@@ -13,8 +13,15 @@ import jp.ne.opt.chronoscala.Imports._
 
 import scala.util.{Failure, Success, Try}
 
-@deprecated(message = "Use com.azavea.rf.batch.landsat8.airflow.ImportLandsat8C1 instead, as USGS changes LC8 storage rules: https://landsat.usgs.gov/landsat-collections", since = "https://github.com/azavea/raster-foundry/pull/1821")
-final case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.UTC), threshold: Int = 10)(implicit val xa: Transactor[IO]) extends Job {
+@deprecated(
+  message =
+    "Use com.azavea.rf.batch.landsat8.airflow.ImportLandsat8C1 instead, as USGS changes LC8 storage rules: https://landsat.usgs.gov/landsat-collections",
+  since = "https://github.com/azavea/raster-foundry/pull/1821"
+)
+final case class ImportLandsat8(
+    startDate: LocalDate = LocalDate.now(ZoneOffset.UTC),
+    threshold: Int = 10)(implicit val xa: Transactor[IO])
+    extends Job {
   val name = ImportLandsat8.name
 
   /** Get S3 client per each call */
@@ -28,7 +35,8 @@ final case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.
   }
 
   protected def getLandsatUrl(productId: String): String = {
-    val rootUrl = s"${landsat8Config.awsLandsatBase}${getLandsatPath(productId)}"
+    val rootUrl =
+      s"${landsat8Config.awsLandsatBase}${getLandsatPath(productId)}"
     logger.debug(s"Constructed Root URL: $rootUrl")
     rootUrl
   }
@@ -40,14 +48,20 @@ final case class ImportLandsat8(startDate: LocalDate = LocalDate.now(ZoneOffset.
     val path = s"${getLandsatPath(productId)}/$tifPath"
     logger.info(s"Getting object size for path: $path")
     Try(
-      s3Client.getObject(landsat8Config.bucketName, path).getObjectMetadata.getContentLength.toInt
+      s3Client
+        .getObject(landsat8Config.bucketName, path)
+        .getObjectMetadata
+        .getContentLength
+        .toInt
     ) match {
       case Success(size) => size
-      case Failure(_) => -1
+      case Failure(_)    => -1
     }
   }
 
-  protected def createThumbnails(sceneId: UUID, productId: String): List[Thumbnail.Identified] = {
+  protected def createThumbnails(
+      sceneId: UUID,
+      productId: String): List[Thumbnail.Identified] = {
     val path = getLandsatUrl(productId)
     val smallUrl = s"$path/${productId}_thumb_small.jpg"
     val largeUrl = s"$path/${productId}_thumb_large.jpg"
@@ -81,17 +95,23 @@ object ImportLandsat8 {
 
     /** Since 30/04/2017 old LC8 collection is not updated */
     val job = args.toList match {
-      case List(date, threshold) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) => ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
-      case List(date) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) => ImportLandsat8C1(LocalDate.parse(date))
-      case List(date, threshold) => throw new NotImplementedError(
-        "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
-      )
-      case List(date) => throw new NotImplementedError(
-        "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
-      )
-      case _ => throw new NotImplementedError(
-        "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
-      )
+      case List(date, threshold)
+          if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) =>
+        ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
+      case List(date) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) =>
+        ImportLandsat8C1(LocalDate.parse(date))
+      case List(date, threshold) =>
+        throw new NotImplementedError(
+          "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
+        )
+      case List(date) =>
+        throw new NotImplementedError(
+          "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
+        )
+      case _ =>
+        throw new NotImplementedError(
+          "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
+        )
     }
 
     job.run

@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M144 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(144)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(144)(
+    List(
+      sqlu"""
     CREATE TYPE organization_type AS ENUM ('COMMERCIAL', 'GOVERNMENT', 'NON-PROFIT', 'ACADEMIC', 'MILITARY', 'OTHER');
 
     ALTER TABLE users
@@ -22,5 +23,5 @@ object M144 {
         "profileUrl": ""
       }';
     """
-  ))
+    ))
 }

@@ -7,7 +7,6 @@ import doobie.postgres._, doobie.postgres.implicits._
 import doobie.util.invariant.InvalidObjectMapping
 import cats._, cats.data._, cats.effect.IO
 
-
 trait EnumMeta {
   implicit val annotationQualityMeta: Meta[AnnotationQuality] =
     pgEnumString("annotation_quality", AnnotationQuality.fromString, _.repr)

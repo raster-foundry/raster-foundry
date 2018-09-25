@@ -63,7 +63,7 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
 
           val updatePlatformWithPlatformAndAffectedRowsIO = insertPlatformWithUserIO flatMap {
             case (dbPlatform: Platform, dbUser: User) => {
-              PlatformDao.update(platformUpdate, dbPlatform.id, dbUser) flatMap {
+              PlatformDao.update(platformUpdate, dbPlatform.id) flatMap {
                 (affectedRows: Int) => {
                   PlatformDao.unsafeGetPlatformById(dbPlatform.id) map { (affectedRows, _) }
                 }
@@ -207,8 +207,8 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
             (dbUserAnother, dbProjectAnother) = userProjectAnother
             datasource <- unsafeGetRandomDatasource
             sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, datasource, sceneCreate), dbUser)
-            _ <- ProjectDao.addScenesToProject(List(sceneInsert.id), dbProject.id, dbUser)
-            _ <- ProjectDao.addScenesToProject(List(sceneInsert.id), dbProjectAnother.id, dbUserAnother)
+            _ <- ProjectDao.addScenesToProject(List(sceneInsert.id), dbProject.id)
+            _ <- ProjectDao.addScenesToProject(List(sceneInsert.id), dbProjectAnother.id)
             listOfUserIds = List(dbUser.id, dbUserAnother.id)
             listOfPUSP <- PlatformDao.getPlatUsersAndProjByConsumerAndSceneID(listOfUserIds, sceneInsert.id)
           } yield (dbUser, dbUserAnother, dbPlatform, dbProject, dbProjectAnother, listOfPUSP)
@@ -259,7 +259,7 @@ class PlatformDaoSpec extends FunSuite with Matchers with Checkers with DBTestCo
             (dbUser, dbOrg, dbPlatform, dbProject) = userOrgPlatProject
             datasource <- unsafeGetRandomDatasource
             sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser, datasource, sceneCreate), dbUser)
-            _ <- ProjectDao.addScenesToProject(List(sceneInsert.id), dbProject.id, dbUser)
+            _ <- ProjectDao.addScenesToProject(List(sceneInsert.id), dbProject.id)
             pUO <- PlatformDao.getPlatAndUsersBySceneOwnerId(sceneInsert.owner)
           } yield (dbUser, dbPlatform, dbProject, pUO)
 

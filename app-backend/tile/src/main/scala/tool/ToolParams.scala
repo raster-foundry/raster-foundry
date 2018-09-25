@@ -7,14 +7,18 @@ import geotrellis.raster.render.{ColorRamps, ColorRamp}
 import scala.util.Try
 
 case class ToolParams(
-  bands: Array[Int],
-  breaks: Array[Double],
-  ramp: ColorRamp
+    bands: Array[Int],
+    breaks: Array[Double],
+    ramp: ColorRamp
 )
 
 object ToolParams {
-  def toolParams(defaultColorRamp: Option[ColorRamp] = None, defaultBreaks: Option[Array[Double]] = None): Directive1[ToolParams] =
-    (bandsParam('bands) &  colorBreaksParam('breaks, defaultBreaks) & colorRampParam('ramp, defaultColorRamp)).as(ToolParams.apply _)
+  def toolParams(
+      defaultColorRamp: Option[ColorRamp] = None,
+      defaultBreaks: Option[Array[Double]] = None): Directive1[ToolParams] =
+    (bandsParam('bands) & colorBreaksParam('breaks, defaultBreaks) & colorRampParam(
+      'ramp,
+      defaultColorRamp)).as(ToolParams.apply _)
 
   def subsetBands: Directive1[Option[Array[Int]]] =
     parameters('bands.?).as { bands: Option[String] =>
@@ -27,7 +31,8 @@ object ToolParams {
     * @param name     Name of the URL parameters
     * @param default  Default ColorMap if parameter is not set or can't be parsed
     */
-  def colorRampParam(name: Symbol, default: Option[ColorRamp]): Directive1[ColorRamp] = {
+  def colorRampParam(name: Symbol,
+                     default: Option[ColorRamp]): Directive1[ColorRamp] = {
     def getColorRamp(str: String): Option[ColorRamp] = {
       val chunks = str.split(",").map(_.trim)
       if (chunks.length > 1)
@@ -42,16 +47,18 @@ object ToolParams {
             case "LightToDarkGreen" =>
               ColorRamps.LightToDarkGreen
             case _ => null
-              // TODO: List all options in ColorRamps
+            // TODO: List all options in ColorRamps
           }
         }
     }
 
     parameters(name.as[String].?).as { str: Option[String] =>
       (str.flatMap(getColorRamp), default) match {
-        case (Some(ramp), _) => ramp
+        case (Some(ramp), _)    => ramp
         case (None, Some(ramp)) => ramp
-        case (None, None) => throw new IllegalArgumentException(s"$name parameter could be parsed into a ColorRamp")
+        case (None, None) =>
+          throw new IllegalArgumentException(
+            s"$name parameter could be parsed into a ColorRamp")
       }
     }
   }
@@ -62,12 +69,18 @@ object ToolParams {
     * @param name     Name of the URL parameters
     * @param default  Default breaks if parameter is not set or can't be parsed
     */
-  def colorBreaksParam(name: Symbol, default: Option[Array[Double]] = None): Directive1[Array[Double]] =
+  def colorBreaksParam(
+      name: Symbol,
+      default: Option[Array[Double]] = None): Directive1[Array[Double]] =
     parameters(name.as[String].?).as { str: Option[String] =>
-      (str.flatMap(str => Try(str.split(",").map(_.trim.toDouble).sorted).toOption), default) match {
-        case (Some(ramp), _) => ramp
+      (str.flatMap(str =>
+         Try(str.split(",").map(_.trim.toDouble).sorted).toOption),
+       default) match {
+        case (Some(ramp), _)    => ramp
         case (None, Some(ramp)) => ramp
-        case (None, None) => throw new IllegalArgumentException(s"$name parameter could be parsed into a Array[Double]")
+        case (None, None) =>
+          throw new IllegalArgumentException(
+            s"$name parameter could be parsed into a Array[Double]")
       }
     }
 

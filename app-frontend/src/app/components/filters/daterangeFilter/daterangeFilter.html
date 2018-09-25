@@ -4,6 +4,18 @@
     <span ng-if="$ctrl.datefilterPreset">{{$ctrl.datefilterPreset}}</span>
     <span ng-if="!$ctrl.datefilterPreset">{{$ctrl.datefilter.start.calendar()}} to {{$ctrl.datefilter.end.calendar()}}</span>
   </div>
+  <span>
+    <rf-toggle value="$ctrl.usingUTC" on-change="$ctrl.onSetUTC(value)">
+      &nbsp;<strong>Use UTC dates</strong>
+      <span class="icon-help"
+            tooltips
+            tooltip-template="Scenes are filtered using the UTC definition of midnight 00:00 GMT. Uncheck this to use your local definition of midnight instead. This may result in you seeing scenes with different UTC dates depending on your timezone."
+            tooltop-size="small"
+            tooltip-class="rf-tooltip"
+            tooltip-side="left"
+      ></span>
+    </rf-toggle>
+  </span>
 </div>
 <div class="filter">
   <label></label>

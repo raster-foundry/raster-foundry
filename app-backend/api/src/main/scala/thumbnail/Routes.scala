@@ -15,14 +15,14 @@ import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import kamon.akka.http.KamonTraceDirectives
 
-
-trait ThumbnailRoutes extends Authentication
-  with ThumbnailQueryParameterDirective
-  with PaginationDirectives
-  with CommonHandlers
-  with UserErrorHandler
-  with Config
-  with KamonTraceDirectives {
+trait ThumbnailRoutes
+    extends Authentication
+    with ThumbnailQueryParameterDirective
+    with PaginationDirectives
+    with CommonHandlers
+    with UserErrorHandler
+    with Config
+    with KamonTraceDirectives {
 
   val xa: Transactor[IO]
 
@@ -36,39 +36,44 @@ trait ThumbnailRoutes extends Authentication
         }
       }
     } ~
-    pathPrefix(Segment) { thumbnailPath =>
-      pathEndOrSingleSlash {
-        get { getThumbnailImage(thumbnailPath) }
+      pathPrefix(Segment) { thumbnailPath =>
+        pathEndOrSingleSlash {
+          get { getThumbnailImage(thumbnailPath) }
+        }
       }
-    }
   }
 
   @SuppressWarnings(Array("AsInstanceOf"))
-  def getThumbnailImage(thumbnailPath: String): Route = authenticateWithParameter { _ =>
-    var uriString = s"http://s3.amazonaws.com/${thumbnailBucket}/${thumbnailPath}"
-    val uri = new URI(uriString)
-    val s3Object = S3.getObject(uri)
-    val metaData = S3.getObjectMetadata(s3Object)
-    val s3MediaType = MediaType.parse(metaData.getContentType()) match {
-      case Right(m) => m.asInstanceOf[MediaType.Binary]
-      case Left(_) => MediaTypes.`image/png`
+  def getThumbnailImage(thumbnailPath: String): Route =
+    authenticateWithParameter { _ =>
+      var uriString =
+        s"http://s3.amazonaws.com/${thumbnailBucket}/${thumbnailPath}"
+      val uri = new URI(uriString)
+      val s3Object = S3.getObject(uri)
+      val metaData = S3.getObjectMetadata(s3Object)
+      val s3MediaType = MediaType.parse(metaData.getContentType()) match {
+        case Right(m) => m.asInstanceOf[MediaType.Binary]
+        case Left(_)  => MediaTypes.`image/png`
+      }
+      complete(
+        HttpResponse(entity =
+          HttpEntity(ContentType(s3MediaType), S3.getObjectBytes(s3Object))))
     }
-    complete(HttpResponse(entity =
-      HttpEntity(ContentType(s3MediaType), S3.getObjectBytes(s3Object))
-    ))
-  }
 
   @SuppressWarnings(Array("AsInstanceOf"))
-  def getProxiedThumbnailImage(thumbnailUri: String): Route = authenticateWithParameter { _ =>
-    val bucketAndPrefix = S3.bucketAndPrefixFromURI(new URI(URLDecoder.decode(thumbnailUri)))
-    val s3Object = sentinelS3client.getObject(new GetObjectRequest(bucketAndPrefix._1, bucketAndPrefix._2, true))
-    val metaData = S3.getObjectMetadata(s3Object)
-    val s3MediaType = MediaType.parse(metaData.getContentType()) match {
-      case Right(m) => m.asInstanceOf[MediaType.Binary]
-      case Left(_) => MediaTypes.`image/png`
+  def getProxiedThumbnailImage(thumbnailUri: String): Route =
+    authenticateWithParameter { _ =>
+      val bucketAndPrefix =
+        S3.bucketAndPrefixFromURI(new URI(URLDecoder.decode(thumbnailUri)))
+      val s3Object = sentinelS3client.getObject(
+        new GetObjectRequest(bucketAndPrefix._1, bucketAndPrefix._2, true))
+      val metaData = S3.getObjectMetadata(s3Object)
+      val s3MediaType = MediaType.parse(metaData.getContentType()) match {
+        case Right(m) => m.asInstanceOf[MediaType.Binary]
+        case Left(_)  => MediaTypes.`image/png`
+      }
+      complete(
+        HttpResponse(entity =
+          HttpEntity(ContentType(s3MediaType), S3.getObjectBytes(s3Object))))
     }
-    complete(HttpResponse(entity =
-      HttpEntity(ContentType(s3MediaType), S3.getObjectBytes(s3Object))
-    ))
-  }
 }

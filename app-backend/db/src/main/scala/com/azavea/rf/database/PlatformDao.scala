@@ -1,30 +1,30 @@
 package com.azavea.rf.database
 
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel._
-import com.azavea.rf.database.filter.Filters._
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import doobie.util.transactor.Transactor
-import doobie.{Fragments, Fragment}
-import cats._, cats.data._, cats.effect.IO, cats.implicits._, cats.syntax._
-import io.circe._
-
-import com.lonelyplanet.akka.http.extensions.PageRequest
-
 import java.util.UUID
 
+import cats.free.Free
+import com.azavea.rf.database.filter.Filters._
+import com.azavea.rf.database.Implicits._
+import com.azavea.rf.datamodel._
+import com.lonelyplanet.akka.http.extensions.PageRequest
+import doobie.free.connection
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import doobie.{Fragment, Fragments, _}
+
 object PlatformDao extends Dao[Platform] {
+
   val tableName = "platforms"
 
-  val selectF = sql"""
+  val selectF: Fragment = sql"""
     SELECT
       id, name, public_settings, is_active, default_organization_id, private_settings
     FROM
   """ ++ tableF
 
-  def createF(platform: Platform) = fr"INSERT INTO" ++ tableF ++ fr"""(
+  def createF(platform: Platform): Fragment =
+    fr"INSERT INTO" ++ tableF ++ fr"""(
         id, name, public_settings , is_active, default_organization_id, private_settings
       )
       VALUES (
@@ -33,25 +33,36 @@ object PlatformDao extends Dao[Platform] {
       )
   """
 
-  def getPlatformById(platformId: UUID) =
+  def getPlatformById(platformId: UUID): ConnectionIO[Option[Platform]] =
     query.filter(platformId).selectOption
 
-  def unsafeGetPlatformById(platformId: UUID) =
+  def unsafeGetPlatformById(platformId: UUID): ConnectionIO[Platform] =
     query.filter(platformId).select
 
-  def listPlatforms(page: PageRequest) =
-    query.page(page)
+  def listPlatforms(
+      page: PageRequest): ConnectionIO[PaginatedResponse[Platform]] =
+    query.page(page, fr"")
 
-  def listMembers(platformId: UUID, page: PageRequest, searchParams: SearchQueryParameters, actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
+  def listMembers(
+      platformId: UUID,
+      page: PageRequest,
+      searchParams: SearchQueryParameters,
+      actingUser: User): ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
     for {
       isAdmin <- userIsAdmin(actingUser, platformId)
       userPageIO <- {
-        val userListPage = UserGroupRoleDao.listUsersByGroup(GroupType.Platform, platformId, page, searchParams, actingUser,
+        val userListPage = UserGroupRoleDao.listUsersByGroup(
+          GroupType.Platform,
+          platformId,
+          page,
+          searchParams,
+          actingUser,
           Some(fr"ORDER BY ugr.membership_status, ugr.group_role"))
-        isAdmin match {
-          case true => userListPage
-          case false => userListPage.map {
-            (usersPage: PaginatedResponse[User.WithGroupRole]) => {
+        if (isAdmin) {
+          userListPage
+        } else {
+          userListPage.map { usersPage: PaginatedResponse[User.WithGroupRole] =>
+            {
               usersPage.copy(results = usersPage.results map {
                 _.copy(email = "")
               })
@@ -62,7 +73,9 @@ object PlatformDao extends Dao[Platform] {
     } yield userPageIO
   }
 
-  def listPlatformUserTeams(user: User, searchParams: SearchQueryParameters): ConnectionIO[List[Team]] = {
+  def listPlatformUserTeams(
+      user: User,
+      searchParams: SearchQueryParameters): ConnectionIO[List[Team]] = {
     val teamsF: Option[Fragment] = Some(fr"""
       id IN (
         SELECT group_id
@@ -84,7 +97,8 @@ object PlatformDao extends Dao[Platform] {
         )
     """)
     TeamDao.query
-      .filter(Fragment.const("(") ++ Fragments.orOpt(teamsF, organizationsF) ++ Fragment.const(")"))
+      .filter(Fragment.const("(") ++ Fragments
+        .orOpt(teamsF, organizationsF) ++ Fragment.const(")"))
       .filter(searchQP(searchParams, List("name")))
       .filter(fr"is_active = true")
       .list(0, 5, fr"order by name")
@@ -92,12 +106,17 @@ object PlatformDao extends Dao[Platform] {
 
   def create(platform: Platform): ConnectionIO[Platform] = {
     createF(platform).update.withUniqueGeneratedKeys[Platform](
-      "id", "name", "public_settings", "is_active", "default_organization_id", "private_settings"
+      "id",
+      "name",
+      "public_settings",
+      "is_active",
+      "default_organization_id",
+      "private_settings"
     )
   }
 
-  def update(platform: Platform, id: UUID, user: User): ConnectionIO[Int] = {
-      (fr"UPDATE" ++ tableF ++ fr"""SET
+  def update(platform: Platform, id: UUID): ConnectionIO[Int] = {
+    (fr"UPDATE" ++ tableF ++ fr"""SET
         name = ${platform.name},
         public_settings = ${platform.publicSettings},
         default_organization_id = ${platform.defaultOrganizationId},
@@ -107,13 +126,13 @@ object PlatformDao extends Dao[Platform] {
   }
 
   def validatePath(platformId: UUID): ConnectionIO[Boolean] =
-  (fr"""
+    (fr"""
     SELECT count(p.id) > 0
     FROM """ ++ tableF ++ fr""" p
     WHERE p.id = ${platformId}
   """).query[Boolean].option.map(_.getOrElse(false))
 
-  def userIsMemberF(user: User, platformId: UUID ) = fr"""
+  def userIsMemberF(user: User, platformId: UUID): Fragment = fr"""
     SELECT (
         SELECT is_superuser
         FROM """ ++ UserDao.tableF ++ fr"""
@@ -130,10 +149,12 @@ object PlatformDao extends Dao[Platform] {
   """
 
   def userIsMember(user: User, platformId: UUID): ConnectionIO[Boolean] =
-    userIsMemberF(user, platformId).query[Boolean].option.map(_.getOrElse(false))
+    userIsMemberF(user, platformId)
+      .query[Boolean]
+      .option
+      .map(_.getOrElse(false))
 
-
-  def userIsAdminF(user: User, platformId: UUID) = fr"""
+  def userIsAdminF(user: User, platformId: UUID): Fragment = fr"""
       SELECT (
         SELECT is_superuser
         FROM """ ++ UserDao.tableF ++ fr"""
@@ -153,59 +174,80 @@ object PlatformDao extends Dao[Platform] {
       )
   """
 
-  def userIsAdmin(user: User, platformId: UUID) =
+  def userIsAdmin(user: User,
+                  platformId: UUID): Free[connection.ConnectionOp, Boolean] =
     userIsAdminF(user, platformId).query[Boolean].option.map(_.getOrElse(false))
 
   def delete(platformId: UUID): ConnectionIO[Int] =
     PlatformDao.query.filter(platformId).delete
 
-  def addUserRole(actingUser: User, subjectId: String, platformId: UUID, userRole: GroupRole): ConnectionIO[UserGroupRole] = {
+  def addUserRole(actingUser: User,
+                  subjectId: String,
+                  platformId: UUID,
+                  userRole: GroupRole): ConnectionIO[UserGroupRole] = {
     val userGroupRoleCreate = UserGroupRole.Create(
-      subjectId, GroupType.Platform, platformId, userRole
+      subjectId,
+      GroupType.Platform,
+      platformId,
+      userRole
     )
-    UserGroupRoleDao.create(userGroupRoleCreate.toUserGroupRole(actingUser, MembershipStatus.Approved))
+    UserGroupRoleDao.create(
+      userGroupRoleCreate.toUserGroupRole(actingUser,
+                                          MembershipStatus.Approved))
   }
 
-  def setUserRole(actingUser: User, subjectId: String, platformId: UUID, userRole: GroupRole):
-      ConnectionIO[List[UserGroupRole]] = {
+  def setUserRole(actingUser: User,
+                  subjectId: String,
+                  platformId: UUID,
+                  userRole: GroupRole): ConnectionIO[List[UserGroupRole]] = {
     deactivateUserRoles(actingUser, subjectId, platformId)
-      .flatMap(updatedRoles =>
-        addUserRole(actingUser, subjectId, platformId, userRole).map((ugr: UserGroupRole) => updatedRoles ++ List(ugr))
+      .flatMap(
+        updatedRoles =>
+          addUserRole(actingUser, subjectId, platformId, userRole)
+            .map((ugr: UserGroupRole) => updatedRoles ++ List(ugr))
       )
   }
 
-  def deactivateUserRoles(actingUser: User, subjectId: String, platformId: UUID): ConnectionIO[List[UserGroupRole]] = {
-    val userGroup = UserGroupRole.UserGroup(subjectId, GroupType.Platform, platformId)
+  def deactivateUserRoles(
+      actingUser: User,
+      subjectId: String,
+      platformId: UUID): ConnectionIO[List[UserGroupRole]] = {
+    val userGroup =
+      UserGroupRole.UserGroup(subjectId, GroupType.Platform, platformId)
     UserGroupRoleDao.deactivateUserGroupRoles(userGroup, actingUser)
   }
 
-  def activatePlatform(platformId: UUID) = {
+  def activatePlatform(platformId: UUID): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"""SET
        is_active = true,
        where id = ${platformId}
       """).update.run
   }
 
-  def deactivatePlatform(platformId: UUID) = {
+  def deactivatePlatform(platformId: UUID): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"""SET
        is_active = false,
        where id = ${platformId}
       """).update.run
   }
 
-  def organizationIsPublicOrg(organizationId: UUID, platformId: UUID): ConnectionIO[Boolean] = {
-    query.filter(platformId).selectOption map {
-      platformO => {
-        platformO.map( _.defaultOrganizationId == Some(organizationId)).getOrElse(false)
+  def organizationIsPublicOrg(organizationId: UUID,
+                              platformId: UUID): ConnectionIO[Boolean] = {
+    query.filter(platformId).selectOption map { platformO =>
+      {
+        platformO.exists(_.defaultOrganizationId.contains(organizationId))
       }
     }
   }
 
-  def getPlatUsersAndProjByConsumerAndSceneID(userIds: List[String], sceneId: UUID): ConnectionIO[List[PlatformWithUsersSceneProjects]] = {
-    val userIdsString = "(" ++ userIds.map("'" ++ _.toString() ++ "'" ).mkString(", ") ++ ")"
+  def getPlatUsersAndProjByConsumerAndSceneID(
+      userIds: List[String],
+      sceneId: UUID): ConnectionIO[List[PlatformWithUsersSceneProjects]] = {
+    val userIdsString = "(" ++ userIds
+      .map("'" ++ _ ++ "'")
+      .mkString(", ") ++ ")"
     val sceneIdString = "'" ++ sceneId.toString ++ "'"
-    Fragment.const(
-      s"""
+    Fragment.const(s"""
         SELECT plat.id AS plat_id, plat.name AS plat_name, u.id AS u_id, u.name AS u_name,
                plat.public_settings AS pub_settings, plat.private_settings AS pri_settings,
                u.email AS email, u.email_notifications AS email_notifications,
@@ -221,14 +263,13 @@ object PlatformDao extends Dao[Platform] {
           ON prj.id = stp.project_id
         WHERE stp.scene_id = ${sceneIdString}
           AND u.id IN ${userIdsString}
-      """
-    ).query[PlatformWithUsersSceneProjects].to[List]
+      """).query[PlatformWithUsersSceneProjects].to[List]
   }
 
-  def getPlatAndUsersBySceneOwnerId(sceneOwnerId: String): ConnectionIO[PlatformWithSceneOwner] = {
+  def getPlatAndUsersBySceneOwnerId(
+      sceneOwnerId: String): ConnectionIO[PlatformWithSceneOwner] = {
     val ownerId = "'" ++ sceneOwnerId ++ "'"
-    Fragment.const(
-      s"""
+    Fragment.const(s"""
         SELECT DISTINCT
           plat.id AS plat_id, plat.name AS plat_name, u.id AS u_id, u.name AS u_name,
           plat.public_settings AS pub_settings, plat.private_settings AS pri_settings,

@@ -1,33 +1,23 @@
 package com.azavea.rf.database
 
+import java.util.UUID
+
+import cats.implicits._
+import com.azavea.rf.datamodel._
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util._
-import com.azavea.rf.datamodel._
+import com.azavea.rf.tool.ast.MapAlgebraAST._
 import com.azavea.rf.tool.ast._
-import cats.implicits._
-import MapAlgebraAST._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
-import cats.implicits._
-import io.circe._
-import io.circe.syntax._
-import com.lonelyplanet.akka.http.extensions.PageRequest
-
-import scala.concurrent.Future
-import java.sql.Timestamp
-import java.util.{Date, UUID}
-import java.net.URI
 
 object ExportDao extends Dao[Export] {
 
   val tableName = "exports"
 
-  val selectF = fr"""
+  val selectF: Fragment = fr"""
     SELECT
       id, created_at, created_by, modified_at, modified_by, owner,
       project_id, export_status, export_type,
@@ -44,7 +34,7 @@ object ExportDao extends Dao[Export] {
   def insert(export: Export, user: User): ConnectionIO[Export] = {
     val insertF: Fragment = Fragment.const(s"INSERT INTO ${tableName} (")
     val ownerId = util.Ownership.checkOwner(user, Some(export.owner))
-    (insertF ++fr"""
+    (insertF ++ fr"""
         id, created_at, created_by, modified_at, modified_by, owner,
         project_id, export_status, export_type,
         visibility, toolrun_id, export_options
@@ -54,9 +44,18 @@ object ExportDao extends Dao[Export] {
         ${export.visibility}, ${export.toolRunId}, ${export.exportOptions}
       )
     """).update.withUniqueGeneratedKeys[Export](
-      "id", "created_at", "created_by", "modified_at", "modified_by", "owner",
-      "project_id", "export_status", "export_type",
-      "visibility", "toolrun_id", "export_options"
+      "id",
+      "created_at",
+      "created_by",
+      "modified_at",
+      "modified_by",
+      "owner",
+      "project_id",
+      "export_status",
+      "export_type",
+      "visibility",
+      "toolrun_id",
+      "export_options"
     )
   }
 
@@ -70,13 +69,19 @@ object ExportDao extends Dao[Export] {
     """).update.run
   }
 
-  def getWithStatus(id: UUID, user: User, status: ExportStatus): ConnectionIO[Option[Export]] = {
-    (selectF ++ fr"WHERE id = ${id} AND export_status = ${status}").query[Export].option
+  def getWithStatus(id: UUID,
+                    status: ExportStatus): ConnectionIO[Option[Export]] = {
+    (selectF ++ fr"WHERE id = ${id} AND export_status = ${status}")
+      .query[Export]
+      .option
   }
 
-  def getExportDefinition(export: Export, user: User): ConnectionIO[ExportDefinition] = {
+  def getExportDefinition(export: Export,
+                          user: User): ConnectionIO[ExportDefinition] = {
     val exportOptions = export.exportOptions.as[ExportOptions] match {
-      case Left(e) => throw new Exception(s"Did not find options for export ${export.id}: ${e}")
+      case Left(e) =>
+        throw new Exception(
+          s"Did not find options for export ${export.id}: ${e}")
       case Right(eo) => eo
     }
 
@@ -101,18 +106,24 @@ object ExportDao extends Dao[Export] {
       )
     }
 
-    val exportInput: Either[ConnectionIO[SimpleInput], ConnectionIO[ASTInput]] = (export.projectId, export.toolRunId) match {
-      // Exporting a tool-run
-      case (_, Some(toolRunId)) => Right(astInput(toolRunId, user))
-      // Exporting a project
-      case (Some(projectId), None) => Left(simpleInput(projectId, export, user, exportOptions))
-      case (None, None) => throw new Exception(s"Export Definitions ${export.id} does not have project or ast input defined")
-    }
+    val exportInput: Either[ConnectionIO[SimpleInput], ConnectionIO[ASTInput]] =
+      (export.projectId, export.toolRunId) match {
+        // Exporting a tool-run
+        case (_, Some(toolRunId)) => Right(astInput(toolRunId))
+        // Exporting a project
+        case (Some(projectId), None) =>
+          Left(simpleInput(projectId, exportOptions))
+        case (None, None) =>
+          throw new Exception(
+            s"Export Definitions ${export.id} does not have project or ast input defined")
+      }
 
     for {
       _ <- logger.info("Creating output definition").pure[ConnectionIO]
       outDef <- outputDefinition
-      _ <- logger.info(s"Created output definition for ${outDef.source}").pure[ConnectionIO]
+      _ <- logger
+        .info(s"Created output definition for ${outDef.source}")
+        .pure[ConnectionIO]
       _ <- logger.info("Creating input definition").pure[ConnectionIO]
       inputDefinition <- exportInput match {
         case Left(si) => {
@@ -136,34 +147,31 @@ object ExportDao extends Dao[Export] {
     * happen at the same time, and there's nothing illegal about this, we just
     * need to make sure to include all the ingest locations.
     */
-  private def astInput(
-    toolRunId: UUID,
-    user: User
-  ): ConnectionIO[ASTInput] ={
+  private def astInput(toolRunId: UUID): ConnectionIO[ASTInput] = {
     for {
       toolRun <- ToolRunDao.query.filter(toolRunId).select
       _ <- logger.debug("Got tool run").pure[ConnectionIO]
       ast <- {
         toolRun.executionParameters.as[MapAlgebraAST] match {
-          case Left(e) => throw e
+          case Left(e)              => throw e
           case Right(mapAlgebraAST) => stripMetadata(mapAlgebraAST)
         }
       }.pure[ConnectionIO]
       _ <- logger.debug("Fetched ast").pure[ConnectionIO]
-      sceneLocs <- sceneIngestLocs(ast, user)
+      sceneLocs <- sceneIngestLocs(ast)
       _ <- logger.debug("Found ingest locations for scenes").pure[ConnectionIO]
-      projectLocs <- projectIngestLocs(ast, user)
-      _ <- logger.debug("Found ingest locations for projects").pure[ConnectionIO]
+      projectLocs <- projectIngestLocs(ast)
+      _ <- logger
+        .debug("Found ingest locations for projects")
+        .pure[ConnectionIO]
     } yield {
       ASTInput(ast, sceneLocs, projectLocs)
     }
   }
 
   private def simpleInput(
-    projectId: UUID,
-    export: Export,
-    user: User,
-    exportOptions: ExportOptions
+      projectId: UUID,
+      exportOptions: ExportOptions
   ): ConnectionIO[SimpleInput] = {
 
     val exportLayerDefinitions = fr"""
@@ -188,7 +196,8 @@ object ExportDao extends Dao[Export] {
           eld
         }
       }
-      SimpleInput(modifiedLayerDefinitions.toArray, exportOptions.mask.map(_.geom))
+      SimpleInput(modifiedLayerDefinitions.toArray,
+                  exportOptions.mask.map(_.geom))
     }
   }
 
@@ -209,13 +218,12 @@ object ExportDao extends Dao[Export] {
     *       ingest location
     */
   private def sceneIngestLocs(
-    ast: MapAlgebraAST,
-    user: User
+      ast: MapAlgebraAST
   ): ConnectionIO[Map[UUID, String]] = {
 
     val sceneIds: Set[UUID] = ast.tileSources.flatMap {
       case s: SceneRaster => Some(s.sceneId)
-      case _ => None
+      case _              => None
     }
 
     logger.debug(s"Working with this many scenes: ${sceneIds.size}")
@@ -223,20 +231,23 @@ object ExportDao extends Dao[Export] {
     for {
       scenes <- sceneIds.toList.toNel match {
         case Some(ids) =>
-          SceneDao.query.filter(sceneIds.toList.toNel.map(ids => Fragments.in(fr"id", ids))).list
+          SceneDao.query
+            .filter(sceneIds.toList.toNel.map(ids => Fragments.in(fr"id", ids)))
+            .list
         case _ => List.empty[Scene].pure[ConnectionIO]
       }
     } yield {
-      scenes.flatMap{ scene =>
+      scenes.flatMap { scene =>
         scene.ingestLocation.map((scene.id, _))
       }.toMap
     }
   }
 
-  private def projectIngestLocs(ast: MapAlgebraAST, user: User): ConnectionIO[Map[UUID, List[(UUID, String)]]] = {
+  private def projectIngestLocs(
+      ast: MapAlgebraAST): ConnectionIO[Map[UUID, List[(UUID, String)]]] = {
     val projectIds: Set[UUID] = ast.tileSources.flatMap {
       case s: ProjectRaster => Some(s.projId)
-      case _ => None
+      case _                => None
     }
 
     logger.debug(s"Working with this many projects: ${projectIds.size}")
@@ -249,16 +260,21 @@ object ExportDao extends Dao[Export] {
       scenes
     ON
       stp.scene_id = scenes.id
-    """ ++ Fragments.whereAndOpt(projectIds.toList.toNel.map(ids => Fragments.in(fr"stp.project_id", ids))) ++ fr"GROUP BY stp.project_id"
+    """ ++ Fragments.whereAndOpt(
+      projectIds.toList.toNel.map(ids => Fragments.in(fr"stp.project_id", ids))
+    ) ++ fr"GROUP BY stp.project_id"
     val projectSceneLocs = for {
-      stps <- sceneProjectSelect.query[(UUID, List[UUID], List[String])].to[List]
+      stps <- sceneProjectSelect
+        .query[(UUID, List[UUID], List[String])]
+        .to[List]
     } yield {
-      stps.flatMap{ case (pID, sID, loc) =>
-        if (loc.isEmpty) {
-          None
-        } else {
-          Some((pID, sID zip loc))
-        }
+      stps.flatMap {
+        case (pID, sID, loc) =>
+          if (loc.isEmpty) {
+            None
+          } else {
+            Some((pID, sID zip loc))
+          }
       }.toMap
     }
     projectSceneLocs

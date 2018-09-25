@@ -1,3 +1,4 @@
+/* global _ */
 import typeToReducer from 'type-to-reducer';
 
 import {
@@ -35,7 +36,9 @@ export const projectReducer = typeToReducer({
                     options
                 );
                 mapWrapper.setLayer('draw', polygonLayer, false);
-                mapWrapper.map.panTo(polygonLayer.getCenter());
+                if (_.get(action, 'payload.meta.panTo')) {
+                    mapWrapper.map.panTo(polygonLayer.getCenter());
+                }
                 editHandler = new L.EditToolbar.Edit(mapWrapper.map, {
                     featureGroup: L.featureGroup([polygonLayer])
                 });
@@ -48,7 +51,9 @@ export const projectReducer = typeToReducer({
                     'draggable': true
                 });
                 mapWrapper.setLayer('draw', markerLayer, false);
-                mapWrapper.map.panTo([geometry.coordinates[1], geometry.coordinates[0]]);
+                if (_.get(action, 'payload.meta.panTo')) {
+                    mapWrapper.map.panTo([geometry.coordinates[1], geometry.coordinates[0]]);
+                }
             }
             return Object.assign({}, state, {
                 editHandler

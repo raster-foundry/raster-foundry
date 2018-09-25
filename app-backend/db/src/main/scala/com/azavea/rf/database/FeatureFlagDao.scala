@@ -8,7 +8,6 @@ import cats._, cats.data._, cats.effect.IO, cats.implicits._
 
 import java.util.UUID
 
-
 object FeatureFlagDao extends Dao[FeatureFlag] {
 
   val tableName = "feature_flags"
@@ -21,4 +20,3 @@ object FeatureFlagDao extends Dao[FeatureFlag] {
     """ ++ tableF
 
 }
-

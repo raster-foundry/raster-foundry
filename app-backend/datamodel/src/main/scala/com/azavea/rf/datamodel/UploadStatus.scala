@@ -18,15 +18,17 @@ object UploadStatus {
   case object Aborted extends UploadStatus("ABORTED")
 
   def fromString(s: String): UploadStatus = s.toUpperCase match {
-    case "CREATED" => Created
-    case "UPLOADING" => Uploading
-    case "UPLOADED" => Uploaded
-    case "QUEUED" => Queued
+    case "CREATED"    => Created
+    case "UPLOADING"  => Uploading
+    case "UPLOADED"   => Uploaded
+    case "QUEUED"     => Queued
     case "PROCESSING" => Processing
-    case "COMPLETE" => Complete
-    case "FAILED" => Failed
-    case "ABORTED" => Aborted
-    case _ => throw new IllegalArgumentException(s"Argument $s cannot be mapped to UploadStatus")
+    case "COMPLETE"   => Complete
+    case "FAILED"     => Failed
+    case "ABORTED"    => Aborted
+    case _ =>
+      throw new IllegalArgumentException(
+        s"Argument $s cannot be mapped to UploadStatus")
   }
 
   implicit val uploadStatusEncoder: Encoder[UploadStatus] =

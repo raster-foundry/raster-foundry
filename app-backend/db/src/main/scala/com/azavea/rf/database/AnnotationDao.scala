@@ -1,26 +1,21 @@
 package com.azavea.rf.database
 
+import java.util.UUID
+
+import cats.implicits._
 import com.azavea.rf.datamodel._
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util._
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-import geotrellis.vector.Geometry
-import com.lonelyplanet.akka.http.extensions.PageRequest
-
-import scala.concurrent.Future
-import java.sql.Timestamp
-import java.util.{Date, UUID}
-
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 object AnnotationDao extends Dao[Annotation] {
 
   val tableName = "annotations"
 
-  val selectF =
+  val selectF: Fragment =
     fr"""
       SELECT
         id, project_id, created_at, created_by, modified_at, modified_by, owner,
@@ -29,12 +24,13 @@ object AnnotationDao extends Dao[Annotation] {
       FROM
     """ ++ tableF
 
-  def unsafeGetAnnotationById(annotationId: UUID, user: User): ConnectionIO[Annotation] = {
+  def unsafeGetAnnotationById(annotationId: UUID): ConnectionIO[Annotation] = {
     query.filter(annotationId).select
   }
 
-  def listAnnotationsForProject(projectId: UUID, user: User): ConnectionIO[List[Annotation]] = {
-fr"""
+  def listAnnotationsForProject(
+      projectId: UUID): ConnectionIO[List[Annotation]] = {
+    fr"""
     SELECT
     id, project_id, created_at, created_by, modified_at, modified_by, owner,
     label, description, machine_generated, confidence,
@@ -43,13 +39,15 @@ fr"""
 """
     (selectF ++ Fragments.whereAndOpt(fr"project_id = ${projectId}".some))
       .query[Annotation]
-      .stream.compile.toList
+      .stream
+      .compile
+      .toList
   }
 
   def insertAnnotations(
-    annotations: List[Annotation.Create],
-    projectId: UUID,
-    user: User
+      annotations: List[Annotation.Create],
+      projectId: UUID,
+      user: User
   ): ConnectionIO[List[Annotation]] = {
     val updateSql = "INSERT INTO " ++ tableName ++ """
         (id, project_id, created_at, created_by, modified_at, modified_by, owner,
@@ -62,22 +60,51 @@ fr"""
       defaultAnnotationGroup <- project.defaultAnnotationGroup match {
         case Some(group) =>
           group.pure[ConnectionIO]
-        case _ => AnnotationGroupDao.createAnnotationGroup(
-          projectId, AnnotationGroup.Create("Annotations", None), user
-        ).map(_.id).flatMap(defaultId =>
-          ProjectDao.updateProject(project.copy(defaultAnnotationGroup = Some(defaultId)), project.id, user)
-            .map(_ => defaultId)
-        )
+        case _ =>
+          AnnotationGroupDao
+            .createAnnotationGroup(
+              projectId,
+              AnnotationGroup.Create("Annotations", None),
+              user
+            )
+            .map(_.id)
+            .flatMap(
+              defaultId =>
+                ProjectDao
+                  .updateProject(
+                    project.copy(defaultAnnotationGroup = Some(defaultId)),
+                    project.id,
+                    user)
+                  .map(_ => defaultId))
       }
-      insertedAnnotations <- Update[Annotation](updateSql).updateManyWithGeneratedKeys[Annotation](
-        "id", "project_id", "created_at", "created_by", "modified_at", "modified_by", "owner",
-        "label", "description", "machine_generated", "confidence",
-        "quality", "geometry", "annotation_group", "labeled_by", "verified_by"
-      )(annotations map { _.toAnnotation(projectId, user, defaultAnnotationGroup) }).compile.toList
+      insertedAnnotations <- Update[Annotation](updateSql)
+        .updateManyWithGeneratedKeys[Annotation](
+          "id",
+          "project_id",
+          "created_at",
+          "created_by",
+          "modified_at",
+          "modified_by",
+          "owner",
+          "label",
+          "description",
+          "machine_generated",
+          "confidence",
+          "quality",
+          "geometry",
+          "annotation_group",
+          "labeled_by",
+          "verified_by"
+        )(annotations map {
+          _.toAnnotation(projectId, user, defaultAnnotationGroup)
+        })
+        .compile
+        .toList
     } yield insertedAnnotations
   }
 
-  def updateAnnotation(annotation: Annotation, id: UUID, user: User): ConnectionIO[Int] = {
+  def updateAnnotation(annotation: Annotation,
+                       user: User): ConnectionIO[Int] = {
     (fr"UPDATE" ++ tableF ++ fr"SET" ++ fr"""
         modified_at = NOW(),
         modified_by = ${user.id},
@@ -95,10 +122,11 @@ fr"""
     """).update.run
   }
 
-  def listProjectLabels(projectId: UUID, user: User): ConnectionIO[List[String]] = {
-    (fr"SELECT DISTINCT ON (label) label FROM" ++ tableF ++ Fragments.whereAndOpt(
-      Some(fr"project_id = ${projectId}")
-    )).query[String].to[List]
+  def listProjectLabels(projectId: UUID): ConnectionIO[List[String]] = {
+    (fr"SELECT DISTINCT ON (label) label FROM" ++ tableF ++ Fragments
+      .whereAndOpt(
+        Some(fr"project_id = ${projectId}")
+      )).query[String].to[List]
   }
 
   def deleteByAnnotationGroup(annotationGroupId: UUID): ConnectionIO[Int] =

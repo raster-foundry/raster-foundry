@@ -20,9 +20,8 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
-
-trait ToolTagRoutes extends Authentication
+trait ToolTagRoutes
+    extends Authentication
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler {
@@ -31,49 +30,68 @@ trait ToolTagRoutes extends Authentication
   val toolTagRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get { listToolTags } ~
-      post { createToolTag }
+        post { createToolTag }
     } ~
-    pathPrefix(JavaUUID) { toolTagId =>
-      pathEndOrSingleSlash {
-        get { getToolTag(toolTagId) } ~
-        put { updateToolTag(toolTagId) } ~
-        delete { deleteToolTag(toolTagId) }
+      pathPrefix(JavaUUID) { toolTagId =>
+        pathEndOrSingleSlash {
+          get { getToolTag(toolTagId) } ~
+            put { updateToolTag(toolTagId) } ~
+            delete { deleteToolTag(toolTagId) }
+        }
       }
-    }
   }
 
   def listToolTags: Route = authenticate { user =>
     (withPagination) { (page) =>
       complete {
-        ToolTagDao.query.filter(user).page(page).transact(xa).unsafeToFuture()
+        ToolTagDao.query
+          .filter(user)
+          .page(page, fr"")
+          .transact(xa)
+          .unsafeToFuture()
       }
     }
   }
 
   def createToolTag: Route = authenticate { user =>
     entity(as[ToolTag.Create]) { newToolTag =>
-      onSuccess(ToolTagDao.insert(newToolTag, user).transact(xa).unsafeToFuture()) { toolTag =>
-        complete(StatusCodes.Created, toolTag)
+      onSuccess(
+        ToolTagDao.insert(newToolTag, user).transact(xa).unsafeToFuture()) {
+        toolTag =>
+          complete(StatusCodes.Created, toolTag)
       }
     }
   }
 
   def getToolTag(toolTagId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolTagDao.query.ownedBy(user, toolTagId).exists.transact(xa).unsafeToFuture
+      ToolTagDao.query
+        .ownedBy(user, toolTagId)
+        .exists
+        .transact(xa)
+        .unsafeToFuture
     } {
       rejectEmptyResponse {
-        complete(ToolTagDao.query.filter(toolTagId).select.transact(xa).unsafeToFuture)
+        complete(
+          ToolTagDao.query.filter(toolTagId).select.transact(xa).unsafeToFuture)
       }
     }
   }
 
   def updateToolTag(toolTagId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolTagDao.query.ownedBy(user, toolTagId).exists.transact(xa).unsafeToFuture
+      ToolTagDao.query
+        .ownedBy(user, toolTagId)
+        .exists
+        .transact(xa)
+        .unsafeToFuture
     } {
       entity(as[ToolTag]) { updatedToolTag =>
-        onSuccess(ToolTagDao.update(updatedToolTag, toolTagId, user).transact(xa).unsafeToFuture()) {
+        onSuccess(
+          ToolTagDao
+            .update(updatedToolTag, toolTagId, user)
+            .transact(xa)
+            .unsafeToFuture()) {
           completeSingleOrNotFound
         }
       }
@@ -82,9 +100,18 @@ trait ToolTagRoutes extends Authentication
 
   def deleteToolTag(toolTagId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolTagDao.query.ownedBy(user, toolTagId).exists.transact(xa).unsafeToFuture
+      ToolTagDao.query
+        .ownedBy(user, toolTagId)
+        .exists
+        .transact(xa)
+        .unsafeToFuture
     } {
-      onSuccess(ToolTagDao.query.filter(toolTagId).delete.transact(xa).unsafeToFuture()) {
+      onSuccess(
+        ToolTagDao.query
+          .filter(toolTagId)
+          .delete
+          .transact(xa)
+          .unsafeToFuture()) {
         completeSingleOrNotFound
       }
     }

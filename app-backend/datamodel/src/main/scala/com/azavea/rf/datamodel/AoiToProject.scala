@@ -1,11 +1,12 @@
 package com.azavea.rf.datamodel
 
-import java.util.UUID
 import java.sql.Timestamp
+import java.util.UUID
 
-// --- //
-
-/** Represents a many-to-many relationship between [[AOI]]s and
+/** Represents a many-to-many relatioØnship between [[AOI]]s and
   * [[Project]]s.
   */
-case class AoiToProject(aoiId: UUID, projectId: UUID, approvalRequired: Boolean, startTime: Timestamp)
+final case class AoiToProject(aoiId: UUID,
+                              projectId: UUID,
+                              approvalRequired: Boolean,
+                              startTime: Timestamp)

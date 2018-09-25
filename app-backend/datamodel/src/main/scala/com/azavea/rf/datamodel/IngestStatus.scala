@@ -16,28 +16,31 @@ sealed abstract class IngestStatus(val repr: String) {
     * that aren't queued or currently ingesting.
     */
   def toInt: Int = repr.toUpperCase match {
-    case "NOTINGESTED" => 1
-    case "TOBEINGESTED" => 2
-    case "INGESTING" => 3
-    case "INGESTED" => 4
-    case "FAILED" => 0
+    case "NOTINGESTED"  => 1
+    case "QUEUED"       => 2
+    case "TOBEINGESTED" => 3
+    case "INGESTING"    => 4
+    case "INGESTED"     => 5
+    case "FAILED"       => 0
   }
 }
 
 object IngestStatus {
   case object NotIngested extends IngestStatus("NOTINGESTED")
+  case object Queued extends IngestStatus("QUEUED")
   case object ToBeIngested extends IngestStatus("TOBEINGESTED")
   case object Ingesting extends IngestStatus("INGESTING")
   case object Ingested extends IngestStatus("INGESTED")
   case object Failed extends IngestStatus("FAILED")
 
   def fromString(s: String): IngestStatus = s.toUpperCase match {
-    case "NOTINGESTED" => NotIngested
+    case "NOTINGESTED"  => NotIngested
+    case "QUEUED"       => Queued
     case "TOBEINGESTED" => ToBeIngested
-    case "INGESTING" => Ingesting
-    case "INGESTED" => Ingested
-    case "FAILED" => Failed
-    case _ => throw new InvalidParameterException(s"Invalid IngestStatus: $s")
+    case "INGESTING"    => Ingesting
+    case "INGESTED"     => Ingested
+    case "FAILED"       => Failed
+    case _              => throw new InvalidParameterException(s"Invalid IngestStatus: $s")
   }
 
   implicit val ingestStatusEncoder: Encoder[IngestStatus] =

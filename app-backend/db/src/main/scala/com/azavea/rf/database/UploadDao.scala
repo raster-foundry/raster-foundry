@@ -14,7 +14,6 @@ import cats.implicits._
 import cats.syntax._
 import java.util.UUID
 
-
 object UploadDao extends Dao[Upload] {
 
   val tableName = "uploads"
@@ -49,9 +48,20 @@ object UploadDao extends Dao[Upload] {
          ${upload.source}
        )
       """.update.withUniqueGeneratedKeys[Upload](
-      "id", "created_at", "created_by", "modified_at", "modified_by",
-      "owner", "upload_status", "file_type", "upload_type",
-      "files", "datasource", "metadata", "visibility", "project_id",
+      "id",
+      "created_at",
+      "created_by",
+      "modified_at",
+      "modified_by",
+      "owner",
+      "upload_status",
+      "file_type",
+      "upload_type",
+      "files",
+      "datasource",
+      "metadata",
+      "visibility",
+      "project_id",
       "source"
     )
   }
@@ -80,11 +90,19 @@ object UploadDao extends Dao[Upload] {
       nAffected <- recordUpdateIO
       userPlatform <- UserDao.unsafeGetUserPlatform(oldUpload.owner)
       owner <- UserDao.unsafeGetUserById(oldUpload.owner)
-     } yield (oldUpload, newStatus, nAffected, userPlatform, owner)) flatMap {
-      case (oldUpload: Upload, newStatus: UploadStatus, nAffected: Int, platform: Platform, owner: User) => {
-        (oldUpload.uploadStatus, newStatus, platform.publicSettings.emailIngestNotification, owner.getEmail) match {
+    } yield (oldUpload, newStatus, nAffected, userPlatform, owner)) flatMap {
+      case (oldUpload: Upload,
+            newStatus: UploadStatus,
+            nAffected: Int,
+            platform: Platform,
+            owner: User) => {
+        (oldUpload.uploadStatus,
+         newStatus,
+         platform.publicSettings.emailIngestNotification,
+         owner.getEmail) match {
           case (_, _, _, "") | (_, _, false, _) => {
-            logger.info(s"Upload complete, but user ${owner.id} or platform ${platform.name} has not requested email notifications")
+            logger.info(
+              s"Upload complete, but user ${owner.id} or platform ${platform.name} has not requested email notifications")
             nAffected.pure[ConnectionIO]
           }
           case (UploadStatus.Processing, UploadStatus.Failed, true, s) => {
@@ -93,12 +111,14 @@ object UploadDao extends Dao[Upload] {
               nAffected.pure[ConnectionIO]
           }
           case (UploadStatus.Processing, UploadStatus.Complete, true, s) => {
-            logger.info(s"Notifying user ${owner.id} that their upload succeeded")
+            logger.info(
+              s"Notifying user ${owner.id} that their upload succeeded")
             UploadNotifier(platform.id, id, MessageType.UploadSucceeded).send *>
               nAffected.pure[ConnectionIO]
           }
           case _ => {
-            logger.info("No need to send notifications, status transition isn't something users care about")
+            logger.info(
+              "No need to send notifications, status transition isn't something users care about")
             nAffected.pure[ConnectionIO]
           }
         }

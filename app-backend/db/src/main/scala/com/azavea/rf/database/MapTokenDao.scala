@@ -16,7 +16,6 @@ import java.util.{Date, UUID}
 
 import scala.concurrent.Future
 
-
 object MapTokenDao extends Dao[MapToken] {
 
   val tableName = "map_tokens"
@@ -29,7 +28,8 @@ object MapTokenDao extends Dao[MapToken] {
       FROM
     """ ++ tableF
 
-  def insert(newMapToken: MapToken.Create, user: User): ConnectionIO[MapToken] = {
+  def insert(newMapToken: MapToken.Create,
+             user: User): ConnectionIO[MapToken] = {
     val id = UUID.randomUUID()
     val now = new Timestamp(new java.util.Date().getTime())
     val ownerId = util.Ownership.checkOwner(user, newMapToken.owner)
@@ -41,31 +41,50 @@ object MapTokenDao extends Dao[MapToken] {
           (${id}, ${now}, ${user.id}, ${now}, ${user.id}, ${ownerId}, ${newMapToken.name},
            ${newMapToken.project}, ${newMapToken.toolRun})
        """.update.withUniqueGeneratedKeys[MapToken](
-      "id", "created_at", "created_by", "modified_at", "modified_by",
-      "owner", "name", "project_id", "toolrun_id"
+      "id",
+      "created_at",
+      "created_by",
+      "modified_at",
+      "modified_by",
+      "owner",
+      "name",
+      "project_id",
+      "toolrun_id"
     )
   }
 
-  def authorize(mapTokenId: UUID, user: User, actionType: ActionType): ConnectionIO[Boolean] = for {
-    mapTokenO <- MapTokenDao.query.filter(mapTokenId).selectOption
-    projAuthed = (
-      mapTokenO flatMap { _.project } map {
-        (projectId: UUID) => {
-          ProjectDao.query.authorized(user, ObjectType.Project, projectId, actionType)
+  def authorize(mapTokenId: UUID,
+                user: User,
+                actionType: ActionType): ConnectionIO[Boolean] =
+    for {
+      mapTokenO <- MapTokenDao.query.filter(mapTokenId).selectOption
+      projAuthed = (
+        mapTokenO flatMap { _.project } map { (projectId: UUID) =>
+          {
+            ProjectDao.query.authorized(user,
+                                        ObjectType.Project,
+                                        projectId,
+                                        actionType)
+          }
         }
-      }
-    ).getOrElse(false.pure[ConnectionIO])
-    toolRunAuthed = (
-      mapTokenO flatMap { _.toolRun } map {
-        (toolRunId: UUID) => {
-          ToolRunDao.query.authorized(user, ObjectType.Analysis, toolRunId, actionType)
+      ).getOrElse(false.pure[ConnectionIO])
+      toolRunAuthed = (
+        mapTokenO flatMap { _.toolRun } map { (toolRunId: UUID) =>
+          {
+            ToolRunDao.query.authorized(user,
+                                        ObjectType.Analysis,
+                                        toolRunId,
+                                        actionType)
+          }
         }
-      }
-    ).getOrElse(false.pure[ConnectionIO])
-    authTuple <- (projAuthed, toolRunAuthed).tupled
-  } yield { authTuple._1 || authTuple._2 }
+      ).getOrElse(false.pure[ConnectionIO])
+      authTuple <- (projAuthed, toolRunAuthed).tupled
+    } yield { authTuple._1 || authTuple._2 }
 
-  def listAuthorizedMapTokens(user: User, mapTokenParams: CombinedMapTokenQueryParameters, page: PageRequest): ConnectionIO[PaginatedResponse[MapToken]] = {
+  def listAuthorizedMapTokens(
+      user: User,
+      mapTokenParams: CombinedMapTokenQueryParameters,
+      page: PageRequest): ConnectionIO[PaginatedResponse[MapToken]] = {
     val authedProjectsIO = ProjectDao.authQuery(user, ObjectType.Project).list
     val authedAnalysesIO = ToolRunDao.authQuery(user, ObjectType.Analysis).list
 
@@ -75,15 +94,17 @@ object MapTokenDao extends Dao[MapToken] {
       projIdsF: Option[Fragment] = (authedProjects map { _.id }).toNel map {
         Fragments.in(fr"project_id", _)
       }
-      analysesIdsF: Option[Fragment] = (authedAnalyses map { _.id  }).toNel map {
+      analysesIdsF: Option[Fragment] = (authedAnalyses map { _.id }).toNel map {
         Fragments.in(fr"toolrun_id", _)
       }
-      authFilterF: Fragment = Fragments.orOpt(projIdsF, analysesIdsF, Some(fr"owner = ${user.id}"))
+      authFilterF: Fragment = Fragments.orOpt(projIdsF,
+                                              analysesIdsF,
+                                              Some(fr"owner = ${user.id}"))
       mapTokens <- {
         MapTokenDao.query
           .filter(mapTokenParams)
           .filter(authFilterF)
-          .page(page)
+          .page(page, fr"")
       }
     } yield { mapTokens }
   }
@@ -105,11 +126,11 @@ object MapTokenDao extends Dao[MapToken] {
   }
 
   def create(
-    user: User,
-    owner: Option[String],
-    name: String,
-    project: Option[UUID],
-    toolRun: Option[UUID]
+      user: User,
+      owner: Option[String],
+      name: String,
+      project: Option[UUID],
+      toolRun: Option[UUID]
   ): ConnectionIO[MapToken] = {
     val id = UUID.randomUUID
     val now = new Timestamp((new java.util.Date()).getTime())
@@ -118,4 +139,3 @@ object MapTokenDao extends Dao[MapToken] {
     insert(newMapToken, user)
   }
 }
-

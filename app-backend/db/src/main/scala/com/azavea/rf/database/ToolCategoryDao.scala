@@ -1,7 +1,7 @@
 package com.azavea.rf.database
 
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{ ToolCategory, User }
+import com.azavea.rf.datamodel.{ToolCategory, User}
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
@@ -20,13 +20,19 @@ object ToolCategoryDao extends Dao[ToolCategory] {
     FROM
   """ ++ tableF
 
-  def insertToolCategory(category: ToolCategory, user: User): ConnectionIO[ToolCategory] = {
+  def insertToolCategory(category: ToolCategory,
+                         user: User): ConnectionIO[ToolCategory] = {
     (fr"""INSERT INTO tool_categories
         (slug_label, created_at, created_by, modified_at, modified_by, category)
         VALUES
         (${category.slugLabel}, NOW(), ${user.id}, NOW(), ${user.id}, ${category.category})
     """).update.withUniqueGeneratedKeys[ToolCategory](
-      "slug_label", "created_at", "modified_at", "created_by", "modified_by", "category"
+      "slug_label",
+      "created_at",
+      "modified_at",
+      "created_by",
+      "modified_by",
+      "category"
     )
   }
 
@@ -34,4 +40,3 @@ object ToolCategoryDao extends Dao[ToolCategory] {
     this.query.filter(fr"slug_label = $slug AND created_by = ${user.id}").delete
   }
 }
-

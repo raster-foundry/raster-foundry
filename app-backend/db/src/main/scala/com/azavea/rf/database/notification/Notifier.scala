@@ -10,4 +10,3 @@ trait Notifier {
   def userFinder(messageType: MessageType): ConnectionIO[List[User]]
   def send: ConnectionIO[Either[Throwable, Unit]]
 }
-

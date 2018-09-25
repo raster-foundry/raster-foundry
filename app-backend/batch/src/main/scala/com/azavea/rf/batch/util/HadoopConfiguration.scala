@@ -8,8 +8,8 @@ import org.apache.hadoop.conf.Configuration
   * Serializable [[Configuration]] wrapper
   * @param conf Hadoop Configuration
   */
-
-final case class HadoopConfiguration(var conf: Configuration) extends Serializable {
+final case class HadoopConfiguration(var conf: Configuration)
+    extends Serializable {
   def get: Configuration = conf
 
   private def writeObject(out: ObjectOutputStream): Unit =

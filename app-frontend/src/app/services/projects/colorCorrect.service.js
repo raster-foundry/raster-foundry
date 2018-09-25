@@ -165,7 +165,6 @@ export default (app) => {
                 { items: bulkData }
             ).$promise;
         }
-
     }
 
     app.service('colorCorrectService', ColorCorrectService);

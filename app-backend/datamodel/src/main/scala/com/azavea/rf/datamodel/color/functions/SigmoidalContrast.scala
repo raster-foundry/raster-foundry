@@ -8,6 +8,7 @@ import org.apache.commons.math3.util.FastMath
   * We can consider these functions usages in case of real performance issues caused by a long sigmoidal contrast.
   */
 object SigmoidalContrast {
+
   /**
     * @param  cellType   The cell type on which the transform is to act
     * @param  alpha      The center around-which the stretch is performed (given as a fraction)
@@ -15,7 +16,8 @@ object SigmoidalContrast {
     * @param  intensity  The raw intensity value to be mapped-from
     * @return            The intensity value produced by the sigmoidal contrast transformation
     */
-  def transform(cellType: CellType, alpha: Double, beta: Double)(intensity: Double): Double = {
+  def transform(cellType: CellType, alpha: Double, beta: Double)(
+      intensity: Double): Double = {
     val bits = cellType.bits
 
     val u = cellType match {
@@ -29,8 +31,10 @@ object SigmoidalContrast {
         (intensity + (1 << (bits - 1))) / ((1 << bits) - 1)
     }
 
-    val numer = 1 / (1 + FastMath.exp(beta * (alpha - u))) - 1 / (1 + FastMath.exp(beta))
-    val denom = 1 / (1 + FastMath.exp(beta * (alpha - 1))) - 1 / (1 + FastMath.exp(beta * alpha))
+    val numer = 1 / (1 + FastMath.exp(beta * (alpha - u))) - 1 / (1 + FastMath
+      .exp(beta))
+    val denom = 1 / (1 + FastMath.exp(beta * (alpha - 1))) - 1 / (1 + FastMath
+      .exp(beta * alpha))
     val gu = math.max(0.0, math.min(1.0, numer / denom))
 
     cellType match {
@@ -59,11 +63,12 @@ object SigmoidalContrast {
     * @return        The output tile
     */
   def apply(tile: Tile, alpha: Double, beta: Double): Tile = {
-    val localTransform = transform(tile.cellType, alpha, beta)_
+    val localTransform = transform(tile.cellType, alpha, beta) _
     tile.mapDouble(localTransform)
   }
 
-  def localTransform(cellType: CellType, alpha: Double, beta: Double) = transform(cellType, alpha, beta)_
+  def localTransform(cellType: CellType, alpha: Double, beta: Double) =
+    transform(cellType, alpha, beta) _
 
   /**
     * Given a [[MultibandTile]] object and the parameters alpha and
@@ -79,7 +84,7 @@ object SigmoidalContrast {
     * @return        The output tile
     */
   def apply(tile: MultibandTile, alpha: Double, beta: Double): MultibandTile = {
-    val localTransform = transform(tile.cellType, alpha, beta)_
+    val localTransform = transform(tile.cellType, alpha, beta) _
     MultibandTile(tile.bands.map(_.mapDouble(localTransform)))
   }
 }

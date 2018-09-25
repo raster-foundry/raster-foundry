@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M143 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(143)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(143)(
+    List(
+      sqlu"""
       ALTER TABLE annotation_groups
       DROP CONSTRAINT annotation_groups_project_id_fkey,
       ADD CONSTRAINT annotation_groups_project_id_fkey FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE;
@@ -42,5 +43,5 @@ object M143 {
       DROP CONSTRAINT teams_organization_id_fkey,
       ADD CONSTRAINT teams_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE;
     """
-  ))
+    ))
 }

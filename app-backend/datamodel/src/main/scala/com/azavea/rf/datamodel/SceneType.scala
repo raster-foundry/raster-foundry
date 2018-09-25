@@ -14,8 +14,8 @@ object SceneType {
   def fromString(s: String): SceneType = {
     s.toUpperCase match {
       case "AVRO" => SceneType.Avro
-      case "COG" => SceneType.COG
-      case _ => throw new Exception(s"Invalid SceneType string: $s")
+      case "COG"  => SceneType.COG
+      case _      => throw new Exception(s"Invalid SceneType string: $s")
     }
   }
 

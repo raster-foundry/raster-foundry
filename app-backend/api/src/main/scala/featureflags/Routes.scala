@@ -18,14 +18,14 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
 /**
   * Routes for FeatureFlag overrides
   */
-trait FeatureFlagRoutes extends Authentication
-  with PaginationDirectives
-  with CommonHandlers
-  with UserErrorHandler {
+trait FeatureFlagRoutes
+    extends Authentication
+    with PaginationDirectives
+    with CommonHandlers
+    with UserErrorHandler {
 
   val xa: Transactor[IO]
 

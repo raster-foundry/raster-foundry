@@ -1,20 +1,17 @@
 package com.azavea.rf.database.notification.templates
 
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
-
-import doobie.ConnectionIO
-
 import java.util.UUID
 
-case class UploadFailure(
-  uploadId: UUID,
-  platformId: UUID
-) {
+import com.azavea.rf.database._
+import com.azavea.rf.datamodel._
+import doobie.ConnectionIO
+
+final case class UploadFailure(uploadId: UUID, platformId: UUID) {
   def build: ConnectionIO[EmailData] = {
     for {
       platform <- PlatformDao.unsafeGetPlatformById(platformId)
-      platformHost = platform.publicSettings.platformHost.getOrElse("app.rasterfoundry.com")
+      platformHost = platform.publicSettings.platformHost
+        .getOrElse("app.rasterfoundry.com")
       upload <- UploadDao.unsafeGetUploadById(uploadId)
       owner <- UserDao.unsafeGetUserById(upload.owner)
     } yield {

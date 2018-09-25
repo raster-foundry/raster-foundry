@@ -1,0 +1,36 @@
+#!/bin/bash
+set -e
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
+
+function usage() {
+
+    echo -n \
+"Usage: $(basename "$0")
+
+Format changed scala files. Compares against develop, so results may be unpredictable
+if your branch isn't rebased on develop / if your develop isn't up-to-date.
+"
+}
+
+function format_changed_scala_files() {
+    files=$(git diff --name-only develop | grep '\.scala')
+    echo "${files}"
+    # scalafmt needs a space-separated list of files, so we can't quote
+    # shellcheck disable=SC2086
+    scalafmt ${files}
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+        format_changed_scala_files
+    fi
+    exit
+fi
+

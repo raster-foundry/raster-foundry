@@ -1,36 +1,29 @@
 package com.azavea.rf.database
 
+import java.sql.Timestamp
+import java.util.UUID
+
+import cats.implicits._
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
-
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-import io.circe._
-
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-
-import java.sql.Timestamp
-import java.util.{Date, UUID}
-
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 object ImageDao extends Dao[Image] {
 
   val tableName = "images"
 
-  val selectF = sql"""
+  val selectF: Fragment = sql"""
     SELECT
       id, created_at, modified_at, created_by, modified_by,
       owner, raw_data_bytes, visibility, filename, sourceuri, scene,
       image_metadata, resolution_meters, metadata_files FROM """ ++ tableF
 
-  def create(
-    image: Image,
-    user: User
-  ): ConnectionIO[Image] = {
+  def create(image: Image, user: User): ConnectionIO[Image] = {
     val id = UUID.randomUUID
-    val now = new Timestamp((new java.util.Date()).getTime())
+    val now = new Timestamp(new java.util.Date().getTime)
     val ownerId = util.Ownership.checkOwner(user, Some(image.owner))
     (fr"INSERT INTO" ++ tableF ++ fr"""
         (id, created_at, modified_at, created_by, modified_by,
@@ -42,16 +35,31 @@ object ImageDao extends Dao[Image] {
          ${image.filename}, ${image.sourceUri}, ${image.scene},
          ${image.imageMetadata}, ${image.resolutionMeters}, ${image.metadataFiles})
     """).update.withUniqueGeneratedKeys[Image](
-        "id", "created_at", "modified_at", "created_by", "modified_by",
-        "owner", "raw_data_bytes", "visibility", "filename", "sourceuri", "scene",
-        "image_metadata", "resolution_meters", "metadata_files"
+      "id",
+      "created_at",
+      "modified_at",
+      "created_by",
+      "modified_by",
+      "owner",
+      "raw_data_bytes",
+      "visibility",
+      "filename",
+      "sourceuri",
+      "scene",
+      "image_metadata",
+      "resolution_meters",
+      "metadata_files"
     )
   }
 
-  def insertImage(imageBanded: Image.Banded, user: User): ConnectionIO[Option[Image.WithRelated]] = {
+  def insertImage(imageBanded: Image.Banded,
+                  user: User): ConnectionIO[Option[Image.WithRelated]] = {
     val image = imageBanded.toImage(user)
-    val bands: List[Band] = (imageBanded.bands map { band: Band.Create => band.toBand(image.id) }).toList
-    val imageWithRelated = Image.WithRelated.fromRecords(bands.map((image, _))).headOption
+    val bands: List[Band] = (imageBanded.bands map { band: Band.Create =>
+      band.toBand(image.id)
+    }).toList
+    val imageWithRelated =
+      Image.WithRelated.fromRecords(bands.map((image, _))).headOption
     val transaction = for {
       _ <- this.create(image, user)
       _ <- BandDao.createMany(bands)
@@ -73,7 +81,7 @@ object ImageDao extends Dao[Image] {
 
   //update images
   def updateImage(image: Image, id: UUID, user: User): ConnectionIO[Int] = {
-    val now = new Timestamp((new java.util.Date()).getTime())
+    val now = new Timestamp(new java.util.Date().getTime)
     val updateQuery: Fragment =
       fr"UPDATE" ++ this.tableF ++ fr"SET" ++
         fr"""
@@ -91,19 +99,15 @@ object ImageDao extends Dao[Image] {
     updateQuery.update.run
   }
 
-  // delete images
-  def deleteImage(id: UUID, user: User): ConnectionIO[Int] = {
+  def deleteImage(id: UUID): ConnectionIO[Int] = {
     this.query.filter(id).delete
   }
 
-  // get image
   def getImage(id: UUID): ConnectionIO[Option[Image]] = {
     this.query.filter(id).selectOption
   }
 
-  // get an image assuming it's present
   def unsafeGetImage(id: UUID): ConnectionIO[Image] = {
     this.query.filter(id).select
   }
 }
-

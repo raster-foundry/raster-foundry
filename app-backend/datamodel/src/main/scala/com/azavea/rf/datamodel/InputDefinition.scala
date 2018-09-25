@@ -16,10 +16,8 @@ import io.circe.syntax._
   * [[MultibandTile]] exports which can perform colour correction and do simple
   * cropping
   */
-case class InputDefinition(
-  resolution: Int,
-  style: Either[SimpleInput, ASTInput]
-)
+final case class InputDefinition(resolution: Int,
+                                 style: Either[SimpleInput, ASTInput])
 
 object InputDefinition {
   implicit val dec: Decoder[InputDefinition] = Decoder.instance(
@@ -33,26 +31,25 @@ object InputDefinition {
       ).mapN(InputDefinition.apply)
   )
 
-  implicit val eitherEnc: Encoder[Either[SimpleInput, ASTInput]] = new Encoder[Either[SimpleInput, ASTInput]] {
-    final def apply(a: Either[SimpleInput, ASTInput]): Json = a match {
-      case Left(l) => l.asJson
-      case Right(r) => r.asJson
+  implicit val eitherEnc: Encoder[Either[SimpleInput, ASTInput]] =
+    new Encoder[Either[SimpleInput, ASTInput]] {
+      def apply(a: Either[SimpleInput, ASTInput]): Json = a match {
+        case Left(l)  => l.asJson
+        case Right(r) => r.asJson
+      }
     }
-  }
 
   implicit val enc: Encoder[InputDefinition] =
     Encoder.forProduct2("resolution", "style")(u => (u.resolution, u.style))
 }
 
 @JsonCodec
-case class SimpleInput(layers: Array[ExportLayerDefinition], mask: Option[MultiPolygon])
+final case class SimpleInput(layers: Array[ExportLayerDefinition],
+                             mask: Option[MultiPolygon])
 
 @JsonCodec
-case class ASTInput(
-  ast: MapAlgebraAST,
-  /* Ingest locations of "singleton" scenes that appear in the EvalParams */
-  ingestLocs: Map[UUID, String],
-  /* Ingest locations (and implicit ordering) of each scene in each project */
-  projectScenes: Map[UUID, List[(UUID, String)]]
-)
-
+final case class ASTInput(ast: MapAlgebraAST,
+                          /* Ingest locations of "singleton" scenes that appear in the EvalParams */
+                          ingestLocs: Map[UUID, String],
+                          /* Ingest locations (and implicit ordering) of each scene in each project */
+                          projectScenes: Map[UUID, List[(UUID, String)]])
