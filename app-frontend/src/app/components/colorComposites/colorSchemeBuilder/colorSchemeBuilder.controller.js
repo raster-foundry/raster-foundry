@@ -32,7 +32,12 @@ export default class ColorSchemeBuilderController {
         ) {
             this.buffer = [ ...incomingSchemeAsArray ];
             // coerce color scheme to map, since it's initially set as an array in the dropdown
-            this.onChange({ value: this.getBufferAsObject() });
+            this.onChange({
+                value: {
+                    schemeColors: this.getBufferAsObject(),
+                    masked: this.maskedValues || []
+                }
+            });
         }
         this.isValid = true;
     }
@@ -50,6 +55,7 @@ export default class ColorSchemeBuilderController {
                 color: this.colorScheme[b].length === 7 ?
                     this.colorScheme[b] :
                     this.colorScheme[b].substr(0, this.colorScheme[b].length - 2),
+                masked: this.colorScheme[b].masked,
                 errors: []
             };
         });
@@ -78,7 +84,12 @@ export default class ColorSchemeBuilderController {
     }
 
     applyBuffer() {
-        this.onChange({ value: this.getBufferAsObject() });
+        this.onChange({
+            value: {
+                schemeColors: this.getBufferAsObject(),
+                masked: this.maskedValues
+            }
+        });
     }
 
     onColorRemove(index) {
@@ -148,6 +159,15 @@ export default class ColorSchemeBuilderController {
         return {
             'background': color
         };
+    }
+
+    toggleMaskColor(ind, colorBreak) {
+        if (!isFinite(this.maskedValues) || !this.maskedValues.includes(colorBreak)) {
+            this.maskedValues = [...(this.maskedValues || []), colorBreak];
+        } else {
+            this.maskedValues = _.filter(this.maskedValues, (x) => x !== colorBreak);
+        }
+        this.onBufferChanged();
     }
 
 }

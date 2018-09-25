@@ -104,6 +104,8 @@ export default class ProjectsEditColormode {
         this.projectBuffer.singleBandOptions =
             Object.assign({}, this.defaultSingleBandOptions, this.projectBuffer.singleBandOptions);
 
+        this.maskedValues = this.projectBuffer.singleBandOptions.extraNoData;
+
         this.activeColorSchemeType =
             this.colorSchemeService.defaultColorSchemeTypes.find(
                 t => t.value === this.projectBuffer.singleBandOptions.dataType
@@ -126,25 +128,14 @@ export default class ProjectsEditColormode {
             dataType: scheme.type,
             colorScheme: this.colorSchemeService.colorStopsToProportionalArray(scheme.colors),
             colorBins: 0,
-            legendOrientation: 'left'
+            legendOrientation: 'left',
+            extraNoData: []
         };
     }
 
     hasNoBands(datasource) {
         return !datasource.bands.length;
     }
-
-    // fetchAllColorCorrections(layers) {
-    //     let requests = layers.map(({id, layer}) => {
-    //         return layer.getColorCorrection().then(result => ({id: id, correction: result}));
-    //     });
-    //     this.correctionsRequest = this.$q.all(requests).then(results => {
-    //         this.corrections = results;
-    //         delete this.correctionsRequest;
-    //     }, error => {
-    //         this.$log.error('Error fetching color corrections', error);
-    //     });
-    // }
 
     getSerializedSingleBandOptions() {
         return angular.toJson(this.projectBuffer.singleBandOptions);
@@ -191,12 +182,13 @@ export default class ProjectsEditColormode {
         return this.colorSchemeService.colorsToDiscreteScheme(this.activeColorScheme.colors);
     }
 
-    setActiveColorScheme(scheme, save = false) {
+    setActiveColorScheme(scheme, masked, save = false) {
         if (!this.isLoading) {
             this.activeColorScheme = scheme;
             this.activeColorSchemeType =
                 this.colorSchemeService.defaultColorSchemeTypes.find(t => t.value === scheme.type);
             this.projectBuffer.singleBandOptions.dataType = scheme.type;
+            this.projectBuffer.singleBandOptions.extraNoData = _.filter(masked, isFinite);
             if (scheme.type !== 'CATEGORICAL') {
                 this.projectBuffer.singleBandOptions.colorScheme =
                     this.colorSchemeService.colorStopsToProportionalArray(
@@ -246,7 +238,7 @@ export default class ProjectsEditColormode {
         });
     }
 
-    onSchemeColorsChange(schemeColors) {
+    onSchemeColorsChange({schemeColors, masked}) {
         const breaks = Object.keys(schemeColors);
         const colors = breaks.map(b => schemeColors[b]);
 
@@ -256,7 +248,7 @@ export default class ProjectsEditColormode {
             colors: colors,
             breaks: breaks,
             type: 'CATEGORICAL'
-        }, true);
+        }, masked, true);
     }
 
     getActiveColorMode() {
