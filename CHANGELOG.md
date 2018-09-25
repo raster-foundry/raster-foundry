@@ -1,5 +1,41 @@
 # Change Log
 
+## [1.11.0](https://github.com/raster-foundry/raster-foundry/tree/1.11.0) (2018-09-25)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.10.0...1.11.0)
+
+**Merged pull requests:**
+
+- Add backsplash generated files to app-migrations .dockerignore [\#4094](https://github.com/raster-foundry/raster-foundry/pull/4094)
+- Add database query logging [\#4083](https://github.com/raster-foundry/raster-foundry/pull/4083)
+- Add error message for failed s3 and cog uploads [\#4082](https://github.com/raster-foundry/raster-foundry/pull/4082)
+- Fix misnamed function call in project list controller [\#4081](https://github.com/raster-foundry/raster-foundry/pull/4081)
+- Paginate and fix AOI scene approval [\#4078](https://github.com/raster-foundry/raster-foundry/pull/4078)
+- Staging frontend fix: project list, AOI datasource filter, links [\#4076](https://github.com/raster-foundry/raster-foundry/pull/4076)
+- Fix band selection for singleband mosaics [\#4075](https://github.com/raster-foundry/raster-foundry/pull/4075)
+- Only send email on third batch attempt or successful export [\#4054](https://github.com/raster-foundry/raster-foundry/pull/4054)
+- Remove default argument from page with ordering method [\#4049](https://github.com/raster-foundry/raster-foundry/pull/4049)
+- Add cron task to clean up Coursier cache [\#4048](https://github.com/raster-foundry/raster-foundry/pull/4048)
+- Fix users/me endpoint [\#4047](https://github.com/raster-foundry/raster-foundry/pull/4047)
+- Use COG image if available for scene download [\#4044](https://github.com/raster-foundry/raster-foundry/pull/4044)
+- Route lab tile requests through single band mosaic [\#4041](https://github.com/raster-foundry/raster-foundry/pull/4041)
+- Add download button to scene list [\#4035](https://github.com/raster-foundry/raster-foundry/pull/4035)
+- Use AutoHigherResolution [\#4033](https://github.com/raster-foundry/raster-foundry/pull/4033)
+- Add more statuses  for ingest control flow [\#4032](https://github.com/raster-foundry/raster-foundry/pull/4032)
+- Add scalafmt helper script [\#4030](https://github.com/raster-foundry/raster-foundry/pull/4030)
+- Allow user to search scenes using UTC or local time on frontend [\#4028](https://github.com/raster-foundry/raster-foundry/pull/4028)
+- Paginate and streamline project scene views [\#4014](https://github.com/raster-foundry/raster-foundry/pull/4014)
+- Add tab completion to rf cli [\#4012](https://github.com/raster-foundry/raster-foundry/pull/4012)
+- Remove auth0 configuration that isn't used [\#4011](https://github.com/raster-foundry/raster-foundry/pull/4011)
+- Make pan-to new annotations optional [\#4007](https://github.com/raster-foundry/raster-foundry/pull/4007)
+- Filter actual list of AOI scenes to approve instead of response object [\#4006](https://github.com/raster-foundry/raster-foundry/pull/4006)
+- Remove Scapegoat errors for data model project [\#3988](https://github.com/raster-foundry/raster-foundry/pull/3988)
+- \[Front End\] Cleans up front-end map controls [\#3985](https://github.com/raster-foundry/raster-foundry/pull/3985)
+- Add support for scalafmt via set plugin [\#3959](https://github.com/raster-foundry/raster-foundry/pull/3959)
+- Remove Scapegoat errors for database project [\#3949](https://github.com/raster-foundry/raster-foundry/pull/3949)
+- Use logger for ZOOMANDEXTENTS message [\#3935](https://github.com/raster-foundry/raster-foundry/pull/3935)
+- \[Anchor\] Backsplash [\#3850](https://github.com/raster-foundry/raster-foundry/pull/3850)
+
 ## [1.10.0](https://github.com/raster-foundry/raster-foundry/tree/1.10.0) (2018-08-31)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.9.0...1.10.0)
@@ -15,7 +51,6 @@
 - Simplify output processing options for project export frontend [\#3982](https://github.com/raster-foundry/raster-foundry/pull/3982)
 - Refactor import notification copy [\#3980](https://github.com/raster-foundry/raster-foundry/pull/3980)
 - Make planet uploads COGs [\#3979](https://github.com/raster-foundry/raster-foundry/pull/3979)
-- Try Auto\(x\) instead of AutoHigherResolution for tile rendering and COG thumbnails [\#3969](https://github.com/raster-foundry/raster-foundry/pull/3969)
 - Simplify adding scenes to projects UI [\#3955](https://github.com/raster-foundry/raster-foundry/pull/3955)
 - Choose AutoHigherResolution for OverviewStrategy [\#3952](https://github.com/raster-foundry/raster-foundry/pull/3952)
 - Replace deprecated \(a |@| b\) with \(a, b\).mapN [\#3947](https://github.com/raster-foundry/raster-foundry/pull/3947)
@@ -60,6 +95,7 @@
 - Force re-fetching datasources after adding scenes to project [\#3804](https://github.com/raster-foundry/raster-foundry/pull/3804)
 - Send emails after uploads succeed or fail [\#3789](https://github.com/raster-foundry/raster-foundry/pull/3789)
 - Only mosaic scenes if they contribute to the visible layer [\#3783](https://github.com/raster-foundry/raster-foundry/pull/3783)
+- Try Auto\(x\) instead of AutoHigherResolution for tile rendering and COG thumbnails [\#3969](https://github.com/raster-foundry/raster-foundry/pull/3969)
 
 ## [1.9.0](https://github.com/raster-foundry/raster-foundry/tree/1.9.0) (2018-08-13)
 
