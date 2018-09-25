@@ -104,6 +104,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       polygonOption.map(polygon =>
         fr"ST_Intersects(scenes.tile_footprint, ${polygon})"),
       Some(fr"scenes_to_projects.project_id = ${projectId}"),
+      Some(fr"scenes_to_projects.accepted = true"),
       Some(fr"scenes.ingest_status = 'INGESTED'")
     )
     val select = fr"""
