@@ -162,7 +162,7 @@ export default class ColorSchemeBuilderController {
     }
 
     toggleMaskColor(ind, colorBreak) {
-        if (!isFinite(this.maskedValues) || !this.maskedValues.includes(colorBreak)) {
+        if (!this.maskedValues || !this.maskedValues.includes(colorBreak)) {
             this.maskedValues = [...(this.maskedValues || []), colorBreak];
         } else {
             this.maskedValues = _.filter(this.maskedValues, (x) => x !== colorBreak);
