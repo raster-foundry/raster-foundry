@@ -72,7 +72,7 @@
         repository="$ctrl.repository"
         ng-mouseover="$ctrl.setHoveredScene(scene)"
         ng-mouseleave="$ctrl.removeHoveredScene()"
-        ng-repeat="scene in $ctrl.$parent.sceneList track by $ctrl.sceneOrderTracker(scene)"
+        ng-repeat="scene in $ctrl.$parent.sceneList"
         on-move="$ctrl.onMove(scene, position)"
         ng-if="$ctrl.$parent.pagination.count > 30"
         ui-tree-node>
@@ -90,7 +90,7 @@
         repository="$ctrl.repository"
         ng-mouseover="$ctrl.setHoveredScene(scene)"
         ng-mouseleave="$ctrl.removeHoveredScene()"
-        ng-repeat="scene in $ctrl.$parent.sceneList track by $ctrl.sceneOrderTracker(scene)"
+        ng-repeat="scene in $ctrl.$parent.sceneList"
         on-move="$ctrl.onMove(scene, position)"
         ng-if="$ctrl.$parent.pagination.count <= 30"
         ui-tree-node>
