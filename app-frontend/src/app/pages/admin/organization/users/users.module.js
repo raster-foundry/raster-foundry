@@ -81,7 +81,17 @@ class OrganizationUsersController {
                         this.buildOptions();
                     });
                 }
-            });
+            }, {
+                label: 'Remove user',
+                callback: () => {
+                    this.organizationService.removeUser(
+                        this.platform.id, this.organization.id, user.id
+                    ).then(() => {
+                        return this.fetchPage();
+                    });
+                }
+            }
+            );
         }
         return options;
         /* eslint-enable */
