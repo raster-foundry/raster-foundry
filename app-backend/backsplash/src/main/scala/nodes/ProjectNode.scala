@@ -16,7 +16,7 @@ import cats.data.{OptionT, EitherT}
 import cats.effect.{IO, Timer}
 import cats.implicits._
 import doobie.implicits._
-import geotrellis.raster.{CellSize, CellType, Raster}
+import geotrellis.raster.{CellSize, CellType, Raster, GridBounds}
 import geotrellis.raster.render.{ColorMap, ColorRamps}
 import geotrellis.server.core.cog.CogUtils
 import geotrellis.server.core.maml.CogNode
@@ -238,12 +238,25 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         (mbTileE map {
           (mbTile: MultibandTile) =>
             {
+
               val innerCol = col % resolutionDiff
               val innerRow = row % resolutionDiff
               val cols = mbTile.cols / resolutionDiff
               val rows = mbTile.rows / resolutionDiff
-              val corrected =
+              val corrected = if (zoom > sourceZoom) {
+                md.colorCorrections.colorCorrect(
+                  mbTile.crop(
+                    GridBounds(
+                      colMin = innerCol * cols,
+                      rowMin = innerRow * rows,
+                      colMax = (innerCol + 1) * cols - 1,
+                      rowMax = (innerRow + 1) * rows - 1
+                    )
+                  ),
+                  histograms.toSeq)
+              } else {
                 md.colorCorrections.colorCorrect(mbTile, histograms.toSeq)
+              }
               Raster(corrected.color, extent).resample(256, 256)
             }
         }).toOption
@@ -334,7 +347,24 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
                 .lift(singleBandOptions.band) getOrElse {
                 throw new Exception("No histogram found for band")
               }
-              colorSingleBandTile(tile, extent, histogram, singleBandOptions)
+              if (zoom > sourceZoom) {
+                colorSingleBandTile(
+                  tile.crop(
+                    GridBounds(
+                      colMin = innerCol * cols,
+                      rowMin = innerRow * rows,
+                      colMax = (innerCol + 1) * cols - 1,
+                      rowMax = (innerRow + 1) * rows - 1
+                    )
+                  ),
+                  extent,
+                  histogram,
+                  singleBandOptions
+                )
+              } else {
+                colorSingleBandTile(tile, extent, histogram, singleBandOptions)
+              }
+
             }
         }).toOption
       }
