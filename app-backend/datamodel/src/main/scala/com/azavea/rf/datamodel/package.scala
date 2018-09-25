@@ -23,8 +23,8 @@ trait JsonCodecs {
     Encoder.encodeString.contramap[Timestamp](_.toInstant.toString)
   implicit val timestampDecoder: Decoder[Timestamp] =
     Decoder.decodeString.emap { str =>
-      val timeStr:String = str.contains("+") match {
-        case true => str.dropRight(6) ++ "Z"
+      val timeStr: String = str.contains("+") match {
+        case true  => str.dropRight(6) ++ "Z"
         case false => str
       }
       Either
