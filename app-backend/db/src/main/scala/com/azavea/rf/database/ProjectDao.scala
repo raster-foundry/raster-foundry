@@ -186,6 +186,7 @@ object ProjectDao extends Dao[Project] with AWSBatch {
                   (scenes.ingest_status = ${IngestStatus.Ingesting.toString} :: ingest_status AND
                    (now() - modified_at) > '1 day'::interval))
            AND sub.scene_id = scenes.id
+           AND scene_type = 'AVRO' :: scene_type
          """
     updateStatusQuery.update.run
   }
