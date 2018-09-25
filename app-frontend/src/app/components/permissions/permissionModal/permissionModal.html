@@ -12,7 +12,19 @@
     ></span>
   </div>
   <div class="modal-body" ng-if="$ctrl.objectOwnerId === $ctrl.userId">
-    <form class="add-permission-form" ng-if="!$ctrl.loading">
+    <form class="add-permission-form" ng-if="!$ctrl.loading && (!$ctrl.authService.user.personalInfo.firstName || !$ctrl.authService.user.personalInfo.lastName)">
+      <div class="permission-message">
+        <div>
+            <p>
+              Sharing requires you to have entered your name so that we can let other users know who is sharing with them.
+            </p>
+            <p>
+              <a ui-sref="user.settings.profile({userId: 'me'})">Update your personal information</a>
+            </p>
+        </div>
+      </div>
+    </form>
+    <form class="add-permission-form" ng-if="!$ctrl.loading && $ctrl.authService.user.personalInfo.firstName && $ctrl.authService.user.personalInfo.lastName">
       <label>Grant permissions to</label>
       <div class="permission-all-in-one">
         <select class="form-control subject-select"
@@ -27,7 +39,7 @@
                ng-if="$ctrl.currentTargetSubject === 'PLATFORM'"
                placeholder="Grant VIEW permissions to everyone"
                disabled
-        ></input>
+        />
         <rf-search on-search="$ctrl.onOrganizationSearch(value)"
                    placeholder="Search for {{$ctrl.getCurrentSubject().plural}}"
                    auto-focus="true"

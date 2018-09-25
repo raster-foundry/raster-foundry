@@ -129,6 +129,15 @@ final case class User(id: String,
       case (true, false)                => email
       case (false, false)               => ""
     }
+
+  def withScrubbedName: User = {
+    val scrubbedName =
+      s"${personalInfo.firstName} ${personalInfo.lastName}" match {
+        case " "      => "Anonymous"
+        case fullName => fullName
+      }
+    this.copy(name = scrubbedName)
+  }
 }
 
 object User {
