@@ -1,0 +1,52 @@
+/*
+ * High contrast theme
+ */
+
+/* * * *
+ * Settings
+ * * * */
+@import
+ "settings/colors",
+ "settings/fonts",
+ "settings/variables";
+
+/* * * *
+ * All required imports
+ * * * */
+@import "../../imports";
+
+
+/* * * *
+ * Default theme overrides
+ * * * */
+@import
+  "base/typography";
+
+@import
+  "layout/aside",
+  "layout/container",
+  "layout/navbar",
+  "layout/sidebar";
+
+@import
+  "components/annotation",
+  "components/button",
+  "components/drawToolbar",
+  "components/dropdown",
+  "components/filter",
+  "components/form",
+  "components/lab-node",
+  "components/login",
+  "components/map-controls",
+  "components/nav",
+  "components/pagination",
+  "components/panel",
+  "components/project-item",
+  "components/slider",
+  "components/modal",
+  "components/shapefilter";
+
+@import
+  "pages/dashboard",
+  "pages/login",
+  "pages/admin";

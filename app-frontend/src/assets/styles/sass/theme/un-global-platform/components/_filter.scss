@@ -1,0 +1,46 @@
+.filter-group {
+  border-color: $border-color-default;
+}
+
+.filter {
+
+  label {
+    color: $text-base;
+    font-weight: 700;
+  }
+
+  .selectize-control {
+    width: 100%;
+    margin-right: 0 !important;
+  }
+
+  .selectize-input {
+    border: 1px solid $border-color-default;
+    background-color: $white;
+    color: $text-base;
+  }
+
+  .searchselect-clear {
+    background: none;
+    border-color: transparent;
+    width: 3rem;
+    height: 3rem;
+    line-height: 3rem;
+    text-align: center;
+    position: absolute;
+    bottom: -8px;
+    right: 0;
+    margin: 0;
+    display: none;
+  }
+
+  .selectize-dropdown {
+    background-color: $white;
+    color: $text-base;
+
+    .active {
+      background-color: $off-white;
+      color: $brand-primary
+    }
+  }
+}

@@ -1,0 +1,177 @@
+.btn {
+  padding: 1.1rem 2rem;
+  font-size: 1.4rem;
+  background: $off-white;
+  color: $text-base;
+  font-weight: 700;
+
+  &:hover, &.hover,
+  &:active, &.active, {
+    color: $text-base;
+    background-color: darken($off-white, 5%);
+  }
+}
+
+/*
+ * Solid bg-color buttons
+ */
+.btn-default {
+  background: $off-white;
+  color: $text-base;
+  border-color: $shade-light;
+
+  @include button-states($off-white, $text-base);
+}
+
+.btn-light {
+  background: $shade-light;
+  color: $text-base;
+  border-color: darken($shade-light, 5%);
+
+  @include button-states($shade-light, $text-base);
+}
+
+/*
+ * Makes three main buttons
+ * types look the identical
+ */
+ .btn-primary {
+  background: $brand-primary;
+  border-color: darken($brand-primary, 5%);
+  color: #fff;
+
+  @include button-states($brand-primary, $white);
+}
+
+.btn-secondary {
+  background: $brand-primary;
+  color: #fff;
+  border-color: darken($brand-primary, 5%);
+
+  @include button-states($brand-primary, $white);
+}
+
+.btn-tertiary {
+  background: $brand-primary;
+  color: #fff;
+  border-color: darken($brand-primary, 5%);
+
+  @include button-states($brand-primary, $white);
+}
+
+.btn-warning {
+  background: $warning;
+  border-color: darken($warning, 5%);
+  color: #fff;
+
+  @include button-states($warning, $white);
+}
+
+.btn-danger {
+  background: $danger;
+  border-color: darken($danger, 5%);
+  color: #fff;
+
+  @include button-states($danger, $white);
+}
+
+.btn-transparent {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+/*
+ * Ghost buttons, borders only
+ */
+.btn-ghost {
+  background-color: transparent;
+
+  @include ghost-button-states(transparent, $white);
+}
+
+.btn-ghost-white {
+  background-color: transparent;
+  color: #fff;
+  border-color: #fff;
+
+  @include ghost-button-states(#fff, #fff);
+}
+
+.btn-ghost-default {
+  background-color: transparent;
+  color: $text-base;
+  border-color: darken($off-white, 5%);
+
+  @include ghost-button-states($off-white, $text-base);
+}
+
+.btn-ghost-danger {
+  background-color: transparent;
+  color: $danger;
+  border-color: $danger;
+
+  @include ghost-button-states($danger, darken($danger, 20%));
+}
+
+/*
+ * Button Sizes
+ */
+.btn-text {
+  font-size: 1em;
+  padding: 0.3em 0.3em;
+}
+
+.btn-tiny {
+  font-size: 1.2rem;
+  padding: .7rem .5rem;
+}
+
+.btn-small {
+  font-size: 1.3rem;
+  padding: .8rem 1rem;
+}
+
+.btn-large {
+  padding: 1.6rem 2rem;
+}
+
+.btn-square {
+  padding: 1rem;
+}
+
+/*
+Copy button on project share modal
+*/
+.btn-copy-modal,
+.btn-copy-modal-first {
+  width: 100px;
+  height: 39px;
+}
+
+/*
+ * Button toggles
+ */
+ .btn-toggle {
+  @extend .btn-default;
+
+  &:hover, &.hover {
+    border-color: $brand-primary;
+  }
+
+  &.active {
+    background: $brand-primary;
+    border-color: darken($brand-primary, 5%);
+    color: #fff;
+    box-shadow: none;
+
+    &:hover, &.hover,
+    &:active {
+      background-color: darken($brand-primary, 5%);
+      border-color: darken($brand-primary, 5%);
+    }
+
+    &:active {
+      box-shadow: inset 0 2px 2px 0px rgba(black, .2);
+    }
+  }
+}

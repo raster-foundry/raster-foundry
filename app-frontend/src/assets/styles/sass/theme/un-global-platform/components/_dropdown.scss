@@ -1,0 +1,33 @@
+.dropdown-menu {
+  background-color: $white;
+  border: 1px solid $shade-light;
+  border-top: none;
+
+  .divider {
+    background-color: $shade-light;
+  }
+
+  > li > a,
+  .active > a {
+    color: $shade-normal;
+
+    &:hover,
+    &:focus {
+      text-decoration: none;
+      color: $brand-primary;
+    }
+  }
+}
+
+.dropdown-menu.dropdown-menu-light > li > a {
+  &:hover,
+  &:focus {
+    text-decoration: none;
+    color: $brand-primary;
+    background: $off-white;
+    &.color-danger {
+      color: #fff !important;
+      background: $danger;
+    }
+  }
+}

@@ -1,0 +1,128 @@
+rf-lab-node {
+  border-radius: 0;
+  box-shadow: none;
+  border: 1px solid $border-color-default;
+}
+
+.node-header {
+  border-radius: 0;
+  border-bottom: 1px solid $border-color-default;
+  background-color: $white;
+}
+
+.node-header-colorblock {
+  border-radius: 0 !important;
+}
+
+.node-actions {
+  background-color: $white;
+}
+
+.node-button-group {
+  background-color: $white;
+}
+
+.node-button {
+  padding: .3rem;
+  border: 1px solid $gray-lighter;
+
+  &.active {
+    box-shadow: none;
+    background-color: $brand-primary;
+    color: $white;
+    border-color: $brand-primary;
+  }
+}
+
+.node-header-text {
+  padding: 5px 10px;
+}
+
+.node-status {
+  padding: 1.2rem;
+}
+
+.input-node-item {
+  align-items: baseline;
+}
+
+.input-node-label {
+  padding: 0;
+}
+
+.input-data {
+
+  .btn,
+  .form-control {
+    padding: 6px 12px;
+  }
+}
+
+.operation-node-body {
+
+  .btn {
+    padding: 6px 12px;
+  }
+}
+
+.btn-operation {
+  font-weight: 800;
+}
+
+rf-node-histogram {
+  color: $text-base;
+  background-color: $white;
+  padding: 1.5rem;
+  height: 100%;
+}
+
+.node-histogram-header rf-color-scheme-dropdown {
+  margin-top: 8px;
+
+  .dropdown-toggle {
+    background-color: #eee;
+    border-color: darken($shade-light, 35%);
+    padding: 6px;
+    color: darken($shade-light, 35%);
+  }
+}
+
+rf-histogram-breakpoint .breakpoint-input input {
+  background-color: $off-white;
+  color: $shade-normal;
+}
+
+.histogram-placeholder {
+  color: $white;
+}
+
+rf-node-selector {
+  background-color: $white;
+  box-shadow: 0 2px 3px 0 rgba(black, .2);
+  border-radius: 0;
+}
+
+.node-selector-dropdown {
+  color: $text-base;
+
+  .btn {
+    color: $text-base;
+  }
+}
+
+.node-select {
+  background-color: $white;
+}
+
+.node-selections {
+  background-color: $white;
+}
+
+.node-option:hover {
+  background-color: $brand-primary;
+  color: $white;
+}
+
+.node-option.selected {
+  color: $white;
+}

@@ -8,22 +8,14 @@
       color: $shade-normal;
       font-weight: 400;
 
-      i {
-        opacity: .5;
-      }
-
       &:hover {
         color: $brand-primary;
-
-        i {
-          opacity: 1;
-        }
       }
     }
 
     a.active {
-      color: $brand-primary;
-      background: none;
+      color: $white;
+      background: $brand-primary;
 
       i {
         opacity: 1;
@@ -36,7 +28,7 @@
   }
 
   .dropdown > a {
-    border-color: $shade-light;
+    border-color: $border-color-default;
     border-radius: $border-radius-base;
   }
 
@@ -85,27 +77,22 @@
   }
 }
 
-.primary nav a {
-  text-transform: uppercase;
-}
-
 .navbar-vertical-divider {
   background-color: $shade-light;
+  height: auto;
+  align-self: stretch;
 }
 
 .navbar.secondary-navbar {
   background: $white;
   border-color: $shade-light;
-
-  nav a {
-    text-transform: uppercase;
-  }
 }
 
 .brand {
-  padding: 1rem 1.9rem;
+  padding: 1rem;
+
   img {
     max-width: 50px;
-    height: 3.9rem;
+    height: auto;
   }
 }

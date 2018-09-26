@@ -1,0 +1,37 @@
+@include heading-tags {
+  margin-top: 1.8rem;
+  margin-bottom: .9rem;
+  line-height: 1.1;
+}
+
+h1, .h1 {
+  font-size: 3.3rem;
+}
+
+h2, .h2 {
+  font-size: 2.7rem;
+}
+
+h3, .h3 {
+  font-size: 2.1rem;
+}
+
+h4, .h4 {
+  font-size: 1.7rem;
+}
+
+h5, .h5 {
+  font-size: 1.4rem;
+}
+
+h6, .h6 {
+  font-size: 1.2rem;
+}
+
+p, .p {
+  @extend .font-base;
+  font-size: 1.4rem;
+  line-height: 1.4;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}

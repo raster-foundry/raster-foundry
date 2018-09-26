@@ -1,0 +1,64 @@
+.form-control {
+  // Placeholders
+  &::-moz-placeholder {
+    color: rgba($shade-normal, .5);
+    opacity: 1;
+  }
+  &:-ms-input-placeholder {
+    color: rgba($shade-normal, .5);
+  }
+  &::-webkit-input-placeholder {
+    color: rgba($shade-normal, .5);
+  }
+}
+
+.form-group.search-form {
+
+  .form-control {
+    height: 3.6rem;
+  }
+}
+
+// Dark inputs to lighter inputs
+.form-group.input-group {
+  border-color: $shade-light;
+  background-color: $shade-light;
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($brand-primary, .3);
+  }
+
+  .close {
+    color: $shade-normal;
+  }
+}
+
+.form-control.input-dark {
+  border-color: $shade-light;
+  background-color: $shade-light;
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($brand-primary, .3);
+  }
+}
+
+.form-group.all-in-one.input-dark {
+  border-color: $shade-light;
+  background-color: $shade-light;
+
+  .btn {
+    border-left-color: $shade-light;
+  }
+}
+
+label.checkbox,
+div.checkbox {
+  &.dark {
+    color: $text-base;
+
+    &:after {
+      background: $white;
+      border-color: $shade-light;
+    }
+  }
+}

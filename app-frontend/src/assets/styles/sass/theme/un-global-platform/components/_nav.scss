@@ -1,0 +1,8 @@
+nav a {
+  color: $text-base;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none !important;
+  }
+}

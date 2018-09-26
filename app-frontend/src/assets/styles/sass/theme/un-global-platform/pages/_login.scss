@@ -1,0 +1,54 @@
+.login {
+  background: $off-white;
+}
+
+.auth0-lock-container {
+
+  .auth0-lock.auth0-lock {
+    
+    .auth0-lock-overlay {
+      background: $off-white;
+    }
+
+    &.auth0-lock-opened .auth0-lock-overlay {
+      opacity: 1;
+    }
+  }
+}
+
+#auth0-lock-container-2 .auth0-lock-widget {
+  box-shadow: none !important;
+  border: 1px solid darken($off-white, 10%);
+
+
+  .auth0-lock-header-bg {
+    background: $off-white !important;
+  }
+
+  .auth0-lock-header-bg-solid {
+    display: none !important;
+  }
+
+  .auth0-lock-input-wrap {
+    background: none;
+    border-color: $shade-light;
+  }
+
+  .auth0-lock-submit {
+    width: 90%;
+    height: 40px;
+    border-radius: $border-radius-base;
+    margin: 0px auto 20px !important;
+    padding: 0;
+    background-color: rgba($brand-primary, .9) !important;
+  }
+
+  .auth0-lock-alternative-link {
+    color: $gray-lighter;
+    transition: .2s ease-in-out color;
+
+    &:hover {
+      color: $text-base;
+    }
+  }
+}

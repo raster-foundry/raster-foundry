@@ -7,20 +7,20 @@
       </span>
       {{$ctrl.unit}}
       <button type="button"
-              class="btn btn-primary"
+              class="btn btn-tiny"
               ng-show="$ctrl.unitType === 'metric'"
               ng-click="$ctrl.toggleUnits()">
         to imperial
       </button>
       <button type="button"
-              class="btn btn-primary"
+              class="btn btn-tiny"
               ng-show="$ctrl.unitType === 'imperial'"
               ng-click="$ctrl.toggleUnits()">
         to metric
       </button>
     </div>
     <button type="button"
-            class="btn btn-secondary measure-delete-btn"
+            class="btn btn-tiny btn-block"
             ng-click="$ctrl.delete()">
       Delete
     </button>

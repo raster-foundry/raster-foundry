@@ -1,0 +1,30 @@
+.map-container-controls {
+  background-color: $white;
+  border: 1px solid $shade-light;
+}
+
+.zoom-level {
+  background-color: $off-white;
+  color: $text-base;
+}
+
+.map-control-btn {
+  color: $text-base;
+  border-bottom-color: $shade-light;
+
+  &:hover,
+  &.active {
+    background-color: $off-white;
+  }
+}
+
+.layer-picker-label {
+  color: $text-base;
+}
+
+.layer-picker-toggle {
+
+  .toggle {
+    background-color: $white;
+  }
+}
