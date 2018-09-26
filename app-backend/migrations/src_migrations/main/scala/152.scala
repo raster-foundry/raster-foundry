@@ -1,8 +1,8 @@
 import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
-object M151 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(151)(
+object M152 {
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(152)(
     List(
       sqlu"""
     -- Delete some 'ALL' ACR records which we used visibility = 'PUBLIC' to populate in migration 118
