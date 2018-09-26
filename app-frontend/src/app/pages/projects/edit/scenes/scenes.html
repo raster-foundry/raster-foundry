@@ -9,16 +9,16 @@
   <h5 class="sidebar-title">
     Scenes
     (
-    <span ng-show="$ctrl.$parent.pagination.count && $ctrl.$parent.ingesting.count">
-      <ng-pluralize count="$ctrl.$parent.pagination.count - $ctrl.$parent.ingesting.count"
+    <span ng-show="$ctrl.pagination.count && $ctrl.ingesting.count">
+      <ng-pluralize count="$ctrl.pagination.count - $ctrl.ingesting.count"
                     when="{'0': '0 /',
                            'one': '1 /',
                            'other': '{} /'
                            }">
       </ng-pluralize>
     </span>
-    {{$ctrl.$parent.pagination.count}}
-    <span ng-if="$ctrl.$parent.ingesting.count && $ctrl.$parent.pagination.count">
+    {{$ctrl.pagination.count}}
+    <span ng-if="$ctrl.ingesting.count && $ctrl.pagination.count">
       ingested
     </span>
     )
@@ -64,7 +64,7 @@
      data-empty-placeholder-enabled="false">
   <div
     class="list-group"
-    ng-model="$ctrl.$parent.sceneList"
+    ng-model="$ctrl.sceneList"
     ui-tree-nodes>
     <rf-scene-item
         previewable
@@ -72,9 +72,9 @@
         repository="$ctrl.repository"
         ng-mouseover="$ctrl.setHoveredScene(scene)"
         ng-mouseleave="$ctrl.removeHoveredScene()"
-        ng-repeat="scene in $ctrl.$parent.sceneList"
+        ng-repeat="scene in $ctrl.sceneList"
         on-move="$ctrl.onMove(scene, position)"
-        ng-if="$ctrl.$parent.pagination.count > 30"
+        ng-if="$ctrl.pagination.count > $ctrl.projectService.scenePageSize"
         ui-tree-node>
       <button class="btn btn-tiny" ng-click="$ctrl.downloadSceneModal(scene)" title="Download scene data">
         <i class="icon-download"></i>
@@ -90,9 +90,9 @@
         repository="$ctrl.repository"
         ng-mouseover="$ctrl.setHoveredScene(scene)"
         ng-mouseleave="$ctrl.removeHoveredScene()"
-        ng-repeat="scene in $ctrl.$parent.sceneList"
+        ng-repeat="scene in $ctrl.sceneList"
         on-move="$ctrl.onMove(scene, position)"
-        ng-if="$ctrl.$parent.pagination.count <= 30"
+        ng-if="$ctrl.pagination.count <= $ctrl.projectService.scenePageSize"
         ui-tree-node>
       <button class="btn btn-tiny" ng-click="$ctrl.downloadSceneModal(scene)" title="Download scene data">
         <i class="icon-download"></i>
@@ -103,9 +103,9 @@
     </rf-scene-item>
   </div>
   <rf-pagination-controls
-      pagination="$ctrl.$parent.pagination"
-      is-loading="$ctrl.$parent.currentQuery"
-      on-change="$ctrl.$parent.fetchPage(value)"
-      ng-show="!$ctrl.$parent.currentQuery && !$ctrl.$parent.fetchError"
+      pagination="$ctrl.pagination"
+      is-loading="$ctrl.currentQuery"
+      on-change="$ctrl.fetchPage(value)"
+      ng-show="!$ctrl.currentQuery && !$ctrl.fetchError"
   ></rf-pagination-controls>
 </div>

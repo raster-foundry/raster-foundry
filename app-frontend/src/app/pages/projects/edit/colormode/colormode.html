@@ -17,20 +17,20 @@
     </div>
   </div>
   <div class="content">
-    <div class="sidebar-actions-group" ng-if="$ctrl.$parent.pagination.count">
+    <div class="sidebar-actions-group" ng-if="$ctrl.pagination.count">
       <label>Change the visual output</label>
     </div>
-    <div class="sidebar-actions-group" ng-if="!$ctrl.$parent.currentRequest && $ctrl.$parent.pagination && !$ctrl.$parent.pagination.count">
+    <div class="sidebar-actions-group" ng-if="!$ctrl.currentRequest && $ctrl.pagination && !$ctrl.pagination.count">
       <label>You must add scenes to this project in order to set a color mapping</label>
     </div>
   </div>
 </div>
-<div class="sidebar-overlay" ng-show="(!$ctrl.corrections || $ctrl.$parent.currentRequest) && ($ctrl.$parent.pagination && !$ctrl.$parent.pagination.count)">
+<div class="sidebar-overlay" ng-show="(!$ctrl.corrections || $ctrl.currentRequest) && ($ctrl.pagination && !$ctrl.pagination.count)">
   <div class="sidebar-loading">
     <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.isLoading}"></span>
   </div>
 </div>
-<div class="sidebar-scrollable" ng-show="$ctrl.$parent.pagination && $ctrl.$parent.pagination.count">
+<div class="sidebar-scrollable" ng-show="$ctrl.pagination && $ctrl.pagination.count">
   <div class="list-group" ng-if="!$ctrl.isLoading">
     <div class="list-group-item flex-column" ng-if="!$ctrl.$parent.bands.length">
         There are currently no bands defined for one or more datasources used in this project.

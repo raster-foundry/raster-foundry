@@ -260,7 +260,6 @@ class ProjectsSceneBrowserController {
                 scene.inProject = true;
             })
             .finally(() => {
-                this.$parent.fetchPage();
                 this.$parent.layerFromProject();
                 this.scenesBeingAdded = this.scenesBeingAdded.filter(s => s !== scene.id);
             });
@@ -279,7 +278,6 @@ class ProjectsSceneBrowserController {
                 });
             })
             .finally(() => {
-                this.$parent.fetchPage();
                 this.$parent.layerFromProject();
                 this.scenesBeingAdded =
                     this.scenesBeingAdded.filter(s => sceneIdsToAdd.includes(s));
