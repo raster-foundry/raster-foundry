@@ -10,5 +10,6 @@ object SingleBandOptions {
                           dataType: BandDataType,
                           colorBins: Int,
                           colorScheme: Json,
-                          legendOrientation: String)
+                          legendOrientation: String,
+                          extraNoData: Seq[Int] = Seq.empty[Int])
 }
