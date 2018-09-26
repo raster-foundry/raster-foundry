@@ -157,29 +157,29 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
     }
   }
 
+  // ACR deactivation upon team deactivation needs to be reconsidered in issue 4020
   test("Deactivated teams are not listed") {
     check {
       forAll (
         (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
-         acc: AccessControlRule.Create, project: Project.Create) => {
+         acr: ObjectAccessControlRule, project: Project.Create) => {
           val createTeamIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
             teamInsert <- TeamDao.create(fixupTeam(teamCreate, orgInsert, userInsert))
             insertedProject <- ProjectDao.insertProject(project, userInsert)
-            acr = acc.toAccessControlRule(userInsert, ObjectType.Project, insertedProject.id)
-                     .copy(subjectType = SubjectType.Team, subjectId = Some(teamInsert.id.toString()))
-            accessControlRule <- AccessControlRuleDao.create(acr)
+            acrToInsert = acr.copy(subjectType = SubjectType.Team, subjectId = Some(teamInsert.id.toString()))
+            _ <- ProjectDao.addPermission(insertedProject.id, acrToInsert)
             deactivateTeam <- TeamDao.deactivate(teamInsert.id)
+            permissionAfterTeamDeactivate <- ProjectDao.getPermissions(insertedProject.id)
             deactivatedTeams <- TeamDao.query.filter(fr"is_active = false").filter(fr"modified_by=${userInsert.id}").list
-            deactivatedACRs <- AccessControlRuleDao.query.filter(fr"is_active = false").list
             activatedTeams <- TeamDao.listOrgTeams(orgInsert.id, PageRequest(0, 30, Map.empty), TeamQueryParameters())
-          } yield (deactivatedTeams, deactivatedACRs, activatedTeams)
-          val (deactivatedTeams, deactivatedACRs, activatedTeams) = createTeamIO.transact(xa).unsafeRunSync
+          } yield { (deactivatedTeams, activatedTeams, acrToInsert, permissionAfterTeamDeactivate) }
+          val (deactivatedTeams, activatedTeams, acrToInsert, permissionAfterTeamDeactivate) = createTeamIO.transact(xa).unsafeRunSync
 
           assert(deactivatedTeams.size == 1, "Deactivated team should exist")
-          assert(deactivatedACRs.size == 1, "Deactivated access control rules should exist")
           assert(activatedTeams.results.size == 0, "No team is active")
+          assert(Set(acrToInsert) == permissionAfterTeamDeactivate.flatten.toSet, "Permissions exists after team deactivation")
           true
         }
       )

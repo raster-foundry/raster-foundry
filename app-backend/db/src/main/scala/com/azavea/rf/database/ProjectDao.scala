@@ -19,7 +19,10 @@ import io.circe._
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
 
-object ProjectDao extends Dao[Project] with AWSBatch {
+object ProjectDao
+    extends Dao[Project]
+    with AWSBatch
+    with ObjectPermissions[Project] {
 
   val tableName = "projects"
 
@@ -384,4 +387,33 @@ object ProjectDao extends Dao[Project] with AWSBatch {
           .copy(results = List.empty[Project.WithUser])
           .pure[ConnectionIO]
     }
+
+  def authQuery(user: User,
+                objectType: ObjectType,
+                ownershipTypeO: Option[String] = None,
+                groupTypeO: Option[GroupType] = None,
+                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Project] =
+    user.isSuperuser match {
+      case true =>
+        Dao.QueryBuilder[Project](selectF, tableF, List.empty)
+      case false =>
+        Dao.QueryBuilder[Project](selectF,
+                                  tableF,
+                                  List(
+                                    queryObjectsF(user,
+                                                  objectType,
+                                                  ActionType.View,
+                                                  ownershipTypeO,
+                                                  groupTypeO,
+                                                  groupIdO)))
+    }
+
+  def authorized(user: User,
+                 objectType: ObjectType,
+                 objectId: UUID,
+                 actionType: ActionType): ConnectionIO[Boolean] =
+    this.query
+      .filter(authorizedF(user, objectType, actionType))
+      .filter(objectId)
+      .exists
 }

@@ -207,7 +207,7 @@ trait SceneRoutes
   def getScene(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
       SceneDao
-        .authViewQuery(user)
+        .authQuery(user, ObjectType.Scene)
         .filter(sceneId)
         .exists
         .transact(xa)
@@ -223,7 +223,7 @@ trait SceneRoutes
 
   def updateScene(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.query
+      SceneDao
         .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -242,7 +242,7 @@ trait SceneRoutes
 
   def deleteScene(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.query
+      SceneDao
         .authorized(user, ObjectType.Scene, sceneId, ActionType.Delete)
         .transact(xa)
         .unsafeToFuture
@@ -256,7 +256,7 @@ trait SceneRoutes
 
   def getDownloadUrl(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneWithRelatedDao.query
+      SceneWithRelatedDao
         .authorized(user, ObjectType.Scene, sceneId, ActionType.Download)
         .transact(xa)
         .unsafeToFuture
@@ -297,8 +297,8 @@ trait SceneRoutes
       SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao
-          .listByObject(ObjectType.Scene, sceneId)
+        SceneDao
+          .getPermissions(sceneId)
           .transact(xa)
           .unsafeToFuture
       }
@@ -309,15 +309,10 @@ trait SceneRoutes
     authorizeAsync {
       SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
     } {
-      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+      entity(as[List[ObjectAccessControlRule]]) { acrList =>
         complete {
-          AccessControlRuleDao
-            .replaceWithResults(
-              user,
-              ObjectType.Scene,
-              sceneId,
-              acrCreates
-            )
+          SceneDao
+            .replacePermissions(sceneId, acrList)
             .transact(xa)
             .unsafeToFuture
         }
@@ -329,12 +324,10 @@ trait SceneRoutes
     authorizeAsync {
       SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
     } {
-      entity(as[AccessControlRule.Create]) { acrCreate =>
+      entity(as[ObjectAccessControlRule]) { acr =>
         complete {
-          AccessControlRuleDao
-            .createWithResults(
-              acrCreate.toAccessControlRule(user, ObjectType.Scene, sceneId)
-            )
+          SceneDao
+            .addPermission(sceneId, acr)
             .transact(xa)
             .unsafeToFuture
         }
@@ -345,7 +338,7 @@ trait SceneRoutes
   def listUserSceneActions(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
       SceneDao
-        .authViewQuery(user)
+        .authQuery(user, ObjectType.Scene)
         .filter(sceneId)
         .exists
         .transact(xa)
@@ -364,8 +357,8 @@ trait SceneRoutes
               case true => complete(List("*"))
               case false =>
                 complete {
-                  AccessControlRuleDao
-                    .listUserActions(user, ObjectType.Scene, sceneId)
+                  SceneDao
+                    .listUserActions(user, sceneId)
                     .transact(xa)
                     .unsafeToFuture
                 }
@@ -380,8 +373,8 @@ trait SceneRoutes
       SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao
-          .deleteByObject(ObjectType.Scene, sceneId)
+        SceneDao
+          .deletePermissions(sceneId)
           .transact(xa)
           .unsafeToFuture
       }
@@ -391,7 +384,7 @@ trait SceneRoutes
   def getSceneDatasource(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
       SceneDao
-        .authViewQuery(user)
+        .authQuery(user, ObjectType.Scene)
         .filter(sceneId)
         .exists
         .transact(xa)
@@ -415,7 +408,7 @@ trait SceneRoutes
           {
             authorizeAsync {
               SceneDao
-                .authViewQuery(user)
+                .authQuery(user, ObjectType.Scene)
                 .filter(sceneId)
                 .exists
                 .transact(xa)

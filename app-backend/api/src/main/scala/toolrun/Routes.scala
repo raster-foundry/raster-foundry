@@ -15,7 +15,7 @@ import cats.implicits._
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.database.{AccessControlRuleDao, ToolRunDao}
+import com.azavea.rf.database.ToolRunDao
 import doobie.util.transactor.Transactor
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -105,7 +105,7 @@ trait ToolRunRoutes
 
   def getToolRun(runId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolRunDao.query
+      ToolRunDao
         .authorized(user, ObjectType.Analysis, runId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -123,7 +123,7 @@ trait ToolRunRoutes
 
   def updateToolRun(runId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolRunDao.query
+      ToolRunDao
         .authorized(user, ObjectType.Analysis, runId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -142,7 +142,7 @@ trait ToolRunRoutes
 
   def deleteToolRun(runId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolRunDao.query
+      ToolRunDao
         .authorized(user, ObjectType.Analysis, runId, ActionType.Delete)
         .transact(xa)
         .unsafeToFuture
@@ -163,8 +163,8 @@ trait ToolRunRoutes
         .unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao
-          .listByObject(ObjectType.Analysis, toolRunId)
+        ToolRunDao
+          .getPermissions(toolRunId)
           .transact(xa)
           .unsafeToFuture
       }
@@ -179,15 +179,10 @@ trait ToolRunRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+      entity(as[List[ObjectAccessControlRule]]) { acrList =>
         complete {
-          AccessControlRuleDao
-            .replaceWithResults(
-              user,
-              ObjectType.Analysis,
-              toolRunId,
-              acrCreates
-            )
+          ToolRunDao
+            .replacePermissions(toolRunId, acrList)
             .transact(xa)
             .unsafeToFuture
         }
@@ -203,14 +198,10 @@ trait ToolRunRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      entity(as[AccessControlRule.Create]) { acrCreate =>
+      entity(as[ObjectAccessControlRule]) { acr =>
         complete {
-          AccessControlRuleDao
-            .createWithResults(
-              acrCreate.toAccessControlRule(user,
-                                            ObjectType.Analysis,
-                                            toolRunId)
-            )
+          ToolRunDao
+            .addPermission(toolRunId, acr)
             .transact(xa)
             .unsafeToFuture
         }
@@ -220,7 +211,7 @@ trait ToolRunRoutes
 
   def listUserAnalysisActions(analysisId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolRunDao.query
+      ToolRunDao
         .authorized(user, ObjectType.Analysis, analysisId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -239,8 +230,8 @@ trait ToolRunRoutes
               case true => complete(List("*"))
               case false =>
                 complete {
-                  AccessControlRuleDao
-                    .listUserActions(user, ObjectType.Analysis, analysisId)
+                  ToolRunDao
+                    .listUserActions(user, analysisId)
                     .transact(xa)
                     .unsafeToFuture
                 }
@@ -259,8 +250,8 @@ trait ToolRunRoutes
         .unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao
-          .deleteByObject(ObjectType.Analysis, toolRunId)
+        ToolRunDao
+          .deletePermissions(toolRunId)
           .transact(xa)
           .unsafeToFuture
       }

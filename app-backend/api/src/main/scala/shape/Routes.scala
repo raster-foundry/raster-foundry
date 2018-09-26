@@ -11,7 +11,7 @@ import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common._
 import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.{AccessControlRuleDao, ShapeDao}
+import com.azavea.rf.database.ShapeDao
 import com.azavea.rf.datamodel.GeoJsonCodec._
 import com.azavea.rf.datamodel._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
@@ -175,7 +175,7 @@ trait ShapeRoutes
 
   def getShape(shapeId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ShapeDao.query
+      ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -206,7 +206,7 @@ trait ShapeRoutes
 
   def updateShape(shapeId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ShapeDao.query
+      ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -225,7 +225,7 @@ trait ShapeRoutes
 
   def deleteShape(shapeId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ShapeDao.query
+      ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.Delete)
         .transact(xa)
         .unsafeToFuture
@@ -242,8 +242,8 @@ trait ShapeRoutes
       ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao
-          .listByObject(ObjectType.Shape, shapeId)
+        ShapeDao
+          .getPermissions(shapeId)
           .transact(xa)
           .unsafeToFuture
       }
@@ -254,15 +254,10 @@ trait ShapeRoutes
     authorizeAsync {
       ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
     } {
-      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+      entity(as[List[ObjectAccessControlRule]]) { acrList =>
         complete {
-          AccessControlRuleDao
-            .replaceWithResults(
-              user,
-              ObjectType.Shape,
-              shapeId,
-              acrCreates
-            )
+          ShapeDao
+            .replacePermissions(shapeId, acrList)
             .transact(xa)
             .unsafeToFuture
         }
@@ -274,12 +269,10 @@ trait ShapeRoutes
     authorizeAsync {
       ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
     } {
-      entity(as[AccessControlRule.Create]) { acrCreate =>
+      entity(as[ObjectAccessControlRule]) { acr =>
         complete {
-          AccessControlRuleDao
-            .createWithResults(
-              acrCreate.toAccessControlRule(user, ObjectType.Shape, shapeId)
-            )
+          ShapeDao
+            .addPermission(shapeId, acr)
             .transact(xa)
             .unsafeToFuture
         }
@@ -289,7 +282,7 @@ trait ShapeRoutes
 
   def listUserShapeActions(shapeId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ShapeDao.query
+      ShapeDao
         .authorized(user, ObjectType.Shape, shapeId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -304,8 +297,8 @@ trait ShapeRoutes
               case true => complete(List("*"))
               case false =>
                 complete {
-                  AccessControlRuleDao
-                    .listUserActions(user, ObjectType.Shape, shapeId)
+                  ShapeDao
+                    .listUserActions(user, shapeId)
                     .transact(xa)
                     .unsafeToFuture
                 }
@@ -320,8 +313,8 @@ trait ShapeRoutes
       ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao
-          .deleteByObject(ObjectType.Shape, shapeId)
+        ShapeDao
+          .deletePermissions(shapeId)
           .transact(xa)
           .unsafeToFuture
       }

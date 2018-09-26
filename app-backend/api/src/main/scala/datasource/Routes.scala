@@ -89,7 +89,7 @@ trait DatasourceRoutes
 
   def getDatasource(datasourceId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      DatasourceDao.query
+      DatasourceDao
         .authorized(user, ObjectType.Datasource, datasourceId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -119,7 +119,7 @@ trait DatasourceRoutes
 
   def updateDatasource(datasourceId: UUID): Route = authenticate { user =>
     authorizeAsync(
-      DatasourceDao.query
+      DatasourceDao
         .authorized(user, ObjectType.Datasource, datasourceId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -164,8 +164,8 @@ trait DatasourceRoutes
           .unsafeToFuture
       } {
         complete {
-          AccessControlRuleDao
-            .listByObject(ObjectType.Datasource, datasourceId)
+          DatasourceDao
+            .getPermissions(datasourceId)
             .transact(xa)
             .unsafeToFuture
         }
@@ -181,15 +181,10 @@ trait DatasourceRoutes
           .transact(xa)
           .unsafeToFuture
       } {
-        entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+        entity(as[List[ObjectAccessControlRule]]) { acrList =>
           complete {
-            AccessControlRuleDao
-              .replaceWithResults(
-                user,
-                ObjectType.Datasource,
-                datasourceId,
-                acrCreates
-              )
+            DatasourceDao
+              .replacePermissions(datasourceId, acrList)
               .transact(xa)
               .unsafeToFuture
           }
@@ -206,14 +201,10 @@ trait DatasourceRoutes
           .transact(xa)
           .unsafeToFuture
       } {
-        entity(as[AccessControlRule.Create]) { acrCreate =>
+        entity(as[ObjectAccessControlRule]) { acr =>
           complete {
-            AccessControlRuleDao
-              .createWithResults(
-                acrCreate.toAccessControlRule(user,
-                                              ObjectType.Datasource,
-                                              datasourceId)
-              )
+            DatasourceDao
+              .addPermission(datasourceId, acr)
               .transact(xa)
               .unsafeToFuture
           }
@@ -224,7 +215,7 @@ trait DatasourceRoutes
   def listUserDatasourceActions(datasourceId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        DatasourceDao.query
+        DatasourceDao
           .authorized(user,
                       ObjectType.Datasource,
                       datasourceId,
@@ -245,10 +236,8 @@ trait DatasourceRoutes
                 case true => complete(List("*"))
                 case false =>
                   complete {
-                    AccessControlRuleDao
-                      .listUserActions(user,
-                                       ObjectType.Datasource,
-                                       datasourceId)
+                    DatasourceDao
+                      .listUserActions(user, datasourceId)
                       .transact(xa)
                       .unsafeToFuture
                   }
@@ -268,8 +257,8 @@ trait DatasourceRoutes
           .unsafeToFuture
       } {
         complete {
-          AccessControlRuleDao
-            .deleteByObject(ObjectType.Analysis, datasourceId)
+          DatasourceDao
+            .deletePermissions(datasourceId)
             .transact(xa)
             .unsafeToFuture
         }

@@ -62,15 +62,15 @@ trait MapTokenRoutes
         val authIO = (newMapToken.project, newMapToken.toolRun) match {
           case (None, None) => false.pure[ConnectionIO]
           case (Some(projectId), None) =>
-            ProjectDao.query.authorized(user,
-                                        ObjectType.Project,
-                                        projectId,
-                                        ActionType.Edit)
+            ProjectDao.authorized(user,
+                                  ObjectType.Project,
+                                  projectId,
+                                  ActionType.Edit)
           case (None, Some(toolRunId)) =>
-            ToolRunDao.query.authorized(user,
-                                        ObjectType.Analysis,
-                                        toolRunId,
-                                        ActionType.Edit)
+            ToolRunDao.authorized(user,
+                                  ObjectType.Analysis,
+                                  toolRunId,
+                                  ActionType.Edit)
           case _ => false.pure[ConnectionIO]
         }
         authIO.transact(xa).unsafeToFuture
