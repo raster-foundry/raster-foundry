@@ -105,20 +105,23 @@ export default class ProjectItemController {
 
     deleteModal() {
         const modal = this.modalService.open({
-            component: 'rfConfirmationModal',
+            component: 'rfFeedbackModal',
             resolve: {
-                title: () => 'Delete Project?',
+                title: () => 'Project deletion',
                 subtitle: () =>
-                    'The project will be permanently deleted,'
-                    + ' but scenes will be unaffected.',
+                    'The project will be deleted, '
+                    + 'but scenes will remain unaffected.',
                 content: () =>
-                    '<div class="color-danger">'
-                    + 'You are about to delete the project. '
-                    + 'Annotations, exports, and analyses that use this project '
-                    + 'will not longer be accessible. This action is not reversible. '
-                    + 'Are you sure you wish to continue?'
-                    + '</div>',
-                confirmText: () => 'Delete Project',
+                    '<h2>Do you wish to continue?</h2>'
+                    + '<p>Deleting the project will also make '
+                    + 'associated annotations, exports and '
+                    + 'analyses inaccessible. This is a '
+                    + 'permanent action.</p>',
+                /* feedbackIconType : default, success, danger, warning */
+                feedbackIconType: () => 'danger',
+                feedbackIcon: () => 'icon-warning',
+                feedbackBtnType: () => 'btn-danger',
+                feedbackBtnText: () => 'Delete Project',
                 cancelText: () => 'Cancel'
             }
         });
