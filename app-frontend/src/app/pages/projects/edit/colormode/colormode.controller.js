@@ -3,7 +3,8 @@
 export default class ProjectsEditColormode {
     constructor(
         $scope, $q, $state,
-        colorCorrectService, colorSchemeService, projectService, projectEditService
+        colorCorrectService, colorSchemeService, projectService, projectEditService,
+        paginationService
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -28,42 +29,39 @@ export default class ProjectsEditColormode {
     }
 
     initColorModes() {
-        let sceneListQuery;
-        if (!this.$parent.sceneList) {
-            sceneListQuery = this.$parent.currentQuery || this.$parent.fetchPage();
-        } else {
-            sceneListQuery = this.$q.resolve(this.$parent.sceneList);
-        }
-        sceneListQuery.then(() => {
-            let projectScene = _.first(this.$parent.sceneList);
-            if (projectScene) {
-                return this.colorCorrectService.get(projectScene.id, this.$parent.projectId);
-            }
-            return this.$q.resolve();
-        }).then((correction) => {
-            if (!correction) {
-                this.isLoading = false;
-                return;
-            }
-            this.currentBands = {
-                redBand: correction.redBand,
-                greenBand: correction.greenBand,
-                blueBand: correction.blueBand,
-                mode: correction.mode ? correction.mode : 'multi'
-            };
-            this.unifiedCompositesRequest = this.$parent.fetchUnifiedComposites(true)
-                .then((composites) => {
-                    this.unifiedComposites =
-                        Object.assign(
-                            {},
-                            composites,
-                            this.defaultColorModes
-                        );
-                    this.initProjectBuffer();
+        this.projectService
+            .getProjectScenes(this.$parent.projectId, {page: 0, pageSize: 1})
+            .then((paginatedResponse) => {
+                this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                const firstScene = _.first(paginatedResponse.results);
+                if (firstScene) {
+                    return this.colorCorrectService.get(firstScene.id, this.$parent.projectId);
+                }
+                return this.$q.resolve();
+            }).then((correction) => {
+                if (!correction) {
                     this.isLoading = false;
-                    this.activeColorModeKey = this.initActiveColorMode();
-                });
-        });
+                    return;
+                }
+                this.currentBands = {
+                    redBand: correction.redBand,
+                    greenBand: correction.greenBand,
+                    blueBand: correction.blueBand,
+                    mode: correction.mode ? correction.mode : 'multi'
+                };
+                this.unifiedCompositesRequest = this.$parent.fetchUnifiedComposites(true)
+                    .then((composites) => {
+                        this.unifiedComposites =
+                            Object.assign(
+                                {},
+                                composites,
+                                this.defaultColorModes
+                            );
+                        this.initProjectBuffer();
+                        this.isLoading = false;
+                        this.activeColorModeKey = this.initActiveColorMode();
+                    });
+            });
     }
 
     initActiveColorMode() {
@@ -340,8 +338,8 @@ export default class ProjectsEditColormode {
     correctionsDisabled() {
         return this.projectBuffer && this.projectBuffer.isSingleBand ||
                 !this.projectBuffer ||
-            this.$parent.pagination &&
-            this.$parent.pagination.count > this.$parent.pagination.pageSize;
+            this.pagination &&
+            this.pagination.count > this.projectService.scenePageSize;
     }
 
     navToCorrections() {

@@ -46,7 +46,6 @@ class ProjectsEditController {
                         this.projectUpdateListeners.forEach((wait) => {
                             wait.resolve(project);
                         });
-                        this.fetchPage();
                         this.initColorComposites();
                         this.layerFromProject();
                     },
@@ -92,37 +91,6 @@ class ProjectsEditController {
         });
     }
 
-    fetchPage(page = this.$state.params.page || 1) {
-        this.getIngestingSceneCount();
-        delete this.fetchError;
-        this.sceneList = [];
-        const currentQuery = this.projectService.getProjectScenes(
-            this.projectId,
-            {
-                pageSize: 30,
-                page: page - 1
-            }
-        ).then((paginatedResponse) => {
-            this.sceneList = paginatedResponse.results;
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page);
-            if (this.currentQuery === currentQuery) {
-                delete this.fetchError;
-            }
-        }, (e) => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
-        this.currentQuery = currentQuery;
-        return currentQuery;
-    }
-
-
     addUningestedScenesToMap(scenes) {
         this.getMap().then((mapWrapper) => {
             mapWrapper.deleteLayers('Uningested Scenes');
@@ -154,18 +122,6 @@ class ProjectsEditController {
                 });
             });
         });
-    }
-
-    getIngestingSceneCount() {
-        if (!this.pendingIngestingRequest) {
-            this.pendingIngestRequest = this.projectService.getProjectScenes(this.projectId, {
-                ingested: false,
-                pageSize: 0
-            });
-            this.pendingIngestRequest.then((paginatedResponse) => {
-                this.ingesting = this.paginationService.buildPagination(paginatedResponse);
-            });
-        }
     }
 
     layerFromProject() {

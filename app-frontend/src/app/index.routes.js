@@ -115,7 +115,7 @@ function projectEditStates($stateProvider) {
     $stateProvider
         .state('projects.edit', {
             title: 'Project: Edit',
-            url: '/edit/:projectid?page',
+            url: '/edit/:projectid',
             params: {project: null},
             views: {
                 'navmenu@root': {
@@ -161,7 +161,7 @@ function projectEditStates($stateProvider) {
         })
         .state('projects.edit.scenes', {
             title: 'Project: Scenes',
-            url: '/scenes',
+            url: '/scenes?page',
             templateUrl: projectsScenesTpl,
             controller: 'ProjectsScenesController',
             controllerAs: '$ctrl'
