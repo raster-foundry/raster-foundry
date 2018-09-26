@@ -112,8 +112,12 @@ class SceneWithRelatedDaoSpec
 
             val (insertedScenes, scenesInProject) =
               scenesToIngestIO.transact(xa).unsafeRunSync
-            val ingestableScenesIds = scenesInProject filter {
-              _.statusFields.ingestStatus == IngestStatus.ToBeIngested
+            val ingestableScenesIds = scenesInProject filter { scene =>
+              (scene.statusFields.ingestStatus, scene.sceneType) match {
+                case (_, Some(SceneType.COG)) => false
+                case (IngestStatus.ToBeIngested, _) => true
+                case _ => false
+              }
             } map { _.id }
             val ingestableIdsFromInserted = insertedScenes
               .filter((scene: Scene.WithRelated) => {
@@ -121,11 +125,12 @@ class SceneWithRelatedDaoSpec
                   scene.modifiedAt.before(Timestamp.valueOf(
                     LocalDate.now().atStartOfDay.plusDays(-1L)))
                 val ingestStatus = scene.statusFields.ingestStatus
-                (staleModified, ingestStatus) match {
-                  case (true, IngestStatus.Ingesting)  => true
-                  case (false, IngestStatus.Ingesting) => false
-                  case (_, IngestStatus.Ingested)      => false
-                  case (_, _)                          => true
+                (staleModified, ingestStatus, scene.sceneType) match {
+                  case (true, IngestStatus.Ingesting, _)  => true
+                  case (false, IngestStatus.Ingesting, _) => false
+                  case (_, IngestStatus.Ingested, _)      => false
+                  case (_, _, Some(SceneType.COG))        => false
+                  case (_, _, _)                          => true
                 }
               })
               .map(_.id)
