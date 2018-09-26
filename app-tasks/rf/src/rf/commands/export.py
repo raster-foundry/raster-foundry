@@ -138,9 +138,14 @@ def post_process_exports(export_definition, tiff_directory):
     translated_tiff = os.path.join(tiff_directory, 'translated.tiff')
     export_tiff = os.path.join(tiff_directory, 'export.tiff')
     merge_command = ['gdal_merge.py', '-o', merged_tiff] + tiff_files
-    warp_command = ['gdalwarp', '-co', 'COMPRESS=LZW',
-                    '-co', 'TILED=YES', '-crop_to_cutline',
-                    '-cutline', temp_geojson, merged_tiff, export_tiff]
+    warp_command = []
+    if export_obj.exportOptions.mask is None:
+        warp_command = ['gdalwarp', '-co', 'COMPRESS=LZW',
+                        '-co', 'TILED=YES', merged_tiff, export_tiff]
+    else:
+        warp_command = ['gdalwarp', '-co', 'COMPRESS=LZW',
+                        '-co', 'TILED=YES', '-crop_to_cutline',
+                        '-cutline', temp_geojson, merged_tiff, export_tiff]
     translate_command = ['gdal_translate', '-co', 'COMPRESS=LZW', '-co', 'TILED=YES', '-stats',
                          export_tiff, translated_tiff]
     logger.info('Running Merge Command: %s', ' '.join(merge_command))
