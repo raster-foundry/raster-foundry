@@ -26,7 +26,7 @@
             </label>
       </div>
     </div>
-    <div class="modal-inner" ng-show="$ctrl.shareUrl">
+    <div class="modal-inner-container" ng-show="$ctrl.shareUrl">
       <div class="form-group">
         <div class="form-group">
           <label for="published-link">Published page</label>
@@ -110,44 +110,6 @@
             <i class="icon-check color-green"
                 aria-hidden="true"
                 ng-show="$ctrl.copyType === 'token'"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-    <div class="content" ng-show="$ctrl.resolve.templateTitle">
-      <h4>Sharing</h4>
-      <div class="form-group">
-        <label for="tile-link">ZXY Tile Layer URL</label>
-        <div class="form-group all-in-one">
-          <input id="tile-link" type="text" class="form-control"
-                  value="{{$ctrl.tileLayerUrls.standard}}" readonly>
-          <button class="btn btn-link btn-copy-modal"
-                  clipboard text="$ctrl.tileLayerUrls.standard"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.standard, 'zxy')">
-                  <span ng-show="$ctrl.copyType !== 'zxy'">Copy</span>
-                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'zxy'"></span>
-          </button>
-        </div>
-        <label for="tile-link">ArcGIS Tile Layer URL</label>
-        <div class="form-group all-in-one">
-          <input id="tile-link" type="text" class="form-control"
-                  value="{{$ctrl.tileLayerUrls.arcGIS}}" readonly>
-          <button class="btn btn-link btn-copy-modal"
-                  clipboard text="$ctrl.tileLayerUrls.arcGIS"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.arcGIS, 'arcGIS')">
-                  <span ng-show="$ctrl.copyType !== 'arcGIS'">Copy</span>
-                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'arcGIS'"></span>
-          </button>
-        </div>
-        <label>Token</label>
-        <div class="form-group all-in-one">
-          <input id="tile-link" type="text" class="form-control"
-                 value="{{$ctrl.analysisToken}}" readonly>
-          <button class="btn btn-link btn-copy-modal"
-                  clipboard text="$ctrl.analysisToken"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.analysisToken, 'token')">
-                  <span ng-show="$ctrl.copyType !== 'token'">Copy</span>
-                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'token'"></span>
           </button>
         </div>
       </div>

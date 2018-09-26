@@ -93,6 +93,7 @@ export default angular.module('index.components', [
     require('./components/common/toggle-old/toggle-old.module.js').name,
     require('./components/common/toggle/toggle.module.js').name,
     require('./components/common/confirmationModal/confirmationModal.module.js').name,
+    require('./components/common/feedbackModal/feedbackModal.module.js').name,
     require('./components/common/boxSelectItem/boxSelectItem.module.js').name,
     require('./components/common/callToActionItem/callToActionItem.module.js').name,
     require('./components/common/dateRangePickerModal/dateRangePickerModal.module.js').name,
