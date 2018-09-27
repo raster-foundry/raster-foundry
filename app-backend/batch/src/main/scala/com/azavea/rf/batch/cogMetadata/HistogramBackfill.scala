@@ -75,7 +75,9 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
                 parsed
               )
             )
-            .map({ layerAttribute: LayerAttribute => Some(layerAttribute) })
+            .map({ layerAttribute: LayerAttribute =>
+              Some(layerAttribute)
+            })
             .transact(xa)
       }
     } yield inserted
@@ -87,18 +89,16 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
     IO.fromFuture {
       IO(
         (CogUtils.fromUri(ingestLocation) map {
-           CogUtils.geoTiffDoubleHistogram(_).toList
-         }).value
+          CogUtils.geoTiffDoubleHistogram(_).toList
+        }).value
       )
-    } recoverWith(
-      {
-        case t: Throwable =>
-          sendError(t)
-          logger.info(s"Fetching histogram for scene at $ingestLocation failed")
-          logger.error(t.getMessage, t)
-          Option.empty[List[Histogram[Double]]].pure[IO]
-      }
-    )
+    } recoverWith ({
+      case t: Throwable =>
+        sendError(t)
+        logger.info(s"Fetching histogram for scene at $ingestLocation failed")
+        logger.error(t.getMessage, t)
+        Option.empty[List[Histogram[Double]]].pure[IO]
+    })
   }
 
   def run(sceneIds: Array[UUID]): IO[Unit] =
@@ -126,12 +126,11 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
     } yield {
       val allResults: List[Option[LayerAttribute]] = ios flatMap {
         _.recoverWith({
-                        case t: Throwable =>
-                          sendError(t)
-                          logger.error(t.getMessage, t)
-                          IO(List.empty[Option[LayerAttribute]])
-                      })
-          .unsafeRunSync
+          case t: Throwable =>
+            sendError(t)
+            logger.error(t.getMessage, t)
+            IO(List.empty[Option[LayerAttribute]])
+        }).unsafeRunSync
       }
       val errors = allResults filter { _.isEmpty }
       val successes = allResults filter { !_.isEmpty }
