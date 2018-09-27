@@ -5,6 +5,10 @@
 .filter {
   flex-direction: column;
 
+  &:not(:last-child) {
+    margin-bottom: inherit;
+  }
+
   label {
     color: $shade-normal;
     width: auto;
