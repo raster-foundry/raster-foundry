@@ -36,8 +36,7 @@ trait LicenseRoutes
 
   def listLicenses: Route = authenticate { user =>
     withPagination { pageRequest =>
-      complete(
-        LicenseDao.query.page(pageRequest, fr"").transact(xa).unsafeToFuture)
+      complete(LicenseDao.query.page(pageRequest).transact(xa).unsafeToFuture)
     }
   }
 

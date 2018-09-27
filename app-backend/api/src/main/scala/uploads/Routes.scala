@@ -51,7 +51,7 @@ trait UploadRoutes
           UploadDao.query
             .filter(user)
             .filter(queryParams)
-            .page(page, fr"")
+            .page(page)
             .transact(xa)
             .unsafeToFuture
         }

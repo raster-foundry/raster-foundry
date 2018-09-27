@@ -7,7 +7,7 @@ import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.filter.Filterables
 import com.azavea.rf.database.util._
 import com.azavea.rf.datamodel._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import doobie.{LogHandler => _, _}
 import doobie.implicits._
 import doobie.postgres._
@@ -209,10 +209,12 @@ object Dao extends LazyLogging {
         pageRequest: PageRequest,
         selectF: Fragment,
         countF: Fragment,
-        orderClause: Fragment): ConnectionIO[PaginatedResponse[T]] = {
+        orderClause: Map[String, Order]): ConnectionIO[PaginatedResponse[T]] = {
       for {
-        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ orderClause ++ Page(
-          pageRequest)).query[T].to[List]
+        page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(
+          pageRequest.copy(sort = orderClause ++ pageRequest.sort)))
+          .query[T]
+          .to[List]
         count <- (countF ++ Fragments.whereAndOpt(filters: _*))
           .query[Int]
           .unique
@@ -230,9 +232,12 @@ object Dao extends LazyLogging {
     }
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page(pageRequest: PageRequest,
-             orderClause: Fragment): ConnectionIO[PaginatedResponse[Model]] =
+    def page(pageRequest: PageRequest, orderClause: Map[String, Order])
+      : ConnectionIO[PaginatedResponse[Model]] =
       page(pageRequest, selectF, countF, orderClause)
+
+    def page(pageRequest: PageRequest): ConnectionIO[PaginatedResponse[Model]] =
+      page(pageRequest, selectF, countF, Map.empty[String, Order])
 
     def listQ(pageRequest: PageRequest): Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(Some(pageRequest)))

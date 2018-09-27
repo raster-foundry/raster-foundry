@@ -46,7 +46,7 @@ trait ToolTagRoutes
       complete {
         ToolTagDao.query
           .filter(user)
-          .page(page, fr"")
+          .page(page)
           .transact(xa)
           .unsafeToFuture()
       }

@@ -104,7 +104,7 @@ object MapTokenDao extends Dao[MapToken] {
         MapTokenDao.query
           .filter(mapTokenParams)
           .filter(authFilterF)
-          .page(page, fr"")
+          .page(page)
       }
     } yield { mapTokens }
   }

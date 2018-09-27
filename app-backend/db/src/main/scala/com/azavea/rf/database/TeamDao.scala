@@ -7,7 +7,7 @@ import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 
 import cats._, cats.data._, cats.effect.IO, cats.implicits._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 
 import java.util.{Date, UUID}
 import java.sql.Timestamp
@@ -92,7 +92,7 @@ object TeamDao extends Dao[Team] {
       .filter(fr"organization_id = ${organizationId}")
       .filter(fr"is_active = true")
       .filter(qp)
-      .page(page, fr"")
+      .page(page)
   }
 
   def listMembers(
@@ -106,7 +106,10 @@ object TeamDao extends Dao[Team] {
       page,
       searchParams,
       actingUser,
-      Some(fr"ORDER BY ugr.membership_status, ugr.group_role"))
+      Some(
+        Map("ugr.membership_status" -> Order.Asc,
+            "ugr.group_role" -> Order.Asc))
+    )
 
   def validatePath(platformId: UUID,
                    organizationId: UUID,

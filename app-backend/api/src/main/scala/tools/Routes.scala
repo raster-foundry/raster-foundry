@@ -150,7 +150,7 @@ trait ToolRoutes
               combinedToolQueryParameters.groupQueryParameters.groupId
             )
             .filter(combinedToolQueryParameters)
-            .page(page, fr"")
+            .page(page)
             .transact(xa)
             .unsafeToFuture
         }

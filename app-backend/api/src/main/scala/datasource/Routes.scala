@@ -80,7 +80,7 @@ trait DatasourceRoutes
               datasourceParams.groupQueryParameters.groupId
             )
             .filter(datasourceParams)
-            .page(page, fr"")
+            .page(page)
             .transact(xa)
             .unsafeToFuture
         }

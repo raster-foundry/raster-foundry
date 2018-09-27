@@ -6,7 +6,7 @@ import cats.free.Free
 import com.azavea.rf.database.filter.Filters._
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import doobie.free.connection
 import doobie.implicits._
 import doobie.postgres._
@@ -41,7 +41,7 @@ object PlatformDao extends Dao[Platform] {
 
   def listPlatforms(
       page: PageRequest): ConnectionIO[PaginatedResponse[Platform]] =
-    query.page(page, fr"")
+    query.page(page)
 
   def listMembers(
       platformId: UUID,
@@ -57,7 +57,10 @@ object PlatformDao extends Dao[Platform] {
           page,
           searchParams,
           actingUser,
-          Some(fr"ORDER BY ugr.membership_status, ugr.group_role"))
+          Some(
+            Map("ugr.membership_status" -> Order.Asc,
+                "ugr.group_role" -> Order.Asc))
+        )
         if (isAdmin) {
           userListPage
         } else {

@@ -76,7 +76,7 @@ object AoiDao extends Dao[AOI] {
   // TODO embed shape into aoi
   def listAOIs(projectId: UUID,
                page: PageRequest): ConnectionIO[PaginatedResponse[AOI]] =
-    query.filter(fr"project_id = ${projectId}").page(page, fr"")
+    query.filter(fr"project_id = ${projectId}").page(page)
 
   def listAuthorizedAois(
       user: User,
@@ -94,7 +94,7 @@ object AoiDao extends Dao[AOI] {
         AoiDao.query
           .filter(aoiQueryParams)
           .filter(authFilterF)
-          .page(page, fr"")
+          .page(page)
       }
     } yield { aois }
   }

@@ -66,7 +66,7 @@ object ProjectDao
       params.groupQueryParameters.groupType,
       params.groupQueryParameters.groupId
     ).filter(params)
-      .page(page, fr"")
+      .page(page)
       .flatMap(projectsToProjectsWithRelated)
   }
 
