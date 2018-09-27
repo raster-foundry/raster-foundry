@@ -50,7 +50,7 @@ trait ToolCategoryRoutes
       complete {
         ToolCategoryDao.query
           .filter(combinedParams)
-          .page(page, fr"")
+          .page(page)
           .transact(xa)
           .unsafeToFuture
       }

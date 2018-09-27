@@ -45,8 +45,9 @@ object ProjectScenesDao extends Dao[Scene] {
       case _          => fr"accepted = true"
     }
 
-    val manualOrderF = fr"ORDER BY scene_order ASC, id ASC"
-    val autoOrderF = fr"ORDER BY acquisition_date ASC, cloud_cover ASC"
+    val manualOrder = Map("scene_order" -> Order.Asc, "id" -> Order.Asc)
+    val autoOrder =
+      Map("acquisition_date" -> Order.Asc, "cloud_cover" -> Order.Asc)
     val filterQ = query
       .filter(fr"project_id = ${projectId}")
       .filter(andPendingF)
@@ -55,8 +56,8 @@ object ProjectScenesDao extends Dao[Scene] {
     val paginatedScenes = for {
       project <- projectQuery
       page <- project.manualOrder match {
-        case true => filterQ.page(pageRequest, manualOrderF)
-        case _    => filterQ.page(pageRequest, autoOrderF)
+        case true => filterQ.page(pageRequest, manualOrder)
+        case _    => filterQ.page(pageRequest, autoOrder)
       }
     } yield page
     paginatedScenes.flatMap { (pr: PaginatedResponse[Scene]) =>

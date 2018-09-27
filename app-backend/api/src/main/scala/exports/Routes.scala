@@ -72,7 +72,7 @@ trait ExportRoutes
           ExportDao.query
             .filter(queryParams)
             .filter(user)
-            .page(page, fr"")
+            .page(page)
             .transact(xa)
             .unsafeToFuture()
         }

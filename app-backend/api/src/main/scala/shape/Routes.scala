@@ -161,7 +161,7 @@ trait ShapeRoutes
               queryParams.groupQueryParameters.groupId
             )
             .filter(queryParams)
-            .page(page, fr"")
+            .page(page)
             .transact(xa)
             .unsafeToFuture()
             .map { p =>

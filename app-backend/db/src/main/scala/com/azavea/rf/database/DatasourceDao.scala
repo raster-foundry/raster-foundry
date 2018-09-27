@@ -34,7 +34,7 @@ object DatasourceDao
     : ConnectionIO[PaginatedResponse[Datasource]] = {
     DatasourceDao.query
       .filter(params)
-      .page(page, fr"")
+      .page(page)
   }
 
   def create(datasource: Datasource, user: User): ConnectionIO[Datasource] = {
