@@ -92,7 +92,6 @@ export default class ProjectItemController {
     shareModal(project) {
         this.modalService.open({
             component: 'rfPermissionModal',
-            size: 'med',
             resolve: {
                 object: () => project,
                 permissionsBase: () => 'projects',

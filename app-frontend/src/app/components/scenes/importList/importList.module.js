@@ -121,7 +121,6 @@ class ImportListController {
     shareModal(scene) {
         this.modalService.open({
             component: 'rfPermissionModal',
-            size: 'med',
             resolve: {
                 object: () => scene,
                 permissionsBase: () => 'scenes',
