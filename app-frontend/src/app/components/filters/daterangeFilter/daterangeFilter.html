@@ -1,6 +1,6 @@
 <div class="filter">
   <label>{{$ctrl.filter.label}}</label>
-  <div class="flex-fill">
+  <div>
     <span ng-if="$ctrl.datefilterPreset">{{$ctrl.datefilterPreset}}</span>
     <span ng-if="!$ctrl.datefilterPreset">{{$ctrl.datefilter.start.calendar()}} to {{$ctrl.datefilter.end.calendar()}}</span>
   </div>
@@ -8,7 +8,7 @@
 <div class="filter">
   <label></label>
   <rf-toggle value="$ctrl.usingUTC" on-change="$ctrl.onSetUTC(value)">
-    &nbsp;<strong>Use UTC dates</strong>
+    <strong>&nbsp;&nbsp;Use UTC dates</strong>
     <span class="icon-help"
           tooltips
           tooltip-template="Scenes are filtered using the UTC definition of midnight 00:00 GMT. Uncheck this to use your local definition of midnight instead. This may result in you seeing scenes with different UTC dates depending on your timezone."
@@ -20,6 +20,6 @@
 </div>
 <div class="filter">
   <label></label>
-  <button class="btn btn-small btn-primary flex-fill"
+  <button class="btn btn-small btn-primary flex-fill btn-block"
           ng-click="$ctrl.openDateRangePickerModal()">{{$ctrl.hasDatetimeFilter ? 'Update ' : 'Set '}}Date</button>
 </div>
