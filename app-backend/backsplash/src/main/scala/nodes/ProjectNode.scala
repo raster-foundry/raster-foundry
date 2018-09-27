@@ -16,7 +16,7 @@ import cats.data.{OptionT, EitherT}
 import cats.effect.{IO, Timer}
 import cats.implicits._
 import doobie.implicits._
-import geotrellis.raster.{CellSize, CellType, Raster}
+import geotrellis.raster.{CellSize, CellType, Raster, GridBounds}
 import geotrellis.raster.render.{ColorMap, ColorRamps}
 import geotrellis.server.core.cog.CogUtils
 import geotrellis.server.core.maml.CogNode
@@ -210,6 +210,24 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     Raster(tile.color(colorMap), extent)
   }
 
+  def getCroppedGridBounds(tile: MultibandTile,
+                           zoom: Int,
+                           col: Int,
+                           row: Int,
+                           sourceZoom: Int): GridBounds = {
+    val resolutionDiff = 1 << (zoom - sourceZoom)
+    val innerCol = col % resolutionDiff
+    val innerRow = row % resolutionDiff
+    val cols = tile.cols / resolutionDiff
+    val rows = tile.rows / resolutionDiff
+    GridBounds(
+      colMin = innerCol * cols,
+      rowMin = innerRow * rows,
+      colMax = (innerCol + 1) * cols - 1,
+      rowMax = (innerRow + 1) * rows - 1
+    )
+  }
+
   // TODO: this essentially inlines a bunch of logic from LayerCache, which isn't super cool
   // it would be nice to get that logic somewhere more appropriate, especially since a lot of
   // it is grid <-> geometry math, but I'm not certain where it should go.
@@ -245,12 +263,15 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         (mbTileE map {
           (mbTile: MultibandTile) =>
             {
-              val innerCol = col % resolutionDiff
-              val innerRow = row % resolutionDiff
-              val cols = mbTile.cols / resolutionDiff
-              val rows = mbTile.rows / resolutionDiff
-              val corrected =
+              val corrected = if (zoom > sourceZoom) {
+                md.colorCorrections.colorCorrect(
+                  mbTile.crop(
+                    getCroppedGridBounds(mbTile, zoom, col, row, sourceZoom)
+                  ),
+                  histograms.toSeq)
+              } else {
                 md.colorCorrections.colorCorrect(mbTile, histograms.toSeq)
+              }
               Raster(corrected.color, extent).resample(256, 256)
             }
         }).toOption
@@ -341,7 +362,20 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
                 .lift(singleBandOptions.band) getOrElse {
                 throw new Exception("No histogram found for band")
               }
-              colorSingleBandTile(tile, extent, histogram, singleBandOptions)
+
+              if (zoom > sourceZoom) {
+                colorSingleBandTile(
+                  tile.crop(
+                    getCroppedGridBounds(mbTile, zoom, col, row, sourceZoom)
+                  ),
+                  extent,
+                  histogram,
+                  singleBandOptions
+                )
+              } else {
+                colorSingleBandTile(tile, extent, histogram, singleBandOptions)
+              }
+
             }
         }).toOption
       }
