@@ -60,12 +60,11 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
     for {
       histogram <- getSceneHistogram(cogTuple._2.get)
       inserted <- parse(histogram.toJson.toString).toOption match {
-        case Some(x) if x.toString == "null" | None =>
-          logger.info("Nah my dude none parsed")
+        case Some(x) if x.toString == "null" =>
+          None.pure[IO]
+        case None =>
           None.pure[IO]
         case Some(parsed) =>
-          logger.info("Yeah my dude some parsed")
-          logger.info(s"Parsed: $parsed")
           LayerAttributeDao
             .insertLayerAttribute(
               LayerAttribute(
