@@ -17,6 +17,7 @@ import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
 
 import io.circe.parser._
+import io.circe.syntax._
 
 import spray.json.DefaultJsonProtocol._
 import spray.json._
@@ -47,7 +48,7 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
        """.query[CogTuple].to[List].transact(xa) map { tuples =>
       {
         logger.info(s"Found ${tuples.length} scenes to create histograms for")
-        tuples.grouped(8).toList
+        tuples.grouped((tuples.length / 10) max 1).toList
       }
     }
   }
@@ -55,11 +56,16 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
   // presence of the ingest location is guaranteed by the filter in the sql string
   @SuppressWarnings(Array("OptionGet"))
   def insertHistogramLayerAttribute(
-      cogTuple: CogTuple): OptionT[IO, LayerAttribute] = (
+      cogTuple: CogTuple): IO[Option[LayerAttribute]] = (
     for {
       histogram <- getSceneHistogram(cogTuple._2.get)
-      inserted <- OptionT(
-        parse(histogram.toJson.toString).toOption traverse { parsed =>
+      inserted <- parse(histogram.toJson.toString).toOption match {
+        case Some(x) if x.toString == "null" | None =>
+          logger.info("Nah my dude none parsed")
+          None.pure[IO]
+        case Some(parsed) =>
+          logger.info("Yeah my dude some parsed")
+          logger.info(s"Parsed: $parsed")
           LayerAttributeDao
             .insertLayerAttribute(
               LayerAttribute(
@@ -69,29 +75,35 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
                 parsed
               )
             )
+            .map({ layerAttribute: LayerAttribute => Some(layerAttribute) })
             .transact(xa)
-        }
-      )
+      }
     } yield inserted
   )
 
   def getSceneHistogram(
-      ingestLocation: String): OptionT[IO, List[Histogram[Double]]] = {
+      ingestLocation: String): IO[Option[List[Histogram[Double]]]] = {
     logger.info(s"Fetching histogram for scene at $ingestLocation")
-    OptionT(
-      IO.fromFuture {
-        IO(
-          (CogUtils.fromUri(ingestLocation) map {
-            CogUtils.geoTiffDoubleHistogram(_).toList
-          }).value
-        )
+    IO.fromFuture {
+      IO(
+        (CogUtils.fromUri(ingestLocation) map {
+           CogUtils.geoTiffDoubleHistogram(_).toList
+         }).value
+      )
+    } recoverWith(
+      {
+        case t: Throwable =>
+          sendError(t)
+          logger.info(s"Fetching histogram for scene at $ingestLocation failed")
+          logger.error(t.getMessage, t)
+          Option.empty[List[Histogram[Double]]].pure[IO]
       }
     )
   }
 
   def run(sceneIds: Array[UUID]): IO[Unit] =
     for {
-      chunkedTuples <- sceneIds.toList match {
+      sceneTupleChunks <- sceneIds.toList match {
         // If we don't have any ids, just get all the COG scenes without histograms
         case Nil => getScenesToBackfill
         // If we do have some ids, go get those scenes. Assume the user has picked scenes correctly
@@ -102,15 +114,25 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
                 (scene.id, scene.ingestLocation)
               }
             }
-          } map { _.grouped(8).toList }
+          } map { List(_) }
       }
-      inserts <- (chunkedTuples parTraverse { sceneList =>
-        sceneList traverse { scene =>
-          insertHistogramLayerAttribute(scene)
+      ios <- IO {
+        sceneTupleChunks map { chunk =>
+          chunk traverse { idWithIngestLoc =>
+            insertHistogramLayerAttribute(idWithIngestLoc)
+          }
         }
-      }).value
+      }
     } yield {
-      val allResults = inserts reduce { _ ++ _ }
+      val allResults: List[Option[LayerAttribute]] = ios flatMap {
+        _.recoverWith({
+                        case t: Throwable =>
+                          sendError(t)
+                          logger.error(t.getMessage, t)
+                          IO(List.empty[Option[LayerAttribute]])
+                      })
+          .unsafeRunSync
+      }
       val errors = allResults filter { _.isEmpty }
       val successes = allResults filter { !_.isEmpty }
       logger.info(
@@ -123,16 +145,5 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
     }
 
   def main(args: Array[String]): Unit =
-    run(args map { UUID.fromString(_) })
-      .recoverWith(
-        {
-          case t: Throwable =>
-            IO {
-              sendError(t)
-              logger.error(t.getMessage, t)
-              sys.exit(1)
-            }
-        }
-      )
-      .unsafeRunSync
+    run(args map { UUID.fromString(_) }).unsafeRunSync
 }
