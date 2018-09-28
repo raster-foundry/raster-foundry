@@ -18,7 +18,7 @@ import geotrellis.spark.io.postgres.PostgresAttributeStore
 import geotrellis.spark.io.s3.{S3CollectionLayerReader, S3ValueReader}
 import geotrellis.spark.tiling.LayoutLevel
 import geotrellis.spark.{SpatialKey, TileLayerMetadata, io => _, _}
-import geotrellis.vector.Extent
+import geotrellis.vector.{Extent, Polygon, Projected}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -29,6 +29,12 @@ object Avro extends RollbarNotifier with HistogramJsonFormats {
   import com.rasterfoundry.database.util.RFTransactor.xa
 
   val store = PostgresAttributeStore()
+
+  def fetchGlobalTile(mosaicDefinition: MosaicDefinition,
+                      extent: Option[Projected[Polygon]],
+                      redBand: Int,
+                      greenBand: Int,
+                      blueBand: Int): IO[MultibandTile] = ???
 
   // TODO: this essentially inlines a bunch of logic from LayerCache, which isn't super cool
   // it would be nice to get that logic somewhere more appropriate, especially since a lot of

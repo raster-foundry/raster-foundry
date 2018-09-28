@@ -12,9 +12,11 @@ import cats.data._
 import cats.effect._
 import cats.implicits._
 import fs2.StreamApp
+import org.http4s.server.middleware._
 import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.server.middleware.AutoSlash
 
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object BacksplashServer extends StreamApp[IO] {
@@ -28,15 +30,24 @@ object ServerStream {
   implicit val timer: Timer[IO] = IO.timer(global)
 
   def healthCheckService = new HealthCheckService[IO].service
-  def mosaicService = new MosaicService().service
+  def mosaicService =
+    CORS(
+      Authenticators.queryParamAuthMiddleware(new MosaicService().service),
+      CORSConfig(
+        anyOrigin = true,
+        anyMethod = false,
+        allowedMethods = Some(Set("GET", "POST", "HEAD", "OPTIONS")),
+        allowedHeaders = Some(Set("Content-Type", "Authorization", "*")),
+        allowCredentials = true,
+        maxAge = 1800
+      )
+    )
   def analysisService = new AnalysisService().service
 
   def stream =
     BlazeBuilder[IO]
       .bindHttp(8080, "0.0.0.0")
-      .mountService(
-        AutoSlash(Authenticators.queryParamAuthMiddleware(mosaicService)),
-        "/")
+      .mountService(AutoSlash(mosaicService), "/")
       .mountService(AutoSlash(healthCheckService), "/healthcheck")
       .mountService(
         AutoSlash(Authenticators.queryParamAuthMiddleware(analysisService)),

@@ -768,7 +768,10 @@ object Generators extends ArbitraryInstances {
     }
 
     implicit def arbListSceneCreate: Arbitrary[List[Scene.Create]] = Arbitrary {
-      Gen.listOfN(3, sceneCreateGen)
+      Gen.oneOf(
+        Gen.listOfN(7, sceneCreateGen),
+        Gen.listOfN(0, sceneCreateGen)
+      )
     }
 
     implicit def arbThumbnail: Arbitrary[Thumbnail] = Arbitrary { thumbnailGen }
