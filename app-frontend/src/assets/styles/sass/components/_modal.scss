@@ -40,6 +40,12 @@
   &.in .modal-dialog {
     transform: translate(0, 0);
   }
+
+  // Fixes overflow beyond modal footer when fading in
+  &.in-add .modal-dialog {
+    max-height: 100vh;
+    overflow: hidden;
+  }
 }
 
 .modal-open .modal {
@@ -118,14 +124,15 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  //height: 72vh; Testing position sticky
   min-height: 43rem;
   position: relative;
   background: $off-white;
-  padding: 0 3rem;
+  padding: 3rem;
 }
 
 .modal-action-bar {
+  position: relative;
+  top: -3rem;
   flex: none;
   display: flex;
   align-items: center;
@@ -156,6 +163,8 @@
   border-radius: 7.5rem;
   color: $brand-primary;
   font-size: 3.5rem;
+  align-self: center;
+  margin: 2rem auto;
 
   img, 
   svg {
@@ -188,19 +197,22 @@
   background: $white;
   border: 1px solid $border-color-default;
   padding: 3rem;
-  margin: 3rem 0;
+  margin: 0;
   flex: 1;
-  //overflow: auto; Testing position sticky
 
   &.small {
     flex: none;
-    width: 70%;
+    width: 65%;
     margin: auto;
     min-height: 25rem;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
+
+    .btn {
+      align-self: center;
+    }
   }
 }
 

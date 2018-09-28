@@ -27,26 +27,24 @@
   </div>
   <div class="modal-inner-container" ng-show="$ctrl.shareUrl">
     <div class="form-group">
-      <div class="form-group">
-        <label for="published-link">Published page</label>
-        <div class="input-group">
-          <input id="published-link" type="text" class="form-control"
-                  value="{{$ctrl.shareUrl}}" readonly>
-          <button class="btn btn-link btn-square btn-icon"
-                  clipboard text="$ctrl.shareUrl"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')"
-                  tooltips
-                  tooltip-size="small"
-                  tooltip-side="top right"
-                  tooltip-template="Copy URL">
-            <i class="icon-copy color-base" 
-                aria-hidden="true"
-                ng-show="$ctrl.copyType !== 'page'"><span class="sr-only">Copy URL</span></i>
-            <i class="icon-check color-green"
-                aria-hidden="true"
-                ng-show="$ctrl.copyType === 'page'"></i>
-          </button>
-        </div>
+      <label for="published-link">Published page</label>
+      <div class="input-group">
+        <input id="published-link" type="text" class="form-control"
+                value="{{$ctrl.shareUrl}}" readonly>
+        <button class="btn btn-link btn-square btn-icon"
+                clipboard text="$ctrl.shareUrl"
+                ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')"
+                tooltips
+                tooltip-size="small"
+                tooltip-side="top right"
+                tooltip-template="Copy URL">
+          <i class="icon-copy color-base" 
+              aria-hidden="true"
+              ng-show="$ctrl.copyType !== 'page'"><span class="sr-only">Copy URL</span></i>
+          <i class="icon-check color-green"
+              aria-hidden="true"
+              ng-show="$ctrl.copyType === 'page'"></i>
+        </button>
       </div>
     </div>
     <div class="form-group">
