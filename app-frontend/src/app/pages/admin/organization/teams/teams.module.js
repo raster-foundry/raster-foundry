@@ -135,7 +135,6 @@ class OrganizationTeamsController {
     newTeamModal() {
         this.modalService.open({
             component: 'rfTeamModal',
-            size: 'sm'
         }).result.then((result) => {
             // eslint-disable-next-line
             this.teamService
