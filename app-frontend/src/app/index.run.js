@@ -22,7 +22,7 @@ function runBlock(
         $state.go('error');
     }
 
-    $rootScope.$on('$stateChangeStart', function (e, toState, params) {
+    $rootScope.$on('$stateChangeStart', function (e, toState, params, fromState) {
         function setupState(route) {
             let appName = BUILDCONFIG.APP_NAME;
             $window.document.title = toState.title ?
@@ -52,6 +52,13 @@ function runBlock(
                 }
             }
         }
+        if (
+            toState.name !== fromState.name &&
+            toState.redirectTo !== fromState.name &&
+            toState.resolve
+        ) {
+            $rootScope.isLoadingResolves = true;
+        }
         // TODO: I'm not sure exactly where this lies on the continuum between awful and the worst
         // thing ever, but it's pretty bad. We should either refactor our app initialization so this
         // is easier, or refactor FeatureFlags to deal in promises.
@@ -65,7 +72,8 @@ function runBlock(
         }
     });
 
-    $rootScope.$on('$stateChangeSuccess', () => {
+    $rootScope.$on('$stateChangeSuccess', (e, toState) => {
+        $rootScope.isLoadingResolves = false;
         modalService.closeActiveModal();
     });
 
