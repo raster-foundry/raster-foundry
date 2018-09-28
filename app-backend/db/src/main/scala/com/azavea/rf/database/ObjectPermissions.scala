@@ -243,7 +243,7 @@ trait ObjectPermissions[Model] {
       // shared to the requesting user directly, across platform, or due to group membership
       case Some(ownershipType) if ownershipType == "shared" =>
         Some(
-          fr"(" ++ visibilityF ++ acrFilterF ++ fr") AND owner <> ${user.id}")
+          fr"(" ++ acrFilterF ++ fr") AND owner <> ${user.id}")
       // shared to the requesting user due to group membership
       case Some(ownershipType) if ownershipType == "inherited" =>
         Some(inheritedF ++ fr"&& acrs")
