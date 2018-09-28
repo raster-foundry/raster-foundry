@@ -441,6 +441,7 @@ lazy val bridge = Project("bridge", file("bridge"))
 lazy val backsplash = Project("backsplash", file("backsplash"))
   .dependsOn(authentication, geotrellis, db)
   .settings(commonSettings: _*)
+  .settings(fork in run := true)
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.geotrellisServer,

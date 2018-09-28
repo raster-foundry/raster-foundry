@@ -1,6 +1,7 @@
 package com.azavea.rf.backsplash.services
 
 import com.azavea.rf.authentication.Authentication
+import com.azavea.rf.backsplash.error._
 import com.azavea.rf.backsplash.parameters.PathParameters._
 import com.azavea.rf.backsplash.nodes.ProjectNode
 import com.azavea.rf.common.RollbarNotifier
@@ -40,7 +41,8 @@ class MosaicService(
 )(implicit t: Timer[IO])
     extends Http4sDsl[IO]
     with RollbarNotifier
-    with Authentication {
+    with Authentication
+    with ErrorHandling {
 
   implicit val xa = RFTransactor.xa
 
@@ -58,7 +60,7 @@ class MosaicService(
 
   val service: HttpService[IO] =
     HttpService {
-      case GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
+      case req @ GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
             y)
             :? TokenQueryParamMatcher(token)
             :? RedBandOptionalQueryParamMatcher(redOverride)
@@ -75,9 +77,7 @@ class MosaicService(
                       .transact(xa)
                   )
                 case Left(e) =>
-                  EitherT.leftT[IO, User](
-                    new Exception("Failed to validate user from JWT")
-                  )
+                  EitherT.leftT[IO, User](e)
               }
             )
             authorized <- EitherT.liftF(
@@ -88,7 +88,10 @@ class MosaicService(
                             ActionType.View)
                 .transact(xa)
             )
-          } yield authorized
+            authPassed <- if (authorized)
+              EitherT.pure[IO, Throwable](Right(true))
+            else EitherT.leftT[IO, Boolean](NotAuthorized())
+          } yield authPassed
 
         def getTileResult(
             project: Project): EitherT[IO, Throwable, Interpreted[Tile]] = {
@@ -130,9 +133,6 @@ class MosaicService(
                 BadRequest(e.toString)
             }
           }
-        ).value flatMap {
-          case Left(e)     => BadRequest(e.getMessage)
-          case Right(resp) => resp
-        }
+        ).value flatMap { handleErrors }
     }
 }
