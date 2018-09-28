@@ -1,6 +1,7 @@
 package com.rasterfoundry.backsplash.error
 
 import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.datamodel.User
 
 import cats._
 import cats.data._
@@ -25,29 +26,28 @@ final case class NotAuthorizedException(message: String = "")
     extends BacksplashException
 final case class BadAnalysisASTException(message: String)
     extends BacksplashException
+final case class WrappedDoobieException(message: String)
+    extends BacksplashException
+final case class WrappedS3Exception(message: String) extends BacksplashException
+final case class UnknownException(message: String) extends BacksplashException
 
-trait ErrorHandling extends RollbarNotifier {
-  def handleErrors(t: Throwable): IO[Response[IO]] = t match {
-    case t @ MetadataException(m) =>
-      sendError(t)
-      InternalServerError(m)
-    case SingleBandOptionsException(m) => BadRequest(m)
-    case UningestedScenesException(m)  => NotFound(m)
-    case UnknownSceneTypeException(m)  => BadRequest(m)
-    case BadAnalysisASTException(m)    => BadRequest(m)
-    case NotAuthorizedException(_) =>
-      sendError(t)
-      Forbidden(
-        "Resource does not exist or user is not authorized to access resource")
+class ForeignErrorHandler[F[_], E <: Throwable](implicit M: MonadError[F, E])
+    extends RollbarNotifier
+    with HttpErrorHandler[F, E]
+    with Http4sDsl[F] {
+  private def wrapError(t: E): F[Response[F]] = t match {
     case (err: InvariantViolation) =>
       logger.error(err.getMessage, err.printStackTrace)
-      NotFound("Necessary data to produce tiles not available")
+      throw WrappedDoobieException(err.getMessage)
     case (err: AmazonS3Exception) =>
       logger.error(err.getMessage, err.printStackTrace)
-      NotFound(
-        "Necessary data to produce tiles not available. Check to ensure underlying data are still accessible in S3")
-    case err => InternalServerError(err.getMessage)
+      throw WrappedS3Exception(err.getMessage)
+    case (err: BacksplashException) => throw err
+    case t                          => throw UnknownException(t.getMessage)
   }
+
+  override def handle(service: AuthedService[User, F]): AuthedService[User, F] =
+    ServiceHttpErrorHandler(service)(wrapError)
 }
 
 class BacksplashHttpErrorHandler[F[_]](
@@ -66,17 +66,26 @@ class BacksplashHttpErrorHandler[F[_]](
     case t @ NotAuthorizedException(_) =>
       sendError(t)
       Forbidden(
-        "Resource does not exist or user is not authorized to access resource")
+        "Resource does not exist or user is not authorized to access this resource")
+    case WrappedDoobieException(m) =>
+      NotFound(m)
+    case WrappedS3Exception(_) =>
+      NotFound(
+        "Underlying data to produce tiles for this project appears to have moved or is no longer available")
+    case t @ UnknownException(m) =>
+      sendError(t)
+      InternalServerError(m)
   }
 
-  override def handle(service: HttpRoutes[F]): HttpRoutes[F] =
+  override def handle(service: AuthedService[User, F]): AuthedService[User, F] =
     ServiceHttpErrorHandler(service)(handler)
 }
 
 object ServiceHttpErrorHandler {
-  def apply[F[_], E](service: HttpRoutes[F])(handler: E => F[Response[F]])(
-      implicit ev: ApplicativeError[F, E]): HttpRoutes[F] =
-    Kleisli { req: Request[F] =>
+  def apply[F[_], E](service: AuthedService[User, F])(
+      handler: E => F[Response[F]])(
+      implicit ev: ApplicativeError[F, E]): AuthedService[User, F] =
+    Kleisli { req: AuthedRequest[F, User] =>
       OptionT {
         service(req).value.handleErrorWith { e =>
           handler(e).map(Option(_))
@@ -86,7 +95,7 @@ object ServiceHttpErrorHandler {
 }
 
 trait HttpErrorHandler[F[_], E <: Throwable] extends RollbarNotifier {
-  def handle(service: HttpRoutes[F]): HttpRoutes[F]
+  def handle(service: AuthedService[User, F]): AuthedService[User, F]
 }
 
 object HttpErrorHandler {

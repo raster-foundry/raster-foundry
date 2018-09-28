@@ -1,5 +1,6 @@
 package com.rasterfoundry.backsplash.services
 
+import cats.data.OptionT
 import cats.effect.Effect
 import io.circe.Json
 import org.http4s._
