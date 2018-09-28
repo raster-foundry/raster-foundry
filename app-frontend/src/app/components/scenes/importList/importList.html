@@ -1,3 +1,10 @@
+<rf-pagination-count
+    ng-if="$ctrl.pagination.count"
+    start-index="$ctrl.pagination.startingItem"
+    end-index="$ctrl.pagination.endingItem"
+    total="$ctrl.pagination.count"
+    item-name="rasters">
+</rf-pagination-count>
 <div class="text-center" ng-show="$ctrl.loading">
   <div>Loading Imports</div>
   <span class="list-placeholder h3">
@@ -24,23 +31,19 @@
     </div>
   </rf-scene-item>
 </div>
-<div class="list-group text-center"
-     ng-if="$ctrl.shouldShowImportList()">
-  <ul uib-pagination
-      items-per-page="$ctrl.lastSceneResult.pageSize"
-      total-items="$ctrl.lastSceneResult.count"
-      ng-model="$ctrl.currentPage"
-      max-size="4"
-      rotate="true"
-      boundary-link-numbers="true"
-      force-ellipses="true"
-      ng-change="$ctrl.populateImportList($ctrl.currentPage)">
-  </ul>
+<div class="list-group text-center">
+  <rf-pagination-controls
+    pagination="$ctrl.pagination"
+    is-loading="$ctrl.currentQuery"
+    on-change="$ctrl.populateImportList(value)"
+    ng-show="$ctrl.shouldShowImportList()"
+  ></rf-pagination-controls>
 </div>
 
 <!-- No imports placeholder -->
 <div ng-if="$ctrl.shouldShowImportBox()">
   <rf-call-to-action-item
+    ng-if="$ctrl.ownershipType == 'owned'"
     title="You haven't imported any scenes"
     class="panel panel-off-white">
     <p class="pb-25">
@@ -51,6 +54,14 @@
     <a class="btn btn-primary" ng-click="$ctrl.importModal()">Import scenes</a>
     <p>
       <a>Getting started with Imports</a>
+    </p>
+  </rf-call-to-action-item>
+  <rf-call-to-action-item
+    ng-if="$ctrl.ownershipType == 'shared'"
+    title="No raster data has been shared with you yet"
+    class="panel panel-off-white">
+    <p class="pb-25">
+      Once another user shares raster data with you or with organizations or teams you're a part of, you'll be able to see it here.
     </p>
   </rf-call-to-action-item>
 </div>

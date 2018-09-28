@@ -1,3 +1,5 @@
+/* global _ */
+
 import angular from 'angular';
 import importListTpl from './importList.html';
 
@@ -5,7 +7,8 @@ const ImportListComponent = {
     templateUrl: importListTpl,
     controller: 'ImportListController',
     bindings: {
-        platform: '<'
+        platform: '<',
+        ownershipType: '<'
     }
 };
 
@@ -13,15 +16,13 @@ const pageSize = '10';
 
 class ImportListController {
     constructor( // eslint-disable-line max-params
-        $log, sceneService, $state, authService, modalService,
+        $rootScope, $log, sceneService, $state,
+        authService, modalService, paginationService,
         RasterFoundryRepository
     ) {
         'ngInject';
-        this.$log = $log;
-        this.sceneService = sceneService;
-        this.$state = $state;
-        this.authService = authService;
-        this.modalService = modalService;
+        $rootScope.autoInject(this, arguments);
+        this.currentOwnershipFilter = 'owned';
         this.repository = {
             name: 'Raster Foundry',
             service: RasterFoundryRepository
@@ -50,6 +51,27 @@ class ImportListController {
         ];
     }
 
+    $onChanges(changes) {
+        if (_.get(changes, 'ownershipType.currentValue')) {
+            this.populateImportList(1);
+        }
+        this.handleParameterChange();
+    }
+
+    handleParameterChange() {
+        let replace = !this.$state.params.page || !this.$state.params.ownership;
+        this.$state.go(
+            this.$state.$current.name,
+            {
+                page: _.get(this, 'pagination.currentPage') || this.$state.params.page || 1,
+                ownership: this.ownershipType
+            }, {
+                location: replace ? 'replace' : true,
+                notify: false
+            }
+        );
+    }
+
     populateImportList(page) {
         if (this.loading) {
             return;
@@ -63,24 +85,12 @@ class ImportListController {
                 sort: 'createdAt,desc',
                 pageSize: pageSize,
                 page: page - 1,
-                owner: this.authService.getProfile().sub
+                ownershipType: this.ownershipType
             }
         ).then((sceneResult) => {
+            this.pagination = this.paginationService.buildPagination(sceneResult);
+            this.paginationService.updatePageParam(page, '');
             this.lastSceneResult = sceneResult;
-            this.numPaginationButtons = 6 - sceneResult.page % 10;
-            if (this.numPaginationButtons < 3) {
-                this.numPaginationButtons = 3;
-            }
-            this.currentPage = sceneResult.page + 1;
-            let replace = !this.$state.params.page;
-            this.$state.transitionTo(
-                this.$state.$current.name,
-                {page: this.currentPage},
-                {
-                    location: replace ? 'replace' : true,
-                    notify: false
-                }
-            );
             this.importList = this.lastSceneResult.results;
             this.loading = false;
         }, () => {

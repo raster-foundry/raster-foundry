@@ -473,7 +473,7 @@ function importStates($stateProvider) {
         })
         .state('imports.rasters', {
             title: 'Rasters',
-            url: '/rasters?page',
+            url: '/rasters?page&ownership',
             templateUrl: rasterListTpl,
             controller: 'RasterListController',
             controllerAs: '$ctrl'
