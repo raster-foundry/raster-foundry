@@ -9,9 +9,8 @@ import boto3
 import click
 from rasterfoundry.api import API
 
-from rf.uploads.landsat8.io import get_tempdir
 from ..utils.exception_reporting import wrap_rollbar
-from ..utils.io import s3_upload_export, dropbox_upload_export, get_jwt
+from ..utils.io import s3_upload_export, dropbox_upload_export, get_jwt, get_tempdir
 logger = logging.getLogger(__name__)
 
 HOST = os.getenv('RF_HOST')

@@ -10,7 +10,6 @@ import requests
 
 from rf.models import Band, Scene
 from rf.uploads.geotiff import create_geotiff_image
-from rf.uploads.landsat8.io import get_tempdir
 from rf.utils import cog, io
 from .parse_mtl import extract_metadata
 
@@ -73,7 +72,7 @@ class LandsatHistoricalSceneFactory(object):
                 'T': ThematicMapperConfig,
                 'E': EnhancedThematicMapperConfig
             }[sensor]
-            with get_tempdir() as temp_dir:
+            with io.get_tempdir() as temp_dir:
                 scene = create_scene(self.upload.owner, temp_dir, landsat_id,
                                      config, self.upload.datasource)
                 scenes.append(scene)

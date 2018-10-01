@@ -16,6 +16,21 @@ logger = logging.getLogger(__name__)
 s3 = boto3.resource('s3', region_name='eu-central-1')
 
 
+@contextmanager
+def get_tempdir(debug=False):
+    """Returns a temporary directory that is cleaned up after usage
+
+    Returns:
+        str
+    """
+    temp_dir = tempfile.mkdtemp()
+    try:
+        yield temp_dir
+    finally:
+        if not debug:
+            shutil.rmtree(temp_dir)
+
+
 def s3_bucket_and_key_from_url(s3_url):
     parts = urlparse(s3_url)
     # parts.path[1:] drops the leading slash that urlparse includes

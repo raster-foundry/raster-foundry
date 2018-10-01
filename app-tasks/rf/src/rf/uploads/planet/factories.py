@@ -8,9 +8,8 @@ import boto3
 import requests
 from retrying import retry
 
-from rf.uploads.landsat8.io import get_tempdir
 from rf.utils import cog
-from rf.utils.io import Visibility
+from rf.utils.io import Visibility, get_tempdir
 from .create_scenes import create_planet_scene
 
 logger = logging.getLogger(__name__)
