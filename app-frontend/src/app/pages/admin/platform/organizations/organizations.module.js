@@ -124,7 +124,7 @@ class PlatformOrganizationsController {
 
     newOrgModal() {
         this.modalService.open({
-            component: 'rfOrganizationModal',
+            component: 'rfOrganizationModal'
         }).result.then((result) => {
             this.platformService
                 .createOrganization(this.$stateParams.platformId, result.name, 'ACTIVE')
