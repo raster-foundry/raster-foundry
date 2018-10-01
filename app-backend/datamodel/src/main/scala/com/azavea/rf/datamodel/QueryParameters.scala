@@ -89,7 +89,7 @@ final case class GridQueryParameters(
 
 @JsonCodec
 final case class SceneSearchModeQueryParams(
-  isSceneBrowse: Option[Boolean] = None
+    isSceneBrowse: Option[Boolean] = None
 )
 
 /** Combined all query parameters */
@@ -102,7 +102,8 @@ final case class CombinedSceneQueryParams(
     ownershipTypeParams: OwnershipTypeQueryParameters =
       OwnershipTypeQueryParameters(),
     groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
-    sceneSearchModeParams: SceneSearchModeQueryParams = SceneSearchModeQueryParams()
+    sceneSearchModeParams: SceneSearchModeQueryParams =
+      SceneSearchModeQueryParams()
 )
 
 /** Combined all query parameters for grids */
