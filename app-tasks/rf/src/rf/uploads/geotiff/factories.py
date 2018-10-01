@@ -6,7 +6,7 @@ import boto3
 
 from .create_images import create_geotiff_image
 from .create_scenes import create_geotiff_scene
-from .utils import convert_to_cog
+from rf.utils import cog
 from rf.utils.io import Visibility, IngestStatus, upload_tifs, s3_bucket_and_key_from_url
 from rf.uploads.landsat8.io import get_tempdir
 
@@ -62,7 +62,8 @@ class GeoTiffS3SceneFactory(object):
             with get_tempdir() as tempdir:
                 tmp_fname = os.path.join(tempdir, filename)
                 bucket.download_file(key, tmp_fname)
-                cog_path = convert_to_cog(tempdir, filename)
+                cog.add_overviews(tmp_fname)
+                cog_path = cog.convert_to_cog(tmp_fname, tempdir)
                 scene = self.create_geotiff_scene(tmp_fname, os.path.splitext(filename)[0])
                 scene.ingestLocation = upload_tifs([cog_path], self.owner, scene.id)[0]
                 images = [self.create_geotiff_image(
