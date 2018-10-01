@@ -27,7 +27,7 @@
       <div class="alert-message">Any scenes added from this repository will also appear in your imports</div>
     </div>
   </div>
-  <div class="list-group-item" ng-if="$ctrl.sceneCount">
+  <div class="list-group-item" ng-if="$ctrl.sceneCount !== '0'">
     <strong class="color-dark">
       1 - {{$ctrl.sceneList.length}} of {{$ctrl.sceneCount}} scenes
     </strong>
