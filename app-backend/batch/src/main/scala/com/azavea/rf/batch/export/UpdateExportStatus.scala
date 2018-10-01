@@ -7,6 +7,7 @@ import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.datamodel._
 
+import com.typesafe.scalalogging.LazyLogging
 import cats.effect.IO
 import cats.implicits._
 import doobie.{ConnectionIO, Transactor}
@@ -24,6 +25,7 @@ final case class UpdateExportStatus(
   val name = UpdateExportStatus.name
 
   def run(): Unit = {
+    logger.info(s"Running update export status job...")
     updateExportStatus.transact(xa).unsafeRunSync
     exportStatus match {
       case ExportStatus.Failed =>
@@ -205,13 +207,14 @@ final case class UpdateExportStatus(
 
 }
 
-object UpdateExportStatus {
+object UpdateExportStatus extends LazyLogging {
   val name = "update_export_status"
   implicit val xa = RFTransactor.xa
 
   def main(args: Array[String]): Unit = {
     val job = args.toList match {
       case List(exportId, exportStatus) =>
+        logger.info(s"Updating export ${exportId} of status ${exportStatus}...")
         UpdateExportStatus(
           UUID.fromString(exportId),
           ExportStatus.fromString(exportStatus)
