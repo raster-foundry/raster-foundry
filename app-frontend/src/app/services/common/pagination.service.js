@@ -7,21 +7,19 @@ export default (app) => {
         }
 
         buildPagination(paginatedResponse) {
-            let startingItem = paginatedResponse.page * paginatedResponse.pageSize + 1;
-            let endingItem = Math.min(
-                (paginatedResponse.page + 1) * paginatedResponse.pageSize,
-                paginatedResponse.count
-            );
-            if (endingItem === 0) {
-                startingItem = 0;
-            }
             return {
                 pageSize: paginatedResponse.pageSize,
                 show: paginatedResponse.count > paginatedResponse.pageSize,
                 count: paginatedResponse.count,
                 currentPage: paginatedResponse.page + 1,
-                startingItem: startingItem,
-                endingItem: endingItem,
+                startingItem: Math.min(
+                    paginatedResponse.page * paginatedResponse.pageSize + 1,
+                    paginatedResponse.count
+                ),
+                endingItem: Math.min(
+                    (paginatedResponse.page + 1) * paginatedResponse.pageSize,
+                    paginatedResponse.count
+                ),
                 hasNext: paginatedResponse.hasNext,
                 hasPrevious: paginatedResponse.hasPrevious
             };
