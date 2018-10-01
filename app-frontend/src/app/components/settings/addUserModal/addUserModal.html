@@ -83,12 +83,20 @@
     </div>
   </div>
   <div class="modal-footer">
-    <span class="color-danger">{{$ctrl.error}}</span>
-    <button type="button"
-            class="btn"
-            ng-click="$ctrl.addUsers()"
-            ng-disabled="!$ctrl.hasPermission">
-      Add users
-    </button>
+    <div class="footer-section left">
+      <button type="button" class="btn"
+              ng-click="$ctrl.dismiss()">
+        Cancel
+      </button>
+    </div>
+    <div class="footer-section right">
+      <span class="color-danger">{{$ctrl.error}}</span>
+      <button type="button"
+              class="btn btn-primary"
+              ng-click="$ctrl.addUsers()"
+              ng-disabled="!$ctrl.hasPermission">
+        Add users
+      </button>
+    </div>
   </div>
 </div>

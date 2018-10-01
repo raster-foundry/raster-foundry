@@ -123,13 +123,17 @@
   </div>
 
   <div class="modal-footer">
-    <button type="button" class="btn pull-left"
-            ng-click="$ctrl.closeWithData(1)">
-      Close
-    </button>
-    <button type="button" class="btn btn-default pull-right"
-            ng-click="$ctrl.openDownloadModal()">
-      <i class="icon-download"></i> Download
-    </button>
+    <div class="footer-section left">
+      <button type="button" class="btn"
+              ng-click="$ctrl.closeWithData(1)">
+        Close
+      </button>
+    </div>
+    <div class="footer-section right">
+      <button type="button" class="btn"
+              ng-click="$ctrl.openDownloadModal()">
+        <i class="icon-download"></i> Download
+      </button>
+    </div>
   </div>
 </div>

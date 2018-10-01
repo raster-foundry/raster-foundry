@@ -224,6 +224,7 @@
   display: flex;
   position: sticky;
   bottom: 0;
+  z-index: 999;
 
   .footer-section {
     display: flex;
@@ -235,6 +236,10 @@
     &.right {
       flex: 1;
       justify-content: flex-end;
+
+      .btn {
+        margin-left: 5px;
+      }
     }
   }
 }
@@ -301,6 +306,10 @@
         max-height: 100%;
       }
     }
+  }
+
+  .modal-footer {
+    flex: none;
   }
 }
 
