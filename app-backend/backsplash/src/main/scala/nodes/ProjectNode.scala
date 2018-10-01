@@ -94,7 +94,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
           }
           for {
             mds <- mdIO
-            mbTiles <- mds.toList.parTraverse(self.isSingleBand match {
+            mbTiles <- mds.toList.traverse(self.isSingleBand match {
               case false =>
                 getMultiBandTileFromMosaic(z, x, y, extent)
               case true =>
@@ -127,14 +127,14 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
     md.sceneType match {
       case Some(SceneType.COG) =>
-        IO.shift(t) *> fetchSingleBandCogTile(md,
+        fetchSingleBandCogTile(md,
                                               z,
                                               x,
                                               y,
                                               extent,
                                               singleBandOptions).value
       case Some(SceneType.Avro) =>
-        IO.shift(t) *> fetchSingleBandAvroTile(md,
+        fetchSingleBandAvroTile(md,
                                                z,
                                                x,
                                                y,
@@ -148,9 +148,9 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
     md.sceneType match {
       case Some(SceneType.COG) =>
-        IO.shift(t) *> fetchMultiBandCogTile(md, z, x, y, extent).value
+        fetchMultiBandCogTile(md, z, x, y, extent).value
       case Some(SceneType.Avro) =>
-        IO.shift(t) *> fetchMultiBandAvroTile(md, z, x, y, extent).value
+        fetchMultiBandAvroTile(md, z, x, y, extent).value
       case None =>
         throw UnknownSceneType("Unable to fetch tiles with unknown scene type")
     }
@@ -243,12 +243,12 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         _ <- IO.pure(
           logger.debug(
             s"Fetching multi-band avro tile for scene id ${md.sceneId}"))
-        metadata <- IO.shift(t) *> tileLayerMetadata(md.sceneId, zoom)
+        metadata <- tileLayerMetadata(md.sceneId, zoom)
         (sourceZoom, tlm) = metadata
         zoomDiff = zoom - sourceZoom
         resolutionDiff = 1 << zoomDiff
         sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
-        histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
+        histograms <- layerHistogram(md.sceneId)
         mbTileE <- {
           if (tlm.bounds.includes(sourceKey))
             avroLayerTile(md.sceneId, sourceZoom, sourceKey).attempt
@@ -290,13 +290,13 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       _ <- IO.pure(
         logger.debug(
           s"Fetching multi-band COG tile for scene ID ${md.sceneId}"))
-      raster <- IO.shift(t) *> CogUtils.fetch(
+      raster <- CogUtils.fetch(
         md.ingestLocation.getOrElse(
           throw UningestedScenes(s"Scene ${md.sceneId} is not yet ingested")),
         zoom,
         col,
         row)
-      histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
+      histograms <- layerHistogram(md.sceneId)
     } yield {
       val bandOrder = List(
         md.colorCorrections.redBand,
@@ -335,12 +335,12 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         _ <- IO.pure(
           logger.debug(
             s"Fetching single-band avro tile for scene id ${md.sceneId}"))
-        metadata <- IO.shift(t) *> tileLayerMetadata(md.sceneId, zoom)
+        metadata <- tileLayerMetadata(md.sceneId, zoom)
         (sourceZoom, tlm) = metadata
         zoomDiff = zoom - sourceZoom
         resolutionDiff = 1 << zoomDiff
         sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
-        histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
+        histograms <- layerHistogram(md.sceneId)
         mbTileE <- {
           if (tlm.bounds.includes(sourceKey))
             avroLayerTile(md.sceneId, sourceZoom, sourceKey).attempt
@@ -396,13 +396,13 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       _ <- IO.pure(
         logger.debug(
           s"Fetching single-band COG tile for scene ID ${md.sceneId}"))
-      raster <- IO.shift(t) *> CogUtils.fetch(
+      raster <- CogUtils.fetch(
         md.ingestLocation.getOrElse(
           throw UningestedScenes(s"Scene ${md.sceneId} is not yet ingested")),
         zoom,
         col,
         row)
-      histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
+      histograms <- layerHistogram(md.sceneId)
     } yield {
       val tile = raster.tile.bands.lift(singleBandOptions.band) getOrElse {
         throw SingleBandOptionsError("No band found in single-band options")
