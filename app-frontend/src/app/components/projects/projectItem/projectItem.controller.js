@@ -120,7 +120,7 @@ export default class ProjectItemController {
                 feedbackIconType: () => 'danger',
                 feedbackIcon: () => 'icon-warning',
                 feedbackBtnType: () => 'btn-danger',
-                feedbackBtnText: () => 'Delete Project',
+                feedbackBtnText: () => 'Delete project',
                 cancelText: () => 'Cancel'
             }
         });

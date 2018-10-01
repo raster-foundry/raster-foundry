@@ -47,19 +47,25 @@
   <!-- Footer -->
   <!-- NAME -->
   <div class="modal-footer" ng-if="$ctrl.currentStepIs('NAME')">
-    <button type="button" class="btn pull-left" ng-click="$ctrl.dismiss()">
-      Cancel
-    </button>
-    <button type="button" class="btn btn-primary"
-            ng-click="$ctrl.handleCreate()"
-            ng-disabled="$ctrl.isCreatingDatasource">
-      Create
-    </button>
+    <div class="footer-section left">
+      <button type="button" class="btn" ng-click="$ctrl.dismiss()">
+        Cancel
+      </button>
+    </div>
+    <div class="footer-section right">
+      <button type="button" class="btn btn-primary"
+              ng-click="$ctrl.handleCreate()"
+              ng-disabled="$ctrl.isCreatingDatasource">
+        Create
+      </button>
+    </div>
   </div>
   <!-- SUCCESS -->
   <div class="modal-footer" ng-if="$ctrl.currentStepIs('SUCCESS')">
-    <button type="button" class="btn btn-primary" ng-click="$ctrl.close()">
-      Done
-    </button>
+    <div class="footer-section left">
+      <button type="button" class="btn" ng-click="$ctrl.close()">
+        Close
+      </button>
+    </div>
   </div>
 </div>

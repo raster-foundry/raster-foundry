@@ -104,12 +104,22 @@ class OrganizationTeamsController {
                 label: 'Delete',
                 callback: () => {
                     const modal = this.modalService.open({
-                        component: 'rfConfirmationModal',
+                        component: 'rfFeedbackModal',
                         resolve: {
                             title: () => 'Delete team?',
-                            content: () => 'This action is not reversible. Anything shared with this team will' +
-                                ' no longer be accessible by its members.',
-                            confirmText: () => 'Delete Team',
+                            subtitle: ()=> 
+                                'Deleting teams cannot be '
+                                + 'undone.',
+                            content: () => 
+                            '<h2>Do you wish to continue?</h2>'
+                            + '<p>Anything shared with this '
+                            + 'team will no longer be '
+                            + 'accessible by its members.',
+                            /* feedbackIconType : default, success, danger, warning */
+                            feedbackIconType: () => 'danger',
+                            feedbackIcon: () => 'icon-warning',
+                            feedbackBtnType: () => 'btn-danger',
+                            feedbackBtnText: () => 'Delete team',
                             cancelText: () => 'Cancel'
                         }
                     });
