@@ -2,17 +2,16 @@ from collections import OrderedDict
 import glob
 import logging
 import os
-import subprocess
+import shutil
 import urllib
 
 import boto3
-import rasterio
 import requests
 
 from rf.models import Band, Scene
 from rf.uploads.geotiff import create_geotiff_image
 from rf.uploads.landsat8.io import get_tempdir
-from rf.utils import io
+from rf.utils import cog, io
 from .parse_mtl import extract_metadata
 
 logger = logging.getLogger(__name__)
@@ -99,8 +98,12 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
         'COG': os.path.join(prefix, cog_fname),
         'STACKED': os.path.join(prefix, stacked_fname)
     }
-    convert_to_cog(prefix, filenames['STACKED'], filenames['COG'], config,
-                   landsat_id)
+    local_paths = glob.glob('/{}/{}*.TIF'.format(prefix, landsat_id))
+    warped_paths = cog.warp_tifs(local_paths, prefix)
+    merged = cog.merge_tifs(warped_paths, prefix)
+    cog.add_overviews(merged)
+    cog_path = cog.convert_to_cog(merged, prefix)
+    shutil.move(cog_path, filenames['COG'])
     s3_location = upload_file(owner, filenames['COG'], cog_fname)
     logger.info('Creating image')
     ingest_location = 's3://{}/{}'.format(data_bucket,
@@ -126,45 +129,6 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
         band_create_function=lambda x: config.bands.values())
     scene.images = [image]
     return scene
-
-
-def convert_to_cog(prefix, stacked_tif_path, cog_tif_path, config, landsat_id):
-    own_tifs = glob.glob('/{}/{}*.TIF'.format(prefix, landsat_id))
-    with rasterio.open(own_tifs[0]) as src0:
-        meta = src0.meta
-        meta.update(count=len(own_tifs))
-    with rasterio.open(stacked_tif_path, 'w', **meta) as dst:
-        for i, band in enumerate(config.bands):
-            fname = os.path.join(prefix, '{}_B{}.TIF'.format(landsat_id, band))
-            with rasterio.open(fname) as src:
-                dst.write_band(i + 1, src.read(1))
-
-    translate_cmd = [
-        'gdal_translate', stacked_tif_path,
-        os.path.join(prefix, 'translated.tif'), '-co', 'TILED=YES', '-co',
-        'COMPRESS=DEFLATE', '-co', 'PREDICTOR=2'
-    ]
-    overviews_cmd = [
-        'gdaladdo',
-        '-r',
-        'average',
-        '--config',
-        'COMPRESS_OVERVIEW', 'DEFLATE',
-        os.path.join(prefix, 'translated.tif'),
-    ]
-    cog_cmd = [
-        'gdal_translate',
-        os.path.join(prefix, 'translated.tif'), cog_tif_path, '-co',
-        'TILED=YES', '-co', 'COMPRESS=DEFLATE', '-co',
-        'COPY_SRC_OVERVIEWS=YES'
-    ]
-
-    logger.info('Tiling input tif')
-    subprocess.check_call(translate_cmd)
-    logger.info('Adding overviews')
-    subprocess.check_call(overviews_cmd)
-    logger.info('Converting tif to COG')
-    subprocess.check_call(cog_cmd)
 
 
 def upload_file(owner, local_path, remote_fname):
