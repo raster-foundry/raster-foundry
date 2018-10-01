@@ -8,8 +8,8 @@ import boto3
 import requests
 from retrying import retry
 
-from rf.uploads.geotiff.utils import convert_to_cog
 from rf.uploads.landsat8.io import get_tempdir
+from rf.utils import cog
 from rf.utils.io import Visibility
 from .create_scenes import create_planet_scene
 
@@ -78,7 +78,8 @@ class PlanetSceneFactory(object):
         updated_assets = self.activate_asset_and_wait(asset_type, assets, item_id, item_type)
 
         temp_tif_file = self.download_planet_tif(prefix, asset_type, updated_assets, item_id)
-        cog_path = convert_to_cog(prefix, temp_tif_file)
+        cog.add_overviews(temp_tif_file)
+        cog_path = cog.convert_to_cog(temp_tif_file, prefix)
         bucket, s3_path = self.upload_planet_tif(asset_type, item_id, item_type, cog_path)
 
         analytic_xml = self.get_analytic_xml(assets, item_id, item_type)
