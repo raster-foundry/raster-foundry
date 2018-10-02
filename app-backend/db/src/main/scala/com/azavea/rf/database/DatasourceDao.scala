@@ -95,8 +95,7 @@ object DatasourceDao
   }
 
   def isDeletable(datasourceId: UUID,
-                  user: User,
-                  objectType: ObjectType): ConnectionIO[Boolean] = {
+                  user: User): ConnectionIO[Boolean] = {
     val statusF: List[Fragment] =
       List("CREATED", "UPLOADING", "UPLOADED", "QUEUED", "PROCESSING")
         .map(status => fr"upload_status = ${status}::upload_status")
@@ -105,11 +104,11 @@ object DatasourceDao
       datasourceO <- DatasourceDao.getDatasourceById(datasourceId)
       isOwner = datasourceO match {
         case Some(datasource) if datasource.owner == user.id => true
-        case _                                               => false
+        case _ => false
       }
       isShared <- DatasourceDao.query
         .filter(datasourceId)
-        .filter(fr"acrs <> '{}':text[]")
+        .filter(fr"array_length(acrs, 1) != 0")
         .exists
       hasUpload <- UploadDao.query
         .filter(fr"datasource = ${datasourceId}")
