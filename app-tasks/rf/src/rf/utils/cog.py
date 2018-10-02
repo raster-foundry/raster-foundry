@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def add_overviews(tif_path):
     logger.info('Adding overviews to %s', tif_path)
     overviews_command = [
-        'gdaladdo', '-r', 'average', '--config', 'COMPRESS_OVERVIEW', 'LZW',
+        'gdaladdo', '-r', 'average', '--config', 'COMPRESS_OVERVIEW', 'DEFLATE',
         tif_path
     ]
     subprocess.check_call(overviews_command)
@@ -33,7 +33,7 @@ def convert_to_cog(tif_with_overviews_path, local_dir):
     out_path = os.path.join(local_dir, 'cog.tif')
     cog_command = [
         'gdal_translate', tif_with_overviews_path, '-co', 'TILED=YES', '-co',
-        'COMPRESS=LZW', '-co', 'COPY_SRC_OVERVIEWS=YES', '-co', 'BIGTIFF=IF_SAFER',
+        'COMPRESS=DEFLATE', '-co', 'COPY_SRC_OVERVIEWS=YES', '-co', 'BIGTIFF=IF_SAFER',
         '-co', 'PREDICTOR=2', out_path
     ]
     subprocess.check_call(cog_command)
@@ -72,7 +72,7 @@ def merge_tifs(local_tif_paths, local_dir):
     logger.debug('The files are:\n%s', '\n'.join(local_tif_paths))
     merged_path = os.path.join(local_dir, 'merged.tif')
     merge_command = [
-        'gdal_merge.py', '-o', merged_path, '-separate', '-co', 'COMPRESS=LZW',
+        'gdal_merge.py', '-o', merged_path, '-separate', '-co', 'COMPRESS=DEFLATE',
         '-co', 'PREDICTOR=2', '-co', 'BIGTIFF=IF_SAFER'
     ] + local_tif_paths
     subprocess.check_call(merge_command)
@@ -100,7 +100,7 @@ def resample_tif(src_path, local_dir, src_x, dst_x, src_y, dst_y):
             'No need to reproject for %s, already in target resolution',
             src_path)
         subprocess.check_call(
-            ['gdal_translate', '-co', 'COMPRESS=LZW', '-co', 'BIGTIFF=IF_SAFER', src_path, dst_path])
+            ['gdal_translate', '-co', 'COMPRESS=DEFLATE', '-co', 'BIGTIFF=IF_SAFER', src_path, dst_path])
     # if there are any resolution difference, including if they're weird, like a
     # greater x resolution and lesser y resolution, reproject to the same size
     else:
@@ -113,7 +113,7 @@ def resample_tif(src_path, local_dir, src_x, dst_x, src_y, dst_y):
         # No need to throw in -wo for the compression options, since we're doing all
         # of the bands at once
         subprocess.check_call([
-            'gdalwarp', '-co', 'COMPRESS=LZW', '-co', 'PREDICTOR=2',
+            'gdalwarp', '-co', 'COMPRESS=DEFLATE', '-co', 'PREDICTOR=2',
             '-co', 'BIGTIFF=IF_SAFER',
             '-dstnodata', '0', '-tr',
             str(dst_x),
