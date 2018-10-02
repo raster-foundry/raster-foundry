@@ -28,7 +28,13 @@ let load = function () {
     console.log('Current Environment: ', ENV);
 
     // load config file by environment
-    return configs && merge(
+    return configs && merge({
+        customizeArray: merge.unique(
+            'plugins',
+            ['HtmlWebpackPlugin'],
+            plugin => plugin.constructor && plugin.constructor.name
+        )}
+    )(
         configs.overrides ? configs.overrides(__dirname) : null,
         configs.global(__dirname),
         configs[ENV](__dirname)
