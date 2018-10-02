@@ -86,7 +86,7 @@ class ImportListController {
                 pageSize: pageSize,
                 page: page - 1,
                 ownershipType: this.ownershipType,
-                exactCount: false
+                exactCount: true
             }
         ).then((sceneResult) => {
             this.pagination = this.paginationService.buildPagination(sceneResult);
