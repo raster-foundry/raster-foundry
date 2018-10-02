@@ -77,8 +77,9 @@ class PlanetSceneFactory(object):
         updated_assets = self.activate_asset_and_wait(asset_type, assets, item_id, item_type)
 
         temp_tif_file = self.download_planet_tif(prefix, asset_type, updated_assets, item_id)
-        cog.add_overviews(temp_tif_file)
-        cog_path = cog.convert_to_cog(temp_tif_file, prefix)
+        full_path_to_temp_tif = os.path.join(prefix, temp_tif_file)
+        cog.add_overviews(full_path_to_temp_tif)
+        cog_path = cog.convert_to_cog(full_path_to_temp_tif, prefix)
         bucket, s3_path = self.upload_planet_tif(asset_type, item_id, item_type, cog_path)
 
         analytic_xml = self.get_analytic_xml(assets, item_id, item_type)
