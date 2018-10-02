@@ -35,7 +35,7 @@ trait SceneQueryParameterDirective extends QueryParametersCommon {
     )).as(SceneQueryParameters.apply _)
 
   val sceneSearchModeQueryParams = parameters(
-    ('isSceneBrowse.as[Boolean].?)
+    ('exactCount.as[Boolean].?)
   ).as(SceneSearchModeQueryParams.apply _)
 
   val sceneQueryParameters = (orgQueryParams &

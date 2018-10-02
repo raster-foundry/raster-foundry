@@ -89,7 +89,7 @@ final case class GridQueryParameters(
 
 @JsonCodec
 final case class SceneSearchModeQueryParams(
-    isSceneBrowse: Option[Boolean] = None
+    exactCount: Option[Boolean] = None
 )
 
 /** Combined all query parameters */
