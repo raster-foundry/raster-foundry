@@ -249,7 +249,8 @@ object Dao extends LazyLogging {
     }
 
     /** Short circuit for quickly getting an approximate count for large queries (e.g. scenes) **/
-    def sceneCountIO(isSceneBrowseOption: Option[Boolean]): ConnectionIO[Int] = {
+    def sceneCountIO(
+        isSceneBrowseOption: Option[Boolean]): ConnectionIO[Int] = {
       val countQuery = countF ++ Fragments.whereAndOpt(filters: _*)
       val over100IO: ConnectionIO[Boolean] =
         (fr"SELECT EXISTS(" ++ (selectF ++ Fragments.whereAndOpt(filters: _*) ++ fr"offset 100") ++ fr")")
