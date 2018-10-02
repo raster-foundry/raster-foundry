@@ -7,11 +7,12 @@ import com.azavea.rf.backsplash.services.{HealthCheckService, MosaicService}
 
 import cats._
 import cats.data._
-import cats.effect.{Effect, IO}
+import cats.effect._
 import cats.implicits._
 import fs2.StreamApp
 import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.server.middleware.AutoSlash
+import com.olegpy.meow.hierarchy._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -22,9 +23,8 @@ object BacksplashServer extends StreamApp[IO] {
 }
 
 object ServerStream {
-  implicit val timer = IO.timer(global)
   implicit val contextShift = IO.contextShift(global)
-  implicit val backsplashErrorHandler = new BacksplashHttpErrorHandler()
+  implicit val backsplashHttpErrorHandler: HttpErrorHandler[IO, BacksplashError] = new BacksplashHttpErrorHandler[IO]
   def healthCheckService = new HealthCheckService[IO].service
   def mosaicService = new MosaicService().service
 

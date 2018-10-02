@@ -7,8 +7,6 @@ import cats.data._
 import cats.effect._
 import cats.implicits._
 import com.amazonaws.services.s3.model.AmazonS3Exception
-import com.nimbusds.jwt.proc.BadJWTException
-import doobie.util.invariant.UnexpectedEnd
 import org.http4s._
 import org.http4s.dsl._
 import org.http4s.dsl.io._
@@ -22,8 +20,8 @@ case class UningestedScenes(message: String) extends BacksplashError
 case class UnknownSceneType(message: String) extends BacksplashError
 case class NotAuthorized(message: String = "") extends BacksplashError
 
-class BacksplashHttpErrorHandler extends HttpErrorHandler[BacksplashError] with Http4sDsl[IO] with RollbarNotifier {
-  private val handler: BacksplashError => IO[Response[IO]] = {
+class BacksplashHttpErrorHandler[F[_]](implicit M: MonadError[F, BacksplashError]) extends HttpErrorHandler[F, BacksplashError] with Http4sDsl[F] with RollbarNotifier {
+  private val handler: BacksplashError => F[Response[F]] = {
     case t @ MetadataError(m) =>
       sendError(t)
       InternalServerError(m)
@@ -35,45 +33,23 @@ class BacksplashHttpErrorHandler extends HttpErrorHandler[BacksplashError] with 
         "Tiles cannot be produced or user is not authorized to view these tiles")
   }
 
-  override def handle(service: HttpService[IO]): HttpService[IO] =
+  override def handle(service: HttpService[F]): HttpService[F] =
     ServiceHttpErrorHandler(service)(handler)
 }
 
 object ServiceHttpErrorHandler {
-  def apply[E <: Throwable](service: HttpService[IO])(handler: E => IO[Response[IO]]): HttpService[IO] =
-    Kleisli { req: Request[IO] =>
+  def apply[F[_], E](service: HttpService[F])(handler: E => F[Response[F]])(implicit ev: ApplicativeError[F, E]): HttpService[F] =
+    Kleisli { req: Request[F] =>
       OptionT {
-        service(req).value.handleErrorWith { exception => handler(exception).map(Option(_)) }
+        service(req).value.handleErrorWith { e => handler(e).map(Option(_)) }
       }
     }
 }
 
-trait HttpErrorHandler[E <: Throwable] extends RollbarNotifier {
-  def handle(service: HttpService[IO]): HttpService[IO]
+trait HttpErrorHandler[F[_], E <: Throwable] extends RollbarNotifier {
+  def handle(service: HttpService[F]): HttpService[F]
 }
 
 object HttpErrorHandler {
-  def apply[E <: Throwable](implicit ev: HttpErrorHandler[E]) = ev
+  def apply[F[_], E <: Throwable](implicit ev: HttpErrorHandler[F, E]) = ev
 }
-
-//   def handleErrors(
-//       data: Either[Throwable, IO[Response[IO]]]): IO[Response[IO]] = {
-//     data match {
-//       case Right(response) => response
-//       case Left(UnexpectedEnd) =>
-//         Forbidden(
-//           "Tiles cannot be produced or user is not authorized to view these tiles")
-//       case Left(t: AmazonS3Exception) if t.getStatusCode == 404 =>
-//         Gone("Underlying data for tile request are no longer available")
-//       case Left(t: AmazonS3Exception) if t.getStatusCode == 403 =>
-//         Forbidden(
-//           "The Raster Foundry application is not authorized to access underlying data for this tile")
-//       case Left(t: BadJWTException) =>
-//         Forbidden(
-//           "Token could not be verified. Please check authentication information and try again")
-//       case Left(t) =>
-//         sendError(t)
-//         InternalServerError("Something went wrong")
-//     }
-//   }
-// }

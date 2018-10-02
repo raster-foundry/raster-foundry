@@ -13,7 +13,7 @@ import com.azavea.maml.eval.BufferingInterpreter
 import cats._
 import cats.data._
 import cats.data.Validated._
-import cats.effect.{ContextShift, IO, Timer}
+import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import cats.syntax._
 import doobie.implicits._
@@ -37,7 +37,7 @@ import java.util.UUID
 
 class MosaicService(
     interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit t: Timer[IO], cs: ContextShift[IO], H: HttpErrorHandler[BacksplashError])
+)(implicit contextShift: ContextShift[IO], H: HttpErrorHandler[IO, BacksplashError])
     extends Http4sDsl[IO]
     with RollbarNotifier {
 
