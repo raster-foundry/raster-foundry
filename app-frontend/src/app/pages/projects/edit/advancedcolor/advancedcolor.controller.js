@@ -4,21 +4,11 @@ export default class ProjectsAdvancedColorController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $q, projectService, layerService, sceneService, $state, mapService,
         datasourceService, mapUtilsService, colorCorrectService, projectEditService,
-        RasterFoundryRepository
+        RasterFoundryRepository, paginationService
     ) {
         'ngInject';
-        this.projectService = projectService;
-        this.layerService = layerService;
-        this.sceneService = sceneService;
-        this.datasourceService = datasourceService;
-        this.mapUtilsService = mapUtilsService;
-        this.colorCorrectService = colorCorrectService;
-        this.projectEditService = projectEditService;
-        this.$state = $state;
-        this.$scope = $scope;
+        $scope.autoInject(this, arguments);
         this.$parent = $scope.$parent.$ctrl;
-        this.$q = $q;
-        this.$log = $log;
         this.repository = {
             name: 'Raster Foundry',
             service: RasterFoundryRepository
@@ -39,6 +29,10 @@ export default class ProjectsAdvancedColorController {
                 this.project = project;
                 this.initMap();
             });
+        }
+
+        if (!this.currentRequest) {
+            this.fetchPage();
         }
 
         this.$scope.$on('$destroy', this.$onDestroy.bind(this));
@@ -79,6 +73,35 @@ export default class ProjectsAdvancedColorController {
             });
             this.mosaic = () => this.$parent.mosaicLayer.values().next().value;
         });
+    }
+
+    fetchPage(page = this.$state.params.page || 1) {
+        delete this.fetchError;
+        this.sceneList = [];
+        const currentQuery = this.projectService.getProjectScenes(
+            this.$parent.projectId,
+            {
+                pageSize: this.projectService.scenePageSize,
+                page : page - 1
+            }
+        ).then((paginatedResponse) => {
+            this.sceneList = paginatedResponse.results;
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page);
+            if (this.currentQuery === currentQuery) {
+                delete this.fetchError;
+            }
+        }, (e) => {
+            if (this.currentQuery === currentQuery) {
+                this.fetchError = e;
+            }
+        }).finally(() => {
+            if (this.currentQuery === currentQuery) {
+                delete this.currentQuery;
+            }
+        });
+        this.currentQuery = currentQuery;
+        return currentQuery;
     }
 
     /**
@@ -161,7 +184,7 @@ export default class ProjectsAdvancedColorController {
 
     shouldSelectAll() {
         return this.selectedScenes.size === 0 ||
-            this.selectedScenes.size < this.$parent.sceneList.length;
+            this.selectedScenes.size < this.pagination.count;
     }
 
     setSelected(scene, selected) {
@@ -187,7 +210,7 @@ export default class ProjectsAdvancedColorController {
     }
 
     selectAllScenes() {
-        this.$parent.sceneList.map((scene) => this.setSelected(scene, true));
+        this.sceneList.map((scene) => this.setSelected(scene, true));
     }
 
     selectNoScenes() {
