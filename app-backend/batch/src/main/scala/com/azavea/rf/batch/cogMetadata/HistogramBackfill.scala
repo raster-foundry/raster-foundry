@@ -8,7 +8,7 @@ import com.azavea.rf.database.Implicits._
 import com.azavea.rf.database.{LayerAttributeDao, SceneDao}
 
 import cats.data._
-import cats.effect.IO
+import cats.effect._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -89,7 +89,7 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
     )
   }
 
-  def run(sceneIds: Array[UUID]): IO[Unit] =
+  def run(sceneIds: Array[UUID])(implicit cs: ContextShift[IO]): IO[Unit] =
     for {
       chunkedTuples <- sceneIds.toList match {
         // If we don't have any ids, just get all the COG scenes without histograms
@@ -122,7 +122,7 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
       sys.exit(0)
     }
 
-  def main(args: Array[String]): Unit =
+  def main(args: Array[String])(implicit cs: ContextShift[IO]): Unit =
     run(args map { UUID.fromString(_) })
       .recoverWith(
         {

@@ -16,7 +16,15 @@ import com.azavea.rf.batch.sentinel2.ImportSentinel2
 import com.azavea.rf.batch.stac.{ReadStacFeature}
 import com.azavea.rf.batch.notification.NotifyIngestStatus
 
+import cats.effect.IO
+
+import scala.concurrent.ExecutionContext.Implicits.global
+
+
 object Main {
+
+  implicit val contextShift = IO.contextShift(global)
+
   val modules = Map[String, Array[String] => Unit](
     CreateExportDef.name -> (CreateExportDef.main(_)),
     DropboxCopy.name -> (DropboxCopy.main(_)),
