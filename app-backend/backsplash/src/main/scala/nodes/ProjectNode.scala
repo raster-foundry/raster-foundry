@@ -14,7 +14,7 @@ import com.azavea.rf.datamodel.{
 }
 
 import cats.data.{OptionT, EitherT}
-import cats.effect.{IO, Timer}
+import cats.effect.{IO, ContextShift}
 import cats.implicits._
 import doobie.implicits._
 import geotrellis.raster.{CellSize, CellType, Raster, GridBounds}
@@ -70,7 +70,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       def kind(self: ProjectNode): MamlKind = MamlKind.Tile
 
       def tmsReification(self: ProjectNode, buffer: Int)(
-          implicit t: Timer[IO]): (Int, Int, Int) => IO[Literal] =
+          implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
           val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
           val mdIO = self.getBandOverrides match {
@@ -124,7 +124,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
                                   y: Int,
                                   extent: Extent,
                                   singleBandOptions: SingleBandOptions.Params)(
-      md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
+      md: MosaicDefinition)(implicit contextShift: ContextShift[IO]): IO[Option[Raster[Tile]]] =
     md.sceneType match {
       case Some(SceneType.COG) =>
         fetchSingleBandCogTile(md,
@@ -145,7 +145,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     }
 
   def getMultiBandTileFromMosaic(z: Int, x: Int, y: Int, extent: Extent)(
-      md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
+      md: MosaicDefinition)(implicit contextShift: ContextShift[IO]): IO[Option[Raster[Tile]]] =
     md.sceneType match {
       case Some(SceneType.COG) =>
         fetchMultiBandCogTile(md, z, x, y, extent).value
@@ -237,7 +237,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       zoom: Int,
       col: Int,
       row: Int,
-      extent: Extent)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+      extent: Extent)(implicit contextShift: ContextShift[IO]): OptionT[IO, Raster[Tile]] = {
     OptionT(
       for {
         _ <- IO.pure(
@@ -285,7 +285,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       zoom: Int,
       col: Int,
       row: Int,
-      extent: Extent)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+      extent: Extent)(implicit contextShift: ContextShift[IO]): OptionT[IO, Raster[Tile]] = {
     val tileIO = for {
       _ <- IO.pure(
         logger.debug(
@@ -329,7 +329,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
                               row: Int,
                               extent: Extent,
                               singleBandOptions: SingleBandOptions.Params)(
-      implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+      implicit contextShift: ContextShift[IO]): OptionT[IO, Raster[Tile]] = {
     OptionT(
       for {
         _ <- IO.pure(
@@ -391,7 +391,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
                              row: Int,
                              extent: Extent,
                              singleBandOptions: SingleBandOptions.Params)(
-      implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+      implicit contextShift: ContextShift[IO]): OptionT[IO, Raster[Tile]] = {
     val tileIO = for {
       _ <- IO.pure(
         logger.debug(
