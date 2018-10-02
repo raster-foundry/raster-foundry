@@ -48,7 +48,8 @@ object SceneWithRelatedDao
       )
       sceneBrowses <- scenesToSceneBrowse(scenes,
                                           sceneParams.sceneParams.project)
-      count <- sceneSearchBuilder.sceneCountIO
+      count <- sceneSearchBuilder.sceneCountIO(
+        sceneParams.sceneSearchModeParams.exactCount)
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count

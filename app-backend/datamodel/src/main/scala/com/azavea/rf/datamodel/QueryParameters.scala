@@ -87,6 +87,11 @@ final case class GridQueryParameters(
     ingestStatus: Iterable[String] = Seq.empty[String]
 )
 
+@JsonCodec
+final case class SceneSearchModeQueryParams(
+    exactCount: Option[Boolean] = None
+)
+
 /** Combined all query parameters */
 @JsonCodec
 final case class CombinedSceneQueryParams(
@@ -96,7 +101,9 @@ final case class CombinedSceneQueryParams(
     sceneParams: SceneQueryParameters = SceneQueryParameters(),
     ownershipTypeParams: OwnershipTypeQueryParameters =
       OwnershipTypeQueryParameters(),
-    groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
+    groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
+    sceneSearchModeParams: SceneSearchModeQueryParams =
+      SceneSearchModeQueryParams()
 )
 
 /** Combined all query parameters for grids */
