@@ -37,7 +37,8 @@ import java.util.UUID
 
 class MosaicService(
     interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit contextShift: ContextShift[IO], H: HttpErrorHandler[IO, BacksplashError])
+)(implicit contextShift: ContextShift[IO],
+  H: HttpErrorHandler[IO, BacksplashError])
     extends Http4sDsl[IO]
     with RollbarNotifier {
 
@@ -62,19 +63,16 @@ class MosaicService(
             :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
         val authorizationIO =
           ProjectDao
-            .authorized(user,
-                        ObjectType.Project,
-                        projectId,
-                        ActionType.View)
-            .transact(xa) map { authResult => 
-              if (!authResult)
-                throw NotAuthorized(s"User ${user.id} not authorized to view project $projectId")
-              else
-                authResult
-            }
+            .authorized(user, ObjectType.Project, projectId, ActionType.View)
+            .transact(xa) map { authResult =>
+            if (!authResult)
+              throw NotAuthorized(
+                s"User ${user.id} not authorized to view project $projectId")
+            else
+              authResult
+          }
 
-        def getTileResult(
-            project: Project): IO[Interpreted[Tile]] = {
+        def getTileResult(project: Project): IO[Interpreted[Tile]] = {
           val projectNode =
             (redOverride, greenOverride, blueOverride).tupled match {
               case Some((red: Int, green: Int, blue: Int)) =>

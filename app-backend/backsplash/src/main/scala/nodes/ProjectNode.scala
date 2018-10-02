@@ -70,7 +70,8 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       def kind(self: ProjectNode): MamlKind = MamlKind.Tile
 
       def tmsReification(self: ProjectNode, buffer: Int)(
-          implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] =
+          implicit contextShift: ContextShift[IO])
+        : (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
           val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
           val mdIO = self.getBandOverrides match {
@@ -119,33 +120,25 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         }
     }
 
-  def getSingleBandTileFromMosaic(z: Int,
-                                  x: Int,
-                                  y: Int,
-                                  extent: Extent,
-                                  singleBandOptions: SingleBandOptions.Params)(
-      md: MosaicDefinition)(implicit contextShift: ContextShift[IO]): IO[Option[Raster[Tile]]] =
+  def getSingleBandTileFromMosaic(
+      z: Int,
+      x: Int,
+      y: Int,
+      extent: Extent,
+      singleBandOptions: SingleBandOptions.Params)(md: MosaicDefinition)(
+      implicit contextShift: ContextShift[IO]): IO[Option[Raster[Tile]]] =
     md.sceneType match {
       case Some(SceneType.COG) =>
-        fetchSingleBandCogTile(md,
-                                              z,
-                                              x,
-                                              y,
-                                              extent,
-                                              singleBandOptions).value
+        fetchSingleBandCogTile(md, z, x, y, extent, singleBandOptions).value
       case Some(SceneType.Avro) =>
-        fetchSingleBandAvroTile(md,
-                                               z,
-                                               x,
-                                               y,
-                                               extent,
-                                               singleBandOptions).value
+        fetchSingleBandAvroTile(md, z, x, y, extent, singleBandOptions).value
       case None =>
         throw UnknownSceneType("Unable to fetch tiles with unknown scene type")
     }
 
   def getMultiBandTileFromMosaic(z: Int, x: Int, y: Int, extent: Extent)(
-      md: MosaicDefinition)(implicit contextShift: ContextShift[IO]): IO[Option[Raster[Tile]]] =
+      md: MosaicDefinition)(
+      implicit contextShift: ContextShift[IO]): IO[Option[Raster[Tile]]] =
     md.sceneType match {
       case Some(SceneType.COG) =>
         fetchMultiBandCogTile(md, z, x, y, extent).value
@@ -232,12 +225,12 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
   // TODO: this essentially inlines a bunch of logic from LayerCache, which isn't super cool
   // it would be nice to get that logic somewhere more appropriate, especially since a lot of
   // it is grid <-> geometry math, but I'm not certain where it should go.
-  def fetchMultiBandAvroTile(
-      md: MosaicDefinition,
-      zoom: Int,
-      col: Int,
-      row: Int,
-      extent: Extent)(implicit contextShift: ContextShift[IO]): OptionT[IO, Raster[Tile]] = {
+  def fetchMultiBandAvroTile(md: MosaicDefinition,
+                             zoom: Int,
+                             col: Int,
+                             row: Int,
+                             extent: Extent)(
+      implicit contextShift: ContextShift[IO]): OptionT[IO, Raster[Tile]] = {
     OptionT(
       for {
         _ <- IO.pure(
@@ -280,12 +273,12 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     )
   }
 
-  def fetchMultiBandCogTile(
-      md: MosaicDefinition,
-      zoom: Int,
-      col: Int,
-      row: Int,
-      extent: Extent)(implicit contextShift: ContextShift[IO]): OptionT[IO, Raster[Tile]] = {
+  def fetchMultiBandCogTile(md: MosaicDefinition,
+                            zoom: Int,
+                            col: Int,
+                            row: Int,
+                            extent: Extent)(
+      implicit contextShift: ContextShift[IO]): OptionT[IO, Raster[Tile]] = {
     val tileIO = for {
       _ <- IO.pure(
         logger.debug(

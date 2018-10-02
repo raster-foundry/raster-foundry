@@ -20,7 +20,11 @@ case class UningestedScenes(message: String) extends BacksplashError
 case class UnknownSceneType(message: String) extends BacksplashError
 case class NotAuthorized(message: String = "") extends BacksplashError
 
-class BacksplashHttpErrorHandler[F[_]](implicit M: MonadError[F, BacksplashError]) extends HttpErrorHandler[F, BacksplashError] with Http4sDsl[F] with RollbarNotifier {
+class BacksplashHttpErrorHandler[F[_]](
+    implicit M: MonadError[F, BacksplashError])
+    extends HttpErrorHandler[F, BacksplashError]
+    with Http4sDsl[F]
+    with RollbarNotifier {
   private val handler: BacksplashError => F[Response[F]] = {
     case t @ MetadataError(m) =>
       sendError(t)
@@ -33,21 +37,24 @@ class BacksplashHttpErrorHandler[F[_]](implicit M: MonadError[F, BacksplashError
         "Tiles cannot be produced or user is not authorized to view these tiles")
   }
 
-  override def handle(service: HttpService[F]): HttpService[F] =
+  override def handle(service: HttpRoutes[F]): HttpRoutes[F] =
     ServiceHttpErrorHandler(service)(handler)
 }
 
 object ServiceHttpErrorHandler {
-  def apply[F[_], E](service: HttpService[F])(handler: E => F[Response[F]])(implicit ev: ApplicativeError[F, E]): HttpService[F] =
+  def apply[F[_], E](service: HttpRoutes[F])(handler: E => F[Response[F]])(
+      implicit ev: ApplicativeError[F, E]): HttpRoutes[F] =
     Kleisli { req: Request[F] =>
       OptionT {
-        service(req).value.handleErrorWith { e => handler(e).map(Option(_)) }
+        service(req).value.handleErrorWith { e =>
+          handler(e).map(Option(_))
+        }
       }
     }
 }
 
 trait HttpErrorHandler[F[_], E <: Throwable] extends RollbarNotifier {
-  def handle(service: HttpService[F]): HttpService[F]
+  def handle(service: HttpRoutes[F]): HttpRoutes[F]
 }
 
 object HttpErrorHandler {

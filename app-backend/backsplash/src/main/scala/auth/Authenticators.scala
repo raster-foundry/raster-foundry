@@ -13,8 +13,7 @@ import org.http4s._
 import org.http4s.server._
 import org.http4s.dsl.io._
 
-object TokenQueryParamMatcher
-    extends QueryParamDecoderMatcher[String]("token")
+object TokenQueryParamMatcher extends QueryParamDecoderMatcher[String]("token")
 
 object Authenticators extends Authentication {
   implicit val xa = RFTransactor.xa

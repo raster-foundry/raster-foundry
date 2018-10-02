@@ -30,7 +30,7 @@ object Version {
   val geotrellisServer = "0.0.2"
   val hadoop = "2.8.4"
   val hikariCP = "3.2.0"
-  val http4s = "0.18.15"
+  val http4s = "0.19.0-M3"
   val json4s = "3.5.0"
   val kamon = "0.6.7"
   val kamonAkkaHttp = "0.6.8"
