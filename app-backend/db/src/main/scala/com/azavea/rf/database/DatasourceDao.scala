@@ -108,7 +108,7 @@ object DatasourceDao
       }
       isShared <- DatasourceDao.query
         .filter(datasourceId)
-        .filter(fr"array_length(acrs, 1) != 0")
+        .filter(fr"array_length(acrs, 1) is not null")
         .exists
       hasUpload <- UploadDao.query
         .filter(fr"datasource = ${datasourceId}")
