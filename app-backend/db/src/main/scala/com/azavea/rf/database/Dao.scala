@@ -257,12 +257,12 @@ object Dao extends LazyLogging {
           .unique
       over100IO.flatMap(over100 => {
         (exactCountOption, over100) match {
-          case (Some(false), _) =>
+          case (Some(true), _) =>
             countQuery.query[Int].unique
-          case (_, true) =>
-            100.pure[ConnectionIO]
           case (_, false) =>
             countQuery.query[Int].unique
+          case _ =>
+            100.pure[ConnectionIO]
         }
       })
     }
