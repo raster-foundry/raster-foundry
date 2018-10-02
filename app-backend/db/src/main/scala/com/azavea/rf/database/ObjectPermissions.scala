@@ -245,7 +245,8 @@ trait ObjectPermissions[Model] {
         if (objectType == ObjectType.Shape) {
           Some(fr"(" ++ acrFilterF ++ fr") AND owner <> ${user.id}")
         } else {
-          Some(fr"visibility != 'PUBLIC' AND (" ++ acrFilterF ++ fr") AND owner <> ${user.id}")
+          Some(
+            fr"visibility != 'PUBLIC' AND (" ++ acrFilterF ++ fr") AND owner <> ${user.id}")
         }
       // shared to the requesting user due to group membership
       case Some(ownershipType) if ownershipType == "inherited" =>
