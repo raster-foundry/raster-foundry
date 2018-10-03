@@ -53,6 +53,8 @@ class AnnotateController {
             filter,
             fetchingAnnotations: state.projects.fetchingAnnotations,
             fetchingAnnotationsError: state.projects.fetchingAnnotationsError,
+            creatingAnnotations: state.projects.creatingAnnotations,
+            creatingAnnotationsError: state.projects.creatingAnnotationsError,
             editingAnnotation: state.projects.editingAnnotation,
             annotationTemplate: state.projects.annotationTemplate,
             annotationShapefileProps

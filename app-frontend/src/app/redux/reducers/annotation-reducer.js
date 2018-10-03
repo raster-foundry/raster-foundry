@@ -28,6 +28,7 @@ export const annotationReducer = typeToReducer({
             annotations: new OrderedMap(), editingAnnotation: null,
             fetchingAnnotations: false, fetchingAnnotationsError: null,
             sidebarDisabled: false, annotationTemplate: null,
+            creatingAnnotations: false, creatingAnnotationsError: false,
 
             labels: [], filter: 'All'
         });
@@ -145,12 +146,19 @@ export const annotationReducer = typeToReducer({
     },
     [ANNOTATIONS_CREATE]: {
         PENDING: (state) => {
-            return state;
+            return Object.assign({}, state, {
+                creatingAnnotations: true,
+                creatingAnnotationsError: false
+            });
         },
         REJECTED: (state, action) => {
             // eslint-disable-next-line
             console.error('Error creating annotations', action.payload);
-            return state;
+
+            return Object.assign({}, state, {
+                creatingAnnotations: false,
+                creatingAnnotationsError: true
+            });
         },
         FULFILLED: (state, action) => {
             let newAnnotations = action.payload.data.features;
@@ -172,6 +180,8 @@ export const annotationReducer = typeToReducer({
                 {},
                 state,
                 {
+                    creatingAnnotations: false,
+                    creatingAnnotationsError: false,
                     annotations,
                     labels: labels.toArray()
                 }
