@@ -1,5 +1,33 @@
 # Change Log
 
+## [1.12.0](https://github.com/raster-foundry/raster-foundry/tree/1.12.0) (2018-10-03)
+
+[Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.11.0...1.12.0)
+
+**Merged pull requests:**
+
+- Add visibility check to shared ownership type [\#4144](https://github.com/raster-foundry/raster-foundry/pull/4144)
+- Change webpack merge strategy to override HtmlWebpackPlugin [\#4139](https://github.com/raster-foundry/raster-foundry/pull/4139)
+- Fix raster data count for pagination [\#4137](https://github.com/raster-foundry/raster-foundry/pull/4137)
+- Fix navbar alignment on smaller screens [\#4133](https://github.com/raster-foundry/raster-foundry/pull/4133)
+- Filter imports by ownership [\#4129](https://github.com/raster-foundry/raster-foundry/pull/4129)
+- Merge page sorting parameters [\#4122](https://github.com/raster-foundry/raster-foundry/pull/4122)
+- Fix project export [\#4120](https://github.com/raster-foundry/raster-foundry/pull/4120)
+- Staging frontend bug fix: scene date UTC filter; User profile; AOI datasource filter [\#4119](https://github.com/raster-foundry/raster-foundry/pull/4119)
+- Fix annotation editing [\#4118](https://github.com/raster-foundry/raster-foundry/pull/4118)
+- Fix dropbox dummy session store [\#4112](https://github.com/raster-foundry/raster-foundry/pull/4112)
+- Crop over-zoomed avro tiles [\#4109](https://github.com/raster-foundry/raster-foundry/pull/4109)
+- Filter out pending scenes from mosaic definitions [\#4108](https://github.com/raster-foundry/raster-foundry/pull/4108)
+- Don't kick off cog ingest [\#4107](https://github.com/raster-foundry/raster-foundry/pull/4107)
+- Allow removing users from an organization [\#4106](https://github.com/raster-foundry/raster-foundry/pull/4106)
+- Update timestamp string parsing [\#4105](https://github.com/raster-foundry/raster-foundry/pull/4105)
+- Fix scene re-ordering again [\#4104](https://github.com/raster-foundry/raster-foundry/pull/4104)
+- Reset lab state when a new analysis is fetched [\#4103](https://github.com/raster-foundry/raster-foundry/pull/4103)
+- Require first and last name for sharing, scrub email [\#4097](https://github.com/raster-foundry/raster-foundry/pull/4097)
+- Light Theme [\#4091](https://github.com/raster-foundry/raster-foundry/pull/4091)
+- Add single band category transparency rendering [\#4085](https://github.com/raster-foundry/raster-foundry/pull/4085)
+- ACR in text array [\#3967](https://github.com/raster-foundry/raster-foundry/pull/3967)
+
 ## [1.11.0](https://github.com/raster-foundry/raster-foundry/tree/1.11.0) (2018-09-25)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.10.0...1.11.0)
@@ -30,11 +58,11 @@
 - Make pan-to new annotations optional [\#4007](https://github.com/raster-foundry/raster-foundry/pull/4007)
 - Filter actual list of AOI scenes to approve instead of response object [\#4006](https://github.com/raster-foundry/raster-foundry/pull/4006)
 - Remove Scapegoat errors for data model project [\#3988](https://github.com/raster-foundry/raster-foundry/pull/3988)
-- \[Front End\] Cleans up front-end map controls [\#3985](https://github.com/raster-foundry/raster-foundry/pull/3985)
 - Add support for scalafmt via set plugin [\#3959](https://github.com/raster-foundry/raster-foundry/pull/3959)
 - Remove Scapegoat errors for database project [\#3949](https://github.com/raster-foundry/raster-foundry/pull/3949)
 - Use logger for ZOOMANDEXTENTS message [\#3935](https://github.com/raster-foundry/raster-foundry/pull/3935)
 - \[Anchor\] Backsplash [\#3850](https://github.com/raster-foundry/raster-foundry/pull/3850)
+- \[Front End\] Cleans up front-end map controls [\#3985](https://github.com/raster-foundry/raster-foundry/pull/3985)
 
 ## [1.10.0](https://github.com/raster-foundry/raster-foundry/tree/1.10.0) (2018-08-31)
 
