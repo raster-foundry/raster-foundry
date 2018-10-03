@@ -12,7 +12,10 @@ export default (app) => {
                 show: paginatedResponse.count > paginatedResponse.pageSize,
                 count: paginatedResponse.count,
                 currentPage: paginatedResponse.page + 1,
-                startingItem: paginatedResponse.page * paginatedResponse.pageSize + 1,
+                startingItem: Math.min(
+                    paginatedResponse.page * paginatedResponse.pageSize + 1,
+                    paginatedResponse.count
+                ),
                 endingItem: Math.min(
                     (paginatedResponse.page + 1) * paginatedResponse.pageSize,
                     paginatedResponse.count

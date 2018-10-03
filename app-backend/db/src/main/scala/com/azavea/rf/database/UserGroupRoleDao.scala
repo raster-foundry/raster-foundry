@@ -10,7 +10,7 @@ import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import cats._, cats.data._, cats.effect.IO, cats.implicits._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import io.circe._
 
 import java.util.UUID
@@ -233,7 +233,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
                        page: PageRequest,
                        searchParams: SearchQueryParameters,
                        actingUser: User,
-                       orderClauseO: Option[Fragment] = None)
+                       orderClauseO: Option[Map[String, Order]] = None)
     : ConnectionIO[PaginatedResponse[User.WithGroupRole]] = {
     // PUBLIC users can be seen by anyone within the same platform
     // PRIVATE users can be seen by anyone within the same organization
@@ -305,7 +305,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           )
           .page[User.WithGroupRole](page, sf, cf, orderClauseO match {
             case Some(orderClause) => orderClause
-            case None              => fr""
+            case None              => Map.empty[String, Order]
           })
       }
     } yield { result }

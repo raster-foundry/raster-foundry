@@ -1,7 +1,7 @@
 /* global BUILDCONFIG, HELPCONFIG */
 class RasterListController {
     constructor(
-        $scope, $uibModal,
+        $scope, $state, $uibModal,
         authService, uploadService,
         platform
     ) {
@@ -14,6 +14,7 @@ class RasterListController {
         this.HELPCONFIG = HELPCONFIG;
         this.pendingImports = 0;
         this.checkPendingImports();
+        this.currentOwnershipFilter = this.$state.params.ownership || 'owned';
     }
 
     $onDestroy() {

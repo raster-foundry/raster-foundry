@@ -44,5 +44,5 @@ class DummySessionStore extends DbxSessionStore {
     }
   }
   def set(s: String): Unit = this.setToken(s)
-  def clear(): Unit = this.clear
+  def clear(): Unit = ()
 }

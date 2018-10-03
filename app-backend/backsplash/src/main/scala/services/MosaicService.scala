@@ -81,7 +81,7 @@ class MosaicService(
               }
             )
             authorized <- EitherT.liftF(
-              ProjectDao.query
+              ProjectDao
                 .authorized(user,
                             ObjectType.Project,
                             projectId,
@@ -110,14 +110,17 @@ class MosaicService(
                             project.singleBandOptions)
             }
           val paramMap = Map("identity" -> projectNode)
-          EitherT(eval(paramMap, z, x, y).attempt)
+          EitherT(IO.shift(t) *> eval(paramMap, z, x, y).attempt)
         }
 
         IO.shift(t) *> (
           for {
             authed <- authIO
             project <- EitherT(
-              ProjectDao.unsafeGetProjectById(projectId).transact(xa).attempt)
+              IO.shift(t) *> ProjectDao
+                .unsafeGetProjectById(projectId)
+                .transact(xa)
+                .attempt)
             result <- getTileResult(project)
           } yield {
             result match {

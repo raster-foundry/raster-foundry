@@ -3,7 +3,8 @@
 export default class ProjectsEditColormode {
     constructor(
         $scope, $q, $state,
-        colorCorrectService, colorSchemeService, projectService, projectEditService
+        colorCorrectService, colorSchemeService, projectService, projectEditService,
+        paginationService
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -28,42 +29,39 @@ export default class ProjectsEditColormode {
     }
 
     initColorModes() {
-        let sceneListQuery;
-        if (!this.$parent.sceneList) {
-            sceneListQuery = this.$parent.currentQuery || this.$parent.fetchPage();
-        } else {
-            sceneListQuery = this.$q.resolve(this.$parent.sceneList);
-        }
-        sceneListQuery.then(() => {
-            let projectScene = _.first(this.$parent.sceneList);
-            if (projectScene) {
-                return this.colorCorrectService.get(projectScene.id, this.$parent.projectId);
-            }
-            return this.$q.resolve();
-        }).then((correction) => {
-            if (!correction) {
-                this.isLoading = false;
-                return;
-            }
-            this.currentBands = {
-                redBand: correction.redBand,
-                greenBand: correction.greenBand,
-                blueBand: correction.blueBand,
-                mode: correction.mode ? correction.mode : 'multi'
-            };
-            this.unifiedCompositesRequest = this.$parent.fetchUnifiedComposites(true)
-                .then((composites) => {
-                    this.unifiedComposites =
-                        Object.assign(
-                            {},
-                            composites,
-                            this.defaultColorModes
-                        );
-                    this.initProjectBuffer();
+        this.projectService
+            .getProjectScenes(this.$parent.projectId, {page: 0, pageSize: 1})
+            .then((paginatedResponse) => {
+                this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                const firstScene = _.first(paginatedResponse.results);
+                if (firstScene) {
+                    return this.colorCorrectService.get(firstScene.id, this.$parent.projectId);
+                }
+                return this.$q.resolve();
+            }).then((correction) => {
+                if (!correction) {
                     this.isLoading = false;
-                    this.activeColorModeKey = this.initActiveColorMode();
-                });
-        });
+                    return;
+                }
+                this.currentBands = {
+                    redBand: correction.redBand,
+                    greenBand: correction.greenBand,
+                    blueBand: correction.blueBand,
+                    mode: correction.mode ? correction.mode : 'multi'
+                };
+                this.unifiedCompositesRequest = this.$parent.fetchUnifiedComposites(true)
+                    .then((composites) => {
+                        this.unifiedComposites =
+                            Object.assign(
+                                {},
+                                composites,
+                                this.defaultColorModes
+                            );
+                        this.initProjectBuffer();
+                        this.isLoading = false;
+                        this.activeColorModeKey = this.initActiveColorMode();
+                    });
+            });
     }
 
     initActiveColorMode() {
@@ -104,6 +102,8 @@ export default class ProjectsEditColormode {
         this.projectBuffer.singleBandOptions =
             Object.assign({}, this.defaultSingleBandOptions, this.projectBuffer.singleBandOptions);
 
+        this.maskedValues = this.projectBuffer.singleBandOptions.extraNoData;
+
         this.activeColorSchemeType =
             this.colorSchemeService.defaultColorSchemeTypes.find(
                 t => t.value === this.projectBuffer.singleBandOptions.dataType
@@ -126,25 +126,14 @@ export default class ProjectsEditColormode {
             dataType: scheme.type,
             colorScheme: this.colorSchemeService.colorStopsToProportionalArray(scheme.colors),
             colorBins: 0,
-            legendOrientation: 'left'
+            legendOrientation: 'left',
+            extraNoData: []
         };
     }
 
     hasNoBands(datasource) {
         return !datasource.bands.length;
     }
-
-    // fetchAllColorCorrections(layers) {
-    //     let requests = layers.map(({id, layer}) => {
-    //         return layer.getColorCorrection().then(result => ({id: id, correction: result}));
-    //     });
-    //     this.correctionsRequest = this.$q.all(requests).then(results => {
-    //         this.corrections = results;
-    //         delete this.correctionsRequest;
-    //     }, error => {
-    //         this.$log.error('Error fetching color corrections', error);
-    //     });
-    // }
 
     getSerializedSingleBandOptions() {
         return angular.toJson(this.projectBuffer.singleBandOptions);
@@ -191,12 +180,13 @@ export default class ProjectsEditColormode {
         return this.colorSchemeService.colorsToDiscreteScheme(this.activeColorScheme.colors);
     }
 
-    setActiveColorScheme(scheme, save = false) {
+    setActiveColorScheme(scheme, masked, save = false) {
         if (!this.isLoading) {
             this.activeColorScheme = scheme;
             this.activeColorSchemeType =
                 this.colorSchemeService.defaultColorSchemeTypes.find(t => t.value === scheme.type);
             this.projectBuffer.singleBandOptions.dataType = scheme.type;
+            this.projectBuffer.singleBandOptions.extraNoData = _.filter(masked, isFinite);
             if (scheme.type !== 'CATEGORICAL') {
                 this.projectBuffer.singleBandOptions.colorScheme =
                     this.colorSchemeService.colorStopsToProportionalArray(
@@ -246,7 +236,7 @@ export default class ProjectsEditColormode {
         });
     }
 
-    onSchemeColorsChange(schemeColors) {
+    onSchemeColorsChange({schemeColors, masked}) {
         const breaks = Object.keys(schemeColors);
         const colors = breaks.map(b => schemeColors[b]);
 
@@ -256,7 +246,7 @@ export default class ProjectsEditColormode {
             colors: colors,
             breaks: breaks,
             type: 'CATEGORICAL'
-        }, true);
+        }, masked, true);
     }
 
     getActiveColorMode() {
@@ -348,8 +338,8 @@ export default class ProjectsEditColormode {
     correctionsDisabled() {
         return this.projectBuffer && this.projectBuffer.isSingleBand ||
                 !this.projectBuffer ||
-            this.$parent.pagination &&
-            this.$parent.pagination.count > this.$parent.pagination.pageSize;
+            this.pagination &&
+            this.pagination.count > this.projectService.scenePageSize;
     }
 
     navToCorrections() {

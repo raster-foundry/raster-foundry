@@ -13,13 +13,11 @@
         <a href ng-click="$ctrl.resetAllFilters()" class="btn btn-toggle btn-small btn-block">Clear all filters</a>
       </div>
     </div>
-    <div class="filter-group">
-      <rf-search-select-filter
-        class="filter-group"
-        data-filter="$ctrl.datasourceFilter"
-        on-filter-change="$ctrl.onDatasourceFilterChange(filter, filterParams)">
-      </rf-search-select-filter>
-    </div>
+    <rf-search-select-filter
+      class="filter-group"
+      data-filter="$ctrl.datasourceFilter"
+      on-filter-change="$ctrl.onDatasourceFilterChange(filter, filterParams)">
+    </rf-search-select-filter>
     <div class="filter-group">
       <div class="filter">
         <label>Cloud cover</label>

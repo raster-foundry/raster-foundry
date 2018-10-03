@@ -427,7 +427,7 @@ trait ProjectRoutes
       case _ =>
         authenticate { user =>
           authorizeAsync {
-            ProjectDao.query
+            ProjectDao
               .authorized(user, ObjectType.Project, projectId, ActionType.View)
               .transact(xa)
               .unsafeToFuture
@@ -448,7 +448,7 @@ trait ProjectRoutes
 
   def updateProject(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -467,7 +467,7 @@ trait ProjectRoutes
 
   def deleteProject(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Delete)
         .transact(xa)
         .unsafeToFuture
@@ -480,7 +480,7 @@ trait ProjectRoutes
 
   def listLabels(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -493,7 +493,7 @@ trait ProjectRoutes
 
   def listAnnotationGroups(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -509,7 +509,7 @@ trait ProjectRoutes
 
   def createAnnotationGroup(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
         .transact(xa)
         .unsafeToFuture
@@ -528,7 +528,7 @@ trait ProjectRoutes
   def getAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        ProjectDao.query
+        ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
           .unsafeToFuture
@@ -545,7 +545,7 @@ trait ProjectRoutes
   def updateAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        ProjectDao.query
+        ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
           .transact(xa)
           .unsafeToFuture
@@ -564,7 +564,7 @@ trait ProjectRoutes
   def deleteAnnotationGroup(projectId: UUID, agId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        ProjectDao.query
+        ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
           .transact(xa)
           .unsafeToFuture
@@ -580,7 +580,7 @@ trait ProjectRoutes
 
   def listAnnotations(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -591,7 +591,7 @@ trait ProjectRoutes
             AnnotationDao.query
               .filter(fr"project_id=$projectId")
               .filter(queryParams)
-              .page(page, fr"")
+              .page(page)
               .transact(xa)
               .unsafeToFuture
               .map { p =>
@@ -607,7 +607,7 @@ trait ProjectRoutes
 
   def createAnnotation(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
         .transact(xa)
         .unsafeToFuture
@@ -630,7 +630,7 @@ trait ProjectRoutes
 
   def exportAnnotationShapefile(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -664,7 +664,7 @@ trait ProjectRoutes
   def getAnnotation(projectId: UUID, annotationId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        ProjectDao.query
+        ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
           .unsafeToFuture
@@ -687,7 +687,7 @@ trait ProjectRoutes
   def updateAnnotation(projectId: UUID, annotationId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
-        ProjectDao.query
+        ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
           .transact(xa)
           .unsafeToFuture
@@ -708,7 +708,7 @@ trait ProjectRoutes
   def deleteAnnotation(projectId: UUID, annotationId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
-        ProjectDao.query
+        ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
           .transact(xa)
           .unsafeToFuture
@@ -726,7 +726,7 @@ trait ProjectRoutes
 
   def deleteProjectAnnotations(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Annotate)
         .transact(xa)
         .unsafeToFuture
@@ -744,7 +744,7 @@ trait ProjectRoutes
 
   def listAOIs(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -759,7 +759,7 @@ trait ProjectRoutes
 
   def createAOI(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -779,7 +779,7 @@ trait ProjectRoutes
   def acceptScene(projectId: UUID, sceneId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        ProjectDao.query
+        ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
@@ -795,7 +795,7 @@ trait ProjectRoutes
 
   def acceptScenes(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -818,7 +818,7 @@ trait ProjectRoutes
 
   def listProjectScenes(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -836,7 +836,7 @@ trait ProjectRoutes
 
   def listProjectDatasources(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -853,7 +853,7 @@ trait ProjectRoutes
   def moveProjectScene(projectId: UUID, from: Int, to: Int): Route =
     authenticate { user =>
       authorizeAsync {
-        ProjectDao.query
+        ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
@@ -871,7 +871,7 @@ trait ProjectRoutes
   /** Set the manually defined z-ordering for scenes within a given project */
   def setProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -896,7 +896,7 @@ trait ProjectRoutes
   def getProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) =
     authenticate { user =>
       authorizeAsync {
-        ProjectDao.query
+        ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
           .unsafeToFuture
@@ -914,7 +914,7 @@ trait ProjectRoutes
   def setProjectSceneColorCorrectParams(projectId: UUID, sceneId: UUID) =
     authenticate { user =>
       authorizeAsync {
-        ProjectDao.query
+        ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
@@ -933,7 +933,7 @@ trait ProjectRoutes
 
   def setProjectColorMode(projectId: UUID) = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -954,7 +954,7 @@ trait ProjectRoutes
   def setProjectScenesColorCorrectParams(projectId: UUID) = authenticate {
     user =>
       authorizeAsync {
-        ProjectDao.query
+        ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
@@ -974,7 +974,7 @@ trait ProjectRoutes
   /** Get the information which defines mosaicing behavior for each scene in a given project */
   def getProjectMosaicDefinition(projectId: UUID) = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -992,7 +992,7 @@ trait ProjectRoutes
 
   def addProjectScenes(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -1012,7 +1012,7 @@ trait ProjectRoutes
   def addProjectScenesFromQueryParams(projectId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        ProjectDao.query
+        ProjectDao
           .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
@@ -1031,7 +1031,7 @@ trait ProjectRoutes
 
   def updateProjectScenes(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -1058,7 +1058,7 @@ trait ProjectRoutes
 
   def deleteProjectScenes(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -1088,8 +1088,8 @@ trait ProjectRoutes
         .unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao
-          .listByObject(ObjectType.Project, projectId)
+        ProjectDao
+          .getPermissions(projectId)
           .transact(xa)
           .unsafeToFuture
       }
@@ -1104,15 +1104,10 @@ trait ProjectRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+      entity(as[List[ObjectAccessControlRule]]) { acrList =>
         complete {
-          AccessControlRuleDao
-            .replaceWithResults(
-              user,
-              ObjectType.Project,
-              projectId,
-              acrCreates
-            )
+          ProjectDao
+            .replacePermissions(projectId, acrList)
             .transact(xa)
             .unsafeToFuture
         }
@@ -1128,12 +1123,10 @@ trait ProjectRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      entity(as[AccessControlRule.Create]) { acrCreate =>
+      entity(as[ObjectAccessControlRule]) { acr =>
         complete {
-          AccessControlRuleDao
-            .createWithResults(
-              acrCreate.toAccessControlRule(user, ObjectType.Project, projectId)
-            )
+          ProjectDao
+            .addPermission(projectId, acr)
             .transact(xa)
             .unsafeToFuture
         }
@@ -1143,7 +1136,7 @@ trait ProjectRoutes
 
   def listUserProjectActions(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
+      ProjectDao
         .authorized(user, ObjectType.Project, projectId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -1161,8 +1154,8 @@ trait ProjectRoutes
               case true => complete(List("*"))
               case false =>
                 complete {
-                  AccessControlRuleDao
-                    .listUserActions(user, ObjectType.Project, projectId)
+                  ProjectDao
+                    .listUserActions(user, projectId)
                     .transact(xa)
                     .unsafeToFuture
                 }
@@ -1181,8 +1174,8 @@ trait ProjectRoutes
         .unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao
-          .deleteByObject(ObjectType.Project, projectId)
+        ProjectDao
+          .deletePermissions(projectId)
           .transact(xa)
           .unsafeToFuture
       }

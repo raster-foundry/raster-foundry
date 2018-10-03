@@ -20,6 +20,8 @@ object Main {
   val modules = Map[String, Array[String] => Unit](
     CreateExportDef.name -> (CreateExportDef.main(_)),
     DropboxCopy.name -> (DropboxCopy.main(_)),
+    S3Copy.name -> (S3Copy.main(_)),
+    UpdateExportStatus.name -> (UpdateExportStatus.main(_)),
     Export.name -> (Export.main(_)),
     FindAOIProjects.name -> (FindAOIProjects.main(_)),
     HealthCheck.name -> (HealthCheck.main(_)),
@@ -29,7 +31,6 @@ object Main {
     ImportSentinel2.name -> (ImportSentinel2.main(_)),
     NotifyIngestStatus.name -> (NotifyIngestStatus.main(_)),
     ReadStacFeature.name -> (ReadStacFeature.main(_)),
-    S3Copy.name -> (S3Copy.main(_)),
     UpdateAOIProject.name -> (UpdateAOIProject.main(_))
   )
 

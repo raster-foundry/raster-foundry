@@ -21,8 +21,8 @@ class ProjectsScenesController {
         };
         this.pendingImports = 0;
         this.checkPendingImports();
-        if (!this.$parent.currentRequest) {
-            this.$parent.fetchPage();
+        if (!this.currentRequest) {
+            this.fetchPage();
         }
         this.getPendingSceneCount();
         // eslint-disable-next-line
@@ -36,6 +36,49 @@ class ProjectsScenesController {
             }
         };
     }
+
+    fetchPage(page = this.$state.params.page || 1) {
+        this.getIngestingSceneCount();
+        delete this.fetchError;
+        this.sceneList = [];
+        const currentQuery = this.projectService.getProjectScenes(
+            this.projectId,
+            {
+                pageSize: this.projectService.scenePageSize,
+                page: page - 1
+            }
+        ).then((paginatedResponse) => {
+            this.sceneList = paginatedResponse.results;
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page);
+            if (this.currentQuery === currentQuery) {
+                delete this.fetchError;
+            }
+        }, (e) => {
+            if (this.currentQuery === currentQuery) {
+                this.fetchError = e;
+            }
+        }).finally(() => {
+            if (this.currentQuery === currentQuery) {
+                delete this.currentQuery;
+            }
+        });
+        this.currentQuery = currentQuery;
+        return currentQuery;
+    }
+
+    getIngestingSceneCount() {
+        if (!this.pendingIngestingRequest) {
+            this.pendingIngestRequest = this.projectService.getProjectScenes(this.projectId, {
+                ingested: false,
+                pageSize: 0
+            });
+            this.pendingIngestRequest.then((paginatedResponse) => {
+                this.ingesting = this.paginationService.buildPagination(paginatedResponse);
+            });
+        }
+    }
+
 
     getPendingSceneCount() {
         if (!this.pendingSceneRequest) {
@@ -63,8 +106,7 @@ class ProjectsScenesController {
 
     onSceneDropped(orderedScenes) {
         // get order using paginator
-        const pagination = this.$parent.pagination;
-        this.$parent.sceneList = this.$parent.sceneList.map(
+        this.sceneList = this.sceneList.map(
             (scene, index) => Object.assign(scene, {sceneOrder: index})
         );
         let orderedSceneIds = orderedScenes.map(s => s.id);
@@ -86,16 +128,16 @@ class ProjectsScenesController {
         let p = position;
         if (p < 0) {
             p = 0;
-        } else if (p > this.$parent.pagination.count - 1) {
-            p = this.$parent.pagination.count - 1;
+        } else if (p > this.pagination.count - 1) {
+            p = this.pagination.count - 1;
         }
 
         arrayMove(
-            this.$parent.sceneList,
-            this.$parent.sceneList.findIndex((s) => s.id === scene.id),
+            this.sceneList,
+            this.sceneList.findIndex((s) => s.id === scene.id),
             p
         );
-        this.onSceneDropped(this.$parent.sceneList);
+        this.onSceneDropped(this.sceneList);
     }
 
     removeSceneFromProject(scene, $event) {
@@ -104,7 +146,7 @@ class ProjectsScenesController {
         this.projectService.removeScenesFromProject(this.$parent.projectId, [scene.id]).then(
             () => {
                 this.$parent.removeHoveredScene();
-                this.$parent.fetchPage();
+                this.fetchPage();
                 this.$parent.layerFromProject();
             },
             () => {

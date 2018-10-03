@@ -612,20 +612,6 @@ object Generators extends ArbitraryInstances {
       teamCreate.toTeam(user)
     }
 
-  private def accessControlRuleCreateGen: Gen[AccessControlRule.Create] =
-    for {
-      subjectType <- subjectTypeGen
-      subjectId <- uuidGen
-      actionType <- actionTypeGen
-    } yield {
-      AccessControlRule.Create(
-        isActive = true,
-        subjectType,
-        Some(subjectId.toString),
-        actionType
-      )
-    }
-
   private def userGroupRoleCreateGen: Gen[UserGroupRole.Create] =
     for {
       user <- userGen
@@ -695,6 +681,18 @@ object Generators extends ArbitraryInstances {
     for {
       searchName <- possiblyEmptyStringGen
     } yield { SearchQueryParameters(Some(searchName)) }
+
+  private def objectAccessControlRuleGen: Gen[ObjectAccessControlRule] = for {
+    subjectType <- subjectTypeGen
+    subjectId <- uuidGen
+    actionType <- actionTypeGen
+  } yield { ObjectAccessControlRule(
+    subjectType,
+    subjectType match {
+      case SubjectType.All => None
+      case _ => Some(subjectId.toString)
+    },
+    actionType) }
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
@@ -818,16 +816,20 @@ object Generators extends ArbitraryInstances {
       userJwtFieldsGen
     }
 
-    implicit def arbAccessControlRule: Arbitrary[AccessControlRule.Create] =
-      Arbitrary {
-        accessControlRuleCreateGen
-      }
-
     implicit def arbUserVisibility: Arbitrary[UserVisibility] = Arbitrary {
       userVisibilityGen
     }
 
     implicit def arbSearchQueryParameters: Arbitrary[SearchQueryParameters] =
       Arbitrary { searchQueryParametersGen }
+
+
+    implicit def arbObjectAccessControlRule : Arbitrary[ObjectAccessControlRule] =
+      Arbitrary { objectAccessControlRuleGen }
+
+    implicit def arbListObjectAccessControlRule: Arbitrary[List[ObjectAccessControlRule]] =
+      Arbitrary {
+        Gen.nonEmptyListOf[ObjectAccessControlRule](arbitrary[ObjectAccessControlRule])
+      }
   }
 }

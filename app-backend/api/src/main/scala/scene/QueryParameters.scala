@@ -34,10 +34,15 @@ trait SceneQueryParameterDirective extends QueryParametersCommon {
       'shape.as[UUID].?
     )).as(SceneQueryParameters.apply _)
 
+  val sceneSearchModeQueryParams = parameters(
+    ('exactCount.as[Boolean].?)
+  ).as(SceneSearchModeQueryParams.apply _)
+
   val sceneQueryParameters = (orgQueryParams &
     userQueryParameters &
     timestampQueryParameters &
     sceneSpecificQueryParams &
     ownershipTypeQueryParameters &
-    groupQueryParameters).as(CombinedSceneQueryParams.apply _)
+    groupQueryParameters &
+    sceneSearchModeQueryParams).as(CombinedSceneQueryParams.apply _)
 }

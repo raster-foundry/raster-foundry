@@ -8,8 +8,12 @@ const GREEN = '#81C784';
 
 export const projectReducer = typeToReducer({
     [PROJECT_SET_MAP]: (state, action) => {
+        if (state.editHandler) {
+            state.editHandler.disable();
+        }
         return Object.assign({}, state, {
-            projectMap: action.payload
+            projectMap: action.payload,
+            editHandler: null
         });
     },
     [PROJECT_SET_ID]: (state, action) => {

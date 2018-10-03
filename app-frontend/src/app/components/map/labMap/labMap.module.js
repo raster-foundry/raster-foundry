@@ -67,8 +67,12 @@ class LabMapController {
     }
 
     $onDestroy() {
-        this.mapWrapper.deleteLayers('Measurement');
-        this.drawListener.forEach((listener) => this.map.off(listener));
+        if (this.mapWrapper) {
+            this.mapWrapper.deleteLayers('Measurement');
+        }
+        if (this.drawListener) {
+            this.drawListener.forEach((listener) => this.map.off(listener));
+        }
         this.disableDrawHandlers();
 
         this.mapService.deregisterMap(this.mapId);
@@ -240,8 +244,12 @@ class LabMapController {
     }
 
     disableDrawHandlers() {
-        this.drawPolygonHandler.disable();
-        this.drawPolylineHandler.disable();
+        if (this.drawPolygonHandler) {
+            this.drawPolygonHandler.disable();
+        }
+        if (this.drawPolylineHandler) {
+            this.drawPolylineHandler.disable();
+        }
     }
 
     addMeasureShapeToMap(layer, type) {

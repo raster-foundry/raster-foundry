@@ -10,7 +10,7 @@ import com.amazonaws.services.s3.model.{CannedAccessControlList, ObjectMetadata}
 import com.amazonaws.services.s3.{AmazonS3Client => AWSAmazonS3Client}
 import com.azavea.rf.database.Implicits._
 import com.azavea.rf.datamodel._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -100,7 +100,10 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
         page,
         searchParams,
         actingUser,
-        Some(fr"ORDER BY ugr.membership_status, ugr.group_role"))
+        Some(
+          Map("ugr.membership_status" -> Order.Asc,
+              "ugr.group_role" -> Order.Asc))
+      )
       maybeSanitized = if (isDefaultOrg) {
         usersPage.copy(results = usersPage.results map { _.copy(email = "") })
       } else {
@@ -336,7 +339,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
         .viewFilter(user)
         .filter(fr"platform_id=${platformId}")
         .filter(searchParams)
-        .page(pageRequest, fr"")
+        .page(pageRequest)
     }
 
     for {

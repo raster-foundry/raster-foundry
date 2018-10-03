@@ -61,20 +61,20 @@ object MapTokenDao extends Dao[MapToken] {
       projAuthed = (
         mapTokenO flatMap { _.project } map { (projectId: UUID) =>
           {
-            ProjectDao.query.authorized(user,
-                                        ObjectType.Project,
-                                        projectId,
-                                        actionType)
+            ProjectDao.authorized(user,
+                                  ObjectType.Project,
+                                  projectId,
+                                  actionType)
           }
         }
       ).getOrElse(false.pure[ConnectionIO])
       toolRunAuthed = (
         mapTokenO flatMap { _.toolRun } map { (toolRunId: UUID) =>
           {
-            ToolRunDao.query.authorized(user,
-                                        ObjectType.Analysis,
-                                        toolRunId,
-                                        actionType)
+            ToolRunDao.authorized(user,
+                                  ObjectType.Analysis,
+                                  toolRunId,
+                                  actionType)
           }
         }
       ).getOrElse(false.pure[ConnectionIO])
@@ -104,7 +104,7 @@ object MapTokenDao extends Dao[MapToken] {
         MapTokenDao.query
           .filter(mapTokenParams)
           .filter(authFilterF)
-          .page(page, fr"")
+          .page(page)
       }
     } yield { mapTokens }
   }

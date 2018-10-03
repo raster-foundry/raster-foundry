@@ -17,7 +17,7 @@ import kamon.akka.http.KamonTraceDirectives
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.database.{AccessControlRuleDao, ToolDao}
+import com.azavea.rf.database.ToolDao
 import doobie._
 import doobie.implicits._
 import doobie.Fragments.in
@@ -117,7 +117,7 @@ trait ToolRoutes
 
   def getToolSources(toolId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolDao.query
+      ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -150,7 +150,7 @@ trait ToolRoutes
               combinedToolQueryParameters.groupQueryParameters.groupId
             )
             .filter(combinedToolQueryParameters)
-            .page(page, fr"")
+            .page(page)
             .transact(xa)
             .unsafeToFuture
         }
@@ -168,7 +168,7 @@ trait ToolRoutes
 
   def getTool(toolId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolDao.query
+      ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -182,7 +182,7 @@ trait ToolRoutes
 
   def updateTool(toolId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolDao.query
+      ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
@@ -201,7 +201,7 @@ trait ToolRoutes
 
   def deleteTool(toolId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolDao.query
+      ToolDao
         .authorized(user, ObjectType.Template, toolId, ActionType.Delete)
         .transact(xa)
         .unsafeToFuture
@@ -233,8 +233,8 @@ trait ToolRoutes
       ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao
-          .listByObject(ObjectType.Template, toolId)
+        ToolDao
+          .getPermissions(toolId)
           .transact(xa)
           .unsafeToFuture
       }
@@ -245,15 +245,10 @@ trait ToolRoutes
     authorizeAsync {
       ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
     } {
-      entity(as[List[AccessControlRule.Create]]) { acrCreates =>
+      entity(as[List[ObjectAccessControlRule]]) { acrList =>
         complete {
-          AccessControlRuleDao
-            .replaceWithResults(
-              user,
-              ObjectType.Template,
-              toolId,
-              acrCreates
-            )
+          ToolDao
+            .replacePermissions(toolId, acrList)
             .transact(xa)
             .unsafeToFuture
         }
@@ -265,12 +260,10 @@ trait ToolRoutes
     authorizeAsync {
       ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
     } {
-      entity(as[AccessControlRule.Create]) { acrCreate =>
+      entity(as[ObjectAccessControlRule]) { acr =>
         complete {
-          AccessControlRuleDao
-            .createWithResults(
-              acrCreate.toAccessControlRule(user, ObjectType.Template, toolId)
-            )
+          ToolDao
+            .addPermission(toolId, acr)
             .transact(xa)
             .unsafeToFuture
         }
@@ -280,7 +273,7 @@ trait ToolRoutes
 
   def listUserTemplateActions(templateId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolDao.query
+      ToolDao
         .authorized(user, ObjectType.Template, templateId, ActionType.View)
         .transact(xa)
         .unsafeToFuture
@@ -295,8 +288,8 @@ trait ToolRoutes
               case true => complete(List("*"))
               case false =>
                 complete {
-                  AccessControlRuleDao
-                    .listUserActions(user, ObjectType.Template, templateId)
+                  ToolDao
+                    .listUserActions(user, templateId)
                     .transact(xa)
                     .unsafeToFuture
                 }
@@ -311,8 +304,8 @@ trait ToolRoutes
       ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
     } {
       complete {
-        AccessControlRuleDao
-          .deleteByObject(ObjectType.Template, toolId)
+        ToolDao
+          .deletePermissions(toolId)
           .transact(xa)
           .unsafeToFuture
       }

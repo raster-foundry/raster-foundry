@@ -48,6 +48,7 @@ class DiagramContainerController {
             selectingNode: state.lab.selectingNode,
             selectedNode: state.lab.selectedNode,
             preventSelecting: state.lab.preventSelecting,
+            analysisErrors: state.lab.analysisErrors,
             reduxState: state
         };
     }
@@ -82,6 +83,9 @@ class DiagramContainerController {
         }
     }
 
+    canPreview() {
+        return !this.preventSelecting && !(this.analysisErrors && this.analysisErrors.size);
+    }
 
     initDiagram() {
         let definition = this.analysis.executionParameters ?

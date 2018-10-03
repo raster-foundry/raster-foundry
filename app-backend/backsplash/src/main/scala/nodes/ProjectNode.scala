@@ -16,7 +16,7 @@ import cats.data.{OptionT, EitherT}
 import cats.effect.{IO, Timer}
 import cats.implicits._
 import doobie.implicits._
-import geotrellis.raster.{CellSize, CellType, Raster}
+import geotrellis.raster.{CellSize, CellType, Raster, GridBounds}
 import geotrellis.raster.render.{ColorMap, ColorRamps}
 import geotrellis.server.core.cog.CogUtils
 import geotrellis.server.core.maml.CogNode
@@ -186,14 +186,21 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       histogram: Histogram[Double],
       singleBandOptions: SingleBandOptions.Params): Raster[Tile] = {
     val colorScheme = singleBandOptions.colorScheme
-    val colorMap = (colorScheme.asArray, colorScheme.asObject) match {
-      case (Some(a), None) =>
+    val colorMap = (colorScheme.asArray,
+                    colorScheme.asObject,
+                    singleBandOptions.extraNoData) match {
+      case (Some(a), None, _) =>
         ColorRampMosaic.colorMapFromVector(a.map(_.noSpaces),
                                            singleBandOptions,
                                            histogram)
-      case (None, Some(o)) =>
+      case (None, Some(o), Nil) =>
         ColorRampMosaic.colorMapFromMap(o.toMap map {
           case (k, v) => (k, v.noSpaces)
+        })
+      case (None, Some(o), masked @ (h +: t)) =>
+        ColorRampMosaic.colorMapFromMap(o.toMap map {
+          case (k, v) =>
+            (k, if (masked.contains(k.toInt)) "#00000000" else v.noSpaces)
         })
       case _ =>
         val message =
@@ -201,6 +208,24 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         throw new IllegalArgumentException(message)
     }
     Raster(tile.color(colorMap), extent)
+  }
+
+  def getCroppedGridBounds(tile: MultibandTile,
+                           zoom: Int,
+                           col: Int,
+                           row: Int,
+                           sourceZoom: Int): GridBounds = {
+    val resolutionDiff = 1 << (zoom - sourceZoom)
+    val innerCol = col % resolutionDiff
+    val innerRow = row % resolutionDiff
+    val cols = tile.cols / resolutionDiff
+    val rows = tile.rows / resolutionDiff
+    GridBounds(
+      colMin = innerCol * cols,
+      rowMin = innerRow * rows,
+      colMax = (innerCol + 1) * cols - 1,
+      rowMax = (innerRow + 1) * rows - 1
+    )
   }
 
   // TODO: this essentially inlines a bunch of logic from LayerCache, which isn't super cool
@@ -238,12 +263,15 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         (mbTileE map {
           (mbTile: MultibandTile) =>
             {
-              val innerCol = col % resolutionDiff
-              val innerRow = row % resolutionDiff
-              val cols = mbTile.cols / resolutionDiff
-              val rows = mbTile.rows / resolutionDiff
-              val corrected =
+              val corrected = if (zoom > sourceZoom) {
+                md.colorCorrections.colorCorrect(
+                  mbTile.crop(
+                    getCroppedGridBounds(mbTile, zoom, col, row, sourceZoom)
+                  ),
+                  histograms.toSeq)
+              } else {
                 md.colorCorrections.colorCorrect(mbTile, histograms.toSeq)
+              }
               Raster(corrected.color, extent).resample(256, 256)
             }
         }).toOption
@@ -334,7 +362,20 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
                 .lift(singleBandOptions.band) getOrElse {
                 throw new Exception("No histogram found for band")
               }
-              colorSingleBandTile(tile, extent, histogram, singleBandOptions)
+
+              if (zoom > sourceZoom) {
+                colorSingleBandTile(
+                  tile.crop(
+                    getCroppedGridBounds(mbTile, zoom, col, row, sourceZoom)
+                  ),
+                  extent,
+                  histogram,
+                  singleBandOptions
+                )
+              } else {
+                colorSingleBandTile(tile, extent, histogram, singleBandOptions)
+              }
+
             }
         }).toOption
       }

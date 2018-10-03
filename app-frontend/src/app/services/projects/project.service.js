@@ -41,6 +41,9 @@ export default (app) => {
             tokenService, authService, statusService
         ) {
             'ngInject';
+            // Max scene page size used for limited features on large projects for now.
+            // TODO support stuff like reordering etc on larger projects
+            this.scenePageSize = 30;
 
             this.tokenService = tokenService;
             this.authService = authService;

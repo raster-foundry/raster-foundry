@@ -19,7 +19,10 @@ import io.circe._
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
 
-object ProjectDao extends Dao[Project] with AWSBatch {
+object ProjectDao
+    extends Dao[Project]
+    with AWSBatch
+    with ObjectPermissions[Project] {
 
   val tableName = "projects"
 
@@ -63,7 +66,7 @@ object ProjectDao extends Dao[Project] with AWSBatch {
       params.groupQueryParameters.groupType,
       params.groupQueryParameters.groupId
     ).filter(params)
-      .page(page, fr"")
+      .page(page)
       .flatMap(projectsToProjectsWithRelated)
   }
 
@@ -186,6 +189,7 @@ object ProjectDao extends Dao[Project] with AWSBatch {
                   (scenes.ingest_status = ${IngestStatus.Ingesting.toString} :: ingest_status AND
                    (now() - modified_at) > '1 day'::interval))
            AND sub.scene_id = scenes.id
+           AND scene_type = 'AVRO' :: scene_type
          """
     updateStatusQuery.update.run
   }
@@ -372,6 +376,7 @@ object ProjectDao extends Dao[Project] with AWSBatch {
                         "Somehow, a user id was lost to the aether")
                     )
                     .head
+                    .withScrubbedName
                 )
               }
             projectsPage.copy(results = withUsers)
@@ -382,4 +387,33 @@ object ProjectDao extends Dao[Project] with AWSBatch {
           .copy(results = List.empty[Project.WithUser])
           .pure[ConnectionIO]
     }
+
+  def authQuery(user: User,
+                objectType: ObjectType,
+                ownershipTypeO: Option[String] = None,
+                groupTypeO: Option[GroupType] = None,
+                groupIdO: Option[UUID] = None): Dao.QueryBuilder[Project] =
+    user.isSuperuser match {
+      case true =>
+        Dao.QueryBuilder[Project](selectF, tableF, List.empty)
+      case false =>
+        Dao.QueryBuilder[Project](selectF,
+                                  tableF,
+                                  List(
+                                    queryObjectsF(user,
+                                                  objectType,
+                                                  ActionType.View,
+                                                  ownershipTypeO,
+                                                  groupTypeO,
+                                                  groupIdO)))
+    }
+
+  def authorized(user: User,
+                 objectType: ObjectType,
+                 objectId: UUID,
+                 actionType: ActionType): ConnectionIO[Boolean] =
+    this.query
+      .filter(authorizedF(user, objectType, actionType))
+      .filter(objectId)
+      .exists
 }

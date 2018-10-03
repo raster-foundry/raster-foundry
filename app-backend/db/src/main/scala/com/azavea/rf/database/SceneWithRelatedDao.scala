@@ -12,7 +12,9 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
+object SceneWithRelatedDao
+    extends Dao[Scene.WithRelated]
+    with ObjectPermissions[Scene.WithRelated] {
 
   val tableName = "scenes"
 
@@ -29,8 +31,9 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
       }
       sceneSearchBuilder = {
         SceneDao
-          .authViewQuery(
+          .authQuery(
             user,
+            ObjectType.Scene,
             sceneParams.ownershipTypeParams.ownershipType,
             sceneParams.groupQueryParameters.groupType,
             sceneParams.groupQueryParameters.groupId
@@ -45,7 +48,8 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
       )
       sceneBrowses <- scenesToSceneBrowse(scenes,
                                           sceneParams.sceneParams.project)
-      count <- sceneSearchBuilder.sceneCountIO
+      count <- sceneSearchBuilder.sceneCountIO(
+        sceneParams.sceneSearchModeParams.exactCount)
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = ((pageRequest.offset + 1) * pageRequest.limit) < count
@@ -236,4 +240,35 @@ object SceneWithRelatedDao extends Dao[Scene.WithRelated] {
     : List[List[Option[Fragment]]] = {
     myList.map(filterable.toFilters(_))
   }
+
+  def authQuery(
+      user: User,
+      objectType: ObjectType,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None): Dao.QueryBuilder[Scene.WithRelated] =
+    user.isSuperuser match {
+      case true =>
+        Dao.QueryBuilder[Scene.WithRelated](selectF, tableF, List.empty)
+      case false =>
+        Dao.QueryBuilder[Scene.WithRelated](selectF,
+                                            tableF,
+                                            List(
+                                              queryObjectsF(user,
+                                                            objectType,
+                                                            ActionType.View,
+                                                            ownershipTypeO,
+                                                            groupTypeO,
+                                                            groupIdO)))
+    }
+
+  def authorized(user: User,
+                 objectType: ObjectType,
+                 objectId: UUID,
+                 actionType: ActionType): ConnectionIO[Boolean] =
+    this.query
+      .filter(authorizedF(user, objectType, actionType))
+      .filter(objectId)
+      .exists
+
 }
