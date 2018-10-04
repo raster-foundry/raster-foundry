@@ -1,5 +1,21 @@
 # Change Log
 
+## Unreleased(https://github.com/raster-foundry/raster-foundry/tree/develop)
+
+### Added
+
+### Changed
+
+- Switched to [keepachangelog](https://keepachangelog.com/en/1.0.0/) CHANGELOG format
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
 ## [1.12.0](https://github.com/raster-foundry/raster-foundry/tree/1.12.0) (2018-10-03)
 
 [Full Changelog](https://github.com/raster-foundry/raster-foundry/compare/1.11.0...1.12.0)
