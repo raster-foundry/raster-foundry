@@ -11,6 +11,9 @@ export default (app) => {
 
         getPosts() {
             return this.$q((resolve, reject) => {
+                if (!BUILDCONFIG.FEED_SOURCE || BUILDCONFIG.FEED_SOURCE === 'disabled') {
+                    return reject();
+                }
                 this.$http({
                     method: 'GET',
                     url: `${BUILDCONFIG.API_HOST}/api/feed/` +
@@ -21,15 +24,15 @@ export default (app) => {
                         let json = JSON.parse(raw.substring(raw.indexOf('{')));
                         let payload = json.payload;
                         if (payload && payload.posts) {
-                            resolve(payload.posts);
+                            return resolve(payload.posts);
                         } else {
-                            reject();
+                            return reject();
                         }
                     } catch (err) {
-                        reject();
+                        return reject();
                     }
                 }, () => {
-                    reject();
+                    return reject();
                 });
             });
         }
