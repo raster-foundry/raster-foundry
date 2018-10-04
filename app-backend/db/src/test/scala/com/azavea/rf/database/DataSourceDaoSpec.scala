@@ -19,6 +19,7 @@ import org.scalatest.prop.Checkers
 import io.circe._
 import io.circe.syntax._
 import java.util.UUID
+import scala.util.Random
 
 
 class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
@@ -116,6 +117,81 @@ class DatasourceDaoSpec extends FunSuite with Matchers with Checkers with DBTest
 
   test("listing datasources") {
     DatasourceDao.query.list.transact(xa).unsafeRunSync.length >= 0
+  }
+
+  test("only owner of a datasource can delete a datasource"){
+    check {
+      forAll (
+        (userCreate: User.Create, ownerCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create) => {
+          val isDsDeletableIO = for {
+            orgAndOwnerInsert <- insertUserAndOrg(ownerCreate, orgCreate)
+            (orgInsert, ownerInsert) = orgAndOwnerInsert
+            userInsert <- UserDao.create(userCreate)
+            dsInsert <- fixupDatasource(dsCreate, ownerInsert)
+            isDeletableUser <- DatasourceDao.isDeletable(dsInsert.id, userInsert)
+            isDeletableOwner <- DatasourceDao.isDeletable(dsInsert.id, ownerInsert)
+          } yield { (isDeletableUser, isDeletableOwner) }
+
+          val (isDeletableUser, isDeletableOwner) = isDsDeletableIO.transact(xa).unsafeRunSync
+
+          assert(
+            !isDeletableUser,
+            "Non-owner of a datasource should not be able to delete a datasource")
+          assert(
+            isDeletableOwner,
+            "Owner of a datasource should be able to delete a datasource")
+          true
+        }
+      )
+    }
+  }
+
+  test("isDeletable should return false if a datasource is shared") {
+    check {
+      forAll (
+        (userCreate: User.Create, ownerCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create) => {
+          val isDsDeletableIO = for {
+            orgAndOwnerInsert <- insertUserAndOrg(ownerCreate, orgCreate)
+            (orgInsert, ownerInsert) = orgAndOwnerInsert
+            dsInsert <- fixupDatasource(dsCreate, ownerInsert)
+            _ <- DatasourceDao.addPermission(dsInsert.id, ObjectAccessControlRule(SubjectType.All, None, ActionType.View))
+            isDeletable <- DatasourceDao.isDeletable(dsInsert.id, ownerInsert)
+          } yield { isDeletable }
+
+          val isDeletable = isDsDeletableIO.transact(xa).unsafeRunSync
+          assert(
+            !isDeletable,
+            "isDeletable should return false if a datasource is shared")
+          true
+        }
+      )
+    }
+  }
+
+  test("isDeletable should return false if a datasource has an upload not completed/failed/aborted") {
+    check {
+      forAll (
+        (userCreate: User.Create, ownerCreate: User.Create, orgCreate: Organization.Create, dsCreate: Datasource.Create, project: Project.Create, upload: Upload.Create) => {
+          @SuppressWarnings(Array("TraversableHead"))
+          val isDsDeletableIO = for {
+            orgUserProject <- insertUserOrgProject(userCreate, orgCreate, project)
+            (dbOrg, dbUser, dbProject) = orgUserProject
+            datasource <- fixupDatasource(dsCreate, dbUser)
+            statuses = List(UploadStatus.Created, UploadStatus.Uploading, UploadStatus.Uploaded, UploadStatus.Queued, UploadStatus.Processing)
+            status = Random.shuffle(statuses).head
+            _ <- UploadDao.insert(fixupUploadCreate(dbUser, dbProject, datasource, upload.copy(uploadStatus=status)), dbUser)
+            isDeletable <- DatasourceDao.isDeletable(datasource.id, dbUser)
+          } yield { isDeletable }
+
+          val isDeletable = isDsDeletableIO.transact(xa).unsafeRunSync
+          
+          assert(
+            !isDeletable,
+            "isDeletable should return false if a datasource has an upload not in completed/failed/aborted")
+          true
+        }
+      )
+    }
   }
 
 }

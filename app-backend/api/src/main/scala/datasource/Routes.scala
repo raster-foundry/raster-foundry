@@ -139,7 +139,7 @@ trait DatasourceRoutes
   def deleteDatasource(datasourceId: UUID): Route = authenticate { user =>
     authorizeAsync {
       DatasourceDao
-        .isDeletable(datasourceId, user, ObjectType.Datasource)
+        .isDeletable(datasourceId, user)
         .transact(xa)
         .unsafeToFuture
     } {
