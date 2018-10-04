@@ -17,6 +17,16 @@
     <meta name="msapplication-config" content="/favicons/browserconfig.xml">
     <meta name="theme-color" content="#464f77">
 
+    {% if (o.htmlWebpackPlugin.options.gtagId) { %}
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+             j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+     })(window,document,'script','dataLayer','{%=o.htmlWebpackPlugin.options.gtagId %}');</script>
+    <!-- End Google Tag Manager -->
+    {% } %}
+
     {% for (var chunk in o.htmlWebpackPlugin.files.chunks) { %}
       <script src="{%=o.htmlWebpackPlugin.files.chunks[chunk].entry %}" defer></script>
     {% } %}
@@ -29,6 +39,12 @@
     {% } %}
 </head>
 <body>
+  {% if (o.htmlWebpackPlugin.options.gtagId) { %}
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={%=o.htmlWebpackPlugin.options.gtagId %}"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+  {% } %}
     <style>
       div.app-loading-indicator {
         position: absolute;
