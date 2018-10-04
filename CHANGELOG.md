@@ -4,6 +4,7 @@
 
 ### Added
 - Disable blog feed and intercom initialization using webpack override file [\#4162](https://github.com/raster-foundry/raster-foundry/pull/4162)
+- Add support for google tag manager via webpack overrides [\#4165](https://github.com/raster-foundry/raster-foundry/pull/4165)
 
 ### Changed
 
