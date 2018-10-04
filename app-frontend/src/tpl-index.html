@@ -17,7 +17,7 @@
     <meta name="msapplication-config" content="/favicons/browserconfig.xml">
     <meta name="theme-color" content="#464f77">
 
-    {% if (o.htmlWebpackPlugin.options.gtagId) { %}
+    {% if (o.htmlWebpackPlugin.options.gtagId && o.htmlWebpackPlugin.options.gtagId !== 'disabled') { %}
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -39,7 +39,7 @@
     {% } %}
 </head>
 <body>
-  {% if (o.htmlWebpackPlugin.options.gtagId) { %}
+  {% if (o.htmlWebpackPlugin.options.gtagId && o.htmlWebpackPlugin.options.gtagId !== 'disabled') { %}
   <!-- Google Tag Manager (noscript) -->
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={%=o.htmlWebpackPlugin.options.gtagId %}"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>

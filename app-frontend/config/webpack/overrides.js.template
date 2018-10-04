@@ -16,7 +16,7 @@ const HERE_APP_CODE = '5pn07ENomTHOap0u7nQSFA';
 // leave this unless you are setting your own
 const INTERCOM_APP_ID = 'disabled';
 const FEED_SOURCE = 'disabled';
-const GOOGLE_TAG_ID = 'GTM-54XHDBP';
+const GOOGLE_TAG_ID = 'disabled';
 
 const basemaps = JSON.stringify({
     layers: {
