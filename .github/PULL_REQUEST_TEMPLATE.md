@@ -4,7 +4,7 @@ Brief description of what this PR does, and why it is needed.
 
 ### Checklist
 
-- [ ] Description of PR is in an appropriate section of the [changelog](https://github.com/raster-foundry/raster-foundry/blob/develop/CHANGELOG.md)
+- [ ] Description of PR is in an appropriate section of the [changelog](https://github.com/raster-foundry/raster-foundry/blob/develop/CHANGELOG.md) and grouped with similar changes if possible
 - [ ] Styleguide updated, if necessary
 - [ ] [Swagger specification](https://github.com/raster-foundry/raster-foundry-api-spec) updated
 - [ ] Symlinks from new migrations present or corrected for any new migrations
