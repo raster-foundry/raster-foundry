@@ -28,7 +28,7 @@ def warp_tif(combined_tif_path, warped_tif_path, dst_crs={
             'nodata': -28762
         })
         with rasterio.open(
-                warped_tif_path, 'w', compress='LZW', tiled=True,
+                warped_tif_path, 'w', compress='DEFLATE', tiled=True,
                 **new_meta) as dst:
             for i in range(1, src.count):
                 reproject(

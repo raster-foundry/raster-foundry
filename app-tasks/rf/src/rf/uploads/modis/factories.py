@@ -8,10 +8,10 @@ import urllib
 from rf.models import Band
 from rf.models import Scene
 from rf.uploads.geotiff import create_geotiff_image
-from rf.uploads.landsat8.io import get_tempdir
 from rf.uploads.modis.create_geotiff import create_geotiffs
 from rf.uploads.modis.download_modis import download_hdf
 from rf.utils.io import (
+    get_tempdir,
     upload_tifs,
     IngestStatus,
     JobStatus,

@@ -3,8 +3,8 @@
 from rf.ingest.settings import (landsat8_band_order, sentinel2_band_order,
                                 landsat8_datasource_id,
                                 sentinel2_datasource_id)
-from rf.uploads.landsat8.io import get_tempdir
 from rf.utils import cog
+from rf.utils.io import get_tempdir
 
 import boto3
 
