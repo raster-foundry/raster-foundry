@@ -14,6 +14,7 @@
 
 ### Fixed
 
+- Removed duplicate emails for repeated failures of the same upload [\#4130](https://github.com/raster-foundry/raster-foundry/pull/4130)
 - Use safer options for large tifs when processing uploads and ingests [\#4131](https://github.com/raster-foundry/raster-foundry/pull/4131)
 
 ### Security
