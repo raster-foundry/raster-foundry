@@ -14,6 +14,8 @@
 
 ### Fixed
 
+- Use safer options for large tifs when processing uploads and ingests [\#4131](https://github.com/raster-foundry/raster-foundry/pull/4131)
+
 ### Security
 
 ## [1.12.0](https://github.com/raster-foundry/raster-foundry/tree/1.12.0) (2018-10-03)
