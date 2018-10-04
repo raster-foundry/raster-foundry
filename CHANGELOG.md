@@ -6,7 +6,7 @@
 
 ### Changed
 
-- Switched to [keepachangelog](https://keepachangelog.com/en/1.0.0/) CHANGELOG format
+- Switched to [keepachangelog](https://keepachangelog.com/en/1.0.0/) CHANGELOG format [\#4159](https://github.com/raster-foundry/raster-foundry/pull/4159)
 
 ### Deprecated
 
