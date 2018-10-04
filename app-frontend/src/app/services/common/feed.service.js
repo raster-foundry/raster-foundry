@@ -12,28 +12,29 @@ export default (app) => {
         getPosts() {
             return this.$q((resolve, reject) => {
                 if (!BUILDCONFIG.FEED_SOURCE || BUILDCONFIG.FEED_SOURCE === 'disabled') {
-                    return reject();
-                }
-                this.$http({
-                    method: 'GET',
-                    url: `${BUILDCONFIG.API_HOST}/api/feed/` +
-                        `?source=${BUILDCONFIG.FEED_SOURCE}`
-                }).then(response => {
-                    let raw = response.data;
-                    try {
-                        let json = JSON.parse(raw.substring(raw.indexOf('{')));
-                        let payload = json.payload;
-                        if (payload && payload.posts) {
-                            return resolve(payload.posts);
-                        } else {
-                            return reject();
+                    reject();
+                } else {
+                    this.$http({
+                        method: 'GET',
+                        url: `${BUILDCONFIG.API_HOST}/api/feed/` +
+                            `?source=${BUILDCONFIG.FEED_SOURCE}`
+                    }).then(response => {
+                        let raw = response.data;
+                        try {
+                            let json = JSON.parse(raw.substring(raw.indexOf('{')));
+                            let payload = json.payload;
+                            if (payload && payload.posts) {
+                                resolve(payload.posts);
+                            } else {
+                                reject();
+                            }
+                        } catch (err) {
+                            reject();
                         }
-                    } catch (err) {
-                        return reject();
-                    }
-                }, () => {
-                    return reject();
-                });
+                    }, () => {
+                        reject();
+                    });
+                }
             });
         }
     }
