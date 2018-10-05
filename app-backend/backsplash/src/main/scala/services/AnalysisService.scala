@@ -8,9 +8,11 @@ import cats.effect.{IO, Timer}
 import com.azavea.maml.eval.BufferingInterpreter
 import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.backsplash._
+import com.azavea.rf.backsplash.error._
 import com.azavea.rf.backsplash.maml.BacksplashMamlAdapter
 import com.azavea.rf.backsplash.parameters.PathParameters._
 import com.azavea.rf.common.RollbarNotifier
+import com.azavea.rf.datamodel.User
 import com.azavea.rf.database.ToolRunDao
 import com.azavea.rf.database.filter.Filterables._
 import com.azavea.rf.database.util.RFTransactor
@@ -27,16 +29,12 @@ import scala.util._
 
 class AnalysisService(
     interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit t: Timer[IO])
+)(implicit timer: Timer[IO])
     extends Http4sDsl[IO]
     with RollbarNotifier
     with Authentication {
 
   implicit val xa = RFTransactor.xa
-
-  // TODO: DRY OUT
-  object TokenQueryParamMatcher
-      extends QueryParamDecoderMatcher[String]("token")
 
   object NodeQueryParamMatcher extends QueryParamDecoderMatcher[String]("node")
 
@@ -46,19 +44,18 @@ class AnalysisService(
   implicit class MapAlgebraAstConversion(val rfmlAst: MapAlgebraAST)
       extends BacksplashMamlAdapter
 
-  val service: HttpService[IO] =
-    HttpService {
+  val service: AuthedService[User, IO] =
+    AuthedService {
       case GET -> Root / UUIDWrapper(analysisId) / histogram
-            :? TokenQueryParamMatcher(token)
             :? NodeQueryParamMatcher(node)
-            :? VoidCacheQueryParamMatcher(void) => {
+            :? VoidCacheQueryParamMatcher(void) as user => {
 
         ???
       }
 
       case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(
             y)
-            :? NodeQueryParamMatcher(node) => {
+            :? NodeQueryParamMatcher(node) as user => {
 
         logger.info(s"Requesting Analysis: ${analysisId}")
         val tr = ToolRunDao.query.filter(analysisId).select.transact(xa)
@@ -69,12 +66,12 @@ class AnalysisService(
             .as[MapAlgebraAST]
             .right
             .toOption
-            .getOrElse(throw new Exception(
+            .getOrElse(throw MetadataError(
               s"Could not decode AST ${analysisId} from database"))
           IO.pure(
             ast
               .find(UUID.fromString(node))
-              .getOrElse(throw new InvalidParameterException(
+              .getOrElse(throw MetadataError(
                 s"Node ${node} missing from in AST ${analysisId}")))
         }
 

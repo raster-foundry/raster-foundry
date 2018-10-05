@@ -18,8 +18,13 @@ case class SingleBandOptionsError(message: String) extends BacksplashError
 case class UningestedScenes(message: String) extends BacksplashError
 case class UnknownSceneType(message: String) extends BacksplashError
 case class NotAuthorized(message: String = "") extends BacksplashError
+case class BadAnalysisAST(message: String) extends BacksplashError
 
-class BacksplashHttpErrorHandler[F[_]](implicit M: MonadError[F, BacksplashError]) extends HttpErrorHandler[F, BacksplashError] with Http4sDsl[F] with RollbarNotifier {
+class BacksplashHttpErrorHandler[F[_]](
+    implicit M: MonadError[F, BacksplashError])
+    extends HttpErrorHandler[F, BacksplashError]
+    with Http4sDsl[F]
+    with RollbarNotifier {
   private val handler: BacksplashError => F[Response[F]] = {
     case t @ MetadataError(m) =>
       sendError(t)
@@ -27,6 +32,7 @@ class BacksplashHttpErrorHandler[F[_]](implicit M: MonadError[F, BacksplashError
     case SingleBandOptionsError(m) => BadRequest(m)
     case UningestedScenes(m)       => NotFound(m)
     case UnknownSceneType(m)       => BadRequest(m)
+    case BadAnalysisAST(m)         => BadRequest(m)
     case NotAuthorized(_) =>
       Forbidden(
         "Tiles cannot be produced or user is not authorized to view these tiles")
@@ -37,10 +43,13 @@ class BacksplashHttpErrorHandler[F[_]](implicit M: MonadError[F, BacksplashError
 }
 
 object ServiceHttpErrorHandler {
-  def apply[F[_], E](service: HttpService[F])(handler: E => F[Response[F]])(implicit ev: ApplicativeError[F, E]): HttpService[F] =
+  def apply[F[_], E](service: HttpService[F])(handler: E => F[Response[F]])(
+      implicit ev: ApplicativeError[F, E]): HttpService[F] =
     Kleisli { req: Request[F] =>
       OptionT {
-        service(req).value.handleErrorWith { e => handler(e).map(Option(_)) }
+        service(req).value.handleErrorWith { e =>
+          handler(e).map(Option(_))
+        }
       }
     }
 }

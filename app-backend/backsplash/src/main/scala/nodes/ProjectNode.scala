@@ -52,7 +52,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       def kind(self: ProjectNode): MamlKind = MamlKind.Tile
 
       def tmsReification(self: ProjectNode, buffer: Int)(
-          implicit t: Timer[IO]): (Int, Int, Int) => IO[Literal] =
+          implicit timer: Timer[IO]): (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
           val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
           val mdIO = Mosaic.getMosaicDefinitions(self, extent)

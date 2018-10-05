@@ -38,18 +38,18 @@ object Avro extends RollbarNotifier with HistogramJsonFormats {
       zoom: Int,
       col: Int,
       row: Int,
-      extent: Extent)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+      extent: Extent)(implicit timer: Timer[IO]): OptionT[IO, Raster[Tile]] = {
     OptionT(
       for {
         _ <- IO.pure(
           logger.debug(
             s"Fetching multi-band avro tile for scene id ${md.sceneId}"))
-        metadata <- IO.shift(t) *> tileLayerMetadata(md.sceneId, zoom)
+        metadata <- tileLayerMetadata(md.sceneId, zoom)
         (sourceZoom, tlm) = metadata
         zoomDiff = zoom - sourceZoom
         resolutionDiff = 1 << zoomDiff
         sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
-        histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
+        histograms <- layerHistogram(md.sceneId)
         mbTileE <- {
           if (tlm.bounds.includes(sourceKey))
             avroLayerTile(md.sceneId, sourceZoom, sourceKey).attempt
@@ -81,7 +81,7 @@ object Avro extends RollbarNotifier with HistogramJsonFormats {
   def fetchMultiBandAvroTile(md: MosaicDefinition,
                              layoutLevel: LayoutLevel,
                              extent: Extent)(
-      implicit t: Timer[IO]): OptionT[IO, Raster[MultibandTile]] = {
+      implicit timer: Timer[IO]): OptionT[IO, Raster[MultibandTile]] = {
     val layerId = LayerId(md.sceneId.toString, layoutLevel.zoom)
     val tileIO = IO(Try {
       S3CollectionLayerReader(store)
@@ -110,18 +110,18 @@ object Avro extends RollbarNotifier with HistogramJsonFormats {
                               extent: Extent,
                               singleBandOptions: SingleBandOptions.Params,
                               rawSingleBandValues: Boolean)(
-      implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+      implicit timer: Timer[IO]): OptionT[IO, Raster[Tile]] = {
     OptionT(
       for {
         _ <- IO.pure(
           logger.debug(
             s"Fetching single-band avro tile for scene id ${md.sceneId}"))
-        metadata <- IO.shift(t) *> tileLayerMetadata(md.sceneId, zoom)
+        metadata <- tileLayerMetadata(md.sceneId, zoom)
         (sourceZoom, tlm) = metadata
         zoomDiff = zoom - sourceZoom
         resolutionDiff = 1 << zoomDiff
         sourceKey = SpatialKey(col / resolutionDiff, row / resolutionDiff)
-        histograms <- IO.shift(t) *> layerHistogram(md.sceneId)
+        histograms <- layerHistogram(md.sceneId)
         mbTileE <- {
           if (tlm.bounds.includes(sourceKey))
             avroLayerTile(md.sceneId, sourceZoom, sourceKey).attempt

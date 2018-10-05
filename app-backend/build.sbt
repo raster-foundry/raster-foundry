@@ -448,7 +448,6 @@ lazy val backsplash = Project("backsplash", file("backsplash"))
     libraryDependencies ++= Seq(
       Dependencies.catsCore,
       Dependencies.catsEffect,
-      Dependencies.catsMeow,
       Dependencies.geotrellisServer,
       Dependencies.http4sBlaze,
       Dependencies.http4sBlazeClient,

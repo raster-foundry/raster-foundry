@@ -24,6 +24,9 @@ object BacksplashServer extends StreamApp[IO] {
 }
 
 object ServerStream {
+
+  implicit val timer: Timer[IO] = IO.timer(global)
+
   def healthCheckService = new HealthCheckService[IO].service
   def mosaicService = new MosaicService().service
   def analysisService = new AnalysisService().service
@@ -31,8 +34,10 @@ object ServerStream {
   def stream =
     BlazeBuilder[IO]
       .bindHttp(8080, "0.0.0.0")
-      .mountService(AutoSlash(Authenticators.queryParamAuthMiddleware(mosaicService)), "/")
+      .mountService(
+        AutoSlash(Authenticators.queryParamAuthMiddleware(mosaicService)),
+        "/")
       .mountService(AutoSlash(healthCheckService), "/healthcheck")
-      .mountService(AutoSlash(analysisService), "/tools")
+      .mountService(AutoSlash(Authenticators.queryParamAuthMiddleware(analysisService)), "/tools")
       .serve
 }

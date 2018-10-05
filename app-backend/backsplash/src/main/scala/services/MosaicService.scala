@@ -21,7 +21,6 @@ import com.azavea.maml.eval.BufferingInterpreter
 import cats._
 import cats.data._
 import cats.data.Validated._
-import cats.effect.{Timer, IO}
 import cats.implicits._
 import cats.syntax._
 import doobie.implicits._
@@ -32,7 +31,9 @@ import org.http4s.dsl._
 
 class MosaicService(
     interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit timer: Timer[IO]) extends Http4sDsl[IO] with RollbarNotifier {
+)(implicit timer: Timer[IO])
+    extends Http4sDsl[IO]
+    with RollbarNotifier {
 
   implicit val xa = RFTransactor.xa
 
@@ -55,19 +56,16 @@ class MosaicService(
             :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
         val authorizationIO =
           ProjectDao
-            .authorized(user,
-                        ObjectType.Project,
-                        projectId,
-                        ActionType.View)
-            .transact(xa) map { authResult => 
-              if (!authResult)
-                throw NotAuthorized(s"User ${user.id} not authorized to view project $projectId")
-              else
-                authResult
-            }
+            .authorized(user, ObjectType.Project, projectId, ActionType.View)
+            .transact(xa) map { authResult =>
+            if (!authResult)
+              throw NotAuthorized(
+                s"User ${user.id} not authorized to view project $projectId")
+            else
+              authResult
+          }
 
-        def getTileResult(
-            project: Project): IO[Interpreted[Tile]] = {
+        def getTileResult(project: Project): IO[Interpreted[Tile]] = {
           val projectNode =
             (redOverride, greenOverride, blueOverride).tupled match {
               case Some((red: Int, green: Int, blue: Int)) =>
@@ -98,10 +96,11 @@ class MosaicService(
         } yield {
           result match {
             case Valid(tile) =>
-              ??? // Ok(tile.renderPng.bytes)
+              ??? // Response[IO].pure(tile.renderPng.bytes)
             case Invalid(e) =>
-              ??? // BadRequest(e.toString)
+              ??? // Response[IO].pure(e.toString)
           }
         }
+      case req @ _ => Ok(req)
     }
 }

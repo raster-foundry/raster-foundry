@@ -1,7 +1,9 @@
 package com.azavea.rf.backsplash.io
 
 import cats.effect.{IO, Timer}
+import cats.data._
 import cats.implicits._
+import com.azavea.rf.backsplash.error._
 import com.azavea.rf.backsplash.nodes.ProjectNode
 import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.database.SceneToProjectDao
@@ -17,6 +19,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object Mosaic extends RollbarNotifier {
 
   import com.azavea.rf.database.util.RFTransactor.xa
+
+  implicit val timer: Timer[IO] = IO.timer(global)
 
   def getMosaicDefinitions(self: ProjectNode,
                            extent: Extent): IO[Seq[MosaicDefinition]] = {
@@ -49,7 +53,7 @@ object Mosaic extends RollbarNotifier {
       case Some(SceneType.Avro) =>
         Avro.fetchMultiBandAvroTile(md, z, x, y, extent).value
       case None =>
-        throw new Exception("Unable to fetch tiles with unknown scene type")
+        throw UnknownSceneType("Unable to fetch tiles with unknown scene type")
     }
 
   def getMosaicDefinitionTiles(self: ProjectNode,
@@ -58,7 +62,7 @@ object Mosaic extends RollbarNotifier {
                                y: Int,
                                extent: Extent,
                                mds: Seq[MosaicDefinition]) = {
-    mds.toList.parTraverse(self.isSingleBand match {
+    mds.toList.traverse(self.isSingleBand match {
       case false =>
         getMultiBandTileFromMosaic(z, x, y, extent)
       case true => {
@@ -70,7 +74,7 @@ object Mosaic extends RollbarNotifier {
           y,
           extent,
           self.singleBandOptions getOrElse {
-            throw new Exception(
+            throw SingleBandOptionsError(
               "No single-band options found for single-band visualization")
           },
           self.rawSingleBandValues
@@ -85,7 +89,7 @@ object Mosaic extends RollbarNotifier {
                                   extent: Extent,
                                   singleBandOptions: SingleBandOptions.Params,
                                   rawSingleBandValues: Boolean)(
-      md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
+      md: MosaicDefinition): IO[Option[Raster[Tile]]] =
     md.sceneType match {
       case Some(SceneType.COG) =>
         Cog
@@ -108,6 +112,6 @@ object Mosaic extends RollbarNotifier {
                                    rawSingleBandValues)
           .value
       case None =>
-        throw new Exception("Unable to fetch tiles with unknown scene type")
+        throw UnknownSceneType("Unable to fetch tiles with unknown scene type")
     }
 }

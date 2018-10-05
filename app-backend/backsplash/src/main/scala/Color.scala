@@ -1,6 +1,7 @@
 package com.rf.azavea.backsplash
 
 import cats.data.{NonEmptyList => NEL}
+import com.azavea.rf.backsplash.error._
 import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.datamodel.{ColorRampMosaic, SingleBandOptions}
 import geotrellis.raster.histogram._
@@ -36,7 +37,7 @@ object Color extends RollbarNotifier {
         val message =
           "Invalid color scheme format. Color schemes must be defined as an array of hex colors or a mapping of raster values to hex colors."
         logger.error(message)
-        throw new IllegalArgumentException(message)
+        throw SingleBandOptionsError(message)
       }
     }
     Raster(tile.color(colorMap), extent)
