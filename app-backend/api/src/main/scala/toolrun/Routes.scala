@@ -175,9 +175,16 @@ trait ToolRunRoutes
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
         (ToolRunDao.query
-          .ownedBy(user, toolRunId)
+           .ownedBy(user, toolRunId)
            .exists,
-         acrList traverse { acr => ToolRunDao.isValidPermission(acr, user) } map { _.foldLeft(true)(_ && _) }).tupled.map({authTup => authTup._1 && authTup._2}).transact(xa).unsafeToFuture
+         acrList traverse { acr =>
+           ToolRunDao.isValidPermission(acr, user)
+         } map { _.foldLeft(true)(_ && _) }).tupled
+          .map({ authTup =>
+            authTup._1 && authTup._2
+          })
+          .transact(xa)
+          .unsafeToFuture
       } {
         complete {
           ToolRunDao
@@ -193,9 +200,14 @@ trait ToolRunRoutes
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
         (ToolRunDao.query
-          .ownedBy(user, toolRunId)
+           .ownedBy(user, toolRunId)
            .exists,
-         ToolRunDao.isValidPermission(acr, user)).tupled.map({authTup => authTup._1 && authTup._2}).transact(xa).unsafeToFuture
+         ToolRunDao.isValidPermission(acr, user)).tupled
+          .map({ authTup =>
+            authTup._1 && authTup._2
+          })
+          .transact(xa)
+          .unsafeToFuture
       } {
         complete {
           ToolRunDao

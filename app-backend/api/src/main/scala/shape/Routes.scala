@@ -254,8 +254,14 @@ trait ShapeRoutes
   def replaceShapePermissions(shapeId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (ShapeDao.query.ownedBy(user, shapeId).exists,
-         acrList traverse { acr => ShapeDao.isValidPermission(acr, user) } map { _.foldLeft(true)(_ && _) }).tupled.map({authTup => authTup._1 && authTup._2}).transact(xa).unsafeToFuture
+        (ShapeDao.query.ownedBy(user, shapeId).exists, acrList traverse { acr =>
+          ShapeDao.isValidPermission(acr, user)
+        } map { _.foldLeft(true)(_ && _) }).tupled
+          .map({ authTup =>
+            authTup._1 && authTup._2
+          })
+          .transact(xa)
+          .unsafeToFuture
       } {
         complete {
           ShapeDao
@@ -271,7 +277,12 @@ trait ShapeRoutes
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
         (ShapeDao.query.ownedBy(user, shapeId).exists,
-         ShapeDao.isValidPermission(acr, user)).tupled.map({authTup => authTup._1 && authTup._2}).transact(xa).unsafeToFuture
+         ShapeDao.isValidPermission(acr, user)).tupled
+          .map({ authTup =>
+            authTup._1 && authTup._2
+          })
+          .transact(xa)
+          .unsafeToFuture
       } {
         complete {
           ShapeDao

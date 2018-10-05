@@ -1102,7 +1102,14 @@ trait ProjectRoutes
         (ProjectDao.query
            .ownedBy(user, projectId)
            .exists,
-         acrList traverse { acr => ProjectDao.isValidPermission(acr, user) } map { _.foldLeft(true)(_ && _ ) }).tupled.map({authTup => authTup._1 && authTup._2}).transact(xa).unsafeToFuture
+         acrList traverse { acr =>
+           ProjectDao.isValidPermission(acr, user)
+         } map { _.foldLeft(true)(_ && _) }).tupled
+          .map({ authTup =>
+            authTup._1 && authTup._2
+          })
+          .transact(xa)
+          .unsafeToFuture
       } {
         complete {
           ProjectDao
@@ -1120,7 +1127,12 @@ trait ProjectRoutes
         (ProjectDao.query
            .ownedBy(user, projectId)
            .exists,
-         ProjectDao.isValidPermission(acr, user)).tupled.map({authTup => authTup._1 && authTup._2}).transact(xa).unsafeToFuture
+         ProjectDao.isValidPermission(acr, user)).tupled
+          .map({ authTup =>
+            authTup._1 && authTup._2
+          })
+          .transact(xa)
+          .unsafeToFuture
       } {
         complete {
           ProjectDao

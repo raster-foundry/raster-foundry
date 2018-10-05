@@ -38,7 +38,8 @@ trait ObjectPermissions[Model] {
         throw new Exception(s"${tableName} not yet supported")
     }).query.filter(id).exists
 
-  def isValidPermission(acr: ObjectAccessControlRule, user: User): ConnectionIO[Boolean] =
+  def isValidPermission(acr: ObjectAccessControlRule,
+                        user: User): ConnectionIO[Boolean] =
     (acr.subjectType, acr.subjectId, user) match {
       case (SubjectType.All, _, u) => u.isSuperuser.pure[ConnectionIO]
       case (SubjectType.Platform, Some(subjectId), user) =>
