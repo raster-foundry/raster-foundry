@@ -5,13 +5,13 @@ import cats.effect.{IO, Timer}
 import cats.implicits._
 import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.datamodel.{MosaicDefinition, SingleBandOptions}
-import com.rf.azavea.backsplash.color
+import com.rf.azavea.backsplash.Color
 import geotrellis.raster.{Raster, io => _, _}
 import geotrellis.server.core.cog.CogUtils
 import geotrellis.spark.{io => _}
 import geotrellis.vector.Extent
 
-object cog extends RollbarNotifier {
+object Cog extends RollbarNotifier {
 
   def fetchSingleBandCogTile(md: MosaicDefinition,
                              zoom: Int,
@@ -19,21 +19,21 @@ object cog extends RollbarNotifier {
                              row: Int,
                              extent: Extent,
                              singleBandOptions: SingleBandOptions.Params,
-                             rawSingleBandValues: Boolean
-                            )(
-                              implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+                             rawSingleBandValues: Boolean)(
+      implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
     val tileIO = for {
       _ <- IO.pure(
         logger.debug(
           s"Fetching single-band COG tile for scene ID ${md.sceneId}"))
       raster <- IO.shift(t) *> CogUtils.fetch(
         md.ingestLocation.getOrElse(
-          throw new IllegalArgumentException("Cannot fetch scene with no ingest location")
+          throw new IllegalArgumentException(
+            "Cannot fetch scene with no ingest location")
         ),
         zoom,
         col,
         row)
-      histograms <- IO.shift(t) *> avro.layerHistogram(md.sceneId)
+      histograms <- IO.shift(t) *> Avro.layerHistogram(md.sceneId)
     } yield {
       logger.debug(s"Retrieved Tile: ${raster.tile.dimensions}")
       val tile = raster.tile.bands.lift(singleBandOptions.band) getOrElse {
@@ -45,7 +45,8 @@ object cog extends RollbarNotifier {
       }
 
       rawSingleBandValues match {
-        case false => color.colorSingleBandTile(tile, extent, histogram, singleBandOptions)
+        case false =>
+          Color.colorSingleBandTile(tile, extent, histogram, singleBandOptions)
         case _ => Raster(tile, extent)
       }
     }
@@ -53,18 +54,22 @@ object cog extends RollbarNotifier {
   }
 
   def fetchMultiBandCogTile(
-                             md: MosaicDefinition,
-                             zoom: Int,
-                             col: Int,
-                             row: Int,
-                             extent: Extent)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+      md: MosaicDefinition,
+      zoom: Int,
+      col: Int,
+      row: Int,
+      extent: Extent)(implicit t: Timer[IO]): OptionT[IO, Raster[Tile]] = {
     val tileIO = for {
-      _ <- IO.pure(logger.debug(s"Fetching multi-band COG tile for scene ID ${md.sceneId}"))
-      raster <- IO.shift(t) *> CogUtils.fetch(md.ingestLocation.getOrElse("Cannot fetch scene with no ingest location"),
+      _ <- IO.pure(
+        logger.debug(
+          s"Fetching multi-band COG tile for scene ID ${md.sceneId}"))
+      raster <- IO.shift(t) *> CogUtils.fetch(
+        md.ingestLocation.getOrElse(
+          "Cannot fetch scene with no ingest location"),
         zoom,
         col,
         row)
-      histograms <- IO.shift(t) *> avro.layerHistogram(md.sceneId)
+      histograms <- IO.shift(t) *> Avro.layerHistogram(md.sceneId)
     } yield {
       val bandOrder = List(
         md.colorCorrections.redBand,
@@ -74,14 +79,15 @@ object cog extends RollbarNotifier {
       val subsetBands = raster.tile.subsetBands(bandOrder)
       val subsetHistograms = bandOrder map histograms
       val normalized =
-        subsetBands.mapBands { (i: Int, tile: Tile) => {
-          (subsetHistograms(i).minValue, subsetHistograms(i).maxValue) match {
-            case (Some(min), Some(max)) => tile.normalize(min, max, 0, 255)
-            case _ =>
-              throw new Exception(
-                "Histogram bands don't match up with tile bands")
+        subsetBands.mapBands { (i: Int, tile: Tile) =>
+          {
+            (subsetHistograms(i).minValue, subsetHistograms(i).maxValue) match {
+              case (Some(min), Some(max)) => tile.normalize(min, max, 0, 255)
+              case _ =>
+                throw new Exception(
+                  "Histogram bands don't match up with tile bands")
+            }
           }
-        }
         }
 
       Raster(normalized.color, extent).resample(256, 256)

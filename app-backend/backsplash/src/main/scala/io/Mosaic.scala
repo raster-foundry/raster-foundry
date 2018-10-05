@@ -14,12 +14,12 @@ import geotrellis.vector.{Extent, Projected}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-
-object mosaic extends RollbarNotifier {
+object Mosaic extends RollbarNotifier {
 
   import com.azavea.rf.database.util.RFTransactor.xa
 
-  def getMosaicDefinitions(self: ProjectNode, extent: Extent): IO[Seq[MosaicDefinition]] = {
+  def getMosaicDefinitions(self: ProjectNode,
+                           extent: Extent): IO[Seq[MosaicDefinition]] = {
     self.getBandOverrides match {
       case Some((red, green, blue)) =>
         SceneToProjectDao
@@ -41,39 +41,73 @@ object mosaic extends RollbarNotifier {
     }
   }
 
-  def getMultiBandTileFromMosaic(z: Int, x: Int, y: Int, extent: Extent)(md: MosaicDefinition): IO[Option[Raster[Tile]]] =
+  def getMultiBandTileFromMosaic(z: Int, x: Int, y: Int, extent: Extent)(
+      md: MosaicDefinition): IO[Option[Raster[Tile]]] =
     md.sceneType match {
       case Some(SceneType.COG) =>
-        cog.fetchMultiBandCogTile(md, z, x, y, extent).value
+        Cog.fetchMultiBandCogTile(md, z, x, y, extent).value
       case Some(SceneType.Avro) =>
-        avro.fetchMultiBandAvroTile(md, z, x, y, extent).value
+        Avro.fetchMultiBandAvroTile(md, z, x, y, extent).value
       case None =>
         throw new Exception("Unable to fetch tiles with unknown scene type")
     }
 
-  def getMosaicDefinitionTiles(self: ProjectNode, z: Int, x: Int, y: Int, extent: Extent, mds: Seq[MosaicDefinition]) = {
+  def getMosaicDefinitionTiles(self: ProjectNode,
+                               z: Int,
+                               x: Int,
+                               y: Int,
+                               extent: Extent,
+                               mds: Seq[MosaicDefinition]) = {
     mds.toList.parTraverse(self.isSingleBand match {
       case false =>
         getMultiBandTileFromMosaic(z, x, y, extent)
       case true => {
-        logger.info(s"Getting Single Band Tile From Mosaic: ${z} ${x} ${y} ${self.projectId}")
-        getSingleBandTileFromMosaic(z, x, y, extent, self.singleBandOptions getOrElse {
-          throw new Exception(
+        logger.info(
+          s"Getting Single Band Tile From Mosaic: ${z} ${x} ${y} ${self.projectId}")
+        getSingleBandTileFromMosaic(
+          z,
+          x,
+          y,
+          extent,
+          self.singleBandOptions getOrElse {
+            throw new Exception(
               "No single-band options found for single-band visualization")
-          }, self.rawSingleBandValues)
+          },
+          self.rawSingleBandValues
+        )
       }
     })
   }
 
-  def getSingleBandTileFromMosaic(z: Int, x: Int, y: Int, extent: Extent, singleBandOptions: SingleBandOptions.Params, rawSingleBandValues: Boolean)(
-    md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
+  def getSingleBandTileFromMosaic(z: Int,
+                                  x: Int,
+                                  y: Int,
+                                  extent: Extent,
+                                  singleBandOptions: SingleBandOptions.Params,
+                                  rawSingleBandValues: Boolean)(
+      md: MosaicDefinition)(implicit t: Timer[IO]): IO[Option[Raster[Tile]]] =
     md.sceneType match {
       case Some(SceneType.COG) =>
-        cog.fetchSingleBandCogTile(md, z, x, y, extent, singleBandOptions, rawSingleBandValues).value
+        Cog
+          .fetchSingleBandCogTile(md,
+                                  z,
+                                  x,
+                                  y,
+                                  extent,
+                                  singleBandOptions,
+                                  rawSingleBandValues)
+          .value
       case Some(SceneType.Avro) =>
-        avro.fetchSingleBandAvroTile(md, z, x, y, extent, singleBandOptions, rawSingleBandValues).value
+        Avro
+          .fetchSingleBandAvroTile(md,
+                                   z,
+                                   x,
+                                   y,
+                                   extent,
+                                   singleBandOptions,
+                                   rawSingleBandValues)
+          .value
       case None =>
         throw new Exception("Unable to fetch tiles with unknown scene type")
     }
 }
-

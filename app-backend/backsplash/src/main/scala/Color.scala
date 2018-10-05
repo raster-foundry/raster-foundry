@@ -1,46 +1,14 @@
 package com.rf.azavea.backsplash
-import java.util.UUID
 
-import cats.data.{OptionT, NonEmptyList => NEL}
-import cats.effect.{IO, Timer}
-import cats.implicits._
-import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
+import cats.data.{NonEmptyList => NEL}
 import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel.{
-  ColorRampMosaic,
-  MosaicDefinition,
-  SceneType,
-  SingleBandOptions
-}
-import doobie.implicits._
-import geotrellis.proj4.{CRS, Proj4Transform, WebMercator}
+import com.azavea.rf.datamodel.{ColorRampMosaic, SingleBandOptions}
 import geotrellis.raster.histogram._
-import geotrellis.raster.io.geotiff.{Auto, AutoHigherResolution}
-import geotrellis.raster.io.json.HistogramJsonFormats
-import geotrellis.raster.reproject.ReprojectRasterExtent
-import geotrellis.raster.{CellSize, Raster, io => _, _}
-import geotrellis.server.core.cog.CogUtils
-import geotrellis.server.core.cog.CogUtils.{
-  closestTiffOverview,
-  cropGeoTiff,
-  tmsLevels
-}
-import geotrellis.server.core.maml.metadata._
-import geotrellis.server.core.maml.reification._
-import geotrellis.spark.io._
-import geotrellis.spark.io.postgres.PostgresAttributeStore
-import geotrellis.spark.io.s3.S3ValueReader
-import geotrellis.spark.tiling.{LayoutDefinition, ZoomedLayoutScheme}
-import geotrellis.spark.{io => _, _}
-import geotrellis.vector.{Extent, Projected}
-import io.circe.generic.semiauto._
-import spray.json.DefaultJsonProtocol._
-import spray.json._
+import geotrellis.raster.{Raster, io => _, _}
+import geotrellis.spark.{io => _}
+import geotrellis.vector.Extent
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
-object color extends RollbarNotifier {
+object Color extends RollbarNotifier {
   def colorSingleBandTile(
       tile: Tile,
       extent: Extent,

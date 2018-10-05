@@ -8,7 +8,7 @@ import cats.implicits._
 import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.database.LayerAttributeDao
 import com.azavea.rf.datamodel.{MosaicDefinition, SingleBandOptions}
-import com.rf.azavea.backsplash.color
+import com.rf.azavea.backsplash.Color
 import doobie.implicits._
 import geotrellis.raster.histogram._
 import geotrellis.raster.io.json.HistogramJsonFormats
@@ -24,7 +24,7 @@ import spray.json._
 
 import scala.util._
 
-object avro extends RollbarNotifier with HistogramJsonFormats {
+object Avro extends RollbarNotifier with HistogramJsonFormats {
 
   import com.azavea.rf.database.util.RFTransactor.xa
 
@@ -146,7 +146,7 @@ object avro extends RollbarNotifier with HistogramJsonFormats {
               }
               rawSingleBandValues match {
                 case false =>
-                  color.colorSingleBandTile(tile,
+                  Color.colorSingleBandTile(tile,
                                             extent,
                                             histogram,
                                             singleBandOptions)

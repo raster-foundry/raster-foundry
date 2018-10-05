@@ -11,10 +11,10 @@ import java.security.InvalidParameterException
 
 import com.azavea.rf.backsplash.nodes.ProjectNode
 import com.azavea.rf.datamodel.{BandDataType, SingleBandOptions}
+import com.azavea.rf.tool.ast.MapAlgebraAST.{CogRaster, SceneRaster}
 import io.circe.Json
 
 trait BacksplashMamlAdapter {
-
 
   def rfmlAst: MapAlgebraAST
 
@@ -25,12 +25,27 @@ trait BacksplashMamlAdapter {
 
       ast match {
         case MapAlgebraAST.ProjectRaster(_, projId, band, celltype, _) => {
-          val bandActual = band.getOrElse(throw new IllegalArgumentException("Band must be provided to evaluate AST"))
+          val bandActual = band.getOrElse(
+            throw new IllegalArgumentException(
+              "Band must be provided to evaluate AST"))
           // This is silly - mostly making up single band options here when all we really need is the band number
-          val singleBandOptions = SingleBandOptions.Params(bandActual, BandDataType.Diverging, 0, Json.Null, "Up")
-          Map[String, ProjectNode](s"${projId.toString}_${bandActual}" -> ProjectNode(projId, None, None, None, true, Some(singleBandOptions)))
+          val singleBandOptions = SingleBandOptions.Params(
+            bandActual,
+            BandDataType.Diverging,
+            0,
+            Json.Null,
+            "Up")
+          Map[String, ProjectNode](
+            s"${projId.toString}_${bandActual}" -> ProjectNode(
+              projId,
+              None,
+              None,
+              None,
+              true,
+              Some(singleBandOptions)))
         }
-        case _ => args.foldLeft(Map.empty[String, ProjectNode])( (a, b) => a ++ b)
+        case _ =>
+          args.foldLeft(Map.empty[String, ProjectNode])((a, b) => a ++ b)
       }
     }
 
@@ -43,6 +58,11 @@ trait BacksplashMamlAdapter {
           val bandActual = band.getOrElse(1)
           RasterVar(s"${projId.toString}_${bandActual}")
         }
+
+        // TODO: Remove COG & Scene Raster once Old Tile Server is GONE
+        // https://github.com/raster-foundry/raster-foundry/issues/4168
+        case CogRaster(_, _, _, _, _, _)         => ???
+        case SceneRaster(_, _, _, _, _)          => ???
         case MapAlgebraAST.Constant(_, const, _) => DblLit(const)
         case MapAlgebraAST.LiteralTile(_, lt, _) =>
           throw new InvalidParameterException(
@@ -59,8 +79,9 @@ trait BacksplashMamlAdapter {
         case MapAlgebraAST.Min(_, _, _)            => Min(args)
         case MapAlgebraAST.Classification(_, _, _, classmap) =>
           Classification(args, MamlClassMap(classmap.classifications))
-//        case MapAlgebraAST.Masking(_, _, _, mask) =>
-//          Masking(args :+ GeomJson(mask.toGeoJson))
+        // TODO: Reimplement Masking https://github.com/raster-foundry/raster-foundry/issues/4169
+        case MapAlgebraAST.Masking(_, _, _, mask) => ???
+        //  Masking(args :+ GeomJson(mask.toGeoJson))
         case MapAlgebraAST.Equality(_, _, _)       => Equal(args)
         case MapAlgebraAST.Inequality(_, _, _)     => Unequal(args)
         case MapAlgebraAST.Greater(_, _, _)        => Greater(args)

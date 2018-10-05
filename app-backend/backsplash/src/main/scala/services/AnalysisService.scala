@@ -26,63 +26,68 @@ import org.http4s.headers._
 import scala.util._
 
 class AnalysisService(
-                       interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-                     )(implicit t: Timer[IO])
-  extends Http4sDsl[IO]
-  with RollbarNotifier
-  with Authentication {
+    interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
+)(implicit t: Timer[IO])
+    extends Http4sDsl[IO]
+    with RollbarNotifier
+    with Authentication {
 
   implicit val xa = RFTransactor.xa
 
   // TODO: DRY OUT
   object TokenQueryParamMatcher
-    extends QueryParamDecoderMatcher[String]("token")
+      extends QueryParamDecoderMatcher[String]("token")
 
-  object NodeQueryParamMatcher
-    extends OptionalQueryParamDecoderMatcher[String]("node")
+  object NodeQueryParamMatcher extends QueryParamDecoderMatcher[String]("node")
 
   object VoidCacheQueryParamMatcher
-    extends QueryParamDecoderMatcher[Boolean]("voidCache")
+      extends QueryParamDecoderMatcher[Boolean]("voidCache")
 
   implicit class MapAlgebraAstConversion(val rfmlAst: MapAlgebraAST)
-    extends BacksplashMamlAdapter
+      extends BacksplashMamlAdapter
 
   val service: HttpService[IO] =
     HttpService {
       case GET -> Root / UUIDWrapper(analysisId) / histogram
-        :? TokenQueryParamMatcher(token)
-        :? NodeQueryParamMatcher(node)
-        :? VoidCacheQueryParamMatcher(void) => {
+            :? TokenQueryParamMatcher(token)
+            :? NodeQueryParamMatcher(node)
+            :? VoidCacheQueryParamMatcher(void) => {
 
         ???
       }
 
-
-      case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(y)
-        :? NodeQueryParamMatcher(node) => {
+      case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(
+            y)
+            :? NodeQueryParamMatcher(node) => {
 
         logger.info(s"Requesting Analysis: ${analysisId}")
         val tr = ToolRunDao.query.filter(analysisId).select.transact(xa)
 
-        val mapAlgebraAST = tr.flatMap{ toolRun =>
+        val mapAlgebraAST = tr.flatMap { toolRun =>
           logger.info(s"Getting AST")
-          val astOption = toolRun.executionParameters.as[MapAlgebraAST].right.toOption
-          (astOption, node) match {
-            case (Some(ast), Some(id)) => IO.pure(ast.find(UUID.fromString(id)).getOrElse(
-              throw new InvalidParameterException(s"Node ${id} missing from in AST ${analysisId}")))
-            case (Some(ast), _) => IO.pure(ast)
-          }
+          val ast = toolRun.executionParameters
+            .as[MapAlgebraAST]
+            .right
+            .toOption
+            .getOrElse(throw new Exception(
+              s"Could not decode AST ${analysisId} from database"))
+          IO.pure(
+            ast
+              .find(UUID.fromString(node))
+              .getOrElse(throw new InvalidParameterException(
+                s"Node ${node} missing from in AST ${analysisId}")))
         }
 
         logger.debug(s"AST: ${mapAlgebraAST}")
         mapAlgebraAST.flatMap { ast =>
           val (exp, mdOption, params) = ast.asMaml
-          val mamlEval = MamlTms.apply(IO.pure(exp), IO.pure(params), interpreter)
+          val mamlEval =
+            MamlTms.apply(IO.pure(exp), IO.pure(params), interpreter)
           val tileIO = mamlEval(z, x, y)
           tileIO.attempt flatMap {
             case Left(error) => ???
             case Right(Valid(tile)) => {
-              val colorMap  = for {
+              val colorMap = for {
                 md <- mdOption
                 renderDef <- md.renderDef
               } yield renderDef
@@ -90,11 +95,13 @@ class AnalysisService(
               colorMap match {
                 case Some(rd) => {
                   logger.debug(s"Using Render Definition: ${rd}")
-                  Ok(tile.renderPng(rd).bytes, `Content-Type`(MediaType.`image/png`))
+                  Ok(tile.renderPng(rd).bytes,
+                     `Content-Type`(MediaType.`image/png`))
                 }
                 case _ => {
                   logger.debug(s"Using Default Color Ramp: Viridis")
-                  Ok(tile.renderPng(ColorRamps.Viridis).bytes, `Content-Type`(MediaType.`image/png`))
+                  Ok(tile.renderPng(ColorRamps.Viridis).bytes,
+                     `Content-Type`(MediaType.`image/png`))
                 }
               }
             }

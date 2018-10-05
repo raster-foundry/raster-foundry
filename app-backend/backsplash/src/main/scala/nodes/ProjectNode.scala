@@ -6,7 +6,7 @@ import cats.data.{NonEmptyList => NEL}
 import cats.effect.{IO, Timer}
 import cats.implicits._
 import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
-import com.azavea.rf.backsplash.io.mosaic
+import com.azavea.rf.backsplash.io.Mosaic
 import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.datamodel.SingleBandOptions
 import geotrellis.raster.io.json.HistogramJsonFormats
@@ -55,10 +55,10 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
           implicit t: Timer[IO]): (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
           val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
-          val mdIO = mosaic.getMosaicDefinitions(self, extent)
+          val mdIO = Mosaic.getMosaicDefinitions(self, extent)
           for {
             mds <- mdIO
-            mbTiles <- mosaic.getMosaicDefinitionTiles(self,
+            mbTiles <- Mosaic.getMosaicDefinitionTiles(self,
                                                        z,
                                                        x,
                                                        y,
