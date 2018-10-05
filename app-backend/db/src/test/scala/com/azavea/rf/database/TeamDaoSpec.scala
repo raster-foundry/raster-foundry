@@ -104,6 +104,28 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
     }
   }
 
+  test("creating a team with role") {
+    check {
+      forAll (
+        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create) => {
+          val createTeamIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            teamInsert <- TeamDao.createWithRole(fixupTeam(teamCreate, orgInsert, userInsert), userInsert)
+            users <- TeamDao.listMembers(teamInsert.id, PageRequest(0, 30, Map.empty), SearchQueryParameters(), userInsert)
+          } yield (teamInsert, orgInsert, users)
+
+          val (createdTeam, org, teamusers) = createTeamIO.transact(xa).unsafeRunSync
+
+          createdTeam.name == teamCreate.name &&
+            createdTeam.organizationId == org.id &&
+            createdTeam.settings == teamCreate.settings &&
+            createdTeam.isActive == true && teamusers.count == 1
+        }
+      )
+    }
+  }
+
   test("updating a team"){
     check {
       forAll (

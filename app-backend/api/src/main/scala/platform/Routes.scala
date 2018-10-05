@@ -524,15 +524,23 @@ trait PlatformRoutes
 
   def createTeam(platformId: UUID, orgId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      // QUESTION: do we want to allow any user to create a team rather than only admins?
-      OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
+      OrganizationDao.userIsMember(user, orgId).transact(xa).unsafeToFuture
     } {
       entity(as[Team.Create]) { newTeamCreate =>
         onSuccess(
-          TeamDao
-            .create(newTeamCreate.toTeam(user))
+          OrganizationDao
+            .userIsAdmin(user, orgId)
+            .flatMap {
+              case true => TeamDao.create(newTeamCreate.toTeam(user))
+              case _ =>
+                TeamDao.createWithRole(
+                  newTeamCreate.toTeam(user),
+                  user
+                )
+            }
             .transact(xa)
-            .unsafeToFuture) { team =>
+            .unsafeToFuture()
+        ) { team =>
           complete(StatusCodes.Created, team)
         }
       }
