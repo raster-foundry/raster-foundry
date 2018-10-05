@@ -192,7 +192,7 @@ lazy val root = Project("root", file("."))
              tile,
              tool,
              bridge,
-    backsplash)
+             backsplash)
   .settings(commonSettings: _*)
 
 lazy val api = Project("api", file("api"))
