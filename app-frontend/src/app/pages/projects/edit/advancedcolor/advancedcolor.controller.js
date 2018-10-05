@@ -82,7 +82,7 @@ export default class ProjectsAdvancedColorController {
             this.$parent.projectId,
             {
                 pageSize: this.projectService.scenePageSize,
-                page : page - 1
+                page: page - 1
             }
         ).then((paginatedResponse) => {
             this.sceneList = paginatedResponse.results;

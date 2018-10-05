@@ -78,19 +78,9 @@ object Cog extends RollbarNotifier {
       )
       val subsetBands = raster.tile.subsetBands(bandOrder)
       val subsetHistograms = bandOrder map histograms
-      val normalized =
-        subsetBands.mapBands { (i: Int, tile: Tile) =>
-          {
-            (subsetHistograms(i).minValue, subsetHistograms(i).maxValue) match {
-              case (Some(min), Some(max)) => tile.normalize(min, max, 0, 255)
-              case _ =>
-                throw new Exception(
-                  "Histogram bands don't match up with tile bands")
-            }
-          }
-        }
-
-      Raster(normalized.color, extent).resample(256, 256)
+      val colored =
+        md.colorCorrections.colorCorrect(subsetBands, subsetHistograms).color
+      Raster(colored, extent).resample(256, 256)
     }
     OptionT(tileIO.attempt.map(_.toOption))
   }
