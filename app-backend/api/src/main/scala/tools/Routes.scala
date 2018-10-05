@@ -242,10 +242,11 @@ trait ToolRoutes
   }
 
   def replaceToolPermissions(toolId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
-    } {
-      entity(as[List[ObjectAccessControlRule]]) { acrList =>
+    entity(as[List[ObjectAccessControlRule]]) { acrList =>
+      authorizeAsync {
+        (ToolDao.query.ownedBy(user, toolId).exists,
+         acrList traverse { acr => ToolDao.isValidPermission(acr, user) } map { _.foldLeft(true)(_ && _) }).tupled.map({authTup => authTup._1 && authTup._2}).transact(xa).unsafeToFuture
+      } {
         complete {
           ToolDao
             .replacePermissions(toolId, acrList)
@@ -257,10 +258,11 @@ trait ToolRoutes
   }
 
   def addToolPermission(toolId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
-    } {
-      entity(as[ObjectAccessControlRule]) { acr =>
+    entity(as[ObjectAccessControlRule]) { acr =>
+      authorizeAsync {
+        (ToolDao.query.ownedBy(user, toolId).exists,
+         ToolDao.isValidPermission(acr, user)).tupled.map({authTup => authTup._1 && authTup._2}).transact(xa).unsafeToFuture
+      } {
         complete {
           ToolDao
             .addPermission(toolId, acr)

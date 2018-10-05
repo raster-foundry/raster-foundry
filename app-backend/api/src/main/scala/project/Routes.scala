@@ -1097,14 +1097,13 @@ trait ProjectRoutes
   }
 
   def replaceProjectPermissions(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .ownedBy(user, projectId)
-        .exists
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[List[ObjectAccessControlRule]]) { acrList =>
+    entity(as[List[ObjectAccessControlRule]]) { acrList =>
+      authorizeAsync {
+        (ProjectDao.query
+           .ownedBy(user, projectId)
+           .exists,
+         acrList traverse { acr => ProjectDao.isValidPermission(acr, user) } map { _.foldLeft(true)(_ && _ ) }).tupled.map({authTup => authTup._1 && authTup._2}).transact(xa).unsafeToFuture
+      } {
         complete {
           ProjectDao
             .replacePermissions(projectId, acrList)
@@ -1116,14 +1115,13 @@ trait ProjectRoutes
   }
 
   def addProjectPermission(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao.query
-        .ownedBy(user, projectId)
-        .exists
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[ObjectAccessControlRule]) { acr =>
+    entity(as[ObjectAccessControlRule]) { acr =>
+      authorizeAsync {
+        (ProjectDao.query
+           .ownedBy(user, projectId)
+           .exists,
+         ProjectDao.isValidPermission(acr, user)).tupled.map({authTup => authTup._1 && authTup._2}).transact(xa).unsafeToFuture
+      } {
         complete {
           ProjectDao
             .addPermission(projectId, acr)
