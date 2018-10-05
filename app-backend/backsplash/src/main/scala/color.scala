@@ -7,7 +7,12 @@ import cats.implicits._
 import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
 import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.database._
-import com.azavea.rf.datamodel.{ColorRampMosaic, MosaicDefinition, SceneType, SingleBandOptions}
+import com.azavea.rf.datamodel.{
+  ColorRampMosaic,
+  MosaicDefinition,
+  SceneType,
+  SingleBandOptions
+}
 import doobie.implicits._
 import geotrellis.proj4.{CRS, Proj4Transform, WebMercator}
 import geotrellis.raster.histogram._
@@ -16,7 +21,11 @@ import geotrellis.raster.io.json.HistogramJsonFormats
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.raster.{CellSize, Raster, io => _, _}
 import geotrellis.server.core.cog.CogUtils
-import geotrellis.server.core.cog.CogUtils.{closestTiffOverview, cropGeoTiff, tmsLevels}
+import geotrellis.server.core.cog.CogUtils.{
+  closestTiffOverview,
+  cropGeoTiff,
+  tmsLevels
+}
 import geotrellis.server.core.maml.metadata._
 import geotrellis.server.core.maml.reification._
 import geotrellis.spark.io._
@@ -33,24 +42,24 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object color extends RollbarNotifier {
   def colorSingleBandTile(
-                           tile: Tile,
-                           extent: Extent,
-                           histogram: Histogram[Double],
-                           singleBandOptions: SingleBandOptions.Params): Raster[Tile] = {
+      tile: Tile,
+      extent: Extent,
+      histogram: Histogram[Double],
+      singleBandOptions: SingleBandOptions.Params): Raster[Tile] = {
     logger.debug(s"Applying Colorings")
     val colorScheme = singleBandOptions.colorScheme
     val colorMap = (colorScheme.asArray,
-      colorScheme.asObject,
-      singleBandOptions.extraNoData) match {
+                    colorScheme.asObject,
+                    singleBandOptions.extraNoData) match {
       case (Some(a), None, _) =>
         ColorRampMosaic.colorMapFromVector(a.map(_.noSpaces),
-          singleBandOptions,
-          histogram)
+                                           singleBandOptions,
+                                           histogram)
       case (None, Some(o), Nil) =>
         ColorRampMosaic.colorMapFromMap(o.toMap map {
           case (k, v) => (k, v.noSpaces)
         })
-      case (None, Some(o), masked@(h +: t)) =>
+      case (None, Some(o), masked @ (h +: t)) =>
         ColorRampMosaic.colorMapFromMap(o.toMap map {
           case (k, v) =>
             (k, if (masked.contains(k.toInt)) "#00000000" else v.noSpaces)
@@ -64,6 +73,5 @@ object color extends RollbarNotifier {
     }
     Raster(tile.color(colorMap), extent)
   }
-
 
 }
