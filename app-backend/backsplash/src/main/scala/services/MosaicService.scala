@@ -51,11 +51,12 @@ class MosaicService(
 
   val service: AuthedService[User, IO] =
     AuthedService {
-      case req @ GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(y) / _
-          :? RedBandOptionalQueryParamMatcher(redOverride)
-          :? GreenBandOptionalQueryParamMatcher(greenOverride)
-          :? BlueBandOptionalQueryParamMatcher(blueOverride)
-          :? TagOptionalQueryParamMatcher(tag) as user =>
+      case req @ GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
+            y) / _
+            :? RedBandOptionalQueryParamMatcher(redOverride)
+            :? GreenBandOptionalQueryParamMatcher(greenOverride)
+            :? BlueBandOptionalQueryParamMatcher(blueOverride)
+            :? TagOptionalQueryParamMatcher(tag) as user =>
         val authorizationIO =
           ProjectDao
             .authorized(user, ObjectType.Project, projectId, ActionType.View)

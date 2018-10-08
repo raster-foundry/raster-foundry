@@ -38,6 +38,8 @@ object ServerStream {
         AutoSlash(Authenticators.queryParamAuthMiddleware(mosaicService)),
         "/")
       .mountService(AutoSlash(healthCheckService), "/healthcheck")
-      .mountService(AutoSlash(Authenticators.queryParamAuthMiddleware(analysisService)), "/tools")
+      .mountService(
+        AutoSlash(Authenticators.queryParamAuthMiddleware(analysisService)),
+        "/tools")
       .serve
 }
