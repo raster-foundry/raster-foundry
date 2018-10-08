@@ -16,6 +16,7 @@ import kamon.akka.http.KamonTraceDirectives
 
 import java.util.UUID
 import scala.util.{Success, Failure}
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.Fragments.in
@@ -139,7 +140,7 @@ trait DatasourceRoutes
   def deleteDatasource(datasourceId: UUID): Route = authenticate { user =>
     authorizeAsync {
       DatasourceDao
-        .isDeletable(datasourceId, user, ObjectType.Datasource)
+        .isDeletable(datasourceId, user)
         .transact(xa)
         .unsafeToFuture
     } {
@@ -174,14 +175,20 @@ trait DatasourceRoutes
 
   def replaceDatasourcePermissions(datasourceId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
-        DatasourceDao.query
-          .ownedBy(user, datasourceId)
-          .exists
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[List[ObjectAccessControlRule]]) { acrList =>
+      entity(as[List[ObjectAccessControlRule]]) { acrList =>
+        authorizeAsync {
+          (DatasourceDao.query
+             .ownedBy(user, datasourceId)
+             .exists,
+           acrList traverse { acr =>
+             DatasourceDao.isValidPermission(acr, user)
+           } map { _.foldLeft(true)(_ && _) }).tupled
+            .map({ authTup =>
+              authTup._1 && authTup._2
+            })
+            .transact(xa)
+            .unsafeToFuture
+        } {
           complete {
             DatasourceDao
               .replacePermissions(datasourceId, acrList)
@@ -194,14 +201,18 @@ trait DatasourceRoutes
 
   def addDatasourcePermission(datasourceId: UUID): Route = authenticate {
     user =>
-      authorizeAsync {
-        DatasourceDao.query
-          .ownedBy(user, datasourceId)
-          .exists
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        entity(as[ObjectAccessControlRule]) { acr =>
+      entity(as[ObjectAccessControlRule]) { acr =>
+        authorizeAsync {
+          (DatasourceDao.query
+             .ownedBy(user, datasourceId)
+             .exists,
+           DatasourceDao.isValidPermission(acr, user)).tupled
+            .map({ authTup =>
+              authTup._1 && authTup._2
+            })
+            .transact(xa)
+            .unsafeToFuture
+        } {
           complete {
             DatasourceDao
               .addPermission(datasourceId, acr)

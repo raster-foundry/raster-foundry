@@ -9,6 +9,9 @@
 ### Changed
 
 - Switched to [keepachangelog](https://keepachangelog.com/en/1.0.0/) CHANGELOG format [\#4159](https://github.com/raster-foundry/raster-foundry/pull/4159)
+- Used production-hardened existing color correction for backsplash COGs instead of hand-rolled ad hoc color correction [\#4160](https://github.com/raster-foundry/raster-foundry/pull/4160)
+- Restricted sharing with everyone and platforms to superusers and platform admins [\#4166](https://github.com/raster-foundry/raster-foundry/pull/4166)
+- Added sbt configuration for auto-scalafmt [\#4175](https://github.com/raster-foundry/raster-foundry/pull/4175)
 
 ### Deprecated
 
@@ -16,7 +19,9 @@
 
 ### Fixed
 
+- Removed duplicate emails for repeated failures of the same upload [\#4130](https://github.com/raster-foundry/raster-foundry/pull/4130)
 - Use safer options for large tifs when processing uploads and ingests [\#4131](https://github.com/raster-foundry/raster-foundry/pull/4131)
+- Re-enable datasource deletion and disable it if there is permission attached [\#4140](https://github.com/raster-foundry/raster-foundry/pull/4140), [\#4158](https://github.com/raster-foundry/raster-foundry/pull/4158)
 
 ### Security
 

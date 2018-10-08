@@ -172,14 +172,20 @@ trait ToolRunRoutes
   }
 
   def replaceToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ToolRunDao.query
-        .ownedBy(user, toolRunId)
-        .exists
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[List[ObjectAccessControlRule]]) { acrList =>
+    entity(as[List[ObjectAccessControlRule]]) { acrList =>
+      authorizeAsync {
+        (ToolRunDao.query
+           .ownedBy(user, toolRunId)
+           .exists,
+         acrList traverse { acr =>
+           ToolRunDao.isValidPermission(acr, user)
+         } map { _.foldLeft(true)(_ && _) }).tupled
+          .map({ authTup =>
+            authTup._1 && authTup._2
+          })
+          .transact(xa)
+          .unsafeToFuture
+      } {
         complete {
           ToolRunDao
             .replacePermissions(toolRunId, acrList)
@@ -191,14 +197,18 @@ trait ToolRunRoutes
   }
 
   def addToolRunPermission(toolRunId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ToolRunDao.query
-        .ownedBy(user, toolRunId)
-        .exists
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[ObjectAccessControlRule]) { acr =>
+    entity(as[ObjectAccessControlRule]) { acr =>
+      authorizeAsync {
+        (ToolRunDao.query
+           .ownedBy(user, toolRunId)
+           .exists,
+         ToolRunDao.isValidPermission(acr, user)).tupled
+          .map({ authTup =>
+            authTup._1 && authTup._2
+          })
+          .transact(xa)
+          .unsafeToFuture
+      } {
         complete {
           ToolRunDao
             .addPermission(toolRunId, acr)

@@ -7,6 +7,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import better.files.{File => ScalaFile}
 import cats.effect.IO
+import cats.implicits._
 import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
 import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.common._
@@ -251,10 +252,17 @@ trait ShapeRoutes
   }
 
   def replaceShapePermissions(shapeId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
-    } {
-      entity(as[List[ObjectAccessControlRule]]) { acrList =>
+    entity(as[List[ObjectAccessControlRule]]) { acrList =>
+      authorizeAsync {
+        (ShapeDao.query.ownedBy(user, shapeId).exists, acrList traverse { acr =>
+          ShapeDao.isValidPermission(acr, user)
+        } map { _.foldLeft(true)(_ && _) }).tupled
+          .map({ authTup =>
+            authTup._1 && authTup._2
+          })
+          .transact(xa)
+          .unsafeToFuture
+      } {
         complete {
           ShapeDao
             .replacePermissions(shapeId, acrList)
@@ -266,10 +274,16 @@ trait ShapeRoutes
   }
 
   def addShapePermission(shapeId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
-    } {
-      entity(as[ObjectAccessControlRule]) { acr =>
+    entity(as[ObjectAccessControlRule]) { acr =>
+      authorizeAsync {
+        (ShapeDao.query.ownedBy(user, shapeId).exists,
+         ShapeDao.isValidPermission(acr, user)).tupled
+          .map({ authTup =>
+            authTup._1 && authTup._2
+          })
+          .transact(xa)
+          .unsafeToFuture
+      } {
         complete {
           ShapeDao
             .addPermission(shapeId, acr)

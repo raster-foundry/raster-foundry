@@ -14,7 +14,7 @@ from ..utils.io import get_session
 
 logger = logging.getLogger(__name__)
 HOST = os.getenv('RF_HOST')
-
+JOB_ATTEMPT = int(os.getenv('AWS_BATCH_JOB_ATTEMPT', -1))
 
 @click.command(name='process-upload')
 @click.argument('upload_id')
@@ -87,5 +87,8 @@ def process_upload(upload_id):
     except:
         logger.error('Failed to process upload (%s) for user %s with files %s',
                      upload.id, upload.owner, upload.files)
-        upload.update_upload_status('FAILED')
+        if JOB_ATTEMPT >= 3:
+            upload.update_upload_status('FAILED')
+        else:
+            upload.update_upload_status('QUEUED')
         raise

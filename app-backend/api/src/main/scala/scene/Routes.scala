@@ -306,10 +306,17 @@ trait SceneRoutes
   }
 
   def replaceScenePermissions(sceneId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
-    } {
-      entity(as[List[ObjectAccessControlRule]]) { acrList =>
+    entity(as[List[ObjectAccessControlRule]]) { acrList =>
+      authorizeAsync {
+        (SceneDao.query.ownedBy(user, sceneId).exists, acrList traverse { acr =>
+          SceneDao.isValidPermission(acr, user)
+        } map { _.foldLeft(true)(_ && _) }).tupled
+          .map({ authTup =>
+            authTup._1 && authTup._2
+          })
+          .transact(xa)
+          .unsafeToFuture
+      } {
         complete {
           SceneDao
             .replacePermissions(sceneId, acrList)
@@ -321,10 +328,14 @@ trait SceneRoutes
   }
 
   def addScenePermission(sceneId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
-    } {
-      entity(as[ObjectAccessControlRule]) { acr =>
+    entity(as[ObjectAccessControlRule]) { acr =>
+      authorizeAsync {
+        (SceneDao.query.ownedBy(user, sceneId).exists,
+         SceneDao.isValidPermission(acr, user)).tupled
+          .map(authTup => authTup._1 && authTup._2)
+          .transact(xa)
+          .unsafeToFuture
+      } {
         complete {
           SceneDao
             .addPermission(sceneId, acr)

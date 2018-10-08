@@ -117,7 +117,7 @@ object UploadDao extends Dao[Upload] {
               nAffected.pure[ConnectionIO]
           }
           case _ => {
-            logger.info(
+            logger.debug(
               "No need to send notifications, status transition isn't something users care about")
             nAffected.pure[ConnectionIO]
           }
