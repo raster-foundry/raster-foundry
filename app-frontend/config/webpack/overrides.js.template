@@ -16,6 +16,7 @@ const HERE_APP_CODE = '5pn07ENomTHOap0u7nQSFA';
 // leave this unless you are setting your own
 const INTERCOM_APP_ID = 'disabled';
 const FEED_SOURCE = 'disabled';
+const GOOGLE_TAG_ID = 'disabled';
 
 const basemaps = JSON.stringify({
     layers: {
@@ -46,6 +47,7 @@ module.exports = function (_path) {
                 filename: 'index.html',
                 template: path.join(_path, 'src', 'tpl-index.html'),
                 heapLoad: DEVELOPMENT ? '2743344218' : '3505855839',
+                gtagId: GOOGLE_TAG_ID,
                 development: DEVELOPMENT,
                 APP_NAME: 'Raster Foundry'
             }),
