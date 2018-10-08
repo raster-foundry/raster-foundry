@@ -13,9 +13,9 @@ object Shapefile {
       prj: String): Either[List[Int], List[T2]] =
     accumulateFrom match {
       case Nil =>
-        errorIndices.length match {
-          case 0 => Right(accum)
-          case _ => Left(errorIndices)
+        errorIndices match {
+          case Nil => Right(accum)
+          case _   => Left(errorIndices)
         }
       case h +: t =>
         f(h, props, userId, prj) match {

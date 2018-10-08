@@ -10,6 +10,7 @@ git.gitTagToVersionNumber in ThisBuild := { tag: String =>
 }
 
 lazy val commonSettings = Seq(
+  scalafmtOnCompile := true,
   // Add the default sonatype repository setting
   publishTo := sonatypePublishTo.value,
   organization := "com.rasterfoundry",
@@ -345,6 +346,7 @@ lazy val tile = Project("tile", file("tile"))
              geotrellis)
   .dependsOn(tool)
   .enablePlugins(GatlingPlugin)
+  .settings(fork in run := true)
   .settings(commonSettings: _*)
   .settings({
     libraryDependencies ++= loggingDependencies ++ testDependencies ++
