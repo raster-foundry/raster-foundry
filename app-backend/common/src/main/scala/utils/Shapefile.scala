@@ -13,8 +13,8 @@ object Shapefile {
       prj: String): Either[List[Int], List[T2]] =
     accumulateFrom match {
       case Nil =>
-        errorIndices.length match {
-          case 0 => Right(accum)
+        errorIndices match {
+          case Nil => Right(accum)
           case _ => Left(errorIndices)
         }
       case h +: t =>

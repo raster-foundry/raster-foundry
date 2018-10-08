@@ -67,8 +67,8 @@ trait ObjectPermissions[Model] {
   def updatePermissionsF(id: UUID,
                          acrList: List[ObjectAccessControlRule],
                          replace: Boolean = false): Fragment = {
-    val newAcrs: String = acrList.length match {
-      case 0 => "'{}'::text[]"
+    val newAcrs: String = acrList match {
+      case Nil => "'{}'::text[]"
       case _ =>
         val acrTextArray: String =
           s"ARRAY[${acrList.map("'" ++ _.toObjAcrString ++ "'").mkString(",")}]"
