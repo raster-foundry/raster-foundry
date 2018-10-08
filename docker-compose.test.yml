@@ -84,5 +84,6 @@ services:
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
       - $HOME/.gnupg:/root/.gnupg
+      - $HOME/.coursier-cache:/opt/raster-foundry/app-backend/.coursier-cache
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt

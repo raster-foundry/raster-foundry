@@ -12,6 +12,7 @@
 - Used production-hardened existing color correction for backsplash COGs instead of hand-rolled ad hoc color correction [\#4160](https://github.com/raster-foundry/raster-foundry/pull/4160)
 - Restricted sharing with everyone and platforms to superusers and platform admins [\#4166](https://github.com/raster-foundry/raster-foundry/pull/4166)
 - Added sbt configuration for auto-scalafmt [\#4175](https://github.com/raster-foundry/raster-foundry/pull/4175)
+- Added a global cache location for sharing artifacts across CI builds [\#4181](https://github.com/raster-foundry/raster-foundry/pull/4175)
 
 ### Deprecated
 
