@@ -51,10 +51,12 @@ object ColorCorrect extends LazyLogging {
         tile: MultibandTile,
         hist: Seq[Histogram[Double]]
     ): (MultibandTile, Array[Histogram[Double]]) = {
-      logger.debug(s"RedBand: ${redBand}, GreenBand: ${greenBand}, BlueBand: ${blueBand}")
-      logger.debug(s"RedHist: ${hist(redBand).statistics()}\n GreenHist: ${hist(greenBand).statistics()}\n BlueHist: ${hist(blueBand).statistics()}")
+      logger.debug(
+        s"RedBand: ${redBand}, GreenBand: ${greenBand}, BlueBand: ${blueBand}")
+      logger.debug(s"RedHist: ${hist(redBand).statistics()}\n GreenHist: ${hist(
+        greenBand).statistics()}\n BlueHist: ${hist(blueBand).statistics()}")
       (tile.subsetBands(redBand, greenBand, blueBand),
-        Array(hist(redBand), hist(greenBand), hist(blueBand)))
+       Array(hist(redBand), hist(greenBand), hist(blueBand)))
     }
 
     def colorCorrect(tile: MultibandTile,
@@ -181,7 +183,9 @@ object ColorCorrect extends LazyLogging {
       )
     }
 
-    logger.debug(s"Red (Clip Min: ${rclipMin}, Max: ${rclipMax}) (New Min: ${rnewMin}, ${rnewMax})")
+    logger.debug(
+      s"Red (Clip Min: ${rclipMin}, Max: ${rclipMax}) (New Min: ${rnewMin}, ${rnewMax})")
+
     /** In this case for some reason with this func wrap it works faster ¯\_(ツ)_/¯ (it was micro benchmarked) */
     lazyWrapper {
       cfor(0)(_ < rgbTile.cols, _ + 1) { col =>
