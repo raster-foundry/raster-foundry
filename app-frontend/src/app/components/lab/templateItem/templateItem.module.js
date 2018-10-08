@@ -1,4 +1,4 @@
-/* global BUILDCONFIG, _ */
+/* global BUILDCONFIG */
 import angular from 'angular';
 import templateItemTpl from './templateItem.html';
 const TemplateItemComponent = {
