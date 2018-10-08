@@ -10,6 +10,7 @@ git.gitTagToVersionNumber in ThisBuild := { tag: String =>
 }
 
 lazy val commonSettings = Seq(
+  scalafmtOnCompile := true,
   // Add the default sonatype repository setting
   publishTo := sonatypePublishTo.value,
   organization := "com.rasterfoundry",
