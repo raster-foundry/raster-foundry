@@ -1,7 +1,6 @@
 package com.azavea.rf.tool.ast
 
 import com.azavea.maml.eval.tile.LazyTile
-import io.circe.generic.JsonCodec
 import cats.implicits._
 import geotrellis.vector.MultiPolygon
 import geotrellis.raster._
