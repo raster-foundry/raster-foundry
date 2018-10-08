@@ -46,14 +46,16 @@ class MosaicService(
       extends OptionalQueryParamDecoderMatcher[Int]("greenBand")
   object BlueBandOptionalQueryParamMatcher
       extends OptionalQueryParamDecoderMatcher[Int]("blueBand")
+  object TagOptionalQueryParamMatcher
+      extends OptionalQueryParamDecoderMatcher[String]("tag")
 
   val service: AuthedService[User, IO] =
     AuthedService {
-      case req @ GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
-            y)
-            :? RedBandOptionalQueryParamMatcher(redOverride)
-            :? GreenBandOptionalQueryParamMatcher(greenOverride)
-            :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
+      case req @ GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(y) / _
+          :? RedBandOptionalQueryParamMatcher(redOverride)
+          :? GreenBandOptionalQueryParamMatcher(greenOverride)
+          :? BlueBandOptionalQueryParamMatcher(blueOverride)
+          :? TagOptionalQueryParamMatcher(tag) as user =>
         val authorizationIO =
           ProjectDao
             .authorized(user, ObjectType.Project, projectId, ActionType.View)
@@ -93,14 +95,12 @@ class MosaicService(
           authed <- authorizationIO
           project <- ProjectDao.unsafeGetProjectById(projectId).transact(xa)
           result <- getTileResult(project)
-        } yield {
-          result match {
+          resp <- result match {
             case Valid(tile) =>
-              ??? // Response[IO].pure(tile.renderPng.bytes)
+              Ok(tile.renderPng.bytes, `Content-Type`(MediaType.`image/png`))
             case Invalid(e) =>
-              ??? // Response[IO].pure(e.toString)
+              BadRequest(e.toString)
           }
-        }
-      case req @ _ => Ok(req)
+        } yield resp
     }
 }
