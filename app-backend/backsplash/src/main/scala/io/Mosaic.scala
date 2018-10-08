@@ -26,14 +26,15 @@ object Mosaic extends RollbarNotifier {
 
   implicit val timer: Timer[IO] = IO.timer(global)
 
-  def getMosaicDefinitions(self: ProjectNode,
-                           extent: Extent): IO[Seq[MosaicDefinition]] = {
+  def getMosaicDefinitions(
+      self: ProjectNode,
+      extent: Option[Extent] = None): IO[Seq[MosaicDefinition]] = {
     self.getBandOverrides match {
       case Some((red, green, blue)) =>
         SceneToProjectDao
           .getMosaicDefinition(
             self.projectId,
-            Some(Projected(extent, 3857)),
+            extent.map(Projected(_, 3857)),
             Some(red),
             Some(green),
             Some(blue)
@@ -43,7 +44,7 @@ object Mosaic extends RollbarNotifier {
         SceneToProjectDao
           .getMosaicDefinition(
             self.projectId,
-            Some(Projected(extent, 3857))
+            extent.map(Projected(_, 3857))
           )
           .transact(xa)
     }

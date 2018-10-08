@@ -27,7 +27,7 @@ object Version {
   val gatling = "2.2.4"
   val geotools = "17.1"
   val geotrellis = "2.1.0"
-  val geotrellisServer = "0.0.8"
+  val geotrellisServer = "0.0.9"
   val hadoop = "2.8.4"
   val hikariCP = "3.2.0"
   val http4s = "0.20.0-M1"

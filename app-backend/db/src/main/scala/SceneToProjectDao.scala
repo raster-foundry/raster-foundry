@@ -127,7 +127,9 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
           .to[List]
       }
     } yield {
-      logger.debug(s"Found ${stps.length} scenes in projects")
+      logger.debug(
+        s"Found ${stps.length} scenes in project with id ${projectId}")
+      // logger.debug(s"filtered polygon: ${polygon.map(p => p.to_json())}")
       val md = (redBand, greenBand, blueBand).tupled match {
         case Some((r, g, b)) =>
           MosaicDefinition.fromScenesToProjects(stps, r, g, b)

@@ -9,7 +9,7 @@ import cats.data._
 import cats.implicits._
 
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.backsplash.nodes.ProjectNode
+import com.rasterfoundry.backsplash.nodes.LabNode
 import com.rasterfoundry.datamodel.{BandDataType, SingleBandOptions}
 import com.rasterfoundry.tool.ast.MapAlgebraAST.{CogRaster, SceneRaster}
 import io.circe.Json
@@ -18,9 +18,9 @@ trait BacksplashMamlAdapter {
 
   def rfmlAst: MapAlgebraAST
 
-  def asMaml: (Expression, Option[NodeMetadata], Map[String, ProjectNode]) = {
+  def asMaml: (Expression, Option[NodeMetadata], Map[String, LabNode]) = {
 
-    def evalParams(ast: MapAlgebraAST): Map[String, ProjectNode] = {
+    def evalParams(ast: MapAlgebraAST): Map[String, LabNode] = {
       val args = ast.args.map(evalParams)
 
       ast match {
@@ -29,23 +29,15 @@ trait BacksplashMamlAdapter {
             throw SingleBandOptionsException(
               "Band must be provided to evaluate AST"))
           // This is silly - mostly making up single band options here when all we really need is the band number
-          val singleBandOptions = SingleBandOptions.Params(
-            bandActual,
-            BandDataType.Diverging,
-            0,
-            Json.Null,
-            "Up")
-          Map[String, ProjectNode](
-            s"${projId.toString}_${bandActual}" -> ProjectNode(
+          Map[String, LabNode](
+            s"${projId.toString}_${bandActual}" -> LabNode(
               projId,
-              None,
-              None,
-              None,
-              true,
-              Some(singleBandOptions)))
+              bandActual
+            )
+          )
         }
         case _ =>
-          args.foldLeft(Map.empty[String, ProjectNode])((a, b) => a ++ b)
+          args.foldLeft(Map.empty[String, LabNode])((a, b) => a ++ b)
       }
     }
 
