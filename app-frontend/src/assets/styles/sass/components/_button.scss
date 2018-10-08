@@ -362,6 +362,12 @@
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
+
+  .btn-danger-disabled {
+    background-color: rgba($danger, 0.5);
+    border-color: rgba(darken($danger, 5%), 0.5);
+    cursor: not-allowed;
+  }
 }
 
 .btn-dropdown-transitional {

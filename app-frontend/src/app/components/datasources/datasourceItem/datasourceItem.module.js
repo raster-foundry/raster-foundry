@@ -38,7 +38,7 @@ class DatasourceItemController {
     checkSharing() {
         if (this.isOwner) {
             this.datasourceService.getPermissions(this.datasource.id).then(permissions => {
-                this.isShared = !!permissions.find(permission => permission.isActive);
+                this.isShared = permissions.length;
             });
         }
     }
@@ -49,18 +49,20 @@ class DatasourceItemController {
     }
 
     onOpenDatasourceDeleteModal() {
-        this.modalService.open({
-            component: 'rfDatasourceDeleteModal',
-            resolve: {
-                datasource: () => this.datasource
-            }
-        }).result.then(() => {
-            this.datasourceService.deleteDatasource(this.datasource.id).then(res => {
-                this.$state.reload();
-            }, (err) => {
-                this.$log.debug('error deleting datasource', err);
+        if (!this.isShared) {
+            this.modalService.open({
+                component: 'rfDatasourceDeleteModal',
+                resolve: {
+                    datasource: () => this.datasource
+                }
+            }).result.then(() => {
+                this.datasourceService.deleteDatasource(this.datasource.id).then(res => {
+                    this.$state.reload();
+                }, (err) => {
+                    this.$log.debug('error deleting datasource', err);
+                });
             });
-        });
+        }
     }
 }
 

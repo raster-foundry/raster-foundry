@@ -30,10 +30,17 @@
         type="button"
         class="btn btn-small btn-danger"
         ng-click="$ctrl.onOpenDatasourceDeleteModal()"
-        ng-if="$ctrl.isOwner && !$ctrl.isShared"
-        uib-tooltip="After today restriction">
+        ng-if="$ctrl.isOwner"
+        ng-class="{'btn-danger-disabled': $ctrl.isShared}">
         <span class="sr-only">Delete</span>
-        <i class="icon-trash"></i>
+        <i class="icon-trash" ng-if="!$ctrl.isShared"></i>
+        <i class="icon-trash"
+           ng-if="$ctrl.isShared"
+           tooltips
+           tooltip-template="Datasource cannot be deleted at this time because it is being shared."
+           tooltop-size="small"
+           tooltip-class="rf-tooltip"
+           tooltip-side="right"></i>
       </button>
     </div>
   </div>

@@ -27,20 +27,7 @@ class DatasourceDeleteModalController {
     }
 
     $onInit() {
-        this.checkPermissions();
-    }
-
-    checkPermissions() {
-        this.checkInProgress = true;
-        this.datasourceService.getPermissions(this.datasource.id).then(permissions => {
-            if (permissions.length === 0) {
-                this.checkUploadStatus();
-            } else {
-                this.checkInProgress = false;
-                this.allowDelete = false;
-                this.displayPermissionMsg(permissions.length);
-            }
-        });
+        this.checkUploadStatus();
     }
 
     checkUploadStatus() {
@@ -93,14 +80,6 @@ class DatasourceDeleteModalController {
             + 'Scenes using this datasource will no longer be accessible. '
             + 'This action is not reversible. '
             + 'Are you sure you wish to continue?</p>'
-            + '</div>';
-    }
-
-    displayPermissionMsg(acrCount) {
-        const text = acrCount === 1 ? 'permission is' : 'permissions are';
-        this.deleteMsg = '<div class="color-danger">'
-            + `<p>${acrCount} ${text} granted on this datasource.</p>`
-            + '<p>Datasource cannot be deleted at this time.</p>'
             + '</div>';
     }
 }
