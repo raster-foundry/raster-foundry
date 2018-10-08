@@ -34,14 +34,10 @@ class TemplateItemController {
     }
 
     setTemplateOwnerDisplay(user) {
-    // user.id is a desperate last resort
-        this.templateOwner = _.chain([
-            user.personalInfo.firstName,
-            user.personalInfo.lastName,
-            user.name,
-            user.email,
-            user.id
-        ]).compact().head().value();
+        this.templateOwner = user.personalInfo.firstName.trim() &&
+            user.personalInfo.lastName.trim() ?
+            `${user.personalInfo.firstName.trim()} ${user.personalInfo.lastName.trim()}` :
+            user.name || 'Anonymous';
     }
 }
 
