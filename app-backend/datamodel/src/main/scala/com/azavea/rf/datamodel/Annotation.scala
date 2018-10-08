@@ -203,7 +203,7 @@ object Annotation extends LazyLogging {
         properties.owner,
         properties.label match {
           case "" => "Unlabeled"
-          case _ => properties.label
+          case _  => properties.label
         },
         properties.description,
         properties.machineGenerated,
@@ -245,7 +245,7 @@ object Annotation extends LazyLogging {
         ownerId, // owner
         label match {
           case "" => "Unlabeled"
-          case _ => label
+          case _  => label
         },
         description,
         machineGenerated,
@@ -338,7 +338,7 @@ object AnnotationShapefileService extends LazyLogging {
           ("id", annotation.id),
           ("label", annotation.label match {
             case "" => "Unlabeled"
-            case _ => annotation.label
+            case _  => annotation.label
           }),
           ("desc", annotation.description.getOrElse("")),
           ("machinegen", annotation.machineGenerated.getOrElse(false)),

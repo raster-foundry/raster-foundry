@@ -15,7 +15,7 @@ object Shapefile {
       case Nil =>
         errorIndices match {
           case Nil => Right(accum)
-          case _ => Left(errorIndices)
+          case _   => Left(errorIndices)
         }
       case h +: t =>
         f(h, props, userId, prj) match {
