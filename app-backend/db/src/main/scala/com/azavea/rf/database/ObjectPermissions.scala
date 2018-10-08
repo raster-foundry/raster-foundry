@@ -38,19 +38,20 @@ trait ObjectPermissions[Model] {
         throw new Exception(s"${tableName} not yet supported")
     }).query.filter(id).exists
 
-  def isValidPermission(acr: ObjectAccessControlRule): ConnectionIO[Boolean] =
-    (acr.subjectType, acr.subjectId) match {
-      case (SubjectType.All, _) => true.pure[ConnectionIO]
-      case (SubjectType.Platform, Some(subjectId)) =>
-        PlatformDao.query.filter(UUID.fromString(subjectId)).exists
-      case (SubjectType.Organization, Some(subjectId)) =>
+  def isValidPermission(acr: ObjectAccessControlRule,
+                        user: User): ConnectionIO[Boolean] =
+    (acr.subjectType, acr.subjectId, user) match {
+      case (SubjectType.All, _, u) => u.isSuperuser.pure[ConnectionIO]
+      case (SubjectType.Platform, Some(subjectId), user) =>
+        PlatformDao.userIsAdmin(user, UUID.fromString(subjectId))
+      case (SubjectType.Organization, Some(subjectId), _) =>
         OrganizationDao.query.filter(UUID.fromString(subjectId)).exists
-      case (SubjectType.Team, Some(subjectId)) =>
+      case (SubjectType.Team, Some(subjectId), _) =>
         TeamDao.query.filter(UUID.fromString(subjectId)).exists
-      case (SubjectType.User, Some(subjectId)) =>
+      case (SubjectType.User, Some(subjectId), _) =>
         UserDao.filterById(subjectId).exists
       case _ =>
-        throw new Exception("Subject id required and but not provided in")
+        false.pure[ConnectionIO]
     }
 
   def getPermissionsF(id: UUID): Fragment =
@@ -66,8 +67,8 @@ trait ObjectPermissions[Model] {
   def updatePermissionsF(id: UUID,
                          acrList: List[ObjectAccessControlRule],
                          replace: Boolean = false): Fragment = {
-    val newAcrs: String = acrList.length match {
-      case 0 => "'{}'::text[]"
+    val newAcrs: String = acrList match {
+      case Nil => "'{}'::text[]"
       case _ =>
         val acrTextArray: String =
           s"ARRAY[${acrList.map("'" ++ _.toObjAcrString ++ "'").mkString(",")}]"
@@ -104,56 +105,33 @@ trait ObjectPermissions[Model] {
 
   def addPermission(id: UUID, acr: ObjectAccessControlRule)
     : ConnectionIO[List[Option[ObjectAccessControlRule]]] =
-    isValidPermission(acr) flatMap { isValidPermission =>
-      isValidPermission match {
-        case false => throw new Exception(s"${acr.toObjAcrString} is invalid!")
+    for {
+      permissions <- getPermissions(id)
+      permExists = permissions.contains(Some(acr))
+      addPermission <- permExists match {
         case true =>
-          for {
-            permissions <- getPermissions(id)
-            permExists = permissions.contains(Some(acr))
-            addPermission <- permExists match {
-              case true =>
-                throw new Exception(
-                  s"${acr.toObjAcrString} exists for ${tableName} ${id}")
-              case false =>
-                appendPermissionF(id, acr).update
-                  .withUniqueGeneratedKeys[List[String]]("acrs")
-                  .map(acrStringsToList(_))
-            }
-          } yield { addPermission }
+          throw new Exception(
+            s"${acr.toObjAcrString} exists for ${tableName} ${id}")
+        case false =>
+          appendPermissionF(id, acr).update
+            .withUniqueGeneratedKeys[List[String]]("acrs")
+            .map(acrStringsToList(_))
       }
-    }
+    } yield { addPermission }
 
   def addPermissionsMany(id: UUID,
                          acrList: List[ObjectAccessControlRule],
                          replace: Boolean = false)
     : ConnectionIO[List[Option[ObjectAccessControlRule]]] = {
-    val isAcrListPermittedIO: ConnectionIO[List[Boolean]] =
-      acrList.traverse(isValidPermission(_))
     for {
-      isAcrListPermitted <- isAcrListPermittedIO
       permissions <- getPermissions(id)
-      acrListFiltered: List[ObjectAccessControlRule] = isAcrListPermitted.zipWithIndex
-        .foldLeft(List[ObjectAccessControlRule]()) { (acc, perm) =>
-          {
-            val (permitted, idx): (Boolean, Int) = perm
-            (replace, permitted) match {
-              case (true, true) => acrList(perm._2) :: acc
-              case (false, true)
-                  if !permissions.contains(Some(acrList(perm._2))) =>
-                acrList(perm._2) :: acc
-              case _ =>
-                acc
-            }
-          }
-        }
-      addPermissionsMany <- acrListFiltered.length match {
-        case 0 if !replace =>
+      addPermissionsMany <- acrList match {
+        case Nil if !replace =>
           throw new Exception(s"All permissions exist for ${tableName} ${id}")
-        case 0 if replace =>
+        case Nil if replace =>
           throw new Exception("List of permissions do not have valid subjects")
         case _ =>
-          updatePermissionsF(id, acrListFiltered, replace).update
+          updatePermissionsF(id, acrList, replace).update
             .withUniqueGeneratedKeys[List[String]]("acrs")
             .map(acrStringsToList(_))
       }

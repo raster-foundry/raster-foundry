@@ -28,8 +28,8 @@ object ObjectAccessControlRule {
   def fromObjAcrString(objAcrString: String): Option[ObjectAccessControlRule] =
     objAcrString.split(";") match {
       case Array(subjectType, subjectId, actionType) =>
-        (subjectType, subjectId.length) match {
-          case ("ALL", 0) =>
+        (subjectType, subjectId) match {
+          case ("ALL", "") =>
             Some(
               ObjectAccessControlRule(SubjectType.All,
                                       None,
@@ -37,7 +37,7 @@ object ObjectAccessControlRule {
           case ("ALL", _) =>
             throw new Exception(
               s"Invalid subjectId for subjectType All: ${subjectId}")
-          case (_, 0) =>
+          case (_, "") =>
             throw new Exception(
               s"No subject Id provided for subject type: ${subjectType}")
           case (_, _) =>
