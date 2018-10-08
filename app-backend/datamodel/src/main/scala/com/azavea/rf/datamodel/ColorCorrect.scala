@@ -5,6 +5,7 @@ import io.circe.generic.JsonCodec
 import geotrellis.raster._
 import geotrellis.raster.equalization.HistogramEqualization
 import geotrellis.raster.histogram.Histogram
+import geotrellis.util.LazyLogging
 import org.apache.commons.math3.util.FastMath
 import spire.syntax.cfor._
 
@@ -12,7 +13,7 @@ import spire.syntax.cfor._
   * Usage of Approximations.{pow | exp} functions can allow to speed up this function on 10 - 15ms.
   * We can consider these functions usages in case of real performance issues caused by a long color correction.
   */
-object ColorCorrect {
+object ColorCorrect extends LazyLogging {
   import functions.SaturationAdjust._
   import functions.SigmoidalContrast._
 
@@ -49,11 +50,12 @@ object ColorCorrect {
     def reorderBands(
         tile: MultibandTile,
         hist: Seq[Histogram[Double]]
-    ): (MultibandTile, Array[Histogram[Double]]) =
-      (
-        tile.subsetBands(redBand, greenBand, blueBand),
-        Array(hist(redBand), hist(greenBand), hist(blueBand))
-      )
+    ): (MultibandTile, Array[Histogram[Double]]) = {
+      logger.debug(s"RedBand: ${redBand}, GreenBand: ${greenBand}, BlueBand: ${blueBand}")
+      logger.debug(s"RedHist: ${hist(redBand).statistics()}\n GreenHist: ${hist(greenBand).statistics()}\n BlueHist: ${hist(blueBand).statistics()}")
+      (tile.subsetBands(redBand, greenBand, blueBand),
+        Array(hist(redBand), hist(greenBand), hist(blueBand)))
+    }
 
     def colorCorrect(tile: MultibandTile,
                      hist: Seq[Histogram[Double]]): MultibandTile = {
@@ -179,6 +181,7 @@ object ColorCorrect {
       )
     }
 
+    logger.debug(s"Red (Clip Min: ${rclipMin}, Max: ${rclipMax}) (New Min: ${rnewMin}, ${rnewMax})")
     /** In this case for some reason with this func wrap it works faster ¯\_(ツ)_/¯ (it was micro benchmarked) */
     lazyWrapper {
       cfor(0)(_ < rgbTile.cols, _ + 1) { col =>
@@ -238,6 +241,7 @@ object ColorCorrect {
     var _rgbHist = rgbHist
     val gammas = params.getGamma
     if (params.equalize.enabled) {
+      logger.debug(s"Normalizing Histograms")
       _rgbTile = HistogramEqualization(rgbTile, rgbHist)
       _rgbHist = _rgbTile.histogramDouble()
     }
@@ -250,11 +254,10 @@ object ColorCorrect {
         val hst = _rgbHist(index)
         val imin = hst.minValue().map(_.toInt).getOrElse(0)
         val imax = hst.maxValue().map(_.toInt).getOrElse(255)
+        logger.debug(s"Histogram Min/Max: ${imin}/${imax}")
         iMaxMin(index) = (imin, imax)
-        isCorrected &&= {
-          if (range.contains(hst.minValue().map(_.toInt).getOrElse(0))) true
-          else if (range.contains(hst.maxValue().map(_.toInt).getOrElse(255)))
-            true
+        isCorrected = {
+          if (range.contains(imin) && range.contains(imax)) true
           else false
         }
       }
@@ -288,6 +291,8 @@ object ColorCorrect {
       )
     )
 
+    logger.debug(s"ColorCorrectArgs: ${colorCorrectArgs}")
+    logger.debug(s"Layer Normalize Args: ${layerNormalizeArgs}")
     complexColorCorrect(_rgbTile, params.saturation)(
       layerNormalizeArgs,
       gammas

@@ -346,6 +346,7 @@ lazy val tile = Project("tile", file("tile"))
              geotrellis)
   .dependsOn(tool)
   .enablePlugins(GatlingPlugin)
+  .settings(fork in run := true)
   .settings(commonSettings: _*)
   .settings({
     libraryDependencies ++= loggingDependencies ++ testDependencies ++
