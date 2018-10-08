@@ -142,11 +142,8 @@ trait ObjectPermissions[Model] {
     : ConnectionIO[List[Option[ObjectAccessControlRule]]] =
     addPermissionsMany(id, acrList, true)
 
-  def deletePermissions(
-      id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
-    updatePermissionsF(id, List[ObjectAccessControlRule]()).update
-      .withUniqueGeneratedKeys[List[String]]("acrs")
-      .map(acrStringsToList(_))
+  def deletePermissions(id: UUID): ConnectionIO[Int] =
+    updatePermissionsF(id, List[ObjectAccessControlRule]()).update.run
 
   def listUserActions(user: User, id: UUID): ConnectionIO[List[String]] =
     for {
