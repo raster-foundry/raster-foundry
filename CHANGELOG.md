@@ -3,6 +3,7 @@
 ## Unreleased(https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Disable blog feed and intercom initialization using webpack override file [\#4162](https://github.com/raster-foundry/raster-foundry/pull/4162)
 
 ### Changed
 
