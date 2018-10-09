@@ -363,10 +363,13 @@
     border-bottom-left-radius: 0;
   }
 
-  .btn-danger-disabled {
-    background-color: rgba($danger, 0.5);
-    border-color: rgba(darken($danger, 5%), 0.5);
-    cursor: not-allowed;
+  .btn-group-danger-delete {
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+  }
+
+  .btn-group-danger-delete-disabled {
+    z-index: -1;
   }
 }
 

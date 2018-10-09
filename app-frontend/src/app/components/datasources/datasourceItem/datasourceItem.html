@@ -26,22 +26,23 @@
          <span class="sr-only">View</span>
          <i class="icon-eye"></i>
       </a>
-      <button
-        type="button"
-        class="btn btn-small btn-danger"
-        ng-click="$ctrl.onOpenDatasourceDeleteModal()"
-        ng-if="$ctrl.isOwner"
-        ng-class="{'btn-danger-disabled': $ctrl.isShared}">
-        <span class="sr-only">Delete</span>
-        <i class="icon-trash" ng-if="!$ctrl.isShared"></i>
-        <i class="icon-trash"
-           ng-if="$ctrl.isShared"
-           tooltips
+      <div tooltips
            tooltip-template="Datasource cannot be deleted at this time because it is being shared."
            tooltop-size="small"
            tooltip-class="rf-tooltip"
-           tooltip-side="right"></i>
-      </button>
+           tooltip-side="right"
+           tooltip-hidden="{{!$ctrl.isShared}}"
+           ng-class="{'btn-group-tooltip-disabled': $ctrl.isShared}">
+        <button type="button"
+                class="btn btn-small btn-danger btn-group-danger-delete"
+                ng-class="{'btn-group-danger-delete-disabled': $ctrl.isShared}"
+                ng-click="$ctrl.onOpenDatasourceDeleteModal()"
+                ng-if="$ctrl.isOwner"
+                ng-disabled="$ctrl.isShared">
+         <span class="sr-only">Delete</span>
+         <i class="icon-trash"></i>
+        </button>
+      </div>
     </div>
   </div>
 </div>

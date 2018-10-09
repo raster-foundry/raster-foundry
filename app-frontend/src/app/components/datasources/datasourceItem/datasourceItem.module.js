@@ -49,20 +49,18 @@ class DatasourceItemController {
     }
 
     onOpenDatasourceDeleteModal() {
-        if (!this.isShared) {
-            this.modalService.open({
-                component: 'rfDatasourceDeleteModal',
-                resolve: {
-                    datasource: () => this.datasource
-                }
-            }).result.then(() => {
-                this.datasourceService.deleteDatasource(this.datasource.id).then(res => {
-                    this.$state.reload();
-                }, (err) => {
-                    this.$log.debug('error deleting datasource', err);
-                });
+        this.modalService.open({
+            component: 'rfDatasourceDeleteModal',
+            resolve: {
+                datasource: () => this.datasource
+            }
+        }).result.then(() => {
+            this.datasourceService.deleteDatasource(this.datasource.id).then(res => {
+                this.$state.reload();
+            }, (err) => {
+                this.$log.debug('error deleting datasource', err);
             });
-        }
+        });
     }
 }
 
