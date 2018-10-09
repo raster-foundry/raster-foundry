@@ -1,7 +1,7 @@
 <div class="panel-body">
   <ng-container ng-if="!$ctrl.slim">
     <rf-status-tag ng-if="$ctrl.status && $ctrl.status != 'CURRENT' " entity-type="project" status="$ctrl.status" class="project-status"></rf-status-tag>
-    <a href ui-sref="projects.edit.scenes({projectid: $ctrl.project.id})" class="no-hover">
+    <a ui-sref="projects.edit.scenes({projectid: $ctrl.project.id})" class="no-hover">
       <img class="avatar tiny" ng-attr-src="{{ $ctrl.project.owner.profileImageUri }}" ng-if="$ctrl.project.owner.profileImageUri"/>
       <h4 class="project-title" data-title="{{$ctrl.project.name}}">{{$ctrl.project.name}}</h4>
     </a>

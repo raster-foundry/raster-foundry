@@ -1,9 +1,7 @@
 <div class="navbar secondary-navbar">
   <div class="navbar-section">
     <nav>
-    <a href
-       class=""
-       ui-sref="projects.edit.scenes"
+    <a ui-sref="projects.edit.scenes"
        ng-class="{
               active: ('projects.edit.scenes' | includedByState) ||
                       ('projects.edit.browse' | includedByState)
@@ -12,9 +10,7 @@
       <i class="icon-project"></i>
       <span>Scenes</span>
     </a>
-    <a href
-       class=""
-       ui-sref="projects.edit.colormode"
+    <a ui-sref="projects.edit.colormode"
        ng-class="{
          active: ('projects.edit.colormode' | includedByState) ||
                  ('projects.edit.advancedcolor' | includedByState)
@@ -23,25 +19,19 @@
       <i class="icon-color-correct"></i>
       <span>Color mode</span>
     </a>
-    <a href
-       class=""
-       ui-sref="projects.edit.annotate"
+    <a ui-sref="projects.edit.annotate"
        ui-sref-active="active"
        data-title="Annotations">
       <i class="icon-polygon"></i>
       <span>Annotations</span>
     </a>
-    <a href
-       class=""
-       ui-sref="projects.edit.exports"
+    <a ui-sref="projects.edit.exports"
        ui-sref-active="active"
        data-title="Exports">
       <i class="icon-download"></i>
       <span>Exports</span>
     </a>
-    <a href
-       class=""
-       ui-sref="projects.edit.sharing"
+    <a ui-sref="projects.edit.sharing"
        ui-sref-active="active"
        data-title="Share">
       <i class="icon-share"></i>
