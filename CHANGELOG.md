@@ -17,6 +17,7 @@
 - Displayed user information on template items when not created by the platform [\#4172](https://github.com/raster-foundry/raster-foundry/pull/4172)
 - Simplified authorization logic in backsplash [\#4176](https://github.com/raster-foundry/raster-foundry/pull/4176)
 - Added a global cache location for sharing artifacts across CI builds [\#4181](https://github.com/raster-foundry/raster-foundry/pull/4181), [\#4183](https://github.com/raster-foundry/raster-foundry/pull/4183), [\#4186](https://github.com/raster-foundry/raster-foundry/pull/4186)
+- Switched to using `sbt` to resolve dependencies [\#4191](https://github.com/raster-foundry/raster-foundry/pull/4191)
 
 ### Deprecated
 
