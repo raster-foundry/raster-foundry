@@ -81,7 +81,7 @@ services:
         condition: service_healthy
     env_file: .env
     environment:
-      - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
+      - COURSIER_CACHE=/root/.coursier-cache
       - RF_LOG_LEVEL=INFO
       - TILE_SERVER_LOCATION=http://localhost:8081
     ports:
@@ -93,7 +93,7 @@ services:
       - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
-      - $HOME/.coursier-cache:/opt/raster-foundry/app-backend/.coursier-cache
+      - $HOME/.coursier-cache:/root/.coursier-cache
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
     command:
@@ -137,7 +137,7 @@ services:
       - statsd
     env_file: .env
     environment:
-      - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
+      - COURSIER_CACHE=/root/.coursier-cache
       - RF_LOG_LEVEL=INFO
     ports:
       - "9900:9900"
@@ -147,7 +147,7 @@ services:
       - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
-      - $HOME/.coursier-cache:/opt/raster-foundry/app-backend/.coursier-cache
+      - $HOME/.coursier-cache:/root/.coursier-cache
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
     command:
@@ -166,7 +166,7 @@ services:
       - postgres:database.service.rasterfoundry.internal
     env_file: .env
     environment:
-      - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
+      - COURSIER_CACHE=/root/.coursier-cache
       - RF_LOG_LEVEL=INFO
       - SBT_OPTS="-Xmx2G -XX:MaxPermSize=2G"
     ports:
@@ -177,7 +177,7 @@ services:
       - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
-      - $HOME/.coursier-cache:/opt/raster-foundry/app-backend/.coursier-cache
+      - $HOME/.coursier-cache:/root/.coursier-cache
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
     command:
