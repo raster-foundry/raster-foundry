@@ -59,6 +59,8 @@ services:
     build:
       context: ./app-backend
       dockerfile: Dockerfile
+    volumes:
+      - $HOME/.coursier-cache:/root/.coursier-cache
 
   batch:
     image: raster-foundry-batch:${GIT_COMMIT:-latest}

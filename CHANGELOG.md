@@ -5,6 +5,7 @@
 ### Added
 - Disable blog feed and intercom initialization using webpack override file [\#4162](https://github.com/raster-foundry/raster-foundry/pull/4162)
 - Add support for google tag manager via webpack overrides [\#4165](https://github.com/raster-foundry/raster-foundry/pull/4165)
+- Added support for additional/future Planet asset types [\#4184](https://github.com/raster-foundry/raster-foundry/pull/4184)
 
 ### Changed
 
@@ -13,6 +14,9 @@
 - Restricted sharing with everyone and platforms to superusers and platform admins [\#4166](https://github.com/raster-foundry/raster-foundry/pull/4166)
 - Added sbt configuration for auto-scalafmt [\#4175](https://github.com/raster-foundry/raster-foundry/pull/4175)
 - Added a global cache location for sharing artifacts across CI builds [\#4181](https://github.com/raster-foundry/raster-foundry/pull/4175), [\#4183](https://github.com/raster-foundry/raster-foundry/pull/4183)
+- Displayed user information on template items when not created by the platform [\#4172](https://github.com/raster-foundry/raster-foundry/pull/4172)
+- Simplified authorization logic in backsplash [\#4176](https://github.com/raster-foundry/raster-foundry/pull/4176)
+- Added a global cache location for sharing artifacts across CI builds [\#4181](https://github.com/raster-foundry/raster-foundry/pull/4181), [\#4183](https://github.com/raster-foundry/raster-foundry/pull/4183), [\#4186](https://github.com/raster-foundry/raster-foundry/pull/4186)
 - Switched to using `sbt` to resolve dependencies [\#4191](https://github.com/raster-foundry/raster-foundry/pull/4191)
 
 ### Deprecated
@@ -22,10 +26,11 @@
 ### Fixed
 
 - Removed duplicate emails for repeated failures of the same upload [\#4130](https://github.com/raster-foundry/raster-foundry/pull/4130)
-- Use safer options for large tifs when processing uploads and ingests [\#4131](https://github.com/raster-foundry/raster-foundry/pull/4131)
-- Re-enable datasource deletion and disable it if there is permission attached [\#4140](https://github.com/raster-foundry/raster-foundry/pull/4140), [\#4158](https://github.com/raster-foundry/raster-foundry/pull/4158)
-- Fix permission modal bug so that it won't hang after deleting permissions [\#4174](https://github.com/raster-foundry/raster-foundry/pull/4174)
+- Used safer options for large tifs when processing uploads and ingests [\#4131](https://github.com/raster-foundry/raster-foundry/pull/4131)
+- Re-enabled datasource deletion and disable it if there is permission attached [\#4140](https://github.com/raster-foundry/raster-foundry/pull/4140), [\#4158](https://github.com/raster-foundry/raster-foundry/pull/4158)
+- Fixed permission modal bug so that it won't hang after deleting permissions [\#4174](https://github.com/raster-foundry/raster-foundry/pull/4174)
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [\#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
+- Included missing `pow` operation for decoding json representations of analyses [\#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [\#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
 
 ### Security
 
