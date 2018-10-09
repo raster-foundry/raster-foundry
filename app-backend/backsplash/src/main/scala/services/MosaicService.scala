@@ -4,15 +4,12 @@ import com.azavea.maml.error.Interpreted
 import com.azavea.maml.eval.BufferingInterpreter
 import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.backsplash.error._
-import com.azavea.rf.backsplash.parameters.PathParameters._
 import com.azavea.rf.backsplash.nodes.ProjectNode
 import com.azavea.rf.backsplash.parameters.PathParameters._
 import com.azavea.rf.common.RollbarNotifier
 import com.azavea.rf.database.util.RFTransactor
 import com.azavea.rf.database.{ProjectDao, UserDao}
 import com.azavea.rf.datamodel._
-import com.azavea.maml.error.Interpreted
-import com.azavea.maml.eval.BufferingInterpreter
 
 import cats.data.Validated._
 import cats.data._
@@ -58,7 +55,7 @@ class MosaicService(
             .authorized(user, ObjectType.Project, projectId, ActionType.View)
             .transact(xa) map { authResult =>
             if (!authResult)
-              throw NotAuthorized(
+              throw NotAuthorizedException(
                 s"User ${user.id} not authorized to view project $projectId")
             else
               authResult

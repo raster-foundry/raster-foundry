@@ -7,7 +7,6 @@ import geotrellis.vector.io._
 import cats._
 import cats.data._
 import cats.implicits._
-import java.security.InvalidParameterException
 
 import com.azavea.rf.backsplash.error._
 import com.azavea.rf.backsplash.nodes.ProjectNode
@@ -27,7 +26,7 @@ trait BacksplashMamlAdapter {
       ast match {
         case MapAlgebraAST.ProjectRaster(_, projId, band, celltype, _) => {
           val bandActual = band.getOrElse(
-            throw SingleBandOptionsError(
+            throw SingleBandOptionsException(
               "Band must be provided to evaluate AST"))
           // This is silly - mostly making up single band options here when all we really need is the band number
           val singleBandOptions = SingleBandOptions.Params(
@@ -66,10 +65,10 @@ trait BacksplashMamlAdapter {
         case SceneRaster(_, _, _, _, _)          => ???
         case MapAlgebraAST.Constant(_, const, _) => DblLit(const)
         case MapAlgebraAST.LiteralTile(_, lt, _) =>
-          throw MetadataError(
+          throw MetadataException(
             "No literal tiles should appear on pre-MAML RFML tools")
         case MapAlgebraAST.ToolReference(_, _) =>
-          throw MetadataError("Tool references not yet supported via MAML")
+          throw MetadataException("Tool references not yet supported via MAML")
         /* --- LOCAL OPERATIONS --- */
         case MapAlgebraAST.Addition(_, _, _)       => Addition(args)
         case MapAlgebraAST.Subtraction(_, _, _)    => Subtraction(args)

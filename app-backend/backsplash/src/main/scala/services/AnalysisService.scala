@@ -66,12 +66,12 @@ class AnalysisService(
             .as[MapAlgebraAST]
             .right
             .toOption
-            .getOrElse(throw MetadataError(
+            .getOrElse(throw MetadataException(
               s"Could not decode AST ${analysisId} from database"))
           IO.pure(
             ast
               .find(UUID.fromString(node))
-              .getOrElse(throw MetadataError(
+              .getOrElse(throw MetadataException(
                 s"Node ${node} missing from in AST ${analysisId}")))
         }
 

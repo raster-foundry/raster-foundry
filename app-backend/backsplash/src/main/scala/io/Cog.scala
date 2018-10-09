@@ -14,34 +14,34 @@ import geotrellis.vector.Extent
 
 object Cog extends RollbarNotifier {
 
-  def fetchSingleBandCogTile(md: MosaicDefinition,
-                             zoom: Int,
-                             col: Int,
-                             row: Int,
-                             extent: Extent,
-                             singleBandOptions: SingleBandOptions.Params,
-                             rawSingleBandValues: Boolean)(
-      implicit timer: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+  def fetchSingleBandCogTile(
+      md: MosaicDefinition,
+      zoom: Int,
+      col: Int,
+      row: Int,
+      extent: Extent,
+      singleBandOptions: SingleBandOptions.Params,
+      rawSingleBandValues: Boolean): OptionT[IO, Raster[Tile]] = {
     val tileIO = for {
       _ <- IO.pure(
         logger.debug(
           s"Fetching single-band COG tile for scene ID ${md.sceneId}"))
-      raster <- CogUtils.fetch(
-        md.ingestLocation.getOrElse(
-          throw UningestedScenes("Cannot fetch scene with no ingest location")
-        ),
-        zoom,
-        col,
-        row)
+      raster <- CogUtils.fetch(md.ingestLocation.getOrElse(
+                                 throw UningestedScenesException(
+                                   "Cannot fetch scene with no ingest location")
+                               ),
+                               zoom,
+                               col,
+                               row)
       histograms <- Avro.layerHistogram(md.sceneId)
     } yield {
       logger.debug(s"Retrieved Tile: ${raster.tile.dimensions}")
       val tile = raster.tile.bands.lift(singleBandOptions.band) getOrElse {
-        throw SingleBandOptionsError("No band found in single-band options")
+        throw SingleBandOptionsException("No band found in single-band options")
       }
       val histogram = histograms
         .lift(singleBandOptions.band) getOrElse {
-        throw MetadataError("No histogram found for band")
+        throw MetadataException("No histogram found for band")
       }
 
       rawSingleBandValues match {
@@ -53,12 +53,11 @@ object Cog extends RollbarNotifier {
     OptionT(tileIO.attempt.map(_.toOption))
   }
 
-  def fetchMultiBandCogTile(
-      md: MosaicDefinition,
-      zoom: Int,
-      col: Int,
-      row: Int,
-      extent: Extent)(implicit timer: Timer[IO]): OptionT[IO, Raster[Tile]] = {
+  def fetchMultiBandCogTile(md: MosaicDefinition,
+                            zoom: Int,
+                            col: Int,
+                            row: Int,
+                            extent: Extent): OptionT[IO, Raster[Tile]] = {
     val tileIO = for {
       _ <- IO.pure(
         logger.debug(

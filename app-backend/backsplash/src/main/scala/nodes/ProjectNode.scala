@@ -18,7 +18,7 @@ import geotrellis.spark.tiling.LayoutDefinition
 import geotrellis.spark.{io => _}
 import io.circe.generic.semiauto._
 
-case class ProjectNode(
+final case class ProjectNode(
     projectId: UUID,
     redBandOverride: Option[Int] = None,
     greenBandOverride: Option[Int] = None,
@@ -40,12 +40,6 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
 
   implicit val projectNodeDecoder = deriveDecoder[ProjectNode]
   implicit val projectNodeEncoder = deriveEncoder[ProjectNode]
-
-  def getClosest(cellWidth: Double, listNums: List[LayoutDefinition]) =
-    listNums match {
-      case Nil  => Double.MaxValue
-      case list => list.minBy(ld => math.abs(ld.cellSize.width - cellWidth))
-    }
 
   implicit val projectNodeTmsReification: MamlTmsReification[ProjectNode] =
     new MamlTmsReification[ProjectNode] {

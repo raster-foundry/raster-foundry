@@ -37,7 +37,7 @@ object Color extends RollbarNotifier {
         val message =
           "Invalid color scheme format. Color schemes must be defined as an array of hex colors or a mapping of raster values to hex colors."
         logger.error(message)
-        throw SingleBandOptionsError(message)
+        throw SingleBandOptionsException(message)
       }
     }
     Raster(tile.color(colorMap), extent)

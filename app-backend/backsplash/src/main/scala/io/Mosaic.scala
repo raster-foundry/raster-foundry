@@ -53,7 +53,8 @@ object Mosaic extends RollbarNotifier {
       case Some(SceneType.Avro) =>
         Avro.fetchMultiBandAvroTile(md, z, x, y, extent).value
       case None =>
-        throw UnknownSceneType("Unable to fetch tiles with unknown scene type")
+        throw UnknownSceneTypeException(
+          "Unable to fetch tiles with unknown scene type")
     }
 
   def getMosaicDefinitionTiles(self: ProjectNode,
@@ -74,7 +75,7 @@ object Mosaic extends RollbarNotifier {
           y,
           extent,
           self.singleBandOptions getOrElse {
-            throw SingleBandOptionsError(
+            throw SingleBandOptionsException(
               "No single-band options found for single-band visualization")
           },
           self.rawSingleBandValues
@@ -112,6 +113,7 @@ object Mosaic extends RollbarNotifier {
                                    rawSingleBandValues)
           .value
       case None =>
-        throw UnknownSceneType("Unable to fetch tiles with unknown scene type")
+        throw UnknownSceneTypeException(
+          "Unable to fetch tiles with unknown scene type")
     }
 }

@@ -13,24 +13,29 @@ import org.http4s.dsl._
 import org.http4s.dsl.io._
 import org.http4s.implicits._
 
-sealed trait BacksplashError extends Exception
-case class MetadataError(message: String) extends BacksplashError
-case class SingleBandOptionsError(message: String) extends BacksplashError
-case class UningestedScenes(message: String) extends BacksplashError
-case class UnknownSceneType(message: String) extends BacksplashError
-case class NotAuthorized(message: String = "") extends BacksplashError
-case class BadAnalysisAST(message: String) extends BacksplashError
+sealed trait BacksplashException extends Exception
+final case class MetadataException(message: String) extends BacksplashException
+final case class SingleBandOptionsException(message: String)
+    extends BacksplashException
+final case class UningestedScenesException(message: String)
+    extends BacksplashException
+final case class UnknownSceneTypeException(message: String)
+    extends BacksplashException
+final case class NotAuthorizedException(message: String = "")
+    extends BacksplashException
+final case class BadAnalysisASTException(message: String)
+    extends BacksplashException
 
 trait ErrorHandling extends RollbarNotifier {
   def handleErrors(t: Throwable): IO[Response[IO]] = t match {
-    case t @ MetadataError(m) =>
+    case t @ MetadataException(m) =>
       sendError(t)
       InternalServerError(m)
-    case SingleBandOptionsError(m) => BadRequest(m)
-    case UningestedScenes(m)       => NotFound(m)
-    case UnknownSceneType(m)       => BadRequest(m)
-    case BadAnalysisAST(m)         => BadRequest(m)
-    case NotAuthorized(_) =>
+    case SingleBandOptionsException(m) => BadRequest(m)
+    case UningestedScenesException(m)  => NotFound(m)
+    case UnknownSceneTypeException(m)  => BadRequest(m)
+    case BadAnalysisASTException(m)    => BadRequest(m)
+    case NotAuthorizedException(_) =>
       sendError(t)
       Forbidden(
         "Resource does not exist or user is not authorized to access resource")
@@ -46,19 +51,19 @@ trait ErrorHandling extends RollbarNotifier {
 }
 
 class BacksplashHttpErrorHandler[F[_]](
-    implicit M: MonadError[F, BacksplashError])
-    extends HttpErrorHandler[F, BacksplashError]
+    implicit M: MonadError[F, BacksplashException])
+    extends HttpErrorHandler[F, BacksplashException]
     with Http4sDsl[F]
     with RollbarNotifier {
-  private val handler: BacksplashError => F[Response[F]] = {
-    case t @ MetadataError(m) =>
+  private val handler: BacksplashException => F[Response[F]] = {
+    case t @ MetadataException(m) =>
       sendError(t)
       InternalServerError(m)
-    case SingleBandOptionsError(m) => BadRequest(m)
-    case UningestedScenes(m)       => NotFound(m)
-    case UnknownSceneType(m)       => BadRequest(m)
-    case BadAnalysisAST(m)         => BadRequest(m)
-    case t @ NotAuthorized(_) =>
+    case SingleBandOptionsException(m) => BadRequest(m)
+    case UningestedScenesException(m)  => NotFound(m)
+    case UnknownSceneTypeException(m)  => BadRequest(m)
+    case BadAnalysisASTException(m)    => BadRequest(m)
+    case t @ NotAuthorizedException(_) =>
       sendError(t)
       Forbidden(
         "Resource does not exist or user is not authorized to access resource")
