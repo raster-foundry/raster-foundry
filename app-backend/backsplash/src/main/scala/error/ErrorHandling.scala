@@ -58,9 +58,10 @@ class BacksplashHttpErrorHandler[F[_]](
     case UningestedScenes(m)       => NotFound(m)
     case UnknownSceneType(m)       => BadRequest(m)
     case BadAnalysisAST(m)         => BadRequest(m)
-    case NotAuthorized(_) =>
+    case t @ NotAuthorized(_) =>
+      sendError(t)
       Forbidden(
-        "Tiles cannot be produced or user is not authorized to view these tiles")
+        "Resource does not exist or user is not authorized to access resource")
   }
 
   override def handle(service: HttpService[F]): HttpService[F] =
