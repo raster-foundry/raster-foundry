@@ -7,7 +7,6 @@
 const path = require('path');
 const webpack = require('webpack');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
-const WebpackFailPlugin = require('webpack-fail-plugin');
 const Manifest = require('manifest-revision-webpack-plugin');
 
 module.exports = function (_path) {
@@ -17,12 +16,12 @@ module.exports = function (_path) {
         context: _path,
         debug: false,
         devtool: 'eval',
+        mode: 'production',
         output: {
             publicPath: '/',
             filename: '[name].[chunkhash].js'
         },
         plugins: [
-            WebpackFailPlugin,
             new webpack.NoErrorsPlugin(),
             new CleanWebpackPlugin(['dist'], {
                 root: _path,

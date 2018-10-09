@@ -1,6 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
-import d3 from 'd3';
+import * as d3 from 'd3';
 import {Map} from 'immutable';
 import nodeHistogramTpl from './nodeHistogram.html';
 import LabActions from '_redux/actions/lab-actions';

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 /* eslint no-unused-vars: 0 */
 /* eslint spaced-comment: 0 */

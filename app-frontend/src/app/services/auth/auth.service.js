@@ -15,6 +15,7 @@ export default (app) => {
             rollbarWrapperService, intercomService, $resource, $ngRedux, $location
 
         ) {
+            'ngInject';
             this.localStorage = localStorage;
             this.jwtHelper = jwtHelper;
             this.$q = $q;
