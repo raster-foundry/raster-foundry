@@ -135,7 +135,7 @@ class AnnotateSidebarItemController {
     }
 
     onLabelFieldFocus() {
-        if (this.labelNameInput.length >= this.minMatchedLabelLength) {
+        if (this.labelNameInput && this.labelNameInput.length >= this.minMatchedLabelLength) {
             this.matchLabelName(this.labelNameInput);
         }
     }

@@ -1,4 +1,4 @@
-const asyncDispatchMiddleware = store => next => action => {
+export const asyncDispatchMiddleware = store => next => action => {
     let syncActivityFinished = false;
     let actionQueue = [];
 

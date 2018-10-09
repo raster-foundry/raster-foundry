@@ -1,4 +1,5 @@
 import ImportsController from './imports.controller.js';
+import autoInject from '_appRoot/autoInject';
 
 const ImportsModule = angular.module('pages.imports', []);
 
@@ -20,6 +21,7 @@ ImportsModule.resolve = {
         return platformService.getPlatform(platformRole.groupId);
     }
 };
+autoInject(ImportsModule);
 
 ImportsModule.controller('ImportsController', ImportsController);
 
