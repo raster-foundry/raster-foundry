@@ -1,9 +1,5 @@
 package com.azavea.rf.backsplash.services
 
-import cats.data.Validated._
-import cats.data._
-import cats.effect.{IO, Timer}
-import cats.implicits._
 import com.azavea.maml.error.Interpreted
 import com.azavea.maml.eval.BufferingInterpreter
 import com.azavea.rf.authentication.Authentication
@@ -18,22 +14,22 @@ import com.azavea.rf.datamodel._
 import com.azavea.maml.error.Interpreted
 import com.azavea.maml.eval.BufferingInterpreter
 
-import cats._
-import cats.data._
 import cats.data.Validated._
+import cats.data._
+import cats.effect._
 import cats.implicits._
-import cats.syntax._
 import doobie.implicits._
 import geotrellis.raster.Tile
 import geotrellis.server.core.maml._
 import org.http4s._
 import org.http4s.dsl._
+import org.http4s.headers._
 
 class MosaicService(
     interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
 )(implicit timer: Timer[IO])
     extends Http4sDsl[IO]
-    with RollbarNotifier {
+    with ErrorHandling {
 
   implicit val xa = RFTransactor.xa
 
@@ -92,7 +88,7 @@ class MosaicService(
           eval(paramMap, z, x, y)
         }
 
-        for {
+        val respIO = for {
           authed <- authorizationIO
           project <- ProjectDao.unsafeGetProjectById(projectId).transact(xa)
           result <- getTileResult(project)
@@ -103,5 +99,6 @@ class MosaicService(
               BadRequest(e.toString)
           }
         } yield resp
+        respIO.handleErrorWith(handleErrors _)
     }
 }

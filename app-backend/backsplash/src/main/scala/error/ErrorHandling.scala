@@ -7,6 +7,7 @@ import cats.data._
 import cats.effect._
 import cats.implicits._
 import com.amazonaws.services.s3.model.AmazonS3Exception
+import doobie.util.invariant.InvariantViolation
 import org.http4s._
 import org.http4s.dsl._
 import org.http4s.dsl.io._
@@ -19,6 +20,30 @@ case class UningestedScenes(message: String) extends BacksplashError
 case class UnknownSceneType(message: String) extends BacksplashError
 case class NotAuthorized(message: String = "") extends BacksplashError
 case class BadAnalysisAST(message: String) extends BacksplashError
+
+trait ErrorHandling extends RollbarNotifier {
+  def handleErrors(t: Throwable): IO[Response[IO]] = t match {
+    case t @ MetadataError(m) =>
+      sendError(t)
+      InternalServerError(m)
+    case SingleBandOptionsError(m) => BadRequest(m)
+    case UningestedScenes(m)       => NotFound(m)
+    case UnknownSceneType(m)       => BadRequest(m)
+    case BadAnalysisAST(m)         => BadRequest(m)
+    case NotAuthorized(_) =>
+      sendError(t)
+      Forbidden(
+        "Resource does not exist or user is not authorized to access resource")
+    case (err: InvariantViolation) =>
+      logger.error(err.getMessage, err.printStackTrace)
+      NotFound("Necessary data to produce tiles not available")
+    case (err: AmazonS3Exception) =>
+      logger.error(err.getMessage, err.printStackTrace)
+      NotFound(
+        "Necessary data to produce tiles not available. Check to ensure underlying data are still accessible in S3")
+    case err => InternalServerError(err.getMessage)
+  }
+}
 
 class BacksplashHttpErrorHandler[F[_]](
     implicit M: MonadError[F, BacksplashError])

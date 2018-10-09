@@ -5,6 +5,7 @@ import java.util.UUID
 
 import cats.data.Validated._
 import cats.effect.{IO, Timer}
+import cats.implicits._
 import com.azavea.maml.eval.BufferingInterpreter
 import com.azavea.rf.authentication.Authentication
 import com.azavea.rf.backsplash._
@@ -31,8 +32,7 @@ class AnalysisService(
     interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
 )(implicit timer: Timer[IO])
     extends Http4sDsl[IO]
-    with RollbarNotifier
-    with Authentication {
+    with ErrorHandling {
 
   implicit val xa = RFTransactor.xa
 
@@ -76,7 +76,7 @@ class AnalysisService(
         }
 
         logger.debug(s"AST: ${mapAlgebraAST}")
-        mapAlgebraAST.flatMap { ast =>
+        val respIO = mapAlgebraAST.flatMap { ast =>
           val (exp, mdOption, params) = ast.asMaml
           val mamlEval =
             MamlTms.apply(IO.pure(exp), IO.pure(params), interpreter)
@@ -107,6 +107,8 @@ class AnalysisService(
             }
           }
         }
+
+        respIO.handleErrorWith(handleErrors _)
       }
     }
 }
