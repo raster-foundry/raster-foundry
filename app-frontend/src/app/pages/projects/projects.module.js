@@ -1,6 +1,6 @@
-/* global _ */
+import _ from 'lodash';
 import ProjectsController from './projects.controller.js';
-
+import autoInject from '_appRoot/autoInject';
 const ProjectsModule = angular.module('pages.projects', []);
 
 ProjectsModule.resolve = {
@@ -30,6 +30,8 @@ ProjectsModule.resolve = {
         return $q.all(teamRoles.map(r => teamService.getTeam(r.groupId)));
     }
 };
+
+autoInject(ProjectsModule);
 
 ProjectsModule.controller('ProjectsController', ProjectsController);
 

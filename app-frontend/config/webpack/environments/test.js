@@ -11,6 +11,7 @@ module.exports = function (_path) {
         context: _path,
         debug: true,
         devtool: 'cheap-source-map',
+        mode: 'development',
         entry: {},
         module: {
             preLoaders: [{

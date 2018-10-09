@@ -10,11 +10,12 @@ const webpack = require('webpack');
 const autoprefixer = require('autoprefixer-core');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const postcssPresetEnv = require('postcss-preset-env');
 
 const NODE_ENV = process.env.NODE_ENV || 'production';
 const DEVELOPMENT = NODE_ENV === 'production' ? false : true;
-const stylesLoader = 'css-loader?sourceMap!postcss-loader!sass-loader?' +
-        'outputStyle=expanded&sourceMap=true&sourceMapContents=true';
+// const stylesLoader = 'css-loader?sourceMap!postcss-loader!sass-loader?' +
+//         'outputStyle=expanded&sourceMap=true&sourceMapContents=true';
 
 const HERE_APP_ID = 'v88MqS5fQgxuHyIWJYX7';
 const HERE_APP_CODE = '5pn07ENomTHOap0u7nQSFA';
@@ -79,22 +80,30 @@ module.exports = function (_path) {
     let webpackConfig = {
         // entry points
         entry: {
-            vendor: _path + '/src/app/index.vendor.js',
+            // vendor: _path + '/src/app/index.vendor.js',
             app: _path + '/src/app/index.bootstrap.js',
-            polyfill: _path + '/node_modules/babel-polyfill'
+            // wasm: _path + '/node_modules/gdal-js/gdal.wasm'
+            // polyfill: _path + '/node_modules/babel-polyfill'
         },
 
         // output system
         output: {
-            path: 'dist',
+            path: path.resolve(__dirname, 'dist'),
             filename: '[name].js',
             publicPath: '/'
         },
+        target: 'web',
+        // optimization: {
+        //     splitChunks: {
+        //         chunks: 'all',
+        //         name: false
+        //     }
+        // },
 
         // resolves modules
         resolve: {
-            extensions: ['', '.js'],
-            modulesDirectories: ['node_modules'],
+            extensions: ['.js'],
+            modules: ['node_modules'],
             alias: {
                 _appRoot: path.join(_path, 'src', 'app'),
                 _stylesheets: path.join(_path, 'src', 'assets', 'styles'),
@@ -105,30 +114,33 @@ module.exports = function (_path) {
                 _images: path.join(_path, 'src', 'assets', 'images'),
                 _font: path.join(_path, 'src', 'assets', 'font'),
                 loamLib: path.join(_path, 'node_modules', 'loam', 'lib'),
-                gdalJs: path.join(_path, 'node_modules', 'gdal-js')
-            }
+                gdalJs: path.join(_path, 'node_modules', 'gdal-js'),
+                moment: 'moment/moment.js'
+            },
+            mainFields: ['module', 'jsnext:main', 'main'],
         },
 
         // modules resolvers
         module: {
-            noParse: [],
-            preLoaders: [
-                {
-                    test: /\.js$/,
-                    loaders: ['eslint-loader'],
-                    exclude: [/node_modules/, /tests\.webpack\.js/, /\.config.js/, /\.spec\.js$/]
+            // noParse: [],
+            exprContextRegExp: /^\.\/*$/,
+            unknownContextRegExp: /^\.\/.*$/,
+            rules: [{
+                enforce: 'pre',
+                test: /\.js$/,
+                exclude: [/node_modules/, /tests\.webpack\.js/, /\.config.js/, /\.spec\.js$/],
+                loader: 'eslint-loader',
+                options: {
+                    configFile: './.eslintrc'
                 }
-            ],
-            loaders: [{
+            }, {
                 test: /\.html$/,
+                exclude: [
+                    path.resolve(_path, 'src/tpl-index.html')
+                ],
                 loaders: [
                     'ngtemplate-loader?relativeTo=' + _path,
                     'html-loader?attrs[]=img:src&attrs[]=img:data-src&attrs[]=source:src'
-                ]
-            }, {
-                test: /\.js$/,
-                loaders: [
-                    'baggage-loader?[file].html&[file].css'
                 ]
             }, {
                 test: /\.js$/,
@@ -136,7 +148,7 @@ module.exports = function (_path) {
                     path.resolve(_path, 'node_modules')
                 ],
                 loaders: [
-                    'ng-annotate-loader'
+                    'ng-annotate-loader?ngAnnotate=ng-annotate-patched'
                 ]
             }, {
                 test: /\.js$/,
@@ -147,18 +159,69 @@ module.exports = function (_path) {
                 loader: 'babel-loader',
                 query: {
                     cacheDirectory: true,
-                    plugins: ['transform-runtime', 'add-module-exports'],
-                    presets: ['angular', 'latest']
+                    plugins: ['@babel/plugin-transform-runtime'],//, '@babel/syntax-dynamic-import'],
+                    presets: ['@babel/env'] // , 'module:angular']
                 }
             }, {
                 test: /\.css$/,
-                loader: DEVELOPMENT ? 'style-loader!css-loader?sourceMap!postcss-loader'
-                    : ExtractTextPlugin.extract('style-loader',
-                                                'css-loader!postcss-loader')
+                use: [
+                    'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            sourceMap: Boolean(DEVELOPMENT),
+                            importLoaders: 1
+                        }
+                    },
+                    {
+                        loader: 'postcss-loader',
+                        options: {
+                            ident: 'postcss',
+                            plugins: () => [
+                                postcssPresetEnv()
+                            ]
+                        }
+                    }
+                ]
+                // loader: DEVELOPMENT ? 'style-loader!css-loader?sourceMap!postcss-loader'
+                //     : ExtractTextPlugin.extract('style-loader',
+                //                                 'css-loader!postcss-loader'),
+                // post css.
+                // TODO This should be
+                // ['>0.25%', 'not ie 11', 'not op_mini all']
+                // see https://jamie.build/last-2-versions
+                // this doesn't seem to be compatible with the loader version that we're using
             }, {
                 test: /\.(scss|sass)$/,
-                loader: DEVELOPMENT ? 'style-loader!' + stylesLoader
-                    : ExtractTextPlugin.extract('style-loader', stylesLoader)
+                use: [
+                    'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            sourceMap: Boolean(DEVELOPMENT),
+                            importLoaders: 1
+                        }
+                    },
+                    {
+                        loader: 'postcss-loader',
+                        options: {
+                            ident: 'postcss',
+                            plugins: () => [
+                                postcssPresetEnv()
+                            ]
+                        }
+                    },
+                    {
+                        loader: 'sass-loader',
+                        options: {
+                            outputStyle: 'expanded',
+                            sourceMap: true,
+                            sourceMapContents: true
+                        }
+                    }
+                ]
+                // loader: DEVELOPMENT ? 'style-loader!' + stylesLoader
+                //     : ExtractTextPlugin.extract('style-loader', stylesLoader)
             }, {
                 test: /\.(woff2|woff|ttf|eot|svg)(\?[a-z0-9]+)?$/,
                 loaders: [
@@ -178,86 +241,94 @@ module.exports = function (_path) {
                 test: /(loam-worker\.js|gdal\.js|gdal\.wasm|gdal\.data)$/,
                 loader: 'file-loader?name=[name].[ext]'
             }, {
+                test: /\.(gif|png|jpe?g|svg)$/i,
+                use: [
+                    'file-loader',
+                    {
+                        'loader': 'image-webpack-loader',
+                        options: {
+                            bypassOnDebug: true,
+                            disable: true,
+                            pngquant: {
+                                quality: '65-90',
+                                speed: 4
+                            }
+                        }
+                    }
+                ]
+            }, {
                 test: require.resolve('angular-deferred-bootstrap'),
                 loaders: [
-                    'expose?deferredBootstrapper'
+                    'expose-loader?deferredBootstrapper'
                 ]
             }, {
                 test: require.resolve('angular'),
                 loaders: [
-                    'expose?angular'
+                    'expose-loader?angular'
                 ]
             }, {
                 test: require.resolve('jquery'),
                 loaders: [
-                    'expose?$',
-                    'expose?jQuery'
+                    'expose-loader?$',
+                    'expose-loader?jQuery'
                 ]
             }, {
                 test: require.resolve('leaflet'),
                 loaders: [
-                    'expose?L'
+                    'expose-loader?L'
                 ]
             }, {
                 test: require.resolve('jointjs'),
                 loaders: [
-                    'expose?joint'
+                    'expose-loader?joint'
                 ]
             }, {
                 test: require.resolve('moment'),
                 loaders: [
-                    'expose?moment'
+                    'expose-loader?moment'
                 ]
             }, {
                 test: require.resolve('mathjs'),
                 loaders: [
-                    'expose?mathjs'
+                    'expose-loader?mathjs'
                 ]
             }, {
                 test: require.resolve('loam'),
                 loaders: [
-                    'expose?loam'
+                    'expose-loader?loam'
                 ]
-            }, {
-                test: /node_modules[\\\/]auth0-js[\\\/].*\.js$/,
-                loaders: ['transform-loader/cacheable?brfs',
-                          'transform-loader/cacheable?packageify',
-                          'babel-loader?presets[]=latest'
-                         ]
-            }, {
-                test: /node_modules[\\\/]auth0-lock[\\\/].*\.js$/,
-                loaders: ['transform-loader/cacheable?brfs',
-                          'transform-loader/cacheable?packageify']
-            }, {
-                test: /node_modules[\\\/]auth0-lock[\\\/].*\.ejs$/,
-                loader: 'transform-loader/cacheable?ejsify'
-            }, {
-                test: /\.json$/,
-                loader: 'json'
+            // }, {
+            //     test: /node_modules[\\\/]auth0-js[\\\/].*\.js$/,
+            //     loader: 'transform-loader/cacheable',
+            //     options: {
+            //         brfs: true,
+            //         packageify: true
+            //     }
+                // loaders: ['transform-loader/cacheable?brfs',
+                //           'transform-loader/cacheable?packageify',
+                //           'babel-loader'
+                //          ]
+            // }, {
+            //     test: /node_modules[\\\/]auth0-lock[\\\/].*\.js$/,
+            //     loader: 'transform-loader/cacheable',
+            //     options: {
+            //         brfs: true,
+            //         packageify: true
+            //     }
+                // loaders: ['transform-loader/cacheable?brfs',
+                //           'transform-loader/cacheable?packageify']
+            // }, {
+            //     test: /node_modules[\\\/]auth0-lock[\\\/].*\.ejs$/,
+            //     // loader: 'transform-loader/cacheable?ejsify'
+            //     loader: 'transform-loader/cacheable',
+            //     options: {
+            //         ejsify: true
+            //     }
             }]
         },
-
-        // post css.
-        // TODO This should be
-        // ['>0.25%', 'not ie 11', 'not op_mini all']
-        // see https://jamie.build/last-2-versions
-        // this doesn't seem to be compatible with the loader version that we're using
-        postcss: [autoprefixer({browsers: ['last 2 versions']})],
-
-        imageWebpackLoader: {
-            pngquant: {
-                quality: '66-90',
-                speed: 4
-            }
-        },
-
-        eslint: {
-            configFile: './.eslintrc'
-        },
-
         // load plugins
         plugins: [
-            new webpack.optimize.DedupePlugin(),
+            // new webpack.optimize.DedupePlugin(),
             new webpack.ProvidePlugin({
                 $: 'jquery',
                 jQuery: 'jquery',
@@ -267,12 +338,6 @@ module.exports = function (_path) {
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
             new webpack.optimize.AggressiveMergingPlugin({
                 moveToParents: true
-            }),
-            new webpack.optimize.CommonsChunkPlugin({
-                name: 'common',
-                async: true,
-                children: true,
-                minChunks: Infinity
             }),
             new ExtractTextPlugin(
                 'assets/styles/css/[name]' +
@@ -285,7 +350,13 @@ module.exports = function (_path) {
                 heapLoad: DEVELOPMENT ? '2743344218' : '3505855839',
                 gtagId: GOOGLE_TAG_ID,
                 development: DEVELOPMENT,
-                APP_NAME: 'Raster Foundry'
+                APP_NAME: 'Raster Foundry',
+                // chunks: {
+                //     head: {
+                //         app: _path + '/src/app/index.bootstrap.js',
+                //     }
+                // }
+                inject: 'head'
             }),
             new webpack.DefinePlugin({
                 'BUILDCONFIG': {
@@ -311,7 +382,13 @@ module.exports = function (_path) {
                     DEVELOPER_RESOURCES: JSON.stringify('https://help.rasterfoundry.com/developer-resources')
                 }
             })
-        ]
+        ],
+        node: {
+            dgram: 'empty',
+            fs: 'empty',
+            net: 'empty',
+            tls: 'empty',
+        }
     };
 
     return webpackConfig;

@@ -1,4 +1,5 @@
 import angular from 'angular';
+import autoInject from '_appRoot/autoInject';
 
 class OrganizationController {
     constructor(
@@ -172,6 +173,7 @@ OrganizationModule.resolve = {
         );
     }
 };
+autoInject(OrganizationModule);
 
 OrganizationModule.controller('OrganizationController', OrganizationController);
 

@@ -4,19 +4,20 @@
 
 
 const webpack = require('webpack');
+const path = require('path');
 const port = process.env.RF_PORT_9091 || 9091;
 const serverport = process.env.RF_SERVER_PORT || 9100;
 
 module.exports = function (_path) {
     return {
         context: _path,
-        debug: true,
+        // debug: true,
         devtool: 'cheap-source-map',
+        mode: 'development',
         devServer: {
-            contentBase: './dist',
-            info: true,
+            contentBase: path.join(__dirname, 'dist'),
             hot: true,
-            inline: true,
+            // inline: true,
             progress: true,
             historyApiFallback: true,
             port: port,
