@@ -36,6 +36,7 @@ trait MapAlgebraOperationCodecs extends MapAlgebraUtilityCodecs {
         case Some("or")          => ma.as[MapAlgebraAST.Or]
         case Some("xor")         => ma.as[MapAlgebraAST.Xor]
         case Some("^")           => ma.as[MapAlgebraAST.Pow]
+        case Some("pow")         => ma.as[MapAlgebraAST.Pow]
         case Some("abs")         => ma.as[MapAlgebraAST.Abs]
         case Some(">")           => ma.as[MapAlgebraAST.Greater]
         case Some(">=")          => ma.as[MapAlgebraAST.GreaterOrEqual]

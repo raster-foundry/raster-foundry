@@ -67,13 +67,19 @@ class PlanetSceneFactory(object):
             dict: geojson for the overview of the planet tif
         """
 
-        item_type, item_id = planet_id.split(':')
+        split_id = planet_id.split(':')
+        item_type = split_id[0]
+        item_id = split_id[1]
+        if len(split_id) == 2:
+            asset_type = None
+        elif len(split_id) == 3:
+            asset_type = split_id[2]
         logger.info('Retrieving item type %s with id %s', item_type, item_id)
         item = self.get_item(item_id, item_type)
         item_id = item['id']
 
         assets = self.get_assets_by_id(item_id, item_type)
-        asset_type = PlanetSceneFactory.get_asset_type(assets)
+        asset_type = PlanetSceneFactory.get_asset_type(assets, asset_type)
         updated_assets = self.activate_asset_and_wait(asset_type, assets, item_id, item_type)
 
         temp_tif_file = self.download_planet_tif(prefix, asset_type, updated_assets, item_id)
@@ -89,6 +95,7 @@ class PlanetSceneFactory(object):
         item['added_props'] = {}
         item['added_props']['localPath'] = cog_path
         item['added_props']['s3Location'] = 's3://{}/{}'.format(bucket, s3_path)
+        item['added_props']['asset_type'] = asset_type
 
         # Return the json representation of the item
         return item, temp_tif_file
@@ -189,7 +196,7 @@ class PlanetSceneFactory(object):
         return coefficients
 
     @staticmethod
-    def get_asset_type(asset_dict):
+    def get_asset_type(asset_dict, acceptable_type=None):
         """Helper function to get first asset (analytic/basic_analytic)
 
         This varies by satellite so this covers our bases
@@ -200,7 +207,10 @@ class PlanetSceneFactory(object):
         Returns:
             str
         """
-        acceptable_types = ['analytic', 'basic_analytic', 'analytic_dn', 'basic_analytic_dn']
+        if acceptable_type:
+            acceptable_types = [acceptable_type]
+        else:
+            acceptable_types = ['analytic', 'basic_analytic', 'analytic_dn', 'basic_analytic_dn']
         logger.info('Determining Analytics Asset Type')
         for acceptable_type in acceptable_types:
             if acceptable_type in asset_dict:
