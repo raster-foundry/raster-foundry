@@ -82,7 +82,7 @@ services:
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
-      - TILE_SERVER_LOCATION=http://localhost:8081
+      - TILE_SERVER_LOCATION
     ports:
       - "9000:9000"
       - "9010:9010"
