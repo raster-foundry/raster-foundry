@@ -10,6 +10,10 @@ import doobie.postgres._, doobie.postgres.implicits._
 import doobie.scalatest.imports._
 import org.scalatest._
 
-class ToolTagDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
+class ToolTagDaoSpec
+    extends FunSuite
+    with Matchers
+    with IOChecker
+    with DBTestConfig {
   test("selection types") { check(ToolTagDao.selectF.query[ToolTag]) }
 }

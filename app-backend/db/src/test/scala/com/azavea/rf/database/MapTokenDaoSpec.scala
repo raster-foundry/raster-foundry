@@ -10,9 +10,11 @@ import doobie.postgres._, doobie.postgres.implicits._
 import doobie.scalatest.imports._
 import org.scalatest._
 
-
-class MapTokenDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig{
+class MapTokenDaoSpec
+    extends FunSuite
+    with Matchers
+    with IOChecker
+    with DBTestConfig {
 
   test("types") { check(MapTokenDao.selectF.query[MapToken]) }
 }
-

@@ -70,7 +70,8 @@ class SceneWithRelatedDaoSpec
                 scene.name
             }
             val listedNamesSet = listedScenes.results.toSet map {
-              (scene: Scene.Browse) => scene.name
+              (scene: Scene.Browse) =>
+                scene.name
             }
             assert(
               listedNamesSet.intersect(insertedNamesSet) == listedNamesSet,
@@ -114,9 +115,9 @@ class SceneWithRelatedDaoSpec
               scenesToIngestIO.transact(xa).unsafeRunSync
             val ingestableScenesIds = scenesInProject filter { scene =>
               (scene.statusFields.ingestStatus, scene.sceneType) match {
-                case (_, Some(SceneType.COG)) => false
+                case (_, Some(SceneType.COG))       => false
                 case (IngestStatus.ToBeIngested, _) => true
-                case _ => false
+                case _                              => false
               }
             } map { _.id }
             val ingestableIdsFromInserted = insertedScenes

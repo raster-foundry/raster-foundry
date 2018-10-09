@@ -10,21 +10,25 @@ import doobie.postgres._, doobie.postgres.implicits._
 import doobie.scalatest.imports._
 import org.scalatest._
 
-
-class ToolCategoryDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
+class ToolCategoryDaoSpec
+    extends FunSuite
+    with Matchers
+    with IOChecker
+    with DBTestConfig {
 
   test("types") { check(ToolCategoryDao.selectF.query[ToolCategory]) }
 
   test("insertion") {
     val category = "A good, reasonably specific category"
-    val makeToolCategory = (user : User) => {
+    val makeToolCategory = (user: User) => {
       ToolCategory.Create(category).toToolCategory(user.id)
     }
 
     val transaction = for {
       user <- defaultUserQ
       toolCategoryIn <- ToolCategoryDao.insertToolCategory(
-        makeToolCategory(user), user
+        makeToolCategory(user),
+        user
       )
     } yield (toolCategoryIn)
 
@@ -33,4 +37,3 @@ class ToolCategoryDaoSpec extends FunSuite with Matchers with IOChecker with DBT
     result.category shouldBe category
   }
 }
-
