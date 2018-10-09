@@ -1,10 +1,12 @@
 /* global AWS, document, window, BUILDCONFIG, _ */
 import { initialize as loamInitialize, open as loamOpen } from 'loam';
 /* eslint-disable no-unused-vars */
-import loamWorker from 'loamLib/loam-worker.js';
-import gdalJs from 'gdalJs/gdal.js';
-import gdalWasm from 'gdalJs/gdal.wasm';
-import gdalData from 'gdalJs/gdal.data';
+// const gdalImports = Promise.all([
+//     import('loamLib/loam-worker.js'),
+//     import('gdalJs/gdal.js'),
+//     import('gdalJs/gdal.wasm'),
+//     import('gdalJs/gdal.data')
+// ]);
 /* eslint-enable no-unused-vars */
 
 import planetLogo from '../../../../assets/images/planet-logo-light.png';

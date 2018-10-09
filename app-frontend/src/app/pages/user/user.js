@@ -1,5 +1,6 @@
-/* global _ */
+import _ from 'lodash';
 import angular from 'angular';
+import autoInject from '_appRoot/autoInject';
 
 class UserController {
     constructor(
@@ -115,6 +116,7 @@ UserModule.resolve = {
         );
     }
 };
+autoInject(UserModule);
 
 UserModule.controller('UserController', UserController);
 

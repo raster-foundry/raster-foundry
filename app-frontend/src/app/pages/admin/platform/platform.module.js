@@ -1,6 +1,7 @@
 /* global BUILDCONFIG */
 
 import angular from 'angular';
+import autoInject from '_appRoot/autoInject';
 let assetLogo = BUILDCONFIG.LOGOFILE ?
     require(`../../../../assets/images/${BUILDCONFIG.LOGOFILE}`) :
     require('../../../../assets/images/raster-foundry-logo.svg');
@@ -123,6 +124,8 @@ PlatformModule.resolve = {
         );
     }
 };
+
+autoInject(PlatformModule);
 
 PlatformModule.controller('PlatformController', PlatformController);
 

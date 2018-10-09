@@ -1,24 +1,14 @@
 import angular from 'angular';
+import autoInject from '_appRoot/autoInject';
 
 class TeamController {
     constructor(
-        authService, teamService,
+        $scope, authService, teamService,
         platform, team, organization, members,
         projects, rasters, vectors, datasources, templates, analyses
     ) {
         'ngInject';
-        this.authService = authService;
-        this.teamService = teamService;
-        this.platform = platform;
-        this.team = team;
-        this.organization = organization;
-        this.members = members;
-        this.projects = projects;
-        this.rasters = rasters;
-        this.vectors = vectors;
-        this.datasources = datasources;
-        this.templates = templates;
-        this.analyses = analyses;
+        $scope.autoInject(this, arguments);
     }
     $onInit() {
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
@@ -151,6 +141,8 @@ TeamModule.resolve = {
         );
     }
 };
+
+autoInject(TeamModule);
 
 TeamModule.controller('AdminTeamController', TeamController);
 
