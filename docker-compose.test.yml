@@ -11,7 +11,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile.tiler
-      
+
   nginx-backsplash:
     image: raster-foundry-nginx-backsplash:${GIT_COMMIT:-latest}
     build:
@@ -47,7 +47,7 @@ services:
     build:
       context: ./app-backend/tile
       dockerfile: Dockerfile
-      
+
   backsplash:
     image: raster-foundry-backsplash:${GIT_COMMIT:-latest}
     build:
@@ -56,8 +56,6 @@ services:
 
   app-migrations:
     image: raster-foundry-app-migrations:${GIT_COMMIT:-latest}
-    environment:
-      - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
     build:
       context: ./app-backend
       dockerfile: Dockerfile
@@ -76,8 +74,6 @@ services:
       context: ./app-backend
       dockerfile: Dockerfile.build
     env_file: .env
-    environment:
-      - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./scratch/:/opt/raster-foundry/scratch/
@@ -86,6 +82,5 @@ services:
       - $HOME/.sbt:/root/.sbt
       - $HOME/.aws:/root/.aws:ro
       - $HOME/.gnupg:/root/.gnupg
-      - $HOME/.coursier-cache:/opt/raster-foundry/app-backend/.coursier-cache
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
