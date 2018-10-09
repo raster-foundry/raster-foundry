@@ -56,6 +56,8 @@ services:
 
   app-migrations:
     image: raster-foundry-app-migrations:${GIT_COMMIT:-latest}
+    environment:
+      - COURSIER_CACHE=/opt/raster-foundry/app-backend/.coursier-cache
     build:
       context: ./app-backend
       dockerfile: Dockerfile
@@ -79,10 +81,11 @@ services:
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./scratch/:/opt/raster-foundry/scratch/
-      - ./.sbt:/root/.sbt
       - ./.git:/opt/raster-foundry/.git
       - ./.bintray:/root/.bintray
+      - $HOME/.sbt:/root/.sbt
       - $HOME/.aws:/root/.aws:ro
       - $HOME/.gnupg:/root/.gnupg
+      - $HOME/.coursier-cache:/opt/raster-foundry/app-backend/.coursier-cache
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
