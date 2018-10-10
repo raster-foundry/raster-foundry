@@ -18,6 +18,7 @@
 - Added a global cache location for sharing artifacts across CI builds [\#4181](https://github.com/raster-foundry/raster-foundry/pull/4181), [\#4183](https://github.com/raster-foundry/raster-foundry/pull/4183), [\#4186](https://github.com/raster-foundry/raster-foundry/pull/4186)
 - Switched to using `sbt` to resolve dependencies [\#4191](https://github.com/raster-foundry/raster-foundry/pull/4191)
 - Users who are not admins of an organization can now correctly create teams and are automatically added to them [\#4147](https://github.com/raster-foundry/raster-foundry/pull/4171)
+- Added additional options for starting development server [\#4192](https://github.com/raster-foundry/raster-foundry/pull/4192)
 
 ### Deprecated
 
