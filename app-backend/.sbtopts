@@ -1,3 +1,5 @@
 -Dsbt.global.base=project/.sbtboot
 -Dsbt.boot.directory=project/.boot
 -Dsbt.ivy.home=project/.ivy
+-Dsbt.override.build.repos=true
+-Dsbt.repository.config=project/repositories

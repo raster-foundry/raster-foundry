@@ -1,0 +1,4 @@
+[repositories]
+  local
+  ivy-proxy-releases: http://host.docker.internal:8081/repository/ivy-public/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
+  maven-proxy-releases: http://host.docker.internal:8081/repository/maven-public/

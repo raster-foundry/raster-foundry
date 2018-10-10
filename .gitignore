@@ -108,3 +108,6 @@ dist/
 # Patch files
 *.patch
 scratch/
+
+# Nexus
+nexus-data
