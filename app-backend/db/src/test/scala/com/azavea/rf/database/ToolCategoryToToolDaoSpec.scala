@@ -10,6 +10,12 @@ import doobie.postgres._, doobie.postgres.implicits._
 import doobie.scalatest.imports._
 import org.scalatest._
 
-class ToolCategoryToToolDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
-  test("selection types") { check(ToolCategoryToToolDao.selectF.query[ToolCategoryToTool]) }
+class ToolCategoryToToolDaoSpec
+    extends FunSuite
+    with Matchers
+    with IOChecker
+    with DBTestConfig {
+  test("selection types") {
+    check(ToolCategoryToToolDao.selectF.query[ToolCategoryToTool])
+  }
 }

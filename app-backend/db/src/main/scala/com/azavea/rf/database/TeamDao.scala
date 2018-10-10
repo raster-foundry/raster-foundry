@@ -84,6 +84,20 @@ object TeamDao extends Dao[Team] {
       )
   }
 
+  def createWithRole(team: Team, user: User): ConnectionIO[Team] = {
+    for {
+      createdTeam <- create(team)
+      userGroupRoleCreate = UserGroupRole.Create(
+        user.id,
+        GroupType.Team,
+        team.id,
+        GroupRole.Admin
+      )
+      _ <- UserGroupRoleDao.create(
+        userGroupRoleCreate.toUserGroupRole(user, MembershipStatus.Approved))
+    } yield createdTeam
+  }
+
   def listOrgTeams(
       organizationId: UUID,
       page: PageRequest,

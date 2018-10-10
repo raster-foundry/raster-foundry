@@ -12,9 +12,11 @@ import org.scalatest._
 import io.circe._
 import io.circe.syntax._
 
-
-class ExportDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
+class ExportDaoSpec
+    extends FunSuite
+    with Matchers
+    with IOChecker
+    with DBTestConfig {
 
   test("types") { check(ExportDao.selectF.query[Export]) }
 }
-

@@ -16,8 +16,12 @@ import org.scalatest.prop.Checkers
 
 import geotrellis.vector.{MultiPolygon, Polygon, Point}
 
-
-class ShapeDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
+class ShapeDaoSpec
+    extends FunSuite
+    with Matchers
+    with Checkers
+    with DBTestConfig
+    with PropTestHelpers {
 
   test("list shapes") {
     ShapeDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
@@ -26,14 +30,19 @@ class ShapeDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
   test("insert shapes") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, shapes: Seq[Shape.Create]) => {
-          val shapeInsertIO = insertUserAndOrg(user, org) flatMap {
-            case (dbOrg: Organization, dbUser: User) => {
-              ShapeDao.insertShapes(shapes map {fixupShapeCreate(dbUser, _)}, dbUser)
+        (user: User.Create,
+         org: Organization.Create,
+         shapes: Seq[Shape.Create]) =>
+          {
+            val shapeInsertIO = insertUserAndOrg(user, org) flatMap {
+              case (dbOrg: Organization, dbUser: User) => {
+                ShapeDao.insertShapes(
+                  shapes map { fixupShapeCreate(dbUser, _) },
+                  dbUser)
+              }
             }
+            shapeInsertIO.transact(xa).unsafeRunSync.length == shapes.length
           }
-          shapeInsertIO.transact(xa).unsafeRunSync.length == shapes.length
-        }
       }
     }
   }
@@ -41,34 +50,47 @@ class ShapeDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
   test("update a shape") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, shapeInsert: Shape.Create, shapeUpdate: Shape.GeoJSON) => {
-          val shapeInsertWithUserAndOrgIO = insertUserAndOrg(user, org) flatMap {
-            case (dbOrg: Organization, dbUser: User) => {
-              ShapeDao.insertShapes(List(shapeInsert) map {fixupShapeCreate(dbUser, _)}, dbUser) map {
-                (shapes: Seq[Shape.GeoJSON]) => (shapes.head.toShape, dbUser, dbOrg)
-              }
-            }
-          }
-          val updateWithShapeIO = shapeInsertWithUserAndOrgIO flatMap {
-            case (insertShape: Shape, dbUser: User, dbOrg: Organization) => {
-              ShapeDao.updateShape(fixupShapeGeoJSON(dbUser, insertShape, shapeUpdate), insertShape.id, dbUser) flatMap {
-                (affectedRows: Int) => {
-                  ShapeDao.unsafeGetShapeById(insertShape.id) map { (affectedRows, _) }
+        (user: User.Create,
+         org: Organization.Create,
+         shapeInsert: Shape.Create,
+         shapeUpdate: Shape.GeoJSON) =>
+          {
+            val shapeInsertWithUserAndOrgIO = insertUserAndOrg(user, org) flatMap {
+              case (dbOrg: Organization, dbUser: User) => {
+                ShapeDao.insertShapes(List(shapeInsert) map {
+                  fixupShapeCreate(dbUser, _)
+                }, dbUser) map { (shapes: Seq[Shape.GeoJSON]) =>
+                  (shapes.head.toShape, dbUser, dbOrg)
                 }
               }
             }
-          }
+            val updateWithShapeIO = shapeInsertWithUserAndOrgIO flatMap {
+              case (insertShape: Shape, dbUser: User, dbOrg: Organization) => {
+                ShapeDao.updateShape(fixupShapeGeoJSON(dbUser,
+                                                       insertShape,
+                                                       shapeUpdate),
+                                     insertShape.id,
+                                     dbUser) flatMap { (affectedRows: Int) =>
+                  {
+                    ShapeDao.unsafeGetShapeById(insertShape.id) map {
+                      (affectedRows, _)
+                    }
+                  }
+                }
+              }
+            }
 
-          val (affectedRows, updatedShape) = updateWithShapeIO.transact(xa).unsafeRunSync
+            val (affectedRows, updatedShape) =
+              updateWithShapeIO.transact(xa).unsafeRunSync
 
-          val shapeUpdateShape = shapeUpdate.toShape
+            val shapeUpdateShape = shapeUpdate.toShape
 
-          affectedRows == 1 &&
+            affectedRows == 1 &&
             updatedShape.name == shapeUpdateShape.name &&
             updatedShape.description == shapeUpdateShape.description &&
             updatedShape.geometry == shapeUpdateShape.geometry
 
-        }
+          }
       }
     }
   }
@@ -76,25 +98,30 @@ class ShapeDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
   test("get a shape by id") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, shape: Shape.Create) => {
-          val shapeInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
-            case (dbOrg: Organization, dbUser: User) => {
-              ShapeDao.insertShapes(List(shape) map {fixupShapeCreate(dbUser, _)}, dbUser) map {
-                (_, dbUser)
+        (user: User.Create, org: Organization.Create, shape: Shape.Create) =>
+          {
+            val shapeInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
+              case (dbOrg: Organization, dbUser: User) => {
+                ShapeDao.insertShapes(List(shape) map {
+                  fixupShapeCreate(dbUser, _)
+                }, dbUser) map {
+                  (_, dbUser)
+                }
               }
             }
-          }
 
-          val shapeByIdIO = shapeInsertWithUserIO flatMap {
-            case (shapes: List[Shape], dbUser: User) => {
-              // safe because we just put it there -- errors here mean insert is broken
-              val insertedShape = shapes.head.toShape
-              ShapeDao.getShapeById(insertedShape.id) map { _.get == insertedShape }
+            val shapeByIdIO = shapeInsertWithUserIO flatMap {
+              case (shapes: List[Shape], dbUser: User) => {
+                // safe because we just put it there -- errors here mean insert is broken
+                val insertedShape = shapes.head.toShape
+                ShapeDao.getShapeById(insertedShape.id) map {
+                  _.get == insertedShape
+                }
+              }
             }
-          }
 
-          shapeByIdIO.transact(xa).unsafeRunSync
-        }
+            shapeByIdIO.transact(xa).unsafeRunSync
+          }
       }
     }
   }
