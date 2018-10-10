@@ -507,8 +507,8 @@ class ProjectDaoSpec
               projectDeletePermissionsIO.transact(xa).unsafeRunSync
 
             assert(
-              permsDeleted.length == 0,
-              "Deleting project permissions should get an empty list back.")
+              permsDeleted == 1,
+              "Deleting project permissions should give number of rows updated.")
             assert(
               permissionsBack.length == 0,
               "Getting back permissions after deletion should return an empty list.")

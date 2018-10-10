@@ -14,13 +14,12 @@ import doobie.util.invariant.InvalidObjectMapping
 import doobie.scalatest.imports._
 import org.scalatest._
 
-
 class CirceJsonbMetaSpec extends FunSpec with Matchers with DBTestConfig {
 
   case class JsonClass(id: Int, json: Json)
 
   val drop: Update0 =
-  sql"""
+    sql"""
     DROP TABLE IF EXISTS jsonb_test_table
   """.update
 
@@ -44,12 +43,11 @@ class CirceJsonbMetaSpec extends FunSpec with Matchers with DBTestConfig {
     val jsonIn = List(123, 234, 345).asJson
 
     val jsonOut = for {
-      _  <- createTable.run
-      _  <- insert(JsonClass(123, jsonIn)).run
+      _ <- createTable.run
+      _ <- insert(JsonClass(123, jsonIn)).run
       js <- select(123)
     } yield js
 
     jsonOut.transact(xa).unsafeRunSync shouldBe jsonIn
   }
 }
-

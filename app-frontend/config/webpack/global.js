@@ -20,6 +20,7 @@ const HERE_APP_ID = 'v88MqS5fQgxuHyIWJYX7';
 const HERE_APP_CODE = '5pn07ENomTHOap0u7nQSFA';
 
 const INTERCOM_APP_ID = '';
+const GOOGLE_TAG_ID = 'GTM-54XHDBP';
 
 const basemaps = JSON.stringify({
     layers: {
@@ -282,6 +283,7 @@ module.exports = function (_path) {
                 filename: 'index.html',
                 template: path.join(_path, 'src', 'tpl-index.html'),
                 heapLoad: DEVELOPMENT ? '2743344218' : '3505855839',
+                gtagId: GOOGLE_TAG_ID,
                 development: DEVELOPMENT,
                 APP_NAME: 'Raster Foundry'
             }),

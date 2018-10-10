@@ -17,7 +17,7 @@ const uploadProgress = 'CREATED,UPLOADING,UPLOADED,QUEUED,PROCESSING';
 class DatasourceDeleteModalController {
     constructor(
         $rootScope, $scope, $log,
-        uploadService, sceneService
+        uploadService, sceneService, datasourceService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);

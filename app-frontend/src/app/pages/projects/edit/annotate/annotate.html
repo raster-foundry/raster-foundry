@@ -69,7 +69,7 @@
     </div>
     <div class="content"
          ng-if="$ctrl.fetchingAnnotationsError">
-      <div class="alert alert-default">
+      <div class="alert alert-warning">
         <div class="alert-message">There was an error fetching your annotations</div>
         <button class="alert-action"
                 ng-click="$ctrl.retryFetches()"
@@ -79,10 +79,26 @@
       </div>
     </div>
     <div class="content"
-         ng-if="$ctrl.fetchingAnnotations">
+         ng-if="$ctrl.creatingAnnotationsError">
+      <div class="alert alert-warning">
+        <div class="alert-message">There was an error creating your annotations</div>
+      </div>
+    </div>
+    <div class="content"
+         ng-if="$ctrl.fetchingAnnotations"
+    >
       <div class="alert alert-default">
         <p class="">Loading Annotations
           <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.fetchingAnnotations}"></span>
+        </p>
+      </div>
+    </div>
+    <div class="content"
+         ng-if="$ctrl.creatingAnnotations"
+    >
+      <div class="alert alert-default">
+        <p>Creating Annotations
+          <span class="icon-load animate-spin"></span>
         </p>
       </div>
     </div>
@@ -92,7 +108,8 @@
                                   ng-attr-id="{{'anchor' + annotation.id}}"
                                   ng-click="$ctrl.doPanToAnnotation(annotation)"
                                   annotation-id="annotation.id"
-        </rf-annotate-sidebar-item>
+        ></rf-annotate-sidebar-item>
+
       </div>
   </div>
 </div>

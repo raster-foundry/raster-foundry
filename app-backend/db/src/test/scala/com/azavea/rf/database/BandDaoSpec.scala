@@ -13,7 +13,6 @@ import org.scalatest._
 
 import java.util.UUID
 
-
 /** We only need to test the list query, since insertion is checked when creating a
   * scene from a Scene.Create
   */
@@ -24,4 +23,3 @@ class BandDaoSpec extends FunSuite with Matchers with DBTestConfig {
     BandDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
   }
 }
-

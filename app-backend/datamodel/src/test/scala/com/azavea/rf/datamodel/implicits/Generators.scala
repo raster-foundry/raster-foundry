@@ -682,17 +682,17 @@ object Generators extends ArbitraryInstances {
       searchName <- possiblyEmptyStringGen
     } yield { SearchQueryParameters(Some(searchName)) }
 
-  private def objectAccessControlRuleGen: Gen[ObjectAccessControlRule] = for {
-    subjectType <- subjectTypeGen
-    subjectId <- uuidGen
-    actionType <- actionTypeGen
-  } yield { ObjectAccessControlRule(
-    subjectType,
-    subjectType match {
-      case SubjectType.All => None
-      case _ => Some(subjectId.toString)
-    },
-    actionType) }
+  private def objectAccessControlRuleGen: Gen[ObjectAccessControlRule] =
+    for {
+      subjectType <- subjectTypeGen
+      subjectId <- uuidGen
+      actionType <- actionTypeGen
+    } yield {
+      ObjectAccessControlRule(subjectType, subjectType match {
+        case SubjectType.All => None
+        case _               => Some(subjectId.toString)
+      }, actionType)
+    }
 
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
@@ -823,13 +823,15 @@ object Generators extends ArbitraryInstances {
     implicit def arbSearchQueryParameters: Arbitrary[SearchQueryParameters] =
       Arbitrary { searchQueryParametersGen }
 
-
-    implicit def arbObjectAccessControlRule : Arbitrary[ObjectAccessControlRule] =
+    implicit def arbObjectAccessControlRule
+      : Arbitrary[ObjectAccessControlRule] =
       Arbitrary { objectAccessControlRuleGen }
 
-    implicit def arbListObjectAccessControlRule: Arbitrary[List[ObjectAccessControlRule]] =
+    implicit def arbListObjectAccessControlRule
+      : Arbitrary[List[ObjectAccessControlRule]] =
       Arbitrary {
-        Gen.nonEmptyListOf[ObjectAccessControlRule](arbitrary[ObjectAccessControlRule])
+        Gen.nonEmptyListOf[ObjectAccessControlRule](
+          arbitrary[ObjectAccessControlRule])
       }
   }
 }

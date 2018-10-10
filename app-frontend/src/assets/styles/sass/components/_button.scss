@@ -362,6 +362,15 @@
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
+
+  .btn-group-danger-delete {
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+  }
+
+  .btn-group-danger-delete-disabled {
+    z-index: -1;
+  }
 }
 
 .btn-dropdown-transitional {

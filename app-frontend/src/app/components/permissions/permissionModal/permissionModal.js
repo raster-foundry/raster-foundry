@@ -75,8 +75,12 @@ class PermissionModalController {
                     target: 'PLATFORM',
                     id: 0,
                     applies: () =>
-                        !this.actionsBuffer.PLATFORM ||
-                        !Object.keys(this.actionsBuffer.PLATFORM).length
+                        this.authService.user.isSuperuser ||
+                        _.find(
+                            this.authService.getUserRoles(),
+                            (userRole) => userRole.groupType === 'PLATFORM' &&
+                                userRole.groupRole === 'ADMIN'
+                        )
                 }, {
                     name: 'An organization',
                     singular: 'organization',

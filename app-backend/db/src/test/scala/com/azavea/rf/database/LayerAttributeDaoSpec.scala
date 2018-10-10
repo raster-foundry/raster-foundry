@@ -14,25 +14,33 @@ import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
 
-
-class LayerAttributeDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig {
+class LayerAttributeDaoSpec
+    extends FunSuite
+    with Matchers
+    with Checkers
+    with DBTestConfig {
 
   test("list all layer ids") {
     LayerAttributeDao.layerIds.transact(xa).unsafeRunSync.length should be >= 0
   }
 
   test("get max zooms for layers") {
-    LayerAttributeDao.maxZoomsForLayers(Set.empty[String]).transact(xa).unsafeRunSync.length should be >= 0
+    LayerAttributeDao
+      .maxZoomsForLayers(Set.empty[String])
+      .transact(xa)
+      .unsafeRunSync
+      .length should be >= 0
   }
 
   // insertLayerAttribute
   test("insert a layer attribute") {
     check {
-      forAll {
-        (layerAttribute: LayerAttribute) => {
+      forAll { (layerAttribute: LayerAttribute) =>
+        {
           val layerId = layerAttribute.layerId
-          val attributeIO = LayerAttributeDao.insertLayerAttribute(layerAttribute) flatMap {
-            _ => LayerAttributeDao.unsafeGetAttribute(layerId, layerAttribute.name)
+          val attributeIO = LayerAttributeDao.insertLayerAttribute(
+            layerAttribute) flatMap { _ =>
+            LayerAttributeDao.unsafeGetAttribute(layerId, layerAttribute.name)
           }
           attributeIO.transact(xa).unsafeRunSync == layerAttribute
         }
@@ -43,14 +51,14 @@ class LayerAttributeDaoSpec extends FunSuite with Matchers with Checkers with DB
   // listAllAttributes
   test("list layers for an attribute name") {
     check {
-      forAll {
-        (layerAttributes: List[LayerAttribute]) => {
+      forAll { (layerAttributes: List[LayerAttribute]) =>
+        {
           val attributesIO = layerAttributes.traverse(
             (attr: LayerAttribute) => {
               LayerAttributeDao.insertLayerAttribute(attr)
             }
-          ) flatMap {
-            _ => LayerAttributeDao.listAllAttributes(layerAttributes.head.name)
+          ) flatMap { _ =>
+            LayerAttributeDao.listAllAttributes(layerAttributes.head.name)
           }
 
           attributesIO.transact(xa).unsafeRunSync.length ==
@@ -63,11 +71,12 @@ class LayerAttributeDaoSpec extends FunSuite with Matchers with Checkers with DB
   // layerExists
   test("check layer existence") {
     check {
-      forAll {
-        (layerAttribute: LayerAttribute) => {
+      forAll { (layerAttribute: LayerAttribute) =>
+        {
           val layerId = layerAttribute.layerId
-          val attributesIO = LayerAttributeDao.insertLayerAttribute(layerAttribute) flatMap {
-            _ => LayerAttributeDao.layerExists(layerId)
+          val attributesIO = LayerAttributeDao.insertLayerAttribute(
+            layerAttribute) flatMap { _ =>
+            LayerAttributeDao.layerExists(layerId)
           }
           attributesIO.transact(xa).unsafeRunSync
         }
@@ -75,4 +84,3 @@ class LayerAttributeDaoSpec extends FunSuite with Matchers with Checkers with DB
     }
   }
 }
-

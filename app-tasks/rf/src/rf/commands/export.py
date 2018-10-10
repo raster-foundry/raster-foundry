@@ -9,9 +9,8 @@ import boto3
 import click
 from rasterfoundry.api import API
 
-from rf.uploads.landsat8.io import get_tempdir
 from ..utils.exception_reporting import wrap_rollbar
-from ..utils.io import s3_upload_export, dropbox_upload_export, get_jwt
+from ..utils.io import s3_upload_export, dropbox_upload_export, get_jwt, get_tempdir
 logger = logging.getLogger(__name__)
 
 HOST = os.getenv('RF_HOST')
@@ -140,13 +139,13 @@ def post_process_exports(export_definition, tiff_directory):
     merge_command = ['gdal_merge.py', '-o', merged_tiff] + tiff_files
     warp_command = []
     if export_obj.exportOptions.mask is None:
-        warp_command = ['gdalwarp', '-co', 'COMPRESS=LZW',
+        warp_command = ['gdalwarp', '-co', 'COMPRESS=DEFLATE',
                         '-co', 'TILED=YES', merged_tiff, export_tiff]
     else:
-        warp_command = ['gdalwarp', '-co', 'COMPRESS=LZW',
+        warp_command = ['gdalwarp', '-co', 'COMPRESS=DEFLATE',
                         '-co', 'TILED=YES', '-crop_to_cutline',
                         '-cutline', temp_geojson, merged_tiff, export_tiff]
-    translate_command = ['gdal_translate', '-co', 'COMPRESS=LZW', '-co', 'TILED=YES', '-stats',
+    translate_command = ['gdal_translate', '-co', 'COMPRESS=DEFLATE', '-co', 'TILED=YES', '-stats',
                          export_tiff, translated_tiff]
     logger.info('Running Merge Command: %s', ' '.join(merge_command))
     subprocess.check_call(merge_command)

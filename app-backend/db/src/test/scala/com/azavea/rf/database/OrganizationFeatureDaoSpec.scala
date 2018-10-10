@@ -10,7 +10,11 @@ import doobie.scalatest.imports._
 
 import org.scalatest._
 
-class OrganizationFeatureDaoSpec extends FunSuite with Matchers with IOChecker with DBTestConfig {
+class OrganizationFeatureDaoSpec
+    extends FunSuite
+    with Matchers
+    with IOChecker
+    with DBTestConfig {
   test("selection types") {
     check(OrganizationFeatureDao.selectF.query[OrgFeatures])
   }

@@ -15,21 +15,35 @@ import org.scalatest.prop.Checkers
 
 import java.util.UUID
 
-class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
+class AnnotationDaoSpec
+    extends FunSuite
+    with Matchers
+    with Checkers
+    with DBTestConfig
+    with PropTestHelpers {
 
   test("insert annotations") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, project: Project.Create, annotations: List[Annotation.Create]) => {
-          val annotationsInsertIO = insertUserOrgProject(user, org, project) flatMap {
-            case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-              AnnotationDao.insertAnnotations(
-                annotations, dbProject.id, dbUser
-              )
+        (user: User.Create,
+         org: Organization.Create,
+         project: Project.Create,
+         annotations: List[Annotation.Create]) =>
+          {
+            val annotationsInsertIO = insertUserOrgProject(user, org, project) flatMap {
+              case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
+                AnnotationDao.insertAnnotations(
+                  annotations,
+                  dbProject.id,
+                  dbUser
+                )
+              }
             }
+            annotationsInsertIO
+              .transact(xa)
+              .unsafeRunSync
+              .length == annotations.length
           }
-          annotationsInsertIO.transact(xa).unsafeRunSync.length == annotations.length
-        }
       }
     }
   }
@@ -37,22 +51,29 @@ class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTest
   test("insert annotations created by a labeler") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, project: Project.Create, annotations: List[Annotation.Create], labelerC: User.Create) => {
-          val annotationsInsertIO = for {
-            oupInsert <- insertUserOrgProject(user, org, project)
-            (dbOrg, dbUser, dbProject) = oupInsert
-            labeler <- UserDao.create(labelerC)
-            insertedAnnotations <- AnnotationDao.insertAnnotations(
-              annotations.map(annotationCreate => annotationCreate.copy(labeledBy = Some(labeler.id))),
-              dbProject.id,
-              dbUser)
-          } yield (insertedAnnotations, labeler)
+        (user: User.Create,
+         org: Organization.Create,
+         project: Project.Create,
+         annotations: List[Annotation.Create],
+         labelerC: User.Create) =>
+          {
+            val annotationsInsertIO = for {
+              oupInsert <- insertUserOrgProject(user, org, project)
+              (dbOrg, dbUser, dbProject) = oupInsert
+              labeler <- UserDao.create(labelerC)
+              insertedAnnotations <- AnnotationDao.insertAnnotations(
+                annotations.map(annotationCreate =>
+                  annotationCreate.copy(labeledBy = Some(labeler.id))),
+                dbProject.id,
+                dbUser)
+            } yield (insertedAnnotations, labeler)
 
-          val (insertedAnnotations, labeler) = annotationsInsertIO.transact(xa).unsafeRunSync
+            val (insertedAnnotations, labeler) =
+              annotationsInsertIO.transact(xa).unsafeRunSync
 
-          insertedAnnotations.length == annotations.length &&
-          insertedAnnotations.flatMap(_.labeledBy).distinct(0) === labeler.id
-        }
+            insertedAnnotations.length == annotations.length &&
+            insertedAnnotations.flatMap(_.labeledBy).distinct(0) === labeler.id
+          }
       }
     }
   }
@@ -64,28 +85,39 @@ class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTest
   test("list annotations for project") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, project: Project.Create, annotations: List[Annotation.Create]) => {
-          val annotationsInsertWithUserAndProjectIO = insertUserOrgProject(user, org, project) flatMap {
-            case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-              AnnotationDao.insertAnnotations(
-                annotations, dbProject.id, dbUser
-              ) map {
-                (dbUser, dbProject, _)
+        (user: User.Create,
+         org: Organization.Create,
+         project: Project.Create,
+         annotations: List[Annotation.Create]) =>
+          {
+            val annotationsInsertWithUserAndProjectIO = insertUserOrgProject(
+              user,
+              org,
+              project) flatMap {
+              case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
+                AnnotationDao.insertAnnotations(
+                  annotations,
+                  dbProject.id,
+                  dbUser
+                ) map {
+                  (dbUser, dbProject, _)
+                }
               }
             }
-          }
-          val annotationsListForProjectIO = annotationsInsertWithUserAndProjectIO flatMap {
-            case (dbUser: User, dbProject: Project, annotations: List[Annotation]) => {
-              AnnotationDao.listAnnotationsForProject(dbProject.id) map {
-                (annotations, _)
+            val annotationsListForProjectIO = annotationsInsertWithUserAndProjectIO flatMap {
+              case (dbUser: User,
+                    dbProject: Project,
+                    annotations: List[Annotation]) => {
+                AnnotationDao.listAnnotationsForProject(dbProject.id) map {
+                  (annotations, _)
+                }
               }
             }
-          }
-          val (insertedAnnotations, annotationsForProject) =
-            annotationsListForProjectIO.transact(xa).unsafeRunSync
+            val (insertedAnnotations, annotationsForProject) =
+              annotationsListForProjectIO.transact(xa).unsafeRunSync
 
-          insertedAnnotations.toSet == annotationsForProject.toSet
-        }
+            insertedAnnotations.toSet == annotationsForProject.toSet
+          }
       }
     }
   }
@@ -93,38 +125,54 @@ class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTest
   test("update an annotation verified by a verifier") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, project: Project.Create,
-         annotationInsert: Annotation.Create, annotationUpdate: Annotation.Create,
-         verifierCreate: User.Create
-       ) => {
-          val annotationInsertWithUserAndProjectIO = for {
-            oupInsert <- insertUserOrgProject(user, org, project)
-            (dbOrg, dbUser, dbProject) = oupInsert
-            annotations <- AnnotationDao.insertAnnotations(List(annotationInsert), dbProject.id, dbUser)
-            verifier <- UserDao.create(verifierCreate)
-          } yield (annotations, dbUser, dbProject, verifier)
+        (user: User.Create,
+         org: Organization.Create,
+         project: Project.Create,
+         annotationInsert: Annotation.Create,
+         annotationUpdate: Annotation.Create,
+         verifierCreate: User.Create) =>
+          {
+            val annotationInsertWithUserAndProjectIO = for {
+              oupInsert <- insertUserOrgProject(user, org, project)
+              (dbOrg, dbUser, dbProject) = oupInsert
+              annotations <- AnnotationDao.insertAnnotations(
+                List(annotationInsert),
+                dbProject.id,
+                dbUser)
+              verifier <- UserDao.create(verifierCreate)
+            } yield (annotations, dbUser, dbProject, verifier)
 
-          val annotationsUpdateWithAnnotationIO = annotationInsertWithUserAndProjectIO flatMap {
-            case (annotations: List[Annotation], dbUser: User, dbProject: Project, verifier: User) => {
-              // safe because it's coming from inserting an annotation above
-              val firstAnnotation = annotations.head
-              val annotationId = firstAnnotation.id
-              val newAnnotation = annotationUpdate.copy(verifiedBy = Some(verifier.id)).toAnnotation(
-                dbProject.id, dbUser, firstAnnotation.annotationGroup
-              ).copy(id=annotationId)
-              AnnotationDao.updateAnnotation(newAnnotation, dbUser) flatMap {
-                (affectedRows: Int) => {
-                  AnnotationDao.unsafeGetAnnotationById(annotationId) map {
-                    (affectedRows, _, verifier)
-                  }
+            val annotationsUpdateWithAnnotationIO = annotationInsertWithUserAndProjectIO flatMap {
+              case (annotations: List[Annotation],
+                    dbUser: User,
+                    dbProject: Project,
+                    verifier: User) => {
+                // safe because it's coming from inserting an annotation above
+                val firstAnnotation = annotations.head
+                val annotationId = firstAnnotation.id
+                val newAnnotation = annotationUpdate
+                  .copy(verifiedBy = Some(verifier.id))
+                  .toAnnotation(
+                    dbProject.id,
+                    dbUser,
+                    firstAnnotation.annotationGroup
+                  )
+                  .copy(id = annotationId)
+                AnnotationDao.updateAnnotation(newAnnotation, dbUser) flatMap {
+                  (affectedRows: Int) =>
+                    {
+                      AnnotationDao.unsafeGetAnnotationById(annotationId) map {
+                        (affectedRows, _, verifier)
+                      }
+                    }
                 }
               }
             }
-          }
 
-          val (affectedRows, updatedAnnotation, verifier) = annotationsUpdateWithAnnotationIO.transact(xa).unsafeRunSync
+            val (affectedRows, updatedAnnotation, verifier) =
+              annotationsUpdateWithAnnotationIO.transact(xa).unsafeRunSync
 
-          affectedRows == 1 &&
+            affectedRows == 1 &&
             updatedAnnotation.label == annotationUpdate.label &&
             updatedAnnotation.description == annotationUpdate.description &&
             updatedAnnotation.machineGenerated == annotationUpdate.machineGenerated &&
@@ -132,7 +180,7 @@ class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTest
             updatedAnnotation.quality == annotationUpdate.quality &&
             updatedAnnotation.geometry == annotationUpdate.geometry &&
             updatedAnnotation.verifiedBy == Some(verifier.id)
-        }
+          }
       }
     }
   }
@@ -141,20 +189,28 @@ class AnnotationDaoSpec extends FunSuite with Matchers with Checkers with DBTest
     check {
       forAll {
 
-        (user: User.Create, org: Organization.Create, project: Project.Create, annotations: List[Annotation.Create]) => {
-          val annotationsLabelsIO = insertUserOrgProject(user, org, project) flatMap {
-            case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-              AnnotationDao.insertAnnotations(
-                annotations, dbProject.id, dbUser
-              ) flatMap {
-                _ => AnnotationDao.listProjectLabels(dbProject.id)
+        (user: User.Create,
+         org: Organization.Create,
+         project: Project.Create,
+         annotations: List[Annotation.Create]) =>
+          {
+            val annotationsLabelsIO = insertUserOrgProject(user, org, project) flatMap {
+              case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
+                AnnotationDao.insertAnnotations(
+                  annotations,
+                  dbProject.id,
+                  dbUser
+                ) flatMap { _ =>
+                  AnnotationDao.listProjectLabels(dbProject.id)
+                }
               }
             }
-          }
 
-          annotationsLabelsIO.transact(xa).unsafeRunSync.toSet ==
-            (annotations.toSet map { (annotation: Annotation.Create) => annotation.label })
-        }
+            annotationsLabelsIO.transact(xa).unsafeRunSync.toSet ==
+              (annotations.toSet map { (annotation: Annotation.Create) =>
+                annotation.label
+              })
+          }
       }
     }
   }
