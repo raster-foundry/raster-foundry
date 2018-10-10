@@ -3,6 +3,20 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.13.0](https://github.com/raster-foundry/raster-foundry/tree/1.13.0) (2018-10-10)
+
+### Added
 - Disable blog feed and intercom initialization using webpack override file [\#4162](https://github.com/raster-foundry/raster-foundry/pull/4162)
 - Add support for google tag manager via webpack overrides [\#4165](https://github.com/raster-foundry/raster-foundry/pull/4165)
 - Added support for additional/future Planet asset types [\#4184](https://github.com/raster-foundry/raster-foundry/pull/4184)
@@ -20,10 +34,6 @@
 - Users who are not admins of an organization can now correctly create teams and are automatically added to them [\#4147](https://github.com/raster-foundry/raster-foundry/pull/4171)
 - Added additional options for starting development server [\#4192](https://github.com/raster-foundry/raster-foundry/pull/4192)
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - Removed duplicate emails for repeated failures of the same upload [\#4130](https://github.com/raster-foundry/raster-foundry/pull/4130)
@@ -32,8 +42,6 @@
 - Fixed permission modal bug so that it won't hang after deleting permissions [\#4174](https://github.com/raster-foundry/raster-foundry/pull/4174)
 - Fixed issue with clamping imagery whose range was greater than, but included values between 0 and 255 [\#4177](https://github.com/raster-foundry/raster-foundry/pull/4177)
 - Included missing `pow` operation for decoding json representations of analyses [\#4179](https://github.com/raster-foundry/raster-foundry/pull/4140), [\#4155](https://github.com/raster-foundry/raster-foundry/issues/4155)
-
-### Security
 
 ## [1.12.0](https://github.com/raster-foundry/raster-foundry/tree/1.12.0) (2018-10-03)
 
