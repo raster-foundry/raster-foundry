@@ -38,7 +38,7 @@ class DatasourceItemController {
     checkSharing() {
         if (this.isOwner) {
             this.datasourceService.getPermissions(this.datasource.id).then(permissions => {
-                this.isShared = !!permissions.find(permission => permission.isActive);
+                this.isShared = permissions.length;
             });
         }
     }
