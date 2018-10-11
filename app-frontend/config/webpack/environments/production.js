@@ -14,7 +14,6 @@ module.exports = function (_path) {
 
     return {
         context: _path,
-        debug: false,
         devtool: 'eval',
         mode: 'production',
         output: {
@@ -27,10 +26,10 @@ module.exports = function (_path) {
                 verbose: true,
                 dry: false
             }),
-            new Manifest(path.join(_path + '/dist', 'manifest.json'), {
-                rootAssetPath: rootAssetPath,
-                ignorePaths: ['.DS_Store']
-            }),
+            // new Manifest(path.join(_path + '/dist', 'manifest.json'), {
+            //     rootAssetPath: rootAssetPath,
+            //     ignorePaths: ['.DS_Store']
+            // }),
             new webpack.DefinePlugin({
                 'process.env': {
                     NODE_ENV: JSON.stringify('production')
