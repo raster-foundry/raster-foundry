@@ -5,6 +5,7 @@
 ### Added
 
 ### Changed
+- Small text edit to the Imports page [\#4198](https://github.com/raster-foundry/raster-foundry/pull/4198)
 
 ### Deprecated
 
