@@ -22,7 +22,6 @@ module.exports = function (_path) {
             filename: '[name].[chunkhash].js'
         },
         plugins: [
-            new webpack.NoErrorsPlugin(),
             new CleanWebpackPlugin(['dist'], {
                 root: _path,
                 verbose: true,
