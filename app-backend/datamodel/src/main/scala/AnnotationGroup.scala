@@ -7,6 +7,9 @@ import io.circe._
 import io.circe.generic.JsonCodec
 
 @JsonCodec
+final case class LabelSummary(label: String, counts: Json)
+
+@JsonCodec
 final case class AnnotationGroup(id: UUID,
                                  name: String,
                                  createdAt: Timestamp,
