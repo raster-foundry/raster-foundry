@@ -1,4 +1,4 @@
-package com.azavea.rf.database.meta
+package com.rasterfoundry.database.meta
 
 import java.time.LocalDate
 import java.util.UUID

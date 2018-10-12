@@ -1,9 +1,9 @@
-package com.azavea.rf.batch
+package com.rasterfoundry.batch
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import com.azavea.rf.batch.util.conf.Config
-import com.azavea.rf.common.RollbarNotifier
+import com.rasterfoundry.batch.util.conf.Config
+import com.rasterfoundry.common.RollbarNotifier
 
 import scala.concurrent.ExecutionContextExecutor
 

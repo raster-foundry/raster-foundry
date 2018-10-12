@@ -1,7 +1,7 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
-import com.azavea.rf.tool._
-import com.azavea.rf.tile.image._
+import com.rasterfoundry.tool._
+import com.rasterfoundry.tile.image._
 
 import cats.syntax.either._
 import io.circe._

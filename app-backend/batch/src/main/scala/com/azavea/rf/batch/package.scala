@@ -1,4 +1,4 @@
-package com.azavea.rf
+package com.rasterfoundry
 
 import cats._
 import cats.data._

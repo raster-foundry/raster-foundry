@@ -1,3 +1,3 @@
-package com.azavea.rf.api
+package com.rasterfoundry.api
 
 package object feed

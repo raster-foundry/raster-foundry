@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.dropbox
+package com.rasterfoundry.batch.dropbox
 
 import java.io.{
   ByteArrayInputStream,

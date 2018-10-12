@@ -1,4 +1,4 @@
-package com.azavea.rf.batch
+package com.rasterfoundry.batch
 
 trait BatchSpec {
   def getJson(resource: String): String = {

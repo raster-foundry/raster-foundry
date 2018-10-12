@@ -1,10 +1,10 @@
-package com.azavea.rf.backsplash
+package com.rasterfoundry.backsplash
 
-import com.azavea.rf.backsplash.auth.Authenticators
-import com.azavea.rf.backsplash.error._
-import com.azavea.rf.backsplash.nodes._
-import com.azavea.rf.backsplash.services.{HealthCheckService, MosaicService}
-import com.azavea.rf.backsplash.analysis.AnalysisService
+import com.rasterfoundry.backsplash.auth.Authenticators
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.nodes._
+import com.rasterfoundry.backsplash.services.{HealthCheckService, MosaicService}
+import com.rasterfoundry.backsplash.analysis.AnalysisService
 import doobie.util.analysis.Analysis
 
 import cats._

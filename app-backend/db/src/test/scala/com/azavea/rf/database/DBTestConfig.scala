@@ -1,6 +1,6 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import doobie.hikari._, doobie.hikari.implicits._

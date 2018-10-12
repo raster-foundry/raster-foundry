@@ -1,9 +1,9 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.sql.Timestamp
 
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel.{
   ToolRun,
   User,
   ObjectType,
@@ -22,7 +22,7 @@ import java.util.UUID
 
 import scala.concurrent.Future
 
-import com.azavea.rf.datamodel.Tool
+import com.rasterfoundry.datamodel.Tool
 
 object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
   val tableName = "tools"

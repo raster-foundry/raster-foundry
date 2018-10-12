@@ -1,4 +1,4 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import doobie._
 

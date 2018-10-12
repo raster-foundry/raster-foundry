@@ -1,4 +1,4 @@
-package com.azavea.rf.common.cache.kryo
+package com.rasterfoundry.common.cache.kryo
 
 import com.twitter.chill.{KryoPool, ScalaKryoInstantiator}
 import net.spy.memcached.CachedData

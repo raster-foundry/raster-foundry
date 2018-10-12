@@ -1,6 +1,6 @@
-package com.azavea.rf.database.meta
+package com.rasterfoundry.database.meta
 
-import com.azavea.rf.datamodel.SingleBandOptions
+import com.rasterfoundry.datamodel.SingleBandOptions
 
 import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO

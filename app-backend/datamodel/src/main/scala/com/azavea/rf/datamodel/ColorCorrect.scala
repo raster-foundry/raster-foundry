@@ -1,6 +1,6 @@
-package com.azavea.rf.datamodel
+package com.rasterfoundry.datamodel
 
-import com.azavea.rf.datamodel.color._
+import com.rasterfoundry.datamodel.color._
 import io.circe.generic.JsonCodec
 import geotrellis.raster._
 import geotrellis.raster.equalization.HistogramEqualization

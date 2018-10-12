@@ -1,15 +1,15 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.sql.Timestamp
 import java.util.UUID
 
 import cats.data._
 import cats.implicits._
-import com.azavea.rf.common.AWSBatch
-import com.azavea.rf.database.util.Page
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.color._
+import com.rasterfoundry.common.AWSBatch
+import com.rasterfoundry.database.util.Page
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.color._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._
 import doobie.implicits._

@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.landsat8
+package com.rasterfoundry.batch.landsat8
 
 import java.io.File
 import java.time.{LocalDate, ZoneOffset}
@@ -6,13 +6,13 @@ import java.util.UUID
 
 import cats.effect.IO
 import cats.implicits._
-import com.azavea.rf.batch.Job
-import com.azavea.rf.batch.util.{S3, isUriExists}
-import com.azavea.rf.common.utils.AntimeridianUtils
-import com.azavea.rf.database._
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.batch.Job
+import com.rasterfoundry.batch.util.{S3, isUriExists}
+import com.rasterfoundry.common.utils.AntimeridianUtils
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel._
 import com.github.tototoshi.csv._
 import doobie.free.connection.ConnectionIO
 import doobie.implicits._

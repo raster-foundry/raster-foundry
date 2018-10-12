@@ -1,16 +1,16 @@
-package com.azavea.rf.tile.image
+package com.rasterfoundry.tile.image
 
-import com.azavea.rf.tile._
-import com.azavea.rf.database.{SceneToProjectDao, SceneDao}
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{
+import com.rasterfoundry.tile._
+import com.rasterfoundry.database.{SceneToProjectDao, SceneDao}
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel.{
   ColorCorrect,
   MosaicDefinition,
   SceneType,
   WhiteBalance
 }
-import com.azavea.rf.common.cache.CacheClient
+import com.rasterfoundry.common.cache.CacheClient
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.spark._
@@ -28,18 +28,18 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-import com.azavea.rf.common.utils.{
+import com.rasterfoundry.common.utils.{
   CogUtils,
   CryptoUtils,
   RangeReaderUtils,
   TileUtils
 }
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.database.util.RFTransactor
 
 import scala.concurrent._
 import scala.concurrent.duration._
 import geotrellis.spark.io.postgres.PostgresAttributeStore
-import com.azavea.rf.tile.AkkaSystem
+import com.rasterfoundry.tile.AkkaSystem
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 

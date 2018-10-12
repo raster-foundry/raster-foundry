@@ -1,4 +1,4 @@
-package com.azavea.rf.database.notification
+package com.rasterfoundry.database.notification
 
 sealed abstract class MessageType(val repr: String) {
   override def toString = repr

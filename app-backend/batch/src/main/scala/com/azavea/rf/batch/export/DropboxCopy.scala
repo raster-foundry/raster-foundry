@@ -1,11 +1,11 @@
-package com.azavea.rf.batch.export
+package com.rasterfoundry.batch.export
 
 import java.io.InputStream
 import java.net.URI
 
 import com.amazonaws.services.s3.model.{ListObjectsRequest, ObjectListing}
-import com.azavea.rf.batch.Job
-import com.azavea.rf.batch.util.S3
+import com.rasterfoundry.batch.Job
+import com.rasterfoundry.batch.util.S3
 import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
 
 import scala.annotation.tailrec

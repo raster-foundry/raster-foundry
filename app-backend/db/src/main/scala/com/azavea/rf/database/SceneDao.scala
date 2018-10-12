@@ -1,13 +1,13 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 
 import cats.implicits._
-import com.azavea.rf.common.AWSBatch
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.color._
-import com.azavea.rf.datamodel.{Scene, User, _}
+import com.rasterfoundry.common.AWSBatch
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel.color._
+import com.rasterfoundry.datamodel.{Scene, User, _}
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._

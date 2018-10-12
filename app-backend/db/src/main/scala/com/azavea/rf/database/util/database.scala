@@ -1,4 +1,4 @@
-package com.azavea.rf.database.util
+package com.rasterfoundry.database.util
 
 import cats.effect.IO
 import doobie.hikari.HikariTransactor

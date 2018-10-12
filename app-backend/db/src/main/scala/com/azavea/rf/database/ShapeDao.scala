@@ -1,9 +1,9 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.sql.Timestamp
 
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{Shape, User, ObjectType, GroupType, ActionType}
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel.{Shape, User, ObjectType, GroupType, ActionType}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._

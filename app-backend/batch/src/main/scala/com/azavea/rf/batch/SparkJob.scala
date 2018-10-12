@@ -1,4 +1,4 @@
-package com.azavea.rf.batch
+package com.rasterfoundry.batch
 
 import org.apache.spark._
 trait SparkJob {

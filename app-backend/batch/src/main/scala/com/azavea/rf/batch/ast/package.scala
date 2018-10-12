@@ -1,12 +1,12 @@
-package com.azavea.rf.batch
+package com.rasterfoundry.batch
 
 import java.util.UUID
 
 import cats.effect.IO
 import com.azavea.maml.eval._
 import com.azavea.maml.spark.eval._
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.maml._
+import com.rasterfoundry.tool.ast._
+import com.rasterfoundry.tool.maml._
 import doobie.Transactor
 import geotrellis.raster._
 import geotrellis.spark._

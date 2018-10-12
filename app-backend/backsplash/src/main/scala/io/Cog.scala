@@ -1,11 +1,11 @@
-package com.azavea.rf.backsplash.io
+package com.rasterfoundry.backsplash.io
 
 import cats.data.OptionT
 import cats.effect.{IO, Timer}
 import cats.implicits._
-import com.azavea.rf.backsplash.error._
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.datamodel.{MosaicDefinition, SingleBandOptions}
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.datamodel.{MosaicDefinition, SingleBandOptions}
 import com.rf.azavea.backsplash.Color
 import geotrellis.raster.{Raster, io => _, _}
 import geotrellis.server.core.cog.CogUtils

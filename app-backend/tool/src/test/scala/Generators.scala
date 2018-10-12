@@ -1,7 +1,7 @@
-package com.azavea.rf.tool
+package com.rasterfoundry.tool
 
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.eval._
+import com.rasterfoundry.tool.ast._
+import com.rasterfoundry.tool.eval._
 
 import org.scalacheck._
 import org.scalacheck.Gen._

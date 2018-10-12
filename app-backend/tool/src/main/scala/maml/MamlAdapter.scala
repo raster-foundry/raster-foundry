@@ -1,6 +1,6 @@
-package com.azavea.rf.tool.maml
+package com.rasterfoundry.tool.maml
 
-import com.azavea.rf.tool.ast._
+import com.rasterfoundry.tool.ast._
 
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{ClassMap => MamlClassMap, NeighborhoodConversion}

@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel
+package com.rasterfoundry.datamodel
 
 import geotrellis.vector.{Geometry, Projected}
 

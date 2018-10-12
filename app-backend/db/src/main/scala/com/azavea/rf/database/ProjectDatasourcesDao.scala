@@ -1,9 +1,9 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.util.Page
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.{
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.Page
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.{
   Scene,
   SceneFilterFields,
   SceneStatusFields,

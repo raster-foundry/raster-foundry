@@ -1,5 +1,5 @@
-package com.azavea.rf.datamodel
+package com.rasterfoundry.datamodel
 
-import com.azavea.rf.JsonCodecs
+import com.rasterfoundry.JsonCodecs
 
 package object stac extends JsonCodecs {}

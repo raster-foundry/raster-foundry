@@ -1,7 +1,7 @@
-package com.azavea.rf
+package com.rasterfoundry
 
-import com.azavea.rf.database.meta.RFMeta
-import com.azavea.rf.database.filter.Filterables
+import com.rasterfoundry.database.meta.RFMeta
+import com.rasterfoundry.database.filter.Filterables
 
 package object database {
   object Implicits extends RFMeta with Filterables

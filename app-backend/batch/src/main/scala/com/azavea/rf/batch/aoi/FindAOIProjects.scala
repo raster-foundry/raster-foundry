@@ -1,12 +1,12 @@
-package com.azavea.rf.batch.aoi
+package com.rasterfoundry.batch.aoi
 
 import java.util.UUID
 
 import cats.effect.IO
 import cats.syntax.option._
-import com.azavea.rf.batch.Job
-import com.azavea.rf.common.AWSBatch
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.batch.Job
+import com.rasterfoundry.common.AWSBatch
+import com.rasterfoundry.database.util.RFTransactor
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.postgres.implicits._

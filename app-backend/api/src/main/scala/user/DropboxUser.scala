@@ -1,4 +1,4 @@
-package com.azavea.rf.api.user
+package com.rasterfoundry.api.user
 
 import java.util.Base64
 

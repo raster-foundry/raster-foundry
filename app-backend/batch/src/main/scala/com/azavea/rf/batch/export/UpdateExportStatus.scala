@@ -1,11 +1,11 @@
-package com.azavea.rf.batch.export
+package com.rasterfoundry.batch.export
 
-import com.azavea.rf.batch.Job
-import com.azavea.rf.common.notification.Email.NotificationEmail
-import com.azavea.rf.database._
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.batch.Job
+import com.rasterfoundry.common.notification.Email.NotificationEmail
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel._
 
 import com.typesafe.scalalogging.LazyLogging
 import cats.effect.IO

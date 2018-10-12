@@ -1,10 +1,10 @@
-package com.azavea.rf.datamodel
+package com.rasterfoundry.datamodel
 
 import java.util.UUID
 
 import cats.implicits._
-import com.azavea.rf.bridge._
-import com.azavea.rf.tool.ast.MapAlgebraAST
+import com.rasterfoundry.bridge._
+import com.rasterfoundry.tool.ast.MapAlgebraAST
 import geotrellis.vector.MultiPolygon
 import io.circe._
 import io.circe.generic.JsonCodec

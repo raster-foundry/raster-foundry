@@ -1,4 +1,4 @@
-package com.azavea.rf.common.utils
+package com.rasterfoundry.common.utils
 
 import java.security.MessageDigest
 

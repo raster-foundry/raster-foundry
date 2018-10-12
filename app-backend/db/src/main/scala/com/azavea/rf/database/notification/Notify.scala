@@ -1,10 +1,10 @@
-package com.azavea.rf.database.notification
+package com.rasterfoundry.database.notification
 
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.common.notification.Email.NotificationEmail
-import com.azavea.rf.database._
-import com.azavea.rf.database.notification.templates._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.common.notification.Email.NotificationEmail
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.notification.templates._
+import com.rasterfoundry.datamodel._
 
 import cats.implicits._
 import doobie.ConnectionIO

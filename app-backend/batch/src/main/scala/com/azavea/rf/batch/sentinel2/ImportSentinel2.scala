@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.sentinel2
+package com.rasterfoundry.batch.sentinel2
 
 import java.net.URI
 import java.security.InvalidParameterException
@@ -8,14 +8,14 @@ import java.util.concurrent.Executors
 
 import cats.effect.IO
 import cats.implicits._
-import com.azavea.rf.batch.Job
-import com.azavea.rf.batch.util._
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.common.utils.AntimeridianUtils
-import com.azavea.rf.database._
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.batch.Job
+import com.rasterfoundry.batch.util._
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.common.utils.AntimeridianUtils
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import io.circe._

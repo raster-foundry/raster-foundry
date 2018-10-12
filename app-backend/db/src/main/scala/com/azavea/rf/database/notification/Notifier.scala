@@ -1,7 +1,7 @@
-package com.azavea.rf.database.notification
+package com.rasterfoundry.database.notification
 
-import com.azavea.rf.database.notification.templates.EmailData
-import com.azavea.rf.datamodel.User
+import com.rasterfoundry.database.notification.templates.EmailData
+import com.rasterfoundry.datamodel.User
 
 import doobie.ConnectionIO
 

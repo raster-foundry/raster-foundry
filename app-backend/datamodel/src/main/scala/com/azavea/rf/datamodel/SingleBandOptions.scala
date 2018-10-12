@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel
+package com.rasterfoundry.datamodel
 
 import io.circe.Json
 import io.circe.generic.JsonCodec

@@ -1,10 +1,10 @@
-package com.azavea.rf.database.notification.templates
+package com.rasterfoundry.database.notification.templates
 
 import java.util.UUID
 
 import cats.implicits._
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel._
 import doobie.ConnectionIO
 import doobie.implicits._
 

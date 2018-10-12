@@ -1,15 +1,15 @@
-package com.azavea.rf.batch.stac
+package com.rasterfoundry.batch.stac
 
 import java.net.URI
 import java.sql.Timestamp
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.batch.util._
-import com.azavea.rf.batch.util.conf.Config
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.database.{SceneDao, UserDao}
-import com.azavea.rf.datamodel.{stac, _}
+import com.rasterfoundry.batch.util._
+import com.rasterfoundry.batch.util.conf.Config
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.database.{SceneDao, UserDao}
+import com.rasterfoundry.datamodel.{stac, _}
 import com.typesafe.scalalogging.LazyLogging
 import doobie.ConnectionIO
 import doobie.implicits._

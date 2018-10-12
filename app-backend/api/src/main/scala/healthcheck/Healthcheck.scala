@@ -1,6 +1,6 @@
-package com.azavea.rf.api.healthcheck
+package com.rasterfoundry.api.healthcheck
 
-import com.azavea.rf.api.Codec._
+import com.rasterfoundry.api.Codec._
 
 import doobie._
 import doobie.implicits._

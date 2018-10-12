@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.export
+package com.rasterfoundry.batch.export
 
 import java.net.URI
 

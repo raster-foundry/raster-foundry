@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.ast
+package com.rasterfoundry.batch.ast
 
 import java.util.UUID
 
@@ -9,11 +9,11 @@ import cats.implicits._
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
 import com.azavea.maml.spark.ast._
-import com.azavea.rf.common.utils.CogUtils
-import com.azavea.rf.database.SceneToProjectDao
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.datamodel._
-import com.azavea.rf.tool.maml._
+import com.rasterfoundry.common.utils.CogUtils
+import com.rasterfoundry.database.SceneToProjectDao
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.tool.maml._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Transactor
 import doobie.implicits._

@@ -1,8 +1,8 @@
-package com.azavea.rf.batch.util.conf
+package com.rasterfoundry.batch.util.conf
 
 import java.util.UUID
 
-import com.azavea.rf.datamodel.Band
+import com.rasterfoundry.datamodel.Band
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig}
 import com.typesafe.config.ConfigFactory

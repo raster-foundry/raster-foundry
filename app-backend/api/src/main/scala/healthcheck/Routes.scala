@@ -1,11 +1,11 @@
-package com.azavea.rf.api.healthcheck
+package com.rasterfoundry.api.healthcheck
 
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server._
 import cats.effect.IO
-import com.azavea.rf.api.Codec._
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.RollbarNotifier
+import com.rasterfoundry.api.Codec._
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.RollbarNotifier
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.util.transactor.Transactor
 import org.postgresql.util.PSQLException

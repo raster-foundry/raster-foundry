@@ -1,9 +1,9 @@
-package com.azavea.rf.api.tooltag
+package com.rasterfoundry.api.tooltag
 
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database.ToolTagDao
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.{CommonHandlers, UserErrorHandler}
+import com.rasterfoundry.database.ToolTagDao
+import com.rasterfoundry.datamodel._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
@@ -14,7 +14,7 @@ import scala.util.{Failure, Success}
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.database.filter.Filterables._
+import com.rasterfoundry.database.filter.Filterables._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._

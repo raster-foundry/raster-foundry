@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel.stac
+package com.rasterfoundry.datamodel.stac
 
 import io.circe._
 import io.circe.generic.JsonCodec

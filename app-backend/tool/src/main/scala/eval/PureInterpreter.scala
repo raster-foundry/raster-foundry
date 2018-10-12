@@ -1,7 +1,7 @@
-package com.azavea.rf.tool.eval
+package com.rasterfoundry.tool.eval
 
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.maml._
+import com.rasterfoundry.tool.ast._
+import com.rasterfoundry.tool.maml._
 
 import com.azavea.maml.eval._
 import cats._

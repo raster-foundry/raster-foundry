@@ -1,11 +1,11 @@
-package com.azavea.rf.batch.cogMetadata
+package com.rasterfoundry.batch.cogMetadata
 
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.common.utils.CogUtils
-import com.azavea.rf.datamodel.{LayerAttribute, Scene, SceneType}
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.{LayerAttributeDao, SceneDao}
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.common.utils.CogUtils
+import com.rasterfoundry.datamodel.{LayerAttribute, Scene, SceneType}
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.{LayerAttributeDao, SceneDao}
 
 import cats.data._
 import cats.effect.IO

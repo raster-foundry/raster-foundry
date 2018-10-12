@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel.stac
+package com.rasterfoundry.datamodel.stac
 
 import java.sql.Timestamp
 

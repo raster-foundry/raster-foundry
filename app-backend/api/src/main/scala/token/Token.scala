@@ -1,4 +1,4 @@
-package com.azavea.rf.api.token
+package com.rasterfoundry.api.token
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshalling.Marshal
@@ -7,8 +7,8 @@ import akka.http.scaladsl.model.Uri.{Path, Query}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{Authorization, GenericHttpCredentials}
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import com.azavea.rf.api.utils.{Auth0Exception, Config, ManagementBearerToken}
-import com.azavea.rf.datamodel.User
+import com.rasterfoundry.api.utils.{Auth0Exception, Config, ManagementBearerToken}
+import com.rasterfoundry.datamodel.User
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import de.heikoseeberger.akkahttpcirce._
 import io.circe.generic.JsonCodec
@@ -35,7 +35,7 @@ final case class RefreshTokenRequest(grant_type: String,
 
 object TokenService extends Config with ErrorAccumulatingCirceSupport {
 
-  import com.azavea.rf.api.AkkaSystem._
+  import com.rasterfoundry.api.AkkaSystem._
 
   val uri = Uri(s"https://$auth0Domain/api/v2/device-credentials")
 

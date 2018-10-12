@@ -1,4 +1,4 @@
-package com.azavea.rf.backsplash.nodes
+package com.rasterfoundry.backsplash.nodes
 
 import java.util.UUID
 
@@ -6,9 +6,9 @@ import cats.data.{NonEmptyList => NEL}
 import cats.effect.{IO, Timer}
 import cats.implicits._
 import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
-import com.azavea.rf.backsplash.io.Mosaic
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.datamodel.SingleBandOptions
+import com.rasterfoundry.backsplash.io.Mosaic
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.datamodel.SingleBandOptions
 import geotrellis.raster.io.json.HistogramJsonFormats
 import geotrellis.raster.{Raster, io => _, _}
 import geotrellis.server.core.cog.CogUtils
@@ -34,7 +34,7 @@ final case class ProjectNode(
 object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
 
   // imported here so import ...backsplash.nodes._ doesn't import a transactor
-  import com.azavea.rf.database.util.RFTransactor.xa
+  import com.rasterfoundry.database.util.RFTransactor.xa
 
   val store = PostgresAttributeStore()
 

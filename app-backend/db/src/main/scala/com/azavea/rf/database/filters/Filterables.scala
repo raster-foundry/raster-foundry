@@ -1,11 +1,11 @@
-package com.azavea.rf.database.filter
+package com.rasterfoundry.database.filter
 
 import java.util.UUID
 
 import cats.implicits._
-import com.azavea.rf.database.Filterable
-import com.azavea.rf.database.meta.RFMeta
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.database.Filterable
+import com.rasterfoundry.database.meta.RFMeta
+import com.rasterfoundry.datamodel._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Fragments.in
 import doobie._

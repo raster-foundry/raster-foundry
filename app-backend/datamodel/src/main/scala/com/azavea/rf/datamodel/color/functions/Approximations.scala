@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel.color.functions
+package com.rasterfoundry.datamodel.color.functions
 
 /**
   * Not very good pow and exponent approximations

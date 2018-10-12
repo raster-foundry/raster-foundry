@@ -1,4 +1,4 @@
-package com.azavea.rf.database.util
+package com.rasterfoundry.database.util
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._

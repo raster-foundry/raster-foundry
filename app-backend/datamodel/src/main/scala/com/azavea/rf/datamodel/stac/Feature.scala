@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel.stac
+package com.rasterfoundry.datamodel.stac
 
 import geotrellis.vector.{Geometry, Projected}
 import io.circe.generic.JsonCodec

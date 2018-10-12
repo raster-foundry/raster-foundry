@@ -2,7 +2,7 @@ name := "rf-batch"
 
 assemblyJarName in assembly := "rf-batch.jar"
 
-mainClass in (Compile, assembly) := Some("com.azavea.rf.batch.Main")
+mainClass in (Compile, assembly) := Some("com.rasterfoundry.batch.Main")
 
 javaOptions += "-Xmx2G"
 

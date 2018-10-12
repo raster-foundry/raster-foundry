@@ -1,6 +1,6 @@
-package com.azavea.rf.database.meta
+package com.rasterfoundry.database.meta
 
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.datamodel._
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._

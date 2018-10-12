@@ -1,6 +1,6 @@
-package com.azavea.rf.common.notification.Email
+package com.rasterfoundry.common.notification.Email
 
-import com.azavea.rf.common.RollbarNotifier
+import com.rasterfoundry.common.RollbarNotifier
 
 import org.apache.commons.mail._
 import org.apache.commons.mail.Email._

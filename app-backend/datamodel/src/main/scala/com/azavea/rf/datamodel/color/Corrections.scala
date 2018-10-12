@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel.color
+package com.rasterfoundry.datamodel.color
 
 import io.circe.generic.JsonCodec
 

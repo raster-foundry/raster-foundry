@@ -1,4 +1,4 @@
-package com.azavea.rf.backsplash.services
+package com.rasterfoundry.backsplash.services
 
 import cats.effect.Effect
 import io.circe.Json

@@ -1,3 +1,3 @@
-package com.azavea.rf.database.notification.templates
+package com.rasterfoundry.database.notification.templates
 
 package object templates {}

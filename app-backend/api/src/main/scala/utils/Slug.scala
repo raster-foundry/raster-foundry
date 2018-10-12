@@ -1,4 +1,4 @@
-package com.azavea.rf.api.utils
+package com.rasterfoundry.api.utils
 
 /** Standardizes strings, removes spaces, etc converts to lowercase */
 object Slug {

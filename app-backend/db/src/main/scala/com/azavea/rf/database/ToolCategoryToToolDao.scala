@@ -1,7 +1,7 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.ToolCategoryToTool
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel.ToolCategoryToTool
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._

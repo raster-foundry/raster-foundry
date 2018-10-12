@@ -1,6 +1,6 @@
-package com.azavea.rf.backsplash.parameters
+package com.rasterfoundry.backsplash.parameters
 
-import com.azavea.rf.backsplash.nodes.ProjectNode
+import com.rasterfoundry.backsplash.nodes.ProjectNode
 
 import scala.util.Try
 

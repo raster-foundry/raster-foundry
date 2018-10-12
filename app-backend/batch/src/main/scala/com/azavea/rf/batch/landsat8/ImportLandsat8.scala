@@ -1,13 +1,13 @@
-package com.azavea.rf.batch.landsat8
+package com.rasterfoundry.batch.landsat8
 
 import java.time.{LocalDate, ZoneOffset}
 import java.util.UUID
 
 import cats.effect.IO
-import com.azavea.rf.batch.Job
-import com.azavea.rf.batch.util._
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.batch.Job
+import com.rasterfoundry.batch.util._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel._
 import doobie.util.transactor.Transactor
 import jp.ne.opt.chronoscala.Imports._
 
@@ -15,7 +15,7 @@ import scala.util.{Failure, Success, Try}
 
 @deprecated(
   message =
-    "Use com.azavea.rf.batch.landsat8.airflow.ImportLandsat8C1 instead, as USGS changes LC8 storage rules: https://landsat.usgs.gov/landsat-collections",
+    "Use com.rasterfoundry.batch.landsat8.airflow.ImportLandsat8C1 instead, as USGS changes LC8 storage rules: https://landsat.usgs.gov/landsat-collections",
   since = "https://github.com/azavea/raster-foundry/pull/1821"
 )
 final case class ImportLandsat8(

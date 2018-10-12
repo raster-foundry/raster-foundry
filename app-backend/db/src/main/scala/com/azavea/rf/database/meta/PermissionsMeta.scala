@@ -1,6 +1,6 @@
-package com.azavea.rf.database.meta
+package com.rasterfoundry.database.meta
 
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.datamodel._
 import cats._
 import cats.effect.IO
 import cats.implicits._

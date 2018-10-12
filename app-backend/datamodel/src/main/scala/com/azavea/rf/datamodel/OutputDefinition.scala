@@ -1,6 +1,6 @@
-package com.azavea.rf.datamodel
+package com.rasterfoundry.datamodel
 
-import com.azavea.rf.bridge._
+import com.rasterfoundry.bridge._
 import geotrellis.proj4.CRS
 import io.circe.generic.JsonCodec
 

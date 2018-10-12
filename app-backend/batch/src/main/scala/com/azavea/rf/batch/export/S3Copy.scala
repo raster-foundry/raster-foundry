@@ -1,9 +1,9 @@
-package com.azavea.rf.batch.export
+package com.rasterfoundry.batch.export
 
 import java.net.URI
 
-import com.azavea.rf.batch.Job
-import com.azavea.rf.batch.util.S3
+import com.rasterfoundry.batch.Job
+import com.rasterfoundry.batch.util.S3
 
 final case class S3Copy(source: URI, target: URI, region: Option[String] = None)
     extends Job {

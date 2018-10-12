@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel
+package com.rasterfoundry.datamodel
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._

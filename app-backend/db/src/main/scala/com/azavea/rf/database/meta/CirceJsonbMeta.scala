@@ -1,4 +1,4 @@
-package com.azavea.rf.database.meta
+package com.rasterfoundry.database.meta
 
 import doobie._
 import doobie.implicits._
@@ -9,12 +9,12 @@ import cats._
 import cats.data._
 import cats.effect.IO
 import cats.syntax.either._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.datamodel._
 import io.circe._
 import io.circe.syntax._
 import org.postgresql.util.PGobject
-import com.azavea.rf.datamodel.ColorCorrect._
-import com.azavea.rf.datamodel.Credential
+import com.rasterfoundry.datamodel.ColorCorrect._
+import com.rasterfoundry.datamodel.Credential
 import java.net.URI
 
 trait CirceJsonbMeta {

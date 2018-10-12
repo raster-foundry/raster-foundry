@@ -1,9 +1,9 @@
 package com.rf.azavea.backsplash
 
 import cats.data.{NonEmptyList => NEL}
-import com.azavea.rf.backsplash.error._
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.datamodel.{ColorRampMosaic, SingleBandOptions}
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.datamodel.{ColorRampMosaic, SingleBandOptions}
 import geotrellis.raster.histogram._
 import geotrellis.raster.{Raster, io => _, _}
 import geotrellis.spark.{io => _}

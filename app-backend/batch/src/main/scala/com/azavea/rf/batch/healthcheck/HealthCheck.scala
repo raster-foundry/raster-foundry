@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.healthcheck
+package com.rasterfoundry.batch.healthcheck
 
 import com.typesafe.scalalogging.LazyLogging
 

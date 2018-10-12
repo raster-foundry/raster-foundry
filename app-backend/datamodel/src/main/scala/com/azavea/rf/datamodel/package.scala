@@ -1,4 +1,4 @@
-package com.azavea.rf
+package com.rasterfoundry
 
 import java.net.URI
 import java.security.InvalidParameterException

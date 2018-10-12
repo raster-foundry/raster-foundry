@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.export.spark
+package com.rasterfoundry.batch.export.spark
 
 import java.io.ByteArrayInputStream
 import java.util.UUID
@@ -9,19 +9,19 @@ import cats.implicits._
 import com.amazonaws.services.s3.AmazonS3URI
 import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
 import com.azavea.maml.eval._
-import com.azavea.rf.batch._
-import com.azavea.rf.batch.ast._
-import com.azavea.rf.batch.dropbox._
-import com.azavea.rf.batch.export._
-import com.azavea.rf.batch.export.json.S3ExportStatus
-import com.azavea.rf.batch.util._
-import com.azavea.rf.batch.util.conf._
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.common.utils.CogUtils
-import com.azavea.rf.database._
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.datamodel._
-import com.azavea.rf.tool.ast.MapAlgebraAST
+import com.rasterfoundry.batch._
+import com.rasterfoundry.batch.ast._
+import com.rasterfoundry.batch.dropbox._
+import com.rasterfoundry.batch.export._
+import com.rasterfoundry.batch.export.json.S3ExportStatus
+import com.rasterfoundry.batch.util._
+import com.rasterfoundry.batch.util.conf._
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.common.utils.CogUtils
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.tool.ast.MapAlgebraAST
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.v2.files.{CreateFolderErrorException, WriteMode}
 import com.typesafe.scalalogging.LazyLogging

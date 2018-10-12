@@ -1,11 +1,11 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.util.UUID
 
 import cats.data._
 import cats.implicits._
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel.{
   BatchParams,
   ColorCorrect,
   MosaicDefinition,
@@ -14,7 +14,7 @@ import com.azavea.rf.datamodel.{
 }
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Fragments._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.datamodel._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._

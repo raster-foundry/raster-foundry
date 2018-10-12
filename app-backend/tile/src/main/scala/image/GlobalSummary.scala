@@ -1,14 +1,14 @@
-package com.azavea.rf.tile.image
+package com.rasterfoundry.tile.image
 
 import java.util.UUID
 
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
-import com.azavea.rf.common.utils.CogUtils
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.datamodel.{MosaicDefinition, SceneType}
-import com.azavea.rf.tile._
+import com.rasterfoundry.common.utils.CogUtils
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel.{MosaicDefinition, SceneType}
+import com.rasterfoundry.tile._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
 import geotrellis.proj4._

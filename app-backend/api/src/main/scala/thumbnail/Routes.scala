@@ -1,4 +1,4 @@
-package com.azavea.rf.api.thumbnail
+package com.rasterfoundry.api.thumbnail
 
 import java.net.{URI, URLDecoder}
 
@@ -7,9 +7,9 @@ import akka.http.scaladsl.server.Route
 import cats.effect.IO
 import com.amazonaws.regions._
 import com.amazonaws.services.s3.model.GetObjectRequest
-import com.azavea.rf.api.utils.Config
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{CommonHandlers, S3, UserErrorHandler}
+import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.{CommonHandlers, S3, UserErrorHandler}
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor

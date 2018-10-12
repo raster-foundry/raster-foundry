@@ -1,7 +1,7 @@
-package com.azavea.rf.database.util
+package com.rasterfoundry.database.util
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.database.filter.Filterables
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.database.filter.Filterables
 
 import doobie._
 import doobie.implicits._

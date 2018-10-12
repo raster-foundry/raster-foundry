@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.util
+package com.rasterfoundry.batch.util
 
 import java.io.{ObjectInputStream, ObjectOutputStream}
 

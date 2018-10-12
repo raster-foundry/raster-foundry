@@ -1,4 +1,4 @@
-package com.azavea.rf.batch
+package com.rasterfoundry.batch
 
 import java.io._
 import java.net._

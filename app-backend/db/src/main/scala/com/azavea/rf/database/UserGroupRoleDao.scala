@@ -1,10 +1,10 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.filter.Filters._
-import com.azavea.rf.database.notification.{GroupNotifier, MessageType}
-import com.azavea.rf.database.notification.templates.PlainGroupRequest
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.filter.Filters._
+import com.rasterfoundry.database.notification.{GroupNotifier, MessageType}
+import com.rasterfoundry.database.notification.templates.PlainGroupRequest
+import com.rasterfoundry.datamodel._
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._

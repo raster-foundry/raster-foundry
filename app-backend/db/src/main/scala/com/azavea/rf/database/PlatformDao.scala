@@ -1,11 +1,11 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.util.UUID
 
 import cats.free.Free
-import com.azavea.rf.database.filter.Filters._
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.database.filter.Filters._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import doobie.free.connection
 import doobie.implicits._

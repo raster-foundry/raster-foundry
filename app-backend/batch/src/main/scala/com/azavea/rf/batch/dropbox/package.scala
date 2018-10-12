@@ -1,3 +1,3 @@
-package com.azavea.rf.batch
+package com.rasterfoundry.batch
 
 package object dropbox extends Implicits

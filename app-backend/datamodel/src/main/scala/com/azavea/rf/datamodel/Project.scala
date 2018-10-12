@@ -1,11 +1,11 @@
-package com.azavea.rf.datamodel
+package com.rasterfoundry.datamodel
 
 import java.sql.Timestamp
 import java.util.UUID
 
 import cats.implicits._
 import cats.syntax.either._
-import com.azavea.rf.bridge._
+import com.rasterfoundry.bridge._
 import geotrellis.vector.io.json.GeoJsonSupport
 import geotrellis.vector.{Geometry, Projected}
 import io.circe._

@@ -1,4 +1,4 @@
-package com.azavea.rf.api.maptoken
+package com.rasterfoundry.api.maptoken
 
 import java.util.UUID
 
@@ -6,15 +6,15 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import cats.effect.IO
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database._
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.{CommonHandlers, UserErrorHandler}
+import com.rasterfoundry.database._
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 import doobie.util.transactor.Transactor
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.datamodel._
 import cats.implicits._
 import doobie._
 import doobie.implicits._

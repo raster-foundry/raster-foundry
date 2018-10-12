@@ -1,6 +1,6 @@
-package com.azavea.rf.tool.ast
+package com.rasterfoundry.tool.ast
 
-import com.azavea.rf.tool.ast.codec._
+import com.rasterfoundry.tool.ast.codec._
 
 import org.scalatest._
 import io.circe._

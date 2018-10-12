@@ -1,4 +1,4 @@
-package com.azavea.rf.batch.aoi
+package com.rasterfoundry.batch.aoi
 
 import java.sql.Timestamp
 import java.time.Instant
@@ -6,13 +6,13 @@ import java.util.UUID
 
 import cats.effect.IO
 import cats.implicits._
-import com.azavea.rf.batch.Job
-import com.azavea.rf.common.AWSBatch
-import com.azavea.rf.common.notification.Email.NotificationEmail
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database._
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.batch.Job
+import com.rasterfoundry.common.AWSBatch
+import com.rasterfoundry.common.notification.Email.NotificationEmail
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._

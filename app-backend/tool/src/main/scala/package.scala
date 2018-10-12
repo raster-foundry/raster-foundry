@@ -1,4 +1,4 @@
-package com.azavea.rf
+package com.rasterfoundry
 
 import cats.syntax.either._
 import io.circe._

@@ -1,16 +1,16 @@
-package com.azavea.rf.batch.notification
+package com.rasterfoundry.batch.notification
 
 import java.util.UUID
 
 import cats.effect.IO
 import cats.implicits._
-import com.azavea.rf.batch.Job
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.common.notification.Email.NotificationEmail
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.database.{PlatformDao, ProjectDao, SceneDao}
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.batch.Job
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.common.notification.Email.NotificationEmail
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.database.{PlatformDao, ProjectDao, SceneDao}
+import com.rasterfoundry.datamodel._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._

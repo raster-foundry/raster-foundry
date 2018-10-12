@@ -1,7 +1,7 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.database.util.Page
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.database.util.Page
+import com.rasterfoundry.datamodel._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -15,7 +15,7 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 
 import java.util.UUID
 
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 object ImageWithRelatedDao extends Dao[Image.WithRelated] {
   val tableName = "images"

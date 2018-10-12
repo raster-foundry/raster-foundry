@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel
+package com.rasterfoundry.datamodel
 
 import java.security.InvalidParameterException
 import java.sql.Timestamp

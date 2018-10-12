@@ -1,6 +1,6 @@
-package com.azavea.rf.tool.ast
+package com.rasterfoundry.tool.ast
 
-import com.azavea.rf.tool.ast.MapAlgebraAST._
+import com.rasterfoundry.tool.ast.MapAlgebraAST._
 
 import java.util.UUID
 

@@ -1,4 +1,4 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.io.ByteArrayInputStream
 import java.sql.Timestamp
@@ -8,8 +8,8 @@ import cats.implicits._
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.services.s3.model.{CannedAccessControlList, ObjectMetadata}
 import com.amazonaws.services.s3.{AmazonS3Client => AWSAmazonS3Client}
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import com.typesafe.scalalogging.LazyLogging
 import doobie._

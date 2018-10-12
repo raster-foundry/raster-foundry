@@ -1,8 +1,8 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import cats.implicits._
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.LayerAttribute
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel.LayerAttribute
 import doobie.Fragments._
 import doobie._
 import doobie.implicits._

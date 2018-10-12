@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel.color.functions
+package com.rasterfoundry.datamodel.color.functions
 
 import geotrellis.raster.{ArrayTile, MultibandTile}
 import org.apache.commons.math3.util.FastMath

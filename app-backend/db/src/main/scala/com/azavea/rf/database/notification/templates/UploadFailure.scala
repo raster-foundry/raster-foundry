@@ -1,9 +1,9 @@
-package com.azavea.rf.database.notification.templates
+package com.rasterfoundry.database.notification.templates
 
 import java.util.UUID
 
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel._
 import doobie.ConnectionIO
 
 final case class UploadFailure(uploadId: UUID, platformId: UUID) {

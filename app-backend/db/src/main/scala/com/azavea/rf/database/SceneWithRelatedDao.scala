@@ -1,11 +1,11 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.util.UUID
 
 import cats.data._
 import cats.implicits._
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{Scene, User, _}
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel.{Scene, User, _}
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._
 import doobie.implicits._

@@ -1,8 +1,8 @@
-package com.azavea.rf.batch.export.json
+package com.rasterfoundry.batch.export.json
 
 import java.util.UUID
 
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.datamodel._
 import io.circe.generic.JsonCodec
 
 @JsonCodec
