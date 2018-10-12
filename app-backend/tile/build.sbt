@@ -1,4 +1,4 @@
-name := "raster-foundry-tile-server"
+name := "tile"
 
 initialCommands in console := """
   |import com.rasterfoundry.tile.Config

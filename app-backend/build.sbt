@@ -107,7 +107,6 @@ lazy val apiSettings = commonSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
   cancelable in Global := true,
-  assemblyJarName in assembly := "rf-server.jar",
   assemblyMergeStrategy in assembly := {
     case "reference.conf"                       => MergeStrategy.concat
     case "application.conf"                     => MergeStrategy.concat
@@ -379,7 +378,6 @@ lazy val tile = Project("tile", file("tile"))
     case PathList("META-INF", "aop.xml") => aopMerge
     case _                               => MergeStrategy.first
   })
-  .settings(assemblyJarName in assembly := "rf-tile-server.jar")
   .settings(test in assembly := {})
 
 lazy val tool = Project("tool", file("tool"))

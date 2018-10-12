@@ -1,4 +1,4 @@
-name := "raster-foundry-tools"
+name := "tool"
 
 scalacOptions ++= Seq("-feature", "-unchecked", "-deprecation")
 

@@ -1,1 +1,1 @@
-name := "rf-migrations"
+name := "migrations"

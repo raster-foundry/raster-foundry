@@ -1,4 +1,6 @@
-name := "raster-foundry-app"
+name := "api"
+
+assemblyJarName in assembly := "api-assembly.jar"
 
 initialCommands in console := """
   |import com.rasterfoundry.api.utils.Config

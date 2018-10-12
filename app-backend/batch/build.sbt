@@ -1,6 +1,6 @@
-name := "rf-batch"
+name := "batch"
 
-assemblyJarName in assembly := "rf-batch.jar"
+assemblyJarName in assembly := "batch-assembly.jar"
 
 mainClass in (Compile, assembly) := Some("com.rasterfoundry.batch.Main")
 

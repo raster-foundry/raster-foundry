@@ -1,3 +1,5 @@
+name := "database"
+
 initialCommands in console :=
   """
 import com.rasterfoundry.database._
