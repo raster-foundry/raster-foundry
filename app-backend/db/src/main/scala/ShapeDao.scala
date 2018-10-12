@@ -3,7 +3,13 @@ package com.rasterfoundry.database
 import java.sql.Timestamp
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.{Shape, User, ObjectType, GroupType, ActionType}
+import com.rasterfoundry.datamodel.{
+  Shape,
+  User,
+  ObjectType,
+  GroupType,
+  ActionType
+}
 import doobie._
 import doobie.implicits._
 import doobie.postgres._

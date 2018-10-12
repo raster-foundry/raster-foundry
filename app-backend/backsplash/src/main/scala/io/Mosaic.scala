@@ -7,7 +7,11 @@ import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.nodes.ProjectNode
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.database.SceneToProjectDao
-import com.rasterfoundry.datamodel.{MosaicDefinition, SceneType, SingleBandOptions}
+import com.rasterfoundry.datamodel.{
+  MosaicDefinition,
+  SceneType,
+  SingleBandOptions
+}
 import doobie.implicits._
 import geotrellis.raster.{Raster, io => _, _}
 import geotrellis.spark.tiling.LayoutLevel

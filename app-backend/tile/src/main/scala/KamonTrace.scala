@@ -10,7 +10,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 trait KamonTrace {
   def traceName[T](name: String)(code: => T): T = {
     Kamon.metrics.counter(name).increment()
-    Tracer.currentContext.withNewSegment(name, "com.rasterfoundry", "tile")(code)
+    Tracer.currentContext.withNewSegment(name, "com.rasterfoundry", "tile")(
+      code)
   }
 
   def timedFuture[T](name: String)(future: Future[T]) = {

@@ -6,7 +6,11 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{Authorization, GenericHttpCredentials}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import cats.effect.IO
-import com.rasterfoundry.api.utils.{Auth0Exception, Config, ManagementBearerToken}
+import com.rasterfoundry.api.utils.{
+  Auth0Exception,
+  Config,
+  ManagementBearerToken
+}
 import com.rasterfoundry.database.UserDao
 import com.rasterfoundry.datamodel.User
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}

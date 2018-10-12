@@ -44,7 +44,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 -f "${DIR}/../docker-compose.test.yml" \
                 run --rm --no-deps \
                 build tile/assembly
-                
+
             echo "Building backsplash JAR"
             docker-compose \
                 -f "${DIR}/../docker-compose.test.yml" \
@@ -52,7 +52,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 build backsplash/assembly
 
             # Build these projects as SNAPSHOT artifacts and publish to
-            # Sonatype OSSRH (Snapshot Repository). 
+            # Sonatype OSSRH (Snapshot Repository).
             if [ "$(whoami)" == "jenkins" ]; then
                 projects=( \
                     "api" \
@@ -101,12 +101,12 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                    "${AWS_ECR_ENDPOINT}/raster-foundry-batch:${GIT_COMMIT}"
             docker tag "raster-foundry-app-migrations:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
-        
+
             docker tag "raster-foundry-nginx-backsplash:${GIT_COMMIT}" \
                     "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-backsplash:${GIT_COMMIT}"
             docker tag "raster-foundry-backsplash:${GIT_COMMIT}" \
                     "${AWS_ECR_ENDPOINT}/raster-foundry-backsplash:${GIT_COMMIT}"
-           
+
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-api:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-tiler:${GIT_COMMIT}"
 
@@ -114,14 +114,10 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-tile-server:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-batch:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
-   
+
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-backsplash:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-backsplash:${GIT_COMMIT}"
 
-            echo "Uploading Spark Batch JAR to S3"
-            aws s3 cp \
-                "${DIR}/../app-backend/batch/target/scala-2.11/rf-batch.jar" \
-                "s3://${RF_ARTIFACTS_BUCKET}/batch/rf-batch-${GIT_COMMIT}.jar"
         else
             echo "ERROR: No AWS_ECR_ENDPOINT variable defined."
             exit 1
