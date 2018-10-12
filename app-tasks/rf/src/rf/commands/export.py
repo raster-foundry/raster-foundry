@@ -73,8 +73,8 @@ def create_export_definition(export_id):
     key = 'export-definitions/{}'.format(export_id)
     logger.info('Creating export definition for %s', export_id)
     command = ['java', '-cp',
-               '/opt/raster-foundry/jars/rf-batch.jar',
-               'com.azavea.rf.batch.Main', 'create_export_def',
+               '/opt/raster-foundry/jars/batch-assembly.jar',
+               'com.rasterfoundry.batch.Main', 'create_export_def',
                export_id, bucket, key]
     logger.info('Running Command %s', ' '.join(command))
     subprocess.check_call(command)
@@ -184,8 +184,8 @@ def run_export(export_s3_uri, export_id):
     command = ['spark-submit',
                '--master', 'local[{}]'.format(export_cores),
                '--driver-memory', '{}g'.format(export_memory),
-               '--class', 'com.azavea.rf.batch.export.spark.Export',
-               '/opt/raster-foundry/jars/rf-batch.jar',
+               '--class', 'com.rasterfoundry.batch.export.spark.Export',
+               '/opt/raster-foundry/jars/batch-assembly.jar',
                '-j', export_s3_uri, '-b', status_uri]
     output = subprocess.check_output(command)
     logger.info('Output from export command was:\n%s', output)
@@ -203,8 +203,8 @@ def update_export_status(export_id, export_status):
 
     command = [
         'java', '-cp',
-        '/opt/raster-foundry/jars/rf-batch.jar',
-        'com.azavea.rf.batch.Main',
+        '/opt/raster-foundry/jars/batch-assembly.jar',
+        'com.rasterfoundry.batch.Main',
         'update_export_status',
         export_id,
         export_status

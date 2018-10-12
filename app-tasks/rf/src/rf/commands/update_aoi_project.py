@@ -19,8 +19,8 @@ def update_aoi_project(project_id):
     """
 
     bash_cmd = [
-        'java', '-cp', '/opt/raster-foundry/jars/rf-batch.jar',
-        'com.azavea.rf.batch.Main', 'update_aoi_project', project_id
+        'java', '-cp', '/opt/raster-foundry/jars/batch-assembly.jar',
+        'com.rasterfoundry.batch.Main', 'update_aoi_project', project_id
     ]
 
     exit_code = subprocess.call(bash_cmd)
