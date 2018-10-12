@@ -18,6 +18,7 @@
       ></rf-search>
       <button type="button" class="btn btn-primary"
               ng-click="$ctrl.addUserModal()"
+              ng-if="$ctrl.isEffectiveAdmin"
               ng-disabled="$ctrl.loading">
         Add Users
       </button>
@@ -32,6 +33,7 @@
       When it does, they'll be shown here.
     </p>
     <button type="button" class="btn btn-primary"
+            ng-if="$ctrl.isEffectiveAdmin"
             ng-click="$ctrl.addUserModal()">
       Add Users
     </button>
