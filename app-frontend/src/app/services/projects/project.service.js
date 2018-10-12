@@ -292,35 +292,40 @@ export default (app) => {
             ).$promise;
         }
 
-        getProjectCorners(projectId) {
-            return this.getAllProjectScenes({projectId: projectId}).then(({scenes}) => {
-                let corners = {
-                    lowerLeftLon: null,
-                    lowerLeftLat: null,
-                    upperRightLon: null,
-                    upperRightLat: null
-                };
-                scenes.forEach(scene => {
-                    let metadata = scene.sceneMetadata;
-                    if (metadata.lowerLeftCornerLatitude < corners.lowerLeftLat ||
-                        corners.lowerLeftLat === null) {
-                        corners.lowerLeftLat = metadata.lowerLeftCornerLatitude;
-                    }
-                    if (metadata.lowerLeftCornerLongitude < corners.lowerLeftLon ||
-                        corners.lowerLeftLon === null) {
-                        corners.lowerLeftLon = metadata.lowerLeftCornerLongitude;
-                    }
-                    if (metadata.upperRightCornerLatitude < corners.upperRightLat ||
-                        corners.upperRightLat === null) {
-                        corners.upperRightLat = metadata.upperRightCornerLatitude;
-                    }
-                    if (metadata.upperRightCornerLongitude < corners.upperRightLon ||
-                        corners.upperRightLon === null) {
-                        corners.upperRightLon = metadata.upperRightCornerLongitude;
-                    }
-                });
-                return corners;
-            });
+        getProjectCorners(id) {
+            // TODO Use project extent instead here
+            throw new Error('ERROR: Update project.service getProjectCorners to use the ' +
+                            'project extent. This function was not updated because ' +
+                            'we don\'t seem to use it anywhere right now.');
+            // return this.fetchProject(id).then(({project}) => {
+
+            //     let corners = {
+            //         lowerLeftLon: null,
+            //         lowerLeftLat: null,
+            //         upperRightLon: null,
+            //         upperRightLat: null
+            //     };
+            //     scenes.forEach(scene => {
+            //         let metadata = scene.sceneMetadata;
+            //         if (metadata.lowerLeftCornerLatitude < corners.lowerLeftLat ||
+            //             corners.lowerLeftLat === null) {
+            //             corners.lowerLeftLat = metadata.lowerLeftCornerLatitude;
+            //         }
+            //         if (metadata.lowerLeftCornerLongitude < corners.lowerLeftLon ||
+            //             corners.lowerLeftLon === null) {
+            //             corners.lowerLeftLon = metadata.lowerLeftCornerLongitude;
+            //         }
+            //         if (metadata.upperRightCornerLatitude < corners.upperRightLat ||
+            //             corners.upperRightLat === null) {
+            //             corners.upperRightLat = metadata.upperRightCornerLatitude;
+            //         }
+            //         if (metadata.upperRightCornerLongitude < corners.upperRightLon ||
+            //             corners.upperRightLon === null) {
+            //             corners.upperRightLon = metadata.upperRightCornerLongitude;
+            //         }
+            //     });
+            //     return corners;
+            // });
         }
 
         getProjectScenes(projectId, params = {}) {

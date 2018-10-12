@@ -12,6 +12,8 @@
 ### Removed
 
 ### Fixed
+- Add user button no longer shows for non-admins of teams and orgs [\#4212](https://github.com/raster-foundry/raster-foundry/pull/4212)
+- Fix undefined function call when selecting project scenes by clicking the map in advanced color correction view [\#4212](https://github.com/raster-foundry/raster-foundry/pull/4212)
 
 ### Security
 
