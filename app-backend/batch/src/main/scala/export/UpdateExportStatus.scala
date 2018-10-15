@@ -177,7 +177,8 @@ final case class UpdateExportStatus(
                         userEmail,
                         subject,
                         html,
-                        plain)
+                        plain,
+                        pub.emailFrom)
               .map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified owner ${user.id} about export ${exportId}.")
           case _ =>

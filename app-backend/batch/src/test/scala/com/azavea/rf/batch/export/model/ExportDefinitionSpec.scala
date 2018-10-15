@@ -37,8 +37,12 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       blueBand = 2,
       bandClipping = PerBandClipping(
         enabled = true,
-        redMax = Some(9), greenMax = Some(9), blueMax = Some(9),
-        redMin = None, greenMin = None, blueMin = None
+        redMax = Some(9),
+        greenMax = Some(9),
+        blueMax = Some(9),
+        redMin = None,
+        greenMin = None,
+        blueMin = None
       ),
       gamma = BandGamma(
         enabled = true,
@@ -100,21 +104,20 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
             |    }
           """.stripMargin.parseGeoJson[MultiPolygon]()
 
-
     val expected = ExportDefinition(
       id = UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57039"),
       input = InputDefinition(
         resolution = 15,
-        style = Left(SimpleInput(
-          layers = Array(
-            ExportLayerDefinition(
+        style = Left(
+          SimpleInput(
+            layers = Array(ExportLayerDefinition(
               layerId = UUID.fromString("8436f7e9-b7f7-4d4f-bda8-76b32c356cff"),
               ingestLocation = new URI("s3://test/"),
               colorCorrections = Some(cc),
               sceneType = SceneType.Avro
             )),
-          mask = Some(mask)
-        ))
+            mask = Some(mask)
+          ))
       ),
       output = outDef
     )
@@ -122,7 +125,7 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     val actual =
       decode[ExportDefinition](getJson("/export/localJob.json")).toOption match {
         case Some(ed) => ed
-        case _ => throw new Exception("Incorrect json to parse")
+        case _        => throw new Exception("Incorrect json to parse")
       }
 
     expected.asJson shouldBe actual.asJson
@@ -135,7 +138,11 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
 
     val inDef = InputDefinition(
       15,
-      Right(ASTInput(ast, ast.tileSources.map(_ => UUID.randomUUID -> "s3://foo/bar/").toMap, Map.empty))
+      Right(
+        ASTInput(
+          ast,
+          ast.tileSources.map(_ => UUID.randomUUID -> "s3://foo/bar/").toMap,
+          Map.empty))
     )
 
     val ed = ExportDefinition(
@@ -146,22 +153,30 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
 
     decode[ExportDefinition](ed.asJson.spaces2) match {
       case Right(ed2) => ed2 shouldBe ed
-      case Left(err) => throw new Exception(s"EXDEF: ${err}")
+      case Left(err)  => throw new Exception(s"EXDEF: ${err}")
     }
   }
 
   it("ASTInput isomorphism (project nodes)") {
-    val s0 = ProjectRaster(UUID.randomUUID, UUID.randomUUID, Some(5), None, None)
-    val s1 = ProjectRaster(UUID.randomUUID, UUID.randomUUID, Some(5), None, None)
+    val s0 =
+      ProjectRaster(UUID.randomUUID, UUID.randomUUID, Some(5), None, None)
+    val s1 =
+      ProjectRaster(UUID.randomUUID, UUID.randomUUID, Some(5), None, None)
     val ast: MapAlgebraAST = Addition(List(s0, s1), UUID.randomUUID, None)
 
-    val astIn = ASTInput(ast, Map.empty, ast.tileSources.map({ src =>
-      src.id -> List(
-        (UUID.randomUUID,"s3://foo/bar/1"),
-        (UUID.randomUUID,"s3://foo/bar/2"),
-        (UUID.randomUUID,"s3://foo/bar/3")
-      )
-    }).toMap)
+    val astIn = ASTInput(
+      ast,
+      Map.empty,
+      ast.tileSources
+        .map({ src =>
+          src.id -> List(
+            (UUID.randomUUID, "s3://foo/bar/1"),
+            (UUID.randomUUID, "s3://foo/bar/2"),
+            (UUID.randomUUID, "s3://foo/bar/3")
+          )
+        })
+        .toMap
+    )
 
     val inDef = InputDefinition(
       15,
@@ -176,7 +191,7 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
 
     decode[ExportDefinition](ed.asJson.spaces2) match {
       case Right(ed2) => ed2 shouldBe ed
-      case Left(err) => throw new Exception(s"EXDEF: ${err}")
+      case Left(err)  => throw new Exception(s"EXDEF: ${err}")
     }
   }
 }

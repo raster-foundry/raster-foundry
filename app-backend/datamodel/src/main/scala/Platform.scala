@@ -25,7 +25,8 @@ object Platform {
                                   emailIngestNotification: Boolean,
                                   emailAoiNotification: Boolean,
                                   emailExportNotification: Boolean,
-                                  platformHost: Option[String])
+                                  platformHost: Option[String],
+                                  emailFrom: Option[String])
 
   @JsonCodec
   final case class PrivateSettings(emailPassword: String)

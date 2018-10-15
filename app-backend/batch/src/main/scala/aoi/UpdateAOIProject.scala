@@ -105,7 +105,8 @@ final case class UpdateAOIProject(projectId: UUID)(
                         userEmail,
                         subject,
                         html,
-                        plain)
+                        plain,
+                        pub.emailFrom)
               .map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified project owner ${user.id} about AOI updates")
           case _ =>

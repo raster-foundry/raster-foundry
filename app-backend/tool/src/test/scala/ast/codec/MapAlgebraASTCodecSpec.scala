@@ -8,7 +8,6 @@ import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop._
 
-
 class MapAlgebraASTCodecSpec extends PropSpec with Checkers {
   property("bijective serialization") {
     check(forAll(genMapAlgebraAST()) { (ast: MapAlgebraAST) =>

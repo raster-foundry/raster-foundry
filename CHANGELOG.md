@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Allow platforms to set a "From" email field in order to change notification "From" name [#\4198](Add from field for email) 
 
 ### Changed
 - Small text edit to the Imports page [\#4198](https://github.com/raster-foundry/raster-foundry/pull/4198)
