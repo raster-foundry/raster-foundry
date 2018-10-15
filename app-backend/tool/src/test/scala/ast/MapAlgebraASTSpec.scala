@@ -19,7 +19,7 @@ class MapAlgebraASTSpec extends FunSpec with Matchers {
     val src6 = randomSourceAST
     val uberAst = src1 + src2 * src3 / src4 max src5 min src6
 
-    uberAst.find(src4.id) should be (Some(src4))
+    uberAst.find(src4.id) should be(Some(src4))
   }
 
   it("Can substitute ToolRef branches") {
@@ -29,6 +29,7 @@ class MapAlgebraASTSpec extends FunSpec with Matchers {
     val preSub = src1 + ref
     val postSub = src1 + replacement
 
-    preSub.substitute(Map(ref.toolId -> replacement)).get.args.toSeq should be (postSub.args.toSeq)
+    preSub.substitute(Map(ref.toolId -> replacement)).get.args.toSeq should be(
+      postSub.args.toSeq)
   }
 }
