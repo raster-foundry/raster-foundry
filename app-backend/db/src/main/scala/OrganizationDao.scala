@@ -7,9 +7,7 @@ import java.util.UUID
 import cats.implicits._
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.services.s3.model.{CannedAccessControlList, ObjectMetadata}
-import com.amazonaws.services.s3.{AmazonS3Client => AWSAmazonS3Client}
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel._
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
@@ -18,6 +16,9 @@ import doobie.postgres._
 import doobie.postgres.implicits._
 import geotrellis.spark.io.s3.AmazonS3Client
 import org.apache.commons.codec.binary.{Base64 => ApacheBase64}
+
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel._
 
 object OrganizationDao extends Dao[Organization] with LazyLogging {
 
@@ -239,7 +240,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     val logoByte = ApacheBase64.decodeBase64(logoBase64)
     val logoStream = new ByteArrayInputStream(logoByte)
     val md = new ObjectMetadata()
-    val s3 = new AWSAmazonS3Client(new DefaultAWSCredentialsProviderChain)
+    val s3 = AmazonS3ClientBuilder.defaultClient()
     val s3Client = new AmazonS3Client(s3)
 
     md.setContentType("image/png")

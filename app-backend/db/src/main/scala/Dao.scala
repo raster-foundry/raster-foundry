@@ -13,13 +13,14 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.log._
+import doobie.util.{Read, Write}
 import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.duration.FiniteDuration
 
 /**
   * This is abstraction over the listing of arbitrary types from the DB with filters/pagination
   */
-abstract class Dao[Model: Composite] extends Filterables {
+abstract class Dao[Model: Read: Write] extends Filterables {
 
   val tableName: String
 
@@ -153,7 +154,7 @@ object Dao extends LazyLogging {
       """.stripMargin)
   }
 
-  final case class QueryBuilder[Model: Composite](
+  final case class QueryBuilder[Model: Read: Write](
       selectF: Fragment,
       tableF: Fragment,
       filters: List[Option[Fragment]]) {
@@ -198,14 +199,14 @@ object Dao extends LazyLogging {
       }
     }
 
-    def pageOffset[T: Composite](
+    def pageOffset[T: Read: Write](
         pageRequest: PageRequest): ConnectionIO[List[T]] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest))
         .query[T]
         .to[List]
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page[T: Composite](
+    def page[T: Read: Write](
         pageRequest: PageRequest,
         selectF: Fragment,
         countF: Fragment,

@@ -69,13 +69,13 @@ class BacksplashHttpErrorHandler[F[_]](
         "Resource does not exist or user is not authorized to access resource")
   }
 
-  override def handle(service: HttpService[F]): HttpService[F] =
+  override def handle(service: HttpRoutes[F]): HttpRoutes[F] =
     ServiceHttpErrorHandler(service)(handler)
 }
 
 object ServiceHttpErrorHandler {
-  def apply[F[_], E](service: HttpService[F])(handler: E => F[Response[F]])(
-      implicit ev: ApplicativeError[F, E]): HttpService[F] =
+  def apply[F[_], E](service: HttpRoutes[F])(handler: E => F[Response[F]])(
+      implicit ev: ApplicativeError[F, E]): HttpRoutes[F] =
     Kleisli { req: Request[F] =>
       OptionT {
         service(req).value.handleErrorWith { e =>
@@ -86,7 +86,7 @@ object ServiceHttpErrorHandler {
 }
 
 trait HttpErrorHandler[F[_], E <: Throwable] extends RollbarNotifier {
-  def handle(service: HttpService[F]): HttpService[F]
+  def handle(service: HttpRoutes[F]): HttpRoutes[F]
 }
 
 object HttpErrorHandler {

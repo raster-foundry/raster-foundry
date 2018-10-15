@@ -1,6 +1,6 @@
 package com.rasterfoundry.backsplash.io
 
-import java.util.UUID
+import com.rasterfoundry.database.util.RFTransactor
 
 import cats.data.{OptionT, NonEmptyList => NEL}
 import cats.effect.{IO, Timer}
@@ -24,10 +24,11 @@ import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import scala.util._
+import java.util.UUID
 
 object Avro extends RollbarNotifier with HistogramJsonFormats {
 
-  import com.rasterfoundry.database.util.RFTransactor.xa
+  implicit val xa = RFTransactor.xa
 
   val store = PostgresAttributeStore()
 

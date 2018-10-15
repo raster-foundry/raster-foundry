@@ -110,10 +110,10 @@ separate section of the application with different scope. For example, a datasou
 factory could live in `test/factories/Datasource.scala`, and could look like:
 
 ```scala
-package com.azavea.rf.factories
+package com.rasterfoundry.factories
 
 import java.util.UUID
-import com.azavea.rf.datamodel.{Datasource, Visibility}
+import com.rasterfoundry.datamodel.{Datasource, Visibility}
 
 object DatasourceFactory {
   def create(

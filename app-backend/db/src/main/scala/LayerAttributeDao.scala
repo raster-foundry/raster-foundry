@@ -8,6 +8,7 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
+import doobie.postgres.circe.jsonb.implicits._
 import geotrellis.spark.LayerId
 
 object LayerAttributeDao extends Dao[LayerAttribute] {

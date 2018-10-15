@@ -5,34 +5,27 @@ import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.nodes._
 import com.rasterfoundry.backsplash.services.{HealthCheckService, MosaicService}
 import com.rasterfoundry.backsplash.analysis.AnalysisService
-import doobie.util.analysis.Analysis
 
 import cats._
 import cats.data._
 import cats.effect._
 import cats.implicits._
-import fs2.StreamApp
-import org.http4s.server.middleware._
-import org.http4s.server.blaze.BlazeBuilder
+import fs2._
+import org.http4s._
+import org.http4s.server.Router
+import org.http4s.server.middleware.{CORS, CORSConfig}
+import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.AutoSlash
+import org.http4s.syntax.kleisli._
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object BacksplashServer extends StreamApp[IO] {
+object BacksplashServer extends IOApp {
 
-  def stream(args: List[String], requestShutdown: IO[Unit]) =
-    ServerStream.stream
-}
-
-object ServerStream {
-
-  implicit val timer: Timer[IO] = IO.timer(global)
-
-  def healthCheckService = new HealthCheckService[IO].service
-  def mosaicService =
+  def withCORS(svc: HttpRoutes[IO]): HttpRoutes[IO] =
     CORS(
-      Authenticators.queryParamAuthMiddleware(new MosaicService().service),
+      svc,
       CORSConfig(
         anyOrigin = true,
         anyMethod = false,
@@ -42,15 +35,27 @@ object ServerStream {
         maxAge = 1800
       )
     )
-  def analysisService = new AnalysisService().service
+
+  def healthCheckService = new HealthCheckService[IO].service
+  def analysisService =
+    Authenticators.queryParamAuthMiddleware(new AnalysisService().service)
+  def mosaicService =
+    Authenticators.queryParamAuthMiddleware(new MosaicService().service)
+
+  val httpApp =
+    Router(
+      "/" -> AutoSlash(withCORS(mosaicService)),
+      "/healthcheck" -> AutoSlash(healthCheckService),
+      "/tools" -> AutoSlash(analysisService)
+    ).orNotFound
 
   def stream =
-    BlazeBuilder[IO]
+    BlazeServerBuilder[IO]
+      .enableHttp2(true)
       .bindHttp(8080, "0.0.0.0")
-      .mountService(AutoSlash(mosaicService), "/")
-      .mountService(AutoSlash(healthCheckService), "/healthcheck")
-      .mountService(
-        AutoSlash(Authenticators.queryParamAuthMiddleware(analysisService)),
-        "/tools")
+      .withHttpApp(httpApp)
       .serve
+
+  def run(args: List[String]): IO[ExitCode] =
+    stream.compile.drain.as(ExitCode.Success)
 }

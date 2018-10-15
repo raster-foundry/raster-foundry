@@ -18,12 +18,11 @@ import cats.effect._
 import cats.implicits._
 import doobie.implicits._
 import geotrellis.raster.Tile
-import geotrellis.server.core.maml._
-import geotrellis.server.core.maml.reification.MamlTmsReification
 import geotrellis.vector.{Projected, Polygon}
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
+import geotrellis.server._
 import org.http4s._
 import org.http4s.dsl._
 import org.http4s.dsl.io._
@@ -38,14 +37,11 @@ import java.util.Base64
 
 class MosaicService(
     interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit timer: Timer[IO])
+)(implicit timer: Timer[IO], cs: ContextShift[IO])
     extends Http4sDsl[IO]
     with ErrorHandling {
 
   implicit val xa = RFTransactor.xa
-
-  // final val eval = MamlTms.curried(RasterVar("identity"), interpreter)
-  final val eval = MamlTms.identity[ProjectNode](interpreter)
 
   object RedBandOptionalQueryParamMatcher
       extends OptionalQueryParamDecoderMatcher[Int]("redBand")
@@ -95,8 +91,8 @@ class MosaicService(
                             project.singleBandOptions,
                             false)
             }
-          val paramMap = Map("identity" -> projectNode)
-          eval(paramMap, z, x, y)
+          val eval = LayerTms.identity[ProjectNode](projectNode)
+          eval(z, x, y)
         }
 
         val respIO = for {
@@ -105,7 +101,7 @@ class MosaicService(
           result <- getTileResult(project)
           resp <- result match {
             case Valid(tile) =>
-              Ok(tile.renderPng.bytes, `Content-Type`(MediaType.`image/png`))
+              Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
             case Invalid(e) =>
               BadRequest(e.toString)
           }
