@@ -232,10 +232,19 @@ object ProjectDao
       AND """ ++ inClause
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
+      _ <- logger
+        .debug(s"Got project ${projectId} in add scenes")
+        .pure[ConnectionIO]
       user <- UserDao.unsafeGetUserById(project.owner)
+      _ <- logger
+        .debug(s"Got user ${project.owner} in add scenes")
+        .pure[ConnectionIO]
       sceneQueryResult <- sceneIdWithDatasourceF
         .query[(UUID, Datasource)]
         .to[List]
+      _ <- logger
+        .debug(s"Got scene ids with datasources in add scenes")
+        .pure[ConnectionIO]
       sceneToProjectInserts <- {
         val scenesToProject: List[SceneToProject] = sceneQueryResult.map {
           case (sceneId, datasource) =>
@@ -245,6 +254,9 @@ object ProjectDao
           "INSERT INTO scenes_to_projects (scene_id, project_id, accepted, scene_order, mosaic_definition) VALUES (?, ?, ?, ?, ?)"
         Update[SceneToProject](inserts).updateMany(scenesToProject)
       }
+      _ <- logger
+        .debug(s"Inserted scenes to projects for project ${projectId}")
+        .pure[ConnectionIO]
       _ <- { sql"""
                UPDATE projects
                SET extent = subquery.extent
@@ -257,7 +269,11 @@ object ProjectDao
                   GROUP BY projects.id) AS subquery
                WHERE projects.id = ${projectId};
               """.update.run }
+      _ <- logger
+        .debug(s"Updated project extent for project ${projectId}")
+        .pure[ConnectionIO]
       _ <- updateSceneIngestStatus(projectId)
+      _ <- logger.debug("Updated scene ingest statuses").pure[ConnectionIO]
       scenesToIngest <- SceneWithRelatedDao.getScenesToIngest(projectId)
       _ <- scenesToIngest traverse { (swr: Scene.WithRelated) =>
         logger.info(
@@ -270,6 +286,7 @@ object ProjectDao
           user
         )
       }
+      _ <- logger.debug("Kicked off ingests").pure[ConnectionIO]
     } yield sceneToProjectInserts
   }
 

@@ -23,12 +23,10 @@ def update_aoi_project(project_id):
         'com.rasterfoundry.batch.Main', 'update_aoi_project', project_id
     ]
 
-    exit_code = subprocess.call(bash_cmd)
-    logger.info('Checking whether %s has updated scenes available', project_id)
-    is_success = exit_code == 0
-
-    if is_success:
-        logger.info('Successfully completed project %s update', project_id)
-    else:
-        raise Exception('Update of project %s failed', project_id)
-    return is_success
+    try:
+        subprocess.check_call(bash_cmd)
+    except subprocess.CalledProcessError as e:
+        logger.info('Command %s failed.\n Output is: %s.\n Stderr is: %s',
+                    e.cmd, e.output, e.stderr)
+        raise e
+    return True
