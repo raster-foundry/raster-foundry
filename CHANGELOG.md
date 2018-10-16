@@ -6,7 +6,7 @@
 
 ### Changed
 - Small text edit to the Imports page [\#4198](https://github.com/raster-foundry/raster-foundry/pull/4198)
-- Updated package and assembly jar names [\#3924](https://github.com/raster-foundry/raster-foundry/pull/3924)
+- Updated package and assembly jar names [\#3924](https://github.com/raster-foundry/raster-foundry/pull/3924), [\#4222](https://github.com/raster-foundry/raster-foundry/pull/4222)
 
 ### Deprecated
 
