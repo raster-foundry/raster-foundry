@@ -1,4 +1,4 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._

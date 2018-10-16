@@ -1,6 +1,6 @@
-package com.azavea.rf.batch.sentinel2
+package com.rasterfoundry.batch.sentinel2
 
-import com.azavea.rf.batch.BatchSpec
+import com.rasterfoundry.batch.BatchSpec
 
 import io.circe._
 import io.circe.parser._

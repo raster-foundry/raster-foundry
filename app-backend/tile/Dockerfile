@@ -12,10 +12,10 @@ RUN \
       && wget -qO /var/lib/rf/aspectjweaver.jar https://s3.amazonaws.com/rasterfoundry-global-artifacts-us-east-1/aspectjweaver/aspectjweaver-$ASPECTJ_WEAVER_VERSION.jar \
       && apk del .build-deps
 
-COPY ./target/scala-2.11/rf-tile-server.jar /var/lib/rf/
+COPY ./target/scala-2.11/tile-assembly.jar /var/lib/rf/
 
 USER rf
 WORKDIR /var/lib/rf
 
 ENTRYPOINT ["java"]
-CMD ["-jar", "rf-tile-server.jar"]
+CMD ["-jar", "tile-assembly.jar"]

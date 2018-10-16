@@ -1,8 +1,8 @@
-package com.azavea.rf.api.config
+package com.rasterfoundry.api.config
 
-import com.azavea.rf.api.utils.Config
-import com.azavea.rf.database.FeatureFlagDao
-import com.azavea.rf.datamodel.FeatureFlag
+import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.database.FeatureFlagDao
+import com.rasterfoundry.datamodel.FeatureFlag
 import doobie.free.connection.ConnectionIO
 import io.circe.generic.JsonCodec
 

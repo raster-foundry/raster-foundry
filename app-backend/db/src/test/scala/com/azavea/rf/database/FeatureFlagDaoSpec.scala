@@ -1,7 +1,7 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel.FeatureFlag
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel.FeatureFlag
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO

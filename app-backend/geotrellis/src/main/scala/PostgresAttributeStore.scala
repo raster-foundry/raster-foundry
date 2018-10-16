@@ -4,9 +4,9 @@ import java.util.concurrent.Executors
 
 import cats.effect.IO
 import cats.implicits._
-import com.azavea.rf.common.Config
-import com.azavea.rf.database.LayerAttributeDao
-import com.azavea.rf.datamodel.LayerAttribute
+import com.rasterfoundry.common.Config
+import com.rasterfoundry.database.LayerAttributeDao
+import com.rasterfoundry.datamodel.LayerAttribute
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor

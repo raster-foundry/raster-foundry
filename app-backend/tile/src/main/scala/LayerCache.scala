@@ -1,16 +1,16 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
-import com.azavea.rf.datamodel.{Tool, ToolRun, User}
-import com.azavea.rf.database.ToolRunDao
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.tile.tool._
-import com.azavea.rf.tool.eval._
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.maml._
-import com.azavea.rf.common.cache._
-import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
-import com.azavea.rf.common.{Config => CommonConfig}
-import com.azavea.rf.common.utils.{CogUtils, CryptoUtils}
+import com.rasterfoundry.datamodel.{Tool, ToolRun, User}
+import com.rasterfoundry.database.ToolRunDao
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.tile.tool._
+import com.rasterfoundry.tool.eval._
+import com.rasterfoundry.tool.ast._
+import com.rasterfoundry.tool.maml._
+import com.rasterfoundry.common.cache._
+import com.rasterfoundry.common.cache.kryo.KryoMemcachedClient
+import com.rasterfoundry.common.{Config => CommonConfig}
+import com.rasterfoundry.common.utils.{CogUtils, CryptoUtils}
 import com.azavea.maml.eval._
 import com.azavea.maml.ast.Expression
 import com.azavea.maml.eval.directive.SourceDirectives._
@@ -34,7 +34,7 @@ import cats.effect.IO
 import java.util.UUID
 import java.sql.Timestamp
 
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.database.util.RFTransactor
 import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._

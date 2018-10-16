@@ -1,13 +1,13 @@
-package com.azavea.rf.backsplash.io
+package com.rasterfoundry.backsplash.io
 
 import java.util.UUID
 
 import cats.data.{OptionT, NonEmptyList => NEL}
 import cats.effect.{IO, Timer}
 import cats.implicits._
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.database.LayerAttributeDao
-import com.azavea.rf.datamodel.{MosaicDefinition, SingleBandOptions}
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.database.LayerAttributeDao
+import com.rasterfoundry.datamodel.{MosaicDefinition, SingleBandOptions}
 import com.rf.azavea.backsplash.Color
 import doobie.implicits._
 import geotrellis.raster.histogram._
@@ -26,7 +26,7 @@ import scala.util._
 
 object Avro extends RollbarNotifier with HistogramJsonFormats {
 
-  import com.azavea.rf.database.util.RFTransactor.xa
+  import com.rasterfoundry.database.util.RFTransactor.xa
 
   val store = PostgresAttributeStore()
 

@@ -1,8 +1,8 @@
-package com.azavea.rf.common
+package com.rasterfoundry.common
 
-import com.azavea.rf.datamodel.{Tool, ToolRun, User}
-import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.tool.eval._
+import com.rasterfoundry.datamodel.{Tool, ToolRun, User}
+import com.rasterfoundry.tool.ast.MapAlgebraAST
+import com.rasterfoundry.tool.eval._
 
 import com.azavea.maml.eval._
 import cats._

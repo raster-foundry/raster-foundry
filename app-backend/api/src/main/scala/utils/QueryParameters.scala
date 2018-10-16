@@ -1,7 +1,7 @@
-package com.azavea.rf.api.utils.queryparams
+package com.rasterfoundry.api.utils.queryparams
 
-import com.azavea.rf.api._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.api._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters

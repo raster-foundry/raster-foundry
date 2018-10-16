@@ -1,12 +1,12 @@
-package com.azavea.rf.tile.routes
+package com.rasterfoundry.tile.routes
 
-import com.azavea.rf.common.RfStackTrace
-import com.azavea.rf.tile._
-import com.azavea.rf.tile.image.Mosaic
-import com.azavea.rf.datamodel.{ColorCorrect, SceneToProject}
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.{SceneToProjectDao}
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.common.RfStackTrace
+import com.rasterfoundry.tile._
+import com.rasterfoundry.tile.image.Mosaic
+import com.rasterfoundry.datamodel.{ColorCorrect, SceneToProject}
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.{SceneToProjectDao}
+import com.rasterfoundry.database.util.RFTransactor
 
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._

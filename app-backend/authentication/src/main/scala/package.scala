@@ -1,3 +1,3 @@
-package com.azavea.rf.authentication
+package com.rasterfoundry.authentication
 
 package object authentication {}

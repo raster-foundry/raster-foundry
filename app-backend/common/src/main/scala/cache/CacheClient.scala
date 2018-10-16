@@ -1,9 +1,9 @@
-package com.azavea.rf.common.cache
+package com.rasterfoundry.common.cache
 
 import java.util.concurrent.Executors
 
 import cats.data._
-import com.azavea.rf.common.{Config, RfStackTrace, RollbarNotifier}
+import com.rasterfoundry.common.{Config, RfStackTrace, RollbarNotifier}
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging

@@ -1,11 +1,11 @@
-package com.azavea.rf.api.organization
+package com.rasterfoundry.api.organization
 
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database.OrganizationDao
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.datamodel._
-import com.azavea.rf.api.utils.Config
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.{CommonHandlers, UserErrorHandler}
+import com.rasterfoundry.database.OrganizationDao
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.api.utils.Config
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives

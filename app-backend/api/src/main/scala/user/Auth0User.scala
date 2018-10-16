@@ -1,4 +1,4 @@
-package com.azavea.rf.api.user
+package com.rasterfoundry.api.user
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
@@ -6,9 +6,13 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{Authorization, GenericHttpCredentials}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import cats.effect.IO
-import com.azavea.rf.api.utils.{Auth0Exception, Config, ManagementBearerToken}
-import com.azavea.rf.database.UserDao
-import com.azavea.rf.datamodel.User
+import com.rasterfoundry.api.utils.{
+  Auth0Exception,
+  Config,
+  ManagementBearerToken
+}
+import com.rasterfoundry.database.UserDao
+import com.rasterfoundry.datamodel.User
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
@@ -89,7 +93,7 @@ final case class UserWithOAuthUpdate(
 )
 object Auth0UserService extends Config with LazyLogging {
 
-  import com.azavea.rf.api.AkkaSystem._
+  import com.rasterfoundry.api.AkkaSystem._
 
   val uri = Uri(s"https://$auth0Domain/api/v2/device-credentials")
   val userUri = Uri(s"https://$auth0Domain/api/v2/users")

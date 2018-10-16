@@ -1,9 +1,9 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
-import com.azavea.rf.common.CommonHandlers
-import com.azavea.rf.tile.routes._
-import com.azavea.rf.tile.tool._
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.common.CommonHandlers
+import com.rasterfoundry.tile.routes._
+import com.rasterfoundry.tile.tool._
+import com.rasterfoundry.database.util.RFTransactor
 
 import akka.http.scaladsl.server._
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._

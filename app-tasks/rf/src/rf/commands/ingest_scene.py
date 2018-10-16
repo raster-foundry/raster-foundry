@@ -38,8 +38,8 @@ def metadata_to_postgres(scene_id):
     """
 
     bash_cmd = [
-        'java', '-cp', '/opt/raster-foundry/jars/rf-batch.jar',
-        'com.azavea.rf.batch.Main', 'cog-histogram-backfill',
+        'java', '-cp', '/opt/raster-foundry/jars/batch-assembly.jar',
+        'com.rasterfoundry.batch.Main', 'cog-histogram-backfill',
         scene_id
     ]
 
@@ -60,8 +60,8 @@ def notify_for_scene_ingest_status(scene_id):
     """
 
     bash_cmd = [
-        'java', '-cp', '/opt/raster-foundry/jars/rf-batch.jar',
-        'com.azavea.rf.batch.Main', 'notify_ingest_status', scene_id
+        'java', '-cp', '/opt/raster-foundry/jars/batch-assembly.jar',
+        'com.rasterfoundry.batch.Main', 'notify_ingest_status', scene_id
     ]
     running_process = subprocess.Popen(bash_cmd)
     running_process.communicate()

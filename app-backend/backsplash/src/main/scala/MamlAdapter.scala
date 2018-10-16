@@ -1,6 +1,6 @@
-package com.azavea.rf.backsplash.maml
+package com.rasterfoundry.backsplash.maml
 
-import com.azavea.rf.tool.ast._
+import com.rasterfoundry.tool.ast._
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{NeighborhoodConversion, ClassMap => MamlClassMap}
 import geotrellis.vector.io._
@@ -8,10 +8,10 @@ import cats._
 import cats.data._
 import cats.implicits._
 
-import com.azavea.rf.backsplash.error._
-import com.azavea.rf.backsplash.nodes.ProjectNode
-import com.azavea.rf.datamodel.{BandDataType, SingleBandOptions}
-import com.azavea.rf.tool.ast.MapAlgebraAST.{CogRaster, SceneRaster}
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.nodes.ProjectNode
+import com.rasterfoundry.datamodel.{BandDataType, SingleBandOptions}
+import com.rasterfoundry.tool.ast.MapAlgebraAST.{CogRaster, SceneRaster}
 import io.circe.Json
 
 trait BacksplashMamlAdapter {

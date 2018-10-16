@@ -1,8 +1,8 @@
-package com.azavea.rf.api.token
+package com.rasterfoundry.api.token
 
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.UserErrorHandler
-import com.azavea.rf.api.utils.{Auth0ErrorHandler}
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.UserErrorHandler
+import com.rasterfoundry.api.utils.{Auth0ErrorHandler}
 
 import akka.http.scaladsl.server.Route
 import io.circe._

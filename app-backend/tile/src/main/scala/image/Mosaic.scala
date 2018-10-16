@@ -1,12 +1,12 @@
-package com.azavea.rf.tile.image
+package com.rasterfoundry.tile.image
 
-import com.azavea.rf.tile.{image, _}
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.{ProjectDao, SceneDao}
-import com.azavea.rf.datamodel.Project
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.common.cache.CacheClient
-import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
+import com.rasterfoundry.tile.{image, _}
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.database.{ProjectDao, SceneDao}
+import com.rasterfoundry.datamodel.Project
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.common.cache.CacheClient
+import com.rasterfoundry.common.cache.kryo.KryoMemcachedClient
 import geotrellis.raster._
 import geotrellis.raster.render.Png
 import geotrellis.proj4._

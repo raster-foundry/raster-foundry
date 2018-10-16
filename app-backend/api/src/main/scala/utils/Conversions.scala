@@ -1,4 +1,4 @@
-package com.azavea.rf.api.utils
+package com.rasterfoundry.api.utils
 
 object EitherToOption {
   def apply[A](either: Either[_, A]): Option[A] = either match {

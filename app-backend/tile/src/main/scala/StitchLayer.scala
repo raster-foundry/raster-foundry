@@ -1,6 +1,6 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
-import com.azavea.rf.common.cache._
+import com.rasterfoundry.common.cache._
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.vector._
@@ -13,7 +13,7 @@ import cats.data._
 import cats.implicits._
 import java.util.UUID
 
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.database.util.RFTransactor
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 
 import scala.concurrent._

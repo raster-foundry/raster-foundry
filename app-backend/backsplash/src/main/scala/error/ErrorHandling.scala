@@ -1,6 +1,6 @@
-package com.azavea.rf.backsplash.error
+package com.rasterfoundry.backsplash.error
 
-import com.azavea.rf.common.RollbarNotifier
+import com.rasterfoundry.common.RollbarNotifier
 
 import cats._
 import cats.data._

@@ -1,4 +1,4 @@
-package com.azavea.rf.api.utils
+package com.rasterfoundry.api.utils
 
 import com.typesafe.config.ConfigFactory
 

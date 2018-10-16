@@ -25,12 +25,12 @@ then
             find ./scripts -type f -print0 | xargs -0 -r shellcheck
         fi
 
-        if [ -f /opt/raster-foundry/jars/rf-batch.jar ]; then
+        if [ -f /opt/raster-foundry/jars/batch-assembly.jar ]; then
             echo "Verifying that Batch containers can run the batch jar"
             docker-compose \
                 run --rm batch \
                 bash -c \
-                "java -cp /opt/raster-foundry/jars/rf-batch.jar com.azavea.rf.batch.Main healthcheck"
+                "java -cp /opt/raster-foundry/jars/batch-assembly.jar com.rasterfoundry.batch.Main healthcheck"
         fi
 
         echo "Updating Scala dependencies"

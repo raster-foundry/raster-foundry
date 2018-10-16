@@ -1,6 +1,6 @@
-package com.azavea.rf.tool
+package com.rasterfoundry.tool
 
-import com.azavea.rf.tool.ast._
+import com.rasterfoundry.tool.ast._
 
 package object maml {
   implicit class MapAlgebraAstConversion(val rfmlAst: MapAlgebraAST)

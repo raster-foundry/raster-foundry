@@ -1,9 +1,9 @@
-package com.azavea.rf
+package com.rasterfoundry
 
-import com.azavea.rf.backsplash.maml.BacksplashMamlAdapter
-import com.azavea.rf.tool.ast._
+import com.rasterfoundry.backsplash.maml.BacksplashMamlAdapter
+import com.rasterfoundry.tool.ast._
 
-import com.azavea.rf.tool._
+import com.rasterfoundry.tool._
 
 import geotrellis.raster.Tile
 import geotrellis.raster._

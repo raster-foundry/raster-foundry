@@ -1,8 +1,8 @@
-package com.azavea.rf.tool
+package com.rasterfoundry.tool
 
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.ast.MapAlgebraAST._
-import com.azavea.rf.tool.ast.codec.MapAlgebraCodec
+import com.rasterfoundry.tool.ast._
+import com.rasterfoundry.tool.ast.MapAlgebraAST._
+import com.rasterfoundry.tool.ast.codec.MapAlgebraCodec
 
 import io.circe._
 import io.circe.optics.JsonPath._

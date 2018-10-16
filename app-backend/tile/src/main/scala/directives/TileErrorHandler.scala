@@ -1,7 +1,7 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.common.RfStackTrace
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.common.RfStackTrace
 
 import geotrellis.spark.io.LayerIOError
 import akka.http.scaladsl.server.{ExceptionHandler, Directives}

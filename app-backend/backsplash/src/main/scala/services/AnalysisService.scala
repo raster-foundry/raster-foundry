@@ -1,4 +1,4 @@
-package com.azavea.rf.backsplash.analysis
+package com.rasterfoundry.backsplash.analysis
 
 import java.security.InvalidParameterException
 import java.util.UUID
@@ -7,17 +7,17 @@ import cats.data.Validated._
 import cats.effect.{IO, Timer}
 import cats.implicits._
 import com.azavea.maml.eval.BufferingInterpreter
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.backsplash._
-import com.azavea.rf.backsplash.error._
-import com.azavea.rf.backsplash.maml.BacksplashMamlAdapter
-import com.azavea.rf.backsplash.parameters.PathParameters._
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.datamodel.User
-import com.azavea.rf.database.ToolRunDao
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.tool.ast.{MapAlgebraAST, _}
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.backsplash._
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.maml.BacksplashMamlAdapter
+import com.rasterfoundry.backsplash.parameters.PathParameters._
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.database.ToolRunDao
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.tool.ast.{MapAlgebraAST, _}
 import doobie.implicits._
 import geotrellis.raster._
 import geotrellis.raster.render._

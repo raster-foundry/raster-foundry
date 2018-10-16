@@ -1,9 +1,9 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.database.util.RFTransactor
 import kamon.Kamon
 
 import scala.util.Try

@@ -1,8 +1,8 @@
-package com.azavea.rf.common.utils
+package com.rasterfoundry.common.utils
 
-import com.azavea.rf.common.cache._
-import com.azavea.rf.common.cache.kryo._
-import com.azavea.rf.common.{Config => CommonConfig}
+import com.rasterfoundry.common.cache._
+import com.rasterfoundry.common.cache.kryo._
+import com.rasterfoundry.common.{Config => CommonConfig}
 
 import com.amazonaws.services.s3.AmazonS3URI
 import geotrellis.vector._

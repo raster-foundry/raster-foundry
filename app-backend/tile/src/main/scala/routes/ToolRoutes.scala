@@ -1,16 +1,16 @@
-package com.azavea.rf.tile.routes
+package com.rasterfoundry.tile.routes
 
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common._
-import com.azavea.rf.common.ast._
-import com.azavea.rf.datamodel.User
-import com.azavea.rf.tile._
-import com.azavea.rf.tile.image._
-import com.azavea.rf.tile.tool._
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.eval._
-import com.azavea.rf.tool.maml._
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common._
+import com.rasterfoundry.common.ast._
+import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.tile._
+import com.rasterfoundry.tile.image._
+import com.rasterfoundry.tile.tool._
+import com.rasterfoundry.tool.ast._
+import com.rasterfoundry.tool.eval._
+import com.rasterfoundry.tool.maml._
+import com.rasterfoundry.database.util.RFTransactor
 
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
@@ -46,8 +46,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import java.util.UUID
 
-import com.azavea.rf.common.cache.CacheClient
-import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
+import com.rasterfoundry.common.cache.CacheClient
+import com.rasterfoundry.common.cache.kryo.KryoMemcachedClient
 
 class ToolRoutes
     extends Authentication
@@ -105,8 +105,8 @@ class ToolRoutes
     }
   }
 
-  /** Endpoint used to verify that a [[com.azavea.rf.datamodel.ToolRun]] is sufficient to
-    *  evaluate the [[com.azavea.rf.datamodel.Tool]] to which it refers
+  /** Endpoint used to verify that a [[com.rasterfoundry.datamodel.ToolRun]] is sufficient to
+    *  evaluate the [[com.rasterfoundry.datamodel.Tool]] to which it refers
     */
   def validate(toolRunId: UUID, user: User) = {
     traceName("toolrun-validate") {
@@ -121,7 +121,7 @@ class ToolRoutes
     }
   }
 
-  /** Endpoint used to get a [[com.azavea.rf.datamodel.ToolRun]] histogram */
+  /** Endpoint used to get a [[com.rasterfoundry.datamodel.ToolRun]] histogram */
   def histogram(toolRunId: UUID, user: User) = {
     traceName("toolrun-histogram") {
       pathPrefix("histogram") {

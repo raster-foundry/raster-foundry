@@ -1,6 +1,6 @@
-package com.azavea.rf.tool
+package com.rasterfoundry.tool
 
-import com.azavea.rf.tool._
+import com.rasterfoundry.tool._
 
 import cats.syntax.either._
 import io.circe._

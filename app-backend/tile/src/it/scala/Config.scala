@@ -1,4 +1,4 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
 import com.typesafe.config.ConfigFactory
 

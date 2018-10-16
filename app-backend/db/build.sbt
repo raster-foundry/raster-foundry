@@ -1,13 +1,15 @@
+name := "database"
+
 initialCommands in console :=
   """
-import com.azavea.rf.database._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import doobie.hikari._, doobie.hikari.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
 import cats._, cats.data._, cats.effect.IO, cats.implicits._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.datamodel._
 import doobie.util.log.LogHandler
 import java.util.UUID
 

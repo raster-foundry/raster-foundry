@@ -1,8 +1,8 @@
-package com.azavea.rf.tile.tool
+package com.rasterfoundry.tile.tool
 
-import com.azavea.rf.tile._
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.maml._
+import com.rasterfoundry.tile._
+import com.rasterfoundry.tool.ast._
+import com.rasterfoundry.tool.maml._
 
 import doobie._
 import doobie.implicits._
@@ -21,9 +21,9 @@ object RelabelAst {
     val sources: List[Future[Option[(UUID, MapAlgebraAST)]]] =
       ast.tileSources.toList.map {
         case MapAlgebraAST.SceneRaster(id, sceneId, band, celltype, metadata) =>
-          import com.azavea.rf.database._
-          import com.azavea.rf.database.Implicits._
-          import com.azavea.rf.datamodel._
+          import com.rasterfoundry.database._
+          import com.rasterfoundry.database.Implicits._
+          import com.rasterfoundry.datamodel._
           import cats.implicits._
 
           SceneDao.query

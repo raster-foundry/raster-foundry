@@ -1,8 +1,8 @@
-name := "raster-foundry-tile-server"
+name := "tile"
 
 initialCommands in console := """
-  |import com.azavea.rf.tile.Config
-  |import com.azavea.rf.datamodel._
+  |import com.rasterfoundry.tile.Config
+  |import com.rasterfoundry.datamodel._
   |import io.circe._
   |import io.circe.syntax._
   |import java.util.UUID

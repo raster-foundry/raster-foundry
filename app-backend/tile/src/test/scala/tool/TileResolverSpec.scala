@@ -1,14 +1,14 @@
-package com.azavea.rf.tile.tool
+package com.rasterfoundry.tile.tool
 
-import com.azavea.rf.tile.image.Mosaic
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.maml._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.tile.image.Mosaic
+import com.rasterfoundry.tool.ast._
+import com.rasterfoundry.tool.maml._
+import com.rasterfoundry.datamodel._
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
 import com.azavea.maml.eval.tile._
 import com.azavea.maml.util.NeighborhoodConversion
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.database.util.RFTransactor
 import org.scalatest._
 import cats._
 import cats.data.Validated._
@@ -36,7 +36,7 @@ import java.net.URI
 import java.sql.Timestamp
 import java.time.Instant
 
-import com.azavea.rf.common.utils.CogUtils
+import com.rasterfoundry.common.utils.CogUtils
 
 import scala.concurrent.{ExecutionContext, Future}
 

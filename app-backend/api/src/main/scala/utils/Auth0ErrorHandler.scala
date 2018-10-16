@@ -1,8 +1,8 @@
-package com.azavea.rf.api.utils
+package com.rasterfoundry.api.utils
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directives, ExceptionHandler}
-import com.azavea.rf.common.RfStackTrace
+import com.rasterfoundry.common.RfStackTrace
 import com.typesafe.scalalogging.LazyLogging
 
 trait Auth0ErrorHandler extends Directives with LazyLogging {

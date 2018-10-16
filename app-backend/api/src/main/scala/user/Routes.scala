@@ -1,15 +1,15 @@
-package com.azavea.rf.api.user
+package com.rasterfoundry.api.user
 
 import java.net.URLDecoder
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import cats.effect.IO
-import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.{CommonHandlers, UserErrorHandler}
+import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel._
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import com.typesafe.scalalogging.LazyLogging

@@ -1,4 +1,4 @@
-package com.azavea.rf.api.feed
+package com.rasterfoundry.api.feed
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
@@ -13,9 +13,9 @@ import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 
-import com.azavea.rf.common.UserErrorHandler
-import com.azavea.rf.api.utils.queryparams._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.common.UserErrorHandler
+import com.rasterfoundry.api.utils.queryparams._
+import com.rasterfoundry.datamodel._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -46,7 +46,7 @@ trait FeedQueryParametersDirective extends QueryParametersCommon {
 }
 
 object FeedService extends LazyLogging {
-  import com.azavea.rf.api.AkkaSystem._
+  import com.rasterfoundry.api.AkkaSystem._
 
   val feedCache: AsyncLoadingCache[String, String] =
     Scaffeine()

@@ -1,4 +1,4 @@
-package com.azavea.rf.common
+package com.rasterfoundry.common
 
 import com.rollbar.notifier.Rollbar
 import com.rollbar.notifier.config.ConfigBuilder

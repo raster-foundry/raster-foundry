@@ -1,10 +1,10 @@
-package com.azavea.rf.batch.export.model
+package com.rasterfoundry.batch.export.model
 
-import com.azavea.rf.batch.BatchSpec
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.color._
-import com.azavea.rf.tool.ast.MapAlgebraAST._
-import com.azavea.rf.tool.ast._
+import com.rasterfoundry.batch.BatchSpec
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.color._
+import com.rasterfoundry.tool.ast.MapAlgebraAST._
+import com.rasterfoundry.tool.ast._
 
 import io.circe.parser._
 import io.circe.syntax._

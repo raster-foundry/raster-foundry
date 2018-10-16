@@ -1,4 +1,4 @@
-package com.azavea.rf.tool.ast
+package com.rasterfoundry.tool.ast
 
 import java.util.UUID
 

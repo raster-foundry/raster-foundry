@@ -1,9 +1,9 @@
-package com.azavea.rf.backsplash
+package com.rasterfoundry.backsplash
 
-import com.azavea.rf.authentication
-import com.azavea.rf.database._
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.authentication
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel._
 
 import cats.data._
 import cats.effect.IO
