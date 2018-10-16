@@ -233,8 +233,10 @@ final case class UpdateAOIProject(projectId: UUID)(
     def updateProjectIO(user: User, projectId: UUID): ConnectionIO[Int] =
       for {
         proj <- ProjectDao.unsafeGetProjectById(projectId)
+        _ <- logger.debug(s"Got project ${projectId}").pure[ConnectionIO]
         newProject = proj.copy(aoisLastChecked = Timestamp.from(Instant.now))
         affectedRows <- ProjectDao.updateProject(newProject, proj.id, user)
+        _ <- logger.debug(s"Update ${affectedRows} projects").pure[ConnectionIO]
       } yield affectedRows
 
     val (projId, numberNewScenes) =
