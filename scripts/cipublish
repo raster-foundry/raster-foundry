@@ -67,14 +67,14 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 do
                     echo "Publishing ${project} artifact"
 
-#                     docker-compose \
-#                        -f "${DIR}/../docker-compose.test.yml" \
-#                        run --rm --no-deps \
-#                        -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
-#                        -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
-#                        -e PGP_HEX_KEY="${PGP_HEX_KEY}" \
-#                        -e PGP_PASSPHRASE="${PGP_PASSPHRASE}" \
-#                        build gitSnapshots "${project}/publishSigned"
+                    docker-compose \
+                       -f "${DIR}/../docker-compose.test.yml" \
+                       run --rm --no-deps \
+                       -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
+                       -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
+                       -e PGP_HEX_KEY="${PGP_HEX_KEY}" \
+                       -e PGP_PASSPHRASE="${PGP_PASSPHRASE}" \
+                       build gitSnapshots "${project}/publishSigned"
                 done
             fi
 
