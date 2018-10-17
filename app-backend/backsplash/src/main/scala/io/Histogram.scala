@@ -1,8 +1,8 @@
-package com.azavea.rf.backsplash.io
+package com.rasterfoundry.backsplash.io
 
-import com.azavea.rf.database.SceneToProjectDao
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.datamodel.SceneType
+import com.rasterfoundry.database.SceneToProjectDao
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.datamodel.SceneType
 
 import cats.data.OptionT
 import cats.effect.IO

@@ -2,15 +2,15 @@ package com.rasterfoundry.backsplash.services
 
 import com.azavea.maml.error.Interpreted
 import com.azavea.maml.eval.BufferingInterpreter
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.backsplash.error._
-import com.azavea.rf.backsplash.io.Histogram
-import com.azavea.rf.backsplash.nodes.ProjectNode
-import com.azavea.rf.backsplash.parameters.PathParameters._
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.database.{ProjectDao, UserDao}
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.io.Histogram
+import com.rasterfoundry.backsplash.nodes.ProjectNode
+import com.rasterfoundry.backsplash.parameters.PathParameters._
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.database.{ProjectDao, UserDao}
+import com.rasterfoundry.datamodel._
 
 import cats.data.Validated._
 import cats.data._
