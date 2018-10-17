@@ -195,7 +195,9 @@ class AnnotationGroupDaoSpec
             assert(annotationGroupSummary.length > 0,
                    "; No summary produced for annotation group")
 
-            Generators.labelValues.map { label =>
+            val annotationLabelSet = annotationsDB.map(_.label).toSet
+
+            annotationLabelSet.map { label =>
               val annotationCount =
                 annotationGroupSummary
                   .find(_.label == label)
