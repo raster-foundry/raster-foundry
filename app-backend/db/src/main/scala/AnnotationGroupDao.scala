@@ -103,7 +103,7 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
                        annotation_group,
                        count(*),
                        label,
-                       quality
+                       coalesce(quality, 'YES'::annotation_quality) as quality
                    FROM
                        annotations
                    WHERE
