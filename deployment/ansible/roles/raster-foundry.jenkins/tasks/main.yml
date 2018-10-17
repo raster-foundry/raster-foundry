@@ -81,3 +81,12 @@
     job: find /var/lib/jenkins/workspace/ -path "*/.ivy/*" -delete
     state: "present"
   changed_when: False
+
+- name: Setup weekly Coursier cleanup cron task
+  cron:
+    name: "coursier-cleanup"
+    user: "root"
+    special_time: "weekly"
+    job: find /var/lib/jenkins/workspace/ -path "*/.coursier-cache/*" -delete
+    state: "present"
+  changed_when: False

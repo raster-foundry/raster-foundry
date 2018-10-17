@@ -37,6 +37,10 @@
 - Users who are not admins of an organization can now correctly create teams and are automatically added to them [\#4147](https://github.com/raster-foundry/raster-foundry/pull/4171)
 - Added additional options for starting development server [\#4192](https://github.com/raster-foundry/raster-foundry/pull/4192)
 
+### Deprecated
+
+### Removed
+
 ### Fixed
 
 - Removed duplicate emails for repeated failures of the same upload [\#4130](https://github.com/raster-foundry/raster-foundry/pull/4130)
