@@ -187,13 +187,31 @@ class AnnotationGroupDaoSpec
                 .listAnnotationGroupsForProject(dbProject.id)
               annotationGroupSummary <- AnnotationGroupDao
                 .getAnnotationGroupSummary(annotationGroupDB.id)
-            } yield annotationGroupSummary
+            } yield (annotationGroupSummary, annotationsDB)
 
-            val annotationGroupSummary =
+            val (annotationGroupSummary, annotationsDB) =
               annotationGroupIO.transact(xa).unsafeRunSync()
 
             assert(annotationGroupSummary.length > 0,
                    "; No summary produced for annotation group")
+
+            Generators.labelValues.map { label =>
+              val annotationCount =
+                annotationGroupSummary
+                  .find(_.label == label)
+                  .get
+                  .counts
+                  .as[Map[String, Int]]
+                  .right
+                  .get
+                  .map(_._2)
+                  .foldLeft(0)(_ + _)
+              assert(annotationCount === annotationsDB
+                       .filter(_.label == label)
+                       .length,
+                     "; Count of car qualities did not equal number inserted")
+            }
+
             true
           }
       }
