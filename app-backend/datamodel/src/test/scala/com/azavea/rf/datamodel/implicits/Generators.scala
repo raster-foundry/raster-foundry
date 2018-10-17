@@ -193,10 +193,12 @@ object Generators extends ArbitraryInstances {
       defaultStyle <- Gen.const(Some(().asJson))
     } yield { AnnotationGroup.Create(name, defaultStyle) }
 
+  val labelValues = Seq("Car", "Human", "Apple")
+
   private def annotationCreateGen: Gen[Annotation.Create] =
     for {
       owner <- Gen.const(None)
-      label <- nonEmptyStringGen
+      label <- Gen.oneOf(labelValues)
       description <- nonEmptyStringGen map { Some(_) }
       machineGenerated <- arbitrary[Option[Boolean]]
       confidence <- Gen.choose(0.0f, 1.0f) map { Some(_) }

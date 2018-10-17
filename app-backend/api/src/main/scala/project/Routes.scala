@@ -143,7 +143,10 @@ trait ProjectRoutes
                         deleteAnnotationGroup(projectId, annotationGroupId)
                       }
                     }
-                }
+                } ~
+                  pathPrefix("summary") {
+                    getAnnotationGroupSummary(projectId, annotationGroupId)
+                  }
               }
           } ~
           pathPrefix("annotations") {
@@ -536,6 +539,24 @@ trait ProjectRoutes
         complete {
           AnnotationGroupDao
             .getAnnotationGroup(projectId, agId)
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
+  }
+
+  def getAnnotationGroupSummary(projectId: UUID,
+                                annotationGroupId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          AnnotationGroupDao
+            .getAnnotationGroupSummary(annotationGroupId)
             .transact(xa)
             .unsafeToFuture
         }

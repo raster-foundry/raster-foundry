@@ -159,6 +159,67 @@ class AnnotationGroupDaoSpec
     }
   }
 
+  test("retrieve annotation summary for a group") {
+    check {
+      forAll {
+        (user: User.Create,
+         org: Organization.Create,
+         project: Project.Create,
+         ag: AnnotationGroup.Create,
+         agAnnotations: List[Annotation.Create]) =>
+          {
+            val annotationGroupIO = for {
+              orgUserProject <- insertUserOrgProject(user, org, project)
+              (dbOrg, dbUser, dbProject) = orgUserProject
+              annotationGroupDB <- AnnotationGroupDao.createAnnotationGroup(
+                dbProject.id,
+                ag,
+                dbUser)
+              annotationsDB <- AnnotationDao.insertAnnotations(
+                agAnnotations.map(
+                  _.copy(annotationGroup = Some(annotationGroupDB.id))),
+                dbProject.id,
+                dbUser)
+              projectAnnotations <- AnnotationDao.query
+                .filter(fr"project_id=${dbProject.id}")
+                .list
+              projectAnnotationGroups <- AnnotationGroupDao
+                .listAnnotationGroupsForProject(dbProject.id)
+              annotationGroupSummary <- AnnotationGroupDao
+                .getAnnotationGroupSummary(annotationGroupDB.id)
+            } yield (annotationGroupSummary, annotationsDB)
+
+            val (annotationGroupSummary, annotationsDB) =
+              annotationGroupIO.transact(xa).unsafeRunSync()
+
+            assert(annotationGroupSummary.length > 0,
+                   "; No summary produced for annotation group")
+
+            val annotationLabelSet = annotationsDB.map(_.label).toSet
+
+            annotationLabelSet.map { label =>
+              val annotationCount =
+                annotationGroupSummary
+                  .find(_.label == label)
+                  .get
+                  .counts
+                  .as[Map[String, Int]]
+                  .right
+                  .get
+                  .map(_._2)
+                  .foldLeft(0)(_ + _)
+              assert(annotationCount === annotationsDB
+                       .filter(_.label == label)
+                       .length,
+                     "; Count of car qualities did not equal number inserted")
+            }
+
+            true
+          }
+      }
+    }
+  }
+
   test("Creating annotations on a project with no annotation groups") {
     check {
       forAll {

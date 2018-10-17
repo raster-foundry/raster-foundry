@@ -80,6 +80,46 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
                          agId: UUID): ConnectionIO[Option[AnnotationGroup]] =
     query.filter(fr"project_id = $projectId").filter(agId).selectOption
 
+  def getAnnotationGroupSummary(
+      annotationGroupId: UUID): ConnectionIO[List[LabelSummary]] = {
+    val queryString =
+      sql"""
+           SELECT
+               annots.label, jsonb_object_agg(annots.quality, coalesce(counts.count, 0)) as counts
+           FROM (
+               SELECT
+                   DISTINCT annotation_group,
+                   label,
+                   vals.quality
+               FROM
+                   annotations,
+                   (
+                       SELECT
+                           unnest(enum_range(NULL::annotation_quality)) AS quality) AS vals
+              WHERE annotation_group = ${annotationGroupId}
+              ) AS annots
+               LEFT JOIN (
+                   SELECT
+                       annotation_group,
+                       count(*),
+                       label,
+                       coalesce(quality, 'YES'::annotation_quality) as quality
+                   FROM
+                       annotations
+                   WHERE
+                       annotation_group = ${annotationGroupId}
+                   GROUP BY
+                       quality,
+                       label,
+                       annotation_group) counts ON annots.annotation_group = counts.annotation_group
+               AND counts.label = annots.label
+               AND annots.quality = counts.quality
+           GROUP BY annots.label
+
+         """
+    queryString.query[LabelSummary].to[List]
+  }
+
   def deleteAnnotationGroup(projectId: UUID, agId: UUID): ConnectionIO[Int] =
     for {
       _ <- AnnotationDao.deleteByAnnotationGroup(agId)
