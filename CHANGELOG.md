@@ -10,6 +10,7 @@
 - Updated package and assembly jar names [\#3924](https://github.com/raster-foundry/raster-foundry/pull/3924), [\#4222](https://github.com/raster-foundry/raster-foundry/pull/4222)
 - Updated package and assembly jar names [\#3924](https://github.com/raster-foundry/raster-foundry/pull/3924)
 - Change homepage "Create a new Template" button to "Create a new Analysis" [/#4224](https://github.com/raster-foundry/raster-foundry/pull/4224)
+- Projects with > 30 scenes will not show a preview on the project list page [/#4231](https://github.com/raster-foundry/raster-foundry/pull/4231)
 
 ### Deprecated
 

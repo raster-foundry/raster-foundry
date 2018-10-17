@@ -1,7 +1,7 @@
 <div class="panel-body">
   <ng-container ng-if="!$ctrl.slim">
     <rf-status-tag ng-if="$ctrl.status && $ctrl.status != 'CURRENT' " entity-type="project" status="$ctrl.status" class="project-status"></rf-status-tag>
-    <a href ui-sref="projects.edit({projectid: $ctrl.project.id})" class="no-hover">
+    <a href ui-sref="projects.edit.scenes({projectid: $ctrl.project.id})" class="no-hover">
       <img class="avatar tiny" ng-attr-src="{{ $ctrl.project.owner.profileImageUri }}" ng-if="$ctrl.project.owner.profileImageUri"/>
       <h4 class="project-title" data-title="{{$ctrl.project.name}}">{{$ctrl.project.name}}</h4>
     </a>
@@ -20,7 +20,7 @@
       </a>
     </div>
     <div class="project-preview">
-      <a ui-sref="projects.edit({projectid: $ctrl.project.id})" style="text-decoration: none">
+      <a ui-sref="projects.edit.scenes({projectid: $ctrl.project.id})" style="text-decoration: none">
         <!-- IF project has no scenes -->
         <div class="project-preview-container placeholder"
              ng-if="$ctrl.status === 'NOSCENES'"
@@ -29,7 +29,13 @@
 
         <!-- IF not all scenes ingested: -->
         <div class="project-preview-container placeholder"
-             ng-if="$ctrl.status !== 'CURRENT' && $ctrl.status !== 'NOSCENES'"
+             ng-if="$ctrl.status === 'PARTIAL'"
+             style="background-image: url({{$ctrl.projectPlaceholder}})">
+        </div>
+
+        <!-- IF large project -->
+        <div class="project-preview-container placeholder"
+             ng-if="$ctrl.status == 'LARGE'"
              style="background-image: url({{$ctrl.projectPlaceholder}})">
         </div>
 
