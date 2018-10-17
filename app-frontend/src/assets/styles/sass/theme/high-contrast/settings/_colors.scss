@@ -4,10 +4,10 @@ $brand-secondary: #0B5FBF;
 $brand-tertiary: #0B5FBF;
 
 // Base Colors:
-$text-base: #2F343B;
 $shade-light: #ccd4dc;
 $shade-normal: #2F343B;
 $shade-dark: #353C58;
+$text-base: $shade-normal;
 
 // grays:
 $gray: #38394f;

@@ -4,10 +4,11 @@
 
 ### Added
 - Added summary endpoint for annotation groups to list the number of labels with different qualities (YES, NO, MISS, UNSURE) to support annotation applications [\#4221](https://github.com/raster-foundry/raster-foundry/pull/4221)
+- Allow platforms to set a "From" email field in order to change notification "From" name [#\4198](Add from field for email) 
 
 ### Changed
 - Small text edit to the Imports page [\#4198](https://github.com/raster-foundry/raster-foundry/pull/4198)
-- Updated package and assembly jar names [\#3924](https://github.com/raster-foundry/raster-foundry/pull/3924)
+- Updated package and assembly jar names [\#3924](https://github.com/raster-foundry/raster-foundry/pull/3924), [\#4222](https://github.com/raster-foundry/raster-foundry/pull/4222)
 
 ### Deprecated
 

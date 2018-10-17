@@ -137,11 +137,6 @@ class ProjectPublishModalController {
         this.hydrateTileUrls();
     }
 
-    openProjectShare() {
-        let url = this.$state.href('share', {projectid: this.resolve.project.id});
-        this.$window.open(url, '_blank');
-    }
-
     hydrateTileUrls() {
         let zxyUrl = this.resolve.tileUrl
             .replace('{z}', `{${this.urlMappings.standard.z}}`)

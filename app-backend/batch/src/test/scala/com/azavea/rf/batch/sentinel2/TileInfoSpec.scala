@@ -52,7 +52,9 @@ class TileInfoSpec extends FunSpec with Matchers with BatchSpec {
         |      ]
         |    ]
         |  }
-      """.stripMargin.parseGeoJson[Polygon].reproject(CRS.fromName("EPSG:32601"), CRS.fromName("EPSG:3857"))
+      """.stripMargin
+        .parseGeoJson[Polygon]
+        .reproject(CRS.fromName("EPSG:32601"), CRS.fromName("EPSG:3857"))
 
     val tileDataGeometry =
       """
@@ -165,24 +167,31 @@ class TileInfoSpec extends FunSpec with Matchers with BatchSpec {
         |      ]
         |    ]
         |  }
-      """.stripMargin.parseGeoJson[Polygon].reproject(CRS.fromName("EPSG:32601"), CRS.fromName("EPSG:3857"))
+      """.stripMargin
+        .parseGeoJson[Polygon]
+        .reproject(CRS.fromName("EPSG:32601"), CRS.fromName("EPSG:3857"))
 
     val sceneMetadata =
       Map(
-        "path"                   -> "tiles/1/X/CA/2017/4/20/0",
-        "cloudyPixelPercentage"  -> "12.96",
-        "gridSquare"             -> "CA",
-        "timeStamp"              -> "2017-04-20T00:26:08.456Z",
-        "utmZone"                -> "1",
-        "productPath"            -> "products/2017/4/20/S2A_MSIL1C_20170420T002611_N0204_R102_T01XCA_20170420T002608",
-        "productName"            -> "S2A_MSIL1C_20170420T002611_N0204_R102_T01XCA_20170420T002608",
-        "latitudeBand"           -> "X",
+        "path" -> "tiles/1/X/CA/2017/4/20/0",
+        "cloudyPixelPercentage" -> "12.96",
+        "gridSquare" -> "CA",
+        "timeStamp" -> "2017-04-20T00:26:08.456Z",
+        "utmZone" -> "1",
+        "productPath" -> "products/2017/4/20/S2A_MSIL1C_20170420T002611_N0204_R102_T01XCA_20170420T002608",
+        "productName" -> "S2A_MSIL1C_20170420T002611_N0204_R102_T01XCA_20170420T002608",
+        "latitudeBand" -> "X",
         "dataCoveragePercentage" -> "51.98"
       )
 
     json.map { tileInfo =>
-      ImportSentinel2.multiPolygonFromJson(tileInfo, "tileDataGeometry").get.vertices shouldBe MultiPolygon(tileDataGeometry).vertices
-      ImportSentinel2.multiPolygonFromJson(tileInfo, "tileGeometry").get shouldBe MultiPolygon(tileGeometry)
+      ImportSentinel2
+        .multiPolygonFromJson(tileInfo, "tileDataGeometry")
+        .get
+        .vertices shouldBe MultiPolygon(tileDataGeometry).vertices
+      ImportSentinel2
+        .multiPolygonFromJson(tileInfo, "tileGeometry")
+        .get shouldBe MultiPolygon(tileGeometry)
 
       ImportSentinel2.getSceneMetadata(tileInfo) shouldBe sceneMetadata
     }

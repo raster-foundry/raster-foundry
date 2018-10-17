@@ -64,19 +64,23 @@
 
   <!--Footer for SUCCESS-->
   <div class="modal-footer">
-    <button type="button" class="btn pull-left"
-            ng-disabled="$ctrl.isProcessing"
-            ng-click="$ctrl.dismiss()">
-      Cancel
-    </button>
-    <button type="button" class="btn btn-primary"
-            ng-if="!$ctrl.isProcessing"
-            ng-click="$ctrl.createTemplate()"
-            ng-disabled="!$ctrl.isValid()">
-      Create Template
-    </button>
-    <div class="btn btn-primary disabled" ng-if="$ctrl.isProcessing">
-      Processing
+    <div class="footer-section left">
+      <button type="button" class="btn"
+              ng-disabled="$ctrl.isProcessing"
+              ng-click="$ctrl.dismiss()">
+        Cancel
+      </button>
+    </div>
+    <div class="footer-section right">
+      <button type="button" class="btn btn-primary"
+              ng-if="!$ctrl.isProcessing"
+              ng-click="$ctrl.createTemplate()"
+              ng-disabled="!$ctrl.isValid()">
+        Create Template
+      </button>
+      <div class="btn btn-primary disabled" ng-if="$ctrl.isProcessing">
+        Processing
+      </div>
     </div>
   </div>
 </div>
