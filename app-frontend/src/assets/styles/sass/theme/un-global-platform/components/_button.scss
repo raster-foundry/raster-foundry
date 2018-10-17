@@ -113,6 +113,19 @@
   @include ghost-button-states($danger, darken($danger, 20%));
 }
 
+.btn-link {
+  border-color: transparent;
+  color: $brand-primary;
+  background-color: transparent;
+
+  &:hover, &.hover,
+  &:active, &.active, {
+    background-color: transparent;
+    border-color: transparent;
+    color: darken($brand-primary, 10%);
+  }
+}
+
 /*
  * Button Sizes
  */

@@ -1,5 +1,7 @@
 name := "tile"
 
+assemblyJarName in assembly := "tile-assembly.jar"
+
 initialCommands in console := """
   |import com.rasterfoundry.tile.Config
   |import com.rasterfoundry.datamodel._

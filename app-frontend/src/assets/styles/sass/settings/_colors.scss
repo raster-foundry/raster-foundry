@@ -4,10 +4,10 @@ $brand-secondary: #2FC1D0 !default; // green
 $brand-tertiary: #53B1E0 !default;  // blue
 
 // Base Colors:
-$text-base: #7B8391 !default;
 $shade-light: #959CAC !default;  // slightly lighter then $text-base
 $shade-normal: #465076 !default; // deep purple
 $shade-dark: #353C58 !default;   // deepdeep purple
+$text-base: $shade-dark !default;
 
 // grays:
 $gray: #38394f !default;
@@ -20,7 +20,7 @@ $link-color: $brand-primary !default;
 
 // whites
 $white: #fff !default;
-$off-white: #f3f3f3 !default;
+$off-white: #F4F5F7 !default;
 
 // Action Colors:
 $warning: #E69348 !default; // orange

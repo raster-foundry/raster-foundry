@@ -16,6 +16,11 @@
   &.active {
     background-color: $off-white;
   }
+
+  &.disabled > i,
+  &:disabled > i {
+    color: $text-base;
+  }
 }
 
 .layer-picker-label {

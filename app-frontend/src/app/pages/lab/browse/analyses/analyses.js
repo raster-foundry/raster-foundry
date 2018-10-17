@@ -124,12 +124,20 @@ class LabBrowseAnalysesController {
 
     deleteSelected() {
         const modal = this.modalService.open({
-            component: 'rfConfirmationModal',
+            component: 'rfFeedbackModal',
             resolve: {
                 title: () => `Delete ${this.selected.size} analyses?`,
-                content: () => 'Deleting analyses will make any ' +
-                    'further tile requests with them fail',
-                confirmText: () => 'Delete Analyses',
+                subtitle: () =>
+                    'Deleting analyses cannot be undone.',
+                content: () =>
+                    '<h2>Do you wish to continue?</h2>'
+                    + '<p>Future attempts to access this '
+                    + 'analysis will fail.',
+                /* feedbackIconType : default, success, danger, warning */
+                feedbackIconType: () => 'danger',
+                feedbackIcon: () => 'icon-warning',
+                feedbackBtnType: () => 'btn-danger',
+                feedbackBtnText: () => 'Delete analyses',
                 cancelText: () => 'Cancel'
             }
         });

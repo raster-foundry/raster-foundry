@@ -34,12 +34,20 @@ class MapTokensController {
 
     deleteToken(token) {
         const modal = this.modalService.open({
-            component: 'rfConfirmationModal',
+            component: 'rfFeedbackModal',
             resolve: {
                 title: () => 'Delete map token?',
-                content: () => 'Deleting this map token will make any ' +
-                    'further requests with it fail',
-                confirmText: () => 'Delete Map Token',
+                subtitle: () =>
+                    'Deleting this map token will '
+                    + 'make any further requests with it fail',
+                content: () =>
+                    '<h2>Do you wish to continue?</h2>'
+                    + '<p>This is a permanent action</p>',
+                /* feedbackIconType : default, success, danger, warning */
+                feedbackIconType: () => 'danger',
+                feedbackIcon: () => 'icon-warning',
+                feedbackBtnType: () => 'btn-danger',
+                feedbackBtnText: () => 'Delete map token',
                 cancelText: () => 'Cancel'
             }
         });

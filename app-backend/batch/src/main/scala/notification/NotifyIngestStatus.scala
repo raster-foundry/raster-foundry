@@ -181,7 +181,8 @@ final case class NotifyIngestStatus(sceneId: UUID)(
                           userEmail,
                           ingestEmailSubject,
                           htmlBody,
-                          plainBody)
+                          plainBody,
+                          pU.pubSettings.emailFrom)
                 .map((configuredEmail: Email) => configuredEmail.send)
               logger.info(s"Notified project owner ${pU.uId}.")
             case _ =>
@@ -235,7 +236,8 @@ final case class NotifyIngestStatus(sceneId: UUID)(
                         userEmail,
                         ingestEmailSubject,
                         htmlBody,
-                        plainBody)
+                        plainBody,
+                        pO.pubSettings.emailFrom)
               .map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified scene owner ${pO.uId}.")
           case _ =>

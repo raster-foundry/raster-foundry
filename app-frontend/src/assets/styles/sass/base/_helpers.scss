@@ -22,6 +22,10 @@
 }
 
 // Color helpers
+.color-base {
+  color: $text-base !important;
+}
+
 .color-primary {
   color: $brand-primary !important;
 }

@@ -29,10 +29,23 @@ form {
   &.no-margin {
     margin-bottom: 0;
   }
+
+  &.inline {
+    display: flex;
+
+    label {
+      margin-bottom: 0;
+      margin-right: 2rem;
+    }
+  }
+}
+
+.input-group {
+  display: flex;
 }
 
 label, .label {
-  font-weight: 600;
+  font-weight: 700;
   max-width: 100%;
   margin-bottom: 5px;
   display: inline-block;
@@ -230,7 +243,6 @@ div.checkbox {
   position: relative;
   display: flex;
   align-items: center;
-  font-weight: 500;
   margin: 0;
 
   label {
@@ -276,11 +288,10 @@ div.checkbox {
 
   input[type=checkbox] {
     visibility: hidden;
-    margin-left: -1rem;
+    margin-left: -1.5rem;
   }
 
   &.active {
-    color: $brand-primary;
     transition: .2s ease-in-out color;
 
     &:after {
@@ -293,6 +304,10 @@ div.checkbox {
       opacity: 1;
       transform: scale(1);
     }
+  }
+
+  &:not(.active) {
+    color: rgba($text-base, .7);
   }
 
   &:hover:not(.active):before:not([disabled]) {
@@ -328,7 +343,6 @@ div.radio {
   position: relative;
   display: flex;
   align-items: center;
-  font-weight: 500;
   margin: 0;
 
   span {
@@ -368,11 +382,10 @@ div.radio {
   input[type=checkbox],
   input[type=radio] {
     visibility: hidden;
-    margin-left: -1rem;
+    margin-left: -1.5rem;
   }
 
   &.active {
-    color: $brand-primary;
     transition: .2s ease-in-out color;
 
     &:after {
@@ -384,6 +397,10 @@ div.radio {
       opacity: 1;
       transform: scale(1);
     }
+  }
+
+  &:not(.active) {
+    color: rgba($text-base, .7);
   }
 
   &:hover:not(.active):before {
