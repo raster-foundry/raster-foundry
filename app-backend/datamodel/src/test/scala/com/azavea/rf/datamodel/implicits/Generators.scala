@@ -18,6 +18,11 @@ object Generators extends ArbitraryInstances {
   val defaultPlatformId: UUID =
     UUID.fromString("31277626-968b-4e40-840b-559d9c67863c")
 
+  private def stringOptionGen: Gen[Option[String]] =
+    Gen.oneOf(
+      Gen.const(Option.empty[String]), nonEmptyStringGen map { Some(_) }
+    )
+
   private def stringListGen: Gen[List[String]] =
     Gen.oneOf(0, 15) flatMap { Gen.listOfN(_, nonEmptyStringGen) }
 
@@ -317,7 +322,7 @@ object Generators extends ArbitraryInstances {
       sourceUri <- nonEmptyStringGen
       scene <- uuidGen
       imageMetadata <- Gen.const(().asJson)
-      owner <- arbitrary[Option[String]]
+      owner <- stringOptionGen
       resolutionMeters <- Gen.choose(0.25f, 1000f)
       metadataFiles <- stringListGen
     } yield
@@ -341,7 +346,7 @@ object Generators extends ArbitraryInstances {
       sourceUri <- nonEmptyStringGen
       scene <- uuidGen
       imageMetadata <- Gen.const(().asJson)
-      owner <- arbitrary[Option[String]]
+      owner <- stringOptionGen
       resolutionMeters <- Gen.choose(0.25f, 1000f)
       metadataFiles <- stringListGen
       bands <- Gen.listOfN(3, bandCreateGen)
@@ -456,7 +461,7 @@ object Generators extends ArbitraryInstances {
       datasource <- uuidGen
       sceneMetadata <- Gen.const(().asJson)
       name <- nonEmptyStringGen
-      owner <- arbitrary[Option[String]]
+      owner <- stringOptionGen
       tileFootprint <- projectedMultiPolygonGen3857 map { Some(_) }
       dataFootprint <- projectedMultiPolygonGen3857 map { Some(_) }
       metadataFiles <- stringListGen
@@ -632,7 +637,7 @@ object Generators extends ArbitraryInstances {
       emailAoiNotification <- arbitrary[Boolean]
       emailExportNotification <- arbitrary[Boolean]
       platformHost <- Gen.const(None)
-      emailFrom <- arbitrary[Option[String]]
+      emailFrom <- stringOptionGen
     } yield {
       Platform.PublicSettings(
         emailUser,
