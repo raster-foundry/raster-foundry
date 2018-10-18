@@ -93,19 +93,23 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     } yield sceneIds
   }
 
-  def getMosaicDefinition(
-      projectId: UUID,
-      polygonOption: Option[Projected[Polygon]],
-      redBand: Option[Int] = None,
-      greenBand: Option[Int] = None,
-      blueBand: Option[Int] = None): ConnectionIO[Seq[MosaicDefinition]] = {
+  def getMosaicDefinition(projectId: UUID,
+                          polygonOption: Option[Projected[Polygon]],
+                          redBand: Option[Int] = None,
+                          greenBand: Option[Int] = None,
+                          blueBand: Option[Int] = None,
+                          sceneIdSubset: List[UUID] = List.empty)
+    : ConnectionIO[Seq[MosaicDefinition]] = {
 
     val filters = List(
       polygonOption.map(polygon =>
         fr"ST_Intersects(scenes.tile_footprint, ${polygon})"),
       Some(fr"scenes_to_projects.project_id = ${projectId}"),
       Some(fr"scenes_to_projects.accepted = true"),
-      Some(fr"scenes.ingest_status = 'INGESTED'")
+      Some(fr"scenes.ingest_status = 'INGESTED'"),
+      sceneIdSubset.toNel map {
+        Fragments.in(fr"scene_id", _)
+      }
     )
     val select = fr"""
     SELECT

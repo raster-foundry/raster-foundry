@@ -216,8 +216,7 @@ class ProjectDaoSpec
                     dbScenes: List[Scene.WithRelated],
                     dbUser: User) => {
                 ProjectDao.addScenesToProject(
-                  // this.get is safe because the arbitrary instance only produces NELs
-                  (dbScenes map { _.id }).toNel.get,
+                  (dbScenes map { _.id }),
                   dbProject.id,
                   true
                 )
@@ -334,9 +333,7 @@ class ProjectDaoSpec
                     dbScenes: List[Scene.WithRelated],
                     dbUser: User) => {
                 val sceneIds = dbScenes map { _.id }
-                ProjectDao.addScenesToProject(
-                                              // this.get is safe because the arbitrary instance only produces NELs
-                                              (dbScenes map { _.id }).toNel.get,
+                ProjectDao.addScenesToProject((dbScenes map { _.id }),
                                               dbProject.id,
                                               true) flatMap { _ =>
                   ProjectDao.deleteScenesFromProject(dbScenes map { _.id },

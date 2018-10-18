@@ -87,18 +87,26 @@ class SceneToProjectDaoSpec
               }).traverse(
                 (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
               )
+              selectedSceneIds = scenesInsert.take(2) map { _.id }
               _ <- ProjectDao.addScenesToProject(scenesInsert map { _.id },
                                                  dbProject.id,
                                                  false)
               _ <- SceneToProjectDao.setManualOrder(dbProject.id,
                                                     scenesInsert map { _.id })
-              mds <- SceneToProjectDao.getMosaicDefinition(dbProject.id, None)
+              mds <- SceneToProjectDao.getMosaicDefinition(dbProject.id,
+                                                           None,
+                                                           sceneIdSubset =
+                                                             selectedSceneIds)
               stps <- SceneToProjectDao.query
                 .filter(fr"project_id = ${dbProject.id}")
+                .filter(selectedSceneIds.toNel map {
+                  Fragments.in(fr"scene_id", _)
+                })
                 .list
-            } yield (mds, stps)
+            } yield (mds, stps, selectedSceneIds)
 
-            val (mds, stps) = mdAndStpsIO.transact(xa).unsafeRunSync
+            val (mds, stps, selectedIds) =
+              mdAndStpsIO.transact(xa).unsafeRunSync
 
             // Mapping of scene ids to scene order
             val sceneMap =

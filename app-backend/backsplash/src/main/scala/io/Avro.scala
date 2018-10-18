@@ -10,15 +10,16 @@ import com.rasterfoundry.database.LayerAttributeDao
 import com.rasterfoundry.datamodel.{MosaicDefinition, SingleBandOptions}
 import com.rf.azavea.backsplash.Color
 import doobie.implicits._
+import geotrellis.proj4.{WebMercator, LatLng}
 import geotrellis.raster.histogram._
-import geotrellis.raster.io.json.HistogramJsonFormats
 import geotrellis.raster.{Raster, io => _, _}
 import geotrellis.spark.io._
+import geotrellis.raster.io.json._
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 import geotrellis.spark.io.s3.{S3CollectionLayerReader, S3ValueReader}
 import geotrellis.spark.tiling.LayoutLevel
 import geotrellis.spark.{SpatialKey, TileLayerMetadata, io => _, _}
-import geotrellis.vector.Extent
+import geotrellis.vector.{Extent, Polygon, Projected}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
@@ -29,6 +30,60 @@ object Avro extends RollbarNotifier with HistogramJsonFormats {
   import com.rasterfoundry.database.util.RFTransactor.xa
 
   val store = PostgresAttributeStore()
+
+  def fetchGlobalTile(
+      mosaicDefinition: MosaicDefinition,
+      extent: Option[Projected[Polygon]],
+      redBand: Int,
+      greenBand: Int,
+      blueBand: Int,
+      size: Int = 64,
+      attributeStore: AttributeStore = store): IO[MultibandTile] = IO {
+    require(size < 4096, s"$size is too large to stitch")
+    minZoomLevel(attributeStore, mosaicDefinition.sceneId.toString, size).map {
+      case (layerId, re) =>
+        S3CollectionLayerReader(store)
+          .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](
+            layerId)
+          .where(Intersects(re.extent))
+          .result
+          .stitch
+          .crop(re.extent)
+    } match {
+      case Success(raster) =>
+        raster.tile.subsetBands(redBand, greenBand, blueBand)
+      case Failure(e) => throw e
+    }
+  }
+
+  def minZoomLevel(store: AttributeStore,
+                   layerName: String,
+                   size: Int): Try[(LayerId, RasterExtent)] = {
+    def forZoom(zoom: Int): Try[(LayerId, RasterExtent)] = {
+      val currentId = LayerId(layerName, zoom)
+      val meta = Try {
+        store.readMetadata[TileLayerMetadata[SpatialKey]](currentId)
+      }
+      val rasterExtent = meta.map { tlm =>
+        (tlm, dataRasterExtent(tlm))
+      }
+      rasterExtent.map {
+        case (tlm, re) =>
+          logger.debug(s"$currentId has (${re.cols},${re.rows}) pixels")
+          if (re.cols >= size || re.rows >= size) (currentId, re)
+          else forZoom(zoom + 1).getOrElse((currentId, re))
+      }
+    }
+    forZoom(1)
+  }
+
+  def dataRasterExtent(md: TileLayerMetadata[_]): RasterExtent = {
+    val re = RasterExtent(md.layout.extent,
+                          md.layout.tileLayout.totalCols.toInt,
+                          md.layout.tileLayout.totalRows.toInt)
+    val gb = re.gridBoundsFor(md.extent)
+    re.rasterExtentFor(gb).toRasterExtent
+  }
 
   // TODO: this essentially inlines a bunch of logic from LayerCache, which isn't super cool
   // it would be nice to get that logic somewhere more appropriate, especially since a lot of

@@ -336,9 +336,13 @@ object ProjectDao
   def deleteScenesFromProject(sceneIds: List[UUID],
                               projectId: UUID): ConnectionIO[Int] = {
     val f: Option[Fragment] = sceneIds.toNel.map(Fragments.in(fr"scene_id", _))
-    val deleteQuery = fr"DELETE FROM scenes_to_projects" ++
-      Fragments.whereAndOpt(f, Some(fr"project_id = ${projectId}"))
-    deleteQuery.update.run
+    f match {
+      case fragO @ Some(_) =>
+        val deleteQuery = fr"DELETE FROM scenes_to_projects" ++
+          Fragments.whereAndOpt(f, Some(fr"project_id = ${projectId}"))
+        deleteQuery.update.run
+      case _ => 0.pure[ConnectionIO]
+    }
   }
 
   def addScenesToProjectFromQuery(sceneParams: CombinedSceneQueryParams,
