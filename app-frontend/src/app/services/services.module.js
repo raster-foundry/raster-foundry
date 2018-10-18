@@ -72,6 +72,7 @@ require('./common/modal.service').default(shared);
 require('./common/url.filter').default(shared);
 require('./common/orgStatus.filter').default(shared);
 require('./common/pagination.service').default(shared);
+require('./common/graph.service').default(shared);
 
 
 export default shared;
