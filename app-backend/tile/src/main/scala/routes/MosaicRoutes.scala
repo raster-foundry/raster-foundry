@@ -148,21 +148,27 @@ object MosaicRoutes extends LazyLogging with KamonTrace {
   def mosaicScene(sceneId: UUID)(implicit xa: Transactor[IO]): Route =
     pathPrefix(IntNumber / IntNumber / IntNumber) { (zoom, x, y) =>
       get {
-        complete {
-          val future =
-            timedFuture("tile-zxy")(
-              Mosaic(sceneId, zoom, x, y, true)
-                .map(_.renderPng)
-                .getOrElse(emptyTilePng)
-                .map(pngAsHttpResponse)
-            )
-          future onComplete {
-            case Success(s) => s
-            case Failure(e) =>
-              logger.error(
-                s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+        parameters(
+          'redBand.as[Int],
+          'greenBand.as[Int],
+          'blueBand.as[Int]
+        ) { (redband, greenBand, blueBand) =>
+          complete {
+            val future =
+              timedFuture("tile-zxy")(
+                Mosaic(sceneId, zoom, x, y, redband, greenBand, blueBand, true)
+                  .map(_.renderPng)
+                  .getOrElse(emptyTilePng)
+                  .map(pngAsHttpResponse)
+              )
+            future onComplete {
+              case Success(s) => s
+              case Failure(e) =>
+                logger.error(
+                  s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+            }
+            future
           }
-          future
         }
       }
     }

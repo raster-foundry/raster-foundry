@@ -84,12 +84,15 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
 
   def mosaicDefinition(id: UUID,
                        polygonOption: Option[Projected[Polygon]],
+                       redBand: Int,
+                       greenBand: Int,
+                       blueBand: Int,
                        isScene: Boolean)(
       implicit xa: Transactor[IO]): Future[Seq[MosaicDefinition]] = {
     if (isScene) {
       logger.debug(s"Reading mosaic definition (scene: $id")
       SceneDao
-        .getMosaicDefinition(id, polygonOption)
+        .getMosaicDefinition(id, polygonOption, redBand, blueBand, greenBand)
         .transact(xa)
         .unsafeToFuture
     } else
@@ -322,6 +325,9 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
       zoom: Int,
       col: Int,
       row: Int,
+      redband: Int,
+      greenBand: Int,
+      blueBand: Int,
       isScene: Boolean
   )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] =
     traceName(s"MultiBandMosaic.apply($id)") {
@@ -331,14 +337,15 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
         val polygonBbox: Projected[Polygon] =
           TileUtils.getTileBounds(zoom, col, row)
         val md: Future[Seq[MosaicDefinition]] =
-          mosaicDefinition(id, Option(polygonBbox), true)
+          mosaicDefinition(id, Option(polygonBbox), redband, greenBand, blueBand, true)
         OptionT(
           mergeTiles(
             renderForBbox(md,
                           Some(polygonBbox),
                           zoom,
-                          Some(s"${zoom}-${col}-${row}"),
-                          false)))
+                          Some(s"${zoom}-${col}-${row}"))
+          )
+        )
       } else {
         apply(id, zoom, col, row)
       }
