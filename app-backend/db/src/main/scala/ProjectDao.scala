@@ -39,21 +39,11 @@ object ProjectDao
 
   type SceneToProject = (UUID, UUID, Boolean, Option[Int], Option[Json])
 
-  def unsafeGetProjectById(projectId: UUID): ConnectionIO[Project] = {
-    val idFilter = Some(fr"id = ${projectId}")
+  def unsafeGetProjectById(projectId: UUID): ConnectionIO[Project] =
+    query.filter(projectId).select
 
-    (selectF ++ Fragments.whereAndOpt(idFilter))
-      .query[Project]
-      .unique
-  }
-
-  def getProjectById(projectId: UUID): ConnectionIO[Option[Project]] = {
-    val idFilter = Some(fr"id = ${projectId}")
-
-    (selectF ++ Fragments.whereAndOpt(idFilter))
-      .query[Project]
-      .option
-  }
+  def getProjectById(projectId: UUID): ConnectionIO[Option[Project]] =
+    query.filter(projectId).selectOption
 
   def listProjects(
       page: PageRequest,
@@ -196,17 +186,16 @@ object ProjectDao
 
   def addScenesToProject(sceneIds: List[UUID],
                          projectId: UUID,
-                         isAccepted: Boolean = true): ConnectionIO[Int] = {
-    sceneIds.toNel match {
-      case Some(ids) => addScenesToProject(ids, projectId, isAccepted)
-      case _         => 0.pure[ConnectionIO]
-    }
-  }
+                         isAccepted: Boolean = true): ConnectionIO[Int] =
+    sceneIds.toNel map { ids =>
+      addScenesToProject(ids, projectId, isAccepted)
+    } getOrElse { 0.pure[ConnectionIO] }
 
   def addScenesToProject(sceneIds: NonEmptyList[UUID],
                          projectId: UUID,
                          isAccepted: Boolean): ConnectionIO[Int] = {
     val inClause = Fragments.in(fr"scenes.id", sceneIds)
+    logger.info("Constructed inClause")
     val sceneIdWithDatasourceF = fr"""
       SELECT scenes.id,
             datasources.id,
@@ -230,20 +219,21 @@ object ProjectDao
        WHERE project_id = ${projectId} AND accepted = true
       )
       AND """ ++ inClause
+    logger.info("Constructed sceneIdWithDatasourceF")
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
       _ <- logger
-        .debug(s"Got project ${projectId} in add scenes")
+        .info(s"Got project ${projectId} in add scenes")
         .pure[ConnectionIO]
       user <- UserDao.unsafeGetUserById(project.owner)
       _ <- logger
-        .debug(s"Got user ${project.owner} in add scenes")
+        .info(s"Got user ${project.owner} in add scenes")
         .pure[ConnectionIO]
       sceneQueryResult <- sceneIdWithDatasourceF
         .query[(UUID, Datasource)]
         .to[List]
       _ <- logger
-        .debug(s"Got scene ids with datasources in add scenes")
+        .info(s"Got scene ids with datasources in add scenes")
         .pure[ConnectionIO]
       sceneToProjectInserts <- {
         val scenesToProject: List[SceneToProject] = sceneQueryResult.map {
@@ -255,7 +245,7 @@ object ProjectDao
         Update[SceneToProject](inserts).updateMany(scenesToProject)
       }
       _ <- logger
-        .debug(s"Inserted scenes to projects for project ${projectId}")
+        .info(s"Inserted scenes to projects for project ${projectId}")
         .pure[ConnectionIO]
       _ <- { sql"""
                UPDATE projects
@@ -270,10 +260,10 @@ object ProjectDao
                WHERE projects.id = ${projectId};
               """.update.run }
       _ <- logger
-        .debug(s"Updated project extent for project ${projectId}")
+        .info(s"Updated project extent for project ${projectId}")
         .pure[ConnectionIO]
       _ <- updateSceneIngestStatus(projectId)
-      _ <- logger.debug("Updated scene ingest statuses").pure[ConnectionIO]
+      _ <- logger.info("Updated scene ingest statuses").pure[ConnectionIO]
       scenesToIngest <- SceneWithRelatedDao.getScenesToIngest(projectId)
       _ <- scenesToIngest traverse { (swr: Scene.WithRelated) =>
         logger.info(
