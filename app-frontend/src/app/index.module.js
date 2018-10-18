@@ -1,20 +1,19 @@
 /* globals window */
+import vendors from './index.vendor.js';
 import config from './index.config';
 import run from './index.run';
 import IndexController from './index.controller';
-import angular from 'angular';
 
 (() => {
     'use strict';
     window.Auth0Lock = require('auth0-lock').default;
 })();
-import vendors from './index.vendor.js';
+import angular from 'angular';
 
 const App = angular.module(
     'rasterFoundry', [
         // plugins
         'ui.router',
-        // require('angular-nvd3'),
         'obDateRangePicker',
         'angular-jwt',
         'angular-clipboard',

@@ -81,6 +81,12 @@ class DiagramContainerController {
         if (this.onWindowResize) {
             this.$window.removeEventListener('resize', this.onWindowResize);
         }
+        if (this.graph) {
+            this.graph.clear();
+        }
+        if (this.paper) {
+            this.paper.remove();
+        }
     }
 
     canPreview() {
