@@ -24,9 +24,9 @@ def update_aoi_project(project_id):
     ]
 
     try:
-        subprocess.check_call(bash_cmd)
+        subprocess.check_output(bash_cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        logger.info('Command %s failed.\n Output is: %s.\n Stderr is: %s',
-                    e.cmd, e.output, e.stderr)
+        logger.info('Command %s failed.\n Output is: %s.\n',
+                    e.cmd, e.output)
         raise e
     return True
