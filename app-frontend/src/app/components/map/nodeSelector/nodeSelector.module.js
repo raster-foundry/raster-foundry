@@ -23,12 +23,7 @@ class NodeSelectorController {
         this.$scope = $scope;
         this.$timeout = $timeout;
         this.$document = $document;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            NodeActions
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
+        this.$ngRedux = $ngRedux;
     }
 
     mapStateToThis(state) {
@@ -45,6 +40,14 @@ class NodeSelectorController {
             nodes,
             nodeArray
         };
+    }
+
+    $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            NodeActions
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
     }
 
     $postLink() {
@@ -72,7 +75,7 @@ class NodeSelectorController {
     }
 
     updateSelected(nodes, selected) {
-        if (selected) {
+        if (nodes && selected) {
             const selectedNode = nodes.get(selected);
             this.selectedLabel = selectedNode.metadata.label;
             if (selectedNode.type) {

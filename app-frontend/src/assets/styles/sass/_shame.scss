@@ -848,7 +848,7 @@ calendar .board .day.range-start:not(.other-month):not(.disabled) {
   box-shadow: 4px 4px 4px rgba(0,0,0,0.25);
 }
 
-div.lab-workspace svg {
+div.lab-workspace > svg {
   cursor: grab;
 }
 
@@ -2297,10 +2297,6 @@ ul.gradient-dropdown {
 }
 
 
-.graph-container {
-  user-select: none;
-  border-bottom: 1px solid #555;
-}
 
 .graph-labels {
   position: relative;
@@ -2445,6 +2441,7 @@ rf-histogram-breakpoint {
 }
 
 .graph-container {
+  user-select: none;
   position: relative;
   &[disabled] {
       cursor: not-allowed;

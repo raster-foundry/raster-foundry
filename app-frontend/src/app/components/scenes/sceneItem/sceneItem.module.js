@@ -41,7 +41,7 @@ class SceneItemController {
         this.isPreviewable = $attrs.hasOwnProperty('previewable');
         this.isClickable = $attrs.hasOwnProperty('clickable');
     }
-    $onInit(){
+    $onInit() {
         this.datasource = this.scene.datasource;
         if (this.respository) {
             this.updateThumbnails();
@@ -78,7 +78,7 @@ class SceneItemController {
         }
     }
 
-    updateThumbnails(){
+    updateThumbnails() {
         if (this.scene.sceneType === 'COG') {
             let redBand = _.findIndex(
                 this.datasource.bands, (x) => x.name.toLowerCase() === 'red');
