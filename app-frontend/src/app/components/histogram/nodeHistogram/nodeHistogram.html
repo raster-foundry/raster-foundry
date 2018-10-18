@@ -43,12 +43,7 @@
      ng-disabled="$ctrl.isSource"
      ng-attr-title="{{$ctrl.isSource && 'Cannot adjust previews for inputs'}}"
 >
-  <nvd3 ng-attr-id="chart-{{$ctrl.nodeId}}"
-        style="height: 101px;"
-        options="$ctrl.histOptions"
-        data="$ctrl.plot"
-        api="$ctrl.api"></nvd3>
-  <div style="height: 100px;" ng-if="!$ctrl.plot"></div>
+  <svg ng-attr-id="graph-{{$ctrl.graphId}}" height="100px" width="100%"></svg>
   <rf-histogram-breakpoint
       ng-if="$ctrl.plot && bp.options.style !== 'hidden' && !$ctrl.isSource"
       ng-repeat="bp in $ctrl.breakpoints track by bp.id"
@@ -87,11 +82,11 @@
   </div>
 </div>
 
-<style ng-if="$ctrl.nodeId">
- #chart-{{$ctrl.nodeId}} .nv-series-0 {
-   fill: url(#line-gradient-{{$ctrl.nodeId}}) !important;
+<style ng-if="$ctrl.graph">
+ #graph-{{$ctrl.graphId}} .data-fill {
+   fill: url(#line-gradient-{{$ctrl.graphId}}) !important;
    fill-opacity: 1 !important;
-   stroke: url(#line-gradient-{{$ctrl.nodeId}}) !important;
+   stroke: url(#line-gradient-{{$ctrl.graphId}}) !important;
    stroke-opacity: 1 !important;
  }
 </style>

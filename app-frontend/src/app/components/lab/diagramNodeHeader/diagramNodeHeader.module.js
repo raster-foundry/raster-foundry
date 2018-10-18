@@ -18,12 +18,15 @@ class DiagramNodeHeaderController {
         'ngInject';
         this.$document = $document;
         this.$scope = $scope;
+        this.$ngRedux = $ngRedux;
+    }
 
-        let unsubscribe = $ngRedux.connect(
+    $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
             this.mapStateToThis.bind(this),
             Object.assign({}, LabActions, NodeActions)
         )(this);
-        $scope.$on('$destroy', unsubscribe);
+        this.$scope.$on('$destroy', unsubscribe);
     }
 
     mapStateToThis(state) {

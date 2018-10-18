@@ -1,4 +1,5 @@
 import angular from 'angular';
+import $ from 'jquery';
 import histogramBreakpointTpl from './histogramBreakpoint.html';
 
 const HistogramBreakpointComponent = {
@@ -34,7 +35,7 @@ class HistogramBreakpointController {
 
     $onInit() {
         this.documentBody = angular.element(this.$document[0].body);
-        this.parent = this.$element.parent();
+        this.parent = $(this.$element.parent());
         this.registerEvents();
         if (!this.breakpointPosition) {
             this.breakpointPosition = '0%';
