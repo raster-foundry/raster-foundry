@@ -36,6 +36,17 @@ class ProjectDatasourcesDaoSpec
          scenes1: List[Scene.Create],
          scenes2: List[Scene.Create]) =>
           {
+
+            val expected1 = scenes1 match {
+              case Nil => 0
+              case _   => 1
+            }
+            val expected2 = scenes2 match {
+              case Nil => 0
+              case _   => 1
+            }
+            val expected = expected1 + expected2
+
             val createDsIO = for {
               orgUserProjectInsert <- insertUserOrgProject(userCreate,
                                                            orgCreate,
@@ -62,7 +73,8 @@ class ProjectDatasourcesDaoSpec
                 .listProjectDatasources(dbProject.id)
             } yield (projectDatasources)
             val (pd) = createDsIO.transact(xa).unsafeRunSync
-            assert(pd.size == 2, "; Datasources are not duplicated in request")
+            assert(pd.size == expected,
+                   "; Datasources are not duplicated in request")
             true
           }
       }
