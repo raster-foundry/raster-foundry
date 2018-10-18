@@ -2,7 +2,6 @@ package com.rasterfoundry.database
 
 import java.util.UUID
 
-import cats.free.Free
 import com.rasterfoundry.database.filter.Filters._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
@@ -177,8 +176,7 @@ object PlatformDao extends Dao[Platform] {
       )
   """
 
-  def userIsAdmin(user: User,
-                  platformId: UUID): Free[connection.ConnectionOp, Boolean] =
+  def userIsAdmin(user: User, platformId: UUID): ConnectionIO[Boolean] =
     userIsAdminF(user, platformId).query[Boolean].option.map(_.getOrElse(false))
 
   def delete(platformId: UUID): ConnectionIO[Int] =

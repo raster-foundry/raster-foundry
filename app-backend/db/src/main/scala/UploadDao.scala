@@ -33,9 +33,18 @@ object UploadDao extends Dao[Upload] {
   def unsafeGetUploadById(uploadId: UUID): ConnectionIO[Upload] =
     query.filter(uploadId).select
 
-  def insert(newUpload: Upload.Create, user: User): ConnectionIO[Upload] = {
-    val upload = newUpload.toUpload(user)
-    sql"""
+  def insert(newUpload: Upload.Create, user: User): ConnectionIO[Upload] =
+    for {
+      ownerPlatform <- newUpload.owner traverse { userId =>
+        UserDao.unsafeGetUserPlatform(userId) map { _.id }
+      }
+      userPlatform <- UserDao.unsafeGetUserPlatform(user.id)
+      userPlatformAdmin <- PlatformDao.userIsAdmin(user, userPlatform.id)
+      upload = newUpload.toUpload(user,
+                                  (userPlatform.id, userPlatformAdmin),
+                                  ownerPlatform)
+      insertedUpload <- (
+        sql"""
        INSERT INTO uploads
          (id, created_at, created_by, modified_at, modified_by,
           owner, upload_status, file_type, upload_type,
@@ -48,23 +57,24 @@ object UploadDao extends Dao[Upload] {
          ${upload.source}
        )
       """.update.withUniqueGeneratedKeys[Upload](
-      "id",
-      "created_at",
-      "created_by",
-      "modified_at",
-      "modified_by",
-      "owner",
-      "upload_status",
-      "file_type",
-      "upload_type",
-      "files",
-      "datasource",
-      "metadata",
-      "visibility",
-      "project_id",
-      "source"
-    )
-  }
+          "id",
+          "created_at",
+          "created_by",
+          "modified_at",
+          "modified_by",
+          "owner",
+          "upload_status",
+          "file_type",
+          "upload_type",
+          "files",
+          "datasource",
+          "metadata",
+          "visibility",
+          "project_id",
+          "source"
+        )
+      )
+    } yield insertedUpload
 
   def update(upload: Upload, id: UUID, user: User): ConnectionIO[Int] = {
     val idFilter = fr"id = ${id}"

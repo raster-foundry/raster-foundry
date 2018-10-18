@@ -47,13 +47,15 @@ object Upload {
       val now = new Timestamp(new java.util.Date().getTime)
       // This logic isn't in OwnerCheck because we don't know that we want to let Platform Admins set owners on
       // everything in the universe yet. If that does become the case we can move it to the trait.
-      val ownerId = (owner, ownerPlatform, user.id, userPlatformAdmin) match {
+      val ownerId = (owner, ownerPlatform, user, userPlatformAdmin) match {
         // if no intended owner, the acting user is the owner
-        case (None, None, userId, _) =>
-          userId
+        case (intendedOwnerO, _, user, _) if user.isSuperuser =>
+          intendedOwnerO.getOrElse(user.id)
+        case (None, None, user, _) =>
+          user.id
         // if intended owner and acting user are the same, then the other conditions shake out in the wash
-        case (Some(intendedOwner), _, userId, _) if userId == intendedOwner =>
-          userId
+        case (Some(intendedOwner), _, user, _) if user.id == intendedOwner =>
+          user.id
         // when intendedOwner and user are different people, we check that both the two users' platforms
         // match and that the acting user is an admin of that platform
         case (Some(intendedOwner),
