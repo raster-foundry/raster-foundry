@@ -88,8 +88,9 @@ export default (app) => {
 
                     this.scope.updateTick = new Date().getTime();
                 },
-                removeBox: function () {
+                remove: function () {
                     this.$box.remove();
+                    this.scope.$destroy();
                 }
             });
         }
