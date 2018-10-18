@@ -359,7 +359,7 @@ export default (app) => {
                     return 'FAILED';
                 } else if (successScenes.count < allScenes.count) {
                     return 'PARTIAL';
-                } else if (allScenes.count > this.scenePageSize){
+                } else if (allScenes.count > this.scenePageSize) {
                     return 'LARGE';
                 } else if (successScenes.count === allScenes.count && allScenes.count > 0) {
                     return 'CURRENT';
