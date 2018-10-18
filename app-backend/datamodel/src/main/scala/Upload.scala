@@ -39,12 +39,40 @@ object Upload {
                           owner: Option[String],
                           visibility: Visibility,
                           projectId: Option[UUID],
-                          source: Option[String])
-      extends OwnerCheck {
-    def toUpload(user: User): Upload = {
+                          source: Option[String]) {
+    def toUpload(user: User,
+                 userPlatformAdmin: (UUID, Boolean),
+                 ownerPlatform: Option[UUID]): Upload = {
       val id = UUID.randomUUID()
       val now = new Timestamp(new java.util.Date().getTime)
-      val ownerId = checkOwner(user, this.owner)
+      // This logic isn't in OwnerCheck because we don't know that we want to let Platform Admins set owners on
+      // everything in the universe yet. If that does become the case we can move it to the trait.
+      val ownerId = (owner, ownerPlatform, user.id, userPlatformAdmin) match {
+        // if no intended owner, the acting user is the owner
+        case (None, None, userId, _) =>
+          userId
+        // if intended owner and acting user are the same, then the other conditions shake out in the wash
+        case (Some(intendedOwner), _, userId, _) if userId == intendedOwner =>
+          userId
+        // when intendedOwner and user are different people, we check that both the two users' platforms
+        // match and that the acting user is an admin of that platform
+        case (Some(intendedOwner),
+              Some(ownerPlatformId),
+              _,
+              (userPlatformId, userIsPlatformAdmin)) =>
+          if (ownerPlatformId == userPlatformId && userIsPlatformAdmin) {
+            intendedOwner
+          } else {
+            throw new IllegalArgumentException(
+              "Insufficient permissions to set owner on object"
+            )
+          }
+        // Otherwise something bizarre has happened
+        case (None, Some(_), _, _) | (Some(_), _, _, _) =>
+          throw new IllegalArgumentException(
+            "Owner and ownerPlatform must both be Some(x) or both be None"
+          )
+      }
 
       Upload(
         id,
