@@ -4,7 +4,7 @@
 
 ### Added
 - Added summary endpoint for annotation groups to list the number of labels with different qualities (YES, NO, MISS, UNSURE) to support annotation applications [\#4221](https://github.com/raster-foundry/raster-foundry/pull/4221)
-- Allow platforms to set a "From" email field in order to change notification "From" name [#\4198](Add from field for email) 
+- Allow platforms to set a "From" email field in order to change notification "From" name [#\4198](Add from field for email)
 - Added project histogram support for COG and Avro scenes [\#4190](https://github.com/raster-foundry/raster-foundry/pull/4190)
 
 ### Changed
@@ -20,6 +20,7 @@
 ### Fixed
 - Add user button no longer shows for non-admins of teams and orgs [\#4212](https://github.com/raster-foundry/raster-foundry/pull/4212)
 - Fix undefined function call when selecting project scenes by clicking the map in advanced color correction view [\#4212](https://github.com/raster-foundry/raster-foundry/pull/4212)
+- Fix visualization of Planet scenes and fix bands used when generating COG scene thumbnails [\#4238](https://github.com/raster-foundry/raster-foundry/pull/4238)
 
 ### Security
 
