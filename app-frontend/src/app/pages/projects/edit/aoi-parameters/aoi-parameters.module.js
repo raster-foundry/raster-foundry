@@ -13,18 +13,6 @@ const updateFrequencies = [
     {
         label: 'every day',
         value: 86400000
-    },
-    {
-        label: 'every week',
-        value: 604800000
-    },
-    {
-        label: 'every two weeks',
-        value: 1209600000
-    },
-    {
-        label: 'every month',
-        value: 2592000000
     }
 ];
 
