@@ -227,7 +227,7 @@ final case class UpdateAOIProject(projectId: UUID)(
                                        qp.toOption)
         _ <- logger.info(s"Found ${sceneIds.length} scenes").pure[ConnectionIO]
         _ <- updateProjectIO(user, projectId)
-        _ <- logger.info("Project updated my dude nice work")
+        _ <- logger.info("Project updated").pure[ConnectionIO]
         _ <- ProjectDao.addScenesToProject(sceneIds, projectId, false)
       } yield { (projectId, sceneIds) }
     }
