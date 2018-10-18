@@ -28,12 +28,15 @@ class SceneDetailModalController {
         this.moment = moment;
         this.sceneService = sceneService;
         this.authService = authService;
-        this.scene = this.resolve.scene;
-        this.repository = this.resolve.repository;
         this.getMap = () => mapService.getMap('scene-preview-map');
         $scope.$on('$destroy', () => {
             mapService.deregisterMap('scene-preview-map');
         });
+    }
+
+    $onInit() {
+        this.scene = this.resolve.scene;
+        this.repository = this.resolve.repository;
     }
 
     $postLink() {
