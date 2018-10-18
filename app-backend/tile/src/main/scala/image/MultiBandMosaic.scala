@@ -337,7 +337,12 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
         val polygonBbox: Projected[Polygon] =
           TileUtils.getTileBounds(zoom, col, row)
         val md: Future[Seq[MosaicDefinition]] =
-          mosaicDefinition(id, Option(polygonBbox), redband, greenBand, blueBand, true)
+          mosaicDefinition(id,
+                           Option(polygonBbox),
+                           redband,
+                           greenBand,
+                           blueBand,
+                           true)
         OptionT(
           mergeTiles(
             renderForBbox(md,

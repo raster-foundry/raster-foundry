@@ -78,7 +78,14 @@ object Mosaic extends LazyLogging with KamonTrace {
             .transact(xa)
             .unsafeToFuture) flatMap { scene =>
           logger.debug(s"Constructing MultiBand Mosaic ${scene}")
-          MultiBandMosaic(id, zoom, col, row, redband, greenBand, blueBand, true)
+          MultiBandMosaic(id,
+                          zoom,
+                          col,
+                          row,
+                          redband,
+                          greenBand,
+                          blueBand,
+                          true)
         }
       } else {
         apply(id, zoom, col, row)

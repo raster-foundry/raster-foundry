@@ -235,11 +235,11 @@ object SceneDao
   }
 
   def getMosaicDefinition(
-    sceneId: UUID,
-    polygonO: Option[Projected[Polygon]],
-    redBand: Int,
-    greenBand: Int,
-    blueBand: Int): ConnectionIO[Seq[MosaicDefinition]] = {
+      sceneId: UUID,
+      polygonO: Option[Projected[Polygon]],
+      redBand: Int,
+      greenBand: Int,
+      blueBand: Int): ConnectionIO[Seq[MosaicDefinition]] = {
     val polygonF: Fragment = polygonO match {
       case Some(polygon) => fr"ST_Intersects(tile_footprint, ${polygon})"
       case _             => fr""
