@@ -58,6 +58,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                     "api" \
                     "authentication" \
                     "batch" \
+                    "common" \
                     "datamodel" \
                     "db" \
                     "tile" \
