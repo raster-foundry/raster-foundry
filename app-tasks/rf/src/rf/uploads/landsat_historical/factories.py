@@ -98,7 +98,6 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
         'STACKED': os.path.join(prefix, stacked_fname)
     }
     local_paths = sorted(glob.glob('/{}/{}*.TIF'.format(prefix, landsat_id)))
-    print(local_paths)
     warped_paths = cog.warp_tifs(local_paths, prefix)
     merged = cog.merge_tifs(warped_paths, prefix)
     cog.add_overviews(merged)
