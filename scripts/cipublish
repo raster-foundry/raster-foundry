@@ -58,9 +58,12 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                     "api" \
                     "authentication" \
                     "batch" \
+                    "bridge" \
+                    "common" \
                     "datamodel" \
                     "db" \
                     "tile" \
+                    "tool"
                 )
 
                 for project in "${projects[@]}"
