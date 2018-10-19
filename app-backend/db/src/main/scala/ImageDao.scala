@@ -59,7 +59,7 @@ object ImageDao extends Dao[Image] {
       band.toBand(image.id)
     }).toList
     val imageWithRelated =
-      Image.WithRelated.fromRecords(bands.map((image, _))).headOption
+      Option(image.withRelatedFromComponents(bands))
     val transaction = for {
       _ <- this.create(image, user)
       _ <- BandDao.createMany(bands)

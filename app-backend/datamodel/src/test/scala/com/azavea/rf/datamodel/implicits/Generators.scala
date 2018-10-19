@@ -545,7 +545,8 @@ object Generators extends ArbitraryInstances {
       owner <- Gen.const(None)
       composites <- Gen.delay(().asJson)
       extras <- Gen.delay(().asJson)
-      bands <- Gen.delay(().asJson)
+      // bands gets a concrete nonsense type to make the implicits work
+      bands <- Gen.delay(List.empty[Int].asJson)
       licenseName <- Gen.oneOf(None, Some("GPL-3.0"))
     } yield {
       Datasource.Create(
