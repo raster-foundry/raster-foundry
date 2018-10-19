@@ -310,4 +310,21 @@ object ColorCorrect extends LazyLogging {
   }
 
   private def lazyWrapper[T](f: => T): T = f
+
+  def paramsFromBandSpecOnly(
+      redBand: Int,
+      greenBand: Int,
+      blueBand: Int
+  ): Params = Params(
+    redBand,
+    greenBand,
+    blueBand,
+    BandGamma(false, None, None, None),
+    PerBandClipping(false, None, None, None, None, None, None),
+    MultiBandClipping(false, None, None),
+    SigmoidalContrast(false, None, None),
+    Saturation(false, None),
+    Equalization(false),
+    AutoWhiteBalance(false)
+  )
 }

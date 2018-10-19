@@ -21,6 +21,8 @@
 - Add user button no longer shows for non-admins of teams and orgs [\#4212](https://github.com/raster-foundry/raster-foundry/pull/4212)
 - Fix undefined function call when selecting project scenes by clicking the map in advanced color correction view [\#4212](https://github.com/raster-foundry/raster-foundry/pull/4212)
 
+- Stopped explicitly setting a nodata value in one step of ingest for Sentinel-2 and Landsat [\#4324](https://github.com/raster-foundry/raster-foundry/pull/4234)
+
 ### Security
 
 ## [1.13.0](https://github.com/raster-foundry/raster-foundry/tree/1.13.0) (2018-10-10)

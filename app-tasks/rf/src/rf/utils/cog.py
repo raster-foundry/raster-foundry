@@ -114,8 +114,7 @@ def resample_tif(src_path, local_dir, src_x, dst_x, src_y, dst_y):
         # of the bands at once
         subprocess.check_call([
             'gdalwarp', '-co', 'COMPRESS=DEFLATE', '-co', 'PREDICTOR=2',
-            '-co', 'BIGTIFF=IF_SAFER',
-            '-dstnodata', '0', '-tr',
+            '-co', 'BIGTIFF=IF_SAFER', '-tr',
             str(dst_x),
             str(dst_y), src_path, dst_path
         ])
