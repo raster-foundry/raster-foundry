@@ -349,7 +349,7 @@ object Generators extends ArbitraryInstances {
       owner <- stringOptionGen
       resolutionMeters <- Gen.choose(0.25f, 1000f)
       metadataFiles <- stringListGen
-      bands <- Gen.listOfN(3, bandCreateGen)
+      bands <- Gen.listOf[Band.Create](bandCreateGen)
     } yield
       Image.Banded(
         rawDataBytes,
