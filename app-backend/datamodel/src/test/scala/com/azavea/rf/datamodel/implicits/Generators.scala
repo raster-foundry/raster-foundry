@@ -20,7 +20,8 @@ object Generators extends ArbitraryInstances {
 
   private def stringOptionGen: Gen[Option[String]] =
     Gen.oneOf(
-      Gen.const(Option.empty[String]), nonEmptyStringGen map { Some(_) }
+      Gen.const(Option.empty[String]),
+      nonEmptyStringGen map { Some(_) }
     )
 
   private def stringListGen: Gen[List[String]] =
