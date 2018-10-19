@@ -4,8 +4,10 @@
 
 ### Added
 - Added summary endpoint for annotation groups to list the number of labels with different qualities (YES, NO, MISS, UNSURE) to support annotation applications [\#4221](https://github.com/raster-foundry/raster-foundry/pull/4221)
-- Allow platforms to set a "From" email field in order to change notification "From" name [#\4198](Add from field for email)
 - Added project histogram support for COG and Avro scenes [\#4190](https://github.com/raster-foundry/raster-foundry/pull/4190)
+- Administration
+  - Allow platforms to set a "From" email field in order to change notification "From" name [#\4214](https://github.com/raster-foundry/raster-foundry/pull/4214) 
+  - Allow platform administrators to create uploads for other users within their platforms [\#4237](https://github.com/raster-foundry/raster-foundry/pull/4237)
 
 ### Changed
 - Small text edit to the Imports page [\#4198](https://github.com/raster-foundry/raster-foundry/pull/4198)
