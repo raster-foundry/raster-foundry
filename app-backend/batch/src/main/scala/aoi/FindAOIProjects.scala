@@ -22,12 +22,12 @@ final case class FindAOIProjects(implicit val xa: Transactor[IO])
     def timeToEpoch(timeFunc: String): Fragment =
       Fragment.const(s"extract(epoch from ${timeFunc})")
 
-    val aoiProjectsToUpdate: ConnectionIO[List[UUID]] = {
+    val aoiProjectsToUpdate: ConnectionIO[List[(UUID, Long)]] = {
 
       // get ids only
       val baseSelect: Fragment =
         fr"""
-        select proj_table.id from (
+        select (proj_table.id, proj_table.aoi_cadence_millis / 1000 from (
           (projects proj_table inner join aois on proj_table.id = aois.project_id)
         )"""
 
@@ -47,13 +47,22 @@ final case class FindAOIProjects(implicit val xa: Transactor[IO])
       (baseSelect ++ Fragments.whereAndOpt(isAoi,
                                            nowGtLastCheckedPlusCadence,
                                            aoiActive))
-        .query[UUID]
+        .query[(UUID, Long)]
         .to[List]
     }
 
-    val projectIds = aoiProjectsToUpdate.transact(xa).unsafeRunSync
-    logger.info(s"Found the following projects to update: ${projectIds}")
-    projectIds.map(kickoffAOIUpdateProject)
+    val projectIdsAndCadences = aoiProjectsToUpdate.transact(xa).unsafeRunSync
+    logger.info(s"Found the following projects to update: ${projectIdsAndCadences map { _._1 }}")
+    projectIdsAndCadences map {
+      // if the cadence is at least as frequent as one day
+      // we probably could use a heuristic for AOI area also but I don't know what that should be
+      case (projectId, cadence) if cadence <= 86400 =>
+        kickoffAOIUpdateProject(projectId)
+      // if it's less frequent than a day, bump memory to 15000, since there will probably be a _lot_
+      // of scenes
+      case (projectId, _) =>
+        kickoffAOIUpdateProject(projectId, 15000)
+    }
   }
 }
 

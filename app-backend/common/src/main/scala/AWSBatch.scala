@@ -5,7 +5,7 @@ import java.util.UUID
 import com.typesafe.scalalogging.LazyLogging
 
 import com.amazonaws.services.batch.AWSBatchClientBuilder
-import com.amazonaws.services.batch.model.SubmitJobRequest
+import com.amazonaws.services.batch.model.{SubmitJobRequest, ContainerOverrides}
 
 import scala.collection.immutable.Map
 import scala.collection.JavaConverters._
@@ -21,12 +21,15 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
   def submitJobRequest(jobDefinition: String,
                        jobQueueName: String,
                        parameters: Map[String, String],
-                       jobName: String): Unit = {
+                       jobName: String,
+                       containerOverrides: ContainerOverrides =
+                         new ContainerOverrides()): Unit = {
     val jobRequest = new SubmitJobRequest()
       .withJobName(jobName)
       .withJobDefinition(jobDefinition)
       .withJobQueue(jobQueueName)
       .withParameters(parameters.asJava)
+      .withContainerOverrides(containerOverrides)
 
     logger.info(s"Using ${awsbatchConfig.environment} in AWS Batch")
 
@@ -84,12 +87,13 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
                      jobName)
   }
 
-  def kickoffAOIUpdateProject(projectId: UUID): Unit = {
+  def kickoffAOIUpdateProject(projectId: UUID, jobMemory: Int = 4096): Unit = {
     val jobDefinition = awsbatchConfig.aoiUpdateJobName
     val jobName = s"$jobDefinition-$projectId"
     submitJobRequest(jobDefinition,
                      awsbatchConfig.jobQueue,
                      Map("projectId" -> s"$projectId"),
-                     jobName)
+                     jobName,
+                     new ContainerOverrides().withMemory(jobMemory))
   }
 }
