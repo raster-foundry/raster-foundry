@@ -11,6 +11,9 @@ trait EnumMeta {
   implicit val annotationQualityMeta: Meta[AnnotationQuality] =
     pgEnumString("annotation_quality", AnnotationQuality.fromString, _.repr)
 
+  implicit val membershipStatusMeta: Meta[MembershipStatus] =
+    pgEnumString("membership_status", MembershipStatus.fromString, _.repr)
+
   implicit val visibilityMeta: Meta[Visibility] =
     pgEnumString("visibility", Visibility.fromString, _.repr)
 

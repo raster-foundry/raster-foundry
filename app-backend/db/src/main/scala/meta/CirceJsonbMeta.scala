@@ -31,9 +31,6 @@ trait CirceJsonbMeta {
   implicit val credentialMeta: Meta[Credential] =
     CirceJsonbMeta[Credential]
 
-  implicit val membershipStatusMeta: Meta[MembershipStatus] =
-    CirceJsonbMeta[MembershipStatus]
-
   implicit val colorCorrectionMeta: Meta[ColorCorrect.Params] =
     CirceJsonbMeta[ColorCorrect.Params]
 
