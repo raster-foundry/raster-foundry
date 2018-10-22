@@ -68,18 +68,21 @@ class SceneItemController {
         if (changes.repository && changes.repository.currentValue) {
             this.repository = changes.repository.currentValue;
             if (this.scene.sceneType === 'COG') {
-                let redBand = _.findIndex(
-                    this.datasource.bands, (x) => x.name.toLowerCase() === 'red');
-                let greenBand = _.findIndex(
-                    this.datasource.bands, (x) => x.name.toLowerCase() === 'green');
-                let blueBand = _.findIndex(
-                    this.datasource.bands, (x) => x.name.toLowerCase() === 'blue');
+                let redBand = this.datasource.bands.find(x => {
+                    return x.name.toLowerCase() === 'red';
+                }).number;
+                let greenBand = this.datasource.bands.find(x => {
+                    return x.name.toLowerCase() === 'green';
+                }).number;
+                let blueBand = this.datasource.bands.find(x => {
+                    return x.name.toLowerCase() === 'blue';
+                }).number;
                 let bands = {};
                 let atLeastThreeBands = this.datasource.bands.length >= 3;
                 if (atLeastThreeBands) {
-                    bands.red = redBand || 0;
-                    bands.green = greenBand || 1;
-                    bands.blue = blueBand || 2;
+                    bands.red = parseInt(redBand || 0, 10);
+                    bands.green = parseInt(greenBand || 1, 10);
+                    bands.blue = parseInt(blueBand || 2, 10);
                 } else {
                     bands.red = 0;
                     bands.green = 0;

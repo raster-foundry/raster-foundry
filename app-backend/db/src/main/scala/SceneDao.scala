@@ -234,34 +234,28 @@ object SceneDao
     }
   }
 
-  def getMosaicDefinition(sceneId: UUID, polygonO: Option[Projected[Polygon]])
-    : ConnectionIO[Seq[MosaicDefinition]] = {
+  def getMosaicDefinition(
+      sceneId: UUID,
+      polygonO: Option[Projected[Polygon]],
+      redBand: Int,
+      greenBand: Int,
+      blueBand: Int): ConnectionIO[Seq[MosaicDefinition]] = {
     val polygonF: Fragment = polygonO match {
       case Some(polygon) => fr"ST_Intersects(tile_footprint, ${polygon})"
       case _             => fr""
     }
     for {
       sceneO <- SceneDao.query.filter(sceneId).filter(polygonF).selectOption
-      datasourceO <- sceneO match {
-        case Some(s: Scene) =>
-          DatasourceDao.query.filter(s.datasource).selectOption
-        case _ => None.pure[ConnectionIO]
-      }
     } yield {
-      (sceneO, datasourceO) match {
-        case (Some(scene: Scene), Some(datasource: Datasource)) =>
-          val composites = datasource.composites
-          val redBandPath = root.natural.selectDynamic("value").redBand.int
-          val greenBandPath = root.natural.selectDynamic("value").greenBand.int
-          val blueBandPath = root.natural.selectDynamic("value").blueBand.int
-
+      sceneO match {
+        case Some(scene: Scene) =>
           Seq(
             MosaicDefinition(
               scene.id,
               ColorCorrect.Params(
-                redBandPath.getOption(composites).getOrElse(0),
-                greenBandPath.getOption(composites).getOrElse(1),
-                blueBandPath.getOption(composites).getOrElse(2),
+                redBand,
+                greenBand,
+                blueBand,
                 BandGamma(enabled = false, None, None, None),
                 PerBandClipping(enabled = false,
                                 None,
