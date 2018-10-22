@@ -28,6 +28,7 @@
 - Stopped explicitly setting a nodata value in one step of ingest for Sentinel-2 and Landsat [\#4324](https://github.com/raster-foundry/raster-foundry/pull/4234)
 - Stopped combining Landsat 4 / 5 / 7 bands in random orders when converting them to COGs [\#4242](https://github.com/raster-foundry/raster-foundry/pull/4242)
 - Cleaned up project database tests to prevent a database deadlock [\#4248](https://github.com/raster-foundry/raster-foundry/pull/4248)
+- Don't include name in intercom user init if it's the same as the email [\#4247](https://github.com/raster-foundry/raster-foundry/pull/4247)
 
 ### Security
 
