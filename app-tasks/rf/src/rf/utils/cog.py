@@ -53,11 +53,13 @@ def crop_to_nodata(abs_tif_path, local_dir):
         abs_tif_path, cropped_tif_path
     ]
     src = rasterio.open(abs_tif_path, 'r')
+    logger.info('Calculating nodata mask for %s', abs_tif_path)
     masks = src.read_masks()
     mask_meta = src.meta.copy()
     mask_meta['count'] = 1
     mask_meta['crs'] = src.meta['crs']
     logger.info('Mask crs: %s', mask_meta['crs'])
+    logger.info('Writing mask to %s', mask_path)
     with rasterio.open(mask_path, 'w', **mask_meta) as sink:
         sink.write(masks[0].astype(rasterio.uint16), 1)
     logger.info('Polygonizing nodata mask')
