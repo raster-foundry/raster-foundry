@@ -40,6 +40,33 @@ def convert_to_cog(tif_with_overviews_path, local_dir):
     return out_path
 
 
+def crop_to_nodata(abs_tif_path, local_dir):
+    polygon_path = os.path.join(local_dir, 'nodata_polygon.geojson')
+    mask_path = os.path.join(local_dir, 'mask.tif')
+    cropped_tif_path = os.path.join(local_dir, 'nodata-cropped.tif')
+    polygonize_cmd = [
+        'gdal_polygonize.py', mask_path, polygon_path
+    ]
+    crop_to_cutline_cmd = [
+        'gdalwarp', '-co', 'COMPRESS=DEFLATE', '-co', 'BIGTIFF=IF_SAFER',
+        '-cutline', polygon_path, '-crop_to_cutline', '-dstalpha',
+        abs_tif_path, cropped_tif_path
+    ]
+    src = rasterio.open(abs_tif_path, 'r')
+    masks = src.read_masks()
+    mask_meta = src.meta.copy()
+    mask_meta['count'] = 1
+    mask_meta['crs'] = src.meta['crs']
+    logger.info('Mask crs: %s', mask_meta['crs'])
+    with rasterio.open(mask_path, 'w', **mask_meta) as sink:
+        sink.write(masks[0].astype(rasterio.uint16), 1)
+    logger.info('Polygonizing nodata mask')
+    subprocess.check_call(polygonize_cmd)
+    logger.info('Cropping input tif at %s to nodata mask', abs_tif_path)
+    subprocess.check_call(crop_to_cutline_cmd)
+    return cropped_tif_path
+
+
 def fetch_imagery(image_locations, local_dir):
     pool = Pool(cpu_count())
     tupled = [(loc[0], loc[1], local_dir) for loc in image_locations]

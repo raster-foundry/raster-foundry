@@ -84,8 +84,9 @@ class PlanetSceneFactory(object):
 
         temp_tif_file = self.download_planet_tif(prefix, asset_type, updated_assets, item_id)
         full_path_to_temp_tif = os.path.join(prefix, temp_tif_file)
-        cog.add_overviews(full_path_to_temp_tif)
-        cog_path = cog.convert_to_cog(full_path_to_temp_tif, prefix)
+        cropped_path = cog.crop_to_nodata(full_path_to_temp_tif, prefix)
+        cog.add_overviews(cropped_path)
+        cog_path = cog.convert_to_cog(cropped_path, prefix)
         bucket, s3_path = self.upload_planet_tif(asset_type, item_id, item_type, cog_path)
 
         analytic_xml = self.get_analytic_xml(assets, item_id, item_type)
@@ -93,7 +94,7 @@ class PlanetSceneFactory(object):
         item['properties'].update(reflectance_coefficients)
 
         item['added_props'] = {}
-        item['added_props']['localPath'] = cog_path
+        item['added_props']['localPath'] = full_path_to_temp_tif
         item['added_props']['s3Location'] = 's3://{}/{}'.format(bucket, s3_path)
         item['added_props']['asset_type'] = asset_type
 
