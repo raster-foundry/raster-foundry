@@ -19,7 +19,6 @@ import org.scalatest.prop.Checkers
 import io.circe._
 import io.circe.syntax._
 import java.util.UUID
-import scala.util.Random
 
 class DatasourceDaoSpec
     extends FunSuite
@@ -201,35 +200,34 @@ class DatasourceDaoSpec
         (userCreate: User.Create,
          ownerCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          dsCreate: Datasource.Create,
          project: Project.Create,
          upload: Upload.Create) => {
           @SuppressWarnings(Array("TraversableHead"))
           val isDsDeletableIO = for {
-            orgUserProject <- insertUserOrgProject(userCreate,
-                                                   orgCreate,
-                                                   project)
-            (dbOrg, dbUser, dbProject) = orgUserProject
+            orgUserPlatProject <- insertUserOrgPlatProject(userCreate,
+                                                           orgCreate,
+                                                           platform,
+                                                           project)
+            (dbUser, dbOrg, dbPlatform, dbProject) = orgUserPlatProject
             datasource <- fixupDatasource(dsCreate, dbUser)
-            statuses = List(UploadStatus.Created,
-                            UploadStatus.Uploading,
-                            UploadStatus.Uploaded,
-                            UploadStatus.Queued,
-                            UploadStatus.Processing)
-            status = Random.shuffle(statuses).head
             _ <- UploadDao.insert(
-              fixupUploadCreate(dbUser,
-                                dbProject,
-                                datasource,
-                                upload.copy(uploadStatus = status)),
+              fixupUploadCreate(dbUser, dbProject, datasource, upload),
               dbUser)
             isDeletable <- DatasourceDao.isDeletable(datasource.id, dbUser)
-          } yield { isDeletable }
+          } yield { (isDeletable, upload.uploadStatus) }
 
-          val isDeletable = isDsDeletableIO.transact(xa).unsafeRunSync
-
+          val (isDeletable, uploadStatus) =
+            isDsDeletableIO.transact(xa).unsafeRunSync
+          val ok = List(
+            UploadStatus.Created,
+            UploadStatus.Uploading,
+            UploadStatus.Uploaded,
+            UploadStatus.Queued,
+            UploadStatus.Processing).contains(uploadStatus) != isDeletable
           assert(
-            !isDeletable,
+            ok,
             "isDeletable should return false if a datasource has an upload not in completed/failed/aborted")
           true
         }

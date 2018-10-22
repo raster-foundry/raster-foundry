@@ -27,12 +27,16 @@ class UploadDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          upload: Upload.Create) =>
           {
             val uploadInsertIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              orgUserProject <- insertUserOrgPlatProject(user,
+                                                         org,
+                                                         platform,
+                                                         project)
+              (dbUser, dbOrg, _, dbProject) = orgUserProject
               datasource <- unsafeGetRandomDatasource
               insertedUpload <- UploadDao.insert(
                 fixupUploadCreate(dbUser, dbProject, datasource, upload),
@@ -72,12 +76,14 @@ class UploadDaoSpec
               insertedUpload <- UploadDao.insert(
                 fixupUploadCreate(dbUser, dbProject, datasource, insertUpload),
                 dbUser)
-            } yield (insertedUpload, dbUser, dbOrg, dbProject, datasource)
+            } yield
+              (insertedUpload, dbUser, dbOrg, dbPlatform, dbProject, datasource)
 
             val uploadUpdateWithUploadIO = uploadInsertWithUserOrgProjectDatasourceIO flatMap {
               case (dbUpload: Upload,
                     dbUser: User,
                     dbOrg: Organization,
+                    dbPlatform: Platform,
                     dbProject: Project,
                     dbDatasource: Datasource) => {
                 val uploadId = dbUpload.id
@@ -85,7 +91,10 @@ class UploadDaoSpec
                   fixupUploadCreate(dbUser,
                                     dbProject,
                                     dbDatasource,
-                                    updateUpload).toUpload(dbUser)
+                                    updateUpload).toUpload(dbUser,
+                                                           (dbPlatform.id,
+                                                            false),
+                                                           Some(dbPlatform.id))
                 UploadDao.update(fixedUpUpdateUpload, uploadId, dbUser) flatMap {
                   (affectedRows: Int) =>
                     {
