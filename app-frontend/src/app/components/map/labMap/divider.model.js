@@ -94,7 +94,7 @@ export default class Divider {
     update() {
         $(this._container).css({
             left: `${this._position * 100}%`,
-            top: 0,
+            top: '0px',
             height: '100%',
             width: '2px'
         });

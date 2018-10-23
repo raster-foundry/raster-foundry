@@ -89,9 +89,9 @@ class ImportListController {
                 exactCount: true
             }
         ).then((sceneResult) => {
+            this.lastSceneResult = sceneResult;
             this.pagination = this.paginationService.buildPagination(sceneResult);
             this.paginationService.updatePageParam(page, '');
-            this.lastSceneResult = sceneResult;
             this.importList = this.lastSceneResult.results;
             this.loading = false;
         }, () => {

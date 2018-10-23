@@ -261,11 +261,11 @@ module.exports = function (_path) {
                 loaders: [
                     'expose-loader?deferredBootstrapper'
                 ]
-            }, {
-                test: require.resolve('angular'),
-                loaders: [
-                    'expose-loader?angular'
-                ]
+            // }, {
+            //     test: require.resolve('angular'),
+            //     loaders: [
+            //         'expose-loader?angular'
+            //     ]
             }, {
                 test: require.resolve('jquery'),
                 loaders: [
@@ -277,11 +277,11 @@ module.exports = function (_path) {
                 loaders: [
                     'expose-loader?L'
                 ]
-            }, {
-                test: require.resolve('jointjs'),
-                loaders: [
-                    'expose-loader?joint'
-                ]
+            // }, {
+            //     test: require.resolve('jointjs'),
+            //     loaders: [
+            //         'expose-loader?joint'
+            //     ]
             }, {
                 test: require.resolve('moment'),
                 loaders: [

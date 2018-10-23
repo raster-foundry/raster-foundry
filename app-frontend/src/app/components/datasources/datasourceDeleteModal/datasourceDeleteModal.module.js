@@ -22,11 +22,11 @@ class DatasourceDeleteModalController {
         'ngInject';
         $rootScope.autoInject(this, arguments);
 
-        this.datasource = this.resolve.datasource;
         this.uploadProgress = uploadProgress;
     }
 
     $onInit() {
+        this.datasource = this.resolve.datasource;
         this.checkUploadStatus();
     }
 

@@ -5,12 +5,14 @@ export default class PlanetSceneDetailModalController {
         $scope, mapService
     ) {
         'ngInject';
-        this.scene = this.resolve.scene;
-        this.planetThumbnailUrl = this.resolve.planetThumbnailUrl;
         this.getMap = () => mapService.getMap('scene-preview-map');
         $scope.$on('$destroy', () => {
             mapService.deregisterMap('scene-preview-map');
         });
+    }
+    $onInit() {
+        this.scene = this.resolve.scene;
+        this.planetThumbnailUrl = this.resolve.planetThumbnailUrl;
     }
 
     $postLink() {

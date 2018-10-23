@@ -39,6 +39,7 @@ class AnnotateSidebarItemController {
 
         return {
             annotation,
+            annotations: state.projects.annotations,
             editingAnnotation: state.projects.editingAnnotation,
             sidebarDisabled: state.projects.sidebarDisabled,
             labels: state.projects.labels
@@ -48,6 +49,12 @@ class AnnotateSidebarItemController {
     $onInit() {
         this.minMatchedLabelLength = 3;
         this.maxMatchedLabels = 4;
+        let watch = this.$scope.$watch('$ctrl.annotationId', (annotationId) => {
+            if(annotationId && !this.annotation && this.annotations) {
+                this.annotation = this.annotations.get(annotationId);
+                watch();
+            }
+        });
     }
 
     onAnnotationClone($event) {

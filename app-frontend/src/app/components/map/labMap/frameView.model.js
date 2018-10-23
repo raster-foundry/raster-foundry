@@ -21,10 +21,10 @@ export default class FrameView extends Frame {
         }
         let dimensions = this.calculatedDimensions;
         $(this._container).css({
-            width: dimensions.width,
-            height: dimensions.height,
-            top: dimensions.y,
-            left: dimensions.x
+            width: `${dimensions.width}px`,
+            height: `${dimensions.height}px`,
+            top: `${dimensions.y}px`,
+            left: `${dimensions.x}px`
             // transform: `translateX(${dimensions.rotation})`
         });
 
