@@ -1,7 +1,8 @@
-/* globals joint $ _ */
-// TODO tear out all references to tool run - it should use redux to pull in the correct stuff
+import _ from 'lodash';
+import * as joint from 'jointjs';
 import {Map} from 'immutable';
 import {getNodeArgs} from '_redux/node-utils';
+// TODO tear out all references to tool run - it should use redux to pull in the correct stuff
 
 export default (app) => {
     class LabUtils {
@@ -45,8 +46,8 @@ export default (app) => {
                             y: 0
                         };
                         this.$box.css({
-                            left: bbox.x * this.scale + origin.x,
-                            top: bbox.y * this.scale + origin.y
+                            left: `${bbox.x * this.scale + origin.x}px`,
+                            top: `${bbox.y * this.scale + origin.y}px`
                         });
                     });
                     this.scale = 1;
@@ -58,8 +59,8 @@ export default (app) => {
                             y: 0
                         };
                         this.$box.css({
-                            left: bbox.x * this.scale + origin.x,
-                            top: bbox.y * this.scale + origin.y,
+                            left: `${bbox.x * this.scale + origin.x}px`,
+                            top: `${bbox.y * this.scale + origin.y}px`,
                             transform: `scale(${scale})`,
                             'transform-origin': '0 0'
                         });
@@ -79,10 +80,10 @@ export default (app) => {
                     };
 
                     this.$box.css({
-                        width: bbox.width,
-                        height: bbox.height,
-                        left: bbox.x * this.scale + origin.x,
-                        top: bbox.y * this.scale + origin.y
+                        width: `${bbox.width}px`,
+                        height: `${bbox.height}px`,
+                        left: `${bbox.x * this.scale + origin.x}px`,
+                        top: `${bbox.y * this.scale + origin.y}px`
                     });
 
                     this.scope.updateTick = new Date().getTime();
@@ -98,7 +99,7 @@ export default (app) => {
             let inputList = Array.isArray(inputs) ?
                 inputs : Array(inputs).fill();
 
-            ports = inputList.map((_, idx) => {
+            ports = inputList.map((item, idx) => {
                 return {
                     id: `input-${idx}`,
                     label: `input-${idx}`,

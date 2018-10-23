@@ -21,8 +21,6 @@ class ReclassifyModalController {
     constructor($scope, $ngRedux, reclassifyService) {
         'ngInject';
         this.reclassifyService = reclassifyService;
-        this.breaks = this.resolve.breaks;
-        this.nodeId = this.resolve.nodeId;
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis.bind(this),
@@ -35,6 +33,11 @@ class ReclassifyModalController {
                 this.fetchHistogram(id);
             }
         });
+    }
+
+    $onInit() {
+        this.breaks = this.resolve.breaks;
+        this.nodeId = this.resolve.nodeId;
     }
 
     mapStateToThis(state) {

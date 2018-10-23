@@ -40,7 +40,12 @@ class SceneItemController {
         this.isDraggable = $attrs.hasOwnProperty('draggable');
         this.isPreviewable = $attrs.hasOwnProperty('previewable');
         this.isClickable = $attrs.hasOwnProperty('clickable');
+    }
+    $onInit(){
         this.datasource = this.scene.datasource;
+        if (this.respository) {
+            this.updateThumbnails();
+        }
     }
 
     $postLink() {
@@ -67,48 +72,54 @@ class SceneItemController {
         }
         if (changes.repository && changes.repository.currentValue) {
             this.repository = changes.repository.currentValue;
-            if (this.scene.sceneType === 'COG') {
-                let redBand = this.datasource.bands.find(x => {
-                    return x.name.toLowerCase() === 'red';
-                }).number;
-                let greenBand = this.datasource.bands.find(x => {
-                    return x.name.toLowerCase() === 'green';
-                }).number;
-                let blueBand = this.datasource.bands.find(x => {
-                    return x.name.toLowerCase() === 'blue';
-                }).number;
-                let bands = {};
-                let atLeastThreeBands = this.datasource.bands.length >= 3;
-                if (atLeastThreeBands) {
-                    bands.red = parseInt(redBand || 0, 10);
-                    bands.green = parseInt(greenBand || 1, 10);
-                    bands.blue = parseInt(blueBand || 2, 10);
-                } else {
-                    bands.red = 0;
-                    bands.green = 0;
-                    bands.blue = 0;
-                }
-                this.sceneService.cogThumbnail(
-                    this.scene.id,
-                    this.authService.token(),
-                    128,
-                    128,
-                    bands.red,
-                    bands.green,
-                    bands.blue
-                ).then(res => {
-                    // Because 504s aren't rejections, apparently
-                    if (_.isString(res)) {
-                        this.thumbnail = `data:image/png;base64,${res}`;
-                    }
-                }).catch(() => {
-                    this.imageError = true;
-                });
-            } else {
-                this.repository.service.getThumbnail(this.scene).then((thumbnail) => {
-                    this.thumbnail = thumbnail;
-                });
+            if (this.datasource) {
+                this.updateThumbnails();
             }
+        }
+    }
+
+    updateThumbnails(){
+        if (this.scene.sceneType === 'COG') {
+            let redBand = this.datasource.bands.find(x => {
+                return x.name.toLowerCase() === 'red';
+            }).number;
+            let greenBand = this.datasource.bands.find(x => {
+                return x.name.toLowerCase() === 'green';
+            }).number;
+            let blueBand = this.datasource.bands.find(x => {
+                return x.name.toLowerCase() === 'blue';
+            }).number;
+            let bands = {};
+            let atLeastThreeBands = this.datasource.bands.length >= 3;
+            if (atLeastThreeBands) {
+                bands.red = parseInt(redBand || 0, 10);
+                bands.green = parseInt(greenBand || 1, 10);
+                bands.blue = parseInt(blueBand || 2, 10);
+            } else {
+                bands.red = 0;
+                bands.green = 0;
+                bands.blue = 0;
+            }
+            this.sceneService.cogThumbnail(
+                this.scene.id,
+                this.authService.token(),
+                128,
+                128,
+                bands.red,
+                bands.green,
+                bands.blue
+            ).then(res => {
+                // Because 504s aren't rejections, apparently
+                if (_.isString(res)) {
+                    this.thumbnail = `data:image/png;base64,${res}`;
+                }
+            }).catch(() => {
+                this.imageError = true;
+            });
+        } else {
+            this.repository.service.getThumbnail(this.scene).then((thumbnail) => {
+                this.thumbnail = thumbnail;
+            });
         }
     }
 

@@ -1,4 +1,4 @@
-/* global joint */
+import * as joint from 'jointjs';
 import angular from 'angular';
 import _ from 'lodash';
 import diagramContainerTpl from './diagramContainer.html';
