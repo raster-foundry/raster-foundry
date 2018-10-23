@@ -3,13 +3,22 @@ package com.rasterfoundry.database
 import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
-import doobie.hikari._, doobie.hikari.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
+import doobie.hikari._
+import doobie.hikari.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import cats._
+import cats.data._
+import cats.effect._
+import cats.implicits._
 
 import java.util.UUID
+import scala.concurrent.ExecutionContext
 
 trait DBTestConfig {
+
+  implicit val cs: ContextShift[IO] =
+    IO.contextShift(ExecutionContext.Implicits.global)
 
   val xa: Transactor[IO] =
     Transactor.after.set(

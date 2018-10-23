@@ -12,6 +12,8 @@ import cats.effect.IO
 import cats.implicits._
 import doobie._
 import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats

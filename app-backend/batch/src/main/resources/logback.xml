@@ -5,7 +5,7 @@
     </encoder>
   </appender>
 
-  <logger name="com.azavea.rf" level="${RF_LOG_LEVEL:-INFO}"/>
+  <logger name="com.rasterfoundry" level="${RF_LOG_LEVEL:-INFO}"/>
 
   <logger name="org.apache.http.wire" level="info" additivity="false">
     <appender-ref ref="STDOUT" />

@@ -17,6 +17,8 @@ import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel._
 import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import io.circe._
 import io.circe.syntax._

@@ -35,6 +35,7 @@ object Dependencies {
   val doobieCore = "org.tpolecat" %% "doobie-core" % Version.doobie
   val doobieHikari = "org.tpolecat" %% "doobie-hikari" % Version.doobie
   val doobiePostgres = "org.tpolecat" %% "doobie-postgres" % Version.doobie
+  val doobiePostgresCirce = "org.tpolecat" %% "doobie-postgres-circe" % Version.doobie
   val doobieScalatest = "org.tpolecat" %% "doobie-scalatest" % Version.doobie
   val doobieSpecs = "org.tpolecat" %% "doobie-specs2" % Version.doobie
   val dropbox = "com.dropbox.core" % "dropbox-core-sdk" % Version.dropbox

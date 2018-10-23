@@ -10,6 +10,7 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
+import doobie.postgres.circe.jsonb.implicits._
 
 object ImageDao extends Dao[Image] {
 

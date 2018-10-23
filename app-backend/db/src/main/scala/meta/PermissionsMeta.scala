@@ -13,5 +13,5 @@ import io.circe.syntax._
 trait PermissionsMeta {
   implicit val ObjectAccessControlRuleMeta: Meta[ObjectAccessControlRule] =
     Meta[String]
-      .xmap(ObjectAccessControlRule.unsafeFromObjAcrString, _.toObjAcrString)
+      .timap(ObjectAccessControlRule.unsafeFromObjAcrString)(_.toObjAcrString)
 }

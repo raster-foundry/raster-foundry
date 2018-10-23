@@ -10,7 +10,7 @@ import com.rf.azavea.backsplash.Color
 import geotrellis.proj4.WebMercator
 import geotrellis.raster.{CellSize, Raster, RasterExtent, io => _, _}
 import geotrellis.raster.io.geotiff.AutoHigherResolution
-import geotrellis.server.core.cog.CogUtils
+import geotrellis.server.cog.util.CogUtils
 import geotrellis.spark.{io => _}
 import geotrellis.vector.{Extent, Polygon, Projected}
 

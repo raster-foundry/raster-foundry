@@ -1,9 +1,15 @@
 package com.rasterfoundry.database.util
 
-import cats.effect.IO
-import doobie.hikari.HikariTransactor
+import cats.effect._
+import cats.implicits._
 
+import doobie.util.ExecutionContexts
+import doobie.hikari.HikariTransactor
+import com.zaxxer.hikari.{HikariDataSource, HikariConfig}
+
+import scala.concurrent.ExecutionContext
 import scala.util.Properties
+import java.util.concurrent.Executors
 
 trait Config {
   var jdbcDriver: String = "org.postgresql.Driver"
@@ -25,20 +31,30 @@ trait Config {
 
 object RFTransactor extends Config {
 
-  implicit lazy val xa: HikariTransactor[IO] = (for {
-    xa <- HikariTransactor.newHikariTransactor[IO](
-      driverClassName = jdbcDriver,
-      url = jdbcUrl,
-      user = dbUser,
-      pass = dbPassword
-    )
-    _ <- xa.configure(c =>
-      IO {
-        c.setPoolName("Raster-Foundry-Hikari-Pool")
-        c.setMaximumPoolSize(dbMaximumPoolSize)
-        c.setConnectionInitSql(
-          s"SET statement_timeout = ${dbStatementTimeout};")
-    })
-  } yield xa).unsafeRunSync()
+  implicit val cs: ContextShift[IO] =
+    IO.contextShift(ExecutionContext.Implicits.global)
 
+  val hikariConfig = new HikariConfig()
+  hikariConfig.setPoolName("Raster-Foundry-Hikari-Pool")
+  hikariConfig.setMaximumPoolSize(dbMaximumPoolSize)
+  hikariConfig.setConnectionInitSql(
+    s"SET statement_timeout = ${dbStatementTimeout};")
+  hikariConfig.setJdbcUrl(jdbcUrl)
+  hikariConfig.setUsername(dbUser)
+  hikariConfig.setPassword(dbPassword)
+  hikariConfig.setDriverClassName(jdbcDriver)
+
+  val hikariDS = new HikariDataSource(hikariConfig)
+
+  // Execution contexts to be used by Hikari
+  val connectionEC =
+    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(32))
+  val transactionEC =
+    ExecutionContext.fromExecutor(Executors.newCachedThreadPool)
+
+  lazy val xa: HikariTransactor[IO] = HikariTransactor.apply[IO](
+    hikariDS,
+    connectionEC,
+    transactionEC
+  )
 }

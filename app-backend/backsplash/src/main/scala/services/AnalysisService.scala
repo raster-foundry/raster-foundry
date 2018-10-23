@@ -4,7 +4,7 @@ import java.security.InvalidParameterException
 import java.util.UUID
 
 import cats.data.Validated._
-import cats.effect.{IO, Timer}
+import cats.effect._
 import cats.implicits._
 import com.azavea.maml.eval.BufferingInterpreter
 import com.rasterfoundry.authentication.Authentication
@@ -21,7 +21,7 @@ import com.rasterfoundry.tool.ast.{MapAlgebraAST, _}
 import doobie.implicits._
 import geotrellis.raster._
 import geotrellis.raster.render._
-import geotrellis.server.core.maml._
+import geotrellis.server._
 import org.http4s.{MediaType, _}
 import org.http4s.dsl._
 import org.http4s.headers._
@@ -30,7 +30,7 @@ import scala.util._
 
 class AnalysisService(
     interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit timer: Timer[IO])
+)(implicit timer: Timer[IO], cs: ContextShift[IO])
     extends Http4sDsl[IO]
     with ErrorHandling {
 
@@ -78,9 +78,9 @@ class AnalysisService(
         logger.debug(s"AST: ${mapAlgebraAST}")
         val respIO = mapAlgebraAST.flatMap { ast =>
           val (exp, mdOption, params) = ast.asMaml
-          val mamlEval =
-            MamlTms.apply(IO.pure(exp), IO.pure(params), interpreter)
-          val tileIO = mamlEval(z, x, y)
+          val layerEval =
+            LayerTms.apply(IO.pure(exp), IO.pure(params), interpreter)
+          val tileIO = layerEval(z, x, y)
           tileIO.attempt flatMap {
             case Left(error) => ???
             case Right(Valid(tile)) => {
@@ -93,12 +93,12 @@ class AnalysisService(
                 case Some(rd) => {
                   logger.debug(s"Using Render Definition: ${rd}")
                   Ok(tile.renderPng(rd).bytes,
-                     `Content-Type`(MediaType.`image/png`))
+                     `Content-Type`(MediaType.image.png))
                 }
                 case _ => {
                   logger.debug(s"Using Default Color Ramp: Viridis")
                   Ok(tile.renderPng(ColorRamps.Viridis).bytes,
-                     `Content-Type`(MediaType.`image/png`))
+                     `Content-Type`(MediaType.image.png))
                 }
               }
             }
