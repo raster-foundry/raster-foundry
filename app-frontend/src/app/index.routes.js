@@ -168,7 +168,7 @@ function projectEditStates($stateProvider) {
         })
         .state('projects.edit.browse', {
             title: 'Project Scenes',
-            url: '/browse/:sceneid?' + addScenesQueryParams,
+            url: '/browse/?sceneid' + addScenesQueryParams,
             templateUrl: projectsSceneBrowserTpl,
             controller: 'ProjectsSceneBrowserController',
             controllerAs: '$ctrl',
