@@ -169,12 +169,8 @@ trait PropTestHelpers {
     image.copy(createdBy = ownerId, owner = ownerId, scene = sceneId)
 
   def fixupDatasource(dsCreate: Datasource.Create,
-                      user: User): ConnectionIO[Datasource] = {
-    for {
-      ds <- DatasourceDao.createDatasource(dsCreate.copy(owner = Some(user.id)),
-                                           user)
-    } yield ds
-  }
+                      user: User): ConnectionIO[Datasource] =
+    DatasourceDao.createDatasource(dsCreate.copy(owner = Some(user.id)), user)
 
   def fixupThumbnail(scene: Scene.WithRelated,
                      thumbnail: Thumbnail): Thumbnail =
