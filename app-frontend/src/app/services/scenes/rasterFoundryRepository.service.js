@@ -1,4 +1,4 @@
-/* global _*/
+import _ from 'lodash';
 
 import {Map} from 'immutable';
 export default (app) => {

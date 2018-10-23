@@ -29,12 +29,13 @@ class AddUserModalController {
         this.teamService = teamService;
         this.userService = userService;
 
-        this.platformId = this.resolve.platformId;
-        this.organizationId = this.resolve.organizationId;
         this.selected = new Map();
     }
 
     $onInit() {
+        this.platformId = this.resolve.platformId;
+        this.organizationId = this.resolve.organizationId;
+
         let debouncedSearch = _.debounce(
             this.onSearch.bind(this),
             500,
