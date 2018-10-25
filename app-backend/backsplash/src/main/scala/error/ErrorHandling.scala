@@ -29,7 +29,10 @@ final case class BadAnalysisASTException(message: String)
 final case class WrappedDoobieException(message: String)
     extends BacksplashException
 final case class WrappedS3Exception(message: String) extends BacksplashException
-final case class UnknownException(message: String) extends BacksplashException
+// Private so no one can deliberately throw an UnknownException elsewhere --
+// only exists to catch the fall-through case in the foreign error handler
+private[error] final case class UnknownException(message: String)
+    extends BacksplashException
 
 class ForeignErrorHandler[F[_], E <: Throwable](implicit M: MonadError[F, E])
     extends RollbarNotifier
