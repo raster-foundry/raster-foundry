@@ -29,6 +29,7 @@
 - Stopped combining Landsat 4 / 5 / 7 bands in random orders when converting them to COGs [\#4242](https://github.com/raster-foundry/raster-foundry/pull/4242)
 - Cleaned up project database tests to prevent a database deadlock [\#4248](https://github.com/raster-foundry/raster-foundry/pull/4248)
 - Don't include name in intercom user init if it's the same as the email [\#4247](https://github.com/raster-foundry/raster-foundry/pull/4247)
+- Kick off ingests for scenes without scene types also [\#4260](https://github.com/raster-foundry/raster-foundry/pull/4260)
 
 ### Security
 
