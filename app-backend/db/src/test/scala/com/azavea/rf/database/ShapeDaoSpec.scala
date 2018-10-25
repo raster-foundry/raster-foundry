@@ -111,7 +111,7 @@ class ShapeDaoSpec
             }
 
             val shapeByIdIO = shapeInsertWithUserIO flatMap {
-              case (shapes: List[Shape], dbUser: User) => {
+              case (shapes, dbUser) => {
                 // safe because we just put it there -- errors here mean insert is broken
                 val insertedShape = shapes.head.toShape
                 ShapeDao.getShapeById(insertedShape.id) map {

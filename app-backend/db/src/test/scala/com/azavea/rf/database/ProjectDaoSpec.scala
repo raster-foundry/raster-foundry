@@ -187,42 +187,51 @@ class ProjectDaoSpec
         (user: User.Create,
          org: Organization.Create,
          scenes: List[Scene.Create],
-         project: Project.Create) =>
+         project: Project.Create,
+         datasource: Datasource.Create) =>
           {
-            val projAndScenesInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
-              case (dbOrg: Organization, dbUser: User) => {
-                val scenesInsertIO = unsafeGetRandomDatasource flatMap {
-                  (dbDatasource: Datasource) =>
-                    {
-                      scenes.traverse(
-                        (scene: Scene.Create) => {
-                          SceneDao.insert(fixupSceneCreate(dbUser,
-                                                           dbDatasource,
-                                                           scene),
-                                          dbUser)
-                        }
-                      )
-                    }
-                }
-                val projectInsertIO =
-                  ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
-                                           dbUser)
-                (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
+            val addScenesIO = for {
+              orgUserProject <- insertUserOrgProject(user, org, project)
+              (dbOrg, dbUser, dbProject) = orgUserProject
+              dbDatasource <- fixupDatasource(datasource, dbUser)
+              insertedScenes <- scenes traverse { scene =>
+                SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene),
+                                dbUser)
               }
-            }
+              _ <- ProjectDao.addScenesToProject(
+                insertedScenes map { _.id },
+                dbProject.id,
+                true
+              )
+              scenesInProject <- ProjectScenesDao.listProjectScenes(
+                dbProject.id,
+                PageRequest(0, 100, Map.empty),
+                CombinedSceneQueryParams())
+            } yield scenesInProject.results
 
-            val addScenesIO = projAndScenesInsertWithUserIO flatMap {
-              case (dbProject: Project,
-                    dbScenes: List[Scene.WithRelated],
-                    dbUser: User) => {
-                ProjectDao.addScenesToProject(
-                  (dbScenes map { _.id }),
-                  dbProject.id,
-                  true
-                )
-              }
-            }
-            addScenesIO.transact(xa).unsafeRunSync == scenes.length
+            val addedScenes = addScenesIO.transact(xa).unsafeRunSync
+
+            assert(
+              (Set(addedScenes filter {
+                _.sceneType map { _ == SceneType.Avro } getOrElse true
+              } map {
+                _.statusFields.ingestStatus
+              }: _*) |
+                Set(IngestStatus.ToBeIngested,
+                    IngestStatus.Ingesting,
+                    IngestStatus.Ingested)) ==
+                Set(IngestStatus.ToBeIngested,
+                    IngestStatus.Ingesting,
+                    IngestStatus.Ingested),
+              "; Some scenes are neither ingesting nor scheduled for ingest"
+            )
+
+            assert(
+              addedScenes.length == scenes.length,
+              "; Correct number of scenes was not added"
+            )
+
+            true
           }
       }
     }
