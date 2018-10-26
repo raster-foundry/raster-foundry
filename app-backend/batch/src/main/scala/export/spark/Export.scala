@@ -156,7 +156,7 @@ object Export extends SparkJob with Config with RollbarNotifier {
               rdd.mapValues(
                 { tile =>
                   val ctile = (eld.colorCorrections, hist) mapN {
-                    _.colorCorrect(tile, _)
+                    _.colorCorrect(tile, _, None)
                   } getOrElse tile
 
                   ed.output.render.flatMap(_.bands.map(_.toSeq)) match {

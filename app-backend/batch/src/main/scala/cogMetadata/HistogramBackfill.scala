@@ -90,7 +90,8 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
     IO.fromFuture {
       IO(
         (CogUtils.fromUri(ingestLocation) map {
-          CogUtils.geoTiffDoubleHistogram(_).toList
+          case (tiff, _) =>
+            CogUtils.geoTiffDoubleHistogram(tiff).toList
         }).value
       )
     } recoverWith ({

@@ -419,7 +419,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
                   .flatMap { tile =>
                     if (colorCorrect) {
                       LayerCache.layerHistogram(sceneId, zoom).map { hist =>
-                        colorCorrectParams.colorCorrect(tile, hist)
+                        colorCorrectParams.colorCorrect(tile, hist, None)
                       }
                     } else {
                       OptionT[Future, MultibandTile](Future(Some(tile)))
@@ -460,19 +460,21 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     }
 
     rfCache.cachingOptionT(cacheKey)(
-      CogUtils.fromUri(ingestLocation).flatMap { tiff =>
-        CogUtils.cropForZoomExtent(tiff, zoom, extent).flatMap {
-          cropped: MultibandTile =>
-            if (colorCorrect) {
-              rfCache
-                .cachingOptionT(s"hist-tiff-${sceneId}") {
-                  OptionT.liftF(Future(CogUtils.geoTiffHistogram(tiff)))
-                }
-                .semiflatMap { histogram =>
-                  Future(colorCorrectParams.colorCorrect(cropped, histogram))
-                }
-            } else OptionT.pure[Future](cropped)
-        }
+      CogUtils.fromUri(ingestLocation).flatMap {
+        case (tiff, metadata) =>
+          CogUtils.cropForZoomExtent(tiff, zoom, extent).flatMap {
+            cropped: MultibandTile =>
+              if (colorCorrect) {
+                rfCache
+                  .cachingOptionT(s"hist-tiff-${sceneId}") {
+                    OptionT.liftF(Future(CogUtils.geoTiffHistogram(tiff)))
+                  }
+                  .semiflatMap { histogram =>
+                    Future(colorCorrectParams
+                      .colorCorrect(cropped, histogram, metadata.noDataValue))
+                  }
+              } else OptionT.pure[Future](cropped)
+          }
       }
     )
 

@@ -108,7 +108,9 @@ object Cog extends RollbarNotifier {
       val subsetBands = raster.tile.subsetBands(bandOrder)
       val subsetHistograms = bandOrder map histograms
       val colored =
-        md.colorCorrections.colorCorrect(subsetBands, subsetHistograms).color
+        md.colorCorrections
+          .colorCorrect(subsetBands, subsetHistograms, None)
+          .color
       Raster(colored, extent).resample(256, 256)
     }
     OptionT(tileIO.attempt.map(_.toOption))

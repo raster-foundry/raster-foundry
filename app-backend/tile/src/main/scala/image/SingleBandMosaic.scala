@@ -82,7 +82,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
 
     rfCache
       .cachingOptionT(cacheKey)(
-        CogUtils.fromUri(ingestLocation).flatMap { tiff =>
+        CogUtils.fromUri(ingestLocation) map { _._1 } flatMap { tiff =>
           CogUtils.cropForZoomExtent(tiff, zoom, extent).flatMap {
             cropped: MultibandTile =>
               val hist = CogUtils.geoTiffDoubleHistogram(tiff)

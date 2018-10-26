@@ -158,7 +158,7 @@ trait SceneRoutes
       val histogram: OptionT[Future, Array[Histogram[Double]]] =
         (newScene.sceneType, newScene.ingestLocation) match {
           case (Some(SceneType.COG), Some(ingestLocation)) =>
-            CogUtils.fromUri(ingestLocation) map { geoTiff =>
+            CogUtils.fromUri(ingestLocation) map { _._1 } map { geoTiff =>
               CogUtils.geoTiffDoubleHistogram(geoTiff)
             }
           case _ => OptionT.fromOption(None)
