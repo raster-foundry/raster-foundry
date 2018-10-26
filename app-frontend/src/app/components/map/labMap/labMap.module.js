@@ -34,24 +34,28 @@ class LabMapController {
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
-        this.getMap = () => this.mapService.getMap(this.mapId);
+    }
 
-        this.availableResolutions = this.exportService.getAvailableResolutions();
-        this.availableTargets = this.exportService.getAvailableTargets(false);
-
-        $ngRedux.subscribe(() => {
-            this.state = $ngRedux.getState();
-            this.nodes = this.state.lab.nodes;
-            if (this.nodes) {
-                let resultNode = this.nodes.toArray().find(node => node.args.length);
-                if (resultNode) {
-                    this.resultNodeId = resultNode.id;
-                }
-            }
+    mapStateToThis(state) {
+        let resultNodeId;
+        if (state.lab.nodes) {
+            let resultNode = state.lab.nodes.toArray().find(node => node.args.length);
+            resultNodeId = resultNode && resultNode.id;
+        }
+        return Object.assign({
+            state: state,
+            nodes: state.lab.nodes,
+            resultNodeId
         });
     }
 
     $onInit() {
+        this.availableResolutions = this.exportService.getAvailableResolutions();
+        this.availableTargets = this.exportService.getAvailableTargets(false);
+
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis)(this);
+        this.$scope.$on('$destroy', unsubscribe);
+
         if (this.enableNodeExport) {
             this.exportOptions = {};
         }
@@ -80,6 +84,9 @@ class LabMapController {
         if (this.clickListener) {
             this.$document.off('click', this.clickListener);
         }
+    }
+    getMap() {
+        return this.mapService.getMap(this.mapId);
     }
 
     initMap() {

@@ -20,12 +20,15 @@ export default class ProjectItemController {
             }
         );
         this.mapId = `${this.project.id}-map`;
-        this.getMap = () => this.mapService.getMap(this.mapId);
 
         this.showProjectThumbnail =
             !this.featureFlags.isOnByDefault('project-preview-mini-map');
 
         this.getProjectStatus();
+    }
+
+    getMap() {
+        return this.mapService.getMap(this.mapId);
     }
 
     getThumbnailURL() {

@@ -24,9 +24,7 @@ class LabAnalysisController {
 
     $onInit() {
         this.tileServer = `${this.APP_CONFIG.tileServerLocation}`;
-        this.getMap = () => this.mapService.getMap('lab-preview');
         this.showDiagram = true;
-
         this.analysisId = this.$state.params.analysisid;
 
         let userWatch = this.$scope.$watch('$ctrl.user', user => {
@@ -56,6 +54,10 @@ class LabAnalysisController {
             Object.assign({}, LabActions, NodeActions)
         )(this);
         this.$scope.$on('$destroy', unsubscribe);
+    }
+
+    getMap() {
+        return this.mapService.getMap('lab-preview');
     }
 
     initAnalysis() {

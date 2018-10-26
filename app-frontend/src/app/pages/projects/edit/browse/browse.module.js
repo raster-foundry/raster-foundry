@@ -6,53 +6,39 @@ import _ from 'lodash';
 
 class ProjectsSceneBrowserController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $location, $scope, $timeout,
+        $log, $state, $location, $scope, $timeout, $rootScope,
         modalService, mapService, sceneService,
         projectService, sessionStorage, planetLabsService, authService, featureFlags,
         RasterFoundryRepository, PlanetRepository, CMRRepository
     ) {
         'ngInject';
+        $rootScope.autoInject(this, arguments);
         this.$parent = $scope.$parent.$ctrl;
-        this.$log = $log;
-        this.$state = $state;
-        this.$location = $location;
-        this.$scope = $scope;
-        this.$timeout = $timeout;
-        this.modalService = modalService;
-        this.projectService = projectService;
-        this.sessionStorage = sessionStorage;
-        this.mapService = mapService;
-        this.planetLabsService = planetLabsService;
-        this.authService = authService;
-        this.sceneService = sceneService;
+    }
 
+    $onInit() {
         this.repositories = [
             {
                 label: 'Raster Foundry',
                 overrideLabel: BUILDCONFIG.APP_NAME,
-                service: RasterFoundryRepository
+                service: this.RasterFoundryRepository
             }
         ];
 
-        if (featureFlags.isOnByDefault('external-source-browse-planet')) {
+        if (this.featureFlags.isOnByDefault('external-source-browse-planet')) {
             this.repositories.push({
                 label: 'Planet Labs',
-                service: PlanetRepository
+                service: this.PlanetRepository
             });
         }
 
-        if (featureFlags.isOnByDefault('external-source-browse-cmr')) {
+        if (this.featureFlags.isOnByDefault('external-source-browse-cmr')) {
             this.repositories.push({
                 label: 'NASA CMR',
-                service: CMRRepository
+                service: this.CMRRepository
             });
         }
 
-        this.getMap = () => this.mapService.getMap('edit');
-        this.getPreviewMap = () => this.mapService.getMap('preview');
-    }
-
-    $onInit() {
         this.projectScenesReady = false;
         this.registerClick = true;
         this.sceneList = [];
@@ -84,6 +70,14 @@ class ProjectsSceneBrowserController {
                 browseMap.deleteThumbnail();
             });
         });
+    }
+
+    getMap() {
+        return this.mapService.getMap('edit');
+    }
+
+    getPreviewMap() {
+        return this.mapService.getMap('preview');
     }
 
     initParams() {
