@@ -9,14 +9,14 @@ export default class ProjectsAdvancedColorController {
         'ngInject';
         $scope.autoInject(this, arguments);
         this.$parent = $scope.$parent.$ctrl;
-        this.repository = {
-            name: 'Raster Foundry',
-            service: RasterFoundryRepository
-        };
-        this.getMap = () => mapService.getMap('edit');
     }
 
     $onInit() {
+        this.repository = {
+            name: 'Raster Foundry',
+            service: this.RasterFoundryRepository
+        };
+
         this.selectedTileX = null;
         this.selectedTileY = null;
         this.selectedScenes = new Map();
@@ -47,6 +47,10 @@ export default class ProjectsAdvancedColorController {
             map.deleteLayers('grid-selection-layer');
             this.selectedScenes.forEach((scene) => map.deleteGeojson(scene.id));
         });
+    }
+
+    getMap() {
+        return this.mapService.getMap('edit');
     }
 
     initMap() {

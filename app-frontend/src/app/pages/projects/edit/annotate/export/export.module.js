@@ -4,21 +4,12 @@ import {annotationsToFeatureCollection} from '_redux/annotation-utils';
 
 class AnnotateExportController {
     constructor( // eslint-disable-line max-params
-        $log, $state, $scope, $ngRedux,
+        $rootScope, $log, $state, $scope, $ngRedux,
         projectService
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$state = $state;
-        this.$scope = $scope;
+        $rootScope.autoInject(this, arguments);
         this.$parent = $scope.$parent.$ctrl;
-
-        this.projectService = projectService;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
     }
 
     mapStateToThis(state) {
@@ -28,6 +19,11 @@ class AnnotateExportController {
     }
 
     $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
+
         this.visibleAnnotations = this.$parent.visibleAnnotations;
         this.projectService.getAnnotationShapefile(this.$state.params.projectid).then(
             (res) => {
