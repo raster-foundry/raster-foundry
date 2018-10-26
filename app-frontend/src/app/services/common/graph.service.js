@@ -213,6 +213,7 @@ export default (app) => {
         }
 
         register(el, id, options) {
+            // el is expected to be a bare DOM svg node
             if (el.nodeName !== 'svg') {
                 throw new Error('graphService requires an svg element.');
             }
