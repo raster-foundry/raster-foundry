@@ -1,5 +1,6 @@
 import angular from 'angular';
 import organizationModalTpl from './organizationModal.html';
+import $ from 'jquery';
 
 const OrganizationModalComponent = {
     templateUrl: organizationModalTpl,
@@ -13,10 +14,9 @@ const OrganizationModalComponent = {
 };
 
 class OrganizationModalController {
-    constructor($element, $timeout) {
+    constructor($rootScope, $element, $timeout) {
         'ngInject';
-        this.$element = $element;
-        this.$timeout = $timeout;
+        $rootScope.autoInject(this, arguments);
     }
 
     $postLink() {
@@ -25,7 +25,7 @@ class OrganizationModalController {
 
     claimFocus(interval = 0) {
         this.$timeout(() => {
-            const el = $(this.$element[0]).find('input').get(0);
+            const el = this.$element.find('input').get(0);
             el.focus();
         }, interval);
     }

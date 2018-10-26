@@ -17,11 +17,9 @@ const ReclassifyEntryComponent = {
 };
 
 class ReclassifyEntryController {
-    constructor($element, $timeout, reclassifyService) {
+    constructor($rootScope, $element, $timeout, reclassifyService) {
         'ngInject';
-        this.$element = $element;
-        this.$timeout = $timeout;
-        this.reclassifyService = reclassifyService;
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
@@ -50,7 +48,7 @@ class ReclassifyEntryController {
         }
         if (!this.isShowingRange) {
             this.$timeout(() => {
-                const el = $(this.$element[0]).find('input').get(0);
+                const el = this.$element.find('input').get(0);
                 el.focus();
             }, 200);
         }

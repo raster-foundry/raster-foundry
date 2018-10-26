@@ -1,4 +1,5 @@
 /* global BUILDCONFIG */
+import $ from 'jquery';
 function runBlock(
     $rootScope, jwtHelper, $state, $location, $window, APP_CONFIG,
     $ngRedux, $timeout,
@@ -109,7 +110,14 @@ function runBlock(
     });
     $rootScope.autoInject = function (context, args) {
         context.constructor.$inject.forEach((injectable, idx) => {
-            context[injectable] = args[idx];
+            switch(injectable) {
+            case '$element':
+            case '$document':
+                context[injectable] = $(args[idx]);
+                break;
+            default:
+                context[injectable] = args[idx];
+            }
         });
     };
 }
