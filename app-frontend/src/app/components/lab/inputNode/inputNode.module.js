@@ -18,31 +18,10 @@ const InputNodeComponent = {
 class InputNodeController {
     constructor(
         modalService, datasourceService, projectService, sceneService,
-        $q, $scope, $ngRedux, $log
+        $q, $scope, $ngRedux, $log, $rootScope
     ) {
         'ngInject';
-        this.modalService = modalService;
-        this.datasourceService = datasourceService;
-        this.projectService = projectService;
-        this.sceneService = sceneService;
-        this.$scope = $scope;
-        this.$log = $log;
-        this.$q = $q;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            Object.assign({}, LabActions, NodeActions)
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
-
-        $scope.$watch('$ctrl.node', (node, oldNode) => {
-            let inputsEqual = node && oldNode && (
-                (a, b) => a.projId === b.projId && a.band === b.band
-            )(node, oldNode);
-            if (node && (!inputsEqual || !this.initialized)) {
-                this.processUpdates();
-            }
-        });
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
@@ -52,6 +31,23 @@ class InputNodeController {
             analysisErrors: state.lab.analysisErrors,
             node: getNodeDefinition(state, this)
         };
+    }
+
+    $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            Object.assign({}, LabActions, NodeActions)
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
+
+        this.$scope.$watch('$ctrl.node', (node, oldNode) => {
+            let inputsEqual = node && oldNode && (
+                (a, b) => a.projId === b.projId && a.band === b.band
+            )(node, oldNode);
+            if (node && (!inputsEqual || !this.initialized)) {
+                this.processUpdates();
+            }
+        });
     }
 
     processUpdates() {
