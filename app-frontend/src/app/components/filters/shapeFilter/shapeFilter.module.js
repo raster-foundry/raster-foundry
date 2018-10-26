@@ -16,31 +16,10 @@ const ShapeFilterComponent = {
 
 class ShapeFilterController {
     constructor(
-        $scope, $location, $q, $ngRedux,
+        $rootScope, $scope, $location, $q, $ngRedux,
         shapesService, modalService, mapService
     ) {
-        this.$scope = $scope;
-        this.$location = $location;
-        this.$q = $q;
-        this.shapesService = shapesService;
-        this.modalService = modalService;
-        this.getMap = () => mapService.getMap('edit');
-
-        this.selectedShape = null;
-        this.shapeSearch = '';
-        this.open = false;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            ShapeActions
-        )(this);
-        $scope.$on('$destroy', () => {
-            this.getMap().then(m => {
-                m.deleteGeojson('AOI');
-            });
-            this.cancelDrawing();
-            unsubscribe();
-        });
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
@@ -50,6 +29,22 @@ class ShapeFilterController {
     }
 
     $onInit() {
+        this.selectedShape = null;
+        this.shapeSearch = '';
+        this.open = false;
+
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            ShapeActions
+        )(this);
+        this.$scope.$on('$destroy', () => {
+            this.getMap().then(m => {
+                m.deleteGeojson('AOI');
+            });
+            this.cancelDrawing();
+            unsubscribe();
+        });
+
         this.shapeRequest = this.getShapes().then((shapes) => {
             this.shapes = shapes;
             this.filteredShapes = shapes;
@@ -77,6 +72,10 @@ class ShapeFilterController {
         if (shape && shape.id !== _.get(this, 'selectedShape.id')) {
             this.setShapeFromShape(shape);
         }
+    }
+
+    getMap(){
+        return this.mapService.getMap('edit');
     }
 
     setShapeFromParam(param) {

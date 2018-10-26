@@ -7,16 +7,10 @@ assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
 
 export default class ShareController {
     constructor( // eslint-disable-line max-params
-        $log, $state, authService, projectService, mapService, mapUtilsService
+        $rootScope, $log, $state, authService, projectService, mapService, mapUtilsService
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$state = $state;
-        this.logoAsset = assetLogo;
-        this.authService = authService;
-        this.projectService = projectService;
-        this.mapUtilsService = mapUtilsService;
-        this.getMap = () => mapService.getMap('share-map');
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
@@ -39,6 +33,9 @@ export default class ShareController {
                 }
             );
         }
+    }
+    getMap() {
+        return this.mapService.getMap('share-map');
     }
 
     addProjectLayer() {

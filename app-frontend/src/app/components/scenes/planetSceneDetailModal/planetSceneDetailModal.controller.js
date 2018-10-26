@@ -2,15 +2,15 @@
 
 export default class PlanetSceneDetailModalController {
     constructor(
-        $scope, mapService
+        $rootScope, $scope, mapService
     ) {
         'ngInject';
-        this.getMap = () => mapService.getMap('scene-preview-map');
-        $scope.$on('$destroy', () => {
-            mapService.deregisterMap('scene-preview-map');
-        });
+        $rootScope.autoInject(this, arguments);
     }
     $onInit() {
+        this.$scope.$on('$destroy', () => {
+            this.mapService.deregisterMap('scene-preview-map');
+        });
         this.scene = this.resolve.scene;
         this.planetThumbnailUrl = this.resolve.planetThumbnailUrl;
     }
@@ -25,6 +25,10 @@ export default class PlanetSceneDetailModalController {
                 url: this.planetThumbnailUrl
             });
         });
+    }
+
+    getMap() {
+        return this.mapService.getMap('scene-preview-map');
     }
 
     getSceneBounds() {

@@ -9,17 +9,13 @@ export default class NewExportController {
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
-
         this.$parent = this.$scope.$parent.$ctrl;
-
-        this.availableResolutions = this.exportService.getAvailableResolutions();
-        this.availableTargets = this.exportService.getAvailableTargets();
-        this.availableProcessingOptions = this.projectService.availableProcessingOptionsThin;
-
-        this.getMap = () => mapService.getMap('edit');
     }
 
     $onInit() {
+        this.availableResolutions = this.exportService.getAvailableResolutions();
+        this.availableTargets = this.exportService.getAvailableTargets();
+        this.availableProcessingOptions = this.projectService.availableProcessingOptionsThin;
         // Initial visible state of the output parameters pane
         this.showParameters = false;
 
@@ -60,6 +56,11 @@ export default class NewExportController {
             mapWrapper.deleteLayers('Export Area');
         });
     }
+
+    getMap() {
+        return this.mapService.getMap('edit');
+    }
+
 
     getDefaultTarget() {
         return this.availableTargets.find(t => t.default) ||

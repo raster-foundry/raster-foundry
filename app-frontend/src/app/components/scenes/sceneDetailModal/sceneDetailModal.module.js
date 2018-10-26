@@ -16,25 +16,18 @@ const SceneDetailModalComponent = {
 
 class SceneDetailModalController {
     constructor(
-        $log, $state, modalService, $scope,
+        $log, $state, modalService, $scope, $rootScope,
         moment, sceneService, mapService,
         authService
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$state = $state;
-        this.modalService = modalService;
-        this.$scope = $scope;
-        this.moment = moment;
-        this.sceneService = sceneService;
-        this.authService = authService;
-        this.getMap = () => mapService.getMap('scene-preview-map');
-        $scope.$on('$destroy', () => {
-            mapService.deregisterMap('scene-preview-map');
-        });
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
+        this.$scope.$on('$destroy', () => {
+            this.mapService.deregisterMap('scene-preview-map');
+        });
         this.scene = this.resolve.scene;
         this.repository = this.resolve.repository;
     }
@@ -83,6 +76,9 @@ class SceneDetailModalController {
               true
             );
         });
+
+    getMap() {
+        return this.mapService.getMap('scene-preview-map');
     }
 
     openDownloadModal() {

@@ -44,8 +44,6 @@ class MapContainerController {
     }
 
     $onInit() {
-        this.getMap = () => this.mapService.getMap(this.mapId);
-
         let unsubscribe = this.$ngRedux.connect(
             this.mapStateToThis.bind(this),
             ShapeActions
@@ -95,6 +93,10 @@ class MapContainerController {
         if (this.clickListener) {
             this.$document.off('click', this.clickListener);
         }
+    }
+
+    getMap() {
+        return this.mapService.getMap(this.mapId);
     }
 
     initDrawControls(mapWrapper) {
