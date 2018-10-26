@@ -1,6 +1,7 @@
-/* globals FileReader d3 */
+/* globals FileReader */
 import angular from 'angular';
 import _ from 'lodash';
+import * as d3 from 'd3';
 
 import colormapModalTpl from './colormapModal.html';
 
