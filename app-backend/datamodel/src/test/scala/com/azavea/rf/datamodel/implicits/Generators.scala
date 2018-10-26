@@ -350,7 +350,7 @@ object Generators extends ArbitraryInstances {
       owner <- stringOptionGen
       resolutionMeters <- Gen.choose(0.25f, 1000f)
       metadataFiles <- stringListGen
-      bands <- Gen.listOfN(3, bandCreateGen)
+      bands <- Gen.listOf[Band.Create](bandCreateGen)
     } yield
       Image.Banded(
         rawDataBytes,
@@ -545,7 +545,8 @@ object Generators extends ArbitraryInstances {
       owner <- Gen.const(None)
       composites <- Gen.delay(().asJson)
       extras <- Gen.delay(().asJson)
-      bands <- Gen.delay(().asJson)
+      // bands gets a concrete nonsense type to make the implicits work
+      bands <- Gen.delay(List.empty[Int].asJson)
       licenseName <- Gen.oneOf(None, Some("GPL-3.0"))
     } yield {
       Datasource.Create(
