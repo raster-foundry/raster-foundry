@@ -77,25 +77,38 @@ class NodeHistogramController {
                     graph.setData().render();
                 }
             });
+            const renderDefWatch = this.$scope.$watch('$ctrl.renderDefinition', (rdef) => {
+                let changed = false;
+                if ((!this.breakpoints || !this.breakpoints.length) && rdef) {
+                    changed = true;
+                    this.breakpoints = breakpointsFromRenderDefinition(
+                        rdef, this.uuid4.generate
+                    );
+                    this.graph.setData({histogram: this.plot, breakpoints: this.breakpoints});
+                }
+                if (rdef) {
+                    changed = true;
+                    this.options = Object.assign({}, this.options, {
+                        masks: {
+                            min: rdef.clip === 'left' ||
+                                rdef.clip === 'both',
+                            max: rdef.clip === 'right' ||
+                                rdef.clip === 'both'
+                        },
+                        scale: this.renderDefinition.scale,
+                        breakpointRange: this.getBreakpointRange(this.breakpoints)
+                    });
+                    this.graph.setOptions(this.options);
+                }
+                if (changed) {
+                    this.graph
+                        .render();
+                }
+            });
         });
         // re-fetch histogram any time there's a hard update
         this.$scope.$watch('$ctrl.lastAnalysisRefresh', () => {
             this.fetchHistogram(this.nodeId);
-        });
-
-        const renderDefWatch = this.$scope.$watch('$ctrl.renderDefinition', (rdef) => {
-            if ((!this.breakpoints || !this.breakpoints.length) && rdef) {
-                this.breakpoints = breakpointsFromRenderDefinition(
-                    rdef, this.uuid4.generate
-                );
-                if (this.graph) {
-                    this.graph
-                        .setData({histogram: this.plot, breakpoints: this.breakpoints})
-                        .render();
-                }
-            } else if (rdef) {
-                renderDefWatch();
-            }
         });
     }
 
