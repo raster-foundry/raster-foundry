@@ -54,8 +54,6 @@ class AOIParametersController {
         $scope.autoInject(this, arguments);
         this.$parent = $scope.$parent.$ctrl;
         this.updateFrequencies = updateFrequencies;
-
-        this.getMap = () => mapService.getMap('edit');
         this.startTimeTooltip = startTimeTooltip;
     }
 
@@ -106,6 +104,10 @@ class AOIParametersController {
             };
             this.projectLoaded = true;
         });
+    }
+
+    getMap() {
+        return this.mapService.getMap('edit');
     }
 
     fetchProjectAOIs() {

@@ -11,14 +11,9 @@ const OperationNodeComponent = {
 };
 
 class OperationNodeController {
-    constructor($scope, $ngRedux) {
+    constructor($rootScope, $scope, $ngRedux) {
         'ngInject';
-        this.$scope = $scope;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis.bind(this)
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
@@ -34,6 +29,13 @@ class OperationNodeController {
             node,
             inputs
         };
+    }
+
+    $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this)
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
     }
 }
 

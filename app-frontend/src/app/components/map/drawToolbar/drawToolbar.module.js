@@ -32,13 +32,9 @@ const DrawToolbarComponent = {
 };
 
 class DrawToolbarController {
-    constructor($log, $scope, mapService) {
+    constructor($rootScope, $log, $scope, mapService) {
         'ngInject';
-
-        this.$log = $log;
-        this.$scope = $scope;
-
-        this.getMap = () => mapService.getMap(this.mapId);
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
@@ -59,6 +55,10 @@ class DrawToolbarController {
         });
 
         this.$scope.$on('$destroy', this.$onDestroy.bind(this));
+    }
+
+    getMap() {
+        return this.mapService.getMap(this.mapId);
     }
 
     setDrawLayer(mapWrapper, polygons) {
