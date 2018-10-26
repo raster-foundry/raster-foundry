@@ -7,13 +7,9 @@ const ENTER = 13;
 
 export default class MapSearchModalController {
 
-    constructor($scope, $state, $element, $timeout, geocodeService) {
+    constructor($rootScope, $scope, $state, $element, $timeout, geocodeService) {
         'ngInject';
-        this.$scope = $scope;
-        this.$state = $state;
-        this.$element = $element;
-        this.$timeout = $timeout;
-        this.geocodeService = geocodeService;
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
@@ -26,7 +22,7 @@ export default class MapSearchModalController {
 
     $postLink() {
         this.$timeout(() => {
-            const el = $(this.$element[0]).find('input').get(0);
+            const el = this.$element.find('input').get(0);
             el.focus();
             $(el).on('keydown', $.proxy(this.handleKeypress, this));
         }, 0);

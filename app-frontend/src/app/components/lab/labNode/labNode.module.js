@@ -7,15 +7,9 @@ import { getNodeDefinition } from '_redux/node-utils';
 
 class LabNodeController {
     constructor($ngRedux, $scope, $log, $element, modalService, tokenService,
-                projectService, APP_CONFIG) {
+                projectService, APP_CONFIG, $rootScope) {
         'ngInject';
-        this.$log = $log;
-        this.$element = $element;
-        this.$ngRedux = $ngRedux;
-        this.$scope = $scope;
-        this.modalService = modalService;
-        this.tokenService = tokenService;
-        this.projectService = projectService;
+        $rootScope.autoInject(this, arguments);
 
         this.tileServer = `${APP_CONFIG.tileServerLocation}`;
     }

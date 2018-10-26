@@ -24,18 +24,15 @@ const defaultOptions = {
 
 class HistogramBreakpointController {
     constructor(
-        $element, $scope, $log, $document
+        $rootScope, $element, $scope, $log, $document
     ) {
         'ngInject';
-        this.$element = $element;
-        this.$document = $document;
-        this.$scope = $scope;
-        this.$log = $log;
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
-        this.documentBody = angular.element(this.$document[0].body);
-        this.parent = $(this.$element.parent());
+        this.documentBody = this.$document.find('body');
+        this.parent = this.$element.parent();
         this.registerEvents();
         if (!this.breakpointPosition) {
             this.breakpointPosition = '0%';

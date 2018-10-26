@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import angular from 'angular';
 import sceneTpl from './sceneItem.html';
+import $ from 'jquery';
 
 const SceneItemComponent = {
     templateUrl: sceneTpl,
@@ -19,29 +20,18 @@ const SceneItemComponent = {
 
 class SceneItemController {
     constructor(
-        $scope, $attrs, $element, $timeout, $document,
+        $rootScope, $scope, $attrs, $element, $timeout, $document,
         thumbnailService, mapService, modalService, sceneService, authService
     ) {
         'ngInject';
-
-        this.$scope = $scope;
+        $rootScope.autoInject(this, arguments);
         this.$parent = $scope.$parent.$ctrl;
-        this.$element = $element;
-        this.$timeout = $timeout;
-        this.$document = $document;
-
-
-        this.thumbnailService = thumbnailService;
-        this.mapService = mapService;
-        this.modalService = modalService;
-        this.sceneService = sceneService;
-        this.authService = authService;
-
-        this.isDraggable = $attrs.hasOwnProperty('draggable');
-        this.isPreviewable = $attrs.hasOwnProperty('previewable');
-        this.isClickable = $attrs.hasOwnProperty('clickable');
     }
     $onInit() {
+        this.isDraggable = this.$attrs.hasOwnProperty('draggable');
+        this.isPreviewable = this.$attrs.hasOwnProperty('previewable');
+        this.isClickable = this.$attrs.hasOwnProperty('clickable');
+
         this.datasource = this.scene.datasource;
         if (this.respository) {
             this.updateThumbnails();
@@ -49,13 +39,13 @@ class SceneItemController {
     }
 
     $postLink() {
-        this.$timeout(() => {
-            const el = $(this.$element[0]).find('img.item-img').get(0);
+        this.$scope.$evalAsync(() => {
+            const el = this.$element.find('img.item-img').get(0);
             $(el).on('error', () => {
                 this.imageError = true;
                 this.$scope.$evalAsync();
             });
-        }, 0);
+        });
         this.$scope.$watch('$ctrl.scene.sceneOrder', (val) => {
             if (this.orderingInProgress) {
                 this.manualOrderValue = val + 1;

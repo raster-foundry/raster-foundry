@@ -49,12 +49,12 @@ class SearchController {
     }
 
     $onDestroy() {
-        $(this.$element[0]).off();
+        this.$element.off();
     }
 
     claimFocus(interval = 0) {
         this.$timeout(() => {
-            const el = $(this.$element[0]).find('input').get(0);
+            const el = this.$element.find('input').get(0);
             if (el) {
                 el.focus();
             }
@@ -63,13 +63,12 @@ class SearchController {
 
     addBlurHandlers() {
         this.$timeout(() => {
-            const el = $(this.$element[0]);
-            el.on('focusin', () => {
+            this.$element.on('focusin', () => {
                 this.$timeout(() => {
                     this.showSuggestions = true;
                 }, 0);
             });
-            el.on('focusout', () => {
+            this.$element.on('focusout', () => {
                 this.$timeout(() => {
                     this.showSuggestions = false;
                 }, 250);
