@@ -15,15 +15,10 @@ const NodeSelectorComponent = {
 
 class NodeSelectorController {
     constructor(
-        $log, $element, $scope, $timeout, $document, $ngRedux
+        $rootScope, $log, $element, $scope, $timeout, $document, $ngRedux
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$element = $element;
-        this.$scope = $scope;
-        this.$timeout = $timeout;
-        this.$document = $document;
-        this.$ngRedux = $ngRedux;
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {

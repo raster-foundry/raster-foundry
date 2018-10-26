@@ -1,4 +1,5 @@
 import angular from 'angular';
+import $ from 'jquery';
 import teamModalTpl from './teamModal.html';
 
 const TeamModalComponent = {
@@ -13,10 +14,9 @@ const TeamModalComponent = {
 };
 
 class TeamModalController {
-    constructor($element, $timeout) {
+    constructor($rootScope, $element, $timeout) {
         'ngInject';
-        this.$element = $element;
-        this.$timeout = $timeout;
+        $rootScope.autoInject(this, arguments);
     }
 
     $postLink() {
@@ -25,7 +25,7 @@ class TeamModalController {
 
     claimFocus(interval = 0) {
         this.$timeout(() => {
-            const el = $(this.$element[0]).find('input').get(0);
+            const el = this.$element.find('input').get(0);
             el.focus();
         }, interval);
     }

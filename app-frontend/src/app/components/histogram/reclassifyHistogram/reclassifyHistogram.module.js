@@ -1,4 +1,5 @@
-/* global d3 _ */
+import * as d3 from 'd3';
+import _ from 'lodash';
 import angular from 'angular';
 import reclassifyHistogramTpl from './reclassifyHistogram.html';
 
@@ -15,12 +16,9 @@ const ReclassifyHistogramComponent = {
 };
 
 class ReclassifyHistogramController {
-    constructor($log, $scope, $element, uuid4) {
+    constructor($rootScope, $log, $scope, $element, uuid4) {
         'ngInject';
-        this.$log = $log;
-        this.$scope = $scope;
-        this.$element = $element;
-        this.uuid4 = uuid4;
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
@@ -88,7 +86,7 @@ class ReclassifyHistogramController {
                 showLegend: false,
                 showXAxis: false,
                 showYAxis: false,
-                yScale: d3.scale.log(),
+                yScale: d3.scaleLog(),
                 margin: {
                     top: 0,
                     right: 0,

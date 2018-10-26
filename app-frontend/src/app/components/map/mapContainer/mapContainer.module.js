@@ -27,24 +27,30 @@ const MapContainerComponent = {
 class MapContainerController {
     constructor(
         $document, $element, $scope, $timeout, $q,
-        modalService, mapService, $ngRedux, uuid4
+        modalService, mapService, $ngRedux, uuid4,
+        $rootScope
     ) {
         'ngInject';
-        this.$document = $document;
-        this.$element = $element;
-        this.$scope = $scope;
-        this.$timeout = $timeout;
-        this.$q = $q;
-        this.modalService = modalService;
-        this.mapService = mapService;
-        this.uuid4 = uuid4;
+        $rootScope.autoInject(this, arguments);
+    }
+
+    mapStateToThis(state) {
+        const drawing = state.shape.mapId === this.mapId;
+        return {
+            drawing,
+            drawResolve: state.shape.resolve,
+            drawReject: state.shape.resolve
+        };
+    }
+
+    $onInit() {
         this.getMap = () => this.mapService.getMap(this.mapId);
 
-        let unsubscribe = $ngRedux.connect(
+        let unsubscribe = this.$ngRedux.connect(
             this.mapStateToThis.bind(this),
             ShapeActions
         )(this);
-        $scope.$on('$destroy', unsubscribe);
+        this.$scope.$on('$destroy', unsubscribe);
 
         this.getMap().then(m => this.initDrawControls(m));
 
@@ -69,15 +75,6 @@ class MapContainerController {
                 }
             }
         });
-    }
-
-    mapStateToThis(state) {
-        const drawing = state.shape.mapId === this.mapId;
-        return {
-            drawing,
-            drawResolve: state.shape.resolve,
-            drawReject: state.shape.resolve
-        };
     }
 
     $postLink() {
