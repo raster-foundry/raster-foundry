@@ -7,6 +7,8 @@ import cats.implicits._
 
 import doobie._
 import doobie.implicits._
+import doobie.postgres.implicits._
+import doobie.postgres.circe.jsonb.implicits._
 
 import java.util.UUID
 
@@ -167,12 +169,8 @@ trait PropTestHelpers {
     image.copy(createdBy = ownerId, owner = ownerId, scene = sceneId)
 
   def fixupDatasource(dsCreate: Datasource.Create,
-                      user: User): ConnectionIO[Datasource] = {
-    for {
-      ds <- DatasourceDao.createDatasource(dsCreate.copy(owner = Some(user.id)),
-                                           user)
-    } yield ds
-  }
+                      user: User): ConnectionIO[Datasource] =
+    DatasourceDao.createDatasource(dsCreate.copy(owner = Some(user.id)), user)
 
   def fixupThumbnail(scene: Scene.WithRelated,
                      thumbnail: Thumbnail): Thumbnail =

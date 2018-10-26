@@ -15,11 +15,21 @@ import java.util.UUID
 
 implicit val han = LogHandler({ e => println("*** " + e) })
 
+import scala.concurrent.ExecutionContext
+
+implicit val cs = IO.contextShift(ExecutionContext.global)
+
 // implicit transactor for console testing
-implicit val xa = Transactor.fromDriverManager[IO](
-  "org.postgresql.Driver", "jdbc:postgresql://database.service.rasterfoundry.internal/", "rasterfoundry", "rasterfoundry"
+
+val xa = Transactor.fromDriverManager[IO](
+  "org.postgresql.Driver",
+  "jdbc:postgresql://database.service.rasterfoundry.internal/",
+  "rasterfoundry",
+  "rasterfoundry"
 )
-val y = xa.yolo; import y._
+
+val y = xa.yolo
+import y._
 """
 
 testOptions in Test += Tests.Argument("-oD")

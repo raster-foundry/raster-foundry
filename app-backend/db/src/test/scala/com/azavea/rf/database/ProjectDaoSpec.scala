@@ -296,7 +296,6 @@ class ProjectDaoSpec
     }
   }
 
-  // deleteScenesFromProject
   test("delete scenes from a project") {
     check {
       forAll {
@@ -304,59 +303,35 @@ class ProjectDaoSpec
          org: Organization.Create,
          scenes: List[Scene.Create],
          project: Project.Create,
-         pageRequest: PageRequest) =>
+         datasource: Datasource.Create) =>
           {
-            val projAndScenesInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
-              case (dbOrg: Organization, dbUser: User) => {
-                val scenesInsertIO = unsafeGetRandomDatasource flatMap {
-                  (dbDatasource: Datasource) =>
-                    {
-                      scenes.traverse(
-                        (scene: Scene.Create) => {
-                          SceneDao.insert(fixupSceneCreate(dbUser,
-                                                           dbDatasource,
-                                                           scene),
-                                          dbUser)
-                        }
-                      )
-                    }
-                }
-                val projectInsertIO =
-                  ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
-                                           dbUser)
-                (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
+            val listScenesIO = for {
+              orgUserProject <- insertUserOrgProject(user, org, project)
+              (dbOrg, dbUser, dbProject) = orgUserProject
+              dbDatasource <- fixupDatasource(datasource, dbUser)
+              scenes <- scenes traverse { scene =>
+                SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene),
+                                dbUser)
               }
-            }
+              _ <- ProjectDao.addScenesToProject(scenes map { _.id },
+                                                 dbProject.id,
+                                                 true)
+              _ <- ProjectDao.deleteScenesFromProject(scenes map { _.id },
+                                                      dbProject.id)
+              listedScenes <- ProjectScenesDao.listProjectScenes(
+                dbProject.id,
+                PageRequest(0, 100, Map.empty),
+                CombinedSceneQueryParams()
+              ) map { _.results }
+            } yield listedScenes
 
-            val addAndDeleteScenesWithProjectAndUserIO = projAndScenesInsertWithUserIO flatMap {
-              case (dbProject: Project,
-                    dbScenes: List[Scene.WithRelated],
-                    dbUser: User) => {
-                val sceneIds = dbScenes map { _.id }
-                ProjectDao.addScenesToProject((dbScenes map { _.id }),
-                                              dbProject.id,
-                                              true) flatMap { _ =>
-                  ProjectDao.deleteScenesFromProject(dbScenes map { _.id },
-                                                     dbProject.id) map { _ =>
-                    (dbProject, dbUser)
-                  }
-                }
-              }
-            }
+            val scenesInProject = listScenesIO.transact(xa).unsafeRunSync
 
-            val listAddedSceneIDsIO = addAndDeleteScenesWithProjectAndUserIO flatMap {
-              case (dbProject: Project, dbUser: User) => {
-                ProjectScenesDao.listProjectScenes(
-                  dbProject.id,
-                  pageRequest,
-                  CombinedSceneQueryParams()) map {
-                  (resp: PaginatedResponse[Scene.ProjectScene]) =>
-                    resp.results
-                }
-              }
-            }
-
-            listAddedSceneIDsIO.transact(xa).unsafeRunSync == List()
+            assert(
+              scenesInProject == Nil,
+              "; Project should have no scenes after deleting all added scenes."
+            )
+            true
           }
       }
     }

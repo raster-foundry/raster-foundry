@@ -3,10 +3,16 @@ package com.rasterfoundry.database
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
 
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import doobie.postgres.circe.jsonb.implicits._
 import doobie.Fragments
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
+import cats._
+import cats.data._
+import cats.effect.IO
+import cats.implicits._
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global

@@ -55,16 +55,14 @@ class ProjectDatasourcesDaoSpec
               dsInsert1 <- fixupDatasource(dsCreate1, dbUser)
               dsInsert2 <- fixupDatasource(dsCreate2, dbUser)
               dsInsert3 <- fixupDatasource(dsCreate3, dbUser)
-              scenesInsert1 <- (scenes1 map {
-                fixupSceneCreate(dbUser, dsInsert1, _)
-              }).traverse(
-                (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
-              )
-              scenesInsert2 <- (scenes2 map {
-                fixupSceneCreate(dbUser, dsInsert2, _)
-              }).traverse(
-                (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
-              )
+              scenesInsert1 <- scenes1 traverse { scene =>
+                SceneDao.insert(fixupSceneCreate(dbUser, dsInsert1, scene),
+                                dbUser)
+              }
+              scenesInsert2 <- scenes2 traverse { scene =>
+                SceneDao.insert(fixupSceneCreate(dbUser, dsInsert2, scene),
+                                dbUser)
+              }
               _ <- ProjectDao.addScenesToProject(scenesInsert1 map { _.id },
                                                  dbProject.id)
               _ <- ProjectDao.addScenesToProject(scenesInsert2 map { _.id },

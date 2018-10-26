@@ -228,6 +228,7 @@ lazy val common = Project("common", file("common"))
       Dependencies.awsStsSdk,
       Dependencies.rollbar,
       Dependencies.doobiePostgres,
+      Dependencies.doobiePostgresCirce,
       Dependencies.geotrellisSlick.exclude("postgresql", "postgresql"),
       Dependencies.apacheCommonsEmail
     )
@@ -244,6 +245,7 @@ lazy val db = Project("db", file("db"))
       Dependencies.doobieSpecs,
       Dependencies.doobieScalatest,
       Dependencies.doobiePostgres,
+      Dependencies.doobiePostgresCirce,
       "net.postgis" % "postgis-jdbc" % "2.2.1",
       "net.postgis" % "postgis-jdbc-jtsparser" % "2.2.1",
       "org.locationtech.jts" % "jts-core" % "1.15.0",
