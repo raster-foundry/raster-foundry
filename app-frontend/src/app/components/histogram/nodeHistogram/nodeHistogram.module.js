@@ -151,7 +151,7 @@ class NodeHistogramController {
             this.breakpoints = Object.assign([]);
         }
 
-        let elem = $(this.$element[0]).find('.graph-container svg')[0];
+        let elem = this.$element.find('.graph-container svg')[0];
         this.graph = this.graphService.register(elem, this.graphId, this.options);
     }
 
