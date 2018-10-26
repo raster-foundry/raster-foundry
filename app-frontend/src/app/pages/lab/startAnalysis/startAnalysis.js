@@ -2,19 +2,16 @@ import LabActions from '_redux/actions/lab-actions';
 
 class LabStartAnalysisController {
     constructor(
-        $log, $state, $scope, $ngRedux,
+        $rootScope, $log, $state, $scope, $ngRedux,
         analysisService
     ) {
-        this.$log = $log;
-        this.$state = $state;
-
-        this.analysisService = analysisService;
-
-        let unsubscribe = $ngRedux.connect(this.mapStateToThis, LabActions)(this);
-        $scope.$on('$destroy', unsubscribe);
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis, LabActions)(this);
+        this.$scope.$on('$destroy', unsubscribe);
+
         this.template = this.$state.params.template;
         this.templateId = this.$state.params.templateid;
         this.analysisName = '';

@@ -11,16 +11,20 @@ export default class AOIApproveController {
         'ngInject';
         $scope.autoInject(this, arguments);
         this.$parent = $scope.$parent.$ctrl;
-        this.repository = {
-            name: 'Raster Foundry',
-            service: RasterFoundryRepository
-        };
-        this.getMap = () => this.mapService.getMap('edit');
     }
 
     $onInit() {
+        this.repository = {
+            name: 'Raster Foundry',
+            service: this.RasterFoundryRepository
+        };
+
         this.resetAllScenes();
         this.resetStatusSets();
+    }
+
+    getMap() {
+        return this.mapService.getMap('edit');
     }
 
     fetchPage(page = this.$state.params.page || 1) {

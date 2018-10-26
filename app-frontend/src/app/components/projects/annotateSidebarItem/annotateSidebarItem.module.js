@@ -16,19 +16,10 @@ const AnnotateSidebarItemComponent = {
 
 class AnnotateSidebarItemController {
     constructor(
-        $log, $scope, $timeout, $ngRedux, $window
+        $rootScope, $log, $scope, $timeout, $ngRedux, $window
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$scope = $scope;
-        this.$timeout = $timeout;
-        this.$window = $window;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            AnnotationActions
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
@@ -47,6 +38,11 @@ class AnnotateSidebarItemController {
     }
 
     $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            AnnotationActions
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
         this.minMatchedLabelLength = 3;
         this.maxMatchedLabels = 4;
         let watch = this.$scope.$watch('$ctrl.annotationId', (annotationId) => {

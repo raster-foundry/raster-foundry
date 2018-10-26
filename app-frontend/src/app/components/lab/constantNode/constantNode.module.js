@@ -13,26 +13,29 @@ const ConstantNodeComponent = {
 };
 
 class ConstantNodeController {
-    constructor($scope, $ngRedux) {
+    constructor($rootScope, $scope, $ngRedux) {
         'ngInject';
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            NodeActions
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
-
-        $scope.$watch('$ctrl.node', (node) => {
-            if (node && node.constant) {
-                this.value = +node.constant;
-            }
-        });
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
         return {
             node: getNodeDefinition(state, this)
         };
+    }
+
+    $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            NodeActions
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
+
+        this.$scope.$watch('$ctrl.node', (node) => {
+            if (node && node.constant) {
+                this.value = +node.constant;
+            }
+        });
     }
 
     resetValue() {

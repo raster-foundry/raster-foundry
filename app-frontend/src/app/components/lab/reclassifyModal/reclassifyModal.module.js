@@ -18,26 +18,9 @@ const ReclassifyModalComponent = {
 };
 
 class ReclassifyModalController {
-    constructor($scope, $ngRedux, reclassifyService) {
+    constructor($rootScope, $scope, $ngRedux, reclassifyService) {
         'ngInject';
-        this.reclassifyService = reclassifyService;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            HistogramActions
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
-
-        $scope.$watch('$ctrl.inputNodeId', (id) => {
-            if (id) {
-                this.fetchHistogram(id);
-            }
-        });
-    }
-
-    $onInit() {
-        this.breaks = this.resolve.breaks;
-        this.nodeId = this.resolve.nodeId;
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
@@ -52,6 +35,20 @@ class ReclassifyModalController {
     }
 
     $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            HistogramActions
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
+
+        this.$scope.$watch('$ctrl.inputNodeId', (id) => {
+            if (id) {
+                this.fetchHistogram(id);
+            }
+        });
+        this.breaks = this.resolve.breaks;
+        this.nodeId = this.resolve.nodeId;
+
         this.noGapsOverlaps = true;
         this.allEntriesValid = true;
 
