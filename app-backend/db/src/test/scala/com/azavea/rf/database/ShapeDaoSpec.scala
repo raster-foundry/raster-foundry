@@ -24,7 +24,9 @@ class ShapeDaoSpec
     with PropTestHelpers {
 
   test("list shapes") {
-    ShapeDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
+    xa.use(t => ShapeDao.query.list.transact(t))
+      .unsafeRunSync
+      .length should be >= 0
   }
 
   test("insert shapes") {
@@ -41,7 +43,9 @@ class ShapeDaoSpec
                   dbUser)
               }
             }
-            shapeInsertIO.transact(xa).unsafeRunSync.length == shapes.length
+            xa.use(t => shapeInsertIO.transact(t))
+              .unsafeRunSync
+              .length == shapes.length
           }
       }
     }
@@ -81,7 +85,7 @@ class ShapeDaoSpec
             }
 
             val (affectedRows, updatedShape) =
-              updateWithShapeIO.transact(xa).unsafeRunSync
+              xa.use(t => updateWithShapeIO.transact(t)).unsafeRunSync
 
             val shapeUpdateShape = shapeUpdate.toShape
 
@@ -120,7 +124,7 @@ class ShapeDaoSpec
               }
             }
 
-            shapeByIdIO.transact(xa).unsafeRunSync
+            xa.use(t => shapeByIdIO.transact(t)).unsafeRunSync
           }
       }
     }

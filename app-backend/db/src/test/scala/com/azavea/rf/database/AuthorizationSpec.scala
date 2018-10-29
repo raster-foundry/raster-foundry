@@ -68,7 +68,7 @@ class AuthorizationSpec
             } yield (user1Authorized, user2Authorized)
 
             val (user1Authed, user2Authed) =
-              usersAuthedIO.transact(xa).unsafeRunSync
+              xa.use(t => usersAuthedIO.transact(t)).unsafeRunSync
 
             assert(
               user1Authed && user2Authed,
@@ -128,7 +128,7 @@ class AuthorizationSpec
             } yield { (user1Authorized, user2Authorized) }
 
             val (user1Authed, user2Authed) =
-              usersAuthedIO.transact(xa).unsafeRunSync
+              xa.use(t => usersAuthedIO.transact(t)).unsafeRunSync
 
             assert(
               user1Authed,
@@ -183,7 +183,7 @@ class AuthorizationSpec
             } yield { (user1Authorized, user2Authorized) }
 
             val (user1Authed, user2Authed) =
-              usersAuthedIO.transact(xa).unsafeRunSync
+              xa.use(t => usersAuthedIO.transact(t)).unsafeRunSync
             assert(
               user1Authed,
               "A user in the same org as the authorized org should be authorized")
@@ -230,7 +230,8 @@ class AuthorizationSpec
               dbAcrs <- ProjectDao.getPermissions(project.id)
             } yield { (acrs, dbAcrs) }
 
-            val (acrs, dbAcrs) = insertManyAcrsIO.transact(xa).unsafeRunSync
+            val (acrs, dbAcrs) =
+              xa.use(t => insertManyAcrsIO.transact(t)).unsafeRunSync
 
             assert(
               acrs.toSet == dbAcrs.flatten.toSet,
@@ -267,7 +268,8 @@ class AuthorizationSpec
               listOfActions <- ProjectDao.listUserActions(user, project.id)
             } yield listOfActions
 
-            val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
+            val listUserActions =
+              xa.use(t => listUserActionsIO.transact(t)).unsafeRunSync
 
             assert(listUserActions.length == 3,
                    "; List of permitted actions should be 3")
@@ -310,7 +312,8 @@ class AuthorizationSpec
               listOfActions <- ProjectDao.listUserActions(user, project.id)
             } yield listOfActions
 
-            val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
+            val listUserActions =
+              xa.use(t => listUserActionsIO.transact(t)).unsafeRunSync
             listUserActions.length == 0
           }
       }
@@ -345,7 +348,8 @@ class AuthorizationSpec
               listOfActions <- ProjectDao.listUserActions(user, project.id)
             } yield listOfActions
 
-            val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
+            val listUserActions =
+              xa.use(t => listUserActionsIO.transact(t)).unsafeRunSync
 
             assert(listUserActions.length == 3,
                    "; List of permitted actions should be 3")
@@ -388,7 +392,8 @@ class AuthorizationSpec
               listOfActions <- ProjectDao.listUserActions(user, project.id)
             } yield listOfActions
 
-            val listUserActions = listUserActionsIO.transact(xa).unsafeRunSync
+            val listUserActions =
+              xa.use(t => listUserActionsIO.transact(t)).unsafeRunSync
 
             assert(listUserActions.length == 3,
                    "; List of permitted actions should be 3")

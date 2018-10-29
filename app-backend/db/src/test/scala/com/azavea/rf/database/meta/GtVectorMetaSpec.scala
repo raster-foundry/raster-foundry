@@ -72,7 +72,7 @@ class GtVectorMetaSpec extends FunSpec with Matchers with DBTestConfig {
       js <- select(123)
     } yield js
 
-    val results = geomOut.transact(xa).unsafeRunSync
+    val results = xa.use(t => geomOut.transact(t)).unsafeRunSync
     results.point shouldBe point
     results.line shouldBe line
     results.poly shouldBe poly

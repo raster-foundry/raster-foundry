@@ -19,26 +19,31 @@ import scala.concurrent.ExecutionContext
 
 trait DBTestConfig {
 
-  val executorService = Executors.newFixedThreadPool(16)
-  val ec = ExecutionContext.fromExecutorService(
-    executorService,
+  val connectExecutorService = Executors.newFixedThreadPool(10)
+  val transactExecutorService = Executors.newFixedThreadPool(20)
+  val connectEc = ExecutionContext.fromExecutorService(
+    connectExecutorService,
     ExecutionContext.defaultReporter)
+  val transactEc = ExecutionContext.fromExecutorService(
+    transactExecutorService,
+    ExecutionContext.defaultReporter
+  )
 
   implicit val cs: ContextShift[IO] =
-    IO.contextShift(ec)
+    IO.contextShift(transactEc)
 
-  val xa: Transactor[IO] =
-    Transactor.after.set(
-      Transactor.fromDriverManager[IO](
-        "org.postgresql.Driver",
-        "jdbc:postgresql://database.service.rasterfoundry.internal/",
-        "rasterfoundry",
-        "rasterfoundry"
-      ),
-      HC.rollback
-    )
+  val xa =
+    HikariTransactor.newHikariTransactor[IO](
+      "org.postgresql.Driver",
+      "jdbc:postgresql://database.service.rasterfoundry.internal/",
+      "rasterfoundry",
+      "rasterfoundry",
+      connectEc,
+      transactEc
+    ) map { Transactor.after.set(_, HC.rollback) }
 
-  implicit val transactor = xa
+  implicit val transactor: Transactor[IO] =
+    xa.use(trx => IO { trx }).unsafeRunSync
 
   val defaultPlatformId =
     UUID.fromString("31277626-968b-4e40-840b-559d9c67863c")

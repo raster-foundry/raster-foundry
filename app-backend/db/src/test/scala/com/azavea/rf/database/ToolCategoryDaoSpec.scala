@@ -10,13 +10,13 @@ import doobie.postgres._, doobie.postgres.implicits._
 import doobie.scalatest.imports._
 import org.scalatest._
 
-class ToolCategoryDaoSpec
-    extends FunSuite
-    with Matchers
-    with IOChecker
-    with DBTestConfig {
+class ToolCategoryDaoSpec extends FunSuite with Matchers with DBTestConfig {
 
-  test("types") { check(ToolCategoryDao.selectF.query[ToolCategory]) }
+  test("types") {
+    xa.use(t => ToolCategoryDao.query.list.transact(t))
+      .unsafeRunSync
+      .length should be >= 0
+  }
 
   test("insertion") {
     val category = "A good, reasonably specific category"
@@ -32,7 +32,7 @@ class ToolCategoryDaoSpec
       )
     } yield (toolCategoryIn)
 
-    val result = transaction.transact(xa).unsafeRunSync
+    val result = xa.use(t => transaction.transact(t)).unsafeRunSync
 
     result.category shouldBe category
   }

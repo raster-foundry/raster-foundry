@@ -12,10 +12,10 @@ import doobie.postgres.circe.jsonb.implicits._
 import doobie.scalatest.imports._
 import org.scalatest._
 
-class ToolDaoSpec
-    extends FunSuite
-    with Matchers
-    with IOChecker
-    with DBTestConfig {
-  test("selection types") { check(ToolDao.selectF.query[Tool]) }
+class ToolDaoSpec extends FunSuite with Matchers with DBTestConfig {
+  test("selection types") {
+    xa.use(t => ToolDao.query.list.transact(t))
+      .unsafeRunSync
+      .length should be >= 0
+  }
 }
