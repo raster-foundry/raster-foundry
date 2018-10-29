@@ -10,6 +10,7 @@ import cats._
 import cats.data._
 import cats.effect._
 import cats.implicits._
+import com.olegpy.meow.hierarchy._
 import fs2._
 import org.http4s._
 import org.http4s.server.Router
@@ -22,6 +23,13 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object BacksplashServer extends IOApp {
+
+  implicit val backsplashErrorHandler
+    : HttpErrorHandler[IO, BacksplashException] =
+    new BacksplashHttpErrorHandler[IO]
+
+  implicit val foreignErrorHandler: HttpErrorHandler[IO, Throwable] =
+    new ForeignErrorHandler[IO, Throwable]
 
   def withCORS(svc: HttpRoutes[IO]): HttpRoutes[IO] =
     CORS(
@@ -46,7 +54,7 @@ object BacksplashServer extends IOApp {
     Router(
       "/" -> AutoSlash(withCORS(mosaicService)),
       "/healthcheck" -> AutoSlash(healthCheckService),
-      "/tools" -> AutoSlash(analysisService)
+      "/tools" -> AutoSlash(withCORS(analysisService))
     ).orNotFound
 
   def stream =

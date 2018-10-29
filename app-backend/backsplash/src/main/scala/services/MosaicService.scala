@@ -37,9 +37,12 @@ import java.util.Base64
 
 class MosaicService(
     interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit timer: Timer[IO], cs: ContextShift[IO])
+)(implicit timer: Timer[IO],
+  cs: ContextShift[IO],
+  H: HttpErrorHandler[IO, BacksplashException],
+  ForeignError: HttpErrorHandler[IO, Throwable])
     extends Http4sDsl[IO]
-    with ErrorHandling {
+    with RollbarNotifier {
 
   implicit val xa = RFTransactor.xa
 
@@ -53,100 +56,107 @@ class MosaicService(
       extends OptionalQueryParamDecoderMatcher[String]("tag")
 
   val service: AuthedService[User, IO] =
-    AuthedService {
-      case req @ GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
-            y) / _
-            :? RedBandOptionalQueryParamMatcher(redOverride)
-            :? GreenBandOptionalQueryParamMatcher(greenOverride)
-            :? BlueBandOptionalQueryParamMatcher(blueOverride)
-            :? TagOptionalQueryParamMatcher(tag) as user =>
-        val authorizationIO =
-          ProjectDao
-            .authorized(user, ObjectType.Project, projectId, ActionType.View)
-            .transact(xa) map { authResult =>
-            if (!authResult)
-              throw NotAuthorizedException(
-                s"User ${user.id} not authorized to view project $projectId")
-            else
-              authResult
-          }
+    H.handle {
+      ForeignError.handle {
+        AuthedService {
+          case req @ GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(
+                x) / IntVar(y) / _
+                :? RedBandOptionalQueryParamMatcher(redOverride)
+                :? GreenBandOptionalQueryParamMatcher(greenOverride)
+                :? BlueBandOptionalQueryParamMatcher(blueOverride)
+                :? TagOptionalQueryParamMatcher(tag) as user =>
+            val authorizationF =
+              ProjectDao
+                .authorized(user,
+                            ObjectType.Project,
+                            projectId,
+                            ActionType.View)
+                .transact(xa) map { authResult =>
+                if (!authResult)
+                  throw NotAuthorizedException(
+                    s"User ${user.id} not authorized to view project $projectId")
+                else
+                  authResult
+              }
 
-        def getTileResult(project: Project): IO[Interpreted[Tile]] = {
-          val projectNode =
-            (redOverride, greenOverride, blueOverride).tupled match {
-              case Some((red: Int, green: Int, blue: Int)) =>
-                ProjectNode(projectId,
-                            Some(red),
-                            Some(green),
-                            Some(blue),
-                            project.isSingleBand,
-                            project.singleBandOptions,
-                            false)
-              case _ =>
-                ProjectNode(projectId,
-                            None,
-                            None,
-                            None,
-                            project.isSingleBand,
-                            project.singleBandOptions,
-                            false)
+            def getTileResult(project: Project): IO[Interpreted[Tile]] = {
+              val projectNode =
+                (redOverride, greenOverride, blueOverride).tupled match {
+                  case Some((red: Int, green: Int, blue: Int)) =>
+                    ProjectNode(projectId,
+                                Some(red),
+                                Some(green),
+                                Some(blue),
+                                project.isSingleBand,
+                                project.singleBandOptions,
+                                false)
+                  case _ =>
+                    ProjectNode(projectId,
+                                None,
+                                None,
+                                None,
+                                project.isSingleBand,
+                                project.singleBandOptions,
+                                false)
+                }
+              val eval = LayerTms.identity[ProjectNode](projectNode)
+              eval(z, x, y)
             }
-          val eval = LayerTms.identity[ProjectNode](projectNode)
-          eval(z, x, y)
+
+            for {
+              authed <- authorizationF
+              project <- ProjectDao.unsafeGetProjectById(projectId).transact(xa)
+              result <- getTileResult(project)
+              resp <- result match {
+                case Valid(tile) =>
+                  Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
+                case Invalid(e) =>
+                  BadRequest(e.toString)
+              }
+            } yield resp
+
+          case GET -> Root / UUIDWrapper(projectId) / "histogram" / _
+                :? RedBandOptionalQueryParamMatcher(redOverride)
+                :? GreenBandOptionalQueryParamMatcher(greenOverride)
+                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
+            for {
+              histograms <- Histogram.getRGBProjectHistogram(projectId,
+                                                             None,
+                                                             None,
+                                                             None,
+                                                             None,
+                                                             List.empty[UUID])
+              resp <- Ok((histograms map { _.binCounts.toMap } asJson).noSpaces)
+            } yield resp
+
+          case authedReq @ POST -> Root / UUIDWrapper(projectId) / "histogram" / _
+                :? RedBandOptionalQueryParamMatcher(redOverride)
+                :? GreenBandOptionalQueryParamMatcher(greenOverride)
+                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user => {
+            // Compile to a byte array, decode that as a string, and do something with the results
+            authedReq.req.body.compile.to[Array] flatMap { uuids =>
+              decode[List[UUID]](
+                uuids map { _.toChar } mkString
+              ) match {
+                case Right(uuids) =>
+                  logger.info(s"How many uuids: ${uuids.length}")
+                  for {
+                    histograms <- Histogram.getRGBProjectHistogram(
+                      projectId,
+                      None,
+                      redOverride,
+                      greenOverride,
+                      blueOverride,
+                      uuids)
+                    resp <- Ok(
+                      (histograms map { _.binCounts.toMap } asJson).noSpaces)
+                  } yield resp
+                case _ =>
+                  BadRequest("Could not decode body as sequence of UUIDs")
+              }
+            }
+          }
         }
-
-        val respIO = for {
-          authed <- authorizationIO
-          project <- ProjectDao.unsafeGetProjectById(projectId).transact(xa)
-          result <- getTileResult(project)
-          resp <- result match {
-            case Valid(tile) =>
-              Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
-            case Invalid(e) =>
-              BadRequest(e.toString)
-          }
-        } yield resp
-        respIO.handleErrorWith(handleErrors _)
-
-      case GET -> Root / UUIDWrapper(projectId) / "histogram" / _
-            :? RedBandOptionalQueryParamMatcher(redOverride)
-            :? GreenBandOptionalQueryParamMatcher(greenOverride)
-            :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
-        val respIO = for {
-          histograms <- Histogram.getRGBProjectHistogram(projectId,
-                                                         None,
-                                                         None,
-                                                         None,
-                                                         None,
-                                                         List.empty[UUID])
-          resp <- Ok((histograms map { _.binCounts.toMap } asJson).noSpaces)
-        } yield resp
-        respIO handleErrorWith { handleErrors _ }
-
-      case authedReq @ POST -> Root / UUIDWrapper(projectId) / "histogram" / _
-            :? RedBandOptionalQueryParamMatcher(redOverride)
-            :? GreenBandOptionalQueryParamMatcher(greenOverride)
-            :? BlueBandOptionalQueryParamMatcher(blueOverride) as user => {
-        // Compile to a byte array, decode that as a string, and do something with the results
-        authedReq.req.body.compile.to[Array] flatMap { uuids =>
-          decode[List[UUID]](
-            uuids map { _.toChar } mkString
-          ) match {
-            case Right(uuids) =>
-              logger.info(s"How many uuids: ${uuids.length}")
-              for {
-                histograms <- Histogram.getRGBProjectHistogram(projectId,
-                                                               None,
-                                                               redOverride,
-                                                               greenOverride,
-                                                               blueOverride,
-                                                               uuids)
-                resp <- Ok(
-                  (histograms map { _.binCounts.toMap } asJson).noSpaces)
-              } yield resp
-            case _ => BadRequest("Could not decode body as sequence of UUIDs")
-          }
-        } handleErrorWith (handleErrors _)
       }
     }
 }
