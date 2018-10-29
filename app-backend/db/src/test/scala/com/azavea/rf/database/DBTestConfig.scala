@@ -7,18 +7,25 @@ import doobie.hikari._
 import doobie.hikari.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
+import doobie.util.ExecutionContexts
 import cats._
 import cats.data._
 import cats.effect._
 import cats.implicits._
 
 import java.util.UUID
+import java.util.concurrent._
 import scala.concurrent.ExecutionContext
 
 trait DBTestConfig {
 
+  val executorService = Executors.newFixedThreadPool(16)
+  val ec = ExecutionContext.fromExecutorService(
+    executorService,
+    ExecutionContext.defaultReporter)
+
   implicit val cs: ContextShift[IO] =
-    IO.contextShift(ExecutionContext.Implicits.global)
+    IO.contextShift(ec)
 
   val xa: Transactor[IO] =
     Transactor.after.set(
