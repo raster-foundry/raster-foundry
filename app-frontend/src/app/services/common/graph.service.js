@@ -82,7 +82,7 @@ class SinglebandHistogram extends D3Element {
 
     calculateAxis(svg, defs) {
         const xRange = [this.options.margin.left,
-                        this.el.clientWidth - this.options.margin.right];
+                        this.el.width.baseVal.value - this.options.margin.right];
         this.xScale = d3.scaleLinear()
             .domain([d3.min(this.data.histogram, d => d.x),
                      d3.max(this.data.histogram, d => d.x)])
