@@ -38,7 +38,7 @@ class DatasourceDaoSpec
             (orgInsert, userInsert) = orgAndUserInsert
             dsInsert <- fixupDatasource(dsCreate, userInsert)
           } yield dsInsert
-          val createDs = createDsIO.transact(xa).unsafeRunSync
+          val createDs = xa.use(t => createDsIO.transact(t)).unsafeRunSync
           createDs.name == dsCreate.name
         }
       )
@@ -57,7 +57,7 @@ class DatasourceDaoSpec
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             dsGet <- DatasourceDao.getDatasourceById(dsInsert.id)
           } yield dsGet
-          val getDs = getDsIO.transact(xa).unsafeRunSync
+          val getDs = xa.use(t => getDsIO.transact(t)).unsafeRunSync
           getDs.get.name === dsCreate.name
         }
       )
@@ -76,7 +76,7 @@ class DatasourceDaoSpec
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             dsGetUnsafe <- DatasourceDao.unsafeGetDatasourceById(dsInsert.id)
           } yield dsGetUnsafe
-          val getDsUnsafe = getDsUnsafeIO.transact(xa).unsafeRunSync
+          val getDsUnsafe = xa.use(t => getDsUnsafeIO.transact(t)).unsafeRunSync
           getDsUnsafe.name === dsCreate.name
         }
       )
@@ -99,7 +99,8 @@ class DatasourceDaoSpec
                                                          dsInsert.id,
                                                          userInsert)
           } yield (rowUpdated, dsUpdated)
-          val (rowUpdated, dsUpdated) = updateDsIO.transact(xa).unsafeRunSync
+          val (rowUpdated, dsUpdated) =
+            xa.use(t => updateDsIO.transact(t)).unsafeRunSync
           rowUpdated == 1 &&
           dsUpdated.name == dsUpdate.name &&
           dsUpdated.visibility == dsUpdate.visibility &&
@@ -124,7 +125,8 @@ class DatasourceDaoSpec
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             rowDeleted <- DatasourceDao.deleteDatasource(dsInsert.id)
           } yield rowDeleted
-          val deleteDsRowCount = deleteDsIO.transact(xa).unsafeRunSync
+          val deleteDsRowCount =
+            xa.use(t => deleteDsIO.transact(t)).unsafeRunSync
           deleteDsRowCount == 1
         }
       )
@@ -132,7 +134,7 @@ class DatasourceDaoSpec
   }
 
   test("listing datasources") {
-    DatasourceDao.query.list.transact(xa).unsafeRunSync.length >= 0
+    xa.use(t => DatasourceDao.query.list.transact(t)).unsafeRunSync.length >= 0
   }
 
   test("only owner of a datasource can delete a datasource") {
@@ -154,7 +156,7 @@ class DatasourceDaoSpec
           } yield { (isDeletableUser, isDeletableOwner) }
 
           val (isDeletableUser, isDeletableOwner) =
-            isDsDeletableIO.transact(xa).unsafeRunSync
+            xa.use(t => isDsDeletableIO.transact(t)).unsafeRunSync
 
           assert(
             !isDeletableUser,
@@ -184,7 +186,8 @@ class DatasourceDaoSpec
             isDeletable <- DatasourceDao.isDeletable(dsInsert.id, ownerInsert)
           } yield { isDeletable }
 
-          val isDeletable = isDsDeletableIO.transact(xa).unsafeRunSync
+          val isDeletable =
+            xa.use(t => isDsDeletableIO.transact(t)).unsafeRunSync
           assert(!isDeletable,
                  "isDeletable should return false if a datasource is shared")
           true
@@ -219,7 +222,7 @@ class DatasourceDaoSpec
           } yield { (isDeletable, upload.uploadStatus) }
 
           val (isDeletable, uploadStatus) =
-            isDsDeletableIO.transact(xa).unsafeRunSync
+            xa.use(t => isDsDeletableIO.transact(t)).unsafeRunSync
           val ok = List(
             UploadStatus.Created,
             UploadStatus.Uploading,

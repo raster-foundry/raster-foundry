@@ -45,7 +45,8 @@ class ProjectDaoSpec
                                          user)
               }
             }
-            val insertedProject = projInsertIO.transact(xa).unsafeRunSync
+            val insertedProject =
+              xa.use(t => projInsertIO.transact(t)).unsafeRunSync
             insertedProject.name == project.name &&
             insertedProject.description == project.description &&
             insertedProject.visibility == project.visibility &&
@@ -96,7 +97,7 @@ class ProjectDaoSpec
             }
 
             val (affectedRows, updatedProject) =
-              updateProjectWithUpdatedIO.transact(xa).unsafeRunSync
+              xa.use(t => updateProjectWithUpdatedIO.transact(t)).unsafeRunSync
 
             affectedRows == 1 &&
             updatedProject.owner == user.id &&
@@ -139,7 +140,7 @@ class ProjectDaoSpec
               }
             }
 
-            projDeleteIO.transact(xa).unsafeRunSync == None
+            xa.use(t => projDeleteIO.transact(t)).unsafeRunSync == None
           }
       }
     }
@@ -169,7 +170,11 @@ class ProjectDaoSpec
             } yield { listedProjects }
 
             val returnedThinUser =
-              projectsListIO.transact(xa).unsafeRunSync.results.head.owner
+              xa.use(t => projectsListIO.transact(t))
+                .unsafeRunSync
+                .results
+                .head
+                .owner
             assert(
               returnedThinUser.id == user.id,
               "Listed project's owner should be the same as the creating user")
@@ -209,7 +214,7 @@ class ProjectDaoSpec
                 CombinedSceneQueryParams())
             } yield scenesInProject.results
 
-            val addedScenes = addScenesIO.transact(xa).unsafeRunSync
+            val addedScenes = xa.use(t => addScenesIO.transact(t)).unsafeRunSync
 
             assert(
               (Set(addedScenes filter {
@@ -298,7 +303,7 @@ class ProjectDaoSpec
               }
             }
             val (foundScenes, createdScenes) =
-              listAddedSceneIDsIO.transact(xa).unsafeRunSync
+              xa.use(t => listAddedSceneIDsIO.transact(t)).unsafeRunSync
             foundScenes.toSet == createdScenes.toSet
           }
       }
@@ -334,7 +339,8 @@ class ProjectDaoSpec
               ) map { _.results }
             } yield listedScenes
 
-            val scenesInProject = listScenesIO.transact(xa).unsafeRunSync
+            val scenesInProject =
+              xa.use(t => listScenesIO.transact(t)).unsafeRunSync
 
             assert(
               scenesInProject == Nil,
@@ -369,7 +375,7 @@ class ProjectDaoSpec
             } yield { (permissions, acrInsert) }
 
             val (permissions, acrInsert) =
-              projectPermissionIO.transact(xa).unsafeRunSync
+              xa.use(t => projectPermissionIO.transact(t)).unsafeRunSync
 
             assert(
               permissions.flatten.headOption == Some(acrInsert),
@@ -407,7 +413,7 @@ class ProjectDaoSpec
             } yield { (permissionsInsert, permissionsBack) }
 
             val (permissionsInsert, permissionsBack) =
-              projectPermissionsIO.transact(xa).unsafeRunSync
+              xa.use(t => projectPermissionsIO.transact(t)).unsafeRunSync
 
             assert(
               permissionsInsert.diff(permissionsBack).length == 0,
@@ -447,7 +453,7 @@ class ProjectDaoSpec
             } yield { (permReplaced, permissionsBack) }
 
             val (permReplaced, permissionsBack) =
-              projectReplacePermissionsIO.transact(xa).unsafeRunSync
+              xa.use(t => projectReplacePermissionsIO.transact(t)).unsafeRunSync
 
             assert(
               permReplaced.diff(permissionsBack).length == 0,
@@ -485,7 +491,7 @@ class ProjectDaoSpec
             } yield { (permsDeleted, permissionsBack) }
 
             val (permsDeleted, permissionsBack) =
-              projectDeletePermissionsIO.transact(xa).unsafeRunSync
+              xa.use(t => projectDeletePermissionsIO.transact(t)).unsafeRunSync
 
             assert(
               permsDeleted == 1,
@@ -551,7 +557,7 @@ class ProjectDaoSpec
             } yield { (actions, permissionsBack) }
 
             val (userActions, permissionsBack) =
-              userActionsIO.transact(xa).unsafeRunSync
+              xa.use(t => userActionsIO.transact(t)).unsafeRunSync
 
             val acrActionsDistinct =
               permissionsBack.flatten.map(_.actionType.toString).distinct
@@ -632,7 +638,8 @@ class ProjectDaoSpec
             val (projectInsert1,
                  projectInsert2,
                  permissionsBack,
-                 paginatedProjects) = listProjectsIO.transact(xa).unsafeRunSync
+                 paginatedProjects) =
+              xa.use(t => listProjectsIO.transact(t)).unsafeRunSync
 
             val hasViewPermission =
               permissionsBack.flatten.exists(_.actionType == ActionType.View)
@@ -749,7 +756,7 @@ class ProjectDaoSpec
             } yield { (action, projectInsert2, isPermitted1, isPermitted2) }
 
             val (action, projectInsert2, isPermitted1, isPermitted2) =
-              isUserPermittedIO.transact(xa).unsafeRunSync
+              xa.use(t => isUserPermittedIO.transact(t)).unsafeRunSync
 
             if (projectInsert2.visibility == Visibility.Public) {
               (action) match {

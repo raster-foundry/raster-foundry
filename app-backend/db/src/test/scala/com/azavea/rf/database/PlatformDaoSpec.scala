@@ -30,9 +30,11 @@ class PlatformDaoSpec
     check {
       forAll { (pageRequest: PageRequest) =>
         {
-          PlatformDao
-            .listPlatforms(pageRequest)
-            .transact(xa)
+          xa.use(
+              t =>
+                PlatformDao
+                  .listPlatforms(pageRequest)
+                  .transact(t))
             .unsafeRunSync
             .results
             .length >= 0
@@ -54,7 +56,8 @@ class PlatformDaoSpec
               insertedPlatform <- PlatformDao.create(platform)
             } yield { insertedPlatform }
 
-            val dbPlatform = insertPlatformIO.transact(xa).unsafeRunSync
+            val dbPlatform =
+              xa.use(t => insertPlatformIO.transact(t)).unsafeRunSync
 
             dbPlatform.name == platform.name &&
             dbPlatform.publicSettings == platform.publicSettings &&
@@ -92,8 +95,9 @@ class PlatformDaoSpec
             }
 
             val (affectedRows, updatedPlatform) =
-              updatePlatformWithPlatformAndAffectedRowsIO
-                .transact(xa)
+              xa.use(t =>
+                  updatePlatformWithPlatformAndAffectedRowsIO
+                    .transact(t))
                 .unsafeRunSync
             affectedRows == 1 &&
             updatedPlatform.name == platformUpdate.name &&
@@ -120,7 +124,8 @@ class PlatformDaoSpec
             } yield { (deletePlatform, byIdPlatform) }
 
             val (rowsAffected, platformById) =
-              deletePlatformWithPlatformIO.transact(xa).unsafeRunSync
+              xa.use(t => deletePlatformWithPlatformIO.transact(t))
+                .unsafeRunSync
             rowsAffected == 1 && platformById == None
           }
       }
@@ -151,7 +156,8 @@ class PlatformDaoSpec
             } yield { (insertedPlatform, byIdUserGroupRole) }
 
             val (dbPlatform, dbUserGroupRole) =
-              addPlatformRoleWithPlatformIO.transact(xa).unsafeRunSync
+              xa.use(t => addPlatformRoleWithPlatformIO.transact(t))
+                .unsafeRunSync
             dbUserGroupRole match {
               case Some(ugr) =>
                 assert(ugr.isActive, "; Added role should be active")
@@ -198,7 +204,7 @@ class PlatformDaoSpec
             }
 
             val (dbPlatform, dbOldUGR, dbNewUGRs) =
-              setPlatformRoleIO.transact(xa).unsafeRunSync
+              xa.use(t => setPlatformRoleIO.transact(t)).unsafeRunSync
 
             assert(dbNewUGRs.filter((ugr) => ugr.isActive == true).size == 1,
                    "; Updated UGRs should have one set to active")
@@ -249,7 +255,7 @@ class PlatformDaoSpec
             }
 
             val (dbPlatform, dbOldUGR, dbNewUGRs) =
-              setPlatformRoleIO.transact(xa).unsafeRunSync
+              xa.use(t => setPlatformRoleIO.transact(t)).unsafeRunSync
 
             assert(dbNewUGRs.filter((ugr) => ugr.isActive == false).size == 1,
                    "; The updated UGR should be inactive")
@@ -311,7 +317,8 @@ class PlatformDaoSpec
                  dbPlatform,
                  dbProject,
                  dbProjectAnother,
-                 listOfPUSP) = listOfPwuIO.transact(xa).unsafeRunSync
+                 listOfPUSP) =
+              xa.use(t => listOfPwuIO.transact(t)).unsafeRunSync
 
             assert(listOfPUSP.length == 2, "; list of return length is not 2")
             assert(listOfPUSP(0).platId == dbPlatform.id &&
@@ -402,7 +409,7 @@ class PlatformDaoSpec
             } yield (dbUser, dbPlatform, dbProject, pUO)
 
             val (dbUser, dbPlatform, dbProject, pU) =
-              puIO.transact(xa).unsafeRunSync
+              xa.use(t => puIO.transact(t)).unsafeRunSync
 
             assert(pU.platId == dbPlatform.id, "; platform ID don't match")
             assert(pU.platName == dbPlatform.name,
@@ -494,7 +501,7 @@ class PlatformDaoSpec
             } yield (teamInsert1, teamInsert2, teamInsert3, searchedTeams)
 
             val (teamInsert1, teamInsert2, teamInsert3, searchedTeams) =
-              createAndGetTeamsIO.transact(xa).unsafeRunSync
+              xa.use(t => createAndGetTeamsIO.transact(t)).unsafeRunSync
 
             val teams = List(teamInsert1, teamInsert2, teamInsert3)
 

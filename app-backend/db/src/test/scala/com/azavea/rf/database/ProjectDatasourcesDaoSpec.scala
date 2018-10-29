@@ -70,7 +70,7 @@ class ProjectDatasourcesDaoSpec
               projectDatasources <- ProjectDatasourcesDao
                 .listProjectDatasources(dbProject.id)
             } yield (projectDatasources)
-            val (pd) = createDsIO.transact(xa).unsafeRunSync
+            val pd = xa.use(t => createDsIO.transact(t)).unsafeRunSync
             assert(pd.size == expected,
                    "; Datasources are not duplicated in request")
             true

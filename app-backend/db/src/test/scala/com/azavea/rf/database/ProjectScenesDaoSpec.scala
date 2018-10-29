@@ -64,7 +64,7 @@ class ProjectScenesDaoSpec
             }
 
             val (insertedScenes, listedScenes) =
-              scenesListIO.transact(xa).unsafeRunSync
+              xa.use(t => scenesListIO.transact(t)).unsafeRunSync
             val insertedIds = insertedScenes.toSet map {
               (scene: Scene.WithRelated) =>
                 scene.id
