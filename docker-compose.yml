@@ -92,6 +92,7 @@ services:
       - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
+      - $HOME/.ivy2:/root/.ivy2
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
     command:
@@ -144,6 +145,7 @@ services:
       - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
+      - $HOME/.ivy2:/root/.ivy2
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
     command:
@@ -172,6 +174,7 @@ services:
       - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
+      - $HOME/.ivy2:/root/.ivy2
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
     command:
