@@ -110,7 +110,7 @@ function runBlock(
     });
     $rootScope.autoInject = function (context, args) {
         context.constructor.$inject.forEach((injectable, idx) => {
-            switch(injectable) {
+            switch (injectable) {
             case '$element':
             case '$document':
                 context[injectable] = $(args[idx]);
