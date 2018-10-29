@@ -31,7 +31,7 @@
 - Cleaned up a project database test [\#4248](https://github.com/raster-foundry/raster-foundry/pull/4248)
 - Don't include name in intercom user init if it's the same as the email [\#4247](https://github.com/raster-foundry/raster-foundry/pull/4247)
 - Kick off ingests for scenes without scene types also [\#4260](https://github.com/raster-foundry/raster-foundry/pull/4260)
-- Separate connection and transaction execution contexts in database tests [\#4264](https://github.com/raster-foundry/raster-foundry/pull/4264)
+- Separated connection and transaction execution contexts in database tests [\#4264](https://github.com/raster-foundry/raster-foundry/pull/4264)
 
 ### Security
 
