@@ -26,7 +26,6 @@ class ColorSchemeDropdownController {
     }
 
     $onInit() {
-
         this.bins = [0, ...[ ...Array(1 + MAX_BINS - MIN_BINS).keys()].map(b => b + MIN_BINS)];
 
         this.filterToValidSchemes = (value) => {
