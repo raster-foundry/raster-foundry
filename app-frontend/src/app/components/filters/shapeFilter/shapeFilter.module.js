@@ -74,7 +74,7 @@ class ShapeFilterController {
         }
     }
 
-    getMap(){
+    getMap() {
         return this.mapService.getMap('edit');
     }
 
