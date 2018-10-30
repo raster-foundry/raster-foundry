@@ -63,17 +63,18 @@ final case class ImportLandsat8C1(
      * and I don't like it but no quotes/no spaces was the only way I could get it to
      * interpret the awk script correctly.
      */
-    s"wget -q -O - ${landsat8Config.usgsLandsatUrlC1}.gz" #|
-      "zcat" #|
-      s"""awk -F, {if($$33=="${startDate}"||/acquisitionDate/){print}}""" #>
-      new File("/tmp/landsat.csv") !
+    // s"wget -q -O - ${landsat8Config.usgsLandsatUrlC1}.gz" #|
+    //   "zcat" #|
+    //   s"""awk -F, {if($$33=="${startDate}"||/acquisitionDate/){print}}""" #>
+    //   new File("/tmp/landsat.csv") !
 
-    logger.info("CSV downloaded and filtered successfully")
+    // logger.info("CSV downloaded and filtered successfully")
 
-    val reader = CSVReader.open(new File("/tmp/landsat.csv"))
-    val rows = reader.allWithHeaders()
-    logger.info(s"Found ${rows.length} rows for ${startDate}")
-    rows
+    // val reader = CSVReader.open(new File("/tmp/landsat.csv"))
+    // val rows = reader.allWithHeaders()
+    // logger.info(s"Found ${rows.length} rows for ${startDate}")
+    // rows
+    List.empty
   }
 
   protected def getLandsatPath(productId: String): String = {
@@ -320,19 +321,19 @@ final case class ImportLandsat8C1(
     val user = UserDao.unsafeGetUserById(systemUser).transact(xa).unsafeRunSync
     val rows = rowsFromCsv.par
     rows.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(16))
-    val insertedScenes: ParSeq[Option[Scene.WithRelated]] = rows map {
-      (row: Map[String, String]) =>
-        {
-          csvRowToScene(row, user)
-            .handleErrorWith(
-              (error: Throwable) => {
-                sendError(error)
-                IO.pure(None)
-              }
-            )
-            .unsafeRunSync
-        }
-    }
+    // val insertedScenes: ParSeq[Option[Scene.WithRelated]] = rows map {
+    //   (row: Map[String, String]) =>
+    //     {
+    //       csvRowToScene(row, user)
+    //         .handleErrorWith(
+    //           (error: Throwable) => {
+    //             sendError(error)
+    //             IO.pure(None)
+    //           }
+    //         )
+    //         .unsafeRunSync
+    //     }
+    // }
     stop
   }
 }
