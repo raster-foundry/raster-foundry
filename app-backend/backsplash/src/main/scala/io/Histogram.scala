@@ -70,7 +70,8 @@ object Histogram {
           val subsetTile =
             globalMbTile.subsetBands(rgbBands._1, rgbBands._2, rgbBands._3)
           md.colorCorrections.colorCorrect(subsetTile,
-                                           subsetTile.histogramDouble)
+                                           subsetTile.histogramDouble,
+                                           None)
       }
     } yield {
       correctedTiles.foldLeft(Vector.fill(3)(IntHistogram(): Histogram[Int]))(

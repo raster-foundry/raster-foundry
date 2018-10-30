@@ -462,6 +462,7 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
       case cr @ CogRaster(_, Some(band), celltype, location) =>
         CogUtils
           .fromUri(location)
+          .map(_.tiff)
           .flatMap { tiff =>
             CogUtils.cropForZoomExtent(tiff, zoom, Some(extent)).map {
               tile: MultibandTile =>

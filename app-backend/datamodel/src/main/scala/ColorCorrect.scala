@@ -60,9 +60,10 @@ object ColorCorrect extends LazyLogging {
     }
 
     def colorCorrect(tile: MultibandTile,
-                     hist: Seq[Histogram[Double]]): MultibandTile = {
+                     hist: Seq[Histogram[Double]],
+                     nodataValue: Option[Double]): MultibandTile = {
       val (rgbTile, rgbHist) = reorderBands(tile, hist)
-      ColorCorrect(rgbTile, rgbHist, this)
+      ColorCorrect(rgbTile, rgbHist, this, nodataValue)
     }
   }
 
@@ -124,7 +125,8 @@ object ColorCorrect extends LazyLogging {
       gammas: Map[Int, Option[Double]]
   )(sigmoidalContrast: SigmoidalContrast)(
       colorCorrectArgs: Map[Int, MaybeClipBounds],
-      tileClipping: MultiBandClipping
+      tileClipping: MultiBandClipping,
+      nodataValue: Option[Double]
   ): MultibandTile = {
     val (red, green, blue) = (rgbTile.band(0), rgbTile.band(1), rgbTile.band(2))
     val (gr, gg, gb) = (gammas(0), gammas(1), gammas(2))
@@ -138,9 +140,13 @@ object ColorCorrect extends LazyLogging {
     val ClipBounds(gmin, gmax) = layerNormalizeArgs(1)
     val ClipBounds(bmin, bmax) = layerNormalizeArgs(2)
 
-    val (rclipMin, rclipMax, rnewMin, rnewMax) = (rmin, rmax, 0, 255)
-    val (gclipMin, gclipMax, gnewMin, gnewMax) = (gmin, gmax, 0, 255)
-    val (bclipMin, bclipMax, bnewMin, bnewMax) = (bmin, bmax, 0, 255)
+    val tileMin = nodataValue match {
+      case Some(0) => 1
+      case _       => 0
+    }
+    val (rclipMin, rclipMax, rnewMin, rnewMax) = (rmin, rmax, tileMin, 255)
+    val (gclipMin, gclipMax, gnewMin, gnewMax) = (gmin, gmax, tileMin, 255)
+    val (bclipMin, bclipMax, bnewMin, bnewMax) = (bmin, bmax, tileMin, 255)
 
     val sigmoidal: Double => Double =
       (
@@ -240,7 +246,8 @@ object ColorCorrect extends LazyLogging {
 
   def apply(rgbTile: MultibandTile,
             rgbHist: Array[Histogram[Double]],
-            params: Params): MultibandTile = {
+            params: Params,
+            nodataValue: Option[Double]): MultibandTile = {
     var _rgbTile = rgbTile
     var _rgbHist = rgbHist
     val gammas = params.getGamma
@@ -300,7 +307,9 @@ object ColorCorrect extends LazyLogging {
     complexColorCorrect(_rgbTile, params.saturation)(
       layerNormalizeArgs,
       gammas
-    )(params.sigmoidalContrast)(colorCorrectArgs, params.tileClipping)
+    )(params.sigmoidalContrast)(colorCorrectArgs,
+                                params.tileClipping,
+                                nodataValue)
   }
 
   @inline def clampColor(z: Int): Int = {

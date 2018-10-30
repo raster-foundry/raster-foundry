@@ -2,7 +2,12 @@ package com.rasterfoundry.batch.cogMetadata
 
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.utils.CogUtils
-import com.rasterfoundry.datamodel.{LayerAttribute, Scene, SceneType}
+import com.rasterfoundry.datamodel.{
+  LayerAttribute,
+  Scene,
+  SceneType,
+  TiffWithMetadata
+}
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.{LayerAttributeDao, SceneDao}
@@ -90,7 +95,8 @@ object HistogramBackfill extends RollbarNotifier with HistogramJsonFormats {
     IO.fromFuture {
       IO(
         (CogUtils.fromUri(ingestLocation) map {
-          CogUtils.geoTiffDoubleHistogram(_).toList
+          case TiffWithMetadata(tiff, _) =>
+            CogUtils.geoTiffDoubleHistogram(tiff).toList
         }).value
       )
     } recoverWith ({

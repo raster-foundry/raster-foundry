@@ -193,7 +193,8 @@ object MosaicRoutes extends LazyLogging with KamonTrace {
       } yield {
         val (rgbBands, rgbHist) =
           params.reorderBands(tile, tile.histogramDouble)
-        val sceneBands = ColorCorrect(rgbBands, rgbHist, params).bands
+        // Ok to use None here because this is non-COGs only right now
+        val sceneBands = ColorCorrect(rgbBands, rgbHist, params, None).bands
         sceneBands.map(tile => tile.histogram)
       }
     }
