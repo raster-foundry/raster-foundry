@@ -260,7 +260,7 @@ object Export extends SparkJob with Config with RollbarNotifier {
         dropboxConfig.client(ed.output.dropboxCredential.getOrElse(""))
 
       try {
-        client.files.createFolder(ed.output.source.getPath)
+        client.files.createFolderV2(ed.output.source.getPath, false)
       } catch {
         case e: CreateFolderErrorException =>
           logger.warn(s"Target Path already exists, ${e.errorValue}")

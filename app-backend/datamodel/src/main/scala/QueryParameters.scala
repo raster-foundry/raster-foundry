@@ -3,32 +3,35 @@ package com.rasterfoundry.datamodel
 import java.sql.Timestamp
 import java.util.UUID
 
-import io.circe.generic.JsonCodec
+import io.circe._
+import io.circe.generic.semiauto._
 import geotrellis.proj4._
 import geotrellis.vector.{Extent, Point, Polygon, Projected}
 
 /** Case class representing all /thumbnail query parameters */
-@JsonCodec
 final case class ThumbnailQueryParameters(sceneId: Option[UUID] = None)
 
-/** Case class for combined params for images */
-@JsonCodec
-final case class CombinedImageQueryParams(
-    orgParams: OrgQueryParameters = OrgQueryParameters(),
-    timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-    imageParams: ImageQueryParameters = ImageQueryParameters()
-)
+object ThumbnailQueryParameters {
+  implicit def encThumbnailQueryParameters =
+    deriveEncoder[ThumbnailQueryParameters]
+  implicit def decThumbnailQueryParameters =
+    deriveDecoder[ThumbnailQueryParameters]
+}
 
+/** Case class for combined params for images */
 /** Query parameters specific to image files */
-@JsonCodec
 final case class ImageQueryParameters(minRawDataBytes: Option[Long] = None,
                                       maxRawDataBytes: Option[Long] = None,
                                       minResolution: Option[Float] = None,
                                       maxResolution: Option[Float] = None,
                                       scene: Iterable[UUID] = Seq.empty[UUID])
 
+object ImageQueryParameters {
+  implicit def encImageQueryParameters = deriveEncoder[ImageQueryParameters]
+  implicit def decImageQueryParameters = deriveDecoder[ImageQueryParameters]
+}
+
 /** Case class representing all possible query parameters */
-@JsonCodec
 @SuppressWarnings(Array("CatchException"))
 final case class SceneQueryParameters(
     maxCloudCover: Option[Float] = None,
@@ -68,32 +71,23 @@ final case class SceneQueryParameters(
   }
 }
 
-/** Case class for Grid query parameters */
-@JsonCodec
-final case class GridQueryParameters(
-    maxCloudCover: Option[Float] = None,
-    minCloudCover: Option[Float] = None,
-    minAcquisitionDatetime: Option[Timestamp] = None,
-    maxAcquisitionDatetime: Option[Timestamp] = None,
-    datasource: Iterable[UUID] = Seq.empty[UUID],
-    month: Iterable[Int] = Seq.empty[Int],
-    minDayOfMonth: Option[Int] = None,
-    maxDayOfMonth: Option[Int] = None,
-    maxSunAzimuth: Option[Float] = None,
-    minSunAzimuth: Option[Float] = None,
-    maxSunElevation: Option[Float] = None,
-    minSunElevation: Option[Float] = None,
-    ingested: Option[Boolean] = None,
-    ingestStatus: Iterable[String] = Seq.empty[String]
-)
+object SceneQueryParameters {
+  implicit def encSceneQueryParameters = deriveEncoder[SceneQueryParameters]
+  implicit def decSceneQueryParameters = deriveDecoder[SceneQueryParameters]
+}
 
-@JsonCodec
 final case class SceneSearchModeQueryParams(
     exactCount: Option[Boolean] = None
 )
 
+object SceneSearchModeQueryParams {
+  implicit def encSceneSearchModeQueryParams =
+    deriveEncoder[SceneSearchModeQueryParams]
+  implicit def decSceneSearchModeQueryParams =
+    deriveDecoder[SceneSearchModeQueryParams]
+}
+
 /** Combined all query parameters */
-@JsonCodec
 final case class CombinedSceneQueryParams(
     orgParams: OrgQueryParameters = OrgQueryParameters(),
     userParams: UserQueryParameters = UserQueryParameters(),
@@ -106,18 +100,14 @@ final case class CombinedSceneQueryParams(
       SceneSearchModeQueryParams()
 )
 
-/** Combined all query parameters for grids */
-@JsonCodec
-final case class CombinedGridQueryParams(
-    orgParams: OrgQueryParameters = OrgQueryParameters(),
-    userParams: UserQueryParameters = UserQueryParameters(),
-    timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
-    gridParams: GridQueryParameters = GridQueryParameters(),
-    imageParams: ImageQueryParameters = ImageQueryParameters()
-)
+object CombinedSceneQueryParams {
+  implicit def encCombinedSceneQueryParams =
+    deriveEncoder[CombinedSceneQueryParams]
+  implicit def decCombinedSceneQueryParams =
+    deriveDecoder[CombinedSceneQueryParams]
+}
 
 /** Case class for project query parameters */
-@JsonCodec
 final case class ProjectQueryParameters(
     orgParams: OrgQueryParameters = OrgQueryParameters(),
     userParams: UserQueryParameters = UserQueryParameters(),
@@ -129,15 +119,23 @@ final case class ProjectQueryParameters(
     tagQueryParameters: TagQueryParameters = TagQueryParameters()
 )
 
-@JsonCodec
+object ProjectQueryParameters {
+  implicit def encProjectQueryParameters = deriveEncoder[ProjectQueryParameters]
+  implicit def decProjectQueryParameters = deriveDecoder[ProjectQueryParameters]
+}
+
 final case class AoiQueryParameters(
     orgParams: OrgQueryParameters = OrgQueryParameters(),
     userParams: UserQueryParameters = UserQueryParameters(),
     timestampParams: TimestampQueryParameters = TimestampQueryParameters()
 )
 
+object AoiQueryParameters {
+  implicit def encAoiQueryParameters = deriveEncoder[AoiQueryParameters]
+  implicit def decAoiQueryParameters = deriveDecoder[AoiQueryParameters]
+}
+
 /** Combined tool query parameters */
-@JsonCodec
 final case class CombinedToolQueryParameters(
     orgParams: OrgQueryParameters = OrgQueryParameters(),
     userParams: UserQueryParameters = UserQueryParameters(),
@@ -148,31 +146,64 @@ final case class CombinedToolQueryParameters(
     groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
-@JsonCodec
+object CombinedToolQueryParameters {
+  implicit def encCombinedToolQueryParameters =
+    deriveEncoder[CombinedToolQueryParameters]
+  implicit def decCombinedToolQueryParameters =
+    deriveDecoder[CombinedToolQueryParameters]
+}
+
 final case class FootprintQueryParameters(x: Option[Double] = None,
                                           y: Option[Double] = None,
                                           bbox: Option[String] = None)
 
-@JsonCodec
+object FootprintQueryParameters {
+  implicit def encFootprintQueryParameters =
+    deriveEncoder[FootprintQueryParameters]
+  implicit def decFootprintQueryParameters =
+    deriveDecoder[FootprintQueryParameters]
+}
+
 final case class CombinedFootprintQueryParams(
     orgParams: OrgQueryParameters = OrgQueryParameters(),
     timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
     footprintParams: FootprintQueryParameters = FootprintQueryParameters()
 )
 
+object CombinedFootprintQueryParams {
+  implicit def encCombinedFootprintQueryParams =
+    deriveEncoder[CombinedFootprintQueryParams]
+  implicit def decCombinedFootprintQueryParams =
+    deriveDecoder[CombinedFootprintQueryParams]
+}
+
 /** Common query parameters for models that have organization attributes */
-@JsonCodec
 final case class OrgQueryParameters(
     organizations: Iterable[UUID] = Seq.empty[UUID])
 
+object OrgQueryParameters {
+  implicit def encOrgQueryParameters = deriveEncoder[OrgQueryParameters]
+  implicit def decOrgQueryParameters = deriveDecoder[OrgQueryParameters]
+}
+
 /** Query parameters to filter by only users */
-@JsonCodec
 final case class UserAuditQueryParameters(createdBy: Option[String] = None,
                                           modifiedBy: Option[String] = None)
 
+object UserAuditQueryParameters {
+  implicit def encUserAuditQueryParameters =
+    deriveEncoder[UserAuditQueryParameters]
+  implicit def decUserAuditQueryParameters =
+    deriveDecoder[UserAuditQueryParameters]
+}
+
 /** Query parameters to filter by owners */
-@JsonCodec
 final case class OwnerQueryParameters(owner: Option[String] = None)
+
+object OwnerQueryParameters {
+  implicit def encOwnerQueryParameters = deriveEncoder[OwnerQueryParameters]
+  implicit def decOwnerQueryParameters = deriveDecoder[OwnerQueryParameters]
+}
 
 /** Query parameters to filter by ownership type:
   *- owned by the requesting user only: owned
@@ -180,26 +211,39 @@ final case class OwnerQueryParameters(owner: Option[String] = None)
   *- shared to the requesting user directly, across platform, or due to group membership: shared
   *- both the above: none, this is default
   */
-@JsonCodec
 final case class OwnershipTypeQueryParameters(
     ownershipType: Option[String] = None
 )
 
+object OwnershipTypeQueryParameters {
+  implicit def encOwnershipTypeQueryParameters =
+    deriveEncoder[OwnershipTypeQueryParameters]
+  implicit def decOwnershipTypeQueryParameters =
+    deriveDecoder[OwnershipTypeQueryParameters]
+}
+
 /** Query parameters to filter by group membership*/
-@JsonCodec
 final case class GroupQueryParameters(groupType: Option[GroupType] = None,
                                       groupId: Option[UUID] = None)
 
+object GroupQueryParameters {
+  implicit def encGroupQueryParameters = deriveEncoder[GroupQueryParameters]
+  implicit def decGroupQueryParameters = deriveDecoder[GroupQueryParameters]
+}
+
 /** Query parameters to filter by users */
-@JsonCodec
 final case class UserQueryParameters(
     onlyUserParams: UserAuditQueryParameters = UserAuditQueryParameters(),
     ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
     activationParams: ActivationQueryParameters = ActivationQueryParameters()
 )
 
+object UserQueryParameters {
+  implicit def encUserQueryParameters = deriveEncoder[UserQueryParameters]
+  implicit def decUserQueryParameters = deriveDecoder[UserQueryParameters]
+}
+
 /** Query parameters to filter by modified/created times */
-@JsonCodec
 final case class TimestampQueryParameters(
     minCreateDatetime: Option[Timestamp] = None,
     maxCreateDatetime: Option[Timestamp] = None,
@@ -207,15 +251,31 @@ final case class TimestampQueryParameters(
     maxModifiedDatetime: Option[Timestamp] = None
 )
 
-@JsonCodec
+object TimestampQueryParameters {
+  implicit def encTimestampQueryParameters =
+    deriveEncoder[TimestampQueryParameters]
+  implicit def decTimestampQueryParameters =
+    deriveDecoder[TimestampQueryParameters]
+}
+
 final case class ToolCategoryQueryParameters(search: Option[String] = None)
 
-@JsonCodec
+object ToolCategoryQueryParameters {
+  implicit def encToolCategoryQueryParameters =
+    deriveEncoder[ToolCategoryQueryParameters]
+  implicit def decToolCategoryQueryParameters =
+    deriveDecoder[ToolCategoryQueryParameters]
+}
+
 final case class ToolRunQueryParameters(createdBy: Option[String] = None,
                                         projectId: Option[UUID] = None,
                                         toolId: Option[UUID] = None)
 
-@JsonCodec
+object ToolRunQueryParameters {
+  implicit def encToolRunQueryParameters = deriveEncoder[ToolRunQueryParameters]
+  implicit def decToolRunQueryParameters = deriveDecoder[ToolRunQueryParameters]
+}
+
 final case class CombinedToolRunQueryParameters(
     toolRunParams: ToolRunQueryParameters = ToolRunQueryParameters(),
     timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
@@ -226,14 +286,26 @@ final case class CombinedToolRunQueryParameters(
     searchParams: SearchQueryParameters = SearchQueryParameters()
 )
 
-@JsonCodec
+object CombinedToolRunQueryParameters {
+  implicit def encCombinedToolRunQueryParameters =
+    deriveEncoder[CombinedToolRunQueryParameters]
+  implicit def decCombinedToolRunQueryParameters =
+    deriveDecoder[CombinedToolRunQueryParameters]
+}
+
 final case class CombinedToolCategoryQueryParams(
     timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
     toolCategoryParams: ToolCategoryQueryParameters =
       ToolCategoryQueryParameters()
 )
 
-@JsonCodec
+object CombinedToolCategoryQueryParams {
+  implicit def encCombinedToolCategoryQueryParams =
+    deriveEncoder[CombinedToolCategoryQueryParams]
+  implicit def decCombinedToolCategoryQueryParams =
+    deriveDecoder[CombinedToolCategoryQueryParams]
+}
+
 final case class DatasourceQueryParameters(
     userParams: UserQueryParameters = UserQueryParameters(),
     searchParams: SearchQueryParameters = SearchQueryParameters(),
@@ -242,33 +314,65 @@ final case class DatasourceQueryParameters(
     groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
 )
 
-@JsonCodec
+object DatasourceQueryParameters {
+  implicit def encDatasourceQueryParameters =
+    deriveEncoder[DatasourceQueryParameters]
+  implicit def decDatasourceQueryParameters =
+    deriveDecoder[DatasourceQueryParameters]
+}
+
 final case class MapTokenQueryParameters(name: Option[String] = None,
                                          projectId: Option[UUID] = None)
 
-@JsonCodec
+object MapTokenQueryParameters {
+  implicit def encMapTokenQueryParameters =
+    deriveEncoder[MapTokenQueryParameters]
+  implicit def decMapTokenQueryParameters =
+    deriveDecoder[MapTokenQueryParameters]
+}
+
 final case class CombinedMapTokenQueryParameters(
     orgParams: OrgQueryParameters = OrgQueryParameters(),
     userParams: UserQueryParameters = UserQueryParameters(),
     mapTokenParams: MapTokenQueryParameters = MapTokenQueryParameters()
 )
 
-@JsonCodec
+object CombinedMapTokenQueryParameters {
+  implicit def encCombinedMapTokenQueryParameters =
+    deriveEncoder[CombinedMapTokenQueryParameters]
+  implicit def decCombinedMapTokenQueryParameters =
+    deriveDecoder[CombinedMapTokenQueryParameters]
+}
+
 final case class UploadQueryParameters(datasource: Option[UUID] = None,
                                        uploadStatus: Option[String] = None,
                                        projectId: Option[UUID] = None)
 
-@JsonCodec
+object UploadQueryParameters {
+  implicit def encUploadQueryParameters = deriveEncoder[UploadQueryParameters]
+  implicit def decUploadQueryParameters = deriveDecoder[UploadQueryParameters]
+}
+
 final case class ExportQueryParameters(organization: Option[UUID] = None,
                                        project: Option[UUID] = None,
                                        analysis: Option[UUID] = None,
                                        exportStatus: Iterable[String] =
                                          Seq.empty[String])
 
-@JsonCodec
+object ExportQueryParameters {
+  implicit def encExportQueryParameters = deriveEncoder[ExportQueryParameters]
+  implicit def decExportQueryParameters = deriveDecoder[ExportQueryParameters]
+}
+
 final case class DropboxAuthQueryParameters(code: Option[String] = None)
 
-@JsonCodec
+object DropboxAuthQueryParameters {
+  implicit def encDropboxAuthQueryParameters =
+    deriveEncoder[DropboxAuthQueryParameters]
+  implicit def decDropboxAuthQueryParameters =
+    deriveDecoder[DropboxAuthQueryParameters]
+}
+
 final case class AnnotationQueryParameters(
     orgParams: OrgQueryParameters = OrgQueryParameters(),
     userParams: UserQueryParameters = UserQueryParameters(),
@@ -284,7 +388,12 @@ final case class AnnotationQueryParameters(
     BboxUtil.toBboxPolygon(bbox)
 }
 
-@JsonCodec
+object AnnotationQueryParameters {
+  implicit def encAnnotationQueryParameters =
+    deriveEncoder[AnnotationQueryParameters]
+  implicit def decAnnotationQueryParameters =
+    deriveDecoder[AnnotationQueryParameters]
+}
 final case class ShapeQueryParameters(
     orgParams: OrgQueryParameters = OrgQueryParameters(),
     userParams: UserQueryParameters = UserQueryParameters(),
@@ -295,16 +404,34 @@ final case class ShapeQueryParameters(
     searchParams: SearchQueryParameters = SearchQueryParameters()
 )
 
-@JsonCodec
+object ShapeQueryParameters {
+  implicit def encShapeQueryParameters = deriveEncoder[ShapeQueryParameters]
+  implicit def decShapeQueryParameters = deriveDecoder[ShapeQueryParameters]
+}
+
 final case class FeedQueryParameters(source: Option[String] = None)
 
-@JsonCodec
+object FeedQueryParameters {
+  implicit def encFeedQueryParameters = deriveEncoder[FeedQueryParameters]
+  implicit def decFeedQueryParameters = deriveDecoder[FeedQueryParameters]
+}
+
 final case class SearchQueryParameters(search: Option[String] = None)
 
-@JsonCodec
+object SearchQueryParameters {
+  implicit def encSearchQueryParameters = deriveEncoder[SearchQueryParameters]
+  implicit def decSearchQueryParameters = deriveDecoder[SearchQueryParameters]
+}
+
 final case class ActivationQueryParameters(isActive: Option[Boolean] = None)
 
-@JsonCodec
+object ActivationQueryParameters {
+  implicit def encActivationQueryParameters =
+    deriveEncoder[ActivationQueryParameters]
+  implicit def decActivationQueryParameters =
+    deriveDecoder[ActivationQueryParameters]
+}
+
 final case class TeamQueryParameters(
     timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
     orgParams: OrgQueryParameters = OrgQueryParameters(),
@@ -313,7 +440,11 @@ final case class TeamQueryParameters(
     activationParams: ActivationQueryParameters = ActivationQueryParameters()
 )
 
-@JsonCodec
+object TeamQueryParameters {
+  implicit def encTeamQueryParameters = deriveEncoder[TeamQueryParameters]
+  implicit def decTeamQueryParameters = deriveDecoder[TeamQueryParameters]
+}
+
 final case class PlatformQueryParameters(
     timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
     onlyUserParams: UserAuditQueryParameters = UserAuditQueryParameters(),
@@ -321,10 +452,22 @@ final case class PlatformQueryParameters(
     activationParams: ActivationQueryParameters = ActivationQueryParameters()
 )
 
-@JsonCodec
+object PlatformQueryParameters {
+  implicit def encPlatformQueryParameters =
+    deriveEncoder[PlatformQueryParameters]
+  implicit def decPlatformQueryParameters =
+    deriveDecoder[PlatformQueryParameters]
+}
+
 final case class PlatformIdQueryParameters(platformId: Option[UUID] = None)
 
-@JsonCodec
+object PlatformIdQueryParameters {
+  implicit def encPlatformIdQueryParameters =
+    deriveEncoder[PlatformIdQueryParameters]
+  implicit def decPlatformIdQueryParameters =
+    deriveDecoder[PlatformIdQueryParameters]
+}
+
 final case class OrganizationQueryParameters(
     timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
     searchParams: SearchQueryParameters = SearchQueryParameters(),
@@ -332,7 +475,13 @@ final case class OrganizationQueryParameters(
     platformIdParams: PlatformIdQueryParameters = PlatformIdQueryParameters()
 )
 
-@JsonCodec
+object OrganizationQueryParameters {
+  implicit def encOrganizationQueryParameters =
+    deriveEncoder[OrganizationQueryParameters]
+  implicit def decOrganizationQueryParameters =
+    deriveDecoder[OrganizationQueryParameters]
+}
+
 final case class SceneThumbnailQueryParameters(width: Option[Int],
                                                height: Option[Int],
                                                token: String,
@@ -341,11 +490,22 @@ final case class SceneThumbnailQueryParameters(width: Option[Int],
                                                blue: Option[Int],
                                                floor: Option[Int])
 
-@JsonCodec
+object SceneThumbnailQueryParameters {
+  implicit def encSceneThumbnailQueryParameters =
+    deriveEncoder[SceneThumbnailQueryParameters]
+  implicit def decSceneThumbnailQueryParameters =
+    deriveDecoder[SceneThumbnailQueryParameters]
+}
+
 final case class TagQueryParameters(
     tagsInclude: Iterable[String] = Seq.empty[String],
     tagsExclude: Iterable[String] = Seq.empty[String]
 )
+
+object TagQueryParameters {
+  implicit def encTagQueryParameters = deriveEncoder[TagQueryParameters]
+  implicit def decTagQueryParameters = deriveDecoder[TagQueryParameters]
+}
 
 object BboxUtil {
   @SuppressWarnings(Array("CatchException"))
