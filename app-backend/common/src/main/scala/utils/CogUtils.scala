@@ -3,6 +3,7 @@ package com.rasterfoundry.common.utils
 import com.rasterfoundry.common.cache._
 import com.rasterfoundry.common.cache.kryo._
 import com.rasterfoundry.common.{Config => CommonConfig}
+import com.rasterfoundry.datamodel.TiffWithMetadata
 
 import com.amazonaws.services.s3.AmazonS3URI
 import geotrellis.vector._
@@ -12,7 +13,6 @@ import geotrellis.raster.resample._
 import geotrellis.raster.histogram._
 import geotrellis.raster.reproject._
 import geotrellis.raster.io.geotiff._
-import geotrellis.raster.io.geotiff.tags.TiffTags
 import geotrellis.raster.io.geotiff.reader.{GeoTiffReader, TiffTagsReader}
 import geotrellis.util._
 import geotrellis.proj4._
@@ -43,8 +43,8 @@ object CogUtils {
   }.toArray
 
   /** Read GeoTiff from URI while caching the header bytes in memcache */
-  def fromUri(uri: String)(implicit ec: ExecutionContext)
-    : OptionT[Future, (GeoTiff[MultibandTile], TiffTags)] = {
+  def fromUri(uri: String)(
+      implicit ec: ExecutionContext): OptionT[Future, TiffWithMetadata] = {
     val cacheKey = s"cog-header-${URIUtils.withNoParams(uri)}"
     val cacheSize = 1 << 18
 
@@ -59,8 +59,8 @@ object CogUtils {
       .mapFilter { headerBytes =>
         RangeReaderUtils.fromUri(uri).map { rr =>
           val crr = CacheRangeReader(rr, headerBytes)
-          (GeoTiffReader.readMultiband(crr, streaming = true),
-           TiffTagsReader.read(crr))
+          TiffWithMetadata(GeoTiffReader.readMultiband(crr, streaming = true),
+                           TiffTagsReader.read(crr))
         }
       }
   }
@@ -131,7 +131,7 @@ object CogUtils {
       s"cog-tile-${zoom}-${x}-${y}-${URIUtils.withNoParams(uri)}")(
       CogUtils
         .fromUri(uri)
-        .map(_._1)
+        .map(_.tiff)
         .mapFilter { tiff =>
           val transform = Proj4Transform(tiff.crs, WebMercator)
           val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
@@ -177,7 +177,7 @@ object CogUtils {
     val floor = floorO.getOrElse(25)
     rfCache.cachingOptionT(s"cog-thumbnail-${width}-${height}-${URIUtils
       .withNoParams(uri)}-${red}-${green}-${blue}-${floor}")(
-      CogUtils.fromUri(uri).map(_._1) mapFilter {
+      CogUtils.fromUri(uri).map(_.tiff) mapFilter {
         tiff =>
           val cellSize = CellSize(tiff.extent, width, height)
           val overview =

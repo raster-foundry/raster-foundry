@@ -8,6 +8,7 @@ import com.rasterfoundry.datamodel.{
   ColorCorrect,
   MosaicDefinition,
   SceneType,
+  TiffWithMetadata,
   WhiteBalance
 }
 import com.rasterfoundry.common.cache.CacheClient
@@ -461,7 +462,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
 
     rfCache.cachingOptionT(cacheKey)(
       CogUtils.fromUri(ingestLocation).flatMap {
-        case (tiff, metadata) =>
+        case TiffWithMetadata(tiff, metadata) =>
           CogUtils.cropForZoomExtent(tiff, zoom, extent).flatMap {
             cropped: MultibandTile =>
               if (colorCorrect) {
