@@ -4,7 +4,7 @@ import java.io.File
 import java.time.{LocalDate, ZoneOffset}
 import java.util.UUID
 
-import cats.effect.IO
+import cats.effect.{IO, Resource}
 import cats.implicits._
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util.{S3, isUriExists}
@@ -28,10 +28,14 @@ import scala.collection.parallel.immutable.ParSeq
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.sys.process._
 
-final case class ImportLandsat8C1(
-    startDate: LocalDate = LocalDate.now(ZoneOffset.UTC),
-    threshold: Int = 10)(implicit val xa: Transactor[IO])
+final case class ImportLandsat8C1(startDate: LocalDate =
+                                    LocalDate.now(ZoneOffset.UTC),
+                                  threshold: Int = 10,
+                                  xa: Transactor[IO])
     extends Job {
+
+  implicit val transactor = xa
+
   val name = ImportLandsat8C1.name
 
   /** Get S3 client per each call */
@@ -318,22 +322,31 @@ final case class ImportLandsat8C1(
   def run(): Unit = {
     logger.info("Importing scenes...")
 
+    def acquireThreadPool = IO { new ForkJoinPool(16) }
+    def releaseThreadPool(pool: ForkJoinPool) = IO { pool.shutdown() }
+    val threadPoolResource = Resource.make(acquireThreadPool)(releaseThreadPool)
+
     val user = UserDao.unsafeGetUserById(systemUser).transact(xa).unsafeRunSync
     val rows = rowsFromCsv.par
-    rows.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(16))
-    // val insertedScenes: ParSeq[Option[Scene.WithRelated]] = rows map {
-    //   (row: Map[String, String]) =>
-    //     {
-    //       csvRowToScene(row, user)
-    //         .handleErrorWith(
-    //           (error: Throwable) => {
-    //             sendError(error)
-    //             IO.pure(None)
-    //           }
-    //         )
-    //         .unsafeRunSync
-    //     }
-    // }
+    threadPoolResource
+      .use(pool => {
+        rows.tasksupport = new ForkJoinTaskSupport(pool)
+        IO {
+          rows map { (row: Map[String, String]) =>
+            {
+              csvRowToScene(row, user)
+                .handleErrorWith(
+                  (error: Throwable) => {
+                    sendError(error)
+                    IO.pure(None)
+                  }
+                )
+                .unsafeRunSync
+            }
+          }
+        }
+      })
+      .unsafeRunSync
     stop
   }
 }
@@ -342,15 +355,18 @@ object ImportLandsat8C1 {
   val name = "import_landsat8_c1"
 
   def main(args: Array[String]): Unit = {
-    implicit val xa = RFTransactor.xa
 
-    val job = args.toList match {
-      case List(date, threshold) =>
-        ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
-      case List(date) => ImportLandsat8C1(LocalDate.parse(date))
-      case _          => ImportLandsat8C1()
-    }
-
-    job.run
+    RFTransactor.xaResource
+      .use(xa => {
+        val job = args.toList match {
+          case List(date, threshold) =>
+            ImportLandsat8C1(LocalDate.parse(date), threshold.toInt, xa)
+          case List(date) => ImportLandsat8C1(LocalDate.parse(date), xa = xa)
+          case _          => ImportLandsat8C1(xa = xa)
+        }
+        IO { job.run }
+      })
+      .unsafeRunSync
+    System.exit(0)
   }
 }

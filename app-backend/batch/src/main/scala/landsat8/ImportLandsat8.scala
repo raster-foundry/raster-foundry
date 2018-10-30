@@ -89,17 +89,17 @@ final case class ImportLandsat8(
 object ImportLandsat8 {
   val name = "import_landsat8"
 
-  implicit val xa = RFTransactor.xa
-
   def main(args: Array[String]): Unit = {
 
     /** Since 30/04/2017 old LC8 collection is not updated */
     val job = args.toList match {
       case List(date, threshold)
           if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) =>
-        ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
+        ImportLandsat8C1(LocalDate.parse(date),
+                         threshold.toInt,
+                         RFTransactor.xa)
       case List(date) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) =>
-        ImportLandsat8C1(LocalDate.parse(date))
+        ImportLandsat8C1(LocalDate.parse(date), xa = RFTransactor.xa)
       case List(date, threshold) =>
         throw new NotImplementedError(
           "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
