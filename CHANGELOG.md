@@ -28,7 +28,7 @@
 - Fix undefined function call when selecting project scenes by clicking the map in advanced color correction view [\#4212](https://github.com/raster-foundry/raster-foundry/pull/4212)
 - Fix visualization of Planet scenes and fix bands used when generating COG scene thumbnails [\#4238](https://github.com/raster-foundry/raster-foundry/pull/4238), [\#4262](https://github.com/raster-foundry/raster-foundry/pull/4262)
 - Stopped explicitly setting a nodata value in one step of ingest for Sentinel-2 and Landsat [\#4324](https://github.com/raster-foundry/raster-foundry/pull/4234)
-- Stopped combining Landsat 4 / 5 / 7 bands in random orders when converting them to COGs [\#4242](https://github.com/raster-foundry/raster-foundry/pull/4242)
+- Stopped combining Landsat 4 / 5 / 7 bands in random orders when converting them to COGs and added command to fix existing Landsat 4 / 5 / 7 scenes [\#4242](https://github.com/raster-foundry/raster-foundry/pull/4242), [\#4261](https://github.com/raster-foundry/raster-foundry/pull/4261)
 - Cleaned up a project database test [\#4248](https://github.com/raster-foundry/raster-foundry/pull/4248)
 - Don't include name in intercom user init if it's the same as the email [\#4247](https://github.com/raster-foundry/raster-foundry/pull/4247)
 - Kick off ingests for scenes without scene types also [\#4260](https://github.com/raster-foundry/raster-foundry/pull/4260)

@@ -82,28 +82,14 @@ class LandsatHistoricalSceneFactory(object):
 def create_scene(owner, prefix, landsat_id, config, datasource):
     logger.info('Creating scene for landsat id {}'.format(landsat_id))
     gcs_prefix = io.gcs_path_for_landsat_id(landsat_id)
-    logger.info('Fetching all bands')
-    for band in config.bands.keys():
-        fetch_band(prefix, gcs_prefix, band, landsat_id)
     metadata_resp = requests.get(io.make_path_for_mtl(gcs_prefix, landsat_id))
     if metadata_resp.status_code == 404:
         logger.error('Landsat scene %s is not available yet in GCS',
                      landsat_id)
         raise Exception('Could not find landsat scene %s', landsat_id)
     filter_metadata = extract_metadata(metadata_resp.content)
-    cog_fname = '{}_COG.tif'.format(landsat_id)
-    stacked_fname = '{}_STACKED.tif'.format(landsat_id)
-    filenames = {
-        'COG': os.path.join(prefix, cog_fname),
-        'STACKED': os.path.join(prefix, stacked_fname)
-    }
-    local_paths = sorted(glob.glob('/{}/{}*.TIF'.format(prefix, landsat_id)))
-    warped_paths = cog.warp_tifs(local_paths, prefix)
-    merged = cog.merge_tifs(warped_paths, prefix)
-    cog.add_overviews(merged)
-    cog_path = cog.convert_to_cog(merged, prefix)
-    shutil.move(cog_path, filenames['COG'])
-    s3_location = upload_file(owner, filenames['COG'], cog_fname)
+    (filename, cog_fname) = process_to_cog(prefix, gcs_prefix, landsat_id, config)
+    s3_location = upload_file(owner, filename, cog_fname)
     logger.info('Creating image')
     ingest_location = 's3://{}/{}'.format(data_bucket,
                                           urllib.quote(s3_location))
@@ -120,7 +106,7 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
         sceneType='COG',
         owner=owner)
     image = create_geotiff_image(
-        filenames['COG'],
+        filename,
         ingest_location,
         filename=cog_fname,
         owner=owner,
@@ -128,6 +114,25 @@ def create_scene(owner, prefix, landsat_id, config, datasource):
         band_create_function=lambda x: config.bands.values())
     scene.images = [image]
     return scene
+
+
+def process_to_cog(prefix, gcs_prefix, landsat_id, config):
+    logger.info('Fetching all bands')
+    for band in config.bands.keys():
+        fetch_band(prefix, gcs_prefix, band, landsat_id)
+    cog_fname = '{}_COG.tif'.format(landsat_id)
+    stacked_fname = '{}_STACKED.tif'.format(landsat_id)
+    filenames = {
+        'COG': os.path.join(prefix, cog_fname),
+        'STACKED': os.path.join(prefix, stacked_fname)
+    }
+    local_paths = sorted(glob.glob('/{}/{}*.TIF'.format(prefix, landsat_id)))
+    warped_paths = cog.warp_tifs(local_paths, prefix)
+    merged = cog.merge_tifs(warped_paths, prefix)
+    cog.add_overviews(merged)
+    cog_path = cog.convert_to_cog(merged, prefix)
+    shutil.move(cog_path, filenames['COG'])
+    return (filenames['COG'], cog_fname)
 
 
 def upload_file(owner, local_path, remote_fname):
