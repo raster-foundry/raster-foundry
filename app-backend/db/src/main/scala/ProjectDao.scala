@@ -190,7 +190,7 @@ object ProjectDao
                   (scenes.ingest_status = ${IngestStatus.Ingesting.toString} :: ingest_status AND
                    (now() - modified_at) > '1 day'::interval))
            AND sub.scene_id = scenes.id
-           AND scene_type = 'AVRO' :: scene_type
+           AND (scene_type = 'AVRO' :: scene_type OR scene_type IS NULL)
          """
     updateStatusQuery.update.run
   }
@@ -260,14 +260,16 @@ object ProjectDao
               """.update.run }
       _ <- updateSceneIngestStatus(projectId)
       scenesToIngest <- SceneWithRelatedDao.getScenesToIngest(projectId)
-      _ <- scenesToIngest traverse { (swr: Scene.WithRelated) =>
+      _ <- scenesToIngest traverse { (scene: Scene) =>
         logger.info(
-          s"Kicking off ingest for scene ${swr.id} with ingest status ${swr.statusFields.ingestStatus}")
-        kickoffSceneIngest(swr.id).pure[ConnectionIO] <* SceneDao.update(
-          swr.toScene.copy(
-            statusFields =
-              swr.statusFields.copy(ingestStatus = IngestStatus.ToBeIngested)),
-          swr.id,
+          s"Kicking off ingest for scene ${scene.id} with ingest status ${scene.statusFields.ingestStatus}")
+        kickoffSceneIngest(scene.id).pure[ConnectionIO]
+      }
+      _ <- scenesToIngest.traverse { (scene: Scene) =>
+        SceneDao.update(
+          scene.copy(statusFields =
+            scene.statusFields.copy(ingestStatus = IngestStatus.ToBeIngested)),
+          scene.id,
           user
         )
       }

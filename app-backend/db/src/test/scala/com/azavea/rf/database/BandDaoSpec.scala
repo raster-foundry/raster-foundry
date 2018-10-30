@@ -20,6 +20,8 @@ class BandDaoSpec extends FunSuite with Matchers with DBTestConfig {
 
   // list bands
   test("list bands") {
-    BandDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
+    xa.use(t => BandDao.query.list.transact(t))
+      .unsafeRunSync
+      .length should be >= 0
   }
 }

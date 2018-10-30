@@ -154,23 +154,6 @@ object Image {
       )
   }
 
-  object WithRelated {
-
-    /** Helper function to create Iterable[Image.WithRelated] from join
-      *
-      * @param records result of join query to return image with related information
-      */
-    def fromRecords(
-        records: List[(Image, Band)]
-    ): Iterable[Image.WithRelated] = {
-      val distinctImages = records.map(_._1)
-      val bands = records.map(_._2)
-      distinctImages map { image =>
-        image.withRelatedFromComponents(bands.filter(_.image == image.id))
-      }
-    }
-  }
-
   @JsonCodec
   final case class Downloadable(filename: String,
                                 sourceUri: String,

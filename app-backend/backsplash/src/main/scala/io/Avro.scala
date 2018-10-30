@@ -125,7 +125,7 @@ object Avro extends RollbarNotifier with HistogramJsonFormats {
               val cols = mbTile.cols / resolutionDiff
               val rows = mbTile.rows / resolutionDiff
               val corrected =
-                md.colorCorrections.colorCorrect(mbTile, histograms.toSeq)
+                md.colorCorrections.colorCorrect(mbTile, histograms.toSeq, None)
               Raster(corrected.color, extent).resample(256, 256)
             }
         }).toOption

@@ -56,7 +56,7 @@ class SceneToProjectDaoSpec
             } yield (acceptedSceneCount, stps)
 
             val (acceptedSceneCount, stps) =
-              acceptedSceneAndStpIO.transact(xa).unsafeRunSync
+              xa.use(t => acceptedSceneAndStpIO.transact(t)).unsafeRunSync
 
             acceptedSceneCount == scenes.length &&
             stps.length == scenes.length &&
@@ -106,7 +106,7 @@ class SceneToProjectDaoSpec
             } yield (mds, stps, selectedSceneIds)
 
             val (mds, stps, selectedIds) =
-              mdAndStpsIO.transact(xa).unsafeRunSync
+              xa.use(t => mdAndStpsIO.transact(t)).unsafeRunSync
 
             // Mapping of scene ids to scene order
             val sceneMap =

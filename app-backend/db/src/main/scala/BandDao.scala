@@ -34,15 +34,9 @@ object BandDao extends Dao[Band] {
     val bandFragments: List[Fragment] = bands map { (band: Band) =>
       fr"(${band.id}, ${band.image}, ${band.name}, ${band.number}, ${band.wavelength})"
     }
-    val insertFragment = fr"INSERT INTO" ++ tableF ++ fr"(id, image_id, name, number, wavelength) VALUES" ++ {
-      bandFragments.toNel match {
-        case Some(fragments) =>
-          fragments.intercalate(fr",")
-        case None =>
-          throw new IllegalArgumentException(
-            "Can't insert bands from an empty list")
-      }
-    }
-    insertFragment.update.run
+    bandFragments.toNel map { fragments =>
+      (fr"INSERT INTO" ++ tableF ++ fr"(id, image_id, name, number, wavelength) VALUES" ++ fragments
+        .intercalate(fr",")).update.run
+    } getOrElse { 0.pure[ConnectionIO] }
   }
 }

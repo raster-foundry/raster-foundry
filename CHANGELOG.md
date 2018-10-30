@@ -5,6 +5,7 @@
 ### Added
 - Added summary endpoint for annotation groups to list the number of labels with different qualities (YES, NO, MISS, UNSURE) to support annotation applications [\#4221](https://github.com/raster-foundry/raster-foundry/pull/4221)
 - Added project histogram support for COG and Avro scenes [\#4190](https://github.com/raster-foundry/raster-foundry/pull/4190)
+- Added service-level and total error-handling to backsplash tile server [\#4258](https://github.com/raster-foundry/raster-foundry/pull/4258)
 - Administration
   - Allow platforms to set a "From" email field in order to change notification "From" name [#\4214](https://github.com/raster-foundry/raster-foundry/pull/4214) 
   - Allow platform administrators to create uploads for other users within their platforms [\#4237](https://github.com/raster-foundry/raster-foundry/pull/4237)
@@ -15,6 +16,7 @@
 - Change homepage "Create a new Template" button to "Create a new Analysis" [/#4224](https://github.com/raster-foundry/raster-foundry/pull/4224)
 - Projects with > 30 scenes will not show a preview on the project list page [/#4231](https://github.com/raster-foundry/raster-foundry/pull/4231)
 - Upgraded scala typelevel ecosystem [\#4215](https://github.com/raster-foundry/raster-foundry/pull/4215)
+- Images no longer require a non-empty list of bands when creating scenes [\#4241](https://github.com/raster-foundry/raster-foundry/pull/4241)
 
 ### Deprecated
 
@@ -24,11 +26,13 @@
 - Increase nginx buffer size & count for Scene, Tool, and Thumbnail requests [\#4170](https://github.com/raster-foundry/raster-foundry/pull/4170)
 - Add user button no longer shows for non-admins of teams and orgs [\#4212](https://github.com/raster-foundry/raster-foundry/pull/4212)
 - Fix undefined function call when selecting project scenes by clicking the map in advanced color correction view [\#4212](https://github.com/raster-foundry/raster-foundry/pull/4212)
-- Fix visualization of Planet scenes and fix bands used when generating COG scene thumbnails [\#4238](https://github.com/raster-foundry/raster-foundry/pull/4238)
+- Fix visualization of Planet scenes and fix bands used when generating COG scene thumbnails [\#4238](https://github.com/raster-foundry/raster-foundry/pull/4238), [\#4262](https://github.com/raster-foundry/raster-foundry/pull/4262)
 - Stopped explicitly setting a nodata value in one step of ingest for Sentinel-2 and Landsat [\#4324](https://github.com/raster-foundry/raster-foundry/pull/4234)
 - Stopped combining Landsat 4 / 5 / 7 bands in random orders when converting them to COGs and added command to fix existing Landsat 4 / 5 / 7 scenes [\#4242](https://github.com/raster-foundry/raster-foundry/pull/4242), [\#4261](https://github.com/raster-foundry/raster-foundry/pull/4261)
-- Cleaned up project database tests to prevent a database deadlock [\#4248](https://github.com/raster-foundry/raster-foundry/pull/4248)
+- Cleaned up a project database test [\#4248](https://github.com/raster-foundry/raster-foundry/pull/4248)
 - Don't include name in intercom user init if it's the same as the email [\#4247](https://github.com/raster-foundry/raster-foundry/pull/4247)
+- Kick off ingests for scenes without scene types also [\#4260](https://github.com/raster-foundry/raster-foundry/pull/4260)
+- Separated connection and transaction execution contexts in database tests [\#4264](https://github.com/raster-foundry/raster-foundry/pull/4264)
 
 ### Security
 
