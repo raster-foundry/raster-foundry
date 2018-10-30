@@ -67,18 +67,17 @@ final case class ImportLandsat8C1(startDate: LocalDate =
      * and I don't like it but no quotes/no spaces was the only way I could get it to
      * interpret the awk script correctly.
      */
-    // s"wget -q -O - ${landsat8Config.usgsLandsatUrlC1}.gz" #|
-    //   "zcat" #|
-    //   s"""awk -F, {if($$33=="${startDate}"||/acquisitionDate/){print}}""" #>
-    //   new File("/tmp/landsat.csv") !
+    s"wget -q -O - ${landsat8Config.usgsLandsatUrlC1}.gz" #|
+      "zcat" #|
+      s"""awk -F, {if($$33=="${startDate}"||/acquisitionDate/){print}}""" #>
+      new File("/tmp/landsat.csv") !
 
-    // logger.info("CSV downloaded and filtered successfully")
+    logger.info("CSV downloaded and filtered successfully")
 
-    // val reader = CSVReader.open(new File("/tmp/landsat.csv"))
-    // val rows = reader.allWithHeaders()
-    // logger.info(s"Found ${rows.length} rows for ${startDate}")
-    // rows
-    List.empty
+    val reader = CSVReader.open(new File("/tmp/landsat.csv"))
+    val rows = reader.allWithHeaders()
+    logger.info(s"Found ${rows.length} rows for ${startDate}")
+    rows
   }
 
   protected def getLandsatPath(productId: String): String = {
