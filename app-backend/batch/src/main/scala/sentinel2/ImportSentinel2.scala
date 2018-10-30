@@ -6,7 +6,7 @@ import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
 import java.util.UUID
 import java.util.concurrent.Executors
 
-import cats.effect.IO
+import cats.effect.{IO, Resource}
 import cats.implicits._
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util._
@@ -32,15 +32,14 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.forkjoin.ForkJoinPool
 
 final case class ImportSentinel2(startDate: LocalDate =
-                                   LocalDate.now(ZoneOffset.UTC))(
-    implicit val xa: Transactor[IO])
+                                   LocalDate.now(ZoneOffset.UTC),
+                                 xa: Transactor[IO])
     extends Job {
+
+  implicit val transactor = xa
 
   // To resolve an ambiguous implicit
   import ImportSentinel2._
-
-  val cachedThreadPool = Executors.newFixedThreadPool(5)
-  val SceneCreationIOContext = ExecutionContext.fromExecutor(cachedThreadPool)
 
   // Eagerly get existing scene names
   val previousDay = startDate.minusDays(1)
@@ -229,7 +228,7 @@ final case class ImportSentinel2(startDate: LocalDate =
 
     val sceneInsertIO = SceneDao.insertMaybe(sceneCreate, user).transact(xa)
 
-    IO.shift(SceneCreationIOContext) *> sceneInsertIO
+    sceneInsertIO
   }
 
   def insertSceneFromURI(uri: URI,
@@ -274,33 +273,43 @@ final case class ImportSentinel2(startDate: LocalDate =
 
   def run(): Unit = {
     logger.info(s"Importing Sentinel 2 scenes for ${startDate}")
+
+    def acquireThreadPool = IO { new ForkJoinPool(16) }
+    def releaseThreadPool(pool: ForkJoinPool) = IO { pool.shutdown() }
+    val threadPoolResource = Resource.make(acquireThreadPool)(releaseThreadPool)
+
     val keys = getSentinel2Products(startDate).par
-    keys.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(16))
-    val user = UserDao
-      .getUserById(systemUser)
-      .transact(xa)
-      .unsafeRunSync
-      .getOrElse(
-        throw new Exception(
-          s"${systemUser} could not be found -- probably the database is borked")
-      )
-    val insertedScenes: ParSeq[Option[Scene.WithRelated]] = keys flatMap {
-      (key: URI) =>
-        {
-          insertSceneFromURI(key, sentinel2Config.datasourceUUID, user) map {
-            (sceneIO: IO[Option[Scene.WithRelated]]) =>
-              sceneIO
-                .handleErrorWith(
-                  (error: Throwable) => {
-                    sendError(error)
-                    IO.pure(None)
-                  }
-                )
-                .unsafeRunSync
+
+    threadPoolResource
+      .use(pool => {
+        keys.tasksupport = new ForkJoinTaskSupport(pool)
+        val user = UserDao
+          .getUserById(systemUser)
+          .transact(xa)
+          .unsafeRunSync
+          .getOrElse(
+            throw new Exception(
+              s"${systemUser} could not be found -- probably the database is borked")
+          )
+        IO {
+          keys flatMap { (key: URI) =>
+            {
+              insertSceneFromURI(key, sentinel2Config.datasourceUUID, user) map {
+                (sceneIO: IO[Option[Scene.WithRelated]]) =>
+                  sceneIO
+                    .handleErrorWith(
+                      (error: Throwable) => {
+                        sendError(error)
+                        IO.pure(None)
+                      }
+                    )
+                    .unsafeRunSync
+              }
+            }
           }
         }
-    }
-    cachedThreadPool.shutdown()
+      })
+      .unsafeRunSync
     stop
   }
 }
@@ -372,12 +381,16 @@ object ImportSentinel2 extends RollbarNotifier {
   }
 
   def main(args: Array[String]): Unit = {
-    implicit val xa = RFTransactor.xa
-    val job = args.toList match {
-      case List(date) => ImportSentinel2(LocalDate.parse(date))
-      case _          => ImportSentinel2()
-    }
-    logger.info(s"Preparing to run job")
-    job.run
+    RFTransactor.xaResource
+      .use(xa => {
+        val job = args.toList match {
+          case List(date) => ImportSentinel2(LocalDate.parse(date), xa = xa)
+          case _          => ImportSentinel2(xa = xa)
+        }
+        logger.info(s"Preparing to run job")
+        IO { job.run }
+      })
+      .unsafeRunSync
+    System.exit(0)
   }
 }
