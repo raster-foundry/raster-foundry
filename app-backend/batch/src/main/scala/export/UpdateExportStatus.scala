@@ -1,6 +1,7 @@
 package com.rasterfoundry.batch.export
 
 import com.rasterfoundry.batch.Job
+import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.notification.Email.NotificationEmail
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.Implicits._
@@ -25,22 +26,21 @@ final case class UpdateExportStatus(
   val name = UpdateExportStatus.name
 
   def run(): Unit = {
-    // logger.info(s"Running update export status job...")
-    // updateExportStatus.transact(xa).unsafeRunSync
-    // exportStatus match {
-    //   case ExportStatus.Failed =>
-    //     logger.info(s"Export finished with ${exportStatus}")
-    //     sendError(s"Export status update failed for ${exportId}")
-    //     notifyExportOwner("FAILED")
-    //   case ExportStatus.Exported =>
-    //     logger.info(s"Export updated successfully")
-    //     logger.info(s"Updating export owners")
-    //     notifyExportOwner("EXPORTED")
-    //   case _ =>
-    //     logger.info(
-    //       s"Export ${exportId} has not yet completed: ${exportStatus}")
-    // }
-    logger.info("good job!")
+    logger.info(s"Running update export status job...")
+    updateExportStatus.transact(xa).unsafeRunSync
+    exportStatus match {
+      case ExportStatus.Failed =>
+        logger.info(s"Export finished with ${exportStatus}")
+        sendError(s"Export status update failed for ${exportId}")
+        notifyExportOwner("FAILED")
+      case ExportStatus.Exported =>
+        logger.info(s"Export updated successfully")
+        logger.info(s"Updating export owners")
+        notifyExportOwner("EXPORTED")
+      case _ =>
+        logger.info(
+          s"Export ${exportId} has not yet completed: ${exportStatus}")
+    }
   }
 
   def notifyExportOwner(status: String): Unit = {
@@ -209,24 +209,37 @@ final case class UpdateExportStatus(
 
 }
 
-object UpdateExportStatus extends LazyLogging {
+object UpdateExportStatus extends RollbarNotifier {
   val name = "update_export_status"
-  implicit val xa = RFTransactor.xa
 
   def main(args: Array[String]): Unit = {
-    val job = args.toList match {
-      case List(exportId, exportStatus) =>
-        logger.info(s"Updating export ${exportId} of status ${exportStatus}...")
-        UpdateExportStatus(
-          UUID.fromString(exportId),
-          ExportStatus.fromString(exportStatus)
-        )
-      case _ =>
-        throw new IllegalArgumentException(
-          s"Arguments could not be parsed to UUID and export status: ${args}"
-        )
-    }
+    RFTransactor.xaResource
+      .use(xa => {
+        implicit val transactor = xa
+        val job = args.toList match {
+          case List(exportId, exportStatus) =>
+            logger.info(
+              s"Updating export ${exportId} of status ${exportStatus}...")
+            UpdateExportStatus(
+              UUID.fromString(exportId),
+              ExportStatus.fromString(exportStatus)
+            )
+          case _ =>
+            throw new IllegalArgumentException(
+              s"Arguments could not be parsed to UUID and export status: ${args}"
+            )
+        }
 
-    job.run()
+        IO { job.run() } handleErrorWith {
+          case e: Throwable =>
+            IO {
+              sendError(e)
+              job.stop()
+              System.exit(1)
+            }
+        }
+      })
+      .unsafeRunSync
+    System.exit(0)
   }
 }

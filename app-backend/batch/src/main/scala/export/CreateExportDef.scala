@@ -6,6 +6,7 @@ import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.batch._
 import com.rasterfoundry.batch.util._
+import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{ExportDao, UserDao}
@@ -17,7 +18,7 @@ import doobie.util.transactor.Transactor
 import io.circe.syntax._
 
 final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
-    implicit val xa: Transactor[IO])
+    implicit xa: Transactor[IO])
     extends Job {
   val name = CreateExportDef.name
 
@@ -53,12 +54,14 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
         .debug(s"Fetched export successfully: ${export.id}")
         .pure[ConnectionIO]
       exportDef <- ExportDao.getExportDefinition(export, user)
+      _ <- logger.debug("Got export definition").pure[ConnectionIO]
       updatedExport = export.copy(
         exportStatus = ExportStatus.Exporting,
         exportOptions = exportDef.asJson
       )
       x <- ExportDao.update(updatedExport, exportId, user)
     } yield {
+      logger.info(s"Writing export definition to s3")
       writeExportDefToS3(exportDef, bucket, key)
       logger.info(s"Wrote export definition: ${x}")
       stop
@@ -67,33 +70,38 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
 
     exportDefinitionWrite
       .transact(xa)
-      .attempt
-      .handleErrorWith(
-        (error: Throwable) => {
-          logger.error(error.stackTraceString)
-          sendError(error)
-          stop
-          sys.exit(1)
-        }
-      )
       .unsafeRunSync
   }
 }
 
-object CreateExportDef {
+object CreateExportDef extends RollbarNotifier {
   val name = "create_export_def"
 
   def main(args: Array[String]): Unit = {
-    implicit val xa = RFTransactor.xa
+    RFTransactor.xaResource
+      .use(xa => {
+        implicit val transactor = xa
+        val job = args.toList match {
+          case List(exportId, bucket, key) =>
+            CreateExportDef(UUID.fromString(exportId), bucket, key)
+          case _ =>
+            throw new IllegalArgumentException(
+              "Argument could not be parsed to UUID and URI")
+        }
 
-    val job = args.toList match {
-      case List(exportId, bucket, key) =>
-        CreateExportDef(UUID.fromString(exportId), bucket, key)
-      case _ =>
-        throw new IllegalArgumentException(
-          "Argument could not be parsed to UUID and URI")
-    }
+        IO { job.run() } handleErrorWith { (error: Throwable) =>
+          {
+            IO {
+              logger.error(error.stackTraceString)
+              sendError(error)
+              job.stop()
+              System.exit(1)
+            }
+          }
+        }
+      })
+      .unsafeRunSync
+    System.exit(0)
 
-    job.run
   }
 }

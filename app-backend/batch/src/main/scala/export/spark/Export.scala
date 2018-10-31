@@ -1,6 +1,7 @@
 package com.rasterfoundry.batch.export.spark
 
 import java.io.ByteArrayInputStream
+import java.net.URI
 import java.util.UUID
 
 import cats.data.Validated._
@@ -87,29 +88,42 @@ object Export extends SparkJob with Config with RollbarNotifier {
   }
 
   /** Get a LayerReader and an attribute store for the catalog located at the provided URI
-    *
-    * @param ed export job's layer definition
     */
   def getRfLayerManagement(
-      ed: ExportLayerDefinition
+      mosaicDefinition: MosaicDefinition
   )(implicit @transient sc: SparkContext)
     : (FilteringLayerReader[LayerId], AttributeStore) = {
-    ed.ingestLocation.getScheme match {
-      case "s3" | "s3a" | "s3n" =>
-        val (bucket, prefix) = S3.parse(ed.ingestLocation)
+    (mosaicDefinition.ingestLocation map { new URI(_) },
+     mosaicDefinition.ingestLocation map {
+       new URI(_).getScheme
+     }) match {
+      case (Some(loc), Some("s3")) =>
+        val (bucket, prefix) = S3.parse(loc)
         val reader = S3LayerReader(bucket, prefix)
         (reader, reader.attributeStore)
-      case "file" =>
-        val reader = FileLayerReader(ed.ingestLocation.getPath)
+      case (Some(loc), Some("s3a")) =>
+        val (bucket, prefix) = S3.parse(loc)
+        val reader = S3LayerReader(bucket, prefix)
         (reader, reader.attributeStore)
+      case (Some(loc), Some("s3n")) =>
+        val (bucket, prefix) = S3.parse(loc)
+        val reader = S3LayerReader(bucket, prefix)
+        (reader, reader.attributeStore)
+      case (Some(loc), Some("file")) =>
+        val reader = FileLayerReader(loc.getPath)
+        (reader, reader.attributeStore)
+      case _ =>
+        throw new Exception("Scene had no ingest location or unknown scheme")
     }
   }
 
   def getAvroLayerRdd(ed: ExportDefinition,
-                      eld: ExportLayerDefinition,
-                      mask: Option[MultiPolygon])(implicit sc: SparkContext) = {
-    val (reader, store) = getRfLayerManagement(eld)
-    val requestedLayerId = LayerId(eld.layerId.toString, ed.input.resolution)
+                      mosaicDefinition: MosaicDefinition,
+                      mask: Option[MultiPolygon],
+                      raw: Boolean)(implicit sc: SparkContext) = {
+    val (reader, store) = getRfLayerManagement(mosaicDefinition)
+    val requestedLayerId =
+      LayerId(mosaicDefinition.sceneId.toString, ed.input.resolution)
 
     val maxAvailableZoom =
       store.layerIds
@@ -137,11 +151,11 @@ object Export extends SparkJob with Config with RollbarNotifier {
         maxLayerId)
 
     val hist =
-      eld.colorCorrections
-        .map { _ =>
+      if (raw) None
+      else
+        Some(
           store.read[Array[Histogram[Double]]](requestedLayerId.copy(zoom = 0),
-                                               "histogram")
-        }
+                                               "histogram"))
 
     val queryLayer =
       (q: BoundLayerQuery[SpatialKey,
@@ -155,7 +169,7 @@ object Export extends SparkJob with Config with RollbarNotifier {
             { rdd =>
               rdd.mapValues(
                 { tile =>
-                  val ctile = (eld.colorCorrections, hist) mapN {
+                  val ctile = (Some(mosaicDefinition.colorCorrections), hist) mapN {
                     _.colorCorrect(tile, _, None)
                   } getOrElse tile
 
@@ -190,16 +204,20 @@ object Export extends SparkJob with Config with RollbarNotifier {
     }
   }
 
-  def getCOGLayerRdd(eld: ExportLayerDefinition)(implicit sc: SparkContext) =
-    CogUtils.fromUriAsRdd(eld.ingestLocation.toString)
+  def getCOGLayerRdd(mosaicDefinition: MosaicDefinition)(
+      implicit sc: SparkContext) =
+    CogUtils.fromUriAsRdd(mosaicDefinition.ingestLocation getOrElse {
+      s"Cog ${mosaicDefinition.sceneId} has no ingest location"
+    })
 
   def multibandExport(
       ed: ExportDefinition,
-      layers: Array[ExportLayerDefinition],
-      mask: Option[MultiPolygon]
+      layers: Array[MosaicDefinition],
+      mask: Option[MultiPolygon],
+      raw: Boolean
   )(implicit @transient sc: SparkContext): Unit = {
     val rdds = layers.map { ld =>
-      if (ld.sceneType == SceneType.Avro) getAvroLayerRdd(ed, ld, mask)
+      if (ld.sceneType == SceneType.Avro) getAvroLayerRdd(ed, ld, mask, raw)
       else getCOGLayerRdd(ld)
     }
 
@@ -343,36 +361,41 @@ object Export extends SparkJob with Config with RollbarNotifier {
     // You can set them to info and check 'Output from export command' in the logs from
     // running `rf export`, and you'll get nothing. It's pretty annoying!
     val runIO: IO[Unit] = xaResource.use(xa => {
-      IO { println("good job!") }
-      // for {
-      //   _ <- logger.debug("Fetching system user").pure[IO]
-      //   user <- UserDao.unsafeGetUserById(systemUser).transact(xa)
-      //   _ <- logger.debug(s"Fetching export ${exportDef.id}").pure[IO]
-      //   export <- ExportDao.unsafeGetExportById(exportDef.id).transact(xa)
-      //   _ <- logger.debug(s"Performing export").pure[IO]
-      //   result <- exportDef.input.style match {
-      //     case Left(SimpleInput(layers, mask)) =>
-      //       IO(multibandExport(exportDef, layers, mask)).attempt
-      //     case Right(ASTInput(ast, _, projLocs)) =>
-      //       IO(astExport(exportDef, ast, projLocs).unsafeRunSync).attempt
-      //   }
-      // } yield {
-      //   result match {
-      //     case Right(_) => ()
-      //     case Left(throwable) =>
-      //       sendError(throwable)
-      //       throw throwable
-      //   }
-      // }
-    })
-    try {
-      runIO.unsafeRunSync
-      sc.stop()
-      System.exit(0)
-    } catch {
+      implicit val transactor = xa
+      for {
+        _ <- logger.debug("Fetching system user").pure[IO]
+        user <- UserDao.unsafeGetUserById(systemUser).transact(xa)
+        _ <- logger.debug(s"Fetching export ${exportDef.id}").pure[IO]
+        export <- ExportDao.unsafeGetExportById(exportDef.id).transact(xa)
+        exportOptions = export.exportOptions.as[ExportOptions]
+        _ <- logger.debug(s"Performing export").pure[IO]
+        result <- exportDef.input.style match {
+          case SimpleInput(layers, mask) =>
+            IO(multibandExport(exportDef, layers, mask, exportOptions map {
+              _.raw
+            } getOrElse false)).attempt
+          case ASTInput(ast, _, projLocs) =>
+            IO(astExport(exportDef, ast, projLocs).unsafeRunSync).attempt
+        }
+      } yield {
+        result match {
+          case Right(_) => ()
+          case Left(throwable) =>
+            sendError(throwable)
+            throw throwable
+        }
+      }
+    }) handleErrorWith {
       case e: Throwable =>
-        sc.stop()
-        throw e
+        IO {
+          sc.stop()
+          sendError(e)
+          logger.error(e.stackTraceString)
+          System.exit(1)
+        }
     }
+    runIO.unsafeRunSync
+    sc.stop()
+    System.exit(0)
   }
 }

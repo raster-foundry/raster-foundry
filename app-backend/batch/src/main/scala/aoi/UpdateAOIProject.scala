@@ -7,7 +7,8 @@ import java.util.UUID
 import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.batch.Job
-import com.rasterfoundry.common.AWSBatch
+import com.rasterfoundry.batch.util._
+import com.rasterfoundry.common.{AWSBatch, RollbarNotifier}
 import com.rasterfoundry.common.notification.Email.NotificationEmail
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database._
@@ -247,20 +248,31 @@ final case class UpdateAOIProject(projectId: UUID)(
   }
 }
 
-object UpdateAOIProject {
+object UpdateAOIProject extends RollbarNotifier {
   val name = "update_aoi_project"
-
-  implicit val xa = RFTransactor.xa
 
   def main(args: Array[String]): Unit = {
 
-    val job = args.toList match {
-      case List(projectId) => UpdateAOIProject(UUID.fromString(projectId))
-      case _ =>
-        throw new IllegalArgumentException(
-          "Argument could not be parsed to UUID")
-    }
+    RFTransactor.xaResource
+      .use(xa => {
+        implicit val transactor = xa
+        val job = args.toList match {
+          case List(projectId) => UpdateAOIProject(UUID.fromString(projectId))
+          case _ =>
+            throw new IllegalArgumentException(
+              "Argument could not be parsed to UUID")
+        }
 
-    job.run
+        IO { job.run } handleErrorWith {
+          case e: Throwable =>
+            IO {
+              sendError(e)
+              logger.error(e.stackTraceString)
+              System.exit(1)
+            }
+        }
+      })
+      .unsafeRunSync
+    System.exit(0)
   }
 }
