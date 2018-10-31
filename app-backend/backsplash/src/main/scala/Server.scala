@@ -46,9 +46,9 @@ object BacksplashServer extends IOApp {
 
   def healthCheckService = new HealthCheckService[IO].service
   def analysisService =
-    Authenticators.queryParamAuthMiddleware(new AnalysisService().service)
+    Authenticators.tokensAuthMiddleware(new AnalysisService().service)
   def mosaicService =
-    Authenticators.queryParamAuthMiddleware(new MosaicService().service)
+    Authenticators.tokensAuthMiddleware(new MosaicService().service)
 
   val httpApp =
     Router(
