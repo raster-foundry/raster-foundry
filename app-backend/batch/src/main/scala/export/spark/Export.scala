@@ -220,7 +220,7 @@ object Export extends SparkJob with Config with RollbarNotifier {
       ld.sceneType map {
         case SceneType.Avro =>
           getAvroLayerRdd(ed, ld, mask, raw)
-        case SceneType.Cog =>
+        case SceneType.COG =>
           getCOGLayerRdd(ld)
       } getOrElse { getAvroLayerRdd(ed, ld, mask, raw) }
     }
