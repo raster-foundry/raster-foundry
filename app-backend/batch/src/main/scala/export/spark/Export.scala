@@ -217,8 +217,12 @@ object Export extends SparkJob with Config with RollbarNotifier {
       raw: Boolean
   )(implicit @transient sc: SparkContext): Unit = {
     val rdds = layers.map { ld =>
-      if (ld.sceneType == SceneType.Avro) getAvroLayerRdd(ed, ld, mask, raw)
-      else getCOGLayerRdd(ld)
+      ld.sceneType map {
+        case SceneType.Avro =>
+          getAvroLayerRdd(ed, ld, mask, raw)
+        case SceneType.Cog =>
+          getCOGLayerRdd(ld)
+      } getOrElse { getAvroLayerRdd(ed, ld, mask, raw) }
     }
 
     /** Tile merge with respect to layer initial ordering */
