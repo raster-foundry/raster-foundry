@@ -123,9 +123,9 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
     )
 
     val actual =
-      decode[ExportDefinition](getJson("/export/localJob.json")).toOption match {
-        case Some(ed) => ed
-        case _        => throw new Exception("Incorrect json to parse")
+      decode[ExportDefinition](getJson("/export/localJob.json")) match {
+        case Right(ed) => ed
+        case Left(e)   => throw e
       }
 
     expected.asJson shouldBe actual.asJson
