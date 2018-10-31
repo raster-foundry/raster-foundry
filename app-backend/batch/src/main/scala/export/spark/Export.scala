@@ -316,7 +316,7 @@ object Export extends SparkJob with Config with RollbarNotifier {
     */
   @SuppressWarnings(Array("CatchThrowable")) // need to ensure that status is written for errors
   def main(args: Array[String]): Unit = {
-    implicit val xa = RFTransactor.xa
+    val xaResource = RFTransactor.xaResource
 
     val params = CommandLine.parser.parse(args, CommandLine.Params()) match {
       case Some(params) =>
@@ -342,31 +342,37 @@ object Export extends SparkJob with Config with RollbarNotifier {
     // Note: these logs don't actually work independent of log level and I have no idea why
     // You can set them to info and check 'Output from export command' in the logs from
     // running `rf export`, and you'll get nothing. It's pretty annoying!
-    val runIO: IO[Unit] = for {
-      _ <- logger.debug("Fetching system user").pure[IO]
-      user <- UserDao.unsafeGetUserById(systemUser).transact(xa)
-      _ <- logger.debug(s"Fetching export ${exportDef.id}").pure[IO]
-      export <- ExportDao.unsafeGetExportById(exportDef.id).transact(xa)
-      _ <- logger.debug(s"Performing export").pure[IO]
-      result <- exportDef.input.style match {
-        case Left(SimpleInput(layers, mask)) =>
-          IO(multibandExport(exportDef, layers, mask)).attempt
-        case Right(ASTInput(ast, _, projLocs)) =>
-          IO(astExport(exportDef, ast, projLocs).unsafeRunSync).attempt
-      }
-    } yield {
-      result match {
-        case Right(_) => ()
-        case Left(throwable) =>
-          sendError(throwable)
-          throw throwable
-      }
-    }
-
+    val runIO: IO[Unit] = xaResource.use(xa => {
+      IO { println("good job!") }
+      // for {
+      //   _ <- logger.debug("Fetching system user").pure[IO]
+      //   user <- UserDao.unsafeGetUserById(systemUser).transact(xa)
+      //   _ <- logger.debug(s"Fetching export ${exportDef.id}").pure[IO]
+      //   export <- ExportDao.unsafeGetExportById(exportDef.id).transact(xa)
+      //   _ <- logger.debug(s"Performing export").pure[IO]
+      //   result <- exportDef.input.style match {
+      //     case Left(SimpleInput(layers, mask)) =>
+      //       IO(multibandExport(exportDef, layers, mask)).attempt
+      //     case Right(ASTInput(ast, _, projLocs)) =>
+      //       IO(astExport(exportDef, ast, projLocs).unsafeRunSync).attempt
+      //   }
+      // } yield {
+      //   result match {
+      //     case Right(_) => ()
+      //     case Left(throwable) =>
+      //       sendError(throwable)
+      //       throw throwable
+      //   }
+      // }
+    })
     try {
       runIO.unsafeRunSync
-    } finally {
-      sc.stop
+      sc.stop()
+      System.exit(0)
+    } catch {
+      case e: Throwable =>
+        sc.stop()
+        throw e
     }
   }
 }

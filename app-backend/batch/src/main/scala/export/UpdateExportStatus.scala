@@ -25,21 +25,22 @@ final case class UpdateExportStatus(
   val name = UpdateExportStatus.name
 
   def run(): Unit = {
-    logger.info(s"Running update export status job...")
-    updateExportStatus.transact(xa).unsafeRunSync
-    exportStatus match {
-      case ExportStatus.Failed =>
-        logger.info(s"Export finished with ${exportStatus}")
-        sendError(s"Export status update failed for ${exportId}")
-        notifyExportOwner("FAILED")
-      case ExportStatus.Exported =>
-        logger.info(s"Export updated successfully")
-        logger.info(s"Updating export owners")
-        notifyExportOwner("EXPORTED")
-      case _ =>
-        logger.info(
-          s"Export ${exportId} has not yet completed: ${exportStatus}")
-    }
+    // logger.info(s"Running update export status job...")
+    // updateExportStatus.transact(xa).unsafeRunSync
+    // exportStatus match {
+    //   case ExportStatus.Failed =>
+    //     logger.info(s"Export finished with ${exportStatus}")
+    //     sendError(s"Export status update failed for ${exportId}")
+    //     notifyExportOwner("FAILED")
+    //   case ExportStatus.Exported =>
+    //     logger.info(s"Export updated successfully")
+    //     logger.info(s"Updating export owners")
+    //     notifyExportOwner("EXPORTED")
+    //   case _ =>
+    //     logger.info(
+    //       s"Export ${exportId} has not yet completed: ${exportStatus}")
+    // }
+    logger.info("good job!")
   }
 
   def notifyExportOwner(status: String): Unit = {
