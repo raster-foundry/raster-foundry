@@ -3,6 +3,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Add Ansible role to install Nexus Repo Manager [\#4277](https://github.com/raster-foundry/raster-foundry/pull/4277)
 
 ### Changed
 

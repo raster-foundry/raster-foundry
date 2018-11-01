@@ -1,0 +1,3 @@
+---
+nexus_server_name: "nexus.staging.rasterfoundry.com nexus.rasterfoundry.internal"
+nexus_http_port: "8081"

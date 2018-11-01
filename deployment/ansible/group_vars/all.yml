@@ -8,3 +8,5 @@ shellcheck_version: "0.3.*"
 
 docker_users:
   - "vagrant"
+
+pyyaml_version: "3.13"
