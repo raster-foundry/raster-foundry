@@ -76,4 +76,12 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
           }
         }
     }
+
+  implicit val extentReification: ExtentReification[ProjectNode] =
+    new ExtentReification[ProjectNode] {
+      def kind(self: ProjectNode): MamlKind = MamlKind.Tile
+
+      def extentReification(self: ProjectNode)(implicit contextShift: ContextShift[IO]) =
+        (extent: Extent, cellSize: CellSize) => IO.pure { RasterLit { IntArrayTile.fill(1, 256, 256) } }
+    }
 }
