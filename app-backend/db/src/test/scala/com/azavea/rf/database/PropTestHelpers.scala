@@ -260,4 +260,12 @@ trait PropTestHelpers {
       dbUserTeamOrgPlat = (dbUser, dbTeam, dbOrg, dbPlatform)
     } yield { (projectInsert, dbUserTeamOrgPlat) }
   }
+
+  def fixupMapToken(mapTokenCreate: MapToken.Create,
+                    user: User,
+                    project: Option[Project],
+                    analysis: Option[ToolRun]): MapToken.Create =
+    mapTokenCreate.copy(project = project map { _.id }, toolRun = analysis map {
+      _.id
+    }, owner = Some(user.id))
 }

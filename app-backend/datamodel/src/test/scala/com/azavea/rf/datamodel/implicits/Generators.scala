@@ -705,6 +705,19 @@ object Generators extends ArbitraryInstances {
       }, actionType)
     }
 
+  private def toolRunCreateGen: Gen[ToolRun.Create] =
+    for {
+      name <- Gen.option(nonEmptyStringGen)
+      visibility <- visibilityGen
+      executionParameters <- Gen.const(().asJson)
+      owner <- Gen.const(None)
+    } yield { ToolRun.Create(name, visibility, executionParameters, owner) }
+
+  private def mapTokenCreateGen: Gen[MapToken.Create] =
+    nonEmptyStringGen map { name =>
+      MapToken.Create(name, None, None, None)
+    }
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
       credentialGen
@@ -847,5 +860,11 @@ object Generators extends ArbitraryInstances {
         Gen.nonEmptyListOf[ObjectAccessControlRule](
           arbitrary[ObjectAccessControlRule])
       }
+
+    implicit def arbToolRunCreate: Arbitrary[ToolRun.Create] =
+      Arbitrary { toolRunCreateGen }
+
+    implicit def arbMapTokenCreate: Arbitrary[MapToken.Create] =
+      Arbitrary { mapTokenCreateGen }
   }
 }
