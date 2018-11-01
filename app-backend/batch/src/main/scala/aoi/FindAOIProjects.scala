@@ -64,8 +64,13 @@ object FindAOIProjects extends LazyLogging {
     if (args.length > 0) {
       logger.warn(s"Ignoring arguments to FindAOIProjects: ${args}")
     }
-    implicit val xa = RFTransactor.xa
-    val job = FindAOIProjects()
-    job.run
+    RFTransactor.xaResource
+      .use(xa => {
+        implicit val transactor = xa
+        val job = FindAOIProjects()
+        IO { job.run }
+      })
+      .unsafeRunSync
+    System.exit(0)
   }
 }

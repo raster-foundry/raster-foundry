@@ -52,6 +52,16 @@ object RFTransactor extends Config {
   val transactionEC =
     ExecutionContext.fromExecutor(Executors.newCachedThreadPool)
 
+  lazy val xaResource: Resource[IO, HikariTransactor[IO]] =
+    HikariTransactor.newHikariTransactor[IO](
+      jdbcDriver,
+      jdbcNoDBUrl,
+      dbUser,
+      dbPassword,
+      connectionEC,
+      transactionEC
+    )
+
   lazy val xa: HikariTransactor[IO] = HikariTransactor.apply[IO](
     hikariDS,
     connectionEC,

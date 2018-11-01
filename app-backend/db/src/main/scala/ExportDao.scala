@@ -107,17 +107,24 @@ object ExportDao extends Dao[Export] {
       )
     }
 
-    val exportInput: Either[ConnectionIO[SimpleInput], ConnectionIO[ASTInput]] =
+    val exportInput: ConnectionIO[InputStyle] = {
+
+      logger.info(s"Project id when getting input style: ${export.projectId}")
+      logger.info(s"Tool run id when getting input style: ${export.toolRunId}")
       (export.projectId, export.toolRunId) match {
         // Exporting a tool-run
-        case (_, Some(toolRunId)) => Right(astInput(toolRunId))
+        case (_, Some(toolRunId)) =>
+          astInput(toolRunId) map { ASTInput.asInputStyle(_) }
         // Exporting a project
         case (Some(projectId), None) =>
-          Left(simpleInput(projectId, exportOptions))
+          simpleInput(projectId, exportOptions) map {
+            SimpleInput.asInputStyle(_)
+          }
         case (None, None) =>
           throw new Exception(
             s"Export Definitions ${export.id} does not have project or ast input defined")
       }
+    }
 
     for {
       _ <- logger.info("Creating output definition").pure[ConnectionIO]
@@ -125,19 +132,14 @@ object ExportDao extends Dao[Export] {
       _ <- logger
         .info(s"Created output definition for ${outDef.source}")
         .pure[ConnectionIO]
-      _ <- logger.info("Creating input definition").pure[ConnectionIO]
-      inputDefinition <- exportInput match {
-        case Left(si) => {
-          logger.debug("In the simple input branch")
-          si.map(s => InputDefinition(exportOptions.resolution, Left(s)))
-        }
-        case Right(asti) => {
-          logger.debug("In the AST input branch")
-          asti.map(s => InputDefinition(exportOptions.resolution, Right(s)))
+      _ <- logger.info(s"Creating input definition").pure[ConnectionIO]
+      inputDefinition <- exportInput map { inputStyle =>
+        {
+          InputDefinition(exportOptions.resolution, inputStyle)
         }
       }
+      _ <- logger.info("Created input definition").pure[ConnectionIO]
     } yield {
-      logger.info("Created input definition")
       ExportDefinition(export.id, inputDefinition, outDef)
     }
   }
@@ -175,8 +177,8 @@ object ExportDao extends Dao[Export] {
       exportOptions: ExportOptions
   ): ConnectionIO[SimpleInput] = {
 
-    val exportLayerDefinitions = fr"""
-    SELECT scenes.id, scenes.scene_type, scenes.ingest_location, stp.mosaic_definition
+    fr"""
+    SELECT scenes.id, stp.mosaic_definition, scenes.scene_type, scenes.ingest_location
     FROM
       scenes
     LEFT JOIN
@@ -185,20 +187,8 @@ object ExportDao extends Dao[Export] {
       stp.scene_id = scenes.id
     WHERE
       stp.project_id = ${projectId}
-  """.query[ExportLayerDefinition].to[List]
-
-    for {
-      layerDefinitions <- exportLayerDefinitions
-    } yield {
-      val modifiedLayerDefinitions = layerDefinitions.map { eld =>
-        if (exportOptions.raw) {
-          eld.copy(colorCorrections = None)
-        } else {
-          eld
-        }
-      }
-      SimpleInput(modifiedLayerDefinitions.toArray,
-                  exportOptions.mask.map(_.geom))
+  """.query[MosaicDefinition].to[List] map { mds =>
+      SimpleInput(mds.toArray, exportOptions.mask.map(_.geom))
     }
   }
 

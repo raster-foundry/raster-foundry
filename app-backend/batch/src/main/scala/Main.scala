@@ -3,12 +3,7 @@ package com.rasterfoundry.batch
 import com.rasterfoundry.batch.aoi.FindAOIProjects
 import com.rasterfoundry.batch.cogMetadata.HistogramBackfill
 import com.rasterfoundry.batch.export.spark.Export
-import com.rasterfoundry.batch.export.{
-  CreateExportDef,
-  DropboxCopy,
-  S3Copy,
-  UpdateExportStatus
-}
+import com.rasterfoundry.batch.export.{CreateExportDef, UpdateExportStatus}
 import com.rasterfoundry.batch.healthcheck.HealthCheck
 import com.rasterfoundry.batch.aoi.UpdateAOIProject
 import com.rasterfoundry.batch.landsat8.{ImportLandsat8, ImportLandsat8C1}
@@ -19,8 +14,6 @@ import com.rasterfoundry.batch.notification.NotifyIngestStatus
 object Main {
   val modules = Map[String, Array[String] => Unit](
     CreateExportDef.name -> (CreateExportDef.main(_)),
-    DropboxCopy.name -> (DropboxCopy.main(_)),
-    S3Copy.name -> (S3Copy.main(_)),
     UpdateExportStatus.name -> (UpdateExportStatus.main(_)),
     Export.name -> (Export.main(_)),
     FindAOIProjects.name -> (FindAOIProjects.main(_)),

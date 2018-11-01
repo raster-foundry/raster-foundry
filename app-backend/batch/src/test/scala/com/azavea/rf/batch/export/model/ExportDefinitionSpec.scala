@@ -108,24 +108,24 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
       id = UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57039"),
       input = InputDefinition(
         resolution = 15,
-        style = Left(
-          SimpleInput(
-            layers = Array(ExportLayerDefinition(
-              layerId = UUID.fromString("8436f7e9-b7f7-4d4f-bda8-76b32c356cff"),
-              ingestLocation = new URI("s3://test/"),
-              colorCorrections = Some(cc),
-              sceneType = SceneType.Avro
+        style = SimpleInput(
+          layers = Array(
+            MosaicDefinition(
+              sceneId = UUID.fromString("8436f7e9-b7f7-4d4f-bda8-76b32c356cff"),
+              ingestLocation = Some("s3://test/"),
+              colorCorrections = cc,
+              sceneType = Some(SceneType.Avro)
             )),
-            mask = Some(mask)
-          ))
+          mask = Some(mask)
+        )
       ),
       output = outDef
     )
 
     val actual =
-      decode[ExportDefinition](getJson("/export/localJob.json")).toOption match {
-        case Some(ed) => ed
-        case _        => throw new Exception("Incorrect json to parse")
+      decode[ExportDefinition](getJson("/export/localJob.json")) match {
+        case Right(ed) => ed
+        case Left(e)   => throw e
       }
 
     expected.asJson shouldBe actual.asJson
@@ -138,13 +138,10 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
 
     val inDef = InputDefinition(
       15,
-      Right(
-        ASTInput(
-          ast,
-          ast.tileSources.map(_ => UUID.randomUUID -> "s3://foo/bar/").toMap,
-          Map.empty))
-    )
-
+      ASTInput(
+        ast,
+        ast.tileSources.map(_ => UUID.randomUUID -> "s3://foo/bar/").toMap,
+        Map.empty))
     val ed = ExportDefinition(
       UUID.fromString("dda6080f-f7ad-455d-b409-764dd8c57039"),
       inDef,
@@ -180,7 +177,7 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
 
     val inDef = InputDefinition(
       15,
-      Right(astIn)
+      astIn
     )
 
     val ed = ExportDefinition(
