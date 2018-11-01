@@ -39,8 +39,6 @@ class AnalysisService(
 
   implicit val xa = RFTransactor.xa
 
-  object NodeQueryParamMatcher extends QueryParamDecoderMatcher[String]("node")
-
   object VoidCacheQueryParamMatcher
       extends QueryParamDecoderMatcher[Boolean]("voidCache")
 

@@ -1,4 +1,4 @@
-package com.rf.azavea.backsplash
+package com.rasterfoundry.backsplash
 
 import cats.data.{NonEmptyList => NEL}
 import com.rasterfoundry.backsplash.error._

@@ -9,6 +9,7 @@ import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
 import com.rasterfoundry.backsplash.io.Mosaic
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.datamodel.SingleBandOptions
+import geotrellis.proj4.{io => _, _}
 import geotrellis.raster.io.json.HistogramJsonFormats
 import geotrellis.raster.{Raster, io => _, _}
 import geotrellis.server._
@@ -16,6 +17,7 @@ import geotrellis.server.cog.util.CogUtils
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 import geotrellis.spark.tiling.LayoutDefinition
 import geotrellis.spark.{io => _}
+import geotrellis.vector.Extent
 import io.circe.generic.semiauto._
 
 import java.util.UUID
@@ -81,7 +83,51 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
     new ExtentReification[ProjectNode] {
       def kind(self: ProjectNode): MamlKind = MamlKind.Tile
 
-      def extentReification(self: ProjectNode)(implicit contextShift: ContextShift[IO]) =
-        (extent: Extent, cellSize: CellSize) => IO.pure { RasterLit { IntArrayTile.fill(1, 256, 256) } }
+      def extentReification(self: ProjectNode)(
+          implicit contextShift: ContextShift[IO]) =
+        (extent: Extent, cellSize: CellSize) => {
+          for {
+            mds <- Mosaic.getMosaicDefinitions(
+              self,
+              extent.reproject(LatLng, WebMercator))
+            _ <- IO { logger.info(s"Found ${mds.length} definitions") }
+            mbTiles <- mds.toList traverse { md =>
+              {
+                val correctedMd = if (!self.isSingleBand) {
+                  (self.redBandOverride,
+                   self.greenBandOverride,
+                   self.blueBandOverride).tupled match {
+                    case Some((r, g, b)) =>
+                      md.copy(
+                        colorCorrections = md.colorCorrections.copy(
+                          redBand = r,
+                          greenBand = g,
+                          blueBand = b
+                        )
+                      )
+                    case _ => md
+                  }
+                } else md
+                Mosaic.getMosaicTileForExtent(extent,
+                                              cellSize,
+                                              self.singleBandOptions,
+                                              self.isSingleBand)(md)
+              }
+            }
+          } yield {
+            RasterLit(
+              mbTiles.flatten match {
+                case Nil => {
+                  logger.info(s"NO DATA")
+                  Raster(IntArrayTile.fill(NODATA, 256, 256), extent)
+                }
+                case tiles @ (h :: _) =>
+                  tiles reduce {
+                    _ merge _
+                  }
+              }
+            )
+          }
+        }
     }
 }
