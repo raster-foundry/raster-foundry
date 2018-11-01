@@ -1,8 +1,9 @@
 - src: azavea.docker
   version: 4.0.0
 
-- src: azavea.pip
-  version: 1.0.0
+- name: azavea.pip 
+  src: https://github.com/azavea/ansible-pip
+  version: feature/tnation/absolute-python-path
 
 - src: azavea.jenkins
   version: 1.2.0
@@ -15,3 +16,6 @@
 
 - src: azavea.packer
   version: 0.2.0
+
+- src: azavea.aws-cli
+  version: 0.1.0

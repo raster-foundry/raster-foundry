@@ -1,0 +1,73 @@
+---
+- name: Add azavea user to Docker group
+  user: name={{ docker_user }} group=docker
+
+- name: Install python dependencies
+  pip: name="{{ item.name }}" version="{{ item.version }}"
+       state=present
+  with_items: "{{ python_deps }}"
+
+- name: Create container build directories
+  file: name={{ item }} state=directory
+        mode=0755 owner={{ docker_user }}
+  with_items:
+    - /var/cache/nexus
+    - /opt/nginx
+    - /opt/nexus
+
+
+- name: Upload Docker build files
+  copy: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - src: Dockerfile.nexus
+      dest: /opt/nexus/Dockerfile
+    - src: Dockerfile.nginx
+      dest: /opt/nginx/Dockerfile
+    - src: nexus.conf
+      dest: /opt/nginx/nexus.conf
+
+- name: Build nexus images
+  docker_image: name={{ item.name }} state=present
+                path={{ item.path }} force=yes
+  with_items:
+    - name: nexus-nginx
+      path: /opt/nginx
+    - name: nexus
+      path: /opt/nexus
+
+- name: Create nexus data volume
+  docker_volume: name=nexus-data
+
+- name: Create network for nexus containers
+  docker_network: name=nexus
+
+- name: Download Nexus data from S3
+  aws_s3: bucket="{{ nexus_data_bucket }}" object="nexus-data-backup.tar.gz"
+          mode=get dest=/tmp/nexus-data-backup.tar.gz
+          profile=default
+
+- name: Unpack nexus data
+  unarchive: src=/tmp/nexus-data-backup.tar.gz dest=/var/cache/nexus
+
+- name: Start containers
+  docker_container:
+    name: "{{ item.name }}"
+    image: "{{ item.image }}"
+    state: started
+    recreate: yes
+    restart_policy: on-failure
+    published_ports: "{{ item.published_ports | default(omit) }}"
+    user: "{{ item.user | default(omit) }}"
+    volumes: "{{ item.volumes | default(omit) }}"
+    networks:
+      - name: "{{ item.network }}"
+  with_items:
+    - name: nexus-nginx
+      image: "nexus-nginx"
+      network: "nexus"
+      published_ports: "80:80"
+    - name: nexus-upstream
+      image: "nexus"
+      network: "nexus"
+      volumes: "/var/cache/nexus:/nexus-data"
+      user: nexus

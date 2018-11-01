@@ -1,0 +1,4 @@
+FROM sonatype/nexus3:3.13.0
+USER root
+RUN usermod -u 1000 nexus
+USER nexus

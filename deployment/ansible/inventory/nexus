@@ -1,0 +1,2 @@
+[nexus]
+nexus_local ansible_host=nexus.internal.azavea.com ansible_user=azavea

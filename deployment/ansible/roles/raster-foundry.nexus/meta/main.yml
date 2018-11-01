@@ -1,0 +1,5 @@
+---
+dependencies: 
+  - { role: "azavea.docker" }
+  - { role: "azavea.pip" }
+  - { role: "azavea.aws-cli"}

@@ -1,0 +1,20 @@
+---
+ansible_python_interpreter: /usr/bin/python3
+
+docker_user: azavea
+
+python_deps:
+  - name: docker-compose
+    version: "{{ docker_compose_version }}"
+  - name: docker
+    version: "3.5.*"
+  - name: PyYaml
+    version: "3.13"
+  - name: boto
+    version: "2.49.*"
+  - name: boto3
+    version: "1.9.*"
+  - name: botocore
+    version: "1.12.*"
+
+nexus_data_bucket: rasterfoundry-development-data-us-east-1
