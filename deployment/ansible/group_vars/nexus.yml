@@ -18,3 +18,4 @@ python_deps:
     version: "1.12.*"
 
 nexus_data_bucket: rasterfoundry-development-data-us-east-1
+service_home: /opt/nexus
