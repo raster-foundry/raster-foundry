@@ -6,6 +6,7 @@
 - Added summary endpoint for annotation groups to list the number of labels with different qualities (YES, NO, MISS, UNSURE) to support annotation applications [\#4221](https://github.com/raster-foundry/raster-foundry/pull/4221)
 - Added project histogram support for COG and Avro scenes in backsplash [\#4190](https://github.com/raster-foundry/raster-foundry/pull/4190)
 - Added map token and authorization header authentication to backsplash [\#4271](https://github.com/raster-foundry/raster-foundry/pull/4271)
+- Added project quick png export support to backsplash [\#4273](https://github.com/raster-foundry/raster-foundry/pull/4273)
 - Added service-level and total error-handling to backsplash tile server [\#4258](https://github.com/raster-foundry/raster-foundry/pull/4258)
 - Administration
   - Allow platforms to set a "From" email field in order to change notification "From" name [#\4214](https://github.com/raster-foundry/raster-foundry/pull/4214) 
