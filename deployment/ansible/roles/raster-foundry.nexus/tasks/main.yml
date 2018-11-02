@@ -51,10 +51,15 @@
           image: "nginx:1.14"
           networks:
             - "nexus"
-          volumes:
-            - "{{ service_home }}/nginx/nexus.conf:/etc/nginx/conf.d/default.conf"
           ports:
             - "80:80"
+          volumes:
+            - "{{ service_home }}/nginx/nexus.conf:/etc/nginx/conf.d/default.conf"
+          restart: on-failure
+          logging:
+            driver: syslog
+            options:
+              tag: nexus-nginx
         nexus-upstream:
           build:
             context: "{{ service_home }}/nexus"
@@ -62,6 +67,11 @@
             - "nexus"
           volumes:
             - /var/cache/nexus:/nexus-data
+          restart: on-failure
+          logging:
+            driver: syslog
+            options:
+              tag: nexus-upstream
         data_copy:
           image: "alpine"
           networks:
@@ -72,5 +82,9 @@
             - "sh"
             - "-c"
             - "chown -R 1000:1000 /src/"
+          logging:
+            driver: syslog
+            options:
+              tag: nexus-data-copy
       networks:
         nexus:
