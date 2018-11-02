@@ -60,7 +60,7 @@
             driver: syslog
             options:
               tag: nexus-nginx
-        nexus-upstream:
+        nexus-server:
           build:
             context: "{{ service_home }}/nexus"
           networks:
@@ -71,7 +71,7 @@
           logging:
             driver: syslog
             options:
-              tag: nexus-upstream
+              tag: nexus-server
         data_copy:
           image: "alpine"
           networks:
