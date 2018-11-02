@@ -14,20 +14,33 @@ import org.http4s.dsl._
 import org.http4s.dsl.io._
 import org.http4s.implicits._
 
+import java.lang.IllegalArgumentException
+
 sealed trait BacksplashException extends Exception
+// When there's something wrong with stored metadata for the calculations we'd like to do
 final case class MetadataException(message: String) extends BacksplashException
+// When single band options are missing for a single band project or something else is wrong with them
 final case class SingleBandOptionsException(message: String)
     extends BacksplashException
+// When scenes don't have an ingest location but show as ingested
 final case class UningestedScenesException(message: String)
     extends BacksplashException
+// When scene type is something other than Some(COG) or Some(Avro)
 final case class UnknownSceneTypeException(message: String)
     extends BacksplashException
+// When an authenticated user is requesting access to something that they aren't allowed to see
 final case class NotAuthorizedException(message: String = "")
     extends BacksplashException
+// When the AST for an analysis is bad somehow
 final case class BadAnalysisASTException(message: String)
     extends BacksplashException
+// When requirements fail, or bboxes don't overlap things, or...
+final case class RequirementFailedException(message: String)
+    extends BacksplashException
+// When we get any doobie error
 final case class WrappedDoobieException(message: String)
     extends BacksplashException
+// When we get any S3 error
 final case class WrappedS3Exception(message: String) extends BacksplashException
 // Private so no one can deliberately throw an UnknownException elsewhere --
 // only exists to catch the fall-through case in the foreign error handler
@@ -45,6 +58,8 @@ class ForeignErrorHandler[F[_], E <: Throwable](implicit M: MonadError[F, E])
     case (err: AmazonS3Exception) =>
       logger.error(err.getMessage, err.printStackTrace)
       throw WrappedS3Exception(err.getMessage)
+    case (err: IllegalArgumentException) =>
+      throw RequirementFailedException(err.getMessage)
     case (err: BacksplashException) => throw err
     case t                          => throw UnknownException(t.getMessage)
   }
@@ -62,10 +77,11 @@ class BacksplashHttpErrorHandler[F[_]](
     case t @ MetadataException(m) =>
       sendError(t)
       InternalServerError(m)
-    case SingleBandOptionsException(m) => BadRequest(m)
     case UningestedScenesException(m)  => NotFound(m)
+    case SingleBandOptionsException(m) => BadRequest(m)
     case UnknownSceneTypeException(m)  => BadRequest(m)
     case BadAnalysisASTException(m)    => BadRequest(m)
+    case RequirementFailedException(m) => BadRequest(m)
     case t @ NotAuthorizedException(_) =>
       sendError(t)
       Forbidden(
