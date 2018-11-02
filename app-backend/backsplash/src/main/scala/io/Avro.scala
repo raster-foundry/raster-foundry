@@ -247,8 +247,8 @@ object Avro extends RollbarNotifier with HistogramJsonFormats {
       singleBand: Boolean,
       mosaicDefinition: MosaicDefinition): IO[Option[Raster[Tile]]] = {
     val reprojectedExtent = extent.reproject(LatLng, WebMercator)
-    val resampleRows = (reprojectedExtent.height / cellSize.height) toInt
-    val resampleCols = (reprojectedExtent.width / cellSize.width) toInt
+    val resampleRows = (reprojectedExtent.height / cellSize.height).toInt
+    val resampleCols = (reprojectedExtent.width / cellSize.width).toInt
     for {
       minZoomAndExtent <- minZoomLevel(store,
                                        mosaicDefinition.sceneId.toString,
