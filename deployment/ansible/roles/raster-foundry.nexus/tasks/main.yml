@@ -8,23 +8,18 @@
   with_items: "{{ python_deps }}"
 
 - name: Create container build directories
-  file: name={{ item }} state=directory
-        mode=755 owner=azavea group=1000
+  file: name={{ item.name }} state=directory
+        mode=755 owner={{ item.owner | default(omit) }} group={{ item.group | default(omit) }}
+        recurse=true
   with_items:
-    - /var/cache/nexus
-    - "{{ service_home }}/nginx"
-    - "{{ service_home }}/nexus"
+    - name: /var/cache/nexus
+      group: 200
+      owner: 200
+    - name: "{{ service_home }}/nginx"
+      owner: "{{ ansible_user }}"
 
-
-- name: Upload Docker build files
-  copy: src={{ item.src }} dest={{ item.dest }}
-  with_items:
-    - src: Dockerfile.nexus
-      dest: "{{ service_home }}/nexus/Dockerfile"
-    - src: Dockerfile.nginx
-      dest: "{{ service_home }}/nginx/Dockerfile"
-    - src: nexus.conf
-      dest: "{{ service_home }}/nginx/nexus.conf"
+- name: Upload nginx config file
+  copy: src=nexus.conf dest="{{ service_home }}/nginx/nexus.conf"
 
 
 - name: Download Nexus data from S3
@@ -61,8 +56,7 @@
             options:
               tag: nexus-nginx
         nexus-server:
-          build:
-            context: "{{ service_home }}/nexus"
+          image: sonatype/nexus3:3.13.0
           networks:
             - "nexus"
           volumes:
@@ -72,19 +66,5 @@
             driver: syslog
             options:
               tag: nexus-server
-        data_copy:
-          image: "alpine"
-          networks:
-            - "nexus"
-          volumes:
-            - "/var/cache/nexus/nexus-data:/src"
-          command:
-            - "sh"
-            - "-c"
-            - "chown -R 1000:1000 /src/"
-          logging:
-            driver: syslog
-            options:
-              tag: nexus-data-copy
       networks:
         nexus:

@@ -1,3 +1,0 @@
-FROM nginx:1.14
-
-COPY nexus.conf /etc/nginx/conf.d/default.conf
