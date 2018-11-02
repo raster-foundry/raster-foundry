@@ -1,0 +1,4 @@
+[repositories]
+  local
+  ivy-proxy-releases: http://nexus.internal.azavea.com/repository/ivy-public/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
+  maven-proxy-releases: http://nexus.internal.azavea.com/repository/maven-public/
