@@ -32,21 +32,23 @@
 
 .searchselect-clear {
   border-radius: 50%;
-  color: $gray;
-  border: 1px solid $gray-lighter;
-  background: $gray-lighter;
+  color: $white;
+  border: 1px solid $gray-dark;
+  background: $gray-dark;
   z-index: 1000;
   width: 2rem;
   height: 2rem;
-  transform: translateY(-50%);
+  flex: none;
   align-self: center;
-  margin-top: 11px;
   cursor: pointer;
+  margin-left: 10px;
 }
 
 .selectize-control {
   width: 100%;
   font-weight: 600;
+  position: relative;
+  display: flex;
 }
 .selectize-dropdown,
 .selectize-input,
@@ -185,17 +187,24 @@
   cursor: text;
 }
 .selectize-control.single .selectize-input:after {
-  content: ' ';
+  content: "\E906";
+  font-family: 'icomoon' !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin-left: 3px;
+  margin-right: 3px;
+  line-height: .9;
+  margin-top: -5px;
   display: block;
   position: absolute;
   top: 50%;
-  right: 15px;
-  margin-top: -3px;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 5px 5px 0 5px;
-  border-color: #808080 transparent transparent transparent;
+  right: 9px;
 }
 .selectize-control.single .selectize-input.dropdown-active:after {
   margin-top: -4px;

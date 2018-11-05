@@ -1,12 +1,16 @@
 .shapefilter-container {
     width: 100%;
+    display: flex;
+    position: relative;
 }
 
 .shapefilter-box {
     width: 100%;
-    padding: 0.5em 1em;
-    background: $shade-dark;
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 8px;
+    background: $shade-dark;
     flex-direction: row;
     border-radius: 3px;
     cursor: pointer;
@@ -32,7 +36,6 @@
 }
 
 .shapefilter-input-actions {
-    padding: 0.2em;
     display: flex;
     flex-direction: row;
     flex: 0;
@@ -40,13 +43,14 @@
 
 .shapefilter-dropdown {
     position: absolute;
-    bottom: -0.5em;
-    right: 0;
+    bottom: 0;
+    left: 0;
     height: 25em;
     width: 23.2em;
     transform: translateY(100%);
     z-index: 100;
     background: $white;
+    color: $text-base;
     border-radius: 3px;
     display: flex;
     flex-direction: column;

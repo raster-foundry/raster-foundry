@@ -43,4 +43,19 @@
       color: $brand-primary
     }
   }
+
+  .browse-source-drop-down {
+    background: white;
+    border: 1px solid $shade-light;
+    padding: 11px 8px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 1.2rem;
+  }
+}
+
+.filter-adjust-input {
+  background-color: $white;
+  border-color: $border-color-default;
+  color: $text-base;
 }

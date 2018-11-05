@@ -35,17 +35,17 @@ class DaterangeFilterController {
             start: moment().startOf('day').subtract(1, 'years'),
             end: moment().endOf('day')
         }, {
-            name: 'None',
+            name: 'Unset',
             start: moment().startOf('day').subtract(100, 'years'),
             end: moment().endOf('day')
         }];
 
-        let NonePreset = _.last(this.presets);
+        let UnsetPreset = _.last(this.presets);
         this.datefilter = {
-            start: NonePreset.start,
-            end: NonePreset.end
+            start: UnsetPreset.start,
+            end: UnsetPreset.end
         };
-        this.dateFilterPreset = 'None';
+        this.dateFilterPreset = 'Unset';
     }
 
     $onChanges(changes) {
@@ -131,7 +131,7 @@ class DaterangeFilterController {
                 min.utcOffset('+00:00', true).startOf('day');
                 max.utcOffset('+00:00', true).endOf('day');
             }
-            if (preset === 'None') {
+            if (preset === 'Unset') {
                 filterParams[this.filter.params.min] = null;
                 filterParams[this.filter.params.max] = null;
             } else {
@@ -146,7 +146,7 @@ class DaterangeFilterController {
     }
 
     clearDateFilter(isResetAll) {
-        this.datefilterPreset = 'None';
+        this.datefilterPreset = 'Unset';
         this.hasDatetimeFilter = false;
         if (!isResetAll) {
             this.onFilterChange({

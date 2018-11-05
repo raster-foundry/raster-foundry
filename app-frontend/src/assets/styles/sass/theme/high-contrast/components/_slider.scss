@@ -1,4 +1,5 @@
 .rzslider {
+  height: 30px;
 
   .rz-bar {
     background: $shade-light;
@@ -18,7 +19,11 @@
     background-color: darken($shade-light, 10%);
 
     .rz-tick-value {
-      color: rgba($text-base, .5);
+      color: $text-base;
     }
+  }
+
+  &.dark .rz-bubble {
+    color: $text-base;
   }
 }

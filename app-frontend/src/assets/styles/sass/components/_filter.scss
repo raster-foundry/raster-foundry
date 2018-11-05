@@ -1,23 +1,28 @@
 .filter {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
   font-size: 1.2rem;
   position: relative;
-  &:not(:last-child) {
-    margin-bottom: 1.2rem;
-  }
-  & > *:not(:last-child) {
-    margin-right: 1.2rem !important;
-  }
+  
   label {
-    color: $shade-light;
-    width: 80px;
+    color: $white;
     font-size: 1.2rem;
     flex-shrink: 0;
   }
+  
   .selectize-dropdown {
-      width: calc(70%);
+    width: calc(70%);
+  }
+
+  .form-control {
+    font-size: inherit;
+  }
+
+  .checkbox,
+  .checkbox:not(.active) {
+    color: $white;
+    
+    &:before {
+      color: $text-base;
+    }
   }
 }
 
