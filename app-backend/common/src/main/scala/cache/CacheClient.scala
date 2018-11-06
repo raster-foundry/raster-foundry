@@ -29,8 +29,8 @@ class CacheClient(client: => MemcachedClient)
 
   import CacheClientThreadPool._
 
-  val cacheEnabled: Boolean = Config.memcached.enabled
-  val localCacheEnabled: Boolean = Config.memcached.localCacheEnabled
+  val cacheEnabled: Boolean = false // Config.memcached.enabled
+  val localCacheEnabled: Boolean = false // Config.memcached.localCacheEnabled
   val localCacheSize: Int = Config.memcached.localCacheSize
   val keySize: Int = Config.memcached.keySize
 
