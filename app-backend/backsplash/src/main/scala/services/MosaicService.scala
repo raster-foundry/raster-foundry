@@ -6,7 +6,7 @@ import com.rasterfoundry.authentication.Authentication
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.io.Histogram
 import com.rasterfoundry.backsplash.nodes.ProjectNode
-import com.rasterfoundry.backsplash.parameters.PathParameters._
+import com.rasterfoundry.backsplash.parameters.Parameters._
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{ProjectDao, UserDao}

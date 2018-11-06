@@ -11,7 +11,7 @@ import com.rasterfoundry.authentication.Authentication
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.maml.BacksplashMamlAdapter
-import com.rasterfoundry.backsplash.parameters.PathParameters._
+import com.rasterfoundry.backsplash.parameters.Parameters._
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.database.ToolRunDao

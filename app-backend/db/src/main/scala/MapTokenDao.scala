@@ -138,4 +138,18 @@ object MapTokenDao extends Dao[MapToken] {
     val newMapToken = MapToken.Create(name, project, toolRun, Some(ownerId))
     insert(newMapToken, user)
   }
+
+  def checkProject(projectId: UUID)(
+      mapToken: UUID): ConnectionIO[Option[MapToken]] =
+    query
+      .filter(fr"project_id=${projectId}")
+      .filter(fr"id=${mapToken}")
+      .selectOption
+
+  def checkAnalysis(analysisId: UUID)(
+      mapToken: UUID): ConnectionIO[Option[MapToken]] =
+    query
+      .filter(fr"toolrun_id=${analysisId}")
+      .filter(fr"id=${mapToken}")
+      .selectOption
 }
