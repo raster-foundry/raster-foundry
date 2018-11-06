@@ -76,17 +76,19 @@ object Filters {
     )
   }
 
-  def searchQP(searchParams: SearchQueryParameters, cols: List[String]): List[Option[Fragment]] =
+  def searchQP(searchParams: SearchQueryParameters,
+               cols: List[String]): List[Option[Fragment]] =
     List(
       searchParams.search.getOrElse("") match {
-        case ""  => None
+        case "" => None
         case searchString =>
           val searchF: List[Option[Fragment]] = cols.map(col => {
             val patternString: String = "%" + searchString.toUpperCase() + "%"
             Some(Fragment.const(s"UPPER($col)") ++ fr"LIKE ${patternString}")
           })
-          Some(Fragment.const("(") ++ Fragments
-            .orOpt(searchF: _*) ++ Fragment.const(")"))
+          Some(
+            Fragment.const("(") ++ Fragments
+              .orOpt(searchF: _*) ++ Fragment.const(")"))
       }
     )
 
