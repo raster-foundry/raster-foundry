@@ -326,15 +326,6 @@ trait Filterables extends RFMeta with LazyLogging {
 
     }
 
-  implicit val combinedImageQueryparamsFilter
-    : Filterable[Any, CombinedImageQueryParams] =
-    Filterable[Any, CombinedImageQueryParams] {
-      cips: CombinedImageQueryParams =>
-        Filters.timestampQP(cips.timestampParams) ++ Filters.imageQP(
-          cips.imageParams
-        )
-    }
-
   implicit val thumbnailParamsFilter
     : Filterable[Any, ThumbnailQueryParameters] =
     Filterable[Any, ThumbnailQueryParameters] {
