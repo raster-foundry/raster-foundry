@@ -8,7 +8,7 @@
 - Added map token and authorization header authentication to backsplash [\#4271](https://github.com/raster-foundry/raster-foundry/pull/4271)
 - Added service-level and total error-handling to backsplash tile server [\#4258](https://github.com/raster-foundry/raster-foundry/pull/4258)
 - Administration
-  - Allow platforms to set a "From" email field in order to change notification "From" name [#\4214](https://github.com/raster-foundry/raster-foundry/pull/4214) 
+  - Allow platforms to set a "From" email field in order to change notification "From" name [#\4214](https://github.com/raster-foundry/raster-foundry/pull/4214)
   - Allow platform administrators to create uploads for other users within their platforms [\#4237](https://github.com/raster-foundry/raster-foundry/pull/4237)
 
 ### Changed
@@ -36,6 +36,7 @@
 - Kick off ingests for scenes without scene types also [\#4260](https://github.com/raster-foundry/raster-foundry/pull/4260)
 - Separated connection and transaction execution contexts in database tests [\#4264](https://github.com/raster-foundry/raster-foundry/pull/4264)
 - More carefully managed system resources to prevent non-terminating asynchronous workflows [\#4268](https://github.com/raster-foundry/raster-foundry/pull/4268)
+- Make search feature more secure for endpoints that supply such query parameter [\#4280](https://github.com/raster-foundry/raster-foundry/pull/4280)
 
 ### Security
 
