@@ -33,8 +33,10 @@ export const projectReducer = typeToReducer({
             }, action.payload.options);
             const mapWrapper = state.projectMap;
             let editHandler;
-            if (geometry.type === 'Polygon') {
-                let coordinates = geometry.coordinates[0].map(c => [c[1], c[0]]);
+            if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
+                let coordinates = geometry.type === 'Polygon' ?
+                    geometry.coordinates[0].map(c => [c[1], c[0]]) :
+                    geometry.coordinates[0][0].map(c => [c[1], c[0]]);
                 let polygonLayer = L.polygon(
                     coordinates,
                     options
