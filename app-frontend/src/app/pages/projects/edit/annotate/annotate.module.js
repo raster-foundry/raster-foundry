@@ -376,8 +376,7 @@ class AnnotateController {
     doPanToAnnotation(annotation) {
         if (!this.sidebarDisabled) {
             this.getMap().then(mapWrapper => {
-                let panTo = annotation;
-                panTo = turfCenter(annotation);
+                let panTo = turfCenter(annotation);
                 mapWrapper.map.panTo([
                     panTo.geometry.coordinates[1],
                     panTo.geometry.coordinates[0]
