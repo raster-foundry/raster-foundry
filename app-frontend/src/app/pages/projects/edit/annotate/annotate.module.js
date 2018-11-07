@@ -345,7 +345,10 @@ class AnnotateController {
     /* eslint-enable no-underscore-dangle */
 
     setLayerStyle(target, color, iconClass) {
-        if (target.feature.geometry.type === 'Polygon') {
+        if (
+            target.feature.geometry.type === 'Polygon' ||
+            target.feature.geometry.type === 'MultiPolygon'
+          ) {
             target.setStyle({'color': color});
         } else if (target.feature.geometry.type === 'Point') {
             target.setIcon(L.divIcon({'className': iconClass}));
@@ -373,10 +376,7 @@ class AnnotateController {
     doPanToAnnotation(annotation) {
         if (!this.sidebarDisabled) {
             this.getMap().then(mapWrapper => {
-                let panTo = annotation;
-                if (annotation.geometry.type === 'Polygon') {
-                    panTo = turfCenter(annotation);
-                }
+                let panTo = turfCenter(annotation);
                 mapWrapper.map.panTo([
                     panTo.geometry.coordinates[1],
                     panTo.geometry.coordinates[0]
