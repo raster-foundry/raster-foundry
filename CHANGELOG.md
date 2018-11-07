@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- Ensured tiles of non-standard sizes get resampled to the appropriate size before reaching users [\#4281](https://github.com/raster-foundry/raster-foundry/pull/4281)
+
 ### Security
 
 ## [1.14.0](https://github.com/raster-foundry/raster-foundry/tree/1.14.0) (2018-11-08)
