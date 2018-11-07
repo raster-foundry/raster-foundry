@@ -204,6 +204,19 @@ object ProjectDao
     }
   }
 
+  def updateProjectExtentIO(projectId: UUID): ConnectionIO[Int] = sql"""
+    UPDATE projects
+    SET extent = subquery.extent
+    FROM
+     (SELECT ST_SETSRID(ST_EXTENT(scenes.data_footprint), 3857) AS extent
+      FROM projects
+      INNER JOIN scenes_to_projects ON project_id = projects.id
+      INNER JOIN scenes ON scenes.id = scene_id
+      WHERE projects.id = ${projectId}
+      GROUP BY projects.id) AS subquery
+    WHERE projects.id = ${projectId};
+    """.update.run
+
   def addScenesToProject(sceneIds: NonEmptyList[UUID],
                          projectId: UUID,
                          isAccepted: Boolean): ConnectionIO[Int] = {
@@ -246,18 +259,7 @@ object ProjectDao
           "INSERT INTO scenes_to_projects (scene_id, project_id, accepted, scene_order, mosaic_definition) VALUES (?, ?, ?, ?, ?)"
         Update[SceneToProject](inserts).updateMany(scenesToProject)
       }
-      _ <- { sql"""
-               UPDATE projects
-               SET extent = subquery.extent
-               FROM
-                 (SELECT ST_SETSRID(ST_EXTENT(scenes.data_footprint), 3857) AS extent
-                  FROM projects
-                  INNER JOIN scenes_to_projects ON project_id = projects.id
-                  INNER JOIN scenes ON scenes.id = scene_id
-                  WHERE projects.id = ${projectId}
-                  GROUP BY projects.id) AS subquery
-               WHERE projects.id = ${projectId};
-              """.update.run }
+      _ <- updateProjectExtentIO(projectId)
       _ <- updateSceneIngestStatus(projectId)
       scenesToIngest <- SceneWithRelatedDao.getScenesToIngest(projectId)
       _ <- scenesToIngest traverse { (scene: Scene) =>
@@ -341,9 +343,12 @@ object ProjectDao
     val f: Option[Fragment] = sceneIds.toNel.map(Fragments.in(fr"scene_id", _))
     f match {
       case fragO @ Some(_) =>
-        val deleteQuery = fr"DELETE FROM scenes_to_projects" ++
+        val deleteQuery: Fragment = fr"DELETE FROM scenes_to_projects" ++
           Fragments.whereAndOpt(f, Some(fr"project_id = ${projectId}"))
-        deleteQuery.update.run
+        for {
+          rowsDeleted <- deleteQuery.update.run
+          _ <- updateProjectExtentIO(projectId)
+        } yield rowsDeleted
       case _ => 0.pure[ConnectionIO]
     }
   }
