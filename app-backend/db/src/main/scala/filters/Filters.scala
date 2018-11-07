@@ -77,20 +77,20 @@ object Filters {
   }
 
   def searchQP(searchParams: SearchQueryParameters,
-               cols: List[String]): List[Option[Fragment]] = {
+               cols: List[String]): List[Option[Fragment]] =
     List(
-      searchParams.search.map(valueToMatch => {
-        Fragment.const(
-          "(" ++ cols
-            .map(col => {
-              val namePattern: String = "'%" + valueToMatch.toUpperCase() + "%'"
-              s"UPPER($col) LIKE $namePattern"
-            })
-            .mkString(" OR ") ++ ")"
-        )
-      })
+      searchParams.search.getOrElse("") match {
+        case "" => None
+        case searchString =>
+          val searchF: List[Option[Fragment]] = cols.map(col => {
+            val patternString: String = "%" + searchString.toUpperCase() + "%"
+            Some(Fragment.const(s"UPPER($col)") ++ fr"LIKE ${patternString}")
+          })
+          Some(
+            Fragment.const("(") ++ Fragments
+              .orOpt(searchF: _*) ++ Fragment.const(")"))
+      }
     )
-  }
 
   def activationQP(
       activationParams: ActivationQueryParameters): List[Option[Fragment]] = {
