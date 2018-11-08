@@ -5,7 +5,7 @@ class ProjectsScenesController {
     constructor( // eslint-disable-line max-params
         $log, $state, $scope, $timeout,
         modalService, projectService, RasterFoundryRepository, uploadService,
-        sceneService, authService, paginationService,
+        sceneService, authService, paginationService, mapUtilsService,
         platform
     ) {
         'ngInject';
@@ -147,12 +147,21 @@ class ProjectsScenesController {
             () => {
                 this.$parent.removeHoveredScene();
                 this.fetchPage();
-                this.$parent.layerFromProject();
+                this.fitMapAndRenderLayer(this.$parent.projectId);
             },
             () => {
                 this.$log.log('error removing scene from project');
             }
         );
+    }
+
+    fitMapAndRenderLayer(projectId) {
+        this.projectService.fetchProject(projectId).then(project => {
+            this.$parent.getMap().then(m => {
+                this.mapUtilsService.fitMapToProject(m, project);
+                this.$parent.layerFromProject();
+            });
+        });
     }
 
     shareModal(project) {

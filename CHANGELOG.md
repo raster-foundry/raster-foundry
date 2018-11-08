@@ -19,6 +19,7 @@
 - Upgraded scala typelevel ecosystem [\#4215](https://github.com/raster-foundry/raster-foundry/pull/4215)
 - Images no longer require a non-empty list of bands when creating scenes [\#4241](https://github.com/raster-foundry/raster-foundry/pull/4241)
 - Switched to semi-automatic json codec derivation for query parameters [\#4267](https://github.com/raster-foundry/raster-foundry/pull/4267)
+- Added recalculation and update of project extent after scene deletion [\#4283](https://github.com/raster-foundry/raster-foundry/pull/4283)
 
 ### Deprecated
 
