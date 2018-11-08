@@ -22,4 +22,14 @@
       <strong>Created by: {{$ctrl.templateOwner}}</strong>
     </div>
   </div>
+  <div uib-dropdown class="dropdown template-delete-dropdown" ng-if="$ctrl.showDelete">
+    <button class="btn btn-tiny btn-ghost" uib-dropdown-toggle>
+      <i class="icon-menu"></i>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-light dropdown-menu-right" uib-dropdown-menu role="menu">
+      <li>
+        <a class="color-danger" ng-click="$ctrl.onClickDeleteTemplate()">Delete</a>
+      </li>
+    </ul>
+  </div>
 </div>
