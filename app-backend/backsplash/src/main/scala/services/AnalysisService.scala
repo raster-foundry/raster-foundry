@@ -63,7 +63,7 @@ class AnalysisService(
             logger.info(s"Requesting Analysis: ${analysisId}")
             val tr = ToolRunDao.query.filter(analysisId).select.transact(xa)
 
-            val mapAlgebraAST = tr.flatMap { toolRun =>
+            val mapAlgebraAST = tr map { toolRun =>
               logger.info(s"Getting AST")
               val ast = toolRun.executionParameters
                 .as[MapAlgebraAST]
@@ -71,11 +71,10 @@ class AnalysisService(
                 .toOption
                 .getOrElse(throw MetadataException(
                   s"Could not decode AST ${analysisId} from database"))
-              IO.pure(
-                ast
-                  .find(UUID.fromString(node))
-                  .getOrElse(throw MetadataException(
-                    s"Node ${node} missing from in AST ${analysisId}")))
+              ast
+                .find(UUID.fromString(node))
+                .getOrElse(throw MetadataException(
+                  s"Node ${node} missing from in AST ${analysisId}"))
             }
 
             logger.debug(s"AST: ${mapAlgebraAST}")
