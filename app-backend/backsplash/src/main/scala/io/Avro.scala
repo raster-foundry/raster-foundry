@@ -8,7 +8,7 @@ import cats.implicits._
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.database.LayerAttributeDao
 import com.rasterfoundry.datamodel.{MosaicDefinition, SingleBandOptions}
-import com.rf.azavea.backsplash.Color
+import com.rasterfoundry.backsplash.Color
 import doobie.implicits._
 import geotrellis.proj4.{WebMercator, LatLng}
 import geotrellis.raster.histogram._
@@ -23,7 +23,6 @@ import geotrellis.vector.{Extent, Polygon, Projected}
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
-import scala.util._
 import java.util.UUID
 
 object Avro extends RollbarNotifier with HistogramJsonFormats {
@@ -39,7 +38,7 @@ object Avro extends RollbarNotifier with HistogramJsonFormats {
       greenBand: Int,
       blueBand: Int,
       size: Int = 64,
-      attributeStore: AttributeStore = store): IO[MultibandTile] = IO {
+      attributeStore: AttributeStore = store): IO[MultibandTile] = {
     require(size < 4096, s"$size is too large to stitch")
     minZoomLevel(attributeStore, mosaicDefinition.sceneId.toString, size).map {
       case (layerId, re) =>
@@ -50,32 +49,33 @@ object Avro extends RollbarNotifier with HistogramJsonFormats {
           .result
           .stitch
           .crop(re.extent)
-    } match {
-      case Success(raster) =>
-        raster.tile.subsetBands(redBand, greenBand, blueBand)
-      case Failure(e) => throw e
+          .tile
+          .subsetBands(redBand, greenBand, blueBand)
     }
   }
 
   def minZoomLevel(store: AttributeStore,
                    layerName: String,
-                   size: Int): Try[(LayerId, RasterExtent)] = {
-    def forZoom(zoom: Int): Try[(LayerId, RasterExtent)] = {
+                   size: Int): IO[(LayerId, RasterExtent)] = {
+    def forZoom(zoom: Int, maxZoom: Int): IO[(LayerId, RasterExtent)] = {
       val currentId = LayerId(layerName, zoom)
-      val meta = Try {
-        store.readMetadata[TileLayerMetadata[SpatialKey]](currentId)
-      }
-      val rasterExtent = meta.map { tlm =>
-        (tlm, dataRasterExtent(tlm))
-      }
-      rasterExtent.map {
-        case (tlm, re) =>
-          logger.debug(s"$currentId has (${re.cols},${re.rows}) pixels")
-          if (re.cols >= size || re.rows >= size) (currentId, re)
-          else forZoom(zoom + 1).getOrElse((currentId, re))
-      }
+      for {
+        meta <- IO {
+          store.readMetadata[TileLayerMetadata[SpatialKey]](currentId)
+        }
+        rasterExtent = dataRasterExtent(meta)
+        result <- if (rasterExtent.cols >= size || rasterExtent.rows >= size || zoom == maxZoom) {
+          IO.pure(currentId, rasterExtent)
+        } else {
+          forZoom(zoom + 1, maxZoom)
+        }
+      } yield result
     }
-    forZoom(1)
+
+    for {
+      maxZoom <- LayerAttributeDao.unsafeMaxZoomForLayer(layerName).transact(xa)
+      result <- forZoom(1, maxZoom._2)
+    } yield result
   }
 
   def dataRasterExtent(md: TileLayerMetadata[_]): RasterExtent = {
@@ -138,7 +138,7 @@ object Avro extends RollbarNotifier with HistogramJsonFormats {
       layoutLevel: LayoutLevel,
       extent: Extent): OptionT[IO, Raster[MultibandTile]] = {
     val layerId = LayerId(md.sceneId.toString, layoutLevel.zoom)
-    val tileIO = IO(Try {
+    val tileIO = IO {
       S3CollectionLayerReader(store)
         .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](
           layerId)
@@ -148,13 +148,14 @@ object Avro extends RollbarNotifier with HistogramJsonFormats {
         .crop(extent)
         .tile
         .resample(256, 256)
-    } match {
-      case Success(tile) => Option(Raster(tile, extent))
-      case Failure(e) =>
+    } map { tile =>
+      Some(Raster(tile, extent))
+    } handleErrorWith {
+      case e =>
         logger.error(
           s"Query layer ${layerId} at zoom ${layoutLevel.zoom}for $extent: ${e.getMessage}")
-        None
-    })
+        IO { None }
+    }
     OptionT(tileIO)
   }
 
@@ -239,4 +240,50 @@ object Avro extends RollbarNotifier with HistogramJsonFormats {
     IO(reader.read(key))
   }
 
+  def tileForExtent(
+      extent: Extent,
+      cellSize: CellSize,
+      singleBandOptions: Option[SingleBandOptions.Params],
+      singleBand: Boolean,
+      mosaicDefinition: MosaicDefinition): IO[Option[Raster[Tile]]] = {
+    val reprojectedExtent = extent.reproject(LatLng, WebMercator)
+    val resampleRows = (reprojectedExtent.height / cellSize.height).toInt
+    val resampleCols = (reprojectedExtent.width / cellSize.width).toInt
+    for {
+      minZoomAndExtent <- minZoomLevel(store,
+                                       mosaicDefinition.sceneId.toString,
+                                       resampleCols)
+      (layerId, rasterExtent) = minZoomAndExtent
+      hists <- layerHistogram(mosaicDefinition.sceneId)
+      stitched <- IO {
+        S3CollectionLayerReader(store)
+          .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](
+            layerId)
+          .where(Intersects(reprojectedExtent))
+          .result
+          .stitch
+          .crop(reprojectedExtent)
+      }
+      resampled = stitched.resample(resampleCols, resampleRows)
+    } yield {
+      if (!singleBand) {
+        Some(
+          Raster(mosaicDefinition.colorCorrections
+                   .colorCorrect(resampled.tile, hists, None)
+                   .color,
+                 extent))
+      } else {
+        singleBandOptions flatMap { params =>
+          resampled.tile.bands lift params.band map { tile =>
+            Color.colorSingleBandTile(
+              tile,
+              resampled.extent,
+              hists(params.band),
+              params
+            )
+          }
+        }
+      }
+    }
+  }
 }

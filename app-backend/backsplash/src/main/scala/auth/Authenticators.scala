@@ -18,11 +18,6 @@ import org.http4s.util.CaseInsensitiveString
 
 import java.util.UUID
 
-object TokenQueryParamMatcher
-    extends OptionalQueryParamDecoderMatcher[String]("token")
-object MapTokenQueryParamMatcher
-    extends OptionalQueryParamDecoderMatcher[UUID]("mapToken")
-
 object Authenticators extends Authentication {
   implicit val xa = RFTransactor.xa
 

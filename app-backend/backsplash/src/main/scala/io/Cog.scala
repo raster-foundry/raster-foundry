@@ -3,11 +3,11 @@ package com.rasterfoundry.backsplash.io
 import cats.data.OptionT
 import cats.effect.{IO, Timer}
 import cats.implicits._
+import com.rasterfoundry.backsplash.Color
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.datamodel.{MosaicDefinition, SingleBandOptions}
-import com.rf.azavea.backsplash.Color
-import geotrellis.proj4.WebMercator
+import geotrellis.proj4.{io => _, _}
 import geotrellis.raster.{CellSize, Raster, RasterExtent, io => _, _}
 import geotrellis.raster.io.geotiff.AutoHigherResolution
 import geotrellis.server.cog.util.CogUtils
@@ -75,10 +75,9 @@ object Cog extends RollbarNotifier {
         throw MetadataException("No histogram found for band")
       }
 
-      rawSingleBandValues match {
-        case false =>
-          Color.colorSingleBandTile(tile, extent, histogram, singleBandOptions)
-        case _ => Raster(tile, extent)
+      if (rawSingleBandValues) Raster(tile, extent)
+      else {
+        Color.colorSingleBandTile(tile, extent, histogram, singleBandOptions)
       }
     }
     OptionT(tileIO.attempt.map(_.toOption))
@@ -115,4 +114,55 @@ object Cog extends RollbarNotifier {
     }
     OptionT(tileIO.attempt.map(_.toOption))
   }
+
+  def tileForExtent(
+      extent: Extent,
+      cellSize: CellSize,
+      singleBandOptions: Option[SingleBandOptions.Params],
+      singleBand: Boolean,
+      mosaicDefinition: MosaicDefinition): IO[Option[Raster[Tile]]] =
+    for {
+      tiff <- mosaicDefinition.ingestLocation map {
+        CogUtils.fromUri(_)
+      } getOrElse {
+        throw UningestedScenesException(
+          s"Scene ${mosaicDefinition.sceneId} has no ingest location")
+      }
+      reprojectedExtent = extent.reproject(LatLng, tiff.crs)
+      hists <- Avro.layerHistogram(mosaicDefinition.sceneId)
+      overview = CogUtils.closestTiffOverview(tiff,
+                                              cellSize,
+                                              AutoHigherResolution)
+      cropped <- CogUtils.cropGeoTiff(overview, reprojectedExtent)
+      resampleRows = (reprojectedExtent.height / cellSize.height).toInt
+      resampleCols = (reprojectedExtent.width / cellSize.width).toInt
+      _ <- IO {
+        logger.debug(
+          s"Target cols: ${resampleCols}, target rows: ${resampleRows}")
+      }
+      resampled = cropped.resample(resampleCols, resampleRows)
+      corrected = Color
+    } yield {
+      if (!singleBand) {
+        Some(
+          Raster(
+            mosaicDefinition.colorCorrections
+              .colorCorrect(resampled.tile, hists, None)
+              .color,
+            resampled.extent
+          )
+        )
+      } else {
+        singleBandOptions flatMap { params =>
+          resampled.tile.bands lift params.band map { tile =>
+            Color.colorSingleBandTile(
+              tile,
+              resampled.extent,
+              hists(params.band),
+              params
+            )
+          }
+        }
+      }
+    }
 }

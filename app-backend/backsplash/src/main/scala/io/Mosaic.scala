@@ -120,4 +120,20 @@ object Mosaic extends RollbarNotifier {
         throw UnknownSceneTypeException(
           "Unable to fetch tiles with unknown scene type")
     }
+
+  def getMosaicTileForExtent(
+      extent: Extent,
+      cellSize: CellSize,
+      singleBandOptions: Option[SingleBandOptions.Params],
+      singleBand: Boolean)(md: MosaicDefinition): IO[Option[Raster[Tile]]] = {
+    md.sceneType match {
+      case Some(SceneType.COG) =>
+        Cog.tileForExtent(extent, cellSize, singleBandOptions, singleBand, md)
+      case Some(SceneType.Avro) =>
+        Avro.tileForExtent(extent, cellSize, singleBandOptions, singleBand, md)
+      case None =>
+        throw UnknownSceneTypeException(
+          "Unable to fetch tiles with unknown scene type")
+    }
+  }
 }

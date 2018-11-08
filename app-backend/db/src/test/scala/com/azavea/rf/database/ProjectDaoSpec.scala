@@ -236,75 +236,12 @@ class ProjectDaoSpec
               "; Correct number of scenes was not added"
             )
 
+            assert(
+              (addedScenes map { _.name } toSet) == (scenes map { _.name } toSet),
+              "; Some scenes were returned that were not inserted, or the opposite"
+            )
+
             true
-          }
-      }
-    }
-  }
-
-  // listProjectSceneOrder
-  test("list project scenes order") {
-    check {
-      forAll {
-        (user: User.Create,
-         org: Organization.Create,
-         scenes: List[Scene.Create],
-         project: Project.Create,
-         pageRequest: PageRequest) =>
-          {
-            val projAndScenesInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
-              case (dbOrg: Organization, dbUser: User) => {
-                val scenesInsertIO = unsafeGetRandomDatasource flatMap {
-                  (dbDatasource: Datasource) =>
-                    {
-                      scenes.traverse(
-                        (scene: Scene.Create) => {
-                          SceneDao.insert(fixupSceneCreate(dbUser,
-                                                           dbDatasource,
-                                                           scene),
-                                          dbUser)
-                        }
-                      )
-                    }
-                }
-                val projectInsertIO =
-                  ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
-                                           dbUser)
-                (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
-              }
-            }
-
-            val addScenesWithProjectAndUserAndScenesIO = projAndScenesInsertWithUserIO flatMap {
-              case (dbProject: Project,
-                    dbScenes: List[Scene.WithRelated],
-                    dbUser: User) => {
-                ProjectDao.addScenesToProject(dbScenes map { _.id },
-                                              dbProject.id) map { _ =>
-                  (dbProject, dbUser, dbScenes)
-                }
-              }
-            }
-
-            val listAddedSceneIDsIO = addScenesWithProjectAndUserAndScenesIO flatMap {
-              case (dbProject: Project,
-                    dbUser: User,
-                    dbScenes: List[Scene.WithRelated]) => {
-                // TODO test the normal list endpoint here
-                ProjectScenesDao.listProjectScenes(
-                  dbProject.id,
-                  pageRequest,
-                  CombinedSceneQueryParams()) map {
-                  (resp: PaginatedResponse[Scene.ProjectScene]) =>
-                    (
-                      resp.results map { _.id },
-                      dbScenes map { _.id }
-                    )
-                }
-              }
-            }
-            val (foundScenes, createdScenes) =
-              xa.use(t => listAddedSceneIDsIO.transact(t)).unsafeRunSync
-            foundScenes.toSet == createdScenes.toSet
           }
       }
     }

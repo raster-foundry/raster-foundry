@@ -17,12 +17,13 @@ import cats.data._
 import cats.effect._
 import cats.implicits._
 import doobie.implicits._
-import geotrellis.raster.Tile
-import geotrellis.vector.{Projected, Polygon}
+import geotrellis.raster.{CellSize, Tile}
+import geotrellis.vector.{Projected, Polygon, Extent}
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import geotrellis.server._
+import geotrellis.server.cog.util.CogUtils
 import org.http4s._
 import org.http4s.dsl._
 import org.http4s.dsl.io._
@@ -45,15 +46,6 @@ class MosaicService(
     with RollbarNotifier {
 
   implicit val xa = RFTransactor.xa
-
-  object RedBandOptionalQueryParamMatcher
-      extends OptionalQueryParamDecoderMatcher[Int]("redBand")
-  object GreenBandOptionalQueryParamMatcher
-      extends OptionalQueryParamDecoderMatcher[Int]("greenBand")
-  object BlueBandOptionalQueryParamMatcher
-      extends OptionalQueryParamDecoderMatcher[Int]("blueBand")
-  object TagOptionalQueryParamMatcher
-      extends OptionalQueryParamDecoderMatcher[String]("tag")
 
   val service: AuthedService[User, IO] =
     H.handle {
@@ -132,7 +124,7 @@ class MosaicService(
           case authedReq @ POST -> Root / UUIDWrapper(projectId) / "histogram" / _
                 :? RedBandOptionalQueryParamMatcher(redOverride)
                 :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user => {
+                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
             // Compile to a byte array, decode that as a string, and do something with the results
             authedReq.req.body.compile.to[Array] flatMap { uuids =>
               decode[List[UUID]](
@@ -155,7 +147,53 @@ class MosaicService(
                   BadRequest("Could not decode body as sequence of UUIDs")
               }
             }
-          }
+
+          case authedReq @ GET -> Root / UUIDWrapper(projectId) / "export" / _
+                :? ExtentQueryParamMatcher(extent)
+                :? ZoomQueryParamMatcher(zoom)
+                :? RedBandOptionalQueryParamMatcher(redOverride)
+                :? GreenBandOptionalQueryParamMatcher(greenOverride)
+                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
+            val authorizationF =
+              ProjectDao
+                .authorized(user,
+                            ObjectType.Project,
+                            projectId,
+                            ActionType.View)
+                .transact(xa) map { authResult =>
+                if (!authResult)
+                  throw NotAuthorizedException(
+                    s"User ${user.id} not authorized to view project $projectId")
+                else
+                  authResult
+              }
+            def getTileResult(
+                project: Project,
+                cellSize: CellSize,
+                projectedExtent: Extent): IO[Interpreted[Tile]] = {
+              val projectNode = ProjectNode(
+                project.id,
+                redOverride,
+                greenOverride,
+                blueOverride,
+                project.isSingleBand,
+                project.singleBandOptions
+              )
+              val eval = LayerExtent.identity[ProjectNode](projectNode)
+              eval(projectedExtent, cellSize)
+            }
+            for {
+              authed <- authorizationF
+              cellSize = CogUtils.tmsLevels(zoom).cellSize
+              project <- ProjectDao.unsafeGetProjectById(projectId).transact(xa)
+              result <- getTileResult(project, cellSize, extent)
+              resp <- result match {
+                case Valid(tile) =>
+                  Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
+                case Invalid(e) =>
+                  BadRequest(e.toString)
+              }
+            } yield resp
         }
       }
     }
