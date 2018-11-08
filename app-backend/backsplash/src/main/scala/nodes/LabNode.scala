@@ -203,7 +203,11 @@ object LabNode extends RollbarNotifier with HistogramJsonFormats {
                           NEL(RasterExtent(
                                 Extent.fromString(
                                   bbox.substring(1, bbox.length() - 1)),
-                                CellSize(256, 256)),
+                                // TODO: This needs needs to be done more intelligently? It's causing massive issues
+                                // Noted issues:
+                                // Tiles are timing out, and never releasing the hikari connection. This causes
+                                // connection starvation and breaks everything.
+                                CellSize(30, 30)),
                               Nil)
                         }
                     case _ =>
