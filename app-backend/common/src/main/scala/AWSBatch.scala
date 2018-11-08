@@ -1,4 +1,4 @@
-package com.azavea.rf.common
+package com.rasterfoundry.common
 
 import java.util.UUID
 
@@ -49,9 +49,9 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
           throw e
       }
     } else {
-      logger.warn(
+      logger.info(
         s"Not submitting AWS Batch -- not in production or staging, in ${awsbatchConfig.environment}")
-      logger.warn(
+      logger.info(
         s"Job Request: ${jobName} -- ${jobDefinition} -- ${parameters}")
     }
 

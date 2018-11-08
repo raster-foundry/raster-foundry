@@ -1,8 +1,8 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 
@@ -64,7 +64,7 @@ class SceneWithRelatedDaoSpec
             } yield { (dbScenes1, listedScenes) }
 
             val (insertedScenes, listedScenes) =
-              scenesIO.transact(xa).unsafeRunSync
+              xa.use(t => scenesIO.transact(t)).unsafeRunSync
             val insertedNamesSet = insertedScenes.toSet map {
               (scene: Scene.WithRelated) =>
                 scene.name
@@ -112,7 +112,7 @@ class SceneWithRelatedDaoSpec
             } yield { (dbScenes, retrievedScenes) }
 
             val (insertedScenes, scenesInProject) =
-              scenesToIngestIO.transact(xa).unsafeRunSync
+              xa.use(t => scenesToIngestIO.transact(t)).unsafeRunSync
             val ingestableScenesIds = scenesInProject filter { scene =>
               (scene.statusFields.ingestStatus, scene.sceneType) match {
                 case (_, Some(SceneType.COG))       => false

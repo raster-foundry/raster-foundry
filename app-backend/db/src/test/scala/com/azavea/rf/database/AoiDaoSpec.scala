@@ -1,8 +1,8 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 import io.circe._
 import io.circe.syntax._
@@ -27,7 +27,9 @@ class AoiDaoSpec
     with PropTestHelpers {
 
   test("list AOIs") {
-    AoiDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
+    xa.use(t => AoiDao.query.list.transact(t))
+      .unsafeRunSync
+      .length should be >= 0
   }
 
   test("insert an AOI") {
@@ -52,7 +54,7 @@ class AoiDaoSpec
               }
             }
             val (insertedShape, insertedAoi) =
-              aoiInsertIO.transact(xa).unsafeRunSync
+              xa.use(t => aoiInsertIO.transact(t)).unsafeRunSync
 
             assert(insertedAoi.shape == insertedShape.id,
                    "Shape should round trip with equality")
@@ -98,8 +100,9 @@ class AoiDaoSpec
                  originalShape,
                  affectedRows,
                  updatedAoi,
-                 updatedShape) =
-              aoiInsertWithOrgUserProjectIO.transact(xa).unsafeRunSync
+                 updatedShape) = xa
+              .use(t => aoiInsertWithOrgUserProjectIO.transact(t))
+              .unsafeRunSync
 
             assert(affectedRows == 1, "Only one row should be updated")
             assert(updatedAoi.shape == updatedShape.id,
@@ -141,7 +144,7 @@ class AoiDaoSpec
               }
             }
 
-            aoiDeleteIO.transact(xa).unsafeRunSync == 1
+            xa.use(t => aoiDeleteIO.transact(t)).unsafeRunSync == 1
           }
       }
     }
@@ -193,7 +196,8 @@ class AoiDaoSpec
               }
             }
 
-            val (dbAois, listedAois) = aoisForProject.transact(xa).unsafeRunSync
+            val (dbAois, listedAois) =
+              xa.use(t => aoisForProject.transact(t)).unsafeRunSync
             (dbAois.toSet map { (aoi: AOI) =>
               aoi.id
             }) == (listedAois.results.toSet map { (aoi: AOI) =>
@@ -251,7 +255,7 @@ class AoiDaoSpec
                                                       page)
             } yield (dbAois1, listedAois)
             val (insertedAois, listedAois) =
-              aoisInsertAndListIO.transact(xa).unsafeRunSync
+              xa.use(t => aoisInsertAndListIO.transact(t)).unsafeRunSync
             val insertedAoiAreaSet = insertedAois map { _.id } toSet
             val listedAoisAreaSet = listedAois.results map { _.id } toSet
 

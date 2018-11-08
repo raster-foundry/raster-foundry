@@ -135,28 +135,31 @@
 
   <!--Default Footer-->
   <div class="modal-footer">
-    <button type="button" class="btn pull-left"
-            ng-if="$ctrl.allowClose() && !$ctrl.allowDone()"
-            ng-click="$ctrl.handleClose()">
-      Cancel
-    </button>
-
-    <button type="button" class="btn"
-            ng-if="$ctrl.hasPrevious()"
-            ng-click="$ctrl.handlePrevious()"
-            ng-disabled="!$ctrl.allowPrevious()">
-      Back
-    </button>
-    <button type="button" class="btn btn-primary"
-            ng-if="$ctrl.hasNext()"
-            ng-click="$ctrl.handleNext()"
-            ng-disabled="!$ctrl.allowNext()">
-      Next
-    </button>
-    <button type="button" class="btn btn-primary"
-            ng-if="$ctrl.allowDone()"
-            ng-click="$ctrl.handleDone()">
-      Done
-    </button>
+    <div class="footer-section left">
+      <button type="button" class="btn pull-left"
+              ng-if="$ctrl.allowClose() && !$ctrl.allowDone()"
+              ng-click="$ctrl.handleClose()">
+        Cancel
+      </button>
+      <button type="button" class="btn"
+              ng-if="$ctrl.allowDone()"
+              ng-click="$ctrl.handleDone()">
+        Close
+      </button>
+    </div>
+    <div class="footer-section right">
+      <button type="button" class="btn"
+              ng-if="$ctrl.hasPrevious()"
+              ng-click="$ctrl.handlePrevious()"
+              ng-disabled="!$ctrl.allowPrevious()">
+        Back
+      </button>
+      <button type="button" class="btn btn-primary"
+              ng-if="$ctrl.hasNext()"
+              ng-click="$ctrl.handleNext()"
+              ng-disabled="!$ctrl.allowNext()">
+        Next
+      </button>
+    </div>
   </div>
 </div>

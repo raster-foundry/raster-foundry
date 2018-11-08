@@ -1,22 +1,24 @@
-package com.azavea.rf.backsplash.nodes
+package com.rasterfoundry.backsplash.nodes
 
-import java.util.UUID
+import com.rasterfoundry.database.util.RFTransactor
 
 import cats.data.{NonEmptyList => NEL}
-import cats.effect.{IO, Timer}
+import cats.effect._
 import cats.implicits._
 import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
-import com.azavea.rf.backsplash.io.Mosaic
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.datamodel.SingleBandOptions
+import com.rasterfoundry.backsplash.io.Mosaic
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.datamodel.SingleBandOptions
 import geotrellis.raster.io.json.HistogramJsonFormats
 import geotrellis.raster.{Raster, io => _, _}
-import geotrellis.server.core.cog.CogUtils
-import geotrellis.server.core.maml.reification._
+import geotrellis.server._
+import geotrellis.server.cog.util.CogUtils
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 import geotrellis.spark.tiling.LayoutDefinition
 import geotrellis.spark.{io => _}
 import io.circe.generic.semiauto._
+
+import java.util.UUID
 
 final case class ProjectNode(
     projectId: UUID,
@@ -33,20 +35,20 @@ final case class ProjectNode(
 
 object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
 
-  // imported here so import ...backsplash.nodes._ doesn't import a transactor
-  import com.azavea.rf.database.util.RFTransactor.xa
+  implicit val xa = RFTransactor.xa
 
   val store = PostgresAttributeStore()
 
   implicit val projectNodeDecoder = deriveDecoder[ProjectNode]
   implicit val projectNodeEncoder = deriveEncoder[ProjectNode]
 
-  implicit val projectNodeTmsReification: MamlTmsReification[ProjectNode] =
-    new MamlTmsReification[ProjectNode] {
+  implicit val projectNodeTmsReification: TmsReification[ProjectNode] =
+    new TmsReification[ProjectNode] {
       def kind(self: ProjectNode): MamlKind = MamlKind.Tile
 
       def tmsReification(self: ProjectNode, buffer: Int)(
-          implicit timer: Timer[IO]): (Int, Int, Int) => IO[Literal] =
+          implicit contextShift: ContextShift[IO])
+        : (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
           val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
           val mdIO = Mosaic.getMosaicDefinitions(self, extent)

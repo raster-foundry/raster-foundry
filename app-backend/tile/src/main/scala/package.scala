@@ -1,4 +1,4 @@
-package com.azavea.rf
+package com.rasterfoundry
 
 import spray.json._
 import com.github.blemale.scaffeine.{Cache => ScaffeineCache}

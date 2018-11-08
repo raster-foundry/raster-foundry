@@ -1,10 +1,10 @@
-package com.azavea.rf.api.datasource
+package com.rasterfoundry.api.datasource
 
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{UserErrorHandler, CommonHandlers}
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
-import com.azavea.rf.database.filter.Filterables._
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.{UserErrorHandler, CommonHandlers}
+import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.database.filter.Filterables._
 
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes

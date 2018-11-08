@@ -1,17 +1,17 @@
-package com.azavea.rf.api.aoi
+package com.rasterfoundry.api.aoi
 
-import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
-import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.common.{CommonHandlers, UserErrorHandler}
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.effect.IO
 import cats.implicits._
-import com.azavea.rf.database.filter.Filterables._
+import com.rasterfoundry.database.filter.Filterables._
 import doobie._
 import doobie.implicits._
 import doobie.Fragments.in

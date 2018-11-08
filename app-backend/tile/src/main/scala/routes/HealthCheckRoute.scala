@@ -1,12 +1,12 @@
-package com.azavea.rf.tile.routes
+package com.rasterfoundry.tile.routes
 
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import cats.effect.IO
-import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
-import com.azavea.rf.database.UserDao
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.common.cache.kryo.KryoMemcachedClient
+import com.rasterfoundry.database.UserDao
+import com.rasterfoundry.database.util.RFTransactor
 import com.typesafe.scalalogging.LazyLogging
 import doobie.hikari.HikariTransactor
 import doobie.implicits._

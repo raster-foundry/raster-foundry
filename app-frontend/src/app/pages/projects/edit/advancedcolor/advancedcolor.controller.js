@@ -75,15 +75,15 @@ export default class ProjectsAdvancedColorController {
         });
     }
 
-    fetchPage(page = this.$state.params.page || 1) {
+    fetchPage(page = this.$state.params.page || 1, params = {}) {
         delete this.fetchError;
         this.sceneList = [];
         const currentQuery = this.projectService.getProjectScenes(
             this.$parent.projectId,
-            {
+            Object.assign({
                 pageSize: this.projectService.scenePageSize,
                 page: page - 1
-            }
+            }, params)
         ).then((paginatedResponse) => {
             this.sceneList = paginatedResponse.results;
             this.pagination = this.paginationService.buildPagination(paginatedResponse);
@@ -160,10 +160,16 @@ export default class ProjectsAdvancedColorController {
         this.updateGridSelection();
 
         if (this.filterBboxList.length) {
-            this.projectService.getAllProjectScenes({
-                projectId: this.project.id,
-                bbox: this.filterBboxList.map(r => r.toBBoxString()).join(';')
-            }).then(({scenes: selectedScenes}) => {
+            this.projectService.getProjectScenes(
+                this.$parent.projectId,
+                {
+                    pageSize: this.projectService.scenePageSize,
+                    page: 0,
+                    bbox: this.filterBboxList
+                        .map(r => r.toBBoxString())
+                        .join(';')
+                }
+            ).then(({results: selectedScenes}) => {
                 if (this.lastRequest === requestTime) {
                     this.selectNoScenes();
                     selectedScenes.map((scene) => this.setSelected(scene, true));

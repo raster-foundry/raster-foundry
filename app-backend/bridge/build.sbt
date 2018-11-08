@@ -1,4 +1,4 @@
-name := "raster-foundry-bridge"
+name := "bridge"
 
 scalacOptions ++= Seq("-feature", "-unchecked", "-deprecation")
 

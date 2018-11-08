@@ -204,7 +204,6 @@ class ProjectsEditController {
     openShareModal() {
         this.modalService.open({
             component: 'rfPermissionModal',
-            size: 'med',
             resolve: {
                 object: () => this.project,
                 permissionsBase: () => 'projects',

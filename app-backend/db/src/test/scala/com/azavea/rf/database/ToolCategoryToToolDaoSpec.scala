@@ -1,7 +1,7 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO
@@ -13,9 +13,10 @@ import org.scalatest._
 class ToolCategoryToToolDaoSpec
     extends FunSuite
     with Matchers
-    with IOChecker
     with DBTestConfig {
   test("selection types") {
-    check(ToolCategoryToToolDao.selectF.query[ToolCategoryToTool])
+    xa.use(t => ToolCategoryToToolDao.query.list.transact(t))
+      .unsafeRunSync
+      .length should be >= 0
   }
 }

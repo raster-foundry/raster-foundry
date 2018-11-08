@@ -1,13 +1,17 @@
-package com.azavea.rf.backsplash.io
+package com.rasterfoundry.backsplash.io
 
 import cats.effect.{IO, Timer}
 import cats.data._
 import cats.implicits._
-import com.azavea.rf.backsplash.error._
-import com.azavea.rf.backsplash.nodes.ProjectNode
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.database.SceneToProjectDao
-import com.azavea.rf.datamodel.{MosaicDefinition, SceneType, SingleBandOptions}
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.nodes.ProjectNode
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.database.SceneToProjectDao
+import com.rasterfoundry.datamodel.{
+  MosaicDefinition,
+  SceneType,
+  SingleBandOptions
+}
 import doobie.implicits._
 import geotrellis.raster.{Raster, io => _, _}
 import geotrellis.spark.tiling.LayoutLevel
@@ -18,7 +22,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object Mosaic extends RollbarNotifier {
 
-  import com.azavea.rf.database.util.RFTransactor.xa
+  import com.rasterfoundry.database.util.RFTransactor.xa
 
   implicit val timer: Timer[IO] = IO.timer(global)
 

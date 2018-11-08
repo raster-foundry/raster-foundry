@@ -1,12 +1,18 @@
-package com.azavea.rf.backsplash.parameters
+package com.rasterfoundry.backsplash.parameters
 
-import com.azavea.rf.backsplash.nodes.ProjectNode
+import com.rasterfoundry.backsplash.nodes.ProjectNode
+
+import org.http4s._
 
 import scala.util.Try
 
 import java.util.UUID
 
-object PathParameters {
+object Parameters {
+
+  implicit val uuidQueryParamDecoder: QueryParamDecoder[UUID] =
+    QueryParamDecoder[String].map(UUID.fromString)
+
   object UUIDWrapper {
     def unapply(s: String): Option[UUID] = {
       if (!s.isEmpty) Try(UUID.fromString(s)).toOption else None

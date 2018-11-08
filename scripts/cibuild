@@ -51,8 +51,8 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             run --rm --no-deps \
             build batch/assembly
 
-        cp "${DIR}/../app-backend/batch/target/scala-2.11/rf-batch.jar" \
-           "${DIR}/../app-tasks/jars/rf-batch.jar"
+        cp "${DIR}/../app-backend/batch/target/scala-2.11/batch-assembly.jar" \
+           "${DIR}/../app-tasks/jars/batch-assembly.jar"
 
         echo "Building Batch container image"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \

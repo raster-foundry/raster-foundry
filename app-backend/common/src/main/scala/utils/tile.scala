@@ -1,4 +1,4 @@
-package com.azavea.rf.common.utils
+package com.rasterfoundry.common.utils
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.proj4.{LatLng, WebMercator}

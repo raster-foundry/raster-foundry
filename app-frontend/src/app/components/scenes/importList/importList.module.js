@@ -121,7 +121,6 @@ class ImportListController {
     shareModal(scene) {
         this.modalService.open({
             component: 'rfPermissionModal',
-            size: 'med',
             resolve: {
                 object: () => scene,
                 permissionsBase: () => 'scenes',
@@ -134,18 +133,22 @@ class ImportListController {
 
     deleteModal(scene) {
         const modal = this.modalService.open({
-            component: 'rfConfirmationModal',
+            component: 'rfFeedbackModal',
             resolve: {
-                title: () => 'Delete Imported Scene?',
+                title: () => 'Delete scene',
                 subtitle: () =>
-                    'The scene will be permanently deleted,'
-                    + ' but any projects containing it will remain.',
+                    'Deleting scenes cannot be undone.',
                 content: () =>
-                    '<div class="text-center color-danger">'
-                    + 'You are about to delete the scene. This action is not reversible.'
-                    + ' Are you sure you wish to continue?'
-                    + '</div>',
-                confirmText: () => 'Delete Scene',
+                    '<h2>Do you wish to continue?</h2>'
+                    + '<p>The scene will be pemanently '
+                    + 'deleted. Projects and Analysis will '
+                    + 'continue to function without the '
+                    + 'scene.</p>',
+                /* feedbackIconType : default, success, danger, warning */
+                feedbackIconType: () => 'danger',
+                feedbackIcon: () => 'icon-warning',
+                feedbackBtnType: () => 'btn-danger',
+                feedbackBtnText: () => 'Delete scene',
                 cancelText: () => 'Cancel'
             }
         });

@@ -1,8 +1,8 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
@@ -42,10 +42,11 @@ class AnnotationGroupDaoSpec
                 }
               }
             }
-            val (annotationGroup, dbUser, dbProject) =
-              annotationGroupInsertWithUserAndProjectIO
-                .transact(xa)
-                .unsafeRunSync()
+            val (annotationGroup, dbUser, dbProject) = xa
+              .use(t =>
+                annotationGroupInsertWithUserAndProjectIO
+                  .transact(t))
+              .unsafeRunSync()
             assert(annotationGroup.name == annotationGroupCreate.name,
                    "; Annotation group should be inserted")
             true
@@ -86,7 +87,7 @@ class AnnotationGroupDaoSpec
               (agDb1, agDb2, agDb3, p1AnnotationGroups, p2AnnotationGroups)
 
             val (ag1, ag2, ag3, p1ag, p2ag) =
-              annotationGroupIO.transact(xa).unsafeRunSync()
+              xa.use(t => annotationGroupIO.transact(t)).unsafeRunSync()
 
             assert(p1ag.length == 2 && p2ag.length == 1,
                    "; annotation groups are filters to project")
@@ -143,7 +144,8 @@ class AnnotationGroupDaoSpec
                  remainingAnnotations,
                  projectAnnotations,
                  projectAnnotationGroups,
-                 deleteCount) = annotationGroupIO.transact(xa).unsafeRunSync()
+                 deleteCount) =
+              xa.use(t => annotationGroupIO.transact(t)).unsafeRunSync()
 
             assert(
               deleteCount == 1,
@@ -153,6 +155,67 @@ class AnnotationGroupDaoSpec
             assert(
               projectAnnotationGroups.length == 2,
               "; Project has default 'Annotations' group and remaining created annotation group")
+            true
+          }
+      }
+    }
+  }
+
+  test("retrieve annotation summary for a group") {
+    check {
+      forAll {
+        (user: User.Create,
+         org: Organization.Create,
+         project: Project.Create,
+         ag: AnnotationGroup.Create,
+         agAnnotations: List[Annotation.Create]) =>
+          {
+            val annotationGroupIO = for {
+              orgUserProject <- insertUserOrgProject(user, org, project)
+              (dbOrg, dbUser, dbProject) = orgUserProject
+              annotationGroupDB <- AnnotationGroupDao.createAnnotationGroup(
+                dbProject.id,
+                ag,
+                dbUser)
+              annotationsDB <- AnnotationDao.insertAnnotations(
+                agAnnotations.map(
+                  _.copy(annotationGroup = Some(annotationGroupDB.id))),
+                dbProject.id,
+                dbUser)
+              projectAnnotations <- AnnotationDao.query
+                .filter(fr"project_id=${dbProject.id}")
+                .list
+              projectAnnotationGroups <- AnnotationGroupDao
+                .listAnnotationGroupsForProject(dbProject.id)
+              annotationGroupSummary <- AnnotationGroupDao
+                .getAnnotationGroupSummary(annotationGroupDB.id)
+            } yield (annotationGroupSummary, annotationsDB)
+
+            val (annotationGroupSummary, annotationsDB) =
+              xa.use(t => annotationGroupIO.transact(t)).unsafeRunSync()
+
+            assert(annotationGroupSummary.length > 0,
+                   "; No summary produced for annotation group")
+
+            val annotationLabelSet = annotationsDB.map(_.label).toSet
+
+            annotationLabelSet.map { label =>
+              val annotationCount =
+                annotationGroupSummary
+                  .find(_.label == label)
+                  .get
+                  .counts
+                  .as[Map[String, Int]]
+                  .right
+                  .get
+                  .map(_._2)
+                  .foldLeft(0)(_ + _)
+              assert(annotationCount === annotationsDB
+                       .filter(_.label == label)
+                       .length,
+                     "; Count of car qualities did not equal number inserted")
+            }
+
             true
           }
       }
@@ -184,7 +247,7 @@ class AnnotationGroupDaoSpec
             } yield (projectAnnotationGroups, updatedProject)
 
             val (projectAnnotationGroups, project) =
-              annotationGroupIO.transact(xa).unsafeRunSync()
+              xa.use(t => annotationGroupIO.transact(t)).unsafeRunSync()
 
             assert(
               projectAnnotationGroups.length == 1,

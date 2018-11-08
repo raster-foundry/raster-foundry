@@ -1,4 +1,4 @@
-package com.azavea.rf.tool.maml
+package com.rasterfoundry.tool.maml
 
 import com.azavea.maml.ast._
 import geotrellis.raster.CellType

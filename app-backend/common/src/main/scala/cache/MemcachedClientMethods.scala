@@ -1,4 +1,4 @@
-package com.azavea.rf.common.cache
+package com.rasterfoundry.common.cache
 
 import com.typesafe.scalalogging.LazyLogging
 import net.spy.memcached._

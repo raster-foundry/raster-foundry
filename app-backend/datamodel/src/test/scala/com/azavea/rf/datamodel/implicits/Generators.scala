@@ -1,4 +1,4 @@
-package com.azavea.rf.datamodel
+package com.rasterfoundry.datamodel
 
 import java.sql.Timestamp
 import java.time.LocalDate
@@ -17,6 +17,12 @@ object Generators extends ArbitraryInstances {
   // This is only necessary until a Platform generator is supported
   val defaultPlatformId: UUID =
     UUID.fromString("31277626-968b-4e40-840b-559d9c67863c")
+
+  private def stringOptionGen: Gen[Option[String]] =
+    Gen.oneOf(
+      Gen.const(Option.empty[String]),
+      nonEmptyStringGen map { Some(_) }
+    )
 
   private def stringListGen: Gen[List[String]] =
     Gen.oneOf(0, 15) flatMap { Gen.listOfN(_, nonEmptyStringGen) }
@@ -193,10 +199,12 @@ object Generators extends ArbitraryInstances {
       defaultStyle <- Gen.const(Some(().asJson))
     } yield { AnnotationGroup.Create(name, defaultStyle) }
 
+  val labelValues = Seq("Car", "Human", "Apple")
+
   private def annotationCreateGen: Gen[Annotation.Create] =
     for {
       owner <- Gen.const(None)
-      label <- nonEmptyStringGen
+      label <- Gen.oneOf(labelValues)
       description <- nonEmptyStringGen map { Some(_) }
       machineGenerated <- arbitrary[Option[Boolean]]
       confidence <- Gen.choose(0.0f, 1.0f) map { Some(_) }
@@ -315,7 +323,7 @@ object Generators extends ArbitraryInstances {
       sourceUri <- nonEmptyStringGen
       scene <- uuidGen
       imageMetadata <- Gen.const(().asJson)
-      owner <- arbitrary[Option[String]]
+      owner <- stringOptionGen
       resolutionMeters <- Gen.choose(0.25f, 1000f)
       metadataFiles <- stringListGen
     } yield
@@ -339,10 +347,10 @@ object Generators extends ArbitraryInstances {
       sourceUri <- nonEmptyStringGen
       scene <- uuidGen
       imageMetadata <- Gen.const(().asJson)
-      owner <- arbitrary[Option[String]]
+      owner <- stringOptionGen
       resolutionMeters <- Gen.choose(0.25f, 1000f)
       metadataFiles <- stringListGen
-      bands <- Gen.listOfN(3, bandCreateGen)
+      bands <- Gen.listOf[Band.Create](bandCreateGen)
     } yield
       Image.Banded(
         rawDataBytes,
@@ -454,7 +462,7 @@ object Generators extends ArbitraryInstances {
       datasource <- uuidGen
       sceneMetadata <- Gen.const(().asJson)
       name <- nonEmptyStringGen
-      owner <- arbitrary[Option[String]]
+      owner <- stringOptionGen
       tileFootprint <- projectedMultiPolygonGen3857 map { Some(_) }
       dataFootprint <- projectedMultiPolygonGen3857 map { Some(_) }
       metadataFiles <- stringListGen
@@ -537,7 +545,8 @@ object Generators extends ArbitraryInstances {
       owner <- Gen.const(None)
       composites <- Gen.delay(().asJson)
       extras <- Gen.delay(().asJson)
-      bands <- Gen.delay(().asJson)
+      // bands gets a concrete nonsense type to make the implicits work
+      bands <- Gen.delay(List.empty[Int].asJson)
       licenseName <- Gen.oneOf(None, Some("GPL-3.0"))
     } yield {
       Datasource.Create(
@@ -630,6 +639,7 @@ object Generators extends ArbitraryInstances {
       emailAoiNotification <- arbitrary[Boolean]
       emailExportNotification <- arbitrary[Boolean]
       platformHost <- Gen.const(None)
+      emailFrom <- stringOptionGen
     } yield {
       Platform.PublicSettings(
         emailUser,
@@ -639,7 +649,8 @@ object Generators extends ArbitraryInstances {
         emailIngestNotification,
         emailAoiNotification,
         emailExportNotification,
-        platformHost
+        platformHost,
+        emailFrom
       )
     }
 
@@ -692,6 +703,19 @@ object Generators extends ArbitraryInstances {
         case SubjectType.All => None
         case _               => Some(subjectId.toString)
       }, actionType)
+    }
+
+  private def toolRunCreateGen: Gen[ToolRun.Create] =
+    for {
+      name <- Gen.option(nonEmptyStringGen)
+      visibility <- visibilityGen
+      executionParameters <- Gen.const(().asJson)
+      owner <- Gen.const(None)
+    } yield { ToolRun.Create(name, visibility, executionParameters, owner) }
+
+  private def mapTokenCreateGen: Gen[MapToken.Create] =
+    nonEmptyStringGen map { name =>
+      MapToken.Create(name, None, None, None)
     }
 
   object Implicits {
@@ -764,7 +788,10 @@ object Generators extends ArbitraryInstances {
     }
 
     implicit def arbListSceneCreate: Arbitrary[List[Scene.Create]] = Arbitrary {
-      Gen.listOfN(3, sceneCreateGen)
+      Gen.oneOf(
+        Gen.listOfN(7, sceneCreateGen),
+        Gen.listOfN(0, sceneCreateGen)
+      )
     }
 
     implicit def arbThumbnail: Arbitrary[Thumbnail] = Arbitrary { thumbnailGen }
@@ -833,5 +860,11 @@ object Generators extends ArbitraryInstances {
         Gen.nonEmptyListOf[ObjectAccessControlRule](
           arbitrary[ObjectAccessControlRule])
       }
+
+    implicit def arbToolRunCreate: Arbitrary[ToolRun.Create] =
+      Arbitrary { toolRunCreateGen }
+
+    implicit def arbMapTokenCreate: Arbitrary[MapToken.Create] =
+      Arbitrary { mapTokenCreateGen }
   }
 }

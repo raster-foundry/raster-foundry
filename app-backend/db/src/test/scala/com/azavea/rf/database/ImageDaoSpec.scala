@@ -1,10 +1,10 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.sql.Timestamp
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 import doobie._
 import doobie.implicits._
 import cats._
@@ -55,7 +55,8 @@ class ImageDaoSpec
               )
             }
           }
-          val insertedImage = imageInsertIO.transact(xa).unsafeRunSync.get
+          val insertedImage =
+            xa.use(t => imageInsertIO.transact(t)).unsafeRunSync.get
           insertedImage.rawDataBytes == image.rawDataBytes &&
           insertedImage.visibility == image.visibility &&
           insertedImage.filename == image.filename &&
@@ -114,7 +115,7 @@ class ImageDaoSpec
           }
 
           val (affectedRows, updatedImage) =
-            imageUpdateWithUpdatedImageIO.transact(xa).unsafeRunSync
+            xa.use(t => imageUpdateWithUpdatedImageIO.transact(t)).unsafeRunSync
           affectedRows == 1 &&
           updatedImage.rawDataBytes == imageUpdate.rawDataBytes &&
           updatedImage.visibility == imageUpdate.visibility &&
@@ -129,6 +130,6 @@ class ImageDaoSpec
   }
 
   test("list images") {
-    ImageDao.query.list.transact(xa).unsafeRunSync
+    xa.use(t => ImageDao.query.list.transact(t)).unsafeRunSync
   }
 }

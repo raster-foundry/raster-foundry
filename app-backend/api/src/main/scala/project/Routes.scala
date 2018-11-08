@@ -1,4 +1,4 @@
-package com.azavea.rf.api.project
+package com.rasterfoundry.api.project
 
 import java.util.{Calendar, UUID}
 
@@ -10,22 +10,22 @@ import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits._
 import com.amazonaws.services.s3.AmazonS3URI
-import com.azavea.rf.api.scene._
-import com.azavea.rf.api.utils.Config
-import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.S3._
-import com.azavea.rf.common.utils.Shapefile
-import com.azavea.rf.common.{
+import com.rasterfoundry.api.scene._
+import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.S3._
+import com.rasterfoundry.common.utils.Shapefile
+import com.rasterfoundry.common.{
   AWSBatch,
   CommonHandlers,
   RollbarNotifier,
   UserErrorHandler
 }
-import com.azavea.rf.database._
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.datamodel.GeoJsonCodec._
-import com.azavea.rf.datamodel.{Annotation, _}
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.datamodel.GeoJsonCodec._
+import com.rasterfoundry.datamodel.{Annotation, _}
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
@@ -143,7 +143,10 @@ trait ProjectRoutes
                         deleteAnnotationGroup(projectId, annotationGroupId)
                       }
                     }
-                }
+                } ~
+                  pathPrefix("summary") {
+                    getAnnotationGroupSummary(projectId, annotationGroupId)
+                  }
               }
           } ~
           pathPrefix("annotations") {
@@ -536,6 +539,24 @@ trait ProjectRoutes
         complete {
           AnnotationGroupDao
             .getAnnotationGroup(projectId, agId)
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
+  }
+
+  def getAnnotationGroupSummary(projectId: UUID,
+                                annotationGroupId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          AnnotationGroupDao
+            .getAnnotationGroupSummary(annotationGroupId)
             .transact(xa)
             .unsafeToFuture
         }

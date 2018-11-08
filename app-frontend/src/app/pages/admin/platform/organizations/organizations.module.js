@@ -85,7 +85,6 @@ class PlatformOrganizationsController {
     deactivateOrganization(organization) {
         const modal = this.modalService.open({
             component: 'rfConfirmationModal',
-            size: 'sm',
             resolve: {
                 title: () => 'Deactivate organization ?',
                 content: () => 'The organization can be reactivated at any time',
@@ -125,8 +124,7 @@ class PlatformOrganizationsController {
 
     newOrgModal() {
         this.modalService.open({
-            component: 'rfOrganizationModal',
-            size: 'sm'
+            component: 'rfOrganizationModal'
         }).result.then((result) => {
             this.platformService
                 .createOrganization(this.$stateParams.platformId, result.name, 'ACTIVE')

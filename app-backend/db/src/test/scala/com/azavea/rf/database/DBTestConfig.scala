@@ -1,28 +1,49 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
-import doobie.hikari._, doobie.hikari.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
+import doobie.hikari._
+import doobie.hikari.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
+import doobie.util.ExecutionContexts
+import cats._
+import cats.data._
+import cats.effect._
+import cats.implicits._
 
 import java.util.UUID
+import java.util.concurrent._
+import scala.concurrent.ExecutionContext
 
 trait DBTestConfig {
 
-  val xa: Transactor[IO] =
-    Transactor.after.set(
-      Transactor.fromDriverManager[IO](
-        "org.postgresql.Driver",
-        "jdbc:postgresql://database.service.rasterfoundry.internal/",
-        "rasterfoundry",
-        "rasterfoundry"
-      ),
-      HC.rollback
-    )
+  val connectExecutorService = Executors.newFixedThreadPool(10)
+  val transactExecutorService = Executors.newFixedThreadPool(20)
+  val connectEc = ExecutionContext.fromExecutorService(
+    connectExecutorService,
+    ExecutionContext.defaultReporter)
+  val transactEc = ExecutionContext.fromExecutorService(
+    transactExecutorService,
+    ExecutionContext.defaultReporter
+  )
 
-  implicit val transactor = xa
+  implicit val cs: ContextShift[IO] =
+    IO.contextShift(transactEc)
+
+  val xa =
+    HikariTransactor.newHikariTransactor[IO](
+      "org.postgresql.Driver",
+      "jdbc:postgresql://database.service.rasterfoundry.internal/",
+      "rasterfoundry",
+      "rasterfoundry",
+      connectEc,
+      transactEc
+    ) map { Transactor.after.set(_, HC.rollback) }
+
+  implicit val transactor: Transactor[IO] =
+    xa.use(trx => IO { trx }).unsafeRunSync
 
   val defaultPlatformId =
     UUID.fromString("31277626-968b-4e40-840b-559d9c67863c")

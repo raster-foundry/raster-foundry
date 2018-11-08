@@ -1,4 +1,4 @@
-package com.azavea.rf.common
+package com.rasterfoundry.common
 
 import java.io.{PrintWriter, StringWriter}
 

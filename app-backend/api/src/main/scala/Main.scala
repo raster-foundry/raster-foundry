@@ -1,12 +1,12 @@
-package com.azavea.rf.api
+package com.rasterfoundry.api
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import cats.effect.IO
-import com.azavea.rf.api.utils.Config
-import com.azavea.rf.common.RFRejectionHandler._
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.common.RFRejectionHandler._
+import com.rasterfoundry.database.util.RFTransactor
 import kamon.Kamon
 
 import scala.util.Try

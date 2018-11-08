@@ -1,6 +1,6 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
-import com.azavea.rf.tool._
+import com.rasterfoundry.tool._
 
 import geotrellis.raster.Tile
 import geotrellis.raster._

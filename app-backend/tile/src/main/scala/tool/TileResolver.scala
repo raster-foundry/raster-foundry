@@ -1,11 +1,11 @@
-package com.azavea.rf.tile.tool
+package com.rasterfoundry.tile.tool
 
-import com.azavea.rf.common.utils._
-import com.azavea.rf.tile.image._
-import com.azavea.rf.tile._
-import com.azavea.rf.tile.image.Mosaic
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.maml._
+import com.rasterfoundry.common.utils._
+import com.rasterfoundry.tile.image._
+import com.rasterfoundry.tile._
+import com.rasterfoundry.tile.image.Mosaic
+import com.rasterfoundry.tool.ast._
+import com.rasterfoundry.tool.maml._
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
 import com.azavea.maml.eval.tile._
@@ -462,6 +462,7 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
       case cr @ CogRaster(_, Some(band), celltype, location) =>
         CogUtils
           .fromUri(location)
+          .map(_.tiff)
           .flatMap { tiff =>
             CogUtils.cropForZoomExtent(tiff, zoom, Some(extent)).map {
               tile: MultibandTile =>

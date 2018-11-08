@@ -1,4 +1,4 @@
-package com.azavea.rf.common
+package com.rasterfoundry.common
 
 import jp.ne.opt.chronoscala.Imports._
 import org.apache.commons.io.IOUtils

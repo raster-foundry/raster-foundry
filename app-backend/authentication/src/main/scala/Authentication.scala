@@ -1,4 +1,4 @@
-package com.azavea.rf.authentication
+package com.rasterfoundry.authentication
 
 import java.net.URL
 import java.util.UUID
@@ -8,8 +8,8 @@ import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsReject
 import akka.http.scaladsl.server._
 import cats.effect.IO
 import cats.implicits._
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel._
 import com.guizmaii.scalajwt.{ConfigurableJwtValidator, JwtToken}
 import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
 import com.nimbusds.jose.proc.SecurityContext

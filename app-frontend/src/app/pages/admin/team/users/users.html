@@ -17,6 +17,7 @@
                  placeholder="Search for users"
                  auto-focus="true"></rf-search>
       <button type="button" class="btn btn-primary"
+              ng-if="$ctrl.isEffectiveAdmin"
               ng-click="$ctrl.addUser()" ng-disabled="$ctrl.currentQuery">
         Invite Users
       </button>
@@ -32,9 +33,10 @@
     </p>
 
     <button type="button" class="btn btn-primary"
+            ng-if="$ctrl.isEffectiveAdmin"
             ng-click="$ctrl.addUser()"
     >
-      Add Users
+      Invite Users
     </button>
   </rf-call-to-action-item>
   <rf-call-to-action-item

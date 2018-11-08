@@ -107,7 +107,6 @@ lazy val apiSettings = commonSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
   cancelable in Global := true,
-  assemblyJarName in assembly := "rf-server.jar",
   assemblyMergeStrategy in assembly := {
     case "reference.conf"                       => MergeStrategy.concat
     case "application.conf"                     => MergeStrategy.concat
@@ -229,6 +228,7 @@ lazy val common = Project("common", file("common"))
       Dependencies.awsStsSdk,
       Dependencies.rollbar,
       Dependencies.doobiePostgres,
+      Dependencies.doobiePostgresCirce,
       Dependencies.geotrellisSlick.exclude("postgresql", "postgresql"),
       Dependencies.apacheCommonsEmail
     )
@@ -245,6 +245,7 @@ lazy val db = Project("db", file("db"))
       Dependencies.doobieSpecs,
       Dependencies.doobieScalatest,
       Dependencies.doobiePostgres,
+      Dependencies.doobiePostgresCirce,
       "net.postgis" % "postgis-jdbc" % "2.2.1",
       "net.postgis" % "postgis-jdbc-jtsparser" % "2.2.1",
       "org.locationtech.jts" % "jts-core" % "1.15.0",
@@ -379,7 +380,6 @@ lazy val tile = Project("tile", file("tile"))
     case PathList("META-INF", "aop.xml") => aopMerge
     case _                               => MergeStrategy.first
   })
-  .settings(assemblyJarName in assembly := "rf-tile-server.jar")
   .settings(test in assembly := {})
 
 lazy val tool = Project("tool", file("tool"))
@@ -448,6 +448,7 @@ lazy val backsplash = Project("backsplash", file("backsplash"))
     libraryDependencies ++= Seq(
       Dependencies.catsCore,
       Dependencies.catsEffect,
+      Dependencies.catsMeow,
       Dependencies.geotrellisServer,
       Dependencies.http4sBlaze,
       Dependencies.http4sBlazeClient,

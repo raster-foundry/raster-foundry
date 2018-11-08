@@ -36,6 +36,7 @@
           <div class="list-group" ng-show="!$ctrl.loadingHistogram && $ctrl.histogramData && !$ctrl.histogramData.length">
             Scenes in this project do not support histograms,<br />
             or they contain no data.<br />
+            <!-- can't yet remove this since we don't know when backsplash will be deployed, but soon -->
             Cloud optimized geotif support is coming soon.
           </div>
           <div class="list-group" ng-show="!$ctrl.histogramData || $ctrl.loadingHistogram">

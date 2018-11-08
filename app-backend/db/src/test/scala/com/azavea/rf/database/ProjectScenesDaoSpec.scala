@@ -1,8 +1,8 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 
@@ -64,7 +64,7 @@ class ProjectScenesDaoSpec
             }
 
             val (insertedScenes, listedScenes) =
-              scenesListIO.transact(xa).unsafeRunSync
+              xa.use(t => scenesListIO.transact(t)).unsafeRunSync
             val insertedIds = insertedScenes.toSet map {
               (scene: Scene.WithRelated) =>
                 scene.id

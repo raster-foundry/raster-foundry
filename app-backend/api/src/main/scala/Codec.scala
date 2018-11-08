@@ -1,6 +1,6 @@
-package com.azavea.rf.api
+package com.rasterfoundry.api
 
-import com.azavea.rf.api.healthcheck.HealthCheckStatus
+import com.rasterfoundry.api.healthcheck.HealthCheckStatus
 
 import io.circe._
 

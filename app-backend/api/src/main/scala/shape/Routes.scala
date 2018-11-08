@@ -1,4 +1,4 @@
-package com.azavea.rf.api.shape
+package com.rasterfoundry.api.shape
 
 import java.util.UUID
 
@@ -8,13 +8,13 @@ import akka.http.scaladsl.server.directives.FileInfo
 import better.files.{File => ScalaFile}
 import cats.effect.IO
 import cats.implicits._
-import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common._
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.ShapeDao
-import com.azavea.rf.datamodel.GeoJsonCodec._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.ShapeDao
+import com.rasterfoundry.datamodel.GeoJsonCodec._
+import com.rasterfoundry.datamodel._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._

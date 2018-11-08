@@ -1,8 +1,8 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO
@@ -19,7 +19,9 @@ class UploadDaoSpec
     with DBTestConfig
     with PropTestHelpers {
   test("list uploads") {
-    UploadDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
+    xa.use(t => UploadDao.query.list.transact(t))
+      .unsafeRunSync
+      .length should be >= 0
   }
 
   test("insert an upload") {
@@ -27,19 +29,23 @@ class UploadDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          upload: Upload.Create) =>
           {
             val uploadInsertIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              orgUserProject <- insertUserOrgPlatProject(user,
+                                                         org,
+                                                         platform,
+                                                         project)
+              (dbUser, dbOrg, _, dbProject) = orgUserProject
               datasource <- unsafeGetRandomDatasource
               insertedUpload <- UploadDao.insert(
                 fixupUploadCreate(dbUser, dbProject, datasource, upload),
                 dbUser)
             } yield insertedUpload
 
-            val dbUpload = uploadInsertIO.transact(xa).unsafeRunSync
+            val dbUpload = xa.use(t => uploadInsertIO.transact(t)).unsafeRunSync
 
             dbUpload.uploadStatus == upload.uploadStatus &&
             dbUpload.fileType == upload.fileType &&
@@ -72,12 +78,14 @@ class UploadDaoSpec
               insertedUpload <- UploadDao.insert(
                 fixupUploadCreate(dbUser, dbProject, datasource, insertUpload),
                 dbUser)
-            } yield (insertedUpload, dbUser, dbOrg, dbProject, datasource)
+            } yield
+              (insertedUpload, dbUser, dbOrg, dbPlatform, dbProject, datasource)
 
             val uploadUpdateWithUploadIO = uploadInsertWithUserOrgProjectDatasourceIO flatMap {
               case (dbUpload: Upload,
                     dbUser: User,
                     dbOrg: Organization,
+                    dbPlatform: Platform,
                     dbProject: Project,
                     dbDatasource: Datasource) => {
                 val uploadId = dbUpload.id
@@ -85,7 +93,10 @@ class UploadDaoSpec
                   fixupUploadCreate(dbUser,
                                     dbProject,
                                     dbDatasource,
-                                    updateUpload).toUpload(dbUser)
+                                    updateUpload).toUpload(dbUser,
+                                                           (dbPlatform.id,
+                                                            false),
+                                                           Some(dbPlatform.id))
                 UploadDao.update(fixedUpUpdateUpload, uploadId, dbUser) flatMap {
                   (affectedRows: Int) =>
                     {
@@ -98,7 +109,7 @@ class UploadDaoSpec
             }
 
             val (affectedRows, updatedUpload) =
-              uploadUpdateWithUploadIO.transact(xa).unsafeRunSync
+              xa.use(t => uploadUpdateWithUploadIO.transact(t)).unsafeRunSync
 
             affectedRows == 1 &&
             updatedUpload.uploadStatus == updateUpload.uploadStatus &&

@@ -1,7 +1,7 @@
-package com.azavea.rf.tool.ast
+package com.rasterfoundry.tool.ast
 
-import com.azavea.rf.tool._
-import com.azavea.rf.tool.ast.codec.MapAlgebraCodec
+import com.rasterfoundry.tool._
+import com.rasterfoundry.tool.ast.codec.MapAlgebraCodec
 
 import geotrellis.raster.histogram._
 import geotrellis.raster.render._

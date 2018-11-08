@@ -208,6 +208,23 @@ export default (app) => {
             return this.$q((resolve) => resolve(scene.datasource));
         }
 
+        getDatasourceBands(scene) {
+            return this.$q((resolve) => {
+                return resolve(scene.datasource.bands.reduce((acc, band) => {
+                    if (band.name.toUpperCase() === 'RED' ||
+                        band.name.toUpperCase() === 'GREEN' ||
+                        band.name.toUpperCase() === 'BLUE') {
+                        acc[band.name.toUpperCase()] = parseInt(band.number, 10);
+                    }
+                    return acc;
+                }, {
+                    RED: 0,
+                    GREEN: 1,
+                    BLUE: 2
+                }));
+            });
+        }
+
 
         /*
           Returns a function which adds the given RF scenes to the project

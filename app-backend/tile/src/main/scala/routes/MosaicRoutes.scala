@@ -1,12 +1,12 @@
-package com.azavea.rf.tile.routes
+package com.rasterfoundry.tile.routes
 
-import com.azavea.rf.common.RfStackTrace
-import com.azavea.rf.tile._
-import com.azavea.rf.tile.image.Mosaic
-import com.azavea.rf.datamodel.{ColorCorrect, SceneToProject}
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.{SceneToProjectDao}
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.common.RfStackTrace
+import com.rasterfoundry.tile._
+import com.rasterfoundry.tile.image.Mosaic
+import com.rasterfoundry.datamodel.{ColorCorrect, SceneToProject}
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.{SceneToProjectDao}
+import com.rasterfoundry.database.util.RFTransactor
 
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
@@ -148,21 +148,27 @@ object MosaicRoutes extends LazyLogging with KamonTrace {
   def mosaicScene(sceneId: UUID)(implicit xa: Transactor[IO]): Route =
     pathPrefix(IntNumber / IntNumber / IntNumber) { (zoom, x, y) =>
       get {
-        complete {
-          val future =
-            timedFuture("tile-zxy")(
-              Mosaic(sceneId, zoom, x, y, true)
-                .map(_.renderPng)
-                .getOrElse(emptyTilePng)
-                .map(pngAsHttpResponse)
-            )
-          future onComplete {
-            case Success(s) => s
-            case Failure(e) =>
-              logger.error(
-                s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+        parameters(
+          'redBand.as[Int],
+          'greenBand.as[Int],
+          'blueBand.as[Int]
+        ) { (redband, greenBand, blueBand) =>
+          complete {
+            val future =
+              timedFuture("tile-zxy")(
+                Mosaic(sceneId, zoom, x, y, redband, greenBand, blueBand, true)
+                  .map(_.renderPng)
+                  .getOrElse(emptyTilePng)
+                  .map(pngAsHttpResponse)
+              )
+            future onComplete {
+              case Success(s) => s
+              case Failure(e) =>
+                logger.error(
+                  s"Message: ${e.getMessage}\nStack trace: ${RfStackTrace(e)}")
+            }
+            future
           }
-          future
         }
       }
     }
@@ -187,7 +193,8 @@ object MosaicRoutes extends LazyLogging with KamonTrace {
       } yield {
         val (rgbBands, rgbHist) =
           params.reorderBands(tile, tile.histogramDouble)
-        val sceneBands = ColorCorrect(rgbBands, rgbHist, params).bands
+        // Ok to use None here because this is non-COGs only right now
+        val sceneBands = ColorCorrect(rgbBands, rgbHist, params, None).bands
         sceneBands.map(tile => tile.histogram)
       }
     }

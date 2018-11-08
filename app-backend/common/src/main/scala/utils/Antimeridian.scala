@@ -1,4 +1,4 @@
-package com.azavea.rf.common.utils
+package com.rasterfoundry.common.utils
 
 import geotrellis.proj4._
 import geotrellis.vector._

@@ -1,12 +1,12 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.cache.CacheClient
-import com.azavea.rf.common.cache.kryo.KryoMemcachedClient
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database.{MapTokenDao, ProjectDao, UserDao}
-import com.azavea.rf.datamodel.{User, Visibility}
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.cache.CacheClient
+import com.rasterfoundry.common.cache.kryo.KryoMemcachedClient
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.{MapTokenDao, ProjectDao, UserDao}
+import com.rasterfoundry.datamodel.{User, Visibility}
+import com.rasterfoundry.database.util.RFTransactor
 
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
 import akka.http.scaladsl.server.{

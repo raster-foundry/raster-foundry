@@ -1,4 +1,4 @@
-package com.azavea.rf.api.utils
+package com.rasterfoundry.api.utils
 
 import akka.http.scaladsl.model.StatusCode
 

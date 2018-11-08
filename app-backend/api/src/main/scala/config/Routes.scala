@@ -1,9 +1,9 @@
-package com.azavea.rf.api.config
+package com.rasterfoundry.api.config
 
 import akka.http.scaladsl.server.Route
 import cats.effect.IO
-import com.azavea.rf.api.Codec._
-import com.azavea.rf.authentication.Authentication
+import com.rasterfoundry.api.Codec._
+import com.rasterfoundry.authentication.Authentication
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.util.transactor.Transactor
 import io.circe._

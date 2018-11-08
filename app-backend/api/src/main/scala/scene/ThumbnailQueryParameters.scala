@@ -1,6 +1,6 @@
-package com.azavea.rf.api.scene
+package com.rasterfoundry.api.scene
 
-import com.azavea.rf.datamodel.SceneThumbnailQueryParameters
+import com.rasterfoundry.datamodel.SceneThumbnailQueryParameters
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters

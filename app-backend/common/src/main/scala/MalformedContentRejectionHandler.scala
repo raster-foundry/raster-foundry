@@ -1,4 +1,4 @@
-package com.azavea.rf.common
+package com.rasterfoundry.common
 
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.model._

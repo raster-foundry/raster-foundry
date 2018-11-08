@@ -1,4 +1,4 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
 import io.circe._
 import io.circe.parser._

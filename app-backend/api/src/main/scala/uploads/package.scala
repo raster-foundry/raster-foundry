@@ -1,8 +1,8 @@
-package com.azavea.rf.api
+package com.rasterfoundry.api
 
 import java.net.URI
 
-import com.azavea.rf.common.S3
+import com.rasterfoundry.common.S3
 
 package object uploads {
   implicit def stringAsJavaURI(uri: String): URI = new URI(uri)

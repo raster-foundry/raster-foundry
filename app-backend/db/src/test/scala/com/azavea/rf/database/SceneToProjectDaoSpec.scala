@@ -1,8 +1,8 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 
@@ -56,7 +56,7 @@ class SceneToProjectDaoSpec
             } yield (acceptedSceneCount, stps)
 
             val (acceptedSceneCount, stps) =
-              acceptedSceneAndStpIO.transact(xa).unsafeRunSync
+              xa.use(t => acceptedSceneAndStpIO.transact(t)).unsafeRunSync
 
             acceptedSceneCount == scenes.length &&
             stps.length == scenes.length &&
@@ -87,18 +87,26 @@ class SceneToProjectDaoSpec
               }).traverse(
                 (scene: Scene.Create) => SceneDao.insert(scene, dbUser)
               )
+              selectedSceneIds = scenesInsert.take(2) map { _.id }
               _ <- ProjectDao.addScenesToProject(scenesInsert map { _.id },
                                                  dbProject.id,
                                                  false)
               _ <- SceneToProjectDao.setManualOrder(dbProject.id,
                                                     scenesInsert map { _.id })
-              mds <- SceneToProjectDao.getMosaicDefinition(dbProject.id, None)
+              mds <- SceneToProjectDao.getMosaicDefinition(dbProject.id,
+                                                           None,
+                                                           sceneIdSubset =
+                                                             selectedSceneIds)
               stps <- SceneToProjectDao.query
                 .filter(fr"project_id = ${dbProject.id}")
+                .filter(selectedSceneIds.toNel map {
+                  Fragments.in(fr"scene_id", _)
+                })
                 .list
-            } yield (mds, stps)
+            } yield (mds, stps, selectedSceneIds)
 
-            val (mds, stps) = mdAndStpsIO.transact(xa).unsafeRunSync
+            val (mds, stps, selectedIds) =
+              xa.use(t => mdAndStpsIO.transact(t)).unsafeRunSync
 
             // Mapping of scene ids to scene order
             val sceneMap =

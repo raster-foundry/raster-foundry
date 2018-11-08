@@ -1,8 +1,9 @@
-package com.azavea.rf.common.utils
+package com.rasterfoundry.common.utils
 
-import com.azavea.rf.common.cache._
-import com.azavea.rf.common.cache.kryo._
-import com.azavea.rf.common.{Config => CommonConfig}
+import com.rasterfoundry.common.cache._
+import com.rasterfoundry.common.cache.kryo._
+import com.rasterfoundry.common.{Config => CommonConfig}
+import com.rasterfoundry.datamodel.TiffWithMetadata
 
 import com.amazonaws.services.s3.AmazonS3URI
 import geotrellis.vector._
@@ -12,7 +13,7 @@ import geotrellis.raster.resample._
 import geotrellis.raster.histogram._
 import geotrellis.raster.reproject._
 import geotrellis.raster.io.geotiff._
-import geotrellis.raster.io.geotiff.reader.GeoTiffReader
+import geotrellis.raster.io.geotiff.reader.{GeoTiffReader, TiffTagsReader}
 import geotrellis.util._
 import geotrellis.proj4._
 import geotrellis.spark._
@@ -42,8 +43,8 @@ object CogUtils {
   }.toArray
 
   /** Read GeoTiff from URI while caching the header bytes in memcache */
-  def fromUri(uri: String)(implicit ec: ExecutionContext)
-    : OptionT[Future, GeoTiff[MultibandTile]] = {
+  def fromUri(uri: String)(
+      implicit ec: ExecutionContext): OptionT[Future, TiffWithMetadata] = {
     val cacheKey = s"cog-header-${URIUtils.withNoParams(uri)}"
     val cacheSize = 1 << 18
 
@@ -58,7 +59,8 @@ object CogUtils {
       .mapFilter { headerBytes =>
         RangeReaderUtils.fromUri(uri).map { rr =>
           val crr = CacheRangeReader(rr, headerBytes)
-          GeoTiffReader.readMultiband(crr, streaming = true)
+          TiffWithMetadata(GeoTiffReader.readMultiband(crr, streaming = true),
+                           TiffTagsReader.read(crr))
         }
       }
   }
@@ -127,21 +129,24 @@ object CogUtils {
       implicit ec: ExecutionContext): OptionT[Future, MultibandTile] =
     rfCache.cachingOptionT(
       s"cog-tile-${zoom}-${x}-${y}-${URIUtils.withNoParams(uri)}")(
-      CogUtils.fromUri(uri).mapFilter { tiff =>
-        val transform = Proj4Transform(tiff.crs, WebMercator)
-        val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
-        val tmsTileRE = RasterExtent(
-          extent = TmsLevels(zoom).mapTransform.keyToExtent(x, y),
-          cols = 256,
-          rows = 256
-        )
-        val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
-        val overview =
-          closestTiffOverview(tiff, tiffTileRE.cellSize, AutoHigherResolution)
-        cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
-          raster.reproject(tmsTileRE, transform, inverseTransform).tile
+      CogUtils
+        .fromUri(uri)
+        .map(_.tiff)
+        .mapFilter { tiff =>
+          val transform = Proj4Transform(tiff.crs, WebMercator)
+          val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
+          val tmsTileRE = RasterExtent(
+            extent = TmsLevels(zoom).mapTransform.keyToExtent(x, y),
+            cols = 256,
+            rows = 256
+          )
+          val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
+          val overview =
+            closestTiffOverview(tiff, tiffTileRE.cellSize, AutoHigherResolution)
+          cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
+            raster.reproject(tmsTileRE, transform, inverseTransform).tile
+          }
         }
-      }
     )
 
   // To construct a multiband geotiff, we have to have more than one band, so the fact that
@@ -172,7 +177,7 @@ object CogUtils {
     val floor = floorO.getOrElse(25)
     rfCache.cachingOptionT(s"cog-thumbnail-${width}-${height}-${URIUtils
       .withNoParams(uri)}-${red}-${green}-${blue}-${floor}")(
-      CogUtils.fromUri(uri).mapFilter {
+      CogUtils.fromUri(uri).map(_.tiff) mapFilter {
         tiff =>
           val cellSize = CellSize(tiff.extent, width, height)
           val overview =

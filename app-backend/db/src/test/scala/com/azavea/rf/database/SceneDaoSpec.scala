@@ -1,8 +1,8 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO
@@ -19,7 +19,9 @@ class SceneDaoSpec
     with DBTestConfig
     with PropTestHelpers {
   test("list scenes") {
-    SceneDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
+    xa.use(t => SceneDao.query.list.transact(t))
+      .unsafeRunSync
+      .length should be >= 0
   }
 
   test("insert a scene") {
@@ -35,7 +37,7 @@ class SceneDaoSpec
               sceneInsert <- SceneDao.insert(fixedUpSceneCreate, dbUser)
             } yield (fixedUpSceneCreate, sceneInsert)
             val (fixedUpSceneCreate, insertedScene) =
-              sceneInsertIO.transact(xa).unsafeRunSync
+              xa.use(t => sceneInsertIO.transact(t)).unsafeRunSync
 
             assert(insertedScene.visibility == fixedUpSceneCreate.visibility,
                    "Visibilities match")
@@ -81,7 +83,7 @@ class SceneDaoSpec
               sceneInsert <- SceneDao.insertMaybe(fixedUpSceneCreate, dbUser)
             } yield (fixedUpSceneCreate, sceneInsert)
             val (fixedUpSceneCreate, insertedSceneO) =
-              sceneInsertIO.transact(xa).unsafeRunSync
+              xa.use(t => sceneInsertIO.transact(t)).unsafeRunSync
             // our expectation is that this should succeed so this should be safe -- if it fails that indicates
             // something else was wrong
             val insertedScene = insertedSceneO.get
@@ -144,7 +146,7 @@ class SceneDaoSpec
             } yield (affectedRows, fixedUpUpdateScene, endScene)
 
             val (affectedRows, fixedUpUpdateScene, updatedScene) =
-              sceneUpdateIO.transact(xa).unsafeRunSync
+              xa.use(t => sceneUpdateIO.transact(t)).unsafeRunSync
 
             assert(affectedRows == 1, "Number of affected rows is correct")
             assert(updatedScene.visibility == fixedUpUpdateScene.visibility,

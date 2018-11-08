@@ -1,8 +1,8 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO
@@ -33,7 +33,8 @@ class UserDaoSpec
             org <- rootOrgQ
             created <- UserDao.create(user)
           } yield (created)
-          val insertedUser = insertedUserIO.transact(xa).unsafeRunSync
+          val insertedUser =
+            xa.use(t => insertedUserIO.transact(t)).unsafeRunSync
           insertedUser.id == user.id
         }
       )
@@ -68,7 +69,7 @@ class UserDaoSpec
           } yield (newUser, userRoles)
 
           val (insertedUser, insertedUserRoles) =
-            insertedUserIO.transact(xa).unsafeRunSync
+            xa.use(t => insertedUserIO.transact(t)).unsafeRunSync
           assert(insertedUser.id == jwtFields.id,
                  "Inserted user should have the same ID as the jwt fields")
           assert(insertedUserRoles.length == 2,
@@ -90,7 +91,11 @@ class UserDaoSpec
             inserted <- UserDao.create(userWithOrg)
             byId <- UserDao.getUserById(inserted.id)
           } yield (byId)
-          userCreate.id == (createdIdIO.transact(xa).unsafeRunSync.get.id)
+          userCreate.id == (xa
+            .use(t => createdIdIO.transact(t))
+            .unsafeRunSync
+            .get
+            .id)
         }
       )
     )
@@ -111,29 +116,32 @@ class UserDaoSpec
           val (affectedRows,
                updatedEmailNotifications,
                updatedDropboxToken,
-               updatedPlanetToken) = (insertedUserIO flatMap {
-            case (insertUser: User) => {
-              UserDao.updateUser(
-                insertUser.copy(planetCredential = planetCredential,
-                                dropboxCredential = dropboxCredential,
-                                emailNotifications = emailNotifications),
-                insertUser.id
-              ) flatMap {
-                case (affectedRows: Int) => {
-                  val updatedPlanetTokenIO = UserDao.unsafeGetUserById(
-                    insertUser.id) map { (usr: User) =>
-                    (usr.emailNotifications,
-                     usr.dropboxCredential,
-                     usr.planetCredential)
-                  }
-                  updatedPlanetTokenIO map {
-                    (t: (Boolean, Credential, Credential)) =>
-                      (affectedRows, t._1, t._2, t._3)
+               updatedPlanetToken) = xa
+            .use(t =>
+              (insertedUserIO flatMap {
+                case (insertUser: User) => {
+                  UserDao.updateUser(
+                    insertUser.copy(planetCredential = planetCredential,
+                                    dropboxCredential = dropboxCredential,
+                                    emailNotifications = emailNotifications),
+                    insertUser.id
+                  ) flatMap {
+                    case (affectedRows: Int) => {
+                      val updatedPlanetTokenIO = UserDao.unsafeGetUserById(
+                        insertUser.id) map { (usr: User) =>
+                        (usr.emailNotifications,
+                         usr.dropboxCredential,
+                         usr.planetCredential)
+                      }
+                      updatedPlanetTokenIO map {
+                        (t: (Boolean, Credential, Credential)) =>
+                          (affectedRows, t._1, t._2, t._3)
+                      }
+                    }
                   }
                 }
-              }
-            }
-          }).transact(xa).unsafeRunSync
+              }).transact(t))
+            .unsafeRunSync
           (affectedRows == 1) &&
           (updatedEmailNotifications == emailNotifications) &&
           (updatedDropboxToken == dropboxCredential) &&
@@ -156,22 +164,26 @@ class UserDaoSpec
             org <- rootOrgQ
             created <- UserDao.create(user)
           } yield (created)
-          val (affectedRows, updatedUser) = (insertedUserIO flatMap {
-            case (created: User) => {
-              val updatedUser = created.copy(
-                email = email,
-                planetCredential = planetCredential,
-                emailNotifications = isEmail,
-                visibility = visibility
-              )
-              UserDao.updateOwnUser(updatedUser) flatMap {
-                case (affectedRows: Int) => {
-                  val updatedUserIO = UserDao.unsafeGetUserById(updatedUser.id)
-                  updatedUserIO map { (affectedRows, _) }
+          val (affectedRows, updatedUser) = xa
+            .use(t =>
+              (insertedUserIO flatMap {
+                case (created: User) => {
+                  val updatedUser = created.copy(
+                    email = email,
+                    planetCredential = planetCredential,
+                    emailNotifications = isEmail,
+                    visibility = visibility
+                  )
+                  UserDao.updateOwnUser(updatedUser) flatMap {
+                    case (affectedRows: Int) => {
+                      val updatedUserIO =
+                        UserDao.unsafeGetUserById(updatedUser.id)
+                      updatedUserIO map { (affectedRows, _) }
+                    }
+                  }
                 }
-              }
-            }
-          }).transact(xa).unsafeRunSync
+              }).transact(t))
+            .unsafeRunSync
 
           affectedRows == 1 &&
           updatedUser.emailNotifications == isEmail &&
@@ -193,17 +205,21 @@ class UserDaoSpec
             org <- rootOrgQ
             created <- UserDao.create(user)
           } yield (created)
-          val (affectedRows, updatedToken) = (insertedUserIO flatMap {
-            case (insertUser: User) => {
-              UserDao.storeDropboxAccessToken(insertUser.id, dropboxCredential) flatMap {
-                case (affectedRows: Int) => {
-                  val updatedDbxTokenIO = UserDao.unsafeGetUserById(
-                    insertUser.id) map { _.dropboxCredential }
-                  updatedDbxTokenIO map { (affectedRows, _) }
+          val (affectedRows, updatedToken) = xa
+            .use(t =>
+              (insertedUserIO flatMap {
+                case (insertUser: User) => {
+                  UserDao.storeDropboxAccessToken(insertUser.id,
+                                                  dropboxCredential) flatMap {
+                    case (affectedRows: Int) => {
+                      val updatedDbxTokenIO = UserDao.unsafeGetUserById(
+                        insertUser.id) map { _.dropboxCredential }
+                      updatedDbxTokenIO map { (affectedRows, _) }
+                    }
+                  }
                 }
-              }
-            }
-          }).transact(xa).unsafeRunSync
+              }).transact(t))
+            .unsafeRunSync
           (updatedToken.token == dropboxCredential.token) && (affectedRows == 1)
         }
       )
@@ -292,10 +308,10 @@ class UserDaoSpec
              u3VisibleUsers,
              u3AdminVisibleUsers)
           }
-          orgsIO.transact(xa).unsafeRunSync
+          xa.use(t => orgsIO.transact(t)).unsafeRunSync
 
           val (u1, u2, u3, u4, u1users, u2users, u3users, u3usersAdmin) =
-            orgsIO.transact(xa).unsafeRunSync
+            xa.use(t => orgsIO.transact(t)).unsafeRunSync
           val u1userids = u1users.toSet.map { u: User =>
             u.id
           }
@@ -346,7 +362,7 @@ class UserDaoSpec
               listedUsers <- UserDao.getUsersByIds(List(dbUser1.id, dbUser2.id))
             } yield { listedUsers }
 
-            val outUsers = outUsersIO.transact(xa).unsafeRunSync
+            val outUsers = xa.use(t => outUsersIO.transact(t)).unsafeRunSync
             assert(outUsers.map(_.id).toSet == Set(user1.id, user2.id),
                    "Lookup by ids should return the correct set of users")
             true
@@ -364,7 +380,7 @@ class UserDaoSpec
             (_, dbUser) = orgAndUser
             createdUser <- UserDao.unsafeGetUserById(dbUser.id, Some(false))
           } yield (createdUser)
-          val createdUser = createdUserIO.transact(xa).unsafeRunSync
+          val createdUser = xa.use(t => createdUserIO.transact(t)).unsafeRunSync
           createdUser.planetCredential == Credential(Some("")) &&
           createdUser.dropboxCredential == Credential(Some(""))
         }
@@ -383,7 +399,8 @@ class UserDaoSpec
               listedPlatform <- UserDao.unsafeGetUserPlatform(dbUser.id)
             } yield (insertedPlatform, listedPlatform)
 
-            val (inserted, listed) = platformsIO.transact(xa).unsafeRunSync
+            val (inserted, listed) =
+              xa.use(t => platformsIO.transact(t)).unsafeRunSync
             assert(
               inserted == listed,
               "Unsafe get of a user's platform should return the user's platform")

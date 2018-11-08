@@ -1,4 +1,4 @@
-package com.azavea.rf.api.uploads
+package com.rasterfoundry.api.uploads
 
 import java.sql.Timestamp
 import java.util.{Date, UUID}
@@ -11,8 +11,8 @@ import com.amazonaws.auth.{
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityRequest
-import com.azavea.rf.api.utils.Config
-import com.azavea.rf.datamodel.User
+import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.datamodel.User
 import com.typesafe.scalalogging.LazyLogging
 import io.circe.generic.JsonCodec
 @JsonCodec

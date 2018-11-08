@@ -1,4 +1,4 @@
-package com.azavea.rf.api.scene
+package com.rasterfoundry.api.scene
 
 import java.util.UUID
 
@@ -9,13 +9,13 @@ import cats.effect.IO
 import cats.implicits._
 import com.amazonaws.services.s3.AmazonS3URI
 import java.net.URLDecoder
-import com.azavea.rf.api.utils.Config
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.utils.CogUtils
-import com.azavea.rf.common.{AWSBatch, CommonHandlers, S3, UserErrorHandler}
-import com.azavea.rf.database._
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.utils.CogUtils
+import com.rasterfoundry.common.{AWSBatch, CommonHandlers, S3, UserErrorHandler}
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.datamodel._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
@@ -158,7 +158,7 @@ trait SceneRoutes
       val histogram: OptionT[Future, Array[Histogram[Double]]] =
         (newScene.sceneType, newScene.ingestLocation) match {
           case (Some(SceneType.COG), Some(ingestLocation)) =>
-            CogUtils.fromUri(ingestLocation) map { geoTiff =>
+            CogUtils.fromUri(ingestLocation) map { _.tiff } map { geoTiff =>
               CogUtils.geoTiffDoubleHistogram(geoTiff)
             }
           case _ => OptionT.fromOption(None)

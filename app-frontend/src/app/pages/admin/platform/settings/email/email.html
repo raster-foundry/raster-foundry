@@ -40,6 +40,16 @@
       <span class="error color-danger" ng-show="emailSettings.password.$error.required">required</span>
     </div>
     <div class="form-group">
+      <label for="emailfrom">From</label>
+      <input id="emailfrom"
+             type="text"
+             class="form-control"
+             name="emailfrom"
+             ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailFrom ?
+                 $ctrl.platformBuffer.publicSettings.emailFrom : 'Default'}}"
+             ng-model="$ctrl.platformBuffer.publicSettings.emailFrom">
+    </div>
+    <div class="form-group">
       <label for="smtp">SMTP Host</label>
       <input id="smtp"
              type="text"

@@ -37,30 +37,7 @@ class SceneDetailModalController {
     }
 
     $postLink() {
-        this.getMap().then(mapWrapper => {
-            if (this.scene.sceneType === 'COG') {
-                mapWrapper.setLayer(
-                  'Browse Scene',
-                  L.tileLayer(
-                    this.sceneService.getSceneLayerURL(
-                        this.scene,
-                        {token: this.authService.token()}
-                    ),
-                    {maxZoom: 30}
-                  ),
-                  true
-                );
-            } else {
-                mapWrapper.setThumbnail(
-                    this.scene,
-                    this.repository,
-                    {
-                        persist: true
-                    }
-                );
-            }
-            mapWrapper.map.fitBounds(this.getSceneBounds());
-        });
+        this.setThumbnail();
         this.repository.service.getDatasource(this.scene).then(d => {
             this.datasource = d;
         });
@@ -71,6 +48,38 @@ class SceneDetailModalController {
         this.accDateDisplay = this.setAccDateDisplay();
         this.isUploadDone = true;
         this.isOwner = this.scene.owner === this.authService.getProfile().sub;
+    }
+
+    setThumbnail() {
+        this.getMap().then(mapWrapper => {
+            if (this.scene.sceneType === 'COG') {
+                this.setCOGThumbnail(mapWrapper);
+            } else {
+                mapWrapper.setThumbnail(this.scene, this.repository, {persist: true});
+            }
+            mapWrapper.map.fitBounds(this.getSceneBounds());
+        });
+    }
+
+    setCOGThumbnail(mapWrapper) {
+        this.repository.service.getDatasourceBands(this.scene).then(rgbBands => {
+            mapWrapper.setLayer(
+              'Browse Scene',
+              L.tileLayer(
+                this.sceneService.getSceneLayerURL(
+                    this.scene,
+                    {
+                        token: this.authService.token(),
+                        redBand: rgbBands.RED,
+                        greenBand: rgbBands.GREEN,
+                        blueBand: rgbBands.BLUE
+                    }
+                ),
+                {maxZoom: 30}
+              ),
+              true
+            );
+        });
     }
 
     openDownloadModal() {

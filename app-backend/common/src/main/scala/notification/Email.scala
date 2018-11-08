@@ -1,6 +1,6 @@
-package com.azavea.rf.common.notification.Email
+package com.rasterfoundry.common.notification.Email
 
-import com.azavea.rf.common.RollbarNotifier
+import com.rasterfoundry.common.RollbarNotifier
 
 import org.apache.commons.mail._
 import org.apache.commons.mail.Email._
@@ -41,7 +41,8 @@ class NotificationEmail extends RollbarNotifier {
                to: String,
                subject: String,
                bodyHtml: String,
-               bodyPlain: String): Either[Unit, Email] = {
+               bodyPlain: String,
+               emailFrom: Option[String] = None): Either[Unit, Email] = {
 
     val email = new HtmlEmail()
 
@@ -56,7 +57,10 @@ class NotificationEmail extends RollbarNotifier {
         email.setSslSmtpPort(port.toString)
       }
       email.setAuthenticator(new DefaultAuthenticator(uName, uPw))
-      email.setFrom(uName)
+      emailFrom match {
+        case Some(from) if from.length > 0 => email.setFrom(uName, from)
+        case _                             => email.setFrom(uName)
+      }
       email.setSubject(subject)
       email.setHtmlMsg(bodyHtml)
       email.setTextMsg(bodyPlain)

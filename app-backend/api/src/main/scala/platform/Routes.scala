@@ -1,17 +1,17 @@
-package com.azavea.rf.api.platform
+package com.rasterfoundry.api.platform
 
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{UserErrorHandler, CommonHandlers}
-import com.azavea.rf.database.{
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.{UserErrorHandler, CommonHandlers}
+import com.rasterfoundry.database.{
   PlatformDao,
   OrganizationDao,
   TeamDao,
   UserDao,
   UserGroupRoleDao
 }
-import com.azavea.rf.datamodel._
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route

@@ -1,16 +1,17 @@
-package com.azavea.rf.tile.image
+package com.rasterfoundry.tile.image
 
-import com.azavea.rf.tile._
-import com.azavea.rf.database.{SceneToProjectDao, SceneDao}
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.datamodel.{
+import com.rasterfoundry.tile._
+import com.rasterfoundry.database.{SceneToProjectDao, SceneDao}
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel.{
   ColorCorrect,
   MosaicDefinition,
   SceneType,
+  TiffWithMetadata,
   WhiteBalance
 }
-import com.azavea.rf.common.cache.CacheClient
+import com.rasterfoundry.common.cache.CacheClient
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.spark._
@@ -28,18 +29,18 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-import com.azavea.rf.common.utils.{
+import com.rasterfoundry.common.utils.{
   CogUtils,
   CryptoUtils,
   RangeReaderUtils,
   TileUtils
 }
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.database.util.RFTransactor
 
 import scala.concurrent._
 import scala.concurrent.duration._
 import geotrellis.spark.io.postgres.PostgresAttributeStore
-import com.azavea.rf.tile.AkkaSystem
+import com.rasterfoundry.tile.AkkaSystem
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 
@@ -84,12 +85,15 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
 
   def mosaicDefinition(id: UUID,
                        polygonOption: Option[Projected[Polygon]],
+                       redBand: Int,
+                       greenBand: Int,
+                       blueBand: Int,
                        isScene: Boolean)(
       implicit xa: Transactor[IO]): Future[Seq[MosaicDefinition]] = {
     if (isScene) {
       logger.debug(s"Reading mosaic definition (scene: $id")
       SceneDao
-        .getMosaicDefinition(id, polygonOption)
+        .getMosaicDefinition(id, polygonOption, redBand, blueBand, greenBand)
         .transact(xa)
         .unsafeToFuture
     } else
@@ -322,6 +326,9 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
       zoom: Int,
       col: Int,
       row: Int,
+      redband: Int,
+      greenBand: Int,
+      blueBand: Int,
       isScene: Boolean
   )(implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] =
     traceName(s"MultiBandMosaic.apply($id)") {
@@ -331,14 +338,20 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
         val polygonBbox: Projected[Polygon] =
           TileUtils.getTileBounds(zoom, col, row)
         val md: Future[Seq[MosaicDefinition]] =
-          mosaicDefinition(id, Option(polygonBbox), true)
+          mosaicDefinition(id,
+                           Option(polygonBbox),
+                           redband,
+                           greenBand,
+                           blueBand,
+                           true)
         OptionT(
           mergeTiles(
             renderForBbox(md,
                           Some(polygonBbox),
                           zoom,
-                          Some(s"${zoom}-${col}-${row}"),
-                          false)))
+                          Some(s"${zoom}-${col}-${row}"))
+          )
+        )
       } else {
         apply(id, zoom, col, row)
       }
@@ -407,7 +420,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
                   .flatMap { tile =>
                     if (colorCorrect) {
                       LayerCache.layerHistogram(sceneId, zoom).map { hist =>
-                        colorCorrectParams.colorCorrect(tile, hist)
+                        colorCorrectParams.colorCorrect(tile, hist, None)
                       }
                     } else {
                       OptionT[Future, MultibandTile](Future(Some(tile)))
@@ -448,19 +461,21 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     }
 
     rfCache.cachingOptionT(cacheKey)(
-      CogUtils.fromUri(ingestLocation).flatMap { tiff =>
-        CogUtils.cropForZoomExtent(tiff, zoom, extent).flatMap {
-          cropped: MultibandTile =>
-            if (colorCorrect) {
-              rfCache
-                .cachingOptionT(s"hist-tiff-${sceneId}") {
-                  OptionT.liftF(Future(CogUtils.geoTiffHistogram(tiff)))
-                }
-                .semiflatMap { histogram =>
-                  Future(colorCorrectParams.colorCorrect(cropped, histogram))
-                }
-            } else OptionT.pure[Future](cropped)
-        }
+      CogUtils.fromUri(ingestLocation).flatMap {
+        case TiffWithMetadata(tiff, metadata) =>
+          CogUtils.cropForZoomExtent(tiff, zoom, extent).flatMap {
+            cropped: MultibandTile =>
+              if (colorCorrect) {
+                rfCache
+                  .cachingOptionT(s"hist-tiff-${sceneId}") {
+                    OptionT.liftF(Future(CogUtils.geoTiffHistogram(tiff)))
+                  }
+                  .semiflatMap { histogram =>
+                    Future(colorCorrectParams
+                      .colorCorrect(cropped, histogram, metadata.noDataValue))
+                  }
+              } else OptionT.pure[Future](cropped)
+          }
       }
     )
 

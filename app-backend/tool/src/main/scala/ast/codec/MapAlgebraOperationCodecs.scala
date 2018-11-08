@@ -1,8 +1,8 @@
-package com.azavea.rf.tool.ast.codec
+package com.rasterfoundry.tool.ast.codec
 
-import com.azavea.rf.tool.ast._
-import com.azavea.rf.tool.eval._
-import com.azavea.rf.bridge._
+import com.rasterfoundry.tool.ast._
+import com.rasterfoundry.tool.eval._
+import com.rasterfoundry.bridge._
 import io.circe._
 import io.circe.syntax._
 

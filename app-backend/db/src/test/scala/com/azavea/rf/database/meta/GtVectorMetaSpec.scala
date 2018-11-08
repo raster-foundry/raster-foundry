@@ -1,8 +1,8 @@
-package com.azavea.rf.database.meta
+package com.rasterfoundry.database.meta
 
-import com.azavea.rf.datamodel.AOI
-import com.azavea.rf.database._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel.AOI
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO
@@ -72,7 +72,7 @@ class GtVectorMetaSpec extends FunSpec with Matchers with DBTestConfig {
       js <- select(123)
     } yield js
 
-    val results = geomOut.transact(xa).unsafeRunSync
+    val results = xa.use(t => geomOut.transact(t)).unsafeRunSync
     results.point shouldBe point
     results.line shouldBe line
     results.poly shouldBe poly

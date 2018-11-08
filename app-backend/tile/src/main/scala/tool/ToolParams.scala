@@ -1,4 +1,4 @@
-package com.azavea.rf.tile.tool
+package com.rasterfoundry.tile.tool
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._

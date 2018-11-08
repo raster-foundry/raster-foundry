@@ -1,27 +1,27 @@
-package com.azavea.rf.backsplash.analysis
+package com.rasterfoundry.backsplash.analysis
 
 import java.security.InvalidParameterException
 import java.util.UUID
 
 import cats.data.Validated._
-import cats.effect.{IO, Timer}
+import cats.effect._
 import cats.implicits._
 import com.azavea.maml.eval.BufferingInterpreter
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.backsplash._
-import com.azavea.rf.backsplash.error._
-import com.azavea.rf.backsplash.maml.BacksplashMamlAdapter
-import com.azavea.rf.backsplash.parameters.PathParameters._
-import com.azavea.rf.common.RollbarNotifier
-import com.azavea.rf.datamodel.User
-import com.azavea.rf.database.ToolRunDao
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.database.util.RFTransactor
-import com.azavea.rf.tool.ast.{MapAlgebraAST, _}
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.backsplash._
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.maml.BacksplashMamlAdapter
+import com.rasterfoundry.backsplash.parameters.Parameters._
+import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.database.ToolRunDao
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.tool.ast.{MapAlgebraAST, _}
 import doobie.implicits._
 import geotrellis.raster._
 import geotrellis.raster.render._
-import geotrellis.server.core.maml._
+import geotrellis.server._
 import org.http4s.{MediaType, _}
 import org.http4s.dsl._
 import org.http4s.headers._
@@ -30,9 +30,12 @@ import scala.util._
 
 class AnalysisService(
     interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit timer: Timer[IO])
+)(implicit timer: Timer[IO],
+  cs: ContextShift[IO],
+  H: HttpErrorHandler[IO, BacksplashException],
+  ForeignError: HttpErrorHandler[IO, Throwable])
     extends Http4sDsl[IO]
-    with ErrorHandling {
+    with RollbarNotifier {
 
   implicit val xa = RFTransactor.xa
 
@@ -45,70 +48,72 @@ class AnalysisService(
       extends BacksplashMamlAdapter
 
   val service: AuthedService[User, IO] =
-    AuthedService {
-      case GET -> Root / UUIDWrapper(analysisId) / histogram
-            :? NodeQueryParamMatcher(node)
-            :? VoidCacheQueryParamMatcher(void) as user => {
+    H.handle {
+      ForeignError.handle {
+        AuthedService {
+          case GET -> Root / UUIDWrapper(analysisId) / histogram
+                :? NodeQueryParamMatcher(node)
+                :? VoidCacheQueryParamMatcher(void) as user => {
 
-        ???
-      }
+            ???
+          }
 
-      case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(
-            y)
-            :? NodeQueryParamMatcher(node) as user => {
+          case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(
+                y)
+                :? NodeQueryParamMatcher(node) as user => {
 
-        logger.info(s"Requesting Analysis: ${analysisId}")
-        val tr = ToolRunDao.query.filter(analysisId).select.transact(xa)
+            logger.info(s"Requesting Analysis: ${analysisId}")
+            val tr = ToolRunDao.query.filter(analysisId).select.transact(xa)
 
-        val mapAlgebraAST = tr.flatMap { toolRun =>
-          logger.info(s"Getting AST")
-          val ast = toolRun.executionParameters
-            .as[MapAlgebraAST]
-            .right
-            .toOption
-            .getOrElse(throw MetadataException(
-              s"Could not decode AST ${analysisId} from database"))
-          IO.pure(
-            ast
-              .find(UUID.fromString(node))
-              .getOrElse(throw MetadataException(
-                s"Node ${node} missing from in AST ${analysisId}")))
-        }
+            val mapAlgebraAST = tr.flatMap { toolRun =>
+              logger.info(s"Getting AST")
+              val ast = toolRun.executionParameters
+                .as[MapAlgebraAST]
+                .right
+                .toOption
+                .getOrElse(throw MetadataException(
+                  s"Could not decode AST ${analysisId} from database"))
+              IO.pure(
+                ast
+                  .find(UUID.fromString(node))
+                  .getOrElse(throw MetadataException(
+                    s"Node ${node} missing from in AST ${analysisId}")))
+            }
 
-        logger.debug(s"AST: ${mapAlgebraAST}")
-        val respIO = mapAlgebraAST.flatMap { ast =>
-          val (exp, mdOption, params) = ast.asMaml
-          val mamlEval =
-            MamlTms.apply(IO.pure(exp), IO.pure(params), interpreter)
-          val tileIO = mamlEval(z, x, y)
-          tileIO.attempt flatMap {
-            case Left(error) => ???
-            case Right(Valid(tile)) => {
-              val colorMap = for {
-                md <- mdOption
-                renderDef <- md.renderDef
-              } yield renderDef
+            logger.debug(s"AST: ${mapAlgebraAST}")
+            mapAlgebraAST.flatMap { ast =>
+              val (exp, mdOption, params) = ast.asMaml
+              val layerEval =
+                LayerTms.apply(IO.pure(exp), IO.pure(params), interpreter)
+              val tileIO = layerEval(z, x, y)
+              tileIO.attempt flatMap {
+                case Left(error) => ???
+                case Right(Valid(tile)) => {
+                  val colorMap = for {
+                    md <- mdOption
+                    renderDef <- md.renderDef
+                  } yield renderDef
 
-              colorMap match {
-                case Some(rd) => {
-                  logger.debug(s"Using Render Definition: ${rd}")
-                  Ok(tile.renderPng(rd).bytes,
-                     `Content-Type`(MediaType.`image/png`))
+                  colorMap match {
+                    case Some(rd) => {
+                      logger.debug(s"Using Render Definition: ${rd}")
+                      Ok(tile.renderPng(rd).bytes,
+                         `Content-Type`(MediaType.image.png))
+                    }
+                    case _ => {
+                      logger.debug(s"Using Default Color Ramp: Viridis")
+                      Ok(tile.renderPng(ColorRamps.Viridis).bytes,
+                         `Content-Type`(MediaType.image.png))
+                    }
+                  }
                 }
-                case _ => {
-                  logger.debug(s"Using Default Color Ramp: Viridis")
-                  Ok(tile.renderPng(ColorRamps.Viridis).bytes,
-                     `Content-Type`(MediaType.`image/png`))
+                case Right(Invalid(e)) => {
+                  BadRequest(e.toString)
                 }
               }
             }
-            case Right(Invalid(e)) => {
-              BadRequest(e.toString)
-            }
           }
         }
-
-        respIO.handleErrorWith(handleErrors _)
       }
     }
 }

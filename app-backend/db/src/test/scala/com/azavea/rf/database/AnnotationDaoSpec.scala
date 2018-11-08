@@ -1,8 +1,8 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._
@@ -39,8 +39,9 @@ class AnnotationDaoSpec
                 )
               }
             }
-            annotationsInsertIO
-              .transact(xa)
+            xa.use((t: Transactor[IO]) =>
+                annotationsInsertIO
+                  .transact(t))
               .unsafeRunSync
               .length == annotations.length
           }
@@ -69,7 +70,7 @@ class AnnotationDaoSpec
             } yield (insertedAnnotations, labeler)
 
             val (insertedAnnotations, labeler) =
-              annotationsInsertIO.transact(xa).unsafeRunSync
+              xa.use(t => annotationsInsertIO.transact(t)).unsafeRunSync
 
             insertedAnnotations.length == annotations.length &&
             insertedAnnotations.flatMap(_.labeledBy).distinct(0) === labeler.id
@@ -79,7 +80,9 @@ class AnnotationDaoSpec
   }
 
   test("list annotations") {
-    AnnotationDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
+    xa.use(t => AnnotationDao.query.list.transact(t))
+      .unsafeRunSync
+      .length should be >= 0
   }
 
   test("list annotations for project") {
@@ -114,7 +117,7 @@ class AnnotationDaoSpec
               }
             }
             val (insertedAnnotations, annotationsForProject) =
-              annotationsListForProjectIO.transact(xa).unsafeRunSync
+              xa.use(t => annotationsListForProjectIO.transact(t)).unsafeRunSync
 
             insertedAnnotations.toSet == annotationsForProject.toSet
           }
@@ -169,8 +172,9 @@ class AnnotationDaoSpec
               }
             }
 
-            val (affectedRows, updatedAnnotation, verifier) =
-              annotationsUpdateWithAnnotationIO.transact(xa).unsafeRunSync
+            val (affectedRows, updatedAnnotation, verifier) = xa
+              .use(t => annotationsUpdateWithAnnotationIO.transact(t))
+              .unsafeRunSync
 
             affectedRows == 1 &&
             updatedAnnotation.label == annotationUpdate.label &&
@@ -206,7 +210,11 @@ class AnnotationDaoSpec
               }
             }
 
-            annotationsLabelsIO.transact(xa).unsafeRunSync.toSet ==
+            xa.use(
+                t => annotationsLabelsIO.transact(t)
+              )
+              .unsafeRunSync
+              .toSet ==
               (annotations.toSet map { (annotation: Annotation.Create) =>
                 annotation.label
               })

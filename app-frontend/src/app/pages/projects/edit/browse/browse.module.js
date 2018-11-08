@@ -218,18 +218,29 @@ class ProjectsSceneBrowserController {
                 if (scene.sceneType !== 'COG') {
                     map.setThumbnail(scene, this.currentRepository);
                 } else {
-                    map.setLayer(
-                      'Hovered Scene',
-                      L.tileLayer(
-                        this.sceneService.getSceneLayerURL(
-                            scene,
-                            {token: this.authService.token()}
-                        ),
-                        {maxZoom: 30})
-                    );
+                    this.setCOGThumbnail(scene, map);
                 }
             });
         }
+    }
+
+    setCOGThumbnail(scene, map) {
+        this.currentRepository.service.getDatasourceBands(scene).then(rgbBands => {
+            map.setLayer(
+              'Hovered Scene',
+              L.tileLayer(
+                this.sceneService.getSceneLayerURL(
+                    scene,
+                    {
+                        token: this.authService.token(),
+                        redBand: rgbBands.RED,
+                        greenBand: rgbBands.GREEN,
+                        blueBand: rgbBands.BLUE
+                    }
+                ),
+                {maxZoom: 30})
+            );
+        });
     }
 
     removeHoveredScene() {

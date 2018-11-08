@@ -4,7 +4,12 @@ node {
   try {
     // Checkout the proper revision into the workspace.
     stage('checkout') {
-      checkout scm
+      checkout([
+        $class: 'GitSCM',
+        branches: scm.branches,
+        extensions: scm.extensions + [[$class: 'CloneOption', noTags: false, reference: '', shallow: false]],
+        userRemoteConfigs: scm.userRemoteConfigs
+      ])
     }
 
     env.AWS_DEFAULT_REGION = 'us-east-1'

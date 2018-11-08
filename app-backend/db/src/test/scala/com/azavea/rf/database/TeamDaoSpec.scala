@@ -1,11 +1,11 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.sql.Timestamp
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database._
 import doobie._
 import doobie.implicits._
 import cats._
@@ -30,7 +30,7 @@ class TeamDaoSpec
     with PropTestHelpers {
 
   test("listing teams") {
-    TeamDao.query.list.transact(xa).unsafeRunSync.length >= 0
+    xa.use(t => TeamDao.query.list.transact(t)).unsafeRunSync.length >= 0
   }
 
   test("getting a team by ID") {
@@ -52,7 +52,8 @@ class TeamDaoSpec
             }
           }
 
-          val (getTeamOp, org) = getTeamAndOrgIO.transact(xa).unsafeRunSync
+          val (getTeamOp, org) =
+            xa.use(t => getTeamAndOrgIO.transact(t)).unsafeRunSync
           val getTeam = getTeamOp.get
 
           getTeam.name == teamCreate.name &&
@@ -83,7 +84,8 @@ class TeamDaoSpec
             }
           }
 
-          val (getTeam, org) = getTeamAndOrgIO.transact(xa).unsafeRunSync
+          val (getTeam, org) =
+            xa.use(t => getTeamAndOrgIO.transact(t)).unsafeRunSync
 
           getTeam.name == teamCreate.name &&
           getTeam.organizationId == org.id &&
@@ -107,7 +109,8 @@ class TeamDaoSpec
               fixupTeam(teamCreate, orgInsert, userInsert))
           } yield (teamInsert, orgInsert)
 
-          val (createdTeam, org) = createTeamIO.transact(xa).unsafeRunSync
+          val (createdTeam, org) =
+            xa.use(t => createTeamIO.transact(t)).unsafeRunSync
 
           createdTeam.name == teamCreate.name &&
           createdTeam.organizationId == org.id &&
@@ -139,7 +142,7 @@ class TeamDaoSpec
           } yield (teamInsert, orgInsert, users, isAdmin)
 
           val (createdTeam, org, teamusers, isAdmin) =
-            createTeamIO.transact(xa).unsafeRunSync
+            xa.use(t => createTeamIO.transact(t)).unsafeRunSync
 
           createdTeam.name == teamCreate.name &&
           createdTeam.organizationId == org.id &&
@@ -177,7 +180,8 @@ class TeamDaoSpec
             }
           }
 
-          val (updatedTeam, org) = updateTeamIO.transact(xa).unsafeRunSync
+          val (updatedTeam, org) =
+            xa.use(t => updateTeamIO.transact(t)).unsafeRunSync
 
           updatedTeam.name == teamUpdate.name &&
           updatedTeam.settings == teamUpdate.settings &&
@@ -205,7 +209,7 @@ class TeamDaoSpec
             case (team: Team) => TeamDao.delete(team.id)
           }
 
-          deleteTeamIO.transact(xa).unsafeRunSync == 1
+          xa.use(t => deleteTeamIO.transact(t)).unsafeRunSync == 1
         }
       )
     }
@@ -251,7 +255,7 @@ class TeamDaoSpec
                activatedTeams,
                acrToInsert,
                permissionAfterTeamDeactivate) =
-            createTeamIO.transact(xa).unsafeRunSync
+            xa.use(t => createTeamIO.transact(t)).unsafeRunSync
 
           assert(deactivatedTeams.size == 1, "Deactivated team should exist")
           assert(activatedTeams.results.size == 0, "No team is active")
@@ -288,7 +292,7 @@ class TeamDaoSpec
             } yield { (insertedTeam, byIdUserGroupRole) }
 
             val (dbTeam, dbUserGroupRole) =
-              addUserTeamRoleIO.transact(xa).unsafeRunSync
+              xa.use(t => addUserTeamRoleIO.transact(t)).unsafeRunSync
             dbUserGroupRole match {
               case Some(ugr) =>
                 assert(ugr.isActive, "; Added role should be active")
@@ -331,7 +335,8 @@ class TeamDaoSpec
                 insertedTeam.id)
             } yield { (originalUserGroupRole, updatedUserGroupRoles) }
 
-            val (dbOldUGR, dbNewUGRs) = setTeamRoleIO.transact(xa).unsafeRunSync
+            val (dbOldUGR, dbNewUGRs) =
+              xa.use(t => setTeamRoleIO.transact(t)).unsafeRunSync
 
             assert(dbNewUGRs.filter((ugr) => ugr.isActive == false).size == 1,
                    "; The updated UGR should be inactive")
@@ -383,7 +388,7 @@ class TeamDaoSpec
               listedTeams <- TeamDao.teamsForUser(dbUser)
             } yield { (List(team1, team2), listedTeams) }
             val (insertedTeams, listedTeams) =
-              teamsForUserIO.transact(xa).unsafeRunSync
+              xa.use(t => teamsForUserIO.transact(t)).unsafeRunSync
             assert(
               insertedTeams.map(_.name).toSet == listedTeams.map(_.name).toSet,
               "Inserted and listed teams for this user should be the same")

@@ -1,8 +1,8 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 
 import cats._, cats.data._, cats.effect.IO
 import cats.syntax.either._
@@ -37,7 +37,7 @@ class OrganizationDaoSpec
                 .toOrganization(true))
           } yield (newOrg, insertedPlatform)
           val (insertedOrg, insertedPlatform) =
-            orgInsertIO.transact(xa).unsafeRunSync
+            xa.use(t => orgInsertIO.transact(t)).unsafeRunSync
 
           insertedOrg.platformId == insertedPlatform.id &&
           insertedOrg.name == orgCreate.name
@@ -60,7 +60,9 @@ class OrganizationDaoSpec
               }
             }
           }
-          retrievedNameIO.transact(xa).unsafeRunSync.get == orgCreate.name
+          xa.use(t => retrievedNameIO.transact(t))
+            .unsafeRunSync
+            .get == orgCreate.name
         }
       )
     }
@@ -88,7 +90,7 @@ class OrganizationDaoSpec
               }
           }
           val (affectedRows, updatedName, updatedStatus) =
-            insertAndUpdateIO.transact(xa).unsafeRunSync
+            xa.use(t => insertAndUpdateIO.transact(t)).unsafeRunSync
           (affectedRows == 1) && (updatedName == withoutNull) && (updatedStatus == orgCreate.status)
         }
       )
@@ -97,7 +99,9 @@ class OrganizationDaoSpec
 
   // list organizations
   test("list organizations") {
-    OrganizationDao.query.list.transact(xa).unsafeRunSync.length should be >= 0
+    xa.use(t => OrganizationDao.query.list.transact(t))
+      .unsafeRunSync
+      .length should be >= 0
   }
 
   test("list authorized organizations") {
@@ -190,7 +194,7 @@ class OrganizationDaoSpec
                u1orgs,
                u2orgs,
                u3orgs,
-               u2orgsAdmin) = orgsIO.transact(xa).unsafeRunSync
+               u2orgsAdmin) = xa.use(t => orgsIO.transact(t)).unsafeRunSync
           val u1orgids = u1orgs.toSet.map { o: Organization =>
             o.id
           }
@@ -246,7 +250,8 @@ class OrganizationDaoSpec
             } yield { (org, byIdUserGroupRole) }
 
             val (dbOrg, dbUserGroupRole) =
-              addPlatformRoleWithPlatformIO.transact(xa).unsafeRunSync
+              xa.use(t => addPlatformRoleWithPlatformIO.transact(t))
+                .unsafeRunSync
             dbUserGroupRole match {
               case Some(ugr) =>
                 assert(
@@ -298,7 +303,7 @@ class OrganizationDaoSpec
             } yield { (originalUserGroupRole, updatedUserGroupRoles) }
 
             val (dbOldUGR, dbUpdatedUGRs) =
-              setPlatformRoleIO.transact(xa).unsafeRunSync
+              xa.use(t => setPlatformRoleIO.transact(t)).unsafeRunSync
 
             assert(dbUpdatedUGRs.size === 1, "; A single UGR should be updated")
             assert(

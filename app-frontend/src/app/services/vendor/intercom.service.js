@@ -1,4 +1,5 @@
 /* global Intercom, BUILDCONFIG */
+import _ from 'lodash';
 export default (app) => {
     class IntercomService {
         constructor($resource, $q, $http, APP_CONFIG, angularLoad) {
@@ -19,12 +20,16 @@ export default (app) => {
         }
 
         bootWithUser(user) {
+            let cleanUser = _.clone(user);
+            if (user.email === user.name) {
+                delete cleanUser.name;
+            }
             if (!this.scriptLoaded && this.appId !== 'disabled') {
                 this.load().then(() => {
-                    this.doBoot(user);
+                    this.doBoot(cleanUser);
                 });
             } else if (this.appId !== 'disabled') {
-                this.doBoot(user);
+                this.doBoot(cleanUser);
             }
         }
 

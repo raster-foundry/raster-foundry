@@ -1,11 +1,11 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.sql.Timestamp
 import scala.util.Random
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 import doobie._
 import doobie.implicits._
 import cats._
@@ -45,7 +45,8 @@ class ProjectDaoSpec
                                          user)
               }
             }
-            val insertedProject = projInsertIO.transact(xa).unsafeRunSync
+            val insertedProject =
+              xa.use(t => projInsertIO.transact(t)).unsafeRunSync
             insertedProject.name == project.name &&
             insertedProject.description == project.description &&
             insertedProject.visibility == project.visibility &&
@@ -96,7 +97,7 @@ class ProjectDaoSpec
             }
 
             val (affectedRows, updatedProject) =
-              updateProjectWithUpdatedIO.transact(xa).unsafeRunSync
+              xa.use(t => updateProjectWithUpdatedIO.transact(t)).unsafeRunSync
 
             affectedRows == 1 &&
             updatedProject.owner == user.id &&
@@ -139,7 +140,7 @@ class ProjectDaoSpec
               }
             }
 
-            projDeleteIO.transact(xa).unsafeRunSync == None
+            xa.use(t => projDeleteIO.transact(t)).unsafeRunSync == None
           }
       }
     }
@@ -169,7 +170,11 @@ class ProjectDaoSpec
             } yield { listedProjects }
 
             val returnedThinUser =
-              projectsListIO.transact(xa).unsafeRunSync.results.head.owner
+              xa.use(t => projectsListIO.transact(t))
+                .unsafeRunSync
+                .results
+                .head
+                .owner
             assert(
               returnedThinUser.id == user.id,
               "Listed project's owner should be the same as the creating user")
@@ -187,43 +192,51 @@ class ProjectDaoSpec
         (user: User.Create,
          org: Organization.Create,
          scenes: List[Scene.Create],
-         project: Project.Create) =>
+         project: Project.Create,
+         datasource: Datasource.Create) =>
           {
-            val projAndScenesInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
-              case (dbOrg: Organization, dbUser: User) => {
-                val scenesInsertIO = unsafeGetRandomDatasource flatMap {
-                  (dbDatasource: Datasource) =>
-                    {
-                      scenes.traverse(
-                        (scene: Scene.Create) => {
-                          SceneDao.insert(fixupSceneCreate(dbUser,
-                                                           dbDatasource,
-                                                           scene),
-                                          dbUser)
-                        }
-                      )
-                    }
-                }
-                val projectInsertIO =
-                  ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
-                                           dbUser)
-                (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
+            val addScenesIO = for {
+              orgUserProject <- insertUserOrgProject(user, org, project)
+              (dbOrg, dbUser, dbProject) = orgUserProject
+              dbDatasource <- fixupDatasource(datasource, dbUser)
+              insertedScenes <- scenes traverse { scene =>
+                SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene),
+                                dbUser)
               }
-            }
+              _ <- ProjectDao.addScenesToProject(
+                insertedScenes map { _.id },
+                dbProject.id,
+                true
+              )
+              scenesInProject <- ProjectScenesDao.listProjectScenes(
+                dbProject.id,
+                PageRequest(0, 100, Map.empty),
+                CombinedSceneQueryParams())
+            } yield scenesInProject.results
 
-            val addScenesIO = projAndScenesInsertWithUserIO flatMap {
-              case (dbProject: Project,
-                    dbScenes: List[Scene.WithRelated],
-                    dbUser: User) => {
-                ProjectDao.addScenesToProject(
-                  // this.get is safe because the arbitrary instance only produces NELs
-                  (dbScenes map { _.id }).toNel.get,
-                  dbProject.id,
-                  true
-                )
-              }
-            }
-            addScenesIO.transact(xa).unsafeRunSync == scenes.length
+            val addedScenes = xa.use(t => addScenesIO.transact(t)).unsafeRunSync
+
+            assert(
+              (Set(addedScenes filter {
+                _.sceneType map { _ == SceneType.Avro } getOrElse true
+              } map {
+                _.statusFields.ingestStatus
+              }: _*) |
+                Set(IngestStatus.ToBeIngested,
+                    IngestStatus.Ingesting,
+                    IngestStatus.Ingested)) ==
+                Set(IngestStatus.ToBeIngested,
+                    IngestStatus.Ingesting,
+                    IngestStatus.Ingested),
+              "; Some scenes are neither ingesting nor scheduled for ingest"
+            )
+
+            assert(
+              addedScenes.length == scenes.length,
+              "; Correct number of scenes was not added"
+            )
+
+            true
           }
       }
     }
@@ -290,14 +303,13 @@ class ProjectDaoSpec
               }
             }
             val (foundScenes, createdScenes) =
-              listAddedSceneIDsIO.transact(xa).unsafeRunSync
+              xa.use(t => listAddedSceneIDsIO.transact(t)).unsafeRunSync
             foundScenes.toSet == createdScenes.toSet
           }
       }
     }
   }
 
-  // deleteScenesFromProject
   test("delete scenes from a project") {
     check {
       forAll {
@@ -305,61 +317,36 @@ class ProjectDaoSpec
          org: Organization.Create,
          scenes: List[Scene.Create],
          project: Project.Create,
-         pageRequest: PageRequest) =>
+         datasource: Datasource.Create) =>
           {
-            val projAndScenesInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
-              case (dbOrg: Organization, dbUser: User) => {
-                val scenesInsertIO = unsafeGetRandomDatasource flatMap {
-                  (dbDatasource: Datasource) =>
-                    {
-                      scenes.traverse(
-                        (scene: Scene.Create) => {
-                          SceneDao.insert(fixupSceneCreate(dbUser,
-                                                           dbDatasource,
-                                                           scene),
-                                          dbUser)
-                        }
-                      )
-                    }
-                }
-                val projectInsertIO =
-                  ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
-                                           dbUser)
-                (projectInsertIO, scenesInsertIO, dbUser.pure[ConnectionIO]).tupled
+            val listScenesIO = for {
+              orgUserProject <- insertUserOrgProject(user, org, project)
+              (dbOrg, dbUser, dbProject) = orgUserProject
+              dbDatasource <- fixupDatasource(datasource, dbUser)
+              scenes <- scenes traverse { scene =>
+                SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene),
+                                dbUser)
               }
-            }
+              _ <- ProjectDao.addScenesToProject(scenes map { _.id },
+                                                 dbProject.id,
+                                                 true)
+              _ <- ProjectDao.deleteScenesFromProject(scenes map { _.id },
+                                                      dbProject.id)
+              listedScenes <- ProjectScenesDao.listProjectScenes(
+                dbProject.id,
+                PageRequest(0, 100, Map.empty),
+                CombinedSceneQueryParams()
+              ) map { _.results }
+            } yield listedScenes
 
-            val addAndDeleteScenesWithProjectAndUserIO = projAndScenesInsertWithUserIO flatMap {
-              case (dbProject: Project,
-                    dbScenes: List[Scene.WithRelated],
-                    dbUser: User) => {
-                val sceneIds = dbScenes map { _.id }
-                ProjectDao.addScenesToProject(
-                                              // this.get is safe because the arbitrary instance only produces NELs
-                                              (dbScenes map { _.id }).toNel.get,
-                                              dbProject.id,
-                                              true) flatMap { _ =>
-                  ProjectDao.deleteScenesFromProject(dbScenes map { _.id },
-                                                     dbProject.id) map { _ =>
-                    (dbProject, dbUser)
-                  }
-                }
-              }
-            }
+            val scenesInProject =
+              xa.use(t => listScenesIO.transact(t)).unsafeRunSync
 
-            val listAddedSceneIDsIO = addAndDeleteScenesWithProjectAndUserIO flatMap {
-              case (dbProject: Project, dbUser: User) => {
-                ProjectScenesDao.listProjectScenes(
-                  dbProject.id,
-                  pageRequest,
-                  CombinedSceneQueryParams()) map {
-                  (resp: PaginatedResponse[Scene.ProjectScene]) =>
-                    resp.results
-                }
-              }
-            }
-
-            listAddedSceneIDsIO.transact(xa).unsafeRunSync == List()
+            assert(
+              scenesInProject == Nil,
+              "; Project should have no scenes after deleting all added scenes."
+            )
+            true
           }
       }
     }
@@ -388,7 +375,7 @@ class ProjectDaoSpec
             } yield { (permissions, acrInsert) }
 
             val (permissions, acrInsert) =
-              projectPermissionIO.transact(xa).unsafeRunSync
+              xa.use(t => projectPermissionIO.transact(t)).unsafeRunSync
 
             assert(
               permissions.flatten.headOption == Some(acrInsert),
@@ -426,7 +413,7 @@ class ProjectDaoSpec
             } yield { (permissionsInsert, permissionsBack) }
 
             val (permissionsInsert, permissionsBack) =
-              projectPermissionsIO.transact(xa).unsafeRunSync
+              xa.use(t => projectPermissionsIO.transact(t)).unsafeRunSync
 
             assert(
               permissionsInsert.diff(permissionsBack).length == 0,
@@ -466,7 +453,7 @@ class ProjectDaoSpec
             } yield { (permReplaced, permissionsBack) }
 
             val (permReplaced, permissionsBack) =
-              projectReplacePermissionsIO.transact(xa).unsafeRunSync
+              xa.use(t => projectReplacePermissionsIO.transact(t)).unsafeRunSync
 
             assert(
               permReplaced.diff(permissionsBack).length == 0,
@@ -504,7 +491,7 @@ class ProjectDaoSpec
             } yield { (permsDeleted, permissionsBack) }
 
             val (permsDeleted, permissionsBack) =
-              projectDeletePermissionsIO.transact(xa).unsafeRunSync
+              xa.use(t => projectDeletePermissionsIO.transact(t)).unsafeRunSync
 
             assert(
               permsDeleted == 1,
@@ -570,7 +557,7 @@ class ProjectDaoSpec
             } yield { (actions, permissionsBack) }
 
             val (userActions, permissionsBack) =
-              userActionsIO.transact(xa).unsafeRunSync
+              xa.use(t => userActionsIO.transact(t)).unsafeRunSync
 
             val acrActionsDistinct =
               permissionsBack.flatten.map(_.actionType.toString).distinct
@@ -651,7 +638,8 @@ class ProjectDaoSpec
             val (projectInsert1,
                  projectInsert2,
                  permissionsBack,
-                 paginatedProjects) = listProjectsIO.transact(xa).unsafeRunSync
+                 paginatedProjects) =
+              xa.use(t => listProjectsIO.transact(t)).unsafeRunSync
 
             val hasViewPermission =
               permissionsBack.flatten.exists(_.actionType == ActionType.View)
@@ -768,7 +756,7 @@ class ProjectDaoSpec
             } yield { (action, projectInsert2, isPermitted1, isPermitted2) }
 
             val (action, projectInsert2, isPermitted1, isPermitted2) =
-              isUserPermittedIO.transact(xa).unsafeRunSync
+              xa.use(t => isUserPermittedIO.transact(t)).unsafeRunSync
 
             if (projectInsert2.visibility == Visibility.Public) {
               (action) match {

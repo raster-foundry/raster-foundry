@@ -1,45 +1,69 @@
-package com.azavea.rf.backsplash
+package com.rasterfoundry.backsplash
 
-import com.azavea.rf.backsplash.auth.Authenticators
-import com.azavea.rf.backsplash.error._
-import com.azavea.rf.backsplash.nodes._
-import com.azavea.rf.backsplash.services.{HealthCheckService, MosaicService}
-import com.azavea.rf.backsplash.analysis.AnalysisService
-import doobie.util.analysis.Analysis
+import com.rasterfoundry.backsplash.auth.Authenticators
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.nodes._
+import com.rasterfoundry.backsplash.services.{HealthCheckService, MosaicService}
+import com.rasterfoundry.backsplash.analysis.AnalysisService
 
 import cats._
 import cats.data._
 import cats.effect._
 import cats.implicits._
-import fs2.StreamApp
-import org.http4s.server.blaze.BlazeBuilder
+import com.olegpy.meow.hierarchy._
+import fs2._
+import org.http4s._
+import org.http4s.server.Router
+import org.http4s.server.middleware.{CORS, CORSConfig}
+import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.AutoSlash
+import org.http4s.syntax.kleisli._
 
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object BacksplashServer extends StreamApp[IO] {
+object BacksplashServer extends IOApp {
 
-  def stream(args: List[String], requestShutdown: IO[Unit]) =
-    ServerStream.stream
-}
+  implicit val backsplashErrorHandler
+    : HttpErrorHandler[IO, BacksplashException] =
+    new BacksplashHttpErrorHandler[IO]
 
-object ServerStream {
+  implicit val foreignErrorHandler: HttpErrorHandler[IO, Throwable] =
+    new ForeignErrorHandler[IO, Throwable]
 
-  implicit val timer: Timer[IO] = IO.timer(global)
+  def withCORS(svc: HttpRoutes[IO]): HttpRoutes[IO] =
+    CORS(
+      svc,
+      CORSConfig(
+        anyOrigin = true,
+        anyMethod = false,
+        allowedMethods = Some(Set("GET", "POST", "HEAD", "OPTIONS")),
+        allowedHeaders = Some(Set("Content-Type", "Authorization", "*")),
+        allowCredentials = true,
+        maxAge = 1800
+      )
+    )
 
   def healthCheckService = new HealthCheckService[IO].service
-  def mosaicService = new MosaicService().service
-  def analysisService = new AnalysisService().service
+  def analysisService =
+    Authenticators.tokensAuthMiddleware(new AnalysisService().service)
+  def mosaicService =
+    Authenticators.tokensAuthMiddleware(new MosaicService().service)
+
+  val httpApp =
+    Router(
+      "/" -> AutoSlash(withCORS(mosaicService)),
+      "/healthcheck" -> AutoSlash(healthCheckService),
+      "/tools" -> AutoSlash(withCORS(analysisService))
+    ).orNotFound
 
   def stream =
-    BlazeBuilder[IO]
+    BlazeServerBuilder[IO]
+      .enableHttp2(true)
       .bindHttp(8080, "0.0.0.0")
-      .mountService(
-        AutoSlash(Authenticators.queryParamAuthMiddleware(mosaicService)),
-        "/")
-      .mountService(AutoSlash(healthCheckService), "/healthcheck")
-      .mountService(
-        AutoSlash(Authenticators.queryParamAuthMiddleware(analysisService)),
-        "/tools")
+      .withHttpApp(httpApp)
       .serve
+
+  def run(args: List[String]): IO[ExitCode] =
+    stream.compile.drain.as(ExitCode.Success)
 }
