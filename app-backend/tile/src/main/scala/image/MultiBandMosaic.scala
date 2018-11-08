@@ -19,6 +19,7 @@ import geotrellis.spark.io._
 import geotrellis.raster.GridBounds
 import geotrellis.proj4._
 import geotrellis.vector.{Extent, Point, Polygon, Projected}
+import cats.{Functor, Id}
 import cats.data._
 import cats.implicits._
 import cats.effect.IO
@@ -197,7 +198,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
       }.toSet
 
       val mayhapTiles: Future[Seq[MultibandTile]] =
-        MultiBandMosaic.renderForBbox(Future { mosaic },
+        MultiBandMosaic.renderForBbox(Future { mosaic.toList },
                                       bbox,
                                       zoom,
                                       None,
@@ -217,33 +218,29 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
 
   /** Fetch all bands of a [[MultibandTile]] and return them without assuming anything of their semantics */
   def raw(projectId: UUID, zoom: Int, col: Int, row: Int)(
-      implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] =
+      implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = {
     OptionT(mosaicDefinition(projectId).flatMap { mosaic =>
-      val sceneIds = mosaic.map {
-        case MosaicDefinition(sceneId, _, _, _) => sceneId
-      }.toSet
-
-      val mayhapTiles: Seq[OptionT[Future, MultibandTile]] =
-        for (MosaicDefinition(sceneId, _, sceneType, ingestLocation) <- mosaic)
-          yield
-            MultiBandMosaic.fetch(sceneId,
+      {
+        val mayhapTiles: OptionT[Future, List[MultibandTile]] =
+          mosaic.toList traverse { mosaicDefinition =>
+            MultiBandMosaic.fetch(mosaicDefinition.sceneId,
                                   zoom,
                                   col,
                                   row,
-                                  sceneType,
-                                  ingestLocation)
+                                  mosaicDefinition.sceneType,
+                                  mosaicDefinition.ingestLocation)
+          }
 
-      val futureMergeTile: Future[Option[MultibandTile]] =
-        Future.sequence(mayhapTiles.map(_.value)).map { maybeTiles =>
-          val tiles = maybeTiles.flatten
-          if (tiles.nonEmpty)
-            Option(tiles.reduce(_ merge _))
-          else
-            Option.empty[MultibandTile]
-        }
+        val mergeTile: OptionT[Future, MultibandTile] =
+          mayhapTiles flatMap { tiles =>
+            OptionT.fromOption(mergeTiles(tiles: Id[List[MultibandTile]]))
+          }
 
-      futureMergeTile
+        mergeTile.value
+      }
+
     })
+  }
 
   /**   Render a multiband tile from TMS pyramids given that they are in the same projection.
     *   If a layer does not go up to requested zoom it will be up-sampled.
@@ -286,7 +283,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
 
     OptionT(
       mergeTiles(
-        renderForBbox(md, polygonBbox, zoom, None)
+        renderForBbox(md map { _.toList }, polygonBbox, zoom, None)
       )
     )
   }
@@ -313,7 +310,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
         mosaicDefinition(projectId, Option(polygonBbox))
       OptionT(
         mergeTiles(
-          renderForBbox(md,
+          renderForBbox(md map { _.toList },
                         Some(polygonBbox),
                         zoom,
                         Some(s"${zoom}-${col}-${row}"))
@@ -346,7 +343,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
                            true)
         OptionT(
           mergeTiles(
-            renderForBbox(md,
+            renderForBbox(md map { _.toList },
                           Some(polygonBbox),
                           zoom,
                           Some(s"${zoom}-${col}-${row}"))
@@ -380,7 +377,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
                          blueBand)
       OptionT(
         mergeTiles(
-          renderForBbox(md,
+          renderForBbox(md map { _.toList },
                         Some(polygonBbox),
                         zoom,
                         Some(s"${zoom}-${col}-${row}"))
@@ -389,13 +386,13 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     }
 
   def renderForBbox(
-      mds: Future[Seq[MosaicDefinition]],
+      mds: Future[List[MosaicDefinition]],
       bbox: Option[Projected[Polygon]],
       zoom: Int,
       cacheKey: Option[String],
       colorCorrect: Boolean = true
-  ): Future[Seq[MultibandTile]] =
-    mds.flatMap { mosaic: Seq[MosaicDefinition] =>
+  ): Future[List[MultibandTile]] =
+    mds.flatMap { mosaic: List[MosaicDefinition] =>
       {
         val sceneIds = mosaic.map {
           case MosaicDefinition(sceneId, _, _, _) => sceneId
@@ -481,8 +478,14 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
 
   }
 
-  def mergeTiles(
-      tiles: Future[Seq[MultibandTile]]): Future[Option[MultibandTile]] = {
-    tiles.map(_.reduceOption(_ merge _))
+  def mergeTiles[F[_]: Functor](
+      tiles: F[List[MultibandTile]]): F[Option[MultibandTile]] = {
+    tiles.map(_.reduceOption(maybeResample(_) merge maybeResample(_)))
   }
+
+  @inline def maybeResample(tile: MultibandTile): MultibandTile =
+    if (tile.dimensions != (256, 256)) tile.resample(256, 256) else tile
+
+  @inline def maybeResample(tile: Tile): Tile =
+    if (tile.dimensions != (256, 256)) tile.resample(256, 256) else tile
 }

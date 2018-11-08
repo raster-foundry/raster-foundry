@@ -128,6 +128,7 @@ object MosaicRoutes extends LazyLogging with KamonTrace {
               case _ => Mosaic(projectId, zoom, x, y)
             }
             val future = mosaic
+              .map(_.resample(256, 256))
               .map(_.renderPng)
               .getOrElse(emptyTilePng)
               .map(pngAsHttpResponse)

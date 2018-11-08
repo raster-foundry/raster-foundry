@@ -53,20 +53,23 @@ object Mosaic extends RollbarNotifier {
       md: MosaicDefinition): IO[Option[Raster[Tile]]] =
     md.sceneType match {
       case Some(SceneType.COG) =>
-        Cog.fetchMultiBandCogTile(md, z, x, y, extent).value
+        (Cog.fetchMultiBandCogTile(md, z, x, y, extent) map { maybeResample(_) }).value
       case Some(SceneType.Avro) =>
-        Avro.fetchMultiBandAvroTile(md, z, x, y, extent).value
+        (Avro.fetchMultiBandAvroTile(md, z, x, y, extent) map {
+          maybeResample(_)
+        }).value
       case None =>
         throw UnknownSceneTypeException(
           "Unable to fetch tiles with unknown scene type")
     }
 
-  def getMosaicDefinitionTiles(self: ProjectNode,
-                               z: Int,
-                               x: Int,
-                               y: Int,
-                               extent: Extent,
-                               mds: Seq[MosaicDefinition]) = {
+  def getMosaicDefinitionTiles(
+      self: ProjectNode,
+      z: Int,
+      x: Int,
+      y: Int,
+      extent: Extent,
+      mds: Seq[MosaicDefinition]): IO[List[Option[Raster[Tile]]]] = {
     mds.toList.traverse(self.isSingleBand match {
       case false =>
         getMultiBandTileFromMosaic(z, x, y, extent)
@@ -97,25 +100,25 @@ object Mosaic extends RollbarNotifier {
       md: MosaicDefinition): IO[Option[Raster[Tile]]] =
     md.sceneType match {
       case Some(SceneType.COG) =>
-        Cog
-          .fetchSingleBandCogTile(md,
-                                  z,
-                                  x,
-                                  y,
-                                  extent,
-                                  singleBandOptions,
-                                  rawSingleBandValues)
-          .value
+        (Cog
+          .fetchSingleBandCogTile(
+            md,
+            z,
+            x,
+            y,
+            extent,
+            singleBandOptions,
+            rawSingleBandValues) map { maybeResample(_) }).value
       case Some(SceneType.Avro) =>
-        Avro
-          .fetchSingleBandAvroTile(md,
-                                   z,
-                                   x,
-                                   y,
-                                   extent,
-                                   singleBandOptions,
-                                   rawSingleBandValues)
-          .value
+        (Avro
+          .fetchSingleBandAvroTile(
+            md,
+            z,
+            x,
+            y,
+            extent,
+            singleBandOptions,
+            rawSingleBandValues) map { maybeResample(_) }).value
       case None =>
         throw UnknownSceneTypeException(
           "Unable to fetch tiles with unknown scene type")
@@ -136,4 +139,7 @@ object Mosaic extends RollbarNotifier {
           "Unable to fetch tiles with unknown scene type")
     }
   }
+
+  @inline def maybeResample(tile: Raster[Tile]): Raster[Tile] =
+    if (tile.dimensions != (256, 256)) tile.resample(256, 256) else tile
 }

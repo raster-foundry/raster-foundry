@@ -130,7 +130,9 @@ object ColorRampMosaic extends LazyLogging {
             logger.error(message)
             throw new IllegalArgumentException(message)
         }
-      val tile = cmap.render(singleBandTiles.reduce(_ merge _))
+
+      val tile = cmap.render(
+        singleBandTiles.reduce(maybeResample(_) merge maybeResample(_)))
       val r = tile.map(_.red).interpretAs(UByteCellType)
       val g = tile.map(_.green).interpretAs(UByteCellType)
       val b = tile.map(_.blue).interpretAs(UByteCellType)
@@ -138,4 +140,7 @@ object ColorRampMosaic extends LazyLogging {
       Some(MultibandTile(r, g, b, a))
     }
   }
+
+  @inline def maybeResample(tile: Tile): Tile =
+    if (tile.dimensions != (256, 256)) tile.resample(256, 256) else tile
 }

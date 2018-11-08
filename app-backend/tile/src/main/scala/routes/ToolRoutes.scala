@@ -220,11 +220,11 @@ class ToolRoutes
                               metadata
                                 .flatMap({ md =>
                                   md.renderDef.map({ renderDef =>
-                                    tile.renderPng(renderDef)
+                                    maybeResample(tile) renderPng (renderDef)
                                   })
                                 })
                                 .orElse({
-                                  Some(tile.renderPng(cMap))
+                                  Some(maybeResample(tile).renderPng(cMap))
                                 })
                             case Invalid(nel) =>
                               // We'll remove tile retrieval errors and return an empty tile
@@ -328,4 +328,7 @@ class ToolRoutes
         }
       }
     }
+
+  @inline def maybeResample(tile: Tile): Tile =
+    if (tile.dimensions != (256, 256)) tile.resample(256, 256) else tile
 }
