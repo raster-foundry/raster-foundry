@@ -3,6 +3,20 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.14.0](https://github.com/raster-foundry/raster-foundry/tree/1.14.0) (2018-11-08)
+
+### Added
 - Added summary endpoint for annotation groups to list the number of labels with different qualities (YES, NO, MISS, UNSURE) to support annotation applications [\#4221](https://github.com/raster-foundry/raster-foundry/pull/4221)
 - Added project histogram support for COG and Avro scenes in backsplash [\#4190](https://github.com/raster-foundry/raster-foundry/pull/4190)
 - Added map token and authorization header authentication to backsplash [\#4271](https://github.com/raster-foundry/raster-foundry/pull/4271)
@@ -21,10 +35,6 @@
 - Switched to semi-automatic json codec derivation for query parameters [\#4267](https://github.com/raster-foundry/raster-foundry/pull/4267)
 - Added recalculation and update of project extent after scene deletion [\#4283](https://github.com/raster-foundry/raster-foundry/pull/4283)
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 - Increase nginx buffer size & count for Scene, Tool, and Thumbnail requests [\#4170](https://github.com/raster-foundry/raster-foundry/pull/4170)
 - Add user button no longer shows for non-admins of teams and orgs [\#4212](https://github.com/raster-foundry/raster-foundry/pull/4212)
@@ -39,8 +49,6 @@
 - More carefully managed system resources to prevent non-terminating asynchronous workflows [\#4268](https://github.com/raster-foundry/raster-foundry/pull/4268)
 - Made search feature more secure for endpoints that supply such query parameter [\#4280](https://github.com/raster-foundry/raster-foundry/pull/4280)
 - Fixed annotation click and edit bug when the annotation is uploaded from a zipped shapefile [\#4282](https://github.com/raster-foundry/raster-foundry/pull/4282)
-
-### Security
 
 ## [1.13.0](https://github.com/raster-foundry/raster-foundry/tree/1.13.0) (2018-10-10)
 
