@@ -157,7 +157,12 @@ export default class SceneImportModalController {
             previous: () => 'IMPORT',
             next: () => 'IMPORT_SUCCESS',
             onEnter: () => this.startS3Upload(),
-            onExit: () => this.finishUpload()
+            onExit: () => {
+                if (!this.isProcessS3Failed) {
+                    this.finishUpload();
+                }
+                this.isProcessS3Failed = !this.isProcessS3Failed;
+            }
         }, {
             name: 'IMPORT_SUCCESS',
             allowDone: () => true
@@ -329,11 +334,13 @@ export default class SceneImportModalController {
             .getCurrentUser()
             .then(this.createUpload.bind(this))
             .then(upload => {
+                this.isProcessS3Failed = false;
+                delete this.error;
                 this.upload = upload;
                 this.uploadsDone();
                 return upload;
             }, err => {
-                this.handleNext();
+                this.isProcessS3Failed = true;
                 this.uploadError(err);
             }).finally(() => {
                 this.allowInterruptions();
@@ -669,5 +676,9 @@ export default class SceneImportModalController {
         if (this.resolve.origin === 'datasource') {
             this.$state.go('imports.rasters');
         }
+    }
+
+    backToImport() {
+        this.setCurrentStep(this.getStep('IMPORT'));
     }
 }
