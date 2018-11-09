@@ -4,6 +4,8 @@
 
 ### Added
 
+- Added S3 path suggestions in scene import modal when users upload imageries from S3 buckets [\#4290](https://github.com/raster-foundry/raster-foundry/pull/4290)
+
 ### Changed
 
 ### Deprecated
