@@ -3176,3 +3176,24 @@ rf-navbar-search {
 .btn-group-tooltip-disabled {
   cursor: not-allowed;
 }
+
+// sceneImportModal
+.import-s3-msg {
+  margin: 1em 0;
+}
+.import-s3-suggestions {
+  margin-bottom: 1em;
+
+  button {
+    margin-right: 1em;
+  }
+}
+.import-s3-best-guess {
+  display: inline-block;
+  margin: 0 0.5em;
+  padding: .25em 0.5em;
+  border-radius: 3px;
+  text-transform: capitalize;
+  color: $green;
+  border: 1px solid $green;
+}
