@@ -4,6 +4,8 @@
 
 ### Added
 
+- Upgraded maml to 0.0.15 and circe to 0.10.0 and make async jobs use cats-effect IOApp [\#4288](https://github.com/raster-foundry/raster-foundry/pull/4288)
+
 ### Changed
 
 ### Deprecated
