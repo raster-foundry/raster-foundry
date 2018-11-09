@@ -681,4 +681,51 @@ export default class SceneImportModalController {
     backToImport() {
         this.setCurrentStep(this.getStep('IMPORT'));
     }
+
+    usePath(path) {
+        this.s3Config.bucket = path;
+    }
+
+    generateSuggestedPaths(path, protocol) {
+        let segments = path.replace(protocol, '').split('/');
+
+        if (_.get(segments, 'length') === 1) {
+            this.suggestedPaths = [{
+                bestGuess: false,
+                path
+            }];
+        }
+
+        if (_.get(segments, 'length') > 1) {
+            let cleanSegs = segments;
+            if (protocol === 'http://' || protocol === 'https://') {
+                cleanSegs = segments.filter(seg => !seg.includes('s3.amazonaws.com'));
+            }
+
+            this.suggestedPaths = cleanSegs.map((seg, idx) => {
+                let bestGuess = idx ===
+                    cleanSegs.length - 2 && cleanSegs[idx + 1].includes('.tif') ||
+                    idx === cleanSegs.length - 1 && !cleanSegs[idx].includes('.tif');
+                return {
+                    bestGuess,
+                    path: `s3://${cleanSegs.slice(0, idx + 1).join('/')}`
+                };
+            });
+        }
+    }
+
+    onPathChange(path) {
+        this.suggestedPaths = [];
+        if (path && path.includes('s3://')) {
+            this.generateSuggestedPaths(path, 's3://');
+        }
+
+        if (path && path.includes('https://')) {
+            this.generateSuggestedPaths(path, 'https://');
+        }
+
+        if (path && path.includes('http://')) {
+            this.generateSuggestedPaths(path, 'http://');
+        }
+    }
 }
