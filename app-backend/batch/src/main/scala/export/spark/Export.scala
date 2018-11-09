@@ -64,7 +64,8 @@ object Export extends SparkJob with Config with RollbarNotifier {
       projLocs: Map[UUID, List[(UUID, String)]]
   )(implicit sc: SparkContext, xa: Transactor[IO]): IO[Unit] = {
     interpretRDD(ast, ed.input.resolution, projLocs) map {
-      case Invalid(errs) => throw InterpreterException(errs)
+      case Invalid(errs) =>
+        throw new Exception(s"RDD could not be interpreted: $errs")
       case Valid(rdd) => {
         val crs: CRS = rdd.metadata.crs
 

@@ -52,12 +52,13 @@ class TileResolverSpec extends WordSpec with Matchers {
 
         val cogUri =
           "http://radiant-nasa-iserv.s3-us-west-2.amazonaws.com/2014/11/12/IPR201411121933360530S07841W/IPR201411121933360530S07841W-COG.tif"
-        val ast = CogRaster(
-          UUID.randomUUID(),
-          Some(0),
-          None,
-          cogUri
-        )
+        val ast = RasterLit(
+          CogRaster(
+            UUID.randomUUID(),
+            Some(0),
+            None,
+            cogUri
+          ))
 
         val cogExtent = CogUtils.getTiffExtent(cogUri)
         val publicOrgId =

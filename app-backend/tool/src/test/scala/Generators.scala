@@ -94,11 +94,6 @@ object Generators {
     nmd <- Gen.option(genNodeMetadata)
   } yield constructor(id, imageId, Some(band), None, nmd)
 
-  lazy val genSourceAST = for {
-    id <- arbitrary[UUID]
-    nmd <- Gen.option(genNodeMetadata)
-  } yield MapAlgebraAST.Source(id, nmd)
-
   lazy val genConstantAST = for {
     id <- arbitrary[UUID]
     const <- arbitrary[Int]
@@ -177,7 +172,7 @@ object Generators {
     (2 -> genFocalOpAST(depth))
   )
 
-  def genLeafAST = Gen.oneOf(genConstantAST, genSourceAST, genRefAST)
+  def genLeafAST = Gen.oneOf(genConstantAST, genRefAST)
 
   /** We are forced to manually control flow in this generator to prevent stack overflows
     * See: http://stackoverflow.com/questions/19829293/scalacheck-arbitrary-implicits-and-recursive-generators

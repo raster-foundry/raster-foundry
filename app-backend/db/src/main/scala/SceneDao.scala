@@ -15,7 +15,6 @@ import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import geotrellis.vector.{Polygon, Projected}
-import io.circe.optics.JsonPath._
 
 import scala.concurrent.duration._
 

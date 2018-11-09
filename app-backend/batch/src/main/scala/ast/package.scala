@@ -4,6 +4,7 @@ import java.util.UUID
 
 import cats.effect.IO
 import com.azavea.maml.eval._
+import com.azavea.maml.error._
 import com.azavea.maml.spark.eval._
 import com.rasterfoundry.tool.ast._
 import com.rasterfoundry.tool.maml._
