@@ -455,7 +455,7 @@ lazy val backsplash = Project("backsplash", file("backsplash"))
       Dependencies.http4sCirce,
       Dependencies.http4sDSL,
       Dependencies.http4sServer,
-      "com.azavea" %% "maml-jvm" % "0.0.15"
+      Dependencies.mamlJvm
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))

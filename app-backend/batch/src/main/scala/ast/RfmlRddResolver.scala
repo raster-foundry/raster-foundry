@@ -8,7 +8,8 @@ import cats.effect.IO
 import cats.implicits._
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
-import com.azavea.maml.spark.ast._
+import com.azavea.maml.error._
+import com.azavea.maml.spark.eval.directive.RDDSourceDirectives._
 import com.rasterfoundry.common.utils.CogUtils
 import com.rasterfoundry.database.SceneToProjectDao
 import com.rasterfoundry.database.util.RFTransactor
@@ -60,9 +61,9 @@ object RfmlRddResolver extends LazyLogging {
 
     def eval(exp: Expression): IO[Interpreted[Expression]] =
       exp match {
-        case pr @ ProjectRaster(projId, None, celltype) =>
+        case RasterLit(ProjectRaster(projId, None, celltype)) =>
           IO.pure(Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
-        case pr @ ProjectRaster(projId, Some(band), celltypeO) =>
+        case RasterLit(ProjectRaster(projId, Some(band), celltypeO)) =>
           sourceFs map { (funcs: List[(Option[CellType], Int) => Source]) =>
             {
               val sources = funcs map (_(celltypeO, band))
@@ -84,7 +85,7 @@ object RfmlRddResolver extends LazyLogging {
                 // ::: is the nonempty list combiner
                 Invalid(errors.reduce(_ ::: _))
               } else {
-                Valid(RDDLiteral(rddsAndErrors.flatMap(_.toOption) reduce {
+                Valid(RasterLit(rddsAndErrors.flatMap(_.toOption) reduce {
                   _ merge _
                 }))
               }
@@ -131,7 +132,9 @@ object RfmlRddResolver extends LazyLogging {
     }
     storeO match {
       case None =>
-        Left(NEL.of(NonEvaluableNode(source, Some("attribute store error"))))
+        Left(
+          NEL.of(
+            NonEvaluableNode(RasterLit(source), Some("attribute store error"))))
       case Some(store) =>
         val rdd = S3LayerReader(store)
           .read[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](

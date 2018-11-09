@@ -4,6 +4,7 @@ import com.rasterfoundry.tool.ast._
 import com.rasterfoundry.tool.maml._
 
 import com.azavea.maml.eval._
+import com.azavea.maml.error._
 import cats._
 import cats.data._
 import cats.data.Validated._
@@ -24,7 +25,7 @@ object PureInterpreter extends LazyLogging {
   /** Does a given AST have at least one source? */
   private def hasSources[M: Monoid](ast: MapAlgebraAST): Interpreted[M] = {
     if (ast.sources.exists({
-          case MapAlgebraAST.Source(_, _) | MapAlgebraAST.LiteralTile(_, _, _) |
+          case MapAlgebraAST.LiteralTile(_, _, _) |
               MapAlgebraAST.SceneRaster(_, _, _, _, _) |
               MapAlgebraAST.ProjectRaster(_, _, _, _, _) =>
             true
@@ -49,12 +50,6 @@ object PureInterpreter extends LazyLogging {
       allowUnevaluable: Boolean
   ): Interpreted[M] = ast match {
     /* Validate leaf nodes */
-    case MapAlgebraAST.Source(id, _) if !allowUnevaluable =>
-      Invalid(
-        NonEmptyList.of(
-          NonEvaluableNode(ast.asMaml._1, Some("missing source nodes"))))
-    case MapAlgebraAST.Source(id, _) if allowUnevaluable =>
-      Valid(Monoid[M].empty)
     case MapAlgebraAST.ToolReference(id, _) if !allowUnevaluable =>
       Invalid(
         NonEmptyList.of(

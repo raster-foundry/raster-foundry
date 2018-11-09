@@ -32,7 +32,7 @@ sealed trait MapAlgebraAST extends Product with Serializable {
         f.args.flatMap(_.bufferedSources(true))
       case op: MapAlgebraAST.Operation =>
         op.args.flatMap(_.bufferedSources(buffered))
-      case MapAlgebraAST.Source(id, _)        => if (buffered) List(id) else List()
+      // case MapAlgebraAST.Source(id, _)        => if (buffered) List(id) else List()
       case leaf: MapAlgebraAST.MapAlgebraLeaf => List()
       case _                                  => List()
     }
@@ -657,17 +657,6 @@ object MapAlgebraAST {
   }
 
   /** Map Algebra sources */
-  case class Source(id: UUID, metadata: Option[NodeMetadata])
-      extends MapAlgebraLeaf {
-    val `type` = "src"
-    def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List(this)
-    def substitute(
-        substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST] =
-      Some(this)
-    def withMetadata(newMd: NodeMetadata): MapAlgebraAST =
-      copy(metadata = Some(newMd))
-  }
-
   case class LiteralTile(id: UUID, lt: Tile, metadata: Option[NodeMetadata])
       extends MapAlgebraLeaf {
     val `type` = "rasterLiteral"
@@ -733,7 +722,7 @@ object MapAlgebraAST {
     val `type` = "ref"
 
     def metadata: Option[NodeMetadata] = None
-    def sources: List[MapAlgebraAST.Source] = List()
+    def sources: List[MapAlgebraAST.MapAlgebraLeaf] = Nil
     def substitute(
         substitutions: Map[UUID, MapAlgebraAST]): Option[MapAlgebraAST] =
       substitutions.get(toolId)
