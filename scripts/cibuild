@@ -28,6 +28,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "Pulling down configuration settings for test environment"
         pushd "${DIR}/.."
         aws s3 cp "s3://${RF_SETTINGS_BUCKET}/.env" ".env"
+        
+        aws s3 cp "s3://${RF_SETTINGS_BUCKET}/.sbtopts" - >> app-backend/.sbtopts
+        sort app-backend/.sbtopts | uniq > cleaned_sbtopts
+        mv cleaned_sbtopts app-backend/.sbtopts
+        
         popd
 
         echo "Building static asset bundle"
