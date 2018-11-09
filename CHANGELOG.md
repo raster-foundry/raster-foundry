@@ -6,6 +6,7 @@
 - Add Ansible role to install Nexus Repo Manager [\#4277](https://github.com/raster-foundry/raster-foundry/pull/4277)
 
 - Added S3 path suggestions in scene import modal when users upload imageries from S3 buckets [\#4290](https://github.com/raster-foundry/raster-foundry/pull/4290)
+- Upgraded maml to 0.0.15 and circe to 0.10.0 and make async jobs use cats-effect IOApp [\#4288](https://github.com/raster-foundry/raster-foundry/pull/4288)
 
 ### Changed
 
