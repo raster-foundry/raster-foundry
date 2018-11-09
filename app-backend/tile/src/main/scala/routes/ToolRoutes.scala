@@ -13,6 +13,7 @@ import com.rasterfoundry.tool.maml._
 import com.rasterfoundry.database.util.RFTransactor
 
 import com.azavea.maml.ast._
+import com.azavea.maml.error._
 import com.azavea.maml.eval._
 import com.azavea.maml.eval.directive._
 import com.azavea.maml.util._
@@ -227,20 +228,8 @@ class ToolRoutes
                                   Some(maybeResample(tile).renderPng(cMap))
                                 })
                             case Invalid(nel) =>
-                              // We'll remove tile retrieval errors and return an empty tile
-                              val exceptions = nel.filter({ e =>
-                                e match {
-                                  case S3TileResolutionError(_, _)      => false
-                                  case UnknownTileResolutionError(_, _) => false
-                                  case _                                => true
-                                }
-                              })
-                              NEL.fromList(exceptions) match {
-                                case Some(errors) =>
-                                  throw new InterpreterException(errors)
-                                case None =>
-                                  Some(emptyPng)
-                              }
+                              throw new Exception(
+                                s"Tile could not be resolved: $nel")
                           })
                         })
                       })
@@ -297,27 +286,7 @@ class ToolRoutes
                             HttpEntity(ContentType(MediaTypes.`image/tiff`),
                                        tiff.toByteArray)))
                       case Invalid(nel) =>
-                        // We'll remove tile retrieval errors and return an empty tile
-                        val exceptions = nel.filter(
-                          { e =>
-                            e match {
-                              case S3TileResolutionError(_, _)      => false
-                              case UnknownTileResolutionError(_, _) => false
-                              case _                                => true
-                            }
-                          }
-                        )
-                        NEL.fromList(exceptions) match {
-                          case Some(errors) =>
-                            throw new InterpreterException(errors)
-                          case None =>
-                            val tiff =
-                              SinglebandGeoTiff(emptyTile, extent, WebMercator)
-                            Some(
-                              HttpResponse(entity =
-                                HttpEntity(ContentType(MediaTypes.`image/tiff`),
-                                           tiff.toByteArray)))
-                        }
+                        throw new Exception(s"Tile could not be resolved: $nel")
                     })
                   case _ => Future.successful(None)
                 }

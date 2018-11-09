@@ -2,13 +2,18 @@ package com.rasterfoundry.tool.ast
 
 import com.rasterfoundry.tool.ast.MapAlgebraAST._
 
+import geotrellis.raster.IntArrayTile
+
 import java.util.UUID
 
 import org.scalatest._
 
 class MapAlgebraASTSpec extends FunSpec with Matchers {
 
-  def randomSourceAST = MapAlgebraAST.Source(UUID.randomUUID, None)
+  def randomSourceAST =
+    MapAlgebraAST.LiteralTile(UUID.randomUUID,
+                              IntArrayTile.fill(1, 256, 256),
+                              None)
 
   it("Can find subtrees by ID") {
     val src1 = randomSourceAST
