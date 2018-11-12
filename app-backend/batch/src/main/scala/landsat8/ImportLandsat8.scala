@@ -6,6 +6,8 @@ import java.util.UUID
 import cats.effect.IO
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util._
+import com.rasterfoundry.batch.util.conf.Config
+import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel._
 import doobie.util.transactor.Transactor
@@ -21,8 +23,11 @@ import scala.util.{Failure, Success, Try}
 final case class ImportLandsat8(
     startDate: LocalDate = LocalDate.now(ZoneOffset.UTC),
     threshold: Int = 10)(implicit val xa: Transactor[IO])
-    extends Job {
+    extends RollbarNotifier
+    with Config {
   val name = ImportLandsat8.name
+
+  def runJob(args: List[String]) = ???
 
   /** Get S3 client per each call */
   def s3Client = S3(region = landsat8Config.awsRegion)
@@ -86,20 +91,19 @@ final case class ImportLandsat8(
   def run(): Unit = ???
 }
 
-object ImportLandsat8 {
+object ImportLandsat8 extends Job {
   val name = "import_landsat8"
 
-  def main(args: Array[String]): Unit = {
+  def runJob(args: List[String]): IO[Unit] = {
 
     /** Since 30/04/2017 old LC8 collection is not updated */
-    val job = args.toList match {
-      case List(date, threshold)
+    args match {
+      case argList @ List(date, threshold)
           if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) =>
-        ImportLandsat8C1(LocalDate.parse(date),
-                         threshold.toInt,
-                         RFTransactor.xa)
-      case List(date) if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) =>
-        ImportLandsat8C1(LocalDate.parse(date), xa = RFTransactor.xa)
+        ImportLandsat8C1.runJob(argList)
+      case argList @ List(date)
+          if LocalDate.parse(date) > LocalDate.of(2017, 4, 30) =>
+        ImportLandsat8C1.runJob(argList)
       case List(date, threshold) =>
         throw new NotImplementedError(
           "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
@@ -113,7 +117,5 @@ object ImportLandsat8 {
           "Landsat 8 import for dates prior to May 1, 2017 is not implemented"
         )
     }
-
-    job.run
   }
 }
