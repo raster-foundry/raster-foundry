@@ -103,7 +103,7 @@ export default class SceneImportModalController {
                 if (this.importType === 'local') {
                     return true;
                 } else if (this.importType === 'S3') {
-                    return this.validateS3Config();
+                    return this.validateS3Config() && this.isValidS3Path;
                 } else if (this.importType === 'Planet') {
                     return this.validatePlanetConfig();
                 }
@@ -405,8 +405,20 @@ export default class SceneImportModalController {
             uploadObject.files = this.selectedFileDatasets.map(f => f.file.name);
             uploadObject.uploadType = 'LOCAL';
         } else if (this.importType === 'S3') {
-            uploadObject.uploadType = 'S3';
-            uploadObject.source = encodeURI(this.s3Config.bucket);
+            const segs = this.s3Config.bucket.split('/');
+            if (segs[segs.length - 1].includes('.tif')) {
+                this.importType = 'local';
+                uploadObject = Object.assign(uploadObject, {
+                    files: [encodeURI(this.s3Config.bucket)],
+                    uploadType: 'LOCAL',
+                    uploadStatus: 'UPLOADED'
+                });
+            } else {
+                uploadObject = Object.assign(uploadObject, {
+                    uploadType: 'S3',
+                    source: encodeURI(this.s3Config.bucket)
+                });
+            }
         } else if (this.importType === 'Planet') {
             uploadObject.uploadType = 'PLANET';
             uploadObject.metadata.planetKey = this.planetCredential;
@@ -684,9 +696,11 @@ export default class SceneImportModalController {
 
     usePath(path) {
         this.s3Config.bucket = path;
+        this.isValidS3Path = true;
     }
 
     generateSuggestedPaths(path, protocol) {
+        this.isValidS3Path = false;
         let segments = path.replace(protocol, '').split('/');
 
         if (_.get(segments, 'length') === 1) {
@@ -697,17 +711,10 @@ export default class SceneImportModalController {
         }
 
         if (_.get(segments, 'length') > 1) {
-            let cleanSegs = segments;
-            if (protocol === 'http://' || protocol === 'https://') {
-                cleanSegs = segments.filter(seg => !seg.includes('s3.amazonaws.com'));
-            }
-
+            let cleanSegs = segments.filter(seg => !seg.includes('s3.amazonaws.com'));
             this.suggestedPaths = cleanSegs.map((seg, idx) => {
-                let bestGuess = idx ===
-                    cleanSegs.length - 2 && cleanSegs[idx + 1].includes('.tif') ||
-                    idx === cleanSegs.length - 1 && !cleanSegs[idx].includes('.tif');
                 return {
-                    bestGuess,
+                    bestGuess: false,
                     path: `s3://${cleanSegs.slice(0, idx + 1).join('/')}`
                 };
             });
@@ -717,7 +724,7 @@ export default class SceneImportModalController {
     onPathChange(path) {
         this.suggestedPaths = [];
         if (path && path.includes('s3://')) {
-            this.generateSuggestedPaths(path, 's3://');
+            this.isValidS3Path = true;
         }
 
         if (path && path.includes('https://')) {
