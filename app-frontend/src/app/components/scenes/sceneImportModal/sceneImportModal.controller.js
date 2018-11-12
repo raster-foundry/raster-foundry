@@ -704,20 +704,14 @@ export default class SceneImportModalController {
         let segments = path.replace(protocol, '').split('/');
 
         if (_.get(segments, 'length') === 1) {
-            this.suggestedPaths = [{
-                bestGuess: false,
-                path
-            }];
+            this.suggestedPaths = [path];
         }
 
         if (_.get(segments, 'length') > 1) {
             let cleanSegs = segments.filter(seg => !seg.includes('s3.amazonaws.com'));
-            this.suggestedPaths = cleanSegs.map((seg, idx) => {
-                return {
-                    bestGuess: false,
-                    path: `s3://${cleanSegs.slice(0, idx + 1).join('/')}`
-                };
-            });
+            this.suggestedPaths = cleanSegs.map((seg, idx) =>
+                `s3://${cleanSegs.slice(0, idx + 1).join('/')}`
+            );
         }
     }
 
