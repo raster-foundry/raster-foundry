@@ -2,22 +2,31 @@ package com.rasterfoundry.batch
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import cats.effect._
+import cats.implicits._
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
 
 import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.forkjoin.ForkJoinPool
 
-trait Job extends Config with RollbarNotifier {
+trait Job extends IOApp with Config with RollbarNotifier {
   val name: String
 
-  implicit lazy val system: ActorSystem = ActorSystem(s"$name-system")
-  implicit lazy val materializer: ActorMaterializer = ActorMaterializer()
-  implicit lazy val executionContext: ExecutionContextExecutor =
-    materializer.executionContext
-
-  /** ActorSystem needs to be closed manually. */
-  def stop(): Unit = system.terminate()
+  private def acquireThreadPool = IO { new ForkJoinPool(16) }
+  private def releaseThreadPool(pool: ForkJoinPool) =
+    IO { logger.info("Shutting down threadpool") } map { _ =>
+      pool.shutdown()
+    } map { _ =>
+      logger.info("Thread pool shutdown completed")
+    }
+  val threadPoolResource = Resource.make(acquireThreadPool)(releaseThreadPool)
 
   /** Run function should be defined for all Jobs */
-  def run(): Unit
+  def runJob(args: List[String]): IO[Unit]
+
+  def run(args: List[String]): IO[ExitCode] =
+    for {
+      _ <- runJob(args)
+    } yield ExitCode.Success
 }

@@ -5,7 +5,8 @@ import java.util.UUID
 import cats.effect.IO
 import cats.syntax.option._
 import com.rasterfoundry.batch.Job
-import com.rasterfoundry.common.AWSBatch
+import com.rasterfoundry.batch.util.conf.Config
+import com.rasterfoundry.common.{AWSBatch, RollbarNotifier}
 import com.rasterfoundry.database.util.RFTransactor
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
@@ -14,7 +15,8 @@ import doobie.util.transactor.Transactor
 import doobie.{ConnectionIO, Fragment, Fragments}
 
 final case class FindAOIProjects(implicit val xa: Transactor[IO])
-    extends Job
+    extends Config
+    with RollbarNotifier
     with AWSBatch {
   val name = FindAOIProjects.name
 
@@ -57,10 +59,10 @@ final case class FindAOIProjects(implicit val xa: Transactor[IO])
   }
 }
 
-object FindAOIProjects extends LazyLogging {
+object FindAOIProjects extends Job {
   val name = "find_aoi_projects"
 
-  def main(args: Array[String]): Unit = {
+  def runJob(args: List[String]): IO[Unit] = {
     if (args.length > 0) {
       logger.warn(s"Ignoring arguments to FindAOIProjects: ${args}")
     }
@@ -70,7 +72,5 @@ object FindAOIProjects extends LazyLogging {
         val job = FindAOIProjects()
         IO { job.run }
       })
-      .unsafeRunSync
-    System.exit(0)
   }
 }
