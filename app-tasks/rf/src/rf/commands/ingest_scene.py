@@ -26,7 +26,9 @@ def ingest_scene(scene_id):
     image_locations = [(x.sourceUri, x.filename) for x in sorted(
         scene.images, key=lambda x: io.sort_key(scene.datasource, x.bands[0]))]
     io.create_cog(image_locations, scene)
+    logger.info('Cog created, writing histogram to attribute store')
     metadata_to_postgres(scene.id)
+    logger.info('Histogram added to attribute store, notifying interested parties')
     notify_for_scene_ingest_status(scene.id)
 
 

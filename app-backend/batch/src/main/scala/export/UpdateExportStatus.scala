@@ -1,6 +1,7 @@
 package com.rasterfoundry.batch.export
 
 import com.rasterfoundry.batch.Job
+import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.notification.Email.NotificationEmail
 import com.rasterfoundry.database._
@@ -21,7 +22,8 @@ final case class UpdateExportStatus(
     exportId: UUID,
     exportStatus: ExportStatus
 )(implicit xa: Transactor[IO])
-    extends Job {
+    extends Config
+    with RollbarNotifier {
 
   val name = UpdateExportStatus.name
 
@@ -209,14 +211,14 @@ final case class UpdateExportStatus(
 
 }
 
-object UpdateExportStatus extends RollbarNotifier {
+object UpdateExportStatus extends Job {
   val name = "update_export_status"
 
-  def main(args: Array[String]): Unit = {
+  def runJob(args: List[String]): IO[Unit] = {
     RFTransactor.xaResource
       .use(xa => {
         implicit val transactor = xa
-        val job = args.toList match {
+        val job = args match {
           case List(exportId, exportStatus) =>
             logger.info(
               s"Updating export ${exportId} of status ${exportStatus}...")
@@ -234,12 +236,8 @@ object UpdateExportStatus extends RollbarNotifier {
           case e: Throwable =>
             IO {
               sendError(e)
-              job.stop()
-              System.exit(1)
             }
         }
       })
-      .unsafeRunSync
-    System.exit(0)
   }
 }
