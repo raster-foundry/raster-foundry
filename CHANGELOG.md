@@ -12,6 +12,8 @@
 
 ### Removed
 
+- Removed email form validation from platform email settings page [\#4294](https://github.com/raster-foundry/raster-foundry/pull/4294)
+
 ### Fixed
 
 - Ensured tiles of non-standard sizes get resampled to the appropriate size before reaching users [\#4281](https://github.com/raster-foundry/raster-foundry/pull/4281)
