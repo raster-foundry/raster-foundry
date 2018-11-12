@@ -3176,3 +3176,15 @@ rf-navbar-search {
 .btn-group-tooltip-disabled {
   cursor: not-allowed;
 }
+
+// sceneImportModal
+.import-s3-msg {
+  margin: 1em 0;
+}
+.import-s3-suggestions {
+  margin-bottom: 1em;
+
+  button {
+    margin-right: 1em;
+  }
+}
