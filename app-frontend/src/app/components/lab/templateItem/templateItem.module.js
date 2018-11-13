@@ -1,16 +1,17 @@
-/* global BUILDCONFIG */
+/* global BUILDCONFIG, _ */
 import angular from 'angular';
 import templateItemTpl from './templateItem.html';
 const TemplateItemComponent = {
     templateUrl: templateItemTpl,
     controller: 'TemplateItemController',
     bindings: {
-        templateData: '<'
+        templateData: '<',
+        onTemplateDelete: '&'
     }
 };
 
 class TemplateItemController {
-    constructor($rootScope, $log, userService) {
+    constructor($rootScope, $log, userService, analysisService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
         this.BUILDCONFIG = BUILDCONFIG;
@@ -18,6 +19,7 @@ class TemplateItemController {
 
     $onInit() {
         this.getTemplateOwner();
+        this.getUserTemplateActions();
     }
 
     getTemplateOwner() {
@@ -31,6 +33,18 @@ class TemplateItemController {
                 this.templateOwner = this.BUILDCONFIG.APP_NAME;
             });
         }
+    }
+
+    getUserTemplateActions() {
+        this.analysisService.getTemplateActions(this.templateData.id).then(actionsArray => {
+            if (_.get(_.intersection(actionsArray, ['*', 'DELETE']), 'length')) {
+                this.showDelete = true;
+            }
+        });
+    }
+
+    onClickDeleteTemplate() {
+        this.onTemplateDelete({templateId: this.templateData.id});
     }
 
     setTemplateOwnerDisplay(user) {

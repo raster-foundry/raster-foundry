@@ -5,6 +5,7 @@ import java.util.UUID
 import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.batch.Job
+import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.notification.Email.NotificationEmail
 import com.rasterfoundry.database.filter.Filterables._
@@ -20,10 +21,12 @@ import org.apache.commons.mail.Email
 
 final case class NotifyIngestStatus(sceneId: UUID)(
     implicit val xa: Transactor[IO])
-    extends Job
+    extends Config
     with RollbarNotifier {
 
   val name = NotifyIngestStatus.name
+
+  def runJob(args: List[String]) = ???
 
   def getSceneConsumers(sceneId: UUID): ConnectionIO[List[String]] = {
     for {
@@ -307,20 +310,20 @@ final case class NotifyIngestStatus(sceneId: UUID)(
         }
       case _ => logger.warn(s"No matched scene of id: ${sceneId}")
     }
-    stop
   }
 }
 
-object NotifyIngestStatus extends LazyLogging {
+object NotifyIngestStatus extends Job {
   val name = "notify_ingest_status"
 
-  def main(args: Array[String]): Unit = {
-    implicit val xa = RFTransactor.xa
+  def runJob(args: List[String]): IO[Unit] = {
+    RFTransactor.xaResource.use(transactor => {
+      implicit val xa = transactor
+      val job = args.toList match {
+        case List(id: String) => NotifyIngestStatus(UUID.fromString(id))
+      }
 
-    val job = args.toList match {
-      case List(id: String) => NotifyIngestStatus(UUID.fromString(id))
-    }
-
-    job.run
+      IO { job.run }
+    })
   }
 }

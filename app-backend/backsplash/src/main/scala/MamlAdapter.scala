@@ -53,7 +53,6 @@ trait BacksplashMamlAdapter {
 
       val args = ast.args.map(eval)
       ast match {
-        case MapAlgebraAST.Source(id, _) => RasterVar(id.toString)
         case MapAlgebraAST.ProjectRaster(_, projId, band, celltype, _) => {
           val bandActual = band.getOrElse(1)
           RasterVar(s"${projId.toString}_${bandActual}")

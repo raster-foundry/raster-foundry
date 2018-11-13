@@ -6,6 +6,12 @@
 .dropup,
 .dropdown {
   position: relative;
+
+  &.template-delete-dropdown {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+  }
 }
 
 // Prevent the focus on the dropdown toggle when closing dropdowns

@@ -6,6 +6,7 @@ import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.batch._
 import com.rasterfoundry.batch.util._
+import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
@@ -19,7 +20,8 @@ import io.circe.syntax._
 
 final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
     implicit xa: Transactor[IO])
-    extends Job {
+    extends RollbarNotifier
+    with Config {
   val name = CreateExportDef.name
 
   /** Get S3 client per each call */
@@ -64,8 +66,6 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
       logger.info(s"Writing export definition to s3")
       writeExportDefToS3(exportDef, bucket, key)
       logger.info(s"Wrote export definition: ${x}")
-      stop
-      sys.exit(0)
     }
 
     exportDefinitionWrite
@@ -74,14 +74,14 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
   }
 }
 
-object CreateExportDef extends RollbarNotifier {
+object CreateExportDef extends Job with RollbarNotifier {
   val name = "create_export_def"
 
-  def main(args: Array[String]): Unit = {
+  def runJob(args: List[String]): IO[Unit] = {
     RFTransactor.xaResource
       .use(xa => {
         implicit val transactor = xa
-        val job = args.toList match {
+        val job = args match {
           case List(exportId, bucket, key) =>
             CreateExportDef(UUID.fromString(exportId), bucket, key)
           case _ =>
@@ -94,14 +94,9 @@ object CreateExportDef extends RollbarNotifier {
             IO {
               logger.error(error.stackTraceString)
               sendError(error)
-              job.stop()
-              System.exit(1)
             }
           }
         }
       })
-      .unsafeRunSync
-    System.exit(0)
-
   }
 }

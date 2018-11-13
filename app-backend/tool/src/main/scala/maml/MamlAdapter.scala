@@ -19,14 +19,14 @@ trait MamlAdapter {
     def eval(ast: MapAlgebraAST): Expression = {
       val args = ast.args.map(eval)
       ast match {
-        case MapAlgebraAST.Source(id, _) => TileSource(id.toString)
+        // case MapAlgebraAST.Source(id, _) => TileSource(id.toString)
         case MapAlgebraAST.SceneRaster(_, sceneId, band, celltype, _) =>
-          SceneRaster(sceneId, band, celltype, "")
+          RasterLit(SceneRaster(sceneId, band, celltype, ""))
         case MapAlgebraAST.ProjectRaster(_, projId, band, celltype, _) =>
-          ProjectRaster(projId, band, celltype)
+          RasterLit(ProjectRaster(projId, band, celltype))
         case MapAlgebraAST.CogRaster(_, sceneId, band, celltype, _, location) =>
-          CogRaster(sceneId, band, celltype, location)
-        case MapAlgebraAST.Constant(_, const, _) => DoubleLiteral(const)
+          RasterLit(CogRaster(sceneId, band, celltype, location))
+        case MapAlgebraAST.Constant(_, const, _) => DblLit(const)
         case MapAlgebraAST.LiteralTile(_, lt, _) =>
           throw new InvalidParameterException(
             "No literal tiles should appear on pre-MAML RFML tools")
@@ -44,13 +44,13 @@ trait MamlAdapter {
         case MapAlgebraAST.Classification(_, _, _, classmap) =>
           Classification(args, MamlClassMap(classmap.classifications))
         case MapAlgebraAST.Masking(_, _, _, mask) =>
-          Masking(args :+ GeomJson(mask.toGeoJson))
+          Masking(args :+ GeomLit(mask.toGeoJson))
         case MapAlgebraAST.Equality(_, _, _)       => Equal(args)
         case MapAlgebraAST.Inequality(_, _, _)     => Unequal(args)
         case MapAlgebraAST.Greater(_, _, _)        => Greater(args)
         case MapAlgebraAST.GreaterOrEqual(_, _, _) => GreaterOrEqual(args)
-        case MapAlgebraAST.Less(_, _, _)           => Less(args)
-        case MapAlgebraAST.LessOrEqual(_, _, _)    => LessOrEqual(args)
+        case MapAlgebraAST.Less(_, _, _)           => Lesser(args)
+        case MapAlgebraAST.LessOrEqual(_, _, _)    => LesserOrEqual(args)
         case MapAlgebraAST.And(_, _, _)            => And(args)
         case MapAlgebraAST.Or(_, _, _)             => Or(args)
         case MapAlgebraAST.Xor(_, _, _)            => Xor(args)

@@ -1,6 +1,9 @@
 package com.rasterfoundry.batch
 
+import cats.effect.{IO, Resource}
+
 import org.apache.spark._
+
 trait SparkJob {
   // Functions for combine step
   def createTiles[V](value: V): Seq[V] = Seq(value)
@@ -21,4 +24,9 @@ trait SparkJob {
            classOf[geotrellis.spark.io.kryo.KryoRegistrator].getName)
       .set("spark.kryoserializer.buffer.max", "512m")
       .setIfMissing("spark.master", "local[*]")
+
+  private def acquireSparkContext = IO { new SparkContext(conf) }
+  private def releaseSparkContext(sc: SparkContext) = IO { sc.stop() }
+  val scResource: Resource[IO, SparkContext] =
+    Resource.make(acquireSparkContext)(releaseSparkContext)
 }
