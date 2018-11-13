@@ -100,12 +100,12 @@ class LabBrowseAnalysesController {
     }
 
     fetchSorting() {
-        const k = `${this.authService.getProfile().nickname}-analysis-sort`;
+        const k = `${this.authService.getName()}-analysis-sort`;
         return this.localStorage.getString(k);
     }
 
     storeSorting() {
-        const k = `${this.authService.getProfile().nickname}-analysis-sort`;
+        const k = `${this.authService.getName()}-analysis-sort`;
         return this.localStorage.setString(k, this.serializeSort());
     }
 

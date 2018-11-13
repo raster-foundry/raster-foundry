@@ -136,9 +136,6 @@ trait Router
       } ~
       pathPrefix("feature-flags") {
         featureFlagRoutes
-      } ~
-      pathPrefix("thumbnails") {
-        thumbnailImageRoutes
       }
   }
 }
