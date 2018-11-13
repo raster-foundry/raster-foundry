@@ -19,6 +19,7 @@
 ### Fixed
 
 - Ensured tiles of non-standard sizes get resampled to the appropriate size before reaching users [\#4281](https://github.com/raster-foundry/raster-foundry/pull/4281)
+- Repaired short-lived infinite recursion in export async job [\#4297](https://github.com/raster-foundry/raster-foundry/pull/4297)
 
 ### Security
 
