@@ -7,6 +7,7 @@ import com.rasterfoundry.tile.image.Mosaic
 import com.rasterfoundry.tool.ast._
 import com.rasterfoundry.tool.maml._
 import com.azavea.maml.ast._
+import com.azavea.maml.error._
 import com.azavea.maml.eval._
 import com.azavea.maml.eval.tile._
 import com.azavea.maml.util.NeighborhoodConversion
@@ -52,10 +53,10 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
       (z: Int, x: Int, y: Int) => {
         lazy val extent = TileLayouts(z).mapTransform(SpatialKey(x, y))
         exp match {
-          case pr @ ProjectRaster(projId, None, celltype) =>
+          case RasterLit(ProjectRaster(projId, None, celltype)) =>
             Future.successful(
               Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
-          case pr @ ProjectRaster(projId, Some(band), celltype) =>
+          case RasterLit(ProjectRaster(projId, Some(band), celltype)) =>
             lazy val ndtile = celltype match {
               case Some(ct) => intNdTile.convert(ct)
               case None     => intNdTile
@@ -150,17 +151,16 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
             futureSource.value.map({ maybeSource =>
               maybeSource match {
                 case Some(tile) =>
-                  Valid(TileLiteral(tile, RasterExtent(tile, extent)))
+                  Valid(RasterLit(Raster(tile, extent)))
                 case None =>
-                  Invalid(
-                    NEL.of(UnknownTileResolutionError(exp, Some((z, x, y)))))
+                  Invalid(NEL.of(NonEvaluableNode(exp, None)))
               }
             })
 
-          case cr @ CogRaster(_, None, celltype, location) =>
+          case RasterLit(CogRaster(_, None, celltype, location)) =>
             Future.successful(
               Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
-          case cr @ CogRaster(_, Some(band), celltype, location) =>
+          case RasterLit(CogRaster(_, Some(band), celltype, location)) =>
             lazy val ndtile = celltype match {
               case Some(ct) => intNdTile.convert(ct)
               case None     => intNdTile
@@ -256,17 +256,16 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
             futureSource.value.map({ maybeTile =>
               maybeTile match {
                 case Some(tile) =>
-                  Valid(TileLiteral(tile, RasterExtent(tile, extent)))
+                  Valid(RasterLit(Raster(tile, extent)))
                 case None =>
-                  Invalid(
-                    NEL.of(UnknownTileResolutionError(exp, Some((z, x, y)))))
+                  Invalid(NEL.of(NonEvaluableNode(exp, None)))
               }
             })
 
-          case sr @ SceneRaster(sceneId, None, celltype, _) =>
+          case RasterLit(SceneRaster(sceneId, None, celltype, _)) =>
             Future.successful(
               Invalid(NEL.of(NonEvaluableNode(exp, Some("no band given")))))
-          case sr @ SceneRaster(sceneId, Some(band), celltype, _) =>
+          case RasterLit(SceneRaster(sceneId, Some(band), celltype, _)) =>
             lazy val ndtile = celltype match {
               case Some(ct) => intNdTile.convert(ct)
               case None     => intNdTile
@@ -362,10 +361,9 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
             futureSource.value.map({ maybeTile =>
               maybeTile match {
                 case Some(tile) =>
-                  Valid(TileLiteral(tile, RasterExtent(tile, extent)))
+                  Valid(RasterLit(Raster(tile, extent)))
                 case None =>
-                  Invalid(
-                    NEL.of(UnknownTileResolutionError(exp, Some((z, x, y)))))
+                  Invalid(NEL.of(NonEvaluableNode(exp, None)))
               }
             })
 
@@ -407,10 +405,10 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
                        zoom: Int,
                        extent: Extent): Future[Interpreted[Expression]] = {
     fullExp match {
-      case sr @ SceneRaster(sceneId, None, celltype, _) =>
+      case RasterLit(SceneRaster(sceneId, None, celltype, _)) =>
         Future.successful(
           Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
-      case sr @ SceneRaster(sceneId, Some(band), celltype, _) =>
+      case RasterLit(SceneRaster(sceneId, Some(band), celltype, _)) =>
         Future.successful({
           Try {
             val layerId = LayerId(sceneId.toString, zoom)
@@ -426,16 +424,16 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
             case Success(tile) =>
               val t =
                 tile.band(band).interpretAs(celltype.getOrElse(tile.cellType))
-              Valid(TileLiteral(t, RasterExtent(t, extent)))
+              Valid(RasterLit(Raster(t, extent)))
             case Failure(e) =>
-              Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
+              Invalid(NEL.of(NonEvaluableNode(fullExp, None)))
           }
         })
 
-      case pr @ ProjectRaster(projId, None, celltype) =>
+      case RasterLit(ProjectRaster(projId, None, celltype)) =>
         Future.successful(
           Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
-      case pr @ ProjectRaster(projId, Some(band), celltype) =>
+      case RasterLit(ProjectRaster(projId, Some(band), celltype)) =>
         Mosaic
           .rawForExtent(projId,
                         zoom,
@@ -448,18 +446,18 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
                 case Some(tile) =>
                   val t =
                     tile.interpretAs(celltype.getOrElse(tile.cellType))
-                  Valid(TileLiteral(t.band(0), RasterExtent(t, extent)))
+                  Valid(RasterLit(Raster(t.band(0), extent)))
                 case None =>
-                  Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
+                  Invalid(NEL.of(NonEvaluableNode(fullExp, None)))
               }
             }
           })
 
-      case cr @ CogRaster(_, None, celltype, location) =>
+      case RasterLit(CogRaster(_, None, celltype, location)) =>
         Future.successful(
           Invalid(NEL.of(NonEvaluableNode(fullExp, Some("no band given")))))
 
-      case cr @ CogRaster(_, Some(band), celltype, location) =>
+      case RasterLit(CogRaster(_, Some(band), celltype, location)) =>
         CogUtils
           .fromUri(location)
           .map(_.tiff)
@@ -477,9 +475,9 @@ class TileResolver(xaa: Transactor[IO], ec: ExecutionContext)
               }
               resampled match {
                 case Some(tile) =>
-                  Valid(TileLiteral(tile, RasterExtent(tile, extent)))
+                  Valid(RasterLit(Raster(tile, extent)))
                 case None =>
-                  Invalid(NEL.of(UnknownTileResolutionError(fullExp, None)))
+                  Invalid(NEL.of(NonEvaluableNode(fullExp, None)))
               }
             }
           })

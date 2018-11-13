@@ -10,6 +10,7 @@ import cats.effect.{IO, Resource}
 import cats.implicits._
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util._
+import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.utils.AntimeridianUtils
 import com.rasterfoundry.database._
@@ -26,15 +27,15 @@ import geotrellis.proj4._
 import geotrellis.vector._
 import geotrellis.vector.io._
 
+import scala.concurrent.forkjoin.ForkJoinPool
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.immutable.ParSeq
-import scala.concurrent.ExecutionContext
-import scala.concurrent.forkjoin.ForkJoinPool
 
 final case class ImportSentinel2(startDate: LocalDate =
                                    LocalDate.now(ZoneOffset.UTC),
                                  xa: Transactor[IO])
-    extends Job {
+    extends Config
+    with RollbarNotifier {
 
   implicit val transactor = xa
 
@@ -231,9 +232,11 @@ final case class ImportSentinel2(startDate: LocalDate =
     sceneInsertIO
   }
 
-  def insertSceneFromURI(uri: URI,
-                         datasourceUUID: UUID,
-                         user: User): ParSeq[IO[Option[Scene.WithRelated]]] = {
+  def insertSceneFromURI(
+      uri: URI,
+      datasourceUUID: UUID,
+      user: User,
+      pool: ForkJoinPool): ParSeq[IO[Option[Scene.WithRelated]]] = {
     val paths: ParSeq[String] = getScenePaths(uri).par
     paths.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(16))
     logger.info(s"Found ${paths.length} tiles for ${uri}")
@@ -271,50 +274,41 @@ final case class ImportSentinel2(startDate: LocalDate =
     paths
   }
 
-  def run(): Unit = {
+  def run(pool: ForkJoinPool): Unit = {
     logger.info(s"Importing Sentinel 2 scenes for ${startDate}")
-
-    def acquireThreadPool = IO { new ForkJoinPool(16) }
-    def releaseThreadPool(pool: ForkJoinPool) = IO { pool.shutdown() }
-    val threadPoolResource = Resource.make(acquireThreadPool)(releaseThreadPool)
 
     val keys = getSentinel2Products(startDate).par
 
-    threadPoolResource
-      .use(pool => {
-        keys.tasksupport = new ForkJoinTaskSupport(pool)
-        val user = UserDao
-          .getUserById(systemUser)
-          .transact(xa)
-          .unsafeRunSync
-          .getOrElse(
-            throw new Exception(
-              s"${systemUser} could not be found -- probably the database is borked")
-          )
-        IO {
-          keys flatMap { (key: URI) =>
-            {
-              insertSceneFromURI(key, sentinel2Config.datasourceUUID, user) map {
-                (sceneIO: IO[Option[Scene.WithRelated]]) =>
-                  sceneIO
-                    .handleErrorWith(
-                      (error: Throwable) => {
-                        sendError(error)
-                        IO.pure(None)
-                      }
-                    )
-                    .unsafeRunSync
-              }
-            }
+    keys.tasksupport = new ForkJoinTaskSupport(pool)
+    val user = UserDao
+      .getUserById(systemUser)
+      .transact(xa)
+      .unsafeRunSync
+      .getOrElse(
+        throw new Exception(
+          s"${systemUser} could not be found -- probably the database is borked")
+      )
+    IO {
+      keys flatMap { (key: URI) =>
+        {
+          insertSceneFromURI(key, sentinel2Config.datasourceUUID, user, pool) map {
+            (sceneIO: IO[Option[Scene.WithRelated]]) =>
+              sceneIO
+                .handleErrorWith(
+                  (error: Throwable) => {
+                    sendError(error)
+                    IO.pure(None)
+                  }
+                )
+                .unsafeRunSync
           }
         }
-      })
-      .unsafeRunSync
-    stop
+      }
+    }
   }
 }
 
-object ImportSentinel2 extends RollbarNotifier {
+object ImportSentinel2 extends Job {
   val name = "import_sentinel2"
 
   @SuppressWarnings(Array("CatchThrowable"))
@@ -380,7 +374,7 @@ object ImportSentinel2 extends RollbarNotifier {
     )
   }
 
-  def main(args: Array[String]): Unit = {
+  def runJob(args: List[String]): IO[Unit] = {
     RFTransactor.xaResource
       .use(xa => {
         val job = args.toList match {
@@ -388,9 +382,9 @@ object ImportSentinel2 extends RollbarNotifier {
           case _          => ImportSentinel2(xa = xa)
         }
         logger.info(s"Preparing to run job")
-        IO { job.run }
+        threadPoolResource.use { pool =>
+          IO { job.run(pool) }
+        }
       })
-      .unsafeRunSync
-    System.exit(0)
   }
 }

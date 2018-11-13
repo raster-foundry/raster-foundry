@@ -5,7 +5,7 @@ import java.net.URI
 import java.util.UUID
 
 import cats.data.Validated._
-import cats.effect.IO
+import cats.effect.{ExitCode, IO, IOApp}
 import cats.implicits._
 import com.amazonaws.services.s3.AmazonS3URI
 import com.amazonaws.services.s3.model.{ObjectMetadata, PutObjectRequest}
@@ -50,7 +50,7 @@ import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import spray.json.DefaultJsonProtocol._
 
-object Export extends SparkJob with Config with RollbarNotifier {
+object Export extends SparkJob with Config with RollbarNotifier with IOApp {
 
   val jobName = "Export"
 
@@ -64,7 +64,8 @@ object Export extends SparkJob with Config with RollbarNotifier {
       projLocs: Map[UUID, List[(UUID, String)]]
   )(implicit sc: SparkContext, xa: Transactor[IO]): IO[Unit] = {
     interpretRDD(ast, ed.input.resolution, projLocs) map {
-      case Invalid(errs) => throw InterpreterException(errs)
+      case Invalid(errs) =>
+        throw new Exception(s"RDD could not be interpreted: $errs")
       case Valid(rdd) => {
         val crs: CRS = rdd.metadata.crs
 
@@ -337,7 +338,7 @@ object Export extends SparkJob with Config with RollbarNotifier {
     * @param args Arguments to be parsed by the tooling defined in [[CommandLine]]
     */
   @SuppressWarnings(Array("CatchThrowable")) // need to ensure that status is written for errors
-  def main(args: Array[String]): Unit = {
+  def runJob(args: List[String]): IO[Unit] = {
     val xaResource = RFTransactor.xaResource
 
     val params = CommandLine.parser.parse(args, CommandLine.Params()) match {
@@ -356,8 +357,6 @@ object Export extends SparkJob with Config with RollbarNotifier {
         }
       }
 
-    implicit val sc = new SparkContext(conf)
-
     implicit def asS3Payload(status: ExportStatus): String =
       S3ExportStatus(exportDef.id, status).asJson.noSpaces
 
@@ -365,41 +364,37 @@ object Export extends SparkJob with Config with RollbarNotifier {
     // You can set them to info and check 'Output from export command' in the logs from
     // running `rf export`, and you'll get nothing. It's pretty annoying!
     val runIO: IO[Unit] = xaResource.use(xa => {
-      implicit val transactor = xa
-      for {
-        _ <- logger.debug("Fetching system user").pure[IO]
-        user <- UserDao.unsafeGetUserById(systemUser).transact(xa)
-        _ <- logger.debug(s"Fetching export ${exportDef.id}").pure[IO]
-        export <- ExportDao.unsafeGetExportById(exportDef.id).transact(xa)
-        exportOptions = export.exportOptions.as[ExportOptions]
-        _ <- logger.debug(s"Performing export").pure[IO]
-        result <- exportDef.input.style match {
-          case SimpleInput(layers, mask) =>
-            IO(multibandExport(exportDef, layers, mask, exportOptions map {
-              _.raw
-            } getOrElse false)).attempt
-          case ASTInput(ast, _, projLocs) =>
-            IO(astExport(exportDef, ast, projLocs).unsafeRunSync).attempt
-        }
-      } yield {
-        result match {
-          case Right(_) => ()
-          case Left(throwable) =>
-            sendError(throwable)
-            throw throwable
-        }
+      scResource.use {
+        sparkContext =>
+          implicit val sc = sparkContext
+          implicit val transactor = xa
+          for {
+            _ <- logger.debug("Fetching system user").pure[IO]
+            user <- UserDao.unsafeGetUserById(systemUser).transact(xa)
+            _ <- logger.debug(s"Fetching export ${exportDef.id}").pure[IO]
+            export <- ExportDao.unsafeGetExportById(exportDef.id).transact(xa)
+            exportOptions = export.exportOptions.as[ExportOptions]
+            _ <- logger.debug(s"Performing export").pure[IO]
+            result <- exportDef.input.style match {
+              case SimpleInput(layers, mask) =>
+                IO(multibandExport(exportDef, layers, mask, exportOptions map {
+                  _.raw
+                } getOrElse false)).attempt
+              case ASTInput(ast, _, projLocs) =>
+                IO(astExport(exportDef, ast, projLocs).unsafeRunSync).attempt
+            }
+          } yield {
+            result match {
+              case Right(_) => ()
+              case Left(throwable) =>
+                sendError(throwable)
+                throw throwable
+            }
+          }
       }
-    }) handleErrorWith {
-      case e: Throwable =>
-        IO {
-          sc.stop()
-          sendError(e)
-          logger.error(e.stackTraceString)
-          System.exit(1)
-        }
-    }
-    runIO.unsafeRunSync
-    sc.stop()
-    System.exit(0)
+    })
+    runIO
   }
+
+  def run(args: List[String]): IO[ExitCode] = runJob(args).as(ExitCode.Success)
 }

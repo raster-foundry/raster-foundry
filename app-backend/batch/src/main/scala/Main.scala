@@ -39,5 +39,6 @@ object Main {
       }
       case _ => throw new Exception(s"No options passed: ${args.toList}")
     }
+    System.exit(0)
   }
 }

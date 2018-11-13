@@ -8,6 +8,7 @@ import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util._
+import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.{AWSBatch, RollbarNotifier}
 import com.rasterfoundry.common.notification.Email.NotificationEmail
 import com.rasterfoundry.database.Implicits._
@@ -27,8 +28,8 @@ import org.apache.commons.mail.Email
 
 final case class UpdateAOIProject(projectId: UUID)(
     implicit val xa: Transactor[IO])
-    extends Job
-    with AWSBatch {
+    extends Config
+    with RollbarNotifier {
   val name = FindAOIProjects.name
 
   type LastChecked = Timestamp
@@ -248,10 +249,10 @@ final case class UpdateAOIProject(projectId: UUID)(
   }
 }
 
-object UpdateAOIProject extends RollbarNotifier {
+object UpdateAOIProject extends Job {
   val name = "update_aoi_project"
 
-  def main(args: Array[String]): Unit = {
+  def runJob(args: List[String]): IO[Unit] = {
 
     RFTransactor.xaResource
       .use(xa => {
@@ -265,14 +266,9 @@ object UpdateAOIProject extends RollbarNotifier {
 
         IO { job.run } handleErrorWith {
           case e: Throwable =>
-            IO {
-              sendError(e)
-              logger.error(e.stackTraceString)
-              System.exit(1)
-            }
+            sendError(e)
+            throw e
         }
       })
-      .unsafeRunSync
-    System.exit(0)
   }
 }
