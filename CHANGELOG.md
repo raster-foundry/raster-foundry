@@ -23,6 +23,13 @@
 
 ### Security
 
+## [1.14.1](https://github.com/raster-foundry/raster-foundry/tree/1.14.1) (2018-11-13)
+
+### Fixed
+
+- Upgraded maml to 0.0.15 and circe to 0.10.0 and make async jobs use cats-effect IOApp [\#4288](https://github.com/raster-foundry/raster-foundry/pull/4288)
+- Repaired short-lived infinite recursion in export async job [\#4297](https://github.com/raster-foundry/raster-foundry/pull/4297)
+
 ## [1.14.0](https://github.com/raster-foundry/raster-foundry/tree/1.14.0) (2018-11-08)
 
 ### Added
