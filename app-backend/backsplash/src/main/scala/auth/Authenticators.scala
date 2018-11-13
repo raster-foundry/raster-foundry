@@ -40,16 +40,19 @@ object Authenticators extends Authentication {
       case req @ _ -> UUIDWrapper(projectId) /: _
             :? TokenQueryParamMatcher(tokenQP)
             :? MapTokenQueryParamMatcher(mapTokenQP) => {
-        val authHeaderO: Option[Header] = req.headers.get(CaseInsensitiveString("Authorization"))
+        val authHeaderO: Option[Header] =
+          req.headers.get(CaseInsensitiveString("Authorization"))
         (authHeaderO, tokenQP, mapTokenQP) match {
           case (None, None, None) =>
             userFromPublicProject(projectId)
           case _ =>
-            val authHeader: OptionT[IO, Header] =OptionT.fromOption(authHeaderO)
+            val authHeader: OptionT[IO, Header] =
+              OptionT.fromOption(authHeaderO)
             checkTokenAndHeader(tokenQP, authHeader) :+
               (
                 OptionT.fromOption[IO](mapTokenQP) flatMap { (mapToken: UUID) =>
-                  userFromMapToken(MapTokenDao.checkProject(projectId), mapToken)
+                  userFromMapToken(MapTokenDao.checkProject(projectId),
+                                   mapToken)
                 }
               ) reduce { _ orElse _ }
         }
@@ -99,13 +102,12 @@ object Authenticators extends Authentication {
         .selectOption
       user <- projectO match {
         case Some(project) => UserDao.getUserById(project.owner)
-        case _ => None.pure[ConnectionIO]
+        case _             => None.pure[ConnectionIO]
       }
     } yield user
 
     OptionT(userIO.transact(xa))
   }
-
 
   val tokensAuthMiddleware = AuthMiddleware(tokensAuthenticator)
 }
