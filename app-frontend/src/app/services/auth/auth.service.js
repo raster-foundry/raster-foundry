@@ -360,6 +360,19 @@ export default (app) => {
             return this.profile;
         }
 
+        getName() {
+            let profileName = (profile, dpr) =>
+                (dpr.name !== profile.email ? dpr.name : null) ||
+                (dpr.nickname !== profile.email ? dpr.nickname : null) ||
+                (dpr.given_name || '' + dpr.family_name || '') || null;
+
+            let p = this.getProfile();
+            return profileName(p, p) ||
+                p.delegatedProfile && profileName(p, p.delegatedProfile) ||
+                p.email || p.delegatedProfile && p.delegatedProfile.email ||
+                p.id;
+        }
+
         token(force = false) {
             if (!this.idToken || force) {
                 this.idToken = this.localStorage.get('idToken');

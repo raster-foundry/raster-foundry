@@ -8,6 +8,7 @@ import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsReject
 import akka.http.scaladsl.server._
 import cats.effect.IO
 import cats.implicits._
+import cats.data._
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 import com.guizmaii.scalajwt.{ConfigurableJwtValidator, JwtToken}
@@ -70,6 +71,43 @@ trait Authentication extends Directives with LazyLogging {
   def getStringClaimOrBlank(claims: JWTClaimsSet, key: String): String =
     Option(claims.getStringClaim(key)).getOrElse("")
 
+  def getNameOrFallback(claims: JWTClaimsSet): String = {
+    val delegatedProfile = Option(claims.getJSONObjectClaim("delegatedProfile"))
+    val email = Option(claims.getStringClaim("email"))
+
+    val compareToEmail = (field: String) =>
+      (Option(claims.getStringClaim(field)), email) match {
+        case (fld @ Some(f), Some(e)) if f != e => fld
+        case (fld @ Some(_), None)              => fld
+        case _                                  => None
+    }
+
+    val compareDelegatedToEmail = (field: String) =>
+      (delegatedProfile.map(_.getAsString(field)), email) match {
+        case (fld @ Some(f), Some(e)) if f != e => fld
+        case (fld @ Some(_), None)              => fld
+        case _                                  => None
+    }
+
+    compareToEmail("name")
+      .orElse(compareToEmail("nickname"))
+      .orElse(
+        List(
+          Option(claims.getStringClaim("given_name")),
+          Option(claims.getStringClaim("family_name"))
+        ).flatten.toNel.map(_.toList.mkString(" "))
+      )
+      .orElse(compareDelegatedToEmail("name"))
+      .orElse(compareDelegatedToEmail("nickname"))
+      .orElse(
+        List(
+          delegatedProfile.map(_.getAsString("given_name")),
+          delegatedProfile.map(_.getAsString("family_name"))
+        ).flatten.toNel.map(_.toList.mkString(" "))
+      )
+      .getOrElse(getStringClaimOrBlank(claims, "id"))
+  }
+
   @SuppressWarnings(Array("TraversableHead"))
   def authenticateWithToken(tokenString: String): Directive1[User] = {
     val result = verifyJWT(tokenString)
@@ -79,7 +117,7 @@ trait Authentication extends Directives with LazyLogging {
       case Right((_, jwtClaims)) => {
         val userId = jwtClaims.getStringClaim("sub")
         val email = getStringClaimOrBlank(jwtClaims, "email")
-        val name = getStringClaimOrBlank(jwtClaims, "name")
+        val name = getNameOrFallback(jwtClaims)
         val picture = getStringClaimOrBlank(jwtClaims, "picture")
         final case class MembershipAndUser(platform: Option[Platform],
                                            user: User)

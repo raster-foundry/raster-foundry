@@ -102,7 +102,7 @@
         <a href uib-dropdown-toggle>
           <img ng-if="$ctrl.authService.getProfile().picture" class="avatar tiny" ng-src="{{$ctrl.authService.getProfile().picture}}">
           <div class="avatar image-placeholder" ng-if="$ctrl.authService.getProfile() && !$ctrl.authService.getProfile().picture"></div>
-          <span class="username">{{$ctrl.authService.getProfile().nickname}}</span>
+          <span class="username">{{$ctrl.authService.getName()}}</span>
           <i class="icon-caret-down"></i>
         </a>
         <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dLabel">

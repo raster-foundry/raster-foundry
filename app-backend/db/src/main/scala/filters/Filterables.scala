@@ -371,7 +371,7 @@ trait Filterables extends RFMeta with LazyLogging {
   implicit val userSearchQueryParamsFilter
     : Filterable[User, SearchQueryParameters] =
     Filterable[User, SearchQueryParameters] { params: SearchQueryParameters =>
-      Filters.searchQP(params, List("name", "email"))
+      Filters.searchQP(params, List("name", "email", "id"))
     }
 
   implicit def projectedGeometryFilter: Filterable[Any, Projected[Geometry]] =
