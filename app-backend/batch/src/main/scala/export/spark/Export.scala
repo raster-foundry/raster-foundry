@@ -396,5 +396,5 @@ object Export extends SparkJob with Config with RollbarNotifier with IOApp {
     runIO
   }
 
-  def run(args: List[String]) = run(args).as(ExitCode.Success)
+  def run(args: List[String]): IO[ExitCode] = runJob(args).as(ExitCode.Success)
 }

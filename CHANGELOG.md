@@ -14,6 +14,8 @@
 
 ### Fixed
 
+- Repaired short-lived infinite recursion in export async job [\#4297](https://github.com/raster-foundry/raster-foundry/pull/4297)
+
 ### Security
 
 ## [1.14.0](https://github.com/raster-foundry/raster-foundry/tree/1.14.0) (2018-11-08)
