@@ -60,6 +60,14 @@ class LabBrowseTemplatesController {
             component: 'rfTemplateCreateModal'
         });
     }
+
+    onTemplateDelete(templateId) {
+        this.analysisService.deleteTemplate(templateId).then(() => {
+            this.fetchPage();
+        }, err => {
+            this.$log.error(`There is an error deleting template ${templateId}`, err);
+        });
+    }
 }
 
 export default angular.module('pages.lab.browse.results', [])

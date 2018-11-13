@@ -44,7 +44,7 @@
             class="panel panel-off-white"
             ng-repeat="template in $ctrl.results"
             template-data="template"
-            ng-click=""
+            on-template-delete="$ctrl.onTemplateDelete(templateId)"
         ></rf-template-item>
         <div ng-if="!$ctrl.currentQuery && !$ctrl.search && $ctrl.pagination && !$ctrl.pagination.count"
           <rf-call-to-action-item title="You haven't created any analysis templates yet" class="panel panel-off-white">
