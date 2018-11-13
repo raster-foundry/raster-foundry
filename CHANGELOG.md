@@ -5,7 +5,6 @@
 ### Added
 - Add Ansible role to install Nexus Repo Manager [\#4277](https://github.com/raster-foundry/raster-foundry/pull/4277)
 - Added S3 path suggestions in scene import modal when users upload imageries from S3 buckets [\#4290](https://github.com/raster-foundry/raster-foundry/pull/4290)
-- Upgraded maml to 0.0.15 and circe to 0.10.0 and make async jobs use cats-effect IOApp [\#4288](https://github.com/raster-foundry/raster-foundry/pull/4288)
 - Enabled deleting lab templates on the frontend [\#4287](https://github.com/raster-foundry/raster-foundry/pull/4287)
 
 ### Changed
@@ -19,7 +18,6 @@
 ### Fixed
 
 - Ensured tiles of non-standard sizes get resampled to the appropriate size before reaching users [\#4281](https://github.com/raster-foundry/raster-foundry/pull/4281)
-- Repaired short-lived infinite recursion in export async job [\#4297](https://github.com/raster-foundry/raster-foundry/pull/4297)
 
 ### Security
 
