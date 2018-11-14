@@ -13,7 +13,6 @@ import cats.syntax.either._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie.postgres._, doobie.postgres.implicits._
 import doobie.scalatest.imports._
-import geotrellis.slick._
 import geotrellis.vector._
 import org.scalacheck.Prop.forAll
 import org.scalatest._

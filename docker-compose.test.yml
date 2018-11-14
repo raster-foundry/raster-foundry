@@ -76,6 +76,8 @@ services:
       context: ./app-backend
       dockerfile: Dockerfile.build
     env_file: .env
+    environment:
+      - COURSIER_CACHE=/root/.coursier
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./scratch/:/opt/raster-foundry/scratch/

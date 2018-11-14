@@ -18,7 +18,7 @@ import geotrellis.raster.io.json._
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 import geotrellis.spark.io.s3.{S3CollectionLayerReader, S3ValueReader}
 import geotrellis.spark.tiling.LayoutLevel
-import geotrellis.spark.{SpatialKey, TileLayerMetadata, io => _, _}
+import geotrellis.spark.{SpatialKey, TileLayerMetadata, LayerId, io => _}
 import geotrellis.vector.{Extent, Polygon, Projected}
 import spray.json.DefaultJsonProtocol._
 import spray.json._

@@ -16,7 +16,6 @@ import geotrellis.server._
 import geotrellis.server.cog.util.CogUtils
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 import geotrellis.spark.tiling.LayoutDefinition
-import geotrellis.spark.{io => _}
 import geotrellis.vector.Extent
 import io.circe.generic.semiauto._
 

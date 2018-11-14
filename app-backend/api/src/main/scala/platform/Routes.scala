@@ -1,7 +1,10 @@
 package com.rasterfoundry.api.platform
 
-import com.rasterfoundry.authentication.Authentication
-import com.rasterfoundry.common.{UserErrorHandler, CommonHandlers}
+import com.rasterfoundry.akkautil.{
+  Authentication,
+  UserErrorHandler,
+  CommonHandlers
+}
 import com.rasterfoundry.database.{
   PlatformDao,
   OrganizationDao,

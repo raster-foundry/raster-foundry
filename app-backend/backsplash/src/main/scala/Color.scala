@@ -6,7 +6,6 @@ import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.datamodel.{ColorRampMosaic, SingleBandOptions}
 import geotrellis.raster.histogram._
 import geotrellis.raster.{Raster, io => _, _}
-import geotrellis.spark.{io => _}
 import geotrellis.vector.Extent
 
 object Color extends RollbarNotifier {

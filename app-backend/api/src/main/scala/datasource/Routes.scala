@@ -1,7 +1,10 @@
 package com.rasterfoundry.api.datasource
 
-import com.rasterfoundry.authentication.Authentication
-import com.rasterfoundry.common.{UserErrorHandler, CommonHandlers}
+import com.rasterfoundry.akkautil.{
+  Authentication,
+  UserErrorHandler,
+  CommonHandlers
+}
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.filter.Filterables._

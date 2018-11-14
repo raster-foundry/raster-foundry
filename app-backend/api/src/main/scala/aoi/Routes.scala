@@ -1,8 +1,11 @@
 package com.rasterfoundry.api.aoi
 
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.common.{CommonHandlers, UserErrorHandler}
-import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.akkautil.{
+  Authentication,
+  CommonHandlers,
+  UserErrorHandler
+}
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 

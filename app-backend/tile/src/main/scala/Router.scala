@@ -1,6 +1,6 @@
 package com.rasterfoundry.tile
 
-import com.rasterfoundry.common.CommonHandlers
+import com.rasterfoundry.akkautil.CommonHandlers
 import com.rasterfoundry.tile.routes._
 import com.rasterfoundry.tile.tool._
 import com.rasterfoundry.database.util.RFTransactor

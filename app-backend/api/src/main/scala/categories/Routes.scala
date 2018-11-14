@@ -1,7 +1,6 @@
 package com.rasterfoundry.api.toolcategory
 
-import com.rasterfoundry.authentication.Authentication
-import com.rasterfoundry.common.UserErrorHandler
+import com.rasterfoundry.akkautil.{Authentication, UserErrorHandler}
 import com.rasterfoundry.database._
 import com.rasterfoundry.datamodel._
 import com.rasterfoundry.database.filter.Filterables._
