@@ -5,7 +5,7 @@ import com.rasterfoundry.backsplash.parameters.Parameters._
 import com.rasterfoundry.database.{UserDao, MapTokenDao, ProjectDao}
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.{MapToken, User, Visibility}
+import com.rasterfoundry.datamodel.{MapToken, User, Visibility, Project}
 
 import cats.data._
 import cats.effect.IO
@@ -94,20 +94,16 @@ object Authenticators extends Authentication {
         OptionT(IO(None: Option[User]))
     }
 
-  private def userFromPublicProject(id: UUID): OptionT[IO, User] = {
-    val userIO: ConnectionIO[Option[User]] = for {
-      projectO <- ProjectDao.query
+  private def userFromPublicProject(id: UUID): OptionT[IO, User] =
+    for {
+      project <- OptionT[IO, Project](ProjectDao.query
         .filter(id)
         .filter(fr"tile_visibility=${Visibility.Public.toString}::visibility")
         .selectOption
-      user <- projectO match {
-        case Some(project) => UserDao.getUserById(project.owner)
-        case _             => None.pure[ConnectionIO]
-      }
+        .transact(xa)
+      )
+      user <- OptionT(UserDao.getUserById(project.owner).transact(xa))
     } yield user
-
-    OptionT(userIO.transact(xa))
-  }
 
   val tokensAuthMiddleware = AuthMiddleware(tokensAuthenticator)
 }
