@@ -10,6 +10,9 @@ import IndexController from './index.controller';
 })();
 import angular from 'angular';
 
+require('ui-select/dist/select.css');
+require('angularjs-slider/dist/rzslider.css');
+
 const App = angular.module(
     'rasterFoundry', [
         // plugins
