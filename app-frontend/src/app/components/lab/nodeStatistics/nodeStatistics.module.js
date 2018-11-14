@@ -27,7 +27,6 @@ class NodeStatisticsController {
     }
 
     $onInit() {
-
         let unsubscribe = this.$ngRedux.connect(
             this.mapStateToThis.bind(this),
             StatisticsActions
