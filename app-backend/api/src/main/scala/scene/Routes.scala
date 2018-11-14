@@ -54,9 +54,11 @@ trait SceneRoutes
           listScenes
         }
       } ~
-        post {
-          traceName("scenes-create") {
-            createScene
+        handleExceptions(cogMissingHandler) {
+          post {
+            traceName("scenes-create") {
+              createScene
+            }
           }
         }
     } ~
