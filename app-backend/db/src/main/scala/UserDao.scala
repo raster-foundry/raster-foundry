@@ -161,7 +161,8 @@ object UserDao extends Dao[User] {
          email = ${user.email},
          name = ${user.name},
          profile_image_uri = ${user.profileImageUri},
-         visibility = ${user.visibility}
+         visibility = ${user.visibility},
+         personal_info = ${user.personalInfo}
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 

@@ -149,6 +149,7 @@ trait UserRoutes
   def getUserTeams: Route = authenticate { user =>
     complete { TeamDao.teamsForUser(user).transact(xa).unsafeToFuture }
   }
+
   def updateUserByEncodedAuthId(authIdEncoded: String): Route =
     authenticateSuperUser { root =>
       entity(as[User]) { updatedUser =>
