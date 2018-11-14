@@ -51,7 +51,7 @@ class ColormapModalController {
                 type: 'lineChart', showLegend: false,
                 showXAxis: false,
                 showYAxis: false,
-                yScale: d3.scale.log(),
+                yScale: d3.scaleLog(),
                 margin: {
                     top: 0,
                     right: 0,
