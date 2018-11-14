@@ -1,3 +1,3 @@
 package com.rasterfoundry.akkautil
 
-package object authentication {}
+package object akkautil {}

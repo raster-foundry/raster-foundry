@@ -76,6 +76,7 @@ object Dependencies {
   val scalaforklift = "com.liyaos" %% "scala-forklift-slick" % Version.scalaForklift
   val scalajHttp = "org.scalaj" %% "scalaj-http" % Version.scalajHttp
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test"
+  val scalaServerless = "io.github.howardjohn" %% "http4s-lambda" % Version.scalaServerless
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
   val slickMigrationAPI = "io.github.nafg" %% "slick-migration-api" % Version.slickMigrationAPI
   val spark = "org.apache.spark" %% "spark-core" % Version.spark % "provided"
