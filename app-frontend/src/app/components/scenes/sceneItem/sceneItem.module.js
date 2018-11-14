@@ -70,15 +70,15 @@ class SceneItemController {
 
     updateThumbnails() {
         if (this.scene.sceneType === 'COG') {
-            let redBand = this.datasource.bands.find(x => {
+            let redBand = _.get(this.datasource.bands.find(x => {
                 return x.name.toLowerCase() === 'red';
-            }).number;
-            let greenBand = this.datasource.bands.find(x => {
+            }), 'number');
+            let greenBand = _.get(this.datasource.bands.find(x => {
                 return x.name.toLowerCase() === 'green';
-            }).number;
-            let blueBand = this.datasource.bands.find(x => {
+            }), 'number');
+            let blueBand = _.get(this.datasource.bands.find(x => {
                 return x.name.toLowerCase() === 'blue';
-            }).number;
+            }), 'number');
             let bands = {};
             let atLeastThreeBands = this.datasource.bands.length >= 3;
             if (atLeastThreeBands) {
