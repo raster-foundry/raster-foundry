@@ -19,6 +19,7 @@
 
 - Ensured tiles of non-standard sizes get resampled to the appropriate size before reaching users [\#4281](https://github.com/raster-foundry/raster-foundry/pull/4281)
 - Specifically handled bad paths to COGs when users create scenes [\#4295](https://github.com/raster-foundry/raster-foundry/pull/4295)
+- Fixed shapefile annotations export [\#4300](https://github.com/raster-foundry/raster-foundry/pull/4300)
 
 ### Security
 
