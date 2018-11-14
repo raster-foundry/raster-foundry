@@ -33,7 +33,7 @@ class SceneItemController {
         this.isClickable = this.$attrs.hasOwnProperty('clickable');
 
         this.datasource = this.scene.datasource;
-        if (this.respository) {
+        if (this.repository) {
             this.updateThumbnails();
         }
     }

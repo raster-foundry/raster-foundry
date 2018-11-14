@@ -1,5 +1,5 @@
 'use strict';
-/* globals process module */
+/* globals process module __dirname */
 /* eslint no-process-env: 0
  no-console: 0
  */
@@ -45,13 +45,14 @@ const basemaps = JSON.stringify({
             }
         },
         Aerial: {
-            url: 'https://{s}.{base}.maps.cit.api.here.com/maptile/2.1/{type}/{mapID}/hybrid.day/{z}/{x}/{y}/{size}/{format}?app_id={app_id}&app_code={app_code}&lg={language}',
+            url: 'https://{s}.{base}.maps.cit.api.here.com/maptile/2.1/{type}/{mapID}/hybrid.day' +
+                '/{z}/{x}/{y}/{size}/{format}?app_id={app_id}&app_code={app_code}&lg={language}',
             properties: {
                 attribution: 'Map &copy; 1987-2014 <a href="http://developer.here.com">HERE</a>',
                 subdomains: '1234',
                 mapID: 'newest',
-                app_id: HERE_APP_ID,
-                app_code: HERE_APP_CODE,
+                'app_id': HERE_APP_ID,
+                'app_code': HERE_APP_CODE,
                 base: 'aerial',
                 maxZoom: 30,
                 maxNativeZoom: 20,
@@ -62,12 +63,13 @@ const basemaps = JSON.stringify({
             }
         },
         Streets: {
-            url: 'https://{s}.base.maps.cit.api.here.com/maptile/2.1/maptile/newest/normal.day/{z}/{x}/{y}/256/png8?app_id={app_id}&app_code={app_code}',
+            url: 'https://{s}.base.maps.cit.api.here.com/maptile/2.1/maptile/newest/normal.day/' +
+                '{z}/{x}/{y}/256/png8?app_id={app_id}&app_code={app_code}',
             properties: {
                 attribution: 'Map &copy; 1987-2014 <a href="http://developer.here.com">HERE</a>',
                 subdomains: '1234',
-                app_id: HERE_APP_ID,
-                app_code: HERE_APP_CODE
+                'app_id': HERE_APP_ID,
+                'app_code': HERE_APP_CODE
             }
         }
     },
@@ -81,7 +83,7 @@ module.exports = function (_path) {
         // entry points
         entry: {
             // vendor: _path + '/src/app/index.vendor.js',
-            app: _path + '/src/app/index.bootstrap.js',
+            app: _path + '/src/app/index.bootstrap.js'
             // wasm: _path + '/node_modules/gdal-js/gdal.wasm'
             // polyfill: _path + '/node_modules/babel-polyfill'
         },
@@ -117,7 +119,7 @@ module.exports = function (_path) {
                 gdalJs: path.join(_path, 'node_modules', 'gdal-js'),
                 moment: 'moment/moment.js'
             },
-            mainFields: ['module', 'jsnext:main', 'main'],
+            mainFields: ['module', 'jsnext:main', 'main']
         },
 
         // modules resolvers
@@ -159,8 +161,8 @@ module.exports = function (_path) {
                 loader: 'babel-loader',
                 query: {
                     cacheDirectory: true,
-                    plugins: ['@babel/plugin-transform-runtime'],//, '@babel/syntax-dynamic-import'],
-                    presets: ['@babel/env'] // , 'module:angular']
+                    plugins: ['@babel/plugin-transform-runtime'],
+                    presets: ['@babel/env']
                 }
             }, {
                 test: /\.css$/,
@@ -223,7 +225,7 @@ module.exports = function (_path) {
                 // loader: DEVELOPMENT ? 'style-loader!' + stylesLoader
                 //     : ExtractTextPlugin.extract('style-loader', stylesLoader)
             }, {
-                test: /\.(woff2|woff|ttf|eot|svg)(\?[a-z0-9]+)?$/,
+                test: /\.(woff2|woff|ttf|eot)(\?[a-z0-9]+)?$/,
                 loaders: [
                     'url-loader?name=assets/fonts/[name]_[hash].[ext]'
                 ]
@@ -261,11 +263,6 @@ module.exports = function (_path) {
                 loaders: [
                     'expose-loader?deferredBootstrapper'
                 ]
-            // }, {
-            //     test: require.resolve('angular'),
-            //     loaders: [
-            //         'expose-loader?angular'
-            //     ]
             }, {
                 test: require.resolve('jquery'),
                 loaders: [
@@ -277,11 +274,6 @@ module.exports = function (_path) {
                 loaders: [
                     'expose-loader?L'
                 ]
-            // }, {
-            //     test: require.resolve('jointjs'),
-            //     loaders: [
-            //         'expose-loader?joint'
-            //     ]
             }, {
                 test: require.resolve('moment'),
                 loaders: [
@@ -371,15 +363,21 @@ module.exports = function (_path) {
                     LOGOFILE: JSON.stringify('raster-foundry-logo.svg'),
                     LOGOURL: JSON.stringify(false),
                     FAVICON_DIR: JSON.stringify('/favicon'),
-                    FEED_SOURCE: JSON.stringify('https://blog.rasterfoundry.com/latest?format=json'),
+                    FEED_SOURCE: JSON.stringify(
+                        'https://blog.rasterfoundry.com/latest?format=json'
+                    ),
                     MAP_CENTER: JSON.stringify([-6.8, 39.2]),
                     MAP_ZOOM: 5
                 },
                 'HELPCONFIG': {
                     API_DOCS_URL: JSON.stringify('https://docs.rasterfoundry.com/'),
                     HELP_HOME: JSON.stringify('https://help.rasterfoundry.com/'),
-                    GETTING_STARTED_WITH_PROJECTS: JSON.stringify('https://help.rasterfoundry.com/creating-projects'),
-                    DEVELOPER_RESOURCES: JSON.stringify('https://help.rasterfoundry.com/developer-resources')
+                    GETTING_STARTED_WITH_PROJECTS: JSON.stringify(
+                        'https://help.rasterfoundry.com/creating-projects'
+                    ),
+                    DEVELOPER_RESOURCES: JSON.stringify(
+                        'https://help.rasterfoundry.com/developer-resources'
+                    )
                 }
             })
         ],
@@ -387,7 +385,7 @@ module.exports = function (_path) {
             dgram: 'empty',
             fs: 'empty',
             net: 'empty',
-            tls: 'empty',
+            tls: 'empty'
         }
     };
 
