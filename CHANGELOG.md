@@ -9,6 +9,7 @@
 - Added support for viewing public projects using backsplash [\#4299](https://github.com/raster-foundry/raster-foundry/pull/4299)
 
 ### Changed
+- Populate user profiles from their identity tokens more intelligently [\#4298](https://github.com/raster-foundry/raster-foundry/pull/4298)
 
 ### Deprecated
 
