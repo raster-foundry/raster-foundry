@@ -2,9 +2,10 @@ package com.rasterfoundry.backsplash.auth
 
 import com.rasterfoundry.authentication.Authentication
 import com.rasterfoundry.backsplash.parameters.Parameters._
-import com.rasterfoundry.database.{UserDao, MapTokenDao}
+import com.rasterfoundry.database.{UserDao, MapTokenDao, ProjectDao}
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.datamodel.{MapToken, User}
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.datamodel.{MapToken, User, Visibility, Project}
 
 import cats.data._
 import cats.effect.IO
@@ -39,18 +40,26 @@ object Authenticators extends Authentication {
       case req @ _ -> UUIDWrapper(projectId) /: _
             :? TokenQueryParamMatcher(tokenQP)
             :? MapTokenQueryParamMatcher(mapTokenQP) => {
-        val authHeader: OptionT[IO, Header] =
-          OptionT.fromOption(
-            req.headers.get(CaseInsensitiveString("Authorization")))
-        checkTokenAndHeader(tokenQP, authHeader) :+
-          (
-            OptionT.fromOption[IO](mapTokenQP) flatMap { (mapToken: UUID) =>
-              userFromMapToken(MapTokenDao.checkProject(projectId), mapToken)
-            }
-          ) reduce { _ orElse _ }
+        val authHeaderO: Option[Header] =
+          req.headers.get(CaseInsensitiveString("Authorization"))
+        (authHeaderO, tokenQP, mapTokenQP) match {
+          case (None, None, None) =>
+            userFromPublicProject(projectId)
+          case _ =>
+            val authHeader: OptionT[IO, Header] =
+              OptionT.fromOption(authHeaderO)
+            checkTokenAndHeader(tokenQP, authHeader) :+
+              (
+                OptionT.fromOption[IO](mapTokenQP) flatMap { (mapToken: UUID) =>
+                  userFromMapToken(MapTokenDao.checkProject(projectId),
+                                   mapToken)
+                }
+              ) reduce { _ orElse _ }
+        }
       }
 
-      case _ => OptionT.none[IO, User]
+      case _ =>
+        OptionT.none[IO, User]
     }
   )
 
@@ -84,6 +93,17 @@ object Authenticators extends Authentication {
       case Left(e) =>
         OptionT(IO(None: Option[User]))
     }
+
+  private def userFromPublicProject(id: UUID): OptionT[IO, User] =
+    for {
+      project <- OptionT[IO, Project](
+        ProjectDao.query
+          .filter(id)
+          .filter(fr"tile_visibility=${Visibility.Public.toString}::visibility")
+          .selectOption
+          .transact(xa))
+      user <- OptionT(UserDao.getUserById(project.owner).transact(xa))
+    } yield user
 
   val tokensAuthMiddleware = AuthMiddleware(tokensAuthenticator)
 }
