@@ -96,12 +96,12 @@ object Authenticators extends Authentication {
 
   private def userFromPublicProject(id: UUID): OptionT[IO, User] =
     for {
-      project <- OptionT[IO, Project](ProjectDao.query
-        .filter(id)
-        .filter(fr"tile_visibility=${Visibility.Public.toString}::visibility")
-        .selectOption
-        .transact(xa)
-      )
+      project <- OptionT[IO, Project](
+        ProjectDao.query
+          .filter(id)
+          .filter(fr"tile_visibility=${Visibility.Public.toString}::visibility")
+          .selectOption
+          .transact(xa))
       user <- OptionT(UserDao.getUserById(project.owner).transact(xa))
     } yield user
 
