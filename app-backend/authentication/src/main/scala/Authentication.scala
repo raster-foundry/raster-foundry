@@ -108,6 +108,30 @@ trait Authentication extends Directives with LazyLogging {
       .getOrElse(getStringClaimOrBlank(claims, "id"))
   }
 
+  def defaultPersonalInfo(user: User,
+                          claims: JWTClaimsSet): User.PersonalInfo = {
+    val pi = user.personalInfo
+    val delegatedProfile = Option(claims.getJSONObjectClaim("delegatedProfile"))
+
+    val optionEmpty = (str: String) =>
+      str match {
+        case s if !s.trim.isEmpty => Some(s)
+        case _                    => None
+    }
+
+    val defaultFromClaims = (field: String, str: String) =>
+      optionEmpty(field)
+        .orElse(Option(claims.getStringClaim(str)))
+        .orElse(delegatedProfile.map(_.getAsString(str)))
+        .getOrElse("")
+
+    user.personalInfo.copy(
+      firstName = defaultFromClaims(pi.firstName, "given_name"),
+      lastName = defaultFromClaims(pi.lastName, "family_name"),
+      email = defaultFromClaims(pi.email, "email")
+    )
+  }
+
   @SuppressWarnings(Array("TraversableHead"))
   def authenticateWithToken(tokenString: String): Directive1[User] = {
     val result = verifyJWT(tokenString)
@@ -139,13 +163,23 @@ trait Authentication extends Directives with LazyLogging {
                 s"User without a platform tried to log in: ${userId}")
               None.pure[ConnectionIO]
           }
+          personalInfo = defaultPersonalInfo(user, jwtClaims)
           updatedUser = (user.dropboxCredential, user.planetCredential) match {
             case (Credential(Some(d)), Credential(Some(p))) if d.length == 0 =>
-              user.copy(email = email, name = name, profileImageUri = picture)
+              user.copy(email = email,
+                        name = name,
+                        profileImageUri = picture,
+                        personalInfo = personalInfo)
             case (Credential(Some(d)), Credential(Some(p))) if p.length == 0 =>
-              user.copy(email = email, name = name, profileImageUri = picture)
+              user.copy(email = email,
+                        name = name,
+                        profileImageUri = picture,
+                        personalInfo = personalInfo)
             case _ =>
-              user.copy(email = email, name = name, profileImageUri = picture)
+              user.copy(email = email,
+                        name = name,
+                        profileImageUri = picture,
+                        personalInfo = personalInfo)
           }
           userUpdate <- {
             (updatedUser != user) match {

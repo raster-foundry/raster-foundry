@@ -370,7 +370,7 @@ export default (app) => {
             return profileName(p, p) ||
                 p.delegatedProfile && profileName(p, p.delegatedProfile) ||
                 p.email || p.delegatedProfile && p.delegatedProfile.email ||
-                p.id;
+                p.sub;
         }
 
         token(force = false) {
