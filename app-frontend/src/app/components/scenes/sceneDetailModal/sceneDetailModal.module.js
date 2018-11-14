@@ -76,6 +76,7 @@ class SceneDetailModalController {
               true
             );
         });
+    }
 
     getMap() {
         return this.mapService.getMap('scene-preview-map');
