@@ -13,13 +13,12 @@ import com.amazonaws.services.s3.AmazonS3URI
 import com.rasterfoundry.api.scene._
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.authentication.Authentication
 import com.rasterfoundry.common.S3._
 import com.rasterfoundry.common.utils.Shapefile
-import com.rasterfoundry.common.{
-  AWSBatch,
+import com.rasterfoundry.common.{AWSBatch, RollbarNotifier}
+import com.rasterfoundry.akkautil.{
+  Authentication,
   CommonHandlers,
-  RollbarNotifier,
   UserErrorHandler
 }
 import com.rasterfoundry.database._

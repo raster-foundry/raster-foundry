@@ -7,7 +7,6 @@ import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
 import com.azavea.maml.eval.BufferingInterpreter
-import com.rasterfoundry.authentication.Authentication
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.maml.BacksplashMamlAdapter

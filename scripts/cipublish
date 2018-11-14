@@ -56,7 +56,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             if [ "$(whoami)" == "jenkins" ]; then
                 projects=( \
                     "api" \
-                    "authentication" \
+                    "akkautil" \
                     "batch" \
                     "bridge" \
                     "common" \

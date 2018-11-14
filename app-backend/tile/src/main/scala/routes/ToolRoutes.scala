@@ -1,6 +1,6 @@
 package com.rasterfoundry.tile.routes
 
-import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.akkautil.{CommonHandlers, Authentication}
 import com.rasterfoundry.common._
 import com.rasterfoundry.common.ast._
 import com.rasterfoundry.datamodel.User

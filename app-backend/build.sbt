@@ -48,7 +48,6 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.bintrayRepo("lonelyplanet", "maven"),
     Resolver.bintrayRepo("guizmaii", "maven"),
-    Resolver.bintrayRepo("kwark", "maven"), // Required for Slick 3.1.1.2, see https://github.com/azavea/raster-foundry/pull/1576
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
     Resolver.bintrayRepo("naftoligug", "maven"),
@@ -127,14 +126,6 @@ lazy val loggingDependencies = List(
   "ch.qos.logback" % "logback-classic" % "1.1.7"
 )
 
-lazy val slickDependencies = List(
-  Dependencies.slick,
-  Dependencies.slickPG,
-  Dependencies.slickPGSpray,
-  Dependencies.geotrellisSlick
-    .exclude("postgresql", "postgresql")
-)
-
 lazy val metricsDependencies = List(
   Dependencies.kamonCore,
   Dependencies.kamonStatsd,
@@ -169,17 +160,30 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
   Dependencies.akkastream,
   Dependencies.akkaSlf4j,
   Dependencies.akkaHttpExtensions,
+  Dependencies.awsStsSdk,
+  Dependencies.betterFiles,
   Dependencies.commonsIO,
-  Dependencies.ammoniteOps,
-  Dependencies.geotrellisSlick,
   Dependencies.geotrellisS3,
   Dependencies.geotrellisShapefile,
   Dependencies.betterFiles,
   Dependencies.caffeine,
   Dependencies.scaffeine,
   Dependencies.findbugAnnotations,
-  Dependencies.dropbox,
-  Dependencies.awsStsSdk
+  Dependencies.dropbox
+)
+
+lazy val backsplashShadeRules = Seq(
+  ShadeRule.zap("akka.**").inAll,
+  ShadeRule.zap("org.locationtech.geotrellis.geotools.**").inAll,
+  ShadeRule.zap("org.geotools.**").inAll,
+  ShadeRule.zap("org.apache.spark.**").inAll,
+  ShadeRule.zap("org.apache.hadoop.**").inAll,
+  ShadeRule.zap("slick.**").inAll
+)
+
+lazy val apiServerShadeRules = Seq(
+  ShadeRule.zap("org.apache.spark.**").inAll,
+  ShadeRule.zap("org.apache.hadoop.**").inAll
 )
 
 lazy val root = Project("root", file("."))
@@ -199,37 +203,29 @@ lazy val api = Project("api", file("api"))
   .dependsOn(db,
              datamodel,
              common % "test->test;compile->compile",
-             authentication)
+             akkautil)
   .settings(apiSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
     libraryDependencies ++= apiDependencies
   })
+  .settings(assemblyShadeRules in assembly := apiServerShadeRules)
 
 lazy val common = Project("common", file("common"))
   .dependsOn(datamodel)
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= testDependencies ++ Seq(
-      Dependencies.nimbusJose,
-      Dependencies.akka,
-      Dependencies.akkahttp,
-      Dependencies.akkaCirceJson,
       Dependencies.commonsIO,
       Dependencies.caffeine,
       Dependencies.scaffeine,
       Dependencies.elasticacheClient,
       Dependencies.geotrellisS3,
       Dependencies.findbugAnnotations,
-      Dependencies.ammoniteOps,
       Dependencies.chill,
       Dependencies.catsCore,
       Dependencies.awsBatchSdk,
-      Dependencies.awsStsSdk,
       Dependencies.rollbar,
-      Dependencies.doobiePostgres,
-      Dependencies.doobiePostgresCirce,
-      Dependencies.geotrellisSlick.exclude("postgresql", "postgresql"),
       Dependencies.apacheCommonsEmail
     )
   })
@@ -250,7 +246,6 @@ lazy val db = Project("db", file("db"))
       "net.postgis" % "postgis-jdbc-jtsparser" % "2.2.1",
       "org.locationtech.jts" % "jts-core" % "1.15.0",
       "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15",
-      Dependencies.geotrellisSlick.exclude("postgresql", "postgresql")
     )
   })
 
@@ -266,16 +261,12 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
   .settings({
     libraryDependencies ++= loggingDependencies ++ Seq(
-      Dependencies.geotrellisSlick % "provided",
       Dependencies.geotrellisVectorTestkit,
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisGeotools,
       Dependencies.geotools,
       Dependencies.circeCore,
       Dependencies.circeGenericExtras,
-      Dependencies.akka,
-      Dependencies.akkahttp,
-      Dependencies.betterFiles,
       Dependencies.scalaCheck,
       Dependencies.circeTest,
       "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15" % "test",
@@ -294,17 +285,8 @@ lazy val batch = Project("batch", file("batch"))
       Dependencies.geotrellisS3,
       Dependencies.geotrellisUtil,
       Dependencies.geotrellisRaster,
-      Dependencies.akka,
-      Dependencies.akkahttp,
-      Dependencies.akkaHttpCors,
-      Dependencies.akkaCirceJson,
-      Dependencies.akkastream,
-      Dependencies.akkaSlf4j,
-      Dependencies.akkaSprayJson,
-      Dependencies.geotrellisSlick,
       Dependencies.sparkCore,
       Dependencies.hadoopAws,
-      Dependencies.awsSdk,
       Dependencies.scopt,
       Dependencies.ficus,
       Dependencies.dnsJava,
@@ -343,7 +325,7 @@ import _root_.io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel,
              common % "test->test;compile->compile",
-             authentication,
+             akkautil,
              geotrellis)
   .dependsOn(tool)
   .enablePlugins(GatlingPlugin)
@@ -355,7 +337,6 @@ lazy val tile = Project("tile", file("tile"))
       Dependencies.spark,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisS3,
-      Dependencies.akkaSprayJson,
       Dependencies.akkaCirceJson,
       Dependencies.akkaHttpCors,
       Dependencies.akkastream,
@@ -391,15 +372,13 @@ lazy val tool = Project("tool", file("tool"))
       Dependencies.sparkCore,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisRaster,
-      Dependencies.geotrellisRasterTestkit,
-      Dependencies.shapeless,
+      Dependencies.geotrellisRasterTestkit % "test",
       Dependencies.scalatest,
       Dependencies.circeCore,
       Dependencies.circeGeneric,
       Dependencies.circeParser,
       Dependencies.circeOptics,
       Dependencies.scalaCheck,
-      Dependencies.scalaz,
       Dependencies.mamlJvm
     )
   })
@@ -415,7 +394,7 @@ lazy val geotrellis = Project("geotrellis", file("geotrellis"))
     )
   })
 
-lazy val authentication = Project("authentication", file("authentication"))
+lazy val akkautil = Project("akkautil", file("akkautil"))
   .dependsOn(common, db)
   .settings(commonSettings: _*)
   .settings({
@@ -441,7 +420,7 @@ lazy val bridge = Project("bridge", file("bridge"))
 
 // maml / better-abstracted tile server
 lazy val backsplash = Project("backsplash", file("backsplash"))
-  .dependsOn(authentication, geotrellis, db, tool)
+  .dependsOn(geotrellis, db, tool)
   .settings(commonSettings: _*)
   .settings(fork in run := true)
   .settings({
@@ -455,9 +434,11 @@ lazy val backsplash = Project("backsplash", file("backsplash"))
       Dependencies.http4sCirce,
       Dependencies.http4sDSL,
       Dependencies.http4sServer,
-      Dependencies.mamlJvm
+      Dependencies.mamlJvm,
+      Dependencies.nimbusJose
     )
   })
+  .settings(assemblyShadeRules in assembly := backsplashShadeRules)
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
   .settings(assemblyMergeStrategy in assembly := {
     case m if m.toLowerCase.endsWith("manifest.mf")     => MergeStrategy.discard

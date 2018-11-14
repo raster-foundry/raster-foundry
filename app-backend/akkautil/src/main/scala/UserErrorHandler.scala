@@ -1,4 +1,6 @@
-package com.rasterfoundry.common
+package com.rasterfoundry.akkautil
+
+import com.rasterfoundry.common.{RfStackTrace, RollbarNotifier}
 
 import akka.http.scaladsl.server.{ExceptionHandler, Directives}
 import akka.http.scaladsl.model.{IllegalRequestException, StatusCodes}

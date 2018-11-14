@@ -13,7 +13,7 @@ import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
 
-import com.rasterfoundry.common.UserErrorHandler
+import com.rasterfoundry.akkautil.UserErrorHandler
 import com.rasterfoundry.api.utils.queryparams._
 import com.rasterfoundry.datamodel._
 

@@ -1,8 +1,11 @@
 package com.rasterfoundry.api.featureflags
 
 import akka.http.scaladsl.server.Route
-import com.rasterfoundry.authentication.Authentication
-import com.rasterfoundry.common.{CommonHandlers, UserErrorHandler}
+import com.rasterfoundry.akkautil.{
+  Authentication,
+  CommonHandlers,
+  UserErrorHandler
+}
 import com.rasterfoundry.database.FeatureFlagDao
 import com.rasterfoundry.datamodel._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives

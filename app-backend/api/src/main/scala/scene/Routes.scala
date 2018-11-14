@@ -10,9 +10,13 @@ import cats.implicits._
 import com.amazonaws.services.s3.AmazonS3URI
 import java.net.URLDecoder
 import com.rasterfoundry.api.utils.Config
-import com.rasterfoundry.authentication.Authentication
 import com.rasterfoundry.common.utils.CogUtils
-import com.rasterfoundry.common.{AWSBatch, CommonHandlers, S3, UserErrorHandler}
+import com.rasterfoundry.common.{AWSBatch, S3}
+import com.rasterfoundry.akkautil.{
+  Authentication,
+  CommonHandlers,
+  UserErrorHandler
+}
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.datamodel._
