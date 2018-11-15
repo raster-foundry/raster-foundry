@@ -176,14 +176,48 @@ lazy val backsplashShadeRules = Seq(
   ShadeRule.zap("akka.**").inAll,
   ShadeRule.zap("org.locationtech.geotrellis.geotools.**").inAll,
   ShadeRule.zap("org.geotools.**").inAll,
-  ShadeRule.zap("org.apache.spark.**").inAll,
   ShadeRule.zap("org.apache.hadoop.**").inAll,
-  ShadeRule.zap("slick.**").inAll
-)
-
-lazy val apiServerShadeRules = Seq(
+  ShadeRule.zap("org.apache.commons.**").inAll,
   ShadeRule.zap("org.apache.spark.**").inAll,
-  ShadeRule.zap("org.apache.hadoop.**").inAll
+  ShadeRule.zap("org.apache.guava.**").inAll,
+  ShadeRule.zap("org.apache.spark_core.**").inAll,
+  ShadeRule.zap("org.apache.netty.**").inAll,
+  ShadeRule.zap("org.scalacheck.**").inAll,
+  ShadeRule.zap("org.scalatest.**").inAll,
+  ShadeRule.zap("org.specs2.**").inAll,
+  ShadeRule.zap("slick.**").inAll,
+  ShadeRule.zap("spire.**").inAll,
+  ShadeRule.zap("io.circe.optics.**").inAll,
+  ShadeRule.zap("monocle.**").inAll,
+  // ShadeRule.keep("geotrellis.spark.io.json.**").inProject,
+  // ShadeRule.keep("geotrellis.spark.SpatialKey").inProject,
+  // ShadeRule.keep("geotrellis.spark.TileLayerMetadata").inProject,
+  // ShadeRule.keep("geotrellis.spark.LayerId").inProject,
+  // ShadeRule.keep("geotrellis.vector.Extent").inProject,
+  // ShadeRule.keep("geotrellis.vector.Polygon").inProject,
+  // ShadeRule.keep("geotrellis.vector.Projected").inProject,
+  // ShadeRule.keep("geotrellis.raster.Raster").inProject,
+  // ShadeRule.keep("geotrellis.raster.Tile").inProject,
+  // ShadeRule.keep("geotrellis.raster.MultibandTile").inProject,
+  // ShadeRule.keep("geotrellis.raster.histogram.**").inProject,
+  // ShadeRule.keep("geotrellis.raster.io.json.HistogramJsonFormats").inProject,
+  ShadeRule.keep("com.rasterfoundry.common.**").inProject,
+  ShadeRule.keep("com.rasterfoundry.backsplash.**").inProject,
+  ShadeRule.keep("com.rasterfoundry.database.util.**").inProject,
+  ShadeRule.keep("com.rasterfoundry.database.ProjectDao").inProject,
+  ShadeRule.keep("com.rasterfoundry.database.UserDao").inProject,
+  ShadeRule.keep("com.rasterfoundry.database.MapTokenDao").inProject,
+  ShadeRule.keep("com.rasterfoundry.datamodel.ActionType").inProject,
+  ShadeRule.keep("com.rasterfoundry.datamodel.ObjectType").inProject,
+  ShadeRule.keep("com.rasterfoundry.datamodel.User").inProject,
+  ShadeRule.keep("com.rasterfoundry.datamodel.Project").inProject,
+  ShadeRule.keep("com.rasterfoundry.datamodel.MapToken").inProject,
+  ShadeRule.keep("com.rasterfoundry.datamodel.ColorRampMosaic").inProject,
+  ShadeRule.keep("com.rasterfoundry.datamodel.SingleBandOptions").inProject,
+  ShadeRule.keep("com.rasterfoundry.datamodel.BandDataType").inProject,
+  ShadeRule.keep("com.rasterfoundry.datamodel.SceneType").inProject,
+  ShadeRule.keep("com.rasterfoundry.datamodel.MosaicDefinition").inProject,
+  ShadeRule.keep("com.rasterfoundry.datamodel.Visibility").inProject
 )
 
 lazy val root = Project("root", file("."))
@@ -209,7 +243,6 @@ lazy val api = Project("api", file("api"))
   .settings({
     libraryDependencies ++= apiDependencies
   })
-  .settings(assemblyShadeRules in assembly := apiServerShadeRules)
 
 lazy val common = Project("common", file("common"))
   .dependsOn(datamodel)

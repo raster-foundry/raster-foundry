@@ -15,7 +15,6 @@ import com.rasterfoundry.datamodel.{
 import doobie.implicits._
 import geotrellis.raster.{Raster, io => _, _}
 import geotrellis.spark.tiling.LayoutLevel
-import geotrellis.spark.{io => _}
 import geotrellis.vector.{Extent, Projected}
 
 import scala.concurrent.ExecutionContext.Implicits.global

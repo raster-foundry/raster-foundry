@@ -55,13 +55,13 @@ object BacksplashServer extends IOApp {
       "/" -> AutoSlash(withCORS(mosaicService)),
       "/healthcheck" -> AutoSlash(healthCheckService),
       "/tools" -> AutoSlash(withCORS(analysisService))
-    ).orNotFound
+    )
 
   def stream =
     BlazeServerBuilder[IO]
       .enableHttp2(true)
       .bindHttp(8080, "0.0.0.0")
-      .withHttpApp(httpApp)
+      .withHttpApp(httpApp.orNotFound)
       .serve
 
   def run(args: List[String]): IO[ExitCode] =
