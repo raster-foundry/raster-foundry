@@ -91,7 +91,7 @@ module.exports = function (_path) {
         // output system
         output: {
             path: path.resolve(__dirname, 'dist'),
-            filename: '[name].js',
+            filename: '[name].[hash].js',
             publicPath: '/'
         },
         target: 'web',
