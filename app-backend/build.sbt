@@ -456,8 +456,7 @@ lazy val backsplash = Project("backsplash", file("backsplash"))
       Dependencies.http4sDSL,
       Dependencies.http4sServer,
       Dependencies.mamlJvm,
-      Dependencies.nimbusJose,
-      Dependencies.scalaServerless
+      Dependencies.nimbusJose
     )
   })
   .settings(assemblyShadeRules in assembly := backsplashShadeRules)

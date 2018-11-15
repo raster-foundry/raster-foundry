@@ -44,7 +44,6 @@ object Version {
   val scalaLogging = "3.9.0"
   val scalaTest = "3.0.1"
   val scalajHttp = "2.3.0"
-  val scalaServerless = "0.3.1-JS"
   val scapegoat = "1.3.7"
   val scopt = "3.5.0"
   val slickMigrationAPI = "0.4.0"
