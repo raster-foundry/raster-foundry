@@ -348,15 +348,13 @@ object ImportLandsat8C1 extends Job {
     RFTransactor.xaResource
       .use { xa =>
         implicit val transactor = xa
-        threadPoolResource.use { pool =>
-          val job = args.toList match {
-            case List(date, threshold) =>
-              ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
-            case List(date) => ImportLandsat8C1(LocalDate.parse(date))
-            case _          => ImportLandsat8C1()
-          }
-          job.insertIO
+        val job = args.toList match {
+          case List(date, threshold) =>
+            ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
+          case List(date) => ImportLandsat8C1(LocalDate.parse(date))
+          case _          => ImportLandsat8C1()
         }
+        job.insertIO
       }
   }
 }
