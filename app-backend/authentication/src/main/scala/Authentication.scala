@@ -78,15 +78,13 @@ trait Authentication extends Directives with LazyLogging {
     val compareToEmail = (field: String) =>
       (Option(claims.getStringClaim(field)), email) match {
         case (fld @ Some(f), Some(e)) if f != e => fld
-        case (fld @ Some(_), None)              => fld
-        case _                                  => None
+        case (f, _)                             => f
     }
 
     val compareDelegatedToEmail = (field: String) =>
       (delegatedProfile.map(_.getAsString(field)), email) match {
         case (fld @ Some(f), Some(e)) if f != e => fld
-        case (fld @ Some(_), None)              => fld
-        case _                                  => None
+        case (f, _)                             => f
     }
 
     compareToEmail("name")
