@@ -133,6 +133,10 @@ dl.meta-list > dd {
   text-overflow: ellipsis;
 }
 
+dl.meta-list.editing-metadata > dd {
+  overflow: visible;
+}
+
 .clear-image-source-filter{
   border-radius: 50%;
   color: $gray;
@@ -2458,7 +2462,6 @@ rf-histogram-breakpoint {
 
 .colorscheme-selector {
   padding: 0;
-  min-width: 24rem;
 }
 .dropdown-header {
   display: flex;

@@ -53,7 +53,7 @@
           </dt>
           <dd ng-repeat-end>{{value}}</dd>
         </dl>
-        <dl class="meta-list" ng-if="$ctrl.editingMetadata">
+        <dl class="meta-list editing-metadata" ng-if="$ctrl.editingMetadata">
           <dt>Datasource</dt>
           <dd>
             <ui-select ng-model="$ctrl.selectedDatasource"
@@ -100,7 +100,7 @@
           </dt>
           <dd ng-repeat-end>{{metaVal}}</dd>
         </dl>
-        <dl class="meta-list"  ng-if="$ctrl.editingMetadata">
+        <dl class="meta-list editing-metadata"  ng-if="$ctrl.editingMetadata">
           <dt ng-repeat-start="(metaKey, metaVal) in $ctrl.scene.sceneMetadata">
             {{metaKey}}
           </dt>

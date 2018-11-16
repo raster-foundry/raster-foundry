@@ -7,10 +7,6 @@
     font-size: 1.2rem;
     flex-shrink: 0;
   }
-  
-  .selectize-dropdown {
-    width: calc(70%);
-  }
 
   .form-control {
     font-size: inherit;
@@ -22,6 +18,27 @@
     
     &:before {
       color: $text-base;
+    }
+  }
+
+  .selectize-input {
+    border: 1px solid $shade-dark;
+    background-color: $shade-dark;
+    color: $white;
+  }
+
+  .dropdown-menu {
+    background: $white;
+
+    > li > a,
+    .active > a {
+      color: $shade-normal;
+
+      &:hover,
+      &:focus {
+        text-decoration: none;
+        color: $brand-primary;
+      }
     }
   }
 }
@@ -62,19 +79,13 @@
     }
     .shapefilter-box {
         background: $white;
-        color: $shade-light;
-        border: 1px solid $shade-light;
-        &:hover {
-            background: $shade-light;
-            * {
-                color: $white;
-            }
-        }
+        color: $text-base;
+        border: 1px solid $border-color-default;
     }
     .shapefilter-text {
-        color: $shade-light;
+        color: $text-base;
     }
     .shapefilter-dropdown {
-        border: 1px solid $shade-light;
+        border: 1px solid $border-color-default;
     }
 }

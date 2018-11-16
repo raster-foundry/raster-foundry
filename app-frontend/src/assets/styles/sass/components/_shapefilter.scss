@@ -12,12 +12,8 @@
     padding: 9px 8px;
     background: $shade-dark;
     flex-direction: row;
-    border-radius: 3px;
+    border-radius: $border-radius-base;
     cursor: pointer;
-
-    &:hover {
-        background: darken($shade-dark, 5%);
-    }
 }
 
 .shapefilter-button-content {
@@ -46,12 +42,14 @@
     bottom: 0;
     left: 0;
     height: 25em;
-    width: 23.2em;
+    min-width: 23.2em;
+    width: 100%;
     transform: translateY(100%);
     z-index: 100;
     background: $white;
     color: $text-base;
-    border-radius: 3px;
+    border-radius: $border-radius-base;
+    border: 1px solid $border-color-default;
     display: flex;
     flex-direction: column;
 }
