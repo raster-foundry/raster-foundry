@@ -187,8 +187,7 @@ def run_export(export_s3_uri, export_id):
                '--class', 'com.rasterfoundry.batch.export.spark.Export',
                '/opt/raster-foundry/jars/batch-assembly.jar',
                '-j', export_s3_uri, '-b', status_uri]
-    output = subprocess.check_output(command)
-    logger.info('Output from export command was:\n%s', output)
+    subprocess.check_call(command)
     logger.info('Finished exporting %s in spark local', export_s3_uri)
     return status_uri
 

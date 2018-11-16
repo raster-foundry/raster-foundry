@@ -27,8 +27,6 @@ import org.apache.spark.SparkContext
 /** This interpreter handles resource resolution and compilation of MapAlgebra ASTs */
 object RfmlRddResolver extends LazyLogging {
 
-  implicit val xa = RFTransactor.xa
-
   val intNdTile = IntConstantTile(NODATA, 256, 256)
 
   def resolveRdd(

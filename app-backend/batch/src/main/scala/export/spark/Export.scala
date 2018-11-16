@@ -50,7 +50,7 @@ import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import spray.json.DefaultJsonProtocol._
 
-object Export extends SparkJob with Config with RollbarNotifier with IOApp {
+object Export extends SparkJob with Config {
 
   val jobName = "Export"
 
@@ -337,9 +337,8 @@ object Export extends SparkJob with Config with RollbarNotifier with IOApp {
     *
     * @param args Arguments to be parsed by the tooling defined in [[CommandLine]]
     */
-  @SuppressWarnings(Array("CatchThrowable")) // need to ensure that status is written for errors
   def runJob(args: List[String]): IO[Unit] = {
-    val xaResource = RFTransactor.xaResource
+    implicit val xa = RFTransactor.xa
 
     val params = CommandLine.parser.parse(args, CommandLine.Params()) match {
       case Some(params) =>
@@ -360,41 +359,33 @@ object Export extends SparkJob with Config with RollbarNotifier with IOApp {
     implicit def asS3Payload(status: ExportStatus): String =
       S3ExportStatus(exportDef.id, status).asJson.noSpaces
 
-    // Note: these logs don't actually work independent of log level and I have no idea why
-    // You can set them to info and check 'Output from export command' in the logs from
-    // running `rf export`, and you'll get nothing. It's pretty annoying!
-    val runIO: IO[Unit] = xaResource.use(xa => {
-      scResource.use {
-        sparkContext =>
-          implicit val sc = sparkContext
-          implicit val transactor = xa
-          for {
-            _ <- logger.debug("Fetching system user").pure[IO]
-            user <- UserDao.unsafeGetUserById(systemUser).transact(xa)
-            _ <- logger.debug(s"Fetching export ${exportDef.id}").pure[IO]
-            export <- ExportDao.unsafeGetExportById(exportDef.id).transact(xa)
-            exportOptions = export.exportOptions.as[ExportOptions]
-            _ <- logger.debug(s"Performing export").pure[IO]
-            result <- exportDef.input.style match {
-              case SimpleInput(layers, mask) =>
-                IO(multibandExport(exportDef, layers, mask, exportOptions map {
-                  _.raw
-                } getOrElse false)).attempt
-              case ASTInput(ast, _, projLocs) =>
-                IO(astExport(exportDef, ast, projLocs).unsafeRunSync).attempt
-            }
-          } yield {
-            result match {
-              case Right(_) => ()
-              case Left(throwable) =>
-                sendError(throwable)
-                throw throwable
-            }
-          }
+    scResource.use { sparkContext =>
+      implicit val sc = sparkContext
+      for {
+        _ <- logger.debug("Fetching system user").pure[IO]
+        user <- UserDao.unsafeGetUserById(systemUser).transact(xa)
+        _ <- logger.debug(s"Fetching export ${exportDef.id}").pure[IO]
+        export <- ExportDao.unsafeGetExportById(exportDef.id).transact(xa)
+        exportOptions = export.exportOptions.as[ExportOptions]
+        _ <- logger.debug(s"Performing export").pure[IO]
+        result <- exportDef.input.style match {
+          case SimpleInput(layers, mask) =>
+            IO(multibandExport(exportDef, layers, mask, exportOptions map {
+              _.raw
+            } getOrElse false)).attempt
+          case ASTInput(ast, _, projLocs) =>
+            IO(astExport(exportDef, ast, projLocs).unsafeRunSync).attempt
+        }
+      } yield {
+        result match {
+          case Right(_) => ()
+          case Left(throwable) =>
+            sendError(throwable)
+            throw throwable
+        }
       }
-    })
-    runIO
+    } map { _ =>
+      System.exit(0)
+    }
   }
-
-  def run(args: List[String]): IO[ExitCode] = runJob(args).as(ExitCode.Success)
 }
