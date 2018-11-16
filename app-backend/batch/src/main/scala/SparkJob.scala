@@ -1,10 +1,12 @@
 package com.rasterfoundry.batch
 
-import cats.effect.{IO, Resource}
+import com.rasterfoundry.common.RollbarNotifier
+
+import cats.effect.{IO, Resource, IOApp, ExitCode}
 
 import org.apache.spark._
 
-trait SparkJob {
+trait SparkJob extends IOApp with Job {
   // Functions for combine step
   def createTiles[V](value: V): Seq[V] = Seq(value)
   def mergeTiles1[V](values: Seq[V], value: V): Seq[V] = values :+ value
@@ -25,8 +27,17 @@ trait SparkJob {
       .set("spark.kryoserializer.buffer.max", "512m")
       .setIfMissing("spark.master", "local[*]")
 
-  private def acquireSparkContext = IO { new SparkContext(conf) }
-  private def releaseSparkContext(sc: SparkContext) = IO { sc.stop() }
+  private def acquireSparkContext =
+    IO { logger.info("Acquiring spark context") } map { _ =>
+      new SparkContext(conf)
+    }
+  private def releaseSparkContext(sc: SparkContext) =
+    IO { logger.info("Releasing spark context") } map { _ =>
+      sc.stop()
+    } map { _ =>
+      logger.info("Spark context released")
+    }
   val scResource: Resource[IO, SparkContext] =
     Resource.make(acquireSparkContext)(releaseSparkContext)
+
 }
