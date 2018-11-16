@@ -4,7 +4,7 @@ import java.io.File
 import java.time.{LocalDate, ZoneOffset}
 import java.util.UUID
 
-import cats.effect.{IO, Resource}
+import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util.{S3, isUriExists}
@@ -30,14 +30,11 @@ import scala.collection.parallel.immutable.ParSeq
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.sys.process._
 
-final case class ImportLandsat8C1(startDate: LocalDate =
-                                    LocalDate.now(ZoneOffset.UTC),
-                                  threshold: Int = 10,
-                                  xa: Transactor[IO])
+final case class ImportLandsat8C1(
+    startDate: LocalDate = LocalDate.now(ZoneOffset.UTC),
+    threshold: Int = 10)(implicit xa: Transactor[IO])
     extends Config
     with RollbarNotifier {
-
-  implicit val transactor = xa
 
   val name = ImportLandsat8C1.name
 
@@ -321,26 +318,24 @@ final case class ImportLandsat8C1(startDate: LocalDate =
     (correctedTileFootprint, correctedDataFootprint)
   }
 
-  def run(pool: ForkJoinPool): IO[Unit] = {
+  def insertIO: IO[Unit] = {
     logger.info("Importing scenes...")
 
     val user = UserDao.unsafeGetUserById(systemUser).transact(xa).unsafeRunSync
-    val rows = rowsFromCsv.par
-    rows.tasksupport = new ForkJoinTaskSupport(pool)
-    IO {
-      rows map { (row: Map[String, String]) =>
-        {
-          logger.debug(s"Creating scene for row ${row("LANDSAT_PRODUCT_ID")}")
-          csvRowToScene(row, user)
-            .handleErrorWith(
-              (error: Throwable) => {
-                sendError(error)
-                IO.pure(None)
-              }
-            )
-            .unsafeRunSync
-        }
+    val rows = rowsFromCsv
+    rows traverse { (row: Map[String, String]) =>
+      {
+        logger.debug(s"Creating scene for row ${row("LANDSAT_PRODUCT_ID")}")
+        csvRowToScene(row, user)
+          .handleErrorWith(
+            (error: Throwable) => {
+              sendError(error)
+              IO.pure(None)
+            }
+          )
       }
+    } map { _ =>
+      logger.info("All rows inserted or logged")
     }
   }
 }
@@ -352,14 +347,15 @@ object ImportLandsat8C1 extends Job {
 
     RFTransactor.xaResource
       .use { xa =>
+        implicit val transactor = xa
         threadPoolResource.use { pool =>
           val job = args.toList match {
             case List(date, threshold) =>
-              ImportLandsat8C1(LocalDate.parse(date), threshold.toInt, xa)
-            case List(date) => ImportLandsat8C1(LocalDate.parse(date), xa = xa)
-            case _          => ImportLandsat8C1(xa = xa)
+              ImportLandsat8C1(LocalDate.parse(date), threshold.toInt)
+            case List(date) => ImportLandsat8C1(LocalDate.parse(date))
+            case _          => ImportLandsat8C1()
           }
-          job.run(pool)
+          job.insertIO
         }
       }
   }
