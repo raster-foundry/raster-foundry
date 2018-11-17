@@ -360,6 +360,7 @@ object Export extends SparkJob with Config {
       S3ExportStatus(exportDef.id, status).asJson.noSpaces
 
     scResource.use { sparkContext =>
+      sparkContext.setLogLevel("WARN")
       implicit val sc = sparkContext
       for {
         _ <- logger.debug("Fetching system user").pure[IO]
