@@ -51,34 +51,19 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 run --rm --no-deps \
                 build backsplash/assembly
 
-            # Build these projects as SNAPSHOT artifacts and publish to
-            # Sonatype OSSRH (Snapshot Repository).
+            # Build publishable sbt projects as SNAPSHOT artifacts and 
+            # publish to Sonatype OSSRH (Snapshot Repository).
             if [ "$(whoami)" == "jenkins" ]; then
-                projects=( \
-                    "api" \
-                    "authentication" \
-                    "batch" \
-                    "bridge" \
-                    "common" \
-                    "datamodel" \
-                    "db" \
-                    "tile" \
-                    "tool"
-                )
+                echo "Publishing SNAPSHOT artifacts to Sonatype OSSRH (Snapshot Repository)"
 
-                for project in "${projects[@]}"
-                do
-                    echo "Publishing ${project} artifact"
-
-                    docker-compose \
-                       -f "${DIR}/../docker-compose.test.yml" \
-                       run --rm --no-deps \
-                       -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
-                       -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
-                       -e PGP_HEX_KEY="${PGP_HEX_KEY}" \
-                       -e PGP_PASSPHRASE="${PGP_PASSPHRASE}" \
-                       build gitSnapshots "${project}/publishSigned"
-                done
+                docker-compose \
+                   -f "${DIR}/../docker-compose.test.yml" \
+                   run --rm --no-deps \
+                   -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
+                   -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
+                   -e PGP_HEX_KEY="${PGP_HEX_KEY}" \
+                   -e PGP_PASSPHRASE="${PGP_PASSPHRASE}" \
+                   build gitSnapshots publishSigned
             fi
 
             echo "Building container images"

@@ -1,90 +1,94 @@
 #!groovy
 
 def retagImage(String image_url, String source_tag, String dest_tag) {
-    // Pulls down image with source_tag and re-tags with dest_tag
-    // before pushing back to repository
-
-    sh "docker pull ${image_url}:${source_tag}"
-    sh "docker tag  ${image_url}:${source_tag} ${image_url}:${dest_tag}"
-    sh "docker push ${image_url}:${dest_tag}"
+  // Pulls down image with source_tag and re-tags with dest_tag
+  // before pushing back to repository
+  sh "docker pull ${image_url}:${source_tag}"
+  sh "docker tag  ${image_url}:${source_tag} ${image_url}:${dest_tag}"
+  sh "docker push ${image_url}:${dest_tag}"
 }
 
-node{
-   properties(
-       [parameters(
-           [string(defaultValue: 'develop', description: 'First 7 characters of the SHA for the commit you wish to deploy.', name: 'GIT_COMMIT', trim: false),
-            string(defaultValue: '', description: 'Tag of the Current release.', name: 'RELEASE_TAG', trim: false),
-            string(defaultValue: 'rasterfoundry-production-config-us-east-1', description: 'Location of terraform state & vars files.', name: 'RF_SETTINGS_BUCKET', trim: false),
-            string(defaultValue: 'Production', description: 'Environment name, used to target Batch Compute Environments.', name: 'RF_DEPLOYMENT_ENVIRONMENT', trim: false),
-            string(defaultValue: 'master', description: 'Branch of azavea/raster-foundry-deployment used for deployment.', name: 'RF_DEPLOYMENT_BRANCH', trim: false)]
-        )]
+node {
+  properties([
+    parameters([
+      string(defaultValue: 'develop', description: 'First 7 characters of the SHA for the commit you wish to deploy.', name: 'GIT_COMMIT', trim: false),
+      [$class: 'ValidatingStringParameterDefinition', 
+      defaultValue: '', 
+      description: 'The tag of the current release.', 
+      failedValidationMessage: 'Invalid SemVer.', 
+      name: 'RELEASE_TAG', 
+      regex: /^\d+\.\d+\.\d+$/],
+      string(defaultValue: 'rasterfoundry-production-config-us-east-1', description: 'Location of terraform state & vars files.', name: 'RF_SETTINGS_BUCKET', trim: false),
+      string(defaultValue: 'Production', description: 'Environment name, used to target Batch Compute Environments.', name: 'RF_DEPLOYMENT_ENVIRONMENT', trim: false),
+      string(defaultValue: 'master', description: 'Branch of azavea/raster-foundry-deployment used for deployment.', name: 'RF_DEPLOYMENT_BRANCH', trim: false)
     )
+  ])
     
-    try{
-        env.AWS_DEFAULT_REGION = "us-east-1"
+  try {
+    env.AWS_DEFAULT_REGION = "us-east-1"
 
-        stage('checkout') {
-          checkout([$class: 'GitSCM',
-                   branches: [[name: params.GIT_COMMIT ]],
-                   extensions: [[$class: 'PruneStaleBranch']],
-                   userRemoteConfigs: [[credentialsId: '3bc1e878-814a-43d1-864e-2e378ebddb0f',
-                                        url: 'https://github.com/raster-foundry/raster-foundry',
-                                        ]]
-                     ])
+    // validate release tag ref
+    stage('checkout') {
+      checkout([$class: 'GitSCM',
+               branches: [[name: params.RELEASE_TAG ]],
+               extensions: [[$class: 'PruneStaleBranch']],
+               userRemoteConfigs: [[credentialsId: '3bc1e878-814a-43d1-864e-2e378ebddb0f',
+                                    url: 'https://github.com/raster-foundry/raster-foundry']]
+              ])
+    }
+
+    stage('re-tag images'){
+      sh 'eval $(aws ecr get-login --no-include-email)'
+
+      withCredentials([[$class: 'StringBinding',
+                        credentialsId: 'AWS_ECR_ENDPOINT',
+                        variable: 'AWS_ECR_ENDPOINT']]) {
+        wrap([$class: 'AnsiColorBuildWrapper']) {
+          // Retag images with release tag and push to ECR
+          [
+            "raster-foundry-nginx-api",
+            "raster-foundry-nginx-tiler",
+            "raster-foundry-api-server",
+            "raster-foundry-tile-server",
+            "raster-foundry-batch",
+            "raster-foundry-migrations"
+          ].each { image_url ->
+            retagImage(env.AWS_ECR_ENDPOINT + "/${image_url}", params.GIT_COMMIT, params.RELEASE_TAG)
+          }
         }
-
-        stage('re-tag images'){
-            sh 'eval $(aws ecr get-login --no-include-email)'
-            withCredentials([[$class: 'StringBinding',
-                              credentialsId: 'AWS_ECR_ENDPOINT',
-                              variable: 'AWS_ECR_ENDPOINT']]) {
-              wrap([$class: 'AnsiColorBuildWrapper']) {
-                // Retag images with release tag and push to ECR
-                [
-                    "raster-foundry-nginx-api",
-                    "raster-foundry-nginx-tiler",
-                    "raster-foundry-api-server",
-                    "raster-foundry-tile-server",
-                    "raster-foundry-batch",
-                    "raster-foundry-migrations"
-                ].each { image_url ->
-                    retagImage(env.AWS_ECR_ENDPOINT + "/${image_url}", params.GIT_COMMIT, params.RELEASE_TAG)
-                }
-              }
-            }
-        }
-
-        stage('infra') {
-
-            checkout scm: [$class: 'GitSCM',
-                           branches: [[name: params.RF_DEPLOYMENT_BRANCH]],
-                           extensions: [[$class: 'RelativeTargetDirectory',
-                                         relativeTargetDir: 'raster-foundry-deployment']],
-                           userRemoteConfigs: [[credentialsId: '3bc1e878-814a-43d1-864e-2e378ebddb0f',
-                                                url: 'https://github.com/azavea/raster-foundry-deployment.git']]]
-
-            def slackMessage = ":rasterfoundry: production deployment in progress"
-            slackSend color: 'warning', message: slackMessage
-
-            dir('raster-foundry-deployment') {
-              wrap([$class: 'AnsiColorBuildWrapper']) {
-                sh 'docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm terraform ./scripts/infra plan'
-                withCredentials([[$class: 'StringBinding',
-                                  credentialsId: 'ROLLBAR_ACCESS_TOKEN',
-                                  variable: 'ROLLBAR_ACCESS_TOKEN']]) {
-                    sh 'docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm terraform ./scripts/infra apply'
-                }
-              }
-            }
-
-            slackMessage = ":rasterfoundry: production deployment is complete"
-            slackSend color: 'warning', message: slackMessage
-        }
-      } catch(err) {
-        def slackMessage = ":jenkins-angry: *Deployment #${env.BUILD_NUMBER} of release/hotfix ${params.RELEASE_TAG} has failed*"
-        slackMessage += "\n<${env.BUILD_URL}|View Build>"
-        slackSend color: 'danger', message: slackMessage
-
-        throw err
       }
+    }
+
+    stage('infra') {
+      checkout scm: [$class: 'GitSCM',
+                     branches: [[name: params.RF_DEPLOYMENT_BRANCH]],
+                     extensions: [[$class: 'RelativeTargetDirectory',
+                                   relativeTargetDir: 'raster-foundry-deployment']],
+                     userRemoteConfigs: [[credentialsId: '3bc1e878-814a-43d1-864e-2e378ebddb0f',
+                                          url: 'https://github.com/azavea/raster-foundry-deployment.git']]]
+
+      def slackMessage = ":rasterfoundry: production deployment in progress"
+      slackSend color: 'warning', message: slackMessage
+
+      dir('raster-foundry-deployment') {
+        wrap([$class: 'AnsiColorBuildWrapper']) {
+          sh 'docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm terraform ./scripts/infra plan'
+          withCredentials([[$class: 'StringBinding',
+                            credentialsId: 'ROLLBAR_ACCESS_TOKEN',
+                            variable: 'ROLLBAR_ACCESS_TOKEN']]) {
+              sh 'docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm terraform ./scripts/infra apply'
+          }
+        }
+      }
+
+      slackMessage = ":rasterfoundry: production deployment is complete"
+      slackSend color: 'warning', message: slackMessage
+    }
+  } catch(err) {
+    def slackMessage = ":jenkins-angry: *Deployment #${env.BUILD_NUMBER} of release/hotfix ${params.RELEASE_TAG} has failed*"
+    slackMessage += "\n<${env.BUILD_URL}|View Build>"
+    slackSend color: 'danger', message: slackMessage
+
+    throw err
+  }
 }

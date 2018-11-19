@@ -20,4 +20,6 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
 
 addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")
 
+addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.10")
+
 addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.3")
