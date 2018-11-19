@@ -81,8 +81,9 @@ services:
       - ./scratch/:/opt/raster-foundry/scratch/
       - ./.git:/opt/raster-foundry/.git
       - ./.bintray:/root/.bintray
+      - $HOME/.coursier:/root/.coursier
       - $HOME/.sbt:/root/.sbt
       - $HOME/.aws:/root/.aws:ro
-      - $HOME/.gnupg:/root/.gnupg
+      - $HOME/.gnupg:/root/.gnupg:ro
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
