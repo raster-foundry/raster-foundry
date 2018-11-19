@@ -24,7 +24,7 @@ class ReclassifyModalController {
     }
 
     mapStateToThis(state) {
-        const node = getNodeDefinition(state, this);
+        const node = getNodeDefinition(state, {nodeId: this.resolve.nodeId});
         const inputNodeId = _.first(node.args);
         const histogram = getNodeHistogram(state, {nodeId: inputNodeId});
         return {
