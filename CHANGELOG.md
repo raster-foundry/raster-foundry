@@ -14,6 +14,12 @@
 
 ### Security
 
+## [1.14.2](https://github.com/raster-foundry/raster-foundry/tree/1.14.2) (2018-11-19)
+
+### Fixed
+
+- Fixed regressions causing non-termination of export and Landsat 8 import jobs [\#4312](https://github.com/raster-foundry/raster-foundry/pull/4312), [\#4313](https://github.com/raster-foundry/raster-foundry/pull/4313)
+
 ## [1.14.1](https://github.com/raster-foundry/raster-foundry/tree/1.14.1) (2018-11-13)
 
 ### Fixed
