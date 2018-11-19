@@ -27,13 +27,8 @@ import geotrellis.proj4._
 import geotrellis.vector._
 import geotrellis.vector.io._
 
-import scala.concurrent.forkjoin.ForkJoinPool
-import scala.collection.parallel.ForkJoinTaskSupport
-import scala.collection.parallel.immutable.ParSeq
-
-final case class ImportSentinel2(startDate: LocalDate =
-                                   LocalDate.now(ZoneOffset.UTC),
-                                 xa: Transactor[IO])
+final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(
+                                   ZoneOffset.UTC))(implicit xa: Transactor[IO])
     extends Config
     with RollbarNotifier {
 
@@ -53,7 +48,7 @@ final case class ImportSentinel2(startDate: LocalDate =
             acquisition_date >= ${previousDay.toString}::timestamp AND
             datasource = ${sentinel2Config.datasourceUUID}::uuid
       """.query[String].to[List]
-  val existingSceneNames = sceneQuery.transact(xa).unsafeRunSync.toSet
+  val existingSceneNamesIO = sceneQuery.transact(xa)
 
   val name = ImportSentinel2.name
 
@@ -64,7 +59,7 @@ final case class ImportSentinel2(startDate: LocalDate =
                    infoPath: Option[String],
                    resolution: Float): List[Image.Banded] = {
     val tileInfoPath = infoPath.getOrElse("")
-    logger.info(
+    logger.debug(
       s"Creating images for $tileInfoPath with resolution $resolution")
 
     val keys = resolution match {
@@ -152,7 +147,7 @@ final case class ImportSentinel2(startDate: LocalDate =
       .reduce(_ ++ _)
     val sceneName = s"S2 ${scenePath}"
     logger.info(s"Starting scene creation: ${scenePath}- ${sceneName}")
-    logger.info(s"Getting tile info for ${scenePath}")
+    logger.debug(s"Getting tile info for ${scenePath}")
     val tileinfo =
       s3Client
         .getObject(sentinel2Config.bucketName,
@@ -161,10 +156,10 @@ final case class ImportSentinel2(startDate: LocalDate =
         .getObjectContent
         .toJson
         .getOrElse(Json.Null)
-    logger.info(s"Getting scene metadata for ${scenePath}")
+    logger.debug(s"Getting scene metadata for ${scenePath}")
     val sceneMetadata: Map[String, String] = getSceneMetadata(tileinfo)
     val datasourcePrefix = "S2"
-    logger.info(s"${datasourcePrefix} - Extracting polygons for ${scenePath}")
+    logger.debug(s"${datasourcePrefix} - Extracting polygons for ${scenePath}")
     val tileFootprint = multiPolygonFromJson(tileinfo,
                                              "tileGeometry",
                                              sentinel2Config.targetProjCRS)
@@ -197,7 +192,8 @@ final case class ImportSentinel2(startDate: LocalDate =
           .getEpochSecond * 1000l
       )
     }
-    logger.info(s"${datasourcePrefix} - Creating scene case class ${scenePath}")
+    logger.debug(
+      s"${datasourcePrefix} - Creating scene case class ${scenePath}")
     val sceneCreate = Scene.Create(
       id = sceneId.some,
       visibility = Visibility.Public,
@@ -232,27 +228,27 @@ final case class ImportSentinel2(startDate: LocalDate =
     sceneInsertIO
   }
 
-  def insertSceneFromURI(
-      uri: URI,
-      datasourceUUID: UUID,
-      user: User,
-      pool: ForkJoinPool): ParSeq[IO[Option[Scene.WithRelated]]] = {
-    val paths: ParSeq[String] = getScenePaths(uri).par
-    paths.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(16))
+  def insertSceneFromURI(uri: URI,
+                         datasourceUUID: UUID,
+                         user: User): IO[List[Option[Scene.WithRelated]]] = {
+    val paths: List[String] = getScenePaths(uri)
     logger.info(s"Found ${paths.length} tiles for ${uri}")
-    paths.map { (path: String) =>
-      val sceneExists = existingSceneNames.contains(s"S2 ${path}")
-      sceneExists match {
-        case true => {
-          logger.warn(s"Skipping scene creation S2 ${path} exists")
-          IO.pure(None)
-        }
-        case _ => {
-          logger.info(s"Inserting scene: ${path}")
-          riot(path, datasourceUUID, user)
+    for {
+      existingSceneNames <- existingSceneNamesIO
+      results <- paths traverse { (path: String) =>
+        val sceneExists = existingSceneNames.contains(s"S2 ${path}")
+        sceneExists match {
+          case true => {
+            logger.warn(s"Skipping scene creation S2 ${path} exists")
+            IO.pure(None)
+          }
+          case _ => {
+            logger.info(s"Inserting scene: ${path}")
+            riot(path, datasourceUUID, user)
+          }
         }
       }
-    }
+    } yield results
   }
 
   def getScenePaths(uri: URI): List[String] = {
@@ -274,36 +270,29 @@ final case class ImportSentinel2(startDate: LocalDate =
     paths
   }
 
-  def run(pool: ForkJoinPool): Unit = {
+  def insertIO: IO[Unit] = {
     logger.info(s"Importing Sentinel 2 scenes for ${startDate}")
 
-    val keys = getSentinel2Products(startDate).par
+    val keys = getSentinel2Products(startDate)
 
-    keys.tasksupport = new ForkJoinTaskSupport(pool)
+    logger.info(s"Found ${keys.length} product info jsons for ${startDate}")
+
     val user = UserDao
-      .getUserById(systemUser)
+      .unsafeGetUserById(systemUser)
       .transact(xa)
       .unsafeRunSync
-      .getOrElse(
-        throw new Exception(
-          s"${systemUser} could not be found -- probably the database is borked")
-      )
-    IO {
-      keys flatMap { (key: URI) =>
-        {
-          insertSceneFromURI(key, sentinel2Config.datasourceUUID, user, pool) map {
-            (sceneIO: IO[Option[Scene.WithRelated]]) =>
-              sceneIO
-                .handleErrorWith(
-                  (error: Throwable) => {
-                    sendError(error)
-                    IO.pure(None)
-                  }
-                )
-                .unsafeRunSync
+    keys traverse { (key: URI) =>
+      insertSceneFromURI(key, sentinel2Config.datasourceUUID, user)
+        .handleErrorWith(
+          (error: Throwable) => {
+            logger.error(
+              s"Something went wrong inserting $key: ${error.getMessage}")
+            sendError(error)
+            IO.pure(None)
           }
-        }
-      }
+        )
+    } map { _ =>
+      logger.info("All scenes inserted or logged")
     }
   }
 }
@@ -377,14 +366,13 @@ object ImportSentinel2 extends Job {
   def runJob(args: List[String]): IO[Unit] = {
     RFTransactor.xaResource
       .use(xa => {
+        implicit val transactor = xa
         val job = args.toList match {
-          case List(date) => ImportSentinel2(LocalDate.parse(date), xa = xa)
-          case _          => ImportSentinel2(xa = xa)
+          case List(date) => ImportSentinel2(LocalDate.parse(date))
+          case _          => ImportSentinel2()
         }
-        logger.info(s"Preparing to run job")
-        threadPoolResource.use { pool =>
-          IO { job.run(pool) }
-        }
+        logger.debug(s"Preparing to run job")
+        job.insertIO
       })
   }
 }
