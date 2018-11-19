@@ -228,27 +228,26 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(
     sceneInsertIO
   }
 
-  def insertSceneFromURI(uri: URI,
-                         datasourceUUID: UUID,
-                         user: User): IO[List[Option[Scene.WithRelated]]] = {
+  def insertSceneFromURI(
+      uri: URI,
+      datasourceUUID: UUID,
+      user: User,
+      existingSceneNames: List[String]): IO[List[Option[Scene.WithRelated]]] = {
     val paths: List[String] = getScenePaths(uri)
     logger.info(s"Found ${paths.length} tiles for ${uri}")
-    for {
-      existingSceneNames <- existingSceneNamesIO
-      results <- paths traverse { (path: String) =>
-        val sceneExists = existingSceneNames.contains(s"S2 ${path}")
-        sceneExists match {
-          case true => {
-            logger.warn(s"Skipping scene creation S2 ${path} exists")
-            IO.pure(None)
-          }
-          case _ => {
-            logger.info(s"Inserting scene: ${path}")
-            riot(path, datasourceUUID, user)
-          }
+    paths traverse { (path: String) =>
+      val sceneExists = existingSceneNames.contains(s"S2 ${path}")
+      sceneExists match {
+        case true => {
+          logger.warn(s"Skipping scene creation S2 ${path} exists")
+          IO.pure(None)
+        }
+        case _ => {
+          logger.info(s"Inserting scene: ${path}")
+          riot(path, datasourceUUID, user)
         }
       }
-    } yield results
+    }
   }
 
   def getScenePaths(uri: URI): List[String] = {
@@ -281,17 +280,23 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(
       .unsafeGetUserById(systemUser)
       .transact(xa)
       .unsafeRunSync
-    keys traverse { (key: URI) =>
-      insertSceneFromURI(key, sentinel2Config.datasourceUUID, user)
-        .handleErrorWith(
-          (error: Throwable) => {
-            logger.error(
-              s"Something went wrong inserting $key: ${error.getMessage}")
-            sendError(error)
-            IO.pure(None)
-          }
-        )
-    } map { _ =>
+    for {
+      existingSceneNames <- existingSceneNamesIO
+      results <- keys traverse { (key: URI) =>
+        insertSceneFromURI(key,
+                           sentinel2Config.datasourceUUID,
+                           user,
+                           existingSceneNames)
+          .handleErrorWith(
+            (error: Throwable) => {
+              logger.error(
+                s"Something went wrong inserting $key: ${error.getMessage}")
+              sendError(error)
+              IO.pure(None)
+            }
+          )
+      }
+    } yield {
       logger.info("All scenes inserted or logged")
     }
   }
