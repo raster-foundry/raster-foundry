@@ -3038,8 +3038,13 @@ rf-reclassify-table {
     &.horizontal {
         display: flex;
         flex-direction: row;
+        align-items: center;
+        width: 100%;
         .btn {
             margin: 1em;
+        }
+        svg {
+            flex: 1;
         }
     }
     .expand {
