@@ -129,11 +129,7 @@
   </div>
   <div class="modal-footer">
     <div class="cm-modal-section horizontal">
-      <nvd3 id="chart-modal"
-            style="height: 51px; flex: 1;"
-            options="$ctrl.histOptions"
-            data="$ctrl.plot"
-            api="$ctrl.api"></nvd3>
+      <svg ng-attr-id="graph-{{$ctrl.graphId}}"></svg>
       <button class="btn"
               ng-click="$ctrl.dismiss()"
       >Cancel</button>
@@ -145,11 +141,11 @@
   </div>
 </div>
 
-<style>
- #chart-modal .nv-series-0 {
-     fill: url(#line-gradient-modal) !important;
+<style ng-if="$ctrl.graph">
+ #graph-{{$ctrl.graphId}} .data-fill {
+     fill: url(#line-gradient-{{$ctrl.graphId}}) !important;
      fill-opacity: 1 !important;
-     stroke: url(#line-gradient-modal) !important;
+     stroke: url(#line-gradient-{{$ctrl.graphId}}) !important;
      stroke-opacity: 1 !important;
  }
 </style>
