@@ -44,17 +44,14 @@ class HistogramBreakpointController {
     }
 
     $onChanges(changes) {
-        if (changes.range && changes.range.currentValue) {
-            this.setPositionFromBreakpoint();
-        }
         if (changes.options && changes.options.currentValue) {
             this._options = Object.assign({}, defaultOptions, changes.options.currentValue);
             this.setPositionFromBreakpoint();
-        }
-        if (changes.precision && changes.precision.currentValue) {
-            this.setPositionFromBreakpoint();
-        }
-        if (changes.breakpoint && Number.isFinite(changes.breakpoint.currentValue)) {
+        } else if (
+            changes.range && changes.range.currentValue ||
+            changes.precision && changes.precision.currentValue ||
+            changes.breakpoint && Number.isFinite(changes.breakpoint.currentValue)
+        ) {
             this.setPositionFromBreakpoint();
         }
     }
@@ -130,7 +127,6 @@ class HistogramBreakpointController {
     onMouseMove(event) {
         if (event.target &&
             event.target.classList.contains('graph-container') ||
-            event.target.tagName === 'NVD3' ||
             event.target.tagName === 'rf-node-histogram' ||
             event.target.tagName === 'rf-reclassify-histogram'
         ) {

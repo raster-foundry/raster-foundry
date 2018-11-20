@@ -19,11 +19,10 @@ const defaultD3Options = (el) => ({
 });
 
 class D3Element {
-    constructor(el, id, options, $q) {
+    constructor(el, id, options) {
         this.el = el;
         this.id = id;
         this.options = options;
-        this.$q = $q;
         this.callbacks = new Map();
 
         this.options = Object.assign({}, defaultD3Options(el), options);
@@ -58,11 +57,80 @@ class D3Element {
     }
 }
 
-class SinglebandHistogram extends D3Element {
-    constructor(el, id, options, $q) {
-        super(el, id, options, $q);
+class ChannelHistogram extends D3Element {
+    render() {
+        let svg = d3.select(this.el);
+        let defs = svg.select('defs');
+        if (!defs.nodes().length) {
+            defs = svg.append('defs');
+        }
+
+        if (!this.data || !Number.isFinite(this.data.maxY)) {
+            //eslint-disable-next-line
+            console.log('tried to render graph without a maxY');
+            return;
+        }
+
+        this.calculateAxis(svg, defs);
+        switch (this.options.channel) {
+        case 'rgb':
+            this.renderPlot(svg, defs, this.data.rgb, '#959cad');
+            break;
+        case 'red':
+            this.renderPlot(svg, defs, this.data.red, '#ed1841');
+            break;
+        case 'green':
+            this.renderPlot(svg, defs, this.data.green, '#28af5f');
+            break;
+        case 'blue':
+            this.renderPlot(svg, defs, this.data.blue, '#206fed');
+            break;
+        default:
+            throw new Error(
+                `Invalid channel selected in ChannelHistogram options: ${this.options.channel}`
+            );
+        }
+        super.render();
     }
 
+    calculateAxis(svg, defs) {
+        const xRange = [this.options.margin.left,
+                        this.el.width.baseVal.value - this.options.margin.right];
+        this.xScale = d3.scaleLinear()
+            .domain([0, 255])
+            .range(xRange);
+        let logScale = d3.scaleLog()
+            .domain([0.01, this.data.maxY])
+            .nice()
+            .range([this.options.height - this.options.margin.bottom,
+                    this.options.margin.top]);
+        this.yScale = (x) => logScale(x > 0 ? x : 0.01);
+    }
+
+    renderPlot(svg, defs, plot, color) {
+        let area = d3.area()
+            .x(v => this.xScale(v.x))
+            .y0(this.options.height - this.options.margin.bottom)
+            .y1(v => this.yScale(v.y))
+            .curve(d3.curveStepAfter);
+
+
+        let areaPath = svg.select('#area-path');
+        if (!areaPath.nodes().length) {
+            areaPath = svg.append('path');
+        }
+
+        areaPath.data([plot])
+            .attr('id', 'area-path')
+            .attr('class', 'data-fill')
+            .attr('z-index', 11)
+            .attr('stroke', color)
+            .attr('fill', color)
+            .attr('d', area);
+    }
+}
+
+class SinglebandHistogram extends D3Element {
     render() {
         // render d3 el
         let svg = d3.select(this.el);
@@ -212,12 +280,20 @@ export default (app) => {
             this.$q = $q;
         }
 
-        register(el, id, options) {
+        register(el, id, options = {}) {
             // el is expected to be a bare DOM svg node
             if (el.nodeName !== 'svg') {
                 throw new Error('graphService requires an svg element.');
             }
-            let graph = new SinglebandHistogram(el, id, options, this.$q);
+            let graph;
+            switch (options.type) {
+            case 'channel':
+                graph = new ChannelHistogram(el, id, options);
+                break;
+            case 'single':
+            default:
+                graph = new SinglebandHistogram(el, id, options);
+            }
             this.graphs = this.graphs.set(id, graph);
             if (this._graphPromises.has(id)) {
                 this._graphPromises.get(id).forEach((promise) => {
