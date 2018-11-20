@@ -21,17 +21,17 @@
   }
 
   .searchselect-clear {
-    background: none;
-    border-color: transparent;
+    background: $white;
+    border-color: $border-color-default;
     width: 3rem;
-    height: 3rem;
-    line-height: 3rem;
     text-align: center;
-    position: absolute;
-    bottom: -8px;
-    right: 0;
-    margin: 0;
-    display: none;
+    color: $text-base;
+    align-self: stretch;
+    border-radius: 0;
+    margin-left: -1px;
+    height: initial;
+    z-index: 1;
+    line-height: 32px;
   }
 
   .selectize-dropdown {
@@ -43,4 +43,20 @@
       color: $brand-primary
     }
   }
+
+  .browse-source-drop-down {
+    background: white;
+    border: 1px solid $shade-light;
+    padding: 11px 8px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 1.2rem;
+    border-radius: $border-radius-base;
+  }
+}
+
+.filter-adjust-input {
+  background-color: $white;
+  border-color: $border-color-default;
+  color: $text-base;
 }

@@ -133,6 +133,10 @@ dl.meta-list > dd {
   text-overflow: ellipsis;
 }
 
+dl.meta-list.editing-metadata > dd {
+  overflow: visible;
+}
+
 .clear-image-source-filter{
   border-radius: 50%;
   color: $gray;
@@ -556,14 +560,17 @@ rf-project-editor .leaflet-tile {
 }
 
 .filter-adjust-input {
-  @extend .dark-input;
-  width: 50px;
-  max-width: 50px;
-  text-align: center;
+  width: 6rem;
+  max-width: 6rem;
+  padding: 5px;
+  flex: none;
+  height: 30px;
   font-size: 1.2rem;
-  flex-grow: 0;
-  flex-shrink: 0;
-  color: $gray-lightest;
+  margin-left: 1rem;
+  margin-top: -11px;
+  background: $shade-dark;
+  border-color: $shade-dark;;
+  color: $white;
 }
 
 .histogram-input {
@@ -2455,7 +2462,6 @@ rf-histogram-breakpoint {
 
 .colorscheme-selector {
   padding: 0;
-  min-width: 24rem;
 }
 .dropdown-header {
   display: flex;
@@ -3186,5 +3192,24 @@ rf-navbar-search {
 
   button {
     margin-right: 1em;
+  }
+}
+
+.browse-source-drop-down {
+  padding: 11px 8px;
+  background-color: $shade-dark;
+  border-color: $shade-dark;
+}
+
+.date-range-select {
+  margin: 0 0 7px;
+
+  input {
+    color: $white;
+    cursor: pointer;
+  }
+
+  i {
+    color: $white;
   }
 }

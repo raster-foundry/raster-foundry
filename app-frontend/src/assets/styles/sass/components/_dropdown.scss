@@ -28,7 +28,7 @@
   z-index: 1050;
   display: none; // none by default, but block on "open" of the menu
   float: left;
-  min-width: calc(100% - 2rem);
+  min-width: 100%;
   padding: 10px;
   margin: 0; // override default ul
   margin-top: -2px;

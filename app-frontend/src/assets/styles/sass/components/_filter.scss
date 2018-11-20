@@ -1,23 +1,45 @@
 .filter {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
   font-size: 1.2rem;
   position: relative;
-  &:not(:last-child) {
-    margin-bottom: 1.2rem;
-  }
-  & > *:not(:last-child) {
-    margin-right: 1.2rem !important;
-  }
+  
   label {
-    color: $shade-light;
-    width: 80px;
+    color: $white;
     font-size: 1.2rem;
     flex-shrink: 0;
   }
-  .selectize-dropdown {
-      width: calc(70%);
+
+  .form-control {
+    font-size: inherit;
+  }
+
+  .checkbox,
+  .checkbox:not(.active) {
+    color: $white;
+    
+    &:before {
+      color: $text-base;
+    }
+  }
+
+  .selectize-input {
+    border: 1px solid $shade-dark;
+    background-color: $shade-dark;
+    color: $white;
+  }
+
+  .dropdown-menu {
+    background: $white;
+
+    > li > a,
+    .active > a {
+      color: $shade-normal;
+
+      &:hover,
+      &:focus {
+        text-decoration: none;
+        color: $brand-primary;
+      }
+    }
   }
 }
 
@@ -57,19 +79,13 @@
     }
     .shapefilter-box {
         background: $white;
-        color: $shade-light;
-        border: 1px solid $shade-light;
-        &:hover {
-            background: $shade-light;
-            * {
-                color: $white;
-            }
-        }
+        color: $text-base;
+        border: 1px solid $border-color-default;
     }
     .shapefilter-text {
-        color: $shade-light;
+        color: $text-base;
     }
     .shapefilter-dropdown {
-        border: 1px solid $shade-light;
+        border: 1px solid $border-color-default;
     }
 }

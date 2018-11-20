@@ -32,21 +32,23 @@
 
 .searchselect-clear {
   border-radius: 50%;
-  color: $gray;
-  border: 1px solid $gray-lighter;
-  background: $gray-lighter;
+  color: $white;
+  border: 1px solid $gray-dark;
+  background: $gray-dark;
   z-index: 1000;
   width: 2rem;
   height: 2rem;
-  transform: translateY(-50%);
+  flex: none;
   align-self: center;
-  margin-top: 11px;
   cursor: pointer;
+  margin-left: 10px;
 }
 
 .selectize-control {
   width: 100%;
   font-weight: 600;
+  position: relative;
+  display: flex;
 }
 .selectize-dropdown,
 .selectize-input,
@@ -71,23 +73,13 @@
   position: relative;
   z-index: 1;
   box-sizing: border-box;
-  border-radius: 3px;
-  border-color: $shade-light;
-  color: $brand-primary;
+  border-radius: $border-radius-base;
+  border: 1px solid $border-color-default;
+  color: $text-base;
 }
 
-.filter {
-    .selectize-input {
-        border-color: $shade-dark;
-        background-color: $shade-dark;
-        color: $gray-lightest;
-        & > input {
-            color: $gray-lightest;
-        }
-    }
-}
 .selectize-input.dropdown-active {
-  border-radius: 3px 3px 0 0;
+  border-radius: $border-radius-base $border-radius-base 0 0;
 }
 .selectize-input > * {
   vertical-align: baseline;
@@ -127,6 +119,7 @@
   right: 0;
 }
 .selectize-dropdown {
+  top: 100%;
   position: absolute;
   z-index: 10;
   background: #ffffff;
@@ -135,7 +128,8 @@
   box-sizing: border-box;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border-radius: 0 0 $border-radius-base $border-radius-base;
-  border: 1px solid $shade-dark;
+  border: 1px solid $border-color-default;
+  border-top: none;
 }
 .selectize-dropdown [data-selectable] {
   cursor: pointer;
@@ -158,8 +152,12 @@
   cursor: default;
 }
 .selectize-dropdown .active {
-  background-color: $shade-light;
-  color: $white;
+  background-color: $off-white;
+  color: $brand-primary;
+
+  &:hover {
+    color: $brand-primary !important;
+  }
 }
 .selectize-dropdown .active.create {
   color: #495c68;
@@ -185,17 +183,24 @@
   cursor: text;
 }
 .selectize-control.single .selectize-input:after {
-  content: ' ';
+  content: "\E906";
+  font-family: 'icomoon' !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin-left: 3px;
+  margin-right: 3px;
+  line-height: .9;
+  margin-top: -5px;
   display: block;
   position: absolute;
   top: 50%;
-  right: 15px;
-  margin-top: -3px;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 5px 5px 0 5px;
-  border-color: #808080 transparent transparent transparent;
+  right: 9px;
 }
 .selectize-control.single .selectize-input.dropdown-active:after {
   margin-top: -4px;

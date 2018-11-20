@@ -1,9 +1,6 @@
 .shapefilter-box {
     background: $white;
-    border-color: $shade-light;
-    &:hover {
-        background: $shade-light;
-    }
+    border: 1px solid $border-color-default;
 }
 
 .shapefilter-text {
@@ -12,7 +9,7 @@
 
 .shapefilter-option {
     &:hover {
-        background: $shade-light;
+        background: $off-white;
     }
 }
 

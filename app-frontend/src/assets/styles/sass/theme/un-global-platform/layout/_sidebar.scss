@@ -12,15 +12,22 @@
   background: $off-white;
   box-shadow: -5px 0 5px 0px rgba($text-base, .2);
   margin-left: 0;
+  color: $text-base;
 
   h5, .h5,
-  p {
+  p,
+  label {
     color: $text-base;
   }
 
   .sidebar-header {
     background: $off-white;
     border-color: $border-color-default;
+
+    .btn.sidebar-header-nav-btn {
+      color: $text-base;
+      border-color: $border-color-default;
+    }
   }
 
   .header-controls .btn-default {
