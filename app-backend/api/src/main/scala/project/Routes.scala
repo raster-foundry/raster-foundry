@@ -667,12 +667,12 @@ trait ProjectRoutes
             AnnotationShapefileService.annotationsToShapefile(annotations)
           val cal: Calendar = Calendar.getInstance()
           cal.add(Calendar.DAY_OF_YEAR, 1)
-          val key: AmazonS3URI = new AmazonS3URI(
+          val s3Uri: AmazonS3URI = new AmazonS3URI(
             user.getDefaultAnnotationShapefileSource(dataBucket))
-          putObject(dataBucket, key.toString, zipfile.toJava)
+          putObject(dataBucket, s3Uri.getKey, zipfile.toJava)
             .setExpirationTime(cal.getTime)
           zipfile.delete(true)
-          complete(getSignedUrl(dataBucket, key.toString).toString())
+          complete(getSignedUrl(dataBucket, s3Uri.getKey).toString())
         }
         case _ =>
           complete(
