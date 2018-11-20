@@ -84,39 +84,37 @@ class AnalysisService(
 
             logger.info(
               s"Requesting Analysis histogram. Analysis=${analysisId}, node=${node}")
-            val tr = ToolRunDao.query.filter(analysisId).select.transact(xa)
 
-            val mapAlgebraAST = tr.flatMap { toolRun =>
-              logger.debug(s"Getting AST")
-              val ast = toolRun.executionParameters
-                .as[MapAlgebraAST]
-                .right
-                .toOption
-                .getOrElse(throw new Exception(
-                  s"Could not decode AST ${analysisId} from database"))
-              IO.pure(
+            for {
+              toolRun <- ToolRunDao.query.filter(analysisId).select.transact(xa)
+              mapAlgebraAST = {
+                val decodedAst = toolRun.executionParameters
+                  .as[MapAlgebraAST]
+                  .right
+                  .toOption
+                  .getOrElse(throw new BadAnalysisASTException(
+                    s"Could not decode AST ${analysisId} from database"))
                 node map { nodeId =>
-                  ast
+                  decodedAst
                     .find(UUID.fromString(nodeId))
                     .getOrElse(throw BadAnalysisASTException(
                       s"Node ${nodeId} missing from in AST ${analysisId}"))
-                } getOrElse { ast }
-              )
-            }
-            mapAlgebraAST.flatMap { ast =>
-              val (exp, mdOption, params) = ast.asMaml
-              LayerHistogram.apply(IO.pure(exp),
-                                   IO.pure(params),
-                                   interpreter,
-                                   4096)
-            } flatMap {
-              case Valid(h) =>
-                logger.debug(s"Generated histogram: ${h.asJson}")
-                Ok(h.asJson)
-              case Invalid(e) =>
-                logger.warn(e.toList.toString)
-                BadRequest(e.asJson)
-            }
+                } getOrElse { decodedAst }
+              }
+              (exp, mdOption, params) = mapAlgebraAST.asMaml
+              result <- LayerHistogram.apply(IO.pure(exp),
+                                             IO.pure(params),
+                                             interpreter,
+                                             4096)
+              resp <- result match {
+                case Valid(h) =>
+                  logger.debug(s"Generated histogram: ${h.asJson}")
+                  Ok(h.asJson)
+                case Invalid(e) =>
+                  logger.warn(e.toList.toString)
+                  BadRequest(e.asJson)
+              }
+            } yield { resp }
           }
 
           case GET -> Root / UUIDWrapper(analysisId) / "raw" / _
