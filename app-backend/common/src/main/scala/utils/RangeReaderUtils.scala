@@ -1,13 +1,13 @@
 package com.rasterfoundry.common.utils
 
+import com.rasterfoundry.common.S3
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.util.{FileRangeReader, RangeReader}
 import geotrellis.spark.io.s3.util.S3RangeReader
 import geotrellis.spark.io.s3.AmazonS3Client
 import geotrellis.spark.io.http.util.HttpRangeReader
 
-import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3ClientBuilder}
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+import com.amazonaws.services.s3.AmazonS3URI
 import org.apache.http.client.utils.URLEncodedUtils
 
 import java.nio.file.Paths
@@ -44,7 +44,7 @@ object RangeReaderUtils extends LazyLogging {
 
       case "s3" =>
         val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri, "UTF-8"))
-        val s3Client = new AmazonS3Client(AmazonS3ClientBuilder.defaultClient())
+        val s3Client = AmazonS3Client(S3.client)
         Some(S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client))
 
       case scheme =>
