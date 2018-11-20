@@ -20,7 +20,7 @@ import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.maml.BacksplashMamlAdapter
 import com.rasterfoundry.backsplash.parameters.Parameters._
 import com.rasterfoundry.common.RollbarNotifier
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.datamodel.{User, ObjectType, ActionType}
 import com.rasterfoundry.database.ToolRunDao
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.util.RFTransactor
@@ -29,6 +29,7 @@ import doobie.implicits._
 import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.server._
+import geotrellis.server.cog.util.CogUtils
 import org.http4s.{MediaType, _}
 import org.http4s.dsl._
 import org.http4s.headers._
@@ -120,8 +121,59 @@ class AnalysisService(
           case GET -> Root / UUIDWrapper(analysisId) / "raw" / _
                 :? ExtentQueryParamMatcher(extent)
                 :? ZoomQueryParamMatcher(zoom)
-                :? NodeQueryParamMatcher(node) as user =>
-            Ok("good job")
+                :? NodeQueryParamMatcher(node) as user => {
+            val authorizationF =
+              ToolRunDao
+                .authorized(user,
+                            ObjectType.Analysis,
+                            analysisId,
+                            ActionType.View)
+                .transact(xa) map { authResult =>
+                if (!authResult) {
+                  throw NotAuthorizedException(
+                    s"User ${user.id} not authorized to view project $analysisId")
+                } else {
+                  authResult
+                }
+              }
+            for {
+              authorized <- authorizationF
+              toolRun <- ToolRunDao.query.filter(analysisId).select.transact(xa)
+              mapAlgebraAST = {
+                val decodedAst = toolRun.executionParameters
+                  .as[MapAlgebraAST]
+                  .right
+                  .toOption
+                  .getOrElse(throw new BadAnalysisASTException(
+                    s"Could not decode AST ${analysisId} from database"))
+                node map { nodeId =>
+                  decodedAst
+                    .find(UUID.fromString(nodeId))
+                    .getOrElse(throw BadAnalysisASTException(
+                      s"Node ${nodeId} missing from in AST ${analysisId}"))
+                } getOrElse { decodedAst }
+              }
+              (exp, mdOption, params) = mapAlgebraAST.asMaml
+              layerEval = LayerExtent.apply(IO.pure(exp), IO.pure(params), interpreter)
+              interpretedTile <- layerEval(extent, CogUtils.tmsLevels(zoom).cellSize)
+              resp <- interpretedTile match {
+                case Valid(tile) =>
+                  val colorMap = for {
+                    md <- mdOption
+                    renderDef <- md.renderDef
+                  } yield renderDef
+
+                  colorMap match {
+                    case Some(rd) =>
+                      Ok(tile.renderPng(rd).bytes, `Content-Type`(MediaType.image.png))
+                    case _ =>
+                      Ok(tile.renderPng(ColorRamps.Viridis).bytes, `Content-Type`(MediaType.image.png))
+                  }
+
+                case Invalid(e) => BadRequest(e.toString)
+              }
+            } yield resp
+          }
 
           case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(
                 y)
