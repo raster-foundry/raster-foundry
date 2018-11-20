@@ -89,7 +89,7 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
           for {
             mds <- Mosaic.getMosaicDefinitions(
               self,
-              extent.reproject(LatLng, WebMercator))
+              Some(extent.reproject(LatLng, WebMercator)))
             _ <- IO { logger.info(s"Found ${mds.length} definitions") }
             mbTiles <- mds.toList traverse { md =>
               {

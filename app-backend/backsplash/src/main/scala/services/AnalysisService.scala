@@ -1,6 +1,5 @@
 package com.rasterfoundry.backsplash.analysis
 
-import java.security.InvalidParameterException
 import java.util.UUID
 import io.circe._
 import io.circe.syntax._
@@ -72,11 +71,6 @@ class AnalysisService(
       final def apply(hist: Histogram[Double]): Json = hist.toJson.asJson
     }
 
-  object NodeQueryParamMatcher extends QueryParamDecoderMatcher[String]("node")
-
-  object VoidCacheQueryParamMatcher
-      extends QueryParamDecoderMatcher[Boolean]("voidCache")
-
   implicit class MapAlgebraAstConversion(val rfmlAst: MapAlgebraAST)
       extends BacksplashMamlAdapter
 
@@ -84,7 +78,7 @@ class AnalysisService(
     H.handle {
       ForeignError.handle {
         AuthedService {
-          case GET -> Root / UUIDWrapper(analysisId) / histogram
+          case GET -> Root / UUIDWrapper(analysisId) / "histogram"
                 :? NodeQueryParamMatcher(node)
                 :? VoidCacheQueryParamMatcher(void) as user => {
 
@@ -101,10 +95,13 @@ class AnalysisService(
                 .getOrElse(throw new Exception(
                   s"Could not decode AST ${analysisId} from database"))
               IO.pure(
-                ast
-                  .find(UUID.fromString(node))
-                  .getOrElse(throw new InvalidParameterException(
-                    s"Node ${node} missing from in AST ${analysisId}")))
+                node map { nodeId =>
+                  ast
+                    .find(UUID.fromString(nodeId))
+                    .getOrElse(throw BadAnalysisASTException(
+                      s"Node ${nodeId} missing from in AST ${analysisId}"))
+                } getOrElse { ast }
+              )
             }
             mapAlgebraAST.flatMap { ast =>
               val (exp, mdOption, params) = ast.asMaml
@@ -121,6 +118,13 @@ class AnalysisService(
                 BadRequest(e.asJson)
             }
           }
+
+          case GET -> Root / UUIDWrapper(analysisId) / "raw" / _
+                :? ExtentQueryParamMatcher(extent)
+                :? ZoomQueryParamMatcher(zoom)
+                :? NodeQueryParamMatcher(node) as user =>
+            Ok("good job")
+
           case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(
                 y)
                 :? NodeQueryParamMatcher(node) as user => {
@@ -136,10 +140,12 @@ class AnalysisService(
                 .toOption
                 .getOrElse(throw MetadataException(
                   s"Could not decode AST ${analysisId} from database"))
-              ast
-                .find(UUID.fromString(node))
-                .getOrElse(throw MetadataException(
-                  s"Node ${node} missing from in AST ${analysisId}"))
+              node map { nodeId =>
+                ast
+                  .find(UUID.fromString(nodeId))
+                  .getOrElse(throw BadAnalysisASTException(
+                    s"Node ${nodeId} missing from in AST ${analysisId}"))
+              } getOrElse { ast }
             }
 
             logger.debug(s"AST: ${mapAlgebraAST}")

@@ -30,9 +30,12 @@ object Parameters {
       extends OptionalQueryParamDecoderMatcher[Int]("blueBand")
   object ExtentQueryParamMatcher
       extends QueryParamDecoderMatcher[Extent]("bbox")
-  object NodeQueryParamMatcher extends QueryParamDecoderMatcher[String]("node")
+  object NodeQueryParamMatcher
+      extends OptionalQueryParamDecoderMatcher[String]("node")
   object TagOptionalQueryParamMatcher
       extends OptionalQueryParamDecoderMatcher[String]("tag")
+  object VoidCacheQueryParamMatcher
+      extends QueryParamDecoderMatcher[Boolean]("voidCache")
   object ZoomQueryParamMatcher extends QueryParamDecoderMatcher[Int]("zoom")
 
   /** Path Parameters */
