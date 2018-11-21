@@ -30,6 +30,7 @@ import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.server._
 import geotrellis.server.cog.util.CogUtils
+import geotrellis.proj4.{WebMercator, LatLng}
 import org.http4s.{MediaType, _}
 import org.http4s.dsl._
 import org.http4s.headers._
@@ -136,6 +137,7 @@ class AnalysisService(
                   authResult
                 }
               }
+            val projectedExtent = extent.reproject(LatLng, WebMercator)
             for {
               authorized <- authorizationF
               toolRun <- ToolRunDao.query.filter(analysisId).select.transact(xa)
@@ -155,7 +157,7 @@ class AnalysisService(
               }
               (exp, mdOption, params) = mapAlgebraAST.asMaml
               layerEval = LayerExtent.apply(IO.pure(exp), IO.pure(params), interpreter)
-              interpretedTile <- layerEval(extent, CogUtils.tmsLevels(zoom).cellSize)
+              interpretedTile <- layerEval(projectedExtent, CogUtils.tmsLevels(zoom).cellSize)
               resp <- interpretedTile match {
                 case Valid(tile) =>
                   val colorMap = for {
