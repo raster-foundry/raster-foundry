@@ -200,6 +200,15 @@
   margin: 0;
   flex: 1;
 
+  &.compact {
+    padding: 1rem 3rem;
+  }
+
+  &.fixed-height {
+    max-height: 40rem;
+    overflow: auto;
+  }
+
   &.small {
     flex: none;
     width: 65%;
@@ -213,6 +222,39 @@
     .btn {
       align-self: center;
     }
+  }
+
+  .pagination {
+    margin: 0;
+  }
+  
+  .pagination-count {
+    margin: 8px 0;
+  }
+}
+
+.inner-container-bar {
+  position: sticky;
+  background: $white;
+  margin-left: -3rem;
+  margin-right: -3rem;
+  padding: 8px 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 999;
+
+  &.top-bar {
+    border-bottom: 1px solid $border-color-default;
+    top: -3rem;
+    margin-top: -3rem;
+    margin-bottom: 1rem;
+  }
+
+  &.bottom-bar {
+    border-top: 1px solid $border-color-default;
+    bottom: -3rem;
+    margin-bottom: -3rem;
   }
 }
 

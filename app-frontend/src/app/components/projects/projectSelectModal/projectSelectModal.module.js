@@ -27,7 +27,7 @@ class ProjectSelectModalController {
         const currentQuery = this.projectService.query(
             {
                 sort: 'createdAt,desc',
-                pageSize: 5,
+                pageSize: 9,
                 page: page - 1,
                 search: this.search
             }
