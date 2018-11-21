@@ -156,8 +156,11 @@ class AnalysisService(
                 } getOrElse { decodedAst }
               }
               (exp, mdOption, params) = mapAlgebraAST.asMaml
-              layerEval = LayerExtent.apply(IO.pure(exp), IO.pure(params), interpreter)
-              interpretedTile <- layerEval(projectedExtent, CogUtils.tmsLevels(zoom).cellSize)
+              layerEval = LayerExtent.apply(IO.pure(exp),
+                                            IO.pure(params),
+                                            interpreter)
+              interpretedTile <- layerEval(projectedExtent,
+                                           CogUtils.tmsLevels(zoom).cellSize)
               resp <- interpretedTile match {
                 case Valid(tile) =>
                   val colorMap = for {
@@ -167,9 +170,11 @@ class AnalysisService(
 
                   colorMap match {
                     case Some(rd) =>
-                      Ok(tile.renderPng(rd).bytes, `Content-Type`(MediaType.image.png))
+                      Ok(tile.renderPng(rd).bytes,
+                         `Content-Type`(MediaType.image.png))
                     case _ =>
-                      Ok(tile.renderPng(ColorRamps.Viridis).bytes, `Content-Type`(MediaType.image.png))
+                      Ok(tile.renderPng(ColorRamps.Viridis).bytes,
+                         `Content-Type`(MediaType.image.png))
                   }
 
                 case Invalid(e) => BadRequest(e.toString)
