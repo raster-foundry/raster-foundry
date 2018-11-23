@@ -27,7 +27,7 @@ package object S3 {
   lazy val client = AmazonS3ClientBuilder
     .standard()
     .withCredentials(new DefaultAWSCredentialsProviderChain())
-    .withRegion(Regions.US_EAST_1)
+    .withForceGlobalBucketAccessEnabled(true)
     .build()
 
   def clientWithRegion(region: Regions): AmazonS3 =
