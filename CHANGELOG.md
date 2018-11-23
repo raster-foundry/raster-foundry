@@ -23,6 +23,7 @@
 - Specifically handled bad paths to COGs when users create scenes [\#4295](https://github.com/raster-foundry/raster-foundry/pull/4295)
 - Fixed shapefile annotations export [\#4300](https://github.com/raster-foundry/raster-foundry/pull/4300)
 - Made s3 client tolerate buckets outside of its configured region [\#4319](https://github.com/raster-foundry/raster-foundry/pull/4319)
+- Fixed logging dependency stack to eliminate painfully verbose logging in backsplash [\#4326](https://github.com/raster-foundry/raster-foundry/pull/4326)
 
 ### Security
 
