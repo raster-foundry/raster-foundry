@@ -89,6 +89,7 @@ services:
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./scratch/:/opt/raster-foundry/scratch/
+      - $HOME/.coursier:/root/.coursier
       - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
@@ -142,6 +143,7 @@ services:
       - "9020:9020"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
+      - $HOME/.coursier:/root/.coursier
       - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
@@ -171,6 +173,7 @@ services:
       - "9030:9020"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
+      - $HOME/.coursier:/root/.coursier
       - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro

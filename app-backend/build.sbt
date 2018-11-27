@@ -1,3 +1,6 @@
+import xerial.sbt.Sonatype._
+import ReleaseTransformations._
+
 addCommandAlias("mg", "migrations/run")
 
 addCommandAlias(
@@ -9,15 +12,12 @@ git.gitTagToVersionNumber in ThisBuild := { tag: String =>
   else None
 }
 
+cancelable in Global := true
+
 lazy val commonSettings = Seq(
+  // https://github.com/lucidsoftware/neo-sbt-scalafmt
   scalafmtOnCompile := true,
-  // Add the default sonatype repository setting
-  publishTo := sonatypePublishTo.value,
-  organization := "com.rasterfoundry",
-  organizationName := "Raster Foundry",
-  organizationHomepage := Some(new URL("https://www.rasterfoundry.com")),
-  description := "A platform to find, combine and analyze earth imagery at any scale.",
-  cancelable in Global := true,
+  // https://github.com/sksamuel/sbt-scapegoat
   scapegoatVersion in ThisBuild := Version.scapegoat,
   scalaVersion in ThisBuild := Version.scala,
   scalacOptions := Seq(
@@ -36,6 +36,7 @@ lazy val commonSettings = Seq(
     "-Ypatmat-exhaust-depth",
     "100"
   ),
+  // https://github.com/sbt/sbt/issues/3570
   updateOptions := updateOptions.value.withGigahorse(false),
   externalResolvers := Seq(
     "Geotoolkit Repo" at "http://maven.geotoolkit.org",
@@ -61,8 +62,62 @@ lazy val commonSettings = Seq(
   shellPrompt := { s =>
     Project.extract(s).currentProject.id + " > "
   },
+  // https://www.scala-sbt.org/0.13/docs/Compiler-Plugins.html
+  autoCompilerPlugins := true,
   addCompilerPlugin(
     "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+) ++ publishSettings
+
+lazy val noPublishSettings = Seq(
+  publish := {},
+  publishLocal := {},
+  publishArtifact := false
+)
+
+lazy val publishSettings = Seq(
+  // Add the default sonatype repository setting
+  publishTo := sonatypePublishTo.value,
+  publishMavenStyle := true,
+  organization := "com.rasterfoundry",
+  organizationName := "Raster Foundry",
+  organizationHomepage := Some(new URL("https://www.rasterfoundry.com")),
+  description := "A platform to find, combine and analyze earth imagery at any scale.",
+  sonatypeProfileName := "com.rasterfoundry",
+  sonatypeProjectHosting := Some(
+    GitHubHosting(user = "raster-foundry",
+                  repository = "raster-foundry",
+                  email = "info@rasterfoundry.com")),
+  developers := List(
+    Developer(id = "azavea",
+              name = "Azavea Inc.",
+              email = "systems@azavea.com",
+              url = url("https://www.azavea.com"))
+  ),
+  licenses := Seq(
+    "Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")),
+  pgpPassphrase := Some(
+    System.getenv().getOrDefault("PGP_PASSPHRASE", "").toCharArray()),
+  pgpSecretRing := file("/root/.gnupg/secring.gpg"),
+  usePgpKeyHex(System.getenv().getOrDefault("PGP_HEX_KEY", "0")),
+  releaseProcess := Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    setReleaseVersion,
+    releaseStepCommand("publishSigned"),
+    releaseStepCommand("sonatypeReleaseAll")
+  )
+) ++ credentialsSettings
+
+lazy val credentialsSettings = Seq(
+  // http://web.archive.org/web/20170923125655/http://www.cakesolutions.net/teamblogs/publishing-artefacts-to-oss-sonatype-nexus-using-sbt-and-travis-ci
+  credentials ++= (for {
+    username <- Option(System.getenv().get("SONATYPE_USERNAME"))
+    password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
+  } yield
+    Credentials("Sonatype Nexus Repository Manager",
+                "oss.sonatype.org",
+                username,
+                password)).toSeq
 )
 
 // Create a new MergeStrategy for aop.xml files
@@ -183,7 +238,10 @@ lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
 )
 
 lazy val root = Project("root", file("."))
+  .settings(commonSettings: _*)
+  .settings(noPublishSettings)
   .aggregate(api,
+             authentication,
              db,
              common,
              migrations,
@@ -193,7 +251,6 @@ lazy val root = Project("root", file("."))
              tool,
              bridge,
              backsplash)
-  .settings(commonSettings: _*)
 
 lazy val api = Project("api", file("api"))
   .dependsOn(db,
@@ -256,6 +313,7 @@ lazy val db = Project("db", file("db"))
 
 lazy val migrations = Project("migrations", file("migrations"))
   .settings(commonSettings: _*)
+  .settings(noPublishSettings)
   .settings({
     libraryDependencies ++= migrationsDependencies
   })
@@ -407,6 +465,7 @@ lazy val tool = Project("tool", file("tool"))
 lazy val geotrellis = Project("geotrellis", file("geotrellis"))
   .dependsOn(db, common, datamodel)
   .settings(commonSettings: _*)
+  .settings(noPublishSettings)
   .settings({
     libraryDependencies ++= Seq(
       Dependencies.geotrellisRaster,
@@ -443,6 +502,7 @@ lazy val bridge = Project("bridge", file("bridge"))
 lazy val backsplash = Project("backsplash", file("backsplash"))
   .dependsOn(authentication, geotrellis, db, tool)
   .settings(commonSettings: _*)
+  .settings(noPublishSettings)
   .settings(fork in run := true)
   .settings({
     libraryDependencies ++= Seq(
