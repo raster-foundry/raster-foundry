@@ -107,7 +107,7 @@
     "imagemin-pngquant": "~4.2.0",
     "isparta-instrumenter-loader": "~1.0.1",
     "jasmine-core": "~2.4.1",
-    "json-loader": "0.5.7",
+    "json-loader": "^0.5.7",
     "karma": "~1.1.1",
     "karma-coverage": "~1.1.1",
     "karma-jasmine": "~1.0.2",
