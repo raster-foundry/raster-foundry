@@ -17,6 +17,11 @@ class ProjectSelectModalController {
         'ngInject';
         this.projectService = projectService;
         this.paginationService = paginationService;
+    }
+
+    $onInit() {
+        // Can be one of {owned, shared}
+        this.currentOwnershipFilter = 'owned';
         this.fetchPage();
     }
 
@@ -27,8 +32,9 @@ class ProjectSelectModalController {
         const currentQuery = this.projectService.query(
             {
                 sort: 'createdAt,desc',
-                pageSize: 5,
+                pageSize: 9,
                 page: page - 1,
+                ownershipType: this.currentOwnershipFilter,
                 search: this.search
             }
         ).then((paginatedResponse) => {
@@ -52,6 +58,10 @@ class ProjectSelectModalController {
 
     setSelected(project) {
         this.close({$value: project});
+    }
+
+    handleOwnershipFilterChange(newFilterValue) {
+        this.fetchPage(1);
     }
 }
 
