@@ -55,7 +55,6 @@ require('./scenes/datasourceLicense.service').default(shared);
 // map
 require('./map/map.service').default(shared);
 require('./map/mapUtils.service').default(shared);
-require('./map/gridLayer.service').default(shared);
 require('./map/imageOverlay.service').default(shared);
 require('./map/layer.service').default(shared);
 require('./map/geocode.service').default(shared);

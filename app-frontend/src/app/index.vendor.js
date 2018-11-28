@@ -6,7 +6,6 @@ import 'jquery';
 import 'moment';
 import 'angular';
 import 'ob-daterangepicker';
-import 'd3';
 import '@uirouter/angularjs';
 import 'angular-ui-bootstrap';
 import 'angular-deferred-bootstrap';
