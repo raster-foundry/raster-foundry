@@ -89,16 +89,21 @@ module.exports = function (_path) {
         // output system
         output: {
             path: path.resolve(__dirname, 'dist'),
-            filename: '[name].[hash].js',
+            filename: '[name].[chunkhash].js',
             publicPath: '/'
         },
         target: 'web',
-        // optimization: {
-        //     splitChunks: {
-        //         chunks: 'all',
-        //         name: false
-        //     }
-        // },
+        optimization: {
+            splitChunks: {
+                cacheGroups: {
+                    commons: {
+                        test: /[\\/]node_modules[\\/]/,
+                        name: 'vendor',
+                        chunks: 'initial'
+                    }
+                }
+            }
+        },
 
         // resolves modules
         resolve: {
