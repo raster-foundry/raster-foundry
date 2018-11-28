@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import * as joint from 'jointjs';
 import {Map} from 'immutable';
 import {getNodeArgs} from '_redux/node-utils';
 // TODO tear out all references to tool run - it should use redux to pull in the correct stuff
@@ -8,6 +7,18 @@ export default (app) => {
     class LabUtils {
         constructor($rootScope, $compile) {
             'ngInject';
+            this.$rootScope = $rootScope;
+            this.$compile = $compile;
+        }
+
+        init(joint) {
+            if (this.joint) {
+                return;
+            }
+
+            this.joint = joint;
+            const $rootScope = this.$rootScope;
+            const $compile = this.$compile;
 
             joint.shapes.html = {};
             joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
@@ -156,7 +167,7 @@ export default (app) => {
         }
 
         constructRect(config, dimensions) {
-            return new joint.shapes.html.Element(Object.assign({
+            return new this.joint.shapes.html.Element(Object.assign({
                 id: config.id,
                 size: {
                     width: dimensions.width,
@@ -226,7 +237,7 @@ export default (app) => {
 
                         firstPort.isConnected = true;
 
-                        let link = new joint.dia.Link({
+                        let link = new this.joint.dia.Link({
                             source: {
                                 id: rectangle.id,
                                 port: 'Output'
