@@ -6,8 +6,6 @@ let assetLogo = BUILDCONFIG.LOGOFILE ?
 
 assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
 
-const Plyr = require('plyr/dist/plyr.js');
-
 export default class NavBarController {
     constructor( // eslint-disable-line max-params
         $rootScope, $scope, $log, $state, $document, $sce, $timeout, APP_CONFIG, authService
@@ -67,12 +65,16 @@ export default class NavBarController {
     }
 
     initPlyr() {
-        this.$timeout(() => {
-            this.plyr = new Plyr('#player');
-            this.plyr.on('enterfullscreen', this.onEnterFullscreen.bind(this));
-            this.plyr.on('exitfullscreen', this.onExitFullscreen.bind(this));
-            this.showVideo = true;
-        }, 100);
+        require(['plyr/dist/plyr.js'], (require) => {
+            this.$timeout(() => {
+                const Plyr = require('plyr/dist/plyr.js');
+                this.plyr = new Plyr('#player');
+                this.plyr.on('enterfullscreen', this.onEnterFullscreen.bind(this));
+                this.plyr.on('exitfullscreen', this.onExitFullscreen.bind(this));
+                this.showVideo = true;
+            }, 100);
+        }, (error) => {
+        });
     }
 
     onEnterFullscreen() {

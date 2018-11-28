@@ -6,4 +6,9 @@ const faviconsContext = require.context(
 );
 faviconsContext.keys().forEach(faviconsContext);
 
-const manifest = require(`..${BUILDCONFIG.FAVICON_DIR || '/favicon'}/manifest.json`);
+// const manifest = require.context(
+//     // `..${BUILDCONFIG.FAVICON_DIR || '/favicon'}/manifest.json`,
+//     `!!json-loader?name=favicons/[name].[ext]!..${BUILDCONFIG.FAVICON_DIR || '/favicon'}`,
+//     true,
+//     /\.json$/
+// );

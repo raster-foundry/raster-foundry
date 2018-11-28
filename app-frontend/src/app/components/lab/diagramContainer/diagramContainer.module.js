@@ -1,4 +1,3 @@
-import * as joint from 'jointjs';
 import angular from 'angular';
 import _ from 'lodash';
 import diagramContainerTpl from './diagramContainer.html';
@@ -58,12 +57,25 @@ class DiagramContainerController {
 
         this.contextInitialized = true;
 
-        const analysisWatch = this.$scope.$watch('$ctrl.analysis', (analysis) => {
-            if (analysis && !this.shapes) {
-                this.initDiagram();
+        require.ensure(['jointjs'], (require) => {
+            const joint = require('jointjs');
+            this.labUtils.init(joint);
+            if (this.analysis && !this.shapes) {
+                this.initDiagram(joint);
             } else {
-                analysisWatch();
+                const analysisWatch = this.$scope.$watch('$ctrl.analysis', (analysis) => {
+                    if (analysis && !this.shapes) {
+                        this.initDiagram(joint);
+                    } else {
+                        analysisWatch();
+                    }
+                });
             }
+        }, (error) => {
+            throw new Error(
+                'There was an error fetching the JointJS dependency.' +
+                    ' Please check your webpack config.'
+            );
         });
     }
 
@@ -84,7 +96,7 @@ class DiagramContainerController {
             !(this.analysisErrors && this.analysisErrors.size);
     }
 
-    initDiagram() {
+    initDiagram(joint) {
         let definition = this.analysis.executionParameters ?
             this.analysis.executionParameters :
             this.analysis;

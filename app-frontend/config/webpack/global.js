@@ -14,8 +14,6 @@ const postcssPresetEnv = require('postcss-preset-env');
 
 const NODE_ENV = process.env.NODE_ENV || 'production';
 const DEVELOPMENT = NODE_ENV === 'production' ? false : true;
-// const stylesLoader = 'css-loader?sourceMap!postcss-loader!sass-loader?' +
-//         'outputStyle=expanded&sourceMap=true&sourceMapContents=true';
 
 const HERE_APP_ID = 'v88MqS5fQgxuHyIWJYX7';
 const HERE_APP_CODE = '5pn07ENomTHOap0u7nQSFA';
@@ -124,7 +122,6 @@ module.exports = function (_path) {
 
         // modules resolvers
         module: {
-            // noParse: [],
             exprContextRegExp: /^\.\/*$/,
             unknownContextRegExp: /^\.\/.*$/,
             rules: [{
@@ -185,14 +182,6 @@ module.exports = function (_path) {
                         }
                     }
                 ]
-                // loader: DEVELOPMENT ? 'style-loader!css-loader?sourceMap!postcss-loader'
-                //     : ExtractTextPlugin.extract('style-loader',
-                //                                 'css-loader!postcss-loader'),
-                // post css.
-                // TODO This should be
-                // ['>0.25%', 'not ie 11', 'not op_mini all']
-                // see https://jamie.build/last-2-versions
-                // this doesn't seem to be compatible with the loader version that we're using
             }, {
                 test: /\.(scss|sass)$/,
                 use: [
@@ -222,8 +211,6 @@ module.exports = function (_path) {
                         }
                     }
                 ]
-                // loader: DEVELOPMENT ? 'style-loader!' + stylesLoader
-                //     : ExtractTextPlugin.extract('style-loader', stylesLoader)
             }, {
                 test: /\.(woff2|woff|ttf|eot)(\?[a-z0-9]+)?$/,
                 loaders: [
@@ -280,52 +267,19 @@ module.exports = function (_path) {
                     'expose-loader?moment'
                 ]
             }, {
-                test: require.resolve('mathjs'),
-                loaders: [
-                    'expose-loader?mathjs'
-                ]
-            }, {
                 test: require.resolve('loam'),
                 loaders: [
                     'expose-loader?loam'
                 ]
             // }, {
-            //     test: /node_modules[\\\/]auth0-js[\\\/].*\.js$/,
-            //     loader: 'transform-loader/cacheable',
-            //     options: {
-            //         brfs: true,
-            //         packageify: true
-            //     }
-                // loaders: ['transform-loader/cacheable?brfs',
-                //           'transform-loader/cacheable?packageify',
-                //           'babel-loader'
-                //          ]
-            // }, {
-            //     test: /node_modules[\\\/]auth0-lock[\\\/].*\.js$/,
-            //     loader: 'transform-loader/cacheable',
-            //     options: {
-            //         brfs: true,
-            //         packageify: true
-            //     }
-                // loaders: ['transform-loader/cacheable?brfs',
-                //           'transform-loader/cacheable?packageify']
-            // }, {
-            //     test: /node_modules[\\\/]auth0-lock[\\\/].*\.ejs$/,
-            //     // loader: 'transform-loader/cacheable?ejsify'
-            //     loader: 'transform-loader/cacheable',
-            //     options: {
-            //         ejsify: true
-            //     }
             }]
         },
         // load plugins
         plugins: [
-            // new webpack.optimize.DedupePlugin(),
             new webpack.ProvidePlugin({
                 $: 'jquery',
                 jQuery: 'jquery',
-                L: 'leaflet',
-                mathjs: 'mathjs'
+                L: 'leaflet'
             }),
             new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
             new webpack.optimize.AggressiveMergingPlugin({
