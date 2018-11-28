@@ -634,7 +634,7 @@ trait ProjectRoutes
     } {
       entity(as[AnnotationFeatureCollectionCreate]) { fc =>
         val annotationsCreate = fc.features map { _.toAnnotationCreate }
-        onSuccess (
+        onSuccess(
           AnnotationDao
             .insertAnnotations(annotationsCreate.toList, projectId, user)
             .transact(xa)
