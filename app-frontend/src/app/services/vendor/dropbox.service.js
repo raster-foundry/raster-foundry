@@ -1,6 +1,6 @@
-/* globals BUILDCONFIG */
+/* globals BUILDCONFIG document */
+import _ from 'lodash';
 
-/* globals _ document */
 export default (app) => {
     class DropboxService {
         constructor($resource, authService) {

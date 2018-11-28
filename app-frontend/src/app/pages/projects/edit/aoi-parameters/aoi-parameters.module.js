@@ -1,6 +1,6 @@
 import angular from 'angular';
+import _ from 'lodash';
 
-/* globals _ */
 const updateFrequencies = [
     {
         label: 'every 6 hours',

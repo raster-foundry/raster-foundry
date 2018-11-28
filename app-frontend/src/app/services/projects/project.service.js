@@ -1,4 +1,6 @@
-/* globals BUILDCONFIG _ L*/
+/* globals BUILDCONFIG L*/
+import _ from 'lodash';
+
 const availableProcessingOptions = [
     {
         label: 'Color Corrected',

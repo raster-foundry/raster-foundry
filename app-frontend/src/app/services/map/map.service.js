@@ -1,8 +1,9 @@
 import {Map, Set} from 'immutable';
+import _ from 'lodash';
 
 /* eslint no-unused-vars: 0 */
 /* eslint spaced-comment: 0 */
-/* globals BUILDCONFIG _ console setTimeout*/
+/* globals BUILDCONFIG console setTimeout*/
 
 class MapWrapper {
     // MapWrapper is a bare es6 class, so does not use angular injections

@@ -1,4 +1,6 @@
-/* globals _, document */
+/* globals document */
+import _ from 'lodash';
+
 export default class DateRangePickerModalController {
     constructor($rootScope, $log, $scope, $timeout, moment, dateRangePickerConf) {
         'ngInject';

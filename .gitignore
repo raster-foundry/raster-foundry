@@ -108,3 +108,5 @@ dist/
 # Patch files
 *.patch
 scratch/
+
+stats.json

@@ -1,4 +1,5 @@
-/* globals L, _ */
+/* globals L */
+import _ from 'lodash';
 import angular from 'angular';
 import annotateToolbarTpl from './annotateToolbar.html';
 require('./annotateToolbar.scss');
