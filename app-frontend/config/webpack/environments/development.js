@@ -27,6 +27,11 @@ module.exports = function (_path) {
                 '/config': 'http://localhost:' + serverport
             }
         },
+        output: {
+            path: path.resolve(__dirname, 'dist'),
+            filename: '[name].[hash].js',
+            publicPath: '/'
+        },
         plugins: [
             new webpack.HotModuleReplacementPlugin(),
             new webpack.DefinePlugin({
