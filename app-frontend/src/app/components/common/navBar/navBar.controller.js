@@ -65,9 +65,10 @@ export default class NavBarController {
     }
 
     initPlyr() {
-        require(['plyr/dist/plyr.js'], (require) => {
+        require(['plyr/dist/plyr.js', 'plyr/dist/plyr.css'], (require) => {
             this.$timeout(() => {
                 const Plyr = require('plyr/dist/plyr.js');
+                require('plyr/dist/plyr.css');
                 this.plyr = new Plyr('#player');
                 this.plyr.on('enterfullscreen', this.onEnterFullscreen.bind(this));
                 this.plyr.on('exitfullscreen', this.onExitFullscreen.bind(this));

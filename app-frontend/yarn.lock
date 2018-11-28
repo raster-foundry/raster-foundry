@@ -7405,11 +7405,6 @@ klaw@^1.0.0:
   optionalDependencies:
     graceful-fs "^4.1.9"
 
-konva@1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/konva/-/konva-1.2.2.tgz#ed72bee1d7f51c3ddd09b8dc0a87bf9a1ef82f43"
-  integrity sha1-7XK+4df1HD3dCbjcCoe/mh74L0M=
-
 lazy-cache@^1.0.3:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/lazy-cache/-/lazy-cache-1.0.4.tgz#a1d78fc3a50474cb80845d3b3b6e1da49a446e8e"
