@@ -1,5 +1,6 @@
-/* globals BUILDCONFIG, mathjs, _*/
+/* globals BUILDCONFIG */
 import angular from 'angular';
+import _ from 'lodash';
 import turfArea from '@turf/area';
 import turfDistance from '@turf/distance';
 import labMapTpl from './labMap.html';
@@ -260,15 +261,20 @@ class LabMapController {
     }
 
     addMeasureShapeToMap(layer, type) {
-        let measurement = this.measureCal(type, layer);
-        let compiledPopup = this.setPopupContent(type, measurement, layer);
-        let measureLayers = this.mapWrapper.getLayers('Measurement');
-        measureLayers.push(layer.bindPopup(compiledPopup[0]));
-        this.mapWrapper.setLayer('Measurement', measureLayers, false);
-        layer.openPopup();
+        require.ensure(['mathjs'], (require) => {
+            const mathjs = require('mathjs');
+            let measurement = this.measureCal(type, layer, mathjs);
+            let compiledPopup = this.setPopupContent(type, measurement, layer);
+            let measureLayers = this.mapWrapper.getLayers('Measurement');
+            measureLayers.push(layer.bindPopup(compiledPopup[0]));
+            this.mapWrapper.setLayer('Measurement', measureLayers, false);
+            layer.openPopup();
+        }, (error) => {
+            throw new Error('Error fetching math.js dependency. Check webpack config');
+        });
     }
 
-    measureCal(shapeType, layer) {
+    measureCal(shapeType, layer, mathjs) {
         let dataGeojson = layer.toGeoJSON();
         if (shapeType === 'polygon') {
             return mathjs.round(turfArea(dataGeojson), 2).toString();
