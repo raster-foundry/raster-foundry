@@ -1,5 +1,7 @@
-/* globals L, _, $ */
+/* globals L */
 import angular from 'angular';
+import _ from 'lodash';
+import $ from 'jquery';
 import { Set } from 'immutable';
 import turfCenter from '@turf/center';
 require('./annotate.scss');

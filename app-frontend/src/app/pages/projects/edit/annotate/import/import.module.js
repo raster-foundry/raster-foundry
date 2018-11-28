@@ -1,5 +1,7 @@
-/* globals _, $, FileReader */
+/* globals FileReader */
 import angular from 'angular';
+import _ from 'lodash';
+import $ from 'jquery';
 
 require('./import.scss');
 

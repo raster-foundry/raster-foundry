@@ -1,6 +1,5 @@
-/* globals _ */
-
 import angular from 'angular';
+import _ from 'lodash';
 
 class PlatformEmailController {
     constructor(

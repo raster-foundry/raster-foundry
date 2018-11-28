@@ -1,4 +1,4 @@
-/* globals _ */
+import _ from 'lodash';
 
 const {
     colorSchemes: defaultColorSchemes,
