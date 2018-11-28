@@ -1,4 +1,5 @@
-/* globals BUILDCONFIG, _ */
+/* globals BUILDCONFIG */
+import _ from 'lodash';
 
 export default (app) => {
     class DatasourceService {
@@ -128,7 +129,7 @@ export default (app) => {
 
         generateDefaultBands(count) {
             if (count) {
-                return Array(count).fill().map((_, i) => ({
+                return Array(count).fill().map((a, i) => ({
                     'name': `Band ${i}`,
                     'number': `${i}`
                 }));

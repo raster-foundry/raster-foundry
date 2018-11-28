@@ -1,4 +1,5 @@
-/* globals btoa, Uint8Array, _ */
+/* globals btoa, Uint8Array */
+import _ from 'lodash';
 import turfBbox from '@turf/bbox';
 import turfBboxPolygon from '@turf/bbox-polygon';
 
