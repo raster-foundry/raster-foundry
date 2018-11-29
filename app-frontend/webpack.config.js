@@ -25,8 +25,6 @@ let load = function () {
             ? process.env.NODE_ENV
             : 'production';
 
-    console.log('Current Environment: ', ENV);
-
     // load config file by environment
     return configs && merge({
         customizeArray: merge.unique(

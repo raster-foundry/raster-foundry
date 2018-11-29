@@ -12,11 +12,11 @@
     "url": "https://github.com/azavea/raster-foundry.git"
   },
   "scripts": {
-    "build": "yarn run clean && cross-env NODE_ENV=production webpack --bail --colors",
-    "clean": "rimraf dist/*",
+    "build": "cross-env NODE_ENV=production webpack --bail --colors",
     "build-nginx": "rimraf ../nginx/srv/dist/* && yarn run build && cp -R dist/* ../nginx/srv/dist/",
     "dev": "cross-env NODE_ENV=development webpack-dev-server --verbose",
     "sort-packages": "sort-package-json",
+    "package-sizes": "cross-env NODE_ENV=production webpack --bail --profile --json | tail -n +1 > stats.json && mv stats.json ./dist/stats.json && webpack-bundle-analyzer dist/stats.json",
     "start": "yarn run dev",
     "test": "karma start karma.conf.js",
     "test-watch": "karma start karma.conf.js --auto-watch --no-single-run"
@@ -91,6 +91,7 @@
     "babel-plugin-add-module-exports": "1.0.0",
     "brfs": "~1.4.3",
     "clean-webpack-plugin": "0.1.19",
+    "copy-webpack-plugin": "^4.6.0",
     "cross-env": "~1.0.7",
     "css-loader": "1.0.0",
     "ejsify": "~1.0.0",

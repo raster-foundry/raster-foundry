@@ -16,10 +16,6 @@ module.exports = function (_path) {
         context: _path,
         devtool: 'eval',
         mode: 'production',
-        output: {
-            publicPath: '/',
-            filename: '[name].[chunkhash].js'
-        },
         plugins: [
             new CleanWebpackPlugin(['dist'], {
                 root: _path,

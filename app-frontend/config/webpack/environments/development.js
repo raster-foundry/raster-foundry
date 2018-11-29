@@ -15,7 +15,7 @@ module.exports = function (_path) {
         devtool: 'cheap-source-map',
         mode: 'development',
         devServer: {
-            contentBase: path.join(__dirname, '../dist'),
+            contentBase: path.join(_path, './dist'),
             hot: true,
             // inline: true,
             progress: true,
@@ -28,7 +28,7 @@ module.exports = function (_path) {
             }
         },
         output: {
-            path: path.resolve(__dirname, 'dist'),
+            path: path.join(_path, './dist'),
             filename: '[name].[hash].js',
             publicPath: '/'
         },
