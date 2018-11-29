@@ -44,7 +44,12 @@ object RfmlRddResolver extends LazyLogging {
     val sourceFs: IO[List[(Option[CellType], Int) => Source]] =
       projLocs.keysIterator.toList
         .traverse(
-          (k: UUID) => SceneToProjectDao.getMosaicDefinition(k).transact(xa)
+          (k: UUID) =>
+            SceneToProjectDao
+              .getMosaicDefinition(k)
+              .transact(xa)
+              .compile
+              .to[List]
         )
         .map(_.flatten)
         .map((mosaicDefinitions: List[MosaicDefinition]) =>
