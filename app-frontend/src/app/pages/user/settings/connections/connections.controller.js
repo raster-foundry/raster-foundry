@@ -1,7 +1,4 @@
 /* globals window screen document */
-import dropboxIcon from '../../../../../assets/images/dropbox-icon.svg';
-import dropboxWordmark from '../../../../../assets/images/dropbox-wordmark.svg';
-import planetLogo from '../../../../../assets/images/planet-logo-light.png';
 
 class ConnectionsController {
     constructor(
@@ -20,10 +17,6 @@ class ConnectionsController {
         this.authService = authService;
         this.userService = userService;
         this.dropboxService = dropboxService;
-
-        this.dropboxIcon = dropboxIcon;
-        this.dropboxWordmark = dropboxWordmark;
-        this.planetLogo = planetLogo;
     }
 
     $onInit() {
