@@ -1,8 +1,6 @@
 /* globals document BUILDCONFIG */
 import angular from 'angular';
 
-import '../favicon/favicons';
-
 // main App module
 import './index.module';
 

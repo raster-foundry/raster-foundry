@@ -11,6 +11,7 @@ const autoprefixer = require('autoprefixer-core');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const postcssPresetEnv = require('postcss-preset-env');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 const NODE_ENV = process.env.NODE_ENV || 'production';
 const DEVELOPMENT = NODE_ENV === 'production' ? false : true;
@@ -88,7 +89,7 @@ module.exports = function (_path) {
 
         // output system
         output: {
-            path: path.resolve(__dirname, 'dist'),
+            path: path.resolve(_path, 'dist'),
             filename: '[name].[chunkhash].js',
             publicPath: '/'
         },
@@ -276,7 +277,6 @@ module.exports = function (_path) {
                 loaders: [
                     'expose-loader?loam'
                 ]
-            // }, {
             }]
         },
         // load plugins
@@ -302,13 +302,12 @@ module.exports = function (_path) {
                 gtagId: GOOGLE_TAG_ID,
                 development: DEVELOPMENT,
                 APP_NAME: 'Raster Foundry',
-                // chunks: {
-                //     head: {
-                //         app: _path + '/src/app/index.bootstrap.js',
-                //     }
-                // }
                 inject: 'head'
             }),
+            new CopyWebpackPlugin([{
+                from: 'src/favicon',
+                to: 'favicons'
+            }]),
             new webpack.DefinePlugin({
                 'BUILDCONFIG': {
                     APP_NAME: JSON.stringify('Raster Foundry'),
