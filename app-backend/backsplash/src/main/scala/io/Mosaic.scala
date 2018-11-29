@@ -13,6 +13,7 @@ import com.rasterfoundry.datamodel.{
   SingleBandOptions
 }
 import doobie.implicits._
+import fs2.Stream
 import geotrellis.raster.{Raster, io => _, _}
 import geotrellis.spark.tiling.LayoutLevel
 import geotrellis.spark.{io => _}
@@ -27,7 +28,7 @@ object Mosaic extends RollbarNotifier {
   implicit val timer: Timer[IO] = IO.timer(global)
 
   def getMosaicDefinitions(self: ProjectNode,
-                           extent: Extent): IO[Seq[MosaicDefinition]] = {
+                           extent: Extent): Stream[IO, MosaicDefinition] = {
     self.getBandOverrides match {
       case Some((red, green, blue)) =>
         SceneToProjectDao
@@ -63,33 +64,27 @@ object Mosaic extends RollbarNotifier {
           "Unable to fetch tiles with unknown scene type")
     }
 
-  def getMosaicDefinitionTiles(
-      self: ProjectNode,
-      z: Int,
-      x: Int,
-      y: Int,
-      extent: Extent,
-      mds: Seq[MosaicDefinition]): IO[List[Option[Raster[Tile]]]] = {
-    mds.toList.traverse(self.isSingleBand match {
-      case false =>
-        getMultiBandTileFromMosaic(z, x, y, extent)
-      case true => {
-        logger.info(
-          s"Getting Single Band Tile From Mosaic: ${z} ${x} ${y} ${self.projectId}")
-        getSingleBandTileFromMosaic(
-          z,
-          x,
-          y,
-          extent,
-          self.singleBandOptions getOrElse {
-            throw SingleBandOptionsException(
-              "No single-band options found for single-band visualization")
-          },
-          self.rawSingleBandValues
-        )
-      }
-    })
-  }
+  def getMosaicDefinitionTile(self: ProjectNode,
+                              z: Int,
+                              x: Int,
+                              y: Int,
+                              extent: Extent,
+                              md: MosaicDefinition): IO[Option[Raster[Tile]]] =
+    if (!self.isSingleBand) { getMultiBandTileFromMosaic(z, x, y, extent)(md) } else {
+      logger.info(
+        s"Getting Single Band Tile From Mosaic: ${z} ${x} ${y} ${self.projectId}")
+      getSingleBandTileFromMosaic(
+        z,
+        x,
+        y,
+        extent,
+        self.singleBandOptions getOrElse {
+          throw SingleBandOptionsException(
+            "No single-band options found for single-band visualization")
+        },
+        self.rawSingleBandValues
+      )(md)
+    }
 
   def getSingleBandTileFromMosaic(z: Int,
                                   x: Int,

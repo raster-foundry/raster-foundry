@@ -8,6 +8,7 @@ import cats.data.OptionT
 import cats.effect._
 import cats.implicits._
 import doobie.implicits._
+import fs2.Stream
 import geotrellis.raster.MultibandTile
 import geotrellis.raster.histogram._
 import geotrellis.vector.{Projected, Polygon}
@@ -25,60 +26,57 @@ object Histogram {
                              blueBand: Option[Int] = None,
                              scenesSubset: List[UUID] = List.empty)(
       implicit cs: ContextShift[IO]): IO[Vector[Histogram[Int]]] =
-    for {
-      mosaicDefinitions <- SceneToProjectDao
+    (for {
+      mosaicDefinition <- SceneToProjectDao
         .getMosaicDefinition(projectId,
                              polygonOption,
                              redBand,
                              greenBand,
                              blueBand,
                              scenesSubset)
-        .transact(xa) map { _.toList } // needs to be a list for cats instances
-      rgbs = (redBand, greenBand, blueBand).tupled match {
+        .transact(xa)
+      rgb = (redBand, greenBand, blueBand).tupled match {
         case Some((red, green, blue)) =>
-          List.fill(mosaicDefinitions.length)((red, green, blue))
+          (red, green, blue)
         case _ =>
-          mosaicDefinitions map { md =>
-            (md.colorCorrections.redBand,
-             md.colorCorrections.greenBand,
-             md.colorCorrections.blueBand)
-          }
+          (mosaicDefinition.colorCorrections.redBand,
+           mosaicDefinition.colorCorrections.greenBand,
+           mosaicDefinition.colorCorrections.blueBand)
       }
-      globalTiles <- (mosaicDefinitions zip rgbs) parTraverse {
-        case (mosaicDefinition, rgb) =>
-          if (mosaicDefinition.sceneType == Some(SceneType.COG))
-            Cog.fetchGlobalTile(mosaicDefinition,
-                                polygonOption,
-                                rgb._1,
-                                rgb._2,
-                                rgb._3)
-          else
-            // TODO: how?
-            Avro.fetchGlobalTile(mosaicDefinition,
-                                 polygonOption,
-                                 rgb._1,
-                                 rgb._2,
-                                 rgb._3)
+      globalTile <- Stream.eval {
+        if (mosaicDefinition.sceneType == Some(SceneType.COG))
+          Cog.fetchGlobalTile(mosaicDefinition,
+                              polygonOption,
+                              rgb._1,
+                              rgb._2,
+                              rgb._3)
+        else
+          Avro.fetchGlobalTile(mosaicDefinition,
+                               polygonOption,
+                               rgb._1,
+                               rgb._2,
+                               rgb._3)
       }
-      correctedTiles: List[MultibandTile] = mosaicDefinitions.zip(globalTiles) map {
-        case (md, globalMbTile) =>
-          val rgbBands = (redBand, greenBand, blueBand).tupled getOrElse {
-            (md.colorCorrections.redBand,
-             md.colorCorrections.greenBand,
-             md.colorCorrections.blueBand)
-          }
-          val subsetTile =
-            globalMbTile.subsetBands(rgbBands._1, rgbBands._2, rgbBands._3)
-          md.colorCorrections.colorCorrect(subsetTile,
-                                           subsetTile.histogramDouble,
-                                           None)
+      correctedTile = {
+        val rgbBands = (redBand, greenBand, blueBand).tupled getOrElse {
+          (mosaicDefinition.colorCorrections.redBand,
+           mosaicDefinition.colorCorrections.greenBand,
+           mosaicDefinition.colorCorrections.blueBand)
+        }
+        val subsetTile =
+          globalTile.subsetBands(rgbBands._1, rgbBands._2, rgbBands._3)
+        mosaicDefinition.colorCorrections.colorCorrect(
+          subsetTile,
+          subsetTile.histogramDouble,
+          None)
       }
     } yield {
-      correctedTiles.foldLeft(Vector.fill(3)(IntHistogram(): Histogram[Int]))(
-        (hists: Vector[Histogram[Int]], mbTile: MultibandTile) => {
-          (hists zip mbTile.histogram) map {
-            case (h1, h2) => h1 merge h2
-          }
-        })
-    }
+      correctedTile.histogram
+    }).compile.fold(Vector.fill(3)(IntHistogram(): Histogram[Int]))(
+      (hists1: Vector[Histogram[Int]], hists2: Array[Histogram[Int]]) => {
+        (hists1 zip hists2) map {
+          case (h1, h2) => h1 merge h2
+        } toVector
+      }
+    )
 }
