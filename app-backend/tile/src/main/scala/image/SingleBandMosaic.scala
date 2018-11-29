@@ -115,6 +115,8 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
             : Future[Seq[(MultibandTile, Array[Histogram[Double]])]] = {
             SceneToProjectDao
               .getMosaicDefinition(project.id, Some(polygonBbox))
+              .compile
+              .to[List]
               .transact(xa)
               .unsafeToFuture
               .map { mds =>
@@ -191,6 +193,8 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
             SceneToProjectDao
               .getMosaicDefinition(project.id, bboxPolygon)
               .transact(xa)
+              .compile
+              .to[List]
               .unsafeToFuture
               .map { mds =>
                 val sceneIds = mds.map {
@@ -269,6 +273,8 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
         SceneToProjectDao
           .getMosaicDefinition(projectId, bboxPolygon)
           .transact(xa)
+          .compile
+          .to[List]
           .unsafeToFuture
           .map { mds =>
             val sceneIds = mds.map {

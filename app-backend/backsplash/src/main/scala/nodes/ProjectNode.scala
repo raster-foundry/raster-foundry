@@ -9,6 +9,7 @@ import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
 import com.rasterfoundry.backsplash.io.Mosaic
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.datamodel.SingleBandOptions
+import fs2.Stream
 import geotrellis.proj4.{io => _, _}
 import geotrellis.raster.io.json.HistogramJsonFormats
 import geotrellis.raster.{Raster, io => _, _}
@@ -52,28 +53,20 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
         : (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
           val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
-          val mdIO = Mosaic.getMosaicDefinitions(self, extent)
-          for {
-            mds <- mdIO
-            mbTiles <- Mosaic.getMosaicDefinitionTiles(self,
-                                                       z,
-                                                       x,
-                                                       y,
-                                                       extent,
-                                                       mds)
-          } yield {
-            RasterLit(
-              mbTiles.flatten match {
-                case Nil => {
-                  logger.info(s"NO DATA")
-                  Raster(IntArrayTile.fill(NODATA, 256, 256), extent)
-                }
-                case tiles @ (h :: _) =>
-                  tiles reduce {
-                    _ merge _
-                  }
+          (for {
+            md <- Mosaic.getMosaicDefinitions(self, extent)
+            mbTile <- Stream.eval {
+              Mosaic.getMosaicDefinitionTile(self, z, x, y, extent, md)
+            }
+          } yield { mbTile })
+            .collect({ case Some(i) => i })
+            .compile
+            .fold(IntArrayTile.fill(NODATA, 256, 256): Tile)(
+              (t1: Tile, raster: Raster[Tile]) => {
+                t1 merge raster.tile
               }
-            )
+            ) map { (tile: Tile) =>
+            RasterLit(Raster(tile, extent))
           }
         }
     }
@@ -85,47 +78,38 @@ object ProjectNode extends RollbarNotifier with HistogramJsonFormats {
       def extentReification(self: ProjectNode)(
           implicit contextShift: ContextShift[IO]) =
         (extent: Extent, cellSize: CellSize) => {
-          for {
-            mds <- Mosaic.getMosaicDefinitions(
-              self,
-              extent.reproject(LatLng, WebMercator))
-            _ <- IO { logger.info(s"Found ${mds.length} definitions") }
-            mbTiles <- mds.toList traverse { md =>
-              {
-                val correctedMd = if (!self.isSingleBand) {
-                  (self.redBandOverride,
-                   self.greenBandOverride,
-                   self.blueBandOverride).tupled match {
-                    case Some((r, g, b)) =>
-                      md.copy(
-                        colorCorrections = md.colorCorrections.copy(
-                          redBand = r,
-                          greenBand = g,
-                          blueBand = b
-                        )
-                      )
-                    case _ => md
-                  }
-                } else md
-                Mosaic.getMosaicTileForExtent(extent,
-                                              cellSize,
-                                              self.singleBandOptions,
-                                              self.isSingleBand)(md)
+          (for {
+            md <- Mosaic.getMosaicDefinitions(self,
+                                              extent.reproject(LatLng,
+                                                               WebMercator))
+            correctedMd = if (!self.isSingleBand) {
+              (self.redBandOverride,
+               self.greenBandOverride,
+               self.blueBandOverride).tupled match {
+                case Some((r, g, b)) =>
+                  md.copy(
+                    colorCorrections = md.colorCorrections.copy(
+                      redBand = r,
+                      greenBand = g,
+                      blueBand = b
+                    )
+                  )
+                case _ => md
               }
+            } else md
+            mbTile <- Stream.eval {
+              Mosaic.getMosaicTileForExtent(extent,
+                                            cellSize,
+                                            self.singleBandOptions,
+                                            self.isSingleBand)(correctedMd)
             }
-          } yield {
-            RasterLit(
-              mbTiles.flatten match {
-                case Nil => {
-                  logger.info(s"NO DATA")
-                  Raster(IntArrayTile.fill(NODATA, 256, 256), extent)
-                }
-                case tiles @ (h :: _) =>
-                  tiles reduce {
-                    _ merge _
-                  }
-              }
-            )
+          } yield { mbTile })
+            .collect({ case Some(i) => i })
+            .compile
+            .fold(IntArrayTile.fill(NODATA, 256, 256): Tile)(
+              (t1: Tile, raster: Raster[Tile]) => t1 merge raster.tile
+            ) map { (tile: Tile) =>
+            RasterLit(Raster(tile, extent))
           }
         }
     }
