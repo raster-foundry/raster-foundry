@@ -1006,6 +1006,8 @@ trait ProjectRoutes
           SceneToProjectDao
             .getMosaicDefinition(projectId)
             .transact(xa)
+            .compile
+            .to[List]
             .unsafeToFuture
         }
       }

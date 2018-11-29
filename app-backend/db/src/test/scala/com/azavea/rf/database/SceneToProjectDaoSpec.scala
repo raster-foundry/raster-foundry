@@ -93,10 +93,12 @@ class SceneToProjectDaoSpec
                                                  false)
               _ <- SceneToProjectDao.setManualOrder(dbProject.id,
                                                     scenesInsert map { _.id })
-              mds <- SceneToProjectDao.getMosaicDefinition(dbProject.id,
-                                                           None,
-                                                           sceneIdSubset =
-                                                             selectedSceneIds)
+              mds <- SceneToProjectDao
+                .getMosaicDefinition(dbProject.id,
+                                     None,
+                                     sceneIdSubset = selectedSceneIds)
+                .compile
+                .to[List]
               stps <- SceneToProjectDao.query
                 .filter(fr"project_id = ${dbProject.id}")
                 .filter(selectedSceneIds.toNel map {

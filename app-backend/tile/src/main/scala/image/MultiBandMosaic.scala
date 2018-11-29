@@ -81,6 +81,8 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     SceneToProjectDao
       .getMosaicDefinition(projectId, polygonOption)
       .transact(xa)
+      .compile
+      .to[Seq]
       .unsafeToFuture
   }
 
@@ -116,6 +118,8 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
                            Some(redBand),
                            Some(greenBand),
                            Some(blueBand))
+      .compile
+      .to[Seq]
       .transact(xa)
       .unsafeToFuture
   }

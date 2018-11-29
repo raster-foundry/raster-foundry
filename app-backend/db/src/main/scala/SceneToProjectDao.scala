@@ -19,6 +19,7 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
+import fs2.Stream
 import geotrellis.vector.{Polygon, Projected}
 
 object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
@@ -99,7 +100,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
                           greenBand: Option[Int] = None,
                           blueBand: Option[Int] = None,
                           sceneIdSubset: List[UUID] = List.empty)
-    : ConnectionIO[Seq[MosaicDefinition]] = {
+    : Stream[ConnectionIO, MosaicDefinition] = {
 
     val filters = List(
       polygonOption.map(polygon =>
@@ -120,26 +121,32 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       scenes
     ON scenes.id = scenes_to_projects.scene_id
       """
-    for {
-      stps <- {
-        (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scenes_to_projects.scene_order ASC")
-          .query[SceneToProjectwithSceneType]
-          .to[List]
+    (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scenes_to_projects.scene_order ASC")
+      .query[SceneToProjectwithSceneType]
+      .stream map { stp =>
+      {
+        (redBand, greenBand, blueBand).tupled map {
+          case (r, g, b) =>
+            MosaicDefinition(stp.sceneId,
+                             stp.colorCorrectParams.copy(
+                               redBand = r,
+                               greenBand = g,
+                               blueBand = b
+                             ),
+                             stp.sceneType,
+                             stp.ingestLocation)
+        } getOrElse {
+          MosaicDefinition(stp.sceneId,
+                           stp.colorCorrectParams,
+                           stp.sceneType,
+                           stp.ingestLocation)
+        }
       }
-    } yield {
-      logger.debug(s"Found ${stps.length} scenes in projects")
-      val md = (redBand, greenBand, blueBand).tupled match {
-        case Some((r, g, b)) =>
-          MosaicDefinition.fromScenesToProjects(stps, r, g, b)
-        case _ => MosaicDefinition.fromScenesToProjects(stps)
-      }
-      logger.debug(s"Mosaic Definition: ${md}")
-      md
     }
   }
 
   def getMosaicDefinition(
-      projectId: UUID): ConnectionIO[Seq[MosaicDefinition]] = {
+      projectId: UUID): Stream[ConnectionIO, MosaicDefinition] = {
     getMosaicDefinition(projectId, None)
   }
 
