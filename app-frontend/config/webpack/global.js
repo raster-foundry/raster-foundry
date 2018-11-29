@@ -223,34 +223,32 @@ module.exports = function (_path) {
                     'url-loader?name=assets/fonts/[name]_[hash].[ext]'
                 ]
             }, {
-                test: /\.(jpe?g|png|gif)$/i,
-                loaders: [
-                    'url-loader?name=assets/images/[name]_[hash].[ext]&limit=10000!image-webpack'
-                ]
-            }, {
-                test: /\.(m4v|ogg|webm)$/i,
-                loaders: [
-                    'url-loader?name=assets/video/[name]_[hash].[ext]&limit=10000'
-                ]
-            }, {
-                test: /(loam-worker\.js|gdal\.js|gdal\.wasm|gdal\.data)$/,
-                loader: 'file-loader?name=[name].[ext]'
-            }, {
-                test: /\.(gif|png|jpe?g|svg)$/i,
+                test: /\.(svg)$/i,
                 use: [
-                    'file-loader',
                     {
-                        'loader': 'image-webpack-loader',
+                        loader: 'url-loader',
                         options: {
-                            bypassOnDebug: true,
-                            disable: true,
-                            pngquant: {
-                                quality: '65-90',
-                                speed: 4
-                            }
+                            name: 'assets/images/[name]_[hash].[ext]',
+                            limit: 8192
                         }
                     }
                 ]
+            }, {
+                test: /\.(jpe?g|png|gif)$/i,
+                use: [
+                    {
+                        loader: 'url-loader',
+                        options: {
+                            name: 'assets/images/[name]_[hash].[ext]',
+                            limit: 8192
+                            // fallback: 'responsive-loader' // TODO: Check if this would help
+                        }
+                    }
+                ]
+            }, {
+                test: /(loam-worker\.js|gdal\.js|gdal\.wasm|gdal\.data)$/,
+                type: 'javascript/auto',
+                loader: 'file-loader?name=[name].[ext]'
             }, {
                 test: require.resolve('angular-deferred-bootstrap'),
                 loaders: [
