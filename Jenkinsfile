@@ -118,5 +118,10 @@ node {
     def slackMessage= ":jenkins-angry: *raster-foundry (${env.BRANCH_NAME}) #${env.BUILD_NUMBER}*"
     slackMessage += "\n<${env.BUILD_URL}|:racing_car: Still too slow :racing_car:, view build>"
     slackSend color: 'danger', message: slackMessage
+    throw err
+  } finally {
+    // Pass or fail, ensure that the services and networks
+    // created by Docker Compose are torn down.
+    sh 'docker-compose down -v --remove-orphans'
   }
 }
