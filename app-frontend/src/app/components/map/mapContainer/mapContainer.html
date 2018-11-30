@@ -45,72 +45,76 @@
   </div>
 </div>
 <div class="map-container-controls">
-  <button class="btn btn-default btn-square"
+  <div class="zoom-level" title="Current Zoom">
+    {{$ctrl.zoomLevel}}
+  </div>
+  <button class="map-control-btn"
           title="Zoom In"
-          ng-click="$ctrl.zoomIn()">
+          ng-click="$ctrl.zoomIn()"
+          tooltips tooltip-template="Zoom in" tooltip-size="small" tooltip-class="map-control-tooltip" tooltip-side="left">
     <i class="icon-plus"></i>
   </button>
-  <div class="map-zoom" title="Current Zoom">{{$ctrl.zoomLevel}}</div>
-  <button class="btn btn-default btn-square"
+  <button class="map-control-btn"
           title="Zoom Out"
-          ng-click="$ctrl.zoomOut()">
+          ng-click="$ctrl.zoomOut()"
+          tooltips tooltip-template="Zoom out" tooltip-size="small" tooltip-class="map-control-tooltip" tooltip-side="left">
     <i class="icon-minus"></i>
   </button>
-  <div class="filler"></div>
-  <div class="map-control">
-    <button class="btn btn-default btn-square"
-            title="Layers"
-            ng-click="$ctrl.openMapSearchModal()">
-      <i class="icon-search"></i>
-    </button>
-  </div>
-  <div class="filler"></div>
-  <div class="map-control">
-    <button class="btn btn-default btn-square"
-            title="Layers"
-            ng-click="$ctrl.toggleLayerPicker($event)">
+
+  <button class="map-control-btn"
+          title="Geolocation search"
+          ng-show="!$ctrl.modalService.activeModal"
+          ng-click="$ctrl.openMapSearchModal()"
+          tooltips tooltip-template="Search places" 
+          tooltip-size="small" 
+          tooltip-class="map-control-tooltip"
+          tooltip-side="left"
+          tooltip-show="true">
+    <i class="icon-search"></i>
+  </button>
+
+  <div class="map-control-popup-container">
+    <button class="map-control-btn"
+            title="Basemap and layers"
+            ng-class="{'active': $ctrl.layerPickerOpen}"
+            ng-click="$ctrl.toggleLayerPicker($event)"
+            tooltips tooltip-template="Basemap and layers" 
+            tooltip-size="small" 
+            tooltip-class="map-control-tooltip"
+            tooltip-side="left">
       <i class="icon-project"></i>
     </button>
-    <div class="dropdown-control layer-picker"
-         ng-show="$ctrl.layerPickerOpen"
-         ng-click="$ctrl.cancelPropagation($event)">
-      <div class="layer-picker-title">Basemap and Layers</div>
-      <div class="dropdown-arrow"></div>
-      <div class="layer-picker-body">
+    <div class="map-control-popup layer-popup"
+          ng-show="$ctrl.layerPickerOpen"
+          ng-click="$ctrl.cancelPropagation($event)">
+      <div class="map-control-popup-body">
         <div class="layer-picker-option"
              ng-repeat="layer in $ctrl.basemapKeys"
              ng-style="$ctrl.getBasemapStyle(layer)"
              ng-click="$ctrl.setBasemap(layer)"
              ng-attr-title="{{layer}}"
-        >
-          <div class="layer-picker-label"></div>
-          <button class="btn btn-default btn-square"
-                  ng-class="{'hide-icon': $ctrl.mapWrapper.currentBasemap !== layer}">
-            <span class="icon-check" ></span>
-          </button>
+             ng-class="{'active': $ctrl.mapWrapper.currentBasemap == layer}">
+          <div class="layer-picker-label sr-only">{{layer}}</div>
         </div>
-        <div class="layer-picker-divider"></div>
-        <div class="layer-picker-option"
+        <hr>
+        <div class="layer-picker-toggle"
              ng-click="$ctrl.toggleLayer(layerId)"
-             ng-repeat="layerId in $ctrl.toggleableLayers()">
-          <div class="layer-picker-label">
-            {{layerId}}
-          </div>
-          <button class="btn btn-default btn-square">
-            <span class="icon-check" ng-class="{'hide-icon': !$ctrl.layerEnabled(layerId)}"></span>
-          </button>
+             ng-repeat="layerId in $ctrl.toggleableLayers()"
+             ng-class="{'active': $ctrl.layerEnabled(layerId)}">
+          <div class="layer-picker-label">{{layerId}}</div>
+          <div class="toggle"></div>
         </div>
       </div>
     </div>
   </div>
-  <div ng-show="$ctrl.mapHasGeojson()">
-    <div class="filler"></div>
-    <button class="btn btn-square btn-small"
-            title="Selection Polygon"
-            ng-class="{'btn-primary': $ctrl.geojsonEnabled(),
-                   'btn-default': !$ctrl.geojsonEnabled()}"
-            ng-click="$ctrl.toggleGeojson()">
-      <span class="icon-mosaic"></span>
-    </button>
-  </div>
+  <button class="map-control-btn last-of-type"
+          title="Selection Polygon"
+          ng-class="{'active': $ctrl.geojsonEnabled()}"
+          ng-click="$ctrl.toggleGeojson()"
+          tooltips tooltip-template="Toggle scene footprints" 
+          tooltip-size="small" 
+          tooltip-class="map-control-tooltip"
+          tooltip-side="left">
+    <i class="icon-borders"></i>
+  </button>
 </div>

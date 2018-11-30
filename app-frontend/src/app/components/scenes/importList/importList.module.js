@@ -1,3 +1,5 @@
+/* global _ */
+
 import angular from 'angular';
 import importListTpl from './importList.html';
 
@@ -5,6 +7,8 @@ const ImportListComponent = {
     templateUrl: importListTpl,
     controller: 'ImportListController',
     bindings: {
+        platform: '<',
+        ownershipType: '<'
     }
 };
 
@@ -12,15 +16,13 @@ const pageSize = '10';
 
 class ImportListController {
     constructor( // eslint-disable-line max-params
-        $log, sceneService, $state, authService, modalService,
+        $rootScope, $log, sceneService, $state,
+        authService, modalService, paginationService,
         RasterFoundryRepository
     ) {
         'ngInject';
-        this.$log = $log;
-        this.sceneService = sceneService;
-        this.$state = $state;
-        this.authService = authService;
-        this.modalService = modalService;
+        $rootScope.autoInject(this, arguments);
+        this.currentOwnershipFilter = 'owned';
         this.repository = {
             name: 'Raster Foundry',
             service: RasterFoundryRepository
@@ -49,6 +51,27 @@ class ImportListController {
         ];
     }
 
+    $onChanges(changes) {
+        if (_.get(changes, 'ownershipType.currentValue')) {
+            this.populateImportList(1);
+        }
+        this.handleParameterChange();
+    }
+
+    handleParameterChange() {
+        let replace = !this.$state.params.page || !this.$state.params.ownership;
+        this.$state.go(
+            this.$state.$current.name,
+            {
+                page: _.get(this, 'pagination.currentPage') || this.$state.params.page || 1,
+                ownership: this.ownershipType
+            }, {
+                location: replace ? 'replace' : true,
+                notify: false
+            }
+        );
+    }
+
     populateImportList(page) {
         if (this.loading) {
             return;
@@ -62,24 +85,13 @@ class ImportListController {
                 sort: 'createdAt,desc',
                 pageSize: pageSize,
                 page: page - 1,
-                owner: this.authService.getProfile().sub
+                ownershipType: this.ownershipType,
+                exactCount: true
             }
         ).then((sceneResult) => {
+            this.pagination = this.paginationService.buildPagination(sceneResult);
+            this.paginationService.updatePageParam(page, '');
             this.lastSceneResult = sceneResult;
-            this.numPaginationButtons = 6 - sceneResult.page % 10;
-            if (this.numPaginationButtons < 3) {
-                this.numPaginationButtons = 3;
-            }
-            this.currentPage = sceneResult.page + 1;
-            let replace = !this.$state.params.page;
-            this.$state.transitionTo(
-                this.$state.$current.name,
-                {page: this.currentPage},
-                {
-                    location: replace ? 'replace' : true,
-                    notify: false
-                }
-            );
             this.importList = this.lastSceneResult.results;
             this.loading = false;
         }, () => {
@@ -91,7 +103,9 @@ class ImportListController {
     importModal() {
         this.modalService.open({
             component: 'rfSceneImportModal',
-            resolve: {}
+            resolve: {
+                origin: () => 'raster'
+            }
         });
     }
 
@@ -106,30 +120,35 @@ class ImportListController {
 
     shareModal(scene) {
         this.modalService.open({
-            component: 'permissionsModal',
+            component: 'rfPermissionModal',
             resolve: {
                 object: () => scene,
                 permissionsBase: () => 'scenes',
+                objectType: () => 'SCENE',
                 objectName: () => scene.name,
-                extraActions: () => []
+                platform: () => this.platform
             }
         });
     }
 
     deleteModal(scene) {
         const modal = this.modalService.open({
-            component: 'rfConfirmationModal',
+            component: 'rfFeedbackModal',
             resolve: {
-                title: () => 'Delete Imported Scene?',
+                title: () => 'Delete scene',
                 subtitle: () =>
-                    'The scene will be permanently deleted,'
-                    + ' but any projects containing it will remain.',
+                    'Deleting scenes cannot be undone.',
                 content: () =>
-                    '<div class="text-center color-danger">'
-                    + 'You are about to delete the scene. This action is not reversible.'
-                    + ' Are you sure you wish to continue?'
-                    + '</div>',
-                confirmText: () => 'Delete Scene',
+                    '<h2>Do you wish to continue?</h2>'
+                    + '<p>The scene will be pemanently '
+                    + 'deleted. Projects and Analysis will '
+                    + 'continue to function without the '
+                    + 'scene.</p>',
+                /* feedbackIconType : default, success, danger, warning */
+                feedbackIconType: () => 'danger',
+                feedbackIcon: () => 'icon-warning',
+                feedbackBtnType: () => 'btn-danger',
+                feedbackBtnText: () => 'Delete scene',
                 cancelText: () => 'Cancel'
             }
         });
@@ -186,4 +205,3 @@ ImportListModule.component('rfImportList', ImportListComponent);
 ImportListModule.controller('ImportListController', ImportListController);
 
 export default ImportListModule;
-

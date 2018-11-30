@@ -11,6 +11,7 @@ class HomeController {
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
         this.HELPCONFIG = HELPCONFIG;
+        this.blogPosts = [];
         this.feedService.getPosts().then(posts => {
             this.blogPosts = posts;
         });

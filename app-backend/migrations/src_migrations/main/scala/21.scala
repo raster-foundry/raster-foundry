@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M21 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(21)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(21)(
+    List(
+      sqlu"""
 ALTER TABLE images
   ADD COLUMN resolution_meters REAL;
 
@@ -18,5 +19,5 @@ ALTER TABLE images
 ALTER TABLE scenes
   DROP COLUMN resolution_meters;
     """
-  ))
+    ))
 }

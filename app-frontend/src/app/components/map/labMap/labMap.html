@@ -1,92 +1,171 @@
 <div class="map-container"></div>
 <div class="map-container-controls">
-  <button class="btn btn-default btn-square btn-small"
+  <div class="zoom-level" title="Current Zoom">{{$ctrl.zoomLevel}}</div>
+  <button class="map-control-btn"
           title="Zoom In"
-          ng-click="$ctrl.zoomIn()">
-    <span class="icon-plus"></span>
+          ng-click="$ctrl.zoomIn()"
+          tooltips tooltip-template="Zoom in" tooltip-size="small" tooltip-class="map-control-tooltip" tooltip-side="left">
+    <i class="icon-plus"></i>
   </button>
-  <div class="map-zoom" title="Current Zoom">{{$ctrl.map.getZoom()}}</div>
-  <button class="btn btn-default btn-square btn-small"
+  <button class="map-control-btn"
           title="Zoom Out"
-          ng-click="$ctrl.zoomOut()">
-    <span class="icon-minus"></span>
+          ng-click="$ctrl.zoomOut()"
+          tooltips tooltip-template="Zoom out" tooltip-size="small" tooltip-class="map-control-tooltip" tooltip-side="left">
+    <i class="icon-minus"></i>
   </button>
-  <div class="filler"></div>
-  <div class="map-control">
-    <button class="btn btn-default btn-square btn-small"
-            title="Layers"
-            ng-click="$ctrl.toggleLayerPicker($event)">
-      <span class="icon-project"></span>
+  <div class="map-control-popup-container">
+    <button class="map-control-btn"
+            title="Basemap and layers"
+            ng-class="{'active': $ctrl.layerPickerOpen}"
+            ng-click="$ctrl.toggleLayerPicker($event)"
+            tooltips tooltip-template="Basemap and layers" 
+            tooltip-size="small" 
+            tooltip-class="map-control-tooltip"
+            tooltip-side="left">
+      <i class="icon-project"></i>
     </button>
-    <div class="dropdown-control layer-picker"
-         ng-show="$ctrl.layerPickerOpen"
-         ng-click="$ctrl.cancelPropagation($event)">
-      <div class="layer-picker-title">Basemap and Layers</div>
-      <div class="dropdown-arrow"></div>
-      <div class="layer-picker-body">
+    <div class="map-control-popup layer-popup"
+          ng-show="$ctrl.layerPickerOpen"
+          ng-click="$ctrl.cancelPropagation($event)">
+      <div class="map-control-popup-body">
         <div class="layer-picker-option"
              ng-repeat="layer in $ctrl.basemapKeys"
              ng-style="$ctrl.getBasemapStyle(layer)"
              ng-click="$ctrl.setBasemap(layer)"
              ng-attr-title="{{layer}}"
-        >
-          <div class="layer-picker-label"></div>
-          <button class="btn btn-default btn-square"
-                  ng-class="{'hide-icon': $ctrl.mapWrapper.currentBasemap !== layer}">
-            <span class="icon-check" ></span>
-          </button>
+             ng-class="{'active': $ctrl.mapWrapper.currentBasemap == layer}">
+          <div class="layer-picker-label sr-only">{{layer}}</div>
         </div>
-        <div class="layer-picker-divider"></div>
-        <div class="layer-picker-option"
+        <hr>
+        <div class="layer-picker-toggle"
              ng-click="$ctrl.toggleLayer(layerId)"
-             ng-repeat="layerId in $ctrl.toggleableLayers()">
-          <div class="layer-picker-label">
-            {{layerId}}
-          </div>
-          <button class="btn btn-default btn-square">
-            <span class="icon-check" ng-class="{'hide-icon': !$ctrl.layerEnabled(layerId)}"></span>
-          </button>
-        </div>
-      </div>
-    </div>
-    <div class="filler"></div>
-    <button class="btn btn-default btn-square btn-small"
-            title="Measure"
-            ng-click="$ctrl.toggleMeasurePicker($event)">
-      <span class="icon-ruler"></span>
-    </button>
-    <div class="measure-dropdown-control layer-picker"
-         ng-show="$ctrl.measurePickerOpen">
-      <div class="layer-picker-title">Pick Measurement</div>
-      <div class="dropdown-arrow"></div>
-      <div class="layer-picker-body">
-        <div class="layer-picker-option"
-             ng-click="$ctrl.toggleMeasure('Polygon')">
-          <div class="layer-picker-label">
-            Area
-          </div>
-        </div>
-        <div class="layer-picker-option"
-             ng-click="$ctrl.toggleMeasure('Polyline')">
-          <div class="layer-picker-label">
-            Distance
-          </div>
+             ng-repeat="layerId in $ctrl.toggleableLayers()"
+             ng-class="{'active': $ctrl.layerEnabled(layerId)}">
+          <div class="layer-picker-label">{{layerId}}</div>
+          <div class="toggle"></div>
         </div>
       </div>
     </div>
   </div>
-  <div class="filler"></div>
-  <button class="btn btn-square btn-small"
-          title="Compare"
-          ng-class="{'btn-default': !$ctrl.comparing,
-                     'btn-tertiary': $ctrl.comparing}"
-          ng-click="$ctrl.onCompareClick()">
-    <span class="icon-compare"></span>
+  <div class="map-control-popup-container">
+    <button class="map-control-btn"
+            title="Measure"
+            ng-click="$ctrl.toggleMeasurePicker($event)"
+            ng-class="{'active': $ctrl.measurePickerOpen}"
+            tooltips tooltip-template="Measure" 
+            tooltip-size="small" 
+            tooltip-class="map-control-tooltip"
+            tooltip-side="left">
+      <i class="icon-ruler"></i>
+    </button>
+    <div class="map-control-popup measure-popup"
+         ng-show="$ctrl.measurePickerOpen">
+      <div class="map-control-popup-body">
+        <p>Choose a measure tool</p>
+        <div class="layer-picker-option"
+             ng-click="$ctrl.toggleMeasure('Polygon')"
+             ng-class="{'active': $ctrl.toggleMeasure == Polygon}">
+          <div class="layer-picker-label text-center">Area</div>
+        </div>
+        <div class="layer-picker-option"
+             ng-click="$ctrl.toggleMeasure('Polyline')"
+             ng-class="{'active': $ctrl.toggleMeasure == Polyline}">
+          <div class="layer-picker-label text-center">Distance</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="map-control-btn"
+          title="Compare nodes"
+          ng-class="{'active': $ctrl.comparing}"
+          ng-click="$ctrl.onCompareClick()"
+          tooltips tooltip-template="Compare nodes" 
+          tooltip-size="small" 
+          tooltip-class="map-control-tooltip"
+          tooltip-side="left">
+    <i class="icon-compare"></i>
   </button>
-  <div class="filler"></div>
-  <button class="btn btn-default btn-square btn-small"
+  <div class="map-control-popup-container">
+    <button class="map-control-btn"
+            title="Export"
+            ng-click="$ctrl.toggleQuickExport($event)"
+            ng-class="{'active': $ctrl.quickExportOpen && $ctrl.enableNodeExport}"
+            ng-if="$ctrl.enableNodeExport"
+            tooltips tooltip-template="Export" tooltip-size="small" tooltip-class="map-control-tooltip" tooltip-side="left">
+      <i class="icon-export"></i>
+    </button>
+    <div class="map-control-popup export-popup"
+        ng-if="$ctrl.quickExportOpen && $ctrl.enableNodeExport">
+      <div class="map-control-popup-body export-popup">
+        <p ng-if="!$ctrl.isExportCreated">Draw an area of interest to export the analysis result as *.geotiff format.</p>
+        <div class="form-group" 
+             ng-if="!$ctrl.isExportCreated"
+             ng-class="{'hidden': $ctrl.isExportCreating}">
+          <label for="">Export to</label>
+          <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+            <a class="btn dropdown-label">
+              {{$ctrl.exportTarget.label}}
+            </a>
+            <button type="button" class="btn btn-default dropdown-toggle">
+              <i class="icon-caret-down"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+              <li ng-repeat="target in $ctrl.availableTargets" role="menuitem">
+                <a ng-click="$ctrl.updateTarget(target)">{{target.label}}</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="form-group" 
+             ng-if="!$ctrl.isExportCreated"
+             ng-class="{'hidden': $ctrl.isExportCreating}">
+          <label>Zoom level</label>
+          <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
+            <a class="btn dropdown-label">
+              {{$ctrl.getCurrentResolution().value}} ({{$ctrl.getCurrentResolution().label}}<sup>2</sup>)
+            </a>
+            <button type="button" class="btn btn-default dropdown-toggle">
+              <i class="icon-caret-down"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
+              <li ng-repeat="res in $ctrl.availableResolutions" role="menuitem">
+                <a ng-click="$ctrl.updateResolution(res.value)">{{res.value}} ({{res.label}})</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div>
+          <p>{{$ctrl.exportNotice}}</p>
+        </div>
+        <div ng-if="$ctrl.isExportCreating" class="text-center>
+          <i class="icon-load animate-spin" ng-class="{'stop': !$ctrl.isExportCreating}">
+          </i>
+          Loading
+        </div>
+        <button
+          class="btn lab-export-cancel"
+          ng-click="$ctrl.onExportCancel()"
+          ng-if="$ctrl.exportConfirmed && !$ctrl.isExportCreating">
+          Close
+        </button>
+        <button
+          class="btn lab-export-cancel"
+          ng-click="$ctrl.onExportCancel()"
+          ng-if="!$ctrl.exportConfirmed">
+          Cancel
+        </button>
+        <button
+          class="btn btn-primary pull-right lab-export-confirm"
+          ng-if="!$ctrl.exportConfirmed"
+          ng-click="$ctrl.onExportConfirm()"
+          ng-disabled="!$ctrl.hasExportBbox">Confirm</button>
+      </div>
+    </div>
+  </div>
+  <button class="map-control-btn last-of-type"
           title="Close"
-          ng-click="$ctrl.onLabMapClose()">
-    <span class="icon-close"></span>
+          ng-click="$ctrl.onLabMapClose()"
+          tooltips tooltip-template="Close map" tooltip-size="small" tooltip-class="map-control-tooltip" tooltip-side="left">
+    <i class="icon-close"></i>
   </button>
 </div>

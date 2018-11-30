@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 class TeamUsersController {
     constructor(
-      $scope, $stateParams,
+      $scope, $state,
       teamService, modalService, authService, paginationService,
       platform, organization, team
     ) {
@@ -12,9 +12,6 @@ class TeamUsersController {
     }
 
     $onInit() {
-        this.loading = false;
-        this.searchTerm = '';
-        this.onSearch = this.paginationService.buildPagedSearch(this);
         this.isEffectiveAdmin = this.authService.isEffectiveAdmin([
             this.platform.id,
             this.organization.id,
@@ -31,26 +28,38 @@ class TeamUsersController {
             this.team.id,
             user
         ).catch(() => {
-            this.fetchPage(this.pagination.currentPage);
+            this.fetchPage();
         });
     }
 
-    fetchPage(page = this.$stateParams.page || 1) {
-        this.loading = true;
-        this.teamService.getMembers(
+    fetchPage(page = this.$state.params.page || 1, search = this.$state.params.search) {
+        this.search = search && search.length ? search : null;
+        delete this.fetchError;
+        this.results = [];
+        const currentQuery = this.teamService.getMembers(
             this.platform.id,
             this.organization.id,
             this.team.id,
             page - 1,
-            this.searchTerm
+            this.search
         ).then(paginatedResponse => {
             this.results = paginatedResponse.results;
             this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page);
+            this.paginationService.updatePageParam(page, this.search);
             this.buildOptions();
+            if (this.currentQuery === currentQuery) {
+                delete this.fetchError;
+            }
+        }, (e) => {
+            if (this.currentQuery === currentQuery) {
+                this.fetchError = e;
+            }
         }).finally(() => {
-            this.loading = false;
+            if (this.currentQuery === currentQuery) {
+                delete this.currentQuery;
+            }
         });
+        this.currentQuery = currentQuery;
     }
 
     buildOptions() {

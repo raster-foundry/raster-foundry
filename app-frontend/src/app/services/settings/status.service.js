@@ -85,6 +85,10 @@ const statusMapping = {
             "label": "No scenes",
             "color": "grey"
         },
+        "LARGE": {
+            "label": "Too many scenes to preview",
+            "color": "grey"
+        },
         "PARTIAL": {
             "label": "Not all scenes have been ingested",
             "color": "yellow"

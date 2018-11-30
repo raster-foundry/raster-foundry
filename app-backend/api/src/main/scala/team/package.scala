@@ -1,5 +1,5 @@
-package com.azavea.rf.api
+package com.rasterfoundry.api
 
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.datamodel._
 
 package object team

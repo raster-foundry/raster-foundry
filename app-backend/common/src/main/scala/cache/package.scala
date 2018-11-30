@@ -1,9 +1,11 @@
-package com.azavea.rf.common
+package com.rasterfoundry.common
 
-import net.spy.memcached._
 import com.typesafe.scalalogging.LazyLogging
+import net.spy.memcached._
 
 package object cache extends LazyLogging {
-  implicit class withMemcachedClientMethods(client: MemcachedClient)
-    extends MemcachedClientMethods(client)
+
+  implicit class WithMemcachedClientMethods(client: MemcachedClient)
+      extends MemcachedClientMethods(client)
+
 }

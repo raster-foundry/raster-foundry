@@ -49,6 +49,18 @@ export default (app) => {
                             );
                             return angular.toJson(transformed);
                         }
+                    },
+                    delete: {
+                        method: 'DELETE'
+                    },
+                    getPermissions: {
+                        method: 'GET',
+                        cache: true,
+                        url: `${BUILDCONFIG.API_HOST}/api/datasources/:id/permissions`,
+                        params: {
+                            id: '@id'
+                        },
+                        isArray: true
                     }
                 }
             );
@@ -76,7 +88,7 @@ export default (app) => {
                         visibility: params.visibility || 'PRIVATE',
                         composites: composites,
                         extras: params.extras || {},
-                        bands: params.bands || {}
+                        bands: params.bands || []
                     }).$promise;
                 },
                 (error) => {
@@ -122,6 +134,14 @@ export default (app) => {
                 }));
             }
             return [];
+        }
+
+        getPermissions(id) {
+            return this.Datasource.getPermissions({id}).$promise;
+        }
+
+        deleteDatasource(id) {
+            return this.Datasource.delete({id}).$promise;
         }
     }
 

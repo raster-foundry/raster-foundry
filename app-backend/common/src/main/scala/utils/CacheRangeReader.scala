@@ -1,8 +1,8 @@
-package com.azavea.rf.common.utils
+package com.rasterfoundry.common.utils
 
 import geotrellis.util._
 
-case class CacheRangeReader(rr: RangeReader, cachedBytes: Array[Byte])
+final case class CacheRangeReader(rr: RangeReader, cachedBytes: Array[Byte])
     extends RangeReader {
   def totalLength: Long = rr.totalLength
 

@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M29 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(29)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(29)(
+    List(
+      sqlu"""
        CREATE TABLE tools (
          id UUID PRIMARY KEY NOT NULL,
          created_at TIMESTAMP NOT NULL,
@@ -66,5 +67,5 @@ object M29 {
           REFERENCES tool_categories(id)
           ON DELETE CASCADE;
 """
-  ))
+    ))
 }

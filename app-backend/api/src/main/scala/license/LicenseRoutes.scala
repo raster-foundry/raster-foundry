@@ -1,8 +1,8 @@
-package com.azavea.rf.api.license
+package com.rasterfoundry.api.license
 
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
-import com.azavea.rf.database.LicenseDao
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.{CommonHandlers, UserErrorHandler}
+import com.rasterfoundry.database.LicenseDao
 import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import io.circe._
@@ -10,19 +10,19 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 import cats.effect.IO
 import doobie.util.transactor.Transactor
-import com.azavea.rf.database.filter.Filterables._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.datamodel._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-
-trait LicenseRoutes extends Authentication
-  with PaginationDirectives
-  with CommonHandlers
-  with UserErrorHandler {
+trait LicenseRoutes
+    extends Authentication
+    with PaginationDirectives
+    with CommonHandlers
+    with UserErrorHandler {
 
   val xa: Transactor[IO]
 
@@ -42,7 +42,12 @@ trait LicenseRoutes extends Authentication
 
   def getLicense(shortName: String): Route = authenticate { user =>
     rejectEmptyResponse {
-      complete(LicenseDao.query.filter(fr"short_name = ${shortName}").selectOption.transact(xa).unsafeToFuture)
+      complete(
+        LicenseDao.query
+          .filter(fr"short_name = ${shortName}")
+          .selectOption
+          .transact(xa)
+          .unsafeToFuture)
     }
   }
 }

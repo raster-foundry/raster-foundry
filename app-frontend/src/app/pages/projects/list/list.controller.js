@@ -1,92 +1,66 @@
-/* global BUILDCONFIG */
+/* global BUILDCONFIG, HELPCONFIG */
 
 class ProjectsListController {
     constructor( // eslint-disable-line max-params
-        $log, $state, modalService, $scope, projectService, userService, authService
+        $log, $state, modalService, $scope,
+        paginationService, projectService, userService, authService, platform, user
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$state = $state;
-        this.modalService = modalService;
-        this.projectService = projectService;
-        this.userService = userService;
-        this.$scope = $scope;
-        this.authService = authService;
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
-        this.projectList = [];
-        this.populateProjectList(this.$state.params.page || 1);
         this.BUILDCONFIG = BUILDCONFIG;
+        this.HELPCONFIG = HELPCONFIG;
+        // Can be one of {owned, shared}
+        this.currentOwnershipFilter = 'owned';
+        this.fetchPage();
     }
 
-    populateProjectList(page = 1) {
-        if (this.loading) {
-            return;
-        }
-        delete this.errorMsg;
-        this.loading = true;
-        this.projectService.query(
-            {
-                sort: 'createdAt,desc',
-                pageSize: 10,
-                page: page - 1,
-                owner: this.authService.getProfile().sub
-            }
-        ).then(
-            (projectResult) => {
-                this.updatePagination(projectResult);
-                this.currentPage = page;
-                let replace = !this.$state.params.page;
-                this.$state.transitionTo(
-                    this.$state.$current.name,
-                    {page: this.currentPage},
-                    {
-                        location: replace ? 'replace' : true,
-                        notify: false
-                    }
-                );
-                this.lastProjectResult = projectResult;
-                this.projectList = projectResult.results;
-                this.loading = false;
-                this.projectList.forEach((project) => {
-                    this.getProjectScenesCount(project);
-                });
-            },
-            () => {
-                this.errorMsg = 'Server error.';
-                this.loading = false;
-            }
-        );
-    }
-
-    updatePagination(data) {
-        this.pagination = {
-            show: data.count > data.pageSize,
-            count: data.count,
-            currentPage: data.page + 1,
-            startingItem: data.page * data.pageSize + 1,
-            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious
-        };
-    }
-
-    search(value) {
-        this.searchString = value;
-        if (this.searchString) {
-            this.projectService.searchQuery().then(projects => {
-                this.projectList = projects;
+    fetchPage(page = this.$state.params.page || 1, search = this.$state.params.search) {
+        this.search = search && search.length ? search : null;
+        delete this.fetchError;
+        this.results = [];
+        let currentQuery = this.projectService.query({
+            sort: 'createdAt,desc',
+            pageSize: 10,
+            page: page - 1,
+            ownershipType: this.currentOwnershipFilter,
+            search: this.search
+        }).then(paginatedResponse => {
+            this.results = paginatedResponse.results;
+            this.results.forEach((project) => {
+                this.getProjectScenesCount(project);
             });
-        } else {
-            this.populateProjectList();
-        }
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page, this.search);
+            if (this.currentQuery === currentQuery) {
+                delete this.fetchError;
+            }
+        }, (e) => {
+            if (this.currentQuery === currentQuery) {
+                this.fetchError = e;
+            }
+        }).finally(() => {
+            if (this.currentQuery === currentQuery) {
+                delete this.currentQuery;
+            }
+        });
+        this.currentQuery = currentQuery;
+    }
+
+    shouldShowPlaceholder() {
+        return !this.currentQuery &&
+            !this.fetchError &&
+            (!this.search || !this.search.length) &&
+            this.pagination &&
+            this.pagination.count === 0;
     }
 
     getProjectScenesCount(project) {
         this.projectService.getProjectSceneCount({projectId: project.id}).then(
             (sceneResult) => {
-                let bupdate = this.projectList.find((b) => b.id === project.id);
+                let bupdate = this.results.find((b) => b.id === project.id);
                 bupdate.scenes = sceneResult.count;
             }
         );
@@ -103,9 +77,13 @@ class ProjectsListController {
 
         modal.result.then((data) => {
             if (data && data.reloadProjectList) {
-                this.populateProjectList(1);
+                this.fetchPage(1);
             }
         });
+    }
+
+    handleOwnershipFilterChange(newFilterValue) {
+        this.fetchPage(1);
     }
 }
 

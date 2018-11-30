@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M137 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(137)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(137)(
+    List(
+      sqlu"""
 CREATE TABLE annotation_groups (
   id            UUID PRIMARY KEY NOT NULL,
   name          TEXT NOT NULL,
@@ -39,5 +40,5 @@ WHERE annotations.project_id = annotation_groups.project_id;
 
 ALTER TABLE annotations ALTER COLUMN annotation_group SET NOT NULL;
 """
-  ))
+    ))
 }

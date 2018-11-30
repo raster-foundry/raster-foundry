@@ -1,8 +1,8 @@
-package com.azavea.rf.database.meta
+package com.rasterfoundry.database.meta
 
-import com.azavea.rf.datamodel.AOI
-import com.azavea.rf.database._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel.AOI
+import com.rasterfoundry.database._
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO
@@ -11,21 +11,19 @@ import doobie.postgres._, doobie.postgres.implicits._
 import doobie.scalatest.imports._
 import org.scalatest._
 import geotrellis.vector._
-import geotrellis.slick.Projected
-
 
 class GtVectorMetaSpec extends FunSpec with Matchers with DBTestConfig {
 
   case class GeometryClass(
-    id: Int,
-    point: Projected[Point],
-    line: Projected[Line],
-    poly: Projected[Polygon],
-    multipoly: Projected[MultiPolygon]
+      id: Int,
+      point: Projected[Point],
+      line: Projected[Line],
+      poly: Projected[Polygon],
+      multipoly: Projected[MultiPolygon]
   )
 
   val drop: Update0 =
-  sql"""
+    sql"""
     DROP TABLE IF EXISTS geom_test_table
   """.update
 
@@ -51,31 +49,33 @@ class GtVectorMetaSpec extends FunSpec with Matchers with DBTestConfig {
   it("should be able to go in and then come back out") {
     //val point = new Point(1, 2)
     val point = Projected(Point(1, 2), 3857)
-    val line = Projected(Line(Point(0, 1), Point(123, 412), Point(51, 12)), 3857)
+    val line =
+      Projected(Line(Point(0, 1), Point(123, 412), Point(51, 12)), 3857)
     val poly = Projected(
       Polygon(Array(Point(0, 0), Point(0, 1), Point(1, 1), Point(0, 0))),
       3857
     )
     val mpoly = Projected(
-      MultiPolygon(Array(
-        Polygon(Array(Point(0, 0), Point(0, 1), Point(1, 1), Point(0, 0))),
-        Polygon(Array(Point(1, 0), Point(10, 1), Point(1, 1), Point(1, 0))),
-        Polygon(Array(Point(10, 0), Point(10, 1), Point(100, 1), Point(10, 0)))
-      )),
+      MultiPolygon(
+        Array(
+          Polygon(Array(Point(0, 0), Point(0, 1), Point(1, 1), Point(0, 0))),
+          Polygon(Array(Point(1, 0), Point(10, 1), Point(1, 1), Point(1, 0))),
+          Polygon(
+            Array(Point(10, 0), Point(10, 1), Point(100, 1), Point(10, 0)))
+        )),
       3857
     )
 
     val geomOut = for {
-      _  <- createTable.run
-      _  <- insert(GeometryClass(123, point, line, poly, mpoly)).run
+      _ <- createTable.run
+      _ <- insert(GeometryClass(123, point, line, poly, mpoly)).run
       js <- select(123)
     } yield js
 
-    val results = geomOut.transact(xa).unsafeRunSync
+    val results = xa.use(t => geomOut.transact(t)).unsafeRunSync
     results.point shouldBe point
     results.line shouldBe line
     results.poly shouldBe poly
     results.multipoly shouldBe mpoly
   }
 }
-

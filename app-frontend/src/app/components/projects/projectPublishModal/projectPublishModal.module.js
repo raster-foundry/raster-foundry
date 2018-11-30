@@ -118,7 +118,12 @@ class ProjectPublishModalController {
         policy.active = true;
 
         this.project.tileVisibility = policy.enum;
+        this.project.visibility = policy.enum;
+
         if (shouldUpdate) {
+            if (this.project.owner.id) {
+                this.project.owner = this.project.owner.id;
+            }
             this.projectService.updateProject(this.project).then((res) => {
                 this.$log.debug(res);
             }, (err) => {
@@ -130,11 +135,6 @@ class ProjectPublishModalController {
             });
         }
         this.hydrateTileUrls();
-    }
-
-    openProjectShare() {
-        let url = this.$state.href('share', {projectid: this.resolve.project.id});
-        this.$window.open(url, '_blank');
     }
 
     hydrateTileUrls() {

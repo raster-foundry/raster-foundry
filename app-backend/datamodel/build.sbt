@@ -1,1 +1,1 @@
-name := "rf-migrations-generated-code"
+name := "datamodel"

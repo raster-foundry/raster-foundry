@@ -1,4 +1,6 @@
 import _ from 'lodash';
+
+const { colorSchemes: colorSchemes } = require('../services/projects/colorScheme.defaults.json');
 // return an ordered array of breakpoints
 export function breakpointsFromRenderDefinition(renderDefinition, idGenerator) {
     if (renderDefinition.breakpoints) {
@@ -83,4 +85,28 @@ export function colorStopsToRange(colors, min, max) {
         });
     }
     return rangedColors;
+}
+
+export function createRenderDefinition(histogram) {
+    let min = histogram.minimum;
+    let max = histogram.maximum;
+
+    let defaultColorScheme = colorSchemes.find(
+        s => s.label === 'Viridis'
+    );
+    let breakpoints = colorStopsToRange(defaultColorScheme.colors, min, max);
+    let renderDefinition = {clip: 'none', scale: 'SEQUENTIAL', breakpoints};
+    let histogramOptions = {range: {min, max}, baseScheme: {
+        colorScheme: Object.entries(defaultColorScheme.colors)
+            .map(([key, val]) => ({break: key, color: val}))
+            .sort((a, b) => a.break - b.break)
+            .map((c) => c.color),
+        dataType: 'SEQUENTIAL',
+        colorBins: 0
+    }};
+
+    return {
+        renderDefinition,
+        histogramOptions
+    };
 }

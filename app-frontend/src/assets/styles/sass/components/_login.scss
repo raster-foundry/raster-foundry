@@ -38,6 +38,9 @@
 #auth0-lock-container-1,
 #auth0-lock-container-2,
 #auth0-lock-container-3 {
+  .auth0-lock-firstname {
+    color: $white;
+  }
   .auth0-lock-header-logo {
     margin: 18px 0px 11px;
   }

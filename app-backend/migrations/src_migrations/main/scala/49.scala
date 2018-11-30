@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M49 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(49)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(49)(
+    List(
+      sqlu"""
 CREATE TYPE upload_type AS ENUM ('DROPBOX', 'S3', 'LOCAL');
 
 CREATE TYPE upload_status AS ENUM ('CREATED', 'UPLOADING', 'UPLOADED', 'QUEUED', 'PROCESSING', 'COMPLETE');
@@ -25,5 +26,5 @@ CREATE TABLE uploads (
   metadata jsonb NOT NULL
 );
 """
-  ))
+    ))
 }

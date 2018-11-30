@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M42 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(42)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(42)(
+    List(
+      sqlu"""
 ALTER TABLE datasources
 ADD COLUMN composites JSONB default '{}';
 
@@ -15,5 +16,5 @@ UPDATE datasources set (composites) = (
 '{"invalid":{"label":"Invalid Bands","value":{"redBand":0,"greenBand":0,"blueBand":0}}}'
 ) where datasources.id = '4a50cb75-815d-4fe5-8bc1-144729ce5b42';
 """
-  ))
+    ))
 }

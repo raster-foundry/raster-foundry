@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M89 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(89)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(89)(
+    List(
+      sqlu"""
 
       CREATE TABLE shapes (
         id UUID PRIMARY KEY NOT NULL,
@@ -20,5 +21,5 @@ object M89 {
       -- Add a generic geometry column named 'geometry' in 3857 with 2 dimensions
       SELECT AddGeometryColumn('shapes', 'geometry', 3857, 'GEOMETRY', 2);
     """
-  ))
+    ))
 }

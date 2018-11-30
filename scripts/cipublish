@@ -35,17 +35,42 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
             echo "Building application JAR"
             docker-compose \
-                run --rm --no-deps api-server api/assembly
+                -f "${DIR}/../docker-compose.test.yml" \
+                run --rm --no-deps \
+                build api/assembly
 
             echo "Building tile server JAR"
             docker-compose \
-                run --rm --no-deps tile-server tile/assembly
+                -f "${DIR}/../docker-compose.test.yml" \
+                run --rm --no-deps \
+                build tile/assembly
+
+            echo "Building backsplash JAR"
+            docker-compose \
+                -f "${DIR}/../docker-compose.test.yml" \
+                run --rm --no-deps \
+                build backsplash/assembly
+
+            # Build publishable sbt projects as SNAPSHOT artifacts and 
+            # publish to Sonatype OSSRH (Snapshot Repository).
+            if [ "$(whoami)" == "jenkins" ]; then
+                echo "Publishing SNAPSHOT artifacts to Sonatype OSSRH (Snapshot Repository)"
+
+                docker-compose \
+                   -f "${DIR}/../docker-compose.test.yml" \
+                   run --rm --no-deps \
+                   -e SONATYPE_USERNAME="${SONATYPE_USERNAME}" \
+                   -e SONATYPE_PASSWORD="${SONATYPE_PASSWORD}" \
+                   -e PGP_HEX_KEY="${PGP_HEX_KEY}" \
+                   -e PGP_PASSPHRASE="${PGP_PASSPHRASE}" \
+                   build gitSnapshots publishSigned
+            fi
 
             echo "Building container images"
             GIT_COMMIT="${GIT_COMMIT}" docker-compose \
                       -f "${DIR}/../docker-compose.yml" \
                       -f "${DIR}/../docker-compose.test.yml"\
-                      build nginx-api api-server nginx-tiler tile-server
+                      build nginx-api api-server nginx-tiler tile-server nginx-backsplash backsplash
 
             # Evaluate the return value of the get-login subcommand, which
             # is a docker login command with temporarily ECR credentials.
@@ -65,6 +90,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             docker tag "raster-foundry-app-migrations:${GIT_COMMIT}" \
                    "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
 
+            docker tag "raster-foundry-nginx-backsplash:${GIT_COMMIT}" \
+                    "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-backsplash:${GIT_COMMIT}"
+            docker tag "raster-foundry-backsplash:${GIT_COMMIT}" \
+                    "${AWS_ECR_ENDPOINT}/raster-foundry-backsplash:${GIT_COMMIT}"
+
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-api:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-tiler:${GIT_COMMIT}"
 
@@ -73,10 +103,9 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-batch:${GIT_COMMIT}"
             docker push "${AWS_ECR_ENDPOINT}/raster-foundry-migrations:${GIT_COMMIT}"
 
-            echo "Uploading Spark Batch JAR to S3"
-            aws s3 cp \
-                "${DIR}/../app-backend/batch/target/scala-2.11/rf-batch.jar" \
-                "s3://${RF_ARTIFACTS_BUCKET}/batch/rf-batch-${GIT_COMMIT}.jar"
+            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-nginx-backsplash:${GIT_COMMIT}"
+            docker push "${AWS_ECR_ENDPOINT}/raster-foundry-backsplash:${GIT_COMMIT}"
+
         else
             echo "ERROR: No AWS_ECR_ENDPOINT variable defined."
             exit 1

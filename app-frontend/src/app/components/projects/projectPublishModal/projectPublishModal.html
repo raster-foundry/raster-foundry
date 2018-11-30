@@ -1,129 +1,195 @@
-<div class="modal-scrollable-body modal-sidebar-header">
-  <div class="modal-header">
-    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.dismiss()">
-      <span aria-hidden="true">&times;</span>
-    </button>
-    <h4 class="modal-title">
-      Publishing
-    </h4>
-    <h6 class="modal-title" ng-attr-title="{{$ctrl.resolve.templateTitle ? $ctrl.resolve.templateTitle : $ctrl.resolve.project.name}}">{{$ctrl.resolve.templateTitle ? $ctrl.resolve.templateTitle : $ctrl.resolve.project.name}}</h6>
-  </div>
-  <div class="modal-body">
-    <div class="content" ng-show="$ctrl.shareUrl">
-      <div class="form-group">
+<div class="modal-header">
+  <button type="button" class="close" aria-label="Close modal" ng-click="$ctrl.dismiss()">
+    <i aria-hidden="true" class="icon-cross">
+      <span class="sr-only">Close modal</span>
+    </i>
+  </button>
+  <h4 class="modal-title">Publishing options</h4>
+  <p ng-attr-title="{{$ctrl.resolve.templateTitle ? $ctrl.resolve.templateTitle : $ctrl.resolve.project.name}}">{{$ctrl.resolve.templateTitle ? $ctrl.resolve.templateTitle : $ctrl.resolve.project.name}}</p>
+</div>
+<div class="modal-body">
+  <div class="modal-action-bar" ng-show="$ctrl.shareUrl">
+    <div class="form-group inline no-margin">
         <label>Map Visibility</label>
-        <div class="form-group">
-          <div class="btn-group inline">
-            <button class="btn btn-primary"
-                    ng-repeat="policy in $ctrl.sharePolicies"
-                    ng-if="policy.enabled"
-                    ng-click="$ctrl.onPolicyChange(policy)"
-                    ng-class="{'active': policy.active}"
+          <label class="checkbox radio" 
+                  ng-repeat="policy in $ctrl.sharePolicies"
+                  ng-if="policy.enabled"
+                  ng-click="$ctrl.onPolicyChange(policy)"
+                  ng-class="{'active': policy.active}"
+                  ng-disabled="!policy.enabled">
+            <input type="radio" 
+                    name="{{policy.label}}"
+                    ng-checked="policy.active"
                     ng-disabled="!policy.enabled">
-              {{policy.label}}
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Published Page</label>
-        <div class="form-group all-in-one">
-          <label for="tile-link" class="sr-only">URL</label>
-          <input id="tile-link" type="text" class="form-control"
-                 value="{{$ctrl.shareUrl}}" readonly>
-          <button class="btn btn-link btn-copy-modal-first"
-                  clipboard text="$ctrl.shareUrl"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')">
-                  <span ng-show="$ctrl.copyType !== 'page'">Copy</span>
-                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'page'"></span>
-          </button>
-          <button class="btn btn-primary"
-                  ng-click="$ctrl.openProjectShare()">
-            Open
-          </button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="tile-link">ZXY Tile Layer URL</label>
-        <div class="form-group all-in-one">
-          <input id="tile-link" type="text" class="form-control"
-                  value="{{$ctrl.tileLayerUrls.standard}}" readonly>
-          <button class="btn btn-link btn-copy-modal"
-                  clipboard text="$ctrl.tileLayerUrls.standard"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.standard, 'zxy')">
-                  <span ng-show="$ctrl.copyType !== 'zxy'">Copy</span>
-                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'zxy'"></span>
-          </button>
-        </div>
-        <label for="tile-link">ArcGIS Tile Layer URL</label>
-        <div class="form-group all-in-one">
-          <input id="tile-link" type="text" class="form-control"
-                  value="{{$ctrl.tileLayerUrls.arcGIS}}" readonly>
-          <button class="btn btn-link btn-copy-modal"
-                  clipboard text="$ctrl.tileLayerUrls.arcGIS"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.arcGIS, 'arcGIS')">
-                  <span ng-show="$ctrl.copyType !== 'arcGIS'">Copy</span>
-                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'arcGIS'"></span>
-          </button>
-        </div>
-      </div>
-      <div ng-if="$ctrl.activePolicy.enum === 'PRIVATE'" class="form-group">
-        <label>Map Token</label>
-        <div class="form-group all-in-one">
-          <input id="tile-link" type="text" class="form-control"
-                 value="{{$ctrl.mapToken.id}}" readonly>
-          <button class="btn btn-link btn-copy-modal"
-                  clipboard text="$ctrl.mapToken.id"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.mapToken.id, 'token')">
-                  <span ng-show="$ctrl.copyType !== 'token'">Copy</span>
-                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'token'"></span>
-          </button>
-        </div>
+            {{policy.label}}
+          </label>
+    </div>
+  </div>
+  <div class="modal-inner-container" ng-show="$ctrl.shareUrl">
+    <div class="form-group">
+      <label for="published-link">Published page</label>
+      <div class="input-group">
+        <input id="published-link" type="text" class="form-control"
+                value="{{$ctrl.shareUrl}}" readonly>
+        <button class="btn btn-link btn-square btn-icon"
+                clipboard text="$ctrl.shareUrl"
+                ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')"
+                tooltips
+                tooltip-size="small"
+                tooltip-side="top right"
+                tooltip-template="Copy URL">
+          <i class="icon-copy color-base" 
+              aria-hidden="true"
+              ng-show="$ctrl.copyType !== 'page'"><span class="sr-only">Copy URL</span></i>
+          <i class="icon-check color-green"
+              aria-hidden="true"
+              ng-show="$ctrl.copyType === 'page'"></i>
+        </button>
       </div>
     </div>
-    <div class="content" ng-show="$ctrl.resolve.templateTitle">
-      <h4>Sharing</h4>
-      <div class="form-group">
-        <label for="tile-link">ZXY Tile Layer URL</label>
-        <div class="form-group all-in-one">
-          <input id="tile-link" type="text" class="form-control"
-                  value="{{$ctrl.tileLayerUrls.standard}}" readonly>
-          <button class="btn btn-link btn-copy-modal"
-                  clipboard text="$ctrl.tileLayerUrls.standard"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.standard, 'zxy')">
-                  <span ng-show="$ctrl.copyType !== 'zxy'">Copy</span>
-                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'zxy'"></span>
-          </button>
-        </div>
-        <label for="tile-link">ArcGIS Tile Layer URL</label>
-        <div class="form-group all-in-one">
-          <input id="tile-link" type="text" class="form-control"
-                  value="{{$ctrl.tileLayerUrls.arcGIS}}" readonly>
-          <button class="btn btn-link btn-copy-modal"
-                  clipboard text="$ctrl.tileLayerUrls.arcGIS"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.arcGIS, 'arcGIS')">
-                  <span ng-show="$ctrl.copyType !== 'arcGIS'">Copy</span>
-                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'arcGIS'"></span>
-          </button>
-        </div>
-        <label>Token</label>
-        <div class="form-group all-in-one">
-          <input id="tile-link" type="text" class="form-control"
-                 value="{{$ctrl.analysisToken}}" readonly>
-          <button class="btn btn-link btn-copy-modal"
-                  clipboard text="$ctrl.analysisToken"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.analysisToken, 'token')">
-                  <span ng-show="$ctrl.copyType !== 'token'">Copy</span>
-                  <span class="icon-check copy-confirmation" ng-show="$ctrl.copyType === 'token'"></span>
-          </button>
-        </div>
+    <div class="form-group">
+      <label for="zxy-link">ZXY Tile Layer URL</label>
+      <div class="input-group">
+        <input id="zxy-link" type="text" class="form-control"
+                value="{{$ctrl.tileLayerUrls.standard}}" readonly>
+        <button class="btn btn-link btn-square btn-icon"
+                clipboard text="$ctrl.tileLayerUrls.standard"
+                ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.standard, 'zxy')"
+                tooltips
+                tooltip-size="small"
+                tooltip-side="top right"
+                tooltip-template="Copy URL">
+          <i class="icon-copy color-base"
+              aria-hidden="true" 
+              ng-show="$ctrl.copyType !== 'zxy'"><span class="sr-only">Copy URL</span></i>
+          <i class="icon-check color-green"
+              aria-hidden="true"
+              ng-show="$ctrl.copyType === 'zxy'"></i>
+        </button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="arcgis-link">ArcGIS Tile Layer URL</label>
+      <div class="input-group">
+        <input id="arcgis-link" type="text" class="form-control"
+                value="{{$ctrl.tileLayerUrls.arcGIS}}" readonly>
+        <button class="btn btn-link btn-square btn-icon"
+                clipboard text="$ctrl.tileLayerUrls.arcGIS"
+                ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.arcGIS, 'arcGIS')"
+                tooltips
+                tooltip-size="small"
+                tooltip-side="top right"
+                tooltip-template="Copy URL">
+          <i class="icon-copy color-base"
+              aria-hidden="true" 
+              ng-show="$ctrl.copyType !== 'arcGIS'"><span class="sr-only">Copy URL</span></i>
+          <i class="icon-check color-green"
+              aria-hidden="true"
+              ng-show="$ctrl.copyType === 'arcGIS'"></i>
+        </button>
+      </div>
+    </div>
+    <div ng-if="$ctrl.activePolicy.enum === 'PRIVATE'" class="form-group">
+      <label>Map Token</label>
+      <div class="input-group">
+        <input id="tile-link" type="text" class="form-control"
+                value="{{$ctrl.mapToken.id}}" readonly>
+        <button class="btn btn-link btn-square btn-icon"
+                clipboard text="$ctrl.mapToken.id"
+                ng-click="$ctrl.onCopyClick($event, $ctrl.mapToken.id, 'token')"
+                tooltips
+                tooltip-size="small"
+                tooltip-side="top right"
+                tooltip-template="Copy token">
+          <i class="icon-copy color-base"
+              aria-hidden="true" 
+              ng-show="$ctrl.copyType !== 'token'"><span class="sr-only">Copy token</span></i>
+          <i class="icon-check color-green"
+              aria-hidden="true"
+              ng-show="$ctrl.copyType === 'token'"></i>
+        </button>
       </div>
     </div>
   </div>
-  <div class="modal-footer">
-    <button type="button" class="btn"
-            ng-click="$ctrl.dismiss()">
-      Done
-    </button>
+
+  <div class="modal-inner-container" ng-show="$ctrl.resolve.templateTitle">
+    <div class="form-group">
+      <label for="zxy-link2">ZXY Tile Layer URL</label>
+      <div class="input-group">
+        <input id="zxy-link2" 
+                type="text" 
+                class="form-control" 
+                value="{{$ctrl.tileLayerUrls.standard}}" 
+                readonly>
+        <button class="btn btn-link btn-square btn-icon"
+                clipboard text="$ctrl.tileLayerUrls.standard"
+                ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.standard, 'zxy')"
+                tooltips
+                tooltip-size="small"
+                tooltip-side="top right"
+                tooltip-template="Copy URL">
+          <i class="icon-copy color-base"
+              aria-hidden="true" 
+              ng-show="$ctrl.copyType !== 'zxy'"><span class="sr-only">Copy URL</span></i>
+          <i class="icon-check color-green"
+              aria-hidden="true"
+              ng-show="$ctrl.copyType === 'zxy'"></i>
+        </button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="arcgis-link2">ArcGIS Tile Layer URL</label>
+      <div class="input-group">
+        <input id="arcgis-link2" 
+               type="text" 
+               class="form-control"
+               value="{{$ctrl.tileLayerUrls.arcGIS}}" 
+               readonly>
+        <button class="btn btn-link btn-square btn-icon"
+                clipboard text="$ctrl.tileLayerUrls.arcGIS"
+                ng-click="$ctrl.onCopyClick($event, $ctrl.tileLayerUrls.arcGIS, 'arcGIS')"
+                tooltips
+                tooltip-size="small"
+                tooltip-side="top right"
+                tooltip-template="Copy URL">
+          <i class="icon-copy color-base"
+              aria-hidden="true" 
+              ng-show="$ctrl.copyType !== 'arcGIS'"><span class="sr-only">Copy URL</span></i>
+          <i class="icon-check color-green"
+              aria-hidden="true"
+              ng-show="$ctrl.copyType === 'arcGIS'"></i>
+        </button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Token</label>
+      <div class="input-group">
+        <input id="tile-link" 
+               type="text" 
+               class="form-control"
+               value="{{$ctrl.analysisToken}}" 
+               readonly>
+        <button class="btn btn-link btn-square btn-icon"
+                clipboard text="$ctrl.analysisToken"
+                ng-click="$ctrl.onCopyClick($event, $ctrl.analysisToken, 'token')"
+                tooltips
+                tooltip-size="small"
+                tooltip-side="top right"
+                tooltip-template="Copy token">
+          <i class="icon-copy color-base"
+              aria-hidden="true" 
+              ng-show="$ctrl.copyType !== 'token'"><span class="sr-only">Copy token</span></i>
+          <i class="icon-check color-green"
+              aria-hidden="true"
+              ng-show="$ctrl.copyType === 'token'"></i>
+        </button>
+      </div>
+    </div>
   </div>
+</div>
+<div class="modal-footer">
+  <div class="footer-section left">
+    <button type="button" class="btn" ng-click="$ctrl.dismiss()">Close</button>
+  </div>
+  <div class="footer-section right"></div>
 </div>

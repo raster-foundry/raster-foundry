@@ -1,10 +1,10 @@
-package com.azavea.rf.common
+package com.rasterfoundry.common
 
-import com.azavea.rf.datamodel.{Tool, ToolRun, User}
-import com.azavea.rf.tool.ast.MapAlgebraAST
-import com.azavea.rf.tool.eval._
+import com.rasterfoundry.datamodel.{Tool, ToolRun, User}
+import com.rasterfoundry.tool.ast.MapAlgebraAST
+import com.rasterfoundry.tool.eval._
 
-import com.azavea.maml.eval._
+import com.azavea.maml.error._
 import cats._
 import cats.data._
 import cats.implicits._
@@ -23,7 +23,8 @@ package object ast {
   def validateTree[M: Monoid](ast: MapAlgebraAST): M =
     PureInterpreter.interpret[M](ast, true) match {
       case Valid(a) => a
-      case Invalid(nel) => throw InterpreterException(nel)
+      case Invalid(nel) =>
+        throw new Exception("Could not interpret AST")
     }
 
   /** Validate an AST, given some ToolRun. In the case of success, returns
@@ -32,6 +33,7 @@ package object ast {
   def validateTreeWithSources[M: Monoid](ast: MapAlgebraAST): M =
     PureInterpreter.interpret[M](ast, false) match {
       case Valid(a) => a
-      case Invalid(nel) => throw InterpreterException(nel)
+      case Invalid(nel) =>
+        throw new Exception("Could not interpret AST")
     }
 }

@@ -1,3 +1,4 @@
+/* global _ */
 import typeToReducer from 'type-to-reducer';
 
 import {
@@ -7,8 +8,12 @@ const GREEN = '#81C784';
 
 export const projectReducer = typeToReducer({
     [PROJECT_SET_MAP]: (state, action) => {
+        if (state.editHandler) {
+            state.editHandler.disable();
+        }
         return Object.assign({}, state, {
-            projectMap: action.payload
+            projectMap: action.payload,
+            editHandler: null
         });
     },
     [PROJECT_SET_ID]: (state, action) => {
@@ -28,14 +33,18 @@ export const projectReducer = typeToReducer({
             }, action.payload.options);
             const mapWrapper = state.projectMap;
             let editHandler;
-            if (geometry.type === 'Polygon') {
-                let coordinates = geometry.coordinates[0].map(c => [c[1], c[0]]);
+            if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
+                let coordinates = geometry.type === 'Polygon' ?
+                    geometry.coordinates[0].map(c => [c[1], c[0]]) :
+                    geometry.coordinates[0][0].map(c => [c[1], c[0]]);
                 let polygonLayer = L.polygon(
                     coordinates,
                     options
                 );
                 mapWrapper.setLayer('draw', polygonLayer, false);
-                mapWrapper.map.panTo(polygonLayer.getCenter());
+                if (_.get(action, 'payload.meta.panTo')) {
+                    mapWrapper.map.panTo(polygonLayer.getCenter());
+                }
                 editHandler = new L.EditToolbar.Edit(mapWrapper.map, {
                     featureGroup: L.featureGroup([polygonLayer])
                 });
@@ -48,7 +57,9 @@ export const projectReducer = typeToReducer({
                     'draggable': true
                 });
                 mapWrapper.setLayer('draw', markerLayer, false);
-                mapWrapper.map.panTo([geometry.coordinates[1], geometry.coordinates[0]]);
+                if (_.get(action, 'payload.meta.panTo')) {
+                    mapWrapper.map.panTo([geometry.coordinates[1], geometry.coordinates[0]]);
+                }
             }
             return Object.assign({}, state, {
                 editHandler

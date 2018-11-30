@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M11 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(11)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(11)(
+    List(
+      sqlu"""
 CREATE TYPE thumbnailsize AS ENUM ('small', 'large', 'square');
 
 CREATE TABLE thumbnails (
@@ -18,5 +19,5 @@ CREATE TABLE thumbnails (
   url VARCHAR(255) NOT NULL
 );
 """
-  ))
+    ))
 }

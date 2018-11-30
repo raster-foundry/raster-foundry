@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M14 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(14)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(14)(
+    List(
+      sqlu"""
 CREATE TABLE images (
   id UUID PRIMARY KEY NOT NULL,
   created_at TIMESTAMP NOT NULL,
@@ -20,5 +21,5 @@ CREATE TABLE images (
   image_metadata JSONB NOT NULL
 )
 """
-  ))
+    ))
 }

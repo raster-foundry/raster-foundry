@@ -14,3 +14,4 @@
     - { role: raster-foundry.docker }
     - { role: raster-foundry.shellcheck }
     - { role: raster-foundry.jenkins }
+    - { role: raster-foundry.nexus }

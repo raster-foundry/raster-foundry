@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M99 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(99)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(99)(
+    List(
+      sqlu"""
     INSERT INTO licenses (
       short_name, name, url, osi_approved
     ) VALUES
@@ -377,5 +378,5 @@ object M99 {
     ('StandardML-NJ', 'Standard ML of New Jersey License', 'http://www.smlnj.org//license.html', FALSE),
     ('wxWindows', 'wxWindows Library License', 'http://www.opensource.org/licenses/WXwindows', FALSE);
     """
-  ))
+    ))
 }

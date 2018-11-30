@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M123 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(123)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(123)(
+    List(
+      sqlu"""
     ALTER TABLE platforms
       RENAME COLUMN settings
       TO public_settings;
@@ -32,5 +33,5 @@ object M123 {
           "emailPassword": ""
         }';
     """
-  ))
+    ))
 }

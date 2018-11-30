@@ -1,46 +1,68 @@
 <div class="admin-list-content column-stretch">
-  <div ng-if="$ctrl.errorMsg">
-    <p>
-      {{$ctrl.errorMsg}}
-    </p>
-  </div>
-  <div class="admin-list-actions" ng-if="!$ctrl.errorMsg && $ctrl.results.length">
+  <div class="admin-list-actions">
     <div>
-      <rf-search on-search="$ctrl.onSearch(value)"
-                 placeholder="Search for users"
-                 auto-focus="true"
-                 disabled="$ctrl.loading || !$ctrl.results.length"
-      ></rf-search>
       <rf-pagination-count
-        start-index="$ctrl.pagination.startingItem"
-        end-index="$ctrl.pagination.endingItem"
-        total="$ctrl.pagination.count"
-        item-name="users"
-      ></rf-pagination-count>
+          ng-if="!$ctrl.currentQuery && $ctrl.pagination.count"
+          start-index="$ctrl.pagination.startingItem"
+          end-index="$ctrl.pagination.endingItem"
+          total="$ctrl.pagination.count"
+          item-name="users">
+        <span ng-if="$ctrl.search">while searching for <strong>{{$ctrl.search}}</strong></span>
+      </rf-pagination-count>
     </div>
     <div class="actions-right">
+      <rf-search on-search="$ctrl.fetchPage(1, value)"
+                 value="$ctrl.search"
+                 placeholder="Search for users"
+                 auto-focus="true"
+      ></rf-search>
       <button type="button" class="btn btn-primary"
               ng-click="$ctrl.addUserModal()"
+              ng-if="$ctrl.isEffectiveAdmin"
               ng-disabled="$ctrl.loading">
         Add Users
       </button>
     </div>
   </div>
   <rf-call-to-action-item
-    title="No users are in this organization yet"
-    class="panel panel-off-white"
-    ng-if="!$ctrl.results.length && !$ctrl.loading">
+      title="No users are in this organization yet"
+      class="panel panel-off-white"
+      ng-if="!$ctrl.currentQuery && !$ctrl.fetchError && $ctrl.pagination && !$ctrl.pagination.count && !$ctrl.search">
     <p class="pb-25">
       The {{$ctrl.organization.name}} organization does not have any users yet.
       When it does, they'll be shown here.
     </p>
-
     <button type="button" class="btn btn-primary"
-            ng-click="$ctrl.addUserModal()"
-    >
+            ng-if="$ctrl.isEffectiveAdmin"
+            ng-click="$ctrl.addUserModal()">
       Add Users
     </button>
   </rf-call-to-action-item>
+  <rf-call-to-action-item
+      title="Your search didn't return any users"
+      class="panel panel-off-white"
+      ng-show="!$ctrl.currentQuery && !$ctrl.pagination.count && !$ctrl.fetchError && $ctrl.search">
+    <p class="pb-25">
+      Unable to find any users matching "<strong>{{$ctrl.search}}</strong>".
+    </p>
+  </rf-call-to-action-item>
+  <rf-call-to-action-item
+      title="There was an error fetching users."
+      class="panel panel-off-white"
+      ng-show="!$ctrl.currentQuery && $ctrl.fetchError">
+    <div class="pb-25">
+      Please refresh the page and try again.<br />
+      If the problem persists, please contact {{$ctrl.BUILDCONFIG.APP_NAME}} support.
+    </div>
+  </rf-call-to-action-item>
+  <!-- Loading Indicator, show only when loading -->
+  <div class="text-center" ng-show="$ctrl.currentQuery">
+    <div>Loading users</div>
+    <span class="list-placeholder h3">
+      <i class="icon-load animate-spin" ng-class="{'stop': !$ctrl.currentQuery}"></i>
+    </span>
+  </div>
+  <!-- Loading indicator -->
   <table class="admin-table admin-org-user-table" ng-if="!$ctrl.loading && $ctrl.results.length">
     <tbody>
       <tr ng-repeat="user in $ctrl.results track by $index">
@@ -90,5 +112,6 @@
     pagination="$ctrl.pagination"
     is-loading="$ctrl.loading"
     on-change="$ctrl.fetchPage(value)"
+    ng-show="!$ctrl.currentQuery && !$ctrl.fetchError"
   ></rf-pagination-controls>
 </div>

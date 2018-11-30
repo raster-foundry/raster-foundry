@@ -1,18 +1,42 @@
+from contextlib import contextmanager
 import logging
 import os
 import re
+import shutil
 import tempfile
 import urllib
 from urlparse import urlparse
 
 import boto3
+from dropbox.dropbox import Dropbox
+from dropbox.files import CommitInfo, UploadSessionCursor
 import requests
-
 
 logger = logging.getLogger(__name__)
 
 
 s3 = boto3.resource('s3', region_name='eu-central-1')
+
+
+@contextmanager
+def get_tempdir(debug=False):
+    """Returns a temporary directory that is cleaned up after usage
+
+    Returns:
+        str
+    """
+    temp_dir = tempfile.mkdtemp()
+    try:
+        yield temp_dir
+    finally:
+        if not debug:
+            shutil.rmtree(temp_dir)
+
+
+def s3_bucket_and_key_from_url(s3_url):
+    parts = urlparse(s3_url)
+    # parts.path[1:] drops the leading slash that urlparse includes
+    return (parts.netloc, parts.path[1:])
 
 
 def delete_file(fname):
@@ -168,6 +192,32 @@ def upload_tifs(tifs, user_id, scene_id):
                 Key=key
             )
     return s3_uris
+
+
+def s3_upload_export(local_path, source):
+    s3_client = boto3.client('s3')
+    (bucket, key) = s3_bucket_and_key_from_url(urllib.unquote(source))
+    logger.info('Uploading %s => bucket: %s, key: %s', local_path, bucket, key)
+    with open(local_path, 'rb') as inf:
+        s3_client.put_object(Bucket=bucket, Body=inf, Key=key)
+    return key
+
+
+def dropbox_upload_export(access_token, local_path, remote_fname):
+    client = Dropbox(access_token)
+    with open(local_path, 'rb') as inf:
+        chunk_size = int(1.5e8 - 1)
+        next_bytes = inf.read(chunk_size)
+        upload_session_result = client.files_upload_session_start(next_bytes)
+        uploaded_so_far = len(next_bytes)
+        next_bytes = inf.read(chunk_size)
+        cursor = UploadSessionCursor(upload_session_result.session_id, uploaded_so_far)
+        while next_bytes:
+            client.files_upload_session_append_v2(next_bytes, cursor)
+            next_bytes = inf.read(chunk_size)
+            uploaded_so_far += chunk_size
+            cursor = UploadSessionCursor(upload_session_result.session_id, uploaded_so_far)
+        client.files_upload_session_finish('', cursor, CommitInfo(remote_fname))
 
 
 class JobStatus(object):

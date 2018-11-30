@@ -1,4 +1,5 @@
 /* global Intercom, BUILDCONFIG */
+import _ from 'lodash';
 export default (app) => {
     class IntercomService {
         constructor($resource, $q, $http, APP_CONFIG, angularLoad) {
@@ -8,7 +9,6 @@ export default (app) => {
             this.$http = $http;
             this.angularLoad = angularLoad;
             this.scriptLoaded = false;
-            // @TODO: load this value from the APP_CONFIG
             this.appId = BUILDCONFIG.INTERCOM_APP_ID || APP_CONFIG.intercomAppId;
             this.srcUrl = `https://widget.intercom.io/widget/${this.appId}`;
         }
@@ -20,12 +20,16 @@ export default (app) => {
         }
 
         bootWithUser(user) {
-            if (!this.scriptLoaded) {
+            let cleanUser = _.clone(user);
+            if (user.email === user.name) {
+                delete cleanUser.name;
+            }
+            if (!this.scriptLoaded && this.appId !== 'disabled') {
                 this.load().then(() => {
-                    this.doBoot(user);
+                    this.doBoot(cleanUser);
                 });
-            } else {
-                this.doBoot(user);
+            } else if (this.appId !== 'disabled') {
+                this.doBoot(cleanUser);
             }
         }
 

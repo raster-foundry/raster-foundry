@@ -80,34 +80,13 @@ class InputNodeController {
     fetchDatasources(projectId) {
         if (this.selectedProject) {
             this.fetchingDatasources = true;
-            this.projectService.getAllProjectScenes(
-                {
-                    projectId: projectId,
-                    pending: false
-                }
-            ).then(scenes => {
-                const datasourcesP = this.$q.all(
-                    _.map(
-                        _.uniqBy(scenes, scene => scene.datasource.id),
-                        scene => this.sceneService.datasource(scene)
-                    )
-                );
-                datasourcesP.then(datasources => {
-                    const previousBands = this.bands ? this.bands.slice(0) : false;
+            this.projectService.getProjectDatasources(projectId).then(
+                datasources => {
                     this.datasources = datasources;
                     this.bands = this.datasourceService.getUnifiedBands(this.datasources);
-                    if (
-                        previousBands &&
-                        !_.isEqual(
-                            angular.toJson(previousBands),
-                            angular.toJson(this.bands)
-                        )
-                    ) {
-                        this.removeBand();
-                    }
                     this.fetchingDatasources = false;
-                });
-            });
+                }
+            );
         }
     }
 
@@ -153,10 +132,14 @@ class InputNodeController {
 
     onBandChange(index) {
         this.selectedBand = index;
+        if (!Number.isFinite(index) || index < 0) {
+            delete this.selectedBand;
+            this.manualBand = '';
+        }
         this.checkValidity();
         this.updateNode({
             payload: Object.assign({}, this.node, {
-                band: index
+                band: this.selectedBand
             }),
             hard: !this.analysisErrors.size
         });

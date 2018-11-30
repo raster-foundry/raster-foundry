@@ -7,7 +7,8 @@ export default angular.module('index.components', [
     require('./components/admin/sidebarOrganizationList/sidebarOrganizationList.js').name,
 
     // permission components
-    require('./components/permissions/permissionsModal.module.js').name,
+    require('./components/permissions/permissionModal/permissionModal.js').name,
+    require('./components/permissions/permissionItem/permissionItem.js').name,
 
     // scene components
     require('./components/scenes/importList/importList.module.js').name,
@@ -27,7 +28,6 @@ export default angular.module('index.components', [
     // project components
     require('./components/projects/projectItem/projectItem.module.js').name,
     require('./components/projects/projectPublishModal/projectPublishModal.module.js').name,
-    require('./components/projects/projectAddScenesModal/projectAddScenesModal.module.js').name,
     require('./components/projects/projectSelectModal/projectSelectModal.module.js').name,
     require('./components/projects/projectCreateModal/projectCreateModal.module.js').name,
     require('./components/projects/projectExportModal/projectExportModal.module.js').name,
@@ -36,6 +36,7 @@ export default angular.module('index.components', [
     // datasource components
     require('./components/datasources/datasourceItem/datasourceItem.module.js').name,
     require('./components/datasources/datasourceCreateModal/datasourceCreateModal.module.js').name,
+    require('./components/datasources/datasourceDeleteModal/datasourceDeleteModal.module.js').name,
 
     // lab components
     require('./components/lab/templateItem/templateItem.module.js').name,
@@ -77,6 +78,7 @@ export default angular.module('index.components', [
     // export components
     require('./components/exports/exportItem/exportItem.module.js').name,
     require('./components/exports/exportDownloadModal/exportDownloadModal.module.js').name,
+    require('./components/exports/exportAnalysisDownloadModal/exportAnalysisDownloadModal.module.js').name,
 
     // filter components
     require('./components/filters/daterangeFilter/daterangeFilter.module.js').name,
@@ -91,6 +93,7 @@ export default angular.module('index.components', [
     require('./components/common/toggle-old/toggle-old.module.js').name,
     require('./components/common/toggle/toggle.module.js').name,
     require('./components/common/confirmationModal/confirmationModal.module.js').name,
+    require('./components/common/feedbackModal/feedbackModal.module.js').name,
     require('./components/common/boxSelectItem/boxSelectItem.module.js').name,
     require('./components/common/callToActionItem/callToActionItem.module.js').name,
     require('./components/common/dateRangePickerModal/dateRangePickerModal.module.js').name,

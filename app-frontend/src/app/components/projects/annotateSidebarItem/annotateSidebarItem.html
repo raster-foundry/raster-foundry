@@ -1,57 +1,60 @@
-<div class="list-group-item list-sidebar-drawn-annotations"
+<div class="list-group-item"
      ng-if="$ctrl.annotation.geometry && !($ctrl.editingAnnotation === $ctrl.annotation.id)">
-  <div class="sidebar-item annotation-item">
-    <div class="inner">
-      <i class="icon-polygon"
-         ng-if="$ctrl.annotation.geometry.type === 'Polygon'"></i>
-      <i class="icon-map-pin"
+  <div class="annotation-item">
+    <div class="annotation-type-icon-container">
+      <i class="icon-polygon color-primary"
+         ng-if="$ctrl.annotation.geometry.type === 'Polygon' || $ctrl.annotation.geometry.type === 'MultiPolygon'"></i>
+      <i class="icon-map-pin color-primary"
          ng-if="$ctrl.annotation.geometry.type === 'Point'"></i>
-      <p class="annotation-confidence" ng-if="$ctrl.annotation.properties.machineGenerated">
-        <i>{{$ctrl.annotation.properties.confidence}}</i>
-      </p>
     </div>
-    <div class="inner">
-      <div class="annotation-name"
-           ng-if="$ctrl.annotation.properties.label.length">
-        <h5>{{$ctrl.annotation.properties.label}}</h5>
-      </div>
-      <div class="annotation-name "
-           ng-if="!$ctrl.annotation.properties.label.length">
-        <h5><dfn>Unlabeled</dfn></h5>
-      </div>
-      <div class="btn-group" ng-if="$ctrl.annotation.properties.machineGenerated">
-        <button class="btn btn-primary btn-block btn-qa-check-button"
-                type="button"
-                ng-click="$ctrl.onQaCheck('NO')"
-                ng-class="{fail: $ctrl.annotation.properties.quality === 'NO'}">
-          <i class="icon-cross qa-check"></i>
-        </button>
-        <button class="btn btn-primary btn-block btn-qa-check-button"
-                type="button"
-                ng-click="$ctrl.onQaCheck('YES')"
-                ng-class="{pass: $ctrl.annotation.properties.quality === 'YES'}">
-          <i class="icon-check qa-check"></i>
-        </button>
-      </div>
+    <p class="annotation-confidence" ng-if="$ctrl.annotation.properties.machineGenerated">
+      <i>{{$ctrl.annotation.properties.confidence}}</i>
+    </p>
+    <div class="annotation-name"
+         ng-if="$ctrl.annotation.properties.label.length">
+      <span class="color-dark">{{$ctrl.annotation.properties.label}}</span>
+    </div>
+    <div class="annotation-name "
+         ng-if="!$ctrl.annotation.properties.label.length">
+      <span class="color-dark">Unlabeled</span>
+    </div>
+    <div class="btn-group" ng-if="$ctrl.annotation.properties.machineGenerated">
+      <button class="btn btn-primary btn-block btn-qa-check-button"
+              type="button"
+              ng-click="$ctrl.onQaCheck('NO')"
+              ng-class="{fail: $ctrl.annotation.properties.quality === 'NO'}">
+        <i class="icon-cross qa-check"></i>
+      </button>
+      <button class="btn btn-primary btn-block btn-qa-check-button"
+              type="button"
+              ng-click="$ctrl.onQaCheck('YES')"
+              ng-class="{pass: $ctrl.annotation.properties.quality === 'YES'}">
+        <i class="icon-check qa-check"></i>
+      </button>
     </div>
   </div>
-  <div class="list-group-right actions-annotations">
-      <a title="Bulk Create"
-         ng-click="$ctrl.sidebarDisabled || $ctrl.onBulkCreateClick($event)"
-         ng-disabled="$ctrl.sidebarDisabled">
-     Bulk Create</a>
-    <a title="Clone"
-       ng-click="$ctrl.sidebarDisabled || $ctrl.onAnnotationClone($event)"
-       ng-disabled="$ctrl.sidebarDisabled">
-      <i class="icon-duplicate"></i></a>
-    <a title="Edit"
-       ng-click="$ctrl.sidebarDisabled || $ctrl.onAnnotationEdit($event)"
-       ng-disabled="$ctrl.sidebarDisabled">
-      <i class="icon-pencil"></i></a>
-    <a title="Delete"
-       ng-click="$ctrl.sidebarDisabled || $ctrl.onAnnotationDelete($event)"
-       ng-disabled="$ctrl.sidebarDisabled">
-      <i class="icon-trash"></i></a>
+  <div class="list-group-right">
+    <div uib-dropdown class="dropdown">
+      <button class="btn btn-tiny" uib-dropdown-toggle>
+        <i class="icon-menu"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-light dropdown-menu-right" uib-dropdown-menu role="menu">
+        <li >
+          <a ng-click="$ctrl.sidebarDisabled || $ctrl.onAnnotationEdit($event)">Edit</a>
+        </li>
+        <li >
+          <a ng-click="$ctrl.sidebarDisabled || $ctrl.onAnnotationClone($event)">Clone</a>
+        </li>
+        <li >
+          <a ng-click="$ctrl.sidebarDisabled || $ctrl.onBulkCreateClick($event)">Bulk Create</a>
+        </li>
+        <li class="divider">
+        </li>
+        <li>
+          <a class="color-danger" ng-click="$ctrl.sidebarDisabled || $ctrl.onAnnotationDelete($event)">Delete</a>
+        </li>
+      </ul>
+    </div>
   </div>
 </div>
 <div class="list-group-item"

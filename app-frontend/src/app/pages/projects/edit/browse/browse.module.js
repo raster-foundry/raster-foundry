@@ -54,12 +54,11 @@ class ProjectsSceneBrowserController {
 
     $onInit() {
         this.projectScenesReady = false;
-        this.allSelected = false;
         this.registerClick = true;
-        this.selectedScenes = new Map();
         this.sceneList = [];
         this.sceneCount = null;
         this.planetThumbnailUrls = new Map();
+        this.scenesBeingAdded = [];
 
         this.setBboxParam = _.debounce((bbox) => {
             this.$location.search('bbox', bbox).replace();
@@ -71,23 +70,19 @@ class ProjectsSceneBrowserController {
             this.$parent.waitForProject().then((project) => {
                 this.project = project;
                 this.initParams();
-                this.getProjectSceneIds();
                 this.initMap();
             });
         } else {
             this.project = this.$parent.project;
             this.initParams();
-            this.getProjectSceneIds();
             this.initMap();
         }
 
         this.$scope.$on('$destroy', () => {
             this.getMap().then(browseMap => {
                 browseMap.deleteLayers('filterBboxLayer');
-                browseMap.deleteLayers('Selected Scenes');
                 browseMap.deleteThumbnail();
             });
-            this.selectNoScenes();
         });
     }
 
@@ -142,13 +137,6 @@ class ProjectsSceneBrowserController {
                     mapWrapper.map.getZoom()
                 );
             });
-        });
-    }
-
-    getProjectSceneIds() {
-        this.projectService.getAllProjectScenes({ projectId: this.project.id }).then((scenes) => {
-            this.projectSceneIds = scenes.map(s => s.id);
-            this.projectScenesReady = true;
         });
     }
 
@@ -230,18 +218,29 @@ class ProjectsSceneBrowserController {
                 if (scene.sceneType !== 'COG') {
                     map.setThumbnail(scene, this.currentRepository);
                 } else {
-                    map.setLayer(
-                      'Hovered Scene',
-                      L.tileLayer(
-                        this.sceneService.getSceneLayerURL(
-                            scene,
-                            {token: this.authService.token()}
-                        ),
-                        {maxZoom: 30})
-                    );
+                    this.setCOGThumbnail(scene, map);
                 }
             });
         }
+    }
+
+    setCOGThumbnail(scene, map) {
+        this.currentRepository.service.getDatasourceBands(scene).then(rgbBands => {
+            map.setLayer(
+              'Hovered Scene',
+              L.tileLayer(
+                this.sceneService.getSceneLayerURL(
+                    scene,
+                    {
+                        token: this.authService.token(),
+                        redBand: rgbBands.RED,
+                        greenBand: rgbBands.GREEN,
+                        blueBand: rgbBands.BLUE
+                    }
+                ),
+                {maxZoom: 30})
+            );
+        });
     }
 
     removeHoveredScene() {
@@ -255,71 +254,52 @@ class ProjectsSceneBrowserController {
         });
     }
 
-    setSelected(scene, selected) {
-        this.getMap().then((map) => {
-            if (selected) {
-                this.selectedScenes = this.selectedScenes.set(scene.id, {
-                    scene,
-                    repository: this.currentRepository
-                });
-                map.setThumbnail(scene, this.currentRepository, {persist: true});
-            } else {
-                this.selectedScenes = this.selectedScenes.delete(scene.id);
-                map.deleteThumbnail(scene);
-            }
-        });
-    }
-
-    isSelected(scene) {
-        return scene && scene.id && this.selectedScenes.has(scene.id);
-    }
-
-    selectAllScenes() {
-        if (this.allSelected && this.sceneList.length) {
-            this.sceneList.map((scene) => this.setSelected(scene, false));
-            this.getMap().then((map) => {
-                map.deleteThumbnail();
-            });
-        } else if (this.sceneList.length) {
-            this.sceneList.map((scene) => this.setSelected(scene, true));
-        }
-        this.allSelected = !this.allSelected;
-    }
-
-    selectNoScenes() {
-        this.selectedScenes.forEach(s => this.setSelected(s, false));
-    }
-
-    sceneModal() {
-        this.modalService.open({
-            component: 'rfProjectAddScenesModal',
-            resolve: {
-                scenes: () => this.selectedScenes,
-                selectScene: () => this.setSelected.bind(this),
-                selectNoScenes: () => this.selectNoScenes.bind(this),
-                repository: () => this.currentRepository,
-                project: () => this.project
-            },
-            backdrop: 'static'
-        }).result.then((sceneIds) => {
-            this.projectSceneIds = this.projectSceneIds.concat(sceneIds);
-            this.selectNoScenes();
-        }).finally(() => {
-            this.$parent.getSceneList();
-        });
-    }
-
     isInProject(scene) {
-        if (scene && scene.id && this.projectScenesReady) {
-            const index = this.projectSceneIds.indexOf(scene.id);
-            return index >= 0;
-        }
-        return false;
+        return scene && scene.inProject;
     }
 
     gotoProjectScenes() {
-        this.selectNoScenes();
         this.$state.go('projects.edit.scenes');
+    }
+
+    addSceneToProject(scene) {
+        this.scenesBeingAdded = [...this.scenesBeingAdded, scene.id];
+        return this.currentRepository
+            .service
+            .addToProject(this.project.id, [scene])
+            .then(() => {
+                scene.inProject = true;
+            })
+            .finally(() => {
+                this.$parent.layerFromProject();
+                this.scenesBeingAdded = this.scenesBeingAdded.filter(s => s !== scene.id);
+            });
+    }
+
+    addVisibleScenesToProject() {
+        const scenesToAdd = this.sceneList.filter(s => !this.isInProject(s));
+        const sceneIdsToAdd = scenesToAdd.map(s => s.id);
+        this.scenesBeingAdded = [...this.scenesBeingAdded, ...sceneIdsToAdd];
+        return this.currentRepository
+            .service
+            .addToProject(this.project.id, scenesToAdd)
+            .then(() => {
+                scenesToAdd.forEach(scene => {
+                    scene.inProject = true;
+                });
+            })
+            .finally(() => {
+                this.$parent.layerFromProject();
+                this.scenesBeingAdded =
+                    this.scenesBeingAdded.filter(s => sceneIdsToAdd.includes(s));
+            });
+    }
+
+    hasDownloadPermission(scene) {
+        if (this.currentRepository.service.getScenePermissions(scene).includes('download')) {
+            return true;
+        }
+        return false;
     }
 }
 

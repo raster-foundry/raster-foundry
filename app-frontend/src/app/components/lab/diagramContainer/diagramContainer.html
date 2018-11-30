@@ -19,22 +19,30 @@
   <!-- disabled> -->
   <!-- &#x3C;/&#x3E; -->
   <!-- </button> -->
-  <button class="btn btn-default btn-square btn-small"
+  <div tooltips tooltip-template="Select a node to preview"
+       tooltip-size="small"
+       tooltip-class="map-control-tooltip"
+       tooltip-side="right">
+  <button class="map-control-btn"
           type="button"
-          title="Preview Node"
           ng-click="$ctrl.onPreviewClick()"
-          ng-class="{'btn-secondary': $ctrl.selectingNode === 'preview'}"
-  >
+          ng-disabled="!$ctrl.canPreview()"
+          ng-class="{'active': $ctrl.canPreview() && $ctrl.selectingNode === 'preview'}">
     <i class="icon-map"></i>
   </button>
-  <button class="btn btn-default btn-square btn-small"
-          title="Compare Nodes"
+  </div>
+  <div tooltips tooltip-template="Select 2 nodes to compare"
+       tooltip-size="small"
+       tooltip-class="map-control-tooltip"
+       tooltip-side="right">
+  <button class="map-control-btn last-of-type"
           type="button"
           ng-click="$ctrl.onCompareClick()"
-          ng-class="{'btn-secondary': $ctrl.selectingNode === 'compare' || $ctrl.selectingNode === 'select'}"
-  >
+          ng-disabled="!$ctrl.canPreview()"
+          ng-class="{'active': $ctrl.canPreview() && ($ctrl.selectingNode === 'compare' || $ctrl.selectingNode === 'select')}">
     <i class="icon-compare"></i>
   </button>
+  </div>
   <!-- <button class="btn btn-default btn-square btn-small" -->
   <!-- type="button" -->
   <!-- title="Add Comment" -->
@@ -44,21 +52,23 @@
 </div>
 <div class="map-container-controls"
      ng-class="{ 'is-dragging': $ctrl.panActive }">
-  <div class="map-zoom" title="Current Zoom">{{($ctrl.scale * 100).toFixed(0)}}%</div>
-  <button class="btn btn-default btn-square btn-small"
+  <div class="zoom-level" title="Current Zoom">{{($ctrl.scale * 100).toFixed(0)}}%</div>
+  <button class="map-control-btn"
           title="Zoom In"
-          ng-click="$ctrl.zoomIn()">
-    <span class="icon-plus"></span>
+          ng-click="$ctrl.zoomIn()"
+          tooltips tooltip-template="Zoom in" tooltip-size="small" tooltip-class="map-control-tooltip" tooltip-side="left">
+    <i class="icon-plus"></i>
   </button>
-  <button class="btn btn-default btn-square btn-small"
+  <button class="map-control-btn"
           title="Zoom Out"
-          ng-click="$ctrl.zoomOut()">
-    <spam class="icon-minus"></span>
+          ng-click="$ctrl.zoomOut()"
+          tooltips tooltip-template="Zoom out" tooltip-size="small" tooltip-class="map-control-tooltip" tooltip-side="left">
+    <i class="icon-minus"></i>
   </button>
-  <div class="filler"></div>
-  <button class="btn btn-default btn-square btn-small"
+  <button class="map-control-btn last-of-type"
           title="Fit Diagram"
-          ng-click="$ctrl.scaleToContent()">
-    <span class="icon-resize"></span>
+          ng-click="$ctrl.scaleToContent()"
+          tooltips tooltip-template="Zoom to fit" tooltip-size="small" tooltip-class="map-control-tooltip" tooltip-side="left">
+    <i class="icon-extent"></i>
   </button>
 </div>

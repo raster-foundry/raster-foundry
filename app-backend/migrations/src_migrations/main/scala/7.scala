@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M7 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(7)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(7)(
+    List(
+      sqlu"""
 ALTER TABLE users
   DROP constraint users_pkey cascade;
 ALTER TABLE users
@@ -24,5 +25,5 @@ CREATE TABLE users_to_organizations (
 ALTER TABLE users
   DROP COLUMN organization_id;
 """
-  ))
+    ))
 }

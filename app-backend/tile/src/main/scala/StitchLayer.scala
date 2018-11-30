@@ -1,6 +1,6 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
-import com.azavea.rf.common.cache._
+import com.rasterfoundry.common.cache._
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.vector._
@@ -13,7 +13,7 @@ import cats.data._
 import cats.implicits._
 import java.util.UUID
 
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.database.util.RFTransactor
 import geotrellis.spark.io.postgres.PostgresAttributeStore
 
 import scala.concurrent._
@@ -24,7 +24,8 @@ object StitchLayer extends LazyLogging with Config {
   implicit val xa = RFTransactor.xa
 
   val system = AkkaSystem.system
-  implicit val blockingDispatcher = system.dispatchers.lookup("blocking-dispatcher")
+  implicit val blockingDispatcher =
+    system.dispatchers.lookup("blocking-dispatcher")
   val store = PostgresAttributeStore()
   val rfCache = new CacheClient(memcachedClient)
 
@@ -41,37 +42,51 @@ object StitchLayer extends LazyLogging with Config {
     * For non-cached version use [[stitch]] function.
     */
   def apply(id: UUID, size: Int): OptionT[Future, MultibandTile] =
-    OptionT(rfCache.caching(s"stitch-${id}-${size}")(
-      stitch(store, id.toString, size)
-    ))
+    OptionT(
+      rfCache.caching(s"stitch-${id}-${size}")(
+        stitch(store, id.toString, size)
+      ))
 
-  def stitch(store: AttributeStore, layerName: String, size: Int): Future[Option[MultibandTile]] = Future {
+  def stitch(store: AttributeStore,
+             layerName: String,
+             size: Int): Future[Option[MultibandTile]] = Future {
     require(size < 4096, s"$size is too large to stitch")
-    minZoomLevel(store, layerName, size).map { case (layerId, re) =>
-      logger.debug(s"Stitching from $layerId, ${re.extent.reproject(WebMercator, LatLng).toGeoJson}")
-      S3CollectionLayerReader(store)
-        .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
-        .where(Intersects(re.extent))
-        .result
-        .stitch
-        .crop(re.extent)
+    minZoomLevel(store, layerName, size).map {
+      case (layerId, re) =>
+        logger.debug(
+          s"Stitching from $layerId, ${re.extent.reproject(WebMercator, LatLng).toGeoJson}")
+        S3CollectionLayerReader(store)
+          .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](
+            layerId)
+          .where(Intersects(re.extent))
+          .result
+          .stitch
+          .crop(re.extent)
     } match {
-      case Success(tile) => Some(tile)
-      case Failure(_) => None
+      case Success(raster) => Some(raster.tile)
+      case Failure(_)      => None
     }
   }
 
   /** Find the minimum zoom level with enough pixels covering the data region of the layer */
-  def minZoomLevel(store: AttributeStore, layerName: String, size: Int): Try[(LayerId, RasterExtent)] = {
+  def minZoomLevel(store: AttributeStore,
+                   layerName: String,
+                   size: Int): Try[(LayerId, RasterExtent)] = {
     def forZoom(zoom: Int): Try[(LayerId, RasterExtent)] = {
       val currentId = LayerId(layerName, zoom)
-      val meta = Try { store.readMetadata[TileLayerMetadata[SpatialKey]](currentId) }
-      val rasterExtent = meta.map { tlm => (tlm, dataRasterExtent(tlm)) }
-      rasterExtent.map { case(tlm, re) =>
-        logger.debug(s"Data Extent: ${tlm.extent.reproject(WebMercator, LatLng).toGeoJson()}")
-        logger.debug(s"$currentId has (${re.cols},${re.rows}) pixels")
-        if (re.cols >= size || re.rows >= size) (currentId, re)
-        else forZoom(zoom + 1).getOrElse((currentId, re))
+      val meta = Try {
+        store.readMetadata[TileLayerMetadata[SpatialKey]](currentId)
+      }
+      val rasterExtent = meta.map { tlm =>
+        (tlm, dataRasterExtent(tlm))
+      }
+      rasterExtent.map {
+        case (tlm, re) =>
+          logger.debug(
+            s"Data Extent: ${tlm.extent.reproject(WebMercator, LatLng).toGeoJson()}")
+          logger.debug(s"$currentId has (${re.cols},${re.rows}) pixels")
+          if (re.cols >= size || re.rows >= size) (currentId, re)
+          else forZoom(zoom + 1).getOrElse((currentId, re))
       }
     }
     forZoom(1)
@@ -79,8 +94,8 @@ object StitchLayer extends LazyLogging with Config {
 
   def dataRasterExtent(md: TileLayerMetadata[_]): RasterExtent = {
     val re = RasterExtent(md.layout.extent,
-      md.layout.tileLayout.totalCols.toInt,
-      md.layout.tileLayout.totalRows.toInt)
+                          md.layout.tileLayout.totalCols.toInt,
+                          md.layout.tileLayout.totalRows.toInt)
     val gb = re.gridBoundsFor(md.extent)
     re.rasterExtentFor(gb).toRasterExtent
   }

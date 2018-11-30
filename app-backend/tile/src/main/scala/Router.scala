@@ -1,11 +1,10 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
-import com.azavea.rf.common.CommonHandlers
-import com.azavea.rf.tile.routes._
-import com.azavea.rf.tile.tool._
-import com.azavea.rf.database.util.RFTransactor
+import com.rasterfoundry.common.CommonHandlers
+import com.rasterfoundry.tile.routes._
+import com.rasterfoundry.tile.tool._
+import com.rasterfoundry.database.util.RFTransactor
 
-import com.azavea.maml.serve.InterpreterExceptionHandling
 import akka.http.scaladsl.server._
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import ch.megard.akka.http.cors.scaladsl.settings._
@@ -16,11 +15,10 @@ import doobie.postgres._
 import doobie.postgres.implicits._
 import cats.effect.IO
 
-
-class Router extends LazyLogging
+class Router
+    extends LazyLogging
     with TileAuthentication
     with CommonHandlers
-    with InterpreterExceptionHandling
     with TileErrorHandler {
 
   implicit lazy val xa = RFTransactor.xa
@@ -40,37 +38,37 @@ class Router extends LazyLogging
       pathPrefix(JavaUUID) { projectId =>
         projectTileAccessAuthorized(projectId) {
           case true => MosaicRoutes.mosaicProject(projectId)(xa)
-          case _ => reject(AuthorizationFailedRejection)
+          case _    => reject(AuthorizationFailedRejection)
         }
       } ~
-      pathPrefix("healthcheck") {
-        pathEndOrSingleSlash {
-          get {
-            HealthCheckRoute.root
+        pathPrefix("healthcheck") {
+          pathEndOrSingleSlash {
+            get {
+              HealthCheckRoute.root
+            }
           }
-        }
-      } ~
-      pathPrefix("tools") {
-        get {
-          (handleExceptions(interpreterExceptionHandler) & handleExceptions(circeDecodingError)) {
-            pathPrefix(JavaUUID) { (toolRunId) =>
-              authenticateToolTileRoutes(toolRunId) { user =>
-                toolRoutes.tms(toolRunId, user) ~
-                  toolRoutes.raw(toolRunId, user) ~
-                  toolRoutes.validate(toolRunId, user) ~
-                  toolRoutes.statistics(toolRunId, user) ~
-                  toolRoutes.histogram(toolRunId, user) ~
-                  toolRoutes.preflight(toolRunId, user)
+        } ~
+        pathPrefix("tools") {
+          get {
+            handleExceptions(circeDecodingError) {
+              pathPrefix(JavaUUID) { (toolRunId) =>
+                authenticateToolTileRoutes(toolRunId) { user =>
+                  toolRoutes.tms(toolRunId, user) ~
+                    toolRoutes.raw(toolRunId, user) ~
+                    toolRoutes.validate(toolRunId, user) ~
+                    toolRoutes.statistics(toolRunId, user) ~
+                    toolRoutes.histogram(toolRunId, user) ~
+                    toolRoutes.preflight(toolRunId, user)
+                }
               }
             }
           }
+        } ~
+        pathPrefix("scenes") {
+          pathPrefix(JavaUUID) { sceneId =>
+            MosaicRoutes.mosaicScene(sceneId)(xa)
+          }
         }
-      } ~
-      pathPrefix("scenes") {
-        pathPrefix(JavaUUID) { sceneId =>
-          MosaicRoutes.mosaicScene(sceneId)(xa)
-        }
-      }
     }
   }
 }

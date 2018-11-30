@@ -12,13 +12,14 @@ const SceneItemComponent = {
         selected: '<?',
         onSelect: '&?',
         isDisabled: '<?',
-        repository: '<'
+        repository: '<',
+        onMove: '&?'
     }
 };
 
 class SceneItemController {
     constructor(
-        $scope, $attrs, $element, $timeout,
+        $scope, $attrs, $element, $timeout, $document,
         thumbnailService, mapService, modalService, sceneService, authService
     ) {
         'ngInject';
@@ -27,8 +28,8 @@ class SceneItemController {
         this.$parent = $scope.$parent.$ctrl;
         this.$element = $element;
         this.$timeout = $timeout;
+        this.$document = $document;
 
-        this.isDraggable = $attrs.hasOwnProperty('draggable');
 
         this.thumbnailService = thumbnailService;
         this.mapService = mapService;
@@ -50,27 +51,38 @@ class SceneItemController {
                 this.$scope.$evalAsync();
             });
         }, 0);
+        this.$scope.$watch('$ctrl.scene.sceneOrder', (val) => {
+            if (this.orderingInProgress) {
+                this.manualOrderValue = val + 1;
+            }
+        });
     }
 
     $onChanges(changes) {
         if (changes.selected && changes.selected.hasOwnProperty('currentValue')) {
             this.selectedStatus = changes.selected.currentValue;
         }
+        if (_.get(changes, 'scene.currentValue')) {
+            this.manualOrderValue = _.get(changes, 'scene.currentValue.sceneOrder') + 1;
+        }
         if (changes.repository && changes.repository.currentValue) {
             this.repository = changes.repository.currentValue;
             if (this.scene.sceneType === 'COG') {
-                let redBand = _.findIndex(
-                    this.datasource.bands, (x) => x.name.toLowerCase() === 'red');
-                let greenBand = _.findIndex(
-                    this.datasource.bands, (x) => x.name.toLowerCase() === 'green');
-                let blueBand = _.findIndex(
-                    this.datasource.bands, (x) => x.name.toLowerCase() === 'blue');
+                let redBand = this.datasource.bands.find(x => {
+                    return x.name.toLowerCase() === 'red';
+                }).number;
+                let greenBand = this.datasource.bands.find(x => {
+                    return x.name.toLowerCase() === 'green';
+                }).number;
+                let blueBand = this.datasource.bands.find(x => {
+                    return x.name.toLowerCase() === 'blue';
+                }).number;
                 let bands = {};
                 let atLeastThreeBands = this.datasource.bands.length >= 3;
                 if (atLeastThreeBands) {
-                    bands.red = redBand || 0;
-                    bands.green = greenBand || 1;
-                    bands.blue = blueBand || 2;
+                    bands.red = parseInt(redBand || 0, 10);
+                    bands.green = parseInt(greenBand || 1, 10);
+                    bands.blue = parseInt(blueBand || 2, 10);
                 } else {
                     bands.red = 0;
                     bands.green = 0;
@@ -144,6 +156,47 @@ class SceneItemController {
                 repository: () => this.repository
             }
         });
+    }
+
+    onManualOrderToggle(event) {
+        this.manualOrderValue = this.scene.sceneOrder + 1;
+        if (event) {
+            event.stopPropagation();
+        }
+        this.orderingInProgress = !this.orderingInProgress;
+
+        if (this.orderingInProgress && !this.clickListener) {
+            if (this.openDropdownListener) {
+                this.openDropdownListener();
+            }
+            const onClick = () => {
+                this.orderingInProgress = false;
+                this.$document.off('click', this.clickListener);
+                this.$scope.$evalAsync();
+                delete this.clickListener;
+                this.openDropdownListener = null;
+            };
+            this.clickListener = onClick;
+            this.openDropdownListener = onClick;
+            this.$document.on('click', onClick);
+        } else if (!this.orderingInProgress && this.clickListener) {
+            this.$document.off('click', this.clickListener);
+            this.openDropdownListener = null;
+            delete this.clickListener;
+        }
+    }
+
+    onManualOrderConfirm() {
+        this.onMove({scene: this.scene, position: this.manualOrderValue - 1});
+        this.onManualOrderToggle();
+    }
+
+    onManualOrderCancel() {
+        this.onManualOrderToggle();
+    }
+
+    positionIsValid(p) {
+        return Number.isFinite(p) && p >= 0 && p !== this.scene.sceneOrder + 1;
     }
 }
 

@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M69 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(69)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(69)(
+    List(
+      sqlu"""
 
 UPDATE tools set organization_id = 'dfac6307-b5ef-43f7-beda-b9f208bb7726';
 
@@ -211,5 +212,5 @@ update tools set definition = '{
 }' where title = 'Local Subtraction';
 
 """
-  ))
+    ))
 }

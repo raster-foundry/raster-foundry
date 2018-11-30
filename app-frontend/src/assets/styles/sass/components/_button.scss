@@ -65,21 +65,20 @@
   outline: 0;
   border: none;
   padding: .8rem 2rem;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
   text-align: center;
   text-decoration: none;
   border-radius: $border-radius-base;
   user-select: none;
-  background: #fff;
-  border: 1px solid $shade-light;
-  color: $shade-light;
+  background: $off-white;
+  border: 1px solid $border-color-default;
+  color: $text-base;
   will-change: opacity, border;
 
   &:hover, &.hover,
   &:active, &.active, {
-    color: #fff;
-    background-color: lighten($shade-light, 10%);
+    background-color: darken($off-white, 5%);
     z-index: 1;
   }
 
@@ -214,7 +213,6 @@
     background-color: transparent;
     border-color: transparent;
     color: darken($brand-primary, 10%);
-    text-decoration: underline;
   }
 }
 
@@ -250,7 +248,9 @@
 }
 
 .btn-square {
-  padding: 1rem;
+  width: 3.8rem;
+  height: 3.8rem; // height of text input
+  padding: 0;
 }
 
 .btn-block {
@@ -264,7 +264,7 @@
 .btn-toggle {
   background : $shade-dark;
   border-color: darken($shade-dark, 5%);
-  color: $text-base;
+  color: $white;
 
   &:hover, &.hover,
   &:active {
@@ -360,6 +360,15 @@
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
+
+  .btn-group-danger-delete {
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+  }
+
+  .btn-group-danger-delete-disabled {
+    z-index: -1;
+  }
 }
 
 .btn-dropdown-transitional {
@@ -379,22 +388,8 @@
 /*
 Copy button on project share modal
 */
-.btn-copy-modal {
-  width: 99.47px;
-  height: 38px;
-}
-
-.btn-copy-modal-first {
-  width: 73.92px;
-  height: 38px;
-}
-
-/*
-Copy button on project share page
-*/
-.btn-copy-page {
-  width: 77.47px;
-  height: 32px;
+.btn-icon {
+  font-size: 1.8rem;
 }
 
 .btn-nowrap {

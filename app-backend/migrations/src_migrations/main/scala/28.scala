@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M28 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(28)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(28)(
+    List(
+      sqlu"""
 ALTER TABLE model_categories RENAME TO tool_categories;
 
 ALTER TABLE tool_categories RENAME CONSTRAINT
@@ -29,5 +30,5 @@ ALTER TABLE tool_tags RENAME CONSTRAINT
 ALTER TABLE tool_tags RENAME CONSTRAINT
   model_tags_modified_by_fkey TO tool_tags_modified_by_fkey;
 """ // your sql code goes here
-  ))
+    ))
 }

@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M111 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(111)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(111)(
+    List(
+      sqlu"""
     CREATE TABLE platforms (
         id UUID PRIMARY KEY NOT NULL,
         name TEXT NOT NULL,
@@ -61,5 +62,5 @@ object M111 {
         action_type action_type NOT NULL
     );
     """
-  ))
+    ))
 }

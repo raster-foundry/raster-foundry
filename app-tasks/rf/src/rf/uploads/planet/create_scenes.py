@@ -1,62 +1,16 @@
-import os
 import uuid
-import tempfile
 
-import boto3
-import requests
+from rf.models import Scene
+from rf.utils.io import Visibility, JobStatus
 
-from rf.models import Scene, Footprint, Thumbnail
-from rf.utils.io import Visibility, JobStatus, IngestStatus, delete_file
-
-from .create_footprints import bbox_from_planet_feature
 from ..geotiff.create_images import create_geotiff_image
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-def get_planet_thumbnail(thumbnail_uri, planet_key, scene_id):
-    """Download planet thumbnail, push to S3, create RF thumbnail
-
-    Args:
-        thumbnail_uri (str): source thumbnail
-        planet_key (str): planet API key for authentication
-        scene_id (str): scene to attach thumbnail to
-
-    Returns:
-        Thumbnail
-
-    """
-    _, local_filepath = tempfile.mkstemp()
-    params = {'api_key': planet_key}
-
-    logger.info('Downloading thumbnail for Planet scene: %s', thumbnail_uri)
-    response = requests.get(thumbnail_uri, params=params, stream=True)
-
-    with open(local_filepath, 'wb') as filehandle:
-        for chunk in response.iter_content(1024):
-            filehandle.write(chunk)
-
-    thumbnail_key = '{}.png'.format(scene_id)
-    thumbnail_uri = '/thumbnails/{}.png'.format(scene_id)
-    logger.info('Uploading thumbnails to S3: %s', thumbnail_key)
-    s3_bucket_name = os.getenv('THUMBNAIL_BUCKET')
-    s3_bucket = boto3.resource('s3').Bucket(s3_bucket_name)
-    s3_bucket.upload_file(local_filepath, thumbnail_key, {'ContentType': 'image/png'})
-    delete_file(local_filepath)
-
-    return Thumbnail(
-        256,
-        256,
-        'SMALL',
-        thumbnail_uri,
-        sceneId=scene_id
-    )
-
-
 def create_planet_scene(planet_feature, datasource, planet_key,
-                        ingest_status=IngestStatus.TOBEINGESTED,
-                        visibility=Visibility.PRIVATE, tags=[], owner=None, sceneType="AVRO"):
+                        visibility=Visibility.PRIVATE, tags=[], owner=None):
     """Create a Raster Foundry scene from Planet scenes
 
     Args:
@@ -76,10 +30,8 @@ def create_planet_scene(planet_feature, datasource, planet_key,
     name = planet_feature['id']
     acquisitionDate = props['acquired']
     cloudCover = props['cloud_cover']
-    ingestSizeBytes = 0 # TODO
     visibility = visibility
     tags = tags
-    dataFootprint = planet_feature['geometry']['coordinates']
 
     scene_kwargs = {
         'sunAzimuth': props['sun_azimuth'],
@@ -88,11 +40,8 @@ def create_planet_scene(planet_feature, datasource, planet_key,
         'acquisitionDate': acquisitionDate,
         'id': str(uuid.uuid4()),
         'thumbnails': None,
-        'tileFootprint': Footprint(
-            bbox_from_planet_feature(planet_feature)
-        ),
-        'dataFootprint': Footprint(
-            [planet_feature['geometry']['coordinates']]
+        'ingestLocation': planet_feature['added_props']['s3Location'].replace(
+            '|', '%7C'
         )
     }
 
@@ -105,7 +54,6 @@ def create_planet_scene(planet_feature, datasource, planet_key,
     )]
 
     scene = Scene(
-        ingestSizeBytes,
         visibility,
         tags,
         datasource,
@@ -113,15 +61,12 @@ def create_planet_scene(planet_feature, datasource, planet_key,
         name,
         JobStatus.QUEUED,
         JobStatus.QUEUED,
-        ingest_status,
+        'INGESTED',
         [],
         owner=owner,
         images=images,
-        sceneType=sceneType,
+        sceneType='COG',
         **scene_kwargs
     )
-
-    thumbnail_url = planet_feature['_links']['thumbnail']
-    scene.thumbnails = [get_planet_thumbnail(thumbnail_url, planet_key, scene.id)]
 
     return scene

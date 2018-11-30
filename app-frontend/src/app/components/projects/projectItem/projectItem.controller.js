@@ -1,9 +1,11 @@
 import projectPlaceholder from '../../../../assets/images/transparent.svg';
 
 export default class ProjectItemController {
-    constructor($rootScope, $scope, $state, $attrs, $log,
+    constructor(
+        $rootScope, $scope, $state, $attrs, $log,
         projectService, mapService, mapUtilsService, authService, modalService,
-        featureFlags) {
+        featureFlags
+    ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
         this.projectPlaceholder = projectPlaceholder;
@@ -47,7 +49,7 @@ export default class ProjectItemController {
 
     fitProjectExtent() {
         this.getMap().then(mapWrapper => {
-            this.mapUtilsService.fitMapToProject(mapWrapper, this.project, -150);
+            this.mapUtilsService.fitMapToProject(mapWrapper, this.project, -2);
             mapWrapper.map.invalidateSize();
         });
     }
@@ -89,32 +91,36 @@ export default class ProjectItemController {
 
     shareModal(project) {
         this.modalService.open({
-            component: 'permissionsModal',
+            component: 'rfPermissionModal',
             resolve: {
                 object: () => project,
                 permissionsBase: () => 'projects',
+                objectType: () => 'PROJECT',
                 objectName: () => project.name,
-                extraActions: () => ['ANNOTATE']
+                platform: () => this.platform
             }
         });
     }
 
     deleteModal() {
         const modal = this.modalService.open({
-            component: 'rfConfirmationModal',
+            component: 'rfFeedbackModal',
             resolve: {
-                title: () => 'Delete Project?',
+                title: () => 'Project deletion',
                 subtitle: () =>
-                    'The project will be permanently deleted,'
-                    + ' but scenes will be unaffected.',
+                    'The project will be deleted, '
+                    + 'but scenes will remain unaffected.',
                 content: () =>
-                    '<div class="color-danger">'
-                    + 'You are about to delete the project. '
-                    + 'Annotations, exports, and analyses that use this project '
-                    + 'will not longer be accessible. This action is not reversible. '
-                    + 'Are you sure you wish to continue?'
-                    + '</div>',
-                confirmText: () => 'Delete Project',
+                    '<h2>Do you wish to continue?</h2>'
+                    + '<p>Deleting the project will also make '
+                    + 'associated annotations, exports and '
+                    + 'analyses inaccessible. This is a '
+                    + 'permanent action.</p>',
+                /* feedbackIconType : default, success, danger, warning */
+                feedbackIconType: () => 'danger',
+                feedbackIcon: () => 'icon-warning',
+                feedbackBtnType: () => 'btn-danger',
+                feedbackBtnText: () => 'Delete project',
                 cancelText: () => 'Cancel'
             }
         });

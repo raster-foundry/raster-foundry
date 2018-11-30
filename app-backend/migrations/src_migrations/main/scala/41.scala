@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M41 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(41)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(41)(
+    List(
+      sqlu"""
 CREATE TABLE tool_runs (
   id UUID PRIMARY KEY NOT NULL,
   created_at TIMESTAMP NOT NULL,
@@ -17,5 +18,5 @@ CREATE TABLE tool_runs (
   execution_parameters JSONB NOT NULL DEFAULT '{}'
 );
 """
-  ))
+    ))
 }

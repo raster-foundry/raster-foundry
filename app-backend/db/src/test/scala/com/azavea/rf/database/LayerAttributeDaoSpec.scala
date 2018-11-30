@@ -1,8 +1,8 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.datamodel.LayerAttribute
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.datamodel.LayerAttribute
+import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import cats._, cats.data._, cats.effect.IO
@@ -14,27 +14,39 @@ import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
 
-
-class LayerAttributeDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig {
+class LayerAttributeDaoSpec
+    extends FunSuite
+    with Matchers
+    with Checkers
+    with DBTestConfig {
 
   test("list all layer ids") {
-    LayerAttributeDao.layerIds.transact(xa).unsafeRunSync.length should be >= 0
+    xa.use(t => LayerAttributeDao.layerIds.transact(t))
+      .unsafeRunSync
+      .length should be >= 0
   }
 
   test("get max zooms for layers") {
-    LayerAttributeDao.maxZoomsForLayers(Set.empty[String]).transact(xa).unsafeRunSync.length should be >= 0
+    xa.use(
+        t =>
+          LayerAttributeDao
+            .maxZoomsForLayers(Set.empty[String])
+            .transact(t))
+      .unsafeRunSync
+      .length should be >= 0
   }
 
   // insertLayerAttribute
   test("insert a layer attribute") {
     check {
-      forAll {
-        (layerAttribute: LayerAttribute) => {
+      forAll { (layerAttribute: LayerAttribute) =>
+        {
           val layerId = layerAttribute.layerId
-          val attributeIO = LayerAttributeDao.insertLayerAttribute(layerAttribute) flatMap {
-            _ => LayerAttributeDao.unsafeGetAttribute(layerId, layerAttribute.name)
+          val attributeIO = LayerAttributeDao.insertLayerAttribute(
+            layerAttribute) flatMap { _ =>
+            LayerAttributeDao.unsafeGetAttribute(layerId, layerAttribute.name)
           }
-          attributeIO.transact(xa).unsafeRunSync == layerAttribute
+          xa.use(t => attributeIO.transact(t)).unsafeRunSync == layerAttribute
         }
       }
     }
@@ -43,17 +55,17 @@ class LayerAttributeDaoSpec extends FunSuite with Matchers with Checkers with DB
   // listAllAttributes
   test("list layers for an attribute name") {
     check {
-      forAll {
-        (layerAttributes: List[LayerAttribute]) => {
+      forAll { (layerAttributes: List[LayerAttribute]) =>
+        {
           val attributesIO = layerAttributes.traverse(
             (attr: LayerAttribute) => {
               LayerAttributeDao.insertLayerAttribute(attr)
             }
-          ) flatMap {
-            _ => LayerAttributeDao.listAllAttributes(layerAttributes.head.name)
+          ) flatMap { _ =>
+            LayerAttributeDao.listAllAttributes(layerAttributes.head.name)
           }
 
-          attributesIO.transact(xa).unsafeRunSync.length ==
+          xa.use(t => attributesIO.transact(t)).unsafeRunSync.length ==
             layerAttributes.filter(_.name == layerAttributes.head.name).length
         }
       }
@@ -63,16 +75,16 @@ class LayerAttributeDaoSpec extends FunSuite with Matchers with Checkers with DB
   // layerExists
   test("check layer existence") {
     check {
-      forAll {
-        (layerAttribute: LayerAttribute) => {
+      forAll { (layerAttribute: LayerAttribute) =>
+        {
           val layerId = layerAttribute.layerId
-          val attributesIO = LayerAttributeDao.insertLayerAttribute(layerAttribute) flatMap {
-            _ => LayerAttributeDao.layerExists(layerId)
+          val attributesIO = LayerAttributeDao.insertLayerAttribute(
+            layerAttribute) flatMap { _ =>
+            LayerAttributeDao.layerExists(layerId)
           }
-          attributesIO.transact(xa).unsafeRunSync
+          xa.use(t => attributesIO.transact(t)).unsafeRunSync
         }
       }
     }
   }
 }
-

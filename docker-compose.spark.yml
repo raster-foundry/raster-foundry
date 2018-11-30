@@ -18,7 +18,7 @@ services:
       SPARK_DAEMON_JAVA_OPTS: "-Dspark.deploy.recoveryMode=FILESYSTEM -Dspark.deploy.recoveryDirectory=/spark-state"
     volumes:
       - ./app-backend/batch/src/test/resources:/opt/rf/test-resources
-      - ./app-backend/batch/target/scala-2.11/rf-batch.jar:/opt/rf/jars/rf-batch.jar      
+      - ./app-backend/batch/target/scala-2.11/batch-assembly.jar:/opt/rf/jars/batch-assembly.jar
       - $HOME/.aws:/var/lib/spark/.aws:ro
       # Spark cluster state
       - /spark-state
@@ -66,7 +66,7 @@ services:
       SPARK_EXECUTOR_MEMORY: "2G"
     volumes:
       - ./app-backend/batch/src/test/resources:/opt/rf/test-resources
-      - ./app-backend/batch/target/scala-2.11/rf-batch.jar:/opt/rf/jars/rf-batch.jar      
+      - ./app-backend/batch/target/scala-2.11/batch-assembly.jar:/opt/rf/jars/batch-assembly.jar
       - ./worker-tasks/:/opt/raster-foundry/worker-tasks/
       - ./.ivy2:/root/.ivy2
       - ./.sbt:/root/.sbt

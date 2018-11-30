@@ -3,7 +3,6 @@
 """Console script for Raster Foundry"""
 
 import logging
-import os
 
 import click
 
@@ -12,14 +11,11 @@ from .commands import (
     find_aoi_projects,
     ingest_scene,
     process_upload,
+    reprocess_landsat_h,
     update_aoi_project
 )
 
 logger = logging.getLogger('rf')
-
-
-if os.getenv('AWS_BATCH_JOB_ATTEMPT', '') == '3':
-    raise Exception('Failing async task early after suspicious repeated failures')
 
 
 @click.group()
@@ -37,4 +33,5 @@ run.add_command(export)
 run.add_command(process_upload)
 run.add_command(ingest_scene)
 run.add_command(find_aoi_projects)
+run.add_command(reprocess_landsat_h)
 run.add_command(update_aoi_project)

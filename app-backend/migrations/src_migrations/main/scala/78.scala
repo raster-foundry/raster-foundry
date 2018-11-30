@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M78 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(78)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(78)(
+    List(
+      sqlu"""
 ALTER TABLE images
   DROP CONSTRAINT images_scene_fkey,
   ADD CONSTRAINT images_scene_fkey
@@ -23,5 +24,5 @@ ALTER TABLE bands
     REFERENCES images(id)
     ON DELETE CASCADE;
 """
-  ))
+    ))
 }

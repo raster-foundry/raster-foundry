@@ -1,0 +1,5 @@
+---
+dependencies: 
+  - { role: azavea.nginx, nginx_delete_default_site: True }
+  - { role: azavea.pip }
+  - { role: raster-foundry.docker }

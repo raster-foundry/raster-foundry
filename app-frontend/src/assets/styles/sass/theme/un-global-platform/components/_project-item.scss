@@ -1,0 +1,45 @@
+.panel.project-item {
+  border: none;
+  margin-top: 1rem;
+  
+  .panel-body {
+    padding: 0;
+  }
+
+  .avatar {
+    margin-top: -5px;
+  }
+}
+
+.project-preview {
+  margin-top: 1.2rem;
+}
+
+.project-title {
+  font-size: 1.5rem;
+  padding-right: 10rem;
+}
+
+.project-title:after {
+  background: $white;
+  top: -5px;
+  padding: .5rem;
+  padding-left: 3.5rem;
+}
+
+.project-status .inline-tag {
+  margin-top: 1.5rem;
+}
+
+.project-actions {
+  top: -5px;
+
+  .color-danger {
+    color: $text-base !important;
+  }
+}
+
+.project-actions a {
+  padding-top: .5rem;
+  padding-bottom: .5rem;
+}

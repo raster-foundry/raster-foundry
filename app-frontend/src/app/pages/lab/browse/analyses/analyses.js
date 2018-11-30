@@ -1,21 +1,21 @@
 /* global BUILDCONFIG */
 import {Set} from 'immutable';
 class LabBrowseAnalysesController {
-    constructor($state, analysisService, authService, localStorage, modalService) {
+    constructor(
+        $scope, $state, $log,
+        analysisService, authService, localStorage, modalService, exportService, paginationService
+    ) {
         'ngInject';
-        this.$state = $state;
-        this.analysisService = analysisService;
-        this.authService = authService;
-        this.localStorage = localStorage;
-        this.modalService = modalService;
+        $scope.autoInject(this, arguments);
     }
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
+        this.analysesExports = {};
         this.defaultSortingDirection = 'desc';
         this.defaultSortingField = 'modifiedAt';
         this.initSorting();
-        this.fetchAnalysesList(this.$state.params.page);
+        this.fetchPage();
         this.selected = new Set();
     }
 
@@ -31,42 +31,52 @@ class LabBrowseAnalysesController {
         }
     }
 
-    fetchAnalysesList(page = 1) {
-        this.loadingAnalyses = true;
-        this.analysisService.fetchAnalyses(
-            {
-                pageSize: 10,
-                page: page - 1,
-                sort: this.serializeSort()
+    fetchPage(
+        page = this.$state.params.page || 1,
+        search = this.$state.params.search,
+        sort = this.deserializeSort(this.$state.params.sort)
+    ) {
+        this.search = search && search.length ? search : null;
+        delete this.fetchError;
+        this.analyses = [];
+        const currentQuery = this.analysisService.fetchAnalyses({
+            pageSize: 10,
+            page: page - 1,
+            sort: this.serializeSort(),
+            search: this.search
+        }).then(paginatedResponse => {
+            this.analyses = paginatedResponse.results;
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page, search, this.serializeSort());
+            this.checkAnalysesExports(this.analyses);
+            if (this.currentQuery) {
+                delete this.fetchError;
             }
-        ).then(d => {
-            this.currentPage = page;
-            this.updatePagination(d);
-            let replace = !this.$state.params.page;
-            this.$state.transitionTo(
-                this.$state.$current.name,
-                {page: this.currentPage},
-                {
-                    location: replace ? 'replace' : true,
-                    notify: false
-                }
-            );
-            this.lastAnalysisResponse = d;
-            this.analysesList = d.results;
-            this.loadingAnalyses = false;
+        }, (e) => {
+            if (this.currentQuery === currentQuery) {
+                this.fetchError = e;
+            }
+        }).finally(() => {
+            if (this.currentQuery === currentQuery) {
+                delete this.currentQuery;
+            }
         });
+        this.currentQuery = currentQuery;
     }
 
-    updatePagination(data) {
-        this.pagination = {
-            show: data.count > data.pageSize,
-            count: data.count,
-            currentPage: data.page + 1,
-            startingItem: data.page * data.pageSize + 1,
-            endingItem: Math.min((data.page + 1) * data.pageSize, data.count),
-            hasNext: data.hasNext,
-            hasPrevious: data.hasPrevious
-        };
+    shouldShowPlaceholder() {
+        return !this.currentQuery &&
+            !this.fetchError &&
+            (!this.search || !this.search.length) &&
+            this.analyses &&
+            this.analyses.length === 0;
+    }
+
+    shouldShowEmptySearch() {
+        return !this.currentQuery &&
+            !this.fetchError &&
+            this.search && this.search.length &&
+            this.analyses && !this.analyses.length;
     }
 
     formatAnalysisVisibility(visibility) {
@@ -81,7 +91,7 @@ class LabBrowseAnalysesController {
         return `${this.sortingField},${this.sortingDirection}`;
     }
 
-    deserializeSort(sortString) {
+    deserializeSort(sortString = `${this.defaultSortingField},${this.defaultSortingDirection}`) {
         const splitSortString = sortString.split(',');
         return {
             field: splitSortString[0],
@@ -90,12 +100,12 @@ class LabBrowseAnalysesController {
     }
 
     fetchSorting() {
-        const k = `${this.authService.getProfile().nickname}-analysis-sort`;
+        const k = `${this.authService.getName()}-analysis-sort`;
         return this.localStorage.getString(k);
     }
 
     storeSorting() {
-        const k = `${this.authService.getProfile().nickname}-analysis-sort`;
+        const k = `${this.authService.getName()}-analysis-sort`;
         return this.localStorage.setString(k, this.serializeSort());
     }
 
@@ -109,30 +119,39 @@ class LabBrowseAnalysesController {
             this.sortingDirection = this.defaultSortingDirection;
         }
         this.storeSorting();
-        this.fetchAnalysesList(this.currentPage);
+        this.fetchPage(this.currentPage);
     }
 
     deleteSelected() {
         const modal = this.modalService.open({
-            component: 'rfConfirmationModal',
+            component: 'rfFeedbackModal',
             resolve: {
                 title: () => `Delete ${this.selected.size} analyses?`,
-                content: () => 'Deleting analyses will make any ' +
-                    'further tile requests with them fail',
-                confirmText: () => 'Delete Analyses',
+                subtitle: () =>
+                    'Deleting analyses cannot be undone.',
+                content: () =>
+                    '<h2>Do you wish to continue?</h2>'
+                    + '<p>Future attempts to access this '
+                    + 'analysis will fail.',
+                /* feedbackIconType : default, success, danger, warning */
+                feedbackIconType: () => 'danger',
+                feedbackIcon: () => 'icon-warning',
+                feedbackBtnType: () => 'btn-danger',
+                feedbackBtnText: () => 'Delete analyses',
                 cancelText: () => 'Cancel'
             }
         });
 
         modal.result.then(() => {
+            // TODO: use $q.all instead
             this.selected.forEach((id) => {
                 this.analysisService.deleteAnalysis(id).then(() => {
                     this.selected = this.selected.delete(id);
                     if (this.selected.size === 0) {
-                        this.fetchAnalysesList();
+                        this.fetchPage();
                     }
                 }, () => {
-                    this.fetchAnalysesList();
+                    this.fetchPage();
                 });
             });
         });
@@ -144,6 +163,36 @@ class LabBrowseAnalysesController {
         } else {
             this.selected = this.selected.add(id);
         }
+    }
+
+    onAnalysisExportModalClick(analysis) {
+        this.modalService.open({
+            component: 'rfExportAnalysisDownloadModal',
+            resolve: {
+                analysis: () => analysis
+            }
+        });
+    }
+
+    checkAnalysesExports(analysesList) {
+        analysesList.map(analysis => {
+            this.checkAnalysisExport(analysis.id);
+        });
+    }
+
+    checkAnalysisExport(analysisId) {
+        this.exportService.query(
+            {
+                sort: 'createdAt,desc',
+                pageSize: '20',
+                page: 0,
+                analysis: analysisId
+            }
+        ).then(firstPageExports => {
+            if (firstPageExports.results.find(r => r.toolRunId === analysisId)) {
+                this.analysesExports[analysisId] = firstPageExports.count;
+            }
+        });
     }
 }
 

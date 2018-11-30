@@ -254,11 +254,16 @@
 }
 
 .pagination-count {
-    margin-top: 1.8em;
+    font-weight: 600;
 }
 
 .actions-right {
-  margin-left: auto;
+    display: flex;
+    flex-direction: row;
+    margin-left: auto;
+    > *  {
+        margin-left: 1em;
+    }
 }
 
 .admin-search {

@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M124 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(124)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(124)(
+    List(
+      sqlu"""
 INSERT INTO datasources (
     id,
     created_at,
@@ -564,5 +565,5 @@ DELETE FROM datasources WHERE id in
 ('02e8ffdb-d20d-4a50-9a12-23a9b3cf7f0d', 'fa85c966-aff9-4484-8e91-02bf923e86ed', '944d6e0f-8994-4251-ba11-376418bde6e3',
  '5ea52134-ab8e-4dd4-93bb-461bdac9dcaa', '301a3a93-7110-4239-ac1b-4a15e68bcd56', 'fa364cbb-c742-401e-8815-d69d0f042382');
 """
-  ))
+    ))
 }

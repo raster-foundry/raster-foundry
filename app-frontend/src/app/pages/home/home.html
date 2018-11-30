@@ -20,13 +20,11 @@
                 Use on-demand analysis and get the most out of your imagery.
               </p>
               <button class="btn btn-default"
-                      ng-click="$ctrl.openTemplateCreateModal()">
-                Create a new Template
+                      ui-sref="lab.browse.templates">
+                Create a new Analysis
               </button>
               <div class="hide-sm"></div>
               <p>
-                <a ui-sref="lab.browse.templates">Browse Templates</a>
-                <br>
                 <a ui-sref="lab.browse.analyses">Browse your Analyses</a>
               </p>
             </rf-call-to-action-item>
@@ -53,7 +51,7 @@
           <section>
             <h5>Account</h5>
             <p>
-              Hello, <strong>{{$ctrl.authService.getProfile().nickname}}</strong>
+              Hello, <strong>{{$ctrl.authService.getName()}}</strong>
             </p>
             <a class="btn btn-light" ui-sref="user.settings.profile">Manage account</a>
           </section>

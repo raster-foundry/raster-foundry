@@ -1,14 +1,20 @@
 import _ from 'lodash';
 import {Map} from 'immutable';
+import {Promise} from 'es6-promise';
+import {authedRequest} from '../api/authentication';
+import {colorStopsToRange} from '_redux/histogram-utils';
+import {createRenderDefinition} from '_redux/histogram-utils';
 
-export function astFromNodes(labState, updatedNode) {
-    let analysis = labState.analysis;
-    let nodes = labState.nodes;
+export function astFromNodes(labState, updatedNodes) {
+    const analysis = labState.analysis;
+    const nodes = labState.nodes;
     let root = Object.assign({}, _.first(nodes.filter((node) => !node.parent).toArray()));
     let stack = [root];
+    const updatedNodeMap = updatedNodes.reduce((m, node) => m.set(node.id, node), new Map());
     while (stack.length) {
         let currentNode = stack.pop();
-        if (currentNode.id === updatedNode.id) {
+        if (updatedNodeMap.has(currentNode.id)) {
+            let updatedNode = updatedNodeMap.get(currentNode.id);
             let parent = currentNode.parent;
             currentNode = Object.assign({}, updatedNode);
             if (root.id === currentNode.id) {
@@ -79,4 +85,15 @@ export function getNodeHistogram(state, context) {
         return state.lab.histograms.get(context.nodeId);
     }
     return false;
+}
+
+export function createNodeMetadata(state, context) {
+    return authedRequest({
+        method: 'get',
+        url: `${state.api.tileUrl}/tools/${state.lab.analysis.id}/histogram` +
+            `?node=${context.node.id}&voidCache=true&token=${state.api.apiToken}`
+    }, state).then((response) => {
+        const histogram = response.data;
+        return createRenderDefinition(histogram);
+    });
 }

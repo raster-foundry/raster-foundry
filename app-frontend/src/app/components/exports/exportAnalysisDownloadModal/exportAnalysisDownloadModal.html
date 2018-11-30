@@ -1,0 +1,36 @@
+<div class="modal-scrollable-body modal-sidebar-header">
+  <div class="modal-header">
+    <button type="button" class="close" aria-label="Close" ng-click="$ctrl.close()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <h4 class="modal-title">
+      Analysis exports
+    </h4>
+    <p>"{{$ctrl.analysis.name}}" exports' download availabilities.</p>
+  </div>
+
+  <!--Body for TYPE-->
+  <div class="modal-body">
+    <div class="content">
+      <div class="list-group">
+        <div class="list-group-item" ng-repeat="export in $ctrl.exports track by export.id">
+          <div class="list-group-overflow">
+            <strong class="color-dark">{{export.createdAt | date : 'medium'}}</strong><br>
+          </div>
+          <div class="list-group-right">
+            <button
+              class="btn btn-light"
+              ng-class="{
+                'btn-danger': $ctrl.displayDownloadAction(export) === 'Failed',
+                'btn-primary': $ctrl.displayDownloadAction(export) === 'Download' || $ctrl.displayDownloadAction(export) === 'On Dropbox',
+                'export-modal-download-btn': true
+              }"
+              ng-click="$ctrl.handleAnalysisDownload(export)"
+              ng-disabled="!$ctrl.isDownloadAllowed(export)">
+              {{$ctrl.displayDownloadAction(export)}}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>

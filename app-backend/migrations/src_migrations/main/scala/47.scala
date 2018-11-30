@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M47 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(47)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(47)(
+    List(
+      sqlu"""
 CREATE TABLE map_tokens (
   id UUID PRIMARY KEY NOT NULL,
   created_at TIMESTAMP NOT NULL,
@@ -15,5 +16,5 @@ CREATE TABLE map_tokens (
   name TEXT
 );
 """
-  ))
+    ))
 }

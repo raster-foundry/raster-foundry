@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M70 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(70)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(70)(
+    List(
+      sqlu"""
         INSERT INTO tools (
           id, owner, created_at, modified_at, created_by, modified_by, organization_id,
           title, description, requirements, license, visibility, compatible_data_sources,
@@ -58,5 +59,5 @@ object M70 {
           '{"apply":"/","args":[{"apply":"-","args":[{"type":"src","id":"3e1f1b29-f719-31a9-aeb8-21b4b9fb429e","metadata":{"label":"Landsat Near Infrared (NIR)","description":"Wavelength: 0.76-0.90 μm","histogram":null,"colorRamp":null,"classMap":null}},{"type":"src","id":"07e5098f-53b9-39ad-ae37-8b146e34de19","metadata":{"label":"Landsat Shortwave Infrared (SWIR) 1","description":"Wavelength: 1.55-1.75 μm","histogram":null,"colorRamp":null,"classMap":null}}],"id":"1b52eb8e-f2c1-375c-bdf3-ffbe9e3c05da","metadata":null},{"apply":"-","args":[{"type":"src","id":"e9bab2e8-a014-3cb1-9171-e84f1f31267b","metadata":{"label":"Landsat Red","description":"Wavelength: 0.63-0.69 μm","histogram":null,"colorRamp":null,"classMap":null}},{"type":"src","id":"07e5098f-53b9-39ad-ae37-8b146e34de19","metadata":{"label":"Landsat Shortwave Infrared (SWIR) 1","description":"Wavelength: 1.55-1.75 μm","histogram":null,"colorRamp":null,"classMap":null}}],"id":"5fbef652-69a9-3bdd-8210-6251dd89b1dc","metadata":null}],"id":"50eb31a0-d6f1-34ac-a9e6-a3ce0ad5c4a8","metadata":{"label":"NIR over red, with SAC","description":"http://www.sciencedirect.com/science/article/pii/S0034425716304928","histogram":null,"colorRamp":null,"classMap":null}}'
         );
     """
-  ))
+    ))
 }

@@ -23,8 +23,11 @@ class PlatformEmailController {
                 this.platformBuffer = _.cloneDeep(this.platform);
                 this.platformBuffer.privateSettings = {emailPassword: ''};
                 this.platformBuffer.publicSettings.platformHost =
-                  this.platformBuffer.publicSettings.platformHost ||
-                  'app.rasterfoundry.com';
+                    this.platformBuffer.publicSettings.platformHost ||
+                    'app.rasterfoundry.com';
+                this.platformBuffer.publicSettings.emailSmtpEncryption =
+                    this.platformBuffer.publicSettings.emailSmtpEncryption ||
+                    'ssl';
             });
     }
 

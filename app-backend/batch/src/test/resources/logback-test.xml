@@ -1,18 +1,15 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-
-	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%-5level %logger{0}: %msg%n</pattern>
+      <pattern>[%thread] %-5level - %msg%n</pattern>
     </encoder>
   </appender>
 
-	<logger name="org.apache.http.wire" level="info" additivity="false">
-		<appender-ref ref="STDOUT" />
-	</logger>
+  <logger name="org.apache.http.wire" level="info" additivity="false">
+    <appender-ref ref="STDOUT" />
+  </logger>
 
-	<root level="debug">
-		<appender-ref ref="STDOUT" />
-	</root>
-
+  <root level="debug">
+    <appender-ref ref="STDOUT" />
+  </root>
 </configuration>

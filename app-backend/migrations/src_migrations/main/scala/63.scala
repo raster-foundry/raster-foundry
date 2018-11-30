@@ -1,8 +1,9 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M63 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(63)(List(
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(63)(
+    List(
 // Note:
 // The -> operator extracts the JSON value at a given key
 // The ->> operator extracts the JSON value at a given key *as a string*
@@ -12,7 +13,7 @@ object M63 {
 // However,
 // '{"a": null}'::jsonb->>'a'::TEXT::BOOLEAN will properly convert to an empty string and from
 // there to FALSE.
-    sqlu"""
+      sqlu"""
 UPDATE scenes_to_projects SET mosaic_definition = json_build_object(
     'redBand', mosaic_definition->'redBand',
     'greenBand', mosaic_definition->'greenBand',
@@ -78,5 +79,5 @@ UPDATE scenes_to_projects SET mosaic_definition = json_build_object(
     )
 )
     """
-  ))
+    ))
 }

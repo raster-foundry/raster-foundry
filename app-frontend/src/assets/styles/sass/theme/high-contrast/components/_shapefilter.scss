@@ -1,5 +1,7 @@
 .shapefilter-box {
-    background: $white;
+    background: $white !important;
+    padding: 12px 8px;
+    border: 1px solid;
     border-color: $shade-light;
     &:hover {
         background: $shade-light;

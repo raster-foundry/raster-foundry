@@ -1,4 +1,4 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 /**
@@ -8,8 +8,9 @@ import com.liyaos.forklift.slick.SqlMigration
   * which is why they're not configured here.
   */
 object M1 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(1)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(1)(
+    List(
+      sqlu"""
 CREATE TABLE organizations (
   id UUID PRIMARY KEY NOT NULL,
   created_at TIMESTAMP NOT NULL,
@@ -17,5 +18,5 @@ CREATE TABLE organizations (
   name VARCHAR(255) NOT NULL
 );
 """
-  ))
+    ))
 }

@@ -1,0 +1,92 @@
+form.add-permission-form {
+    background: rgba($gray-lightest, 0.2);
+    padding: 1em;
+}
+
+.permission-all-in-one {
+    display: flex;
+    margin-bottom: 1em;
+
+    select.subject-select {
+        flex: 0.5;
+    }
+
+    rf-search,
+    .combo-box {
+        margin-left: 1em;
+        flex: 1;
+        .form-group {
+            flex-direction: row !important;
+            input.form-control {
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+            }
+        }
+    }
+}
+.permission-message {
+    display: flex;
+    color: $gray-light;
+    align-items: center;
+    margin-bottom: 1em;
+    i {
+        margin-right: 0.5em;
+    }
+}
+.permission-button-row {
+    text-align: right;
+}
+
+.permission-list {
+    min-height: 200px;
+    .empty-state {
+        padding: 2em;
+        text-align: center;
+    }
+}
+.permission-item,
+rf-permission-item {
+    padding: 1em;
+    border-bottom: 1px solid $gray-lightest;
+    display: flex;
+    align-items: center;
+    subject,
+    .subject {
+        display: flex;
+        align-items: center;
+        flex-shrink: 1;
+        font-size: 1.5rem;
+        overflow: hidden;
+        .labels {
+            flex: 1;
+            flex-shrink: 1;
+            margin-left: 0.5em;
+            overflow: hidden;
+            > * {
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+            .subtitle {
+                opacity: 0.8;
+                font-size: 1.3rem;
+            }
+        }
+    }
+    .controls {
+        flex-shrink: 0;
+        display: flex;
+        white-space: nowrap;
+        select {
+            font-size: 1.3rem;
+            margin-right: 0.5em;
+            align-self: center;
+            height: 3rem;
+            padding: 3px 12px;
+        }
+        button {
+            align-self: center;
+            height: 3rem;
+        }
+    }
+}

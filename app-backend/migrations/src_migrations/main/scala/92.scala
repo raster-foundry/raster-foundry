@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M92 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(92)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(92)(
+    List(
+      sqlu"""
 -- RapidEye
 INSERT INTO datasources(
     id,
@@ -1108,5 +1109,5 @@ INSERT INTO datasources(
     ]'
 );
     """
-  ))
+    ))
 }

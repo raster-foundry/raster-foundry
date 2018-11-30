@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M90 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(90)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(90)(
+    List(
+      sqlu"""
     INSERT INTO feature_flags (id, key, active, name, description) VALUES
       (
         'd73087dd-5047-4d79-b82c-01a7feef9068',
@@ -20,5 +21,5 @@ object M90 {
         'Allow users to browse planet imagery'
       );
     """
-  ))
+    ))
 }

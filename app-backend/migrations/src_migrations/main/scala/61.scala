@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M61 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(61)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(61)(
+    List(
+      sqlu"""
 
 UPDATE tools set organization_id = 'dfac6307-b5ef-43f7-beda-b9f208bb7726';
 
@@ -196,5 +197,5 @@ update tools set definition = '{
 }', title = 'Local Subtraction' where title = 'Direction of Surface Change';
 
 """
-  ))
+    ))
 }

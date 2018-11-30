@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M10 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(10)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(10)(
+    List(
+      sqlu"""
 CREATE TABLE buckets (
   id UUID PRIMARY KEY NOT NULL,
   created_at TIMESTAMP NOT NULL,
@@ -25,5 +26,5 @@ CREATE TABLE scenes_to_buckets (
 );
 
 """
-  ))
+    ))
 }

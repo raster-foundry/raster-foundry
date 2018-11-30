@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M15 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(15)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(15)(
+    List(
+      sqlu"""
 ALTER TABLE scenes
     ADD COLUMN name VARCHAR(255);
 
@@ -15,5 +16,5 @@ ALTER TABLE scenes
 ALTER TABLE scenes
     ALTER COLUMN name SET NOT NULL;
 """
-  ))
+    ))
 }

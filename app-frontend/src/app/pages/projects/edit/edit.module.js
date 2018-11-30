@@ -1,3 +1,4 @@
+/* global BUILDCONFIG */
 import angular from 'angular';
 import {Map} from 'immutable';
 import ProjectActions from '_redux/actions/project-actions';
@@ -9,24 +10,11 @@ class ProjectsEditController {
         $log, $q, $state, $scope, modalService, $timeout, $ngRedux, $location,
         authService, projectService, projectEditService,
         mapService, mapUtilsService, layerService,
-        datasourceService, imageOverlayService, thumbnailService, sceneService
+        datasourceService, imageOverlayService, thumbnailService, sceneService,
+        platform, paginationService
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$q = $q;
-        this.$state = $state;
-        this.$scope = $scope;
-        this.$location = $location;
-        this.modalService = modalService;
-        this.authService = authService;
-        this.projectService = projectService;
-        this.projectEditService = projectEditService;
-        this.mapUtilsService = mapUtilsService;
-        this.layerService = layerService;
-        this.datasourceService = datasourceService;
-        this.imageOverlayService = imageOverlayService;
-        this.sceneService = sceneService;
-        this.thumbnailService = thumbnailService;
+        $scope.autoInject(this, arguments);
         this.getMap = () => mapService.getMap('edit');
 
         let unsubscribe = $ngRedux.connect(
@@ -41,6 +29,8 @@ class ProjectsEditController {
         this.mosaicLayer = new Map();
         this.sceneLayers = new Map();
         this.projectId = this.$state.params.projectid;
+        this.initialCenter = BUILDCONFIG.MAP_CENTER || [0, 0];
+        this.initialZoom = BUILDCONFIG.MAP_ZOOM || 2;
 
         if (!this.project) {
             if (this.projectId) {
@@ -56,10 +46,8 @@ class ProjectsEditController {
                         this.projectUpdateListeners.forEach((wait) => {
                             wait.resolve(project);
                         });
-                        this.getAndReorderSceneList();
-                        if (this.project.isAOIProject) {
-                            this.getPendingSceneList();
-                        }
+                        this.initColorComposites();
+                        this.layerFromProject();
                     },
                     () => {
                         this.loadingProject = false;
@@ -68,12 +56,11 @@ class ProjectsEditController {
             } else {
                 this.$state.go('projects.list');
             }
-        } else if (this.project.isAOIProject) {
-            this.getPendingSceneList();
         }
         this.resetAnnotations();
         if (this.projectId) {
             this.setProjectId(this.projectId);
+            this.setPermissionsTab();
         }
     }
 
@@ -85,16 +72,10 @@ class ProjectsEditController {
         }
     }
 
-    getAndReorderSceneList() {
-        this.projectService.getSceneOrder(this.projectId).then(
-            (res) => {
-                this.orderedSceneId = res.results;
-            },
-            () => {
-                this.$log.log('error getting ordered scene IDs');
-            }
-        ).finally(() => {
-            this.getSceneList();
+    setPermissionsTab() {
+        this.projectService.fetchProject(this.projectId).then(thisProject => {
+            this.projectOwnerId = thisProject.owner.id || thisProject.owner;
+            this.actingUserId = this.authService.user.id;
         });
     }
 
@@ -108,55 +89,6 @@ class ProjectsEditController {
         this.getMap().then(m => {
             this.mapUtilsService.fitMapToProject(m, this.project);
         });
-    }
-
-    getSceneList() {
-        this.sceneRequestState = {loading: true};
-
-        this.sceneListQuery = this.projectService.getAllProjectScenes(
-            {
-                projectId: this.projectId,
-                pending: false
-            }
-        ).then(
-            (allScenes) => {
-                this.addUningestedScenesToMap(allScenes.filter(
-                    (scene) => scene.statusFields.ingestStatus !== 'INGESTED'
-                ));
-                return this.projectService.getSceneOrder(this.projectId).then(
-                    (res) => {
-                        this.orderedSceneId = res.results;
-                        this.sceneList = _(
-                          this.orderedSceneId.map((id) => _.find(allScenes, {id}))
-                        ).uniqBy('id').compact().value();
-
-                        this.fetchDatasources().then(datasources => {
-                            this.bands = this.datasourceService.getUnifiedBands(datasources);
-                        });
-
-                        this.sceneLayers = this.sceneList.map(scene => ({
-                            id: scene.id,
-                            layer: this.layerService.layerFromScene(scene, this.projectId)
-                        })).reduce((sceneLayers, {id, layer}) => {
-                            return sceneLayers.set(id, layer);
-                        }, new Map());
-
-                        this.layerFromProject();
-                        this.initColorComposites();
-                    },
-                    (err) => {
-                        this.$log.error('Error while adding scenes to projects', err);
-                    }
-                );
-            },
-            (error) => {
-                this.sceneRequestState.errorMsg = error;
-            }
-        ).finally(() => {
-            this.sceneRequestState.loading = false;
-        });
-
-        return this.sceneListQuery;
     }
 
     addUningestedScenesToMap(scenes) {
@@ -190,19 +122,6 @@ class ProjectsEditController {
                 });
             });
         });
-    }
-
-    getPendingSceneList() {
-        if (!this.pendingSceneRequest) {
-            this.pendingSceneRequest = this.projectService.getAllProjectScenes({
-                projectId: this.projectId,
-                pending: true
-            });
-            this.pendingSceneRequest.then(pendingScenes => {
-                this.pendingSceneList = _(pendingScenes).uniqBy('id').compact().value();
-            });
-        }
-        return this.pendingSceneRequest;
     }
 
     layerFromProject() {
@@ -244,7 +163,7 @@ class ProjectsEditController {
     }
 
     initColorComposites() {
-        this.fetchUnifiedComposites(true).then(
+        return this.fetchUnifiedComposites(true).then(
             composites => {
                 this.unifiedComposites = composites;
             }
@@ -253,9 +172,11 @@ class ProjectsEditController {
 
     fetchDatasources(force = false) {
         if (!this.datasourceRequest || force) {
-            this.datasourceRequest = this.$q.all(
-                this.sceneList.map(s => this.sceneService.datasource(s))
-            );
+            this.datasourceRequest = this.projectService.getProjectDatasources(this.projectId)
+                .then((datasources) => {
+                    this.bands = this.datasourceService.getUnifiedBands(datasources);
+                    return datasources;
+                });
         }
         return this.datasourceRequest;
     }
@@ -282,12 +203,13 @@ class ProjectsEditController {
 
     openShareModal() {
         this.modalService.open({
-            component: 'permissionsModal',
+            component: 'rfPermissionModal',
             resolve: {
                 object: () => this.project,
                 permissionsBase: () => 'projects',
+                objectType: () => 'PROJECT',
                 objectName: () => this.project.name,
-                extraActions: () => ['ANNOTATE']
+                platform: () => this.platform
             }
         });
     }

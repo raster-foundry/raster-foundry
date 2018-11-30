@@ -6,7 +6,7 @@
     "style": {
       "layers": [
         {
-          "layerId": "8436f7e9-b7f7-4d4f-bda8-76b32c356cff",
+          "sceneId": "8436f7e9-b7f7-4d4f-bda8-76b32c356cff",
           "ingestLocation": "s3://test/",
           "colorCorrections": {
             "redBand": 0,
@@ -47,7 +47,8 @@
             "autoBalance": {
               "enabled": false
             }
-          }
+          },
+          "sceneType": "AVRO"
         }
       ],
       "mask": {
@@ -83,7 +84,6 @@
   },
   "output": {
     "source": "s3://test/",
-    "stitch": false,
     "render": {
       "operation": "id",
       "bands": [

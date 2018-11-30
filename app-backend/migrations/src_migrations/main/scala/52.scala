@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M52 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(52)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(52)(
+    List(
+      sqlu"""
     INSERT INTO feature_flags (id, key, active, name, description) VALUES
       (
         '68144a5a-bf71-4925-b2f6-94893333c88d',
@@ -41,5 +42,5 @@ object M52 {
         'Enable UI elements providing access to Tools functionality'
       );
     """
-  ))
+    ))
 }

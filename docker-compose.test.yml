@@ -12,8 +12,14 @@ services:
       context: ./nginx
       dockerfile: Dockerfile.tiler
 
+  nginx-backsplash:
+    image: raster-foundry-nginx-backsplash:${GIT_COMMIT:-latest}
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.backsplash
+
   app-frontend:
-    image: kkarczmarczyk/node-yarn:6.9-wheezy
+    image: node:6
     working_dir: /opt/raster-foundry/app-frontend/
     volumes:
       - ./app-frontend/.babelrc:/opt/raster-foundry/app-frontend/.babelrc
@@ -42,11 +48,19 @@ services:
       context: ./app-backend/tile
       dockerfile: Dockerfile
 
+  backsplash:
+    image: raster-foundry-backsplash:${GIT_COMMIT:-latest}
+    build:
+      context: ./app-backend/backsplash
+      dockerfile: Dockerfile
+
   app-migrations:
     image: raster-foundry-app-migrations:${GIT_COMMIT:-latest}
     build:
       context: ./app-backend
       dockerfile: Dockerfile
+    volumes:
+      - $HOME/.coursier-cache:/root/.coursier-cache
 
   batch:
     image: raster-foundry-batch:${GIT_COMMIT:-latest}
@@ -55,3 +69,21 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
+
+  build:
+    image: raster-foundry-build:${GIT_COMMIT:-latest}
+    build:
+      context: ./app-backend
+      dockerfile: Dockerfile.build
+    env_file: .env
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./scratch/:/opt/raster-foundry/scratch/
+      - ./.git:/opt/raster-foundry/.git
+      - ./.bintray:/root/.bintray
+      - $HOME/.coursier:/root/.coursier
+      - $HOME/.sbt:/root/.sbt
+      - $HOME/.aws:/root/.aws:ro
+      - $HOME/.gnupg:/root/.gnupg:ro
+    working_dir: /opt/raster-foundry/app-backend/
+    entrypoint: ./sbt

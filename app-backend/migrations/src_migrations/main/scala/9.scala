@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M9 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(9)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(9)(
+    List(
+      sqlu"""
 CREATE TYPE visibility AS ENUM ('PUBLIC', 'ORGANIZATION', 'PRIVATE');
 
 CREATE TYPE job_status AS ENUM ('UPLOADING', 'SUCCESS', 'FAILURE', 'PARTIALFAILURE', 'QUEUED', 'PROCESSING');
@@ -28,6 +29,5 @@ CREATE TABLE scenes (
   status job_status NOT NULL
 )
     """
-
-  ))
+    ))
 }

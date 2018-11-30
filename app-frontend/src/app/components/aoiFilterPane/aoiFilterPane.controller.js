@@ -5,7 +5,7 @@ const sunAzimuthRange = {min: 0, max: 360};
 export default class AOIFilterPaneController {
     constructor(
         $scope, $rootScope, $timeout, modalService,
-        datasourceService, authService, moment
+        datasourceService, authService, moment, RasterFoundryRepository
     ) {
         'ngInject';
         this.$scope = $scope;
@@ -15,11 +15,12 @@ export default class AOIFilterPaneController {
         this.datasourceService = datasourceService;
         this.authService = authService;
         this.Moment = moment;
+        this.RasterFoundryRepository = RasterFoundryRepository;
     }
 
     $onInit() {
         this.toggleDrag = {toggle: false, enabled: false};
-        this.initSourceFilters();
+        this.initDatasourceFilters();
     }
 
     $onChanges(changes) {
@@ -35,6 +36,10 @@ export default class AOIFilterPaneController {
             }
             this.setFilters(changes.filters.currentValue);
         }
+    }
+
+    initDatasourceFilters() {
+        this.datasourceFilter = this.RasterFoundryRepository.getFilters()[0];
     }
 
     initFilterOptions() {
@@ -146,23 +151,6 @@ export default class AOIFilterPaneController {
         this.onCloseFilterPane({showFilterPane: false});
     }
 
-    initSourceFilters() {
-        this.datasourceService.query().then(d => {
-            this.datasources = d.results;
-            if (this.filters && this.filters.sceneParams &&
-                this.filters.sceneParams.datasource && this.filters.sceneParams.datasource[0]) {
-                let matchedSource = this.datasources.find((ds) => {
-                    return ds.id === this.filters.sceneParams.datasource[0];
-                });
-                if (matchedSource) {
-                    this.selectedDatasource = matchedSource.name;
-                } else {
-                    this.selectedDatasource = '';
-                }
-            }
-        });
-    }
-
     resetAllFilters() {
         this.filterOptions.cloudCover.minModel = cloudCoverRange.min;
         this.filterOptions.cloudCover.maxModel = cloudCoverRange.max;
@@ -173,11 +161,10 @@ export default class AOIFilterPaneController {
         this.filterOptions.sunAzimuth.minModel = sunAzimuthRange.min;
         this.filterOptions.sunAzimuth.maxModel = sunAzimuthRange.max;
 
-        this.selectedDatasource = '';
+        this.initDatasourceFilters();
         this.onFilterChange({changes: {
             datasource: [],
             minCloudCover: null,
-            maxCloudCover: null,
             minSunElevation: null,
             maxSunElevation: null,
             minSunAzimuth: null,
@@ -185,12 +172,7 @@ export default class AOIFilterPaneController {
         }});
     }
 
-    toggleSourceFilter(source) {
-        this.onFilterChange({changes: {datasource: [source.id]}});
-    }
-
-    clearDatasourceFilter() {
-        this.selectedDatasource = '';
-        this.onFilterChange({changes: {datasource: []}});
+    onDatasourceFilterChange(filter, filterParams) {
+        this.onFilterChange({changes: {datasource: [filterParams.datasource]}});
     }
 }

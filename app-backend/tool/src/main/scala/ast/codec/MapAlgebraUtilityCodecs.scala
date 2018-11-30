@@ -1,6 +1,6 @@
-package com.azavea.rf.tool.ast.codec
+package com.rasterfoundry.tool.ast.codec
 
-import com.azavea.rf.tool.ast._
+import com.rasterfoundry.tool.ast._
 
 import geotrellis.raster.io._
 import geotrellis.raster.histogram._
@@ -31,7 +31,8 @@ trait MapAlgebraUtilityCodecs {
   }
 
   implicit val decodeKeyUUID: KeyDecoder[UUID] = new KeyDecoder[UUID] {
-    final def apply(key: String): Option[UUID] = Try(UUID.fromString(key)).toOption
+    final def apply(key: String): Option[UUID] =
+      Try(UUID.fromString(key)).toOption
   }
   implicit val encodeKeyUUID: KeyEncoder[UUID] = new KeyEncoder[UUID] {
     final def apply(key: UUID): String = key.toString
@@ -39,50 +40,58 @@ trait MapAlgebraUtilityCodecs {
 
   implicit lazy val classBoundaryDecoder: Decoder[ClassBoundaryType] =
     Decoder[String].map {
-      case "lessThan" => LessThan
-      case "lessThanOrEqualTo" => LessThanOrEqualTo
-      case "exact" => Exact
+      case "lessThan"             => LessThan
+      case "lessThanOrEqualTo"    => LessThanOrEqualTo
+      case "exact"                => Exact
       case "greaterThanOrEqualTo" => GreaterThanOrEqualTo
-      case "greaterThan" => GreaterThan
+      case "greaterThan"          => GreaterThan
       case unrecognized =>
-        throw new InvalidParameterException(s"'$unrecognized' is not a recognized ClassBoundaryType")
+        throw new InvalidParameterException(
+          s"'$unrecognized' is not a recognized ClassBoundaryType")
     }
 
   implicit lazy val classBoundaryEncoder: Encoder[ClassBoundaryType] =
     Encoder.encodeString.contramap[ClassBoundaryType]({ cbType =>
       cbType match {
-        case LessThan => "lessThan"
-        case LessThanOrEqualTo => "lessThanOrEqualTo"
-        case Exact => "exact"
+        case LessThan             => "lessThan"
+        case LessThanOrEqualTo    => "lessThanOrEqualTo"
+        case Exact                => "exact"
         case GreaterThanOrEqualTo => "greaterThanOrEqualTo"
-        case GreaterThan => "greaterThan"
+        case GreaterThan          => "greaterThan"
         case unrecognized =>
-          throw new InvalidParameterException(s"'$unrecognized' is not a recognized ClassBoundaryType")
+          throw new InvalidParameterException(
+            s"'$unrecognized' is not a recognized ClassBoundaryType")
       }
     })
 
-  implicit val neighborhoodDecoder: Decoder[Neighborhood] = Decoder.instance[Neighborhood] { n =>
-    n._type match {
-      case Some("square") => n.as[Square]
-      case Some("circle") => n.as[Circle]
-      case Some("nesw") => n.as[Nesw]
-      case Some("wedge") => n.as[Wedge]
-      case Some("annulus") => n.as[Annulus]
-      case unrecognized => Left(DecodingFailure(s"Unrecognized neighborhood: $unrecognized", n.history))
+  implicit val neighborhoodDecoder: Decoder[Neighborhood] =
+    Decoder.instance[Neighborhood] { n =>
+      n._type match {
+        case Some("square")  => n.as[Square]
+        case Some("circle")  => n.as[Circle]
+        case Some("nesw")    => n.as[Nesw]
+        case Some("wedge")   => n.as[Wedge]
+        case Some("annulus") => n.as[Annulus]
+        case unrecognized =>
+          Left(
+            DecodingFailure(s"Unrecognized neighborhood: $unrecognized",
+                            n.history))
+      }
     }
-  }
 
-  implicit val neighborhoodEncoder: Encoder[Neighborhood] = new Encoder[Neighborhood] {
-    final def apply(n: Neighborhood): Json = n match {
-      case square: Square => square.asJson
-      case circle: Circle => circle.asJson
-      case nesw: Nesw => nesw.asJson
-      case wedge: Wedge => wedge.asJson
-      case annulus: Annulus => annulus.asJson
-      case unrecognized =>
-        throw new InvalidParameterException(s"Unrecognized neighborhood: $unrecognized")
+  implicit val neighborhoodEncoder: Encoder[Neighborhood] =
+    new Encoder[Neighborhood] {
+      final def apply(n: Neighborhood): Json = n match {
+        case square: Square   => square.asJson
+        case circle: Circle   => circle.asJson
+        case nesw: Nesw       => nesw.asJson
+        case wedge: Wedge     => wedge.asJson
+        case annulus: Annulus => annulus.asJson
+        case unrecognized =>
+          throw new InvalidParameterException(
+            s"Unrecognized neighborhood: $unrecognized")
+      }
     }
-  }
 
   implicit val squareNeighborhoodDecoder: Decoder[Square] =
     Decoder.forProduct1("extent")(Square.apply)
@@ -102,12 +111,14 @@ trait MapAlgebraUtilityCodecs {
   implicit val wedgeNeighborhoodDecoder: Decoder[Wedge] =
     Decoder.forProduct3("radius", "startAngle", "endAngle")(Wedge.apply)
   implicit val wedgeNeighborhoodEncoder: Encoder[Wedge] =
-    Encoder.forProduct4("radius", "startAngle", "endAngle", "type")(op => (op.radius, op.startAngle, op.endAngle, "wedge"))
+    Encoder.forProduct4("radius", "startAngle", "endAngle", "type")(op =>
+      (op.radius, op.startAngle, op.endAngle, "wedge"))
 
   implicit val annulusNeighborhoodDecoder: Decoder[Annulus] =
     Decoder.forProduct2("innerRadius", "outerRadius")(Annulus.apply)
   implicit val annulusNeighborhoodEncoder: Encoder[Annulus] =
-    Encoder.forProduct3("innerRadius", "outerRadius", "type")(op => (op.innerRadius, op.outerRadius, "annulus"))
+    Encoder.forProduct3("innerRadius", "outerRadius", "type")(op =>
+      (op.innerRadius, op.outerRadius, "annulus"))
 
   implicit val colorRampDecoder: Decoder[ColorRamp] =
     Decoder[Vector[Int]].map({ ColorRamp(_) })
@@ -115,21 +126,24 @@ trait MapAlgebraUtilityCodecs {
     final def apply(cRamp: ColorRamp): Json = cRamp.colors.toArray.asJson
   }
 
-  implicit val histogramDecoder: Decoder[Histogram[Double]] = Decoder[Json].map { js =>
-    js.noSpaces.parseJson.convertTo[Histogram[Double]]
-  }
-  implicit val histogramEncoder: Encoder[Histogram[Double]] = new Encoder[Histogram[Double]] {
-    final def apply(hist: Histogram[Double]): Json = hist.toJson.asJson
-  }
+  implicit val histogramDecoder: Decoder[Histogram[Double]] =
+    Decoder[Json].map { js =>
+      js.noSpaces.parseJson.convertTo[Histogram[Double]]
+    }
+  implicit val histogramEncoder: Encoder[Histogram[Double]] =
+    new Encoder[Histogram[Double]] {
+      final def apply(hist: Histogram[Double]): Json = hist.toJson.asJson
+    }
 
   implicit val statsDecoder: Decoder[Statistics[Double]] = deriveDecoder
   implicit val statsEncoder: Encoder[Statistics[Double]] = deriveEncoder
 
   implicit val sprayJsonEncoder: Encoder[JsValue] = new Encoder[JsValue] {
-    final def apply(jsvalue: JsValue): Json = parse(jsvalue.compactPrint) match {
-      case Right(success) => success
-      case Left(fail) => throw fail
-    }
+    final def apply(jsvalue: JsValue): Json =
+      parse(jsvalue.compactPrint) match {
+        case Right(success) => success
+        case Left(fail)     => throw fail
+      }
   }
 
   val defaultClassMapDecoder: Decoder[ClassMap] = deriveDecoder[ClassMap]
@@ -138,11 +152,12 @@ trait MapAlgebraUtilityCodecs {
       for {
         hexes <- c.downField("classifications").as[Map[Double, String]]
       } yield {
-        new ClassMap(hexes.mapValues(new java.math.BigInteger(_, 16).intValue()))
+        new ClassMap(
+          hexes.mapValues(new java.math.BigInteger(_, 16).intValue()))
       }
     }
   }
-  implicit val classMapDecoder: Decoder[ClassMap] = defaultClassMapDecoder or hexClassMapDecoder
+  implicit val classMapDecoder
+    : Decoder[ClassMap] = defaultClassMapDecoder or hexClassMapDecoder
   implicit val classMapEncoder: Encoder[ClassMap] = deriveEncoder[ClassMap]
 }
-

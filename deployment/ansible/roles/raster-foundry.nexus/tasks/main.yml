@@ -1,0 +1,42 @@
+---
+- name: Install PyYAML
+  pip: name=pyyaml version={{ pyyaml_version }}
+
+- name: Create directory for persistant Nexus data
+  file: name=/opt/nexus-data state=directory
+        mode=755 owner=200 group=200
+        recurse=true
+
+- name: Add Nexus Nginx config
+  template: src=nexus.conf.j2
+            dest=/etc/nginx/sites-available/nexus.conf
+  notify:
+    - Restart Nginx
+
+- name: Enable Nexus Nginx config
+  file: src=/etc/nginx/sites-available/nexus.conf
+        dest=/etc/nginx/sites-enabled/nexus
+        state=link
+  notify:
+    - Restart Nginx
+
+- name: Configure Nexus Docker Compose service
+  docker_service:
+    build: yes
+    project_name: nexus
+    state: present
+    definition: 
+      version: "3"
+      services:
+        nexus-server:
+          image: sonatype/nexus3:3.13.0
+          ports:
+            - "{{ nexus_http_port }}:8081"
+          volumes:
+            - "/opt/nexus-data:/nexus-data"
+          restart: on-failure
+          logging:
+            driver: syslog
+            options:
+              tag: nexus-server
+

@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M33 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(33)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(33)(
+    List(
+      sqlu"""
         INSERT INTO tools (
           id, created_at, modified_at, created_by, modified_by, organization_id,
           title, description, requirements, license, visibility, compatible_data_sources,
@@ -119,5 +120,5 @@ object M33 {
           'a115269a-69b4-49c6-bbcf-289f765be969'
         );
     """
-  ))
+    ))
 }

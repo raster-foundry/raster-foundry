@@ -4,7 +4,12 @@ node {
   try {
     // Checkout the proper revision into the workspace.
     stage('checkout') {
-      checkout scm
+      checkout([
+        $class: 'GitSCM',
+        branches: scm.branches,
+        extensions: scm.extensions + [[$class: 'CloneOption', noTags: false, reference: '', shallow: false]],
+        userRemoteConfigs: scm.userRemoteConfigs
+      ])
     }
 
     env.AWS_DEFAULT_REGION = 'us-east-1'
@@ -23,7 +28,7 @@ node {
 
     env.RF_SETTINGS_BUCKET = 'rasterfoundry-staging-config-us-east-1'
 
-    if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME =~ /test\//) {
+    if (env.BRANCH_NAME == 'develop' || env.BRANCH_NAME =~ /test\// || env.BRANCH_NAME =~ /hotfix\// ) {
         env.RF_DOCS_BUCKET = 'rasterfoundry-staging-docs-site-us-east-1'
         env.RF_DEPLOYMENT_BRANCH = 'develop'
         env.RF_DEPLOYMENT_ENVIRONMENT = "Staging"
@@ -36,7 +41,19 @@ node {
         // Jenkins. In includes the Amazon ECR registry endpoint.
         withCredentials([[$class: 'StringBinding',
                           credentialsId: 'AWS_ECR_ENDPOINT',
-                          variable: 'AWS_ECR_ENDPOINT']]) {
+                          variable: 'AWS_ECR_ENDPOINT'], 
+                          [$class: 'StringBinding',
+                          credentialsId: 'SONATYPE_USERNAME',
+                          variable: 'SONATYPE_USERNAME'],
+                          [$class: 'StringBinding',
+                          credentialsId: 'SONATYPE_PASSWORD',
+                          variable: 'SONATYPE_PASSWORD'],
+                          [$class: 'StringBinding',
+                          credentialsId: 'PGP_HEX_KEY',
+                          variable: 'PGP_HEX_KEY'],
+                          [$class: 'StringBinding',
+                          credentialsId: 'PGP_PASSPHRASE',
+                          variable: 'PGP_PASSPHRASE']]) {
           wrap([$class: 'AnsiColorBuildWrapper']) {
             sh './scripts/cipublish'
           }
@@ -64,7 +81,11 @@ node {
         dir('raster-foundry-deployment') {
           wrap([$class: 'AnsiColorBuildWrapper']) {
             sh 'docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm terraform ./scripts/infra plan'
-            sh 'docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm terraform ./scripts/infra apply'
+            withCredentials([[$class: 'StringBinding',
+                              credentialsId: 'ROLLBAR_ACCESS_TOKEN',
+                              variable: 'ROLLBAR_ACCESS_TOKEN']]) {
+              sh 'docker-compose -f docker-compose.yml -f docker-compose.ci.yml run --rm terraform ./scripts/infra apply'
+            }
           }
         }
       }

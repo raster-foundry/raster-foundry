@@ -15,6 +15,9 @@
           <div class="controls">
               <button ng-click="$ctrl.onColorRemove($index)" ng-disabled="!$ctrl.shouldAllowDelete()"><i class="icon-trash"></i></button>
               <button ng-click="$ctrl.onColorAdd($index, item.break)" ng-disabled="!$ctrl.isNextNumberAvailable(item.break)"><i class="icon-plus"></i></button>
+              <button ng-click="$ctrl.toggleMaskColor($index, item.break)">
+                  <i class="icon-eye"></i>
+              </button>
           </div>
         </div>
     </li>

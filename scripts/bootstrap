@@ -1,45 +1,73 @@
 #!/bin/bash
-set -eu
 
-DIR="$(dirname "$0")"
+set -e
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
+
+# fail without RF_SETTINGS_BUCKET
+set -u
+
+DIR="$(dirname "${0}")/../"
 
 function usage() {
     echo -n \
 "Usage: $(basename "$0")
 
-Builds/Pulls containers for project
+Bootstrap development environment.
 
-Example: ./scripts/bootstrap
+--containers builds containers / pulls postgres and memcached
+--env        pulls .env file from S3
+--sbtopts    pulls .sbtopts from S3
 "
 }
 
+function build_containers() {
+    echo "Building containers / pulling postgres and memcached"
+    pushd "${DIR}"
 
-function main() {
-
-    echo "Pulling down development environment..."
-    pushd "${DIR}/.."
-    # Download environment configuration from S3
-    aws s3 cp "s3://${RF_SETTINGS_BUCKET}/.env" ".env"
-    popd
-
-    echo "Building/Pulling containers..."
     docker-compose \
-        -f "${DIR}/../docker-compose.yml" \
+        -f "${DIR}/docker-compose.yml" \
         build
     docker-compose \
-        -f "${DIR}/../docker-compose.yml" \
-        pull postgres memcached
+        -f "${DIR}/docker-compose.yml" \
+        pull postgres memcached   
+
+    popd
 }
 
+function pull_env() {
+    echo "Pulling .env from s3://${RF_SETTINGS_BUCKET}"
+    pushd "${DIR}"
 
-if [ "${BASH_SOURCE[0]}" = "${0}" ]
-then
+    aws s3 cp "s3://${RF_SETTINGS_BUCKET}/.env" ".env"
 
-    if [ "${1:-}" = "--help" ]
-    then
+    popd
+}
+
+function pull_sbtopts() {
+    echo "Pulling .sbtopts from s3://${RF_SETTINGS_BUCKET}"
+    pushd "${DIR}"
+
+    aws s3 cp "s3://${RF_SETTINGS_BUCKET}/.sbtopts" - >> app-backend/.sbtopts
+    sort app-backend/.sbtopts | uniq > cleaned_sbtopts
+    mv cleaned_sbtopts app-backend/.sbtopts     
+
+    popd
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
         usage
+    elif [ "${1:-}" = "--containers" ]; then
+        build_containers
+    elif [ "${1:-}" = "--env" ]; then
+        pull_env
+    elif [ "${1:-}" = "--sbtopts" ]; then
+        pull_sbtopts
     else
-        main
+        pull_env
+        build_containers
     fi
-    exit
 fi

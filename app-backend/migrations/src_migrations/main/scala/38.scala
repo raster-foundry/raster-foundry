@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M38 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(38)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(38)(
+    List(
+      sqlu"""
 INSERT INTO datasources (
   id, created_at, created_by, modified_at, modified_by, organization_id,
   name, visibility, color_correction, extras
@@ -34,5 +35,5 @@ ALTER TABLE scenes ADD FOREIGN KEY (datasource_id) REFERENCES
 ALTER TABLE scenes DROP COLUMN datasource;
 ALTER TABLE scenes RENAME COLUMN datasource_id TO datasource;
 """
-  ))
+    ))
 }

@@ -9,7 +9,9 @@ import {
     ANNOTATIONS_CLEAR, ANNOTATIONS_EDIT, ANNOTATIONS_DELETE,
     ANNOTATIONS_BULK_CREATE,
     ANNOTATIONS_TRANSFORM_DRAWLAYER,
+    ANNOTATIONS_UPLOAD_SHAPEFILE,
     ANNOTATIONS_IMPORT_SHAPEFILE,
+    ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE,
 
     fetchAnnotations, updateAnnotation, fetchLabels
 } from '_redux/actions/annotation-actions';
@@ -26,6 +28,7 @@ export const annotationReducer = typeToReducer({
             annotations: new OrderedMap(), editingAnnotation: null,
             fetchingAnnotations: false, fetchingAnnotationsError: null,
             sidebarDisabled: false, annotationTemplate: null,
+            creatingAnnotations: false, creatingAnnotationsError: false,
 
             labels: [], filter: 'All'
         });
@@ -45,13 +48,37 @@ export const annotationReducer = typeToReducer({
     // action.payload should contain the returned annotations (in the fulfilled case)
     // not clear what comes back in pending
     // error body in rejected.action.payload
-    [ANNOTATIONS_IMPORT_SHAPEFILE]: {
+    [ANNOTATIONS_UPLOAD_SHAPEFILE]: {
         PENDING: (state) => {
-            return Object.assign({}, state, {fetchingAnnotations: true});
+            return Object.assign({}, state, {
+                fetchingAnnotations: true,
+                uploadAnnotationsError: null
+            });
         },
         REJECTED: (state, action) => {
             return Object.assign(
-                {}, state, {fetchingAnnotationsError: action.payload}
+                {}, state, {uploadAnnotationsError: action.payload.response.data}
+            );
+        },
+        FULFILLED: (state, action) => {
+            let annotationShapefileProps = action.payload.data;
+            return Object.assign({}, state, {
+                annotationShapefileProps,
+                fetchingAnnotations: false,
+                uploadAnnotationsError: null
+            });
+        }
+    },
+    [ANNOTATIONS_IMPORT_SHAPEFILE]: {
+        PENDING: (state) => {
+            return Object.assign({}, state, {
+                fetchingAnnotations: true,
+                uploadAnnotationsError: null
+            });
+        },
+        REJECTED: (state, action) => {
+            return Object.assign(
+                {}, state, {uploadAnnotationsError: action.payload.response.data}
             );
         },
         FULFILLED: (state, action) => {
@@ -60,8 +87,16 @@ export const annotationReducer = typeToReducer({
             newAnnotations.forEach(annotation => {
                 annotations = annotations.set(annotation.id, annotation);
             });
-            return Object.assign({}, state, { annotations, fetchingAnnotations: false });
+            return Object.assign({}, state, {
+                annotations,
+                fetchingAnnotations: false,
+                annotationShapefileProps: [],
+                uploadAnnotationsError: null
+            });
         }
+    },
+    [ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE]: (state) => {
+        return Object.assign({}, state, {annotationShapefileProps: []});
     },
     [ANNOTATIONS_FETCH]: {
         PENDING: (state) => {
@@ -111,12 +146,19 @@ export const annotationReducer = typeToReducer({
     },
     [ANNOTATIONS_CREATE]: {
         PENDING: (state) => {
-            return state;
+            return Object.assign({}, state, {
+                creatingAnnotations: true,
+                creatingAnnotationsError: false
+            });
         },
         REJECTED: (state, action) => {
             // eslint-disable-next-line
             console.error('Error creating annotations', action.payload);
-            return state;
+
+            return Object.assign({}, state, {
+                creatingAnnotations: false,
+                creatingAnnotationsError: true
+            });
         },
         FULFILLED: (state, action) => {
             let newAnnotations = action.payload.data.features;
@@ -130,13 +172,16 @@ export const annotationReducer = typeToReducer({
             if (newAnnotations.length === 1 && action.meta.edit) {
                 action.asyncDispatch({
                     type: `${ANNOTATIONS_EDIT}_START`,
-                    payload: newAnnotations[0].id
+                    payload: newAnnotations[0].id,
+                    meta: action.meta
                 });
             }
             return Object.assign(
                 {},
                 state,
                 {
+                    creatingAnnotations: false,
+                    creatingAnnotationsError: false,
                     annotations,
                     labels: labels.toArray()
                 }
@@ -216,7 +261,8 @@ export const annotationReducer = typeToReducer({
                 type: `${PROJECT_EDIT_LAYER}_START`,
                 payload: {
                     geometry: annotation.geometry,
-                    options: {}
+                    options: {},
+                    meta: action.meta
                 }
             });
 

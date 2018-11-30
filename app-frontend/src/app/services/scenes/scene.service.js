@@ -70,7 +70,6 @@ export default (app) => {
                     return this.Scene.create({
                         id: sceneId,
                         organizationId: user.organizationId,
-                        ingestSizeBytes: 0,
                         visibility: 'PRIVATE',
                         tags: scene.tags || [],
                         datasource: datasource.id,

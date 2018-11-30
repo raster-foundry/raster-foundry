@@ -1,11 +1,9 @@
-package com.azavea.rf.tile
+package com.rasterfoundry.tile
 
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{Matchers, WordSpec}
 
-class AuthSpec extends WordSpec
-    with Matchers
-    with ScalatestRouteTest {
+class AuthSpec extends WordSpec with Matchers with ScalatestRouteTest {
 
   val router = new Router()
 

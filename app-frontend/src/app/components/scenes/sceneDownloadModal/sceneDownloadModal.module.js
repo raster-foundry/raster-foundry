@@ -13,15 +13,21 @@ const SceneDownloadModalComponent = {
 };
 
 class SceneDownloadModalController {
-    constructor(sceneService) {
+    constructor(sceneService, $timeout) {
         'ngInject';
         this.sceneService = sceneService;
+        this.$timeout = $timeout;
     }
 
     $onInit() {
         this.downloads = [];
         this.isLoading = false;
-        if (this.resolve.scene) {
+        this.rejectionMessage = null;
+        // Sentinel-2 scenes can't be downloaded unless they've been added to a project --
+        // see https://github.com/raster-foundry/raster-foundry/issues/3989
+        let datasourceIngestCheck = this.resolve.scene.datasource.name !== 'Sentinel-2' ||
+            this.resolve.scene.sceneType === 'COG' && this.resolve.scene.ingestLocation;
+        if (this.resolve.scene && datasourceIngestCheck) {
             const scene = this.resolve.scene;
             this.isLoading = true;
             this.sceneService.getDownloadableImages(scene).then(images => {
@@ -40,6 +46,21 @@ class SceneDownloadModalController {
 
                 this.isLoading = false;
             });
+        } else if (this.resolve.scene.datasource.name === 'Sentinel-2') {
+            this.rejectionMessage =
+                'This scene can only be downloaded after it is transformed into a ' +
+                'Cloud-Optimized GeoTIFF (COG). ' +
+                'To transform this scene into a COG, add it to a project ' +
+                '(you can always remove it later).';
+        }
+    }
+
+    onCopyClick(e, url, type) {
+        if (url && url.length) {
+            this.copyType = type;
+            this.$timeout(() => {
+                delete this.copyType;
+            }, 1000);
         }
     }
 }

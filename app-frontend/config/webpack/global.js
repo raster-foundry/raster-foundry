@@ -20,6 +20,7 @@ const HERE_APP_ID = 'v88MqS5fQgxuHyIWJYX7';
 const HERE_APP_CODE = '5pn07ENomTHOap0u7nQSFA';
 
 const INTERCOM_APP_ID = '';
+const GOOGLE_TAG_ID = 'GTM-54XHDBP';
 
 const basemaps = JSON.stringify({
     layers: {
@@ -282,6 +283,7 @@ module.exports = function (_path) {
                 filename: 'index.html',
                 template: path.join(_path, 'src', 'tpl-index.html'),
                 heapLoad: DEVELOPMENT ? '2743344218' : '3505855839',
+                gtagId: GOOGLE_TAG_ID,
                 development: DEVELOPMENT,
                 APP_NAME: 'Raster Foundry'
             }),
@@ -298,7 +300,9 @@ module.exports = function (_path) {
                     LOGOFILE: JSON.stringify('raster-foundry-logo.svg'),
                     LOGOURL: JSON.stringify(false),
                     FAVICON_DIR: JSON.stringify('/favicon'),
-                    FEED_SOURCE: JSON.stringify('https://blog.rasterfoundry.com/latest?format=json')
+                    FEED_SOURCE: JSON.stringify('https://blog.rasterfoundry.com/latest?format=json'),
+                    MAP_CENTER: JSON.stringify([-6.8, 39.2]),
+                    MAP_ZOOM: 5
                 },
                 'HELPCONFIG': {
                     API_DOCS_URL: JSON.stringify('https://docs.rasterfoundry.com/'),

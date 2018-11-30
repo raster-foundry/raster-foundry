@@ -1,13 +1,12 @@
-package com.azavea.rf.tool.ast.codec
+package com.rasterfoundry.tool.ast.codec
 
 import cats.syntax.either._
-import com.azavea.rf.tool.Generators._
-import com.azavea.rf.tool.ast._
+import com.rasterfoundry.tool.Generators._
+import com.rasterfoundry.tool.ast._
 import io.circe.syntax._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop._
-
 
 class MapAlgebraASTCodecSpec extends PropSpec with Checkers {
   property("bijective serialization") {

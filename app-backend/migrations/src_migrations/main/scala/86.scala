@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M86 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(86)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(86)(
+    List(
+      sqlu"""
       CREATE TYPE annotation_quality AS ENUM('YES', 'NO', 'MISS', 'UNSURE');
 
       CREATE TABLE annotations (
@@ -29,5 +30,5 @@ object M86 {
       -- Add a generic geometry column named 'geometry' in 3857 with 2 dimensions
       SELECT AddGeometryColumn('annotations', 'geometry', 3857, 'GEOMETRY', 2);
     """
-  ))
+    ))
 }

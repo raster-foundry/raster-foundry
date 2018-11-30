@@ -1,10 +1,10 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.sql.Timestamp
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
 import doobie._
 import doobie.implicits._
 import cats._
@@ -21,22 +21,30 @@ import io.circe._
 import io.circe.syntax._
 import java.util.UUID
 
-
 /** We only need to test inserting a single image and listing images because inserting
   *  many is tested in inserting a scene from a Scene.Create
   */
-class ImageDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
+class ImageDaoSpec
+    extends FunSuite
+    with Matchers
+    with Checkers
+    with DBTestConfig
+    with PropTestHelpers {
 
   test("insert a single image") {
     check {
       forAll(
-        (user: User.Create, org: Organization.Create, scene: Scene.Create, image: Image.Banded) => {
+        (user: User.Create,
+         org: Organization.Create,
+         scene: Scene.Create,
+         image: Image.Banded) => {
           val sceneInsertIO = for {
             orgAndUser <- insertUserAndOrg(user, org)
             (insertedOrg, insertedUser) = orgAndUser
             datasource <- unsafeGetRandomDatasource
             insertedScene <- SceneDao.insert(
-              fixupSceneCreate(insertedUser, datasource, scene), insertedUser
+              fixupSceneCreate(insertedUser, datasource, scene),
+              insertedUser
             )
           } yield (insertedScene, insertedUser)
           val imageInsertIO = sceneInsertIO flatMap {
@@ -47,14 +55,15 @@ class ImageDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
               )
             }
           }
-          val insertedImage = imageInsertIO.transact(xa).unsafeRunSync.get
+          val insertedImage =
+            xa.use(t => imageInsertIO.transact(t)).unsafeRunSync.get
           insertedImage.rawDataBytes == image.rawDataBytes &&
-            insertedImage.visibility == image.visibility &&
-            insertedImage.filename == image.filename &&
-            insertedImage.sourceUri == image.sourceUri &&
-            insertedImage.imageMetadata == image.imageMetadata &&
-            insertedImage.resolutionMeters == image.resolutionMeters &&
-            insertedImage.metadataFiles == image.metadataFiles
+          insertedImage.visibility == image.visibility &&
+          insertedImage.filename == image.filename &&
+          insertedImage.sourceUri == image.sourceUri &&
+          insertedImage.imageMetadata == image.imageMetadata &&
+          insertedImage.resolutionMeters == image.resolutionMeters &&
+          insertedImage.metadataFiles == image.metadataFiles
         }
       )
     }
@@ -63,13 +72,18 @@ class ImageDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
   test("update an image") {
     check {
       forAll(
-        (user: User.Create, org: Organization.Create, scene: Scene.Create, imageBanded: Image.Banded, imageUpdate: Image) => {
+        (user: User.Create,
+         org: Organization.Create,
+         scene: Scene.Create,
+         imageBanded: Image.Banded,
+         imageUpdate: Image) => {
           val sceneInsertIO = for {
             orgAndUser <- insertUserAndOrg(user, org)
             (insertedOrg, insertedUser) = orgAndUser
             datasource <- unsafeGetRandomDatasource
             insertedScene <- SceneDao.insert(
-              fixupSceneCreate(insertedUser, datasource, scene), insertedUser
+              fixupSceneCreate(insertedUser, datasource, scene),
+              insertedUser
             )
           } yield (insertedScene, insertedUser)
           val imageInsertIO = sceneInsertIO flatMap {
@@ -88,9 +102,11 @@ class ImageDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
               val origOwner = inserted.owner
               val fixedUp = fixupImage(origOwner, sceneId, imageUpdate)
               ImageDao.updateImage(
-                fixedUp, imageId, dbUser
-              ) flatMap {
-                (affectedRows: Int) => {
+                fixedUp,
+                imageId,
+                dbUser
+              ) flatMap { (affectedRows: Int) =>
+                {
                   val updatedImage = ImageDao.unsafeGetImage(imageId)
                   updatedImage map { (affectedRows, _) }
                 }
@@ -98,22 +114,22 @@ class ImageDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfi
             }
           }
 
-          val (affectedRows, updatedImage) = imageUpdateWithUpdatedImageIO.transact(xa).unsafeRunSync
+          val (affectedRows, updatedImage) =
+            xa.use(t => imageUpdateWithUpdatedImageIO.transact(t)).unsafeRunSync
           affectedRows == 1 &&
-            updatedImage.rawDataBytes == imageUpdate.rawDataBytes &&
-            updatedImage.visibility == imageUpdate.visibility &&
-            updatedImage.filename == imageUpdate.filename &&
-            updatedImage.sourceUri == imageUpdate.sourceUri &&
-            updatedImage.imageMetadata == imageUpdate.imageMetadata &&
-            updatedImage.resolutionMeters == imageUpdate.resolutionMeters &&
-            updatedImage.metadataFiles == imageUpdate.metadataFiles
+          updatedImage.rawDataBytes == imageUpdate.rawDataBytes &&
+          updatedImage.visibility == imageUpdate.visibility &&
+          updatedImage.filename == imageUpdate.filename &&
+          updatedImage.sourceUri == imageUpdate.sourceUri &&
+          updatedImage.imageMetadata == imageUpdate.imageMetadata &&
+          updatedImage.resolutionMeters == imageUpdate.resolutionMeters &&
+          updatedImage.metadataFiles == imageUpdate.metadataFiles
         }
       )
     }
   }
 
   test("list images") {
-    ImageDao.query.list.transact(xa).unsafeRunSync
+    xa.use(t => ImageDao.query.list.transact(t)).unsafeRunSync
   }
 }
-

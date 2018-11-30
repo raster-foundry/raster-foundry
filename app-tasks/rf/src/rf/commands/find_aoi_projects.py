@@ -25,6 +25,6 @@ def find_aoi_projects_to_update():
     """Find AOI projects to check for updates and kick off update batch jobs"""
     logger.info('Finding AOI projects to check for updates')
 
-    bash_cmd = ['java', '-cp', '/opt/raster-foundry/jars/rf-batch.jar',
-                'com.azavea.rf.batch.Main', 'find_aoi_projects']
+    bash_cmd = ['java', '-cp', '/opt/raster-foundry/jars/batch-assembly.jar',
+                'com.rasterfoundry.batch.Main', 'find_aoi_projects']
     subprocess.check_call(bash_cmd)

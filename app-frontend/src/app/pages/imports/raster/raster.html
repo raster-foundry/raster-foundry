@@ -2,16 +2,34 @@
   <div class="row content stack-sm">
     <div class="column-8">
       <!-- Dashboard Header -->
+      <h3>Imports</h3>
       <div class="dashboard-header">
-        <h1 class="h3">Imports</h1>
+        <select class="form-control"
+                ng-model="$ctrl.currentOwnershipFilter"
+        >
+          <option value="owned">Owned by me</option>
+          <option value="shared">Shared with me</option>
+        </select>
         <div class="flex-fill"></div>
         <a class="btn btn-primary" ng-click="$ctrl.importModal()">
           Import scenes
         </a>
       </div>
+      <div class="alert alert-primary" ng-if="$ctrl.pendingImports && $ctrl.currentOwnershipFilter == 'owned'">
+        <div class="alert-message">
+          <ng-pluralize count="$ctrl.pendingImports"
+                    when="{'one': '{} import is',
+                          'other': '{} imports are'
+                          }">
+          </ng-pluralize> being processed
+        </div>
+      </div>
       <!-- Dashboard Header -->
       <!-- Imports list -->
-      <rf-import-list></rf-import-list>
+      <rf-import-list
+        platform="$ctrl.platform"
+        ownership-type="$ctrl.currentOwnershipFilter"
+      ></rf-import-list>
       <!-- Imports list -->
     </div>
 
@@ -21,7 +39,7 @@
         <section>
           <h5>What are imports?</h5>
           <p class="font-size-small">
-            Imports are scenes that have been created from imagery that you've uploaded.
+            Imports are scenes (stored in our repository) that have been ingested from your uploaded imagery or from external repositories.
           </p>
           <h5>What imagery sources am I limited to?</h5>
           <p class="font-size-small">
@@ -31,16 +49,14 @@
           <p class="font-size-small">
             Datasources are how {{$ctrl.BUILDCONFIG.APP_NAME}} stores common information about scenes that share similar structure - typically metadata such as band information that is useful to carry across scenes.
             <ul class="list-unstyled">
-              <li><a href="#">View your datasources</a></li>
-              <li><a href="#">Create a datasources</a></li>
+              <li><a ui-sref="imports.datasources.list">View your datasources</a></li>
             </ul>
           </p>
         </section>
         <section class="aside-footer">
           <h5>Have other questions?</h5>
           <ul class="list-unstyled">
-            <li><a>Getting started with imports</a></li>
-            <li><a>How to create a datasource</a></li>
+            <li><a ng-href="{{$ctrl.HELPCONFIG.HELP_HOME}}" target="_blank">Getting started with imports</a></li>
           </ul>
         </section>
       </div>

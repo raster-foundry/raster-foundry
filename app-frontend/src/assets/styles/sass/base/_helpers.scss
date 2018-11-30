@@ -22,6 +22,10 @@
 }
 
 // Color helpers
+.color-base {
+  color: $text-base !important;
+}
+
 .color-primary {
   color: $brand-primary !important;
 }
@@ -105,6 +109,10 @@
   &:hover {
     color: darken($shade-light, 5%) !important;
   }
+}
+
+.no-hover {
+  text-decoration: none !important;
 }
 
 .hide {

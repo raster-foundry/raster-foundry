@@ -108,6 +108,19 @@
   @include ghost-button-states($danger, $shade-normal);
 }
 
+.btn-link {
+  border-color: transparent;
+  color: $brand-primary;
+  background-color: transparent;
+
+  &:hover, &.hover,
+  &:active, &.active, {
+    background-color: transparent;
+    border-color: transparent;
+    color: darken($brand-primary, 10%);
+  }
+}
+
 /*
  * Button Sizes
  */
@@ -139,7 +152,7 @@ Copy button on project share modal
 */
 .btn-copy-modal,
 .btn-copy-modal-first {
-  width: 99.47px;
+  width: 100px;
   height: 39px;
 }
 

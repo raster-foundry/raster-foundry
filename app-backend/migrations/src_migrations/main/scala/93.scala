@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M93 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(93)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(93)(
+    List(
+      sqlu"""
         -- Update Sentinel (2A and 2B)
         UPDATE datasources
         SET
@@ -233,5 +234,5 @@ object M93 {
         WHERE id = 'e068461d-a368-4def-92ae-e4c8cc8cb784'
             OR id = '2ee9dce4-8077-41d1-b37a-cf45a458ae3b';
     """
-  ))
+    ))
 }

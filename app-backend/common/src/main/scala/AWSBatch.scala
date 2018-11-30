@@ -1,4 +1,4 @@
-package com.azavea.rf.common
+package com.rasterfoundry.common
 
 import java.util.UUID
 
@@ -10,7 +10,6 @@ import com.amazonaws.services.batch.model.SubmitJobRequest
 import scala.collection.immutable.Map
 import scala.collection.JavaConverters._
 
-
 /** Submits jobs to AWS Batch for processing */
 trait AWSBatch extends RollbarNotifier with LazyLogging {
 
@@ -19,7 +18,10 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
   val batchClient = AWSBatchClientBuilder.defaultClient()
 
   @SuppressWarnings(Array("CatchException"))
-  def submitJobRequest(jobDefinition: String, jobQueueName: String, parameters: Map[String, String], jobName: String): Unit = {
+  def submitJobRequest(jobDefinition: String,
+                       jobQueueName: String,
+                       parameters: Map[String, String],
+                       jobName: String): Unit = {
     val jobRequest = new SubmitJobRequest()
       .withJobName(jobName)
       .withJobDefinition(jobDefinition)
@@ -28,8 +30,10 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
 
     logger.info(s"Using ${awsbatchConfig.environment} in AWS Batch")
 
-    val runBatch:Boolean = {
-      awsbatchConfig.environment.toLowerCase() == "staging" || awsbatchConfig.environment.toLowerCase() == "production"
+    val runBatch: Boolean = {
+      awsbatchConfig.environment
+        .toLowerCase() == "staging" || awsbatchConfig.environment
+        .toLowerCase() == "production"
     }
 
     if (runBatch) {
@@ -37,7 +41,6 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
       try {
         val submitJobResult = batchClient.submitJob(jobRequest)
         logger.info(s"Submit Job Result: ${submitJobResult}")
-        // submitJobResult
       } catch {
         case e: Exception =>
           logger.error(
@@ -46,8 +49,10 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
           throw e
       }
     } else {
-      logger.warn(s"Not submitting AWS Batch -- not in production or staging, in ${awsbatchConfig.environment}")
-      logger.warn(s"Job Request: ${jobName} -- ${jobDefinition} -- ${parameters}")
+      logger.info(
+        s"Not submitting AWS Batch -- not in production or staging, in ${awsbatchConfig.environment}")
+      logger.info(
+        s"Job Request: ${jobName} -- ${jobDefinition} -- ${parameters}")
     }
 
   }
@@ -55,24 +60,36 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
   def kickoffSceneIngest(sceneId: UUID): Unit = {
     val jobDefinition = awsbatchConfig.ingestJobName
     val jobName = s"$jobDefinition-$sceneId"
-    submitJobRequest(jobDefinition, awsbatchConfig.ingestJobQueue, Map("sceneId" -> s"$sceneId"), jobName)
+    submitJobRequest(jobDefinition,
+                     awsbatchConfig.ingestJobQueue,
+                     Map("sceneId" -> s"$sceneId"),
+                     jobName)
   }
 
   def kickoffSceneImport(uploadId: UUID): Unit = {
     val jobDefinition = awsbatchConfig.importJobName
     val jobName = s"$jobDefinition-$uploadId"
-    submitJobRequest(jobDefinition, awsbatchConfig.jobQueue, Map("uploadId" -> s"$uploadId"), jobName)
+    submitJobRequest(jobDefinition,
+                     awsbatchConfig.jobQueue,
+                     Map("uploadId" -> s"$uploadId"),
+                     jobName)
   }
 
   def kickoffProjectExport(exportId: UUID): Unit = {
     val jobDefinition = awsbatchConfig.exportJobName
     val jobName = s"$jobDefinition-$exportId"
-    submitJobRequest(jobDefinition, awsbatchConfig.ingestJobQueue, Map("exportId" -> s"$exportId"), jobName)
+    submitJobRequest(jobDefinition,
+                     awsbatchConfig.ingestJobQueue,
+                     Map("exportId" -> s"$exportId"),
+                     jobName)
   }
 
   def kickoffAOIUpdateProject(projectId: UUID): Unit = {
     val jobDefinition = awsbatchConfig.aoiUpdateJobName
     val jobName = s"$jobDefinition-$projectId"
-    submitJobRequest(jobDefinition, awsbatchConfig.jobQueue, Map("projectId" -> s"$projectId"), jobName)
+    submitJobRequest(jobDefinition,
+                     awsbatchConfig.jobQueue,
+                     Map("projectId" -> s"$projectId"),
+                     jobName)
   }
 }

@@ -76,38 +76,42 @@
   </div>
 
   <!--Default Footer-->
-  <div
-    ng-if="$ctrl.currentStepIs('TYPE')"
-    class="modal-footer"
-  >
-    <button type="button" class="btn pull-left"
-            ng-click="$ctrl.closeWithData(1)">
-      Cancel
-    </button>
-
-    <button type="button" class="btn"
-            ng-if="$ctrl.hasPreviousStep()"
-            ng-click="$ctrl.gotoPreviousStep()">
-      Back
-    </button>
-    <button type="button" class="btn btn-primary"
-            ng-click="$ctrl.handleNext()"
-            ng-disabled="$ctrl.isCreatingProject">
-      Next
-    </button>
+  <div ng-if="$ctrl.currentStepIs('TYPE')"
+       class="modal-footer">
+    <div class="footer-section left">
+      <button type="button" class="btn"
+              ng-click="$ctrl.closeWithData(1)">
+        Cancel
+      </button>
+    </div>
+    <div class="footer-section right">
+      <button type="button" class="btn"
+      ng-if="$ctrl.hasPreviousStep()"
+      ng-click="$ctrl.gotoPreviousStep()">
+        Back
+      </button>
+      <button type="button" class="btn btn-primary"
+      ng-click="$ctrl.handleNext()"
+      ng-disabled="$ctrl.isCreatingProject">
+        Next
+      </button>
+    </div>
   </div>
 
   <!--Footer for ADD_SCENES-->
   <div ng-if="$ctrl.currentStepIs('ADD_SCENES')"
-       class="modal-footer"
-  >
-    <button type="button" class="btn pull-left"
+       class="modal-footer">
+    <div class="footer-section left">
+    <button type="button" class="btn"
             ng-click="$ctrl.closeWithData()">
       Add Scenes later
     </button>
+  </div>
+  <div class="footer-section right">
     <button type="button" class="btn btn-primary"
             ng-click="$ctrl.handleNext()">
       Next
     </button>
+    </div>
   </div>
 </div>

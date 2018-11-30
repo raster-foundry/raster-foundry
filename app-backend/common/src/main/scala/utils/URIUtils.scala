@@ -1,8 +1,9 @@
-package com.azavea.rf.common.utils
+package com.rasterfoundry.common.utils
 
 import java.net.URI
 
 object URIUtils {
+  @SuppressWarnings(Array("NullParameter"))
   def withNoParams(uri: URI): URI =
     new URI(
       uri.getScheme,
@@ -11,7 +12,6 @@ object URIUtils {
       null, // Ignore the query part of the input url
       uri.getFragment
     )
-
 
   def withNoParams(str: String): String =
     withNoParams(new URI(str)).toString

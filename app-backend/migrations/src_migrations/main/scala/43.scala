@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M43 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(43)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(43)(
+    List(
+      sqlu"""
 ALTER TABLE tools ADD COLUMN definition JSONB NOT NULL DEFAULT '{}';
 
 UPDATE tools
@@ -57,5 +58,5 @@ SET definition = '{
 
 WHERE id = 'b237a825-203e-44bc-9cfa-81cff9f28641';
     """
-  ))
+    ))
 }

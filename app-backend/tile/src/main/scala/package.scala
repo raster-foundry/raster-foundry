@@ -1,4 +1,4 @@
-package com.azavea.rf
+package com.rasterfoundry
 
 import spray.json._
 import com.github.blemale.scaffeine.{Cache => ScaffeineCache}
@@ -14,7 +14,8 @@ package object tile {
     }
   }
 
-  implicit class withLayerCacheMethods[K, V](cache: ScaffeineCache[K, V]) extends Config {
+  implicit class withLayerCacheMethods[K, V](cache: ScaffeineCache[K, V])
+      extends Config {
     def take(key: K, mappingFunction: K => V): V =
       if (withCaching) cache.get(key, mappingFunction)
       else mappingFunction(key)

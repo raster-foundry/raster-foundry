@@ -2,22 +2,35 @@
   <div class="sidebar-header">
     <h5 class="sidebar-title">Color Mode</h5>
     <div class="header-controls">
-      <a ng-hide="$ctrl.projectBuffer.isSingleBand" ui-sref="projects.edit.advancedcolor"
-        class="btn btn-primary">Corrections</a>
+      <button type="button" class="btn btn-primary"
+              ng-disabled="$ctrl.correctionsDisabled()"
+              ng-click="$ctrl.navToCorrections()">
+        Corrections
+        <span class="icon-info"
+              tooltips
+              tooltip-template="Projects with more than 30 scenes are not currently supported."
+              tooltip-size="small"
+              tooltip-class="rf-tooltip" tooltip-side="left"
+              ng-if="$ctrl.correctionsDisabled()"
+        ></span>
+      </button>
     </div>
   </div>
   <div class="content">
-    <div class="sidebar-actions-group">
+    <div class="sidebar-actions-group" ng-if="$ctrl.pagination.count">
       <label>Change the visual output</label>
+    </div>
+    <div class="sidebar-actions-group" ng-if="!$ctrl.currentRequest && $ctrl.pagination && !$ctrl.pagination.count">
+      <label>You must add scenes to this project in order to set a color mapping</label>
     </div>
   </div>
 </div>
-<div class="sidebar-overlay" ng-show="!$ctrl.corrections || $ctrl.isLoading">
+<div class="sidebar-overlay" ng-show="(!$ctrl.corrections || $ctrl.currentRequest) && ($ctrl.pagination && !$ctrl.pagination.count)">
   <div class="sidebar-loading">
     <span class="icon-load animate-spin" ng-class="{'stop': !$ctrl.isLoading}"></span>
   </div>
 </div>
-<div class="sidebar-scrollable">
+<div class="sidebar-scrollable" ng-show="$ctrl.pagination && $ctrl.pagination.count">
   <div class="list-group" ng-if="!$ctrl.isLoading">
     <div class="list-group-item flex-column" ng-if="!$ctrl.$parent.bands.length">
         There are currently no bands defined for one or more datasources used in this project.
@@ -32,10 +45,10 @@
         </div>
     </div>
     <div class="list-group-item list-group-item-stacked"
-         ng-class="{'active': $ctrl.projectBuffer.isSingleBand}">
+         ng-class="{'active': $ctrl.projectBuffer && $ctrl.projectBuffer.isSingleBand}">
       <div class="list-group-item-row">
         <span class="font-600">Single band</span>
-        <div class="list-group-right" ng-if="$ctrl.$parent.bands.length">
+        <div class="list-group-right" ng-if="$ctrl.$parent.bands.length && $ctrl.projectBuffer">
           <rf-toggle radio="true" value="$ctrl.projectBuffer.isSingleBand" on-change="$ctrl.setActiveColorMode('singleband')">
           </rf-toggle>
         </div>

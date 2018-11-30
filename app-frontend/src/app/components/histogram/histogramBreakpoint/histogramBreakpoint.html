@@ -19,5 +19,7 @@
          ng-model-options="{updateOn: 'blur change'}"
          ng-change="$ctrl.onInputChange(value)"
          ng-disabled="!$ctrl.onBreakpointChange"
+         ng-attr-max="{{$ctrl.range.max}}"
+         ng-attr-min="{{$ctrl.range.min}}"
   >
 </div>

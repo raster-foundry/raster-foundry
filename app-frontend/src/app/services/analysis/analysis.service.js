@@ -21,6 +21,15 @@ export default (app) => {
                     },
                     create: {
                         method: 'POST'
+                    },
+                    delete: {
+                        method: 'DELETE'
+                    },
+                    actions: {
+                        url: `${BUILDCONFIG.API_HOST}/api/tools/:id/actions/`,
+                        method: 'GET',
+                        cache: false,
+                        isArray: true
                     }
                 }
             );
@@ -118,6 +127,14 @@ export default (app) => {
 
         getTemplate(id) {
             return this.Template.get({id}).$promise;
+        }
+
+        deleteTemplate(id) {
+            return this.Template.delete({id}).$promise;
+        }
+
+        getTemplateActions(id) {
+            return this.Template.actions({id}).$promise;
         }
 
         deleteAnalysis(id) {

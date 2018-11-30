@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M131 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(131)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(131)(
+    List(
+      sqlu"""
       ALTER TABLE platforms
       ALTER COLUMN public_settings
       SET DEFAULT
@@ -28,5 +29,5 @@ object M131 {
         'emailExportNotification', false
       )
     """
-  ))
+    ))
 }

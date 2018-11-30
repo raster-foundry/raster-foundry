@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M57 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(57)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(57)(
+    List(
+      sqlu"""
 ALTER TABLE aois ADD COLUMN owner VARCHAR(255) NULL;
 ALTER TABLE datasources ADD COLUMN owner VARCHAR(255) NULL;
 ALTER TABLE exports ADD COLUMN owner VARCHAR(255) NULL;
@@ -54,5 +55,5 @@ ALTER TABLE uploads ADD CONSTRAINT uploads_owner_fkey FOREIGN KEY (owner) REFERE
 
 UPDATE users SET organization_id = '9e2bef18-3f46-426b-a5bd-9913ee1ff840' where id = 'rf|airflow-user';
 """
-  ))
+    ))
 }

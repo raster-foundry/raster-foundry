@@ -1,16 +1,17 @@
-package com.azavea.rf.api.user
+package com.rasterfoundry.api.user
+
+import java.util.Base64
 
 import com.dropbox.core.DbxSessionStore
 import io.circe.generic.JsonCodec
 
 import scala.beans.BeanProperty
 import scala.util.Random
-import java.util.Base64
 
 @JsonCodec
-case class DropboxAuthRequest(
-  authorizationCode: String,
-  redirectURI: String
+final case class DropboxAuthRequest(
+    authorizationCode: String,
+    redirectURI: String
 )
 
 /** Mock a DbxSessionStore.
@@ -28,7 +29,7 @@ case class DropboxAuthRequest(
 class DummySessionStore extends DbxSessionStore {
 
   @BeanProperty
-  var token:String = ""
+  var token: String = ""
 
   def get: String = {
     val s = this.getToken()
@@ -43,5 +44,5 @@ class DummySessionStore extends DbxSessionStore {
     }
   }
   def set(s: String): Unit = this.setToken(s)
-  def clear: Unit = ()
+  def clear(): Unit = ()
 }

@@ -1,5 +1,4 @@
 .navbar {
-  @extend %clearfix;
   background: $shade-normal;
   border-bottom: 1px solid $shade-dark;
   position: relative;
@@ -181,8 +180,8 @@
   justify-content: flex-start;
 
   &.secondary {
+    flex: none;
     align-items: center;
-    justify-content: flex-end;
     text-align: right;
   }
 }

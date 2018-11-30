@@ -24,9 +24,14 @@
         <div class="list-group-item" ng-repeat="datasource in $ctrl.datasources.results | filter: {name: $ctrl.searchString}">
           <div class="list-group-overflow">
             <strong class="color-dark">{{datasource.name}}</strong><br>
+            <ng-pluralize count="datasource.bands.length"
+                          when="{'one': '{} band',
+                                'other': '{} bands'
+                                }">
+            </ng-pluralize>
           </div>
           <div class="list-group-right">
-            <button class="btn btn-square" ng-click="$ctrl.handleDatasourceSelect(datasource)">
+            <button class="btn" ng-click="$ctrl.handleDatasourceSelect(datasource)">
               Select
             </button>
           </div>
@@ -130,7 +135,7 @@
       </div>
 
       <!-- Import config for S3 -->
-      <div ng-if="$ctrl.importType === 'S3'">
+      <div ng-if="$ctrl.importType === 'S3' && !$ctrl.isCog">
           <p>
             Enter the the S3 URI that points to where imagery is located.
             The import process will import any imagery found in that location into {{$ctrl.BUILDCONFIG.APP_NAME}}.
@@ -138,8 +143,24 @@
           <form>
             <div class="form-group">
               <label for="name">S3 Bucket</label>
-              <input id="name" type="url" class="form-control"
-                     placeholder="s3://<bucket>/<prefix>/" ng-model="$ctrl.s3Config.bucket">
+              <input
+                id="name"
+                type="url"
+                class="form-control"
+                placeholder="s3://<bucket>/<prefix>/ OR s3://<bucket>/<prefix>/object.tif"
+                ng-model="$ctrl.s3Config.bucket"
+                ng-change="$ctrl.onPathChange($ctrl.s3Config.bucket)">
+              <div ng-if="$ctrl.suggestedPaths && $ctrl.suggestedPaths.length">
+                <div class="import-s3-msg">Not sure about the format? Here are some suggestions:</div>
+                <div ng-repeat="path in $ctrl.suggestedPaths track by $index">
+                  <div class="import-s3-suggestions">
+                    <button type="button" class="btn btn-primary" ng-click="$ctrl.usePath(path)">
+                      Use
+                    </button>
+                    <span>{{path}}</span>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="form-group color-danger"
                  ng-if="$ctrl.showProjectCreateError && $ctrl.projectCreateErrorText"
@@ -148,7 +169,7 @@
             </div>
           </form>
         </div>
-      <div ng-if="$ctrl.importType === 'COG'">
+      <div ng-if="$ctrl.importType === 'COG' && $ctrl.isCog">
         <p>
           Enter the the HTTP or S3 URI that points to where COG imagery is located.
         </p>
@@ -161,7 +182,7 @@
         </form>
       </div>
 
-      <div ng-if="$ctrl.importType === 'Planet'">
+      <div ng-if="$ctrl.importType === 'Planet' && !$ctrl.isCog">
         <p>
           Enter a list of comma-separated Planet Scene IDs into the text box for import.
           Note these should match the datasource selected in the previous screen.
@@ -371,6 +392,12 @@
     <div class="content">
       <h3 class="no-margin text-center">Processing your S3 import</h3>
     </div>
+    <br/>
+    <div class="color-danger text-center" ng-if="$ctrl.isProcessS3Failed">
+      <p>
+        Something went wrong. <a ng-click="$ctrl.backToImport()">Double check S3 path.</a>
+      </p>
+    </div>
   </div>
 
   <!--Body for Planet IMPORT_SUCCESS-->
@@ -391,40 +418,59 @@
 
   <!--Body for IMPORT_SUCCESS-->
   <div class="modal-body" ng-if="$ctrl.currentStepIs('IMPORT_SUCCESS')">
-    <div class="content">
+    <div class="content" ng-if="!$ctrl.error">
       <h3 class="no-margin">Success!</h3>
       <p>
         Your scenes are importing into {{$ctrl.BUILDCONFIG.APP_NAME}} now.
         This may take some time and we will notify you when the process is complete.
-        In the meantime checkout your Notification Center for up to date information on all of your projects.
+        <span ng-if="$ctrl.resolve.origin">
+          <a ng-click="$ctrl.linkToStatus()">
+            Click here to check the status of your import.
+          </a>
+        </span>
+        <span ng-if="!$ctrl.resolve.origin">
+          You may check the status of your import later.
+        </span>
+      </p>
+    </div>
+    <div class="concent" ng-if="$ctrl.error">
+      <h3>Error</h3>
+      <p>
+        There was an error importing your scenes
+      </p>
+      <p>
+        Please check to make sure that you selected the correct URLs or files
       </p>
     </div>
   </div>
 
   <!--Default Footer-->
   <div class="modal-footer">
-    <button type="button" class="btn pull-left"
-            ng-if="$ctrl.allowClose()"
-            ng-click="$ctrl.handleClose()">
-      Cancel
-    </button>
-
-    <button type="button" class="btn"
-            ng-if="$ctrl.hasPrevious()"
-            ng-click="$ctrl.handlePrevious()"
-            ng-disabled="!$ctrl.allowPrevious()">
-      Back
-    </button>
-    <button type="button" class="btn btn-primary"
-            ng-if="$ctrl.hasNext()"
-            ng-click="$ctrl.handleNext()"
-            ng-disabled="!$ctrl.allowNext()">
-      Next
-    </button>
-    <button type="button" class="btn btn-primary"
-            ng-if="$ctrl.allowDone()"
-            ng-click="$ctrl.handleDone()">
-      Done
-    </button>
+    <div class="footer-section left">
+      <button type="button" class="btn"
+              ng-if="$ctrl.allowClose()"
+              ng-click="$ctrl.handleClose()">
+        Cancel
+      </button>
+    </div>
+    <div class="footer-section right">
+      <button type="button" class="btn"
+              ng-if="$ctrl.hasPrevious()"
+              ng-click="$ctrl.handlePrevious()"
+              ng-disabled="!$ctrl.allowPrevious()">
+        Back
+      </button>
+      <button type="button" class="btn btn-primary"
+              ng-if="$ctrl.hasNext()"
+              ng-click="$ctrl.handleNext()"
+              ng-disabled="!$ctrl.allowNext()">
+        Next
+      </button>
+      <button type="button" class="btn btn-primary"
+              ng-if="$ctrl.allowDone()"
+              ng-click="$ctrl.handleDone()">
+        Done
+      </button>
+    </div>
   </div>
 </div>

@@ -1,6 +1,6 @@
-package com.azavea.rf.common.notification.Email
+package com.rasterfoundry.common.notification.Email
 
-import com.azavea.rf.common.RollbarNotifier
+import com.rasterfoundry.common.RollbarNotifier
 
 import org.apache.commons.mail._
 import org.apache.commons.mail.Email._
@@ -10,10 +10,15 @@ import java.lang.IllegalArgumentException
 
 class NotificationEmail extends RollbarNotifier {
 
-  def isValidEmailSettings(host: String, port: Int, encryption: String, platUserEmail: String, pw: String, userEmail: String): Boolean =
+  def isValidEmailSettings(host: String,
+                           port: Int,
+                           encryption: String,
+                           platUserEmail: String,
+                           pw: String,
+                           userEmail: String): Boolean =
     host.length != 0 &&
       (port == 25 || port == 465 || port == 587 || port == 2525) &&
-      encryption.length!= 0 &&
+      encryption.length != 0 &&
       (encryption == "ssl" || encryption == "tls" || encryption == "starttls") &&
       platUserEmail.length != 0 &&
       pw.length != 0 &&
@@ -28,8 +33,16 @@ class NotificationEmail extends RollbarNotifier {
   def platformNotSubscribedWarning(platId: String): String =
     s"Platform ${platId} did not subscribe to this notification service."
 
-  def setEmail(host: String, port: Int, encryption: String, uName: String, uPw: String,
-    to: String, subject: String, bodyHtml: String, bodyPlain: String): Either[Unit, Email] = {
+  def setEmail(host: String,
+               port: Int,
+               encryption: String,
+               uName: String,
+               uPw: String,
+               to: String,
+               subject: String,
+               bodyHtml: String,
+               bodyPlain: String,
+               emailFrom: Option[String] = None): Either[Unit, Email] = {
 
     val email = new HtmlEmail()
 
@@ -44,7 +57,10 @@ class NotificationEmail extends RollbarNotifier {
         email.setSslSmtpPort(port.toString)
       }
       email.setAuthenticator(new DefaultAuthenticator(uName, uPw))
-      email.setFrom(uName)
+      emailFrom match {
+        case Some(from) if from.length > 0 => email.setFrom(uName, from)
+        case _                             => email.setFrom(uName)
+      }
       email.setSubject(subject)
       email.setHtmlMsg(bodyHtml)
       email.setTextMsg(bodyPlain)
@@ -52,7 +68,7 @@ class NotificationEmail extends RollbarNotifier {
       Right(email)
     } catch {
       case e: IllegalArgumentException => Left(sendError(e))
-      case e: EmailException => Left(sendError(e))
+      case e: EmailException           => Left(sendError(e))
     }
   }
 }

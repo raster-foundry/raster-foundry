@@ -1,33 +1,22 @@
-package com.azavea.rf.api.thumbnail
+package com.rasterfoundry.api.thumbnail
 
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.common.{UserErrorHandler, S3, CommonHandlers}
-import com.azavea.rf.database.ThumbnailDao
-import com.azavea.rf.datamodel._
-import com.azavea.rf.api.utils.Config
+import java.net.{URI, URLDecoder}
 
-import io.circe._
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.model.{StatusCodes, ContentType, HttpEntity, HttpResponse, MediaType, MediaTypes}
+import cats.effect.IO
+import com.amazonaws.regions._
+import com.amazonaws.services.s3.model.GetObjectRequest
+import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.common.{CommonHandlers, S3, UserErrorHandler}
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import doobie.postgres.implicits._
+import doobie.util.transactor.Transactor
 import kamon.akka.http.KamonTraceDirectives
 
-import java.util.UUID
-import java.net.URI
-
-import cats.effect.IO
-import doobie.util.transactor.Transactor
-import com.azavea.rf.database.filter.Filterables._
-import cats.implicits._
-import doobie._
-import doobie.implicits._
-import doobie.Fragments.in
-import doobie.postgres._
-import doobie.postgres.implicits._
-
-
-trait ThumbnailRoutes extends Authentication
+trait ThumbnailRoutes
+    extends Authentication
     with ThumbnailQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
@@ -37,25 +26,54 @@ trait ThumbnailRoutes extends Authentication
 
   val xa: Transactor[IO]
 
+  lazy val sentinelS3client = S3.clientWithRegion(Regions.EU_CENTRAL_1)
+
   val thumbnailImageRoutes: Route = handleExceptions(userExceptionHandler) {
-    pathPrefix(Segment) { thumbnailPath =>
-      pathEndOrSingleSlash {
-        get { getThumbnailImage(thumbnailPath) }
+    pathPrefix("sentinel") {
+      pathPrefix(Segment) { thumbnailUri =>
+        pathEndOrSingleSlash {
+          get { getProxiedThumbnailImage(thumbnailUri) }
+        }
       }
-    }
+    } ~
+      pathPrefix(Segment) { thumbnailPath =>
+        pathEndOrSingleSlash {
+          get { getThumbnailImage(thumbnailPath) }
+        }
+      }
   }
 
-  def getThumbnailImage(thumbnailPath: String): Route = authenticateWithParameter { _ =>
-    var uriString = s"http://s3.amazonaws.com/${thumbnailBucket}/${thumbnailPath}"
-    val uri = new URI(uriString)
-    val s3Object = S3.getObject(uri)
-    val metaData = S3.getObjectMetadata(s3Object)
-    val s3MediaType = MediaType.parse(metaData.getContentType()) match {
-      case Right(m) => m.asInstanceOf[MediaType.Binary]
-      case Left(_) => MediaTypes.`image/png`
+  @SuppressWarnings(Array("AsInstanceOf"))
+  def getThumbnailImage(thumbnailPath: String): Route =
+    authenticateWithParameter { _ =>
+      var uriString =
+        s"http://s3.amazonaws.com/${thumbnailBucket}/${thumbnailPath}"
+      val uri = new URI(uriString)
+      val s3Object = S3.getObject(uri)
+      val metaData = S3.getObjectMetadata(s3Object)
+      val s3MediaType = MediaType.parse(metaData.getContentType()) match {
+        case Right(m) => m.asInstanceOf[MediaType.Binary]
+        case Left(_)  => MediaTypes.`image/png`
+      }
+      complete(
+        HttpResponse(entity =
+          HttpEntity(ContentType(s3MediaType), S3.getObjectBytes(s3Object))))
     }
-    complete(HttpResponse(entity =
-      HttpEntity(ContentType(s3MediaType), S3.getObjectBytes(s3Object))
-    ))
-  }
+
+  @SuppressWarnings(Array("AsInstanceOf"))
+  def getProxiedThumbnailImage(thumbnailUri: String): Route =
+    authenticateWithParameter { _ =>
+      val bucketAndPrefix =
+        S3.bucketAndPrefixFromURI(new URI(URLDecoder.decode(thumbnailUri)))
+      val s3Object = sentinelS3client.getObject(
+        new GetObjectRequest(bucketAndPrefix._1, bucketAndPrefix._2, true))
+      val metaData = S3.getObjectMetadata(s3Object)
+      val s3MediaType = MediaType.parse(metaData.getContentType()) match {
+        case Right(m) => m.asInstanceOf[MediaType.Binary]
+        case Left(_)  => MediaTypes.`image/png`
+      }
+      complete(
+        HttpResponse(entity =
+          HttpEntity(ContentType(s3MediaType), S3.getObjectBytes(s3Object))))
+    }
 }

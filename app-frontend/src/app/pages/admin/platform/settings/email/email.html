@@ -18,7 +18,7 @@
     <div class="form-group">
       <label for="name">User Name</label>
       <input id="name"
-             type="email"
+             type="text"
              class="form-control"
              name="email"
              ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailUser.length ?
@@ -26,7 +26,6 @@
              ng-model="$ctrl.platformBuffer.publicSettings.emailUser"
              required>
       <span class="error color-danger" ng-show="emailSettings.email.$error.required">required</span>
-      <span class="error color-danger" ng-show="emailSettings.email.$error.email">invalid email</span>
     </div>
     <div class="form-group">
       <label for="password">Password</label>
@@ -38,6 +37,16 @@
              ng-model="$ctrl.platformBuffer.privateSettings.emailPassword"
              required>
       <span class="error color-danger" ng-show="emailSettings.password.$error.required">required</span>
+    </div>
+    <div class="form-group">
+      <label for="emailfrom">From</label>
+      <input id="emailfrom"
+             type="text"
+             class="form-control"
+             name="emailfrom"
+             ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailFrom ?
+                 $ctrl.platformBuffer.publicSettings.emailFrom : 'Default'}}"
+             ng-model="$ctrl.platformBuffer.publicSettings.emailFrom">
     </div>
     <div class="form-group">
       <label for="smtp">SMTP Host</label>
@@ -84,7 +93,6 @@
                    class="encryption-toggle">
         <span>STARTTLS</span>
         </rf-toggle>
-     <span class="error color-danger" ng-show="emailSettings.port.$error.required">required</span>
     </div>
     <div class="form-group">
       <div class="label">Subscriptions</div>
@@ -109,9 +117,9 @@
               ng-click="$ctrl.onSubmit()"
               ng-disabled="
                 emailSettings.email.$error.required ||
-                emailSettings.email.$error.email ||
                 emailSettings.password.$error.required ||
-                emailSettings.smtp.$error.required">
+                emailSettings.smtp.$error.required ||
+                emailSettings.port.$error.required">
         {{$ctrl.getButtonText()}}
       </button>
     </div>

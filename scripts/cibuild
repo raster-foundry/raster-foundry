@@ -26,9 +26,9 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     else
         echo "Pulling down configuration settings for test environment"
-        pushd "${DIR}/.."
-        aws s3 cp "s3://${RF_SETTINGS_BUCKET}/.env" ".env"
-        popd
+        
+        ./scripts/bootstrap --env
+        ./scripts/bootstrap --sbtopts
 
         echo "Building static asset bundle"
         docker-compose \
@@ -42,12 +42,17 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
         echo "Building batch JAR"
         docker-compose \
-            run --rm --no-deps api-server batch/clean
-        docker-compose \
-            run --rm --no-deps api-server batch/assembly
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm --no-deps \
+            build batch/clean
 
-        cp "${DIR}/../app-backend/batch/target/scala-2.11/rf-batch.jar" \
-           "${DIR}/../app-tasks/jars/rf-batch.jar"
+        docker-compose \
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm --no-deps \
+            build batch/assembly
+
+        cp "${DIR}/../app-backend/batch/target/scala-2.11/batch-assembly.jar" \
+           "${DIR}/../app-tasks/jars/batch-assembly.jar"
 
         echo "Building Batch container image"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \

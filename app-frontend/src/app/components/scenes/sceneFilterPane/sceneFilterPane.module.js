@@ -21,7 +21,7 @@ const SceneFilterPaneComponent = {
 
 class FilterPaneController {
     constructor(
-        $log, $q, $scope, $rootScope, $compile, $element, $timeout, $location
+        $log, $q, $scope, $rootScope, $compile, $element, $timeout, $location, $state
     ) {
         'ngInject';
         this.$log = $log;
@@ -35,6 +35,7 @@ class FilterPaneController {
         this.filterComponents = [];
         this.initializedFilters = new Set();
         this.firstReset = true;
+        this.$state = $state;
 
         this.$scope.$watch('$ctrl.opened', (opened) => {
             if (opened) {
@@ -43,9 +44,14 @@ class FilterPaneController {
         });
     }
 
+    $onInit() {
+        this.debouncedOnRepositoryChange = _.debounce(this.onRepositoryChange, 250);
+    }
+
     $onChanges(changes) {
         if (changes.onRepositoryChange && changes.onRepositoryChange.currentValue) {
             if (this.currentRepository) {
+                this.debouncedOnRepositoryChange = _.debounce(this.onRepositoryChange, 250);
                 this.onFilterChange();
             }
         }
@@ -112,19 +118,20 @@ class FilterPaneController {
             this.initializedFilters = this.initializedFilters.add(filter.label);
         }
 
-        if (this.initializedFilters.size === this.filterComponents.length) {
-            _.toPairs(this.filterParams).forEach(([param, val]) => {
-                if (val !== null && typeof val === 'object') {
-                    this.$location.search(param, val.id);
-                } else {
-                    this.$location.search(param, val);
-                }
-            });
-            this.onRepositoryChange({
-                fetchScenes: this.currentRepository.service.fetchScenes(this.filterParams),
-                repository: this.currentRepository
-            });
-        }
+        _.toPairs(this.filterParams).forEach(([param, val]) => {
+            if (val !== null && typeof val === 'object') {
+                this.$location.search(param, val.id);
+            } else {
+                this.$location.search(param, val);
+            }
+        });
+
+        this.debouncedOnRepositoryChange({
+            fetchScenes: this.currentRepository.service.fetchScenes(
+                this.filterParams, this.$state.params.projectid
+            ),
+            repository: this.currentRepository
+        });
     }
 
     createFilterComponent(filter) {

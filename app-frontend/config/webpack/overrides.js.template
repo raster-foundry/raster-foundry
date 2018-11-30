@@ -13,7 +13,10 @@ const DEVELOPMENT = NODE_ENV === 'production' ? false : true;
 const HERE_APP_ID = 'v88MqS5fQgxuHyIWJYX7';
 const HERE_APP_CODE = '5pn07ENomTHOap0u7nQSFA';
 
-const INTERCOM_APP_ID = '';
+// leave this unless you are setting your own
+const INTERCOM_APP_ID = 'disabled';
+const FEED_SOURCE = 'disabled';
+const GOOGLE_TAG_ID = 'disabled';
 
 const basemaps = JSON.stringify({
     layers: {
@@ -44,6 +47,7 @@ module.exports = function (_path) {
                 filename: 'index.html',
                 template: path.join(_path, 'src', 'tpl-index.html'),
                 heapLoad: DEVELOPMENT ? '2743344218' : '3505855839',
+                gtagId: GOOGLE_TAG_ID,
                 development: DEVELOPMENT,
                 APP_NAME: 'Raster Foundry'
             }),
@@ -61,7 +65,7 @@ module.exports = function (_path) {
                     LOGOFILE: JSON.stringify('raster-foundry-logo.svg'),
                     LOGOURL: JSON.stringify(false),
                     FAVICON_DIR: JSON.stringify('/favicon'),
-                    FEED_SOURCE: JSON.stringify('https://blog.rasterfoundry.com/latest?format=json')
+                    FEED_SOURCE: JSON.stringify(FEED_SOURCE)
                 },
                 'HELPCONFIG': {
                     HELP_DOCS: JSON.stringify(HELP_DOCS)

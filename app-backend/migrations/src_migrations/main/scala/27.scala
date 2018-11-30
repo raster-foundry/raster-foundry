@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M27 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(27)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(27)(
+    List(
+      sqlu"""
 ALTER TABLE buckets RENAME TO projects;
 
 ALTER TABLE scenes_to_buckets RENAME TO scenes_to_projects;
@@ -27,5 +28,5 @@ ALTER TABLE scenes_to_projects RENAME CONSTRAINT
   scenes_to_buckets_scene_id_fkey TO scenes_to_projects_scene_id_fkey;
 
 """
-  ))
+    ))
 }

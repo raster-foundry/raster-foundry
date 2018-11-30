@@ -1,6 +1,6 @@
-package com.azavea.rf.common.cache.kryo
+package com.rasterfoundry.common.cache.kryo
 
-import com.azavea.rf.common.Config
+import com.rasterfoundry.common.Config
 import net.spy.memcached._
 import net.spy.memcached.transcoders.Transcoder
 

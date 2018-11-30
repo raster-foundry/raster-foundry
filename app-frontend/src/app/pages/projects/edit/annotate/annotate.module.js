@@ -1,6 +1,7 @@
 /* globals L, _, $ */
 import angular from 'angular';
 import { Set } from 'immutable';
+import turfCenter from '@turf/center';
 require('./annotate.scss');
 
 import AnnotationActions from '_redux/actions/annotation-actions';
@@ -12,19 +13,10 @@ const BLUE = '#3388FF';
 class AnnotateController {
     constructor( // eslint-disable-line max-params
         $log, $state, $scope, $rootScope, $anchorScroll, $timeout, $element, $window, $ngRedux,
-        mapService, hotkeys
+        mapService, hotkeys, localStorage
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$state = $state;
-
-        this.$scope = $scope;
-        this.$rootScope = $rootScope;
-        this.$anchorScroll = $anchorScroll;
-        this.$timeout = $timeout;
-        this.$element = $element;
-        this.$window = $window;
-        this.hotkeys = hotkeys;
+        $scope.autoInject(this, arguments);
 
         let unsubscribe = $ngRedux.connect(
             this.mapStateToThis,
@@ -52,6 +44,7 @@ class AnnotateController {
         }
         let persistedLabels = state.projects.labels;
         let labels = [{name: 'All'}].concat(persistedLabels.map(label => ({name: label})));
+        let annotationShapefileProps = state.projects.annotationShapefileProps;
         return {
             user: state.api.user,
             annotations,
@@ -60,8 +53,11 @@ class AnnotateController {
             filter,
             fetchingAnnotations: state.projects.fetchingAnnotations,
             fetchingAnnotationsError: state.projects.fetchingAnnotationsError,
+            creatingAnnotations: state.projects.creatingAnnotations,
+            creatingAnnotationsError: state.projects.creatingAnnotationsError,
             editingAnnotation: state.projects.editingAnnotation,
-            annotationTemplate: state.projects.annotationTemplate
+            annotationTemplate: state.projects.annotationTemplate,
+            annotationShapefileProps
         };
     }
 
@@ -273,7 +269,7 @@ class AnnotateController {
                 description
             })
         );
-        this.createAnnotations(annotationCollection, !this.annotationTemplate);
+        this.createAnnotations(annotationCollection, !this.annotationTemplate, false);
     }
 
     onShapeCreated(shapeLayer) {
@@ -349,7 +345,10 @@ class AnnotateController {
     /* eslint-enable no-underscore-dangle */
 
     setLayerStyle(target, color, iconClass) {
-        if (target.feature.geometry.type === 'Polygon') {
+        if (
+            target.feature.geometry.type === 'Polygon' ||
+            target.feature.geometry.type === 'MultiPolygon'
+          ) {
             target.setStyle({'color': color});
         } else if (target.feature.geometry.type === 'Point') {
             target.setIcon(L.divIcon({'className': iconClass}));
@@ -374,56 +373,14 @@ class AnnotateController {
         }
     }
 
-    toggleSidebarItemClick($event, annotation) {
-        $event.stopPropagation();
+    doPanToAnnotation(annotation) {
         if (!this.sidebarDisabled) {
-            delete this.hoveredId;
-            if (this.clickedId !== annotation.id) {
-                this.clickedId = annotation.id;
-                this.addAndPanToHighlightLayer(annotation, true);
-            } else {
-                this.deleteClickedHighlight();
-            }
-        }
-    }
-
-    onSidebarItemMouseIn(annotation) {
-        if (!this.sidebarDisabled && !this.clickedId) {
-            this.hoveredId = annotation.id;
-            this.addAndPanToHighlightLayer(annotation, true);
-        }
-    }
-
-    onSidebarItemMouseOut() {
-        if (!this.sidebarDisabled && !this.clickedId) {
-            this.deleteClickedHighlight();
-        }
-    }
-
-    createHighlightLayer(data) {
-        return L.geoJSON(data, {
-            style: () => {
-                return {'color': RED, 'weight': 2, 'opacity': 0.8, 'fillOpacity': 0};
-            },
-            pointToLayer: (geoJsonPoint, latlng) => {
-                return L.marker(latlng, {
-                    'icon': L.divIcon({'className': 'annotate-highlight-marker'})
-                });
-            }
-        });
-    }
-
-    addAndPanToHighlightLayer(annotation, panToAnnotation) {
-        if (!this.sidebarDisabled) {
-            this.getMap().then((mapWrapper) => {
-                let highlightLayer = this.createHighlightLayer(annotation);
-                mapWrapper.setLayer('highlight', highlightLayer, false);
-                if (panToAnnotation) {
-                    mapWrapper.map.panTo(
-                        highlightLayer.getBounds().getCenter(),
-                        {'duration': 0.75}
-                    );
-                }
+            this.getMap().then(mapWrapper => {
+                let panTo = turfCenter(annotation);
+                mapWrapper.map.panTo([
+                    panTo.geometry.coordinates[1],
+                    panTo.geometry.coordinates[0]
+                ]);
             });
         }
     }

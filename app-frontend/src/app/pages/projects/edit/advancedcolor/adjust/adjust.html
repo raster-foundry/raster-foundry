@@ -5,7 +5,7 @@
     </a>
     <h5 class="sidebar-title">Advanced Color Correction</h5>
     <div class="header-controls">
-      <button class="btn btn-ghost btn-small link-histogram-reset"
+      <button class="btn btn-default btn-small link-histogram-reset"
                 type="button"
                 ng-click="$ctrl.$parent.resetCorrection()">Reset Changes</button>
     </div>
@@ -32,6 +32,19 @@
                               on-change="$ctrl.onHistogramChange(clipping)"
                               corrections="$ctrl.correction">
         </rf-channel-histogram>
+        <div class="histogram-overlay" ng-show="$ctrl.loadingHistogram || !$ctrl.histogramData.length">
+          <div class="list-group" ng-show="!$ctrl.loadingHistogram && $ctrl.histogramData && !$ctrl.histogramData.length">
+            Scenes in this project do not support histograms,<br />
+            or they contain no data.<br />
+            <!-- can't yet remove this since we don't know when backsplash will be deployed, but soon -->
+            Cloud optimized geotif support is coming soon.
+          </div>
+          <div class="list-group" ng-show="!$ctrl.histogramData || $ctrl.loadingHistogram">
+            <span class="list-placeholder">
+              <i class="icon-load animate-spin" ng-class="{'stop': $ctrl.histogramData && !$ctrl.loadingHistogram}"></i>
+            </span>
+          </div>
+        </div>
       </div>
 
         <!-- Color Correction -->
@@ -40,8 +53,8 @@
           <div class="filter-group-header">
             <rf-toggle-old data-model="$ctrl.correction.sigmoidalContrast.enabled"
                        on-change="$ctrl.storeToggle(value, 'sigmoidalContrast', ['alpha', 'beta'])">
+                       <label>Sigmoidal Contrast</label>
             </rf-toggle-old>
-            <h5>Sigmoidal Contrast</h5>
             <i class="icon-info"
                tooltips
                tooltip-template="
@@ -55,33 +68,37 @@
           <div class="filter-group-body" ng-show="$ctrl.correction.sigmoidalContrast.enabled">
             <div class="filter">
               <label>Threshold</label>
-              <rzslider class="dark"
-                        rz-slider-model="$ctrl.correction.sigmoidalContrast.alpha"
-                        rz-slider-options="$ctrl.alphaOptions"
-              ></rzslider>
-              <input class="filter-adjust-input"
-                     type="number"
-                     min=0
-                     max=1
-                     step=0.01
-                     ng-model="$ctrl.correction.sigmoidalContrast.alpha"
-                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
-                     ng-change="$ctrl.onFilterChange()">
+              <div class="flex-display">
+                <rzslider class="dark"
+                rz-slider-model="$ctrl.correction.sigmoidalContrast.alpha"
+                rz-slider-options="$ctrl.alphaOptions"
+                ></rzslider>
+                <input class="filter-adjust-input form-control"
+                      type="number"
+                      min=0
+                      max=1
+                      step=0.01
+                      ng-model="$ctrl.correction.sigmoidalContrast.alpha"
+                      ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
+                      ng-change="$ctrl.onFilterChange()">
+              </div>
             </div>
             <div class="filter">
               <label>Contrast</label>
-              <rzslider class="dark"
-                        rz-slider-model="$ctrl.correction.sigmoidalContrast.beta"
-                        rz-slider-options="$ctrl.betaOptions"
-              ></rzslider>
-              <input class="filter-adjust-input"
-                     type="number"
-                     min=0
-                     max=10
-                     step=0.01
-                     ng-model="$ctrl.correction.sigmoidalContrast.beta"
-                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
-                     ng-change="$ctrl.onFilterChange()">
+              <div class="flex-display">
+                <rzslider class="dark"
+                          rz-slider-model="$ctrl.correction.sigmoidalContrast.beta"
+                          rz-slider-options="$ctrl.betaOptions"
+                ></rzslider>
+                <input class="filter-adjust-input form-control"
+                      type="number"
+                      min=0
+                      max=10
+                      step=0.01
+                      ng-model="$ctrl.correction.sigmoidalContrast.beta"
+                      ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
+                      ng-change="$ctrl.onFilterChange()">
+              </div>
             </div>
           </div>
         </div>
@@ -91,8 +108,8 @@
           <div class="filter-group-header">
             <rf-toggle-old data-model="$ctrl.correction.gamma.enabled"
                        on-change="$ctrl.storeToggle(value, 'gamma', ['redGamma', 'greenGamma', 'blueGamma'])">
+                       <label>Color Balance</label>
             </rf-toggle-old>
-            <h5>Color Balance</h5>
             <i class="icon-info"
                tooltips
                tooltip-template="
@@ -107,60 +124,67 @@
             <div class="filter">
               <label>
                 Red
-                <i class="icon-locked color-white" ng-if="$ctrl.gammaLinkToggle"></i>
+                <i class="icon-locked" ng-if="$ctrl.gammaLinkToggle"></i>
               </label>
-              <rzslider class="dark"
-                        rz-slider-model="$ctrl.correction.gamma.redGamma"
-                        rz-slider-options="$ctrl.redGammaOptions"
-              ></rzslider>
-              <input class="filter-adjust-input"
-                     type="number"
-                     min=0
-                     max=2
-                     step=0.01
-                     ng-model="$ctrl.correction.gamma.redGamma"
-                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
-                     ng-change="$ctrl.onGammaFilterChange($ctrl.correction.gamma.redGamma)">
+              <div class="flex-display">
+                <rzslider class="dark"
+                          rz-slider-model="$ctrl.correction.gamma.redGamma"
+                          rz-slider-options="$ctrl.redGammaOptions"
+                ></rzslider>
+                <input class="filter-adjust-input form-control"
+                      type="number"
+                      min=0
+                      max=2
+                      step=0.01
+                      ng-model="$ctrl.correction.gamma.redGamma"
+                      ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
+                      ng-change="$ctrl.onGammaFilterChange($ctrl.correction.gamma.redGamma)">
+              </div>
             </div>
             <div class="filter">
               <label>
                 Green
-                <i class="icon-locked color-white" ng-if="$ctrl.gammaLinkToggle"></i>
+                <i class="icon-locked" ng-if="$ctrl.gammaLinkToggle"></i>
               </label>
-              <rzslider class="dark"
-                        rz-slider-model="$ctrl.correction.gamma.greenGamma"
-                        rz-slider-options="$ctrl.greenGammaOptions"
-              ></rzslider>
-              <input class="filter-adjust-input"
-                     type="number"
-                     min=0
-                     max=2
-                     step=0.01
-                     ng-model="$ctrl.correction.gamma.greenGamma"
-                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
-                     ng-change="$ctrl.onGammaFilterChange($ctrl.correction.gamma.greenGamma)">
+              <div class="flex-display">
+                <rzslider class="dark"
+                          rz-slider-model="$ctrl.correction.gamma.greenGamma"
+                          rz-slider-options="$ctrl.greenGammaOptions"
+                ></rzslider>
+                <input class="filter-adjust-input form-control"
+                      type="number"
+                      min=0
+                      max=2
+                      step=0.01
+                      ng-model="$ctrl.correction.gamma.greenGamma"
+                      ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
+                      ng-change="$ctrl.onGammaFilterChange($ctrl.correction.gamma.greenGamma)">
+              </div>
             </div>
             <div class="filter">
               <label>
                 Blue
-                <i class="icon-locked color-white" ng-if="$ctrl.gammaLinkToggle"></i>
+                <i class="icon-locked" ng-if="$ctrl.gammaLinkToggle"></i>
               </label>
-              <rzslider class="dark"
-                        rz-slider-model="$ctrl.correction.gamma.blueGamma"
-                        rz-slider-options="$ctrl.blueGammaOptions"
-              ></rzslider>
-              <input class="filter-adjust-input"
-                     type="number"
-                     min=0
-                     max=2
-                     step=0.01
-                     ng-model="$ctrl.correction.gamma.blueGamma"
-                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
-                     ng-change="$ctrl.onGammaFilterChange($ctrl.correction.gamma.blueGamma)">
+              <div class="flex-display">
+                <rzslider class="dark"
+                          rz-slider-model="$ctrl.correction.gamma.blueGamma"
+                          rz-slider-options="$ctrl.blueGammaOptions"
+                ></rzslider>
+                <input class="filter-adjust-input form-control"
+                      type="number"
+                      min=0
+                      max=2
+                      step=0.01
+                      ng-model="$ctrl.correction.gamma.blueGamma"
+                      ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
+                      ng-change="$ctrl.onGammaFilterChange($ctrl.correction.gamma.blueGamma)">
+              </div>
             </div>
             <div class="filter-group-option">
-              <label class="color-white">Link Sliders</label>
-              <rf-toggle-old data-model="$ctrl.gammaLinkToggle" on-change="$ctrl.gammaLinkToggled()"></rf-toggle-old>
+              <rf-toggle-old data-model="$ctrl.gammaLinkToggle" on-change="$ctrl.gammaLinkToggled()">
+                <label>Link Sliders</label>
+              </rf-toggle-old>
             </div>
           </div>
         </div>
@@ -170,21 +194,23 @@
           <div class="filter-group-header">
             <rf-toggle-old data-model="$ctrl.correction.saturation.enabled"
                        on-change="$ctrl.storeToggle(value, 'saturation', ['saturation'])">
+                       <label>Saturation</label>
             </rf-toggle-old>
-            <h5 class="h5">Saturation</h5>
           </div>
           <div class="filter-group-body" ng-show="$ctrl.correction.saturation.enabled">
             <div class="filter">
               <label>Saturation</label>
-              <rzslider class="dark"
-                        rz-slider-model="$ctrl.correction.saturation.saturation"
-                        rz-slider-options="$ctrl.saturationOptions"></rzslider>
-              <input class="filter-adjust-input"
-                     type="number"
-                     step="1"
-                     ng-model="$ctrl.correction.saturation.saturation"
-                     ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
-                     ng-change="$ctrl.onFilterChange()">
+              <div class="flex-display">
+                <rzslider class="dark"
+                          rz-slider-model="$ctrl.correction.saturation.saturation"
+                          rz-slider-options="$ctrl.saturationOptions"></rzslider>
+                <input class="filter-adjust-input form-control"
+                      type="number"
+                      step="1"
+                      ng-model="$ctrl.correction.saturation.saturation"
+                      ng-model-options="{ debounce: 500, updateOn: 'change blur' }"
+                      ng-change="$ctrl.onFilterChange()">
+              </div>
             </div>
           </div>
         </div>

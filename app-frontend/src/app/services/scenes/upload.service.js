@@ -8,6 +8,10 @@ export default (app) => {
                 `${BUILDCONFIG.API_HOST}/api/uploads/:id`, {
                     id: '@id'
                 }, {
+                    query: {
+                        method: 'GET',
+                        cache: false
+                    },
                     create: {
                         method: 'POST'
                     },
@@ -20,6 +24,10 @@ export default (app) => {
                     }
                 }
             );
+        }
+
+        query(params = {}) {
+            return this.Upload.query(params).$promise;
         }
 
         create(data) {

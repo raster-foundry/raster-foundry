@@ -18,6 +18,7 @@ export default (app) => {
             this.datasourceCache = new Map();
             this.previewOnMap = true;
             this.cogThumbnailCache = [];
+            this.defaultRepository = true;
         }
 
         initRepository() {
@@ -136,7 +137,7 @@ export default (app) => {
           Function chain:
           (filters) => (bbox) => () => Future(next page of scenes)
         */
-        fetchScenes(filters) {
+        fetchScenes(filters, projectId) {
             if (filters.shape && typeof filters.shape === 'object') {
                 filters.shape = filters.shape.id;
             }
@@ -158,7 +159,8 @@ export default (app) => {
                                 pageSize: '20',
                                 page,
                                 bbox,
-                                maxCreateDatetime: requestTime
+                                maxCreateDatetime: requestTime,
+                                project: projectId
                             }, params)
                         ).then((response) => {
                             // We aren't supporting concurrent scene paged requests
@@ -168,7 +170,7 @@ export default (app) => {
                                 scenes: response.results,
                                 hasNext,
                                 count: response.count >= 100 ?
-                                    'At least 100' : this.$filter('number')(response.count)
+                                    'at least 100' : this.$filter('number')(response.count)
                             });
                         }, (error) => {
                             reject({
@@ -204,6 +206,23 @@ export default (app) => {
 
         getDatasource(scene) {
             return this.$q((resolve) => resolve(scene.datasource));
+        }
+
+        getDatasourceBands(scene) {
+            return this.$q((resolve) => {
+                return resolve(scene.datasource.bands.reduce((acc, band) => {
+                    if (band.name.toUpperCase() === 'RED' ||
+                        band.name.toUpperCase() === 'GREEN' ||
+                        band.name.toUpperCase() === 'BLUE') {
+                        acc[band.name.toUpperCase()] = parseInt(band.number, 10);
+                    }
+                    return acc;
+                }, {
+                    RED: 0,
+                    GREEN: 1,
+                    BLUE: 2
+                }));
+            });
         }
 
 

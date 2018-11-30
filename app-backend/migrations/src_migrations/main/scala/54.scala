@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M54 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(54)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(54)(
+    List(
+      sqlu"""
     CREATE TABLE organization_features (
       organization UUID REFERENCES organizations (id),
       feature_flag UUID REFERENCES feature_flags (id),
@@ -11,5 +12,5 @@ object M54 {
       PRIMARY KEY (organization, feature_flag)
     );
     """
-  ))
+    ))
 }

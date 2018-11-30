@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M56 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(56)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(56)(
+    List(
+      sqlu"""
 CREATE TYPE export_type AS ENUM ('DROPBOX', 'S3', 'LOCAL');
 CREATE TYPE export_status AS ENUM ('NOTEXPORTED', 'TOBEEXPORTED', 'EXPORTING', 'EXPORTED', 'FAILED');
 CREATE TABLE exports (
@@ -20,5 +21,5 @@ CREATE TABLE exports (
   export_options jsonb NOT NULL
 );
 """
-  ))
+    ))
 }

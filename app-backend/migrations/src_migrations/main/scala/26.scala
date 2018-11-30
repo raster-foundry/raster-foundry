@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M26 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(26)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(26)(
+    List(
+      sqlu"""
        CREATE TABLE model_categories (
          id UUID PRIMARY KEY NOT NULL,
          created_at TIMESTAMP NOT NULL,
@@ -19,5 +20,5 @@ object M26 {
          model_categories_unique_constraint
        UNIQUE (category);
 """
-  ))
+    ))
 }

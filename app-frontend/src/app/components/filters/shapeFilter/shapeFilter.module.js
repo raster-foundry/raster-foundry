@@ -9,7 +9,8 @@ const ShapeFilterComponent = {
     controller: 'ShapeFilterController',
     bindings: {
         filter: '<',
-        onFilterChange: '&'
+        onFilterChange: '&',
+        shape: '<?'
     }
 };
 
@@ -48,21 +49,51 @@ class ShapeFilterController {
         };
     }
 
+    $onInit() {
+        this.shapeRequest = this.getShapes().then((shapes) => {
+            this.shapes = shapes;
+            this.filteredShapes = shapes;
+            this.shapeSearch = '';
+            if (this.shape) {
+                this.setShapeFromShape(this.shape);
+            } else if (this.paramValue) {
+                this.setShapeFromParam(this.paramValue);
+            }
+        });
+        this.shapeRequest.catch((err) => {
+            this.error = err;
+        });
+    }
+
     $onChanges(changes) {
         if (changes.filter && changes.filter.currentValue) {
             this.filter = changes.filter.currentValue;
-            const paramValue = this.$location.search()[this.filter.param];
-            this.getShapes().then((shapes) => {
-                this.shapes = shapes;
-                this.filteredShapes = shapes;
-                this.shapeSearch = '';
-                let paramShape = _.first(
-                    this.shapes.filter((shape) => shape.id === paramValue)
-                );
+            if (this.filter.param) {
+                this.paramValue = this.$location.search()[this.filter.param];
+                this.setShapeFromParam(this.paramValue);
+            }
+        }
+        let shape = _.get(changes, 'shape.currentValue');
+        if (shape && shape.id !== _.get(this, 'selectedShape.id')) {
+            this.setShapeFromShape(shape);
+        }
+    }
+
+    setShapeFromParam(param) {
+        if (this.shapes && this.shapes.length) {
+            const paramShape = _.first(this.shapes.filter((shape) => shape.id === this.paramValue));
+            if (paramShape) {
                 this.onSelectShape(paramShape);
-            }, (err) => {
-                this.error = err;
-            });
+            }
+        }
+    }
+
+    setShapeFromShape(bindShape) {
+        if (this.shapes && this.shapes.length) {
+            const boundShape = _.first(this.shapes.filter((shape) => shape.id === bindShape.id));
+            if (boundShape) {
+                this.onSelectShape(boundShape);
+            }
         }
     }
 

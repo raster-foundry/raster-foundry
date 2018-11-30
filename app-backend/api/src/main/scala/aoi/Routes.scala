@@ -1,17 +1,17 @@
-package com.azavea.rf.api.aoi
+package com.rasterfoundry.api.aoi
 
-import com.azavea.rf.api.utils.queryparams.QueryParametersCommon
-import com.azavea.rf.common.{CommonHandlers, UserErrorHandler}
-import com.azavea.rf.authentication.Authentication
-import com.azavea.rf.database._
-import com.azavea.rf.datamodel._
+import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
+import com.rasterfoundry.common.{CommonHandlers, UserErrorHandler}
+import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.database._
+import com.rasterfoundry.datamodel._
 
 import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.effect.IO
 import cats.implicits._
-import com.azavea.rf.database.filter.Filterables._
+import com.rasterfoundry.database.filter.Filterables._
 import doobie._
 import doobie.implicits._
 import doobie.Fragments.in
@@ -20,8 +20,8 @@ import doobie.postgres.implicits._
 
 import java.util.UUID
 
-
-trait AoiRoutes extends Authentication
+trait AoiRoutes
+    extends Authentication
     with UserErrorHandler
     with QueryParametersCommon
     with PaginationDirectives
@@ -33,19 +33,22 @@ trait AoiRoutes extends Authentication
     pathEndOrSingleSlash {
       get { listAOIs }
     } ~
-    pathPrefix(JavaUUID) { aoiId =>
-      pathEndOrSingleSlash {
-        get { getAOI(aoiId) } ~
-        put { updateAOI(aoiId) } ~
-        delete { deleteAOI(aoiId) }
+      pathPrefix(JavaUUID) { aoiId =>
+        pathEndOrSingleSlash {
+          get { getAOI(aoiId) } ~
+            put { updateAOI(aoiId) } ~
+            delete { deleteAOI(aoiId) }
+        }
       }
-    }
   }
 
   def listAOIs: Route = authenticate { user =>
     (withPagination & aoiQueryParameters) { (page, aoiQueryParams) =>
       complete {
-        AoiDao.listAuthorizedAois(user, aoiQueryParams, page).transact(xa).unsafeToFuture
+        AoiDao
+          .listAuthorizedAois(user, aoiQueryParams, page)
+          .transact(xa)
+          .unsafeToFuture
       }
     }
   }
@@ -67,7 +70,7 @@ trait AoiRoutes extends Authentication
       AoiDao.authorize(id, user, ActionType.Edit).transact(xa).unsafeToFuture
     } {
       entity(as[AOI]) { aoi =>
-        onSuccess(AoiDao.updateAOI(aoi, id, user).transact(xa).unsafeToFuture) {
+        onSuccess(AoiDao.updateAOI(aoi, user).transact(xa).unsafeToFuture) {
           completeSingleOrNotFound
         }
       }
@@ -78,7 +81,7 @@ trait AoiRoutes extends Authentication
     authorizeAsync {
       AoiDao.authorize(id, user, ActionType.Edit).transact(xa).unsafeToFuture
     } {
-      onSuccess(AoiDao.deleteAOI(id, user).transact(xa).unsafeToFuture) {
+      onSuccess(AoiDao.deleteAOI(id).transact(xa).unsafeToFuture) {
         completeSingleOrNotFound
       }
     }

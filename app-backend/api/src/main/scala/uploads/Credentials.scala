@@ -1,49 +1,44 @@
-package com.azavea.rf.api.uploads
+package com.rasterfoundry.api.uploads
 
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 
-import com.azavea.rf.api.utils.Config
-import com.azavea.rf.datamodel.User
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import com.amazonaws.auth.{AWSCredentials, AWSSessionCredentials, AWSStaticCredentialsProvider}
+import com.amazonaws.auth.{
+  AWSCredentials,
+  AWSSessionCredentials,
+  AWSStaticCredentialsProvider
+}
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityRequest
+import com.rasterfoundry.api.utils.Config
+import com.rasterfoundry.datamodel.User
 import com.typesafe.scalalogging.LazyLogging
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import io.circe.generic.JsonCodec
-import io.circe.optics.JsonPath._
-import io.circe.Json
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-
-
 @JsonCodec
-case class Credentials (
-  AccessKeyId: String,
-  Expiration: String,
-  SecretAccessKey: String,
-  SessionToken: String
-) extends AWSCredentials with AWSSessionCredentials {
+final case class Credentials(
+    AccessKeyId: String,
+    Expiration: String,
+    SecretAccessKey: String,
+    SessionToken: String
+) extends AWSCredentials
+    with AWSSessionCredentials {
   override def getAWSAccessKeyId = this.AccessKeyId
   override def getAWSSecretKey = this.SecretAccessKey
   override def getSessionToken = this.SessionToken
 }
 
 @JsonCodec
-case class CredentialsWithBucketPath (
-  credentials: Credentials,
-  bucketPath: String
+final case class CredentialsWithBucketPath(
+    credentials: Credentials,
+    bucketPath: String
 )
 
 object CredentialsService extends Config with LazyLogging {
-  import com.azavea.rf.api.AkkaSystem._
 
-  def getCredentials(user: User, uploadId: UUID, jwt: String): CredentialsWithBucketPath = {
+  def getCredentials(user: User,
+                     uploadId: UUID,
+                     jwt: String): CredentialsWithBucketPath = {
     val path = s"user-uploads/${user.id}/${uploadId.toString}"
     val stsClient = AWSSecurityTokenServiceClientBuilder.defaultClient
     val stsRequest = new AssumeRoleWithWebIdentityRequest
@@ -55,7 +50,8 @@ object CredentialsService extends Config with LazyLogging {
     // https://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/securitytoken/model/GetSessionTokenRequest.html
     stsRequest.setDurationSeconds(3600)
 
-    val stsCredentials = stsClient.assumeRoleWithWebIdentity(stsRequest).getCredentials
+    val stsCredentials =
+      stsClient.assumeRoleWithWebIdentity(stsRequest).getCredentials
 
     val credentials = Credentials(
       stsCredentials.getAccessKeyId,
@@ -65,9 +61,9 @@ object CredentialsService extends Config with LazyLogging {
     )
 
     val s3 = AmazonS3ClientBuilder.standard
-               .withCredentials(new AWSStaticCredentialsProvider(credentials))
-               .withRegion(region)
-               .build()
+      .withCredentials(new AWSStaticCredentialsProvider(credentials))
+      .withRegion(region)
+      .build()
 
     // Add timestamp object to test credentials
     val now = new Timestamp(new Date().getTime)

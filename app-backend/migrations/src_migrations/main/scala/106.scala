@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M106 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(106)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(106)(
+    List(
+      sqlu"""
 -- Delete old MODIS datasource
 DELETE FROM datasources WHERE id = '73b24c83-1da9-4118-ae3f-ac601d1b701b';
 
@@ -223,5 +224,5 @@ INSERT INTO datasources(
     ]'
 );
 """
-  ))
+    ))
 }

@@ -49,7 +49,8 @@
     </a>
     <a href
        ng-click="$ctrl.openShareModal()"
-       data-title="Share">
+       data-title="Share"
+       ng-if="$ctrl.projectOwnerId === $ctrl.actingUserId">
       <i class="icon-key"></i>
       <span>Permissions</span>
     </a>
@@ -62,7 +63,11 @@
 
   <!-- Main map area -->
   <div class="main">
-    <rf-map-container map-id="edit" ng-show="!$ctrl.showPreviewMap"></rf-map-container>
+    <rf-map-container map-id="edit"
+                      ng-show="!$ctrl.showPreviewMap"
+                      initial-center="$ctrl.initialCenter"
+                      initial-zoom="$ctrl.initialZoom"
+    ></rf-map-container>
     <rf-map-container map-id="preview"
                       ng-if="$ctrl.showPreviewMap"
                       initial-center="$ctrl.center"

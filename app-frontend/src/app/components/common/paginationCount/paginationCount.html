@@ -1,9 +1,4 @@
 <div class="pagination-count">
-    Showing
-    <strong>{{$ctrl.startIndex}}</strong>
-    -
-    <strong>{{$ctrl.endIndex}}</strong>
-    of
-    <strong>{{$ctrl.total}}</strong>
-    {{$ctrl.itemName}}
+{{$ctrl.startIndex}} – {{$ctrl.endIndex}} of {{$ctrl.total}} {{$ctrl.itemName}}
+<ng-transclude></ng-transclude>
 </div>

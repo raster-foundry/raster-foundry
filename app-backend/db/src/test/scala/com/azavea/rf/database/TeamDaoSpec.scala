@@ -1,11 +1,11 @@
-package com.azavea.rf.database
+package com.rasterfoundry.database
 
 import java.sql.Timestamp
 
-import com.azavea.rf.datamodel._
-import com.azavea.rf.datamodel.Generators.Implicits._
-import com.azavea.rf.database.Implicits._
-import com.azavea.rf.database._
+import com.rasterfoundry.datamodel._
+import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database._
 import doobie._
 import doobie.implicits._
 import cats._
@@ -22,20 +22,28 @@ import io.circe.syntax._
 import java.util.UUID
 import com.lonelyplanet.akka.http.extensions.PageRequest
 
-class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig with PropTestHelpers {
+class TeamDaoSpec
+    extends FunSuite
+    with Matchers
+    with Checkers
+    with DBTestConfig
+    with PropTestHelpers {
 
   test("listing teams") {
-    TeamDao.query.list.transact(xa).unsafeRunSync.length >= 0
+    xa.use(t => TeamDao.query.list.transact(t)).unsafeRunSync.length >= 0
   }
 
   test("getting a team by ID") {
     check {
-      forAll (
-        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create) => {
+      forAll(
+        (userCreate: User.Create,
+         orgCreate: Organization.Create,
+         teamCreate: Team.Create) => {
           val createTeamIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.create(fixupTeam(teamCreate, orgInsert, userInsert))
+            teamInsert <- TeamDao.create(
+              fixupTeam(teamCreate, orgInsert, userInsert))
           } yield (teamInsert, orgInsert)
 
           val getTeamAndOrgIO = createTeamIO flatMap {
@@ -44,13 +52,14 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
             }
           }
 
-          val (getTeamOp, org) = getTeamAndOrgIO.transact(xa).unsafeRunSync
+          val (getTeamOp, org) =
+            xa.use(t => getTeamAndOrgIO.transact(t)).unsafeRunSync
           val getTeam = getTeamOp.get
 
           getTeam.name == teamCreate.name &&
-            getTeam.organizationId == org.id &&
-            getTeam.settings == teamCreate.settings &&
-            getTeam.isActive == true
+          getTeam.organizationId == org.id &&
+          getTeam.settings == teamCreate.settings &&
+          getTeam.isActive == true
         }
       )
     }
@@ -58,12 +67,15 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
 
   test("getting a team by ID unsafely") {
     check {
-      forAll (
-        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create) => {
+      forAll(
+        (userCreate: User.Create,
+         orgCreate: Organization.Create,
+         teamCreate: Team.Create) => {
           val createTeamIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.create(fixupTeam(teamCreate, orgInsert, userInsert))
+            teamInsert <- TeamDao.create(
+              fixupTeam(teamCreate, orgInsert, userInsert))
           } yield (teamInsert, orgInsert)
 
           val getTeamAndOrgIO = createTeamIO flatMap {
@@ -72,12 +84,13 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
             }
           }
 
-          val (getTeam, org) = getTeamAndOrgIO.transact(xa).unsafeRunSync
+          val (getTeam, org) =
+            xa.use(t => getTeamAndOrgIO.transact(t)).unsafeRunSync
 
           getTeam.name == teamCreate.name &&
-            getTeam.organizationId == org.id &&
-            getTeam.settings == teamCreate.settings &&
-            getTeam.isActive == true
+          getTeam.organizationId == org.id &&
+          getTeam.settings == teamCreate.settings &&
+          getTeam.isActive == true
         }
       )
     }
@@ -85,33 +98,74 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
 
   test("creating a team") {
     check {
-      forAll (
-        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create) => {
+      forAll(
+        (userCreate: User.Create,
+         orgCreate: Organization.Create,
+         teamCreate: Team.Create) => {
           val createTeamIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.create(fixupTeam(teamCreate, orgInsert, userInsert))
+            teamInsert <- TeamDao.create(
+              fixupTeam(teamCreate, orgInsert, userInsert))
           } yield (teamInsert, orgInsert)
 
-          val (createdTeam, org) = createTeamIO.transact(xa).unsafeRunSync
+          val (createdTeam, org) =
+            xa.use(t => createTeamIO.transact(t)).unsafeRunSync
 
           createdTeam.name == teamCreate.name &&
-            createdTeam.organizationId == org.id &&
-            createdTeam.settings == teamCreate.settings &&
-            createdTeam.isActive == true
+          createdTeam.organizationId == org.id &&
+          createdTeam.settings == teamCreate.settings &&
+          createdTeam.isActive == true
         }
       )
     }
   }
 
-  test("updating a team"){
+  test("creating a team with role") {
     check {
-      forAll (
-        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create, teamUpdate: Team.Create) => {
+      forAll(
+        (userCreate: User.Create,
+         orgCreate: Organization.Create,
+         teamCreate: Team.Create) => {
           val createTeamIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.create(fixupTeam(teamCreate, orgInsert, userInsert))
+            teamInsert <- TeamDao.createWithRole(fixupTeam(teamCreate,
+                                                           orgInsert,
+                                                           userInsert),
+                                                 userInsert)
+            users <- TeamDao.listMembers(teamInsert.id,
+                                         PageRequest(0, 30, Map.empty),
+                                         SearchQueryParameters(),
+                                         userInsert)
+            isAdmin <- TeamDao.userIsAdmin(userInsert, teamInsert.id)
+          } yield (teamInsert, orgInsert, users, isAdmin)
+
+          val (createdTeam, org, teamusers, isAdmin) =
+            xa.use(t => createTeamIO.transact(t)).unsafeRunSync
+
+          createdTeam.name == teamCreate.name &&
+          createdTeam.organizationId == org.id &&
+          createdTeam.settings == teamCreate.settings &&
+          createdTeam.isActive == true && teamusers.count == 1 &&
+          isAdmin
+        }
+      )
+    }
+  }
+
+  test("updating a team") {
+    check {
+      forAll(
+        (userCreate: User.Create,
+         orgCreate: Organization.Create,
+         teamCreate: Team.Create,
+         teamUpdate: Team.Create) => {
+          val createTeamIO = for {
+            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
+            (orgInsert, userInsert) = orgAndUserInsert
+            teamInsert <- TeamDao.create(
+              fixupTeam(teamCreate, orgInsert, userInsert))
           } yield (teamInsert, orgInsert, userInsert)
 
           val updateTeamIO = createTeamIO flatMap {
@@ -126,12 +180,13 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
             }
           }
 
-          val (updatedTeam, org) = updateTeamIO.transact(xa).unsafeRunSync
+          val (updatedTeam, org) =
+            xa.use(t => updateTeamIO.transact(t)).unsafeRunSync
 
           updatedTeam.name == teamUpdate.name &&
-            updatedTeam.settings == teamUpdate.settings &&
-            updatedTeam.organizationId == org.id &&
-            updatedTeam.isActive == true
+          updatedTeam.settings == teamUpdate.settings &&
+          updatedTeam.organizationId == org.id &&
+          updatedTeam.isActive == true
         }
       )
     }
@@ -139,47 +194,74 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
 
   test("deleting a team by ID") {
     check {
-      forAll (
-        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create) => {
+      forAll(
+        (userCreate: User.Create,
+         orgCreate: Organization.Create,
+         teamCreate: Team.Create) => {
           val createTeamIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.create(fixupTeam(teamCreate, orgInsert, userInsert))
+            teamInsert <- TeamDao.create(
+              fixupTeam(teamCreate, orgInsert, userInsert))
           } yield teamInsert
 
           val deleteTeamIO = createTeamIO flatMap {
             case (team: Team) => TeamDao.delete(team.id)
           }
 
-          deleteTeamIO.transact(xa).unsafeRunSync == 1
+          xa.use(t => deleteTeamIO.transact(t)).unsafeRunSync == 1
         }
       )
     }
   }
 
+  // ACR deactivation upon team deactivation needs to be reconsidered in issue 4020
   test("Deactivated teams are not listed") {
     check {
-      forAll (
-        (userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
-         acc: AccessControlRule.Create, project: Project.Create) => {
+      forAll(
+        (userCreate: User.Create,
+         orgCreate: Organization.Create,
+         teamCreate: Team.Create,
+         acr: ObjectAccessControlRule,
+         project: Project.Create) => {
           val createTeamIO = for {
             orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
             (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.create(fixupTeam(teamCreate, orgInsert, userInsert))
+            teamInsert <- TeamDao.create(
+              fixupTeam(teamCreate, orgInsert, userInsert))
             insertedProject <- ProjectDao.insertProject(project, userInsert)
-            acr = acc.toAccessControlRule(userInsert, ObjectType.Project, insertedProject.id)
-                     .copy(subjectType = SubjectType.Team, subjectId = Some(teamInsert.id.toString()))
-            accessControlRule <- AccessControlRuleDao.create(acr)
+            acrToInsert = acr.copy(subjectType = SubjectType.Team,
+                                   subjectId = Some(teamInsert.id.toString()))
+            _ <- ProjectDao.addPermission(insertedProject.id, acrToInsert)
             deactivateTeam <- TeamDao.deactivate(teamInsert.id)
-            deactivatedTeams <- TeamDao.query.filter(fr"is_active = false").list
-            deactivatedACRs <- AccessControlRuleDao.query.filter(fr"is_active = false").list
-            activatedTeams <- TeamDao.listOrgTeams(orgInsert.id, PageRequest(0, 30, Map.empty))
-          } yield (deactivatedTeams, deactivatedACRs, activatedTeams)
-          val (deactivatedTeams, deactivatedACRs, activatedTeams) = createTeamIO.transact(xa).unsafeRunSync
+            permissionAfterTeamDeactivate <- ProjectDao.getPermissions(
+              insertedProject.id)
+            deactivatedTeams <- TeamDao.query
+              .filter(fr"is_active = false")
+              .filter(fr"modified_by=${userInsert.id}")
+              .list
+            activatedTeams <- TeamDao.listOrgTeams(orgInsert.id,
+                                                   PageRequest(0,
+                                                               30,
+                                                               Map.empty),
+                                                   TeamQueryParameters())
+          } yield {
+            (deactivatedTeams,
+             activatedTeams,
+             acrToInsert,
+             permissionAfterTeamDeactivate)
+          }
+          val (deactivatedTeams,
+               activatedTeams,
+               acrToInsert,
+               permissionAfterTeamDeactivate) =
+            xa.use(t => createTeamIO.transact(t)).unsafeRunSync
 
           assert(deactivatedTeams.size == 1, "Deactivated team should exist")
-          assert(deactivatedACRs.size == 1, "Deactivated access control rules should exist")
           assert(activatedTeams.results.size == 0, "No team is active")
+          assert(
+            Set(acrToInsert) == permissionAfterTeamDeactivate.flatten.toSet,
+            "Permissions exists after team deactivation")
           true
         }
       )
@@ -188,56 +270,80 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
 
   test("add a user role") {
     check {
-      forAll{
+      forAll {
         (
-          userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
-          userRole: GroupRole
-        ) => {
-          val addUserTeamRoleIO = for {
-            orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-            (org, dbUser) = orgAndUser
-            insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
-            insertedUserGroupRole <- TeamDao.addUserRole(org.platformId, dbUser, dbUser.id, insertedTeam.id, userRole)
-            byIdUserGroupRole <- UserGroupRoleDao.getOption(insertedUserGroupRole.id)
-          } yield { (insertedTeam, byIdUserGroupRole) }
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            teamCreate: Team.Create,
+            userRole: GroupRole
+        ) =>
+          {
+            val addUserTeamRoleIO = for {
+              orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
+              (org, dbUser) = orgAndUser
+              insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
+              insertedUserGroupRole <- TeamDao.addUserRole(org.platformId,
+                                                           dbUser,
+                                                           dbUser.id,
+                                                           insertedTeam.id,
+                                                           userRole)
+              byIdUserGroupRole <- UserGroupRoleDao.getOption(
+                insertedUserGroupRole.id)
+            } yield { (insertedTeam, byIdUserGroupRole) }
 
-          val (dbTeam, dbUserGroupRole) = addUserTeamRoleIO.transact(xa).unsafeRunSync
-          dbUserGroupRole match {
-            case Some(ugr) =>
-              assert(ugr.isActive, "; Added role should be active")
-              assert(ugr.groupType == GroupType.Team, "; Added role should be for a Team")
-              assert(ugr.groupId == dbTeam.id, "; Added role should be for the correct Team")
-              assert(ugr.groupRole == userRole, "; Added role should have the correct role")
-              true
-            case _ => false
+            val (dbTeam, dbUserGroupRole) =
+              xa.use(t => addUserTeamRoleIO.transact(t)).unsafeRunSync
+            dbUserGroupRole match {
+              case Some(ugr) =>
+                assert(ugr.isActive, "; Added role should be active")
+                assert(ugr.groupType == GroupType.Team,
+                       "; Added role should be for a Team")
+                assert(ugr.groupId == dbTeam.id,
+                       "; Added role should be for the correct Team")
+                assert(ugr.groupRole == userRole,
+                       "; Added role should have the correct role")
+                true
+              case _ => false
+            }
           }
-        }
       }
     }
   }
 
   test("deactivate a user's roles") {
     check {
-      forAll{
+      forAll {
         (
-          userCreate: User.Create, orgCreate: Organization.Create, teamCreate: Team.Create,
-          userRole: GroupRole
-        ) => {
-          val setTeamRoleIO = for {
-            orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-            (org, dbUser) = orgAndUser
-            insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
-            originalUserGroupRole <- TeamDao.addUserRole(org.platformId, dbUser, dbUser.id, insertedTeam.id, userRole)
-            updatedUserGroupRoles <- TeamDao.deactivateUserRoles(dbUser, dbUser.id, insertedTeam.id)
-          } yield { (originalUserGroupRole, updatedUserGroupRoles ) }
+            userCreate: User.Create,
+            orgCreate: Organization.Create,
+            teamCreate: Team.Create,
+            userRole: GroupRole
+        ) =>
+          {
+            val setTeamRoleIO = for {
+              orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
+              (org, dbUser) = orgAndUser
+              insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
+              originalUserGroupRole <- TeamDao.addUserRole(org.platformId,
+                                                           dbUser,
+                                                           dbUser.id,
+                                                           insertedTeam.id,
+                                                           userRole)
+              updatedUserGroupRoles <- TeamDao.deactivateUserRoles(
+                dbUser,
+                dbUser.id,
+                insertedTeam.id)
+            } yield { (originalUserGroupRole, updatedUserGroupRoles) }
 
-          val (dbOldUGR, dbNewUGRs) = setTeamRoleIO.transact(xa).unsafeRunSync
+            val (dbOldUGR, dbNewUGRs) =
+              xa.use(t => setTeamRoleIO.transact(t)).unsafeRunSync
 
-          assert(dbNewUGRs.filter((ugr) => ugr.isActive == false).size == 1,
-                 "; The updated UGR should be inactive")
-          assert(dbNewUGRs.size == 1, "; There should only be a single UGR updated")
-          true
-        }
+            assert(dbNewUGRs.filter((ugr) => ugr.isActive == false).size == 1,
+                   "; The updated UGR should be inactive")
+            assert(dbNewUGRs.size == 1,
+                   "; There should only be a single UGR updated")
+            true
+          }
       }
     }
   }
@@ -245,31 +351,49 @@ class TeamDaoSpec extends FunSuite with Matchers with Checkers with DBTestConfig
   test("listing teams for a user") {
     check {
       forAll {
-        (platform: Platform, userCreate: User.Create, orgCreate: Organization.Create,
-         teamCreate1: Team.Create, teamCreate2: Team.Create) => {
-          val groupRole = GroupRole.Member
-          val teamsForUserIO = for {
-            userOrgPlatform <- insertUserOrgPlatform(userCreate, orgCreate, platform)
-            (dbUser, dbOrg, dbPlatform) = userOrgPlatform
-            team1 <- TeamDao.create(fixupTeam(teamCreate1, dbOrg, dbUser))
-            team2 <- TeamDao.create(fixupTeam(teamCreate2, dbOrg, dbUser))
-            _ <- UserGroupRoleDao.create(
-              UserGroupRole.Create(
-                dbUser.id, GroupType.Team, team1.id, groupRole
-              ).toUserGroupRole(dbUser, MembershipStatus.Approved)
-            )
-            _ <- UserGroupRoleDao.create(
-              UserGroupRole.Create(
-                dbUser.id, GroupType.Team, team2.id, groupRole
-              ).toUserGroupRole(dbUser, MembershipStatus.Approved)
-            )
-            listedTeams <- TeamDao.teamsForUser(dbUser)
-          } yield { (List(team1, team2), listedTeams) }
-          val (insertedTeams, listedTeams) = teamsForUserIO.transact(xa).unsafeRunSync
-          assert(insertedTeams.map( _.name ).toSet == listedTeams.map( _.name ).toSet,
-                 "Inserted and listed teams for this user should be the same")
-          true
-        }
+        (platform: Platform,
+         userCreate: User.Create,
+         orgCreate: Organization.Create,
+         teamCreate1: Team.Create,
+         teamCreate2: Team.Create) =>
+          {
+            val groupRole = GroupRole.Member
+            val teamsForUserIO = for {
+              userOrgPlatform <- insertUserOrgPlatform(userCreate,
+                                                       orgCreate,
+                                                       platform)
+              (dbUser, dbOrg, dbPlatform) = userOrgPlatform
+              team1 <- TeamDao.create(fixupTeam(teamCreate1, dbOrg, dbUser))
+              team2 <- TeamDao.create(fixupTeam(teamCreate2, dbOrg, dbUser))
+              _ <- UserGroupRoleDao.create(
+                UserGroupRole
+                  .Create(
+                    dbUser.id,
+                    GroupType.Team,
+                    team1.id,
+                    groupRole
+                  )
+                  .toUserGroupRole(dbUser, MembershipStatus.Approved)
+              )
+              _ <- UserGroupRoleDao.create(
+                UserGroupRole
+                  .Create(
+                    dbUser.id,
+                    GroupType.Team,
+                    team2.id,
+                    groupRole
+                  )
+                  .toUserGroupRole(dbUser, MembershipStatus.Approved)
+              )
+              listedTeams <- TeamDao.teamsForUser(dbUser)
+            } yield { (List(team1, team2), listedTeams) }
+            val (insertedTeams, listedTeams) =
+              xa.use(t => teamsForUserIO.transact(t)).unsafeRunSync
+            assert(
+              insertedTeams.map(_.name).toSet == listedTeams.map(_.name).toSet,
+              "Inserted and listed teams for this user should be the same")
+            true
+          }
       }
     }
   }

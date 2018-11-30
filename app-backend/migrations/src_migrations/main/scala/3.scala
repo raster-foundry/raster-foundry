@@ -1,12 +1,13 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 /**
   * Schema migration that adds the 'users' table.
   */
 object M3 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(3)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(3)(
+    List(
+      sqlu"""
 CREATE TABLE users (
   id UUID PRIMARY KEY NOT NULL,
   created_at TIMESTAMP NOT NULL,
@@ -19,5 +20,5 @@ CREATE TABLE users (
   organization_id UUID REFERENCES organizations(id) NOT NULL
 );
 """
-  ))
+    ))
 }

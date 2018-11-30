@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M31 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(31)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(31)(
+    List(
+      sqlu"""
 TRUNCATE tool_categories CASCADE;
 ALTER TABLE tool_categories ADD COLUMN  slug_label VARCHAR(255) NOT NULL;
 
@@ -27,5 +28,5 @@ ALTER TABLE tool_categories_to_tools
 ALTER TABLE tool_categories_to_tools
   ADD PRIMARY KEY (tool_category_slug, tool_id)
 """
-  ))
+    ))
 }

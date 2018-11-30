@@ -4,10 +4,10 @@ Brief description of what this PR does, and why it is needed.
 
 ### Checklist
 
+- [ ] Description of PR is in an appropriate section of the [changelog](https://github.com/raster-foundry/raster-foundry/blob/develop/CHANGELOG.md) and grouped with similar changes if possible
 - [ ] Styleguide updated, if necessary
 - [ ] [Swagger specification](https://github.com/raster-foundry/raster-foundry-api-spec) updated
 - [ ] Symlinks from new migrations present or corrected for any new migrations
-- [ ] PR has a name that won't get you publicly shamed for vagueness
 - [ ] Any content changes are properly templated using `BUILDCONFIG.APP_NAME`
 - [ ] Any new SQL strings have tests
 

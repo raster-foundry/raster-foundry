@@ -4,6 +4,7 @@ const rfColorSchemeBuilder = {
     controller: 'ColorSchemeBuilderController',
     bindings: {
         colorScheme: '<',
+        maskedValues: '<',
         onChange: '&'
     },
     controllerAs: '$ctrl'

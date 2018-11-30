@@ -1,5 +1,5 @@
-package com.azavea.rf.api
+package com.rasterfoundry.api
 
-import com.azavea.rf.datamodel.{PaginatedResponse, ToolRun}
+import com.rasterfoundry.datamodel.{PaginatedResponse, ToolRun}
 
 package object toolrun

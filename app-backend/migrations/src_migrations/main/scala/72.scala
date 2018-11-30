@@ -1,9 +1,10 @@
-import slick.driver.PostgresDriver.api._
+import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M72 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(72)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(72)(
+    List(
+      sqlu"""
         INSERT INTO tools (
           id, owner, created_at, modified_at, created_by, modified_by, organization_id,
           title, description, requirements, license, visibility, compatible_data_sources,
@@ -170,5 +171,5 @@ object M72 {
           '{"metadata":{"label":"multiply"},"id":"78b223d6-9c97-49b3-872e-e769a2acef5f","apply":"*","args":[{"metadata":{"label":"G"},"type":"const","constant":2.5,"id":"8b757337-921f-47fb-ad5f-102936060186"},{"metadata":{"label":"divide"},"id":"1251841a-a2dc-4018-9529-6f43b54038ac","apply":"/","args":[{"metadata":{"label":"subtract"},"id":"7cd4790e-91d7-4724-9655-75afdcf6853f","apply":"-","args":[{"metadata":{"label":"NIR"},"type":"src","id":"46e5952c-0790-4601-8ed1-f9e890e57bce"},{"metadata":{"label":"R"},"type":"src","id":"1dbd42f1-7eee-47b8-9ebe-6bb4cf329f9b"}]},{"metadata":{"label":"add"},"id":"385e48f6-2c1f-4a6f-8997-fc585dbb7d71","apply":"+","args":[{"metadata":{"label":"subtract"},"id":"9884bc14-d127-4af0-9194-a034b278f1f8","apply":"-","args":[{"metadata":{"label":"add"},"id":"2edf94d7-a402-4141-b1f3-d7289180d85a","apply":"+","args":[{"metadata":{"label":"NIR"},"type":"src","id":"46e5952c-0790-4601-8ed1-f9e890e57bce"},{"metadata":{"label":"multiply"},"id":"3471abfb-3c5c-46ce-88f7-17a2dc1ce458","apply":"*","args":[{"metadata":{"label":"C1"},"type":"const","constant":6,"id":"96cc3480-eb5c-4eb4-ac89-ebbc8e1776ef"},{"metadata":{"label":"R"},"type":"src","id":"1dbd42f1-7eee-47b8-9ebe-6bb4cf329f9b"}]}]},{"metadata":{"label":"multiply"},"id":"5720e9e8-3921-40bb-957c-5017c39a8fc7","apply":"*","args":[{"metadata":{"label":"C2"},"type":"const","constant":7.5,"id":"233d2c13-5663-4251-81bd-b80a4ff3c4c0"},{"metadata":{"label":"B"},"type":"src","id":"1c7c068e-050d-420f-97df-38f139a4224c"}]}]},{"metadata":{"label":"L"},"type":"const","constant":1,"id":"650502b5-7cfe-4806-9064-908da1548c15"}]}]}]}'
         );
     """
-  ))
+    ))
 }

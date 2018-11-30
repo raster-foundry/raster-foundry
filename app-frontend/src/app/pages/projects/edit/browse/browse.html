@@ -11,43 +11,31 @@
     </button>
   </div>
 </div>
-<div class="sidebar-project" ng-show="!$ctrl.activeScene">
-  <ul class="sidebar-list">
-    <li ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneList.length">
-      <div class="alert alert-secondary">
-        <div class="alert-message">{{$ctrl.$parent.pendingSceneList.length}} scenes awaiting approval</div>
-        <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
-      </div>
-    </li>
-    <li>
-      <div class="label">
-        <span class="text">
-          Select scenes and click <strong>Add Scenes</strong> to add to the project.
-        </span>
-      </div>
-      <div class="btn-group fixedwidth">
-        <button type="button"
-                class="btn btn-primary"
-                style="width: 12rem;"
-                ng-click="$ctrl.sceneModal()">
-          Add Scenes
-        </button>
-        <button type="button"
-                class="btn dropdown-toggle"
-                ng-class="{'btn-secondary': $ctrl.allSelected}"
-                ng-click="$ctrl.selectAllScenes()">
-          <i ng-class="{'icon-plus': !$ctrl.allSelected,
-                       'icon-cross': $ctrl.allSelected}"></i>
-        </button>
-      </div>
-    </li>
-  </ul>
-</div>
 <div class="list-group" ng-if="!$ctrl.fetchingScenes">
-  <div class="list-group-item" ng-if="$ctrl.sceneCount">
+  <div class="list-group-item no-border"
+       ng-if="$ctrl.$parent.project.isAOIProject && $ctrl.$parent.pendingSceneList.length"
+  >
+    <div class="alert alert-secondary">
+      <div class="alert-message">{{$ctrl.$parent.pendingSceneList.length}} scenes awaiting approval</div>
+      <button class="alert-action" ui-sref="projects.edit.aoi-approve">Review Scenes</button>
+    </div>
+  </div>
+  <div class="list-group-item"
+       ng-if="$ctrl.currentRepository && !$ctrl.currentRepository.service.defaultRepository"
+  >
+    <div class="alert alert-default">
+      <div class="alert-message">Any scenes added from this repository will also appear in your imports</div>
+    </div>
+  </div>
+  <div class="list-group-item" ng-if="$ctrl.sceneCount !== '0'">
     <strong class="color-dark">
-      {{$ctrl.sceneCount}} scenes found. Showing {{$ctrl.sceneList.length}}.
+      1 - {{$ctrl.sceneList.length}} of {{$ctrl.sceneCount}} scenes
     </strong>
+    <div class="list-group-right">
+      <button class="btn btn-tiny"
+              ng-click="$ctrl.addVisibleScenesToProject()"
+      >Add all listed scenes</button>
+    </div>
   </div>
   <div class="list-group-item" ng-if="$ctrl.fetchError">
     <strong class="color-danger">
@@ -79,16 +67,34 @@
 <div class="sidebar-scrollable list-group" ng-if="$ctrl.sceneList.length">
   <rf-scene-item
       previewable
-      clickable
       scene="scene"
       repository="$ctrl.currentRepository"
-      selected="$ctrl.isSelected(scene)"
-      is-disabled="$ctrl.isInProject(scene)"
-      on-select="$ctrl.setSelected(scene, selected)"
       ng-mouseenter="$ctrl.setHoveredScene(scene)"
       ng-mouseleave="$ctrl.removeHoveredScene()"
-      ng-click="$ctrl.setSelected(scene, !$ctrl.isSelected(scene))"
-      ng-repeat="scene in $ctrl.sceneList track by scene.id">
+      ng-repeat="scene in $ctrl.sceneList track by scene.id"
+  >
+    <div class="scene-item-lock"
+         tooltips
+         tooltip-template="This imagery requires additional access {{$ctrl.currentRepository.service.permissionSource}}."
+         tooltip-size="small"
+         tooltip-class="rf-tooltip"
+         tooltip-side="left"
+         ng-if="!$ctrl.hasDownloadPermission(scene)"
+    >
+      <span class="icon-locked"></span>
+    </div>
+    <button class="btn-tiny btn"
+            ng-if="!$ctrl.isInProject(scene) && !$ctrl.scenesBeingAdded.includes(scene.id) && $ctrl.hasDownloadPermission(scene)"
+            ng-click="$ctrl.addSceneToProject(scene)"
+    >
+      <i class="icon-plus"></i>
+    </button>
+    <div ng-if="$ctrl.isInProject(scene)">
+      <i class="icon-check h4 color-primary"></i>
+    </div>
+    <div ng-if="!$ctrl.isInProject(scene) && $ctrl.scenesBeingAdded.includes(scene.id)">
+      <i class="icon-load animate-spin h4 color-primary"></i>
+    </div>
   </rf-scene-item>
   <img ng-attr-src="{{$ctrl.base64Uri}}">
   <div class="sidebar-content">
@@ -108,5 +114,5 @@
     data-opened="$ctrl.showFilterPane"
     data-repositories="$ctrl.repositories"
     on-repository-change="$ctrl.onRepositoryChange(fetchScenes, repository)"
-    ></rf-scene-filter-pane>
+  ></rf-scene-filter-pane>
 </div>

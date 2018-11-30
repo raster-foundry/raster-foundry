@@ -1,19 +1,19 @@
 .shapefilter-container {
     width: 100%;
+    display: flex;
+    position: relative;
 }
 
 .shapefilter-box {
     width: 100%;
-    padding: 0.5em 1em;
-    background: $shade-dark;
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 8px;
+    background: $shade-dark;
     flex-direction: row;
-    border-radius: 3px;
+    border-radius: $border-radius-base;
     cursor: pointer;
-
-    &:hover {
-        background: darken($shade-dark, 5%);
-    }
 }
 
 .shapefilter-button-content {
@@ -21,14 +21,17 @@
     display: flex;
     flex-direction: column;
     justify-content: space-around;
+    overflow: hidden;
 }
 
 .shapefilter-text {
     color: $white;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .shapefilter-input-actions {
-    padding: 0.2em;
     display: flex;
     flex-direction: row;
     flex: 0;
@@ -36,14 +39,17 @@
 
 .shapefilter-dropdown {
     position: absolute;
-    bottom: -0.5em;
-    right: 0;
+    bottom: 0;
+    left: 0;
     height: 25em;
-    width: 23.2em;
+    min-width: 23.2em;
+    width: 100%;
     transform: translateY(100%);
     z-index: 100;
     background: $white;
-    border-radius: 3px;
+    color: $text-base;
+    border-radius: $border-radius-base;
+    border: 1px solid $border-color-default;
     display: flex;
     flex-direction: column;
 }

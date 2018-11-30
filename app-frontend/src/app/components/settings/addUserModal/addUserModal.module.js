@@ -42,6 +42,8 @@ class AddUserModalController {
         );
 
         this.$scope.$watch('$ctrl.search', debouncedSearch);
+
+        this.isPlatformAdmin = this.authService.isEffectiveAdmin(this.resolve.platformId);
     }
 
     onSearch(search) {
@@ -64,20 +66,7 @@ class AddUserModalController {
         this.fetching = true;
         if (this.resolve.groupType === 'organization') {
             if (this.isPlatformAdmin) {
-                this.platformService.getMembers(
-                    this.platformId,
-                    page - 1,
-                    search && search.length ? search : null
-                ).then((response) => {
-                    this.hasPermission = true;
-                    this.fetching = false;
-                    this.updatePagination(response);
-                    this.lastUserResult = response;
-                    this.users = response.results;
-                }, (error) => {
-                    // platform admins or super users are allowed to list platform users
-                    this.permissionDenied(error, 'platform admin');
-                });
+                this.fetchPlatformUsers(page, search);
             } else if (search && search.length) {
                 this.userService.searchUsers(search).then(response => {
                     this.hasPermission = true;
@@ -92,21 +81,42 @@ class AddUserModalController {
                 });
             }
         } else if (this.resolve.groupType === 'team') {
-            this.organizationService.getMembers(
-                this.platformId,
-                this.organizationId,
-                page - 1,
-                search && search.length ? search : null
-            ).then((response) => {
-                this.hasPermission = true;
-                this.fetching = false;
-                this.updatePagination(response);
-                this.lastUserResult = response;
-                this.users = response.results;
-            }, (error) => {
-                this.permissionDenied(error, 'organization admin');
-            });
+            if (this.isPlatformAdmin) {
+                this.fetchPlatformUsers(page, search);
+            } else {
+                this.organizationService.getMembers(
+                    this.platformId,
+                    this.organizationId,
+                    page - 1,
+                    search && search.length ? search : null
+                ).then((response) => {
+                    this.hasPermission = true;
+                    this.fetching = false;
+                    this.updatePagination(response);
+                    this.lastUserResult = response;
+                    this.users = response.results;
+                }, (error) => {
+                    this.permissionDenied(error, 'organization admin');
+                });
+            }
         }
+    }
+
+    fetchPlatformUsers(page, search) {
+        this.platformService.getMembers(
+            this.platformId,
+            page - 1,
+            search && search.length ? search : null
+        ).then((response) => {
+            this.hasPermission = true;
+            this.fetching = false;
+            this.updatePagination(response);
+            this.lastUserResult = response;
+            this.users = response.results;
+        }, (error) => {
+            // platform admins or super users are allowed to list platform users
+            this.permissionDenied(error, 'platform admin');
+        });
     }
 
     toggleUserSelect(user, adminToggle) {

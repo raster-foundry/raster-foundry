@@ -1,0 +1,98 @@
+.navbar {
+  background: $white;
+  border-bottom: 1px solid $shade-light;
+
+  nav {
+
+    a {
+      color: $shade-normal;
+      font-weight: 400;
+
+      &:hover {
+        color: $brand-primary;
+      }
+    }
+
+    a.active {
+      color: $white;
+      background: $brand-primary;
+
+      i {
+        opacity: 1;
+      }
+    }
+
+    .open .dropdown-toggle {
+      background: $white;
+    }
+  }
+
+  .dropdown > a {
+    border-color: $border-color-default;
+    border-radius: $border-radius-base;
+  }
+
+  .navbar-text,
+  .navbar-detail-title {
+    font-weight: 600;
+    color: $shade-normal;
+  }
+
+  .detail-title-container {
+
+    .detail-title-edit {
+      opacity: 1;
+      color: darken($shade-light, 15%);
+
+      &:hover {
+        color: #fff;
+        background-color: darken($shade-light, 5%);
+      }
+    }
+  }
+}
+
+.navbar .form-group.all-in-one {
+  border-color: $shade-light;
+  color: $shade-normal;
+
+  .form-control {
+    color: $shade-normal;
+
+    &:hover,
+    &:focus {
+      background-color: inherit;
+    }
+  }
+
+  .btn {
+    border-color: $shade-light;
+    color: rgba($shade-normal, .5);
+
+    &:hover, &.hover,
+    &:active, &.active,
+    &:focus, &.focus {
+      background-color: darken(#eee, 10%);
+    }
+  }
+}
+
+.navbar-vertical-divider {
+  background-color: $shade-light;
+  height: auto;
+  align-self: stretch;
+}
+
+.navbar.secondary-navbar {
+  background: $white;
+  border-color: $shade-light;
+}
+
+.brand {
+  padding: 1rem;
+
+  img {
+    max-width: 50px;
+    height: auto;
+  }
+}

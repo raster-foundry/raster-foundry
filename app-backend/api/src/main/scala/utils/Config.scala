@@ -1,4 +1,4 @@
-package com.azavea.rf.api.utils
+package com.rasterfoundry.api.utils
 
 import com.typesafe.config.ConfigFactory
 
@@ -23,7 +23,6 @@ trait Config {
   val auth0ManagementSecret = auth0Config.getString("managementSecret")
 
   val clientEnvironment = clientConfig.getString("clientEnvironment")
-
 
   val intercomAppId = intercomConfig.getString("appId")
   val rollbarClientToken = rollbarConfig.getString("clientToken")

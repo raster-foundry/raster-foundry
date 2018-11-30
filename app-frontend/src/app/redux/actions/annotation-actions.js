@@ -1,7 +1,7 @@
 import {
     getProjectAnnotationsRequest, createProjectAnnotationsRequest, updateProjectAnnotationRequest,
     getProjectLabelsRequest, clearProjectAnnotationsRequest, deleteProjectAnnotationRequest,
-    postShapefile
+    uploadShapefileOnly, uploadShapefileWithProps
 } from '_api/annotations';
 
 // IF YOU ADD CONSTANTS:
@@ -21,7 +21,9 @@ export const ANNOTATIONS_EDIT = 'ANNOTATIONS_EDIT';
 export const ANNOTATIONS_BULK_CREATE = 'ANNOTATIONS_BULK_CREATE';
 export const ANNOTATIONS_SIDEBAR = 'ANNOTATIONS_SIDEBAR';
 export const ANNOTATIONS_TRANSFORM_DRAWLAYER = 'ANNOTATIONS_TRANSFORM_DRAWLAYER';
+export const ANNOTATIONS_UPLOAD_SHAPEFILE = 'ANNOTATIONS_UPLOAD_SHAPEFILE';
 export const ANNOTATIONS_IMPORT_SHAPEFILE = 'ANNOTATIONS_IMPORT_SHAPEFILE';
+export const ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE = 'ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE';
 
 export const ANNOTATIONS_ACTION_PREFIX = 'ANNOTATIONS';
 
@@ -69,23 +71,41 @@ export function fetchLabels() {
     };
 }
 
-export function createAnnotations(annotations, edit) {
+export function createAnnotations(annotations, edit, panTo) {
     return (dispatch, getState) => {
         dispatch({
             type: ANNOTATIONS_CREATE,
             payload: createProjectAnnotationsRequest(getState(), annotations),
             meta: {
-                edit
+                edit,
+                panTo
             }
         });
     };
 }
 
-export function importShapefile(shapefile) {
+export function uploadShapefile(shapefile) {
+    return (dispatch, getState) => {
+        dispatch({
+            type: ANNOTATIONS_UPLOAD_SHAPEFILE,
+            payload: uploadShapefileOnly(getState(), shapefile)
+        });
+    };
+}
+
+export function deleteShapeFileUpload() {
+    return (dispatch, getState) => {
+        dispatch({
+            type: ANNOTATIONS_UPLOAD_SHAPEFILE_DELETE
+        });
+    };
+}
+
+export function importShapefileWithProps(shapefile, matchedKeys) {
     return (dispatch, getState) => {
         dispatch({
             type: ANNOTATIONS_IMPORT_SHAPEFILE,
-            payload: postShapefile(getState(), shapefile)
+            payload: uploadShapefileWithProps(getState(), shapefile, matchedKeys)
         });
     };
 }
@@ -191,5 +211,6 @@ export default {
     createAnnotations, updateAnnotation, filterAnnotations,
     clearAnnotations, editAnnotation, finishEditingAnnotation,
     deleteAnnotation, bulkCreateAnnotations, finishBulkCreate,
-    transformDrawlayer, importShapefile
+    transformDrawlayer, uploadShapefile, importShapefileWithProps,
+    deleteShapeFileUpload
 };
