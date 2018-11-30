@@ -36,19 +36,19 @@ services:
     entrypoint: yarn
     command: run build
 
-  api-server:
+  api-server-build:
     image: raster-foundry-api-server:${GIT_COMMIT:-latest}
     build:
       context: ./app-backend/api
       dockerfile: Dockerfile
 
-  tile-server:
+  tile-server-build:
     image: raster-foundry-tile-server:${GIT_COMMIT:-latest}
     build:
       context: ./app-backend/tile
       dockerfile: Dockerfile
 
-  backsplash:
+  backsplash-build:
     image: raster-foundry-backsplash:${GIT_COMMIT:-latest}
     build:
       context: ./app-backend/backsplash

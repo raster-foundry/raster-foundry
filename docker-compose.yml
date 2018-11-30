@@ -167,7 +167,7 @@ services:
       - "-Djava.rmi.server.hostname=localhost"
 
   backsplash:
-    image: openjdk:8-jre
+    image: daunnc/openjdk-gdal:2.3.2
     links:
       - postgres:database.service.rasterfoundry.internal
     env_file: .env
