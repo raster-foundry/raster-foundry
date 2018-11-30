@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
+## [1.15.0](https://github.com/raster-foundry/raster-foundry/tree/1.15.0) (2018-11-30)
 
 ### Added
 - Add Ansible role to install Nexus Repo Manager [\#4277](https://github.com/raster-foundry/raster-foundry/pull/4277)
@@ -11,8 +11,6 @@
 ### Changed
 - Populate user profiles from their identity tokens more intelligently [\#4298](https://github.com/raster-foundry/raster-foundry/pull/4298)
 - Improved project selection modal within the lab [\#4324](https://github.com/raster-foundry/raster-foundry/pull/4324)
-
-### Deprecated
 
 ### Removed
 
@@ -25,8 +23,6 @@
 - Fixed shapefile annotations export [\#4300](https://github.com/raster-foundry/raster-foundry/pull/4300)
 - Made s3 client tolerate buckets outside of its configured region [\#4319](https://github.com/raster-foundry/raster-foundry/pull/4319)
 - Fixed logging dependency stack to eliminate painfully verbose logging in backsplash [\#4326](https://github.com/raster-foundry/raster-foundry/pull/4326)
-
-### Security
 
 ## [1.14.2](https://github.com/raster-foundry/raster-foundry/tree/1.14.2) (2018-11-19)
 
