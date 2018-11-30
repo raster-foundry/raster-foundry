@@ -87,3 +87,21 @@ services:
       - $HOME/.gnupg:/root/.gnupg:ro
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
+
+  integration-test:
+    image: openjdk:8-jre
+    build:
+      context: ./app-backend
+      dockerfile: Dockerfile
+    env_file: .env
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./.sbt:/root/.sbt
+      - $HOME/.coursier:/root/.coursier
+      - $HOME/.ivy2:/root/.ivy2
+    working_dir: /opt/raster-foundry/app-backend/
+    depends_on:
+      backsplash:
+        condition: service_healthy
+      api-server:
+        condition: service_healthy

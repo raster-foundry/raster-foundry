@@ -501,6 +501,7 @@ lazy val bridge = Project("bridge", file("bridge"))
 // maml / better-abstracted tile server
 lazy val backsplash = Project("backsplash", file("backsplash"))
   .dependsOn(authentication, geotrellis, db, tool)
+  .enablePlugins(GatlingPlugin)
   .settings(commonSettings: _*)
   .settings(noPublishSettings)
   .settings(fork in run := true)
@@ -515,7 +516,10 @@ lazy val backsplash = Project("backsplash", file("backsplash"))
       Dependencies.http4sCirce,
       Dependencies.http4sDSL,
       Dependencies.http4sServer,
-      Dependencies.mamlJvm
+      Dependencies.mamlJvm,
+      Dependencies.gatlingApp,
+      Dependencies.gatlingTest,
+      Dependencies.gatlingHighcharts
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))

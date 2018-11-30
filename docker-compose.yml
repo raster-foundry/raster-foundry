@@ -105,6 +105,12 @@ services:
       - "-Dcom.sun.management.jmxremote.authenticate=false"
       - "-Dcom.sun.management.jmxremote.local.only=false"
       - "-Djava.rmi.server.hostname=localhost"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/api/healthcheck/"]
+      interval: 5s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
 
   batch:
     image: raster-foundry-batch
@@ -189,3 +195,9 @@ services:
       - "-Dcom.sun.management.jmxremote.authenticate=false"
       - "-Dcom.sun.management.jmxremote.local.only=false"
       - "-Djava.rmi.server.hostname=localhost"
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:8080/healthcheck"]
+      retries: 12
+      timeout: 5s
+      interval: 5s
+      start_period: 30s
