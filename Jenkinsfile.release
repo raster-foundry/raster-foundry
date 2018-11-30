@@ -21,7 +21,7 @@ node {
       string(defaultValue: 'rasterfoundry-production-config-us-east-1', description: 'Location of terraform state & vars files.', name: 'RF_SETTINGS_BUCKET', trim: false),
       string(defaultValue: 'Production', description: 'Environment name, used to target Batch Compute Environments.', name: 'RF_DEPLOYMENT_ENVIRONMENT', trim: false),
       string(defaultValue: 'master', description: 'Branch of azavea/raster-foundry-deployment used for deployment.', name: 'RF_DEPLOYMENT_BRANCH', trim: false)
-    )
+    ])
   ])
     
   try {
