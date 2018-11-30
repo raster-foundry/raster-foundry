@@ -108,4 +108,15 @@ node {
     // created by Docker Compose are torn down.
     sh 'docker-compose down -v --remove-orphans'
   }
+
+  stage("load-test") {
+  try {
+    wrap([$class: 'AnsiColorBuildWrapper']) {
+      sh 'scripts/it'
+    }
+  } catch (err) {
+    def slackMessage= ":jenkins-angry: *raster-foundry (${env.BRANCH_NAME}) #${env.BUILD_NUMBER}*"
+    slackMessage += "\n<${env.BUILD_URL}|:racing_car: Still too slow :racing_car:, view build>"
+    slackSend color: 'danger', message: slackMessage
+  }
 }

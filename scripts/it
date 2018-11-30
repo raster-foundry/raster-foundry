@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
+
+function usage() {
+    echo -n \
+"Usage: $(basename "$0")
+Run integration tests.
+"
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+      echo "Running integration tests"
+      docker-compose \
+          -f docker-compose.yml \
+          -f docker-compose.test.yml \
+          up integration-test
+    fi
+fi
