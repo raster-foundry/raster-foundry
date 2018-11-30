@@ -76,6 +76,8 @@ services:
       context: ./app-backend
       dockerfile: Dockerfile.build
     env_file: .env
+    environment:
+      - COURSIER_CACHE=/root/.coursier_cache
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./scratch/:/opt/raster-foundry/scratch/
@@ -94,9 +96,12 @@ services:
       context: ./app-backend
       dockerfile: Dockerfile
     env_file: .env
+    environment:
+      - COURSIER_CACHE=/root/.coursier_cache
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./.sbt:/root/.sbt
+      - ./.bintray:/root/.bintray
       - $HOME/.coursier:/root/.coursier
       - $HOME/.ivy2:/root/.ivy2
     working_dir: /opt/raster-foundry/app-backend/
@@ -105,3 +110,5 @@ services:
         condition: service_healthy
       api-server:
         condition: service_healthy
+    entrypoint: ./sbt
+    command: ["backsplash/gatling-it:test"]

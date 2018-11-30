@@ -83,6 +83,7 @@ services:
     environment:
       - RF_LOG_LEVEL=INFO
       - TILE_SERVER_LOCATION
+      - COURSIER_CACHE=/root/.coursier
     ports:
       - "9000:9000"
       - "9010:9010"
@@ -106,7 +107,7 @@ services:
       - "-Dcom.sun.management.jmxremote.local.only=false"
       - "-Djava.rmi.server.hostname=localhost"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/api/healthcheck/"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/healthcheck/"]
       interval: 5s
       timeout: 10s
       retries: 12
@@ -144,6 +145,7 @@ services:
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
+      - COURSIER_CACHE=/root/.coursier
     ports:
       - "9900:9900"
       - "9020:9020"
@@ -173,6 +175,7 @@ services:
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
+      - COURSIER_CACHE=/root/.coursier
       - SBT_OPTS="-Xmx2G -XX:MaxPermSize=2G"
     ports:
       - "8080:8080"
@@ -196,8 +199,8 @@ services:
       - "-Dcom.sun.management.jmxremote.local.only=false"
       - "-Djava.rmi.server.hostname=localhost"
     healthcheck:
-      test: ["CMD", "curl", "http://localhost:8080/healthcheck"]
-      retries: 12
+      test: ["CMD", "curl", "http://localhost:8080/healthcheck/"]
+      retries: 60
       timeout: 5s
       interval: 5s
       start_period: 30s
