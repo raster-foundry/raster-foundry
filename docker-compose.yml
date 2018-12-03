@@ -178,7 +178,7 @@ services:
       - COURSIER_CACHE=/root/.coursier
       - SBT_OPTS="-Xmx2G -XX:MaxPermSize=2G"
     ports:
-      - "8080:8080"
+      - "9900:8080"
       - "9030:9020"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
