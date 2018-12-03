@@ -149,4 +149,9 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         searchParams &
         activationParams
     ).as(TeamQueryParameters.apply _)
+
+  def userGroupRoleQueryParameters =
+    parameters(
+      'withGroupName.as[Boolean].?
+    ).as(UserGroupRoleParameters.apply _)
 }
