@@ -171,7 +171,10 @@ trait UserRoutes
       complete {
         ugrQP.withGroupName match {
           case Some(true) =>
-            UserGroupRoleDao.listByUserWithGroupName(user).transact(xa).unsafeToFuture()
+            UserGroupRoleDao
+              .listByUserWithGroupName(user)
+              .transact(xa)
+              .unsafeToFuture()
           case _ =>
             UserGroupRoleDao.listByUser(user).transact(xa).unsafeToFuture()
         }

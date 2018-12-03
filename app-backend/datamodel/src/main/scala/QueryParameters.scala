@@ -597,7 +597,7 @@ object BboxUtil {
 }
 
 final case class UserGroupRoleParameters(
-  withGroupName: Option[Boolean] = None
+    withGroupName: Option[Boolean] = None
 )
 
 object UserGroupRoleParameters {
