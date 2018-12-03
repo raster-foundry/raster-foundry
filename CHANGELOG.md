@@ -2,6 +2,10 @@
 
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
+### Added
+
+- Support team creation on user's team list page [\#4345](https://github.com/raster-foundry/raster-foundry/pull/4345)
+
 ### Changed
 
 - Reorganized scala dependencies for package cleanliness and smaller bundles [\#4301](https://github.com/raster-foundry/raster-foundry/pull/4301)
@@ -9,6 +13,8 @@
 ### Fixed
 
 - Made the status code for aoi creation on projects a 201 instead of a 200 [\#4331](https://github.com/raster-foundry/raster-foundry/pull/4331/files)
+
+### Removed
 
 ## [1.15.0](https://github.com/raster-foundry/raster-foundry/tree/1.15.0) (2018-11-30)
 
