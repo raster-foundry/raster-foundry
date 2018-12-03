@@ -482,8 +482,8 @@ export default (app) => {
             return result.join('');
         }
 
-        fetchUserRoles() {
-            return this.User.roles().$promise;
+        fetchUserRoles(withGroupName = false) {
+            return this.User.roles({ withGroupName }).$promise;
         }
 
         isEffectiveAdmin(groupIds) {

@@ -1,3 +1,4 @@
+/* globals _ */
 import angular from 'angular';
 import $ from 'jquery';
 import teamModalTpl from './teamModal.html';
@@ -14,13 +15,26 @@ const TeamModalComponent = {
 };
 
 class TeamModalController {
-    constructor($rootScope, $element, $timeout) {
+    constructor($rootScope, $element, $timeout, authService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
 
     $postLink() {
         this.claimFocus();
+
+        this.initOrganizationSelect();
+    }
+
+    initOrganizationSelect() {
+        if (this.resolve.chooseOrg) {
+            this.authService.fetchUserRoles(true).then(res => {
+                const groupedUgrs = _.groupBy(res, 'groupType');
+                this.platform = groupedUgrs.PLATFORM[0];
+                this.organizations = groupedUgrs.ORGANIZATION;
+                this.selectedOrganization = this.organizations[0];
+            });
+        }
     }
 
     claimFocus(interval = 0) {
@@ -30,10 +44,23 @@ class TeamModalController {
         }, interval);
     }
 
+    disableCreate() {
+        return !_.get(this, 'form.name.$modelValue.length');
+    }
+
     onAdd() {
-        this.close({$value: {
+        let result = {
             name: this.form.name.$modelValue
-        }});
+        };
+
+        if (this.resolve.chooseOrg) {
+            result = Object.assign(result, {
+                platform: this.platform,
+                organization: this.selectedOrganization
+            });
+        }
+
+        this.close({$value: result});
     }
 }
 
