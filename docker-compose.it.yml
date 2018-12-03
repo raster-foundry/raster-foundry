@@ -1,4 +1,5 @@
 version: '2.3'
+services:
   integration-test:
     image: openjdk:8-jre
     build:
