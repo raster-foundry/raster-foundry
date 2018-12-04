@@ -110,7 +110,7 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:9000/healthcheck/"]
       interval: 5s
       timeout: 10s
-      retries: 12
+      retries: 60
       start_period: 300s
 
   batch:
