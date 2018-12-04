@@ -23,14 +23,14 @@ object Notify extends RollbarNotifier {
                 messagePlain: String): ConnectionIO[Unit] = {
     val email = new NotificationEmail
     for {
-      _ <- publicSettings.emailUser match {
+      _ <- publicSettings.emailSmtpUserName match {
         case "" => ().pure[ConnectionIO]
         case s => {
           val preparedEmail = email.setEmail(
             publicSettings.emailSmtpHost,
             publicSettings.emailSmtpPort,
             publicSettings.emailSmtpEncryption,
-            publicSettings.emailUser,
+            publicSettings.emailSmtpUserName,
             privateSettings.emailPassword,
             to,
             subject,

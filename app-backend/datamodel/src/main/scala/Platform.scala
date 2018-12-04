@@ -18,7 +18,7 @@ object Platform {
   def tupled = (Platform.apply _).tupled
 
   @JsonCodec
-  final case class PublicSettings(emailUser: String,
+  final case class PublicSettings(emailSmtpUserName: String,
                                   emailSmtpHost: String,
                                   emailSmtpPort: Int,
                                   emailSmtpEncryption: String,
@@ -26,7 +26,8 @@ object Platform {
                                   emailAoiNotification: Boolean,
                                   emailExportNotification: Boolean,
                                   platformHost: Option[String],
-                                  emailFrom: Option[String])
+                                  emailFrom: String,
+                                  emailSupport: String)
 
   @JsonCodec
   final case class PrivateSettings(emailPassword: String)
