@@ -11,6 +11,9 @@
 ### Changed
 - Populate user profiles from their identity tokens more intelligently [\#4298](https://github.com/raster-foundry/raster-foundry/pull/4298)
 - Improved project selection modal within the lab [\#4324](https://github.com/raster-foundry/raster-foundry/pull/4324)
+- Upgraded to Webpack 4 and replace broken libraries / componenets [\#4199](https://github.com/raster-foundry/raster-foundry/pull/4199)
+- Greatly reduce bundle size by using dynamic imports and using a more effective build process [\#4199](https://github.com/raster-foundry/raster-foundry/pull/4199)
+
 
 ### Removed
 
