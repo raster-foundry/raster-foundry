@@ -11,6 +11,9 @@ node {
         userRemoteConfigs: scm.userRemoteConfigs
       ])
     }
+  } catch (err) {
+      sh 'echo "yup err"'
+  }
 
 //    env.AWS_DEFAULT_REGION = 'us-east-1'
 //    env.RF_ARTIFACTS_BUCKET = 'rasterfoundry-global-artifacts-us-east-1'
