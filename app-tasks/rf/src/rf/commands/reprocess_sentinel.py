@@ -20,7 +20,8 @@ def reprocess_sentinel(scene_id):
         scene_id (str): Scene id to reprocess
     """
     print("Starting reprocessing scene: %s" % (scene_id, ))
-    conn = psycopg2.connect("host=postgres dbname=%s user=%s password=%s" % (
+    conn = psycopg2.connect("host=%s dbname=%s user=%s password=%s" % (
+        os.environ.get('POSTGRES_HOST', 'postgres'),
         os.environ['POSTGRES_DB'], os.environ['POSTGRES_USER'], os.environ['POSTGRES_PASSWORD']))
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     # nondict_cur = conn.cursor()
