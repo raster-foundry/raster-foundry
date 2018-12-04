@@ -12,7 +12,8 @@ from .commands import (
     ingest_scene,
     process_upload,
     reprocess_landsat_h,
-    update_aoi_project
+    reprocess_sentinel,
+    update_aoi_project,
 )
 
 logger = logging.getLogger('rf')
@@ -34,4 +35,5 @@ run.add_command(process_upload)
 run.add_command(ingest_scene)
 run.add_command(find_aoi_projects)
 run.add_command(reprocess_landsat_h)
+run.add_command(reprocess_sentinel)
 run.add_command(update_aoi_project)
