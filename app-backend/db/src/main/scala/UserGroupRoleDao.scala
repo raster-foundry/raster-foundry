@@ -186,8 +186,8 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
       .list
   }
 
-  def listByUserWithGroupName(
-      user: User): ConnectionIO[List[UserGroupRole.WithGroupName]] = {
+  def listByUserWithRelated(
+      user: User): ConnectionIO[List[UserGroupRole.WithRelated]] = {
     fr"""
     SELECT ugr.*, p.name as platform_name, o.name as organization_name, t.name as team_name
     FROM user_group_roles as ugr
@@ -196,7 +196,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
     LEFT JOIN teams as t ON t.id = ugr.group_id
     WHERE ugr.user_id = ${user.id} AND ugr.is_active = true;
     """
-      .query[UserGroupRole.WithGroupName]
+      .query[UserGroupRole.WithRelated]
       .to[List]
   }
 

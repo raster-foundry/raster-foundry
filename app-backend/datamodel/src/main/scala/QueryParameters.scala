@@ -595,14 +595,3 @@ object BboxUtil {
         ).initCause(e)
     }
 }
-
-final case class UserGroupRoleParameters(
-    withGroupName: Option[Boolean] = None
-)
-
-object UserGroupRoleParameters {
-  implicit def encUserGroupRoleParameters: Encoder[UserGroupRoleParameters] =
-    deriveEncoder[UserGroupRoleParameters]
-  implicit def decUserGroupRoleParameters: Decoder[UserGroupRoleParameters] =
-    deriveDecoder[UserGroupRoleParameters]
-}

@@ -698,7 +698,7 @@ class UserGroupRoleDaoSpec
                   )
                   .toUserGroupRole(dbUser, MembershipStatus.Approved)
                 )
-              ugrWithName <- UserGroupRoleDao.listByUserWithGroupName(dbUser)
+              ugrWithName <- UserGroupRoleDao.listByUserWithRelated(dbUser)
           } yield { (ugrWithName, dbPlat, dbOrg, dbTeam) }
 
           val (ugrWithName, dbPlat, dbOrg, dbTeam) = xa

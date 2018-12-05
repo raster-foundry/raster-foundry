@@ -54,7 +54,7 @@ object UserGroupRole {
   }
 
   @JsonCodec
-  final case class WithGroupName(id: UUID,
+  final case class WithRelated(id: UUID,
                                  createdAt: Timestamp,
                                  createdBy: String,
                                  modifiedAt: Timestamp,

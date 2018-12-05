@@ -167,18 +167,11 @@ trait UserRoutes
     }
 
   def getUserRoles: Route = authenticate { user =>
-    userGroupRoleQueryParameters { ugrQP =>
-      complete {
-        ugrQP.withGroupName match {
-          case Some(true) =>
-            UserGroupRoleDao
-              .listByUserWithGroupName(user)
-              .transact(xa)
-              .unsafeToFuture()
-          case _ =>
-            UserGroupRoleDao.listByUser(user).transact(xa).unsafeToFuture()
-        }
-      }
+    complete {
+      UserGroupRoleDao
+        .listByUserWithRelated(user)
+        .transact(xa)
+        .unsafeToFuture()
     }
   }
 
