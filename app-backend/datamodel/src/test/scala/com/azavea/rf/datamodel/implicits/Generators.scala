@@ -640,6 +640,7 @@ object Generators extends ArbitraryInstances {
       emailExportNotification <- arbitrary[Boolean]
       platformHost <- Gen.const(None)
       emailFrom <- nonEmptyStringGen
+      emailFromDisplayName <- nonEmptyStringGen
       emailSupport <- nonEmptyStringGen
     } yield {
       Platform.PublicSettings(
@@ -652,6 +653,7 @@ object Generators extends ArbitraryInstances {
         emailExportNotification,
         platformHost,
         emailFrom,
+        emailFromDisplayName,
         emailSupport
       )
     }
