@@ -18,6 +18,7 @@ object M154 {
           "emailExportNotification": false,
           "platformHost": null,
           "emailFrom": "noreply@example.com",
+          "emailFromDisplayName": "",
           "emailSupport": "support@example.com"
         }'::jsonb;
 
@@ -26,6 +27,7 @@ object M154 {
         public_settings - 'emailUser' || jsonb_build_object(
           'emailSmtpUserName', public_settings->'emailUser',
           'emailFrom', 'noreply@example.com',
+          'emailFromDisplayName', '',
           'emailSupport', 'support@example.com'
         );
     """
