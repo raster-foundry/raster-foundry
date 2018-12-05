@@ -6,7 +6,8 @@ const TemplateItemComponent = {
     controller: 'TemplateItemController',
     bindings: {
         templateData: '<',
-        onTemplateDelete: '&'
+        onTemplateDelete: '&',
+        onShareClick: '&'
     }
 };
 

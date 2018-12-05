@@ -2,13 +2,16 @@
 
 class LabBrowseTemplatesController {
     constructor( // eslint-disable-line max-params
-        $log, $scope, $state, analysisService, modalService, paginationService
+        $log, $scope, $state,
+        analysisService, modalService, paginationService,
+        platform
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
     }
 
     $onInit() {
+        this.currentOwnershipFilter = 'owned';
         this.fetchPage();
     }
 
@@ -20,7 +23,8 @@ class LabBrowseTemplatesController {
             sort: 'createdAt,desc',
             pageSize: 10,
             page: page - 1,
-            search: this.search
+            search: this.search,
+            ownershipType: this.currentOwnershipFilter
         }).then(paginatedResponse => {
             this.results = paginatedResponse.results;
             this.pagination = this.paginationService.buildPagination(paginatedResponse);
@@ -40,32 +44,28 @@ class LabBrowseTemplatesController {
         this.currentQuery = currentQuery;
     }
 
-    // initFilters() {
-    //     this.queryParams = _.mapValues(this.$state.params, v => {
-    //         return v || null;
-    //     });
-    //     this.filters = Object.assign({}, this.queryParams);
-    // }
-
-    // toggleTag(index) {
-    //     this.tags[index].selected = !this.tags[index].selected;
-    // }
-
-    // toggleCategory(index) {
-    //     this.categories[index].selected = !this.categories[index].selected;
-    // }
-
-    openTemplateCreateModal() {
-        this.modalService.open({
-            component: 'rfTemplateCreateModal'
-        });
-    }
-
     onTemplateDelete(templateId) {
         this.analysisService.deleteTemplate(templateId).then(() => {
             this.fetchPage();
         }, err => {
             this.$log.error(`There is an error deleting template ${templateId}`, err);
+        });
+    }
+
+    handleOwnershipFilterChange(newFilterValue) {
+        this.fetchPage(1);
+    }
+
+    onTemplateShareClick(template) {
+        this.modalService.open({
+            component: 'rfPermissionModal',
+            resolve: {
+                object: () => template,
+                permissionsBase: () => 'tools',
+                objectType: () => 'TEMPLATE',
+                objectName: () => template.name,
+                platform: () => this.platform
+            }
         });
     }
 }
