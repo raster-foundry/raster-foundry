@@ -23,6 +23,7 @@ import java.util.UUID
 
 import scala.concurrent.Future
 
+import com.rasterfoundry.database.util.Email
 import com.rasterfoundry.database.Implicits._
 
 object UserDao extends Dao[User] {
@@ -49,7 +50,14 @@ object UserDao extends Dao[User] {
       filterById(id).select map { (user: User) =>
         {
           user.copy(planetCredential = Credential(Some("")),
-                    dropboxCredential = Credential(Some("")))
+                    dropboxCredential = Credential(Some("")),
+                    name = Email.obfuscate(user.name),
+                    email = Email.obfuscate(user.email),
+                    personalInfo = user.personalInfo.copy(
+                      email = Email.obfuscate(user.personalInfo.email),
+                      phoneNumber = ""
+                    )
+          )
         }
       }
   }
