@@ -26,6 +26,9 @@
 - Fixed shapefile annotations export [\#4300](https://github.com/raster-foundry/raster-foundry/pull/4300)
 - Made s3 client tolerate buckets outside of its configured region [\#4319](https://github.com/raster-foundry/raster-foundry/pull/4319)
 - Fixed logging dependency stack to eliminate painfully verbose logging in backsplash [\#4326](https://github.com/raster-foundry/raster-foundry/pull/4326)
+- Fix thumbnail loading placeholder size [\#4355](https://github.com/raster-foundry/raster-foundry/pull/4355)
+- Fix hidden text field for scene image sources [\#4355](https://github.com/raster-foundry/raster-foundry/pull/4355)
+- Fix long source names for scenes [\#4355](https://github.com/raster-foundry/raster-foundry/pull/4355)
 
 ## [1.14.2](https://github.com/raster-foundry/raster-foundry/tree/1.14.2) (2018-11-19)
 
