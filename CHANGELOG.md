@@ -29,6 +29,7 @@
 - Fix thumbnail loading placeholder size [\#4355](https://github.com/raster-foundry/raster-foundry/pull/4355)
 - Fix hidden text field for scene image sources [\#4355](https://github.com/raster-foundry/raster-foundry/pull/4355)
 - Fix long source names for scenes [\#4355](https://github.com/raster-foundry/raster-foundry/pull/4355)
+- Duplicate ingest emails for users with inactive platform UGRs [\#4359](https://github.com/raster-foundry/raster-foundry/pull/4359)
 
 ## [1.14.2](https://github.com/raster-foundry/raster-foundry/tree/1.14.2) (2018-11-19)
 

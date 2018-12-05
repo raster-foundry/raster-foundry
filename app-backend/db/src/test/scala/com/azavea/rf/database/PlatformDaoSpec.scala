@@ -275,6 +275,7 @@ class PlatformDaoSpec
             userCreateAnother: User.Create,
             orgCreate: Organization.Create,
             platform: Platform,
+            platform2: Platform,
             projectCreate: Project.Create,
             projectCreateAnother: Project.Create,
             sceneCreate: Scene.Create
@@ -286,6 +287,12 @@ class PlatformDaoSpec
                                                              platform,
                                                              projectCreate)
               (dbUser, dbOrg, dbPlatform, dbProject) = userOrgPlatProject
+              secondPlatform <- PlatformDao.create(platform2)
+              deactivatedRole <- PlatformDao.addUserRole(dbUser,
+                                                         dbUser.id,
+                                                         secondPlatform.id,
+                                                         GroupRole.Member)
+              _ <- UserGroupRoleDao.deactivate(deactivatedRole.id, dbUser)
               userProjectAnother <- insertUserProject(userCreateAnother,
                                                       dbOrg,
                                                       dbPlatform,
