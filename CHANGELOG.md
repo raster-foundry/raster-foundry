@@ -2,6 +2,10 @@
 
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
+## Important Notice
+
+- In this release, we have added more fields to platform email settings to make it work better. We strongly suggest platform admins to go to your platform email settings and fill in **all fields**.
+
 ### Added
 - Added a support email field to platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
 
