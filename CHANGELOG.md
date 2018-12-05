@@ -1,4 +1,19 @@
 # Change Log
+## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
+
+### Added
+- Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
+
+### Changed
+- Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
 
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
