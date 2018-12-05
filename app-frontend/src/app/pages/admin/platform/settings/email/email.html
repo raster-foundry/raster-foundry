@@ -40,7 +40,7 @@
       <span class="error color-danger" ng-show="emailSettings.password.$error.required">required</span>
     </div>
     <div class="form-group">
-      <label for="emailfrom">From Field</label>
+      <label for="emailfrom">From Field Email Address</label>
       <input id="emailfrom"
              type="email"
              class="form-control"
@@ -51,6 +51,18 @@
              required>
       <span class="error color-danger" ng-show="emailSettings.emailfrom.$error.required">required</span>
       <span class="error color-danger" ng-show="emailSettings.emailfrom.$error.email">invalid email</span>
+    </div>
+    <div class="form-group">
+      <label for="emailFromDisplayName">From Field Display Name</label>
+      <input id="emailFromDisplayName"
+             type="string"
+             class="form-control"
+             name="emailFromDisplayName"
+             ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailFromDisplayName ?
+                 $ctrl.platformBuffer.publicSettings.emailFromDisplayName : $ctrl.appName}}"
+             ng-model="$ctrl.platformBuffer.publicSettings.emailFromDisplayName"
+             required>
+      <span class="error color-danger" ng-show="emailSettings.emailFromDisplayName.$error.required">required</span>
     </div>
     <div class="form-group">
       <label for="emailSupport">Support Email Address</label>
@@ -138,6 +150,7 @@
                 emailSettings.password.$error.required ||
                 emailSettings.emailfrom.$error.required ||
                 emailSettings.emailfrom.$error.email ||
+                emailSettings.emailFromDisplayName.$error.required ||
                 emailSettings.emailSupport.$error.required ||
                 emailSettings.emailSupport.$error.email ||
                 emailSettings.smtpHost.$error.required ||
