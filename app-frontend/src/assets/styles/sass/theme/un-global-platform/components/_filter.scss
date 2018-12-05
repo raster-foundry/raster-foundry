@@ -18,6 +18,10 @@
     border: 1px solid $border-color-default;
     background-color: $white;
     color: $text-base;
+
+    > input {
+      color: $text-base;
+    }
   }
 
   .searchselect-clear {
