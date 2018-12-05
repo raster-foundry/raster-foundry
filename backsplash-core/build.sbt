@@ -1,5 +1,5 @@
 val Http4sVersion = "0.20.0-M3"
-val GeotrellisServerVersion = "0.0.11"
+val GeotrellisServerVersion = "0.0.11-LOCAL"
 val Specs2Version = "4.1.0"
 val ScalatestVersion = "3.0.5"
 
@@ -23,12 +23,13 @@ lazy val root = (project in file("."))
       ) // important to pull deps from the local repo
     ),
     libraryDependencies ++= Seq(
-      "org.http4s"      %% "http4s-blaze-server"    % Http4sVersion,
-      "org.http4s"      %% "http4s-circe"           % Http4sVersion,
-      "org.http4s"      %% "http4s-dsl"             % Http4sVersion,
-      "org.scalatest"   %% "scalatest"              % ScalatestVersion % "test",
-      "com.azavea"      %% "geotrellis-server-core" % GeotrellisServerVersion,
-      "org.scalacheck"  %% "scalacheck"             % "1.14.0"
+      "org.http4s"       %% "http4s-blaze-server"    % Http4sVersion,
+      "org.http4s"       %% "http4s-circe"           % Http4sVersion,
+      "org.http4s"       %% "http4s-dsl"             % Http4sVersion,
+      "org.scalatest"    %% "scalatest"              % ScalatestVersion % Test,
+      "com.azavea"       %% "geotrellis-server-core" % GeotrellisServerVersion,
+      "org.scalacheck"   %% "scalacheck"             % "1.14.0",
+      "org.apache.spark" %% "spark-core"             % "2.4.0" % Provided
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector"     % "0.9.6"),
     addCompilerPlugin("com.olegpy"     %% "better-monadic-for" % "0.2.4")
