@@ -25,6 +25,9 @@
     border: 1px solid $border-color-default;
     display: flex;
     justify-content: center;
+    overflow: hidden;
+    flex: none;
+    border-radius: 4px;
 
     &.previewable {
         cursor: zoom-in;
