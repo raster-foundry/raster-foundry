@@ -49,14 +49,15 @@ object UserDao extends Dao[User] {
     case _ =>
       filterById(id).select map { (user: User) =>
         {
-          user.copy(planetCredential = Credential(Some("")),
-                    dropboxCredential = Credential(Some("")),
-                    name = Email.obfuscate(user.name),
-                    email = Email.obfuscate(user.email),
-                    personalInfo = user.personalInfo.copy(
-                      email = Email.obfuscate(user.personalInfo.email),
-                      phoneNumber = ""
-                    )
+          user.copy(
+            planetCredential = Credential(Some("")),
+            dropboxCredential = Credential(Some("")),
+            name = Email.obfuscate(user.name),
+            email = Email.obfuscate(user.email),
+            personalInfo = user.personalInfo.copy(
+              email = Email.obfuscate(user.personalInfo.email),
+              phoneNumber = ""
+            )
           )
         }
       }
