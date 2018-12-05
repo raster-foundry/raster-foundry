@@ -27,6 +27,7 @@ object Platform {
                                   emailExportNotification: Boolean,
                                   platformHost: Option[String],
                                   emailFrom: String,
+                                  emailFromDisplayName: String,
                                   emailSupport: String)
 
   @JsonCodec

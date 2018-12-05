@@ -42,7 +42,8 @@ class NotificationEmail extends RollbarNotifier {
                subject: String,
                bodyHtml: String,
                bodyPlain: String,
-               emailFrom: String): Either[Unit, Email] = {
+               emailFrom: String,
+               emailFromDisplayName: String): Either[Unit, Email] = {
 
     val email = new HtmlEmail()
 
@@ -57,7 +58,7 @@ class NotificationEmail extends RollbarNotifier {
         email.setSslSmtpPort(port.toString)
       }
       email.setAuthenticator(new DefaultAuthenticator(uName, uPw))
-      email.setFrom(emailFrom)
+      email.setFrom(emailFrom, emailFromDisplayName)
       email.setSubject(subject)
       email.setHtmlMsg(bodyHtml)
       email.setTextMsg(bodyPlain)

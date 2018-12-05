@@ -36,7 +36,8 @@ object Notify extends RollbarNotifier {
             subject,
             messageRich,
             messagePlain,
-            publicSettings.emailFrom
+            publicSettings.emailFrom,
+            publicSettings.emailFromDisplayName
           )
           try {
             preparedEmail
