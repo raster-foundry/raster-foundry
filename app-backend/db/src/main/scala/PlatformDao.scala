@@ -264,6 +264,7 @@ object PlatformDao extends Dao[Platform] {
           ON prj.id = stp.project_id
         WHERE stp.scene_id = ${sceneIdString}
           AND u.id IN ${userIdsString}
+          AND ugr.is_active = true
       """).query[PlatformWithUsersSceneProjects].to[List]
   }
 
