@@ -1,0 +1,4 @@
+-J-Djava.library.path=/usr/local/lib
+-J-Xmx4g
+-J-Xms4g
+-J-Xss6M
