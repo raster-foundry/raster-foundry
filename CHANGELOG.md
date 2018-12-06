@@ -5,6 +5,7 @@
 ### Changed
 
 - Reorganized scala dependencies for package cleanliness and smaller bundles [\#4301](https://github.com/raster-foundry/raster-foundry/pull/4301)
+- If users are not requesting their own info, the returned other users' personal info are protected [\#4360](https://github.com/raster-foundry/raster-foundry/pull/4360)
 
 ### Fixed
 
