@@ -1,5 +1,11 @@
 # Change Log
 
+## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
+
+### Changed
+
+- Reorganized scala dependencies for package cleanliness and smaller bundles [\#4301](https://github.com/raster-foundry/raster-foundry/pull/4301)
+
 ## [1.15.0](https://github.com/raster-foundry/raster-foundry/tree/1.15.0) (2018-11-30)
 
 ### Added
@@ -13,7 +19,6 @@
 - Improved project selection modal within the lab [\#4324](https://github.com/raster-foundry/raster-foundry/pull/4324)
 - Upgraded to Webpack 4 and replace broken libraries / componenets [\#4199](https://github.com/raster-foundry/raster-foundry/pull/4199)
 - Greatly reduce bundle size by using dynamic imports and using a more effective build process [\#4199](https://github.com/raster-foundry/raster-foundry/pull/4199)
-
 
 ### Removed
 

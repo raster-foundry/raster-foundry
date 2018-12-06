@@ -1,7 +1,10 @@
 package com.rasterfoundry.api.license
 
-import com.rasterfoundry.authentication.Authentication
-import com.rasterfoundry.common.{CommonHandlers, UserErrorHandler}
+import com.rasterfoundry.akkautil.{
+  Authentication,
+  CommonHandlers,
+  UserErrorHandler
+}
 import com.rasterfoundry.database.LicenseDao
 import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives

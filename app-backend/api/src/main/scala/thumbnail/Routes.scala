@@ -8,8 +8,12 @@ import cats.effect.IO
 import com.amazonaws.regions._
 import com.amazonaws.services.s3.model.GetObjectRequest
 import com.rasterfoundry.api.utils.Config
-import com.rasterfoundry.authentication.Authentication
-import com.rasterfoundry.common.{CommonHandlers, S3, UserErrorHandler}
+import com.rasterfoundry.akkautil.{
+  Authentication,
+  CommonHandlers,
+  UserErrorHandler
+}
+import com.rasterfoundry.common.S3
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor

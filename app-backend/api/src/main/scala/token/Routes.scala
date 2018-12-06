@@ -1,7 +1,6 @@
 package com.rasterfoundry.api.token
 
-import com.rasterfoundry.authentication.Authentication
-import com.rasterfoundry.common.UserErrorHandler
+import com.rasterfoundry.akkautil.{Authentication, UserErrorHandler}
 import com.rasterfoundry.api.utils.{Auth0ErrorHandler}
 
 import akka.http.scaladsl.server.Route

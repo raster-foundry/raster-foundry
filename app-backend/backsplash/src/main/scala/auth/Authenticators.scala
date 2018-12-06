@@ -1,6 +1,5 @@
 package com.rasterfoundry.backsplash.auth
 
-import com.rasterfoundry.authentication.Authentication
 import com.rasterfoundry.backsplash.parameters.Parameters._
 import com.rasterfoundry.database.{UserDao, MapTokenDao, ProjectDao}
 import com.rasterfoundry.database.util.RFTransactor
@@ -10,6 +9,12 @@ import com.rasterfoundry.datamodel.{MapToken, User, Visibility, Project}
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
+import com.guizmaii.scalajwt.{ConfigurableJwtValidator, JwtToken}
+import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
+import com.nimbusds.jwt.proc.BadJWTException
+import com.nimbusds.jose.proc.SecurityContext
+import com.nimbusds.jwt.JWTClaimsSet
+import com.typesafe.config.ConfigFactory
 import doobie.ConnectionIO
 import doobie.implicits._
 import org.http4s._
@@ -17,9 +22,10 @@ import org.http4s.dsl.io._
 import org.http4s.server._
 import org.http4s.util.CaseInsensitiveString
 
+import java.net.URL
 import java.util.UUID
 
-object Authenticators extends Authentication {
+object Authenticators {
   implicit val xa = RFTransactor.xa
 
   val tokensAuthenticator = Kleisli[OptionT[IO, ?], Request[IO], User](
@@ -104,6 +110,20 @@ object Authenticators extends Authentication {
           .transact(xa))
       user <- OptionT(UserDao.getUserById(project.owner).transact(xa))
     } yield user
+
+  private val configAuth = ConfigFactory.load()
+  private val auth0Config = configAuth.getConfig("auth0")
+
+  private val jwksURL = auth0Config.getString("jwksURL")
+  private val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(
+    new URL(jwksURL))
+
+  private def verifyJWT(tokenString: String)
+    : Either[BadJWTException, (JwtToken, JWTClaimsSet)] = {
+    val token: JwtToken = JwtToken(content = tokenString)
+
+    ConfigurableJwtValidator(jwkSet).validate(token)
+  }
 
   val tokensAuthMiddleware = AuthMiddleware(tokensAuthenticator)
 }

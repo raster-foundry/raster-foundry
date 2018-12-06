@@ -1,4 +1,4 @@
-package com.rasterfoundry.common
+package com.rasterfoundry.akkautil
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{RequestContext, RouteResult}

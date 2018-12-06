@@ -4,8 +4,8 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import cats.effect.IO
+import com.rasterfoundry.akkautil.RFRejectionHandler._
 import com.rasterfoundry.api.utils.Config
-import com.rasterfoundry.common.RFRejectionHandler._
 import com.rasterfoundry.database.util.RFTransactor
 import kamon.Kamon
 

@@ -83,6 +83,7 @@ services:
     environment:
       - RF_LOG_LEVEL=INFO
       - TILE_SERVER_LOCATION
+      - COURSIER_CACHE=/root/.coursier
     ports:
       - "9000:9000"
       - "9010:9010"
@@ -138,6 +139,7 @@ services:
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
+      - COURSIER_CACHE=/root/.coursier
     ports:
       - "9900:9900"
       - "9020:9020"
@@ -168,6 +170,7 @@ services:
     environment:
       - RF_LOG_LEVEL=INFO
       - SBT_OPTS="-Xmx2G -XX:MaxPermSize=2G"
+      - COURSIER_CACHE=/root/.coursier
     ports:
       - "8080:8080"
       - "9030:9020"

@@ -1,4 +1,4 @@
-package com.rasterfoundry.authentication
+package com.rasterfoundry.akkautil
 
 import java.net.URL
 import java.util.UUID

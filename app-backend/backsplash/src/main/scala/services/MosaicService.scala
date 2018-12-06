@@ -2,7 +2,6 @@ package com.rasterfoundry.backsplash.services
 
 import com.azavea.maml.error.Interpreted
 import com.azavea.maml.eval.BufferingInterpreter
-import com.rasterfoundry.authentication.Authentication
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.io.Histogram
 import com.rasterfoundry.backsplash.nodes.ProjectNode
