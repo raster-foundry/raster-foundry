@@ -11,6 +11,7 @@ import org.scalacheck.Prop.forAll
 import com.azavea.maml.ast._
 
 import BacksplashImageGen._
+import Implicits._
 
 import scala.concurrent.ExecutionContext
 
@@ -40,17 +41,29 @@ class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
     }
   }
 
-  test("cheating") {
+  ignore("writeExtent") {
     check {
       forAll {
         (mosaic: BacksplashMosaic) =>
-          //val RasterExtents = implicitly[HasRasterExtents[BacksplashMosaic]]
-          //val ExtentReification = implicitly[ExtentReification[BacksplashMosaic]]
-          //val re = BacksplashMosaic.impl.rasterExtents(mosaic).map(println(_)).unsafeRunSync
-          val eval = BacksplashMosaic.impl.extentReification(mosaic)
+          val eval = mosaic.extentReification
           val e = Extent(-147.34863281250003,20.014645445341365,-83.40820312500001,49.97948776108648)
-          val r = eval(e, CellSize(10, 10)).unsafeRunSync
-          MultibandGeoTiff(r.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster, geotrellis.proj4.WebMercator).write(s"/tmp/${java.util.UUID.randomUUID}")
+          val rlit = eval(e, CellSize(10, 10)).unsafeRunSync
+          MultibandGeoTiff(rlit.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster, geotrellis.proj4.WebMercator)
+            .write(s"/tmp/${java.util.UUID.randomUUID}")
+          println("DID ONE")
+          true
+      }
+    }
+  }
+
+  ignore("writeTMS") {
+    check {
+      forAll {
+        (mosaic: BacksplashMosaic) =>
+          val eval = mosaic.tmsReification(0)
+          val rlit = eval(7, 24, 48).unsafeRunSync
+          MultibandGeoTiff(rlit.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster, geotrellis.proj4.WebMercator)
+            .write(s"/tmp/${java.util.UUID.randomUUID}.tif")
           println("DID ONE")
           true
       }
@@ -58,3 +71,4 @@ class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
   }
 
 }
+
