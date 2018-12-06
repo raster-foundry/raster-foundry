@@ -42,7 +42,7 @@ final case class PlainGroupInvitation(
       | To approve or reject this request, visit https://${platformHost}/user/me/${groupType.toString.toLowerCase}s
       |
       | If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to
-      | ${platform.publicSettings.emailUser}.
+      | ${platform.publicSettings.emailSupport}.
       |
       | -- The ${platform.name} Team
       """.trim.stripMargin
@@ -56,7 +56,7 @@ final case class PlainGroupInvitation(
   </p>
   <p>
     If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to
-    ${platform.publicSettings.emailUser}
+    ${platform.publicSettings.emailSupport}
   </p>
   <p>
     -- The ${platform.name} Team

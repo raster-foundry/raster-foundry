@@ -5,8 +5,8 @@
   <form name="emailSettings" autocomplete="off">
     <input autocomplete="false" name="hidden" type="text" style="display:none;">
     <div class="form-group">
-      <label for="plat-host">Platform Host</label>
-      <input id="plat-host"
+      <label for="platHost">Platform Host</label>
+      <input id="platHost"
              type="text"
              class="form-control"
              name="platHost"
@@ -14,18 +14,19 @@
                $ctrl.platformBuffer.publicSettings.platformHost : 'app.rasterfoundry.com'}}"
              ng-model="$ctrl.platformBuffer.publicSettings.platformHost"
              required>
+      <span class="error color-danger" ng-show="emailSettings.platHost.$error.required">required</span>
     </div>
     <div class="form-group">
-      <label for="name">User Name</label>
-      <input id="name"
+      <label for="smtpUserName">SMTP User Name</label>
+      <input id="smtpUserName"
              type="text"
              class="form-control"
-             name="email"
-             ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailUser.length ?
-               $ctrl.platformBuffer.publicSettings.emailUser : 'user@example.com'}}"
-             ng-model="$ctrl.platformBuffer.publicSettings.emailUser"
+             name="smtpUserName"
+             ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailSmtpUserName.length ?
+               $ctrl.platformBuffer.publicSettings.emailSmtpUserName : 'user@example.com'}}"
+             ng-model="$ctrl.platformBuffer.publicSettings.emailSmtpUserName"
              required>
-      <span class="error color-danger" ng-show="emailSettings.email.$error.required">required</span>
+      <span class="error color-danger" ng-show="emailSettings.smtpUserName.$error.required">required</span>
     </div>
     <div class="form-group">
       <label for="password">Password</label>
@@ -39,26 +40,54 @@
       <span class="error color-danger" ng-show="emailSettings.password.$error.required">required</span>
     </div>
     <div class="form-group">
-      <label for="emailfrom">From</label>
+      <label for="emailfrom">From Field Email Address</label>
       <input id="emailfrom"
-             type="text"
+             type="email"
              class="form-control"
              name="emailfrom"
              ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailFrom ?
-                 $ctrl.platformBuffer.publicSettings.emailFrom : 'Default'}}"
-             ng-model="$ctrl.platformBuffer.publicSettings.emailFrom">
+                 $ctrl.platformBuffer.publicSettings.emailFrom : 'noreply@example.com'}}"
+             ng-model="$ctrl.platformBuffer.publicSettings.emailFrom"
+             required>
+      <span class="error color-danger" ng-show="emailSettings.emailfrom.$error.required">required</span>
+      <span class="error color-danger" ng-show="emailSettings.emailfrom.$error.email">invalid email</span>
     </div>
     <div class="form-group">
-      <label for="smtp">SMTP Host</label>
-      <input id="smtp"
+      <label for="emailFromDisplayName">From Field Display Name</label>
+      <input id="emailFromDisplayName"
+             type="string"
+             class="form-control"
+             name="emailFromDisplayName"
+             ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailFromDisplayName ?
+                 $ctrl.platformBuffer.publicSettings.emailFromDisplayName : $ctrl.appName}}"
+             ng-model="$ctrl.platformBuffer.publicSettings.emailFromDisplayName"
+             required>
+      <span class="error color-danger" ng-show="emailSettings.emailFromDisplayName.$error.required">required</span>
+    </div>
+    <div class="form-group">
+      <label for="emailSupport">Support Email Address</label>
+      <input id="emailSupport"
+             type="email"
+             class="form-control"
+             name="emailSupport"
+             ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailSupport ?
+                 $ctrl.platformBuffer.publicSettings.emailSupport : 'support@example.com'}}"
+             ng-model="$ctrl.platformBuffer.publicSettings.emailSupport"
+             required>
+      <span class="error color-danger" ng-show="emailSettings.emailSupport.$error.required">required</span>
+      <span class="error color-danger" ng-show="emailSettings.emailSupport.$error.email">invalid email</span>
+    </div>
+    <div class="form-group">
+      <label for="smtpHost">SMTP Host</label>
+      <input id="smtpHost"
              type="text"
              class="form-control"
-             name="smtp"
+             name="smtpHost"
              ng-attr-placeholder="{{$ctrl.platformBuffer.publicSettings.emailSmtpHost.length ?
                $ctrl.platformBuffer.publicSettings.emailSmtpHost : 'smtp.example.com'}}"
              ng-model="$ctrl.platformBuffer.publicSettings.emailSmtpHost"
              required>
-     <span class="error color-danger" ng-show="emailSettings.smtp.$error.required">required</span>
+     <span class="error color-danger" ng-show="emailSettings.smtpHost.$error.required">required</span>
     </div>
     <div class="form-group">
       <label for="port">SMTP Port</label>
@@ -116,9 +145,15 @@
               ng-class="{'btn-danger': $ctrl.error }"
               ng-click="$ctrl.onSubmit()"
               ng-disabled="
-                emailSettings.email.$error.required ||
+                emailSettings.platHost.$error.required ||
+                emailSettings.smtpUserName.$error.required ||
                 emailSettings.password.$error.required ||
-                emailSettings.smtp.$error.required ||
+                emailSettings.emailfrom.$error.required ||
+                emailSettings.emailfrom.$error.email ||
+                emailSettings.emailFromDisplayName.$error.required ||
+                emailSettings.emailSupport.$error.required ||
+                emailSettings.emailSupport.$error.email ||
+                emailSettings.smtpHost.$error.required ||
                 emailSettings.port.$error.required">
         {{$ctrl.getButtonText()}}
       </button>

@@ -1,3 +1,5 @@
+/* globals BUILDCONFIG */
+
 import angular from 'angular';
 import _ from 'lodash';
 
@@ -12,6 +14,8 @@ class PlatformEmailController {
         this.$timeout = $timeout;
 
         this.platformService = platformService;
+
+        this.appName = BUILDCONFIG.APP_NAME;
     }
 
     $onInit() {
