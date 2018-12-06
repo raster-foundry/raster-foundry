@@ -12,10 +12,12 @@
 ### Changed
 
 - Reorganized scala dependencies for package cleanliness and smaller bundles [\#4301](https://github.com/raster-foundry/raster-foundry/pull/4301)
+- If users are not requesting their own info, the returned other users' personal info are protected [\#4360](https://github.com/raster-foundry/raster-foundry/pull/4360)
 
 ### Fixed
 
-- Made the status code for aoi creation on projects a 201 instead of a 200 [\#4331](https://github.com/raster-foundry/raster-foundry/pull/4331/files)
+- Made the status code for aoi creation on projects a 201 instead of a 200 [\#4331](https://github.com/raster-foundry/raster-foundry/pull/4331)
+- Opened access for group members to remove their group memberships [\#4358](https://github.com/raster-foundry/raster-foundry/pull/4358)
 - Used the correct field as outgoing email source in platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
 
 ## [1.15.0](https://github.com/raster-foundry/raster-foundry/tree/1.15.0) (2018-11-30)
