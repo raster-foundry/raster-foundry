@@ -495,7 +495,16 @@ trait PlatformRoutes
                                  orgId: UUID,
                                  userId: String): Route = authenticate { user =>
     authorizeAsync {
-      OrganizationDao.userIsAdmin(user, orgId).transact(xa).unsafeToFuture
+      val authCheck = (
+        OrganizationDao.userIsAdmin(user, orgId),
+        (userId == user.id).pure[ConnectionIO]
+      ).tupled.map(
+        {
+          case (true, _) | (_, true) => true
+          case _                     => false
+        }
+      )
+      authCheck.transact(xa).unsafeToFuture
     } {
       complete {
         OrganizationDao
@@ -650,7 +659,16 @@ trait PlatformRoutes
                          teamId: UUID,
                          userId: String): Route = authenticate { user =>
     authorizeAsync {
-      TeamDao.userIsAdmin(user, teamId).transact(xa).unsafeToFuture
+      val authCheck = (
+        TeamDao.userIsAdmin(user, teamId),
+        (userId == user.id).pure[ConnectionIO]
+      ).tupled.map(
+        {
+          case (true, _) | (_, true) => true
+          case _                     => false
+        }
+      )
+      authCheck.transact(xa).unsafeToFuture
     } {
       complete {
         TeamDao
