@@ -1,6 +1,6 @@
-/* globals _ */
 import angular from 'angular';
 import $ from 'jquery';
+import _ from 'lodash';
 import teamModalTpl from './teamModal.html';
 
 const TeamModalComponent = {
@@ -28,7 +28,7 @@ class TeamModalController {
 
     initOrganizationSelect() {
         if (this.resolve.chooseOrg) {
-            this.authService.fetchUserRoles(true).then(res => {
+            this.authService.fetchUserRoles().then(res => {
                 const groupedUgrs = _.groupBy(res, 'groupType');
                 this.platform = groupedUgrs.PLATFORM[0];
                 this.organizations = groupedUgrs.ORGANIZATION;
