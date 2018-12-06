@@ -1,5 +1,7 @@
 package com.rasterfoundry.backsplash
 
+import com.rasterfoundry.backsplash.Implicits._
+
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.resample.NearestNeighbor
@@ -16,6 +18,7 @@ import cats.effect._
 
 
 object BacksplashMosaic {
+
 
   /** Filter out images that don't need to be included  */
   def filterRelevant(bsm: BacksplashMosaic): BacksplashMosaic = {
@@ -41,5 +44,8 @@ object BacksplashMosaic {
       }
     })
   }
+
+  def layerHistogram(mosaic: BacksplashMosaic)(implicit cs: ContextShift[IO]) =
+    LayerHistogram.identity(mosaic, 4000)
 }
 

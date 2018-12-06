@@ -22,6 +22,17 @@ import doobie.postgres.implicits._
 import fs2.Stream
 import geotrellis.vector.{Polygon, Projected}
 
+
+case class MosaicStreamer(
+  ..
+)
+
+object MosaicStreamer {
+  implicit val asProjectStore: ProjectStore[SceneToProjectDao.type] = new ProjectStore {
+    ???
+  }
+}
+
 object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
 
   val tableName = "scenes_to_projects"

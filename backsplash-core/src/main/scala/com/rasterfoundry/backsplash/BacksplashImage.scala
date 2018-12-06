@@ -14,6 +14,7 @@ import geotrellis.contrib.vlm.gdal._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.IO
 
+import java.util.UUID
 
 case class BacksplashImage(uri: String, footprint: Polygon, subsetBands: List[Int]) {
   def read(extent: Extent, cs: CellSize): Option[MultibandTile] = {
@@ -36,6 +37,7 @@ case class BacksplashImage(uri: String, footprint: Polygon, subsetBands: List[In
 
 
 object BacksplashImage extends RasterSourceUtils {
+
   def getRasterSource(uri: String): GDALRasterSource = GDALRasterSource(uri)
 
   def apply(uri: String, wkt: String, subsetBands: List[Int]): BacksplashImage =

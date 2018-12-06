@@ -1,5 +1,5 @@
 val Http4sVersion = "0.20.0-M3"
-val GeotrellisServerVersion = "0.0.11-LOCAL"
+val GeotrellisServerVersion = "0.0.13-LOCAL"
 val Specs2Version = "4.1.0"
 val ScalatestVersion = "3.0.5"
 
