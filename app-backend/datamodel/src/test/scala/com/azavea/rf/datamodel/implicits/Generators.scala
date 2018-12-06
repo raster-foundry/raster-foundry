@@ -631,7 +631,7 @@ object Generators extends ArbitraryInstances {
 
   private def platformPublicSettingsGen: Gen[Platform.PublicSettings] =
     for {
-      emailUser <- nonEmptyStringGen
+      emailSmtpUserName <- nonEmptyStringGen
       emailSmtpHost <- nonEmptyStringGen
       emailSmtpPort <- Gen.oneOf(25, 2525, 465, 587)
       emailSmtpEncryption <- Gen.oneOf("ssl", "tls", "starttls")
@@ -639,10 +639,12 @@ object Generators extends ArbitraryInstances {
       emailAoiNotification <- arbitrary[Boolean]
       emailExportNotification <- arbitrary[Boolean]
       platformHost <- Gen.const(None)
-      emailFrom <- stringOptionGen
+      emailFrom <- nonEmptyStringGen
+      emailFromDisplayName <- nonEmptyStringGen
+      emailSupport <- nonEmptyStringGen
     } yield {
       Platform.PublicSettings(
-        emailUser,
+        emailSmtpUserName,
         emailSmtpHost,
         emailSmtpPort,
         emailSmtpEncryption,
@@ -650,7 +652,9 @@ object Generators extends ArbitraryInstances {
         emailAoiNotification,
         emailExportNotification,
         platformHost,
-        emailFrom
+        emailFrom,
+        emailFromDisplayName,
+        emailSupport
       )
     }
 

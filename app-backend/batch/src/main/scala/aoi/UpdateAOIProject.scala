@@ -51,7 +51,7 @@ final case class UpdateAOIProject(projectId: UUID)(
         <p>You have ${sceneCount} new scenes updated to your AOI project "${project.name}"! You can access
         these new scenes <a href="https://${platformHost}/projects/edit/${project.id}/scenes" target="_blank">here</a> or any past
         projects you've created at any time <a href="https://${platformHost}/projects/list" target="_blank">here</a>.</p>
-        <p>If you have questions, please feel free to reach out any time at ${platform.publicSettings.emailUser}.</p>
+        <p>If you have questions, please feel free to reach out any time at ${platform.publicSettings.emailSupport}.</p>
         <p>- The ${platform.name} Team</p>
       </html>
       """,
@@ -59,7 +59,7 @@ final case class UpdateAOIProject(projectId: UUID)(
       ${user.name}: You have ${sceneCount} new scenes updated to your AOI project "${project.name}"! You can access
       these new scenes here: https://${platformHost}/projects/edit/${project.id}/scenes , or any past
       projects you've created at any time here: https://${platformHost}/projects/list . If you have questions,
-      please feel free to reach out any time at ${platform.publicSettings.emailUser}. - The ${platform.name} Team
+      please feel free to reach out any time at ${platform.publicSettings.emailSupport}. - The ${platform.name} Team
       """
     )
   }
@@ -83,19 +83,19 @@ final case class UpdateAOIProject(projectId: UUID)(
         (pub.emailSmtpHost,
          pub.emailSmtpPort,
          pub.emailSmtpEncryption,
-         pub.emailUser,
+         pub.emailSmtpUserName,
          pri.emailPassword,
          userEmailAddress) match {
           case (host: String,
                 port: Int,
                 encryption: String,
-                platUserEmail: String,
+                platSmtpUserName: String,
                 pw: String,
                 userEmail: String)
               if email.isValidEmailSettings(host,
                                             port,
                                             encryption,
-                                            platUserEmail,
+                                            platSmtpUserName,
                                             pw,
                                             userEmail) =>
             val (subject, html, plain) =
@@ -104,13 +104,14 @@ final case class UpdateAOIProject(projectId: UUID)(
               .setEmail(host,
                         port,
                         encryption,
-                        platUserEmail,
+                        platSmtpUserName,
                         pw,
                         userEmail,
                         subject,
                         html,
                         plain,
-                        pub.emailFrom)
+                        pub.emailFrom,
+                        pub.emailFromDisplayName)
               .map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified project owner ${user.id} about AOI updates")
           case _ =>

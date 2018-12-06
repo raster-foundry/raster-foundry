@@ -120,7 +120,7 @@ final case class UpdateExportStatus(
         <p>Your export in ${exportType} "${targetName}" ${content} can access
         this ${exportType} <a href="${targetLink}" target="_blank">here</a> or any past
         projects you've created at any time <a href="${listLink}" target="_blank">here</a>.</p>
-        <p>If you have questions, please feel free to reach out any time at ${platform.publicSettings.emailUser}.</p>
+        <p>If you have questions, please feel free to reach out any time at ${platform.publicSettings.emailSupport}.</p>
         <p>- The ${platform.name} Team</p>
       </html>
       """,
@@ -128,7 +128,7 @@ final case class UpdateExportStatus(
       ${user.name}:
       Your export in ${exportType} "${targetName}" ${content} can access this ${exportType} here: ${targetLink},
       or any past projects you've created at any time here: ${listLink}.
-      If you have questions, please feel free to reach out any time at ${platform.publicSettings.emailUser}.
+      If you have questions, please feel free to reach out any time at ${platform.publicSettings.emailSupport}.
       - The ${platform.name} Team
       """
     )
@@ -154,19 +154,19 @@ final case class UpdateExportStatus(
         (pub.emailSmtpHost,
          pub.emailSmtpPort,
          pub.emailSmtpEncryption,
-         pub.emailUser,
+         pub.emailSmtpUserName,
          pri.emailPassword,
          emailAddress) match {
           case (host: String,
                 port: Int,
                 encryption: String,
-                platUserEmail: String,
+                platSmtpUserName: String,
                 pw: String,
                 userEmail: String)
               if email.isValidEmailSettings(host,
                                             port,
                                             encryption,
-                                            platUserEmail,
+                                            platSmtpUserName,
                                             pw,
                                             userEmail) =>
             val (subject, html, plain) =
@@ -175,13 +175,14 @@ final case class UpdateExportStatus(
               .setEmail(host,
                         port,
                         encryption,
-                        platUserEmail,
+                        platSmtpUserName,
                         pw,
                         userEmail,
                         subject,
                         html,
                         plain,
-                        pub.emailFrom)
+                        pub.emailFrom,
+                        pub.emailFromDisplayName)
               .map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified owner ${user.id} about export ${exportId}.")
           case _ =>
