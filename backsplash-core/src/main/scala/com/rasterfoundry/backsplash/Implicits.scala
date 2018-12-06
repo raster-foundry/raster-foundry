@@ -14,11 +14,15 @@ import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 
-import TmsReification._
+import ProjectStore._
 import ExtentReification._
 import HasRasterExtents._
+import TmsReification._
 
-trait Implicits extends ToTmsReificationOps with ToExtentReificationOps with ToHasRasterExtentsOps {
+trait Implicits extends ToTmsReificationOps
+    with ToExtentReificationOps
+    with ToHasRasterExtentsOps
+    with ToProjectStoreOps {
 
   implicit val mosaicTmsReification = new TmsReification[BacksplashMosaic] {
     def kind(self: BacksplashMosaic): MamlKind = MamlKind.Image

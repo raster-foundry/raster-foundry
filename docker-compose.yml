@@ -182,13 +182,13 @@ services:
       - $HOME/.aws:/root/.aws:ro
       - $HOME/.ivy2:/root/.ivy2
     working_dir: /opt/raster-foundry/backsplash-core/
-    entrypoint: bash
-    # command:
-    #   - "bash"
-      # - "-Dcom.sun.management.jmxremote.rmi.port=9020"
-      # - "-Dcom.sun.management.jmxremote=true"
-      # - "-Dcom.sun.management.jmxremote.port=9020"
-      # - "-Dcom.sun.management.jmxremote.ssl=false"
-      # - "-Dcom.sun.management.jmxremote.authenticate=false"
-      # - "-Dcom.sun.management.jmxremote.local.only=false"
-      # - "-Djava.rmi.server.hostname=localhost"
+    entrypoint: sbt
+    command:
+      - "run"
+      - "-Dcom.sun.management.jmxremote.rmi.port=9020"
+      - "-Dcom.sun.management.jmxremote=true"
+      - "-Dcom.sun.management.jmxremote.port=9020"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
+      - "-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-Dcom.sun.management.jmxremote.local.only=false"
+      - "-Djava.rmi.server.hostname=localhost"
