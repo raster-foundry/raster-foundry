@@ -768,11 +768,11 @@ function routeConfig(
 
     $stateProvider
         .state('error', {
-
             url: '/error',
             templateUrl: errorTpl,
             controller: 'ErrorController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            bypassAuth: true
         });
 
     $urlRouterProvider.otherwise('/home');
