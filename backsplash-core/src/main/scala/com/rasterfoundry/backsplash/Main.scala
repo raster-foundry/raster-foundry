@@ -1,7 +1,9 @@
 package com.rasterfoundry.backsplash
 
+import cats.Applicative
 import cats.data.Validated._
 import cats.effect._
+import cats.implicits._
 import fs2.Stream
 import geotrellis.proj4.{LatLng,WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
@@ -43,8 +45,12 @@ object Server extends IOApp {
   println(s"Sentinel layer: http://localhost:8080/$sentinelUUID/{z}/{x}/{y}/")
 
   val service: HttpRoutes[IO] = HttpRoutes.of {
-    case GET -> Root / UUIDWrapper(projId) / IntVar(z) / IntVar(x) / IntVar(y) =>
-      val eval = LayerTms.identity(projects.read(projId))
+    case GET -> Root / UUIDWrapper(projId) / IntVar(z) / IntVar(x) / IntVar(y)
+        :? RedBandOptionalQueryParamMatcher(redOverride)
+        :? GreenBandOptionalQueryParamMatcher(greenOverride)
+        :? BlueBandOptionalQueryParamMatcher(blueOverride) =>
+      val bandOverride = Applicative[Option].map3(redOverride, greenOverride, blueOverride)(BandOverride.apply)
+      val eval = LayerTms.identity(projects.read(projId, None, bandOverride, None))
       eval(z, x, y) flatMap {
         case Valid(tile) =>
           Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
@@ -53,17 +59,21 @@ object Server extends IOApp {
       }
 
     case GET -> Root / UUIDWrapper(projId) / "histograms" =>
-      BacksplashMosaic.layerHistogram(projects.read(projId)) flatMap {
+      BacksplashMosaic.layerHistogram(projects.read(projId, None, None, None)) flatMap {
         case Valid(hists) => Ok(hists map { hist => Map(hist.binCounts:_*) } asJson)
         case _ => BadRequest("nah my dude")
       }
 
     case req @ GET -> Root / UUIDWrapper(projectId) / "export"
         :? ExtentQueryParamMatcher(extent)
-        :? ZoomQueryParamMatcher(zoom) =>
+        :? ZoomQueryParamMatcher(zoom)
+        :? RedBandOptionalQueryParamMatcher(redOverride)
+        :? GreenBandOptionalQueryParamMatcher(greenOverride)
+        :? BlueBandOptionalQueryParamMatcher(blueOverride) =>
+      val bandOverride = Applicative[Option].map3(redOverride, greenOverride, blueOverride)(BandOverride.apply)
       val projectedExtent = extent.reproject(LatLng, WebMercator)
       val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
-      val eval = LayerExtent.identity(projects.read(projectId))
+      val eval = LayerExtent.identity(projects.read(projectId, None, bandOverride, None))
       eval(extent, cellSize) flatMap {
         case Valid(tile) =>
           req.headers
