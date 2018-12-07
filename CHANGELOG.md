@@ -15,18 +15,6 @@
 
 ### Security
 
-## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
-
-### Added
-
-### Changed
-
-### Fixed
-
-### Removed
-
-### Security
-
 ## [1.16.0](https://github.com/raster-foundry/raster-foundry/tree/1.16.0) (2019-01-02)
 
 ## Important Notice
@@ -34,6 +22,7 @@
 - In this release, we have added more fields to platform email settings to make it work better. We strongly suggest platform admins to go to your platform email settings and fill in **all fields**.
 
 ### Added
+- Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Added a support email field to platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
 - Supported team creation on user's team list page [\#4345](https://github.com/raster-foundry/raster-foundry/pull/4345)
 - Use java's gdal bindings for tile IO in backsplash and better separate concerns between fetching imagery and talking to the database / users [\#4339](https://github.com/raster-foundry/raster-foundry/pull/4339)
@@ -47,6 +36,7 @@
 
 ### Changed
 
+- Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Reorganized scala dependencies for package cleanliness and smaller bundles [\#4301](https://github.com/raster-foundry/raster-foundry/pull/4301)
 - If users are not requesting their own info, the returned other users' personal info are protected [\#4360](https://github.com/raster-foundry/raster-foundry/pull/4360)
 - Changed the data model of the return of `users/me/roles` endpoint [\#4375](https://github.com/raster-foundry/raster-foundry/pull/4375)
