@@ -1,5 +1,5 @@
 val Http4sVersion = "0.20.0-M3"
-val GeotrellisServerVersion = "0.0.11-LOCAL"
+val GeotrellisServerVersion = "0.0.13"
 val Specs2Version = "4.1.0"
 val ScalatestVersion = "3.0.5"
 
@@ -9,6 +9,7 @@ lazy val root = (project in file("."))
     name := "backsplash",
     version := "0.0.1-SNAPSHOT",
     scalaVersion := "2.11.12",
+    fork in run := true,
     externalResolvers := Seq(
       DefaultMavenRepository,
       Resolver.sonatypeRepo("snapshots"),
@@ -32,6 +33,7 @@ lazy val root = (project in file("."))
       "org.apache.spark" %% "spark-core"             % "2.4.0" % Provided
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector"     % "0.9.6"),
-    addCompilerPlugin("com.olegpy"     %% "better-monadic-for" % "0.2.4")
+    addCompilerPlugin("com.olegpy"     %% "better-monadic-for" % "0.2.4"),
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
 

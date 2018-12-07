@@ -163,28 +163,28 @@ services:
       - "-Djava.rmi.server.hostname=localhost"
 
   backsplash:
-    image: openjdk:8-jre
-    links:
-      - postgres:database.service.rasterfoundry.internal
+    image: raster-foundry-backsplash
+    build:
+      context: backsplash-core
+      dockerfile: Dockerfile
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
-      - SBT_OPTS="-Xmx2G -XX:MaxPermSize=2G"
       - COURSIER_CACHE=/root/.coursier
     ports:
       - "8080:8080"
       - "9030:9020"
     volumes:
-      - ./app-backend/:/opt/raster-foundry/app-backend/
-      - $HOME/.coursier:/root/.coursier
+      - ./backsplash-core/:/opt/raster-foundry/backsplash-core
+      - $HOME/.coursier-gt-server:/root/.coursier
       - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
       - $HOME/.ivy2:/root/.ivy2
-    working_dir: /opt/raster-foundry/app-backend/
-    entrypoint: ./sbt
+    working_dir: /opt/raster-foundry/backsplash-core/
+    entrypoint: sbt
     command:
-      - "backsplash/run"
+      - "run"
       - "-Dcom.sun.management.jmxremote.rmi.port=9020"
       - "-Dcom.sun.management.jmxremote=true"
       - "-Dcom.sun.management.jmxremote.port=9020"
