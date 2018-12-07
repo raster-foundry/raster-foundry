@@ -16,9 +16,7 @@ import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 
-
 object BacksplashMosaic {
-
 
   /** Filter out images that don't need to be included  */
   def filterRelevant(bsm: BacksplashMosaic): BacksplashMosaic = {
@@ -35,9 +33,11 @@ object BacksplashMosaic {
             false
           } else {
             testMultiPoly = (mp union bsi.footprint) match {
-              case PolygonResult(p) => MultiPolygon(p).some
+              case PolygonResult(p)       => MultiPolygon(p).some
               case MultiPolygonResult(mp) => mp.some
-              case _ => throw new Exception("Should get a polygon or multipolygon, instead got no result")
+              case _ =>
+                throw new Exception(
+                  "Should get a polygon or multipolygon, instead got no result")
             }
             true
           }
@@ -48,4 +48,3 @@ object BacksplashMosaic {
   def layerHistogram(mosaic: BacksplashMosaic)(implicit cs: ContextShift[IO]) =
     LayerHistogram.identity(mosaic, 4000)
 }
-

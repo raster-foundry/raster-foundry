@@ -10,9 +10,9 @@ import simulacrum._
 import java.util.UUID
 
 case class BandOverride(
-  red: Int,
-  green: Int,
-  blue: Int
+    red: Int,
+    green: Int,
+    blue: Int
 )
 
 @typeclass trait ProjectStore[A] {

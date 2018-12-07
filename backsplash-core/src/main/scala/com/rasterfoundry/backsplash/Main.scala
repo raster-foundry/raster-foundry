@@ -5,7 +5,7 @@ import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
 import fs2.Stream
-import geotrellis.proj4.{LatLng,WebMercator}
+import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.server._
 import io.circe._
@@ -46,11 +46,14 @@ object Server extends IOApp {
 
   val service: HttpRoutes[IO] = HttpRoutes.of {
     case GET -> Root / UUIDWrapper(projId) / IntVar(z) / IntVar(x) / IntVar(y)
-        :? RedBandOptionalQueryParamMatcher(redOverride)
-        :? GreenBandOptionalQueryParamMatcher(greenOverride)
-        :? BlueBandOptionalQueryParamMatcher(blueOverride) =>
-      val bandOverride = Applicative[Option].map3(redOverride, greenOverride, blueOverride)(BandOverride.apply)
-      val eval = LayerTms.identity(projects.read(projId, None, bandOverride, None))
+          :? RedBandOptionalQueryParamMatcher(redOverride)
+          :? GreenBandOptionalQueryParamMatcher(greenOverride)
+          :? BlueBandOptionalQueryParamMatcher(blueOverride) =>
+      val bandOverride =
+        Applicative[Option].map3(redOverride, greenOverride, blueOverride)(
+          BandOverride.apply)
+      val eval =
+        LayerTms.identity(projects.read(projId, None, bandOverride, None))
       eval(z, x, y) flatMap {
         case Valid(tile) =>
           Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
@@ -60,32 +63,38 @@ object Server extends IOApp {
 
     case GET -> Root / UUIDWrapper(projId) / "histograms" =>
       BacksplashMosaic.layerHistogram(projects.read(projId, None, None, None)) flatMap {
-        case Valid(hists) => Ok(hists map { hist => Map(hist.binCounts:_*) } asJson)
+        case Valid(hists) =>
+          Ok(hists map { hist =>
+            Map(hist.binCounts: _*)
+          } asJson)
         case _ => BadRequest("nah my dude")
       }
 
     case req @ GET -> Root / UUIDWrapper(projectId) / "export"
-        :? ExtentQueryParamMatcher(extent)
-        :? ZoomQueryParamMatcher(zoom)
-        :? RedBandOptionalQueryParamMatcher(redOverride)
-        :? GreenBandOptionalQueryParamMatcher(greenOverride)
-        :? BlueBandOptionalQueryParamMatcher(blueOverride) =>
-      val bandOverride = Applicative[Option].map3(redOverride, greenOverride, blueOverride)(BandOverride.apply)
+          :? ExtentQueryParamMatcher(extent)
+          :? ZoomQueryParamMatcher(zoom)
+          :? RedBandOptionalQueryParamMatcher(redOverride)
+          :? GreenBandOptionalQueryParamMatcher(greenOverride)
+          :? BlueBandOptionalQueryParamMatcher(blueOverride) =>
+      val bandOverride =
+        Applicative[Option].map3(redOverride, greenOverride, blueOverride)(
+          BandOverride.apply)
       val projectedExtent = extent.reproject(LatLng, WebMercator)
       val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
-      val eval = LayerExtent.identity(projects.read(projectId, None, bandOverride, None))
+      val eval =
+        LayerExtent.identity(projects.read(projectId, None, bandOverride, None))
       eval(extent, cellSize) flatMap {
         case Valid(tile) =>
           req.headers
             .get(CaseInsensitiveString("Accept")) match {
-              case Some(Header(_, "image/tiff")) =>
-                Ok(
-                  MultibandGeoTiff(tile, projectedExtent, WebMercator).toByteArray,
-                  `Content-Type`(MediaType.image.tiff)
-                )
-              case _ =>
-                Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
-            }
+            case Some(Header(_, "image/tiff")) =>
+              Ok(
+                MultibandGeoTiff(tile, projectedExtent, WebMercator).toByteArray,
+                `Content-Type`(MediaType.image.tiff)
+              )
+            case _ =>
+              Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
+          }
         case _ => BadRequest("nah my dude")
       }
   }
