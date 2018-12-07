@@ -52,4 +52,20 @@ object UserGroupRole {
       )
     }
   }
+
+  @JsonCodec
+  final case class WithRelated(id: UUID,
+                                 createdAt: Timestamp,
+                                 createdBy: String,
+                                 modifiedAt: Timestamp,
+                                 modifiedBy: String,
+                                 isActive: Boolean,
+                                 userId: String,
+                                 groupType: GroupType,
+                                 groupId: UUID,
+                                 groupRole: GroupRole,
+                                 membershipStatus: MembershipStatus,
+                                 platformName: Option[String],
+                                 organizationName: Option[String],
+                                 teamName: Option[String])
 }

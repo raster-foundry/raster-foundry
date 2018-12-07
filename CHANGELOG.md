@@ -8,6 +8,7 @@
 
 ### Added
 - Added a support email field to platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
+- Supported team creation on user's team list page [\#4345](https://github.com/raster-foundry/raster-foundry/pull/4345)
 
 ### Changed
 
@@ -19,6 +20,8 @@
 - Made the status code for aoi creation on projects a 201 instead of a 200 [\#4331](https://github.com/raster-foundry/raster-foundry/pull/4331)
 - Opened access for group members to remove their group memberships [\#4358](https://github.com/raster-foundry/raster-foundry/pull/4358)
 - Used the correct field as outgoing email source in platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
+
+### Removed
 
 ## [1.15.0](https://github.com/raster-foundry/raster-foundry/tree/1.15.0) (2018-11-30)
 

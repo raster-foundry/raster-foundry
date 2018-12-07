@@ -168,7 +168,10 @@ trait UserRoutes
 
   def getUserRoles: Route = authenticate { user =>
     complete {
-      UserGroupRoleDao.listByUser(user).transact(xa).unsafeToFuture()
+      UserGroupRoleDao
+        .listByUserWithRelated(user)
+        .transact(xa)
+        .unsafeToFuture()
     }
   }
 
