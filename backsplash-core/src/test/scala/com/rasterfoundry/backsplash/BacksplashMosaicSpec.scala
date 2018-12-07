@@ -4,6 +4,7 @@ import geotrellis.server._
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
+import cats.data.Validated._
 import cats.effect.IO
 import org.scalatest._
 import org.scalatest.prop.Checkers
@@ -41,6 +42,9 @@ class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
     }
   }
 
+  /** Use only when you want to write some imagery out to disk during testing, to veriy
+    * that it looks nice
+    */
   ignore("writeExtent") {
     check {
       forAll {
@@ -56,16 +60,33 @@ class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
     }
   }
 
+  /** Use only when you want to write some imagery out to disk during testing, to veriy
+    * that it looks nice
+    */
   ignore("writeTMS") {
     check {
+      forAll { (mosaic: BacksplashMosaic) =>
+        val eval = mosaic.tmsReification(0)
+        val rlit = eval(7, 24, 48).unsafeRunSync
+        MultibandGeoTiff(rlit.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster, geotrellis.proj4.WebMercator)
+          .write(s"/tmp/${java.util.UUID.randomUUID}.tif")
+        println("DID ONE")
+        true
+      }
+    }
+  }
+
+  test("fetching mosaics should return sensible values") {
+    check {
       forAll {
-        (mosaic: BacksplashMosaic) =>
-          val eval = mosaic.tmsReification(0)
-          val rlit = eval(7, 24, 48).unsafeRunSync
-          MultibandGeoTiff(rlit.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster, geotrellis.proj4.WebMercator)
-            .write(s"/tmp/${java.util.UUID.randomUUID}.tif")
-          println("DID ONE")
+        (mosaic: BacksplashMosaic) => {
+          val hists = BacksplashMosaic.layerHistogram(mosaic).unsafeRunSync match {
+            case Valid(hists) => hists
+            case Invalid(_) => throw new Exception("could not resolve histograms for mosaic")
+          }
+          assert(hists.head.minValue != hists.head.maxValue)
           true
+        }
       }
     }
   }

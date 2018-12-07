@@ -22,6 +22,7 @@ import doobie.postgres.implicits._
 import fs2.Stream
 import geotrellis.vector.{Polygon, Projected}
 
+
 object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
 
   val tableName = "scenes_to_projects"

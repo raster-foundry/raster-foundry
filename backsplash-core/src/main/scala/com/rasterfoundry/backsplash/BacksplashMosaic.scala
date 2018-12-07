@@ -1,5 +1,7 @@
 package com.rasterfoundry.backsplash
 
+import com.rasterfoundry.backsplash.Implicits._
+
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.resample.NearestNeighbor
@@ -13,7 +15,6 @@ import cats._
 import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
-
 
 object BacksplashMosaic {
 
@@ -32,14 +33,18 @@ object BacksplashMosaic {
             false
           } else {
             testMultiPoly = (mp union bsi.footprint) match {
-              case PolygonResult(p) => MultiPolygon(p).some
+              case PolygonResult(p)       => MultiPolygon(p).some
               case MultiPolygonResult(mp) => mp.some
-              case _ => throw new Exception("Should get a polygon or multipolygon, instead got no result")
+              case _ =>
+                throw new Exception(
+                  "Should get a polygon or multipolygon, instead got no result")
             }
             true
           }
       }
     })
   }
-}
 
+  def layerHistogram(mosaic: BacksplashMosaic)(implicit cs: ContextShift[IO]) =
+    LayerHistogram.identity(mosaic, 4000)
+}
