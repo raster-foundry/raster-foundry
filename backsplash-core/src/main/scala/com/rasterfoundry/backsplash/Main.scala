@@ -3,16 +3,20 @@ package com.rasterfoundry.backsplash
 import cats.data.Validated._
 import cats.effect._
 import fs2.Stream
+import geotrellis.proj4.{LatLng,WebMercator}
+import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.server._
 import io.circe._
 import io.circe.syntax._
 import org.http4s._
+import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.headers._
 import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig}
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
+import org.http4s.util.CaseInsensitiveString
 
 import Implicits._
 import Parameters._
@@ -35,7 +39,7 @@ object Server extends IOApp {
       )
     )
 
-  println(s"Kansas layer: http://localhost:8080/$kansasUUID/{z}/{x}/{y}/")
+  println(s"Oklahoma layer: http://localhost:8080/$oklahomaUUID/{z}/{x}/{y}/")
   println(s"Sentinel layer: http://localhost:8080/$sentinelUUID/{z}/{x}/{y}/")
 
   val service: HttpRoutes[IO] = HttpRoutes.of {
@@ -50,20 +54,28 @@ object Server extends IOApp {
 
     case GET -> Root / UUIDWrapper(projId) / "histograms" =>
       BacksplashMosaic.layerHistogram(projects.read(projId)) flatMap {
-        case Valid(hists) => Ok("sure")
+        case Valid(hists) => Ok(hists map { hist => Map(hist.binCounts:_*) } asJson)
         case _ => BadRequest("nah my dude")
       }
 
-    case GET -> Root / UUIDWrapper(projectId) / "export"
+    case req @ GET -> Root / UUIDWrapper(projectId) / "export"
         :? ExtentQueryParamMatcher(extent)
         :? ZoomQueryParamMatcher(zoom) =>
-      println("in export")
+      val projectedExtent = extent.reproject(LatLng, WebMercator)
       val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
-      println("got cell size")
       val eval = LayerExtent.identity(projects.read(projectId))
-      println("build eval")
       eval(extent, cellSize) flatMap {
-        case Valid(tile) => Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
+        case Valid(tile) =>
+          req.headers
+            .get(CaseInsensitiveString("Accept")) match {
+              case Some(Header(_, "image/tiff")) =>
+                Ok(
+                  MultibandGeoTiff(tile, projectedExtent, WebMercator).toByteArray,
+                  `Content-Type`(MediaType.image.tiff)
+                )
+              case _ =>
+                Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
+            }
         case _ => BadRequest("nah my dude")
       }
   }
