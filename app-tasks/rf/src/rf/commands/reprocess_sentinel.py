@@ -40,7 +40,7 @@ def reprocess_sentinel(scene_ids):
             conn.rollback()
             logger.error(
                 'Rolling back transaction. \n' +
-                'There was an error while reprocessing scene id "%s",\n%s', (scene_id, e)
+                'There was an error while reprocessing scene id "%s",\n%s', scene_id, e
             )
     conn.close()
 
@@ -54,8 +54,8 @@ def reprocess_scene_id(cur, conn, scene_id):
         scene_id (string)
     """
     scene = get_scene(cur, scene_id)
-    if check_if_broken(cur, scene_id):
-        logger.info('Re-importing sentinel scene: {}'.format(scene['id']))
+    if scene['datasource'] == '4a50cb75-815d-4fe5-8bc1-144729ce5b42' and check_if_broken(cur, scene_id):
+        logger.info('Re-importing sentinel scene: %s', scene['id'])
         band11_id = str(uuid.uuid4())
         band12_id = str(uuid.uuid4())
         logger.info('Updating images')
@@ -68,8 +68,10 @@ def reprocess_scene_id(cur, conn, scene_id):
         if scene['ingest_status'] == 'INGESTED':
             logger.info('Re-ingesting scene')
             ingest_scene(scene_id)
+    elif scene['datasource'] == '4a50cb75-815d-4fe5-8bc1-144729ce5b42':
+        logger.info('Skipping re-import for Scene: %s . Scene is not broken.', scene['id'])
     else:
-        logger.info('Skipping re-import for Scene: {} . Scene is not broken.'.format(scene['id']))
+        logger.info('Told to re-import non-sentinel scene: %s. Skipping', scene['id'])
 
 
 def get_scene(cur, scene_id):
@@ -83,7 +85,7 @@ def get_scene(cur, scene_id):
     """
     cur.execute('''
     SELECT
-    s.id, s.ingest_status, s.ingest_location, s.scene_type, s.scene_metadata, s.metadata_files
+    s.id, s.ingest_status, s.ingest_location, s.scene_type, s.scene_metadata, s.metadata_files, s.datasource
     FROM scenes s join images on images.scene = s.id
     WHERE s.id = %s''', (scene_id,))
     scene = cur.fetchone()
@@ -112,7 +114,7 @@ def update_images(cur, scene, band11_id, band12_id):
         FROM images WHERE scene = %s;''',
                 (scene['id'],))
     existing_image = cur.fetchone()
-    logger.info('Fetched existing image {}'.format(existing_image))
+    logger.info('Fetched existing image %s', existing_image)
     base_uri = os.path.dirname(existing_image['sourceuri'])
     band11 = {
         'id': band11_id, 'created_by': existing_image['created_by'],
@@ -125,7 +127,7 @@ def update_images(cur, scene, band11_id, band12_id):
         'filename': 'B12.jp2', 'sourceuri': base_uri + '/B12.jp2', 'scene': scene['id'], 'resolution_meters': '20'
     }
     bands = (band11, band12)
-    logger.info('Inserting images: {} {}'.format(bands))
+    logger.info('Inserting images: %s', bands)
     cur.executemany('''
     INSERT INTO images (
     id, created_at, modified_at, created_by, modified_by,
@@ -157,7 +159,7 @@ def update_bands(cur, scene, band11_id, band12_id):
             'wavelength': '{2100,2280}'
         }
     )
-    logger.info('Inserting bands {} {}'.format(bands))
+    logger.info('Inserting bands %s', bands)
     cur.executemany('''
     INSERT INTO bands (id, image_id, name, number, wavelength)
     VALUES (%(id)s, %(image_id)s, %(name)s, 0, %(wavelength)s)
@@ -187,5 +189,5 @@ def check_if_broken(cur, scene_id):
     SELECT count(id) from images where scene = %s
     ''', (scene_id,))
     image_count = cur.fetchone()[0]
-    logger.info('Scene has {} images'.format(image_count))
+    logger.info('Scene has %s images', image_count)
     return image_count < 13
