@@ -14,13 +14,17 @@ import geotrellis.contrib.vlm.gdal._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.IO
 
+import java.util.UUID
 
-case class BacksplashImage(uri: String, footprint: Polygon, subsetBands: List[Int]) {
+case class BacksplashImage(uri: String,
+                           footprint: Polygon,
+                           subsetBands: List[Int]) {
   def read(extent: Extent, cs: CellSize): Option[MultibandTile] = {
     val rs = BacksplashImage.getRasterSource(uri)
     val destinationExtent = extent.reproject(LatLng, WebMercator)
     rs.reproject(WebMercator)
-      .resample(TargetRegion(RasterExtent(extent, cs)), NearestNeighbor)
+      .resample(TargetRegion(RasterExtent(destinationExtent, cs)),
+                NearestNeighbor)
       .read(destinationExtent, subsetBands.toSeq)
       .map(_.tile)
   }
@@ -34,23 +38,31 @@ case class BacksplashImage(uri: String, footprint: Polygon, subsetBands: List[In
   }
 }
 
-
 object BacksplashImage extends RasterSourceUtils {
+
   def getRasterSource(uri: String): GDALRasterSource = GDALRasterSource(uri)
 
   def apply(uri: String, wkt: String, subsetBands: List[Int]): BacksplashImage =
-    readWktOrWkb(wkt).as[Polygon].map { poly =>
-      BacksplashImage(uri, poly, subsetBands)
-    }.getOrElse(throw new Exception("Hey, this needs to be a polygon, guy/gal"))
+    readWktOrWkb(wkt)
+      .as[Polygon]
+      .map { poly =>
+        BacksplashImage(uri, poly, subsetBands)
+      }
+      .getOrElse(
+        throw new Exception("Hey, this needs to be a polygon, guy/gal"))
 
   def getRasterExtents(uri: String): IO[NEL[RasterExtent]] = {
     val rs = getRasterSource(uri)
     val dataset = rs.dataset
     val band = dataset.GetRasterBand(1)
 
-    IO.pure(NEL(rs.rasterExtent, (0 until band.GetOverviewCount()).toList.map { idx =>
-      val ovr = band.GetOverview(idx)
-      RasterExtent(rs.extent, CellSize(ovr.GetXSize(), ovr.GetYSize()))
-    }))
+    IO.pure(
+      NEL(
+        rs.rasterExtent,
+        (0 until band.GetOverviewCount()).toList.map { idx =>
+          val ovr = band.GetOverview(idx)
+          RasterExtent(rs.extent, CellSize(ovr.GetXSize(), ovr.GetYSize()))
+        }
+      ))
   }
 }
