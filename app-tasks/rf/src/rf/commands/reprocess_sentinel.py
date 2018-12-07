@@ -11,15 +11,15 @@ logger = logging.getLogger(__name__)
 
 
 @click.command(name='reprocess-sentinel')
-@click.argument('scene_id')
+@click.argument('scene_ids')
 @wrap_rollbar
-def reprocess_sentinel(scene_id):
+def reprocess_sentinel(scene_ids):
     """Fix a sentinel 2 scene by replacing scene metadata bands and Images
 
     Args:
         scene_id (str): Scene id to reprocess
+        scene_ids (str): comma separated list of ids to reprocess
     """
-    logger.info('Starting reprocessing scene: {}'.format(scene_id))
     conn = psycopg2.connect('host={} dbname={} user={} password={}'.format(
         os.environ.get('POSTGRES_HOST', 'postgres'),
         os.environ['POSTGRES_DB'],
@@ -27,7 +27,32 @@ def reprocess_sentinel(scene_id):
         os.environ['POSTGRES_PASSWORD'])
     )
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    ids = [scene.strip() for scene in scene_ids.split(',')]
+
     logger.info('Connected to db')
+
+    for scene_id in ids:
+        logger.info('Starting reprocessing scene: %s', scene_id)
+        try:
+            reprocess_scene_id(cur, conn, scene_id)
+        except Exception as e:
+            conn.rollback()
+            logger.error(
+                'Rolling back transaction. \n' +
+                'There was an error while reprocessing scene id "%s",\n%s', (scene_id, e)
+            )
+    conn.close()
+
+
+def reprocess_scene_id(cur, conn, scene_id):
+    """Reprocess a scene idFilter
+
+    Args:
+        cur (psycopg2.Cursor)
+        conn (psycopg2.Connection)
+        scene_id (string)
+    """
     scene = get_scene(cur, scene_id)
     if check_if_broken(cur, scene_id):
         logger.info('Re-importing sentinel scene: {}'.format(scene['id']))
