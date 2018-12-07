@@ -1,4 +1,4 @@
-FROM daunnc/openjdk-gdal:2.3.1
+FROM daunnc/openjdk-gdal:2.3.2
 
 RUN apt-get install apt-transport-https && \
   echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list && \

@@ -4,6 +4,8 @@ import cats.data.Validated._
 import cats.effect._
 import fs2.Stream
 import geotrellis.server._
+import io.circe._
+import io.circe.syntax._
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
@@ -14,25 +16,11 @@ import org.http4s.syntax.kleisli._
 
 import Implicits._
 import Parameters._
+import Store._
 
 import java.util.UUID
 
 object Server extends IOApp {
-  val aUUID = UUID.randomUUID
-  println(s"Here's a layer: http://localhost:8080/$aUUID/{z}/{x}/{y}/")
-  val projects: Map[UUID, BacksplashMosaic] = Map(
-    aUUID -> (Stream.eval {
-      IO.pure {
-        BacksplashImage(
-          "s3://radiant-nasa-iserv/2014/09/20/IPR201409201521563491N09706W/IPR201409201521563491N09706W-COG.tif",
-          "POLYGON ((-97.1725628915165345 34.8130631368108112, -96.9454161960794210 34.8130631368108112, -96.9454161960794210 35.0064019519968568, -97.1725628915165345 35.0064019519968568, -97.1725628915165345 34.8130631368108112))",
-          List(2, 1, 0))
-      }
-    }).repeat.take(100)
-  )
-  implicit val projStore: ProjectStore[Map[UUID, BacksplashMosaic]] = new ProjectStore[Map[UUID, BacksplashMosaic]] {
-    def read(self: Map[UUID, BacksplashMosaic], projId: UUID) = self.get(projId).get
-  }
 
   def withCORS(svc: HttpRoutes[IO]): HttpRoutes[IO] =
     CORS(
@@ -47,6 +35,9 @@ object Server extends IOApp {
       )
     )
 
+  println(s"Kansas layer: http://localhost:8080/$kansasUUID/{z}/{x}/{y}/")
+  println(s"Sentinel layer: http://localhost:8080/$sentinelUUID/{z}/{x}/{y}/")
+
   val service: HttpRoutes[IO] = HttpRoutes.of {
     case GET -> Root / UUIDWrapper(projId) / IntVar(z) / IntVar(x) / IntVar(y) =>
       val eval = LayerTms.identity(projects.read(projId))
@@ -54,7 +45,26 @@ object Server extends IOApp {
         case Valid(tile) =>
           Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
         case _ =>
-          BadRequest("you suuuuuuuuuck")
+          NotFound()
+      }
+
+    case GET -> Root / UUIDWrapper(projId) / "histograms" =>
+      BacksplashMosaic.layerHistogram(projects.read(projId)) flatMap {
+        case Valid(hists) => Ok("sure")
+        case _ => BadRequest("nah my dude")
+      }
+
+    case GET -> Root / UUIDWrapper(projectId) / "export"
+        :? ExtentQueryParamMatcher(extent)
+        :? ZoomQueryParamMatcher(zoom) =>
+      println("in export")
+      val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
+      println("got cell size")
+      val eval = LayerExtent.identity(projects.read(projectId))
+      println("build eval")
+      eval(extent, cellSize) flatMap {
+        case Valid(tile) => Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
+        case _ => BadRequest("nah my dude")
       }
   }
 

@@ -21,7 +21,7 @@ case class BacksplashImage(uri: String, footprint: Polygon, subsetBands: List[In
     val rs = BacksplashImage.getRasterSource(uri)
     val destinationExtent = extent.reproject(LatLng, WebMercator)
     rs.reproject(WebMercator)
-      .resample(TargetRegion(RasterExtent(extent, cs)), NearestNeighbor)
+      .resample(TargetRegion(RasterExtent(destinationExtent, cs)), NearestNeighbor)
       .read(destinationExtent, subsetBands.toSeq)
       .map(_.tile)
   }
