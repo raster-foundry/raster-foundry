@@ -31,35 +31,34 @@ trait Implicits
     def tmsReification(self: BacksplashMosaic, buffer: Int)(
         implicit contextShift: ContextShift[IO])
       : (Int, Int, Int) => IO[Literal] =
-      (z: Int, x: Int, y: Int) => {
-        val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
-        val bandCount = self
-          .take(1)
-          .map(_.subsetBands.length)
-          .compile
-          .fold(0)(_ + _)
-          .unsafeRunSync
-        val ndtile: MultibandTile = ArrayMultibandTile.empty(
-          IntConstantNoDataCellType,
-          bandCount,
-          256,
-          256)
-        BacksplashMosaic
-          .filterRelevant(self)
-          .map(_.read(z, x, y))
-          .map({ maybeMBTile =>
-            val mbtile = maybeMBTile.getOrElse {
-              throw new Exception(
-                s"really expected to find a tile at $z, $x, $y for $self")
-            }
-            Raster(mbtile, extent)
-          })
-          .compile
-          .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
-            mbr1.merge(mbr2, NearestNeighbor)
-          })
-          .map(RasterLit(_))
-      }
+      (z: Int, x: Int, y: Int) => for {
+        bandCount <- self
+                       .take(1)
+                       .map(_.subsetBands.length)
+                       .compile
+                       .fold(0)(_ + _)
+        extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
+        ndtile: MultibandTile = ArrayMultibandTile.empty(
+                                  IntConstantNoDataCellType,
+                                  bandCount,
+                                  256,
+                                  256
+                                )
+        mosaic <- BacksplashMosaic
+                    .filterRelevant(self)
+                    .map(_.read(z, x, y))
+                    .map({ maybeMBTile =>
+                      val mbtile = maybeMBTile.getOrElse {
+                        throw new Exception(
+                          s"really expected to find a tile at $z, $x, $y for $self")
+                      }
+                      Raster(mbtile, extent)
+                    })
+                    .compile
+                    .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
+                      mbr1.merge(mbr2, NearestNeighbor)
+                    })
+      } yield RasterLit(mosaic)
   }
 
   implicit val mosaicExtentReification: ExtentReification[BacksplashMosaic] =
@@ -68,35 +67,34 @@ trait Implicits
 
       def extentReification(self: BacksplashMosaic)(
           implicit contextShift: ContextShift[IO]) =
-        (extent: Extent, cs: CellSize) => {
-          val bands = self
-            .take(1)
-            .map(_.subsetBands)
-            .compile
-            .toList
-            .map(_.flatten)
-            .unsafeRunSync
-          val ndtile: MultibandTile = ArrayMultibandTile.empty(
-            IntConstantNoDataCellType,
-            bands.length,
-            256,
-            256)
-          BacksplashMosaic
-            .filterRelevant(self)
-            .map(_.read(extent, cs))
-            .map({ maybeMBTile =>
-              val mbtile = maybeMBTile.getOrElse {
-                throw new Exception(
-                  s"really expected to find a tile for $extent and $cs for $self")
-              }
-              Raster(mbtile, extent)
-            })
-            .compile
-            .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
-              mbr1.merge(mbr2, NearestNeighbor)
-            })
-            .map(RasterLit(_))
-        }
+        (extent: Extent, cs: CellSize) => for {
+          bands <- self
+                     .take(1)
+                     .map(_.subsetBands)
+                     .compile
+                     .toList
+                     .map(_.flatten)
+          ndtile: MultibandTile = ArrayMultibandTile.empty(
+                                    IntConstantNoDataCellType,
+                                    bands.length,
+                                    256,
+                                    256
+                                  )
+          mosaic <- BacksplashMosaic
+                      .filterRelevant(self)
+                      .map(_.read(extent, cs))
+                      .map({ maybeMBTile =>
+                        val mbtile = maybeMBTile.getOrElse {
+                          throw new Exception(
+                            s"really expected to find a tile for $extent and $cs for $self")
+                        }
+                        Raster(mbtile, extent)
+                      })
+                      .compile
+                      .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
+                        mbr1.merge(mbr2, NearestNeighbor)
+                      })
+        } yield RasterLit(mosaic)
     }
 
   implicit val mosaicHasRasterExtents: HasRasterExtents[BacksplashMosaic] =
@@ -115,9 +113,6 @@ trait Implicits
               nel1 concatNel nel2
           }))
       }
-
-      def crs(self: BacksplashMosaic)(
-          implicit contextShift: ContextShift[IO]): IO[CRS] = ???
     }
 }
 
