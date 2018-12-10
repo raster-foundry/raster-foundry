@@ -36,11 +36,11 @@ def reprocess_sentinel(scene_ids):
         logger.info('Starting reprocessing scene: %s', scene_id)
         try:
             reprocess_scene_id(cur, conn, scene_id)
-        except Exception as e:
+        except Exception:
             conn.rollback()
-            logger.error(
-                'Rolling back transaction. \n' +
-                'There was an error while reprocessing scene id "%s",\n%s', scene_id, e
+            logger.exception(
+                'Rolling back transaction. ' +
+                'There was an error while reprocessing scene id "%s"', scene_id
             )
     conn.close()
 
