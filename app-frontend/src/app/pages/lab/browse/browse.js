@@ -1,3 +1,6 @@
+import angular from 'angular';
+import autoInject from '_appRoot/autoInject';
+
 class LabBrowseController {
     constructor($scope, modalService) {
         'ngInject';
@@ -30,5 +33,7 @@ LabBrowseModule.resolve = {
         return platformService.getPlatform(platformRole.groupId);
     }
 };
+
+autoInject(LabBrowseModule);
 
 export default LabBrowseModule;

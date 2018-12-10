@@ -4,7 +4,7 @@ class LabBrowseTemplatesController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $state,
         analysisService, modalService, paginationService,
-        platform
+        user, platform
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);

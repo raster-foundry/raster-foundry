@@ -55,6 +55,7 @@
         template-data="template"
         on-template-delete="$ctrl.onTemplateDelete(templateId)"
         on-share-click="$ctrl.onTemplateShareClick(template)"
+        is-owned-by-current-user="$ctrl.user.id === template.owner"
       ></rf-template-item>
       <div
         ng-if="!$ctrl.currentQuery && !$ctrl.search && $ctrl.pagination && !$ctrl.pagination.count"

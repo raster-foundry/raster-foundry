@@ -5,6 +5,7 @@ const TemplateItemComponent = {
     templateUrl: templateItemTpl,
     controller: 'TemplateItemController',
     bindings: {
+        isOwnedByCurrentUser: '<',
         templateData: '<',
         onTemplateDelete: '&',
         onShareClick: '&'
