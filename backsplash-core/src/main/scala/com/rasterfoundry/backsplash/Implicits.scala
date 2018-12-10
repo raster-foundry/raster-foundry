@@ -47,13 +47,7 @@ trait Implicits
         mosaic <- BacksplashMosaic
                     .filterRelevant(self)
                     .map(_.read(z, x, y))
-                    .map({ maybeMBTile =>
-                      val mbtile = maybeMBTile.getOrElse {
-                        throw new Exception(
-                          s"really expected to find a tile at $z, $x, $y for $self")
-                      }
-                      Raster(mbtile, extent)
-                    })
+                    .collect({ case Some(mbtile) => Raster(mbtile, extent) })
                     .compile
                     .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
                       mbr1.merge(mbr2, NearestNeighbor)
@@ -83,13 +77,7 @@ trait Implicits
           mosaic <- BacksplashMosaic
                       .filterRelevant(self)
                       .map(_.read(extent, cs))
-                      .map({ maybeMBTile =>
-                        val mbtile = maybeMBTile.getOrElse {
-                          throw new Exception(
-                            s"really expected to find a tile for $extent and $cs for $self")
-                        }
-                        Raster(mbtile, extent)
-                      })
+                      .collect({ case Some(mbtile) => Raster(mbtile, extent) })
                       .compile
                       .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
                         mbr1.merge(mbr2, NearestNeighbor)
