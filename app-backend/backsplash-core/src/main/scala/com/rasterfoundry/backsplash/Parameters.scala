@@ -29,7 +29,8 @@ object Parameters {
       extends OptionalQueryParamDecoderMatcher[Int]("blueBand")
   object ExtentQueryParamMatcher
       extends QueryParamDecoderMatcher[Extent]("bbox")
-  object NodeQueryParamMatcher extends QueryParamDecoderMatcher[String]("node")
+  object NodeQueryParamMatcher
+      extends OptionalQueryParamDecoderMatcher[UUID]("node")
   object TagOptionalQueryParamMatcher
       extends OptionalQueryParamDecoderMatcher[String]("tag")
   object VoidCacheQueryParamMatcher

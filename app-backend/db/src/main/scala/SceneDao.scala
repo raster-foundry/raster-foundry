@@ -271,7 +271,8 @@ object SceneDao
                 AutoWhiteBalance(false)
               ),
               scene.sceneType,
-              scene.ingestLocation
+              scene.ingestLocation,
+              scene.dataFootprint map { _.geom }
             ))
         case _ => Seq.empty
       }

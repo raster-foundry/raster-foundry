@@ -240,7 +240,7 @@ lazy val root = Project("root", file("."))
              tile,
              tool,
              bridge,
-             backsplash)
+             backsplashServer)
 
 lazy val api = Project("api", file("api"))
   .dependsOn(db, datamodel, common % "test->test;compile->compile", akkautil)
@@ -270,7 +270,7 @@ lazy val common = Project("common", file("common"))
   })
 
 lazy val db = Project("db", file("db"))
-  .dependsOn(datamodel % "compile->compile;test->test", common)
+  .dependsOn(datamodel % "compile->compile;test->test", common, backsplashCore)
   .settings(commonSettings: _*)
   .settings({
     libraryDependencies ++= dbDependencies ++ loggingDependencies ++ Seq(
@@ -460,8 +460,26 @@ lazy val bridge = Project("bridge", file("bridge"))
   })
 
 // maml / better-abstracted tile server
-lazy val backsplash = Project("backsplash", file("backsplash"))
-  .dependsOn(geotrellis, db, tool)
+lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
+  .settings(commonSettings: _*)
+  .settings(
+    fork in run := true,
+    libraryDependencies ++= Seq(
+      "org.http4s"       %% "http4s-blaze-server"    % Version.http4s,
+      "org.http4s"       %% "http4s-circe"           % Version.http4s,
+      "org.http4s"       %% "http4s-dsl"             % Version.http4s,
+      "org.scalatest"    %% "scalatest"              % Version.scalaTest,
+      "com.azavea"       %% "geotrellis-server-core" % Version.geotrellisServer,
+      "org.scalacheck"   %% "scalacheck"             % Version.scalaCheck,
+      "org.apache.spark" %% "spark-core"             % "2.4.0" % Provided
+    ),
+    addCompilerPlugin("org.spire-math" %% "kind-projector"     % "0.9.6"),
+    addCompilerPlugin("com.olegpy"     %% "better-monadic-for" % "0.2.4"),
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+  )
+
+lazy val backsplashServer = Project("backsplash-server", file("backsplash-server"))
+  .dependsOn(db, backsplashCore)
   .settings(commonSettings: _*)
   .settings(noPublishSettings)
   .settings(fork in run := true)
@@ -481,6 +499,7 @@ lazy val backsplash = Project("backsplash", file("backsplash"))
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
+  .settings(addCompilerPlugin("com.olegpy"     %% "better-monadic-for" % "0.2.4"))
   .settings(assemblyMergeStrategy in assembly := {
     case m if m.toLowerCase.endsWith("manifest.mf")     => MergeStrategy.discard
     case m if m.toLowerCase.matches("meta-inf.*\\.sf$") => MergeStrategy.discard

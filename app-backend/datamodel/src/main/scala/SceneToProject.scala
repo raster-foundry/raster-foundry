@@ -1,8 +1,9 @@
 package com.rasterfoundry.datamodel
 
-import java.util.UUID
-
+import geotrellis.vector.{Geometry, Projected}
 import io.circe.generic.JsonCodec
+
+import java.util.UUID
 
 final case class SceneToProject(sceneId: UUID,
                                 projectId: UUID,
@@ -25,7 +26,8 @@ final case class SceneToProjectwithSceneType(
     sceneOrder: Option[Int] = None,
     colorCorrectParams: ColorCorrect.Params,
     sceneType: Option[SceneType] = None,
-    ingestLocation: Option[String]
+    ingestLocation: Option[String],
+    dataFootprint: Option[Projected[Geometry]]
 )
 
 @JsonCodec

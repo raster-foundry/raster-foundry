@@ -82,7 +82,7 @@ services:
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
-      - TILE_SERVER_LOCATION
+      - TILE_SERVER_LOCATION=http://localhost:8080
       - COURSIER_CACHE=/root/.coursier
     ports:
       - "9000:9000"
@@ -165,8 +165,13 @@ services:
   backsplash:
     image: raster-foundry-backsplash
     build:
-      context: backsplash-core
-      dockerfile: Dockerfile
+      context: app-backend
+      dockerfile: Dockerfile.backsplash
+    depends_on:
+      postgres:
+        condition: service_healthy
+    links:
+      - postgres:database.service.rasterfoundry.internal
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
@@ -175,16 +180,16 @@ services:
       - "8080:8080"
       - "9030:9020"
     volumes:
-      - ./backsplash-core/:/opt/raster-foundry/backsplash-core
+      - $HOME/.sbt:/root/.sbt
+      - ./app-backend/:/opt/raster-foundry/app-backend/
       - $HOME/.coursier-gt-server:/root/.coursier
-      - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
       - $HOME/.ivy2:/root/.ivy2
-    working_dir: /opt/raster-foundry/backsplash-core/
+    working_dir: /opt/raster-foundry/app-backend/
     entrypoint: sbt
     command:
-      - "run"
+      - "backsplash-server/run"
       - "-Dcom.sun.management.jmxremote.rmi.port=9020"
       - "-Dcom.sun.management.jmxremote=true"
       - "-Dcom.sun.management.jmxremote.port=9020"
