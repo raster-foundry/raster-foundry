@@ -1,22 +1,19 @@
 const ApiTokensModule = angular.module('pages.settings.tokens.api', []);
 
 class ApiTokensController {
-    constructor($log, modalService, $stateParams, $state, tokenService, authService, APP_CONFIG) {
+    constructor(
+        $scope, $log, $state, $stateParams, $timeout,
+        modalService, tokenService, authService, APP_CONFIG
+    ) {
         'ngInject';
-        this.$log = $log;
-
-        this.tokenService = tokenService;
-        this.authService = authService;
-        this.modalService = modalService;
-        this.$stateParams = $stateParams;
-        this.APP_CONFIG = APP_CONFIG;
-        this.$state = $state;
+        $scope.autoInject(this, arguments);
         this.loading = true;
 
         this.fetchTokens();
     }
 
     $onInit() {
+        this.test = 'test';
         if (this.$stateParams.code) {
             this.tokenService
                 .createApiToken(this.$stateParams.code)
@@ -28,8 +25,13 @@ class ApiTokensController {
                             name: () => 'Refresh Token'
                         }
                     });
+                }, (error) => {
+                    this.createError = true;
+                    this.$log.error(error.data);
+                    this.$timeout(() => {
+                        this.createError = false;
+                    }, 10000);
                 });
-            this.$state.go('.', {code: null, state: null}, {notify: false});
         }
     }
 
