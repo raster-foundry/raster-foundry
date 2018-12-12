@@ -705,14 +705,9 @@ class UserGroupRoleDaoSpec
             .use(t => getUgrWithNameIO.transact(t))
             .unsafeRunSync
 
-          val groupNames = ugrWithName.map{ ugr =>
-            (ugr.platformName.getOrElse(None), ugr.organizationName.getOrElse(None), ugr.teamName.getOrElse(None))
-          }
-          val realGroupNames = List(
-            (dbPlat.name, None, None),
-            (None, dbOrg.name, None),
-            (None, None, dbTeam.name)
-          )
+          val groupNames = ugrWithName.map(_.groupName)
+
+          val realGroupNames = List(dbPlat.name, dbOrg.name, dbTeam.name)
 
           assert(
             realGroupNames.diff(groupNames).length == 0,
