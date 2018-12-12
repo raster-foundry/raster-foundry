@@ -65,7 +65,5 @@ object UserGroupRole {
                                  groupId: UUID,
                                  groupRole: GroupRole,
                                  membershipStatus: MembershipStatus,
-                                 platformName: Option[String],
-                                 organizationName: Option[String],
-                                 teamName: Option[String])
+                                 groupName: String)
 }
