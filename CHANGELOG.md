@@ -21,6 +21,7 @@
 - Opened access for group members to remove their group memberships [\#4358](https://github.com/raster-foundry/raster-foundry/pull/4358)
 - Used the correct field as outgoing email source in platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
 - Fix deprecated use of route change listeners which caused window title to break [\#4365](https://github.com/raster-foundry/raster-foundry/pull/4365)
+- Fix project ownership filter persistance across pages [\#4376](https://github.com/raster-foundry/raster-foundry/pull/4376)
 
 ### Removed
 
