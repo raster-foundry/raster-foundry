@@ -1,5 +1,5 @@
 {
-  "envs": {
+  "env": {
     "browser": true,
     "es6": true,
     "commonjs": true,
@@ -7,8 +7,8 @@
     "jasmine": true
   },
   "parserOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module",
+    "ecmaVersion": 9,
+    "sourceType": "module"
   },
   "ecmaFeatures": {
     "arrowFunctions": true,
@@ -32,7 +32,8 @@
     "templateStrings": true,
     "unicodeCodePointEscapes": true,
     "globalReturn": true,
-    "jsx": false
+    "jsx": false,
+    "experimentalObjectRestSpread": true
   },
   "plugins": [
     "jasmine"

@@ -136,7 +136,7 @@ module.exports = function (_path) {
                 exclude: [/node_modules/, /tests\.webpack\.js/, /\.config.js/, /\.spec\.js$/],
                 loader: 'eslint-loader',
                 options: {
-                    configFile: './.eslintrc'
+                    fix: true
                 }
             }, {
                 test: /\.html$/,
@@ -161,12 +161,7 @@ module.exports = function (_path) {
                     path.resolve(_path, 'node_modules'),
                     path.resolve(_path, 'src/app/services/vendor/aws-sdk-s3.module.js')
                 ],
-                loader: 'babel-loader',
-                query: {
-                    cacheDirectory: true,
-                    plugins: ['@babel/plugin-transform-runtime'],
-                    presets: ['@babel/env']
-                }
+                loader: 'babel-loader'
             }, {
                 test: /\.css$/,
                 use: [

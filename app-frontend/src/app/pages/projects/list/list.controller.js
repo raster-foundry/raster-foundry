@@ -1,4 +1,4 @@
-/* global BUILDCONFIG, HELPCONFIG */
+/* global BUILDCONFIG, HELPCONFIG, _ */
 
 class ProjectsListController {
     constructor( // eslint-disable-line max-params
@@ -13,7 +13,7 @@ class ProjectsListController {
         this.BUILDCONFIG = BUILDCONFIG;
         this.HELPCONFIG = HELPCONFIG;
         // Can be one of {owned, shared}
-        this.currentOwnershipFilter = 'owned';
+        this.currentOwnershipFilter = this.$state.params.ownership || 'owned';
         this.fetchPage();
     }
 
@@ -33,7 +33,9 @@ class ProjectsListController {
                 this.getProjectScenesCount(project);
             });
             this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page, this.search);
+            this.paginationService.updatePageParam(page, this.search, null, {
+                ownership: this.currentOwnershipFilter
+            });
             if (this.currentQuery === currentQuery) {
                 delete this.fetchError;
             }
