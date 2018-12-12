@@ -52,24 +52,11 @@ class ImportListController {
     }
 
     $onChanges(changes) {
-        if (_.get(changes, 'ownershipType.currentValue')) {
+        const ownerChange = _.get(changes, 'ownershipType.currentValue');
+        if (ownerChange !== this.currentOwnershipFilter) {
+            this.currentOwnershipFilter = ownerChange;
             this.populateImportList(1);
         }
-        this.handleParameterChange();
-    }
-
-    handleParameterChange() {
-        let replace = !this.$state.params.page || !this.$state.params.ownership;
-        this.$state.go(
-            this.$state.$current.name,
-            {
-                page: _.get(this, 'pagination.currentPage') || this.$state.params.page || 1,
-                ownership: this.ownershipType
-            }, {
-                location: replace ? 'replace' : true,
-                notify: false
-            }
-        );
     }
 
     populateImportList(page) {
@@ -91,7 +78,9 @@ class ImportListController {
         ).then((sceneResult) => {
             this.lastSceneResult = sceneResult;
             this.pagination = this.paginationService.buildPagination(sceneResult);
-            this.paginationService.updatePageParam(page, '');
+            this.paginationService.updatePageParam(page, '', null, {
+                ownership: this.currentOwnershipFilter
+            });
             this.importList = this.lastSceneResult.results;
             this.loading = false;
         }, () => {

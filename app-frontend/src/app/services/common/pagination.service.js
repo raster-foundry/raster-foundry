@@ -25,12 +25,13 @@ export default (app) => {
             };
         }
 
-        updatePageParam(page, search, sort) {
+        updatePageParam(page, search, sort, extraParams = {}) {
             let replace = !this.$state.params.page ||
                 !this.$state.params.search || !this.$state.params.search;
+
             this.$state.go(
                 this.$state.$current.name,
-                { page, search, sort },
+                { ...extraParams, page, search, sort },
                 {
                     location: replace ? 'replace' : true,
                     notify: false

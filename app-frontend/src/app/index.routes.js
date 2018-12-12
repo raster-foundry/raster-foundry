@@ -260,7 +260,7 @@ function projectStates($stateProvider) {
         })
         .state('projects.list', {
             title: 'User Projects',
-            url: '/list?page&search',
+            url: '/list?page&search&ownership',
             templateUrl: projectsListTpl,
             controller: 'ProjectsListController',
             controllerAs: '$ctrl'
