@@ -148,7 +148,7 @@ export default class NewExportController {
             }
         }).result.then((resp) => {
             this.$state.go('user.settings.connections');
-        });
+        }).catch(() => {});
     }
 
     handleOptionChange(state, option) {

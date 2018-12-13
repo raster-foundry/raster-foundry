@@ -101,7 +101,7 @@ class PlatformUsersController {
         }).result.then((result) => {
             // eslint-disable-next-line
             console.log('user modal closed with value:', result);
-        });
+        }).catch(() => {});
     }
 }
 

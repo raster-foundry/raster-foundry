@@ -48,6 +48,8 @@ export default (app) => {
                             this.$state.go('user.settings.connections');
                         }, () => {
                             reject();
+                        }).catch(() => {
+                            reject();
                         });
                     }
                 }, () => {

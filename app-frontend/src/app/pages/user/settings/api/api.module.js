@@ -26,10 +26,10 @@ class ApiTokensController {
                         }
                     });
                 }, (error) => {
-                    this.createError = true;
+                    this.tokenCreateError = true;
                     this.$log.error(error.data);
                     this.$timeout(() => {
-                        this.createError = false;
+                        this.tokenCreateError = false;
                     }, 10000);
                 });
         }
@@ -98,7 +98,7 @@ class ApiTokensController {
                     this.fetchTokens();
                 }
             );
-        });
+        }).catch(() => {});
     }
 }
 

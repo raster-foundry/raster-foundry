@@ -81,7 +81,7 @@ class ProjectsListController {
             if (data && data.reloadProjectList) {
                 this.fetchPage(1);
             }
-        });
+        }).catch(() => {});
     }
 
     handleOwnershipFilterChange(newFilterValue) {

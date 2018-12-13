@@ -35,7 +35,7 @@ class RasterListController {
 
         this.activeModal.result.then(() => {
             this.checkPendingImports();
-        });
+        }).catch(() => {});
     }
 
     checkPendingImports() {

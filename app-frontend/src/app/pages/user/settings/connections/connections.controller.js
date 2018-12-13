@@ -104,7 +104,7 @@ class ConnectionsController {
 
         modal.result.then(() => {
             this.connectToDropbox();
-        });
+        }).catch(() => {});
     }
 
     onDropboxError(uri) {
@@ -126,7 +126,7 @@ class ConnectionsController {
 
         modal.result.then(() => {
             this.connectToDropbox();
-        });
+        }).catch(() => {});
     }
 
     onDropboxCallback(uri) {
@@ -151,7 +151,7 @@ class ConnectionsController {
             }, (err) => {
                 this.$log.log('There was an error updating the user with a planet api token', err);
             });
-        });
+        }).catch(() => {});
     }
 }
 

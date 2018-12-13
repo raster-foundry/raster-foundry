@@ -191,7 +191,7 @@ class AOIParametersController {
                 }
             }).result.then(selectedDay => {
                 this.updateStartDate(selectedDay);
-            });
+            }).catch(() => {});
     }
 
     updateFrequency(ms) {

@@ -154,7 +154,7 @@ class LabBrowseAnalysesController {
                     this.fetchPage();
                 });
             });
-        });
+        }).catch(() => {});
     }
 
     toggleAnalysisSelection(id) {
