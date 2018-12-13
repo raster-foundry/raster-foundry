@@ -9,6 +9,7 @@ import com.rasterfoundry.backsplash.Parameters._
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.server._
+import io.circe.parser._
 import io.circe.syntax._
 import org.http4s._
 import org.http4s.circe._
@@ -18,6 +19,8 @@ import org.http4s.util.CaseInsensitiveString
 
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Implicits._
+
+import java.util.UUID
 
 class MosaicService[Param: ProjectStore](projects: Param)(
     implicit cs: ContextShift[IO]) {
@@ -45,6 +48,37 @@ class MosaicService[Param: ProjectStore](projects: Param)(
             Map(hist.binCounts: _*)
           } asJson)
         case Invalid(e) => BadRequest(s"Histograms could not be produced: $e")
+      }
+
+    case req @ POST -> Root / UUIDWrapper(projectId) / "histogram" / _
+          :? RedBandOptionalQueryParamMatcher(redOverride)
+          :? GreenBandOptionalQueryParamMatcher(greenOverride)
+          :? BlueBandOptionalQueryParamMatcher(blueOverride) =>
+      // Compile to a byte array, decode that as a string, and do something with the results
+      req.body.compile.to[Array] flatMap { uuids =>
+        decode[List[UUID]](
+          uuids map { _.toChar } mkString
+        ) match {
+          case Right(uuids) =>
+            for {
+              histsValidated <- BacksplashMosaic.layerHistogram(
+                projects.read(
+                  projectId,
+                  None,
+                  Applicative[Option].map3(redOverride,
+                                           greenOverride,
+                                           blueOverride)(BandOverride.apply),
+                  uuids.toNel)
+              )
+              resp <- histsValidated match {
+                case Valid(hists) => Ok(hists asJson)
+                case Invalid(e) =>
+                  BadRequest(s"Unable to produce histograms: $e")
+              }
+            } yield resp
+          case _ =>
+            BadRequest("Could not decode body as sequence of UUIDs")
+        }
       }
 
     case req @ GET -> Root / UUIDWrapper(projectId) / "export"
