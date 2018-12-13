@@ -10,7 +10,7 @@ case class CogRaster(sceneId: UUID,
                      celltype: Option[CellType],
                      location: String)
     extends Source {
-  val kind = MamlKind.Tile
+  val kind = MamlKind.Image
 }
 
 case class SceneRaster(sceneId: UUID,
@@ -18,12 +18,12 @@ case class SceneRaster(sceneId: UUID,
                        celltype: Option[CellType],
                        location: String)
     extends Source {
-  val kind = MamlKind.Tile
+  val kind = MamlKind.Image
 }
 
 case class ProjectRaster(projId: UUID,
                          band: Option[Int],
                          celltype: Option[CellType])
     extends Source {
-  val kind = MamlKind.Tile
+  val kind = MamlKind.Image
 }

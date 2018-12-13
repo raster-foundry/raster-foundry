@@ -708,7 +708,6 @@ class UserGroupRoleDaoSpec
             val (ugrWithName, dbPlat, dbOrg, dbTeam) = xa
               .use(t => getUgrWithNameIO.transact(t))
               .unsafeRunSync
-
             val groupNames = ugrWithName.map(_.groupName)
 
             val realGroupNames = List(dbPlat.name, dbOrg.name, dbTeam.name)

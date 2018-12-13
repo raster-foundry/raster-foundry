@@ -49,7 +49,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             docker-compose \
                 -f "${DIR}/../docker-compose.test.yml" \
                 run --rm --no-deps \
-                build backsplash/assembly
+                build backsplash-server/assembly
 
             # Build publishable sbt projects as SNAPSHOT artifacts and 
             # publish to Sonatype OSSRH (Snapshot Repository).

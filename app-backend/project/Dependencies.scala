@@ -60,6 +60,7 @@ object Dependencies {
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
+  val jts = "com.vividsolutions" % "jts" % Version.jts
   val kamonAkka = "io.kamon" %% "kamon-akka" % Version.kamon
   val kamonAkkaHttp = "io.kamon" %% "kamon-akka-http" % Version.kamonAkkaHttp
   val kamonCore = "io.kamon" %% "kamon-core" % Version.kamon

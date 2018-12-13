@@ -54,10 +54,18 @@ object RfmlRddResolver extends LazyLogging {
         .map(_.flatten)
         .map((mosaicDefinitions: List[MosaicDefinition]) =>
           mosaicDefinitions map {
-            case MosaicDefinition(sceneId, _, Some(SceneType.COG), Some(s)) =>
+            case MosaicDefinition(sceneId,
+                                  _,
+                                  Some(SceneType.COG),
+                                  Some(s),
+                                  _) =>
               (cellTypeO: Option[CellType], band: Int) =>
                 CogRaster(sceneId, Some(band), cellTypeO, s)
-            case MosaicDefinition(sceneId, _, Some(SceneType.Avro), Some(s)) =>
+            case MosaicDefinition(sceneId,
+                                  _,
+                                  Some(SceneType.Avro),
+                                  Some(s),
+                                  _) =>
               (cellTypeO: Option[CellType], band: Int) =>
                 SceneRaster(sceneId, Some(band), cellTypeO, s)
         })
