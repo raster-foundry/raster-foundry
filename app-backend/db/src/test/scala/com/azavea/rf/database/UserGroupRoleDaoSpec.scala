@@ -670,14 +670,18 @@ class UserGroupRoleDaoSpec
          teamCreate: Team.Create,
          ugrCreatePlat: UserGroupRole.Create,
          ugrCreateOrg: UserGroupRole.Create,
-         ugrCreateTeam: UserGroupRole.Create) => {
+         ugrCreateTeam: UserGroupRole.Create) =>
+          {
             val getUgrWithNameIO = for {
-              userOrgPlat <- insertUserOrgPlatform(userCreate, orgCreate,platform, true)
+              userOrgPlat <- insertUserOrgPlatform(userCreate,
+                                                   orgCreate,
+                                                   platform,
+                                                   true)
               (dbUser, dbOrg, dbPlat) = userOrgPlat
               dbTeam <- TeamDao.create(
                 teamCreate
-                .copy(organizationId = dbOrg.id)
-                .toTeam(dbUser))
+                  .copy(organizationId = dbOrg.id)
+                  .toTeam(dbUser))
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(
@@ -687,7 +691,7 @@ class UserGroupRoleDaoSpec
                     GroupRole.Member
                   )
                   .toUserGroupRole(dbUser, MembershipStatus.Approved)
-                )
+              )
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(
@@ -697,28 +701,30 @@ class UserGroupRoleDaoSpec
                     GroupRole.Member
                   )
                   .toUserGroupRole(dbUser, MembershipStatus.Approved)
-                )
+              )
               ugrWithName <- UserGroupRoleDao.listByUserWithRelated(dbUser)
-          } yield { (ugrWithName, dbPlat, dbOrg, dbTeam) }
+            } yield { (ugrWithName, dbPlat, dbOrg, dbTeam) }
 
-          val (ugrWithName, dbPlat, dbOrg, dbTeam) = xa
-            .use(t => getUgrWithNameIO.transact(t))
-            .unsafeRunSync
+            val (ugrWithName, dbPlat, dbOrg, dbTeam) = xa
+              .use(t => getUgrWithNameIO.transact(t))
+              .unsafeRunSync
 
-          val groupNames = ugrWithName.map{ ugr =>
-            (ugr.platformName.getOrElse(None), ugr.organizationName.getOrElse(None), ugr.teamName.getOrElse(None))
+            val groupNames = ugrWithName.map { ugr =>
+              (ugr.platformName.getOrElse(None),
+               ugr.organizationName.getOrElse(None),
+               ugr.teamName.getOrElse(None))
+            }
+            val realGroupNames = List(
+              (dbPlat.name, None, None),
+              (None, dbOrg.name, None),
+              (None, None, dbTeam.name)
+            )
+
+            assert(
+              realGroupNames.diff(groupNames).length == 0,
+              "Inserted UGR group names should match inserted plat, org, and team names")
+            true
           }
-          val realGroupNames = List(
-            (dbPlat.name, None, None),
-            (None, dbOrg.name, None),
-            (None, None, dbTeam.name)
-          )
-
-          assert(
-            realGroupNames.diff(groupNames).length == 0,
-            "Inserted UGR group names should match inserted plat, org, and team names")
-          true
-       }
       }
     }
   }
