@@ -121,7 +121,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
               .unsafeToFuture
               .map { mds =>
                 val sceneIds = mds.map {
-                  case MosaicDefinition(sceneId, _, _, _) => sceneId
+                  case MosaicDefinition(sceneId, _, _, _, _) => sceneId
                 }.toSet
 
                 Future
@@ -198,7 +198,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
               .unsafeToFuture
               .map { mds =>
                 val sceneIds = mds.map {
-                  case MosaicDefinition(sceneId, _, _, _) => sceneId
+                  case MosaicDefinition(sceneId, _, _, _, _) => sceneId
                 }.toSet
 
                 Future
@@ -278,7 +278,7 @@ object SingleBandMosaic extends LazyLogging with KamonTrace {
           .unsafeToFuture
           .map { mds =>
             val sceneIds = mds.map {
-              case MosaicDefinition(sceneId, _, _, _) => sceneId
+              case MosaicDefinition(sceneId, _, _, _, _) => sceneId
             }.toSet
 
             Future
