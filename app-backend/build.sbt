@@ -240,6 +240,7 @@ lazy val root = Project("root", file("."))
              tile,
              tool,
              bridge,
+             backsplashCore,
              backsplashServer)
 
 lazy val api = Project("api", file("api"))
