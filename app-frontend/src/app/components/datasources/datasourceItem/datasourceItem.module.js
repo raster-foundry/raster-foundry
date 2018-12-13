@@ -60,7 +60,7 @@ class DatasourceItemController {
             }, (err) => {
                 this.$log.debug('error deleting datasource', err);
             });
-        });
+        }).catch(() => {});
     }
 }
 

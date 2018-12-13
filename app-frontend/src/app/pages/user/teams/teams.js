@@ -64,7 +64,7 @@ class UserTeamsController {
                 }, err => {
                     this.$log.error(err);
                 });
-        });
+        }).catch(() => {});
     }
 }
 

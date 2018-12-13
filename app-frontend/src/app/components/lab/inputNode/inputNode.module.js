@@ -122,7 +122,7 @@ class InputNodeController {
                     }),
                     hard: !this.analysisErrors.size
                 });
-            });
+            }).catch(() => {});
     }
 
     onBandChange(index) {

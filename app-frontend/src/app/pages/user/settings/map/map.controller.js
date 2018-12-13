@@ -62,7 +62,7 @@ class MapTokensController {
                     this.fetchTokens();
                 }
             );
-        });
+        }).catch(() => {});
     }
 
     updateToken(token, name) {

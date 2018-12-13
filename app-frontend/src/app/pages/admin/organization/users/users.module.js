@@ -107,7 +107,7 @@ class OrganizationUsersController {
             }
         }).result.then(() => {
             this.fetchPage();
-        });
+        }).catch(() => {});
     }
 
     getUserGroupRoleLabel(user) {

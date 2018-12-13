@@ -151,7 +151,7 @@ class ImportListController {
                     this.$log.debug('error deleting scene', err);
                 }
             );
-        });
+        }).catch(() => {});
     }
 
     shouldShowImportList() {
