@@ -14,6 +14,7 @@ import org.http4s.circe._
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Implicits._
 
+@SuppressWarnings(Array("TraversableHead"))
 class AnalysisService[Param: ToolStore](analyses: Param)(
     implicit cs: ContextShift[IO])
     extends BacksplashMamlAdapter {
