@@ -58,7 +58,7 @@ class TokenItemController {
                 tileUrl: () => this.projectService.getProjectLayerURL(this.project),
                 shareUrl: () => this.projectService.getProjectShareURL(this.project)
             }
-        });
+        }).result.catch(() => {});
     }
 }
 

@@ -24,7 +24,7 @@ class ApiTokensController {
                             refreshToken: () => authResult.refresh_token,
                             name: () => 'Refresh Token'
                         }
-                    });
+                    }).result.catch(() => {});
                 }, (error) => {
                     this.tokenCreateError = true;
                     this.$log.error(error.data);
@@ -57,7 +57,7 @@ class ApiTokensController {
                     refreshToken: () => authResult.refreshToken,
                     name: () => this.lastTokenName
                 }
-            });
+            }).result.catch(() => {});
             delete this.newTokenName;
             this.fetchTokens();
         }, (error) => {

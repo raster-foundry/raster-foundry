@@ -156,7 +156,7 @@ class SceneItemController {
                 scene: () => this.scene,
                 repository: () => this.repository
             }
-        });
+        }).result.catch(() => {});
     }
 
     onManualOrderToggle(event) {

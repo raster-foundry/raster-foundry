@@ -1,4 +1,5 @@
-const shared = angular.module('services', []);
+import modal from 'angular-ui-bootstrap/src/modal';
+const shared = angular.module('services', [modal]);
 
 // analyses
 require('./analysis/analysis.service').default(shared);

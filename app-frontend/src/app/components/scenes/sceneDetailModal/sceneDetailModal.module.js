@@ -88,7 +88,7 @@ class SceneDetailModalController {
             resolve: {
                 scene: () => this.scene
             }
-        });
+        }).result.catch(() => {});
     }
 
     getSceneBounds() {

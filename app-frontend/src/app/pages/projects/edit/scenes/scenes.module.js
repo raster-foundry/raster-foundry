@@ -174,7 +174,7 @@ class ProjectsScenesController {
                 objectName: () => project.name,
                 platform: () => this.platform
             }
-        });
+        }).result.catch(() => {});
     }
 
     openImportModal() {
@@ -252,7 +252,7 @@ class ProjectsScenesController {
             resolve: {
                 scene: () => scene
             }
-        });
+        }).result.catch(() => {});
     }
 }
 

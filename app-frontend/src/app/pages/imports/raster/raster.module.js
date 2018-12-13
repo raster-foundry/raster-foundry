@@ -1,7 +1,7 @@
 /* global BUILDCONFIG, HELPCONFIG */
 class RasterListController {
     constructor(
-        $scope, $state, $uibModal,
+        $scope, $state, modalService,
         authService, uploadService,
         platform
     ) {
@@ -17,23 +17,17 @@ class RasterListController {
         this.currentOwnershipFilter = this.$state.params.ownership || 'owned';
     }
 
-    $onDestroy() {
-
-    }
-
     importModal() {
         if (this.activeModal) {
             this.activeModal.dismiss();
         }
 
-        this.activeModal = this.$uibModal.open({
+        this.modalService.open({
             component: 'rfSceneImportModal',
             resolve: {
                 origin: () => 'raster'
             }
-        });
-
-        this.activeModal.result.then(() => {
+        }).result.then(() => {
             this.checkPendingImports();
         }).catch(() => {});
     }
@@ -48,15 +42,9 @@ class RasterListController {
     }
 
     openCreateDatasourceModal() {
-        if (this.activeModal) {
-            this.activeModal.dismiss();
-        }
-
-        this.activeModal = this.$uibModal.open({
+        this.modalService.open({
             component: 'rfDatasourceCreateModal'
-        });
-
-        return this.activeModal;
+        }).result.catch(() => {});
     }
 }
 
