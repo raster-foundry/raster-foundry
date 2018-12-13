@@ -55,12 +55,6 @@ then
         docker-compose \
             run --rm api-server test
 
-        # TODO: https://github.com/azavea/raster-foundry/issues/435
-        # echo "Executing JavaScript test suite"
-        # docker-compose \
-        #     -f "${DIR}/../docker-compose.yml" \
-        #     -f "${DIR}/../docker-compose.test.yml" \
-        #     run --rm app-frontend run test
     fi
     exit
 fi

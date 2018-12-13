@@ -2,3 +2,5 @@
   local
   ivy-proxy-releases: http://nexus.rasterfoundry.internal/repository/ivy-public/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
   maven-proxy-releases: http://nexus.rasterfoundry.internal/repository/maven-public/
+  locationtech-proxy-releases: http://nexus.rasterfoundry.internal/repository/locationtech-releases/
+  locationtech-proxy-snapshots: http://nexus.rasterfoundry.internal/repository/locationtech-snapshots/
