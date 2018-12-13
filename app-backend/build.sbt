@@ -308,6 +308,7 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
       Dependencies.circeGenericExtras,
       Dependencies.scalaCheck,
       Dependencies.circeTest,
+      Dependencies.jts,
       "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15" % "test",
     )
   })
