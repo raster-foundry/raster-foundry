@@ -171,7 +171,7 @@ class LabBrowseAnalysesController {
             resolve: {
                 analysis: () => analysis
             }
-        });
+        }).result.catch(() => {});
     }
 
     checkAnalysesExports(analysesList) {

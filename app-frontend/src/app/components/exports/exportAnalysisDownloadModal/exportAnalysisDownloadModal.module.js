@@ -63,7 +63,7 @@ class ExportAnalysisDownloadModalController {
             resolve: {
                 export: () => thisExport
             }
-        });
+        }).result.catch(() => {});
     }
 }
 

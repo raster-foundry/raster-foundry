@@ -106,7 +106,7 @@ class ProjectItemController {
                 tileUrl: () => this.projectService.getProjectLayerURL(this.project),
                 shareUrl: () => this.projectService.getProjectShareURL(this.project)
             }
-        });
+        }).result.catch(() => {});
     }
 
     shareModal(project) {
@@ -119,7 +119,7 @@ class ProjectItemController {
                 objectName: () => project.name,
                 platform: () => this.platform
             }
-        });
+        }).result.catch(() => {});
     }
 
     deleteModal() {
@@ -143,7 +143,7 @@ class ProjectItemController {
                 feedbackBtnText: () => 'Delete project',
                 cancelText: () => 'Cancel'
             }
-        }).catch(() => {});
+        });
 
         modal.result.then(() => {
             this.projectService.deleteProject(this.project.id).then(
@@ -154,7 +154,7 @@ class ProjectItemController {
                     this.$log.debug('error deleting project', err);
                 }
             );
-        });
+        }).catch(() => {});
     }
 }
 
