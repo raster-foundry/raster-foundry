@@ -21,7 +21,7 @@
           ng-init="$ctrl.selectedOrganization = $ctrl.organizations[0]"
           ng-model="$ctrl.selectedOrganization"
           ng-change="$ctrl.onSelectOrganizationChange()"
-          ng-options="organization.organizationName for organization in $ctrl.organizations">
+          ng-options="organization.groupName for organization in $ctrl.organizations">
         </select>
       </div>
       <div class="form-group">
