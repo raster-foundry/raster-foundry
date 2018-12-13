@@ -239,9 +239,7 @@ lazy val root = Project("root", file("."))
              batch,
              tile,
              tool,
-             bridge,
-             backsplashCore,
-             backsplashServer)
+             bridge)
 
 lazy val api = Project("api", file("api"))
   .dependsOn(db, datamodel, common % "test->test;compile->compile", akkautil)
