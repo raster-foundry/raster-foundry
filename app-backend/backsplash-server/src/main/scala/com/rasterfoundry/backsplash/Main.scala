@@ -48,7 +48,8 @@ object Server extends IOApp {
   val httpApp =
     Router(
       "/" -> GZip(AutoSlash(withCORS(mosaicService))),
-      "/tools" -> GZip(AutoSlash(withCORS(analysisService)))
+      "/tools" -> GZip(AutoSlash(withCORS(analysisService))),
+      "/healthcheck" -> AutoSlash(new HealthcheckService[IO]().routes)
     )
 
   def stream =

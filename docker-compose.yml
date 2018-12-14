@@ -182,7 +182,7 @@ services:
     volumes:
       - $HOME/.sbt:/root/.sbt
       - ./app-backend/:/opt/raster-foundry/app-backend/
-      - $HOME/.coursier-gt-server:/root/.coursier
+      - $HOME/.coursier:/root/.coursier
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
       - $HOME/.ivy2:/root/.ivy2
