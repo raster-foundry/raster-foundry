@@ -1,7 +1,5 @@
 package com.rasterfoundry.backsplash
 
-import com.rasterfoundry.backsplash.Implicits._
-
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.resample.NearestNeighbor
@@ -44,7 +42,4 @@ object BacksplashMosaic {
       }
     })
   }
-
-  def layerHistogram(mosaic: BacksplashMosaic)(implicit cs: ContextShift[IO]) =
-    LayerHistogram.identity(mosaic, 4000)
 }

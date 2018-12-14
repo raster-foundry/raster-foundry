@@ -15,12 +15,17 @@ import org.http4s.circe._
 import org.http4s.util.CaseInsensitiveString
 
 import com.rasterfoundry.backsplash._
-import com.rasterfoundry.backsplash.Implicits._
+import com.rasterfoundry.backsplash.MetricsRegistrator
 
 @SuppressWarnings(Array("TraversableHead"))
-class AnalysisService[Param: ToolStore](analyses: Param)(
-    implicit cs: ContextShift[IO])
-    extends BacksplashMamlAdapter {
+class AnalysisService[Param: ToolStore](
+    analyses: Param,
+    mtr: MetricsRegistrator,
+    mosaicImplicits: MosaicImplicits,
+    toolstoreImplicits: ToolStoreImplicits)(implicit cs: ContextShift[IO]) {
+  import mosaicImplicits._
+  import toolstoreImplicits._
+
   val routes: HttpRoutes[IO] = HttpRoutes.of {
 
     case GET -> Root / UUIDWrapper(analysisId) / "histogram"

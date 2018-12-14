@@ -21,12 +21,19 @@ import ExtentReification._
 import HasRasterExtents._
 import TmsReification._
 
-trait Implicits
+class MosaicImplicits(mtr: MetricsRegistrator)
     extends ToTmsReificationOps
     with ToExtentReificationOps
     with ToHasRasterExtentsOps
     with ToProjectStoreOps
     with ToToolStoreOps {
+
+  val readMosaicTimer =
+    mtr.newTimer(classOf[MosaicImplicits], "read-mosaic")
+  val readSceneTmsTimer =
+    mtr.newTimer(classOf[MosaicImplicits], "read-tms-scene")
+  val readSceneExtentTimer =
+    mtr.newTimer(classOf[MosaicImplicits], "read-extent-scene")
 
   implicit val mosaicTmsReification = new TmsReification[BacksplashMosaic] {
     def kind(self: BacksplashMosaic): MamlKind = MamlKind.Image
@@ -48,15 +55,21 @@ trait Implicits
             256,
             256
           )
-          mosaic <- BacksplashMosaic
+          mosaic = BacksplashMosaic
             .filterRelevant(self)
-            .map(_.read(z, x, y))
+            .map({ relevant =>
+              val time = readSceneTmsTimer.time()
+              val img = relevant.read(z, x, y)
+              time.stop()
+              img
+            })
             .collect({ case Some(mbtile) => Raster(mbtile, extent) })
             .compile
             .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
               mbr1.merge(mbr2, NearestNeighbor)
             })
-        } yield RasterLit(mosaic)
+          timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
+        } yield RasterLit(timedMosaic)
   }
 
   implicit val mosaicExtentReification: ExtentReification[BacksplashMosaic] =
@@ -79,22 +92,28 @@ trait Implicits
               256,
               256
             )
-            mosaic <- BacksplashMosaic
+            mosaic = BacksplashMosaic
               .filterRelevant(self)
-              .map(_.read(extent, cs))
+              .map({ relevant =>
+                val time = readSceneExtentTimer.time()
+                val img = relevant.read(extent, cs)
+                time.stop()
+                img
+              })
               .collect({ case Some(mbtile) => Raster(mbtile, extent) })
               .compile
               .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
                 mbr1.merge(mbr2, NearestNeighbor)
               })
-          } yield RasterLit(mosaic)
+            timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
+          } yield RasterLit(timedMosaic)
     }
 
   implicit val mosaicHasRasterExtents: HasRasterExtents[BacksplashMosaic] =
     new HasRasterExtents[BacksplashMosaic] {
       def rasterExtents(self: BacksplashMosaic)(
           implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] = {
-        BacksplashMosaic
+        val mosaic = BacksplashMosaic
           .filterRelevant(self)
           .flatMap({ img =>
             fs2.Stream.eval(BacksplashImage.getRasterExtents(img.uri))
@@ -105,8 +124,7 @@ trait Implicits
             (nel1: NEL[RasterExtent], nel2: NEL[RasterExtent]) =>
               nel1 concatNel nel2
           }))
+        mtr.timedIO(mosaic, readMosaicTimer)
       }
     }
 }
-
-object Implicits extends Implicits

@@ -42,14 +42,15 @@ object BacksplashImage extends RasterSourceUtils {
 
   def getRasterSource(uri: String): GDALRasterSource = GDALRasterSource(uri)
 
-  def apply(uri: String, wkt: String, subsetBands: List[Int]): BacksplashImage =
+  def fromWkt(uri: String,
+              wkt: String,
+              subsetBands: List[Int]): BacksplashImage =
     readWktOrWkb(wkt)
-      .as[MultiPolygon]
+      .as[Polygon]
       .map { poly =>
-        BacksplashImage(uri, poly, subsetBands)
+        BacksplashImage(uri, MultiPolygon(poly), subsetBands)
       }
-      .getOrElse(
-        throw new Exception("Hey, this needs to be a polygon, guy/gal"))
+      .getOrElse(throw new Exception("Provided WKT/WKB must be a multipolygon"))
 
   def getRasterExtents(uri: String): IO[NEL[RasterExtent]] = {
     val rs = getRasterSource(uri)

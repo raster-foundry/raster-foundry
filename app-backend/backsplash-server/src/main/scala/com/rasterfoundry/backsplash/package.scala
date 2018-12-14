@@ -1,6 +1,5 @@
 package com.rasterfoundry.backsplash
 
-import com.rasterfoundry.backsplash.Implicits._
 import com.rasterfoundry.database.ToolRunDao
 import com.rasterfoundry.database.util.RFTransactor
 
@@ -37,21 +36,5 @@ package object server {
   implicit val histogramEncoder: Encoder[Histogram[Double]] =
     new Encoder[Histogram[Double]] {
       final def apply(hist: Histogram[Double]): Json = hist.toJson.asJson
-    }
-
-  implicit val toolRunDaoStore: ToolStore[ToolRunDao] =
-    new ToolStore[ToolRunDao] {
-      def read(self: ToolRunDao,
-               analysisId: UUID,
-               nodeId: Option[UUID]): IO[PaintableTool] =
-        for {
-          (expr, mdOption, params) <- ToolRunDao
-            .unsafeGetAST(analysisId, nodeId)
-            .transact(RFTransactor.xa) map {
-            BacksplashMamlAdapter.asMaml _
-          }
-        } yield {
-          PaintableTool(expr, identity, params)
-        }
     }
 }

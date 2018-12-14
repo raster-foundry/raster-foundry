@@ -10,15 +10,15 @@ import cats.data._
 import cats.implicits._
 import doobie.implicits._
 
-import com.rasterfoundry.backsplash.BacksplashMosaic
-import com.rasterfoundry.backsplash.Implicits._
+import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel.{BandDataType, SingleBandOptions}
 import com.rasterfoundry.tool.ast.MapAlgebraAST.{CogRaster, SceneRaster}
 import io.circe.Json
 
-trait BacksplashMamlAdapter {
+class BacksplashMamlAdapter(mosaicImplicits: MosaicImplicits) {
+  import mosaicImplicits._
 
   def asMaml(ast: MapAlgebraAST)
     : (Expression, Option[NodeMetadata], Map[String, BacksplashMosaic]) = {
@@ -143,5 +143,3 @@ trait BacksplashMamlAdapter {
     (eval(ast), ast.metadata, evalParams(ast))
   }
 }
-
-object BacksplashMamlAdapter extends BacksplashMamlAdapter
