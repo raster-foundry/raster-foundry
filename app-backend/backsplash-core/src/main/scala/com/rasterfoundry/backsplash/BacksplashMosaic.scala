@@ -42,4 +42,11 @@ object BacksplashMosaic {
       }
     })
   }
+
+  def layerHistogram(mosaic: BacksplashMosaic)(
+      implicit hasRasterExtents: HasRasterExtents[BacksplashMosaic],
+      extentReification: ExtentReification[BacksplashMosaic],
+      cs: ContextShift[IO]) = {
+    LayerHistogram.identity(mosaic, 4000)
+  }
 }

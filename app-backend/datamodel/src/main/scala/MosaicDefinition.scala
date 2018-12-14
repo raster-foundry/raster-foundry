@@ -2,6 +2,7 @@ package com.rasterfoundry.datamodel
 
 import com.rasterfoundry.bridge._
 import geotrellis.vector.{MultiPolygon, Projected}
+import io.circe.Json
 import io.circe.generic.JsonCodec
 
 import java.util.UUID
@@ -11,7 +12,9 @@ final case class MosaicDefinition(sceneId: UUID,
                                   colorCorrections: ColorCorrect.Params,
                                   sceneType: Option[SceneType] = None,
                                   ingestLocation: Option[String],
-                                  footprint: Option[MultiPolygon])
+                                  footprint: Option[MultiPolygon],
+                                  isSingleBand: Boolean,
+                                  singleBandOptions: Json)
 
 object MosaicDefinition {
   def fromScenesToProjects(
@@ -26,13 +29,17 @@ object MosaicDefinition {
           colorCorrection,
           sceneType,
           ingestLocation,
-          footprint
+          footprint,
+          isSingleBand,
+          singleBandOptions
           ) =>
         MosaicDefinition(sceneId,
                          colorCorrection,
                          sceneType,
                          ingestLocation,
-                         footprint flatMap { _.geom.as[MultiPolygon] })
+                         footprint flatMap { _.geom.as[MultiPolygon] },
+                         isSingleBand,
+                         singleBandOptions)
     }
   }
 
@@ -49,7 +56,9 @@ object MosaicDefinition {
           colorCorrection,
           sceneType,
           ingestLocation,
-          footprint
+          footprint,
+          isSingleBand,
+          singleBandOptions
           ) => {
         val ccp = colorCorrection.copy(
           redBand = redBand,
@@ -60,7 +69,9 @@ object MosaicDefinition {
                          ccp,
                          sceneType,
                          ingestLocation,
-                         footprint flatMap { _.geom.as[MultiPolygon] })
+                         footprint flatMap { _.geom.as[MultiPolygon] },
+                         isSingleBand,
+                         singleBandOptions)
       }
     }
   }

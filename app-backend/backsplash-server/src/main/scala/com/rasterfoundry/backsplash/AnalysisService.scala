@@ -5,6 +5,7 @@ import com.rasterfoundry.backsplash.Parameters._
 import cats.data.Validated._
 import cats.effect.{ContextShift, IO}
 import geotrellis.proj4.{LatLng, WebMercator}
+import geotrellis.raster.{io => _, _}
 import geotrellis.raster.render.ColorRamps
 import geotrellis.raster.io.geotiff._
 import io.circe.syntax._
@@ -16,13 +17,15 @@ import org.http4s.util.CaseInsensitiveString
 
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.MetricsRegistrator
+import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
 
 @SuppressWarnings(Array("TraversableHead"))
 class AnalysisService[Param: ToolStore](
     analyses: Param,
     mtr: MetricsRegistrator,
     mosaicImplicits: MosaicImplicits,
-    toolstoreImplicits: ToolStoreImplicits)(implicit cs: ContextShift[IO]) {
+    toolstoreImplicits: ToolStoreImplicits)(implicit cs: ContextShift[IO])
+    extends ColorImplicits {
   import mosaicImplicits._
   import toolstoreImplicits._
 
@@ -50,8 +53,11 @@ class AnalysisService[Param: ToolStore](
         tileValidated <- paintable.tms(z, x, y)
         resp <- tileValidated match {
           case Valid(tile) =>
-            Ok(tile.band(0).renderPng(ColorRamps.Viridis).bytes,
-               `Content-Type`(MediaType.image.png))
+            Ok(
+              paintable.renderDefinition map { renderDef =>
+                tile.band(0).renderPng(renderDef).bytes
+              } getOrElse { tile.band(0).renderPng(ColorRamps.Viridis).bytes }
+            )
           case Invalid(e) =>
             BadRequest(s"Unable to produce tile for $analysisId: $e")
         }

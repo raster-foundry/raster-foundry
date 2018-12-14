@@ -40,6 +40,7 @@ class MosaicService[ProjStore: ProjectStore](
         LayerTms.identity(projects.read(projId, None, bandOverride, None))
       eval(z, x, y) flatMap {
         case Valid(tile) =>
+          println(s"Number of bands in tile: ${tile.bands.length}")
           Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
         case Invalid(e) =>
           BadRequest(s"Could not produce tile: $e")
@@ -95,8 +96,20 @@ class MosaicService[ProjStore: ProjectStore](
           BandOverride.apply)
       val projectedExtent = extent.reproject(LatLng, WebMercator)
       val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
+      // TODO: this will come from the project once we're fetching the project for authorization reasons
+      val toPaint: Boolean = true
       val eval =
-        LayerExtent.identity(projects.read(projectId, None, bandOverride, None))
+        if (toPaint) {
+          LayerExtent.identity(
+            projects.read(projectId, None, bandOverride, None))(
+            paintedMosaicExtentReification,
+            cs)
+        } else {
+          LayerExtent.identity(
+            projects.read(projectId, None, bandOverride, None))(
+            rawMosaicExtentReification,
+            cs)
+        }
       eval(extent, cellSize) flatMap {
         case Valid(tile) =>
           req.headers

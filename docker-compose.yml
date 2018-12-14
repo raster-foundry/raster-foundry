@@ -174,11 +174,11 @@ services:
       - postgres:database.service.rasterfoundry.internal
     env_file: .env
     environment:
-      - RF_LOG_LEVEL=INFO
+      - RF_LOG_LEVEL=DEBUG
       - COURSIER_CACHE=/root/.coursier
     ports:
       - "8080:8080"
-      - "9030:9020"
+      - "9030:9030"
     volumes:
       - $HOME/.sbt:/root/.sbt
       - ./app-backend/:/opt/raster-foundry/app-backend/
@@ -190,10 +190,11 @@ services:
     entrypoint: sbt
     command:
       - "backsplash-server/run"
-      - "-Dcom.sun.management.jmxremote.rmi.port=9020"
-      - "-Dcom.sun.management.jmxremote=true"
-      - "-Dcom.sun.management.jmxremote.port=9020"
-      - "-Dcom.sun.management.jmxremote.ssl=false"
-      - "-Dcom.sun.management.jmxremote.authenticate=false"
-      - "-Dcom.sun.management.jmxremote.local.only=false"
+      - "-J-Dcom.sun.management.jmxremote.rmi.port=9030"
+      - "-J-Dcom.sun.management.jmxremote=true"
+      - "-J-Dcom.sun.management.jmxremote.port=9030"
+      - "-J-Dcom.sun.management.jmxremote.ssl=false"
+      - "-J-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-J-Dcom.sun.management.jmxremote.local.only=false"
+      - "-J-DXmx3G"
       - "-Djava.rmi.server.hostname=localhost"
