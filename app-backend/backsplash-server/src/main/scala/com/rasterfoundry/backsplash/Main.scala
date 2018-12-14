@@ -58,8 +58,8 @@ object Server extends IOApp {
 
   val httpApp =
     Router(
-      "/" -> GZip(AutoSlash(withCORS(mosaicService))),
-      "/tools" -> GZip(AutoSlash(withCORS(analysisService))),
+      "/" -> GZip(AutoSlash(withCORS(withTimeout(mosaicService)))),
+      "/tools" -> GZip(AutoSlash(withCORS(withTimeout(analysisService)))),
       "/healthcheck" -> AutoSlash(new HealthcheckService[IO]().routes)
     )
 
