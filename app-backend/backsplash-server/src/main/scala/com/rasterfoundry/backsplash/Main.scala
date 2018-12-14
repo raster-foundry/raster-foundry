@@ -24,12 +24,13 @@ import org.http4s.util.CaseInsensitiveString
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
 
-import com.rasterfoundry.backsplash.Implicits._
+import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.backsplash.Parameters._
+import com.rasterfoundry.backsplash.MetricsRegistrator
 
 import java.util.UUID
 
-object Server extends IOApp {
+object Main extends IOApp {
 
   val timeout: FiniteDuration = new FiniteDuration(15, TimeUnit.SECONDS)
 
@@ -52,14 +53,24 @@ object Server extends IOApp {
       OptionT.pure[IO](Response[IO](Status.GatewayTimeout))
     )(service)
 
-  val mosaicService
-    : HttpRoutes[IO] = new MosaicService(SceneToProjectDao()).routes
-  val analysisService: HttpRoutes[IO] = new AnalysisService(ToolRunDao()).routes
+  val mtr = new MetricsRegistrator()
+
+  val mosaicImplicits = new MosaicImplicits(mtr)
+  val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits)
+  import toolStoreImplicits._
+
+  val mosaicService: HttpRoutes[IO] =
+    new MosaicService(SceneToProjectDao(), mtr, mosaicImplicits).routes
+
+  val analysisService: HttpRoutes[IO] =
+    new AnalysisService(ToolRunDao(), mtr, mosaicImplicits, toolStoreImplicits).routes
 
   val httpApp =
     Router(
-      "/" -> GZip(AutoSlash(withCORS(withTimeout(mosaicService)))),
-      "/tools" -> GZip(AutoSlash(withCORS(withTimeout(analysisService)))),
+      "/" -> mtr.middleware(
+        GZip(AutoSlash(withCORS(withTimeout(mosaicService))))),
+      "/tools" -> mtr.middleware(
+        GZip(AutoSlash(withCORS(withTimeout(analysisService))))),
       "/healthcheck" -> AutoSlash(new HealthcheckService[IO]().routes)
     )
 

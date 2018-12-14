@@ -12,32 +12,40 @@ import org.scalacheck.Prop.forAll
 import com.azavea.maml.ast._
 
 import BacksplashImageGen._
-import Implicits._
 
 import scala.concurrent.ExecutionContext
-
+import java.util.concurrent.Executors
 
 class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
+  val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(1))
+  implicit val timer = IO.timer(ec)
+  val mosaicImplicits = new MosaicImplicits(new MetricsRegistrator())
+  import mosaicImplicits._
   implicit val cs = IO.contextShift(ExecutionContext.global)
 
   test("remove unnecessary images from mosaic, but not ones we need") {
     check {
-      forAll {
-        (img1: BacksplashImage, img2: BacksplashImage) =>
-          var count = 0
-          def work = { count = count + 1 }
+      forAll { (img1: BacksplashImage, img2: BacksplashImage) =>
+        var count = 0
+        def work = { count = count + 1 }
 
-          val mosaic = fs2.Stream.emits(List(img1, img2)).repeat.take(50)
-          val relevantStream = BacksplashMosaic.filterRelevant(mosaic)
+        val mosaic = fs2.Stream.emits(List(img1, img2)).repeat.take(50)
+        val relevantStream = BacksplashMosaic.filterRelevant(mosaic)
 
-          relevantStream.map({ _ => work }).compile.drain.unsafeRunSync
+        relevantStream
+          .map({ _ =>
+            work
+          })
+          .compile
+          .drain
+          .unsafeRunSync
 
-          if (img1 == img2) {
-            assert(count == 1, s"Expected 1, got $count units of work")
-          } else {
-            assert(count == 2, s"Expected 2, got $count units of work")
-          }
-          true
+        if (img1 == img2) {
+          assert(count == 1, s"Expected 1, got $count units of work")
+        } else {
+          assert(count == 2, s"Expected 2, got $count units of work")
+        }
+        true
       }
     }
   }
@@ -47,15 +55,19 @@ class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
     */
   ignore("writeExtent") {
     check {
-      forAll {
-        (mosaic: BacksplashMosaic) =>
-          val eval = mosaic.extentReification
-          val e = Extent(-147.34863281250003,20.014645445341365,-83.40820312500001,49.97948776108648)
-          val rlit = eval(e, CellSize(10, 10)).unsafeRunSync
-          MultibandGeoTiff(rlit.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster, geotrellis.proj4.WebMercator)
-            .write(s"/tmp/${java.util.UUID.randomUUID}")
-          println("DID ONE")
-          true
+      forAll { (mosaic: BacksplashMosaic) =>
+        val eval = mosaic.extentReification
+        val e = Extent(-147.34863281250003,
+                       20.014645445341365,
+                       -83.40820312500001,
+                       49.97948776108648)
+        val rlit = eval(e, CellSize(10, 10)).unsafeRunSync
+        MultibandGeoTiff(
+          rlit.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster,
+          geotrellis.proj4.WebMercator)
+          .write(s"/tmp/${java.util.UUID.randomUUID}")
+        println("DID ONE")
+        true
       }
     }
   }
@@ -68,7 +80,9 @@ class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
       forAll { (mosaic: BacksplashMosaic) =>
         val eval = mosaic.tmsReification(0)
         val rlit = eval(7, 24, 48).unsafeRunSync
-        MultibandGeoTiff(rlit.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster, geotrellis.proj4.WebMercator)
+        MultibandGeoTiff(
+          rlit.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster,
+          geotrellis.proj4.WebMercator)
           .write(s"/tmp/${java.util.UUID.randomUUID}.tif")
         println("DID ONE")
         true
@@ -78,12 +92,14 @@ class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
 
   test("fetching mosaics should return sensible values") {
     check {
-      forAll {
-        (mosaic: BacksplashMosaic) => {
-          val hists = BacksplashMosaic.layerHistogram(mosaic).unsafeRunSync match {
-            case Valid(hists) => hists
-            case Invalid(_) => throw new Exception("could not resolve histograms for mosaic")
-          }
+      forAll { (mosaic: BacksplashMosaic) =>
+        {
+          val hists =
+            LayerHistogram.identity(mosaic, 4000).unsafeRunSync match {
+              case Valid(hists) => hists
+              case Invalid(_) =>
+                throw new Exception("could not resolve histograms for mosaic")
+            }
           assert(hists.head.minValue != hists.head.maxValue)
           true
         }
@@ -92,4 +108,3 @@ class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
   }
 
 }
-

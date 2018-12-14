@@ -18,12 +18,16 @@ import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
 
 import com.rasterfoundry.backsplash._
-import com.rasterfoundry.backsplash.Implicits._
+import com.rasterfoundry.backsplash.MetricsRegistrator
 
 import java.util.UUID
 
-class MosaicService[Param: ProjectStore](projects: Param)(
-    implicit cs: ContextShift[IO]) {
+class MosaicService[ProjStore: ProjectStore](
+    projects: ProjStore,
+    mtr: MetricsRegistrator,
+    mosaicImplicits: MosaicImplicits)(implicit cs: ContextShift[IO]) {
+  import mosaicImplicits._
+
   val routes: HttpRoutes[IO] = HttpRoutes.of {
     case GET -> Root / UUIDWrapper(projId) / IntVar(z) / IntVar(x) / IntVar(y)
           :? RedBandOptionalQueryParamMatcher(redOverride)
@@ -42,7 +46,8 @@ class MosaicService[Param: ProjectStore](projects: Param)(
       }
 
     case GET -> Root / UUIDWrapper(projId) / "histogram" =>
-      BacksplashMosaic.layerHistogram(projects.read(projId, None, None, None)) flatMap {
+      val mosaic: BacksplashMosaic = projects.read(projId, None, None, None)
+      LayerHistogram.identity(mosaic, 4000) flatMap {
         case Valid(hists) =>
           Ok(hists map { hist =>
             Map(hist.binCounts: _*)
@@ -60,16 +65,14 @@ class MosaicService[Param: ProjectStore](projects: Param)(
           uuids map { _.toChar } mkString
         ) match {
           case Right(uuids) =>
+            val overrides = (redOverride, greenOverride, blueOverride).mapN {
+              case (r, g, b) => BandOverride(r, g, b)
+            }
             for {
-              histsValidated <- BacksplashMosaic.layerHistogram(
-                projects.read(
-                  projectId,
-                  None,
-                  Applicative[Option].map3(redOverride,
-                                           greenOverride,
-                                           blueOverride)(BandOverride.apply),
-                  uuids.toNel)
-              )
+              mosaic <- IO {
+                projects.read(projectId, None, overrides, uuids.toNel)
+              }
+              histsValidated <- LayerHistogram.identity(mosaic, 4000)
               resp <- histsValidated match {
                 case Valid(hists) => Ok(hists asJson)
                 case Invalid(e) =>

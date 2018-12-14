@@ -468,6 +468,7 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       "org.http4s" %% "http4s-blaze-server" % Version.http4s,
       "org.http4s" %% "http4s-circe" % Version.http4s,
       "org.http4s" %% "http4s-dsl" % Version.http4s,
+      "org.http4s" %% "http4s-dropwizard-metrics" % Version.http4s,
       "org.scalatest" %% "scalatest" % Version.scalaTest,
       "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer,
       "org.scalacheck" %% "scalacheck" % Version.scalaCheck,
