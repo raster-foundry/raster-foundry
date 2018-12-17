@@ -2,6 +2,7 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.database.{SceneToProjectDao, ToolRunDao}
 import cats.Applicative
+import cats.data.OptionT
 import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
@@ -15,11 +16,13 @@ import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.headers._
-import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig, GZip}
+import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig, GZip, Timeout}
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
 import org.http4s.util.CaseInsensitiveString
+import scala.concurrent.duration.FiniteDuration
+import java.util.concurrent.TimeUnit
 
 import com.rasterfoundry.backsplash.Implicits._
 import com.rasterfoundry.backsplash.Parameters._
@@ -27,6 +30,8 @@ import com.rasterfoundry.backsplash.Parameters._
 import java.util.UUID
 
 object Server extends IOApp {
+
+  val timeout: FiniteDuration = new FiniteDuration(15, TimeUnit.SECONDS)
 
   def withCORS(svc: HttpRoutes[IO]): HttpRoutes[IO] =
     CORS(
@@ -41,14 +46,20 @@ object Server extends IOApp {
       )
     )
 
+  def withTimeout(service: HttpRoutes[IO]): HttpRoutes[IO] =
+    Timeout(
+      timeout,
+      OptionT.pure[IO](Response[IO](Status.GatewayTimeout))
+    )(service)
+
   val mosaicService
     : HttpRoutes[IO] = new MosaicService(SceneToProjectDao()).routes
   val analysisService: HttpRoutes[IO] = new AnalysisService(ToolRunDao()).routes
 
   val httpApp =
     Router(
-      "/" -> GZip(AutoSlash(withCORS(mosaicService))),
-      "/tools" -> GZip(AutoSlash(withCORS(analysisService))),
+      "/" -> GZip(AutoSlash(withCORS(withTimeout(mosaicService)))),
+      "/tools" -> GZip(AutoSlash(withCORS(withTimeout(analysisService)))),
       "/healthcheck" -> AutoSlash(new HealthcheckService[IO]().routes)
     )
 
