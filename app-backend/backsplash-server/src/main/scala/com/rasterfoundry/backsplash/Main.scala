@@ -82,5 +82,8 @@ object Main extends IOApp {
       .serve
 
   def run(args: List[String]): IO[ExitCode] =
-    stream.compile.drain.map(_ => ExitCode.Success)
+    for {
+      _ <- IO { mtr.reportToConsole }
+      exit <- stream.compile.drain.map(_ => ExitCode.Success)
+    } yield exit
 }

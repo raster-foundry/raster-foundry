@@ -57,13 +57,14 @@ object BacksplashImage extends RasterSourceUtils {
     val dataset = rs.dataset
     val band = dataset.GetRasterBand(1)
 
-    IO.pure(
+    IO {
       NEL(
         rs.rasterExtent,
         (0 until band.GetOverviewCount()).toList.map { idx =>
           val ovr = band.GetOverview(idx)
           RasterExtent(rs.extent, CellSize(ovr.GetXSize(), ovr.GetYSize()))
         }
-      ))
+      )
+    }
   }
 }
