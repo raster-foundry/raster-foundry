@@ -122,7 +122,16 @@ class MosaicImplicits(mtr: MetricsRegistrator)
           .toList
           .map(_.reduceLeft({
             (nel1: NEL[RasterExtent], nel2: NEL[RasterExtent]) =>
-              nel1 concatNel nel2
+              val updatedExtent = nel1.head.extent combine nel2.head.extent
+              val updated1 = nel1.map { re =>
+                RasterExtent(updatedExtent,
+                             CellSize(re.cellwidth, re.cellheight))
+              }
+              val updated2 = nel2.map { re =>
+                RasterExtent(updatedExtent,
+                             CellSize(re.cellwidth, re.cellheight))
+              }
+              updated1 concatNel updated2
           }))
         mtr.timedIO(mosaic, readMosaicTimer)
       }

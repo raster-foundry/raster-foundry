@@ -10,6 +10,7 @@
 - Added a support email field to platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
 - Supported team creation on user's team list page [\#4345](https://github.com/raster-foundry/raster-foundry/pull/4345)
 - Use java's gdal bindings for tile IO in backsplash and better separate concerns between fetching imagery and talking to the database / users [\#4339](https://github.com/raster-foundry/raster-foundry/pull/4339)
+- Added dropwizard metrics instrumentation to backsplash methods and endpoints [\#4381](https://github.com/raster-foundry/raster-foundry/pull/4381)
 
 ### Changed
 

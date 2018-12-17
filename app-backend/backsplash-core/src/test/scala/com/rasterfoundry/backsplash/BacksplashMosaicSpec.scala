@@ -23,7 +23,7 @@ class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
   import mosaicImplicits._
   implicit val cs = IO.contextShift(ExecutionContext.global)
 
-  test("remove unnecessary images from mosaic, but not ones we need") {
+  test("remove unnecessary images from mosaic") {
     check {
       forAll { (img1: BacksplashImage, img2: BacksplashImage) =>
         var count = 0
@@ -50,47 +50,7 @@ class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
     }
   }
 
-  /** Use only when you want to write some imagery out to disk during testing, to veriy
-    * that it looks nice
-    */
-  ignore("writeExtent") {
-    check {
-      forAll { (mosaic: BacksplashMosaic) =>
-        val eval = mosaic.extentReification
-        val e = Extent(-147.34863281250003,
-                       20.014645445341365,
-                       -83.40820312500001,
-                       49.97948776108648)
-        val rlit = eval(e, CellSize(10, 10)).unsafeRunSync
-        MultibandGeoTiff(
-          rlit.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster,
-          geotrellis.proj4.WebMercator)
-          .write(s"/tmp/${java.util.UUID.randomUUID}")
-        println("DID ONE")
-        true
-      }
-    }
-  }
-
-  /** Use only when you want to write some imagery out to disk during testing, to veriy
-    * that it looks nice
-    */
-  ignore("writeTMS") {
-    check {
-      forAll { (mosaic: BacksplashMosaic) =>
-        val eval = mosaic.tmsReification(0)
-        val rlit = eval(7, 24, 48).unsafeRunSync
-        MultibandGeoTiff(
-          rlit.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster,
-          geotrellis.proj4.WebMercator)
-          .write(s"/tmp/${java.util.UUID.randomUUID}.tif")
-        println("DID ONE")
-        true
-      }
-    }
-  }
-
-  test("fetching mosaics should return sensible values") {
+  test("fetching mosaics should return real tiles (diff min/max value as proxy)") {
     check {
       forAll { (mosaic: BacksplashMosaic) =>
         {
@@ -107,4 +67,47 @@ class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
     }
   }
 
+  /** Use only when you want to write some imagery out to disk during testing, to veriy
+    * that it looks nice
+    */
+  ignore("writeExtent") {
+    check {
+      forAll { (mosaic: BacksplashMosaic) =>
+        val eval = mosaic.extentReification
+        val e = Extent(-147.34863281250003,
+                       20.014645445341365,
+                       -83.40820312500001,
+                       49.97948776108648)
+        val rlit = eval(e, CellSize(10, 10)).unsafeRunSync
+        val tileID = java.util.UUID.randomUUID
+        val outputPath = s"/tmp/${tileID}.tif"
+        MultibandGeoTiff(
+          rlit.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster,
+          geotrellis.proj4.WebMercator)
+          .write(outputPath)
+        println(s"Extent-based tiff produced at $outputPath")
+        true
+      }
+    }
+  }
+
+  /** Use only when you want to write some imagery out to disk during testing, to veriy
+    * that it looks nice
+    */
+  ignore("writeTMS") {
+    check {
+      forAll { (mosaic: BacksplashMosaic) =>
+        val eval = mosaic.tmsReification(0)
+        val rlit = eval(7, 24, 48).unsafeRunSync
+        val tileID = java.util.UUID.randomUUID
+        val outputPath = s"/tmp/${tileID}.tif"
+        MultibandGeoTiff(
+          rlit.asInstanceOf[RasterLit[Raster[MultibandTile]]].raster,
+          geotrellis.proj4.WebMercator)
+          .write(outputPath)
+        println(s"TMS-based tiff produced at $outputPath")
+        true
+      }
+    }
+  }
 }
