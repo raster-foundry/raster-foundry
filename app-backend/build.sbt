@@ -31,7 +31,7 @@ lazy val commonSettings = Seq(
     "-language:existentials",
     "-language:experimental.macros",
     "-Xmax-classfile-name",
-    "70",
+    "72",
     "-Ywarn-value-discard",
     "-Ywarn-unused",
     "-Ypartial-unification",
@@ -474,7 +474,8 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       "org.scalatest" %% "scalatest" % Version.scalaTest,
       "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer,
       "org.scalacheck" %% "scalacheck" % Version.scalaCheck,
-      "org.apache.spark" %% "spark-core" % "2.4.0" % Provided
+      "org.apache.spark" %% "spark-core" % "2.4.0" % Provided,
+      Dependencies.catsMeow
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
