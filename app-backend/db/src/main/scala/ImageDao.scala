@@ -23,8 +23,6 @@ object ImageDao extends Dao[Image] {
       image_metadata, resolution_meters, metadata_files FROM """ ++ tableF
 
   def create(image: Image, user: User): ConnectionIO[Image] = {
-    val id = UUID.randomUUID
-    val now = new Timestamp(new java.util.Date().getTime)
     val ownerId = util.Ownership.checkOwner(user, Some(image.owner))
     (fr"INSERT INTO" ++ tableF ++ fr"""
         (id, created_at, modified_at, created_by, modified_by,

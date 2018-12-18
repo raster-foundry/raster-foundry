@@ -58,6 +58,8 @@ object RfmlRddResolver extends LazyLogging {
                                   _,
                                   Some(SceneType.COG),
                                   Some(s),
+                                  _,
+                                  _,
                                   _) =>
               (cellTypeO: Option[CellType], band: Int) =>
                 CogRaster(sceneId, Some(band), cellTypeO, s)
@@ -65,6 +67,8 @@ object RfmlRddResolver extends LazyLogging {
                                   _,
                                   Some(SceneType.Avro),
                                   Some(s),
+                                  _,
+                                  _,
                                   _) =>
               (cellTypeO: Option[CellType], band: Int) =>
                 SceneRaster(sceneId, Some(band), cellTypeO, s)

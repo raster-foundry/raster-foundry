@@ -198,7 +198,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
       implicit xa: Transactor[IO]): OptionT[Future, MultibandTile] = {
     OptionT(mosaicDefinition(projectId).flatMap { mosaic =>
       val sceneIds = mosaic.map {
-        case MosaicDefinition(sceneId, _, _, _, _) => sceneId
+        case MosaicDefinition(sceneId, _, _, _, _, _, _) => sceneId
       }.toSet
 
       val mayhapTiles: Future[Seq[MultibandTile]] =
@@ -399,7 +399,7 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
     mds.flatMap { mosaic: List[MosaicDefinition] =>
       {
         val sceneIds = mosaic.map {
-          case MosaicDefinition(sceneId, _, _, _, _) => sceneId
+          case MosaicDefinition(sceneId, _, _, _, _, _, _) => sceneId
         }.toSet
 
         val tiles = mosaic.map {
@@ -407,6 +407,8 @@ object MultiBandMosaic extends LazyLogging with KamonTrace {
                                 colorCorrectParams,
                                 sceneType,
                                 maybeIngestLocation,
+                                _,
+                                _,
                                 _) => {
             val tile = (maybeIngestLocation, sceneType) match {
               case (Some(ingestLocation), Some(SceneType.COG)) =>

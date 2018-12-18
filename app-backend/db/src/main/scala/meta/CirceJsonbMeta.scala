@@ -57,4 +57,7 @@ trait CirceJsonbMeta {
 
   implicit val singleBandOptionsMeta: Meta[SingleBandOptions.Params] =
     CirceJsonbMeta[SingleBandOptions.Params]
+
+  implicit val jsonMeta: Meta[Json] =
+    CirceJsonbMeta[Json]
 }

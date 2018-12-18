@@ -5,8 +5,11 @@ import com.rasterfoundry.database.util.RFTransactor
 
 import cats.effect.IO
 import doobie.implicits._
+import geotrellis.raster.{io => _, Tile}
 import geotrellis.raster.io._
 import geotrellis.raster.histogram._
+import geotrellis.raster.render._
+import geotrellis.raster.render.png._
 import io.circe.{Encoder, Json, KeyEncoder}
 import io.circe.parser._
 import io.circe.syntax._

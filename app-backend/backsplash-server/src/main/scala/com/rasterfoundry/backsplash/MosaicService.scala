@@ -95,8 +95,20 @@ class MosaicService[ProjStore: ProjectStore](
           BandOverride.apply)
       val projectedExtent = extent.reproject(LatLng, WebMercator)
       val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
+      // TODO: this will come from the project once we're fetching the project for authorization reasons
+      val toPaint: Boolean = true
       val eval =
-        LayerExtent.identity(projects.read(projectId, None, bandOverride, None))
+        if (toPaint) {
+          LayerExtent.identity(
+            projects.read(projectId, None, bandOverride, None))(
+            paintedMosaicExtentReification,
+            cs)
+        } else {
+          LayerExtent.identity(
+            projects.read(projectId, None, bandOverride, None))(
+            rawMosaicExtentReification,
+            cs)
+        }
       eval(extent, cellSize) flatMap {
         case Valid(tile) =>
           req.headers

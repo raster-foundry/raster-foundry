@@ -15,6 +15,7 @@ import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import geotrellis.vector.{Polygon, Projected}
+import io.circe.syntax._
 
 import scala.concurrent.duration._
 
@@ -272,7 +273,9 @@ object SceneDao
               ),
               scene.sceneType,
               scene.ingestLocation,
-              scene.dataFootprint map { _.geom }
+              scene.dataFootprint map { _.geom },
+              false,
+              ().asJson
             ))
         case _ => Seq.empty
       }
