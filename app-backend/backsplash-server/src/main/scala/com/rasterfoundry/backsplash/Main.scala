@@ -34,9 +34,14 @@ import java.util.UUID
 object Main extends IOApp {
 
   override protected implicit def contextShift: ContextShift[IO] =
-    IO.contextShift(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(1)))
+    IO.contextShift(
+      ExecutionContext.fromExecutor(
+        Executors.newFixedThreadPool(
+          Config.parallelism.threadPoolSize
+        )))
 
-  val timeout: FiniteDuration = new FiniteDuration(15, TimeUnit.SECONDS)
+  val timeout: FiniteDuration =
+    new FiniteDuration(Config.server.timeoutSeconds, TimeUnit.SECONDS)
 
   def withCORS(svc: HttpRoutes[IO]): HttpRoutes[IO] =
     CORS(
@@ -44,7 +49,7 @@ object Main extends IOApp {
       CORSConfig(
         anyOrigin = true,
         anyMethod = false,
-        allowedMethods = Some(Set("GET", "POST", "HEAD", "OPTIONS")),
+        allowedMethods = Some(Set("GET", "POST", "HEAD", "OPTIONS// ")),
         allowedHeaders = Some(Set("Content-Type", "Authorization", "*")),
         allowCredentials = true,
         maxAge = 1800
