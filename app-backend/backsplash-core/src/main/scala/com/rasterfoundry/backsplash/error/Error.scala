@@ -4,9 +4,7 @@ import cats._
 import cats.data._
 import cats.effect._
 import cats.implicits._
-// import com.amazonaws.services.s3.model.AmazonS3Exception
 import com.typesafe.scalalogging.LazyLogging
-// import doobie.util.invariant.InvariantViolation
 import org.http4s._
 import org.http4s.dsl._
 import org.http4s.dsl.io._
@@ -42,29 +40,8 @@ final case class WrappedDoobieException(message: String)
 final case class WrappedS3Exception(message: String) extends BacksplashException
 // Private so no one can deliberately throw an UnknownException elsewhere --
 // only exists to catch the fall-through case in the foreign error handler
-private[error] final case class UnknownException(message: String)
+private[backsplash] final case class UnknownException(message: String)
     extends BacksplashException
-
-// class ForeignErrorHandler[F[_], E <: Throwable](implicit M: MonadError[F, E])
-//     extends LazyLogging
-//     with HttpErrorHandler[F, E]
-//     with Http4sDsl[F] {
-//   private def wrapError(t: E): F[Response[F]] = t match {
-//     case (err: InvariantViolation) =>
-//       logger.error(err.getMessage, err.printStackTrace)
-//       throw WrappedDoobieException(err.getMessage)
-//     case (err: AmazonS3Exception) =>
-//       logger.error(err.getMessage, err.printStackTrace)
-//       throw WrappedS3Exception(err.getMessage)
-//     case (err: IllegalArgumentException) =>
-//       throw RequirementFailedException(err.getMessage)
-//     case (err: BacksplashException) => throw err
-//     case t                          => throw UnknownException(t.getMessage)
-//   }
-
-//   override def handle(service: AuthedService[U, F]): AuthedService[U, F] =
-//     ServiceHttpErrorHandler(service)(wrapError)
-// }
 
 class BacksplashHttpErrorHandler[F[_], U](
     implicit M: MonadError[F, BacksplashException])
