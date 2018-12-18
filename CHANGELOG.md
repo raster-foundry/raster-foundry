@@ -33,6 +33,7 @@
 - Restored color correction [\#4387](https://github.com/raster-foundry/raster-foundry/pull/4387)
 - Address a number of unhandled promise chains on the frontend [\#4380](https://github.com/raster-foundry/raster-foundry/pull/4380)
 - Fix logo on project share page and add error handling [/#4377](https://github.com/raster-foundry/raster-foundry/pull/4377)
+- Restored auth and error-handling [\#4390](https://github.com/raster-foundry/raster-foundry/pull/4390)
 
 ### Removed
 
