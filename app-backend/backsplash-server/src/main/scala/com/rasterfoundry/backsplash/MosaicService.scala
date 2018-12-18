@@ -39,7 +39,7 @@ class MosaicService[ProjStore: ProjectStore](projects: ProjStore,
       ForeignError.handle {
         AuthedService {
           case GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
-                y)
+                y) / _
                 :? RedBandOptionalQueryParamMatcher(redOverride)
                 :? GreenBandOptionalQueryParamMatcher(greenOverride)
                 :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
@@ -60,7 +60,7 @@ class MosaicService[ProjStore: ProjectStore](projects: ProjStore,
               }
             } yield resp
 
-          case GET -> Root / UUIDWrapper(projectId) / "histogram" as user =>
+          case GET -> Root / UUIDWrapper(projectId) / "histogram" / _ as user =>
             for {
               _ <- Authorizers.authProject(user, projectId)
               mosaic = projects.read(projectId, None, None, None)
@@ -105,7 +105,7 @@ class MosaicService[ProjStore: ProjectStore](projects: ProjStore,
               }
             }
 
-          case authedReq @ GET -> Root / UUIDWrapper(projectId) / "export"
+          case authedReq @ GET -> Root / UUIDWrapper(projectId) / "export" / _
                 :? ExtentQueryParamMatcher(extent)
                 :? ZoomQueryParamMatcher(zoom)
                 :? RedBandOptionalQueryParamMatcher(redOverride)
