@@ -37,7 +37,7 @@ class AnalysisService[Param: ToolStore](analyses: Param,
     ForeignError.handle {
       AuthedService {
 
-        case GET -> Root / UUIDWrapper(analysisId) / "histogram"
+        case GET -> Root / UUIDWrapper(analysisId) / "histogram" / _
               :? NodeQueryParamMatcher(node)
               :? VoidCacheQueryParamMatcher(void) as user =>
           for {
@@ -53,7 +53,7 @@ class AnalysisService[Param: ToolStore](analyses: Param,
           } yield resp
 
         case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(
-              y)
+              y) / _
               :? NodeQueryParamMatcher(node) as user =>
           for {
             authorized <- Authorizers.authToolRun(user, analysisId)
@@ -73,7 +73,7 @@ class AnalysisService[Param: ToolStore](analyses: Param,
             }
           } yield resp
 
-        case authedReq @ GET -> Root / UUIDWrapper(analysisId) / "raw"
+        case authedReq @ GET -> Root / UUIDWrapper(analysisId) / "raw" / _
               :? ExtentQueryParamMatcher(extent)
               :? ZoomQueryParamMatcher(zoom)
               :? NodeQueryParamMatcher(node) as user =>

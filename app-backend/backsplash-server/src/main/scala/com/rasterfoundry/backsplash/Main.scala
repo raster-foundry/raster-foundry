@@ -80,7 +80,7 @@ object Main extends IOApp {
 
   val mosaicService: HttpRoutes[IO] =
     Authenticators.tokensAuthMiddleware(
-     new MosaicService(SceneToProjectDao(), mtr, mosaicImplicits).routes)
+      new MosaicService(SceneToProjectDao(), mtr, mosaicImplicits).routes)
 
   val analysisService: HttpRoutes[IO] =
     Authenticators.tokensAuthMiddleware(
