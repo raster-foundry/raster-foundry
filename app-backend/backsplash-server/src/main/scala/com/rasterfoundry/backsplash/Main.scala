@@ -21,8 +21,9 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
 import org.http4s.util.CaseInsensitiveString
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{TimeUnit, Executors}
 
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.backsplash.Parameters._
@@ -31,6 +32,9 @@ import com.rasterfoundry.backsplash.MetricsRegistrator
 import java.util.UUID
 
 object Main extends IOApp {
+
+  override protected implicit def contextShift: ContextShift[IO] =
+    IO.contextShift(ExecutionContext.fromExecutor(Executors.newFixedThreadPool(1)))
 
   val timeout: FiniteDuration = new FiniteDuration(15, TimeUnit.SECONDS)
 
