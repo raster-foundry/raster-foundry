@@ -49,7 +49,7 @@ object Main extends IOApp {
       CORSConfig(
         anyOrigin = true,
         anyMethod = false,
-        allowedMethods = Some(Set("GET", "POST", "HEAD", "OPTIONS// ")),
+        allowedMethods = Some(Set("GET", "POST", "HEAD", "OPTIONS")),
         allowedHeaders = Some(Set("Content-Type", "Authorization", "*")),
         allowCredentials = true,
         maxAge = 1800
