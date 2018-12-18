@@ -31,7 +31,7 @@ lazy val commonSettings = Seq(
     "-language:existentials",
     "-language:experimental.macros",
     "-Xmax-classfile-name",
-    "100",
+    "70",
     "-Ywarn-value-discard",
     "-Ywarn-unused",
     "-Ypartial-unification",
