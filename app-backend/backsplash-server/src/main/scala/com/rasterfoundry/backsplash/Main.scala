@@ -34,7 +34,7 @@ import com.rasterfoundry.backsplash.MetricsRegistrator
 
 import java.util.UUID
 
-object Main extends IOApp {
+object Main extends IOApp with ProjectStoreImplicits {
 
   override protected implicit def contextShift: ContextShift[IO] =
     IO.contextShift(

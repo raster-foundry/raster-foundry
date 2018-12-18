@@ -1,19 +1,24 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash._
+import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.ToolRunDao
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.tool
+import com.rasterfoundry.tool.ast.MapAlgebraAST
 
+import cats.effect.IO
+import cats.implicits._
 import doobie._
 import doobie.implicits._
-import cats.effect.IO
 
 import java.util.UUID
 
-class ToolStoreImplicits(mosaicImplicits: MosaicImplicits) {
+class ToolStoreImplicits(mosaicImplicits: MosaicImplicits)
+    extends ProjectStoreImplicits {
   import mosaicImplicits._
   val mamlAdapter = new BacksplashMamlAdapter(mosaicImplicits)
 
@@ -35,8 +40,9 @@ class ToolStoreImplicits(mosaicImplicits: MosaicImplicits) {
     RenderDefinition(toolRd.breakpoints, scaleOpt, clipOpt)
   }
 
-  private def unsafeGetAST(anslysisId: UUID, nodeId: Option[UUID]): IO[MapAlgebraAST] =
-    for {
+  private def unsafeGetAST(analysisId: UUID,
+                           nodeId: Option[UUID]): IO[MapAlgebraAST] =
+    (for {
       executionParams <- ToolRunDao.query.filter(analysisId).select map {
         _.executionParameters
       }
@@ -52,7 +58,7 @@ class ToolStoreImplicits(mosaicImplicits: MosaicImplicits) {
               s"Node $nodeId missing from AST $analysisId")
           }
       } getOrElse { decoded }
-    } transact { RFTransactor.xa }
+    }).transact(RFTransactor.xa)
 
   implicit val toolRunDaoStore: ToolStore[ToolRunDao] =
     new ToolStore[ToolRunDao] {
