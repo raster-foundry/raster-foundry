@@ -2,6 +2,7 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.color._
+import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.ToolRunDao
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.tool
@@ -34,15 +35,32 @@ class ToolStoreImplicits(mosaicImplicits: MosaicImplicits) {
     RenderDefinition(toolRd.breakpoints, scaleOpt, clipOpt)
   }
 
+  private def unsafeGetAST(anslysisId: UUID, nodeId: Option[UUID]): IO[MapAlgebraAST] =
+    for {
+      executionParams <- ToolRunDao.query.filter(analysisId).select map {
+        _.executionParameters
+      }
+    } yield {
+      val decoded = executionParams.as[MapAlgebraAST].toOption getOrElse {
+        throw MetadataException(s"Could not decode AST for $analysisId")
+      }
+      nodeId map {
+        decoded
+          .find(_)
+          .getOrElse {
+            throw MetadataException(
+              s"Node $nodeId missing from AST $analysisId")
+          }
+      } getOrElse { decoded }
+    } transact { RFTransactor.xa }
+
   implicit val toolRunDaoStore: ToolStore[ToolRunDao] =
     new ToolStore[ToolRunDao] {
       def read(self: ToolRunDao,
                analysisId: UUID,
                nodeId: Option[UUID]): IO[PaintableTool] =
         for {
-          (expr, mdOption, params) <- ToolRunDao
-            .unsafeGetAST(analysisId, nodeId)
-            .transact(RFTransactor.xa) map {
+          (expr, mdOption, params) <- unsafeGetAST(analysisId, nodeId) map {
             mamlAdapter.asMaml _
           }
         } yield {

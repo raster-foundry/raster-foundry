@@ -271,7 +271,7 @@ lazy val common = Project("common", file("common"))
   })
 
 lazy val db = Project("db", file("db"))
-  .dependsOn(datamodel % "compile->compile;test->test", common, backsplashCore)
+  .dependsOn(datamodel % "compile->compile;test->test", common)
   .settings(commonSettings: _*)
   .settings({
     libraryDependencies ++= dbDependencies ++ loggingDependencies ++ Seq(
