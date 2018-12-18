@@ -40,7 +40,6 @@ class MosaicService[ProjStore: ProjectStore](
         LayerTms.identity(projects.read(projId, None, bandOverride, None))
       eval(z, x, y) flatMap {
         case Valid(tile) =>
-          println(s"Number of bands in tile: ${tile.bands.length}")
           Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
         case Invalid(e) =>
           BadRequest(s"Could not produce tile: $e")

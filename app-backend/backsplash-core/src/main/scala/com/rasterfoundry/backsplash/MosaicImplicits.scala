@@ -104,8 +104,6 @@ class MosaicImplicits(mtr: MetricsRegistrator)
                   )
                 }
                 time.stop()
-                println(
-                  s"Img corrected, number of bands: ${img map { _.bands.length }}")
                 img
               })
               .collect({ case Some(mbtile) => Raster(mbtile, extent) })
@@ -116,8 +114,6 @@ class MosaicImplicits(mtr: MetricsRegistrator)
           }
           timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
         } yield {
-          println(
-            s"Number of bands in timed mosaic: ${timedMosaic.tile.bands.length}")
           RasterLit(timedMosaic)
       }
   }
