@@ -19,6 +19,8 @@
 - Changed the data model of the return of `users/me/roles` endpoint [\#4375](https://github.com/raster-foundry/raster-foundry/pull/4375)
 - Added more aggressive timeout to backsplash for improved thread recovery [\#4383](https://github.com/raster-foundry/raster-foundry/pull/4383)
 - Decreased max classfile name length from 100 to 70 for CI reasons [\#4388](https://github.com/raster-foundry/raster-foundry/pull/4388)
+- Used a fixed number of threadPool for Backsplash [\#4389](https://github.com/raster-foundry/raster-foundry/pull/4389)
+- Made timeout length and number of threadPool configurable [\#4389](https://github.com/raster-foundry/raster-foundry/pull/4389)
 
 ### Fixed
 
