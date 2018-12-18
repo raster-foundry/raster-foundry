@@ -115,7 +115,9 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
               ingestLocation = Some("s3://test/"),
               colorCorrections = cc,
               sceneType = Some(SceneType.Avro),
-              footprint = Some(mask)
+              footprint = Some(mask),
+              isSingleBand = false,
+              singleBandOptions = ().asJson
             )),
           mask = Some(mask)
         )
