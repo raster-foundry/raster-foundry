@@ -111,6 +111,8 @@ object GlobalSummary extends LazyLogging {
                                   _,
                                   maybeSceneType,
                                   Some(ingestLocation),
+                                  _,
+                                  _,
                                   _) =>
               maybeSceneType match {
                 case Some(SceneType.COG) =>
