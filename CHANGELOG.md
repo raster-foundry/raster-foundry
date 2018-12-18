@@ -31,6 +31,7 @@
 - Fix project ownership filter persistance across pages [\#4376](https://github.com/raster-foundry/raster-foundry/pull/4376)
 - Restored routes missing from backsplash after reintegration into RF main [\#4382](https://github.com/raster-foundry/raster-foundry/pull/4382)
 - Restored color correction [\#4387](https://github.com/raster-foundry/raster-foundry/pull/4387)
+- Address a number of unhandled promise chains on the frontend [\#4380](https://github.com/raster-foundry/raster-foundry/pull/4380)
 
 ### Removed
 
