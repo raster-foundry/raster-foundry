@@ -51,10 +51,10 @@ def fetch_imagery(image_locations, local_dir):
 
 def fetch_image(location, filename, local_dir):
     bucket, key = s3_bucket_and_key_from_url(location)
-    if bucket.startswith('landsat'):
-        extra_kwargs = {}
-    elif bucket.startswith('sentinel'):
+    if bucket.startswith('sentinel'):
         extra_kwargs = {'RequestPayer': 'requester'}
+    else:
+        extra_kwargs = {}
     # both sentinel and landsat have these uris in bucket.s3.amazonaws.com/...,
     # so bucket and key from url does a bad job splitting correctly. follow up
     # by splitting on '.' and taking the first one
