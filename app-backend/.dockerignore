@@ -2,7 +2,7 @@ api/target/*
 authentication/target/*
 batch/target/*
 common/target/*
-database/target/*
+db/target/*
 datamodel/target/*
 ingest/target/*
 migrations/target/*

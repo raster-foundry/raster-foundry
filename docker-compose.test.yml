@@ -51,7 +51,7 @@ services:
   backsplash:
     image: raster-foundry-backsplash:${GIT_COMMIT:-latest}
     build:
-      context: ./app-backend/backsplash
+      context: ./app-backend/backsplash-server
       dockerfile: Dockerfile
 
   app-migrations:
