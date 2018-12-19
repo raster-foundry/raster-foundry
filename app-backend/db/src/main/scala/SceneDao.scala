@@ -275,7 +275,7 @@ object SceneDao
               scene.ingestLocation,
               scene.dataFootprint map { _.geom },
               false,
-              ().asJson
+              Some(().asJson)
             ))
         case _ => Seq.empty
       }

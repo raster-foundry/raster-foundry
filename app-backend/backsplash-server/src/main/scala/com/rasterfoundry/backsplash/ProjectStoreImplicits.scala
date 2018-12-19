@@ -50,7 +50,9 @@ trait ProjectStoreImplicits extends ToProjectStoreOps {
           bandOverride map { _.blue },
           imageSubset map { _.toList } getOrElse List.empty) map { md =>
           val singleBandOptions =
-            md.singleBandOptions.as[BSSingleBandOptions.Params].toOption
+            md.singleBandOptions flatMap {
+              _.as[BSSingleBandOptions.Params].toOption
+            }
           BacksplashImage(
             md.ingestLocation getOrElse {
               throw UningestedScenesException(
