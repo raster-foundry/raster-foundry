@@ -22,7 +22,6 @@ object Version {
   val elasticacheClient = "1.1.1"
   val ficus = "1.4.0"
   val findbugAnnotations = "3.0.1u2"
-  val gatling = "2.2.4"
   val geotools = "17.1"
   val geotrellis = "3.0.0-SNAPSHOT"
   val geotrellisServer = "0.0.13"

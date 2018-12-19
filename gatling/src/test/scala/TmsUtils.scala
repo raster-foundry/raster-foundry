@@ -1,8 +1,8 @@
-package com.rasterfoundry.tile
+package rfgatling
 
-import io.gatling.core.Predef._
-import io.gatling.http.Predef._
-import io.gatling.http.request.builder.HttpRequestBuilder
+import _root_.io.gatling.core.Predef._
+import _root_.io.gatling.http.Predef._
+import _root_.io.gatling.http.request.builder.HttpRequestBuilder
 import com.typesafe.config.ConfigFactory
 import geotrellis.proj4._
 import geotrellis.spark._
@@ -32,7 +32,9 @@ object TmsUtils {
   /** For a given lat, long, and zoom, generate a full screen (up to 16 tile
     *  requests) of TMS tile indices.
     */
-  def tileIdxsForScreen(lat: Double, lon: Double, zoom: Int): Seq[(Int, Int, Int)] = {
+  def tileIdxsForScreen(lat: Double,
+                        lon: Double,
+                        zoom: Int): Seq[(Int, Int, Int)] = {
     val zoomRes = 1 << zoom // one dimensional resolution
     def wrapCoord(latlon: Int) = latlon % zoomRes
 
@@ -81,11 +83,17 @@ object TmsUtils {
   }
 
   /** Random TMS indices constrained by a provided bounding box and bounding zoom levels */
-  def randomTileIdxsForBBox(bbox: Extent = LatLng.worldExtent, minZoom: Int = 1, maxZoom: Int = 20): Seq[(Int, Int, Int)] =
-    tileIdxsForScreen(randomLat(bbox.ymin, bbox.ymax), randomLon(bbox.xmin, bbox.xmax), randomZoom(minZoom, maxZoom))
+  def randomTileIdxsForBBox(bbox: Extent = LatLng.worldExtent,
+                            minZoom: Int = 1,
+                            maxZoom: Int = 20): Seq[(Int, Int, Int)] =
+    tileIdxsForScreen(randomLat(bbox.ymin, bbox.ymax),
+                      randomLon(bbox.xmin, bbox.xmax),
+                      randomZoom(minZoom, maxZoom))
 
   /** A gatling [[Feeder] instance for generating requests that mimic TMS requests */
-  def randomTileFeeder(bbox: Extent = LatLng.worldExtent, minZoom: Int = 1, maxZoom: Int = 20) = {
+  def randomTileFeeder(bbox: Extent = LatLng.worldExtent,
+                       minZoom: Int = 1,
+                       maxZoom: Int = 20) = {
     Iterator.continually {
       Map("tiles" -> randomTileIdxsForBBox(bbox, minZoom, maxZoom))
     }

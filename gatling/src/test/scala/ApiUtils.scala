@@ -1,11 +1,10 @@
-package com.rasterfoundry.tile
+package rfgatling
 
-import io.circe._
-import io.circe.parser._
+import _root_.io.circe._
+import _root_.io.circe.parser._
 import scalaj.http._
 import cats.syntax.either._
 import geotrellis.vector._
-import geotrellis.slick._
 
 import scala.util._
 import java.util.UUID
@@ -33,10 +32,34 @@ object ApiUtils {
 
     parsed.hcursor.get[String]("id_token") match {
       case Right(token) => token
-      case Left(x) => throw new IllegalStateException(s"Parsing auth token failed in ${res}")
+      case Left(x) => {
+        throw new IllegalStateException(s"Parsing auth token failed in ${res}")
+      }
     }
   }
 
+  /** Unfortunately, this [[Extent]] is encoded as a [[Projected[Geometry]]],
+    *  which means we'll need a custom decoder instance.
+    */
+  implicit val decodeExtent: Decoder[Extent] = new Decoder[Extent] {
+    final def apply(c: HCursor): Decoder.Result[Extent] =
+      Either
+        .catchNonFatal {
+          val coords = c.downField("coordinates")
+          val minCurs = coords.downArray.values.get.toList(0).hcursor
+          val maxCurs = coords.downArray.values.get.toList(2).hcursor
+
+          val xmin = minCurs.values.get.toList(0).as[Double].right.get
+          val ymin = minCurs.values.get.toList(1).as[Double].right.get
+          val xmax = maxCurs.values.get.toList(0).as[Double].right.get
+          val ymax = maxCurs.values.get.toList(1).as[Double].right.get
+
+          Extent(xmin, ymin, xmax, ymax)
+        }
+        .leftMap({ t =>
+          DecodingFailure("Parsing failure", c.history)
+        })
+  }
 
   /** Use the RF API to get a project's Bounding Box
     *
@@ -54,27 +77,6 @@ object ApiUtils {
         .asString
 
       var parsed = parse(res.body).getOrElse(Json.Null)
-
-      /** Unfortunately, this [[Extent]] is encoded as a [[Projected[Geometry]]],
-        *  which means we'll need a custom decoder instance.
-        */
-      implicit val decodeExtent: Decoder[Extent] = new Decoder[Extent] {
-        final def apply(c: HCursor): Decoder.Result[Extent] =
-          Either.catchNonFatal {
-            val coords = c.downField("coordinates")
-            val minCurs = coords.downArray.values.get(0).hcursor
-            val maxCurs = coords.downArray.values.get(2).hcursor
-
-            val xmin = minCurs.values.get(0).as[Double].right.get
-            val ymin = minCurs.values.get(1).as[Double].right.get
-            val xmax = maxCurs.values.get(0).as[Double].right.get
-            val ymax = maxCurs.values.get(1).as[Double].right.get
-
-            Extent(xmin, ymin, xmax, ymax)
-          }.leftMap({ t =>
-            DecodingFailure("Parsing failure", c.history)
-          })
-      }
 
       parsed.hcursor.get[Extent]("extent") match {
         case Right(bbox) =>

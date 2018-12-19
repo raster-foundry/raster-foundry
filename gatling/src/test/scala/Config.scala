@@ -1,4 +1,4 @@
-package com.rasterfoundry.tile
+package rfgatling
 
 import com.typesafe.config.ConfigFactory
 
@@ -6,9 +6,9 @@ object Config {
   private val config = ConfigFactory.load()
 
   object RF {
-    val host = config.getString("gatling.rf.host")
-    val tokenEndpoint = host + config.getString("gatling.rf.tokenRoute")
-    val projectEndpoint = host + config.getString("gatling.rf.projectRoute")
+    val apiHost = config.getString("gatling.rf.apiHost")
+    val tokenEndpoint = apiHost + config.getString("gatling.rf.tokenRoute")
+    val projectEndpoint = apiHost + config.getString("gatling.rf.projectRoute")
 
     val projectId = config.getString("gatling.rf.projectId")
     val refreshToken = config.getString("gatling.rf.refreshToken")

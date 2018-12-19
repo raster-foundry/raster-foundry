@@ -39,9 +39,6 @@ object Dependencies {
   val elasticacheClient = "com.amazonaws" % "elasticache-java-cluster-client" % Version.elasticacheClient
   val ficus = "com.iheart" %% "ficus" % Version.ficus
   val findbugAnnotations = "com.google.code.findbugs" % "annotations" % Version.findbugAnnotations % "compile"
-  val gatlingApp = "io.gatling" % "gatling-app" % Version.gatling % "test,it"
-  val gatlingHighcharts = "io.gatling.highcharts" % "gatling-charts-highcharts" % Version.gatling
-  val gatlingTest = "io.gatling" % "gatling-test-framework" % Version.gatling % "test,it"
   val geotools = "org.geotools" % "gt-shapefile" % Version.geotools
   val geotrellisGeotools = "org.locationtech.geotrellis" %% "geotrellis-geotools" % Version.geotrellis
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
