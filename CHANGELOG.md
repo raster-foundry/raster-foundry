@@ -29,6 +29,8 @@
 - Used the correct field as outgoing email source in platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
 - Fix deprecated use of route change listeners which caused window title to break [\#4365](https://github.com/raster-foundry/raster-foundry/pull/4365)
 - Fix project ownership filter persistance across pages [\#4376](https://github.com/raster-foundry/raster-foundry/pull/4376)
+- Fix logo on project share page and add error handling [/#4377](https://github.com/raster-foundry/raster-foundry/pull/4377)
+- Address a number of unhandled promise chains on the frontend [\#4380](https://github.com/raster-foundry/raster-foundry/pull/4380)
 - Restored routes missing from backsplash after reintegration into RF main [\#4382](https://github.com/raster-foundry/raster-foundry/pull/4382)
 - Restored color correction [\#4387](https://github.com/raster-foundry/raster-foundry/pull/4387)
 - Aligned backsplash dockerfile with existing services [\#4394](https://github.com/raster-foundry/raster-foundry/pull/4394)

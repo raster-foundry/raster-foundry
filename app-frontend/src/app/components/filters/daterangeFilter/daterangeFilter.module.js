@@ -112,7 +112,7 @@ class DaterangeFilterController {
                 this.lastRange = range;
                 this.setDateRange(range.start, range.end, range.preset);
             }
-        });
+        }).catch(() => {});
     }
 
     setDateRange(start, end, preset) {

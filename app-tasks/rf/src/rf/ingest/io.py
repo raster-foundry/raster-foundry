@@ -10,6 +10,7 @@ import boto3
 
 import logging
 import os
+import urllib
 
 DATA_BUCKET = os.getenv('DATA_BUCKET')
 
@@ -17,7 +18,7 @@ s3client = boto3.client('s3')
 logger = logging.getLogger(__name__)
 
 
-def create_cog(image_locations, scene):
+def create_cog(image_locations, scene, same_path=False):
     with get_tempdir() as local_dir:
         dsts = [os.path.join(local_dir, fname) for _, fname in image_locations]
         cog.fetch_imagery(image_locations, local_dir)
@@ -25,12 +26,21 @@ def create_cog(image_locations, scene):
         merged_tif = cog.merge_tifs(warped_paths, local_dir)
         cog.add_overviews(merged_tif)
         cog_path = cog.convert_to_cog(merged_tif, local_dir)
-        updated_scene = upload_tif(cog_path, scene)
+        if same_path:
+            updated_scene = upload_tif(
+                cog_path, scene,
+                os.path.join('user-uploads', urllib.quote_plus(scene.owner), '{}_COG.tif'.format(scene.id))
+            )
+        else:
+            updated_scene = upload_tif(cog_path, scene)
         updated_scene.update()
+        os.remove(cog_path)
 
 
-def upload_tif(tif_path, scene):
-    key = os.path.join('public-cogs', '{}_COG.tif'.format(scene.id))
+def upload_tif(tif_path, scene, key=''):
+    if len(key) == 0:
+        key = os.path.join('public-cogs', '{}_COG.tif'.format(scene.id))
+
     s3uri = 's3://{}/{}'.format(DATA_BUCKET, key)
     logger.info('Uploading tif to S3 at %s', s3uri)
     with open(tif_path, 'r') as inf:

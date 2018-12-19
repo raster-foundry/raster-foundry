@@ -198,7 +198,7 @@ class LabNodeController {
                     noDownload: () => true,
                     templateTitle: () => this.analysis.name
                 }
-            });
+            }).result.catch(() => {});
         }
         return false;
     }

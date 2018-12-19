@@ -472,7 +472,7 @@ class LabMapController {
             }
         }).result.then((resp) => {
             this.$state.go('user.settings.connections');
-        });
+        }).catch(() => {});
     }
 }
 

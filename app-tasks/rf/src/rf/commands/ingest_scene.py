@@ -21,8 +21,9 @@ def ingest_scene(scene_id):
     """
     logger.info("Converting scene to COG: %s", scene_id)
     scene = Scene.from_id(scene_id)
-    scene.ingestStatus = 'INGESTING'
-    scene.update()
+    if scene.ingestStatus != 'INGESTED':
+        scene.ingestStatus = 'INGESTING'
+        scene.update()
     image_locations = [(x.sourceUri, x.filename) for x in sorted(
         scene.images, key=lambda x: io.sort_key(scene.datasource, x.bands[0]))]
     io.create_cog(image_locations, scene)

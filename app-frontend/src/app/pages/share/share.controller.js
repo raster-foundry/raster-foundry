@@ -14,26 +14,34 @@ export default class ShareController {
     }
 
     $onInit() {
+        this.assetLogo = assetLogo;
         this.projectId = this.$state.params.projectid;
         this.testNoAuth = false;
         this.sceneList = [];
 
         if (this.projectId) {
-            this.loadingProject = true;
-            this.projectService.query({id: this.projectId}).then(
-                p => {
-                    this.project = p;
-                    this.fitProjectExtent();
-                    this.loadingProject = false;
-                    this.addProjectLayer();
-                },
-                () => {
-                    this.loadingProject = false;
-                    // @TODO: handle displaying an error message
-                }
-            );
+            this.loadProject();
         }
     }
+
+    loadProject() {
+        this.loadingProject = true;
+        this.projectError = false;
+        this.projectService.query({id: this.projectId}).then(
+            p => {
+                this.project = p;
+                this.loadingProject = false;
+                this.projectError = false;
+                this.fitProjectExtent();
+                this.addProjectLayer();
+            },
+            (e) => {
+                this.loadingProject = false;
+                this.projectError = e;
+            }
+        );
+    }
+
     getMap() {
         return this.mapService.getMap('share-map');
     }

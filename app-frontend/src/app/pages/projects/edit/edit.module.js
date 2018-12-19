@@ -201,7 +201,7 @@ class ProjectsEditController {
                 tileUrl: () => this.projectService.getProjectLayerURL(this.project),
                 shareUrl: () => this.projectService.getProjectShareURL(this.project)
             }
-        });
+        }).result.catch(() => {});
     }
 
     openShareModal() {
@@ -214,7 +214,7 @@ class ProjectsEditController {
                 objectName: () => this.project.name,
                 platform: () => this.platform
             }
-        });
+        }).result.catch(() => {});
     }
 
     openExportModal() {
@@ -228,7 +228,7 @@ class ProjectsEditController {
                     zoom: () => zoom
                 }
             });
-        });
+        }).result.catch(() => {});
     }
 
 }

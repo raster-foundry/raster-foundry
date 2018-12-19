@@ -1,4 +1,6 @@
-import DatasourcesController from './datasources.controller.js';
+class DatasourcesController {
+    constructor() { }
+}
 
 const DatasourcesModule = angular.module('pages.imports.datasources', []);
 

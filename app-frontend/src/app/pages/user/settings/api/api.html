@@ -19,12 +19,21 @@
         </button>
       </div>
     </form>
+    <div class="list-group"
+         ng-show="$ctrl.tokenCreateError">
+      <span class="list-placeholder"
+            style="color: red; font-weight: bold;">
+        There was an error generating a new token.
+      </span>
+    </div>
     <div class="list-group">
       <rf-token-item
-        token="token"
-        on-delete="$ctrl.deleteToken(token)"
-        ng-repeat="token in $ctrl.tokens track by token.id">
+          token="token"
+          on-delete="$ctrl.deleteToken(token)"
+          type="api"
+          ng-repeat="token in $ctrl.tokens track by token.id">
     </div>
+    <div class="list-group" ng-show="$ctrl.loading">
     <div class="list-group"
          ng-if="(!$ctrl.tokens || !$ctrl.tokens.length) && !$ctrl.loading">
       You have not generated any tokens.

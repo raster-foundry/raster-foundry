@@ -95,7 +95,7 @@ class ImportListController {
             resolve: {
                 origin: () => 'raster'
             }
-        });
+        }).result.catch(() => {});
     }
 
     downloadModal(scene) {
@@ -104,7 +104,7 @@ class ImportListController {
             resolve: {
                 scene: () => scene
             }
-        });
+        }).result.catch(() => {});
     }
 
     shareModal(scene) {
@@ -117,7 +117,7 @@ class ImportListController {
                 objectName: () => scene.name,
                 platform: () => this.platform
             }
-        });
+        }).result.catch(() => {});
     }
 
     deleteModal(scene) {
@@ -151,7 +151,7 @@ class ImportListController {
                     this.$log.debug('error deleting scene', err);
                 }
             );
-        });
+        }).catch(() => {});
     }
 
     shouldShowImportList() {

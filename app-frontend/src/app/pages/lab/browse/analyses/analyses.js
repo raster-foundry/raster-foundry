@@ -154,7 +154,7 @@ class LabBrowseAnalysesController {
                     this.fetchPage();
                 });
             });
-        });
+        }).catch(() => {});
     }
 
     toggleAnalysisSelection(id) {
@@ -171,7 +171,7 @@ class LabBrowseAnalysesController {
             resolve: {
                 analysis: () => analysis
             }
-        });
+        }).result.catch(() => {});
     }
 
     checkAnalysesExports(analysesList) {

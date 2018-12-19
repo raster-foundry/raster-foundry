@@ -1,22 +1,19 @@
 const ApiTokensModule = angular.module('pages.settings.tokens.api', []);
 
 class ApiTokensController {
-    constructor($log, modalService, $stateParams, $state, tokenService, authService, APP_CONFIG) {
+    constructor(
+        $scope, $log, $state, $stateParams, $timeout,
+        modalService, tokenService, authService, APP_CONFIG
+    ) {
         'ngInject';
-        this.$log = $log;
-
-        this.tokenService = tokenService;
-        this.authService = authService;
-        this.modalService = modalService;
-        this.$stateParams = $stateParams;
-        this.APP_CONFIG = APP_CONFIG;
-        this.$state = $state;
+        $scope.autoInject(this, arguments);
         this.loading = true;
 
         this.fetchTokens();
     }
 
     $onInit() {
+        this.test = 'test';
         if (this.$stateParams.code) {
             this.tokenService
                 .createApiToken(this.$stateParams.code)
@@ -27,9 +24,14 @@ class ApiTokensController {
                             refreshToken: () => authResult.refresh_token,
                             name: () => 'Refresh Token'
                         }
-                    });
+                    }).result.catch(() => {});
+                }, (error) => {
+                    this.tokenCreateError = true;
+                    this.$log.error(error.data);
+                    this.$timeout(() => {
+                        this.tokenCreateError = false;
+                    }, 10000);
                 });
-            this.$state.go('.', {code: null, state: null}, {notify: false});
         }
     }
 
@@ -55,7 +57,7 @@ class ApiTokensController {
                     refreshToken: () => authResult.refreshToken,
                     name: () => this.lastTokenName
                 }
-            });
+            }).result.catch(() => {});
             delete this.newTokenName;
             this.fetchTokens();
         }, (error) => {
@@ -96,7 +98,7 @@ class ApiTokensController {
                     this.fetchTokens();
                 }
             );
-        });
+        }).catch(() => {});
     }
 }
 
