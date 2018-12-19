@@ -1,14 +1,2 @@
-api/target/*
-authentication/target/*
-batch/target/*
-common/target/*
-db/target/*
-datamodel/target/*
-ingest/target/*
-migrations/target/*
-project/target/*
-target/*
-tile/target/*
-tool/target/*
-backsplash/target/*
+*/target/*
 .idea/*

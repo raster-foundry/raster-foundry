@@ -14,7 +14,7 @@ final case class MosaicDefinition(sceneId: UUID,
                                   ingestLocation: Option[String],
                                   footprint: Option[MultiPolygon],
                                   isSingleBand: Boolean,
-                                  singleBandOptions: Json)
+                                  singleBandOptions: Option[Json])
 
 object MosaicDefinition {
   def fromScenesToProjects(

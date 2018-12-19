@@ -117,7 +117,7 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
               sceneType = Some(SceneType.Avro),
               footprint = Some(mask),
               isSingleBand = false,
-              singleBandOptions = ().asJson
+              singleBandOptions = Some(().asJson)
             )),
           mask = Some(mask)
         )
