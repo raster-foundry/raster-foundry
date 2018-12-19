@@ -8,7 +8,7 @@ import com.rasterfoundry.backsplash.Parameters._
 import cats.Applicative
 import cats.data.{NonEmptyList => NEL}
 import cats.data.Validated._
-import cats.effect.{ContextShift, IO}
+import cats.effect.{ContextShift, IO, Fiber}
 import cats.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
@@ -53,8 +53,12 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
               LayerTms.identity(
                 projects.read(projectId, None, bandOverride, None))
             for {
-              _ <- authorizers.authProject(user, projectId)
-              resp <- eval(z, x, y) flatMap {
+              fiberAuth <- authorizers.authProject(user, projectId).start
+              fiberResp <- eval(z, x, y).start
+              _ <- fiberAuth.join.handleErrorWith { error =>
+                fiberResp.cancel *> IO.raiseError(error)
+              }
+              resp <- fiberResp.join flatMap {
                 case Valid(tile) =>
                   Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
                 case Invalid(e) =>
