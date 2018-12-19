@@ -30,7 +30,7 @@ final case class SceneToProjectwithSceneType(
     ingestLocation: Option[String],
     dataFootprint: Option[Projected[Geometry]],
     isSingleBand: Boolean,
-    singleBandOptions: Json
+    singleBandOptions: Option[Json]
 )
 
 @JsonCodec

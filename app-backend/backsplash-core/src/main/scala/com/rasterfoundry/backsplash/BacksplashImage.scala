@@ -17,6 +17,7 @@ import cats.data.{NonEmptyList => NEL}
 import cats.effect.IO
 import io.circe.syntax._
 
+import java.net.URLDecoder
 import java.util.UUID
 
 case class BacksplashImage(
@@ -63,7 +64,8 @@ case class BacksplashImage(
 
 object BacksplashImage extends RasterSourceUtils {
 
-  def getRasterSource(uri: String): GDALRasterSource = GDALRasterSource(uri)
+  def getRasterSource(uri: String): GDALRasterSource =
+    GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
 
   def fromWkt(uri: String,
               wkt: String,

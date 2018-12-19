@@ -2,8 +2,6 @@ package com.rasterfoundry.database
 
 import java.sql.Timestamp
 
-import com.rasterfoundry.backsplash.PaintableTool
-import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel.{
@@ -110,24 +108,4 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
       .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)
       .exists
-
-  def unsafeGetAST(analysisId: UUID,
-                   nodeId: Option[UUID]): ConnectionIO[MapAlgebraAST] =
-    for {
-      executionParams <- query.filter(analysisId).select map {
-        _.executionParameters
-      }
-    } yield {
-      val decoded = executionParams.as[MapAlgebraAST].toOption getOrElse {
-        throw MetadataException(s"Could not decode AST for $analysisId")
-      }
-      nodeId map {
-        decoded
-          .find(_)
-          .getOrElse {
-            throw MetadataException(
-              s"Node $nodeId missing from AST $analysisId")
-          }
-      } getOrElse { decoded }
-    }
 }

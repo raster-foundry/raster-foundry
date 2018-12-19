@@ -271,7 +271,7 @@ lazy val common = Project("common", file("common"))
   })
 
 lazy val db = Project("db", file("db"))
-  .dependsOn(datamodel % "compile->compile;test->test", common, backsplashCore)
+  .dependsOn(datamodel % "compile->compile;test->test", common)
   .settings(commonSettings: _*)
   .settings({
     libraryDependencies ++= dbDependencies ++ loggingDependencies ++ Seq(
@@ -475,7 +475,8 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       "org.scalatest" %% "scalatest" % Version.scalaTest,
       "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer,
       "org.scalacheck" %% "scalacheck" % Version.scalaCheck,
-      "org.apache.spark" %% "spark-core" % "2.4.0" % Provided
+      "org.apache.spark" %% "spark-core" % "2.4.0" % Provided,
+      Dependencies.catsMeow
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),

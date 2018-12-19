@@ -1,11 +1,13 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.database.{SceneToProjectDao, ToolRunDao}
+import com.rasterfoundry.datamodel.User
 import cats.Applicative
 import cats.data.OptionT
 import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
+import com.olegpy.meow.hierarchy._
 import fs2.Stream
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
@@ -25,13 +27,14 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.{TimeUnit, Executors}
 
+import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.MetricsRegistrator
 
 import java.util.UUID
 
-object Main extends IOApp {
+object Main extends IOApp with ProjectStoreImplicits {
 
   override protected implicit def contextShift: ContextShift[IO] =
     IO.contextShift(
@@ -42,6 +45,13 @@ object Main extends IOApp {
 
   val timeout: FiniteDuration =
     new FiniteDuration(Config.server.timeoutSeconds, TimeUnit.SECONDS)
+
+  implicit val backsplashErrorHandler
+    : HttpErrorHandler[IO, BacksplashException, User] =
+    new BacksplashHttpErrorHandler[IO, User]
+
+  implicit val foreignErrorHandler: HttpErrorHandler[IO, Throwable, User] =
+    new ForeignErrorHandler[IO, Throwable, User]
 
   def withCORS(svc: HttpRoutes[IO]): HttpRoutes[IO] =
     CORS(
@@ -69,10 +79,15 @@ object Main extends IOApp {
   import toolStoreImplicits._
 
   val mosaicService: HttpRoutes[IO] =
-    new MosaicService(SceneToProjectDao(), mtr, mosaicImplicits).routes
+    Authenticators.tokensAuthMiddleware(
+      new MosaicService(SceneToProjectDao(), mtr, mosaicImplicits).routes)
 
   val analysisService: HttpRoutes[IO] =
-    new AnalysisService(ToolRunDao(), mtr, mosaicImplicits, toolStoreImplicits).routes
+    Authenticators.tokensAuthMiddleware(
+      new AnalysisService(ToolRunDao(),
+                          mtr,
+                          mosaicImplicits,
+                          toolStoreImplicits).routes)
 
   val httpApp =
     Router(
