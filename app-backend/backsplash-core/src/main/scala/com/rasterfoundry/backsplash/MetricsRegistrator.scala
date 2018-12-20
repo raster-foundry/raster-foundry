@@ -50,9 +50,9 @@ class MetricsRegistrator(implicit clock: Clock[IO]) {
     reporter.start(1, TimeUnit.MINUTES)
   }
 
-  def reportToGraphite = {
+  def reportToGraphite(graphiteUrl: String) = {
     val addr =
-      new InetSocketAddress("graphite.service.rasterfoundry.internal", 2003)
+      new InetSocketAddress(graphiteUrl, 2003)
     val graphite = new Graphite(addr)
     val reporter = GraphiteReporter
       .forRegistry(registry)

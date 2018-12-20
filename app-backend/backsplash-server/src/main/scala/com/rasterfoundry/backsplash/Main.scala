@@ -92,7 +92,7 @@ object Main extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
     for {
-      _ <- IO { mtr.reportToGraphite }
+      _ <- IO { mtr.reportToGraphite(Config.server.graphiteUrl) }
       exit <- stream.compile.drain.map(_ => ExitCode.Success)
     } yield exit
 }
