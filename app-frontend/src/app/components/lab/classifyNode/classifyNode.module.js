@@ -103,7 +103,7 @@ class ClassifyNodeController {
                 }),
                 hard: true
             });
-        });
+        }).catch(() => {});
     }
 }
 

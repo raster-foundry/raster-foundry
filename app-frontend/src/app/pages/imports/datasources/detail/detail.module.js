@@ -162,7 +162,7 @@ class DatasourceDetailController {
                 datasource: () => this.datasource,
                 origin: () => 'datasource'
             }
-        });
+        }).result.catch(() => {});
     }
 
     saveColorComposites() {

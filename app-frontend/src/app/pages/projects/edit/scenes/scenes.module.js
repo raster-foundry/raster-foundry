@@ -174,7 +174,7 @@ class ProjectsScenesController {
                 objectName: () => project.name,
                 platform: () => this.platform
             }
-        });
+        }).result.catch(() => {});
     }
 
     openImportModal() {
@@ -188,7 +188,7 @@ class ProjectsScenesController {
 
         activeModal.result.then(results => {
             this.checkPendingImports();
-        });
+        }).catch(() => {});
     }
 
     updateSceneOrder(orderedSceneIds) {
@@ -252,7 +252,7 @@ class ProjectsScenesController {
             resolve: {
                 scene: () => scene
             }
-        });
+        }).result.catch(() => {});
     }
 }
 

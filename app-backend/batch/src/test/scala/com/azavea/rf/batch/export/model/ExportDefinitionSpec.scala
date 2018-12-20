@@ -114,7 +114,10 @@ class ExportDefinitionSpec extends FunSpec with Matchers with BatchSpec {
               sceneId = UUID.fromString("8436f7e9-b7f7-4d4f-bda8-76b32c356cff"),
               ingestLocation = Some("s3://test/"),
               colorCorrections = cc,
-              sceneType = Some(SceneType.Avro)
+              sceneType = Some(SceneType.Avro),
+              footprint = Some(mask),
+              isSingleBand = false,
+              singleBandOptions = Some(().asJson)
             )),
           mask = Some(mask)
         )

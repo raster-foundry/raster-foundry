@@ -8,18 +8,40 @@
 ### Added
 - Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Added a support email field to platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
+- Supported team creation on user's team list page [\#4345](https://github.com/raster-foundry/raster-foundry/pull/4345)
+- Use java's gdal bindings for tile IO in backsplash and better separate concerns between fetching imagery and talking to the database / users [\#4339](https://github.com/raster-foundry/raster-foundry/pull/4339)
+- Added dropwizard metrics instrumentation to backsplash methods and endpoints [\#4381](https://github.com/raster-foundry/raster-foundry/pull/4381)
+- Added graphite reporter to dropwizard metrics [\#4398](https://github.com/raster-foundry/raster-foundry/pull/4398)
 
 ### Changed
 
 - Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Reorganized scala dependencies for package cleanliness and smaller bundles [\#4301](https://github.com/raster-foundry/raster-foundry/pull/4301)
 - If users are not requesting their own info, the returned other users' personal info are protected [\#4360](https://github.com/raster-foundry/raster-foundry/pull/4360)
+- Changed the data model of the return of `users/me/roles` endpoint [\#4375](https://github.com/raster-foundry/raster-foundry/pull/4375)
+- Added more aggressive timeout to backsplash for improved thread recovery [\#4383](https://github.com/raster-foundry/raster-foundry/pull/4383)
+- Decreased max classfile name length from 100 to 70 for CI reasons [\#4388](https://github.com/raster-foundry/raster-foundry/pull/4388)
+- Used a fixed number of threadPool for Backsplash [\#4389](https://github.com/raster-foundry/raster-foundry/pull/4389)
+- Made timeout length and number of threadPool configurable [\#4389](https://github.com/raster-foundry/raster-foundry/pull/4389)
 
 ### Fixed
 
 - Made the status code for aoi creation on projects a 201 instead of a 200 [\#4331](https://github.com/raster-foundry/raster-foundry/pull/4331)
 - Opened access for group members to remove their group memberships [\#4358](https://github.com/raster-foundry/raster-foundry/pull/4358)
 - Used the correct field as outgoing email source in platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
+- Fix deprecated use of route change listeners which caused window title to break [\#4365](https://github.com/raster-foundry/raster-foundry/pull/4365)
+- Fix project ownership filter persistance across pages [\#4376](https://github.com/raster-foundry/raster-foundry/pull/4376)
+- Fix logo on project share page and add error handling [/#4377](https://github.com/raster-foundry/raster-foundry/pull/4377)
+- Address a number of unhandled promise chains on the frontend [\#4380](https://github.com/raster-foundry/raster-foundry/pull/4380)
+- Restored routes missing from backsplash after reintegration into RF main [\#4382](https://github.com/raster-foundry/raster-foundry/pull/4382)
+- Restored color correction [\#4387](https://github.com/raster-foundry/raster-foundry/pull/4387)
+- Fix logo on project share page and add error handling [/#4377](https://github.com/raster-foundry/raster-foundry/pull/4377)
+- Address a number of unhandled promise chains on the frontend [\#4380](https://github.com/raster-foundry/raster-foundry/pull/4380)
+- Restored auth and error-handling [\#4390](https://github.com/raster-foundry/raster-foundry/pull/4390)
+- Aligned backsplash dockerfile with existing services [\#4394](https://github.com/raster-foundry/raster-foundry/pull/4394)
+- Upgraded geotrellis-server to handle thread safety issue that was causing SEGFAULTs in backsplash [\#4399](https://github.com/raster-foundry/raster-foundry/pull/4399)
+
+### Removed
 
 ## [1.15.0](https://github.com/raster-foundry/raster-foundry/tree/1.15.0) (2018-11-30)
 
@@ -28,6 +50,7 @@
 - Added S3 path suggestions in scene import modal when users upload imageries from S3 buckets [\#4290](https://github.com/raster-foundry/raster-foundry/pull/4290)
 - Enabled deleting lab templates on the frontend [\#4287](https://github.com/raster-foundry/raster-foundry/pull/4287)
 - Added support for viewing public projects using backsplash [\#4299](https://github.com/raster-foundry/raster-foundry/pull/4299)
+- Added script for reprocessing sentinel 2 scenes which were imported with the wrong number of bands [\4349](https://github.com/raster-foundry/raster-foundry/pull/4349
 
 ### Changed
 - Populate user profiles from their identity tokens more intelligently [\#4298](https://github.com/raster-foundry/raster-foundry/pull/4298)

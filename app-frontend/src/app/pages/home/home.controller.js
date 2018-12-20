@@ -14,19 +14,19 @@ class HomeController {
         this.blogPosts = [];
         this.feedService.getPosts().then(posts => {
             this.blogPosts = posts;
-        });
+        }).catch(() => {});
     }
 
     openCreateProjectModal() {
         this.modalService.open({
             component: 'rfProjectCreateModal'
-        });
+        }).result.catch(() => {});
     }
 
     openTemplateCreateModal() {
         this.modalService.open({
             component: 'rfTemplateCreateModal'
-        });
+        }).result.catch(() => {});
     }
 }
 

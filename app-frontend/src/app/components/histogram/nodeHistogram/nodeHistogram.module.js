@@ -436,7 +436,7 @@ class NodeHistogramController {
                     baseScheme
                 })
             });
-        });
+        }).catch(() => {});
     }
 }
 

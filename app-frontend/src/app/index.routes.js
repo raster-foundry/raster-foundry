@@ -261,7 +261,7 @@ function projectStates($stateProvider) {
         })
         .state('projects.list', {
             title: 'User Projects',
-            url: '/list?page&search',
+            url: '/list?page&search&ownership',
             templateUrl: projectsListTpl,
             controller: 'ProjectsListController',
             controllerAs: '$ctrl'
@@ -770,11 +770,11 @@ function routeConfig(
 
     $stateProvider
         .state('error', {
-
             url: '/error',
             templateUrl: errorTpl,
             controller: 'ErrorController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            bypassAuth: true
         });
 
     $urlRouterProvider.otherwise('/home');

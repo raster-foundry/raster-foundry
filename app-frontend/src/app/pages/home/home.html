@@ -34,7 +34,7 @@
               <p class="pb-25">
                 Leverage {{$ctrl.BUILDCONFIG.APP_NAME}}'s powerful API to create your own imagery applications.
               </p>
-              <a class="btn btn-default" ui-sref="user.settings.api-tokens">Manage API Tokens</a>
+              <a class="btn btn-default" ui-sref="user.settings.api-tokens({userId: 'me'})">Manage API Tokens</a>
               <div class="hide-sm"></div>
               <p>
                 <a ng-href="{{$ctrl.HELPCONFIG.DEVELOPER_RESOURCES}}" target="_blank">Developer Resources</a>
@@ -53,7 +53,7 @@
             <p>
               Hello, <strong>{{$ctrl.authService.getName()}}</strong>
             </p>
-            <a class="btn btn-light" ui-sref="user.settings.profile">Manage account</a>
+            <a class="btn btn-light" ui-sref="user.settings.profile({userId: 'me'})">Manage account</a>
           </section>
           <section ng-if="$ctrl.blogPosts && $ctrl.blogPosts.length">
             <h5>From our blog</h5>

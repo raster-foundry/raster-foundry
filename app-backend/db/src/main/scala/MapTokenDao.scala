@@ -132,8 +132,6 @@ object MapTokenDao extends Dao[MapToken] {
       project: Option[UUID],
       toolRun: Option[UUID]
   ): ConnectionIO[MapToken] = {
-    val id = UUID.randomUUID
-    val now = new Timestamp((new java.util.Date()).getTime())
     val ownerId = util.Ownership.checkOwner(user, owner)
     val newMapToken = MapToken.Create(name, project, toolRun, Some(ownerId))
     insert(newMapToken, user)

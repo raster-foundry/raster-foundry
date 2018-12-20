@@ -11,7 +11,7 @@ export default (app) => {
             }
 
             this.activeModal = this.$uibModal.open(modalConfig);
-            this.activeModal.result.finally(() => {
+            this.activeModal.result.catch(() => {}).finally(() => {
                 delete this.activeModal;
             });
             return this.activeModal;

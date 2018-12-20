@@ -14,6 +14,16 @@
       <i class="icon-users"></i>
     </span>
     <form name="$ctrl.form" ng-submit="$ctrl.onAdd()">
+      <div class="form-group" ng-if="$ctrl.resolve.chooseOrg">
+        <label>Choose an organization to add this team to</label>
+        <select
+          class="form-control subject-select"
+          ng-init="$ctrl.selectedOrganization = $ctrl.organizations[0]"
+          ng-model="$ctrl.selectedOrganization"
+          ng-change="$ctrl.onSelectOrganizationChange()"
+          ng-options="organization.groupName for organization in $ctrl.organizations">
+        </select>
+      </div>
       <div class="form-group">
         <label for="new-team-name">Team name</label>
         <input
@@ -33,6 +43,12 @@
       <button type="button" class="btn" ng-click="$ctrl.dismiss()">Close</button>
   </div>
   <div class="footer-section right">
-      <button type="button" class="btn btn-primary" ng-click="$ctrl.onAdd()">Create team</button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        ng-click="$ctrl.onAdd()"
+        ng-disabled="$ctrl.disableCreate()">
+        Create team
+      </button>
   </div>
 </div>

@@ -110,7 +110,10 @@ object GlobalSummary extends LazyLogging {
             case MosaicDefinition(sceneId,
                                   _,
                                   maybeSceneType,
-                                  Some(ingestLocation)) =>
+                                  Some(ingestLocation),
+                                  _,
+                                  _,
+                                  _) =>
               maybeSceneType match {
                 case Some(SceneType.COG) =>
                   minAcceptableCogZoom(ingestLocation, size).value

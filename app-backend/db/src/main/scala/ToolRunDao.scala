@@ -3,6 +3,7 @@ package com.rasterfoundry.database
 import java.sql.Timestamp
 
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel.{
   ToolRun,
   User,
@@ -10,6 +11,7 @@ import com.rasterfoundry.datamodel.{
   GroupType,
   ActionType
 }
+import com.rasterfoundry.tool.ast.MapAlgebraAST
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -22,6 +24,8 @@ import cats.implicits._
 import java.util.UUID
 
 import scala.concurrent.Future
+
+case class ToolRunDao()
 
 object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
 

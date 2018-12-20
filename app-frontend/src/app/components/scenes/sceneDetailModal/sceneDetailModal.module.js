@@ -88,7 +88,7 @@ class SceneDetailModalController {
             resolve: {
                 scene: () => this.scene
             }
-        });
+        }).result.catch(() => {});
     }
 
     getSceneBounds() {
@@ -160,18 +160,17 @@ class SceneDetailModalController {
     }
 
     openDatePickerModal(date) {
-        this.modalService
-            .open({
-                component: 'rfDatePickerModal',
-                windowClass: 'auto-width-modal',
-                resolve: {
-                    config: () => Object({
-                        selectedDay: this.moment(date)
-                    })
-                }
-            }, false).result.then(selectedDay => {
-                this.updateAcquisitionDate(selectedDay);
-            });
+        this.modalService.open({
+            component: 'rfDatePickerModal',
+            windowClass: 'auto-width-modal',
+            resolve: {
+                config: () => Object({
+                    selectedDay: this.moment(date)
+                })
+            }
+        }, false).result.then(selectedDay => {
+            this.updateAcquisitionDate(selectedDay);
+        }).catch(() => {});
     }
 
     updateAcquisitionDate(selectedDay) {

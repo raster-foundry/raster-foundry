@@ -269,7 +269,7 @@ class MapContainerController {
                         [mapView.topLeft.latitude, mapView.topLeft.longitude]
                     ]);
                 }
-            });
+            }).catch(() => {});
     }
 
     startDrawingShape() {

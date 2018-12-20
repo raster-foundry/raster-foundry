@@ -137,10 +137,6 @@ export default class NavBarController {
         return this.$state.current.name.startsWith('projects.edit');
     }
 
-    signin() {
-        this.authService.login();
-    }
-
     logout() {
         this.authService.logout();
     }

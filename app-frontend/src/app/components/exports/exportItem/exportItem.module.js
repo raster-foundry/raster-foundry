@@ -1,6 +1,40 @@
 import angular from 'angular';
-import ExportItemComponent from './exportItem.component.js';
-import ExportItemController from './exportItem.controller.js';
+import exportTpl from './exportItem.html';
+
+const ExportItemComponent = {
+    templateUrl: exportTpl,
+    transclude: true,
+    controller: 'ExportItemController',
+    bindings: {
+        export: '<'
+    }
+};
+
+class ExportItemController {
+    constructor($scope, modalService, exportService) {
+        'ngInject';
+        this.$scope = $scope;
+        this.modalService = modalService;
+        this.exportService = exportService;
+    }
+
+    isDownloadAllowed() {
+        return this.export.exportType === 'S3';
+    }
+
+    isDownloadReady() {
+        return this.export.exportStatus === 'EXPORTED';
+    }
+
+    openDownloadModal() {
+        this.modalService.open({
+            component: 'rfExportDownloadModal',
+            resolve: {
+                export: () => this.export
+            }
+        }).result.catch(() => {});
+    }
+}
 
 const ExportItemModule = angular.module('components.exports.exportItem', []);
 

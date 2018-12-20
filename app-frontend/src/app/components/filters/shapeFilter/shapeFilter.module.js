@@ -195,7 +195,7 @@ class ShapeFilterController {
         });
         modal.result.then(() => {
             this.getShapes();
-        });
+        }).catch(() => {});
     }
 
     startCreateShape() {
@@ -216,7 +216,7 @@ class ShapeFilterController {
                 this.onSearchChange();
                 let shape = _.first(shapes);
                 this.onSelectShape(shape);
-            });
+            }).catch(() => {});
         }, () => {
             this.getMap().then(m => {
                 m.setGeojson('AOI', this.selectedShape);

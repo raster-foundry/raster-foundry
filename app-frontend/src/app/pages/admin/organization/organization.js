@@ -46,7 +46,7 @@ class OrganizationController {
         }).result.then((resp) => {
             this.organization = Object.assign({}, this.organization, resp);
             this.logoUpdateTrigger = new Date().getTime();
-        });
+        }).catch(() => {});
     }
 
     toggleOrgNameEdit() {
