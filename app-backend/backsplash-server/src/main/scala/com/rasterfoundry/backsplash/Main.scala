@@ -107,7 +107,7 @@ object Main extends IOApp with ProjectStoreImplicits {
 
   def run(args: List[String]): IO[ExitCode] =
     for {
-      _ <- IO { mtr.reportToConsole }
+      _ <- IO { mtr.reportToGraphite(Config.server.graphiteUrl) }
       exit <- stream.compile.drain.map(_ => ExitCode.Success)
     } yield exit
 }

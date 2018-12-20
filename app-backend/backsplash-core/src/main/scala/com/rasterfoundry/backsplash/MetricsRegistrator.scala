@@ -3,8 +3,10 @@ package com.rasterfoundry.backsplash
 import org.http4s.server.middleware.Metrics
 import org.http4s.metrics.dropwizard.Dropwizard
 import com.codahale.metrics.{Timer => MetricsTimer, _}
+import com.codahale.metrics.graphite.{Graphite, GraphiteReporter}
 import cats.effect.{IO, Clock}
 
+import java.net.InetSocketAddress
 import java.util.concurrent.TimeUnit
 import java.util.Locale
 import java.io.File
@@ -45,6 +47,18 @@ class MetricsRegistrator(implicit clock: Clock[IO]) {
       .convertRatesTo(TimeUnit.SECONDS)
       .convertDurationsTo(TimeUnit.MILLISECONDS)
       .build(f)
-    reporter.start(1, TimeUnit.SECONDS)
+    reporter.start(1, TimeUnit.MINUTES)
+  }
+
+  def reportToGraphite(graphiteUrl: String) = {
+    val addr =
+      new InetSocketAddress(graphiteUrl, 2003)
+    val graphite = new Graphite(addr)
+    val reporter = GraphiteReporter
+      .forRegistry(registry)
+      .convertRatesTo(TimeUnit.SECONDS)
+      .convertDurationsTo(TimeUnit.MILLISECONDS)
+      .build(graphite)
+    reporter.start(1, TimeUnit.MINUTES)
   }
 }
