@@ -14,6 +14,5 @@ object Config {
     private val serverConfig = config.getConfig("server")
     val timeoutSeconds = serverConfig.getInt("timeoutSeconds")
     val graphiteUrl = serverConfig.getString("graphiteUrl")
-    val environment = serverConfig.getString("environment")
   }
 }
