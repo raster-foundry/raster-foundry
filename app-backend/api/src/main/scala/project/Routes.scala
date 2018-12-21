@@ -428,19 +428,34 @@ trait ProjectRoutes
         }
       case _ =>
         authenticate { user =>
-          authorizeAsync {
-            ProjectDao
-              .authorized(user, ObjectType.Project, projectId, ActionType.View)
-              .transact(xa)
-              .unsafeToFuture
-          } {
-            rejectEmptyResponse {
-              complete {
-                ProjectDao.query
-                  .filter(projectId)
-                  .selectOption
-                  .transact(xa)
-                  .unsafeToFuture
+          (projectQueryParameters) { projectQueryParams =>
+            authorizeAsync {
+              projectQueryParams.analysisId match {
+                // If an analysisId is provided, the authorization is based on the analysis
+                case Some(analysisId: UUID) =>
+                  ToolRunDao
+                    .authorizeReferencedProject(user, analysisId, projectId)
+                    .transact(xa)
+                    .unsafeToFuture
+
+                case _ =>
+                  ProjectDao
+                    .authorized(user,
+                                ObjectType.Project,
+                                projectId,
+                                ActionType.View)
+                    .transact(xa)
+                    .unsafeToFuture
+              }
+            } {
+              rejectEmptyResponse {
+                complete {
+                  ProjectDao.query
+                    .filter(projectId)
+                    .selectOption
+                    .transact(xa)
+                    .unsafeToFuture
+                }
               }
             }
           }
@@ -857,17 +872,29 @@ trait ProjectRoutes
   }
 
   def listProjectDatasources(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      complete {
-        ProjectDatasourcesDao
-          .listProjectDatasources(projectId)
-          .transact(xa)
-          .unsafeToFuture
+    (projectQueryParameters) { projectQueryParams =>
+      authorizeAsync {
+        projectQueryParams.analysisId match {
+          // If an analysisId is provided, the authorization is based on the analysis
+          case Some(analysisId: UUID) =>
+            ToolRunDao
+              .authorizeReferencedProject(user, analysisId, projectId)
+              .transact(xa)
+              .unsafeToFuture
+
+          case _ =>
+            ProjectDao
+              .authorized(user, ObjectType.Project, projectId, ActionType.View)
+              .transact(xa)
+              .unsafeToFuture
+        }
+      } {
+        complete {
+          ProjectDatasourcesDao
+            .listProjectDatasources(projectId)
+            .transact(xa)
+            .unsafeToFuture
+        }
       }
     }
   }

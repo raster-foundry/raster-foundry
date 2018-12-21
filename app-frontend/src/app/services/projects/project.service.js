@@ -226,8 +226,8 @@ export default (app) => {
             });
         }
 
-        fetchProject(id) {
-            return this.Project.get({id}).$promise;
+        fetchProject(id, params = {}) {
+            return this.Project.get({...params, id}).$promise;
         }
 
         listExports(params = {}) {
@@ -341,8 +341,8 @@ export default (app) => {
             ).$promise;
         }
 
-        getProjectDatasources(projectId) {
-            return this.Project.projectDatasources({projectId}).$promise;
+        getProjectDatasources(projectId, params = {}) {
+            return this.Project.projectDatasources({...params, projectId}).$promise;
         }
 
         getProjectStatus(projectId) {

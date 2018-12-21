@@ -7,7 +7,7 @@ import { getNodeDefinition } from '_redux/node-utils';
 
 class LabNodeController {
     constructor($ngRedux, $scope, $log, $element, modalService, tokenService,
-                projectService, APP_CONFIG, $rootScope) {
+        projectService, APP_CONFIG, $rootScope) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
 
@@ -209,7 +209,8 @@ const LabNodeComponent = {
     controller: LabNodeController,
     bindings: {
         nodeId: '<',
-        model: '<'
+        model: '<',
+        enableSharing: '<'
     }
 };
 

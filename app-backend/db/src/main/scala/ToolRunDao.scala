@@ -11,7 +11,9 @@ import com.rasterfoundry.datamodel.{
   GroupType,
   ActionType
 }
-import com.rasterfoundry.tool.ast.MapAlgebraAST
+import com.rasterfoundry.tool.ast._
+import com.rasterfoundry.tool.ast.MapAlgebraAST._
+
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -108,4 +110,32 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
       .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)
       .exists
+
+  def authorizeReferencedProject(user: User,
+                                 toolRunId: UUID,
+                                 projectId: UUID): ConnectionIO[Boolean] =
+    for {
+      toolRunAuthorized <- this.authorized(user,
+                                           ObjectType.Analysis,
+                                           toolRunId,
+                                           ActionType.View)
+      toolRun <- this.query
+        .filter(toolRunId)
+        .select
+      toolRunOwner <- UserDao.unsafeGetUserById(toolRun.owner)
+      ownerProjectAuthorization <- ProjectDao.authorized(toolRunOwner,
+                                                         ObjectType.Project,
+                                                         projectId,
+                                                         ActionType.View)
+      ast = toolRun.executionParameters.as[MapAlgebraAST] match {
+        case Left(e)                             => throw e
+        case Right(mapAlgebraAST: MapAlgebraAST) => mapAlgebraAST
+      }
+      projectIds = ast.sources.collect {
+        case MapAlgebraAST.ProjectRaster(_, projId, _, _, _) => projId
+      }
+      result <- (toolRunAuthorized && ownerProjectAuthorization && projectIds
+        .contains(projectId))
+        .pure[ConnectionIO]
+    } yield result
 }

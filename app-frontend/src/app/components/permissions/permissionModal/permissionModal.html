@@ -14,7 +14,7 @@
       <i class="icon-settings"></i>
     </span>
     <h2>Update your information</h2>
-    <p>Sharing requires you to have associated to your account so we can let other users know who is sharing with them.</p>
+    <p>Sharing requires you to have a name associated with your account so we can let other users know who is sharing with them.</p>
     <a ui-sref="user.settings.profile({userId: 'me'})" class="btn btn-primary">Update your personal information</a>
   </div>
 
@@ -93,7 +93,7 @@
       <div class="empty-state" ng-if="!$ctrl.loading && !$ctrl.permissionCount">
         No permissions are currently configured
       </div>
-      <rf-permission-item 
+      <rf-permission-item
         actions="$ctrl.applicableActions"
         ng-repeat="(id, actionSet) in $ctrl.actionsBuffer.PLATFORM"
         current-action-tag="actionSet.tag"
@@ -106,7 +106,7 @@
         </div>
         <div class="labels">Everyone</div>
       </rf-permission-item>
-      <rf-permission-item 
+      <rf-permission-item
         actions="$ctrl.applicableActions"
         ng-repeat="(id, actionSet) in $ctrl.actionsBuffer.ORGANIZATION"
         current-action-tag="actionSet.tag"
@@ -121,7 +121,7 @@
           <div class="subtitle">Organization</div>
         </div>
       </rf-permission-item>
-      <rf-permission-item 
+      <rf-permission-item
         actions="$ctrl.applicableActions"
         ng-repeat="(id, actionSet) in $ctrl.actionsBuffer.TEAM"
         current-action-tag="actionSet.tag"
@@ -139,7 +139,7 @@
           <div class="subtitle">Team</div>
         </div>
       </rf-permission-item>
-      <rf-permission-item 
+      <rf-permission-item
         actions="$ctrl.applicableActions"
         ng-repeat="(id, actionSet) in $ctrl.actionsBuffer.USER"
         current-action-tag="actionSet.tag"
@@ -161,7 +161,7 @@
   <div class="footer-section left">
     <button type="button" class="btn" ng-click="$ctrl.dismiss()">Close</button>
   </div>
-  <div class="footer-section right" 
+  <div class="footer-section right"
         ng-if="$ctrl.objectOwnerId === $ctrl.userId">
         <button type="button" class="btn btn-primary" ng-click="$ctrl.onSave()">Save Changes</button>
   </div>
