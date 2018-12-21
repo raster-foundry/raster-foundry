@@ -19,6 +19,10 @@ def ingest_scene(scene_id):
     Args:
         scene_id (str): ID of scene to ingest
     """
+    ingest(scene_id)
+
+
+def ingest(scene_id):
     logger.info("Converting scene to COG: %s", scene_id)
     scene = Scene.from_id(scene_id)
     if scene.ingestStatus != 'INGESTED':
