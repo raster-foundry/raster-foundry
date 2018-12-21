@@ -28,8 +28,7 @@ then
             docker-compose logs -f --tail 20 api-server "$@"
     elif [ "${1:-}" = "--backsplash" ]
     then
-        TILE_SERVER_LOCATION="http://localhost:8081" \
-        docker-compose up nginx-backsplash nginx-api memcached api-server backsplash
+        TILE_SERVER_LOCATION="http://localhost:8081" docker-compose -f docker-compose.java.yml up nginx-backsplash backsplash api-server nginx-api
     else
         TILE_SERVER_LOCATION="http://localhost:9101" \
         docker-compose up nginx-tiler nginx-api memcached api-server tile-server

@@ -1,0 +1,163 @@
+version: '2.3'
+services:
+  postgres:
+    image: quay.io/azavea/postgis:2.3-postgres9.6-slim
+    volumes:
+      - ./data/:/tmp/data/
+    env_file: .env
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  sbt:
+    image: openjdk:8-jre
+    links:
+      - postgres:database.service.rasterfoundry.internal
+      - memcached:tile-cache.service.rasterfoundry.internal
+    external_links:
+      - statsd
+    env_file: .env
+    environment:
+      - RF_LOG_LEVEL=INFO
+      - COURSIER_CACHE=/root/.coursier
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/
+      - $HOME/.coursier:/root/.coursier
+      - ./.sbt:/root/.sbt
+      - ./.bintray:/root/.bintray
+      - $HOME/.aws:/root/.aws:ro
+      - $HOME/.ivy2:/root/.ivy2
+    working_dir: /opt/raster-foundry/app-backend/
+    entrypoint: ./sbt
+
+  memcached:
+    image: memcached:1.4-alpine
+    command: -m 4096 -c 8192 -I 5242880b
+
+  nginx-api:
+    image: raster-foundry-nginx-api
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.api
+    ports:
+      - "9100:443"
+    extra_hosts:
+      - "tile-server:127.0.0.1"
+    links:
+      - api-server
+    volumes:
+      - ./nginx/srv/dist/:/srv/dist/
+      - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
+      - ./nginx/etc/nginx/conf.d/api.conf:/etc/nginx/conf.d/default.conf
+
+  nginx-backsplash:
+    image: raster-foundry-nginx-backsplash
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.backsplash
+    ports:
+      - "8081:443"
+    extra_hosts:
+      - "api-server:127.0.0.1"
+    links:
+      - backsplash
+    volumes:
+      - ./nginx/srv/dist/:/srv/dist/
+      - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
+      - ./nginx/etc/nginx/conf.d/backsplash.conf:/etc/nginx/conf.d/default.conf
+
+  api-server:
+    image: openjdk:8-jre
+    links:
+      - postgres:database.service.rasterfoundry.internal
+      - memcached:tile-cache.service.rasterfoundry.internal
+    external_links:
+      - statsd
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - RF_LOG_LEVEL=INFO
+      - TILE_SERVER_LOCATION
+      - COURSIER_CACHE=/root/.coursier
+    ports:
+      - "9000:9000"
+      - "9010:9010"
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/
+      - $HOME/.aws:/root/.aws:ro
+    working_dir: /opt/raster-foundry/app-backend/api/target/scala-2.11/
+    entrypoint: java
+    command:
+      - "-jar"
+      - "api-assembly.jar"
+      - "-Dcom.sun.management.jmxremote.rmi.port=9010"
+      - "-Dcom.sun.management.jmxremote=true"
+      - "-Dcom.sun.management.jmxremote.port=9010"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
+      - "-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-Dcom.sun.management.jmxremote.local.only=false"
+      - "-Djava.rmi.server.hostname=localhost"
+
+  backsplash:
+    image: daunnc/openjdk-gdal:2.3.2
+    build:
+      context: app-backend
+      dockerfile: Dockerfile.backsplash
+    depends_on:
+      postgres:
+        condition: service_healthy
+    links:
+      - postgres:database.service.rasterfoundry.internal
+      - graphite:graphite.service.rasterfoundry.internal
+    env_file: .env
+    environment:
+      - RF_LOG_LEVEL=DEBUG
+      - COURSIER_CACHE=/root/.coursier
+      - VSI_CACHE=TRUE
+      - GDAL_CACHEMAX=1000
+    ports:
+      - "8080:8080"
+      - "9030:9030"
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/
+      - $HOME/.aws:/root/.aws:ro
+    working_dir: /opt/raster-foundry/app-backend/backsplash-server/target/scala-2.11/
+    entrypoint: java
+    command:
+      - "-Dcom.sun.management.jmxremote.rmi.port=9030"
+      - "-Dcom.sun.management.jmxremote=true"
+      - "-Dcom.sun.management.jmxremote.port=9030"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
+      - "-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-Dcom.sun.management.jmxremote.local.only=false"
+      - "-Djava.rmi.server.hostname=localhost"
+      - "-jar"
+      - "backsplash-assembly.jar"
+
+  graphite:
+    image: graphiteapp/graphite-statsd
+    ports:
+      - 2003-2004:2003-2004
+      - 2023-2024:2023-2024
+      - 8125:8125/udp
+      - 8126:8126
+      - 8090:80
+
+  grafana:
+    image: grafana/grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    links:
+      - graphite
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=password
