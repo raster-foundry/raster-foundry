@@ -86,7 +86,7 @@ services:
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
-      - TILE_SERVER_LOCATION=http://localhost:8080
+      - TILE_SERVER_LOCATION
       - COURSIER_CACHE=/root/.coursier
     ports:
       - "9000:9000"
