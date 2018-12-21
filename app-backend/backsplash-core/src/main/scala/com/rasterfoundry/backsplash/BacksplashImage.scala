@@ -5,6 +5,7 @@ import geotrellis.vector.{io => _, _}
 import geotrellis.raster.{io => _, _}
 import geotrellis.vector.io.readWktOrWkb
 import geotrellis.raster.histogram._
+import geotrellis.raster.io.geotiff.AutoHigherResolution
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.spark.SpatialKey
 import geotrellis.proj4.{WebMercator, LatLng}
@@ -31,7 +32,8 @@ case class BacksplashImage(
     val destinationExtent = extent.reproject(rs.crs, WebMercator)
     rs.reproject(WebMercator)
       .resample(TargetRegion(RasterExtent(destinationExtent, cs)),
-                NearestNeighbor)
+                NearestNeighbor,
+                AutoHigherResolution)
       .read(destinationExtent, subsetBands.toSeq)
       .map(_.tile)
   }
@@ -84,14 +86,14 @@ object BacksplashImage extends RasterSourceUtils {
   def getRasterExtents(uri: String): IO[NEL[RasterExtent]] = {
     val rs = getRasterSource(uri)
     val dataset = rs.dataset
-    val band = dataset.GetRasterBand(1)
+    val band = dataset.getRasterBand(1)
 
     IO {
       NEL(
         rs.rasterExtent,
-        (0 until band.GetOverviewCount()).toList.map { idx =>
-          val ovr = band.GetOverview(idx)
-          RasterExtent(rs.extent, CellSize(ovr.GetXSize(), ovr.GetYSize()))
+        (0 until band.getOverviewCount).toList.map { idx =>
+          val ovr = band.getOverview(idx)
+          RasterExtent(rs.extent, CellSize(ovr.getXSize, ovr.getYSize))
         }
       )
     }

@@ -11,7 +11,8 @@
 - Supported team creation on user's team list page [\#4345](https://github.com/raster-foundry/raster-foundry/pull/4345)
 - Use java's gdal bindings for tile IO in backsplash and better separate concerns between fetching imagery and talking to the database / users [\#4339](https://github.com/raster-foundry/raster-foundry/pull/4339)
 - Added dropwizard metrics instrumentation to backsplash methods and endpoints [\#4381](https://github.com/raster-foundry/raster-foundry/pull/4381)
-- Added load testing for backsplash tile server in CI 
+- Added script for ad hoc tile server load testing [\#4395](https://github.com/raster-foundry/raster-foundry/pull/4395)
+- Added graphite reporter to dropwizard metrics [\#4398](https://github.com/raster-foundry/raster-foundry/pull/4398)
 
 ### Changed
 
@@ -38,6 +39,7 @@
 - Address a number of unhandled promise chains on the frontend [\#4380](https://github.com/raster-foundry/raster-foundry/pull/4380)
 - Restored auth and error-handling [\#4390](https://github.com/raster-foundry/raster-foundry/pull/4390)
 - Aligned backsplash dockerfile with existing services [\#4394](https://github.com/raster-foundry/raster-foundry/pull/4394)
+- Upgraded geotrellis-server to handle thread safety issue that was causing SEGFAULTs in backsplash [\#4399](https://github.com/raster-foundry/raster-foundry/pull/4399)
 
 ### Removed
 
