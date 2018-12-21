@@ -381,11 +381,11 @@ lazy val tile = Project("tile", file("tile"))
       Dependencies.akkaHttpCors,
       Dependencies.akkastream,
       Dependencies.akkaSlf4j,
-      Dependencies.circeCore % "it,test",
-      Dependencies.circeGeneric % "it,test",
-      Dependencies.circeParser % "it,test",
-      Dependencies.circeOptics % "it,test",
-      Dependencies.scalajHttp % "it,test"
+      Dependencies.circeCore % "test",
+      Dependencies.circeGeneric % "test",
+      Dependencies.circeParser % "test",
+      Dependencies.circeOptics % "test",
+      Dependencies.scalajHttp % "test"
     )
   })
   .settings(assemblyMergeStrategy in assembly := {
