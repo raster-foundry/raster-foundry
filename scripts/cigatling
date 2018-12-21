@@ -1,0 +1,47 @@
+#!/bin/bash
+set -e
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
+
+GIT_COMMIT="${GIT_COMMIT:-latest}"
+
+function usage() {
+    echo -n \
+"Usage: $(basename "$0")
+Fire gatling at a running backsplash server
+"
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+        echo "Firing gatling at staging..."
+        docker run --rm \
+          -v "$(pwd)/gatling:/opt/gatling" \
+          -v "$HOME/.ivy2:/root/.ivy2" \
+          -w /opt/gatling/ \
+          -e RF_API_HOST \
+          -e RF_PROJECT_ID \
+          -e TOKEN_ROUTE \
+          -e REFRESH_TOKEN \
+          -e RANDOM_SEED \
+          -e PROJECT_ROUTE \
+          -e USER_COUNT \
+          -e RAMPUP_TIME \
+          -e BACKSPLASH_TMS_URL_TEMPLATE \
+          -e MIN_ZOOM \
+          -e MAX_ZOOM \
+          openjdk:8-jre \
+          ./sbt gatling:test
+
+        echo "Uploading results to '$RESULTS_BUCKET'..."
+        aws s3 sync gatling/results "$RESULTS_BUCKET/$GIT_COMMIT"
+    fi
+    exit
+fi
+

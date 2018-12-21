@@ -363,14 +363,12 @@ lazy val batch = Project("batch", file("batch"))
       .inAll
   ))
 
-import _root_.io.gatling.sbt.GatlingPlugin
 lazy val tile = Project("tile", file("tile"))
   .dependsOn(datamodel,
              common % "test->test;compile->compile",
              akkautil,
              geotrellis)
   .dependsOn(tool)
-  .enablePlugins(GatlingPlugin)
   .settings(fork in run := true)
   .settings(commonSettings: _*)
   .settings({
@@ -387,10 +385,7 @@ lazy val tile = Project("tile", file("tile"))
       Dependencies.circeGeneric % "it,test",
       Dependencies.circeParser % "it,test",
       Dependencies.circeOptics % "it,test",
-      Dependencies.scalajHttp % "it,test",
-      Dependencies.gatlingApp,
-      Dependencies.gatlingTest,
-      Dependencies.gatlingHighcharts
+      Dependencies.scalajHttp % "it,test"
     )
   })
   .settings(assemblyMergeStrategy in assembly := {
