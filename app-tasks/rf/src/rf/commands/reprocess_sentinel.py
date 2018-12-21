@@ -5,7 +5,7 @@ import uuid
 import psycopg2
 import psycopg2.extras
 from ..utils.exception_reporting import wrap_rollbar
-from ingest_scene import ingest_scene
+from ingest_scene import ingest
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +17,12 @@ def reprocess_sentinel(scene_ids):
     """Fix a sentinel 2 scene by replacing scene metadata bands and Images
 
     Args:
-        scene_id (str): Scene id to reprocess
         scene_ids (str): comma separated list of ids to reprocess
     """
+    reprocess(scene_ids)
+
+
+def reprocess(scene_ids):
     conn = psycopg2.connect('host={} dbname={} user={} password={}'.format(
         os.environ.get('POSTGRES_HOST', 'postgres'),
         os.environ['POSTGRES_DB'],
@@ -67,7 +70,7 @@ def reprocess_scene_id(cur, conn, scene_id):
         conn.commit()
         if scene['ingest_status'] == 'INGESTED':
             logger.info('Re-ingesting scene')
-            ingest_scene(scene_id)
+            ingest(scene_id)
     elif scene['datasource'] == '4a50cb75-815d-4fe5-8bc1-144729ce5b42':
         logger.info('Skipping re-import for Scene: %s . Scene is not broken.', scene['id'])
     else:
