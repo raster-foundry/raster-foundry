@@ -23,6 +23,7 @@ def ingest_scene(scene_id):
 
 
 def ingest(scene_id):
+    """Separated into another function because the Click annotation messes with calling it from other tasks"""
     logger.info("Converting scene to COG: %s", scene_id)
     scene = Scene.from_id(scene_id)
     if scene.ingestStatus != 'INGESTED':
