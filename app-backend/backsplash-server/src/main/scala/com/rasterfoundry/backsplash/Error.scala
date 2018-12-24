@@ -3,13 +3,12 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash.error._
 
 import cats._
-import com.amazonaws.services.s3.model.AmazonS3Exception
 import com.typesafe.scalalogging.LazyLogging
 import doobie.util.invariant.InvariantViolation
 import org.http4s._
 import org.http4s.dsl._
 import org.http4s.dsl.io._
-import java.lang.IllegalArgumentException
+import java.lang.{IllegalArgumentException, NullPointerException}
 
 class ForeignErrorHandler[F[_], E <: Throwable, U](implicit M: MonadError[F, E])
     extends LazyLogging
@@ -19,7 +18,7 @@ class ForeignErrorHandler[F[_], E <: Throwable, U](implicit M: MonadError[F, E])
     case (err: InvariantViolation) =>
       logger.error(err.getMessage, err.printStackTrace)
       throw WrappedDoobieException(err.getMessage)
-    case (err: AmazonS3Exception) =>
+    case (err: NullPointerException) =>
       logger.error(err.getMessage, err.printStackTrace)
       throw MissingSceneDataException(err.getMessage)
     case (err: IllegalArgumentException) =>

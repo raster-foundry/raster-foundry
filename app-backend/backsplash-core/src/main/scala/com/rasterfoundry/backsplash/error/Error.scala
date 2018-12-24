@@ -64,7 +64,7 @@ class BacksplashHttpErrorHandler[F[_], U](
       NotFound(m)
     case MissingSceneDataException(_) =>
       NotFound(
-        "Underlying data to produce tiles for this project appears to have moved or is no longer available")
+        "Underlying data to produce tiles for this project appears to have moved or has no data at this spatial key")
     case t @ UnknownException(m) =>
       InternalServerError(m)
   }
