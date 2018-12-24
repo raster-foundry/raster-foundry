@@ -21,7 +21,7 @@ class ForeignErrorHandler[F[_], E <: Throwable, U](implicit M: MonadError[F, E])
       throw WrappedDoobieException(err.getMessage)
     case (err: AmazonS3Exception) =>
       logger.error(err.getMessage, err.printStackTrace)
-      throw WrappedS3Exception(err.getMessage)
+      throw MissingSceneDataException(err.getMessage)
     case (err: IllegalArgumentException) =>
       throw RequirementFailedException(err.getMessage)
     case (err: BacksplashException) => throw err

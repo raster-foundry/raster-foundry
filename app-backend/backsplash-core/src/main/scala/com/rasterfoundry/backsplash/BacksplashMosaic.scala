@@ -14,6 +14,8 @@ import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 
+import scala.util.{Try, Success, Failure}
+
 object BacksplashMosaic {
 
   /** Filter out images that don't need to be included  */
@@ -47,6 +49,9 @@ object BacksplashMosaic {
       implicit hasRasterExtents: HasRasterExtents[BacksplashMosaic],
       extentReification: ExtentReification[BacksplashMosaic],
       cs: ContextShift[IO]) = {
-    LayerHistogram.identity(mosaic, 4000)
+    LayerHistogram.identity(mosaic, 4000) handleErrorWith { err =>
+      println(s"Class of error was: ${err.getClass}")
+      throw err
+    }
   }
 }

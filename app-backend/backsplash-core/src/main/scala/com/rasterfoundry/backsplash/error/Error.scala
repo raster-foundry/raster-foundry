@@ -37,7 +37,8 @@ final case class RequirementFailedException(message: String)
 final case class WrappedDoobieException(message: String)
     extends BacksplashException
 // When we get any S3 error
-final case class WrappedS3Exception(message: String) extends BacksplashException
+final case class MissingSceneDataException(message: String)
+    extends BacksplashException
 // Private so no one can deliberately throw an UnknownException elsewhere --
 // only exists to catch the fall-through case in the foreign error handler
 private[backsplash] final case class UnknownException(message: String)
@@ -61,7 +62,7 @@ class BacksplashHttpErrorHandler[F[_], U](
         "Resource does not exist or user is not authorized to access this resource")
     case WrappedDoobieException(m) =>
       NotFound(m)
-    case WrappedS3Exception(_) =>
+    case MissingSceneDataException(_) =>
       NotFound(
         "Underlying data to produce tiles for this project appears to have moved or is no longer available")
     case t @ UnknownException(m) =>

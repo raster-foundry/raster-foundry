@@ -63,6 +63,7 @@ class MosaicImplicits(mtr: MetricsRegistrator)
             case Invalid(e) =>
               throw MetadataException(s"Could not resolve histograms: $e")
           }
+          _ <- IO { println("Made it past getting histograms") }
           extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
           // for single band imagery, after color correction we have RGBA, so
           // the empty tile needs to be four band as well
