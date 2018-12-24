@@ -38,8 +38,6 @@ import java.util.UUID
 object Main extends IOApp with ProjectStoreImplicits {
 
   sgdal.setConfigOption("GDAL_DISABLE_READDIR_ON_OPEN", "YES")
-  sgdal.setConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "1")
-  sgdal.setConfigOption("VRT_SHARED_SOURCE", "0")
 
   override protected implicit def contextShift: ContextShift[IO] =
     IO.contextShift(
