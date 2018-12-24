@@ -40,7 +40,7 @@ def reprocess(scene_ids):
     queue = 'queue{}Reprocess'.format(os.environ.get('ENVIRONMENT', 'Staging')),
     jobDef = get_latest_def(batch, 'job{}IngestScene'.format(os.environ.get('ENVIRONMENT', 'Staging')))
 
-    def submit_job(sid, jobDef):
+    def submit_job(sid):
         batch.submit_job(
             jobName='reprocess-scene-{}'.format(sid),
             jobQueue=queue,
