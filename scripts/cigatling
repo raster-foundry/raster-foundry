@@ -41,8 +41,11 @@ then
 
         echo "Uploading results to '$RESULTS_BUCKET'..."
         # Most recent report will always be last, since they're timestamped
-        reportDir=$(find ./gatling/target/gatling/ -maxdepth 1 -type d | head -n 1)
-        aws s3 sync "${reportDir}" "s3://$RESULTS_BUCKET/$GIT_COMMIT"
+        reportDir=$(find ./gatling/target/gatling/ -maxdepth 1 -type d | tail -n 1)
+        zippedName="$(basename $reportDir).zip"
+        zippedDir="$(dirname $reportDir)"
+        zip -r9 "$zippedDir/$zippedName" "$reportDir"
+        aws s3 cp "$zippedDir/$zippedName" "s3://$RESULTS_BUCKET/$GIT_COMMIT/"
     fi
     exit
 fi
