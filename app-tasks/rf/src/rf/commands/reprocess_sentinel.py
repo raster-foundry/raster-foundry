@@ -40,12 +40,13 @@ def reprocess(scene_ids):
     queue = 'queue{}Reprocess'.format(os.environ.get('ENVIRONMENT', 'Staging')),
     jobDef = get_latest_def(batch, 'job{}IngestScene'.format(os.environ.get('ENVIRONMENT', 'Staging')))
 
-    submit_job = lambda sid, jobDef : batch.submit_job(
-        jobName='reprocess-scene-{}'.format(sid),
-        jobQueue=queue,
-        jobDefinition=jobDef,
-        parameters={'sceneId': sid}
-    )
+    def submit_job(sid, jobDef):
+        batch.submit_job(
+            jobName='reprocess-scene-{}'.format(sid),
+            jobQueue=queue,
+            jobDefinition=jobDef,
+            parameters={'sceneId': sid}
+        )
 
     for scene_id in ids:
         logger.info('Starting reprocessing scene: %s', scene_id)
