@@ -82,20 +82,4 @@ object BacksplashImage extends RasterSourceUtils {
                         None)
       }
       .getOrElse(throw new Exception("Provided WKT/WKB must be a multipolygon"))
-
-  def getRasterExtents(uri: String): IO[NEL[RasterExtent]] = {
-    val rs = getRasterSource(uri)
-    val dataset = rs.dataset
-    val band = dataset.getRasterBand(1)
-
-    IO {
-      NEL(
-        rs.rasterExtent,
-        (0 until band.getOverviewCount).toList.map { idx =>
-          val ovr = band.getOverview(idx)
-          RasterExtent(rs.extent, CellSize(ovr.getXSize, ovr.getYSize))
-        }
-      )
-    }
-  }
 }
