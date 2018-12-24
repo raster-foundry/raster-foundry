@@ -40,7 +40,9 @@ then
           ./sbt gatling:test || true
 
         echo "Uploading results to '$RESULTS_BUCKET'..."
-        aws s3 sync gatling/results "$RESULTS_BUCKET/$GIT_COMMIT"
+        # Most recent report will always be last, since they're timestamped
+        reportDir=$(find ./gatling/target/gatling/ -maxdepth 1 -type d | head -n 1)
+        aws s3 sync "${reportDir}" "s3://$RESULTS_BUCKET/$GIT_COMMIT"
     fi
     exit
 fi
