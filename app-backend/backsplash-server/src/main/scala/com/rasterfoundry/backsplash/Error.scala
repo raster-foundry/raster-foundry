@@ -19,7 +19,6 @@ class ForeignErrorHandler[F[_], E <: Throwable, U](implicit M: MonadError[F, E])
       logger.error(err.getMessage, err.printStackTrace)
       throw WrappedDoobieException(err.getMessage)
     case (err: NullPointerException) =>
-      logger.error(err.getMessage, err.printStackTrace)
       throw MissingSceneDataException(err.getMessage)
     case (err: IllegalArgumentException) =>
       throw RequirementFailedException(err.getMessage)
