@@ -63,7 +63,7 @@ def reprocess(scene_ids):
 
 def get_latest_def(batch, job_name):
     job_definitions = []
-    response = client.describe_job_definitions(
+    response = batch.describe_job_definitions(
         status='ACTIVE',
         jobDefinitionName=job_name
     )
@@ -72,7 +72,7 @@ def get_latest_def(batch, job_name):
     counter = 0
     while next_token:
         counter += 1
-        response = client.describe_job_definitions(
+        response = batch.describe_job_definitions(
             status='active',
             jobDefinitionName=job_name,
             nextToken=next_token
