@@ -26,7 +26,6 @@ then
         bucket="${RESULTS_BUCKET:-rasterfoundry-staging-it-us-east-1}"
         s3path="s3://${bucket}/$1/$2"
         mkdir -p "./gatling-results/$2"
-        echo "./gatling-results/$2"
         aws s3 sync "$s3path" "./gatling-results/$2"
     fi
 fi
