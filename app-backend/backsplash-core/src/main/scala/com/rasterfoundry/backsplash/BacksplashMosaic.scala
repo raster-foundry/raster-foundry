@@ -48,10 +48,6 @@ object BacksplashMosaic {
   def layerHistogram(mosaic: BacksplashMosaic)(
       implicit hasRasterExtents: HasRasterExtents[BacksplashMosaic],
       extentReification: ExtentReification[BacksplashMosaic],
-      cs: ContextShift[IO]) = {
-    LayerHistogram.identity(mosaic, 4000) handleErrorWith { err =>
-      println(s"Class of error was: ${err.getClass}")
-      throw err
-    }
-  }
+      cs: ContextShift[IO]) =
+    LayerHistogram.identity(mosaic, 4000)
 }
