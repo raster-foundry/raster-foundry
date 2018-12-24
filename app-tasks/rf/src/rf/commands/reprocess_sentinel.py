@@ -4,6 +4,7 @@ import os
 import uuid
 import psycopg2
 import psycopg2.extras
+import boto3
 from ..utils.exception_reporting import wrap_rollbar
 from ingest_scene import ingest
 
@@ -35,10 +36,21 @@ def reprocess(scene_ids):
 
     logger.info('Connected to db')
 
+    batch = boto3.client('batch', 'us-east-1')
+    queue = 'queue{}Reprocess'.format(os.environ.get('ENVIRONMENT', 'Staging')),
+    jobDef = get_latest_def(batch, 'job{}IngestScene'.format(os.environ.get('ENVIRONMENT', 'Staging')))
+
+    submit_job = lambda sid, jobDef : batch.submit_job(
+        jobName='reprocess-scene-{}'.format(sid),
+        jobQueue=queue,
+        jobDefinition=jobDef,
+        containerOverrides=()
+    )
+
     for scene_id in ids:
         logger.info('Starting reprocessing scene: %s', scene_id)
         try:
-            reprocess_scene_id(cur, conn, scene_id)
+            reprocess_scene_id(cur, conn, scene_id, submit_job)
         except Exception:
             conn.rollback()
             logger.exception(
@@ -48,7 +60,28 @@ def reprocess(scene_ids):
     conn.close()
 
 
-def reprocess_scene_id(cur, conn, scene_id):
+def get_latest_def(batch, job_name):
+    job_definitions = []
+    response = client.describe_job_definitions(
+        status='ACTIVE',
+        jobDefintionName
+    )
+    job_definitions = response['jobDefinitions']
+    next_token = response.get('nextToken', None)
+    counter = 0
+    while next_token:
+        counter += 1
+        response = client.describe_job_definitions(
+            status='active',
+            jobDefinitionName=job_name,
+            nextToken=next_token
+        )
+        next_token = response.get('nextToken', None)
+        job_definitions += response['jobDefinitions']
+    return max(job_definitions, key=lambda d: d['revision'])
+
+
+def reprocess_scene_id(cur, conn, scene_id, submit_job):
     """Reprocess a scene idFilter
 
     Args:
@@ -70,7 +103,7 @@ def reprocess_scene_id(cur, conn, scene_id):
         conn.commit()
         if scene['ingest_status'] == 'INGESTED':
             logger.info('Re-ingesting scene')
-            ingest(scene_id)
+            submit_job(scene_id)
     elif scene['datasource'] == '4a50cb75-815d-4fe5-8bc1-144729ce5b42':
         logger.info('Skipping re-import for Scene: %s . Scene is not broken.', scene['id'])
     else:
