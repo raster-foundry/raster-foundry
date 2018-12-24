@@ -44,7 +44,7 @@ def reprocess(scene_ids):
         jobName='reprocess-scene-{}'.format(sid),
         jobQueue=queue,
         jobDefinition=jobDef,
-        containerOverrides=()
+        parameters={'sceneId': sid}
     )
 
     for scene_id in ids:
@@ -64,7 +64,7 @@ def get_latest_def(batch, job_name):
     job_definitions = []
     response = client.describe_job_definitions(
         status='ACTIVE',
-        jobDefintionName
+        jobDefinitionName=job_name
     )
     job_definitions = response['jobDefinitions']
     next_token = response.get('nextToken', None)
