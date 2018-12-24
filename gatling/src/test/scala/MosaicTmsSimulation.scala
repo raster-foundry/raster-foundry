@@ -38,11 +38,11 @@ class MosaicTmsSimulation extends Simulation {
           val tile = session("tile").as[(Int, Int, Int)]
           session.set("z", tile._1).set("x", tile._2).set("y", tile._3)
         }).exec {
-            http("tiles at ${tile._1}/${tile._2}/${tile._3}")
-              .get(Config.TMS.template)
-              .header("authorization", "Bearer ${authToken}")
-              .check(status.is(200))
-          }
+          http("tiles at ${tile._1}/${tile._2}/${tile._3}")
+            .get(Config.TMS.template)
+            .header("authorization", "Bearer ${authToken}")
+            .check(status.is(200))
+        }
       })
       .pause(4)
 
@@ -52,6 +52,6 @@ class MosaicTmsSimulation extends Simulation {
         rampUsers(Config.Users.count) during (Config.Users.rampupTime seconds))
       .protocols(httpConf)
   ).assertions(
-    global.responseTime.percentile2.lt(1000)
+    global.responseTime.percentile3.lt(1000)
   )
 }
