@@ -42,6 +42,7 @@
 - Restored auth and error-handling [\#4390](https://github.com/raster-foundry/raster-foundry/pull/4390)
 - Aligned backsplash dockerfile with existing services [\#4394](https://github.com/raster-foundry/raster-foundry/pull/4394)
 - Upgraded geotrellis-server to handle thread safety issue that was causing SEGFAULTs in backsplash [\#4399](https://github.com/raster-foundry/raster-foundry/pull/4399), [\#4412](https://github.com/raster-foundry/raster-foundry/pull/4412)
+- Made backsplash server's foreign error handler handler the correct "data are missing" error [\#4408](https://github.com/raster-foundry/raster-foundry/pull/4408)
 
 ### Removed
 
