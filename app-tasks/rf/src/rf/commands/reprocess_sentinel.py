@@ -44,7 +44,7 @@ def reprocess(scene_ids):
         batch.submit_job(
             jobName='reprocess-scene-{}'.format(sid),
             jobQueue=queue,
-            jobDefinition=jobDef,
+            jobDefinition=jobDef['jobDefinitionArn'],
             parameters={'sceneId': sid}
         )
 
