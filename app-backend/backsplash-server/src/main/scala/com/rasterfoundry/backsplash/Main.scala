@@ -9,6 +9,7 @@ import cats.effect._
 import cats.implicits._
 import com.olegpy.meow.hierarchy._
 import fs2.Stream
+import geotrellis.gdal.sgdal
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.server._
@@ -35,6 +36,9 @@ import com.rasterfoundry.backsplash.MetricsRegistrator
 import java.util.UUID
 
 object Main extends IOApp with ProjectStoreImplicits {
+
+  sgdal.setConfigOption("GDAL_MAX_DATASET_POOL_SIZE", "1")
+  sgdal.setConfigOption("VRT_SHARED_SOURCE", "0")
 
   override protected implicit def contextShift: ContextShift[IO] =
     IO.contextShift(
