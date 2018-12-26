@@ -17,10 +17,11 @@ import doobie.implicits._
 
 import java.util.UUID
 
-class ToolStoreImplicits(mosaicImplicits: MosaicImplicits)
-    extends ProjectStoreImplicits {
+class ToolStoreImplicits(mosaicImplicits: MosaicImplicits, xa: Transactor[IO])
+    extends ProjectStoreImplicits(xa) {
   import mosaicImplicits._
-  val mamlAdapter = new BacksplashMamlAdapter(mosaicImplicits)
+
+  val mamlAdapter = new BacksplashMamlAdapter(mosaicImplicits, xa)
 
   private def toolToColorRd(toolRd: tool.RenderDefinition): RenderDefinition = {
     val scaleOpt = toolRd.scale match {
@@ -58,7 +59,7 @@ class ToolStoreImplicits(mosaicImplicits: MosaicImplicits)
               s"Node $nodeId missing from AST $analysisId")
           }
       } getOrElse { decoded }
-    }).transact(RFTransactor.xa)
+    }).transact(xa)
 
   implicit val toolRunDaoStore: ToolStore[ToolRunDao] =
     new ToolStore[ToolRunDao] {

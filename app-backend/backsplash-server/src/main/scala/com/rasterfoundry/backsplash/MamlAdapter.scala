@@ -6,18 +6,20 @@ import com.azavea.maml.ast._
 import com.azavea.maml.util.{NeighborhoodConversion, ClassMap => MamlClassMap}
 import geotrellis.vector.io._
 import cats._
+import cats.effect.IO
 import cats.implicits._
 import doobie.implicits._
-
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel.{BandDataType, SingleBandOptions}
 import com.rasterfoundry.tool.ast.MapAlgebraAST.{CogRaster, SceneRaster}
+import doobie.util.transactor.Transactor
 import io.circe.Json
 
-class BacksplashMamlAdapter(mosaicImplicits: MosaicImplicits)
-    extends ProjectStoreImplicits {
+class BacksplashMamlAdapter(mosaicImplicits: MosaicImplicits,
+                            xa: Transactor[IO])
+    extends ProjectStoreImplicits(xa) {
   import mosaicImplicits._
 
   def asMaml(ast: MapAlgebraAST)

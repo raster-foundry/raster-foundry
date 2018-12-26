@@ -97,8 +97,6 @@ services:
     working_dir: /opt/raster-foundry/app-backend/api/target/scala-2.11/
     entrypoint: java
     command:
-      - "-jar"
-      - "api-assembly.jar"
       - "-Dcom.sun.management.jmxremote.rmi.port=9010"
       - "-Dcom.sun.management.jmxremote=true"
       - "-Dcom.sun.management.jmxremote.port=9010"
@@ -106,6 +104,8 @@ services:
       - "-Dcom.sun.management.jmxremote.authenticate=false"
       - "-Dcom.sun.management.jmxremote.local.only=false"
       - "-Djava.rmi.server.hostname=localhost"
+      - "-jar"
+      - "api-assembly.jar"
 
   backsplash:
     image: daunnc/openjdk-gdal:2.3.2

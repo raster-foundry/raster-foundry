@@ -1,7 +1,6 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.datamodel.User
-
 import cats.data.Validated._
 import cats.effect.{ContextShift, IO}
 import geotrellis.proj4.{LatLng, WebMercator}
@@ -14,18 +13,19 @@ import org.http4s.dsl.io._
 import org.http4s.headers._
 import org.http4s.circe._
 import org.http4s.util.CaseInsensitiveString
-
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.MetricsRegistrator
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
+import doobie.util.transactor.Transactor
 
 @SuppressWarnings(Array("TraversableHead"))
 class AnalysisService[Param: ToolStore](analyses: Param,
                                         mtr: MetricsRegistrator,
                                         mosaicImplicits: MosaicImplicits,
-                                        toolstoreImplicits: ToolStoreImplicits)(
+                                        toolstoreImplicits: ToolStoreImplicits,
+                                        xa: Transactor[IO])(
     implicit cs: ContextShift[IO],
     H: HttpErrorHandler[IO, BacksplashException, User],
     ForeignError: HttpErrorHandler[IO, Throwable, User])
@@ -33,6 +33,7 @@ class AnalysisService[Param: ToolStore](analyses: Param,
   import mosaicImplicits._
   import toolstoreImplicits._
 
+  val authorizers = new Authorizers(xa)
   val routes: AuthedService[User, IO] = H.handle {
     ForeignError.handle {
       AuthedService {
@@ -41,7 +42,7 @@ class AnalysisService[Param: ToolStore](analyses: Param,
               :? NodeQueryParamMatcher(node)
               :? VoidCacheQueryParamMatcher(void) as user =>
           for {
-            authorized <- Authorizers.authToolRun(user, analysisId)
+            authorized <- authorizers.authToolRun(user, analysisId)
             paintable <- analyses.read(analysisId, node)
             histsValidated <- paintable.histogram(4000)
             resp <- histsValidated match {
@@ -56,7 +57,7 @@ class AnalysisService[Param: ToolStore](analyses: Param,
               y) / _
               :? NodeQueryParamMatcher(node) as user =>
           for {
-            authorized <- Authorizers.authToolRun(user, analysisId)
+            authorized <- authorizers.authToolRun(user, analysisId)
             paintable <- analyses.read(analysisId, node)
             tileValidated <- paintable.tms(z, x, y)
             resp <- tileValidated match {
@@ -88,7 +89,7 @@ class AnalysisService[Param: ToolStore](analyses: Param,
           val pngType = `Content-Type`(MediaType.image.png)
           val tiffType = `Content-Type`(MediaType.image.tiff)
           for {
-            authorized <- Authorizers.authToolRun(user, analysisId)
+            authorized <- authorizers.authToolRun(user, analysisId)
             paintableTool <- analyses.read(analysisId, node)
             tileValidated <- paintableTool.extent(
               projectedExtent,
