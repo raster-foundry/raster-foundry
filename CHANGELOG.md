@@ -25,6 +25,7 @@
 - Used a fixed number of threadPool for Backsplash [\#4389](https://github.com/raster-foundry/raster-foundry/pull/4389)
 - Made timeout length and number of threadPool configurable [\#4389](https://github.com/raster-foundry/raster-foundry/pull/4389)
 - Ignored errors from integration tests so that reports will always be written to s3 [\#4406](https://github.com/raster-foundry/raster-foundry/pull/4406)
+- Added ability to test against several projects in gatling integration tests [\#4416](https://github.com/raster-foundry/raster-foundry/pull/4416)
 
 ### Fixed
 
