@@ -8,7 +8,7 @@ import com.rasterfoundry.backsplash.Parameters._
 import cats.Applicative
 import cats.data.{NonEmptyList => NEL}
 import cats.data.Validated._
-import cats.effect.{ContextShift, IO}
+import cats.effect.{ContextShift, IO, Fiber}
 import cats.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
@@ -53,8 +53,12 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
               LayerTms.identity(
                 projects.read(projectId, None, bandOverride, None))
             for {
-              _ <- authorizers.authProject(user, projectId)
-              resp <- eval(z, x, y) flatMap {
+              fiberAuth <- authorizers.authProject(user, projectId).start
+              fiberResp <- eval(z, x, y).start
+              _ <- fiberAuth.join.handleErrorWith { error =>
+                fiberResp.cancel *> IO.raiseError(error)
+              }
+              resp <- fiberResp.join flatMap {
                 case Valid(tile) =>
                   Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
                 case Invalid(e) =>
@@ -64,9 +68,13 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
 
           case GET -> Root / UUIDWrapper(projectId) / "histogram" / _ as user =>
             for {
-              _ <- authorizers.authProject(user, projectId)
+              authFiber <- authorizers.authProject(user, projectId).start
               mosaic = projects.read(projectId, None, None, None)
-              resp <- LayerHistogram.identity(mosaic, 4000) flatMap {
+              histFiber <- LayerHistogram.identity(mosaic, 4000).start
+              _ <- authFiber.join.handleErrorWith { error =>
+                histFiber.cancel *> IO.raiseError(error)
+              }
+              resp <- histFiber.join.flatMap {
                 case Valid(hists) =>
                   Ok(hists map { hist =>
                     Map(hist.binCounts: _*)
@@ -91,12 +99,16 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
                       case (r, g, b) => BandOverride(r, g, b)
                     }
                   for {
-                    _ <- authorizers.authProject(user, projectId)
-                    mosaic <- IO {
-                      projects.read(projectId, None, overrides, uuids.toNel)
+                    authFiber <- authorizers.authProject(user, projectId).start
+                    mosaic = projects.read(projectId,
+                                           None,
+                                           overrides,
+                                           uuids.toNel)
+                    histFiber <- LayerHistogram.identity(mosaic, 4000).start
+                    _ <- authFiber.join.handleErrorWith { error =>
+                      histFiber.cancel *> IO.raiseError(error)
                     }
-                    histsValidated <- LayerHistogram.identity(mosaic, 4000)
-                    resp <- histsValidated match {
+                    resp <- histFiber.join.flatMap {
                       case Valid(hists) => Ok(hists asJson)
                       case Invalid(e) =>
                         BadRequest(s"Unable to produce histograms: $e")
@@ -134,8 +146,12 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
                   cs)
               }
             for {
-              _ <- authorizers.authProject(user, projectId)
-              resp <- eval(extent, cellSize) flatMap {
+              authFiber <- authorizers.authProject(user, projectId).start
+              respFiber <- eval(extent, cellSize).start
+              _ <- authFiber.join.handleErrorWith { error =>
+                respFiber.cancel *> IO.raiseError(error)
+              }
+              resp <- respFiber.join.flatMap {
                 case Valid(tile) =>
                   authedReq.req.headers
                     .get(CaseInsensitiveString("Accept")) match {
