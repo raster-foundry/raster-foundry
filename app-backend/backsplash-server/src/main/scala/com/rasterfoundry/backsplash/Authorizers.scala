@@ -12,8 +12,7 @@ import doobie.implicits._
 
 import java.util.UUID
 
-object Authorizers {
-  val xa = RFTransactor.xa
+class Authorizers(xa: Transactor[IO]) {
 
   def authToolRun(user: User, toolRunId: UUID): IO[Unit] =
     ToolRunDao

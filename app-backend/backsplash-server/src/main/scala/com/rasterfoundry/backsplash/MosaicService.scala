@@ -1,12 +1,10 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.datamodel.User
-
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.MetricsRegistrator
 import com.rasterfoundry.backsplash.Parameters._
-
 import cats.Applicative
 import cats.data.{NonEmptyList => NEL}
 import cats.data.Validated._
@@ -22,17 +20,21 @@ import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
-
 import java.util.UUID
+
+import doobie.util.transactor.Transactor
 
 class MosaicService[ProjStore: ProjectStore](projects: ProjStore,
                                              mtr: MetricsRegistrator,
-                                             mosaicImplicits: MosaicImplicits)(
+                                             mosaicImplicits: MosaicImplicits,
+                                             xa: Transactor[IO])(
     implicit cs: ContextShift[IO],
     H: HttpErrorHandler[IO, BacksplashException, User],
     ForeignError: HttpErrorHandler[IO, Throwable, User]) {
 
   import mosaicImplicits._
+
+  val authorizers = new Authorizers(xa)
 
   val routes: AuthedService[User, IO] =
     H.handle {
@@ -51,7 +53,7 @@ class MosaicService[ProjStore: ProjectStore](projects: ProjStore,
               LayerTms.identity(
                 projects.read(projectId, None, bandOverride, None))
             for {
-              _ <- Authorizers.authProject(user, projectId)
+              _ <- authorizers.authProject(user, projectId)
               resp <- eval(z, x, y) flatMap {
                 case Valid(tile) =>
                   Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
@@ -62,7 +64,7 @@ class MosaicService[ProjStore: ProjectStore](projects: ProjStore,
 
           case GET -> Root / UUIDWrapper(projectId) / "histogram" / _ as user =>
             for {
-              _ <- Authorizers.authProject(user, projectId)
+              _ <- authorizers.authProject(user, projectId)
               mosaic = projects.read(projectId, None, None, None)
               resp <- LayerHistogram.identity(mosaic, 4000) flatMap {
                 case Valid(hists) =>
@@ -89,7 +91,7 @@ class MosaicService[ProjStore: ProjectStore](projects: ProjStore,
                       case (r, g, b) => BandOverride(r, g, b)
                     }
                   for {
-                    _ <- Authorizers.authProject(user, projectId)
+                    _ <- authorizers.authProject(user, projectId)
                     mosaic <- IO {
                       projects.read(projectId, None, overrides, uuids.toNel)
                     }
@@ -132,7 +134,7 @@ class MosaicService[ProjStore: ProjectStore](projects: ProjStore,
                   cs)
               }
             for {
-              _ <- Authorizers.authProject(user, projectId)
+              _ <- authorizers.authProject(user, projectId)
               resp <- eval(extent, cellSize) flatMap {
                 case Valid(tile) =>
                   authedReq.req.headers
