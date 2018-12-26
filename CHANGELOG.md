@@ -14,6 +14,7 @@
 - Added script for ad hoc tile server load testing [\#4395](https://github.com/raster-foundry/raster-foundry/pull/4395), [\#4404](https://github.com/raster-foundry/raster-foundry/pull/4404)
 - Added graphite reporter to dropwizard metrics [\#4398](https://github.com/raster-foundry/raster-foundry/pull/4398)
 - Added alternative development runner/setup for testing API server and backsplash [\#4402](https://github.com/raster-foundry/raster-foundry/pull/4402)
+- Added configuration and helper script for gatling integration test results [\#4410](https://github.com/raster-foundry/raster-foundry/pull/4410)
 
 ### Changed
 

@@ -1,0 +1,31 @@
+#!/bin/bash
+set -e
+
+if [[ -n "${RF_DEBUG}" ]]; then
+    set -x
+fi
+
+GIT_COMMIT="${GIT_COMMIT:-latest}"
+
+function usage() {
+    echo -n \
+"Usage: $(basename "$0") GIT_COMMIT RESULT
+
+Retrieve results for a previously run Gatling integration test
+
+Example: ./scripts/fetch-it-result local-test mosaictmssimulation-20181224194546570
+"
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+        bucket="${RESULTS_BUCKET:-rasterfoundry-staging-it-us-east-1}"
+        s3path="s3://${bucket}/$1/$2.zip"
+        mkdir -p "./gatling-results/"
+        aws s3 cp "$s3path" "./gatling-results/"
+    fi
+fi

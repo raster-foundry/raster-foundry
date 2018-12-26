@@ -64,6 +64,6 @@ class MosaicTmsSimulation extends Simulation {
         rampUsers(Config.Users.count) during (Config.Users.rampupTime seconds))
       .protocols(httpConf)
   ).assertions(
-    global.responseTime.percentile2.lt(1000)
+    global.responseTime.percentile3.lt(1000)
   )
 }
