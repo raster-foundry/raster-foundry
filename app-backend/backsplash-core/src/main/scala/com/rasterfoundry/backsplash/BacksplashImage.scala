@@ -11,7 +11,6 @@ import geotrellis.spark.SpatialKey
 import geotrellis.proj4.{WebMercator, LatLng}
 
 import geotrellis.server.vlm.RasterSourceUtils
-import geotrellis.contrib.vlm.TargetRegion
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 
 import cats.data.{NonEmptyList => NEL}
