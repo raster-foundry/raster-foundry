@@ -1,5 +1,6 @@
 package com.rasterfoundry.database
 
+import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.LayerAttribute
@@ -10,6 +11,22 @@ import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import geotrellis.spark.LayerId
+
+import spray.json._
+import DefaultJsonProtocol._
+
+import java.util.UUID
+
+case class LayerAttributeDao() {
+  def getHistogram[T: JsonFormat](layerId: UUID, xa: Transactor[IO]): IO[T] = {
+    LayerAttributeDao
+      .unsafeGetAttribute(LayerId(layerId.toString, 0), "histogram")
+      .transact(xa)
+      .map({ attr =>
+        attr.value.noSpaces.parseJson.convertTo[T]
+      })
+  }
+}
 
 object LayerAttributeDao extends Dao[LayerAttribute] {
 

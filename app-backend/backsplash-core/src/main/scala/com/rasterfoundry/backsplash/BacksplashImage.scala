@@ -20,6 +20,7 @@ import io.circe.syntax._
 import java.util.UUID
 
 case class BacksplashImage(
+    imageId: UUID,
     uri: String,
     footprint: MultiPolygon,
     subsetBands: List[Int],
@@ -66,13 +67,15 @@ object BacksplashImage extends RasterSourceUtils {
     new GeoTiffRasterSource(uri)
   }
 
-  def fromWkt(uri: String,
+  def fromWkt(imageId: UUID,
+              uri: String,
               wkt: String,
               subsetBands: List[Int]): BacksplashImage =
     readWktOrWkb(wkt)
       .as[Polygon]
       .map { poly =>
-        BacksplashImage(uri,
+        BacksplashImage(imageId,
+                        uri,
                         MultiPolygon(poly),
                         subsetBands,
                         ColorCorrect.paramsFromBandSpecOnly(0, 1, 2),
