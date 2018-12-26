@@ -25,7 +25,10 @@
 - Decreased max classfile name length from 100 to 70 for CI reasons [\#4388](https://github.com/raster-foundry/raster-foundry/pull/4388)
 - Used a fixed number of threadPool for Backsplash [\#4389](https://github.com/raster-foundry/raster-foundry/pull/4389)
 - Made timeout length and number of threadPool configurable [\#4389](https://github.com/raster-foundry/raster-foundry/pull/4389)
+- Changed to use Fiber for threading in Backsplash services [\#4396](https://github.com/raster-foundry/raster-foundry/pull/4396)
 - Ignored errors from integration tests so that reports will always be written to s3 [\#4406](https://github.com/raster-foundry/raster-foundry/pull/4406)
+- Changed how the database transactor is passed to backsplash and API servers to prevent accidentally passing implicit execution contexts where they are not wanted [\#4415](https://github.com/raster-foundry/raster-foundry/pull/4415)
+- Added ability to test against several projects in gatling integration tests [\#4416](https://github.com/raster-foundry/raster-foundry/pull/4416)
 
 ### Fixed
 
@@ -42,7 +45,9 @@
 - Address a number of unhandled promise chains on the frontend [\#4380](https://github.com/raster-foundry/raster-foundry/pull/4380)
 - Restored auth and error-handling [\#4390](https://github.com/raster-foundry/raster-foundry/pull/4390)
 - Aligned backsplash dockerfile with existing services [\#4394](https://github.com/raster-foundry/raster-foundry/pull/4394)
-- Upgraded geotrellis-server to handle thread safety issue that was causing SEGFAULTs in backsplash [\#4399](https://github.com/raster-foundry/raster-foundry/pull/4399)
+- Upgraded geotrellis-server to handle thread safety issue that was causing SEGFAULTs in backsplash [\#4399](https://github.com/raster-foundry/raster-foundry/pull/4399), [\#4412](https://github.com/raster-foundry/raster-foundry/pull/4412)
+- Switched back to geotrellis for IO to shrink the space of failure conditions [\#4414](https://github.com/raster-foundry/raster-foundry/pull/4414)
+- Fetch histograms for multiband mosaics from the database again [\#4417](https://github.com/raster-foundry/raster-foundry/pull/4417)
 
 ### Removed
 

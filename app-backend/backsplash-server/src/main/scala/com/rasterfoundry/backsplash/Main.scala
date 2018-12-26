@@ -1,6 +1,10 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.database.{SceneToProjectDao, ToolRunDao}
+import com.rasterfoundry.database.{
+  LayerAttributeDao,
+  SceneToProjectDao,
+  ToolRunDao
+}
 import com.rasterfoundry.datamodel.User
 import cats.Applicative
 import cats.data.OptionT
@@ -9,6 +13,7 @@ import cats.effect._
 import cats.implicits._
 import com.olegpy.meow.hierarchy._
 import fs2.Stream
+import geotrellis.gdal.sgdal
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.server._
@@ -23,25 +28,34 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
 import org.http4s.util.CaseInsensitiveString
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
-import java.util.concurrent.{TimeUnit, Executors}
+import java.util.concurrent.{Executors, TimeUnit}
 
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.MetricsRegistrator
-
 import java.util.UUID
 
-object Main extends IOApp with ProjectStoreImplicits {
+import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.rasterfoundry.database.util.RFTransactor
 
-  override protected implicit def contextShift: ContextShift[IO] =
-    IO.contextShift(
-      ExecutionContext.fromExecutor(
-        Executors.newFixedThreadPool(
-          Config.parallelism.threadPoolSize
-        )))
+object Main extends IOApp with HistogramStoreImplicits {
+
+  val dbContextShift: ContextShift[IO] = IO.contextShift(
+    ExecutionContext.fromExecutor(
+      Executors.newFixedThreadPool(
+        8,
+        new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
+      )
+    ))
+
+  val xa = RFTransactor.transactor(dbContextShift)
+
+  val projectStoreImplicits = new ProjectStoreImplicits(xa)
+  import projectStoreImplicits.projectStore
 
   val timeout: FiniteDuration =
     new FiniteDuration(Config.server.timeoutSeconds, TimeUnit.SECONDS)
@@ -73,21 +87,23 @@ object Main extends IOApp with ProjectStoreImplicits {
     )(service)
 
   val mtr = new MetricsRegistrator()
+  val authenticators = new Authenticators(xa)
 
-  val mosaicImplicits = new MosaicImplicits(mtr)
-  val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits)
+  val mosaicImplicits = new MosaicImplicits(mtr, LayerAttributeDao())
+  val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa)
   import toolStoreImplicits._
 
   val mosaicService: HttpRoutes[IO] =
-    Authenticators.tokensAuthMiddleware(
-      new MosaicService(SceneToProjectDao(), mtr, mosaicImplicits).routes)
+    authenticators.tokensAuthMiddleware(
+      new MosaicService(SceneToProjectDao(), mtr, mosaicImplicits, xa).routes)
 
   val analysisService: HttpRoutes[IO] =
-    Authenticators.tokensAuthMiddleware(
+    authenticators.tokensAuthMiddleware(
       new AnalysisService(ToolRunDao(),
                           mtr,
                           mosaicImplicits,
-                          toolStoreImplicits).routes)
+                          toolStoreImplicits,
+                          xa).routes)
 
   val httpApp =
     Router(

@@ -24,9 +24,9 @@ import org.http4s.util.CaseInsensitiveString
 
 import java.net.URL
 import java.util.UUID
+import doobie.util.transactor.Transactor
 
-object Authenticators {
-  implicit val xa = RFTransactor.xa
+class Authenticators(val xa: Transactor[IO]) {
 
   val tokensAuthenticator = Kleisli[OptionT[IO, ?], Request[IO], User](
     {

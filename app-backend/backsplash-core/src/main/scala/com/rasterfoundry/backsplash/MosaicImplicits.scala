@@ -2,9 +2,11 @@ package com.rasterfoundry.backsplash
 
 import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 
 import geotrellis.vector._
 import geotrellis.raster._
+import geotrellis.raster.histogram._
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.proj4.CRS
 import geotrellis.server._
@@ -24,19 +26,25 @@ import ExtentReification._
 import HasRasterExtents._
 import TmsReification._
 
-class MosaicImplicits(mtr: MetricsRegistrator)
+class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
+                                                 histStore: HistStore)
     extends ToTmsReificationOps
     with ToExtentReificationOps
     with ToHasRasterExtentsOps
+    with ToHistogramStoreOps
     with ToProjectStoreOps
     with ToToolStoreOps {
 
   val readMosaicTimer =
-    mtr.newTimer(classOf[MosaicImplicits], "read-mosaic")
+    mtr.newTimer(classOf[MosaicImplicits[HistStore]], "read-mosaic")
   val readSceneTmsTimer =
-    mtr.newTimer(classOf[MosaicImplicits], "read-tms-scene")
+    mtr.newTimer(classOf[MosaicImplicits[HistStore]], "read-tms-scene")
   val readSceneExtentTimer =
-    mtr.newTimer(classOf[MosaicImplicits], "read-extent-scene")
+    mtr.newTimer(classOf[MosaicImplicits[HistStore]], "read-extent-scene")
+  val readSceneHistTimer =
+    mtr.newTimer(classOf[MosaicImplicits[HistStore]], "read-scene-hist")
+  val mbColorSceneTimer =
+    mtr.newTimer(classOf[MosaicImplicits[HistStore]], "color-multiband-scene")
 
   implicit val mosaicTmsReification = new TmsReification[BacksplashMosaic] {
     def kind(self: BacksplashMosaic): MamlKind = MamlKind.Image
@@ -58,11 +66,6 @@ class MosaicImplicits(mtr: MetricsRegistrator)
           // HistogramStore[Param] would solve this problem, but we're putting that off because there
           // are other things to do to get back to parity to start the work we actually care about,
           // which is making things fast (and this will be a layup for "hmm I wonder what could be faster")
-          layerHist <- BacksplashMosaic.layerHistogram(self) map {
-            case Valid(hists) => hists
-            case Invalid(e) =>
-              throw MetadataException(s"Could not resolve histograms: $e")
-          }
           extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
           // for single band imagery, after color correction we have RGBA, so
           // the empty tile needs to be four band as well
@@ -74,11 +77,33 @@ class MosaicImplicits(mtr: MetricsRegistrator)
           )
           mosaic = if (bandCount == 3) {
             filtered
-              .map({ relevant =>
-                val time = readSceneTmsTimer.time()
-                val img = relevant.colorCorrect(z, x, y, layerHist, None)
-                time.stop()
-                img
+              .flatMap({ relevant =>
+                fs2.Stream.eval {
+                  Applicative[IO].map2(
+                    IO {
+                      val time = readSceneTmsTimer.time()
+                      val img = relevant.read(z, x, y)
+                      time.stop()
+                      img
+                    }, {
+                      val time = readSceneHistTimer.time()
+                      val hists = histStore.layerHistogram(relevant.imageId,
+                                                           relevant.subsetBands)
+                      time.stop()
+                      hists
+                    }
+                  )((im: Option[MultibandTile],
+                     hists: Array[Histogram[Double]]) => {
+                    im map { mbTile =>
+                      val time = mbColorSceneTimer.time()
+                      val colored =
+                        relevant.corrections.colorCorrect(mbTile, hists, None)
+                      time.stop()
+                      colored
+                    }
+                  })
+
+                }
               })
               .collect({ case Some(mbtile) => Raster(mbtile, extent) })
               .compile
@@ -89,28 +114,30 @@ class MosaicImplicits(mtr: MetricsRegistrator)
             // Assume that we're in a single band case. It isn't obvious what it would
             // mean if the band count weren't 3 or 1, so just make the assumption that we
             // wouldn't do that to ourselves and don't handle the remainder
-            BacksplashMosaic
-              .filterRelevant(self)
-              .map({ relevant =>
-                val time = readSceneTmsTimer.time()
-                val img = relevant.read(z, x, y) map {
-                  ColorRampMosaic.colorTile(
-                    _,
-                    layerHist,
-                    relevant.singleBandOptions getOrElse {
-                      throw SingleBandOptionsException(
-                        "Must specify single band options when requesting single band visualization.")
-                    }
-                  )
-                }
-                time.stop()
-                img
-              })
-              .collect({ case Some(mbtile) => Raster(mbtile, extent) })
-              .compile
-              .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
-                mbr1.merge(mbr2, NearestNeighbor)
-              })
+            BacksplashMosaic.layerHistogram(filtered) flatMap {
+              case Valid(hists) =>
+                (filtered map { relevant =>
+                  val time = readSceneTmsTimer.time()
+                  val img = relevant.read(z, x, y) map {
+                    ColorRampMosaic.colorTile(
+                      _,
+                      hists,
+                      relevant.singleBandOptions getOrElse {
+                        throw SingleBandOptionsException(
+                          "Must specify single band options when requesting single band visualization.")
+                      }
+                    )
+                  }
+                  time.stop()
+                  img
+                }).collect({ case Some(mbtile) => Raster(mbtile, extent) })
+                  .compile
+                  .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
+                    mbr1.merge(mbr2, NearestNeighbor)
+                  })
+              case Invalid(e) =>
+                throw MetadataException(s"Could not resolve histograms: $e")
+            }
           }
           timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
         } yield {

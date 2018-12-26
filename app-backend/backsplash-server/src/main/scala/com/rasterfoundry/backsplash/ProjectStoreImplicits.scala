@@ -31,7 +31,7 @@ import geotrellis.vector.{Polygon, Projected}
 
 import java.util.UUID
 
-trait ProjectStoreImplicits extends ToProjectStoreOps {
+class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
   implicit val projectStore: ProjectStore[SceneToProjectDao] =
     new ProjectStore[SceneToProjectDao] {
       // safe to get here, since we're just unapplying from a value that we already know
@@ -54,6 +54,7 @@ trait ProjectStoreImplicits extends ToProjectStoreOps {
               _.as[BSSingleBandOptions.Params].toOption
             }
           BacksplashImage(
+            md.sceneId,
             md.ingestLocation getOrElse {
               throw UningestedScenesException(
                 s"Scene ${md.sceneId} does not have an ingest location")
@@ -104,7 +105,7 @@ trait ProjectStoreImplicits extends ToProjectStoreOps {
             ),
             singleBandOptions
           )
-        } transact (RFTransactor.xa)
+        } transact (xa)
       }
     }
 }

@@ -11,17 +11,16 @@ import geotrellis.spark.SpatialKey
 import geotrellis.proj4.{WebMercator, LatLng}
 
 import geotrellis.server.vlm.RasterSourceUtils
-import geotrellis.contrib.vlm._
-import geotrellis.contrib.vlm.gdal._
+import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.IO
 import io.circe.syntax._
 
-import java.net.URLDecoder
 import java.util.UUID
 
 case class BacksplashImage(
+    imageId: UUID,
     uri: String,
     footprint: MultiPolygon,
     subsetBands: List[Int],
@@ -30,10 +29,8 @@ case class BacksplashImage(
   def read(extent: Extent, cs: CellSize): Option[MultibandTile] = {
     val rs = BacksplashImage.getRasterSource(uri)
     val destinationExtent = extent.reproject(rs.crs, WebMercator)
-    rs.reproject(WebMercator)
-      .resample(TargetRegion(RasterExtent(destinationExtent, cs)),
-                NearestNeighbor,
-                AutoHigherResolution)
+    rs.reproject(WebMercator, NearestNeighbor)
+      .resampleToGrid(RasterExtent(extent, cs), NearestNeighbor)
       .read(destinationExtent, subsetBands.toSeq)
       .map(_.tile)
   }
@@ -66,36 +63,23 @@ case class BacksplashImage(
 
 object BacksplashImage extends RasterSourceUtils {
 
-  def getRasterSource(uri: String): GDALRasterSource =
-    GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
+  def getRasterSource(uri: String): GeoTiffRasterSource = {
+    new GeoTiffRasterSource(uri)
+  }
 
-  def fromWkt(uri: String,
+  def fromWkt(imageId: UUID,
+              uri: String,
               wkt: String,
               subsetBands: List[Int]): BacksplashImage =
     readWktOrWkb(wkt)
       .as[Polygon]
       .map { poly =>
-        BacksplashImage(uri,
+        BacksplashImage(imageId,
+                        uri,
                         MultiPolygon(poly),
                         subsetBands,
                         ColorCorrect.paramsFromBandSpecOnly(0, 1, 2),
                         None)
       }
       .getOrElse(throw new Exception("Provided WKT/WKB must be a multipolygon"))
-
-  def getRasterExtents(uri: String): IO[NEL[RasterExtent]] = {
-    val rs = getRasterSource(uri)
-    val dataset = rs.dataset
-    val band = dataset.getRasterBand(1)
-
-    IO {
-      NEL(
-        rs.rasterExtent,
-        (0 until band.getOverviewCount).toList.map { idx =>
-          val ovr = band.getOverview(idx)
-          RasterExtent(rs.extent, CellSize(ovr.getXSize, ovr.getYSize))
-        }
-      )
-    }
-  }
 }

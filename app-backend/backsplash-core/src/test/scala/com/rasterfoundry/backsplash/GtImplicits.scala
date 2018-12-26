@@ -42,7 +42,7 @@ trait GtImplicits
     val rs = new GeoTiffRasterSource(img.uri)
     val destinationExtent = extent.reproject(LatLng, WebMercator)
     rs.reproject(WebMercator)
-      .resample(TargetRegion(RasterExtent(extent, cs)), NearestNeighbor)
+      .resampleToGrid(RasterExtent(extent, cs), NearestNeighbor)
       .read(destinationExtent, img.subsetBands.toSeq)
       .map(_.tile)
   }

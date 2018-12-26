@@ -1,9 +1,9 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.datamodel.User
-
 import cats.data.Validated._
-import cats.effect.{ContextShift, IO}
+import cats.effect.{ContextShift, IO, Fiber}
+import cats.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.{io => _, _}
 import geotrellis.raster.render.ColorRamps
@@ -14,35 +14,40 @@ import org.http4s.dsl.io._
 import org.http4s.headers._
 import org.http4s.circe._
 import org.http4s.util.CaseInsensitiveString
-
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.MetricsRegistrator
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
+import doobie.util.transactor.Transactor
 
 @SuppressWarnings(Array("TraversableHead"))
-class AnalysisService[Param: ToolStore](analyses: Param,
-                                        mtr: MetricsRegistrator,
-                                        mosaicImplicits: MosaicImplicits,
-                                        toolstoreImplicits: ToolStoreImplicits)(
-    implicit cs: ContextShift[IO],
-    H: HttpErrorHandler[IO, BacksplashException, User],
-    ForeignError: HttpErrorHandler[IO, Throwable, User])
+class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
+    analyses: Param,
+    mtr: MetricsRegistrator,
+    mosaicImplicits: MosaicImplicits[HistStore],
+    toolstoreImplicits: ToolStoreImplicits[HistStore],
+    xa: Transactor[IO])(implicit cs: ContextShift[IO],
+                        H: HttpErrorHandler[IO, BacksplashException, User],
+                        ForeignError: HttpErrorHandler[IO, Throwable, User])
     extends ColorImplicits {
   import mosaicImplicits._
   import toolstoreImplicits._
 
+  val authorizers = new Authorizers(xa)
   val routes: AuthedService[User, IO] = H.handle {
     ForeignError.handle {
       AuthedService {
-
         case GET -> Root / UUIDWrapper(analysisId) / "histogram" / _
               :? NodeQueryParamMatcher(node)
               :? VoidCacheQueryParamMatcher(void) as user =>
           for {
-            authorized <- Authorizers.authToolRun(user, analysisId)
-            paintable <- analyses.read(analysisId, node)
+            authFiber <- authorizers.authToolRun(user, analysisId).start
+            paintableFiber <- analyses.read(analysisId, node).start
+            _ <- authFiber.join.handleErrorWith { error =>
+              paintableFiber.cancel *> IO.raiseError(error)
+            }
+            paintable <- paintableFiber.join
             histsValidated <- paintable.histogram(4000)
             resp <- histsValidated match {
               case Valid(hists) =>
@@ -56,8 +61,12 @@ class AnalysisService[Param: ToolStore](analyses: Param,
               y) / _
               :? NodeQueryParamMatcher(node) as user =>
           for {
-            authorized <- Authorizers.authToolRun(user, analysisId)
-            paintable <- analyses.read(analysisId, node)
+            authFiber <- authorizers.authToolRun(user, analysisId).start
+            paintableFiber <- analyses.read(analysisId, node).start
+            _ <- authFiber.join.handleErrorWith { error =>
+              paintableFiber.cancel *> IO.raiseError(error)
+            }
+            paintable <- paintableFiber.join
             tileValidated <- paintable.tms(z, x, y)
             resp <- tileValidated match {
               case Valid(tile) =>
@@ -88,12 +97,15 @@ class AnalysisService[Param: ToolStore](analyses: Param,
           val pngType = `Content-Type`(MediaType.image.png)
           val tiffType = `Content-Type`(MediaType.image.tiff)
           for {
-            authorized <- Authorizers.authToolRun(user, analysisId)
-            paintableTool <- analyses.read(analysisId, node)
+            authFiber <- authorizers.authToolRun(user, analysisId).start
+            paintableFiber <- analyses.read(analysisId, node).start
+            _ <- authFiber.join.handleErrorWith { error =>
+              paintableFiber.cancel *> IO.raiseError(error)
+            }
+            paintableTool <- paintableFiber.join
             tileValidated <- paintableTool.extent(
               projectedExtent,
               BacksplashImage.tmsLevels(zoom).cellSize)
-            // TODO: restore render def coloring
             resp <- tileValidated match {
               case Valid(tile) =>
                 if (respType == tiffType) {

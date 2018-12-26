@@ -163,7 +163,7 @@ services:
       - "-Djava.rmi.server.hostname=localhost"
 
   backsplash:
-    image: raster-foundry-backsplash
+    image: openjdk:8-jre
     build:
       context: app-backend
       dockerfile: Dockerfile.backsplash

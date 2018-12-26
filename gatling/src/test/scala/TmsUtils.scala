@@ -83,19 +83,31 @@ object TmsUtils {
   }
 
   /** Random TMS indices constrained by a provided bounding box and bounding zoom levels */
-  def randomTileIdxsForBBox(bbox: Extent = LatLng.worldExtent,
+  def randomTileIdxsForBBox(projectId: UUID,
+                            bboxes: Map[UUID, Extent],
                             minZoom: Int = 1,
-                            maxZoom: Int = 20): Seq[(Int, Int, Int)] =
+                            maxZoom: Int = 20): Seq[(Int, Int, Int)] = {
+
+    val bbox = bboxes.get(projectId) getOrElse {
+      throw new Exception(
+        s"Project $projectId missing from bbox map for mysterious reasons")
+    }
     tileIdxsForScreen(randomLat(bbox.ymin, bbox.ymax),
                       randomLon(bbox.xmin, bbox.xmax),
                       randomZoom(minZoom, maxZoom))
+  }
 
   /** A gatling [[Feeder] instance for generating requests that mimic TMS requests */
-  def randomTileFeeder(bbox: Extent = LatLng.worldExtent,
+  def randomTileFeeder(projectIds: Array[UUID],
+                       bboxes: Map[UUID, Extent],
                        minZoom: Int = 1,
                        maxZoom: Int = 20) = {
-    Iterator.continually {
-      Map("tiles" -> randomTileIdxsForBBox(bbox, minZoom, maxZoom))
+    projectIds map { (projectId: UUID) =>
+      {
+        val keySeq =
+          randomTileIdxsForBBox(projectId, bboxes, minZoom, maxZoom)
+        Map("tiles" -> (keySeq map { case (z, x, y) => (projectId, z, x, y) }))
+      }
     }
   }
 }

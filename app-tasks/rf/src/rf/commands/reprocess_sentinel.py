@@ -37,14 +37,14 @@ def reprocess(scene_ids):
     logger.info('Connected to db')
 
     batch = boto3.client('batch', 'us-east-1')
-    queue = 'queue{}Reprocess'.format(os.environ.get('ENVIRONMENT', 'Staging')),
+    queue = 'queue{}Reprocess'.format(os.environ.get('ENVIRONMENT', 'Staging'))
     jobDef = get_latest_def(batch, 'job{}IngestScene'.format(os.environ.get('ENVIRONMENT', 'Staging')))
 
-    def submit_job(sid, jobDef):
+    def submit_job(sid):
         batch.submit_job(
             jobName='reprocess-scene-{}'.format(sid),
             jobQueue=queue,
-            jobDefinition=jobDef,
+            jobDefinition=jobDef['jobDefinitionArn'],
             parameters={'sceneId': sid}
         )
 
