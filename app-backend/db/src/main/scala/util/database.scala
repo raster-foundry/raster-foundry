@@ -66,6 +66,26 @@ object RFTransactor extends Config {
     HikariTransactor.apply[IO](hikariDS, connectionEC, transactionEC)
   }
 
+  lazy val xaResource: Resource[IO, HikariTransactor[IO]] = {
+
+    implicit val cs: ContextShift[IO] = IO.contextShift(
+      ExecutionContext.fromExecutor(
+        Executors.newFixedThreadPool(
+          8,
+          new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
+        )
+      ))
+
+    HikariTransactor.newHikariTransactor[IO](
+      jdbcDriver,
+      jdbcNoDBUrl,
+      dbUser,
+      dbPassword,
+      connectionEC,
+      transactionEC
+    )
+  }
+
   // Only use in Tile subproject!!
   lazy val xa: HikariTransactor[IO] = {
 
