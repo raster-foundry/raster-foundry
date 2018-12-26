@@ -11,14 +11,13 @@ import geotrellis.spark.SpatialKey
 import geotrellis.proj4.{WebMercator, LatLng}
 
 import geotrellis.server.vlm.RasterSourceUtils
-import geotrellis.contrib.vlm._
-import geotrellis.contrib.vlm.gdal._
+import geotrellis.contrib.vlm.TargetRegion
+import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.IO
 import io.circe.syntax._
 
-import java.net.URLDecoder
 import java.util.UUID
 
 case class BacksplashImage(
@@ -30,10 +29,8 @@ case class BacksplashImage(
   def read(extent: Extent, cs: CellSize): Option[MultibandTile] = {
     val rs = BacksplashImage.getRasterSource(uri)
     val destinationExtent = extent.reproject(rs.crs, WebMercator)
-    rs.reproject(WebMercator)
-      .resample(TargetRegion(RasterExtent(destinationExtent, cs)),
-                NearestNeighbor,
-                AutoHigherResolution)
+    rs.reproject(WebMercator, NearestNeighbor)
+      .resampleToGrid(RasterExtent(extent, cs), NearestNeighbor)
       .read(destinationExtent, subsetBands.toSeq)
       .map(_.tile)
   }
@@ -66,8 +63,9 @@ case class BacksplashImage(
 
 object BacksplashImage extends RasterSourceUtils {
 
-  def getRasterSource(uri: String): GDALRasterSource =
-    GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
+  def getRasterSource(uri: String): GeoTiffRasterSource = {
+    new GeoTiffRasterSource(uri)
+  }
 
   def fromWkt(uri: String,
               wkt: String,
