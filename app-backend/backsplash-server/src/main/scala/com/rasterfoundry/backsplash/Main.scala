@@ -24,27 +24,36 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
 import org.http4s.util.CaseInsensitiveString
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
-import java.util.concurrent.{TimeUnit, Executors}
+import java.util.concurrent.{Executors, TimeUnit}
 
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.MetricsRegistrator
-
 import java.util.UUID
 
-object Main extends IOApp with ProjectStoreImplicits {
+import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.rasterfoundry.database.util.RFTransactor
+
+object Main extends IOApp {
 
   sgdal.setConfigOption("GDAL_DISABLE_READDIR_ON_OPEN", "YES")
 
-  override protected implicit def contextShift: ContextShift[IO] =
-    IO.contextShift(
-      ExecutionContext.fromExecutor(
-        Executors.newFixedThreadPool(
-          Config.parallelism.threadPoolSize
-        )))
+  val dbContextShift: ContextShift[IO] = IO.contextShift(
+    ExecutionContext.fromExecutor(
+      Executors.newFixedThreadPool(
+        8,
+        new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
+      )
+    ))
+
+  val xa = RFTransactor.transactor(dbContextShift)
+
+  val projectStoreImplicits = new ProjectStoreImplicits(xa)
+  import projectStoreImplicits.projectStore
 
   val timeout: FiniteDuration =
     new FiniteDuration(Config.server.timeoutSeconds, TimeUnit.SECONDS)
@@ -76,21 +85,23 @@ object Main extends IOApp with ProjectStoreImplicits {
     )(service)
 
   val mtr = new MetricsRegistrator()
+  val authenticators = new Authenticators(xa)
 
   val mosaicImplicits = new MosaicImplicits(mtr)
-  val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits)
+  val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa)
   import toolStoreImplicits._
 
   val mosaicService: HttpRoutes[IO] =
-    Authenticators.tokensAuthMiddleware(
-      new MosaicService(SceneToProjectDao(), mtr, mosaicImplicits).routes)
+    authenticators.tokensAuthMiddleware(
+      new MosaicService(SceneToProjectDao(), mtr, mosaicImplicits, xa).routes)
 
   val analysisService: HttpRoutes[IO] =
-    Authenticators.tokensAuthMiddleware(
+    authenticators.tokensAuthMiddleware(
       new AnalysisService(ToolRunDao(),
                           mtr,
                           mosaicImplicits,
-                          toolStoreImplicits).routes)
+                          toolStoreImplicits,
+                          xa).routes)
 
   val httpApp =
     Router(
