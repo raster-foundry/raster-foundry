@@ -25,6 +25,7 @@
 - Used a fixed number of threadPool for Backsplash [\#4389](https://github.com/raster-foundry/raster-foundry/pull/4389)
 - Made timeout length and number of threadPool configurable [\#4389](https://github.com/raster-foundry/raster-foundry/pull/4389)
 - Ignored errors from integration tests so that reports will always be written to s3 [\#4406](https://github.com/raster-foundry/raster-foundry/pull/4406)
+- Changed how the database transactor is passed to backsplash and API servers to prevent accidentally passing implicit execution contexts where they are not wanted [\#4415](https://github.com/raster-foundry/raster-foundry/pull/4415)
 
 ### Fixed
 
