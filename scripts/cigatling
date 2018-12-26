@@ -26,7 +26,7 @@ then
           -v "$HOME/.ivy2:/root/.ivy2" \
           -w /opt/gatling/ \
           -e RF_API_HOST \
-          -e RF_PROJECT_ID \
+          -e RF_PROJECT_IDS \
           -e TOKEN_ROUTE \
           -e REFRESH_TOKEN \
           -e RANDOM_SEED \
