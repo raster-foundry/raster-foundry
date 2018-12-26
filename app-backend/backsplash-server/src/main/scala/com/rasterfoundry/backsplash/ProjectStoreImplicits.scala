@@ -54,6 +54,7 @@ class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
               _.as[BSSingleBandOptions.Params].toOption
             }
           BacksplashImage(
+            md.sceneId,
             md.ingestLocation getOrElse {
               throw UningestedScenesException(
                 s"Scene ${md.sceneId} does not have an ingest location")

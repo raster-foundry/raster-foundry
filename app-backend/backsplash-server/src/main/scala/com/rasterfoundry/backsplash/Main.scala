@@ -1,6 +1,10 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.database.{SceneToProjectDao, ToolRunDao}
+import com.rasterfoundry.database.{
+  LayerAttributeDao,
+  SceneToProjectDao,
+  ToolRunDao
+}
 import com.rasterfoundry.datamodel.User
 import cats.Applicative
 import cats.data.OptionT
@@ -38,9 +42,7 @@ import java.util.UUID
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.rasterfoundry.database.util.RFTransactor
 
-object Main extends IOApp {
-
-  sgdal.setConfigOption("GDAL_DISABLE_READDIR_ON_OPEN", "YES")
+object Main extends IOApp with HistogramStoreImplicits {
 
   val dbContextShift: ContextShift[IO] = IO.contextShift(
     ExecutionContext.fromExecutor(
@@ -87,7 +89,7 @@ object Main extends IOApp {
   val mtr = new MetricsRegistrator()
   val authenticators = new Authenticators(xa)
 
-  val mosaicImplicits = new MosaicImplicits(mtr)
+  val mosaicImplicits = new MosaicImplicits(mtr, LayerAttributeDao())
   val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa)
   import toolStoreImplicits._
 

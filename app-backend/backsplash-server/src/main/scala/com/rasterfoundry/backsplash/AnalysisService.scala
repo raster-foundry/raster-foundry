@@ -21,14 +21,14 @@ import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
 import doobie.util.transactor.Transactor
 
 @SuppressWarnings(Array("TraversableHead"))
-class AnalysisService[Param: ToolStore](analyses: Param,
-                                        mtr: MetricsRegistrator,
-                                        mosaicImplicits: MosaicImplicits,
-                                        toolstoreImplicits: ToolStoreImplicits,
-                                        xa: Transactor[IO])(
-    implicit cs: ContextShift[IO],
-    H: HttpErrorHandler[IO, BacksplashException, User],
-    ForeignError: HttpErrorHandler[IO, Throwable, User])
+class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
+    analyses: Param,
+    mtr: MetricsRegistrator,
+    mosaicImplicits: MosaicImplicits[HistStore],
+    toolstoreImplicits: ToolStoreImplicits[HistStore],
+    xa: Transactor[IO])(implicit cs: ContextShift[IO],
+                        H: HttpErrorHandler[IO, BacksplashException, User],
+                        ForeignError: HttpErrorHandler[IO, Throwable, User])
     extends ColorImplicits {
   import mosaicImplicits._
   import toolstoreImplicits._
