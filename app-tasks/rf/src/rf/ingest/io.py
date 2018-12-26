@@ -29,6 +29,7 @@ def create_cog(image_locations, scene, same_path=False):
         if same_path:
             updated_scene = upload_tif(
                 cog_path, scene,
+                os.path.join('user-uploads', scene.owner, '{}_COG.tif'.format(scene.id)),
                 os.path.join('user-uploads', urllib.quote_plus(scene.owner), '{}_COG.tif'.format(scene.id))
             )
         else:
@@ -37,16 +38,17 @@ def create_cog(image_locations, scene, same_path=False):
         os.remove(cog_path)
 
 
-def upload_tif(tif_path, scene, key=''):
+def upload_tif(tif_path, scene, key='', ingest_location=''):
     if len(key) == 0:
         key = os.path.join('public-cogs', '{}_COG.tif'.format(scene.id))
 
     s3uri = 's3://{}/{}'.format(DATA_BUCKET, key)
+    ingestUri = 's3://{}/{}'.format(DATA_BUCKET, ingest_location)
     logger.info('Uploading tif to S3 at %s', s3uri)
-    with open(tif_path, 'r') as inf:
+    with open(tif_path, 'rb') as inf:
         s3client.put_object(Bucket=DATA_BUCKET, Key=key, Body=inf)
     logger.info('Tif uploaded successfully')
-    scene.ingestLocation = s3uri
+    scene.ingestLocation = s3uri if len(ingest_location) == 0 else ingestUri
     scene.sceneType = 'COG'
     scene.ingestStatus = 'INGESTED'
     return scene
