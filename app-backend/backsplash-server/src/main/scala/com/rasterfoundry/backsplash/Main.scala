@@ -42,16 +42,6 @@ object Main extends IOApp {
 
   sgdal.setConfigOption("GDAL_DISABLE_READDIR_ON_OPEN", "YES")
 
-  override protected implicit def contextShift: ContextShift[IO] =
-    IO.contextShift(
-      ExecutionContext.fromExecutor(
-        Executors.newFixedThreadPool(
-          2,
-          new ThreadFactoryBuilder().setNameFormat("main-http4s-%d").build()
-        )
-      )
-    )
-
   val dbContextShift: ContextShift[IO] = IO.contextShift(
     ExecutionContext.fromExecutor(
       Executors.newFixedThreadPool(
