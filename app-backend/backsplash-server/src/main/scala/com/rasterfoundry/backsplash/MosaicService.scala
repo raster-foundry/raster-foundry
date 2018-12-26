@@ -58,7 +58,7 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
               _ <- fiberAuth.join.handleErrorWith { error =>
                 fiberResp.cancel *> IO.raiseError(error)
               }
-              resp <- respFiber.join flatMap {
+              resp <- fiberResp.join flatMap {
                 case Valid(tile) =>
                   Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
                 case Invalid(e) =>
@@ -100,7 +100,10 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
                     }
                   for {
                     authFiber <- authorizers.authProject(user, projectId).start
-                    mosaic = projects.read(projectId, None, overrides, uuids.toNel)
+                    mosaic = projects.read(projectId,
+                                           None,
+                                           overrides,
+                                           uuids.toNel)
                     histFiber <- LayerHistogram.identity(mosaic, 4000).start
                     _ <- authFiber.join.handleErrorWith { error =>
                       histFiber.cancel *> IO.raiseError(error)
@@ -143,17 +146,12 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
                   cs)
               }
             for {
-<<<<<<< HEAD
-              _ <- authorizers.authProject(user, projectId)
-              resp <- eval(extent, cellSize) flatMap {
-=======
-              authFiber <- Authorizers.authProject(user, projectId).start
+              authFiber <- authorizers.authProject(user, projectId).start
               respFiber <- eval(extent, cellSize).start
               _ <- authFiber.join.handleErrorWith { error =>
                 respFiber.cancel *> IO.raiseError(error)
               }
               resp <- respFiber.join.flatMap {
->>>>>>> Use fiber for threading for backsplash services
                 case Valid(tile) =>
                   authedReq.req.headers
                     .get(CaseInsensitiveString("Accept")) match {
