@@ -33,7 +33,6 @@ then
           -e PROJECT_ROUTE \
           -e USER_COUNT \
           -e RAMPUP_TIME \
-          -e BACKSPLASH_TMS_SERVER \
           -e BACKSPLASH_TMS_URL_TEMPLATE \
           -e MIN_ZOOM \
           -e MAX_ZOOM \

@@ -15,7 +15,6 @@ object Config {
   }
 
   object TMS {
-    val server = config.getString("gatling.tms.server")
     val template = config.getString("gatling.tms.template")
     val minZoom = config.getInt("gatling.tms.minZoom")
     val maxZoom = config.getInt("gatling.tms.maxZoom")
