@@ -15,11 +15,20 @@ import BacksplashImageGen._
 
 import scala.concurrent.ExecutionContext
 import java.util.concurrent.Executors
+import java.util.UUID
 
 class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
   val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(1))
   implicit val timer = IO.timer(ec)
-  val mosaicImplicits = new MosaicImplicits(new MetricsRegistrator())
+
+  implicit val nothingHistStore: HistogramStore[Nothing] =
+    new HistogramStore[Nothing] {
+      def layerHistogram(self: Nothing, layerId: UUID, subsetBands: List[Int]) =
+        ???
+    }
+
+  val mosaicImplicits =
+    new MosaicImplicits[Nothing](new MetricsRegistrator(), ???)
   import mosaicImplicits._
   implicit val cs = IO.contextShift(ExecutionContext.global)
 
@@ -50,7 +59,8 @@ class BacksplashMosaicSpec extends FunSuite with Checkers with Matchers {
     }
   }
 
-  test("fetching mosaics should return real tiles (diff min/max value as proxy)") {
+  test(
+    "fetching mosaics should return real tiles (diff min/max value as proxy)") {
     check {
       forAll { (mosaic: BacksplashMosaic) =>
         {
