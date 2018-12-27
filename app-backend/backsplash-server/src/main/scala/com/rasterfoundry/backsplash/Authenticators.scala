@@ -1,11 +1,10 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.Parameters._
-import com.rasterfoundry.database.{UserDao, MapTokenDao, ProjectDao}
+import com.rasterfoundry.database.{MapTokenDao, ProjectDao, UserDao}
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.{MapToken, User, Visibility, Project}
-
+import com.rasterfoundry.datamodel.{MapToken, Project, User, Visibility}
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
@@ -21,12 +20,16 @@ import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.server._
 import org.http4s.util.CaseInsensitiveString
-
 import java.net.URL
 import java.util.UUID
+
+import com.rasterfoundry.backsplash.MetricsRegistrator
 import doobie.util.transactor.Transactor
 
-class Authenticators(val xa: Transactor[IO]) {
+class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator) {
+
+  val verifyJWTTimer = mtr.newTimer(classOf[Authenticators], "verify-jwt")
+  val tokenAuthTimer = mtr.newTimer(classOf[Authenticators], "token-auth")
 
   val tokensAuthenticator = Kleisli[OptionT[IO, ?], Request[IO], User](
     {
@@ -88,17 +91,17 @@ class Authenticators(val xa: Transactor[IO]) {
       OptionT(UserDao.getUserById(mapToken.owner).transact(xa))
     }
 
-  private def userFromToken(token: String): OptionT[IO, User] =
-    verifyJWT(token) match {
+  private def userFromToken(token: String): OptionT[IO, User] = {
+    val userFromTokenIO = verifyJWT(token) match {
       case Right((_, jwtClaims)) =>
-        OptionT(
-          UserDao
-            .getUserById(jwtClaims.getStringClaim("sub"))
-            .transact(xa)
-        )
+        UserDao
+          .getUserById(jwtClaims.getStringClaim("sub"))
+          .transact(xa)
       case Left(e) =>
-        OptionT(IO(None: Option[User]))
+        IO(None: Option[User])
     }
+    OptionT(mtr.timedIO(userFromTokenIO, tokenAuthTimer))
+  }
 
   private def userFromPublicProject(id: UUID): OptionT[IO, User] =
     for {
@@ -121,8 +124,10 @@ class Authenticators(val xa: Transactor[IO]) {
   private def verifyJWT(tokenString: String)
     : Either[BadJWTException, (JwtToken, JWTClaimsSet)] = {
     val token: JwtToken = JwtToken(content = tokenString)
-
-    ConfigurableJwtValidator(jwkSet).validate(token)
+    val time = verifyJWTTimer.time()
+    val tokenValidation = ConfigurableJwtValidator(jwkSet).validate(token)
+    time.stop()
+    tokenValidation
   }
 
   val tokensAuthMiddleware = AuthMiddleware(tokensAuthenticator)

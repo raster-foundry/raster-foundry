@@ -101,7 +101,7 @@ object Main extends IOApp with HistogramStoreImplicits {
     )(service)
 
   val mtr = new MetricsRegistrator()
-  val authenticators = new Authenticators(xa)
+  val authenticators = new Authenticators(xa, mtr)
 
   val mosaicImplicits = new MosaicImplicits(mtr, LayerAttributeDao())
   val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa)
