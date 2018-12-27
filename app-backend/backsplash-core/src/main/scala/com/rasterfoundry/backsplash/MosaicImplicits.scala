@@ -114,13 +114,13 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             // Assume that we're in a single band case. It isn't obvious what it would
             // mean if the band count weren't 3 or 1, so just make the assumption that we
             // wouldn't do that to ourselves and don't handle the remainder
-            BacksplashMosaic.layerHistogram(filtered) flatMap {
+            BacksplashMosaic.layerHistogram(self) flatMap {
               case Valid(hists) =>
                 (filtered map { relevant =>
                   val time = readSceneTmsTimer.time()
-                  val img = relevant.read(z, x, y) map {
+                  val img = relevant.read(z, x, y) map { im =>
                     ColorRampMosaic.colorTile(
-                      _,
+                      im,
                       hists,
                       relevant.singleBandOptions getOrElse {
                         throw SingleBandOptionsException(
@@ -130,11 +130,12 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                   }
                   time.stop()
                   img
-                }).collect({ case Some(mbtile) => Raster(mbtile, extent) })
+                }).collect({ case Some(mbtile) => mbtile })
                   .compile
-                  .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
-                    mbr1.merge(mbr2, NearestNeighbor)
+                  .fold(ndtile)({ (mbr1, mbr2) =>
+                    mbr1 merge mbr2
                   })
+                  .map(t => Raster(t, extent))
               case Invalid(e) =>
                 throw MetadataException(s"Could not resolve histograms: $e")
             }
