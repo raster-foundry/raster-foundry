@@ -37,7 +37,7 @@ class MetricsRegistrator(implicit clock: Clock[IO]) {
       .convertRatesTo(TimeUnit.SECONDS)
       .convertDurationsTo(TimeUnit.MILLISECONDS)
       .build()
-    reporter.start(1, TimeUnit.MINUTES)
+    reporter.start(1, TimeUnit.SECONDS)
   }
 
   def reportToCSV(f: File) = {
@@ -47,7 +47,7 @@ class MetricsRegistrator(implicit clock: Clock[IO]) {
       .convertRatesTo(TimeUnit.SECONDS)
       .convertDurationsTo(TimeUnit.MILLISECONDS)
       .build(f)
-    reporter.start(1, TimeUnit.MINUTES)
+    reporter.start(1, TimeUnit.SECONDS)
   }
 
   def reportToGraphite(graphiteUrl: String) = {
@@ -59,6 +59,6 @@ class MetricsRegistrator(implicit clock: Clock[IO]) {
       .convertRatesTo(TimeUnit.SECONDS)
       .convertDurationsTo(TimeUnit.MILLISECONDS)
       .build(graphite)
-    reporter.start(1, TimeUnit.MINUTES)
+    reporter.start(1, TimeUnit.SECONDS)
   }
 }
