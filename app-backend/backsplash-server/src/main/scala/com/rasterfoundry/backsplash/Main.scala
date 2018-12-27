@@ -47,12 +47,26 @@ object Main extends IOApp with HistogramStoreImplicits {
   val dbContextShift: ContextShift[IO] = IO.contextShift(
     ExecutionContext.fromExecutor(
       Executors.newFixedThreadPool(
-        8,
-        new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
-      )
+        Config.parallelism.dbThreadPoolSize,
+        new ThreadFactoryBuilder().setNameFormat("db-client-%d").build())
     ))
 
   val xa = RFTransactor.transactor(dbContextShift)
+
+  override protected implicit def contextShift: ContextShift[IO] =
+    IO.contextShift(
+      ExecutionContext.fromExecutor(
+        Executors.newFixedThreadPool(
+          Config.parallelism.http4sThreadPoolSize,
+          new ThreadFactoryBuilder().setNameFormat("http4s-%d").build()
+        )
+      ))
+
+  val blazeEC = ExecutionContext.fromExecutor(
+    Executors.newFixedThreadPool(
+      Config.parallelism.blazeThreadPoolSize,
+      new ThreadFactoryBuilder().setNameFormat("blaze-cached-%d").build())
+  )
 
   val projectStoreImplicits = new ProjectStoreImplicits(xa)
   import projectStoreImplicits.projectStore
@@ -116,7 +130,8 @@ object Main extends IOApp with HistogramStoreImplicits {
 
   def stream =
     BlazeServerBuilder[IO]
-      .enableHttp2(true)
+      .withExecutionContext(blazeEC)
+      .withConnectorPoolSize(Config.parallelism.blazeConnectorPoolSize)
       .bindHttp(8080, "0.0.0.0")
       .withHttpApp(httpApp.orNotFound)
       .serve
