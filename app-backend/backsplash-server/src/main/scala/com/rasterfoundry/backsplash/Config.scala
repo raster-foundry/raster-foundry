@@ -10,7 +10,8 @@ object Config {
     val dbThreadPoolSize = parallelismConfig.getInt("dbThreadPoolSize")
     val http4sThreadPoolSize = parallelismConfig.getInt("http4sThreadPoolSize")
     val blazeThreadPoolSize = parallelismConfig.getInt("blazeThreadPoolSize")
-    val blazeConnectorPoolSize = parallelismConfig.getInt("blazeConnectorPoolSize")
+    val blazeConnectorPoolSize =
+      parallelismConfig.getInt("blazeConnectorPoolSize")
   }
 
   object server {
