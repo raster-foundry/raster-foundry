@@ -80,11 +80,12 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               .flatMap({ relevant =>
                 fs2.Stream.eval {
                   Applicative[IO].map2(
-                    IO {
-                      val time = readSceneTmsTimer.time()
-                      val img = relevant.read(z, x, y)
-                      time.stop()
-                      img
+                    {
+                      for {
+                        time <- IO { readSceneTmsTimer.time() }
+                        img <- relevant.read(z, x, y)
+                        _ <- IO { time.stop() }
+                      } yield img
                     }, {
                       val time = readSceneHistTimer.time()
                       val hists = histStore.layerHistogram(relevant.imageId,
@@ -116,20 +117,26 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             // wouldn't do that to ourselves and don't handle the remainder
             BacksplashMosaic.layerHistogram(filtered) flatMap {
               case Valid(hists) =>
-                (filtered map { relevant =>
-                  val time = readSceneTmsTimer.time()
-                  val img = relevant.read(z, x, y) map {
-                    ColorRampMosaic.colorTile(
-                      _,
-                      hists,
-                      relevant.singleBandOptions getOrElse {
-                        throw SingleBandOptionsException(
-                          "Must specify single band options when requesting single band visualization.")
+                (filtered flatMap { relevant =>
+                  (fs2.Stream.eval {
+                    for {
+                      time <- IO { readSceneTmsTimer.time() }
+                      img <- relevant.read(z, x, y)
+                    } yield {
+                      val colored = img map {
+                        ColorRampMosaic.colorTile(
+                          _,
+                          hists,
+                          relevant.singleBandOptions getOrElse {
+                            throw SingleBandOptionsException(
+                              "Must specify single band options when requesting single band visualization.")
+                          }
+                        )
                       }
-                    )
-                  }
-                  time.stop()
-                  img
+                      time.stop()
+                      colored
+                    }
+                  })
                 }).collect({ case Some(mbtile) => Raster(mbtile, extent) })
                   .compile
                   .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
@@ -184,11 +191,18 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             }
             mosaic = if (bands.length == 3) {
               filtered
-                .map({ relevant =>
-                  val time = readSceneExtentTimer.time()
-                  val img = relevant.colorCorrect(extent, cs, layerHist, None)
-                  time.stop()
-                  img
+                .flatMap({ relevant =>
+                  (fs2.Stream
+                    .eval {
+                      for {
+                        time <- IO { readSceneExtentTimer.time() }
+                        img <- relevant.colorCorrect(extent,
+                                                     cs,
+                                                     layerHist,
+                                                     None)
+                        _ <- IO { time.stop() }
+                      } yield img
+                    })
                 })
                 .collect({ case Some(mbtile) => Raster(mbtile, extent) })
                 .compile
@@ -197,21 +211,26 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                 })
             } else {
               filtered
-                .map({ relevant =>
-                  val time = readSceneExtentTimer.time()
-                  val img = relevant.read(extent, cs) map {
-                    ColorRampMosaic
-                      .colorTile(
-                        _,
-                        layerHist,
-                        relevant.singleBandOptions getOrElse {
-                          throw SingleBandOptionsException(
-                            "Must specify single band options when requesting single band visualization.")
-                        }
-                      )
-                  }
-                  time.stop()
-                  img
+                .flatMap({ relevant =>
+                  (fs2.Stream.eval {
+                    for {
+                      time <- IO { readSceneExtentTimer.time() }
+                      img <- relevant.read(extent, cs)
+                      _ <- IO { time.stop() }
+                    } yield {
+                      img map {
+                        ColorRampMosaic
+                          .colorTile(
+                            _,
+                            layerHist,
+                            relevant.singleBandOptions getOrElse {
+                              throw SingleBandOptionsException(
+                                "Must specify single band options when requesting single band visualization.")
+                            }
+                          )
+                      }
+                    }
+                  })
                 })
                 .collect({ case Some(mbtile) => Raster(mbtile, extent) })
                 .compile
@@ -245,11 +264,14 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             )
             mosaic = BacksplashMosaic
               .filterRelevant(self)
-              .map({ relevant =>
-                val time = readSceneExtentTimer.time()
-                val img = relevant.read(extent, cs)
-                time.stop()
-                img
+              .flatMap({ relevant =>
+                (fs2.Stream.eval {
+                  for {
+                    time <- IO { readSceneExtentTimer.time() }
+                    img <- relevant.read(extent, cs)
+                    _ <- IO { time.stop() }
+                  } yield img
+                })
               })
               .collect({ case Some(mbtile) => Raster(mbtile, extent) })
               .compile
