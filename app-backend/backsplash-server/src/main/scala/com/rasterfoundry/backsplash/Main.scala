@@ -68,7 +68,9 @@ object Main extends IOApp with HistogramStoreImplicits {
       new ThreadFactoryBuilder().setNameFormat("blaze-cached-%d").build())
   )
 
-  val projectStoreImplicits = new ProjectStoreImplicits(xa)
+  val mtr = new MetricsRegistrator()
+
+  val projectStoreImplicits = new ProjectStoreImplicits(xa, mtr)
   import projectStoreImplicits.projectStore
 
   val timeout: FiniteDuration =
@@ -100,11 +102,10 @@ object Main extends IOApp with HistogramStoreImplicits {
       OptionT.pure[IO](Response[IO](Status.GatewayTimeout))
     )(service)
 
-  val mtr = new MetricsRegistrator()
   val authenticators = new Authenticators(xa, mtr)
 
   val mosaicImplicits = new MosaicImplicits(mtr, LayerAttributeDao())
-  val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa)
+  val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa, mtr)
   import toolStoreImplicits._
 
   val mosaicService: HttpRoutes[IO] =

@@ -19,8 +19,9 @@ import io.circe.Json
 
 class BacksplashMamlAdapter[HistStore: HistogramStore](
     mosaicImplicits: MosaicImplicits[HistStore],
-    xa: Transactor[IO])
-    extends ProjectStoreImplicits(xa) {
+    xa: Transactor[IO],
+    mtr: MetricsRegistrator)
+    extends ProjectStoreImplicits(xa, mtr) {
   import mosaicImplicits._
 
   def asMaml(ast: MapAlgebraAST)

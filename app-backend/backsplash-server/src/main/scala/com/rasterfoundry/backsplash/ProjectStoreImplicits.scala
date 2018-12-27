@@ -31,7 +31,8 @@ import geotrellis.vector.{Polygon, Projected}
 
 import java.util.UUID
 
-class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
+class ProjectStoreImplicits(xa: Transactor[IO], mtr: MetricsRegistrator)
+    extends ToProjectStoreOps {
   implicit val projectStore: ProjectStore[SceneToProjectDao] =
     new ProjectStore[SceneToProjectDao] {
       // safe to get here, since we're just unapplying from a value that we already know
@@ -103,7 +104,8 @@ class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
                   .unapply(md.colorCorrections.saturation)
                   .get)
             ),
-            singleBandOptions
+            singleBandOptions,
+            mtr
           )
         } transact (xa)
       }
