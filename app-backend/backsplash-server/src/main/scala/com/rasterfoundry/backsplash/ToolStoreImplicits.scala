@@ -19,11 +19,12 @@ import java.util.UUID
 
 class ToolStoreImplicits[HistStore: HistogramStore](
     mosaicImplicits: MosaicImplicits[HistStore],
-    xa: Transactor[IO])
-    extends ProjectStoreImplicits(xa) {
+    xa: Transactor[IO],
+    mtr: MetricsRegistrator)
+    extends ProjectStoreImplicits(xa, mtr) {
   import mosaicImplicits._
 
-  val mamlAdapter = new BacksplashMamlAdapter(mosaicImplicits, xa)
+  val mamlAdapter = new BacksplashMamlAdapter(mosaicImplicits, xa, mtr)
 
   private def toolToColorRd(toolRd: tool.RenderDefinition): RenderDefinition = {
     val scaleOpt = toolRd.scale match {

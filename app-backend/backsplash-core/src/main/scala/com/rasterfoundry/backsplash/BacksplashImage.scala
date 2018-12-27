@@ -1,5 +1,7 @@
 package com.rasterfoundry.backsplash
 
+import java.net.URLDecoder
+
 import com.rasterfoundry.backsplash.color._
 import geotrellis.vector.{io => _, _}
 import geotrellis.raster.{io => _, _}
@@ -8,26 +10,34 @@ import geotrellis.raster.histogram._
 import geotrellis.raster.io.geotiff.AutoHigherResolution
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.spark.SpatialKey
-import geotrellis.proj4.{WebMercator, LatLng}
-
+import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.server.vlm.RasterSourceUtils
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
-
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.IO
 import io.circe.syntax._
-
 import java.util.UUID
 
-case class BacksplashImage(
-    imageId: UUID,
-    uri: String,
-    footprint: MultiPolygon,
-    subsetBands: List[Int],
-    corrections: ColorCorrect.Params,
-    singleBandOptions: Option[SingleBandOptions.Params]) {
+import com.typesafe.scalalogging.LazyLogging
+
+import geotrellis.contrib.vlm.gdal.GDALRasterSource
+
+case class BacksplashImage(imageId: UUID,
+                           uri: String,
+                           footprint: MultiPolygon,
+                           subsetBands: List[Int],
+                           corrections: ColorCorrect.Params,
+                           singleBandOptions: Option[SingleBandOptions.Params],
+                           mtr: MetricsRegistrator)
+    extends LazyLogging {
+
+  val getRasterSourceTimer =
+    mtr.newTimer(classOf[BacksplashImage], "get-raster-source")
+
   def read(extent: Extent, cs: CellSize): Option[MultibandTile] = {
+    val time = getRasterSourceTimer.time()
     val rs = BacksplashImage.getRasterSource(uri)
+    time.stop()
     val destinationExtent = extent.reproject(rs.crs, WebMercator)
     rs.reproject(WebMercator, NearestNeighbor)
       .resampleToGrid(RasterExtent(extent, cs), NearestNeighbor)
@@ -36,7 +46,9 @@ case class BacksplashImage(
   }
 
   def read(z: Int, x: Int, y: Int): Option[MultibandTile] = {
+    val time = getRasterSourceTimer.time()
     val rs = BacksplashImage.getRasterSource(uri)
+    time.stop()
     val layoutDefinition = BacksplashImage.tmsLevels(z)
     rs.reproject(WebMercator)
       .tileToLayout(layoutDefinition, NearestNeighbor)
@@ -61,25 +73,31 @@ case class BacksplashImage(
     }
 }
 
-object BacksplashImage extends RasterSourceUtils {
+import scala.collection.mutable.HashMap
+
+object BacksplashImage extends RasterSourceUtils with LazyLogging {
+
+//  def getRasterSource(uri: String): GDALRasterSource = blocking {
+//    GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
+//  }
 
   def getRasterSource(uri: String): GeoTiffRasterSource = {
     new GeoTiffRasterSource(uri)
   }
 
-  def fromWkt(imageId: UUID,
-              uri: String,
-              wkt: String,
-              subsetBands: List[Int]): BacksplashImage =
-    readWktOrWkb(wkt)
-      .as[Polygon]
-      .map { poly =>
-        BacksplashImage(imageId,
-                        uri,
-                        MultiPolygon(poly),
-                        subsetBands,
-                        ColorCorrect.paramsFromBandSpecOnly(0, 1, 2),
-                        None)
-      }
-      .getOrElse(throw new Exception("Provided WKT/WKB must be a multipolygon"))
+//  def fromWkt(imageId: UUID,
+//              uri: String,
+//              wkt: String,
+//              subsetBands: List[Int]): BacksplashImage =
+//    readWktOrWkb(wkt)
+//      .as[Polygon]
+//      .map { poly =>
+//        BacksplashImage(imageId,
+//                        uri,
+//                        MultiPolygon(poly),
+//                        subsetBands,
+//                        ColorCorrect.paramsFromBandSpecOnly(0, 1, 2),
+//                        None)
+//      }
+//      .getOrElse(throw new Exception("Provided WKT/WKB must be a multipolygon"))
 }

@@ -1,2 +1,8 @@
 */target/*
 .idea/*
+.ivy/*
+.coursier-cache/*
+.ensime_cache/*
+./project/.ivy/*
+./project/.boot/*
+./project/.sbtboot/*

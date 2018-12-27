@@ -47,14 +47,30 @@ object Main extends IOApp with HistogramStoreImplicits {
   val dbContextShift: ContextShift[IO] = IO.contextShift(
     ExecutionContext.fromExecutor(
       Executors.newFixedThreadPool(
-        8,
-        new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
-      )
+        Config.parallelism.dbThreadPoolSize,
+        new ThreadFactoryBuilder().setNameFormat("db-client-%d").build())
     ))
 
   val xa = RFTransactor.transactor(dbContextShift)
 
-  val projectStoreImplicits = new ProjectStoreImplicits(xa)
+  override protected implicit def contextShift: ContextShift[IO] =
+    IO.contextShift(
+      ExecutionContext.fromExecutor(
+        Executors.newFixedThreadPool(
+          Config.parallelism.http4sThreadPoolSize,
+          new ThreadFactoryBuilder().setNameFormat("http4s-%d").build()
+        )
+      ))
+
+  val blazeEC = ExecutionContext.fromExecutor(
+    Executors.newFixedThreadPool(
+      Config.parallelism.blazeThreadPoolSize,
+      new ThreadFactoryBuilder().setNameFormat("blaze-cached-%d").build())
+  )
+
+  val mtr = new MetricsRegistrator()
+
+  val projectStoreImplicits = new ProjectStoreImplicits(xa, mtr)
   import projectStoreImplicits.projectStore
 
   val timeout: FiniteDuration =
@@ -86,11 +102,10 @@ object Main extends IOApp with HistogramStoreImplicits {
       OptionT.pure[IO](Response[IO](Status.GatewayTimeout))
     )(service)
 
-  val mtr = new MetricsRegistrator()
-  val authenticators = new Authenticators(xa)
+  val authenticators = new Authenticators(xa, mtr)
 
   val mosaicImplicits = new MosaicImplicits(mtr, LayerAttributeDao())
-  val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa)
+  val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa, mtr)
   import toolStoreImplicits._
 
   val mosaicService: HttpRoutes[IO] =
@@ -116,7 +131,8 @@ object Main extends IOApp with HistogramStoreImplicits {
 
   def stream =
     BlazeServerBuilder[IO]
-      .enableHttp2(true)
+      .withExecutionContext(blazeEC)
+      .withConnectorPoolSize(Config.parallelism.blazeConnectorPoolSize)
       .bindHttp(8080, "0.0.0.0")
       .withHttpApp(httpApp.orNotFound)
       .serve

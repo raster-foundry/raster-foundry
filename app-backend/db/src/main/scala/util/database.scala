@@ -49,10 +49,11 @@ object RFTransactor extends Config {
     ExecutionContext.fromExecutor(
       ExecutionContext.fromExecutor(
         Executors.newFixedThreadPool(
-          32,
+          Properties.envOrElse("HIKARI_CONNECTION_THREADS", "8").toInt,
           new ThreadFactoryBuilder().setNameFormat("db-connection-%d").build()
         )
       ))
+
   val transactionEC =
     ExecutionContext.fromExecutor(
       ExecutionContext.fromExecutor(
