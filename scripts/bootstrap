@@ -54,6 +54,10 @@ function pull_sbtopts() {
     sort app-backend/.sbtopts | uniq > cleaned_sbtopts
     mv cleaned_sbtopts app-backend/.sbtopts
 
+    git config --local filter.sbtopts.clean \
+        "sed -e '/^-Dsbt\.override\.build\.repos=true/d' -e '/^-Dsbt\.repository\.config=\([^\s]*\)/d'"
+    git config --local filter.sbtopts.smudge cat
+
     popd
 }
 
@@ -68,6 +72,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         pull_sbtopts
     else
         pull_env
+        pull_sbtopts
         build_containers
     fi
 fi

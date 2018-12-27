@@ -83,8 +83,8 @@ Vagrant.configure(2) do |config|
       export AWS_PROFILE=#{aws_profile}
       export RF_SETTINGS_BUCKET=#{rf_settings_bucket}
       export RF_ARTIFACTS_BUCKET=#{rf_artifacts_bucket}
-      su vagrant ./scripts/bootstrap
-      su vagrant ./scripts/update
+      su vagrant -c './scripts/bootstrap --containers'
+      su vagrant -c './scripts/update'
     SHELL
   end
 end
