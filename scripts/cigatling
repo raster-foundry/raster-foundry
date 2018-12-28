@@ -1,9 +1,5 @@
 #!/bin/bash
-set -e
-
-if [[ -n "${RF_DEBUG}" ]]; then
-    set -x
-fi
+set -eu
 
 GIT_COMMIT="${GIT_COMMIT:-latest}"
 
@@ -24,7 +20,7 @@ then
         docker-compose -f docker-compose.test.yml run gatling-sbt gatling:test || true
 
         BASE_REPORT_DIR="./gatling/target/gatling/"
-        LATEST_REPORT=$(ls -lah "${REPORT_DIRECTORY}" | grep "mosaictmssimulation" | tail -n 1 | cut -c 43-)
+        LATEST_REPORT=$(ls -lah "${BASE_REPORT_DIR}" | grep "mosaictmssimulation" | tail -n 1 | cut -c 43-)
         REPORT_DIR="${BASE_REPORT_DIR}${LATEST_REPORT}"
         RESULTS_S3_URI="s3://${RESULTS_BUCKET}/gatling/${BUILD_NUMBER}/"
 
