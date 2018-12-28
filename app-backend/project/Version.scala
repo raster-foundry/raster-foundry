@@ -24,7 +24,7 @@ object Version {
   val findbugAnnotations = "3.0.1u2"
   val geotools = "17.1"
   val geotrellis = "3.0.0-SNAPSHOT"
-  val geotrellisServer = "0.0.14-RC4"
+  val geotrellisServer = "0.0.14-RC6"
   val hadoop = "2.8.4"
   val hikariCP = "3.2.0"
   val http4s = "0.20.0-M4"
