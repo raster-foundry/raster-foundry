@@ -47,10 +47,11 @@
 - Address a number of unhandled promise chains on the frontend [\#4380](https://github.com/raster-foundry/raster-foundry/pull/4380)
 - Restored auth and error-handling [\#4390](https://github.com/raster-foundry/raster-foundry/pull/4390)
 - Aligned backsplash dockerfile with existing services [\#4394](https://github.com/raster-foundry/raster-foundry/pull/4394)
-- Upgraded geotrellis-server to handle thread safety issue that was causing SEGFAULTs in backsplash [\#4399](https://github.com/raster-foundry/raster-foundry/pull/4399), [\#4412](https://github.com/raster-foundry/raster-foundry/pull/4412)
+- Upgraded geotrellis-server to handle thread safety issue that was causing SEGFAULTs in backsplash and for ArrayTile vs. Tile issues [\#4399](https://github.com/raster-foundry/raster-foundry/pull/4399), [\#4412](https://github.com/raster-foundry/raster-foundry/pull/4412), [\#4426](https://github.com/raster-foundry/raster-foundry/pull/4426)
 - Switched back to geotrellis for IO to shrink the space of failure conditions [\#4414](https://github.com/raster-foundry/raster-foundry/pull/4414)
 - Fetch histograms for multiband mosaics from the database again [\#4417](https://github.com/raster-foundry/raster-foundry/pull/4417)
 - Made single band tiles render without weird stripes [\#4423](https://github.com/raster-foundry/raster-foundry/pull/4423)
+- Fetched histograms from the database for single band visualization, falling back to from tiles [\#4426](https://github.com/raster-foundry/raster-foundry/pull/4426)
 
 ### Removed
 
