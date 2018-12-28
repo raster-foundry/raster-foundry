@@ -52,7 +52,9 @@ case class BacksplashImage(imageId: UUID,
     val layoutDefinition = BacksplashImage.tmsLevels(z)
     rs.reproject(WebMercator)
       .tileToLayout(layoutDefinition, NearestNeighbor)
-      .read(SpatialKey(x, y), subsetBands)
+      .read(SpatialKey(x, y), subsetBands) map { tile =>
+      tile.mapBands((n: Int, t: Tile) => t.toArrayTile)
+    }
   }
 
   def colorCorrect(z: Int,
@@ -77,27 +79,6 @@ import scala.collection.mutable.HashMap
 
 object BacksplashImage extends RasterSourceUtils with LazyLogging {
 
-//  def getRasterSource(uri: String): GDALRasterSource = blocking {
-//    GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
-//  }
-
-  def getRasterSource(uri: String): GeoTiffRasterSource = {
+  def getRasterSource(uri: String): GeoTiffRasterSource =
     new GeoTiffRasterSource(uri)
-  }
-
-//  def fromWkt(imageId: UUID,
-//              uri: String,
-//              wkt: String,
-//              subsetBands: List[Int]): BacksplashImage =
-//    readWktOrWkb(wkt)
-//      .as[Polygon]
-//      .map { poly =>
-//        BacksplashImage(imageId,
-//                        uri,
-//                        MultiPolygon(poly),
-//                        subsetBands,
-//                        ColorCorrect.paramsFromBandSpecOnly(0, 1, 2),
-//                        None)
-//      }
-//      .getOrElse(throw new Exception("Provided WKT/WKB must be a multipolygon"))
 }
