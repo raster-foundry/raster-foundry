@@ -21,6 +21,8 @@ object AuthedAutoSlash {
         // <+> is MonoidK combine
         // It's used here for consistency with the http4s non-authed autoslash
         // https://github.com/http4s/http4s/blob/master/server/src/main/scala/org/http4s/server/middleware/AutoSlash.scala#L20
+        // what it does here is compose the un-autoslashed service with a copy of itself that strips the
+        // trailing slashes and routes the original request back to the first service
         http(authedReq) <+> {
           val pathInfo = authedReq.req.pathInfo
 
