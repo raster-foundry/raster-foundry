@@ -29,7 +29,7 @@ then
         RESULTS_URL="https://s3.amazonaws.com/rasterfoundry-staging-it-us-east-1/gatling/${BUILD_NUMBER}/index.html"
 
         echo "VIEW RESULTS AT: ${RESULTS_URL}"
-        curl -X POST --data-urlencode "payload={\"channel\": \"#raster-foundry\", \"username\": \"Your Friendly Neighborhood Raster Parrot\", \"text\": \"Finished load testing for build ${BUILD_NUMBER}. Results are available <${RESULTS_URL}|here>.\", \"icon_emoji\": \":raster_parrot:\"}" "${SLACK_URL}"
+        curl -X POST --data-urlencode "payload={\"channel\": \"#raster-foundry\", \"username\": \"RF Gatling\", \"text\": \"Finished load testing for build ${BUILD_NUMBER}. Results are available <${RESULTS_URL}|here>.\", \"icon_emoji\": \":gatling:\"}" "${SLACK_URL}"
     fi
     exit
 fi
