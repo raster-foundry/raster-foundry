@@ -52,8 +52,7 @@ case class BacksplashImage(imageId: UUID,
     val layoutDefinition = BacksplashImage.tmsLevels(z)
     rs.reproject(WebMercator)
       .tileToLayout(layoutDefinition, NearestNeighbor)
-      .read(SpatialKey(x, y), subsetBands) map { tile =>
-      tile.mapBands((n: Int, t: Tile) => t.toArrayTile)
+      .read(SpatialKey(x, y), subsetBands)
     }
   }
 
