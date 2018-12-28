@@ -31,14 +31,18 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
                         H: HttpErrorHandler[IO, BacksplashException, User],
                         ForeignError: HttpErrorHandler[IO, Throwable, User])
     extends ColorImplicits {
+
   import mosaicImplicits._
   import toolstoreImplicits._
+
+  private val pngType = `Content-Type`(MediaType.image.png)
+  private val tiffType = `Content-Type`(MediaType.image.tiff)
 
   val authorizers = new Authorizers(xa)
   val routes: AuthedService[User, IO] = H.handle {
     ForeignError.handle {
       AuthedService {
-        case GET -> Root / UUIDWrapper(analysisId) / "histogram" / _
+        case GET -> Root / UUIDWrapper(analysisId) / "histogram"
               :? NodeQueryParamMatcher(node)
               :? VoidCacheQueryParamMatcher(void) as user =>
           for {
@@ -58,7 +62,7 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
           } yield resp
 
         case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(
-              y) / _
+              y)
               :? NodeQueryParamMatcher(node) as user =>
           for {
             authFiber <- authorizers.authToolRun(user, analysisId).start
@@ -75,14 +79,15 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
                     tile.band(0).renderPng(renderDef).bytes
                   } getOrElse {
                     tile.band(0).renderPng(ColorRamps.Viridis).bytes
-                  }
+                  },
+                  pngType
                 )
               case Invalid(e) =>
                 BadRequest(s"Unable to produce tile for $analysisId: $e")
             }
           } yield resp
 
-        case authedReq @ GET -> Root / UUIDWrapper(analysisId) / "raw" / _
+        case authedReq @ GET -> Root / UUIDWrapper(analysisId) / "raw"
               :? ExtentQueryParamMatcher(extent)
               :? ZoomQueryParamMatcher(zoom)
               :? NodeQueryParamMatcher(node) as user =>
@@ -94,8 +99,6 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
                 `Content-Type`(MediaType.image.tiff)
               case _ => `Content-Type`(MediaType.image.png)
             }
-          val pngType = `Content-Type`(MediaType.image.png)
-          val tiffType = `Content-Type`(MediaType.image.tiff)
           for {
             authFiber <- authorizers.authToolRun(user, analysisId).start
             paintableFiber <- analyses.read(analysisId, node).start
@@ -114,8 +117,7 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
                                        WebMercator).toByteArray,
                      tiffType)
                 } else {
-                  Ok(tile.band(0).renderPng(ColorRamps.Viridis).bytes,
-                     `Content-Type`(MediaType.image.png))
+                  Ok(tile.band(0).renderPng(ColorRamps.Viridis).bytes, pngType)
                 }
               case Invalid(e) => BadRequest(s"Could not produce extent: $e")
             }

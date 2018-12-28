@@ -34,6 +34,9 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
 
   import mosaicImplicits._
 
+  private val pngType = `Content-Type`(MediaType.image.png)
+  private val tiffType = `Content-Type`(MediaType.image.tiff)
+
   val authorizers = new Authorizers(xa)
 
   val routes: AuthedService[User, IO] =
@@ -41,7 +44,7 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
       ForeignError.handle {
         AuthedService {
           case GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
-                y) / _
+                y)
                 :? RedBandOptionalQueryParamMatcher(redOverride)
                 :? GreenBandOptionalQueryParamMatcher(greenOverride)
                 :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
@@ -60,13 +63,13 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
               }
               resp <- fiberResp.join flatMap {
                 case Valid(tile) =>
-                  Ok(tile.renderPng.bytes, `Content-Type`(MediaType.image.png))
+                  Ok(tile.renderPng.bytes, pngType)
                 case Invalid(e) =>
                   BadRequest(s"Could not produce tile: $e")
               }
             } yield resp
 
-          case GET -> Root / UUIDWrapper(projectId) / "histogram" / _ as user =>
+          case GET -> Root / UUIDWrapper(projectId) / "histogram" as user =>
             for {
               authFiber <- authorizers.authProject(user, projectId).start
               mosaic = projects.read(projectId, None, None, None)
@@ -84,7 +87,7 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
               }
             } yield resp
 
-          case authedReq @ POST -> Root / UUIDWrapper(projectId) / "histogram" / _
+          case authedReq @ POST -> Root / UUIDWrapper(projectId) / "histogram"
                 :? RedBandOptionalQueryParamMatcher(redOverride)
                 :? GreenBandOptionalQueryParamMatcher(greenOverride)
                 :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
@@ -119,7 +122,7 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
               }
             }
 
-          case authedReq @ GET -> Root / UUIDWrapper(projectId) / "export" / _
+          case authedReq @ GET -> Root / UUIDWrapper(projectId) / "export"
                 :? ExtentQueryParamMatcher(extent)
                 :? ZoomQueryParamMatcher(zoom)
                 :? RedBandOptionalQueryParamMatcher(redOverride)
@@ -158,11 +161,10 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
                     case Some(Header(_, "image/tiff")) =>
                       Ok(
                         MultibandGeoTiff(tile, projectedExtent, WebMercator).toByteArray,
-                        `Content-Type`(MediaType.image.tiff)
+                        tiffType
                       )
                     case _ =>
-                      Ok(tile.renderPng.bytes,
-                         `Content-Type`(MediaType.image.png))
+                      Ok(tile.renderPng.bytes, pngType)
                   }
                 case Invalid(e) => BadRequest(s"Could not produce extent: $e")
               }
