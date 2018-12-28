@@ -53,7 +53,6 @@ case class BacksplashImage(imageId: UUID,
     rs.reproject(WebMercator)
       .tileToLayout(layoutDefinition, NearestNeighbor)
       .read(SpatialKey(x, y), subsetBands)
-    }
   }
 
   def colorCorrect(z: Int,
@@ -73,8 +72,6 @@ case class BacksplashImage(imageId: UUID,
       corrections.colorCorrect(_, hists, nodataValue)
     }
 }
-
-import scala.collection.mutable.HashMap
 
 object BacksplashImage extends RasterSourceUtils with LazyLogging {
 
