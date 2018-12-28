@@ -15,6 +15,7 @@
 - Added graphite reporter to dropwizard metrics [\#4398](https://github.com/raster-foundry/raster-foundry/pull/4398)
 - Added alternative development runner/setup for testing API server and backsplash [\#4402](https://github.com/raster-foundry/raster-foundry/pull/4402)
 - Added configuration and helper script for gatling integration test results [\#4410](https://github.com/raster-foundry/raster-foundry/pull/4410)
+- Created AuthedAutoSlash middleware to make authentication and route matching cooperate [\#4425](https://github.com/raster-foundry/raster-foundry/pull/4425)
 
 ### Changed
 
