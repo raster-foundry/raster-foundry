@@ -16,6 +16,7 @@
 - Added alternative development runner/setup for testing API server and backsplash [\#4402](https://github.com/raster-foundry/raster-foundry/pull/4402)
 - Added configuration and helper script for gatling integration test results [\#4410](https://github.com/raster-foundry/raster-foundry/pull/4410)
 - Added gatling tests script that can be run in CI [\#4424](https://github.com/raster-foundry/raster-foundry/pull/4424)
+- Created AuthedAutoSlash middleware to make authentication and route matching cooperate [\#4425](https://github.com/raster-foundry/raster-foundry/pull/4425)
 
 ### Changed
 
@@ -50,6 +51,7 @@
 - Upgraded geotrellis-server to handle thread safety issue that was causing SEGFAULTs in backsplash [\#4399](https://github.com/raster-foundry/raster-foundry/pull/4399), [\#4412](https://github.com/raster-foundry/raster-foundry/pull/4412)
 - Switched back to geotrellis for IO to shrink the space of failure conditions [\#4414](https://github.com/raster-foundry/raster-foundry/pull/4414)
 - Fetch histograms for multiband mosaics from the database again [\#4417](https://github.com/raster-foundry/raster-foundry/pull/4417)
+- Made single band tiles render without weird stripes [\#4423](https://github.com/raster-foundry/raster-foundry/pull/4423)
 
 ### Removed
 

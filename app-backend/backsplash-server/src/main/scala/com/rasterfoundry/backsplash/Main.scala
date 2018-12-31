@@ -109,23 +109,22 @@ object Main extends IOApp with HistogramStoreImplicits {
   import toolStoreImplicits._
 
   val mosaicService: HttpRoutes[IO] =
-    authenticators.tokensAuthMiddleware(
-      new MosaicService(SceneToProjectDao(), mtr, mosaicImplicits, xa).routes)
+    authenticators.tokensAuthMiddleware(AuthedAutoSlash(
+      new MosaicService(SceneToProjectDao(), mtr, mosaicImplicits, xa).routes))
 
   val analysisService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
-      new AnalysisService(ToolRunDao(),
-                          mtr,
-                          mosaicImplicits,
-                          toolStoreImplicits,
-                          xa).routes)
+      AuthedAutoSlash(
+        new AnalysisService(ToolRunDao(),
+                            mtr,
+                            mosaicImplicits,
+                            toolStoreImplicits,
+                            xa).routes))
 
   val httpApp =
     Router(
-      "/" -> mtr.middleware(
-        GZip(AutoSlash(withCORS(withTimeout(mosaicService))))),
-      "/tools" -> mtr.middleware(
-        GZip(AutoSlash(withCORS(withTimeout(analysisService))))),
+      "/" -> mtr.middleware(GZip(withCORS(withTimeout(mosaicService)))),
+      "/tools" -> mtr.middleware(GZip(withCORS(withTimeout(analysisService)))),
       "/healthcheck" -> AutoSlash(new HealthcheckService[IO]().routes)
     )
 
