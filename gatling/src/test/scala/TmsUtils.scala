@@ -92,9 +92,10 @@ object TmsUtils {
       throw new Exception(
         s"Project $projectId missing from bbox map for mysterious reasons")
     }
-    tileIdxsForScreen(randomLat(bbox.ymin, bbox.ymax),
-                      randomLon(bbox.xmin, bbox.xmax),
-                      randomZoom(minZoom, maxZoom))
+    (minZoom until maxZoom + 1).reverse.flatMap { zoom =>
+      tileIdxsForScreen(randomLat(bbox.ymin, bbox.ymax),
+        randomLon(bbox.xmin, bbox.xmax), zoom)
+    }
   }
 
   /** A gatling [[Feeder] instance for generating requests that mimic TMS requests */
