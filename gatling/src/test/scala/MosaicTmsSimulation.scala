@@ -49,8 +49,9 @@ class MosaicTmsSimulation extends Simulation {
             .set("z", tile._2)
             .set("x", tile._3)
             .set("y", tile._4)
+            .set("authToken", ApiUtils.getAuthToken)
         }).exec {
-          http("tiles at ${projectId}/${z}/${x}/${y}")
+          http("tiles at ${projectId}/${z}/${x}/${y}?token=${authToken}")
             .get(Config.TMS.template)
             .header("authorization", "Bearer ${authToken}")
             .check(status.is(200))

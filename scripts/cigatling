@@ -1,9 +1,5 @@
 #!/bin/bash
-set -e
-
-if [[ -n "${RF_DEBUG}" ]]; then
-    set -x
-fi
+set -eu
 
 GIT_COMMIT="${GIT_COMMIT:-latest}"
 
@@ -21,32 +17,19 @@ then
         usage
     else
         echo "Firing gatling at staging..."
-        docker run --rm \
-          -v "$(pwd)/gatling:/opt/gatling" \
-          -v "$HOME/.ivy2:/root/.ivy2" \
-          -w /opt/gatling/ \
-          -e RF_API_HOST \
-          -e RF_PROJECT_IDS \
-          -e TOKEN_ROUTE \
-          -e REFRESH_TOKEN \
-          -e RANDOM_SEED \
-          -e PROJECT_ROUTE \
-          -e USER_COUNT \
-          -e RAMPUP_TIME \
-          -e BACKSPLASH_TMS_URL_TEMPLATE \
-          -e MIN_ZOOM \
-          -e MAX_ZOOM \
-          openjdk:8-jre \
-          ./sbt gatling:test || true
+        docker-compose -f docker-compose.test.yml run gatling-sbt gatling:test || true
 
-        echo "Uploading results to '$RESULTS_BUCKET'..."
-        # Most recent report will always be last, since they're timestamped
-        reportDir=$(find ./gatling/target/gatling/ -maxdepth 1 -type d | tail -n 1)
-        zippedName=$(basename "$reportDir").zip
-        zippedDir=$(dirname "$reportDir")
-        zip -r9 "$zippedDir/$zippedName" "$reportDir"
-        aws s3 cp "$zippedDir/$zippedName" "s3://$RESULTS_BUCKET/$GIT_COMMIT/"
+        BASE_REPORT_DIR="./gatling/target/gatling/"
+        LATEST_REPORT=$(ls -lah "${BASE_REPORT_DIR}" | grep "mosaictmssimulation" | tail -n 1 | cut -c 43-)
+        REPORT_DIR="${BASE_REPORT_DIR}${LATEST_REPORT}"
+        RESULTS_S3_URI="s3://${RESULTS_BUCKET}/gatling/${BUILD_NUMBER}/"
+
+        echo "SYNCING RESULTS TO S3 ${REPORT_DIR} => ${RESULTS_S3_URI}"
+        aws s3 sync "${REPORT_DIR}" "${RESULTS_S3_URI}"
+        RESULTS_URL="https://s3.amazonaws.com/rasterfoundry-staging-it-us-east-1/gatling/${BUILD_NUMBER}/index.html"
+
+        echo "VIEW RESULTS AT: ${RESULTS_URL}"
+        curl -X POST --data-urlencode "payload={\"channel\": \"#raster-foundry\", \"username\": \"RF Gatling\", \"text\": \"Finished load testing for build ${BUILD_NUMBER}. Results are available <${RESULTS_URL}|here>.\", \"icon_emoji\": \":gatling:\"}" "${SLACK_URL}"
     fi
     exit
 fi
-
