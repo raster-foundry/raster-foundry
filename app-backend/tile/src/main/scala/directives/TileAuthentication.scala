@@ -1,6 +1,6 @@
 package com.rasterfoundry.tile
 
-import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.akkautil.Authentication
 import com.rasterfoundry.common.cache.CacheClient
 import com.rasterfoundry.common.cache.kryo.KryoMemcachedClient
 import com.rasterfoundry.database.Implicits._

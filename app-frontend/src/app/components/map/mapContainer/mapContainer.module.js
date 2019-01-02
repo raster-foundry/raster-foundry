@@ -27,24 +27,28 @@ const MapContainerComponent = {
 class MapContainerController {
     constructor(
         $document, $element, $scope, $timeout, $q,
-        modalService, mapService, $ngRedux, uuid4
+        modalService, mapService, $ngRedux, uuid4,
+        $rootScope
     ) {
         'ngInject';
-        this.$document = $document;
-        this.$element = $element;
-        this.$scope = $scope;
-        this.$timeout = $timeout;
-        this.$q = $q;
-        this.modalService = modalService;
-        this.mapService = mapService;
-        this.uuid4 = uuid4;
-        this.getMap = () => this.mapService.getMap(this.mapId);
+        $rootScope.autoInject(this, arguments);
+    }
 
-        let unsubscribe = $ngRedux.connect(
+    mapStateToThis(state) {
+        const drawing = state.shape.mapId === this.mapId;
+        return {
+            drawing,
+            drawResolve: state.shape.resolve,
+            drawReject: state.shape.resolve
+        };
+    }
+
+    $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
             this.mapStateToThis.bind(this),
             ShapeActions
         )(this);
-        $scope.$on('$destroy', unsubscribe);
+        this.$scope.$on('$destroy', unsubscribe);
 
         this.getMap().then(m => this.initDrawControls(m));
 
@@ -71,15 +75,6 @@ class MapContainerController {
         });
     }
 
-    mapStateToThis(state) {
-        const drawing = state.shape.mapId === this.mapId;
-        return {
-            drawing,
-            drawResolve: state.shape.resolve,
-            drawReject: state.shape.resolve
-        };
-    }
-
     $postLink() {
         this.initMap();
     }
@@ -98,6 +93,10 @@ class MapContainerController {
         if (this.clickListener) {
             this.$document.off('click', this.clickListener);
         }
+    }
+
+    getMap() {
+        return this.mapService.getMap(this.mapId);
     }
 
     initDrawControls(mapWrapper) {
@@ -270,7 +269,7 @@ class MapContainerController {
                         [mapView.topLeft.latitude, mapView.topLeft.longitude]
                     ]);
                 }
-            });
+            }).catch(() => {});
     }
 
     startDrawingShape() {

@@ -1,7 +1,10 @@
 package com.rasterfoundry.api.tooltag
 
-import com.rasterfoundry.authentication.Authentication
-import com.rasterfoundry.common.{CommonHandlers, UserErrorHandler}
+import com.rasterfoundry.akkautil.{
+  Authentication,
+  CommonHandlers,
+  UserErrorHandler
+}
 import com.rasterfoundry.database.ToolTagDao
 import com.rasterfoundry.datamodel._
 import akka.http.scaladsl.model.StatusCodes

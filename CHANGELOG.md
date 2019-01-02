@@ -1,5 +1,70 @@
 # Change Log
 
+## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+### Security
+
+## [1.16.0](https://github.com/raster-foundry/raster-foundry/tree/1.16.0) (2019-01-02)
+
+## Important Notice
+
+- In this release, we have added more fields to platform email settings to make it work better. We strongly suggest platform admins to go to your platform email settings and fill in **all fields**.
+
+### Added
+- Added a support email field to platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
+- Supported team creation on user's team list page [\#4345](https://github.com/raster-foundry/raster-foundry/pull/4345)
+- Use java's gdal bindings for tile IO in backsplash and better separate concerns between fetching imagery and talking to the database / users [\#4339](https://github.com/raster-foundry/raster-foundry/pull/4339)
+- Added dropwizard metrics instrumentation to backsplash methods and endpoints [\#4381](https://github.com/raster-foundry/raster-foundry/pull/4381)
+- Added script for ad hoc tile server load testing [\#4395](https://github.com/raster-foundry/raster-foundry/pull/4395), [\#4404](https://github.com/raster-foundry/raster-foundry/pull/4404)
+- Added graphite reporter to dropwizard metrics [\#4398](https://github.com/raster-foundry/raster-foundry/pull/4398)
+- Added alternative development runner/setup for testing API server and backsplash [\#4402](https://github.com/raster-foundry/raster-foundry/pull/4402)
+- Added configuration and helper script for gatling integration test results [\#4410](https://github.com/raster-foundry/raster-foundry/pull/4410)
+- Added gatling tests script that can be run in CI [\#4424](https://github.com/raster-foundry/raster-foundry/pull/4424)
+- Created AuthedAutoSlash middleware to make authentication and route matching cooperate [\#4425](https://github.com/raster-foundry/raster-foundry/pull/4425)
+
+### Changed
+
+- Reorganized scala dependencies for package cleanliness and smaller bundles [\#4301](https://github.com/raster-foundry/raster-foundry/pull/4301)
+- If users are not requesting their own info, the returned other users' personal info are protected [\#4360](https://github.com/raster-foundry/raster-foundry/pull/4360)
+- Changed the data model of the return of `users/me/roles` endpoint [\#4375](https://github.com/raster-foundry/raster-foundry/pull/4375)
+- Added more aggressive timeout to backsplash for improved thread recovery [\#4383](https://github.com/raster-foundry/raster-foundry/pull/4383)
+- Decreased max classfile name length from 100 to 70 for CI reasons [\#4388](https://github.com/raster-foundry/raster-foundry/pull/4388)
+- Used a fixed number of threadPool for Backsplash [\#4389](https://github.com/raster-foundry/raster-foundry/pull/4389)
+- Made timeout length and number of threadPool configurable [\#4389](https://github.com/raster-foundry/raster-foundry/pull/4389)
+- Changed to use Fiber for threading in Backsplash services [\#4396](https://github.com/raster-foundry/raster-foundry/pull/4396)
+- Ignored errors from integration tests so that reports will always be written to s3 [\#4406](https://github.com/raster-foundry/raster-foundry/pull/4406)
+- Changed how the database transactor is passed to backsplash and API servers to prevent accidentally passing implicit execution contexts where they are not wanted [\#4415](https://github.com/raster-foundry/raster-foundry/pull/4415)
+- Added ability to test against several projects in gatling integration tests [\#4416](https://github.com/raster-foundry/raster-foundry/pull/4416)
+- Changed how to configure threadpools for backsplash and hikari [\#4420](https://github.com/raster-foundry/raster-foundry/pull/4420)
+
+### Fixed
+
+- Made the status code for aoi creation on projects a 201 instead of a 200 [\#4331](https://github.com/raster-foundry/raster-foundry/pull/4331)
+- Opened access for group members to remove their group memberships [\#4358](https://github.com/raster-foundry/raster-foundry/pull/4358)
+- Used the correct field as outgoing email source in platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
+- Fix deprecated use of route change listeners which caused window title to break [\#4365](https://github.com/raster-foundry/raster-foundry/pull/4365)
+- Fix project ownership filter persistance across pages [\#4376](https://github.com/raster-foundry/raster-foundry/pull/4376)
+- Fix logo on project share page and add error handling [/#4377](https://github.com/raster-foundry/raster-foundry/pull/4377)
+- Address a number of unhandled promise chains on the frontend [\#4380](https://github.com/raster-foundry/raster-foundry/pull/4380)
+- Restored routes missing from backsplash after reintegration into RF main [\#4382](https://github.com/raster-foundry/raster-foundry/pull/4382)
+- Restored color correction [\#4387](https://github.com/raster-foundry/raster-foundry/pull/4387)
+- Fix logo on project share page and add error handling [/#4377](https://github.com/raster-foundry/raster-foundry/pull/4377)
+- Address a number of unhandled promise chains on the frontend [\#4380](https://github.com/raster-foundry/raster-foundry/pull/4380)
+- Restored auth and error-handling [\#4390](https://github.com/raster-foundry/raster-foundry/pull/4390)
+- Aligned backsplash dockerfile with existing services [\#4394](https://github.com/raster-foundry/raster-foundry/pull/4394)
+- Upgraded geotrellis-server to handle thread safety issue that was causing SEGFAULTs in backsplash [\#4399](https://github.com/raster-foundry/raster-foundry/pull/4399), [\#4412](https://github.com/raster-foundry/raster-foundry/pull/4412)
+- Switched back to geotrellis for IO to shrink the space of failure conditions [\#4414](https://github.com/raster-foundry/raster-foundry/pull/4414)
+- Fetch histograms for multiband mosaics from the database again [\#4417](https://github.com/raster-foundry/raster-foundry/pull/4417)
+- Made single band tiles render without weird stripes [\#4423](https://github.com/raster-foundry/raster-foundry/pull/4423)
+
 ## [1.15.0](https://github.com/raster-foundry/raster-foundry/tree/1.15.0) (2018-11-30)
 
 ### Added
@@ -7,10 +72,13 @@
 - Added S3 path suggestions in scene import modal when users upload imageries from S3 buckets [\#4290](https://github.com/raster-foundry/raster-foundry/pull/4290)
 - Enabled deleting lab templates on the frontend [\#4287](https://github.com/raster-foundry/raster-foundry/pull/4287)
 - Added support for viewing public projects using backsplash [\#4299](https://github.com/raster-foundry/raster-foundry/pull/4299)
+- Added script for reprocessing sentinel 2 scenes which were imported with the wrong number of bands [\4349](https://github.com/raster-foundry/raster-foundry/pull/4349
 
 ### Changed
 - Populate user profiles from their identity tokens more intelligently [\#4298](https://github.com/raster-foundry/raster-foundry/pull/4298)
 - Improved project selection modal within the lab [\#4324](https://github.com/raster-foundry/raster-foundry/pull/4324)
+- Upgraded to Webpack 4 and replace broken libraries / componenets [\#4199](https://github.com/raster-foundry/raster-foundry/pull/4199)
+- Greatly reduce bundle size by using dynamic imports and using a more effective build process [\#4199](https://github.com/raster-foundry/raster-foundry/pull/4199)
 
 ### Removed
 
@@ -23,6 +91,10 @@
 - Fixed shapefile annotations export [\#4300](https://github.com/raster-foundry/raster-foundry/pull/4300)
 - Made s3 client tolerate buckets outside of its configured region [\#4319](https://github.com/raster-foundry/raster-foundry/pull/4319)
 - Fixed logging dependency stack to eliminate painfully verbose logging in backsplash [\#4326](https://github.com/raster-foundry/raster-foundry/pull/4326)
+- Fix thumbnail loading placeholder size [\#4355](https://github.com/raster-foundry/raster-foundry/pull/4355)
+- Fix hidden text field for scene image sources [\#4355](https://github.com/raster-foundry/raster-foundry/pull/4355)
+- Fix long source names for scenes [\#4355](https://github.com/raster-foundry/raster-foundry/pull/4355)
+- Duplicate ingest emails for users with inactive platform UGRs [\#4359](https://github.com/raster-foundry/raster-foundry/pull/4359)
 
 ## [1.14.2](https://github.com/raster-foundry/raster-foundry/tree/1.14.2) (2018-11-19)
 

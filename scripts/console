@@ -18,9 +18,12 @@ then
     if [ "${1:-}" = "--help" ]
     then
         usage
+    elif [ "${1:-}" = "sbt" ]
+    then
+        docker-compose -f "${DIR}/../docker-compose.java.yml" \
+                       run sbt
     else
-        docker-compose -f "${DIR}/../docker-compose.yml" \
-                       run --rm --service-ports --entrypoint \
+        docker-compose run --rm --service-ports --entrypoint \
                        "/bin/bash -c" "$1" "${@:2}"
     fi
     exit

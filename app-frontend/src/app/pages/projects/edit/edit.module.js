@@ -15,16 +15,15 @@ class ProjectsEditController {
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
-        this.getMap = () => mapService.getMap('edit');
-
-        let unsubscribe = $ngRedux.connect(
-            () => ({}),
-            Object.assign({}, ProjectActions, AnnotationActions)
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
     }
 
     $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            () => ({}),
+            Object.assign({}, ProjectActions, AnnotationActions)
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
+
         this.getMap().then(map => this.setProjectMap(map));
         this.mosaicLayer = new Map();
         this.sceneLayers = new Map();
@@ -70,6 +69,10 @@ class ProjectsEditController {
                 this.fitProjectExtent();
             }
         }
+    }
+
+    getMap() {
+        return this.mapService.getMap('edit');
     }
 
     setPermissionsTab() {
@@ -198,7 +201,7 @@ class ProjectsEditController {
                 tileUrl: () => this.projectService.getProjectLayerURL(this.project),
                 shareUrl: () => this.projectService.getProjectShareURL(this.project)
             }
-        });
+        }).result.catch(() => {});
     }
 
     openShareModal() {
@@ -211,7 +214,7 @@ class ProjectsEditController {
                 objectName: () => this.project.name,
                 platform: () => this.platform
             }
-        });
+        }).result.catch(() => {});
     }
 
     openExportModal() {
@@ -225,7 +228,7 @@ class ProjectsEditController {
                     zoom: () => zoom
                 }
             });
-        });
+        }).result.catch(() => {});
     }
 
 }

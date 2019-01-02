@@ -9,7 +9,7 @@ import better.files.{File => ScalaFile}
 import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.authentication.Authentication
+import com.rasterfoundry.akkautil._
 import com.rasterfoundry.common._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.ShapeDao

@@ -1,4 +1,5 @@
-/* global d3 _ */
+import * as d3 from 'd3';
+import _ from 'lodash';
 import angular from 'angular';
 import reclassifyHistogramTpl from './reclassifyHistogram.html';
 
@@ -15,47 +16,41 @@ const ReclassifyHistogramComponent = {
 };
 
 class ReclassifyHistogramController {
-    constructor($log, $scope, $element, uuid4) {
+    constructor($rootScope, $log, $scope, $element, uuid4, graphService) {
         'ngInject';
-        this.$log = $log;
-        this.$scope = $scope;
-        this.$element = $element;
-        this.uuid4 = uuid4;
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
-        if (!this._options) {
-            this.setDefaults();
-        }
+        this.graphId = this.uuid4.generate();
+        this.getGraph = () => this.graphService.getGraph(this.graphId);
 
-        let cancelApiWatch = this.$scope.$watch('$ctrl.api', (api) => {
-            if (api.refresh) {
-                this.refreshHistogram = _.throttle(this.api.refresh, 100);
-                cancelApiWatch();
-                this.refreshHistogram();
-            }
+        this.getGraph().then((graph) => {
+            this.$scope.$watch('$ctrl.histogram', histogram => {
+                if (histogram) {
+                    this.usingDefaultData = false;
+                    const plot = this.createPlotFromHistogram(histogram);
+                    graph.setData({histogram: plot, breakpoints: this._breakpoints})
+                        .setOptions(this._options)
+                        .render();
+                } else if (!histogram) {
+                    graph.setData().render();
+                }
+            });
         });
-        this.id = this.uuid4.generate();
-        this.api = {};
+    }
 
-        if (!Number.isFinite(this.precision)) {
-            this.precision = 1;
-        }
-        if (!this.histogramRange) {
-            this.histogramRange = {min: this._options.min, max: this._options.max};
+    $postLink() {
+        this.$scope.$evalAsync(() => this.initGraph());
+    }
+
+    $onDestroy() {
+        if (this.graph) {
+            this.graphService.deregister(this.graph.id);
         }
     }
 
     $onChanges(changes) {
-        if (changes.options) {
-            this.setDefaults(changes.options.currentValue);
-        }
-
-        if (changes.histogram && changes.histogram.currentValue) {
-            this.processDataToPlot(changes.histogram.currentValue);
-            this.usingDefaultData = false;
-        }
-
         if (changes.classifications && changes.classifications.currentValue) {
             this._breakpoints = changes.classifications.currentValue.map(bp => {
                 if (bp.id) {
@@ -71,6 +66,36 @@ class ReclassifyHistogramController {
         }
     }
 
+    initGraph() {
+        this._options = {
+            dataRange: {
+                min: 0,
+                max: 255
+            },
+            breakpointRange: {
+                min: 0,
+                max: 255
+            },
+            masks: {
+                min: false,
+                max: false
+            },
+            scale: 'SEQUENTIAL'
+        };
+
+        if (!Number.isFinite(this.precision)) {
+            this.precision = 1;
+        }
+
+        this.histogramRange = {
+            min: this._options.dataRange.min,
+            max: this._options.dataRange.max
+        };
+
+        let elem = this.$element.find('.graph-container svg')[0];
+        this.graph = this.graphService.register(elem, this.graphId, this._options);
+    }
+
     setDefaults(options) {
         this._options = Object.assign({
             min: 0,
@@ -81,43 +106,18 @@ class ReclassifyHistogramController {
             },
             scale: 'SEQUENTIAL'
         }, options ? options : {});
-
-        this.histOptions = {
-            chart: {
-                type: 'lineChart',
-                showLegend: false,
-                showXAxis: false,
-                showYAxis: false,
-                yScale: d3.scale.log(),
-                margin: {
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    left: 0
-                },
-                height: 100,
-                xAxis: {
-                    showLabel: false
-                },
-                yAxis: {
-                    showLabel: false
-                },
-                tooltip: {
-                    enabled: false
-                },
-                interpolate: 'step'
-            }
-        };
     }
 
-    processDataToPlot(data) {
-        let bufferConstant = 1.1;
+    createPlotFromHistogram(data) {
+        let bufferConstant = 0.1;
         let newHistogram = data;
         let breakpoints = this.classifications.map(b => b.break);
-        let min = Math.min(newHistogram.minimum, ...breakpoints, 0) * bufferConstant;
-        let max = Math.max(newHistogram.maximum, ...breakpoints) * bufferConstant;
+        let min = Math.min(newHistogram.minimum, ...breakpoints, 0);
+        min = min - min * bufferConstant;
+        let max = Math.max(newHistogram.maximum, ...breakpoints);
+        max = max + max * bufferConstant;
         let range = max - min;
-        let diff = range / 100;
+        let diff = range / 500;
         let magnitude = Math.round(Math.log10(diff));
         this.precision = Math.pow(10, magnitude);
         if (range) {
@@ -161,19 +161,13 @@ class ReclassifyHistogramController {
             if (_.last(plot).x < max) {
                 plot.push({x: max, y: 0});
             }
-            this.plot = [{
-                values: plot,
-                key: 'Value',
-                area: true}];
         }
+        return plot;
     }
 
     onChange(breakpoint, index) {
         this._breakpoints[index].break = breakpoint;
         this.sendBreakpoints(this._breakpoints);
-        this.onBreakpointChange({
-            breakpoints: this._breakpoints, options: this._options
-        });
     }
 
     sendBreakpoints(breakpoints) {

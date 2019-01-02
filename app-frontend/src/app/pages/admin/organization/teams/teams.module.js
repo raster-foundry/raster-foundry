@@ -93,7 +93,7 @@ class OrganizationTeamsController {
                             .then((paginatedUsers) => {
                                 team.fetchedUsers = paginatedUsers;
                             });
-                    });
+                    }).catch(() => {});
                 },
                 classes: []
             },
@@ -134,7 +134,7 @@ class OrganizationTeamsController {
                                 this.fetchPage(this.pagination.currentPage);
                             }
                         );
-                    });
+                    }).catch(() => {});
                 },
                 classes: ['color-danger']
             }
@@ -152,7 +152,7 @@ class OrganizationTeamsController {
                 .then(() => {
                     this.fetchPage(this.pagination.currentPage);
                 });
-        });
+        }).catch(() => {});
     }
 
     toggleTeamNameEdit(teamId, isEdit) {

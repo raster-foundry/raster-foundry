@@ -1,4 +1,3 @@
-/* global mathjs */
 import angular from 'angular';
 import templateCreateModalTpl from './templateCreateModal.html';
 
@@ -58,11 +57,19 @@ class TemplateCreateModalController {
         this.commonSymbols = [];
         let expressionTree = null;
         try {
-            expressionTree = mathjs.parse(this.definitionExpression);
-            this.templateBuffer.definition = this.expressionTreeToMAML(expressionTree);
-            this.analysisService.createTemplate(this.templateBuffer).then(template => {
-                this.dismiss();
-                this.$state.go('lab.startAnalysis', { templateid: template.id });
+            require.ensure(['mathjs'], (require) => {
+                const mathjs = require('mathjs');
+                expressionTree = mathjs.parse(this.definitionExpression);
+                this.templateBuffer.definition = this.expressionTreeToMAML(expressionTree);
+                this.analysisService.createTemplate(this.templateBuffer).then(template => {
+                    this.dismiss();
+                    this.$state.go('lab.startAnalysis', { templateid: template.id });
+                });
+            }, (error) => {
+                this.currentError =
+                    'There was an error fetching dependencies. Please try again later.';
+                this.isProcessing = false;
+                throw new Error('Error fetching math.js dependency. Check webpack config');
             });
         } catch (e) {
             this.currentError = 'The template definition is not valid';

@@ -8,15 +8,12 @@ object Dependencies {
   val akkaHttpCors = "ch.megard" %% "akka-http-cors" % Version.akkaHttpCors
   val akkaHttpExtensions = "com.lonelyplanet" %% "akka-http-extensions" % Version.akkaHttpExtensions
   val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % Version.akkaSlf4j
-  val akkaSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % Version.akkaHttp
   val akkahttp = "com.typesafe.akka" %% "akka-http" % Version.akkaHttp
   val akkastream = "com.typesafe.akka" %% "akka-stream" % Version.akka
   val akkatestkit = "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp
-  val ammoniteOps = "com.lihaoyi" %% "ammonite-ops" % Version.ammoniteOps
   val apacheCommonsEmail = "org.apache.commons" % "commons-email" % Version.apacheCommonsEmail
   val auth0 = "com.auth0" % "auth0" % Version.auth0
   val awsBatchSdk = "com.amazonaws" % "aws-java-sdk-batch" % Version.awsBatchSdk
-  val awsSdk = "com.amazonaws" % "aws-java-sdk" % Version.awsSdk
   val awsStsSdk = "com.amazonaws" % "aws-java-sdk-sts" % Version.awsStsSdk
   val betterFiles = "com.github.pathikrit" %% "better-files" % Version.betterFiles
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % Version.caffeine
@@ -42,9 +39,6 @@ object Dependencies {
   val elasticacheClient = "com.amazonaws" % "elasticache-java-cluster-client" % Version.elasticacheClient
   val ficus = "com.iheart" %% "ficus" % Version.ficus
   val findbugAnnotations = "com.google.code.findbugs" % "annotations" % Version.findbugAnnotations % "compile"
-  val gatlingApp = "io.gatling" % "gatling-app" % Version.gatling % "test,it"
-  val gatlingHighcharts = "io.gatling.highcharts" % "gatling-charts-highcharts" % Version.gatling
-  val gatlingTest = "io.gatling" % "gatling-test-framework" % Version.gatling % "test,it"
   val geotools = "org.geotools" % "gt-shapefile" % Version.geotools
   val geotrellisGeotools = "org.locationtech.geotrellis" %% "geotrellis-geotools" % Version.geotrellis
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
@@ -52,9 +46,7 @@ object Dependencies {
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
   val geotrellisServer = "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer
   val geotrellisShapefile = "org.locationtech.geotrellis" %% "geotrellis-shapefile" % Version.geotrellis
-  val geotrellisSlick = "org.locationtech.geotrellis" %% "geotrellis-slick" % Version.geotrellis
   val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
-  val geotrellisSparkEtl = "org.locationtech.geotrellis" %% "geotrellis-spark-etl" % Version.geotrellis
   val geotrellisUtil = "org.locationtech.geotrellis" %% "geotrellis-util" % Version.geotrellis
   val geotrellisVector = "org.locationtech.geotrellis" %% "geotrellis-vector" % Version.geotrellis
   val geotrellisVectorTestkit = "org.locationtech.geotrellis" %% "geotrellis-vector-testkit" % Version.geotrellis % "test"
@@ -65,6 +57,7 @@ object Dependencies {
   val http4sCirce = "org.http4s" %% "http4s-circe" % Version.http4s
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
+  val jts = "com.vividsolutions" % "jts" % Version.jts
   val kamonAkka = "io.kamon" %% "kamon-akka" % Version.kamon
   val kamonAkkaHttp = "io.kamon" %% "kamon-akka-http" % Version.kamonAkkaHttp
   val kamonCore = "io.kamon" %% "kamon-core" % Version.kamon
@@ -81,15 +74,8 @@ object Dependencies {
   val scalaforklift = "com.liyaos" %% "scala-forklift-slick" % Version.scalaForklift
   val scalajHttp = "org.scalaj" %% "scalaj-http" % Version.scalajHttp
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test"
-  val scalaz = "org.scalaz" %% "scalaz-core" % Version.scalaz
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
-  val shapeless = "com.chuusai" %% "shapeless" % Version.shapeless
-  val slf4j = "org.slf4j" % "slf4j-simple" % Version.slf4j
-  val slick = "com.typesafe.slick" %% "slick" % Version.slick force ()
   val slickMigrationAPI = "io.github.nafg" %% "slick-migration-api" % Version.slickMigrationAPI
-  val slickPG = "com.github.tminglei" %% "slick-pg" % Version.slickPG
-  val slickPGCirce = "com.github.tminglei" %% "slick-pg_circe-json" % Version.slickPG
-  val slickPGSpray = "com.github.tminglei" %% "slick-pg_spray-json" % Version.slickPG
   val spark = "org.apache.spark" %% "spark-core" % Version.spark % "provided"
   val sparkCore = "org.apache.spark" %% "spark-core" % Version.spark
 }

@@ -168,7 +168,7 @@ function projectEditStates($stateProvider) {
         })
         .state('projects.edit.browse', {
             title: 'Project Scenes',
-            url: '/browse/:sceneid?' + addScenesQueryParams,
+            url: '/browse/?sceneid' + addScenesQueryParams,
             templateUrl: projectsSceneBrowserTpl,
             controller: 'ProjectsSceneBrowserController',
             controllerAs: '$ctrl',
@@ -260,7 +260,7 @@ function projectStates($stateProvider) {
         })
         .state('projects.list', {
             title: 'User Projects',
-            url: '/list?page&search',
+            url: '/list?page&search&ownership',
             templateUrl: projectsListTpl,
             controller: 'ProjectsListController',
             controllerAs: '$ctrl'
@@ -371,7 +371,6 @@ function labStates($stateProvider) {
         .state('lab.template', {
             title: 'View a Template',
             url: '/template/:templateid',
-            parent: 'lab',
             templateUrl: labTemplateTpl,
             controller: 'LabTemplateController',
             controllerAs: '$ctrl'
@@ -379,7 +378,6 @@ function labStates($stateProvider) {
         .state('lab.startAnalysis', {
             title: 'Start an analysis',
             url: '/start-analysis/:templateid',
-            parent: 'lab',
             templateUrl: labStartAnalysisTpl,
             controller: 'LabStartAnalysisController',
             controllerAs: '$ctrl'
@@ -387,7 +385,6 @@ function labStates($stateProvider) {
         .state('lab.analysis', {
             title: 'Analysis details',
             url: '/analysis/:analysisid',
-            parent: 'lab',
             views: {
                 'navmenu@root': {
                     templateUrl: labNavbarTpl,
@@ -744,7 +741,9 @@ function adminStates($stateProvider) {
         });
 }
 
-function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvider, $locationProvider) {
+function routeConfig(
+    $urlRouterProvider, $stateProvider, $urlMatcherFactoryProvider, $locationProvider
+) {
     'ngInject';
 
     $urlMatcherFactoryProvider.strictMode(false);
@@ -769,11 +768,11 @@ function routeConfig($urlRouterProvider, $stateProvider, $urlMatcherFactoryProvi
 
     $stateProvider
         .state('error', {
-
             url: '/error',
             templateUrl: errorTpl,
             controller: 'ErrorController',
-            controllerAs: '$ctrl'
+            controllerAs: '$ctrl',
+            bypassAuth: true
         });
 
     $urlRouterProvider.otherwise('/home');

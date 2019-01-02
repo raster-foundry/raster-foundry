@@ -1,12 +1,24 @@
-/* globals joint $ _ */
-// TODO tear out all references to tool run - it should use redux to pull in the correct stuff
+import _ from 'lodash';
 import {Map} from 'immutable';
 import {getNodeArgs} from '_redux/node-utils';
+// TODO tear out all references to tool run - it should use redux to pull in the correct stuff
 
 export default (app) => {
     class LabUtils {
         constructor($rootScope, $compile) {
             'ngInject';
+            this.$rootScope = $rootScope;
+            this.$compile = $compile;
+        }
+
+        init(joint) {
+            if (this.joint) {
+                return;
+            }
+
+            this.joint = joint;
+            const $rootScope = this.$rootScope;
+            const $compile = this.$compile;
 
             joint.shapes.html = {};
             joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
@@ -45,8 +57,8 @@ export default (app) => {
                             y: 0
                         };
                         this.$box.css({
-                            left: bbox.x * this.scale + origin.x,
-                            top: bbox.y * this.scale + origin.y
+                            left: `${bbox.x * this.scale + origin.x}px`,
+                            top: `${bbox.y * this.scale + origin.y}px`
                         });
                     });
                     this.scale = 1;
@@ -58,8 +70,8 @@ export default (app) => {
                             y: 0
                         };
                         this.$box.css({
-                            left: bbox.x * this.scale + origin.x,
-                            top: bbox.y * this.scale + origin.y,
+                            left: `${bbox.x * this.scale + origin.x}px`,
+                            top: `${bbox.y * this.scale + origin.y}px`,
                             transform: `scale(${scale})`,
                             'transform-origin': '0 0'
                         });
@@ -79,16 +91,17 @@ export default (app) => {
                     };
 
                     this.$box.css({
-                        width: bbox.width,
-                        height: bbox.height,
-                        left: bbox.x * this.scale + origin.x,
-                        top: bbox.y * this.scale + origin.y
+                        width: `${bbox.width}px`,
+                        height: `${bbox.height}px`,
+                        left: `${bbox.x * this.scale + origin.x}px`,
+                        top: `${bbox.y * this.scale + origin.y}px`
                     });
 
                     this.scope.updateTick = new Date().getTime();
                 },
-                removeBox: function () {
+                remove: function () {
                     this.$box.remove();
+                    this.scope.$destroy();
                 }
             });
         }
@@ -98,7 +111,7 @@ export default (app) => {
             let inputList = Array.isArray(inputs) ?
                 inputs : Array(inputs).fill();
 
-            ports = inputList.map((_, idx) => {
+            ports = inputList.map((item, idx) => {
                 return {
                     id: `input-${idx}`,
                     label: `input-${idx}`,
@@ -154,7 +167,7 @@ export default (app) => {
         }
 
         constructRect(config, dimensions) {
-            return new joint.shapes.html.Element(Object.assign({
+            return new this.joint.shapes.html.Element(Object.assign({
                 id: config.id,
                 size: {
                     width: dimensions.width,
@@ -224,7 +237,7 @@ export default (app) => {
 
                         firstPort.isConnected = true;
 
-                        let link = new joint.dia.Link({
+                        let link = new this.joint.dia.Link({
                             source: {
                                 id: rectangle.id,
                                 port: 'Output'

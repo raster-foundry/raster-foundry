@@ -1,0 +1,35 @@
+#!/bin/bash
+set -eu
+
+GIT_COMMIT="${GIT_COMMIT:-latest}"
+
+function usage() {
+    echo -n \
+"Usage: $(basename "$0")
+Fire gatling at a running backsplash server
+"
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]
+then
+    if [ "${1:-}" = "--help" ]
+    then
+        usage
+    else
+        echo "Firing gatling at staging..."
+        docker-compose -f docker-compose.test.yml run gatling-sbt gatling:test || true
+
+        BASE_REPORT_DIR="./gatling/target/gatling/"
+        LATEST_REPORT=$(ls -lah "${BASE_REPORT_DIR}" | grep "mosaictmssimulation" | tail -n 1 | cut -c 43-)
+        REPORT_DIR="${BASE_REPORT_DIR}${LATEST_REPORT}"
+        RESULTS_S3_URI="s3://${RESULTS_BUCKET}/gatling/${BUILD_NUMBER}/"
+
+        echo "SYNCING RESULTS TO S3 ${REPORT_DIR} => ${RESULTS_S3_URI}"
+        aws s3 sync "${REPORT_DIR}" "${RESULTS_S3_URI}"
+        RESULTS_URL="https://s3.amazonaws.com/rasterfoundry-staging-it-us-east-1/gatling/${BUILD_NUMBER}/index.html"
+
+        echo "VIEW RESULTS AT: ${RESULTS_URL}"
+        curl -X POST --data-urlencode "payload={\"channel\": \"#raster-foundry\", \"username\": \"RF Gatling\", \"text\": \"Finished load testing for build ${BUILD_NUMBER}. Results are available <${RESULTS_URL}|here>.\", \"icon_emoji\": \":gatling:\"}" "${SLACK_URL}"
+    fi
+    exit
+fi

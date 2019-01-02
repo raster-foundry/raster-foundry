@@ -3,8 +3,8 @@ package com.rasterfoundry.api.healthcheck
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server._
 import cats.effect.IO
+import com.rasterfoundry.akkautil.Authentication
 import com.rasterfoundry.api.Codec._
-import com.rasterfoundry.authentication.Authentication
 import com.rasterfoundry.common.RollbarNotifier
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.util.transactor.Transactor

@@ -5,8 +5,12 @@ import java.util.UUID
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import cats.effect.IO
-import com.rasterfoundry.authentication.Authentication
-import com.rasterfoundry.common.{AWSBatch, CommonHandlers, UserErrorHandler}
+import com.rasterfoundry.akkautil.{
+  Authentication,
+  CommonHandlers,
+  UserErrorHandler
+}
+import com.rasterfoundry.common.AWSBatch
 import com.rasterfoundry.database.UploadDao
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.datamodel._

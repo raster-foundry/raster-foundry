@@ -176,18 +176,7 @@ object ExportDao extends Dao[Export] {
       projectId: UUID,
       exportOptions: ExportOptions
   ): ConnectionIO[SimpleInput] = {
-
-    fr"""
-    SELECT scenes.id, stp.mosaic_definition, scenes.scene_type, scenes.ingest_location
-    FROM
-      scenes
-    LEFT JOIN
-      scenes_to_projects stp
-    ON
-      stp.scene_id = scenes.id
-    WHERE
-      stp.project_id = ${projectId}
-  """.query[MosaicDefinition].to[List] map { mds =>
+    SceneToProjectDao.getMosaicDefinition(projectId).compile.toList map { mds =>
       SimpleInput(mds.toArray, exportOptions.mask.map(_.geom))
     }
   }

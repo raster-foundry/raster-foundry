@@ -7,45 +7,11 @@ import { getNodeDefinition } from '_redux/node-utils';
 
 class LabNodeController {
     constructor($ngRedux, $scope, $log, $element, modalService, tokenService,
-                projectService, APP_CONFIG) {
+                projectService, APP_CONFIG, $rootScope) {
         'ngInject';
-        this.$log = $log;
-        this.$element = $element;
-        this.modalService = modalService;
-        this.tokenService = tokenService;
-        this.projectService = projectService;
+        $rootScope.autoInject(this, arguments);
 
         this.tileServer = `${APP_CONFIG.tileServerLocation}`;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            Object.assign({}, LabActions, NodeActions)
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
-
-        $scope.$watch('$ctrl.readonly', (readonly) => {
-            if (readonly && !this.isCollapsed) {
-                this.toggleCollapse();
-            }
-        });
-        $scope.$watch('$ctrl.selectingNode', (selectingNode) => {
-            if (selectingNode) {
-                this.$element.addClass('selectable-node');
-            } else {
-                this.$element.removeClass('selectable-node');
-            }
-        });
-        $scope.$watch('$ctrl.selectedNode', (selectedNode) => {
-            if (selectedNode === this.nodeId) {
-                this.$element.addClass('selected-node');
-            } else {
-                this.$element.removeClass('selected-node');
-            }
-        });
-    }
-
-    $postLink() {
-        this.$element.bind('click', this.onNodeClick.bind(this));
     }
 
     mapStateToThis(state) {
@@ -61,6 +27,32 @@ class LabNodeController {
     }
 
     $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            Object.assign({}, LabActions, NodeActions)
+        )(this);
+        this.listeners = [
+            this.$scope.$on('$destroy', unsubscribe),
+            this.$scope.$watch('$ctrl.readonly', (readonly) => {
+                if (readonly && !this.isCollapsed) {
+                    this.toggleCollapse();
+                }
+            }),
+            this.$scope.$watch('$ctrl.selectingNode', (selectingNode) => {
+                if (selectingNode) {
+                    this.$element.addClass('selectable-node');
+                } else {
+                    this.$element.removeClass('selectable-node');
+                }
+            }),
+            this.$scope.$watch('$ctrl.selectedNode', (selectedNode) => {
+                if (selectedNode === this.nodeId) {
+                    this.$element.addClass('selected-node');
+                } else {
+                    this.$element.removeClass('selected-node');
+                }
+            })
+        ];
         // Acceptable values are 'BODY', 'HISTOGRAM', and 'STATISTICS'
         this.currentView = 'BODY';
         this.isCollapsed = false;
@@ -72,6 +64,14 @@ class LabNodeController {
         } else if (this.ifCellType('classify')) {
             this.model.resize(this.baseWidth, 275);
         }
+    }
+
+    $postLink() {
+        this.$element.bind('click', this.onNodeClick.bind(this));
+    }
+
+    $onDestroy() {
+        this.listeners.forEach((l) => l());
     }
 
     preview() {
@@ -198,7 +198,7 @@ class LabNodeController {
                     noDownload: () => true,
                     templateTitle: () => this.analysis.name
                 }
-            });
+            }).result.catch(() => {});
         }
         return false;
     }

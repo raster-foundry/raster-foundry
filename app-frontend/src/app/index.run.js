@@ -1,7 +1,8 @@
 /* global BUILDCONFIG */
+import $ from 'jquery';
 function runBlock(
     $rootScope, jwtHelper, $state, $location, $window, APP_CONFIG,
-    $ngRedux, $timeout,
+    $ngRedux, $timeout, $transitions,
     authService, localStorage, rollbarWrapperService, intercomService,
     featureFlags, perUserFeatureFlags, modalService
 ) {
@@ -22,40 +23,70 @@ function runBlock(
         $state.go('error');
     }
 
-    $rootScope.$on('$stateChangeStart', function (e, toState, params, fromState) {
+
+    $transitions.onStart({}, (transition) => {
+        const toState = transition.to();
+        const fromState = transition.from();
         function setupState(route) {
             let appName = BUILDCONFIG.APP_NAME;
             $window.document.title = toState.title ?
                 `${appName} - ${toState.title}` : appName;
+
+            let idToken = localStorage.get('idToken');
+            let accessToken = localStorage.get('accessToken');
+
             if (APP_CONFIG.error && toState.name !== 'error') {
-                e.preventDefault();
                 if (!localStorage.get('authUrlRestore')) {
                     localStorage.set('authUrlRestore', route);
                 }
-                $state.go('error');
+                return transition.router.stateService.target('error');
+            } else if (APP_CONFIG.error && toState.name !== 'error') {
+                if (!localStorage.get('authUrlRestore')) {
+                    localStorage.set('authUrlRestore', route);
+                }
+                return transition.router.stateService.target('error');
             } else if (toState.bypassAuth && !authService.verifyAuthCache()) {
                 rollbarWrapperService.init();
             } else if (!toState.bypassAuth && !authService.verifyAuthCache()) {
-                e.preventDefault();
                 rollbarWrapperService.init();
                 intercomService.shutdown();
                 if (!localStorage.get('authUrlRestore')) {
                     localStorage.set('authUrlRestore', route);
                 }
-                $state.go('login');
+                return transition.router.stateService.target('login');
             } else if (!toState.bypassAuth && toState.name !== 'callback') {
                 rollbarWrapperService.init(authService.getProfile());
                 intercomService.bootWithUser(authService.getProfile());
                 if (toState.redirectTo) {
-                    e.preventDefault();
-                    $state.go(toState.redirectTo, params);
+                    return transition.router.stateService.target(
+                        toState.redirectTo, Object.assign({}, transition.params())
+                    );
                 }
+            } else if (idToken && accessToken) {
+                if (!authService.verifyAuthCache()) {
+                    rollbarWrapperService.init();
+                    if (!localStorage.get('authUrlRestore')) {
+                        localStorage.set('authUrlRestore', route);
+                    }
+                    if (!authService.login(accessToken, idToken)) {
+                        return transition.router.stateService.target('login');
+                    }
+                }
+            } else if (!route.path.includes('login')) {
+                intercomService.shutdown();
+                rollbarWrapperService.init();
+                if (!localStorage.get('authUrlRestore')) {
+                    localStorage.set('authUrlRestore', route);
+                }
+                return transition.router.stateService.target('login');
             }
+            return true;
         }
+
         if (
             toState.name !== fromState.name &&
-            toState.redirectTo !== fromState.name &&
-            toState.resolve
+                toState.redirectTo !== fromState.name &&
+                toState.resolve
         ) {
             $rootScope.isLoadingResolves = true;
         }
@@ -64,52 +95,33 @@ function runBlock(
         // is easier, or refactor FeatureFlags to deal in promises.
         // Note that on initial login, the feature flags get populated in the AuthService.
         if (flagsPromise) {
-            flagsPromise.then(
+            return flagsPromise.then(
                 () => setupState({path: $location.path(), search: $location.search()})
-            );
-        } else {
-            setupState({path: $location.path(), search: $location.search()});
+            ).catch(e => {
+                if (toState.name === 'error') {
+                    return true;
+                }
+                return transition.router.stateService.target('error');
+            });
         }
+        return setupState({path: $location.path(), search: $location.search()});
     });
 
-    $rootScope.$on('$stateChangeSuccess', (e, toState) => {
+    $transitions.onSuccess({}, (transition) => {
         $rootScope.isLoadingResolves = false;
         modalService.closeActiveModal();
     });
 
-    $rootScope.$on('$locationChangeStart', function () {
-        function setupState(route) {
-            let idToken = localStorage.get('idToken');
-            let accessToken = localStorage.get('accessToken');
-
-            if (idToken && accessToken) {
-                if (!authService.verifyAuthCache()) {
-                    rollbarWrapperService.init();
-                    if (!localStorage.get('authUrlRestore')) {
-                        localStorage.set('authUrlRestore', route);
-                    }
-                    authService.login(accessToken, idToken);
-                }
-            } else if (!route.path.includes('login')) {
-                intercomService.shutdown();
-                rollbarWrapperService.init();
-                if (!localStorage.get('authUrlRestore')) {
-                    localStorage.set('authUrlRestore', route);
-                }
-                $state.go('login');
-            }
-        }
-        if (flagsPromise) {
-            flagsPromise.then(
-                () => setupState({path: $location.path(), search: $location.search()})
-            );
-        } else {
-            setupState({path: $location.path(), search: $location.search()});
-        }
-    });
     $rootScope.autoInject = function (context, args) {
         context.constructor.$inject.forEach((injectable, idx) => {
-            context[injectable] = args[idx];
+            switch (injectable) {
+            case '$element':
+            case '$document':
+                context[injectable] = $(args[idx]);
+                break;
+            default:
+                context[injectable] = args[idx];
+            }
         });
     };
 }

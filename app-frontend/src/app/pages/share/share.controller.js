@@ -7,38 +7,43 @@ assetLogo = BUILDCONFIG.LOGOURL || assetLogo;
 
 export default class ShareController {
     constructor( // eslint-disable-line max-params
-        $log, $state, authService, projectService, mapService, mapUtilsService
+        $rootScope, $log, $state, authService, projectService, mapService, mapUtilsService
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$state = $state;
-        this.logoAsset = assetLogo;
-        this.authService = authService;
-        this.projectService = projectService;
-        this.mapUtilsService = mapUtilsService;
-        this.getMap = () => mapService.getMap('share-map');
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
+        this.assetLogo = assetLogo;
         this.projectId = this.$state.params.projectid;
         this.testNoAuth = false;
         this.sceneList = [];
 
         if (this.projectId) {
-            this.loadingProject = true;
-            this.projectService.query({id: this.projectId}).then(
-                p => {
-                    this.project = p;
-                    this.fitProjectExtent();
-                    this.loadingProject = false;
-                    this.addProjectLayer();
-                },
-                () => {
-                    this.loadingProject = false;
-                    // @TODO: handle displaying an error message
-                }
-            );
+            this.loadProject();
         }
+    }
+
+    loadProject() {
+        this.loadingProject = true;
+        this.projectError = false;
+        this.projectService.query({id: this.projectId}).then(
+            p => {
+                this.project = p;
+                this.loadingProject = false;
+                this.projectError = false;
+                this.fitProjectExtent();
+                this.addProjectLayer();
+            },
+            (e) => {
+                this.loadingProject = false;
+                this.projectError = e;
+            }
+        );
+    }
+
+    getMap() {
+        return this.mapService.getMap('share-map');
     }
 
     addProjectLayer() {

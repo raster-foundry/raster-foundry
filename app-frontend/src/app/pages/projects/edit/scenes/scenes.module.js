@@ -174,7 +174,7 @@ class ProjectsScenesController {
                 objectName: () => project.name,
                 platform: () => this.platform
             }
-        });
+        }).result.catch(() => {});
     }
 
     openImportModal() {
@@ -188,7 +188,7 @@ class ProjectsScenesController {
 
         activeModal.result.then(results => {
             this.checkPendingImports();
-        });
+        }).catch(() => {});
     }
 
     updateSceneOrder(orderedSceneIds) {
@@ -233,15 +233,17 @@ class ProjectsScenesController {
     }
 
     removeHoveredScene() {
-        this.$parent.getMap().then((map) => {
-            if (this.hoveredScene.sceneType !== 'COG' &&
-                this.hoveredScene.statusFields.ingestStatus === 'INGESTED') {
-                this.$parent.removeHoveredScene();
-            } else {
-                map.deleteThumbnail();
-            }
-            delete this.hoveredScene;
-        });
+        if (this.hoveredScene) {
+            this.$parent.getMap().then((map) => {
+                if (this.hoveredScene.sceneType !== 'COG' &&
+                    this.hoveredScene.statusFields.ingestStatus === 'INGESTED') {
+                    this.$parent.removeHoveredScene();
+                } else {
+                    map.deleteThumbnail();
+                }
+                delete this.hoveredScene;
+            });
+        }
     }
 
     downloadSceneModal(scene) {
@@ -250,7 +252,7 @@ class ProjectsScenesController {
             resolve: {
                 scene: () => scene
             }
-        });
+        }).result.catch(() => {});
     }
 }
 

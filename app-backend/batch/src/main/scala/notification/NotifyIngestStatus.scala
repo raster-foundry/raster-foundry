@@ -58,7 +58,7 @@ final case class NotifyIngestStatus(sceneId: UUID)(
             <p>The scene "${scene.name}" has been successfully ingested into your project: ${pU.projectName}! You can access
             this project <a href="https://${platformHost}/projects/edit/${pU.projectId}/scenes">here</a> or any past
             projects you've created at any time <a href="https://${platformHost}/projects/">here</a>.</p>
-            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailUser}.</p>
+            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailSupport}.</p>
             <p>- The ${pU.platName} Team</p>
           </html>
           """,
@@ -67,7 +67,7 @@ final case class NotifyIngestStatus(sceneId: UUID)(
              | You can access this project at here: https://${platformHost}/projects/edit/${pU.projectId}/scenes or
              | any past projects you've created at any time here: https://${platformHost}/projects/ . If you have
              | questions, support is available via in-app chat at ${platformHost} or less quickly via email to
-             | ${pU.pubSettings.emailUser}.
+             | ${pU.pubSettings.emailSupport}.
              | - The ${pU.platName} Team
           """.trim.stripMargin
         )
@@ -80,7 +80,7 @@ final case class NotifyIngestStatus(sceneId: UUID)(
             <p>The scene "${scene.name}" in your project: ${pU.projectName} has failed to ingest. But you can access
             this project <a href="https://${platformHost}/projects/edit/${pU.projectId}/scenes">here</a> or any past
             projects you've created at any time <a href="https://${platformHost}/projects/">here</a>.</p>
-            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailUser}.</p>
+            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailSupport}.</p>
             <p>- The ${pU.platName} Team</p>
           </html>
           """,
@@ -88,7 +88,7 @@ final case class NotifyIngestStatus(sceneId: UUID)(
              | ${pU.uName}: The scene "${scene.name}" in your project: ${pU.projectName} has failed to ingest. But you can
              | access this project at here: https://${platformHost}/projects/edit/${pU.projectId}/scenes or
              | any past projects you've created at any time here: https://${platformHost}/projects/ . If you have
-             | questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailUser}.
+             | questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pU.pubSettings.emailSupport}.
              | - The ${pU.platName} Team
           """.trim.stripMargin
         )
@@ -109,13 +109,13 @@ final case class NotifyIngestStatus(sceneId: UUID)(
           <html>
             <p>${pO.uName},</p><br>
             <p>The scene "${scene.name}" has been successfully ingested!</p>
-            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.</p>
+            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailSupport}.</p>
             <p>- The ${pO.platName} Team</p>
           </html>
           """,
           s"""
              | ${pO.uName}: The scene "${scene.name}" has been successfully ingested!
-             | If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.
+             | If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailSupport}.
              | - The ${pO.platName} Team
           """.trim.stripMargin
         )
@@ -126,14 +126,14 @@ final case class NotifyIngestStatus(sceneId: UUID)(
           <html>
             <p>${pO.uName},</p><br>
             <p>The scene "${scene.name}" has failed to ingest. </p>
-            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.</p>
+            <p>If you have questions, support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailSupport}.</p>
             <p>- The ${pO.platName} Team</p>
           </html>
           """,
           s"""
              | ${pO.uName}: The scene "${scene.name}" has failed to ingest.
              | If you have questions,
-             | support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailUser}.
+             | support is available via in-app chat at ${platformHost} or less quickly via email to ${pO.pubSettings.emailSupport}.
              | - The ${pO.platName} Team
           """.trim.stripMargin
         )
@@ -158,19 +158,19 @@ final case class NotifyIngestStatus(sceneId: UUID)(
           (pU.pubSettings.emailSmtpHost,
            pU.pubSettings.emailSmtpPort,
            pU.pubSettings.emailSmtpEncryption,
-           pU.pubSettings.emailUser,
+           pU.pubSettings.emailSmtpUserName,
            pU.priSettings.emailPassword,
            userEmailAddress) match {
             case (host: String,
                   port: Int,
                   encryption: String,
-                  platUserEmail: String,
+                  platSmtpUserName: String,
                   pw: String,
                   userEmail: String)
                 if email.isValidEmailSettings(host,
                                               port,
                                               encryption,
-                                              platUserEmail,
+                                              platSmtpUserName,
                                               pw,
                                               userEmail) =>
               val (ingestEmailSubject, htmlBody, plainBody) =
@@ -179,13 +179,14 @@ final case class NotifyIngestStatus(sceneId: UUID)(
                 .setEmail(host,
                           port,
                           encryption,
-                          platUserEmail,
+                          platSmtpUserName,
                           pw,
                           userEmail,
                           ingestEmailSubject,
                           htmlBody,
                           plainBody,
-                          pU.pubSettings.emailFrom)
+                          pU.pubSettings.emailFrom,
+                          pU.pubSettings.emailFromDisplayName)
                 .map((configuredEmail: Email) => configuredEmail.send)
               logger.info(s"Notified project owner ${pU.uId}.")
             case _ =>
@@ -213,19 +214,19 @@ final case class NotifyIngestStatus(sceneId: UUID)(
         (pO.pubSettings.emailSmtpHost,
          pO.pubSettings.emailSmtpPort,
          pO.pubSettings.emailSmtpEncryption,
-         pO.pubSettings.emailUser,
+         pO.pubSettings.emailSmtpUserName,
          pO.priSettings.emailPassword,
          userEmailAddress) match {
           case (host: String,
                 port: Int,
                 encryption: String,
-                platUserEmail: String,
+                platSmtpUserName: String,
                 pw: String,
                 userEmail: String)
               if email.isValidEmailSettings(host,
                                             port,
                                             encryption,
-                                            platUserEmail,
+                                            platSmtpUserName,
                                             pw,
                                             userEmail) =>
             val (ingestEmailSubject, htmlBody, plainBody) =
@@ -234,13 +235,14 @@ final case class NotifyIngestStatus(sceneId: UUID)(
               .setEmail(host,
                         port,
                         encryption,
-                        platUserEmail,
+                        platSmtpUserName,
                         pw,
                         userEmail,
                         ingestEmailSubject,
                         htmlBody,
                         plainBody,
-                        pO.pubSettings.emailFrom)
+                        pO.pubSettings.emailFrom,
+                        pO.pubSettings.emailFromDisplayName)
               .map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified scene owner ${pO.uId}.")
           case _ =>

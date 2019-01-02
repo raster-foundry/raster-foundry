@@ -58,7 +58,7 @@ class LabBrowseTemplatesController {
     openTemplateCreateModal() {
         this.modalService.open({
             component: 'rfTemplateCreateModal'
-        });
+        }).result.catch(() => {});
     }
 
     onTemplateDelete(templateId) {

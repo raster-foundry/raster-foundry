@@ -1,4 +1,4 @@
-/* globals _ d3 */
+import _ from 'lodash';
 import angular from 'angular';
 
 import channelHistogramTpl from './channelHistogram.html';
@@ -13,105 +13,102 @@ const ChannelHistogram = {
     }
 };
 
+const minClip = 0;
+const maxClip = 255;
+
 class ChannelHistogramController {
-    constructor($log, $scope) {
+    constructor($log, $rootScope, $scope, $element, graphService, uuid4) {
         'ngInject';
-        this.$log = $log;
-        this.$scope = $scope;
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
-        this.histogramMode = 'rgb';
-        this.minClip = 0;
-        this.maxClip = 255;
-        this.lowerClip = this.minClip;
-        this.upperClip = this.maxClip;
-        this.clipping = {
-            rgb: {
-                min: this.minClip, max: this.maxClip,
-                color: 'white'
-            },
-            red: {
-                min: this.minClip, max: this.maxClip,
-                color: 'red'
-            },
-            green: {
-                min: this.minClip, max: this.maxClip,
-                color: 'green'
-            },
-            blue: {
-                min: this.minClip, max: this.maxClip,
-                color: 'blue'
-            }
-        };
+        this.graphid = this.uuid4.generate();
+        this.getGraph = () => this.graphService.getGraph(this.graphId);
+    }
 
-        this.histOptions = {
-            chart: {
-                type: 'lineChart',
-                showLegend: false,
-                showXAxis: false,
-                showYAxis: false,
-                yScale: d3.scale.log(),
-                deepWatchData: true,
-                margin: {
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    left: 0
+    $postLink() {
+        this.$scope.$evalAsync(() => this.initGraph());
+    }
+
+    $onDestroy() {
+        if (this.graph) {
+            this.graphService.deregister(this.graph.id);
+        }
+    }
+
+    initGraph() {
+        this.histogramMode = 'rgb';
+        this.lowerClip = minClip;
+        this.upperClip = maxClip;
+
+        this.options = {
+            clipping: {
+                rgb: {
+                    min: minClip, max: maxClip,
+                    color: 'white'
                 },
-                height: 100,
-                xAxis: {
-                    showLabel: false
+                red: {
+                    min: minClip, max: maxClip,
+                    color: 'red'
                 },
-                yAxis: {
-                    showLabel: false
+                green: {
+                    min: minClip, max: maxClip,
+                    color: 'green'
                 },
-                tooltip: {
-                    enabled: false
+                blue: {
+                    min: minClip, max: maxClip,
+                    color: 'blue'
                 }
-            }
+            },
+            type: 'channel'
         };
 
         if (this.data && this.data[0] && this.data[1] && this.data[2]) {
             this.plots = this.bandsToPlots(this.data[0], this.data[1], this.data[2]);
         }
 
-        const debouncedUpdate = _.debounce(this.updateClipping.bind(this), 500);
+        let elem = this.$element.find('.graph-container svg')[0];
+        this.graph = this.graphService.register(elem, this.graphId, this.options);
+        this.graph.setData(this.plots);
 
+        const debouncedUpdate = _.debounce(this.updateClipping.bind(this), 500);
         this.$scope.$watch('$ctrl.lowerClip', debouncedUpdate);
         this.$scope.$watch('$ctrl.upperClip', debouncedUpdate);
     }
 
     updateClipping() {
-        if (this.histogramMode && this.lastHistogramModeUpdate === this.histogramMode) {
-            let clipping = this.clipping[this.histogramMode];
-            let changed = false;
-            if (clipping.max !== this.upperClip) {
-                if (this.histogramMode === 'rgb') {
-                    _.forOwn(this.clipping, (clip) => {
-                        clip.max = this.upperClip;
-                    });
-                } else {
-                    clipping.max = this.upperClip;
-                }
-                changed = true;
+        let clipping = this.options.clipping[this.histogramMode];
+        let changed = false;
+        if (clipping.max !== this.upperClip) {
+            if (this.histogramMode === 'rgb') {
+                _.forOwn(this.options.clipping, (clip) => {
+                    clip.max = this.upperClip;
+                });
+            } else {
+                clipping.max = this.upperClip;
             }
-            if (clipping.min !== this.lowerClip) {
-                if (this.histogramMode === 'rgb') {
-                    _.forOwn(this.clipping, (clip) => {
-                        clip.min = this.lowerClip;
-                    });
-                } else {
-                    clipping.min = this.lowerClip;
-                }
-                changed = true;
+            changed = true;
+        }
+        if (clipping.min !== this.lowerClip) {
+            if (this.histogramMode === 'rgb') {
+                _.forOwn(this.options.clipping, (clip) => {
+                    clip.min = this.lowerClip;
+                });
+            } else {
+                clipping.min = this.lowerClip;
             }
+            changed = true;
+        }
 
-            if (changed) {
-                this.onChange({clipping: this.clipping});
-            }
+        if (changed) {
+            this.onChange({clipping: this.options.clipping});
         }
         this.lastHistogramModeUpdate = this.histogramMode;
+        this.graph.setOptions(this.options);
+        if (this.plots) {
+            this.graph.setData(this.plots).render();
+        }
     }
 
     $onChanges(changesObj) {
@@ -120,6 +117,9 @@ class ChannelHistogramController {
             if (data[0] && data[1] && data[2]) {
                 this.plots = this.bandsToPlots(data[0], data[1], data[2]);
                 this.setHistogramMode();
+                if (this.plots && this.options) {
+                    this.graph.setData(this.plots).render();
+                }
             }
         }
 
@@ -127,17 +127,17 @@ class ChannelHistogramController {
             let corr = changesObj.corrections.currentValue;
             let tileClipping = {
                 min:
-                Number.isInteger(corr.tileClipping.min) ? corr.tileClipping.min : this.minClip,
+                Number.isInteger(corr.tileClipping.min) ? corr.tileClipping.min : minClip,
                 max:
-                Number.isInteger(corr.tileClipping.max) ? corr.tileClipping.max : this.maxClip
+                Number.isInteger(corr.tileClipping.max) ? corr.tileClipping.max : maxClip
             };
 
             Object.assign(
-                this.clipping.rgb,
+                this.options.clipping.rgb,
                 {min: tileClipping.min, max: tileClipping.max}
             );
             Object.assign(
-                this.clipping.red,
+                this.options.clipping.red,
                 {
                     min: Number.isInteger(corr.bandClipping.redMin) ?
                         corr.bandClipping.redMin : tileClipping.min,
@@ -146,7 +146,7 @@ class ChannelHistogramController {
                 }
             );
             Object.assign(
-                this.clipping.green,
+                this.options.clipping.green,
                 {
                     min: Number.isInteger(corr.bandClipping.greenMin) ?
                         corr.bandClipping.greenMin : tileClipping.min,
@@ -155,7 +155,7 @@ class ChannelHistogramController {
                 }
             );
             Object.assign(
-                this.clipping.blue,
+                this.options.clipping.blue,
                 {
                     min: Number.isInteger(corr.bandClipping.blueMin) ?
                         corr.bandClipping.blueMin : tileClipping.min,
@@ -163,6 +163,9 @@ class ChannelHistogramController {
                         corr.bandClipping.blueMax : tileClipping.max
                 }
             );
+            if (this.graph && this.plots) {
+                this.graph.setData(this.plots).setOptions(this.options).render();
+            }
         }
     }
 
@@ -215,48 +218,14 @@ class ChannelHistogramController {
 
     setHistogramMode(mode) {
         if (mode) {
-            this.updateClipping();
             this.histogramMode = mode;
         }
 
+        this.options.channel = this.histogramMode;
+        this.lowerClip = this.options.clipping[this.histogramMode].min;
+        this.upperClip = this.options.clipping[this.histogramMode].max;
 
-        if (this.histogramMode === 'rgb') {
-            this.histData = [{
-                values: this.plots.rgb,
-                key: 'rgb',
-                color: '#959cad',
-                area: true
-            }];
-            this.lowerClip = this.clipping.rgb.min;
-            this.upperClip = this.clipping.rgb.max;
-        } else if (this.histogramMode === 'red') {
-            this.histData = [{
-                values: this.plots.red,
-                key: 'red',
-                color: '#ed1841',
-                area: true
-            }];
-            this.lowerClip = this.clipping.red.min;
-            this.upperClip = this.clipping.red.max;
-        } else if (this.histogramMode === 'green') {
-            this.histData = [{
-                values: this.plots.green,
-                key: 'green',
-                color: '#28af5f',
-                area: true
-            }];
-            this.lowerClip = this.clipping.green.min;
-            this.upperClip = this.clipping.green.max;
-        } else if (this.histogramMode === 'blue') {
-            this.histData = [{
-                values: this.plots.blue,
-                key: 'blue',
-                color: '#206fed',
-                area: true
-            }];
-            this.lowerClip = this.clipping.blue.min;
-            this.upperClip = this.clipping.blue.max;
-        }
+        this.updateClipping();
     }
 
     onMinBreakpointChange(breakpoint) {

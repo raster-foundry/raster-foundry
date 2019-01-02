@@ -1,6 +1,6 @@
 import angular from 'angular';
+import _ from 'lodash';
 
-/* globals _ */
 const updateFrequencies = [
     {
         label: 'every 6 hours',
@@ -54,8 +54,6 @@ class AOIParametersController {
         $scope.autoInject(this, arguments);
         this.$parent = $scope.$parent.$ctrl;
         this.updateFrequencies = updateFrequencies;
-
-        this.getMap = () => mapService.getMap('edit');
         this.startTimeTooltip = startTimeTooltip;
     }
 
@@ -106,6 +104,10 @@ class AOIParametersController {
             };
             this.projectLoaded = true;
         });
+    }
+
+    getMap() {
+        return this.mapService.getMap('edit');
     }
 
     fetchProjectAOIs() {
@@ -189,7 +191,7 @@ class AOIParametersController {
                 }
             }).result.then(selectedDay => {
                 this.updateStartDate(selectedDay);
-            });
+            }).catch(() => {});
     }
 
     updateFrequency(ms) {

@@ -1,5 +1,7 @@
-/* globals L, _, $ */
+/* globals L */
 import angular from 'angular';
+import _ from 'lodash';
+import $ from 'jquery';
 import { Set } from 'immutable';
 import turfCenter from '@turf/center';
 require('./annotate.scss');
@@ -17,16 +19,7 @@ class AnnotateController {
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis,
-            AnnotationActions
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
-
-        this.getMap = () => mapService.getMap('edit');
     }
-
     mapStateToThis(state) {
         // listen for changes for the shapefile upload so you can know when that's done
         // and display the posted annotations
@@ -62,6 +55,12 @@ class AnnotateController {
     }
 
     $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis,
+            AnnotationActions
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
+
         L.drawLocal.edit.handlers.edit.tooltip.subtext = '';
 
         this.clearLabelFilter();
@@ -104,6 +103,10 @@ class AnnotateController {
             mapWrapper.deleteLayers('draw');
             mapWrapper.deleteLayers('highlight');
         });
+    }
+
+    getMap() {
+        return this.mapService.getMap('edit');
     }
 
     retryFetches() {

@@ -1,4 +1,5 @@
-/* globals process, _ */
+/* globals process */
+import _ from 'lodash';
 
 /* eslint-disable */
 const providers = [

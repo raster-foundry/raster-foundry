@@ -1,7 +1,7 @@
 class UserTeamsController {
     constructor(
         $scope, $state,
-        teamService,
+        teamService, modalService,
         platform, teamRoles, teams, user
     ) {
         'ngInject';
@@ -48,6 +48,23 @@ class UserTeamsController {
                 this.$state.reload();
             });
         }
+    }
+
+    newTeamModal() {
+        this.modalService.open({
+            component: 'rfTeamModal',
+            resolve: {
+                chooseOrg: true
+            }
+        }).result.then((result) => {
+            this.teamService
+                .createTeam(result.platform.groupId, result.organization.groupId, result.name)
+                .then(() => {
+                    this.$state.reload();
+                }, err => {
+                    this.$log.error(err);
+                });
+        }).catch(() => {});
     }
 }
 

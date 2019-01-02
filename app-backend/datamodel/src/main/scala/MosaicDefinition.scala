@@ -1,14 +1,20 @@
 package com.rasterfoundry.datamodel
 
-import java.util.UUID
-
+import com.rasterfoundry.bridge._
+import geotrellis.vector.{MultiPolygon, Projected}
+import io.circe.Json
 import io.circe.generic.JsonCodec
+
+import java.util.UUID
 
 @JsonCodec
 final case class MosaicDefinition(sceneId: UUID,
                                   colorCorrections: ColorCorrect.Params,
                                   sceneType: Option[SceneType] = None,
-                                  ingestLocation: Option[String])
+                                  ingestLocation: Option[String],
+                                  footprint: Option[MultiPolygon],
+                                  isSingleBand: Boolean,
+                                  singleBandOptions: Option[Json])
 
 object MosaicDefinition {
   def fromScenesToProjects(
@@ -22,11 +28,21 @@ object MosaicDefinition {
           _,
           colorCorrection,
           sceneType,
-          ingestLocation
+          ingestLocation,
+          footprint,
+          isSingleBand,
+          singleBandOptions
           ) =>
-        MosaicDefinition(sceneId, colorCorrection, sceneType, ingestLocation)
+        MosaicDefinition(sceneId,
+                         colorCorrection,
+                         sceneType,
+                         ingestLocation,
+                         footprint flatMap { _.geom.as[MultiPolygon] },
+                         isSingleBand,
+                         singleBandOptions)
     }
   }
+
   def fromScenesToProjects(scenesToProjects: Seq[SceneToProjectwithSceneType],
                            redBand: Int,
                            greenBand: Int,
@@ -39,14 +55,23 @@ object MosaicDefinition {
           _,
           colorCorrection,
           sceneType,
-          ingestLocation
+          ingestLocation,
+          footprint,
+          isSingleBand,
+          singleBandOptions
           ) => {
         val ccp = colorCorrection.copy(
           redBand = redBand,
           greenBand = greenBand,
           blueBand = blueBand
         )
-        MosaicDefinition(sceneId, ccp, sceneType, ingestLocation)
+        MosaicDefinition(sceneId,
+                         ccp,
+                         sceneType,
+                         ingestLocation,
+                         footprint flatMap { _.geom.as[MultiPolygon] },
+                         isSingleBand,
+                         singleBandOptions)
       }
     }
   }

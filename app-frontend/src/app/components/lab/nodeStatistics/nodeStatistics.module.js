@@ -14,23 +14,9 @@ const NodeStatisticsComponent = {
 
 
 class NodeStatisticsController {
-    constructor($scope, $ngRedux, $filter) {
+    constructor($rootScope, $scope, $ngRedux, $filter) {
         'ngInject';
-        this.$scope = $scope;
-        this.$filter = $filter;
-
-        this.visibleStats = ['mean', 'median', 'mode', 'stddev', 'zmin', 'zmax'];
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            StatisticsActions
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
-
-        // re-fetch statistics every time there's a hard update
-        this.$scope.$watch('$ctrl.lastAnalysisRefresh', () => {
-            this.fetchStatistics(this.nodeId);
-        });
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
@@ -41,8 +27,20 @@ class NodeStatisticsController {
     }
 
     $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            StatisticsActions
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
+
+        // re-fetch statistics every time there's a hard update
+        this.$scope.$watch('$ctrl.lastAnalysisRefresh', () => {
+            this.fetchStatistics(this.nodeId);
+        });
+
         this.digitCount = 5;
         this.emptyStats = { };
+        this.visibleStats = ['mean', 'median', 'mode', 'stddev', 'zmin', 'zmax'];
         this.visibleStats.forEach((stat) => {
             this.emptyStats[stat] = '';
         });

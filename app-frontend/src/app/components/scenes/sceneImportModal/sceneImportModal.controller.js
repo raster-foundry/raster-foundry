@@ -1,15 +1,15 @@
-/* global AWS, document, window, BUILDCONFIG, _ */
+/* global AWS, document, window, BUILDCONFIG */
 import { initialize as loamInitialize, open as loamOpen } from 'loam';
-/* eslint-disable no-unused-vars */
-import loamWorker from 'loamLib/loam-worker.js';
-import gdalJs from 'gdalJs/gdal.js';
-import gdalWasm from 'gdalJs/gdal.wasm';
-import gdalData from 'gdalJs/gdal.data';
-/* eslint-enable no-unused-vars */
+import _ from 'lodash';
 
-import planetLogo from '../../../../assets/images/planet-logo-light.png';
-import awsS3Logo from '../../../../assets/images/aws-s3.png';
-import dropboxIcon from '../../../../assets/images/dropbox-icon.svg';
+/* eslint-disable no-unused-vars */
+// const gdalImports = Promise.all([
+//     import('loamLib/loam-worker.js'),
+//     import('gdalJs/gdal.js'),
+//     import('gdalJs/gdal.wasm'),
+//     import('gdalJs/gdal.data')
+// ]);
+/* eslint-enable no-unused-vars */
 
 const availableImportTypes = ['local', 'S3', 'Planet', 'COG'];
 
@@ -25,12 +25,23 @@ export default class SceneImportModalController {
 
         this.BUILDCONFIG = BUILDCONFIG;
         this.availableImportTypes = availableImportTypes;
-        this.planetLogo = planetLogo;
-        this.awsS3Logo = awsS3Logo;
-        this.dropboxIcon = dropboxIcon;
     }
 
     $onInit() {
+        require.ensure([
+            'loamLib/loam-worker.js',
+            'gdalJs/gdal.js',
+            'gdalJs/gdal.wasm',
+            'gdalJs/gdal.data'
+        ], (require) => {
+            require('loamLib/loam-worker.js');
+            require('gdalJs/gdal.js');
+            require('gdalJs/gdal.wasm');
+            require('gdalJs/gdal.data');
+        }, (error) => {
+            this.gdalImportError = true;
+            this.$log.error('There was an error while fetching the gdal dependencies.');
+        }, 'gdal');
         this.initSteps();
         this.importType = 'local';
         this.s3Config = {
@@ -578,7 +589,11 @@ export default class SceneImportModalController {
 
     filesSelected(files) {
         let datasetPromises = files.map(file => {
-            return this.$q.resolve(loamOpen(file));
+            return this.$q.resolve(loamOpen(file))
+                .catch((error) => {
+                    //eslint-disable-next-line
+                    console.log("Error in loam caught", error);
+                });
         });
         let bandCountPromises = datasetPromises.map(dsPromise => {
             return this.bandCount(dsPromise);

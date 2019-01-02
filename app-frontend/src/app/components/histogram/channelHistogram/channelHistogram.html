@@ -2,36 +2,36 @@
   <button type="button"
           class="btn btn-toggle btn-small"
           ng-class="{'active': $ctrl.histogramMode === 'rgb'}"
-          ng-disabled="!$ctrl.histData || !$ctrl.histData.length"
+          ng-disabled="!$ctrl.plots || !$ctrl.options"
           ng-click="$ctrl.setHistogramMode('rgb')">
     RGB
   </button>
   <button type="button"
           class="btn btn-toggle btn-small"
           ng-class="{'active': $ctrl.histogramMode === 'red'}"
-          ng-disabled="!$ctrl.histData || !$ctrl.histData.length"
+          ng-disabled="!$ctrl.plots || !$ctrl.options"
           ng-click="$ctrl.setHistogramMode('red')">
     Red
   </button>
   <button type="button"
           class="btn btn-toggle btn-small"
           ng-class="{'active': $ctrl.histogramMode === 'green'}"
-          ng-disabled="!$ctrl.histData || !$ctrl.histData.length"
+          ng-disabled="!$ctrl.plots || !$ctrl.options"
           ng-click="$ctrl.setHistogramMode('green')">
     Green
   </button>
   <button type="button"
           class="btn btn-toggle btn-small"
           ng-class="{'active': $ctrl.histogramMode === 'blue'}"
-          ng-disabled="!$ctrl.histData || !$ctrl.histData.length"
+          ng-disabled="!$ctrl.plots || !$ctrl.options"
           ng-click="$ctrl.setHistogramMode('blue')">
     Blue
   </button>
 </div>
 <div class="graph-container" style="height: 100px;">
-  <nvd3 options="$ctrl.histOptions" data="$ctrl.histData" api="$ctrl.api"></nvd3>
+  <svg ng-attr-id="graph{{$ctrl.graphId}}"></svg>
   <rf-histogram-breakpoint
-      ng-show="$ctrl.histData.length"
+      ng-show="$ctrl.plots"
       ng-mouseover="$ctrl.lastMouseOver = 'min'"
       ng-class="{'active': $ctrl.lastMouseOver === 'min'}"
       data-color="black"
@@ -42,7 +42,7 @@
       on-breakpoint-change="$ctrl.onMinBreakpointChange(breakpoint)"
   ></rf-histogram-breakpoint>
   <rf-histogram-breakpoint
-      ng-show="$ctrl.histData.length"
+      ng-show="$ctrl.plots"
       ng-mouseover="$ctrl.lastMouseOver = 'max'"
       ng-class="{'active': $ctrl.lastMouseOver === 'max'}"
       data-color="white"

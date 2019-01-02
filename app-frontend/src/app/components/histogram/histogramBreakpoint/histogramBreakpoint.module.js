@@ -1,4 +1,5 @@
 import angular from 'angular';
+import $ from 'jquery';
 import histogramBreakpointTpl from './histogramBreakpoint.html';
 
 const HistogramBreakpointComponent = {
@@ -23,17 +24,14 @@ const defaultOptions = {
 
 class HistogramBreakpointController {
     constructor(
-        $element, $scope, $log, $document
+        $rootScope, $element, $scope, $log, $document
     ) {
         'ngInject';
-        this.$element = $element;
-        this.$document = $document;
-        this.$scope = $scope;
-        this.$log = $log;
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
-        this.documentBody = angular.element(this.$document[0].body);
+        this.documentBody = this.$document.find('body');
         this.parent = this.$element.parent();
         this.registerEvents();
         if (!this.breakpointPosition) {
@@ -46,17 +44,14 @@ class HistogramBreakpointController {
     }
 
     $onChanges(changes) {
-        if (changes.range && changes.range.currentValue) {
-            this.setPositionFromBreakpoint();
-        }
         if (changes.options && changes.options.currentValue) {
             this._options = Object.assign({}, defaultOptions, changes.options.currentValue);
             this.setPositionFromBreakpoint();
-        }
-        if (changes.precision && changes.precision.currentValue) {
-            this.setPositionFromBreakpoint();
-        }
-        if (changes.breakpoint && Number.isFinite(changes.breakpoint.currentValue)) {
+        } else if (
+            changes.range && changes.range.currentValue ||
+            changes.precision && changes.precision.currentValue ||
+            changes.breakpoint && Number.isFinite(changes.breakpoint.currentValue)
+        ) {
             this.setPositionFromBreakpoint();
         }
     }
@@ -132,7 +127,6 @@ class HistogramBreakpointController {
     onMouseMove(event) {
         if (event.target &&
             event.target.classList.contains('graph-container') ||
-            event.target.tagName === 'NVD3' ||
             event.target.tagName === 'rf-node-histogram' ||
             event.target.tagName === 'rf-reclassify-histogram'
         ) {

@@ -48,7 +48,38 @@
               "enabled": false
             }
           },
-          "sceneType": "AVRO"
+          "sceneType": "AVRO",
+          "footprint": {
+            "type":"MultiPolygon",
+            "coordinates":[
+              [
+                [
+                  [
+                    -78.91337999999999,
+                    -12.25582
+                  ],
+                  [
+                    -77.20025,
+                    -12.620750000000017
+                  ],
+                  [
+                    -76.82601,
+                    -10.880060000000018
+                  ],
+                  [
+                    -78.52844,
+                    -10.519079999999995
+                  ],
+                  [
+                    -78.91337999999999,
+                    -12.25582
+                  ]
+                ]
+              ]
+            ]
+          },
+          "singleBandOptions": {},
+          "isSingleBand": false
         }
       ],
       "mask": {

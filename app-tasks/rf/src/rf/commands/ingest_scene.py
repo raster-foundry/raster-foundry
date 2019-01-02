@@ -19,10 +19,16 @@ def ingest_scene(scene_id):
     Args:
         scene_id (str): ID of scene to ingest
     """
+    ingest(scene_id)
+
+
+def ingest(scene_id):
+    """Separated into another function because the Click annotation messes with calling it from other tasks"""
     logger.info("Converting scene to COG: %s", scene_id)
     scene = Scene.from_id(scene_id)
-    scene.ingestStatus = 'INGESTING'
-    scene.update()
+    if scene.ingestStatus != 'INGESTED':
+        scene.ingestStatus = 'INGESTING'
+        scene.update()
     image_locations = [(x.sourceUri, x.filename) for x in sorted(
         scene.images, key=lambda x: io.sort_key(scene.datasource, x.bands[0]))]
     io.create_cog(image_locations, scene)

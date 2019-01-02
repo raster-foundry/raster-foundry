@@ -1,6 +1,7 @@
-/* globals FileReader d3 */
+/* globals FileReader */
 import angular from 'angular';
 import _ from 'lodash';
+import * as d3 from 'd3';
 
 import colormapModalTpl from './colormapModal.html';
 
@@ -16,9 +17,8 @@ const ColormapModalComponent = {
 };
 
 class ColormapModalController {
-    constructor($scope, colorSchemeService) {
-        this.$scope = $scope;
-        this.colorSchemeService = colorSchemeService;
+    constructor($rootScope, $scope, $element, colorSchemeService, graphService, uuid4) {
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
@@ -29,6 +29,10 @@ class ColormapModalController {
                 this.$scope.$evalAsync(this.bindUploadEvent.bind(this));
             }
         });
+
+        this.graphId = this.uuid4.generate();
+        this.getGraph = () => this.graphService.getGraph(this.graphId);
+
         this.histMin = _.get(this.resolve, 'histogram.data.minimum', 'unknown');
         if (this.histMin === 'unknown') {
             this.minPixelValue = 0;
@@ -45,42 +49,45 @@ class ColormapModalController {
             {value: this.minPixelValue, color: '#ffffff'},
             {value: this.maxPixelValue, color: '#000000'}
         ];
-        this.histOptions = {
-            chart: {
-                type: 'lineChart', showLegend: false,
-                showXAxis: false,
-                showYAxis: false,
-                yScale: d3.scale.log(),
-                margin: {
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    left: 0
-                },
-                height: 50,
-                xAxis: {
-                    showLabel: false
-                },
-                yAxis: {
-                    showLabel: false
-                },
-                tooltip: {
-                    enabled: false
-                },
-                interpolate: 'step',
-                dispatch: {
-                    renderEnd: () => {
-                        this.updateHistogramColors();
-                    }
-                }
-            }
-        };
+        // this.updateHistogramColors();
         this.plot = this.resolve.plot;
-        this.$scope.$watch('$ctrl.breakpoints', (breakpoints) => {
-            if (breakpoints && this.api && this.api.refresh) {
-                this.api.refresh();
-            }
-        }, true);
+
+        this.getGraph().then((graph) => {
+            this.$scope.$watch('$ctrl.breakpoints', (breakpoints) => {
+                if (breakpoints && breakpoints.length) {
+                    graph.setData({histogram: this.plot, breakpoints})
+                        .setOptions(this.options)
+                        .render();
+                } else {
+                    graph.setData().render();
+                }
+            }, true);
+        });
+    }
+
+    $postLink() {
+        this.$scope.$evalAsync(() => this.initGraph());
+    }
+
+    initGraph() {
+        this.options = {
+            dataRange: {
+                min: 0,
+                max: 255
+            },
+            breakpointRange: {
+                min: 0,
+                max: 255
+            },
+            masks: {
+                min: false,
+                max: false
+            },
+            scale: 'SEQUENTIAL'
+        };
+
+        let elem = this.$element.find('.cm-modal-section.horizontal svg')[0];
+        this.graph = this.graphService.register(elem, this.graphId, this.options);
     }
 
 

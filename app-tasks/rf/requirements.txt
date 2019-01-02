@@ -13,3 +13,4 @@ retrying==1.3.3
 click==6.7
 dropbox==9.0.0
 rasterfoundry==0.7.1
+psycopg2-binary==2.7.6

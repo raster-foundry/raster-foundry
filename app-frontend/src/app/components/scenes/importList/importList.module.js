@@ -52,24 +52,11 @@ class ImportListController {
     }
 
     $onChanges(changes) {
-        if (_.get(changes, 'ownershipType.currentValue')) {
+        const ownerChange = _.get(changes, 'ownershipType.currentValue');
+        if (ownerChange !== this.currentOwnershipFilter) {
+            this.currentOwnershipFilter = ownerChange;
             this.populateImportList(1);
         }
-        this.handleParameterChange();
-    }
-
-    handleParameterChange() {
-        let replace = !this.$state.params.page || !this.$state.params.ownership;
-        this.$state.go(
-            this.$state.$current.name,
-            {
-                page: _.get(this, 'pagination.currentPage') || this.$state.params.page || 1,
-                ownership: this.ownershipType
-            }, {
-                location: replace ? 'replace' : true,
-                notify: false
-            }
-        );
     }
 
     populateImportList(page) {
@@ -89,9 +76,11 @@ class ImportListController {
                 exactCount: true
             }
         ).then((sceneResult) => {
-            this.pagination = this.paginationService.buildPagination(sceneResult);
-            this.paginationService.updatePageParam(page, '');
             this.lastSceneResult = sceneResult;
+            this.pagination = this.paginationService.buildPagination(sceneResult);
+            this.paginationService.updatePageParam(page, '', null, {
+                ownership: this.currentOwnershipFilter
+            });
             this.importList = this.lastSceneResult.results;
             this.loading = false;
         }, () => {
@@ -106,7 +95,7 @@ class ImportListController {
             resolve: {
                 origin: () => 'raster'
             }
-        });
+        }).result.catch(() => {});
     }
 
     downloadModal(scene) {
@@ -115,7 +104,7 @@ class ImportListController {
             resolve: {
                 scene: () => scene
             }
-        });
+        }).result.catch(() => {});
     }
 
     shareModal(scene) {
@@ -128,7 +117,7 @@ class ImportListController {
                 objectName: () => scene.name,
                 platform: () => this.platform
             }
-        });
+        }).result.catch(() => {});
     }
 
     deleteModal(scene) {
@@ -162,7 +151,7 @@ class ImportListController {
                     this.$log.debug('error deleting scene', err);
                 }
             );
-        });
+        }).catch(() => {});
     }
 
     shouldShowImportList() {

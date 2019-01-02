@@ -51,7 +51,7 @@ services:
   backsplash:
     image: raster-foundry-backsplash:${GIT_COMMIT:-latest}
     build:
-      context: ./app-backend/backsplash
+      context: ./app-backend/backsplash-server
       dockerfile: Dockerfile
 
   app-migrations:
@@ -70,12 +70,38 @@ services:
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
 
+  gatling-sbt:
+    image: openjdk:8-jre
+    environment:
+      - COURSIER_CACHE=/root/.coursier
+      - RF_API_HOST
+      - RF_PROJECT_IDS
+      - TOKEN_ROUTE
+      - REFRESH_TOKEN
+      - RANDOM_SEED
+      - PROJECT_ROUTE
+      - USER_COUNT
+      - RAMPUP_TIME
+      - BACKSPLASH_TMS_URL_TEMPLATE
+      - MIN_ZOOM
+      - MAX_ZOOM
+    volumes:
+      - ./gatling:/opt/gatling
+      - $HOME/.coursier:/root/.coursier
+      - $HOME/.sbt:/root/.sbt
+      - $HOME/.ivy2:/root/.ivy2
+      - $HOME/.aws:/root/.aws:ro
+    working_dir: /opt/gatling/
+    entrypoint: ./sbt
+
   build:
     image: raster-foundry-build:${GIT_COMMIT:-latest}
     build:
       context: ./app-backend
       dockerfile: Dockerfile.build
     env_file: .env
+    environment:
+      - COURSIER_CACHE=/root/.coursier
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./scratch/:/opt/raster-foundry/scratch/

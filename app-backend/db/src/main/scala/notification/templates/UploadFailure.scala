@@ -25,7 +25,7 @@ final case class UploadFailure(uploadId: UUID, platformId: UUID) {
       | ${plainFiles}
       |
       | Support is available via in-app chat at ${platformHost} or less quickly
-      | via email to ${platform.publicSettings.emailUser}.
+      | via email to ${platform.publicSettings.emailSupport}.
       |
       | -- The ${platform.name} Team
       """.trim.stripMargin
@@ -33,7 +33,7 @@ final case class UploadFailure(uploadId: UUID, platformId: UUID) {
 <html>
   <p> Your upload ${upload.id} failed to process successfully. It had the following files: ${richFiles} </p>
   <p>
-    Support is available via in-app chat at ${platformHost} or less quickly via email to ${platform.publicSettings.emailUser}.
+    Support is available via in-app chat at ${platformHost} or less quickly via email to ${platform.publicSettings.emailSupport}.
   </p>
   <p> The ${platform.name} Team </p>
 </html>

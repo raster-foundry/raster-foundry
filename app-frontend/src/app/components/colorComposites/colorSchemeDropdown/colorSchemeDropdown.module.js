@@ -20,12 +20,12 @@ const MAX_BINS = 12;
 const ELASTIC_NAV = true;
 
 class ColorSchemeDropdownController {
-    constructor($scope, $element, colorSchemeService) {
+    constructor($rootScope, $scope, $element, colorSchemeService) {
         'ngInject';
-        this.$scope = $scope;
-        this.$element = $element;
-        this.colorSchemeService = colorSchemeService;
+        $rootScope.autoInject(this, arguments);
+    }
 
+    $onInit() {
         this.bins = [0, ...[ ...Array(1 + MAX_BINS - MIN_BINS).keys()].map(b => b + MIN_BINS)];
 
         this.filterToValidSchemes = (value) => {
@@ -35,9 +35,6 @@ class ColorSchemeDropdownController {
                 (bins === 0 ||
                  Object.keys(value).length >= bins);
         };
-    }
-
-    $onInit() {
         this.$element.on('wheel', (event) => {
             event.stopPropagation();
         });

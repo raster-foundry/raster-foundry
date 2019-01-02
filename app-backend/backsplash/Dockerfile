@@ -1,21 +1,7 @@
-FROM openjdk:8-jre-alpine
+FROM daunnc/openjdk-gdal:2.3.2
 
-ENV ASPECTJ_WEAVER_VERSION 1.8.10
-
-RUN \
-      addgroup -S rf \
-      && adduser -D -S -h /var/lib/rf -s /sbin/nologin -G rf rf \
-      && apk add --no-cache --virtual .build-deps \
-         ca-certificates \
-         tar \
-         wget \
-      && wget -qO /var/lib/rf/aspectjweaver.jar https://s3.amazonaws.com/rasterfoundry-global-artifacts-us-east-1/aspectjweaver/aspectjweaver-$ASPECTJ_WEAVER_VERSION.jar \
-      && apk del .build-deps
-
-COPY ./target/scala-2.11/backsplash-assembly.jar /var/lib/rf/
-
-USER rf
-WORKDIR /var/lib/rf
-
-ENTRYPOINT ["java"]
-CMD ["-jar", "backsplash-assembly.jar"]
+RUN apt-get install apt-transport-https && \
+  echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list && \
+  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823 && \
+  apt-get update && \
+  apt-get install -yq sbt

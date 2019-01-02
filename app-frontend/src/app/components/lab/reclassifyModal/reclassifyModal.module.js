@@ -18,27 +18,13 @@ const ReclassifyModalComponent = {
 };
 
 class ReclassifyModalController {
-    constructor($scope, $ngRedux, reclassifyService) {
+    constructor($rootScope, $scope, $ngRedux, reclassifyService) {
         'ngInject';
-        this.reclassifyService = reclassifyService;
-        this.breaks = this.resolve.breaks;
-        this.nodeId = this.resolve.nodeId;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            HistogramActions
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
-
-        $scope.$watch('$ctrl.inputNodeId', (id) => {
-            if (id) {
-                this.fetchHistogram(id);
-            }
-        });
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
-        const node = getNodeDefinition(state, this);
+        const node = getNodeDefinition(state, {nodeId: this.resolve.nodeId});
         const inputNodeId = _.first(node.args);
         const histogram = getNodeHistogram(state, {nodeId: inputNodeId});
         return {
@@ -49,6 +35,20 @@ class ReclassifyModalController {
     }
 
     $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            HistogramActions
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
+
+        this.$scope.$watch('$ctrl.inputNodeId', (id) => {
+            if (id) {
+                this.fetchHistogram(id);
+            }
+        });
+        this.breaks = this.resolve.breaks;
+        this.nodeId = this.resolve.nodeId;
+
         this.noGapsOverlaps = true;
         this.allEntriesValid = true;
 

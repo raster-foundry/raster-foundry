@@ -14,19 +14,11 @@ const ClassifyNodeComponent = {
 
 class ClassifyNodeController {
     constructor(
-        $log, $scope, $ngRedux, modalService,
+        $rootScope, $log, $scope, $ngRedux, modalService,
         reclassifyService
     ) {
         'ngInject';
-        this.$log = $log;
-        this.modalService = modalService;
-        this.reclassifyService = reclassifyService;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            NodeActions
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
@@ -41,6 +33,14 @@ class ClassifyNodeController {
             node,
             breaks
         };
+    }
+
+    $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            NodeActions
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
     }
 
     /**
@@ -103,7 +103,7 @@ class ClassifyNodeController {
                 }),
                 hard: true
             });
-        });
+        }).catch(() => {});
     }
 }
 

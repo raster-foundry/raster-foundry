@@ -1,5 +1,6 @@
-/* globals BUILDCONFIG, mathjs, _*/
+/* globals BUILDCONFIG */
 import angular from 'angular';
+import _ from 'lodash';
 import turfArea from '@turf/area';
 import turfDistance from '@turf/distance';
 import labMapTpl from './labMap.html';
@@ -34,24 +35,28 @@ class LabMapController {
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
-        this.getMap = () => this.mapService.getMap(this.mapId);
+    }
 
-        this.availableResolutions = this.exportService.getAvailableResolutions();
-        this.availableTargets = this.exportService.getAvailableTargets(false);
-
-        $ngRedux.subscribe(() => {
-            this.state = $ngRedux.getState();
-            this.nodes = this.state.lab.nodes;
-            if (this.nodes) {
-                let resultNode = this.nodes.toArray().find(node => node.args.length);
-                if (resultNode) {
-                    this.resultNodeId = resultNode.id;
-                }
-            }
+    mapStateToThis(state) {
+        let resultNodeId;
+        if (state.lab.nodes) {
+            let resultNode = state.lab.nodes.toArray().find(node => node.args.length);
+            resultNodeId = resultNode && resultNode.id;
+        }
+        return Object.assign({
+            state: state,
+            nodes: state.lab.nodes,
+            resultNodeId
         });
     }
 
     $onInit() {
+        this.availableResolutions = this.exportService.getAvailableResolutions();
+        this.availableTargets = this.exportService.getAvailableTargets(false);
+
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis)(this);
+        this.$scope.$on('$destroy', unsubscribe);
+
         if (this.enableNodeExport) {
             this.exportOptions = {};
         }
@@ -80,6 +85,9 @@ class LabMapController {
         if (this.clickListener) {
             this.$document.off('click', this.clickListener);
         }
+    }
+    getMap() {
+        return this.mapService.getMap(this.mapId);
     }
 
     initMap() {
@@ -253,15 +261,20 @@ class LabMapController {
     }
 
     addMeasureShapeToMap(layer, type) {
-        let measurement = this.measureCal(type, layer);
-        let compiledPopup = this.setPopupContent(type, measurement, layer);
-        let measureLayers = this.mapWrapper.getLayers('Measurement');
-        measureLayers.push(layer.bindPopup(compiledPopup[0]));
-        this.mapWrapper.setLayer('Measurement', measureLayers, false);
-        layer.openPopup();
+        require.ensure(['mathjs'], (require) => {
+            const mathjs = require('mathjs');
+            let measurement = this.measureCal(type, layer, mathjs);
+            let compiledPopup = this.setPopupContent(type, measurement, layer);
+            let measureLayers = this.mapWrapper.getLayers('Measurement');
+            measureLayers.push(layer.bindPopup(compiledPopup[0]));
+            this.mapWrapper.setLayer('Measurement', measureLayers, false);
+            layer.openPopup();
+        }, (error) => {
+            throw new Error('Error fetching math.js dependency. Check webpack config');
+        });
     }
 
-    measureCal(shapeType, layer) {
+    measureCal(shapeType, layer, mathjs) {
         let dataGeojson = layer.toGeoJSON();
         if (shapeType === 'polygon') {
             return mathjs.round(turfArea(dataGeojson), 2).toString();
@@ -459,7 +472,7 @@ class LabMapController {
             }
         }).result.then((resp) => {
             this.$state.go('user.settings.connections');
-        });
+        }).catch(() => {});
     }
 }
 

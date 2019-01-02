@@ -16,24 +16,20 @@ const SceneDetailModalComponent = {
 
 class SceneDetailModalController {
     constructor(
-        $log, $state, modalService, $scope,
+        $log, $state, modalService, $scope, $rootScope,
         moment, sceneService, mapService,
         authService
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$state = $state;
-        this.modalService = modalService;
-        this.$scope = $scope;
-        this.moment = moment;
-        this.sceneService = sceneService;
-        this.authService = authService;
+        $rootScope.autoInject(this, arguments);
+    }
+
+    $onInit() {
+        this.$scope.$on('$destroy', () => {
+            this.mapService.deregisterMap('scene-preview-map');
+        });
         this.scene = this.resolve.scene;
         this.repository = this.resolve.repository;
-        this.getMap = () => mapService.getMap('scene-preview-map');
-        $scope.$on('$destroy', () => {
-            mapService.deregisterMap('scene-preview-map');
-        });
     }
 
     $postLink() {
@@ -82,13 +78,17 @@ class SceneDetailModalController {
         });
     }
 
+    getMap() {
+        return this.mapService.getMap('scene-preview-map');
+    }
+
     openDownloadModal() {
         this.modalService.open({
             component: 'rfSceneDownloadModal',
             resolve: {
                 scene: () => this.scene
             }
-        });
+        }).result.catch(() => {});
     }
 
     getSceneBounds() {
@@ -160,18 +160,17 @@ class SceneDetailModalController {
     }
 
     openDatePickerModal(date) {
-        this.modalService
-            .open({
-                component: 'rfDatePickerModal',
-                windowClass: 'auto-width-modal',
-                resolve: {
-                    config: () => Object({
-                        selectedDay: this.moment(date)
-                    })
-                }
-            }, false).result.then(selectedDay => {
-                this.updateAcquisitionDate(selectedDay);
-            });
+        this.modalService.open({
+            component: 'rfDatePickerModal',
+            windowClass: 'auto-width-modal',
+            resolve: {
+                config: () => Object({
+                    selectedDay: this.moment(date)
+                })
+            }
+        }, false).result.then(selectedDay => {
+            this.updateAcquisitionDate(selectedDay);
+        }).catch(() => {});
     }
 
     updateAcquisitionDate(selectedDay) {

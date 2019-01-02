@@ -660,4 +660,64 @@ class UserGroupRoleDaoSpec
       }
     }
   }
+
+  test("Get user group roles with group names") {
+    check {
+      forAll {
+        (userCreate: User.Create,
+         platform: Platform,
+         orgCreate: Organization.Create,
+         teamCreate: Team.Create,
+         ugrCreatePlat: UserGroupRole.Create,
+         ugrCreateOrg: UserGroupRole.Create,
+         ugrCreateTeam: UserGroupRole.Create) =>
+          {
+            val getUgrWithNameIO = for {
+              userOrgPlat <- insertUserOrgPlatform(userCreate,
+                                                   orgCreate,
+                                                   platform,
+                                                   true)
+              (dbUser, dbOrg, dbPlat) = userOrgPlat
+              dbTeam <- TeamDao.create(
+                teamCreate
+                  .copy(organizationId = dbOrg.id)
+                  .toTeam(dbUser))
+              _ <- UserGroupRoleDao.create(
+                UserGroupRole
+                  .Create(
+                    dbUser.id,
+                    GroupType.Organization,
+                    dbOrg.id,
+                    GroupRole.Member
+                  )
+                  .toUserGroupRole(dbUser, MembershipStatus.Approved)
+              )
+              _ <- UserGroupRoleDao.create(
+                UserGroupRole
+                  .Create(
+                    dbUser.id,
+                    GroupType.Team,
+                    dbTeam.id,
+                    GroupRole.Member
+                  )
+                  .toUserGroupRole(dbUser, MembershipStatus.Approved)
+              )
+              ugrWithName <- UserGroupRoleDao.listByUserWithRelated(dbUser)
+            } yield { (ugrWithName, dbPlat, dbOrg, dbTeam) }
+
+            val (ugrWithName, dbPlat, dbOrg, dbTeam) = xa
+              .use(t => getUgrWithNameIO.transact(t))
+              .unsafeRunSync
+            val groupNames = ugrWithName.map(_.groupName)
+
+            val realGroupNames = List(dbPlat.name, dbOrg.name, dbTeam.name)
+
+            assert(
+              realGroupNames.diff(groupNames).length == 0,
+              "Inserted UGR group names should match inserted plat, org, and team names")
+            true
+          }
+      }
+    }
+  }
 }

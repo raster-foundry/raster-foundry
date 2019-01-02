@@ -1,4 +1,5 @@
 import angular from 'angular';
+import autoInject from '_appRoot/autoInject';
 
 class OrganizationController {
     constructor(
@@ -45,7 +46,7 @@ class OrganizationController {
         }).result.then((resp) => {
             this.organization = Object.assign({}, this.organization, resp);
             this.logoUpdateTrigger = new Date().getTime();
-        });
+        }).catch(() => {});
     }
 
     toggleOrgNameEdit() {
@@ -172,6 +173,7 @@ OrganizationModule.resolve = {
         );
     }
 };
+autoInject(OrganizationModule);
 
 OrganizationModule.controller('OrganizationController', OrganizationController);
 

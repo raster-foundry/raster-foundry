@@ -1,11 +1,14 @@
 package com.rasterfoundry.api
 
+import java.util.concurrent.Executors
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
+import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.rasterfoundry.akkautil.RFRejectionHandler._
 import com.rasterfoundry.api.utils.Config
-import com.rasterfoundry.common.RFRejectionHandler._
 import com.rasterfoundry.database.util.RFTransactor
 import kamon.Kamon
 
@@ -17,6 +20,7 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 object AkkaSystem {
@@ -31,7 +35,16 @@ object Main extends App with Config with Router {
   implicit val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
 
-  val xa = RFTransactor.xa
+  val dbContextShift: ContextShift[IO] = IO.contextShift(
+    ExecutionContext.fromExecutor(
+      Executors.newFixedThreadPool(
+        8,
+        new ThreadFactoryBuilder().setNameFormat("db-client-%d").build()
+      )
+    ))
+
+  val xa = RFTransactor.transactor(dbContextShift)
+
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync
   println(s"Server Started (${canSelect})")
 

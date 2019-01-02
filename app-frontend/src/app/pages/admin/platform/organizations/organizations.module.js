@@ -105,7 +105,7 @@ class PlatformOrganizationsController {
                     this.fetchPage(this.pagination.currentPage);
                 }
             );
-        });
+        }).catch(() => {});
     }
 
     activateOrganization(organization) {
@@ -131,7 +131,7 @@ class PlatformOrganizationsController {
                 .then(() => {
                     this.fetchPage();
                 });
-        });
+        }).catch(() => {});
     }
 
     toggleOrgNameEdit(orgId, isEdit) {

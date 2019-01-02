@@ -39,8 +39,8 @@ export default (app) => {
         setPosition(e) {
             if (e && this.$el && !this.mouseOut) {
                 this.$el.css({
-                    top: e.pageY,
-                    left: e.pageX
+                    top: `${e.pageY}px`,
+                    left: `${e.pageX}px`
                 });
                 this.$el.toggle(true);
             } else if (this.$el) {

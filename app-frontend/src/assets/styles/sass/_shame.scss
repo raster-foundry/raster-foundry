@@ -855,7 +855,7 @@ calendar .board .day.range-start:not(.other-month):not(.disabled) {
   box-shadow: 4px 4px 4px rgba(0,0,0,0.25);
 }
 
-div.lab-workspace svg {
+div.lab-workspace > svg {
   cursor: grab;
 }
 
@@ -1132,10 +1132,25 @@ nav .btn-group {
 }
 .lab-workspace {
     background-color: $off-white !important;
-    display: flex;
-    flex: 1;
     transition: all 0.1s;
     position: relative;
+    .joint-paper-grid {
+        width: 100%;
+        height: 100%;
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    > svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+
+    }
+    g.link-tools {
+        display: none;
+    }
 }
 
 .btn-square.really-square {
@@ -2289,10 +2304,6 @@ ul.gradient-dropdown {
 }
 
 
-.graph-container {
-  user-select: none;
-  border-bottom: 1px solid #555;
-}
 
 .graph-labels {
   position: relative;
@@ -2437,6 +2448,7 @@ rf-histogram-breakpoint {
 }
 
 .graph-container {
+  user-select: none;
   position: relative;
   &[disabled] {
       cursor: not-allowed;
@@ -3026,8 +3038,13 @@ rf-reclassify-table {
     &.horizontal {
         display: flex;
         flex-direction: row;
+        align-items: center;
+        width: 100%;
         .btn {
             margin: 1em;
+        }
+        svg {
+            flex: 1;
         }
     }
     .expand {

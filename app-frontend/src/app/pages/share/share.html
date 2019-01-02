@@ -1,11 +1,25 @@
 <div class="navbar">
   <div class="navbar-section primary">
     <a href="#" class="brand">
-      <img ng-attr-src="{{$ctrl.logoAsset}}">
+      <img ng-attr-src="{{$ctrl.assetLogo}}" style="max-width: 50px">
     </a>
     <span class="navbar-vertical-divider"></span>
-    <nav>
+    <nav ng-show="$ctrl.project">
       <span class="navbar-text">{{$ctrl.project.name}}</span>
+    </nav>
+    <nav ng-show="$ctrl.projectError">
+      <span class="navbar-text">Error loading project.
+        <span class="icon-warning"
+              tooltip-class="rf-tooltip"
+              tooltip-side="bottom"
+              tooltips tooltip-template="{{$ctrl.projectError.data}}"></span>
+      </span>
+      <button
+          class="btn btn-ghost"
+          ng-click="$ctrl.loadProject()"
+      >
+        <span class="navbar-text">Retry</span>
+      </button>
     </nav>
   </div>
 
@@ -20,7 +34,7 @@
         </a>
         <ul class="dropdown-menu" aria-labelledby="dLabel">
           <li>
-            <a href ui-sref="settings.profile">
+            <a ui-sref="settings.profile">
               <i class="icon-settings"></i> Settings
             </a>
           </li>

@@ -1,4 +1,3 @@
-/* global joint */
 import angular from 'angular';
 import _ from 'lodash';
 import diagramContainerTpl from './diagramContainer.html';
@@ -21,24 +20,7 @@ class DiagramContainerController {
         mousetipService, labUtils, $ngRedux
     ) {
         'ngInject';
-        this.$element = $element;
-        this.$scope = $scope;
-        this.$rootScope = $rootScope;
-        this.$state = $state;
-        this.$timeout = $timeout;
-        this.$compile = $compile;
-        this.$document = $document;
-        this.$window = $window;
-        this.mousetipService = mousetipService;
-        this.labUtils = labUtils;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis,
-            Object.assign({}, LabActions, NodeActions)
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
-
-        this.debouncedUpdateNode = _.debounce(this.updateNode, 300);
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
@@ -54,9 +36,16 @@ class DiagramContainerController {
     }
 
     $onInit() {
-        this.scale = 1;
-
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis,
+            Object.assign({}, LabActions, NodeActions)
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
         this.$scope.$on('$destroy', this.$onDestroy.bind(this));
+
+        this.debouncedUpdateNode = _.debounce(this.updateNode, 300);
+
+        this.scale = 1;
 
         this.workspaceElement = this.$element[0].children[0];
         this.comparison = [false, false];
@@ -68,12 +57,25 @@ class DiagramContainerController {
 
         this.contextInitialized = true;
 
-        const analysisWatch = this.$scope.$watch('$ctrl.analysis', (analysis) => {
-            if (analysis && !this.shapes) {
-                this.initDiagram();
+        require.ensure(['jointjs'], (require) => {
+            const joint = require('jointjs');
+            this.labUtils.init(joint);
+            if (this.analysis && !this.shapes) {
+                this.initDiagram(joint);
             } else {
-                analysisWatch();
+                const analysisWatch = this.$scope.$watch('$ctrl.analysis', (analysis) => {
+                    if (analysis && !this.shapes) {
+                        this.initDiagram(joint);
+                    } else {
+                        analysisWatch();
+                    }
+                });
             }
+        }, (error) => {
+            throw new Error(
+                'There was an error fetching the JointJS dependency.' +
+                    ' Please check your webpack config.'
+            );
         });
     }
 
@@ -81,13 +83,20 @@ class DiagramContainerController {
         if (this.onWindowResize) {
             this.$window.removeEventListener('resize', this.onWindowResize);
         }
+        if (this.graph) {
+            this.graph.clear();
+        }
+        if (this.paper) {
+            this.paper.remove();
+        }
     }
 
     canPreview() {
-        return !this.preventSelecting && !(this.analysisErrors && this.analysisErrors.size);
+        return !this.preventSelecting &&
+            !(this.analysisErrors && this.analysisErrors.size);
     }
 
-    initDiagram() {
+    initDiagram(joint) {
         let definition = this.analysis.executionParameters ?
             this.analysis.executionParameters :
             this.analysis;
@@ -116,13 +125,12 @@ class DiagramContainerController {
         }
 
         if (!this.paper) {
-            let el = $(this.$element);
-            let height = el.height();
+            let height = this.$element.height();
             if (height === 0) {
                 let resetDimensions = () => {
-                    let elHeight = el.height();
+                    let elHeight = this.$element.height();
                     if (elHeight !== 0) {
-                        this.paper.setDimensions(el.width(), elHeight);
+                        this.paper.setDimensions(this.$element.width(), elHeight);
                         this.scaleToContent();
                     } else {
                         this.$timeout(resetDimensions, 500);
@@ -133,7 +141,7 @@ class DiagramContainerController {
             this.paper = new joint.dia.Paper({
                 el: this.workspaceElement,
                 height: height,
-                width: el.width(),
+                width: this.$element.width(),
                 gridSize: 25,
                 drawGrid: {
                     name: 'doubleMesh',

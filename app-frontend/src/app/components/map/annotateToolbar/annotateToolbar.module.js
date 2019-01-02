@@ -1,4 +1,5 @@
-/* globals L, _ */
+/* globals L */
+import _ from 'lodash';
 import angular from 'angular';
 import annotateToolbarTpl from './annotateToolbar.html';
 require('./annotateToolbar.scss');
@@ -17,18 +18,9 @@ const AnnotateToolbarComponent = {
 };
 
 class AnnotateToolbarController {
-    constructor($scope, $ngRedux, mapService
-    ) {
+    constructor($rootScope, $scope, $ngRedux, mapService) {
         'ngInject';
-        this.$scope = $scope;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis,
-            AnnotationActions
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
-
-        this.getMap = () => mapService.getMap(this.mapId);
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
@@ -39,6 +31,12 @@ class AnnotateToolbarController {
     }
 
     $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis,
+            AnnotationActions
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
+
         this.isDrawCancel = false;
         this.inBulkMode = false;
         this.lastHandler = null;
@@ -73,6 +71,10 @@ class AnnotateToolbarController {
         this.drawRectangleHandler.disable();
         this.drawPolygonHandler.disable();
         this.drawMarkerHandler.disable();
+    }
+
+    getMap() {
+        return this.mapService.getMap(this.mapId);
     }
 
     onMapClick() {

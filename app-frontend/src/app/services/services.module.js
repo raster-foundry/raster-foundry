@@ -1,77 +1,78 @@
-const shared = angular.module('services', []);
+import modal from 'angular-ui-bootstrap/src/modal';
+const shared = angular.module('services', [modal]);
 
 // analyses
-require('./analysis/analysis.service')(shared);
-require('./analysis/labUtils.service')(shared);
-require('./analysis/reclassify.service')(shared);
-require('./analysis/histogram.service')(shared);
-require('./tools/toolTag.service')(shared);
+require('./analysis/analysis.service').default(shared);
+require('./analysis/labUtils.service').default(shared);
+require('./analysis/reclassify.service').default(shared);
+require('./analysis/histogram.service').default(shared);
+require('./tools/toolTag.service').default(shared);
 
 // auth
-require('./auth/auth.service')(shared);
-require('./auth/token.service')(shared);
-require('./auth/user.service')(shared);
-require('./auth/platform.service.js')(shared);
-require('./auth/organization.service.js')(shared);
-require('./auth/team.service.js')(shared);
-require('./auth/permissions.service.js')(shared);
+require('./auth/auth.service').default(shared);
+require('./auth/token.service').default(shared);
+require('./auth/user.service').default(shared);
+require('./auth/platform.service.js').default(shared);
+require('./auth/organization.service.js').default(shared);
+require('./auth/team.service.js').default(shared);
+require('./auth/permissions.service.js').default(shared);
 
 // settings
-require('./settings/config.provider')(shared);
-require('./settings/storage.service')(shared);
-require('./settings/status.service')(shared);
-require('./settings/featureFlagOverrides.service')(shared);
-require('./settings/featureFlags.provider')(shared);
-require('./settings/featureFlag.directive')(shared);
+require('./settings/config.provider').default(shared);
+require('./settings/storage.service').default(shared);
+require('./settings/status.service').default(shared);
+require('./settings/featureFlagOverrides.service').default(shared);
+require('./settings/featureFlags.provider').default(shared);
+require('./settings/featureFlag.directive').default(shared);
 
 // vendor
-require('./vendor/rollbarWrapper.service')(shared);
-require('./vendor/dropbox.service')(shared);
-require('./vendor/intercom.service')(shared);
-require('./vendor/planetLabs.service.js')(shared);
+require('./vendor/rollbarWrapper.service').default(shared);
+require('./vendor/dropbox.service').default(shared);
+require('./vendor/intercom.service').default(shared);
+require('./vendor/planetLabs.service.js').default(shared);
 require('./vendor/aws-sdk-s3.module.js');
 
 // projects
-require('./projects/colorCorrect.service')(shared);
-require('./projects/colorScheme.service')(shared);
-require('./projects/project.service')(shared);
-require('./projects/edit.service')(shared);
-require('./projects/histogram.service')(shared);
-require('./projects/aoi.service')(shared);
-require('./projects/export.service')(shared);
-require('./projects/histogram.service')(shared);
-require('./projects/export.service')(shared);
-require('./projects/aoi.service')(shared);
+require('./projects/colorCorrect.service').default(shared);
+require('./projects/colorScheme.service').default(shared);
+require('./projects/project.service').default(shared);
+require('./projects/edit.service').default(shared);
+require('./projects/histogram.service').default(shared);
+require('./projects/aoi.service').default(shared);
+require('./projects/export.service').default(shared);
+require('./projects/histogram.service').default(shared);
+require('./projects/export.service').default(shared);
+require('./projects/aoi.service').default(shared);
 
 // scenes
-require('./scenes/scene.service')(shared);
-require('./scenes/upload.service')(shared);
-require('./scenes/datasource.service')(shared);
-require('./scenes/rasterFoundryRepository.service')(shared);
-require('./scenes/planetRepository.service')(shared);
-require('./scenes/cmrRepository.service')(shared);
-require('./scenes/datasourceLicense.service')(shared);
+require('./scenes/scene.service').default(shared);
+require('./scenes/upload.service').default(shared);
+require('./scenes/datasource.service').default(shared);
+require('./scenes/rasterFoundryRepository.service').default(shared);
+require('./scenes/planetRepository.service').default(shared);
+require('./scenes/cmrRepository.service').default(shared);
+require('./scenes/datasourceLicense.service').default(shared);
 
 // map
-require('./map/map.service')(shared);
-require('./map/mapUtils.service')(shared);
-require('./map/gridLayer.service')(shared);
-require('./map/imageOverlay.service')(shared);
-require('./map/layer.service')(shared);
-require('./map/geocode.service')(shared);
+require('./map/map.service').default(shared);
+require('./map/mapUtils.service').default(shared);
+require('./map/imageOverlay.service').default(shared);
+require('./map/layer.service').default(shared);
+require('./map/geocode.service').default(shared);
 
 // vectors
-require('./vectors/shapes.service.js')(shared);
+require('./vectors/shapes.service.js').default(shared);
 
 // common
-require('./common/mousetip.service')(shared);
-require('./common/feed.service')(shared);
-require('./common/thumbnail.service')(shared);
-require('./common/decimal.filter')(shared);
-require('./common/modal.service')(shared);
-require('./common/url.filter')(shared);
-require('./common/orgStatus.filter')(shared);
-require('./common/pagination.service')(shared);
+require('./common/mousetip.service').default(shared);
+require('./common/feed.service').default(shared);
+require('./common/thumbnail.service').default(shared);
+require('./common/decimal.filter').default(shared);
+require('./common/modal.service').default(shared);
+require('./common/url.filter').default(shared);
+require('./common/orgStatus.filter').default(shared);
+require('./common/pagination.service').default(shared);
+require('./common/graph.service').default(shared);
 
 
 export default shared;

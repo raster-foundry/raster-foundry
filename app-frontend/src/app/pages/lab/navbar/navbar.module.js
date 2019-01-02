@@ -1,18 +1,14 @@
-import * as LabActions from '_redux/actions/lab-actions';
+import LabActions from '_redux/actions/lab-actions';
 
 class LabNavbarController {
-    constructor(analysisService, $state, $ngRedux, $scope) {
+    constructor($rootScope, analysisService, $state, $ngRedux, $scope) {
         'ngInject';
-
-        this.analysisService = analysisService;
-        this.$state = $state;
-        this.$ngRedux = $ngRedux;
-
-        let unsubscribe = $ngRedux.connect(this.mapStateToThis, LabActions)(this);
-        $scope.$on('$destroy', unsubscribe);
+        $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
+        let unsubscribe = this.$ngRedux.connect(this.mapStateToThis, LabActions)(this);
+        this.$scope.$on('$destroy', unsubscribe);
     }
 
     mapStateToThis(state) {

@@ -10,29 +10,7 @@ class LabAnalysisController {
         APP_CONFIG
     ) {
         'ngInject';
-        this.$scope = $scope;
-        this.$rootScope = $rootScope;
-        this.$state = $state;
-        this.$timeout = $timeout;
-        this.$element = $element;
-        this.$window = $window;
-        this.$document = $document;
-        this.modalService = modalService;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis,
-            Object.assign({}, LabActions, NodeActions)
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
-
-        this.getMap = () => mapService.getMap('lab-preview');
-        this.projectService = projectService;
-        this.authService = authService;
-        this.mapUtilsService = mapUtilsService;
-        this.analysisService = analysisService;
-        this.tokenService = tokenService;
-
-        this.tileServer = `${APP_CONFIG.tileServerLocation}`;
+        $scope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
@@ -45,8 +23,8 @@ class LabAnalysisController {
     }
 
     $onInit() {
+        this.tileServer = `${this.APP_CONFIG.tileServerLocation}`;
         this.showDiagram = true;
-
         this.analysisId = this.$state.params.analysisid;
 
         let userWatch = this.$scope.$watch('$ctrl.user', user => {
@@ -70,6 +48,16 @@ class LabAnalysisController {
                 this.onSingleClose();
             }
         });
+
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis,
+            Object.assign({}, LabActions, NodeActions)
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
+    }
+
+    getMap() {
+        return this.mapService.getMap('lab-preview');
     }
 
     initAnalysis() {

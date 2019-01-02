@@ -60,7 +60,7 @@ class VectorListController {
         });
         modal.result.then(() => {
             this.fetchPage();
-        });
+        }).catch(() => {});
     }
 }
 

@@ -16,19 +16,10 @@ const AnnotateSidebarItemComponent = {
 
 class AnnotateSidebarItemController {
     constructor(
-        $log, $scope, $timeout, $ngRedux, $window
+        $rootScope, $log, $scope, $timeout, $ngRedux, $window
     ) {
         'ngInject';
-        this.$log = $log;
-        this.$scope = $scope;
-        this.$timeout = $timeout;
-        this.$window = $window;
-
-        let unsubscribe = $ngRedux.connect(
-            this.mapStateToThis.bind(this),
-            AnnotationActions
-        )(this);
-        $scope.$on('$destroy', unsubscribe);
+        $rootScope.autoInject(this, arguments);
     }
 
     mapStateToThis(state) {
@@ -39,6 +30,7 @@ class AnnotateSidebarItemController {
 
         return {
             annotation,
+            annotations: state.projects.annotations,
             editingAnnotation: state.projects.editingAnnotation,
             sidebarDisabled: state.projects.sidebarDisabled,
             labels: state.projects.labels
@@ -46,8 +38,19 @@ class AnnotateSidebarItemController {
     }
 
     $onInit() {
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis.bind(this),
+            AnnotationActions
+        )(this);
+        this.$scope.$on('$destroy', unsubscribe);
         this.minMatchedLabelLength = 3;
         this.maxMatchedLabels = 4;
+        let watch = this.$scope.$watch('$ctrl.annotationId', (annotationId) => {
+            if (annotationId && !this.annotation && this.annotations) {
+                this.annotation = this.annotations.get(annotationId);
+                watch();
+            }
+        });
     }
 
     onAnnotationClone($event) {
@@ -135,7 +138,7 @@ class AnnotateSidebarItemController {
     }
 
     onLabelFieldFocus() {
-        if (this.labelNameInput.length >= this.minMatchedLabelLength) {
+        if (this.labelNameInput && this.labelNameInput.length >= this.minMatchedLabelLength) {
             this.matchLabelName(this.labelNameInput);
         }
     }

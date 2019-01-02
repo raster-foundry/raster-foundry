@@ -123,7 +123,7 @@ class TeamUsersController {
             }
         }).result.then(() => {
             this.fetchPage();
-        });
+        }).catch(() => {});
     }
 
     removeUser(user) {
@@ -145,7 +145,7 @@ class TeamUsersController {
             ).then(() => {
                 this.fetchPage(this.pagination.currentPage);
             });
-        });
+        }).catch(() => {});
     }
 
     getUserGroupRoleLabel(user) {

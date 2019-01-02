@@ -82,7 +82,8 @@ services:
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
-      - TILE_SERVER_LOCATION
+      - TILE_SERVER_LOCATION=http://localhost:8080
+      - COURSIER_CACHE=/root/.coursier
     ports:
       - "9000:9000"
       - "9010:9010"
@@ -138,6 +139,7 @@ services:
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
+      - COURSIER_CACHE=/root/.coursier
     ports:
       - "9900:9900"
       - "9020:9020"
@@ -162,30 +164,47 @@ services:
 
   backsplash:
     image: openjdk:8-jre
+    build:
+      context: app-backend
+      dockerfile: Dockerfile.backsplash
+    depends_on:
+      postgres:
+        condition: service_healthy
     links:
       - postgres:database.service.rasterfoundry.internal
+      - graphite:graphite.service.rasterfoundry.internal
     env_file: .env
     environment:
-      - RF_LOG_LEVEL=INFO
-      - SBT_OPTS="-Xmx2G -XX:MaxPermSize=2G"
+      - RF_LOG_LEVEL=DEBUG
+      - COURSIER_CACHE=/root/.coursier
     ports:
       - "8080:8080"
-      - "9030:9020"
+      - "9030:9030"
     volumes:
+      - $HOME/.sbt:/root/.sbt
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - $HOME/.coursier:/root/.coursier
-      - ./.sbt:/root/.sbt
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
       - $HOME/.ivy2:/root/.ivy2
     working_dir: /opt/raster-foundry/app-backend/
-    entrypoint: ./sbt
+    entrypoint: sbt
     command:
-      - "backsplash/run"
-      - "-Dcom.sun.management.jmxremote.rmi.port=9020"
-      - "-Dcom.sun.management.jmxremote=true"
-      - "-Dcom.sun.management.jmxremote.port=9020"
-      - "-Dcom.sun.management.jmxremote.ssl=false"
-      - "-Dcom.sun.management.jmxremote.authenticate=false"
-      - "-Dcom.sun.management.jmxremote.local.only=false"
+      - "backsplash-server/run"
+      - "-J-Dcom.sun.management.jmxremote.rmi.port=9030"
+      - "-J-Dcom.sun.management.jmxremote=true"
+      - "-J-Dcom.sun.management.jmxremote.port=9030"
+      - "-J-Dcom.sun.management.jmxremote.ssl=false"
+      - "-J-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-J-Dcom.sun.management.jmxremote.local.only=false"
+      - "-J-DXmx3G"
       - "-Djava.rmi.server.hostname=localhost"
+
+  graphite:
+    image: graphiteapp/graphite-statsd
+    ports:
+      - 2003-2004:2003-2004
+      - 2023-2024:2023-2024
+      - 8125:8125/udp
+      - 8126:8126
+      - 8090:80

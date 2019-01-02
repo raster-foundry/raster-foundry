@@ -1,4 +1,4 @@
 {
-  "plugins": ["transform-runtime", "add-module-exports"],
-  "presets": ["angular", "es2017"]
+    "plugins": ["@babel/plugin-transform-runtime", "@babel/plugin-syntax-dynamic-import", "@babel/plugin-proposal-object-rest-spread"],
+    "presets": ["@babel/env"]
 }

@@ -1,12 +1,5 @@
 /* globals document BUILDCONFIG */
-
-const faviconsContext = require.context(
-    `!!file-loader?name=favicons/[name].[ext]!..${BUILDCONFIG.FAVICON_DIR || '/favicon'}`,
-    true,
-    /\.(svg|png|ico|xml|json)$/
-);
-
-faviconsContext.keys().forEach(faviconsContext);
+import angular from 'angular';
 
 // main App module
 import './index.module';

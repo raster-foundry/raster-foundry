@@ -2,24 +2,30 @@ package com.rasterfoundry.database
 
 import java.util.UUID
 
-import cats.data._
+import cats.Applicative
+import cats.data.{NonEmptyList => NEL, _}
 import cats.implicits._
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel.{
   BatchParams,
-  ColorCorrect,
+  ColorCorrect => RFColorCorrect,
   MosaicDefinition,
   SceneToProject,
   SceneToProjectwithSceneType
 }
 import com.typesafe.scalalogging.LazyLogging
-import doobie.Fragments._
 import com.rasterfoundry.datamodel._
 import doobie._
+import doobie.Fragments._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import geotrellis.vector.{Polygon, Projected}
+import fs2.Stream
+import geotrellis.vector.{MultiPolygon, Polygon, Projected}
+import io.circe.syntax._
+
+case class SceneToProjectDao()
 
 object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
 
@@ -45,8 +51,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     }
   }
 
-  def acceptScenes(projectId: UUID,
-                   sceneIds: NonEmptyList[UUID]): ConnectionIO[Int] = {
+  def acceptScenes(projectId: UUID, sceneIds: NEL[UUID]): ConnectionIO[Int] = {
     val updateF: Fragment = fr"""
       UPDATE scenes_to_projects
       SET accepted = true
@@ -99,47 +104,68 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
                           greenBand: Option[Int] = None,
                           blueBand: Option[Int] = None,
                           sceneIdSubset: List[UUID] = List.empty)
-    : ConnectionIO[Seq[MosaicDefinition]] = {
-
+    : Stream[ConnectionIO, MosaicDefinition] = {
     val filters = List(
       polygonOption.map(polygon =>
-        fr"ST_Intersects(scenes.tile_footprint, ${polygon})"),
-      Some(fr"scenes_to_projects.project_id = ${projectId}"),
-      Some(fr"scenes_to_projects.accepted = true"),
-      Some(fr"scenes.ingest_status = 'INGESTED'"),
+        fr"ST_Intersects(scenes_stp.tile_footprint, ${polygon})"),
+      Some(fr"scenes_stp.project_id = ${projectId}"),
+      Some(fr"scenes_stp.accepted = true"),
+      Some(fr"scenes_stp.ingest_status = 'INGESTED'"),
       sceneIdSubset.toNel map {
         Fragments.in(fr"scene_id", _)
       }
     )
     val select = fr"""
     SELECT
-      scene_id, project_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location
-    FROM
+      scene_id, project_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location,
+      data_footprint, is_single_band, single_band_options
+    FROM (
       scenes_to_projects
     LEFT JOIN
       scenes
     ON scenes.id = scenes_to_projects.scene_id
+    ) scenes_stp
+    LEFT JOIN
+      projects
+    ON
+      scenes_stp.project_id = projects.id
       """
-    for {
-      stps <- {
-        (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scenes_to_projects.scene_order ASC")
-          .query[SceneToProjectwithSceneType]
-          .to[List]
+    (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scenes_stp.scene_order ASC")
+      .query[SceneToProjectwithSceneType]
+      .stream map { stp =>
+      {
+        Applicative[Option].map3(redBand, greenBand, blueBand) {
+          case (r, g, b) =>
+            MosaicDefinition(
+              stp.sceneId,
+              stp.colorCorrectParams.copy(
+                redBand = r,
+                greenBand = g,
+                blueBand = b
+              ),
+              stp.sceneType,
+              stp.ingestLocation,
+              stp.dataFootprint flatMap { _.geom.as[MultiPolygon] },
+              stp.isSingleBand,
+              stp.singleBandOptions
+            )
+        } getOrElse {
+          MosaicDefinition(
+            stp.sceneId,
+            stp.colorCorrectParams,
+            stp.sceneType,
+            stp.ingestLocation,
+            stp.dataFootprint flatMap { _.geom.as[MultiPolygon] },
+            stp.isSingleBand,
+            stp.singleBandOptions
+          )
+        }
       }
-    } yield {
-      logger.debug(s"Found ${stps.length} scenes in projects")
-      val md = (redBand, greenBand, blueBand).tupled match {
-        case Some((r, g, b)) =>
-          MosaicDefinition.fromScenesToProjects(stps, r, g, b)
-        case _ => MosaicDefinition.fromScenesToProjects(stps)
-      }
-      logger.debug(s"Mosaic Definition: ${md}")
-      md
     }
   }
 
   def getMosaicDefinition(
-      projectId: UUID): ConnectionIO[Seq[MosaicDefinition]] = {
+      projectId: UUID): Stream[ConnectionIO, MosaicDefinition] = {
     getMosaicDefinition(projectId, None)
   }
 
