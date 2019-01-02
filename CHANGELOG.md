@@ -2,6 +2,18 @@
 
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+### Security
+
+## [1.16.0](https://github.com/raster-foundry/raster-foundry/tree/1.16.0) (2019-01-02)
+
 ## Important Notice
 
 - In this release, we have added more fields to platform email settings to make it work better. We strongly suggest platform admins to go to your platform email settings and fill in **all fields**.
@@ -52,8 +64,6 @@
 - Switched back to geotrellis for IO to shrink the space of failure conditions [\#4414](https://github.com/raster-foundry/raster-foundry/pull/4414)
 - Fetch histograms for multiband mosaics from the database again [\#4417](https://github.com/raster-foundry/raster-foundry/pull/4417)
 - Made single band tiles render without weird stripes [\#4423](https://github.com/raster-foundry/raster-foundry/pull/4423)
-
-### Removed
 
 ## [1.15.0](https://github.com/raster-foundry/raster-foundry/tree/1.15.0) (2018-11-30)
 
