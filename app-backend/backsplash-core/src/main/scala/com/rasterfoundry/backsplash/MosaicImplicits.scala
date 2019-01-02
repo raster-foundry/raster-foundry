@@ -105,39 +105,42 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
 
                 }
               })
-              .collect({ case Some(mbtile) => Raster(mbtile, extent) })
+              .collect({ case Some(mbTile) => mbTile })
               .compile
-              .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
-                mbr1.merge(mbr2, NearestNeighbor)
+              .fold(ndtile)({ (mbr1, mbr2) =>
+                mbr1 merge mbr2
               })
+              .map(Raster(_, extent))
           } else {
             // Assume that we're in a single band case. It isn't obvious what it would
             // mean if the band count weren't 3 or 1, so just make the assumption that we
             // wouldn't do that to ourselves and don't handle the remainder
-            BacksplashMosaic.layerHistogram(self) flatMap {
-              case Valid(hists) =>
-                (filtered map { relevant =>
-                  val time = readSceneTmsTimer.time()
-                  val img = relevant.read(z, x, y) map { im =>
-                    ColorRampMosaic.colorTile(
-                      im,
-                      hists,
-                      relevant.singleBandOptions getOrElse {
-                        throw SingleBandOptionsException(
-                          "Must specify single band options when requesting single band visualization.")
-                      }
-                    )
-                  }
-                  time.stop()
-                  img
-                }).collect({ case Some(mbtile) => mbtile })
-                  .compile
-                  .fold(ndtile)({ (mbr1, mbr2) =>
-                    mbr1 merge mbr2
-                  })
-                  .map(t => Raster(t, extent))
-              case Invalid(e) =>
-                throw MetadataException(s"Could not resolve histograms: $e")
+            BacksplashMosaic.getStoreHistogram(filtered, histStore) flatMap {
+              hists =>
+                {
+                  (BacksplashMosaic.filterRelevant(self) map { relevant =>
+                    println("yup in the thing")
+                    val time = readSceneTmsTimer.time()
+                    val img = relevant.read(z, x, y) map { im =>
+                      ColorRampMosaic.colorTile(
+                        im,
+                        hists,
+                        relevant.singleBandOptions getOrElse {
+                          throw SingleBandOptionsException(
+                            "Must specify single band options when requesting single band visualization.")
+                        }
+                      )
+                    }
+                    println(s"Image bands: ${img map { _.bandCount }}")
+                    time.stop()
+                    img
+                  }).collect({ case Some(mbtile) => mbtile })
+                    .compile
+                    .fold(ndtile)({ (mbr1, mbr2) =>
+                      mbr1 merge mbr2
+                    })
+                    .map(t => Raster(t, extent))
+                }
             }
           }
           timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
@@ -178,47 +181,69 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               256,
               256
             )
-            layerHist <- BacksplashMosaic.layerHistogram(filtered) map {
-              case Valid(hists) => hists
-              case Invalid(e) =>
-                throw MetadataException(s"Could not resolve histograms: $e")
-            }
             mosaic = if (bands.length == 3) {
               filtered
-                .map({ relevant =>
-                  val time = readSceneExtentTimer.time()
-                  val img = relevant.colorCorrect(extent, cs, layerHist, None)
-                  time.stop()
-                  img
-                })
-                .collect({ case Some(mbtile) => Raster(mbtile, extent) })
-                .compile
-                .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
-                  mbr1.merge(mbr2, NearestNeighbor)
-                })
-            } else {
-              filtered
-                .map({ relevant =>
-                  val time = readSceneExtentTimer.time()
-                  val img = relevant.read(extent, cs) map {
-                    ColorRampMosaic
-                      .colorTile(
-                        _,
-                        layerHist,
-                        relevant.singleBandOptions getOrElse {
-                          throw SingleBandOptionsException(
-                            "Must specify single band options when requesting single band visualization.")
-                        }
-                      )
+                .flatMap({ relevant =>
+                  fs2.Stream.eval {
+                    Applicative[IO].map2(
+                      IO {
+                        val time = readSceneTmsTimer.time()
+                        val img = relevant.read(extent, cs)
+                        time.stop()
+                        img
+                      }, {
+                        val time = readSceneHistTimer.time()
+                        val hists =
+                          histStore.layerHistogram(relevant.imageId,
+                                                   relevant.subsetBands)
+                        time.stop()
+                        hists
+                      }
+                    )((im: Option[MultibandTile],
+                       hists: Array[Histogram[Double]]) => {
+                      im map { mbTile =>
+                        val time = mbColorSceneTimer.time()
+                        val colored =
+                          relevant.corrections.colorCorrect(mbTile, hists, None)
+                        time.stop()
+                        colored
+                      }
+
+                    })
                   }
-                  time.stop()
-                  img
                 })
-                .collect({ case Some(mbtile) => Raster(mbtile, extent) })
+                .collect({ case Some(mbTile) => mbTile })
                 .compile
-                .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
-                  mbr1.merge(mbr2, NearestNeighbor)
+                .fold(ndtile)({ (mbr1, mbr2) =>
+                  mbr1 merge mbr2
                 })
+                .map(Raster(_, extent))
+            } else {
+              BacksplashMosaic.getStoreHistogram(filtered, histStore) map {
+                layerHist =>
+                  filtered
+                    .map({ relevant =>
+                      val time = readSceneExtentTimer.time()
+                      val img = relevant.read(extent, cs) map {
+                        ColorRampMosaic
+                          .colorTile(
+                            _,
+                            layerHist,
+                            relevant.singleBandOptions getOrElse {
+                              throw SingleBandOptionsException(
+                                "Must specify single band options when requesting single band visualization.")
+                            }
+                          )
+                      }
+                      time.stop()
+                      img
+                    })
+                    .collect({ case Some(mbtile) => Raster(mbtile, extent) })
+                    .compile
+                    .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
+                      mbr1.merge(mbr2, NearestNeighbor)
+                    })
+              }
             }
             timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
           } yield RasterLit(timedMosaic)
@@ -252,11 +277,12 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                 time.stop()
                 img
               })
-              .collect({ case Some(mbtile) => Raster(mbtile, extent) })
+              .collect({ case Some(mbTile) => mbTile })
               .compile
-              .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
-                mbr1.merge(mbr2, NearestNeighbor)
+              .fold(ndtile)({ (mbr1, mbr2) =>
+                mbr1 merge mbr2
               })
+              .map(Raster(_, extent))
             timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
           } yield RasterLit(timedMosaic)
         }
