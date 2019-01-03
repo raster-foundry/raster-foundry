@@ -2,68 +2,69 @@ package rfgatling
 
 import _root_.io.gatling.http.Predef._
 import _root_.io.gatling.core.Predef._
+import _root_.io.gatling.core.structure.ChainBuilder
 import geotrellis.spark.tiling._
 import geotrellis.proj4._
 
 import scala.concurrent.duration._
-import scala.collection.JavaConverters._
-import scala.util.Random
 import java.util.UUID
+
+import geotrellis.vector.Extent
 
 class MosaicTmsSimulation extends Simulation {
 
-  val httpConf = http
-    .baseUrl(Config.RF.apiHost) // Here is the root for all relative URLs
-    .acceptHeader(
-      "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8") // Here are the common headers
+  val httpProtocol = http
+    .baseUrl(Config.RF.tileHost)
     .doNotTrackHeader("1")
     .acceptLanguageHeader("en-US,en;q=0.5")
     .acceptEncodingHeader("gzip, deflate")
-    .userAgentHeader(
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:16.0) Gecko/20100101 Firefox/16.0")
+    .acceptHeader(
+      "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8") // Here are the common headers
+    .userAgentHeader("Gatling RF Mosaic TMS Simulation")
 
-  val projectIds = Config.RF.projectIds.split(",") map { UUID.fromString _ }
-  val bboxes = Map(
-    (projectIds map { projectId =>
+  val projectIds: Array[UUID] = Config.RF.projectIds.split(",") map {
+    UUID.fromString
+  }
+  val bboxes: Map[UUID, Extent] = Map(
+    projectIds map { projectId =>
       (projectId,
        ApiUtils.getProjectBBox(projectId).getOrElse(LatLng.worldExtent))
-    }): _*
+    }: _*
   )
 
-  val tmsScenario =
-    scenario("Mosaic TMS")
-      .exec(
-        feed(
-          TmsUtils
-            .randomTileFeeder(projectIds,
-                              bboxes,
-                              Config.TMS.minZoom,
-                              Config.TMS.maxZoom)
-            .random))
-      .exec(_.set("authToken", ApiUtils.getAuthToken))
-      .exec(foreach("${tiles}", "tile") {
-        exec({ session =>
-          val tile = session("tile").as[(UUID, Int, Int, Int)]
-          session
-            .set("projectId", tile._1)
-            .set("z", tile._2)
-            .set("x", tile._3)
-            .set("y", tile._4)
-            .set("authToken", ApiUtils.getAuthToken)
-        }).exec {
-          http("tiles at ${projectId}/${z}/${x}/${y}?token=${authToken}")
-            .get(Config.TMS.template)
-            .header("authorization", "Bearer ${authToken}")
-            .check(status.is(200))
+  val authToken: String = ApiUtils.getAuthToken
+
+  /** Chain of HTTP requests grouped by project + zoom level
+    *
+    * Each user is simulated to load a single zoom level then wait between 1-4
+    * seconds before moving on to the next zoom level
+    */
+  val projectChains: Array[ChainBuilder] = projectIds.flatMap { projectId =>
+    (Config.TMS.minZoom until Config.TMS.maxZoom + 1).reverse.map { zoom =>
+      val singleZoomLevelMapLoad = TmsUtils.randomTileRequestSequence(
+        projectId,
+        bboxes.getOrElse(projectIds.head, LatLng.worldExtent),
+        zoom,
+        authToken)
+      group(s"Project: ${projectId}") {
+        group(s"Zoom: ${zoom}") {
+          exec(singleZoomLevelMapLoad).pause(1 seconds, 4 seconds)
         }
-      })
-      .pause(4)
+      }
+    }
+  }
+
+  val tmsScenario =
+    scenario("Mosaic TMS").exec(projectChains: _*)
 
   setUp(
     tmsScenario
       .inject(
-        rampUsers(Config.Users.count) during (Config.Users.rampupTime seconds))
-      .protocols(httpConf)
+        atOnceUsers(1), // Send out initial set of requests for single user, initial ramp-up
+        nothingFor(4 seconds), // Wait to start ramping up users
+        rampUsers(Config.Users.count) during (Config.Users.rampupTimeSeconds seconds)
+      )
+      .protocols(httpProtocol)
   ).assertions(
     global.responseTime.percentile3.lt(1000)
   )
