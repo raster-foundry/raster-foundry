@@ -48,9 +48,9 @@ object ColorCorrect extends LazyLogging {
         tile: MultibandTile,
         hist: Seq[Histogram[Double]]
     ): (MultibandTile, Array[Histogram[Double]]) = {
-      logger.info(
+      logger.trace(
         s"RedBand: ${redBand}, GreenBand: ${greenBand}, BlueBand: ${blueBand}")
-      logger.debug(s"RedHist: ${hist(redBand).statistics()}\n GreenHist: ${hist(
+      logger.trace(s"RedHist: ${hist(redBand).statistics()}\n GreenHist: ${hist(
         greenBand).statistics()}\n BlueHist: ${hist(blueBand).statistics()}")
       (tile.subsetBands(redBand, greenBand, blueBand),
        Array(hist(redBand), hist(greenBand), hist(blueBand)))
@@ -189,7 +189,7 @@ object ColorCorrect extends LazyLogging {
       )
     }
 
-    logger.debug(
+    logger.trace(
       s"Red (Clip Min: ${rclipMin}, Max: ${rclipMax}) (New Min: ${rnewMin}, ${rnewMax})")
 
     /** In this case for some reason with this func wrap it works faster ¯\_(ツ)_/¯ (it was micro benchmarked) */
@@ -260,7 +260,7 @@ object ColorCorrect extends LazyLogging {
         val hst = _rgbHist(index)
         val imin = hst.minValue().map(_.toInt).getOrElse(0)
         val imax = hst.maxValue().map(_.toInt).getOrElse(255)
-        logger.debug(s"Histogram Min/Max: ${imin}/${imax}")
+        logger.trace(s"Histogram Min/Max: ${imin}/${imax}")
         iMaxMin(index) = (imin, imax)
         isCorrected = {
           if (range.contains(imin) && range.contains(imax)) true
@@ -297,8 +297,8 @@ object ColorCorrect extends LazyLogging {
       )
     )
 
-    logger.debug(s"ColorCorrectArgs: ${colorCorrectArgs}")
-    logger.debug(s"Layer Normalize Args: ${layerNormalizeArgs}")
+    logger.trace(s"ColorCorrectArgs: ${colorCorrectArgs}")
+    logger.trace(s"Layer Normalize Args: ${layerNormalizeArgs}")
     complexColorCorrect(_rgbTile, params.saturation)(
       layerNormalizeArgs,
       gammas

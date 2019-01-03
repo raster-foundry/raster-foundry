@@ -3,28 +3,29 @@ package com.rasterfoundry.backsplash
 import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
-
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.histogram._
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.proj4.CRS
 import geotrellis.server._
-
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
-
 import cats._
 import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 import cats.data.Validated._
 import cats.effect._
-
+import scalacache._
+import scalacache.caffeine._
+import scalacache.memoization._
+import scalacache.CatsEffect.modes._
 import ProjectStore._
 import ToolStore._
 import ExtentReification._
 import HasRasterExtents._
 import TmsReification._
+import com.typesafe.scalalogging.LazyLogging
 
 class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                                                  histStore: HistStore)
@@ -33,7 +34,11 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
     with ToHasRasterExtentsOps
     with ToHistogramStoreOps
     with ToProjectStoreOps
-    with ToToolStoreOps {
+    with ToToolStoreOps
+    with LazyLogging {
+
+  implicit val histCache = Cache.histCache
+  implicit val flags = Cache.histCacheFlags
 
   val readMosaicTimer =
     mtr.newTimer(classOf[MosaicImplicits[HistStore]], "read-mosaic")
@@ -49,6 +54,22 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
   implicit val mosaicTmsReification = new TmsReification[BacksplashMosaic] {
     def kind(self: BacksplashMosaic): MamlKind = MamlKind.Image
 
+    def getNoDataValue(cellType: CellType): Option[Double] = {
+      cellType match {
+        case ByteUserDefinedNoDataCellType(value)   => Some(value.toDouble)
+        case UByteUserDefinedNoDataCellType(value)  => Some(value.toDouble)
+        case UByteConstantNoDataCellType            => Some(0)
+        case ShortUserDefinedNoDataCellType(value)  => Some(value.toDouble)
+        case UShortUserDefinedNoDataCellType(value) => Some(value.toDouble)
+        case UShortConstantNoDataCellType           => Some(0)
+        case IntUserDefinedNoDataCellType(value)    => Some(value.toDouble)
+        case FloatUserDefinedNoDataCellType(value)  => Some(value.toDouble)
+        case DoubleUserDefinedNoDataCellType(value) => Some(value.toDouble)
+        case _: NoNoData                            => None
+        case _: ConstantNoData[_]                   => Some(Double.NaN)
+      }
+    }
+
     def tmsReification(self: BacksplashMosaic, buffer: Int)(
         implicit contextShift: ContextShift[IO])
       : (Int, Int, Int) => IO[Literal] =
@@ -61,11 +82,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             .toList
             .map(_.fold(0)(_ + _))
           filtered = BacksplashMosaic.filterRelevant(self)
-          // This is a stop gap -- we know we don't want to fetch the histogram from the raw data
-          // all the time, and that actually it lives in the database or a cache or whatever. A
-          // HistogramStore[Param] would solve this problem, but we're putting that off because there
-          // are other things to do to get back to parity to start the work we actually care about,
-          // which is making things fast (and this will be a layup for "hmm I wonder what could be faster")
           extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
           // for single band imagery, after color correction we have RGBA, so
           // the empty tile needs to be four band as well
@@ -87,19 +103,24 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                       img
                     }, {
                       val time = readSceneHistTimer.time()
-                      val hists = histStore.layerHistogram(relevant.imageId,
-                                                           relevant.subsetBands)
+                      val hists = getHistogramWithCache(relevant)
                       time.stop()
                       hists
                     }
                   )((im: Option[MultibandTile],
                      hists: Array[Histogram[Double]]) => {
-                    im map { mbTile =>
-                      val time = mbColorSceneTimer.time()
-                      val colored =
-                        relevant.corrections.colorCorrect(mbTile, hists, None)
-                      time.stop()
-                      colored
+                    im map {
+                      mbTile =>
+                        val time = mbColorSceneTimer.time()
+                        val noDataValue = getNoDataValue(mbTile.cellType)
+                        logger.info(
+                          s"NODATA Value: ${noDataValue} with CellType: ${mbTile.cellType}")
+                        val colored =
+                          relevant.corrections.colorCorrect(mbTile,
+                                                            hists,
+                                                            noDataValue)
+                        time.stop()
+                        colored
                     }
                   })
 
@@ -149,7 +170,20 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
       }
   }
 
-  // We need to be able to pass information about whether scenes should paint themselves while
+  /** Private histogram retrieval method to allow for caching on/off via settings
+    *
+    * @param relevant
+    * @return
+    */
+  private def getHistogramWithCache(
+      relevant: BacksplashImage
+  )(implicit @cacheKeyExclude flags: Flags): IO[Array[Histogram[Double]]] =
+    memoizeF(None) {
+      logger.debug(s"Retrieving Histograms for ${relevant.imageId} from Source")
+      histStore.layerHistogram(relevant.imageId, relevant.subsetBands)
+    }
+
+// We need to be able to pass information about whether scenes should paint themselves while
   // we're working through the stream from the route into the extent reification. The solution
   // we (Nathan Zimmerman and I) came up with that is the least painful is two implicits, choosing
   // which one to use based on the information we have in the route. That solution can go away if:

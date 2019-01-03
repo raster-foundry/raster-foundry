@@ -93,6 +93,7 @@ services:
       - "9010:9010"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./data/:/opt/data/
       - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/api/target/scala-2.11/
     entrypoint: java
@@ -124,18 +125,23 @@ services:
       - COURSIER_CACHE=/root/.coursier
       - VSI_CACHE=TRUE
       - GDAL_CACHEMAX=1000
-      - DB_THREADPOOL_THREADS=4
-      - HTTP4S_THREADPOOL_THREADS=6
+      - DB_THREADPOOL_THREADS=16
+      - HTTP4S_THREADPOOL_THREADS=4
       - BLAZE_THREADPOOL_THREADS=4
       - BLAZE_CONNECTOR_POOL_SIZE=4
       - POSTGRES_DB_POOL_SIZE=32
-      - HIKARI_CONNECTION_THREADS=8
+      - HIKARI_CONNECTION_THREADS=16
+      - BACKSPLASH_HISTOGRAM_CACHE_ENABLE=true
+      - BACKSPLASH_TILE_CACHE_ENABLE=true
+      - BACKSPLASH_AUTHORIZATION_CACHE_ENABLE=true
+      - BACKSPLASH_AUTHENTICATION_CACHE_ENABLE=true
     ports:
       - "8080:8080"
       - "9030:9030"
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - $HOME/.aws:/root/.aws:ro
+      - ./data/:/opt/data/
     working_dir: /opt/raster-foundry/app-backend/backsplash-server/target/scala-2.11/
     entrypoint: java
     command:

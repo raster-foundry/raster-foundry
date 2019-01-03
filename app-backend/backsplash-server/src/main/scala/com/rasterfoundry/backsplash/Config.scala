@@ -19,4 +19,12 @@ object Config {
     val timeoutSeconds = serverConfig.getInt("timeoutSeconds")
     val graphiteUrl = serverConfig.getString("graphiteUrl")
   }
+
+  object cache {
+    private val cacheConfig = config.getConfig("cache")
+    val authorizationCacheEnable =
+      cacheConfig.getBoolean("authorizationCacheEnable")
+    val authenticationCacheEnable =
+      cacheConfig.getBoolean("authenticationCacheEnable")
+  }
 }
