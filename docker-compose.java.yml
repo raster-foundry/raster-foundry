@@ -119,6 +119,7 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
       - graphite:graphite.service.rasterfoundry.internal
+      - memcached:tile-cache.service.rasterfoundry.internal
     env_file: .env
     environment:
       - RF_LOG_LEVEL=DEBUG

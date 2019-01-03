@@ -5,6 +5,7 @@ import geotrellis.raster.MultibandTile
 import geotrellis.raster.histogram.Histogram
 import scalacache._
 import scalacache.caffeine._
+import scalacache.memcached._
 import scalacache.memoization._
 
 object Cache extends LazyLogging {
