@@ -7,6 +7,8 @@ object Config {
 
   object RF {
     val apiHost = config.getString("gatling.rf.apiHost")
+    val tileHost = config.getString("gatling.rf.tileHost")
+
     val tokenEndpoint = apiHost + config.getString("gatling.rf.tokenRoute")
     val projectEndpoint = apiHost + config.getString("gatling.rf.projectRoute")
 
@@ -15,7 +17,6 @@ object Config {
   }
 
   object TMS {
-    val template = config.getString("gatling.tms.template")
     val minZoom = config.getInt("gatling.tms.minZoom")
     val maxZoom = config.getInt("gatling.tms.maxZoom")
     val randomSeed = config.getInt("gatling.tms.randomSeed")
@@ -23,6 +24,10 @@ object Config {
 
   object Users {
     val count = config.getInt("gatling.users.count")
-    val rampupTime = config.getInt("gatling.users.rampupTime")
+    val rampupTimeSeconds = config.getInt("gatling.load.rampupTime")
+  }
+
+  object Load {
+    val durationMinutes = config.getInt("gatling.load.durationMinutes")
   }
 }

@@ -3,14 +3,11 @@ package rfgatling
 import _root_.io.gatling.core.Predef._
 import _root_.io.gatling.http.Predef._
 import _root_.io.gatling.http.request.builder.HttpRequestBuilder
-import com.typesafe.config.ConfigFactory
 import geotrellis.proj4._
 import geotrellis.spark._
 import geotrellis.spark.tiling._
 import geotrellis.vector._
 
-import scala.concurrent.duration._
-import scala.collection.JavaConverters._
 import scala.util.Random
 import java.util.UUID
 
@@ -40,16 +37,11 @@ object TmsUtils {
 
     val (_, x, y) = getTileZXY(lat, lon, zoom)
 
-    /** The logic here is that:
-      *  zoom 0: offsetting by 0 makes sense (0, 0)
-      *  zoom 1: offsetting by up to 1 makes sense (0-1, 0-1) i.e. a 'space' of 4 tiles
-      *  zoom 2: offsetting by up to 2 makes sense (0-2, 0-2) i.e. 9 tiles
-      *  zoom 3+: offsetting by up to 3 makes sense (0-3, 0-3) i.e. 16 tiles
-      *  Multiple TMS requests are sent out simultaneously for any given centerpoint. The actual
-      *   number of such requests will depend on the client, but the assumptions here are
-      *   reasonable.
+    /** The logic here is that a single page load of a map is ~36 requests on a 1080p
+      *  screen in chrome at 100 percent zoom - so that's what is being simulated -- a full
+      *  map load
       */
-    val requiredColRows = Math.min(zoom, 3)
+    val requiredColRows = 6
 
     for {
       xOffset <- 0 to requiredColRows
@@ -73,41 +65,43 @@ object TmsUtils {
     (rnd.nextDouble() * range) + minVal
   }
 
-  def randomZoom(min: Int = 1, max: Int = 20) = {
-    val minVal = Math.max(min, 1)
-    val maxVal = Math.max(minVal, Math.min(20, max))
-    val range = maxVal - minVal
-
-    if (range > 0) rnd.nextInt(range) + minVal
-    else minVal
+  def seqToRequest(projectId: UUID,
+                   z: Int,
+                   x: Int,
+                   y: Int,
+                   authToken: String): HttpRequestBuilder = {
+    http(s"${x}-${y}")
+      .get(
+        s"/${projectId}/${z}/${x}/${y}/?token=${authToken}"
+      )
+      .check(status.is(200))
   }
 
-  /** Random TMS indices constrained by a provided bounding box and bounding zoom levels */
-  def randomTileIdxsForBBox(projectId: UUID,
-                            bboxes: Map[UUID, Extent],
-                            minZoom: Int = 1,
-                            maxZoom: Int = 20): Seq[(Int, Int, Int)] = {
-
-    val bbox = bboxes.get(projectId) getOrElse {
-      throw new Exception(
-        s"Project $projectId missing from bbox map for mysterious reasons")
+  /** For a given project, extent, and zoom return an [[HttpRequestBuilder]]
+    *
+    * To better simulate loading a whole zoom level of tiles this constructs the request
+    * by making the first tile request and telling gatling that the rest of the tiles are
+    * "resources" for the initial tile. This means that the rest of the tiles should be requested
+    * in a parallel-ish fashion
+    *
+    * @param projectId
+    * @param bbox
+    * @param zoom
+    * @param authToken
+    * @return
+    */
+  def randomTileRequestSequence(projectId: UUID,
+                                bbox: Extent,
+                                zoom: Int,
+                                authToken: String): HttpRequestBuilder = {
+    val keySeq =
+      tileIdxsForScreen(randomLat(bbox.ymin, bbox.ymax),
+                        randomLon(bbox.xmin, bbox.xmax),
+                        zoom)
+    val allRequests = keySeq.map {
+      case (z, x, y) => seqToRequest(projectId, z, x, y, authToken)
     }
-    tileIdxsForScreen(randomLat(bbox.ymin, bbox.ymax),
-                      randomLon(bbox.xmin, bbox.xmax),
-                      randomZoom(minZoom, maxZoom))
+    allRequests.head.resources(allRequests.tail: _*)
   }
 
-  /** A gatling [[Feeder] instance for generating requests that mimic TMS requests */
-  def randomTileFeeder(projectIds: Array[UUID],
-                       bboxes: Map[UUID, Extent],
-                       minZoom: Int = 1,
-                       maxZoom: Int = 20) = {
-    projectIds map { (projectId: UUID) =>
-      {
-        val keySeq =
-          randomTileIdxsForBBox(projectId, bboxes, minZoom, maxZoom)
-        Map("tiles" -> (keySeq map { case (z, x, y) => (projectId, z, x, y) }))
-      }
-    }
-  }
 }
