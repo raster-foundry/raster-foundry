@@ -26,8 +26,13 @@
     <button class="btn btn-tiny" uib-dropdown-toggle>
       <i class="icon-menu"></i>
     </button>
-    <ul class="dropdown-menu dropdown-menu-light dropdown-menu-right" uib-dropdown-menu role="menu">
-      <li>
+    <ul class="dropdown-menu slim dropdown-menu-light dropdown-menu-right" uib-dropdown-menu role="menu" >
+      <li class="dropdown-list-item" ng-if-start="$ctrl.isOwnedByCurrentUser">
+        <a ng-click="$ctrl.onShareClick()">Share</a>
+      </li>
+      <li class="dropdown-menu-item divider" ng-if-end>
+      </li>
+      <li class="dropdown-menu-item">
         <a class="color-danger" ng-click="$ctrl.onClickDeleteTemplate()">Delete</a>
       </li>
     </ul>

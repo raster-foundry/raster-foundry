@@ -3,6 +3,7 @@ import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
 
 import labBrowseTpl from './pages/lab/browse/browse.html';
+import labBrowseModule from './pages/lab/browse/browse';
 import labBrowseAnalysesTpl from './pages/lab/browse/analyses/analyses.html';
 import labBrowseTemplatesTpl from './pages/lab/browse/templates/templates.html';
 import labTemplateTpl from './pages/lab/template/template.html';
@@ -403,7 +404,8 @@ function labStates($stateProvider) {
             templateUrl: labBrowseTpl,
             controller: 'LabBrowseController',
             controllerAs: '$ctrl',
-            redirectTo: 'lab.browse.analyses'
+            redirectTo: 'lab.browse.analyses',
+            resolve: labBrowseModule.resolve
         })
         .state('lab.browse.templates', {
             title: 'Analysis Search',
