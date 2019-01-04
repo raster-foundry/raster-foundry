@@ -103,11 +103,15 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                   Applicative[IO].map2(
                     IO {
                       val time = readSceneTmsTimer.time()
+                      logger.debug(
+                        s"Reading Tile ${relevant.imageId} ${z}-${x}-${y}")
                       val img = relevant.read(z, x, y)
                       time.stop()
                       img
                     }, {
                       val time = readSceneHistTimer.time()
+                      logger.debug(
+                        s"Reading Histogram ${relevant.imageId} ${z}-${x}-${y}")
                       val hists = getHistogramWithCache(relevant)
                       time.stop()
                       hists
