@@ -91,6 +91,17 @@ case class BacksplashImage(imageId: UUID,
 
 object BacksplashImage extends RasterSourceUtils with LazyLogging {
 
-  def getRasterSource(uri: String): GeoTiffRasterSource =
-    new GeoTiffRasterSource(uri)
+  implicit val rasterSourceCache = Cache.rasterSourceCache
+  implicit val flags = Cache.rasterSourceCacheFlags
+
+  def getRasterSource(uri: String): GeoTiffRasterSource = memoizeSync(None) {
+    logger.debug(s"Reading Raster Source from Source Data: ${uri}")
+    val rs = new GeoTiffRasterSource(uri)
+    // access lazy vals so they are cached
+    rs.tiff
+    rs.rasterExtent
+    rs.resolutions
+    rs
+  }
+
 }
