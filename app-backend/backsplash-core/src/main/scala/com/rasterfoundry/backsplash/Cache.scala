@@ -34,7 +34,9 @@ object Cache extends LazyLogging {
 
   val rasterSourceCache: Cache[GeoTiffRasterSource] =
     CaffeineCache[GeoTiffRasterSource]
-  val rasterSourceCacheFlags: Flags = Flags(Config.cache.rasterSourceCacheEnable, Config.cache.rasterSourceCacheEnable)
+  val rasterSourceCacheFlags: Flags = Flags(
+    Config.cache.rasterSourceCacheEnable,
+    Config.cache.rasterSourceCacheEnable)
   logger.info(s"Raster Source Cache Status: ${rasterSourceCacheFlags}")
 
 }
