@@ -70,6 +70,11 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
       }
     }
 
+    def mergeTiles(
+        tiles: IO[List[MultibandTile]]): IO[Option[MultibandTile]] = {
+      tiles.map(_.reduceOption((_) merge (_)))
+    }
+
     def tmsReification(self: BacksplashMosaic, buffer: Int)(
         implicit contextShift: ContextShift[IO])
       : (Int, Int, Int) => IO[Literal] =
@@ -92,7 +97,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             256
           )
           mosaic = if (bandCount == 3) {
-            filtered
+            val ioMBT = filtered
               .flatMap({ relevant =>
                 fs2.Stream.eval {
                   Applicative[IO].map2(
@@ -123,15 +128,15 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                         colored
                     }
                   })
-
                 }
               })
               .collect({ case Some(mbTile) => mbTile })
               .compile
-              .fold(ndtile)({ (mbr1, mbr2) =>
-                mbr1 merge mbr2
-              })
-              .map(Raster(_, extent))
+              .toList
+            mergeTiles(ioMBT).map {
+              case Some(t) => Raster(t, extent)
+              case _       => Raster(ndtile, extent)
+            }
           } else {
             // Assume that we're in a single band case. It isn't obvious what it would
             // mean if the band count weren't 3 or 1, so just make the assumption that we
@@ -139,28 +144,28 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             BacksplashMosaic.getStoreHistogram(filtered, histStore) flatMap {
               hists =>
                 {
-                  (BacksplashMosaic.filterRelevant(self) map { relevant =>
-                    println("yup in the thing")
-                    val time = readSceneTmsTimer.time()
-                    val img = relevant.read(z, x, y) map { im =>
-                      ColorRampMosaic.colorTile(
-                        im,
-                        hists,
-                        relevant.singleBandOptions getOrElse {
-                          throw SingleBandOptionsException(
-                            "Must specify single band options when requesting single band visualization.")
-                        }
-                      )
-                    }
-                    println(s"Image bands: ${img map { _.bandCount }}")
-                    time.stop()
-                    img
-                  }).collect({ case Some(mbtile) => mbtile })
-                    .compile
-                    .fold(ndtile)({ (mbr1, mbr2) =>
-                      mbr1 merge mbr2
-                    })
-                    .map(t => Raster(t, extent))
+                  val ioMBT = (BacksplashMosaic.filterRelevant(self) map {
+                    relevant =>
+                      println("yup in the thing")
+                      val time = readSceneTmsTimer.time()
+                      val img = relevant.read(z, x, y) map { im =>
+                        ColorRampMosaic.colorTile(
+                          im,
+                          hists,
+                          relevant.singleBandOptions getOrElse {
+                            throw SingleBandOptionsException(
+                              "Must specify single band options when requesting single band visualization.")
+                          }
+                        )
+                      }
+                      println(s"Image bands: ${img map { _.bandCount }}")
+                      time.stop()
+                      img
+                  }).collect({ case Some(mbtile) => mbtile }).compile.toList
+                  mergeTiles(ioMBT).map {
+                    case Some(t) => Raster(t, extent)
+                    case _       => Raster(ndtile, extent)
+                  }
                 }
             }
           }
