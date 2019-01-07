@@ -41,8 +41,13 @@ import java.util.UUID
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.rasterfoundry.database.util.RFTransactor
+import com.typesafe.scalalogging.LazyLogging
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
-object Main extends IOApp with HistogramStoreImplicits {
+object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   val dbContextShift: ContextShift[IO] = IO.contextShift(
     ExecutionContext.fromExecutor(
@@ -135,6 +140,9 @@ object Main extends IOApp with HistogramStoreImplicits {
       .bindHttp(8080, "0.0.0.0")
       .withHttpApp(httpApp.orNotFound)
       .serve
+
+  val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync
+  logger.info(s"Server Started (${canSelect})")
 
   def run(args: List[String]): IO[ExitCode] =
     for {

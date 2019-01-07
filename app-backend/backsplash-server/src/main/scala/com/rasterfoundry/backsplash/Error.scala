@@ -22,10 +22,19 @@ class ForeignErrorHandler[F[_], E <: Throwable, U](implicit M: MonadError[F, E])
     case (err: AmazonS3Exception) =>
       logger.error(err.getMessage, err.printStackTrace)
       throw WrappedS3Exception(err.getMessage)
-    case (err: IllegalArgumentException) =>
+    case (err: IllegalArgumentException) => {
+      logger.error(err.getStackTraceString)
       throw RequirementFailedException(err.getMessage)
-    case (err: BacksplashException) => throw err
-    case t                          => throw UnknownException(t.getMessage)
+    }
+    case (err: BacksplashException) =>
+      throw {
+        logger.error(err.getStackTraceString)
+        err
+      }
+    case t => {
+      logger.error(t.getStackTraceString)
+      throw UnknownException(t.getMessage)
+    }
   }
 
   override def handle(service: AuthedService[U, F]): AuthedService[U, F] =

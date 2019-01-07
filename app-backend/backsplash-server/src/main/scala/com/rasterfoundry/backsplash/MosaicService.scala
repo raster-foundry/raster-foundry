@@ -8,7 +8,7 @@ import com.rasterfoundry.backsplash.Parameters._
 import cats.Applicative
 import cats.data.{NonEmptyList => NEL}
 import cats.data.Validated._
-import cats.effect.{ContextShift, IO, Fiber}
+import cats.effect.{ContextShift, Fiber, IO}
 import cats.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
@@ -22,7 +22,9 @@ import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
 import java.util.UUID
 
+import com.rasterfoundry.common.utils.TileUtils
 import doobie.util.transactor.Transactor
+import geotrellis.vector.{Polygon, Projected}
 
 class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
     projects: ProjStore,
@@ -52,9 +54,11 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
               Applicative[Option].map3(redOverride,
                                        greenOverride,
                                        blueOverride)(BandOverride.apply)
+            val polygonBbox: Projected[Polygon] =
+              TileUtils.getTileBounds(z, x, y)
             val eval =
               LayerTms.identity(
-                projects.read(projectId, None, bandOverride, None))
+                projects.read(projectId, Some(polygonBbox), bandOverride, None))
             for {
               fiberAuth <- authorizers.authProject(user, projectId).start
               fiberResp <- eval(z, x, y).start
