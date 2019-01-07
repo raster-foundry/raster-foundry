@@ -347,7 +347,9 @@ class LabAnalysisController {
                         this.$timeout(() => {
                             let s = this.analysisService.generateSourcesFromAST(this.analysis);
                             let firstSourceId = Object.keys(s)[0];
-                            this.projectService.fetchProject(s[firstSourceId].projId).then(p => {
+                            this.projectService.fetchProject(s[firstSourceId].projId, {
+                                analysisId: this.analysisId
+                            }).then(p => {
                                 this.fitProjectExtent(p);
                             });
                         });
