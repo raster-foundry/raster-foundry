@@ -163,12 +163,20 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             for {
               firstImOption <- BacksplashMosaic.first(
                 BacksplashMosaic.filterRelevant(self))
-              histograms <- histStore.projectHistogram(firstImOption map {
-                _.projectId
-              } getOrElse {
-                throw MetadataException(
-                  "Cannot produce tiles from empty mosaics")
-              }, List(1))
+              histograms <- histStore.projectHistogram(
+                firstImOption map {
+                  _.projectId
+                } getOrElse {
+                  throw MetadataException(
+                    "Cannot produce tiles from empty mosaics")
+                },
+                List(firstImOption flatMap {
+                  _.singleBandOptions map { _.band }
+                } getOrElse {
+                  throw SingleBandOptionsException(
+                    "Must provide band for single band visualization")
+                })
+              )
               multibandTilewithSBO <- ioMBTwithSBO
             } yield {
               val (tiles, sbos) = multibandTilewithSBO.unzip
