@@ -23,11 +23,6 @@
       lineinfile: dest=/etc/environment regexp=^RF_SETTINGS_BUCKET line="RF_SETTINGS_BUCKET={{ rf_settings_bucket }}"
       when: rf_settings_bucket is defined
 
-    - name: Set Environment variable for Raster Foundry AWS Artifacts Bucket
-      lineinfile: dest=/etc/environment regexp=^RF_ARTIFACTS_BUCKET
-                  line="RF_ARTIFACTS_BUCKET={{ rf_artifacts_bucket }}"
-      when: rf_artifacts_bucket is defined
-
     - name: Set Environment variable for host user (used to namespace jars and other artifacts in development)
       lineinfile: dest=/etc/environment regexp=^RF_HOST_USER line="RF_HOST_USER={{ host_user }}"
       when: host_user is defined
