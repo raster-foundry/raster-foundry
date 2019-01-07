@@ -101,7 +101,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
           // the empty tile needs to be four band as well
           ndtile: MultibandTile = ArrayMultibandTile.empty(
             IntConstantNoDataCellType,
-            if (bandCount == 1) 1 else bandCount,
+            bandCount,
             256,
             256
           )
