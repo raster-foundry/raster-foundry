@@ -140,13 +140,9 @@ object ColorCorrect extends LazyLogging {
     val ClipBounds(gmin, gmax) = layerNormalizeArgs(1)
     val ClipBounds(bmin, bmax) = layerNormalizeArgs(2)
 
-    val tileMin = nodataValue match {
-      case Some(0) => 1
-      case _       => 0
-    }
-    val (rclipMin, rclipMax, rnewMin, rnewMax) = (rmin, rmax, tileMin, 255)
-    val (gclipMin, gclipMax, gnewMin, gnewMax) = (gmin, gmax, tileMin, 255)
-    val (bclipMin, bclipMax, bnewMin, bnewMax) = (bmin, bmax, tileMin, 255)
+    val (rclipMin, rclipMax, rnewMin, rnewMax) = (rmin, rmax, 1, 255)
+    val (gclipMin, gclipMax, gnewMin, gnewMax) = (gmin, gmax, 1, 255)
+    val (bclipMin, bclipMax, bnewMin, bnewMax) = (bmin, bmax, 1, 255)
 
     val sigmoidal: Double => Double =
       (
