@@ -42,6 +42,13 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
   implicit val histCache = Cache.histCache
   implicit val flags = Cache.histCacheFlags
 
+  // To be used when folding over/merging tiles
+  val invisiCellType = IntUserDefinedNoDataCellType(0)
+  val invisiTile = IntUserDefinedNoDataArrayTile(Array.fill(65536)(0),
+                                                 256,
+                                                 256,
+                                                 invisiCellType)
+
   val readMosaicTimer =
     mtr.newTimer(classOf[MosaicImplicits[HistStore]], "read-mosaic")
   val readSceneTmsTimer =
@@ -182,7 +189,9 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               val (tiles, sbos) = multibandTilewithSBO.unzip
               logger.debug(s"Length of Histograms: ${histograms.length}")
               val combinedHistogram = histograms.reduce(_ merge _)
-              tiles.reduceOption(_ merge _) match {
+              tiles.reduceOption(
+                _.interpretAs(invisiCellType) merge _.interpretAs(
+                  invisiCellType)) match {
                 case Some(t) =>
                   Raster(
                     ColorRampMosaic.colorTile(
