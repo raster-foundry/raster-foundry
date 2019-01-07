@@ -104,8 +104,7 @@ class ProjectStoreImplicits(xa: Transactor[IO], mtr: MetricsRegistrator)
                   .unapply(md.colorCorrections.saturation)
                   .get)
             ),
-            singleBandOptions,
-            mtr
+            singleBandOptions
           )
         } transact (xa)
       }

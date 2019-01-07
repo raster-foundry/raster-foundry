@@ -3,6 +3,8 @@
 
 ### Added
 
+- Added caching for histograms, rastersources, and tiles [\#4429](https://github.com/raster-foundry/raster-foundry/pull/4429)
+
 ### Changed
 
 ### Fixed
