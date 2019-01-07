@@ -8,7 +8,10 @@ import { nodesFromAst, getNodeDefinition } from '_redux/node-utils';
 
 const DiagramContainerComponent = {
     templateUrl: diagramContainerTpl,
-    controller: 'DiagramContainerController'
+    controller: 'DiagramContainerController',
+    bindings: {
+        enableNodeSharing: '<'
+    }
 };
 
 const maxZoom = 3;
@@ -59,7 +62,7 @@ class DiagramContainerController {
 
         require.ensure(['jointjs'], (require) => {
             const joint = require('jointjs');
-            this.labUtils.init(joint);
+            this.labUtils.init(joint, { enableSharing: this.enableNodeSharing });
             if (this.analysis && !this.shapes) {
                 this.initDiagram(joint);
             } else {

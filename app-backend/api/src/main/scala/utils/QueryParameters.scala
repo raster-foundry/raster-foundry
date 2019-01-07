@@ -40,7 +40,10 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         searchParams &
         ownershipTypeQueryParameters &
         groupQueryParameters &
-        tagQueryParameters
+        tagQueryParameters &
+        parameters(
+          'analysisId.as[UUID].?
+        )
     ).as(ProjectQueryParameters.apply _)
 
   def aoiQueryParameters =

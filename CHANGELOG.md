@@ -2,16 +2,20 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 
 - Added caching for histograms, rastersources, and tiles [\#4429](https://github.com/raster-foundry/raster-foundry/pull/4429)
 
 ### Changed
+- Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 
-### Fixed
+### Deprecated
 
 - Removed faulty no-data interpretation in single band visualization [\#4433](https://github.com/raster-foundry/raster-foundry/pull/4433)
 
 ### Removed
+
+### Fixed
 
 ### Security
 

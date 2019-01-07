@@ -26,7 +26,7 @@
       Stats
     </button>
     <button class="btn node-button" type="button"
-            ng-if="!$ctrl.toolErrors.size &&
+            ng-if="$ctrl.enableSharing && !$ctrl.toolErrors.size &&
                    $ctrl.model.get('cellType') !== 'const'"
             ng-click="$ctrl.onNodeShare()">
         <span class="icon-share"></span>

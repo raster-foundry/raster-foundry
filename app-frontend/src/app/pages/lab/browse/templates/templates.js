@@ -43,7 +43,7 @@ class LabBrowseTemplatesController {
         });
         this.currentQuery = currentQuery;
     }
-  
+
     onTemplateDelete(templateId) {
         this.analysisService.deleteTemplate(templateId).then(() => {
             this.fetchPage();

@@ -11,7 +11,7 @@
         >
         </rf-search>
       </div>
-      <div class="vertical-container" feature-flag="analyses-sharing">
+      <div class="vertical-container">
         <label>Filter analyses</label>
         <select
           class="form-control"
@@ -52,6 +52,7 @@
                   $ctrl.pagination && !$ctrl.pagination.count && !$ctrl.search"
       >
         <rf-call-to-action-item
+          ng-if="$ctrl.currentOwnershipFilter === 'owned'"
           title="You have not created any analyses"
           class="panel panel-off-white"
         >

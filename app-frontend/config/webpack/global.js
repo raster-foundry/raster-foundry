@@ -136,7 +136,8 @@ module.exports = function (_path) {
                 exclude: [/node_modules/, /tests\.webpack\.js/, /\.config.js/, /\.spec\.js$/],
                 loader: 'eslint-loader',
                 options: {
-                    fix: true
+                    fix: true,
+                    emitWarning: !!DEVELOPMENT
                 }
             }, {
                 test: /\.html$/,

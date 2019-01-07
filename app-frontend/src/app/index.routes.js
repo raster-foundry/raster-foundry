@@ -8,6 +8,7 @@ import labBrowseAnalysesTpl from './pages/lab/browse/analyses/analyses.html';
 import labBrowseTemplatesTpl from './pages/lab/browse/templates/templates.html';
 import labTemplateTpl from './pages/lab/template/template.html';
 import labAnalysisTpl from './pages/lab/analysis/analysis.html';
+import labAnalysisModule from './pages/lab/analysis/analysis';
 import labStartAnalysisTpl from './pages/lab/startAnalysis/startAnalysis.html';
 import labNavbarTpl from './pages/lab/navbar/navbar.html';
 
@@ -397,7 +398,8 @@ function labStates($stateProvider) {
                     controller: 'LabAnalysisController',
                     controllerAs: '$ctrl'
                 }
-            }
+            },
+            resolve: labAnalysisModule.resolve
         })
         .state('lab.browse', {
             url: '/browse',

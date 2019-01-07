@@ -122,7 +122,8 @@ final case class ProjectQueryParameters(
     ownershipTypeParams: OwnershipTypeQueryParameters =
       OwnershipTypeQueryParameters(),
     groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),
-    tagQueryParameters: TagQueryParameters = TagQueryParameters()
+    tagQueryParameters: TagQueryParameters = TagQueryParameters(),
+    analysisId: Option[UUID] = None
 )
 
 object ProjectQueryParameters {
