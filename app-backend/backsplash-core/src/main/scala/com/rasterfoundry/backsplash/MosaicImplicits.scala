@@ -151,7 +151,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             // wouldn't do that to ourselves and don't handle the remainder
             val ioMBTwithSBO = (BacksplashMosaic.filterRelevant(self) map {
               relevant =>
-                println("yup in the thing")
                 logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
                 val img = relevant.read(z, x, y)
                 img.map(i =>
@@ -162,9 +161,14 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               .toList
 
             for {
-              histograms <- histStore.projectHistogram(
-                UUID.fromString("9fc60cbb-17bd-4376-b7dd-0c8b2ba7383b"),
-                List(1))
+              firstImOption <- BacksplashMosaic.first(
+                BacksplashMosaic.filterRelevant(self))
+              histograms <- histStore.projectHistogram(firstImOption map {
+                _.projectId
+              } getOrElse {
+                throw MetadataException(
+                  "Cannot produce tiles from empty mosaics")
+              }, List(1))
               multibandTilewithSBO <- ioMBTwithSBO
             } yield {
               val (tiles, sbos) = multibandTilewithSBO.unzip
@@ -189,16 +193,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
           RasterLit(timedMosaic)
       }
   }
-//  map { im =>
-//    ColorRampMosaic.colorTile(
-//      im,
-//      hists,
-//      relevant.singleBandOptions getOrElse {
-//        throw SingleBandOptionsException(
-//          "Must specify single band options when requesting single band visualization.")
-//      }
-//    )
-//  }
+
   /** Private histogram retrieval method to allow for caching on/off via settings
     *
     * @param relevant

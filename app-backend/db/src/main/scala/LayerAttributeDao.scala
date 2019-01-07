@@ -56,7 +56,7 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       .filter(fr"name = 'histogram'")
       .filter(fr"zoom = 0")
       .filter(
-        fr"layer_name in (SELECT scene_id from scenes_to_projects where project_id = ${projectId})"
+        fr"layer_name in (SELECT scene_id :: varchar(255) from scenes_to_projects where project_id = ${projectId})"
       )
       .list
   }

@@ -115,6 +115,7 @@ class ProjectStoreImplicits(xa: Transactor[IO], mtr: MetricsRegistrator)
 
           BacksplashImage(
             sceneId,
+            projId,
             ingestLocation,
             footprint,
             subsetBands,
