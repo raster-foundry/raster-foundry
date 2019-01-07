@@ -100,24 +100,26 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             val ioMBT = filtered
               .flatMap({ relevant =>
                 fs2.Stream.eval {
-                  Applicative[IO].map2(
-                    IO {
+                  for {
+                    imFiber <- (IO {
                       val time = readSceneTmsTimer.time()
                       logger.debug(
                         s"Reading Tile ${relevant.imageId} ${z}-${x}-${y}")
                       val img = relevant.read(z, x, y)
                       time.stop()
                       img
-                    }, {
+                    }).start
+                    histsFiber <- ({
                       val time = readSceneHistTimer.time()
                       logger.debug(
                         s"Reading Histogram ${relevant.imageId} ${z}-${x}-${y}")
                       val hists = getHistogramWithCache(relevant)
                       time.stop()
                       hists
-                    }
-                  )((im: Option[MultibandTile],
-                     hists: Array[Histogram[Double]]) => {
+                    }).start
+                    im <- imFiber.join
+                    hists <- histsFiber.join
+                  } yield {
                     im map {
                       mbTile =>
                         val time = mbColorSceneTimer.time()
@@ -131,7 +133,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                         time.stop()
                         colored
                     }
-                  })
+                  }
                 }
               })
               .collect({ case Some(mbTile) => mbTile })
@@ -150,7 +152,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                 {
                   val ioMBT = (BacksplashMosaic.filterRelevant(self) map {
                     relevant =>
-                      println("yup in the thing")
                       val time = readSceneTmsTimer.time()
                       val img = relevant.read(z, x, y) map { im =>
                         ColorRampMosaic.colorTile(
@@ -162,7 +163,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                           }
                         )
                       }
-                      println(s"Image bands: ${img map { _.bandCount }}")
                       time.stop()
                       img
                   }).collect({ case Some(mbtile) => mbtile }).compile.toList
@@ -228,22 +228,26 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               filtered
                 .flatMap({ relevant =>
                   fs2.Stream.eval {
-                    Applicative[IO].map2(
-                      IO {
-                        val time = readSceneTmsTimer.time()
-                        val img = relevant.read(extent, cs)
-                        time.stop()
-                        img
-                      }, {
+                    for {
+                      imFiber <- (
+                        IO {
+                          val time = readSceneTmsTimer.time()
+                          val img = relevant.read(extent, cs)
+                          time.stop()
+                          img
+                        }
+                      ).start
+                      histsFiber <- ({
                         val time = readSceneHistTimer.time()
                         val hists =
                           histStore.layerHistogram(relevant.imageId,
                                                    relevant.subsetBands)
                         time.stop()
                         hists
-                      }
-                    )((im: Option[MultibandTile],
-                       hists: Array[Histogram[Double]]) => {
+                      }).start
+                      im <- imFiber.join
+                      hists <- histsFiber.join
+                    } yield {
                       im map { mbTile =>
                         val time = mbColorSceneTimer.time()
                         val colored =
@@ -251,8 +255,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                         time.stop()
                         colored
                       }
-
-                    })
+                    }
                   }
                 })
                 .collect({ case Some(mbTile) => mbTile })
