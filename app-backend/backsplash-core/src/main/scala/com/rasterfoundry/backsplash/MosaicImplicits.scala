@@ -1,5 +1,7 @@
 package com.rasterfoundry.backsplash
 
+import java.util.UUID
+
 import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
@@ -92,7 +94,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
           // the empty tile needs to be four band as well
           ndtile: MultibandTile = ArrayMultibandTile.empty(
             IntConstantNoDataCellType,
-            if (bandCount == 1) 4 else bandCount,
+            if (bandCount == 1) 1 else bandCount,
             256,
             256
           )
@@ -147,30 +149,39 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             // Assume that we're in a single band case. It isn't obvious what it would
             // mean if the band count weren't 3 or 1, so just make the assumption that we
             // wouldn't do that to ourselves and don't handle the remainder
-            BacksplashMosaic.getStoreHistogram(filtered, histStore) flatMap {
-              hists =>
-                {
-                  val ioMBT = (BacksplashMosaic.filterRelevant(self) map {
-                    relevant =>
-                      val time = readSceneTmsTimer.time()
-                      val img = relevant.read(z, x, y) map { im =>
-                        ColorRampMosaic.colorTile(
-                          im,
-                          hists,
-                          relevant.singleBandOptions getOrElse {
-                            throw SingleBandOptionsException(
-                              "Must specify single band options when requesting single band visualization.")
-                          }
-                        )
-                      }
-                      time.stop()
-                      img
-                  }).collect({ case Some(mbtile) => mbtile }).compile.toList
-                  mergeTiles(ioMBT).map {
-                    case Some(t) => Raster(t, extent)
-                    case _       => Raster(ndtile, extent)
-                  }
-                }
+            val ioMBTwithSBO = (BacksplashMosaic.filterRelevant(self) map {
+              relevant =>
+                println("yup in the thing")
+                logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
+                val img = relevant.read(z, x, y)
+                img.map(i =>
+                  logger.debug(s"Band Count Available: ${i.bandCount}"))
+                (img, relevant.singleBandOptions)
+            }).collect({ case (Some(mbtile), Some(sbo)) => (mbtile, sbo) })
+              .compile
+              .toList
+
+            for {
+              histograms <- histStore.projectHistogram(
+                UUID.fromString("9fc60cbb-17bd-4376-b7dd-0c8b2ba7383b"),
+                List(1))
+              multibandTilewithSBO <- ioMBTwithSBO
+            } yield {
+              val (tiles, sbos) = multibandTilewithSBO.unzip
+              logger.debug(s"Length of Histograms: ${histograms.length}")
+              val combinedHistogram = histograms.reduce(_ merge _)
+              tiles.reduceOption(_ merge _) match {
+                case Some(t) =>
+                  Raster(
+                    ColorRampMosaic.colorTile(
+                      t,
+                      List(combinedHistogram),
+                      sbos.head
+                    ),
+                    extent
+                  )
+                case _ => Raster(ndtile, extent)
+              }
             }
           }
           timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
@@ -178,7 +189,16 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
           RasterLit(timedMosaic)
       }
   }
-
+//  map { im =>
+//    ColorRampMosaic.colorTile(
+//      im,
+//      hists,
+//      relevant.singleBandOptions getOrElse {
+//        throw SingleBandOptionsException(
+//          "Must specify single band options when requesting single band visualization.")
+//      }
+//    )
+//  }
   /** Private histogram retrieval method to allow for caching on/off via settings
     *
     * @param relevant

@@ -11,11 +11,13 @@ import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import geotrellis.spark.LayerId
-
 import spray.json._
 import DefaultJsonProtocol._
-
 import java.util.UUID
+
+import geotrellis.raster.histogram.{Histogram, StreamingHistogram}
+import io.circe.{Encoder, Json}
+import io.circe.parser.parse
 
 case class LayerAttributeDao() {
   def getHistogram[T: JsonFormat](layerId: UUID, xa: Transactor[IO]): IO[T] = {
@@ -25,6 +27,16 @@ case class LayerAttributeDao() {
       .map({ attr =>
         attr.value.noSpaces.parseJson.convertTo[T]
       })
+  }
+
+  def getProjectHistogram[T: JsonFormat](projectId: UUID,
+                                         xa: Transactor[IO]): IO[List[T]] = {
+    LayerAttributeDao
+      .getProjectHistogram(projectId)
+      .transact(xa)
+      .map(_.map({ attr =>
+        attr.value.noSpaces.parseJson.convertTo[T]
+      }))
   }
 }
 
@@ -37,6 +49,17 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
         layer_name, zoom, name, value
       FROM
     """ ++ tableF
+
+  def getProjectHistogram(
+      projectId: UUID): ConnectionIO[List[LayerAttribute]] = {
+    query
+      .filter(fr"name = 'histogram'")
+      .filter(fr"zoom = 0")
+      .filter(
+        fr"layer_name in (SELECT scene_id from scenes_to_projects where project_id = ${projectId})"
+      )
+      .list
+  }
 
   def unsafeGetAttribute(
       layerId: LayerId,
