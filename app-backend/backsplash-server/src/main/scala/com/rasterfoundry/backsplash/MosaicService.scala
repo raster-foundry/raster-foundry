@@ -58,7 +58,7 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
               TileUtils.getTileBounds(z, x, y)
             val eval =
               LayerTms.identity(
-                projects.read(projectId, Some(polygonBbox), bandOverride, None))
+                projects.read(projectId, None, bandOverride, None))
             for {
               fiberAuth <- authorizers.authProject(user, projectId).start
               fiberResp <- eval(z, x, y).start

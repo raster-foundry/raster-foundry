@@ -48,6 +48,14 @@ object BacksplashMosaic extends ToHistogramStoreOps {
     })
   }
 
+  def first(bsm: BacksplashMosaic): IO[Option[BacksplashImage]] = {
+    bsm
+      .take(1)
+      .compile
+      .toList
+      .map(_.headOption)
+  }
+
   def layerHistogram(mosaic: BacksplashMosaic)(
       implicit hasRasterExtents: HasRasterExtents[BacksplashMosaic],
       extentReification: ExtentReification[BacksplashMosaic],

@@ -10,5 +10,12 @@ import java.util.UUID
   @op("layerHistogram") def layerHistogram(
       self: A,
       layerId: UUID,
-      subsetBands: List[Int]): IO[Array[Histogram[Double]]]
+      subsetBands: List[Int]
+  ): IO[Array[Histogram[Double]]]
+
+  @op("projectHistogram") def projectHistogram(
+      self: A,
+      projectId: UUID,
+      subsetBands: List[Int]
+  ): IO[Array[Histogram[Double]]]
 }

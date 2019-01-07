@@ -31,5 +31,27 @@ trait HistogramStoreImplicits
           }
         }
       }
+
+      def projectHistogram(
+          self: LayerAttributeDao,
+          projectId: UUID,
+          subsetBands: List[Int]): IO[Array[Histogram[Double]]] = {
+        self.getProjectHistogram[Array[Histogram[Double]]](projectId, xa) map {
+          hists =>
+            val combinedHistogram = hists.foldLeft(
+              Array.fill(hists.head.length)(
+                StreamingHistogram(255): Histogram[Double]))(
+              (histArr1: Array[Histogram[Double]],
+               histArr2: Array[Histogram[Double]]) => {
+                histArr1 zip histArr2 map {
+                  case (h1, h2) => h1 merge h2
+                }
+              }
+            )
+            subsetBands.toArray map { band =>
+              combinedHistogram(band)
+            }
+        }
+      }
     }
 }

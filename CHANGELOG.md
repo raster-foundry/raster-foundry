@@ -10,6 +10,8 @@
 
 ### Fixed
 
+- Removed faulty no-data interpretation in single band visualization [\#4433](https://github.com/raster-foundry/raster-foundry/pull/4433)
+
 ### Removed
 
 ### Security
