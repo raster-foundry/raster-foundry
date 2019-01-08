@@ -65,6 +65,7 @@ class ProjectStoreImplicits(xa: Transactor[IO], mtr: MetricsRegistrator)
             throw MetadataException(
               s"Scene ${sceneId} does not have a footprint")
           }
+
           val subsetBands = if (md.isSingleBand) {
             singleBandOptions map { sbo =>
               List(sbo.band)
@@ -84,6 +85,7 @@ class ProjectStoreImplicits(xa: Transactor[IO], mtr: MetricsRegistrator)
               )
             }
           }
+
           val colorCorrectParameters = BSColorCorrect.Params(
             0, // red
             1, // green

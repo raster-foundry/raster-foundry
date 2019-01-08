@@ -133,7 +133,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                       mbTile =>
                         val time = mbColorSceneTimer.time()
                         val noDataValue = getNoDataValue(mbTile.cellType)
-                        logger.info(
+                        logger.debug(
                           s"NODATA Value: ${noDataValue} with CellType: ${mbTile.cellType}")
                         val colored =
                           relevant.corrections.colorCorrect(mbTile,

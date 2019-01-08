@@ -1,5 +1,6 @@
 package com.rasterfoundry.backsplash
 import com.typesafe.config.ConfigFactory
+import net.spy.memcached.ClientMode
 
 object Config {
 
@@ -12,5 +13,18 @@ object Config {
     val tileCacheEnable = cacheConfig.getBoolean("core.tileCacheEnable")
     val rasterSourceCacheEnable =
       cacheConfig.getBoolean("core.rasterSourceCacheEnable")
+
+    val memcachedHost = cacheConfig.getString("core.memcachedHost")
+    val memcachedPort = cacheConfig.getInt("core.memcachedPort")
+
+    val memcachedClientMode =
+      if (cacheConfig.getBoolean("core.memcachedDynamicClientMode")) {
+        ClientMode.Dynamic
+      } else {
+        ClientMode.Static
+      }
+
+    val memcachedTimeout = cacheConfig.getInt("core.memcachedTimeout")
+
   }
 }
