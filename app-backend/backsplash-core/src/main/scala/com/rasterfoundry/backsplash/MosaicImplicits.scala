@@ -5,6 +5,7 @@ import java.util.UUID
 import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
+import geotrellis.proj4.LatLng
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.histogram._
@@ -48,7 +49,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                                                  256,
                                                  256,
                                                  invisiCellType)
-
   val readMosaicTimer =
     mtr.newTimer(classOf[MosaicImplicits[HistStore]], "read-mosaic")
   val readSceneTmsTimer =
@@ -59,6 +59,14 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
     mtr.newTimer(classOf[MosaicImplicits[HistStore]], "read-scene-hist")
   val mbColorSceneTimer =
     mtr.newTimer(classOf[MosaicImplicits[HistStore]], "color-multiband-scene")
+
+  def mergeTiles(tiles: IO[List[MultibandTile]]): IO[Option[MultibandTile]] = {
+    tiles.map(_.reduceOption((t1: MultibandTile, t2: MultibandTile) => {
+      logger.trace(s"Tile 1 size: ${t1.band(0).cols}, ${t1.band(0).rows}")
+      logger.trace(s"Tile 2 size: ${t2.band(0).cols}, ${t2.band(0).rows}")
+      t1 merge t2
+    }))
+  }
 
   implicit val mosaicTmsReification = new TmsReification[BacksplashMosaic] {
     def kind(self: BacksplashMosaic): MamlKind = MamlKind.Image
@@ -79,11 +87,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
       }
     }
 
-    def mergeTiles(
-        tiles: IO[List[MultibandTile]]): IO[Option[MultibandTile]] = {
-      tiles.map(_.reduceOption((_) merge (_)))
-    }
-
     def tmsReification(self: BacksplashMosaic, buffer: Int)(
         implicit contextShift: ContextShift[IO])
       : (Int, Int, Int) => IO[Literal] =
@@ -99,12 +102,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
           extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
           // for single band imagery, after color correction we have RGBA, so
           // the empty tile needs to be four band as well
-          ndtile: MultibandTile = ArrayMultibandTile.empty(
-            IntConstantNoDataCellType,
-            bandCount,
-            256,
-            256
-          )
           mosaic = if (bandCount == 3) {
             val ioMBT = filtered
               .flatMap({ relevant =>
@@ -150,7 +147,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               .toList
             mergeTiles(ioMBT).map {
               case Some(t) => Raster(t, extent)
-              case _       => Raster(ndtile, extent)
+              case _       => Raster(invisiTile, extent)
             }
           } else {
             // Assume that we're in a single band case. It isn't obvious what it would
@@ -189,19 +186,29 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               val (tiles, sbos) = multibandTilewithSBO.unzip
               logger.debug(s"Length of Histograms: ${histograms.length}")
               val combinedHistogram = histograms.reduce(_ merge _)
-              tiles.reduceOption(
-                _.interpretAs(invisiCellType) merge _.interpretAs(
-                  invisiCellType)) match {
-                case Some(t) =>
+              tiles match {
+                case tile :: Nil =>
                   Raster(
-                    ColorRampMosaic.colorTile(
-                      t,
-                      List(combinedHistogram),
-                      sbos.head
-                    ),
-                    extent
-                  )
-                case _ => Raster(ndtile, extent)
+                    ColorRampMosaic.colorTile(tile.interpretAs(invisiCellType),
+                                              List(combinedHistogram),
+                                              sbos.head),
+                    extent)
+                case someTiles =>
+                  someTiles.reduceOption(
+                    _.interpretAs(invisiCellType) merge _.interpretAs(
+                      invisiCellType)) match {
+                    case Some(t) =>
+                      Raster(
+                        ColorRampMosaic.colorTile(
+                          t,
+                          List(combinedHistogram),
+                          sbos.head
+                        ),
+                        extent
+                      )
+                    case _ => Raster(invisiTile, extent)
+                  }
+
               }
             }
           }
@@ -224,7 +231,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
       histStore.layerHistogram(relevant.imageId, relevant.subsetBands)
     }
 
-// We need to be able to pass information about whether scenes should paint themselves while
+  // We need to be able to pass information about whether scenes should paint themselves while
   // we're working through the stream from the route into the extent reification. The solution
   // we (Nathan Zimmerman and I) came up with that is the least painful is two implicits, choosing
   // which one to use based on the information we have in the route. That solution can go away if:
@@ -261,22 +268,20 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                 .flatMap({ relevant =>
                   fs2.Stream.eval {
                     for {
-                      imFiber <- (
-                        IO {
-                          val time = readSceneTmsTimer.time()
-                          val img = relevant.read(extent, cs)
-                          time.stop()
-                          img
-                        }
-                      ).start
-                      histsFiber <- ({
+                      imFiber <- IO {
+                        val time = readSceneTmsTimer.time()
+                        val img = relevant.read(extent, cs)
+                        time.stop()
+                        img
+                      }.start
+                      histsFiber <- {
                         val time = readSceneHistTimer.time()
                         val hists =
                           histStore.layerHistogram(relevant.imageId,
                                                    relevant.subsetBands)
                         time.stop()
                         hists
-                      }).start
+                      }.start
                       im <- imFiber.join
                       hists <- histsFiber.join
                     } yield {
@@ -341,28 +346,29 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               .map(_.subsetBands.length)
               .compile
               .fold(0)(_ + _)
-            ndtile: MultibandTile = ArrayMultibandTile.empty(
-              IntConstantNoDataCellType,
-              bands,
-              256,
-              256
-            )
             mosaic = BacksplashMosaic
               .filterRelevant(self)
-              .map({ relevant =>
+              .map { relevant =>
                 val time = readSceneExtentTimer.time()
+                logger.trace(s"This better be the right extent: $extent")
                 val img = relevant.read(extent, cs)
                 time.stop()
                 img
-              })
+              }
               .collect({ case Some(mbTile) => mbTile })
               .compile
-              .fold(ndtile)({ (mbr1, mbr2) =>
-                mbr1 merge mbr2
-              })
-              .map(Raster(_, extent))
+              .toList
+              .map { tiles =>
+                val rasters = tiles.map(Raster(_, extent))
+                rasters.reduceOption(_ merge _) match {
+                  case Some(r) => RasterLit(r)
+                  case _       => RasterLit(Raster(MultibandTile(invisiTile), extent))
+                }
+              }
             timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
-          } yield RasterLit(timedMosaic)
+          } yield {
+            timedMosaic
+          }
         }
     }
 

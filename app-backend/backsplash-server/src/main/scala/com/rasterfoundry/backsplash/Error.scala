@@ -32,7 +32,7 @@ class ForeignErrorHandler[F[_], E <: Throwable, U](implicit M: MonadError[F, E])
         err
       }
     case t => {
-      logger.error(t.getStackTraceString)
+      logger.error("An unmapped error occurred", t)
       throw UnknownException(t.getMessage)
     }
   }

@@ -61,6 +61,25 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
             }
           } yield resp
 
+        case GET -> Root / UUIDWrapper(analysisId) / "statistics"
+              :? NodeQueryParamMatcher(node)
+              :? VoidCacheQueryParamMatcher(void) as user =>
+          for {
+            authFiber <- authorizers.authToolRun(user, analysisId).start
+            paintableFiber <- analyses.read(analysisId, node).start
+            _ <- authFiber.join.handleErrorWith { error =>
+              paintableFiber.cancel *> IO.raiseError(error)
+            }
+            paintable <- paintableFiber.join
+            histsValidated <- paintable.histogram(4000)
+            resp <- histsValidated match {
+              case Valid(hists) =>
+                Ok(hists.head.statistics asJson)
+              case Invalid(e) =>
+                BadRequest(s"Unable to produce statistics for $analysisId: $e")
+            }
+          } yield resp
+
         case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(
               y)
               :? NodeQueryParamMatcher(node) as user =>
