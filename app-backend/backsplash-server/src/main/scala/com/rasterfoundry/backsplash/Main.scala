@@ -2,6 +2,7 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.database.{
   LayerAttributeDao,
+  SceneDao,
   SceneToProjectDao,
   ToolRunDao
 }
@@ -126,9 +127,22 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
                             toolStoreImplicits,
                             xa).routes))
 
+  val sceneMosaicService: HttpRoutes[IO] =
+    authenticators.tokensAuthMiddleware(
+      AuthedAutoSlash(
+        new SceneService(SceneDao(),
+                         mtr,
+                         mosaicImplicits,
+                         LayerAttributeDao(),
+                         xa).routes
+      )
+    )
+
   val httpApp =
     Router(
       "/" -> mtr.middleware(GZip(withCORS(withTimeout(mosaicService)))),
+      "/scenes" -> mtr.middleware(
+        GZip(withCORS(withTimeout(sceneMosaicService)))),
       "/tools" -> mtr.middleware(GZip(withCORS(withTimeout(analysisService)))),
       "/healthcheck" -> AutoSlash(new HealthcheckService[IO]().routes)
     )

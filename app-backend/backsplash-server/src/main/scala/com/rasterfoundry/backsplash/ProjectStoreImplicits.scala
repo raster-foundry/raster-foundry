@@ -1,9 +1,10 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash._
+import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.SceneToProjectDao
+import com.rasterfoundry.database.{SceneDao, SceneToProjectDao}
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel.color.{
   BandGamma => RFBandGamma,
@@ -33,6 +34,37 @@ import java.util.UUID
 
 class ProjectStoreImplicits(xa: Transactor[IO], mtr: MetricsRegistrator)
     extends ToProjectStoreOps {
+  implicit val sceneStore: ProjectStore[SceneDao] = new ProjectStore[SceneDao] {
+    def read(
+        self: SceneDao,
+        projId: UUID, // actually a scene id, but argument names have to match
+        window: Option[Projected[Polygon]],
+        bandOverride: Option[BandOverride],
+        imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage] = {
+      SceneDao.streamSceneById(projId).transact(xa) map { scene =>
+        BacksplashImage(
+          scene.id,
+          // we don't actually have a project, so just make something up
+          UUID.randomUUID,
+          scene.ingestLocation getOrElse {
+            throw UningestedScenesException(
+              s"Scene ${scene.id} does not have an ingest location")
+          },
+          scene.dataFootprint getOrElse {
+            throw MetadataException(
+              s"Scene ${scene.id} does not have a footprint"
+            )
+          },
+          bandOverride map { ovr =>
+            List(ovr.red, ovr.green, ovr.blue)
+          } getOrElse { List(0, 1, 2) },
+          ColorCorrect.paramsFromBandSpecOnly(0, 1, 2),
+          None // no single band options ever
+        )
+      }
+    }
+  }
+
   implicit val projectStore: ProjectStore[SceneToProjectDao] =
     new ProjectStore[SceneToProjectDao] {
       // safe to get here, since we're just unapplying from a value that we already know
