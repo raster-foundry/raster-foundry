@@ -68,7 +68,31 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
     }))
   }
 
-  implicit val mosaicTmsReification = new TmsReification[BacksplashMosaic] {
+  val rawMosaicTmsReification = new TmsReification[BacksplashMosaic] {
+    def kind(self: BacksplashMosaic): MamlKind = MamlKind.Image
+
+    def tmsReification(self: BacksplashMosaic, buffer: Int)(
+        implicit contextShift: ContextShift[IO]
+    ): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
+      val filtered = BacksplashMosaic.filterRelevant(self)
+      val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
+      val mosaic = {
+        val mbtIO = (BacksplashMosaic.filterRelevant(self) map { relevant =>
+          logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
+          val img = relevant.read(z, x, y)
+          img.map(i => logger.debug(s"Band Count Available: ${i.bandCount}"))
+          img
+        }).collect({ case Some(mbtile) => mbtile }).compile.toList
+        mbtIO.map(_.reduceOption(_ merge _) match {
+          case Some(t) => Raster(t, extent)
+          case _       => Raster(invisiTile, extent)
+        })
+      }
+      mtr.timedIO(mosaic, readMosaicTimer).map(RasterLit(_))
+    }
+  }
+
+  val paintedMosaicTmsReification = new TmsReification[BacksplashMosaic] {
     def kind(self: BacksplashMosaic): MamlKind = MamlKind.Image
 
     def getNoDataValue(cellType: CellType): Option[Double] = {

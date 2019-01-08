@@ -33,6 +33,9 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
     extends ColorImplicits {
 
   import mosaicImplicits._
+
+  implicit val tmsReification = rawMosaicTmsReification
+
   import toolstoreImplicits._
 
   private val pngType = `Content-Type`(MediaType.image.png)

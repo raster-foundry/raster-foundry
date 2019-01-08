@@ -36,6 +36,8 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
 
   import mosaicImplicits._
 
+  implicit val tmsReification = paintedMosaicTmsReification
+
   private val pngType = `Content-Type`(MediaType.image.png)
   private val tiffType = `Content-Type`(MediaType.image.tiff)
 
