@@ -22,7 +22,9 @@ class ToolStoreImplicits[HistStore: HistogramStore](
     xa: Transactor[IO],
     mtr: MetricsRegistrator)
     extends ProjectStoreImplicits(xa, mtr) {
+
   import mosaicImplicits._
+  implicit val tmsReification = rawMosaicTmsReification
 
   val mamlAdapter = new BacksplashMamlAdapter(mosaicImplicits, xa, mtr)
 

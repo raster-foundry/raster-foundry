@@ -36,6 +36,8 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
 
   import mosaicImplicits._
 
+  implicit val tmsReification = paintedMosaicTmsReification
+
   private val pngType = `Content-Type`(MediaType.image.png)
   private val tiffType = `Content-Type`(MediaType.image.tiff)
 
@@ -58,7 +60,7 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
               TileUtils.getTileBounds(z, x, y)
             val eval =
               LayerTms.identity(
-                projects.read(projectId, None, bandOverride, None))
+                projects.read(projectId, Some(polygonBbox), bandOverride, None))
             for {
               fiberAuth <- authorizers.authProject(user, projectId).start
               fiberResp <- eval(z, x, y).start

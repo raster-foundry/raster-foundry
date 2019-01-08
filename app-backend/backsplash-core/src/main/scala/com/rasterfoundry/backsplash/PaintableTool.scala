@@ -12,8 +12,9 @@ import geotrellis.vector._
 import geotrellis.server._
 import cats.effect._
 import cats.implicits._
+import com.typesafe.scalalogging.LazyLogging
 
-sealed trait PaintableTool extends ColorImplicits {
+sealed trait PaintableTool extends ColorImplicits with LazyLogging {
   def tms(z: Int, x: Int, y: Int)(
       implicit cs: ContextShift[IO]): IO[Interpreted[MultibandTile]]
   def extent(extent: Extent, cellsize: CellSize)(
@@ -46,11 +47,11 @@ object PaintableTool {
     }
 
     def histogram(maxCellsSampled: Int)(implicit cs: ContextShift[IO])
-      : IO[Interpreted[List[Histogram[Double]]]] =
-      LayerHistogram(IO.pure(expr),
-                     IO.pure(paramMap),
-                     interpreter,
-                     maxCellsSampled)
+      : IO[Interpreted[List[Histogram[Double]]]] = {
+
+      logger.debug(s"Cells to sample: $maxCellsSampled")
+      LayerHistogram(IO.pure(expr), IO.pure(paramMap), interpreter, 2000000)
+    }
 
     def renderDefinition: Option[RenderDefinition] = renderDef
   }
