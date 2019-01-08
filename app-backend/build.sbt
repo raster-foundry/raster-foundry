@@ -474,7 +474,7 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
       "com.github.cb372" %% "scalacache-core" % "0.27.0",
       "com.github.cb372" %% "scalacache-caffeine" % "0.27.0",
-      "com.github.cb372" %% "scalacache-memcached" % "0.27.0" intransitive(),
+      "com.github.cb372" %% "scalacache-memcached" % "0.27.0" intransitive (),
       Dependencies.elasticacheClient,
       Dependencies.catsMeow
     ),
