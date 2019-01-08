@@ -10,6 +10,7 @@
 ### Fixed
 
 - Removed faulty no-data interpretation in single band visualization [\#4433](https://github.com/raster-foundry/raster-foundry/pull/4433)
+- Fixed histogram calcuation + sampling logic and analysis rendering [\#4438](https://github.com/raster-foundry/raster-foundry/pull/4438)
 
 ### Removed
 
