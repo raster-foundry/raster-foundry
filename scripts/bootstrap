@@ -46,17 +46,26 @@ function pull_env() {
     popd
 }
 
-function pull_sbtopts() {
-    echo "Pulling .sbtopts from s3://${RF_SETTINGS_BUCKET}"
+function generate_sbtopts() {
+    echo "Generating .sbtopts"
     pushd "${DIR}"
 
-    aws s3 cp "s3://${RF_SETTINGS_BUCKET}/.sbtopts" - >> app-backend/.sbtopts
+    cp app-backend/.sbtopts.sample app-backend/.sbtopts
+
+    function override_build_repos() {
+        echo "Overriding repository configuration for ${1}"
+        echo "-Dsbt.override.build.repos=true" >> app-backend/.sbtopts
+        echo "-Dsbt.repository.config=project/${1}/repositories" >> app-backend/.sbtopts
+    }
+
+    if host nexus.internal.azavea.com; then
+        override_build_repos "development"
+    elif host nexus.rasterfoundry.internal; then
+        override_build_repos "ci"
+    fi
+
     sort app-backend/.sbtopts | uniq > cleaned_sbtopts
     mv cleaned_sbtopts app-backend/.sbtopts
-
-    git config --local filter.sbtopts.clean \
-        "sed -e '/^-Dsbt\.override\.build\.repos=true/d' -e '/^-Dsbt\.repository\.config=\([^\s]*\)/d'"
-    git config --local filter.sbtopts.smudge cat
 
     popd
 }
@@ -69,10 +78,10 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     elif [ "${1:-}" = "--env" ]; then
         pull_env
     elif [ "${1:-}" = "--sbtopts" ]; then
-        pull_sbtopts
+        generate_sbtopts
     else
         pull_env
-        pull_sbtopts
+        generate_sbtopts
         build_containers
     fi
 fi

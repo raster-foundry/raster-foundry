@@ -23,14 +23,6 @@ then
         mkdir -p "${HOME}/.aws"
         mkdir -p "nginx/srv/dist/"
 
-        AWS_PROFILE=${AWS_PROFILE:-raster-foundry} \
-        RF_SETTINGS_BUCKET=${RF_SETTINGS_BUCKET:-rasterfoundry-development-config-us-east-1} \
-            ./scripts/bootstrap --env
-
-        AWS_PROFILE=${AWS_PROFILE:-raster-foundry} \
-        RF_SETTINGS_BUCKET=${RF_SETTINGS_BUCKET:-rasterfoundry-development-config-us-east-1} \
-            ./scripts/bootstrap --sbtopts
-
         vagrant up --provision
     fi
 fi
