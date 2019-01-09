@@ -24,7 +24,7 @@ import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.headers._
-import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig, GZip, Timeout}
+import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig, Timeout}
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
@@ -140,10 +140,9 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   val httpApp =
     Router(
-      "/" -> mtr.middleware(GZip(withCORS(withTimeout(mosaicService)))),
-      "/scenes" -> mtr.middleware(
-        GZip(withCORS(withTimeout(sceneMosaicService)))),
-      "/tools" -> mtr.middleware(GZip(withCORS(withTimeout(analysisService)))),
+      "/" -> mtr.middleware(withCORS(withTimeout(mosaicService))),
+      "/scenes" -> mtr.middleware(withCORS(withTimeout(sceneMosaicService))),
+      "/tools" -> mtr.middleware(withCORS(withTimeout(analysisService))),
       "/healthcheck" -> AutoSlash(new HealthcheckService[IO]().routes)
     )
 
