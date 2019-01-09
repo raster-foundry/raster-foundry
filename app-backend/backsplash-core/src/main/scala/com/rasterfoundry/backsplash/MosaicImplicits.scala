@@ -272,7 +272,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
       def extentReification(self: BacksplashMosaic)(
           implicit contextShift: ContextShift[IO]) =
         (extent: Extent, cs: CellSize) => {
-          val filtered = BacksplashMosaic.filterRelevant(self)
           for {
             bands <- self
               .take(1)
@@ -287,7 +286,8 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               256
             )
             mosaic = if (bands.length == 3) {
-              filtered
+              BacksplashMosaic
+                .filterRelevant(self)
                 .flatMap({ relevant =>
                   fs2.Stream.eval {
                     for {
@@ -309,6 +309,8 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                       hists <- histsFiber.join
                     } yield {
                       im map { mbTile =>
+                        logger.debug(
+                          s"N bands in resulting tile: ${mbTile.bands.length}")
                         val time = mbColorSceneTimer.time()
                         val colored =
                           relevant.corrections.colorCorrect(mbTile, hists, None)
@@ -325,9 +327,14 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                 })
                 .map(Raster(_, extent))
             } else {
-              BacksplashMosaic.getStoreHistogram(filtered, histStore) flatMap {
-                layerHist =>
-                  filtered
+              logger.debug("Creating single band extent")
+              BacksplashMosaic.getStoreHistogram(
+                BacksplashMosaic.filterRelevant(self),
+                histStore) flatMap { layerHist =>
+                {
+                  logger.debug(s"Got a layer hist: ${layerHist.length}")
+                  BacksplashMosaic
+                    .filterRelevant(self)
                     .map({ relevant =>
                       val time = readSceneExtentTimer.time()
                       val img = relevant.read(extent, cs) map {
@@ -341,14 +348,20 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                             }
                           )
                       }
+                      logger.debug(
+                        s"Colored single band mosaic tile with ${img map {
+                          _.bands.length
+                        }} bands")
                       time.stop()
                       img
                     })
-                    .collect({ case Some(mbtile) => Raster(mbtile, extent) })
+                    .collect({ case Some(mbtile) => mbtile })
                     .compile
-                    .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
-                      mbr1.merge(mbr2, NearestNeighbor)
+                    .fold(ndtile)({ (mbt1, mbt2) =>
+                      mbt1 merge mbt2
                     })
+                    .map(Raster(_, extent))
+                }
               }
             }
             timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
@@ -367,7 +380,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             .filterRelevant(self)
             .map { relevant =>
               val time = readSceneExtentTimer.time()
-              logger.trace(s"This better be the right extent: $extent")
               val img = relevant.read(extent, cs)
               time.stop()
               img

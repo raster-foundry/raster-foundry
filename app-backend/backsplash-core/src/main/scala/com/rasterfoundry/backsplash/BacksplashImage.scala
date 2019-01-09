@@ -82,10 +82,9 @@ case class BacksplashImage(imageId: UUID,
         s"Reading Extent ${extent} with CellSize ${cs} - Image: ${imageId} at ${uri}"
       )
       val rs = BacksplashImage.getRasterSource(uri)
-      val destinationExtent = extent.reproject(rs.crs, WebMercator)
       rs.reproject(WebMercator, NearestNeighbor)
         .resampleToGrid(RasterExtent(extent, cs), NearestNeighbor)
-        .read(destinationExtent, subsetBands.toSeq)
+        .read(extent, subsetBands.toSeq)
         .map(_.tile)
     }
   }

@@ -139,23 +139,27 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
                                        greenOverride,
                                        blueOverride)(BandOverride.apply)
             val projectedExtent = extent.reproject(LatLng, WebMercator)
+            println(
+              s"Projected extent (what I'm expecting to read): ${projectedExtent}")
             val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
             val eval = authedReq.req.headers
               .get(CaseInsensitiveString("Accept")) match {
               case Some(Header(_, "image/tiff")) =>
                 LayerExtent.identity(
-                  projects.read(projectId, None, bandOverride, None))(
-                  paintedMosaicExtentReification,
-                  cs)
+                  projects.read(projectId,
+                                Some(Projected(projectedExtent, 3857)),
+                                bandOverride,
+                                None))(rawMosaicExtentReification, cs)
               case _ =>
                 LayerExtent.identity(
-                  projects.read(projectId, None, bandOverride, None))(
-                  rawMosaicExtentReification,
-                  cs)
+                  projects.read(projectId,
+                                Some(Projected(projectedExtent, 3857)),
+                                bandOverride,
+                                None))(paintedMosaicExtentReification, cs)
             }
             for {
               authFiber <- authorizers.authProject(user, projectId).start
-              respFiber <- eval(extent, cellSize).start
+              respFiber <- eval(projectedExtent, cellSize).start
               _ <- authFiber.join.handleErrorWith { error =>
                 respFiber.cancel *> IO.raiseError(error)
               }
@@ -169,6 +173,8 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
                         tiffType
                       )
                     case _ =>
+                      println(
+                        s"How many bands does it have: ${tile.bands.length}")
                       Ok(tile.renderPng.bytes, pngType)
                   }
                 case Invalid(e) => BadRequest(s"Could not produce extent: $e")
