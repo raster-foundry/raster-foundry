@@ -14,7 +14,6 @@ import net.spy.memcached._
 import java.net.InetSocketAddress
 import scala.collection.JavaConverters._
 
-
 object Cache extends LazyLogging {
 
   class BacksplashConnectionFactory extends DefaultConnectionFactory() {
@@ -22,7 +21,6 @@ object Cache extends LazyLogging {
 
     override def getOperationTimeout: Long = Config.cache.memcachedTimeout
   }
-
 
   val tileCache: Cache[Option[MultibandTile]] = {
 
