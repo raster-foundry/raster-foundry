@@ -1,6 +1,6 @@
 package com.rasterfoundry.backsplash.color
 
-import geotrellis.raster.{io => _, Tile}
+import geotrellis.raster.{io => _, _}
 import geotrellis.raster.render._
 import geotrellis.raster.render.png._
 import io.circe.{Decoder, Encoder, KeyEncoder, KeyDecoder}
