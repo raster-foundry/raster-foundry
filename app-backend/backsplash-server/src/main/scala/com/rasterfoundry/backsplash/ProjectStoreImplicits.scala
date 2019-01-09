@@ -42,6 +42,7 @@ class ProjectStoreImplicits(xa: Transactor[IO], mtr: MetricsRegistrator)
         bandOverride: Option[BandOverride],
         imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage] = {
       SceneDao.streamSceneById(projId).transact(xa) map { scene =>
+        // We don't actually have a project, so just make something up
         val randomProjectId = UUID.randomUUID
         val ingestLocation = scene.ingestLocation getOrElse {
           throw UningestedScenesException(
