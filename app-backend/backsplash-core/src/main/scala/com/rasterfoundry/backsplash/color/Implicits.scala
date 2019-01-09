@@ -135,16 +135,20 @@ trait Implicits {
       }
     }
 
-    /** This method extension provides sugar to match GeoTrellis' renderPng method */
+    /** This method extension provides sugar to match GeoTrellis' renderPng method
+     *  Note the return of 0: this ensure transparency for NODATA values
+     */
     def renderPng(definition: RenderDefinition): Png = {
       val toWrite =
         if (tile.cellType.isFloatingPoint) {
           tile.mapDouble({ cellValue: Double =>
-            buildFn(definition)(cellValue).int
+            if (isData(cellValue)) buildFn(definition)(cellValue).int
+            else 0
           })
         } else {
           tile.map({ cellValue: Int =>
-            buildFn(definition)(cellValue).int
+            if (isData(cellValue)) buildFn(definition)(cellValue).int
+            else 0
           })
         }
 
