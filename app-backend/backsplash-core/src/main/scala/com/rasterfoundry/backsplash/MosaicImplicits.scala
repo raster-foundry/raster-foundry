@@ -74,7 +74,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
     def tmsReification(self: BacksplashMosaic, buffer: Int)(
         implicit contextShift: ContextShift[IO]
     ): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
-      val filtered = BacksplashMosaic.filterRelevant(self)
       val extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
       val mosaic = {
         val mbtIO = (BacksplashMosaic.filterRelevant(self) map { relevant =>
@@ -364,35 +363,26 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
       def extentReification(self: BacksplashMosaic)(
           implicit contextShift: ContextShift[IO]) =
         (extent: Extent, cs: CellSize) => {
-          for {
-            bands <- self
-              .take(1)
-              .map(_.subsetBands.length)
-              .compile
-              .fold(0)(_ + _)
-            mosaic = BacksplashMosaic
-              .filterRelevant(self)
-              .map { relevant =>
-                val time = readSceneExtentTimer.time()
-                logger.trace(s"This better be the right extent: $extent")
-                val img = relevant.read(extent, cs)
-                time.stop()
-                img
+          val mosaic = BacksplashMosaic
+            .filterRelevant(self)
+            .map { relevant =>
+              val time = readSceneExtentTimer.time()
+              logger.trace(s"This better be the right extent: $extent")
+              val img = relevant.read(extent, cs)
+              time.stop()
+              img
+            }
+            .collect({ case Some(mbTile) => mbTile })
+            .compile
+            .toList
+            .map { tiles =>
+              val rasters = tiles.map(Raster(_, extent))
+              rasters.reduceOption(_ merge _) match {
+                case Some(r) => RasterLit(r)
+                case _       => RasterLit(Raster(MultibandTile(invisiTile), extent))
               }
-              .collect({ case Some(mbTile) => mbTile })
-              .compile
-              .toList
-              .map { tiles =>
-                val rasters = tiles.map(Raster(_, extent))
-                rasters.reduceOption(_ merge _) match {
-                  case Some(r) => RasterLit(r)
-                  case _       => RasterLit(Raster(MultibandTile(invisiTile), extent))
-                }
-              }
-            timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
-          } yield {
-            timedMosaic
-          }
+            }
+          mtr.timedIO(mosaic, readMosaicTimer)
         }
     }
 

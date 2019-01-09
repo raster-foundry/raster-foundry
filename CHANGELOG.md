@@ -14,6 +14,9 @@
 
 ### Removed
 
+### Fixed
+- Added back the scenes mosaic endpoint [\#4439](https://github.com/raster-foundry/raster-foundry/pull/4439)
+
 ### Security
 
 ## [1.16.0](https://github.com/raster-foundry/raster-foundry/tree/1.16.0) (2019-01-02)
