@@ -17,18 +17,18 @@ class ForeignErrorHandler[F[_], E <: Throwable, U](implicit M: MonadError[F, E])
     with Http4sDsl[F] {
   private def wrapError(t: E): F[Response[F]] = t match {
     case (err: InvariantViolation) =>
-      logger.error(err.getMessage, err.printStackTrace)
+      logger.error(err.getMessage, err)
       throw WrappedDoobieException(err.getMessage)
     case (err: AmazonS3Exception) =>
-      logger.error(err.getMessage, err.printStackTrace)
+      logger.error(err.getMessage, err)
       throw WrappedS3Exception(err.getMessage)
     case (err: IllegalArgumentException) => {
-      logger.error(err.getStackTraceString)
+      logger.error(err.getMessage, err)
       throw RequirementFailedException(err.getMessage)
     }
     case (err: BacksplashException) =>
       throw {
-        logger.error(err.getStackTraceString)
+        logger.error(err.getMessage, err)
         err
       }
     case t => {

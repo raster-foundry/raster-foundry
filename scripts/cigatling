@@ -21,7 +21,7 @@ then
 
         BASE_REPORT_DIR="./gatling/target/gatling/"
         # shellcheck disable=SC2010
-        LATEST_REPORT=$(ls -lah "${BASE_REPORT_DIR}" | grep "mosaictmssimulation" | tail -n 1 | cut -c 43-)
+        LATEST_REPORT=$(ls -lah "${BASE_REPORT_DIR}" | grep "mosaictmssimulation" | tail -n 1 | cut -c 42-)
         REPORT_DIR="${BASE_REPORT_DIR}${LATEST_REPORT}"
         RESULTS_S3_URI="s3://${RESULTS_BUCKET}/gatling/${BUILD_NUMBER}/"
 

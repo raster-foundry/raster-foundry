@@ -6,6 +6,11 @@ object Config {
 
   private val config = ConfigFactory.load()
 
+  object RasterSource {
+    private val rasterSourceConfig = config.getConfig("rasterSource")
+    val enableGDAL = rasterSourceConfig.getBoolean("enableGDAL")
+  }
+
   object cache {
     private val cacheConfig = config.getConfig("cache")
     val histogramCacheEnable =
