@@ -42,23 +42,27 @@ class ProjectStoreImplicits(xa: Transactor[IO], mtr: MetricsRegistrator)
         bandOverride: Option[BandOverride],
         imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage] = {
       SceneDao.streamSceneById(projId).transact(xa) map { scene =>
+        val randomProjectId = UUID.randomUUID
+        val ingestLocation = scene.ingestLocation getOrElse {
+          throw UningestedScenesException(
+            s"Scene ${scene.id} does not have an ingest location")
+        }
+        val footprint = scene.dataFootprint getOrElse {
+          throw MetadataException(
+            s"Scene ${scene.id} does not have a footprint"
+          )
+        }
+        val imageBandOverride = bandOverride map { ovr =>
+          List(ovr.red, ovr.green, ovr.blue)
+        } getOrElse { List(0, 1, 2) }
+        val colorCorrectParams = ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
         BacksplashImage(
           scene.id,
-          // we don't actually have a project, so just make something up
-          UUID.randomUUID,
-          scene.ingestLocation getOrElse {
-            throw UningestedScenesException(
-              s"Scene ${scene.id} does not have an ingest location")
-          },
-          scene.dataFootprint getOrElse {
-            throw MetadataException(
-              s"Scene ${scene.id} does not have a footprint"
-            )
-          },
-          bandOverride map { ovr =>
-            List(ovr.red, ovr.green, ovr.blue)
-          } getOrElse { List(0, 1, 2) },
-          ColorCorrect.paramsFromBandSpecOnly(0, 1, 2),
+          randomProjectId,
+          ingestLocation,
+          footprint,
+          imageBandOverride,
+          colorCorrectParams,
           None // no single band options ever
         )
       }
