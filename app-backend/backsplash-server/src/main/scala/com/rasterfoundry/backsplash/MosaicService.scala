@@ -140,20 +140,19 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
                                        blueOverride)(BandOverride.apply)
             val projectedExtent = extent.reproject(LatLng, WebMercator)
             val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
-            // TODO: this will come from the project once we're fetching the project for authorization reasons
-            val toPaint: Boolean = true
-            val eval =
-              if (toPaint) {
+            val eval = authedReq.req.headers
+              .get(CaseInsensitiveString("Accept")) match {
+              case Some(Header(_, "image/tiff")) =>
                 LayerExtent.identity(
                   projects.read(projectId, None, bandOverride, None))(
                   paintedMosaicExtentReification,
                   cs)
-              } else {
+              case _ =>
                 LayerExtent.identity(
                   projects.read(projectId, None, bandOverride, None))(
                   rawMosaicExtentReification,
                   cs)
-              }
+            }
             for {
               authFiber <- authorizers.authProject(user, projectId).start
               respFiber <- eval(extent, cellSize).start

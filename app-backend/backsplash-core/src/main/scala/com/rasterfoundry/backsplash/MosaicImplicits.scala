@@ -325,7 +325,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                 })
                 .map(Raster(_, extent))
             } else {
-              BacksplashMosaic.getStoreHistogram(filtered, histStore) map {
+              BacksplashMosaic.getStoreHistogram(filtered, histStore) flatMap {
                 layerHist =>
                   filtered
                     .map({ relevant =>
