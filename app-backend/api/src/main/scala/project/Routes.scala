@@ -686,7 +686,8 @@ trait ProjectRoutes
           val s3Uri: AmazonS3URI = new AmazonS3URI(
             user.getDefaultAnnotationShapefileSource(dataBucket))
           val s3Client = S3()
-          s3Client.putObject(dataBucket, s3Uri.getKey, zipfile.toJava)
+          s3Client
+            .putObject(dataBucket, s3Uri.getKey, zipfile.toJava)
             .setExpirationTime(cal.getTime)
           zipfile.delete(true)
           complete(s3Client.getSignedUrl(dataBucket, s3Uri.getKey).toString())

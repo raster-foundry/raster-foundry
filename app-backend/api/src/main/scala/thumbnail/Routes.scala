@@ -30,7 +30,8 @@ trait ThumbnailRoutes
 
   val xa: Transactor[IO]
 
-  lazy val sentinelS3client = S3(region = Some(S3RegionEnum(Regions.EU_CENTRAL_1)))
+  lazy val sentinelS3client = S3(
+    region = Some(S3RegionEnum(Regions.EU_CENTRAL_1)))
 
   val thumbnailImageRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix("sentinel") {
@@ -68,8 +69,10 @@ trait ThumbnailRoutes
   def getProxiedThumbnailImage(thumbnailUri: String): Route =
     authenticateWithParameter { _ =>
       val bucketAndPrefix =
-        sentinelS3client.bucketAndPrefixFromURI(new URI(URLDecoder.decode(thumbnailUri)))
-      val s3Object = sentinelS3client.getObject(bucketAndPrefix._1, bucketAndPrefix._2, true)
+        sentinelS3client.bucketAndPrefixFromURI(
+          new URI(URLDecoder.decode(thumbnailUri)))
+      val s3Object =
+        sentinelS3client.getObject(bucketAndPrefix._1, bucketAndPrefix._2, true)
       val metaData = S3.getObjectMetadata(s3Object)
       val s3MediaType = MediaType.parse(metaData.getContentType()) match {
         case Right(m) => m.asInstanceOf[MediaType.Binary]
