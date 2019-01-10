@@ -49,7 +49,7 @@ package object util extends LazyLogging {
       val s3Uri = S3Methods.createS3Uri(
         java.net.URLDecoder.decode(uri.toString, "UTF-8")
       )
-      val client = new AmazonS3Client(s3Client)
+      val client = new AmazonS3Client(s3Client.client)
       val s3RangeReader = S3RangeReader(s3Uri.getBucket, s3Uri.getKey, client)
       TiffTagsReader.read(s3RangeReader)
     case _ =>

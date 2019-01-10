@@ -241,13 +241,14 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     val logoByte = ApacheBase64.decodeBase64(logoBase64)
     val logoStream = new ByteArrayInputStream(logoByte)
     val md = new ObjectMetadata()
-    val s3Client = new AmazonS3Client(S3())
+    val s3 = S3()
+    val s3Client = new AmazonS3Client(s3.client)
 
     md.setContentType("image/png")
     md.setContentLength(logoByte.length)
 
     s3Client.putObject(dataBucket, s"${prefix}/${key}", logoStream, md)
-    s3.setObjectAcl(
+    s3.client.setObjectAcl(
       dataBucket,
       s"${prefix}/${key}",
       CannedAccessControlList.PublicRead

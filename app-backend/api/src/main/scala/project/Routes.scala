@@ -388,8 +388,6 @@ trait ProjectRoutes
       }
   }
 
-  val s3Client = S3()
-
   def listProjects: Route = authenticate { user =>
     (withPagination & projectQueryParameters) {
       (page, projectQueryParameters) =>
@@ -687,6 +685,7 @@ trait ProjectRoutes
           cal.add(Calendar.DAY_OF_YEAR, 1)
           val s3Uri: AmazonS3URI = new AmazonS3URI(
             user.getDefaultAnnotationShapefileSource(dataBucket))
+          val s3Client = S3()
           s3Client.putObject(dataBucket, s3Uri.getKey, zipfile.toJava)
             .setExpirationTime(cal.getTime)
           zipfile.delete(true)

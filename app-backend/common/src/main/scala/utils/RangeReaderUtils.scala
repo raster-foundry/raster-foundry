@@ -12,6 +12,8 @@ import geotrellis.spark.io.s3.util.S3RangeReader
 import geotrellis.util.{FileRangeReader, RangeReader}
 import org.apache.http.client.utils.URLEncodedUtils
 
+import com.rasterfoundry.common.S3
+
 object RangeReaderUtils extends LazyLogging {
   def fromUri(uri: String): Option[RangeReader] = {
     val javaUri = new URI(uri)
@@ -40,8 +42,8 @@ object RangeReaderUtils extends LazyLogging {
         Some(new HttpRangeReader(new URL(uri), false))
 
       case "s3" =>
-        val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri, "UTF-8"))
-        val s3Client = new AmazonS3Client(AmazonS3ClientBuilder.defaultClient())
+        val s3Uri = S3.createS3Uri(java.net.URLDecoder.decode(uri, "UTF-8"))
+        val s3Client = new AmazonS3Client(S3().client)
         Some(S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client))
 
       case scheme =>

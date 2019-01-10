@@ -13,6 +13,7 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.common.S3
+import com.rasterfoundry.common.S3RegionEnum
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
@@ -29,8 +30,7 @@ trait ThumbnailRoutes
 
   val xa: Transactor[IO]
 
-  lazy val sentinelS3client = S3(region = Some(Regions.EU_CENTRAL_1))
-  lazy val s3Client = S3()
+  lazy val sentinelS3client = S3(region = Some(S3RegionEnum(Regions.EU_CENTRAL_1)))
 
   val thumbnailImageRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix("sentinel") {
@@ -53,7 +53,7 @@ trait ThumbnailRoutes
       var uriString =
         s"http://s3.amazonaws.com/${thumbnailBucket}/${thumbnailPath}"
       val uri = new URI(uriString)
-      val s3Object = s3Client.getObject(uri)
+      val s3Object = S3().getObject(uri)
       val metaData = S3.getObjectMetadata(s3Object)
       val s3MediaType = MediaType.parse(metaData.getContentType()) match {
         case Right(m) => m.asInstanceOf[MediaType.Binary]

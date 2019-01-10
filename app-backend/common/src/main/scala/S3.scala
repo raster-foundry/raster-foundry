@@ -5,6 +5,10 @@ import java.net._
 import java.time.{Duration, ZoneOffset}
 import java.util.Date
 
+import com.amazonaws.auth.{
+  AWSCredentialsProvider,
+  DefaultAWSCredentialsProviderChain
+}
 import com.amazonaws.HttpMethod
 import com.amazonaws.regions._
 import com.amazonaws.services.s3.model._
@@ -16,10 +20,11 @@ import org.apache.commons.io.IOUtils
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.util.Properties
+import scala.collection.mutable
 
 sealed trait S3Region
-case class S3RegionEnum(region: Regions) extends S3Region
-case class S3RegionString(region: String) extends S3Region
+case class S3RegionEnum(s3Region: Regions) extends S3Region
+case class S3RegionString(s3Region: String) extends S3Region
 
 final case class S3(credentialsProviderChain: AWSCredentialsProvider =
                       new DefaultAWSCredentialsProviderChain,
@@ -27,7 +32,12 @@ final case class S3(credentialsProviderChain: AWSCredentialsProvider =
     extends Serializable {
 
   lazy val client: AmazonS3 = region match {
-    case Some(S3RegionEnum(region)) | Some(S3RegionString(region)) =>
+    case Some(S3RegionEnum(region)) =>
+      AmazonS3ClientBuilder
+        .standard()
+        .withRegion(region)
+        .build()
+    case Some(S3RegionString(region)) =>
       AmazonS3ClientBuilder
         .standard()
         .withRegion(region)
@@ -277,39 +287,12 @@ object S3 {
 
   def createS3Uri(uri: String): AmazonS3URI = new AmazonS3URI(uri)
 
+  def createS3Uri(uri: URI): AmazonS3URI = new AmazonS3URI(uri)
+
   /** Parse an S3 URI unto its bucket and prefix portions */
   def parse(uri: URI): (String, String) = {
     val S3InputFormat.S3UrlRx(_, _, bucket, prefix) = uri.toString
     (bucket, prefix)
   }
 
-  /** Set credentials in case Hadoop configuration files don't specify S3 credentials. */
-  def setCredentials(
-      conf: Configuration,
-      credentialsProviderChain: AWSCredentialsProvider =
-        new DefaultAWSCredentialsProviderChain
-  ): Configuration = {
-
-    /**
-      * Identify whether function is called on EMR
-      * fs.AbstractFileSystem.s3a.impl is a specific key which should be set on EMR
-      *
-      **/
-    if (conf.isKeyUnset("fs.AbstractFileSystem.s3a.impl")) {
-      conf.set(
-        "fs.s3.impl",
-        classOf[org.apache.hadoop.fs.s3native.NativeS3FileSystem].getName
-      )
-      conf.set(
-        "fs.s3.awsAccessKeyId",
-        credentialsProviderChain.getCredentials.getAWSAccessKeyId
-      )
-      conf.set(
-        "fs.s3.awsSecretAccessKey",
-        credentialsProviderChain.getCredentials.getAWSSecretKey
-      )
-    }
-    conf
-  }
-  
 }
