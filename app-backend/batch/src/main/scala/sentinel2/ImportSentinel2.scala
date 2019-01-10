@@ -13,7 +13,7 @@ import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.utils.AntimeridianUtils
-import com.rasterfoundry.common.{S3 => S3Methods, S3RegionString}
+import com.rasterfoundry.common.{S3, S3RegionString}
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
@@ -55,7 +55,7 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(
 
   /** Get S3 client per each call */
   def s3Client =
-    S3Methods(region = sentinel2Config.awsRegion.flatMap { region =>
+    S3(region = sentinel2Config.awsRegion.flatMap { region =>
       Some(S3RegionString(region))
     })
 
