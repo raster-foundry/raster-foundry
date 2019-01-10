@@ -6,7 +6,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Route
 import cats.effect.IO
 import com.amazonaws.regions._
-import com.amazonaws.services.s3.model.GetObjectRequest
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.akkautil.{
   Authentication,
@@ -30,7 +29,8 @@ trait ThumbnailRoutes
 
   val xa: Transactor[IO]
 
-  lazy val sentinelS3client = S3.clientWithRegion(Regions.EU_CENTRAL_1)
+  lazy val sentinelS3client = S3(region = Some(Regions.EU_CENTRAL_1))
+  lazy val s3Client = S3()
 
   val thumbnailImageRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix("sentinel") {
@@ -53,7 +53,7 @@ trait ThumbnailRoutes
       var uriString =
         s"http://s3.amazonaws.com/${thumbnailBucket}/${thumbnailPath}"
       val uri = new URI(uriString)
-      val s3Object = S3.getObject(uri)
+      val s3Object = s3Client.getObject(uri)
       val metaData = S3.getObjectMetadata(s3Object)
       val s3MediaType = MediaType.parse(metaData.getContentType()) match {
         case Right(m) => m.asInstanceOf[MediaType.Binary]
@@ -68,9 +68,8 @@ trait ThumbnailRoutes
   def getProxiedThumbnailImage(thumbnailUri: String): Route =
     authenticateWithParameter { _ =>
       val bucketAndPrefix =
-        S3.bucketAndPrefixFromURI(new URI(URLDecoder.decode(thumbnailUri)))
-      val s3Object = sentinelS3client.getObject(
-        new GetObjectRequest(bucketAndPrefix._1, bucketAndPrefix._2, true))
+        sentinelS3client.bucketAndPrefixFromURI(new URI(URLDecoder.decode(thumbnailUri)))
+      val s3Object = sentinelS3client.getObject(bucketAndPrefix._1, bucketAndPrefix._2, true)
       val metaData = S3.getObjectMetadata(s3Object)
       val s3MediaType = MediaType.parse(metaData.getContentType()) match {
         case Right(m) => m.asInstanceOf[MediaType.Binary]

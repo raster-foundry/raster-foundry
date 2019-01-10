@@ -5,7 +5,6 @@ import java.sql.Timestamp
 import java.util.UUID
 
 import cats.implicits._
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.{CannedAccessControlList, ObjectMetadata}
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import com.typesafe.scalalogging.LazyLogging
@@ -18,6 +17,7 @@ import org.apache.commons.codec.binary.{Base64 => ApacheBase64}
 
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.S3
 
 object OrganizationDao extends Dao[Organization] with LazyLogging {
 
@@ -241,8 +241,7 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
     val logoByte = ApacheBase64.decodeBase64(logoBase64)
     val logoStream = new ByteArrayInputStream(logoByte)
     val md = new ObjectMetadata()
-    val s3 = AmazonS3ClientBuilder.defaultClient()
-    val s3Client = new AmazonS3Client(s3)
+    val s3Client = new AmazonS3Client(S3())
 
     md.setContentType("image/png")
     md.setContentLength(logoByte.length)

@@ -19,6 +19,7 @@ import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf._
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.utils.CogUtils
+import com.rasterfoundry.common.{S3 => S3Methods}
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel._
@@ -56,7 +57,7 @@ object Export extends SparkJob with Config {
 
   val defaultRasterSize = 4000
 
-  def s3Client = S3()
+  def s3Client = S3Methods()
 
   def astExport(
       ed: ExportDefinition,
@@ -99,15 +100,15 @@ object Export extends SparkJob with Config {
        new URI(_).getScheme
      }) match {
       case (Some(loc), Some("s3")) =>
-        val (bucket, prefix) = S3.parse(loc)
+        val (bucket, prefix) = S3Methods.parse(loc)
         val reader = S3LayerReader(bucket, prefix)
         (reader, reader.attributeStore)
       case (Some(loc), Some("s3a")) =>
-        val (bucket, prefix) = S3.parse(loc)
+        val (bucket, prefix) = S3Methods.parse(loc)
         val reader = S3LayerReader(bucket, prefix)
         (reader, reader.attributeStore)
       case (Some(loc), Some("s3n")) =>
-        val (bucket, prefix) = S3.parse(loc)
+        val (bucket, prefix) = S3Methods.parse(loc)
         val reader = S3LayerReader(bucket, prefix)
         (reader, reader.attributeStore)
       case (Some(loc), Some("file")) =>
@@ -256,7 +257,7 @@ object Export extends SparkJob with Config {
     s"/${ed.output.getURLDecodedSource}/${ed.input.resolution}-${ed.id}-${UUID.randomUUID()}.tiff"
 
   def writeGeoTiffS3[T <: CellGrid, G <: GeoTiff[T]](tiff: G, path: String) = {
-    val s3Uri = new AmazonS3URI(path)
+    val s3Uri = S3Methods.createS3Uri(path)
     val bucket = s3Uri.getBucket
     val key = s3Uri.getKey
     val tiffBytes = tiff.toByteArray
@@ -301,7 +302,7 @@ object Export extends SparkJob with Config {
       }
     }
     case "s3" => {
-      val s3uri = new AmazonS3URI(ed.output.source)
+      val s3uri = S3Methods.createS3Uri(ed.output.source)
       val key = s3uri.getKey
       val bucket = s3uri.getBucket
       writeGeoTiffS3[T, G](tiff, path(ed))

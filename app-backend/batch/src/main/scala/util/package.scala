@@ -5,7 +5,7 @@ import java.net._
 import java.nio.charset.Charset
 
 import cats.implicits._
-import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
+import com.rasterfoundry.common.{S3 => S3Methods}
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff.reader.TiffTagsReader
 import geotrellis.raster.io.geotiff.tags.TiffTags
@@ -17,6 +17,8 @@ import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 
 package object util extends LazyLogging {
+
+  val s3Client = S3Methods()
 
   implicit class ConfigurationMethods(conf: Configuration) {
     @SuppressWarnings(Array("NullParameter"))
@@ -44,11 +46,11 @@ package object util extends LazyLogging {
     case "file" =>
       TiffTagsReader.read(uri.toString)
     case "s3" | "https" | "http" =>
-      val s3Uri = new AmazonS3URI(
+      val s3Uri = S3Methods.createS3Uri(
         java.net.URLDecoder.decode(uri.toString, "UTF-8")
       )
-      val s3Client = new AmazonS3Client(AmazonS3ClientBuilder.defaultClient())
-      val s3RangeReader = S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client)
+      val client = new AmazonS3Client(s3Client)
+      val s3RangeReader = S3RangeReader(s3Uri.getBucket, s3Uri.getKey, client)
       TiffTagsReader.read(s3RangeReader)
     case _ =>
       throw new IllegalArgumentException(s"Resource at $uri is not valid")
@@ -68,9 +70,8 @@ package object util extends LazyLogging {
     case "http" | "https" =>
       uri.toURL.openStream
     case "s3" =>
-      val client = AmazonS3ClientBuilder.defaultClient()
-      val s3uri = new AmazonS3URI(uri)
-      client.getObject(s3uri.getBucket, s3uri.getKey).getObjectContent
+      val s3uri = S3Methods.createS3Uri(uri)
+      s3Client.getObject(s3uri.getBucket, s3uri.getKey).getObjectContent
     case _ =>
       throw new IllegalArgumentException(s"Resource at $uri is not valid")
   }
