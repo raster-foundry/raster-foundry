@@ -1,5 +1,7 @@
 package com.rasterfoundry.backsplash
 
+import java.net.URLDecoder
+
 import com.rasterfoundry.backsplash.color._
 import geotrellis.vector.{io => _, _}
 import geotrellis.raster.{io => _, _}
@@ -13,6 +15,8 @@ import io.circe.syntax._
 import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.contrib.vlm.RasterSource
+import geotrellis.contrib.vlm.gdal.GDALRasterSource
 import geotrellis.raster.MultibandTile
 import scalacache._
 import scalacache.memoization._
@@ -61,7 +65,7 @@ case class BacksplashImage(
       logger.debug(s"Reading ${z}-${x}-${y} - Image: ${imageId} at ${uri}")
       val rs = BacksplashImage.getRasterSource(uri)
       val layoutDefinition = BacksplashImage.tmsLevels(z)
-      logger.debug(s"CELL TYPE: ${rs.tiff.cellType}")
+      logger.debug(s"CELL TYPE: ${rs.cellType}")
       rs.reproject(WebMercator)
         .tileToLayout(layoutDefinition, NearestNeighbor)
         .read(SpatialKey(x, y), subsetBands) map { tile =>
@@ -98,13 +102,23 @@ object BacksplashImage extends RasterSourceUtils with LazyLogging {
   implicit val rasterSourceCache = Cache.rasterSourceCache
   implicit val flags = Cache.rasterSourceCacheFlags
 
-  def getRasterSource(uri: String): GeoTiffRasterSource = memoizeSync(None) {
-    logger.debug(s"Reading Raster Source from Source Data: ${uri}")
-    val rs = new GeoTiffRasterSource(uri)
-    // access lazy vals so they are cached
-    rs.tiff
-    rs.rasterExtent
-    rs.resolutions
-    rs
+  val enableGDAL = Config.RasterSource.enableGDAL
+
+  def getRasterSource(uri: String): RasterSource = {
+    if (enableGDAL) {
+      logger.debug(s"Using GDAL Raster Source: ${uri}")
+      // Do not bother caching - let GDAL internals worry about that
+      GDALRasterSource(URLDecoder.decode(uri))
+    } else {
+      memoizeSync(None) {
+        logger.debug(s"Using GeoTiffRasterSource: ${uri}")
+        val rs = new GeoTiffRasterSource(uri)
+        // access lazy vals so they are cached
+        rs.tiff
+        rs.rasterExtent
+        rs.resolutions
+        rs
+      }
+    }
   }
 }

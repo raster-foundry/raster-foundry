@@ -15,7 +15,9 @@ services:
       start_period: 10s
 
   sbt:
-    image: openjdk:8-jre
+    image: daunnc/openjdk-gdal:2.3.2
+    build:
+      context: app-backend
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
@@ -138,6 +140,7 @@ services:
       - BACKSPLASH_AUTHORIZATION_CACHE_ENABLE=true
       - BACKSPLASH_AUTHENTICATION_CACHE_ENABLE=true
       - BACKSPLASH_RASTERSOURCE_CACHE_ENABLE=true
+      - BACKSPLASH_ENABLE_GDAL=false
     ports:
       - "8080:8080"
       - "9030:9030"
