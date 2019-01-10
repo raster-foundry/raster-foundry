@@ -279,12 +279,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               .compile
               .toList
               .map(_.flatten)
-            ndtile: MultibandTile = ArrayMultibandTile.empty(
-              IntConstantNoDataCellType,
-              bands.length,
-              256,
-              256
-            )
             mosaic = if (bands.length == 3) {
               BacksplashMosaic
                 .filterRelevant(self)
@@ -322,10 +316,15 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                 })
                 .collect({ case Some(mbTile) => mbTile })
                 .compile
-                .fold(ndtile)({ (mbr1, mbr2) =>
-                  mbr1 merge mbr2
+                .toList
+                .map(_.reduceOption({ (mbt1, mbt2) =>
+                  mbt1.interpretAs(invisiCellType) merge mbt2.interpretAs(
+                    invisiCellType)
+                }))
+                .map({
+                  case Some(t) => Raster(t, extent)
+                  case _       => Raster(invisiTile, extent)
                 })
-                .map(Raster(_, extent))
             } else {
               logger.debug("Creating single band extent")
               BacksplashMosaic.getStoreHistogram(
@@ -357,10 +356,14 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                     })
                     .collect({ case Some(mbtile) => mbtile })
                     .compile
-                    .fold(ndtile)({ (mbt1, mbt2) =>
-                      mbt1 merge mbt2
+                    .toList
+                    .map(_.reduceOption((mbt1, mbt2) =>
+                      mbt1.interpretAs(invisiCellType) merge mbt2.interpretAs(
+                        invisiCellType)))
+                    .map({
+                      case Some(t) => Raster(t, extent)
+                      case _       => Raster(invisiTile, extent)
                     })
-                    .map(Raster(_, extent))
                 }
               }
             }

@@ -139,8 +139,6 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
                                        greenOverride,
                                        blueOverride)(BandOverride.apply)
             val projectedExtent = extent.reproject(LatLng, WebMercator)
-            println(
-              s"Projected extent (what I'm expecting to read): ${projectedExtent}")
             val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
             val eval = authedReq.req.headers
               .get(CaseInsensitiveString("Accept")) match {
@@ -173,8 +171,6 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
                         tiffType
                       )
                     case _ =>
-                      println(
-                        s"How many bands does it have: ${tile.bands.length}")
                       Ok(tile.renderPng.bytes, pngType)
                   }
                 case Invalid(e) => BadRequest(s"Could not produce extent: $e")
