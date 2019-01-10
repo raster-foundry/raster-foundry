@@ -314,15 +314,15 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                     }
                   }
                 })
-                .collect({ case Some(mbTile) => mbTile })
+                .collect({
+                  case Some(mbTile) =>
+                    Raster(mbTile.interpretAs(invisiCellType), extent)
+                })
                 .compile
                 .toList
-                .map(_.reduceOption({ (mbt1, mbt2) =>
-                  mbt1.interpretAs(invisiCellType) merge mbt2.interpretAs(
-                    invisiCellType)
-                }))
+                .map(_.reduceOption(_ merge _))
                 .map({
-                  case Some(t) => Raster(t, extent)
+                  case Some(r) => r
                   case _       => Raster(invisiTile, extent)
                 })
             } else {
@@ -354,14 +354,14 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                       time.stop()
                       img
                     })
-                    .collect({ case Some(mbtile) => mbtile })
+                    .collect({
+                      case Some(mbtile) => Raster(mbtile, extent)
+                    })
                     .compile
                     .toList
-                    .map(_.reduceOption((mbt1, mbt2) =>
-                      mbt1.interpretAs(invisiCellType) merge mbt2.interpretAs(
-                        invisiCellType)))
+                    .map(_.reduceOption(_ merge _))
                     .map({
-                      case Some(t) => Raster(t, extent)
+                      case Some(r) => r
                       case _       => Raster(invisiTile, extent)
                     })
                 }
