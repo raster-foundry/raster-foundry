@@ -48,6 +48,8 @@ case class BacksplashImage(
   implicit val tileCache = Cache.tileCache
   implicit val flags = Cache.tileCacheFlags
 
+  lazy val rasterSource = BacksplashImage.getRasterSource(uri)
+
   /** Read ZXY tile - defers to a private method to enable disable/enabling of cache **/
   def read(z: Int, x: Int, y: Int): Option[MultibandTile] = {
     readWithCache(z, x, y)
@@ -105,5 +107,4 @@ object BacksplashImage extends RasterSourceUtils with LazyLogging {
     rs.resolutions
     rs
   }
-
 }
