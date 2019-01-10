@@ -35,13 +35,14 @@ import scalacache.modes.sync._
   * @param corrections description + operations for how to correct image
   * @param singleBandOptions band + options of how to color a single band
   */
-case class BacksplashImage(imageId: UUID,
-                           projectId: UUID,
-                           uri: String,
-                           @cacheKeyExclude footprint: MultiPolygon,
-                           subsetBands: List[Int],
-                           @cacheKeyExclude corrections: ColorCorrect.Params,
-                           singleBandOptions: Option[SingleBandOptions.Params])
+case class BacksplashImage(
+    imageId: UUID,
+    @cacheKeyExclude projectId: UUID,
+    @cacheKeyExclude uri: String,
+    @cacheKeyExclude footprint: MultiPolygon,
+    subsetBands: List[Int],
+    @cacheKeyExclude corrections: ColorCorrect.Params,
+    @cacheKeyExclude singleBandOptions: Option[SingleBandOptions.Params])
     extends LazyLogging {
 
   implicit val tileCache = Cache.tileCache
