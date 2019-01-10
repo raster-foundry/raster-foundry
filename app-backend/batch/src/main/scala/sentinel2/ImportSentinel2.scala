@@ -54,7 +54,10 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(
   val name = ImportSentinel2.name
 
   /** Get S3 client per each call */
-  def s3Client = S3Methods(region = sentinel2Config.awsRegion.flatMap{region => Some(S3RegionString(region))})
+  def s3Client =
+    S3Methods(region = sentinel2Config.awsRegion.flatMap { region =>
+      Some(S3RegionString(region))
+    })
 
   def createImages(sceneId: UUID,
                    infoPath: Option[String],

@@ -9,7 +9,8 @@ package object uploads {
 
   def listAllowedFilesInS3Source(source: String): List[String] = {
     val s3Client = S3()
-    s3Client.getObjectPaths(source, false)
+    s3Client
+      .getObjectPaths(source, false)
       .filter { p =>
         val _p = p.toLowerCase
         _p.endsWith(".tif") ||

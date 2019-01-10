@@ -31,7 +31,10 @@ final case class ImportLandsat8(
   def runJob(args: List[String]) = ???
 
   /** Get S3 client per each call */
-  def s3Client = S3Methods(region = landsat8Config.awsRegion.flatMap{region => Some(S3RegionString(region))})
+  def s3Client =
+    S3Methods(region = landsat8Config.awsRegion.flatMap { region =>
+      Some(S3RegionString(region))
+    })
 
   protected def getLandsatPath(productId: String): String = {
     val (wPath, wRow) = productId.substring(3, 6) -> productId.substring(6, 9)
