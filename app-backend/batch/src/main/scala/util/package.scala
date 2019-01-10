@@ -11,6 +11,7 @@ import geotrellis.raster.io.geotiff.reader.TiffTagsReader
 import geotrellis.raster.io.geotiff.tags.TiffTags
 import geotrellis.spark.io.s3.AmazonS3Client
 import geotrellis.spark.io.s3.util.S3RangeReader
+import com.amazonaws.services.s3.AmazonS3URI
 import io.circe.Json
 import io.circe.parser.parse
 import org.apache.commons.io.IOUtils
@@ -46,7 +47,7 @@ package object util extends LazyLogging {
     case "file" =>
       TiffTagsReader.read(uri.toString)
     case "s3" | "https" | "http" =>
-      val s3Uri = S3.createS3Uri(
+      val s3Uri = new AmazonS3URI(
         java.net.URLDecoder.decode(uri.toString, "UTF-8")
       )
       val client = new AmazonS3Client(s3Client.client)
@@ -70,7 +71,7 @@ package object util extends LazyLogging {
     case "http" | "https" =>
       uri.toURL.openStream
     case "s3" =>
-      val s3uri = S3.createS3Uri(uri)
+      val s3uri = new AmazonS3URI(uri)
       s3Client.getObject(s3uri.getBucket, s3uri.getKey).getObjectContent
     case _ =>
       throw new IllegalArgumentException(s"Resource at $uri is not valid")

@@ -7,9 +7,10 @@ import java.util.UUID
 import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.batch.Job
-import com.rasterfoundry.batch.util.{S3, isUriExists}
+import com.rasterfoundry.batch.util.isUriExists
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.common.{S3, S3RegionString}
 import com.rasterfoundry.common.utils.AntimeridianUtils
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.filter.Filterables._
@@ -39,7 +40,9 @@ final case class ImportLandsat8C1(
   val name = ImportLandsat8C1.name
 
   /** Get S3 client per each call */
-  def s3Client = S3(region = landsat8Config.awsRegion)
+  def s3Client = S3(region = landsat8Config.awsRegion.flatMap { region =>
+      Some(S3RegionString(region))
+    })
 
   // Eagerly get existing scene names
   val previousDay = startDate.minusDays(1)
