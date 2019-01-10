@@ -139,7 +139,13 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
                                        WebMercator).toByteArray,
                      tiffType)
                 } else {
-                  Ok(tile.band(0).renderPng(ColorRamps.Viridis).bytes, pngType)
+                  val rendered = paintableTool.renderDefinition match {
+                    case Some(renderDef) =>
+                      tile.band(0).renderPng(renderDef)
+                    case _ =>
+                      tile.band(0).renderPng(ColorRamps.Viridis)
+                  }
+                  Ok(rendered.bytes, pngType)
                 }
               case Invalid(e) => BadRequest(s"Could not produce extent: $e")
             }

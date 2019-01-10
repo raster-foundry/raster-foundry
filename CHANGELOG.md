@@ -18,6 +18,7 @@
 ### Fixed
 
 - Added back the scenes mosaic endpoint [\#4439](https://github.com/raster-foundry/raster-foundry/pull/4439)
+- Fixed quick export of projects and analyses [\#4459](https://github.com/raster-foundry/raster-foundry/pull/4459)
 
 ### Security
 

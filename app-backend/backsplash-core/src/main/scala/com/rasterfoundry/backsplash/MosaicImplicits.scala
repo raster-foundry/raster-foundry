@@ -5,10 +5,11 @@ import java.util.UUID
 import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
-import geotrellis.proj4.LatLng
+import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.histogram._
+import geotrellis.raster.reproject._
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.proj4.CRS
 import geotrellis.server._
@@ -272,7 +273,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
       def extentReification(self: BacksplashMosaic)(
           implicit contextShift: ContextShift[IO]) =
         (extent: Extent, cs: CellSize) => {
-          val filtered = BacksplashMosaic.filterRelevant(self)
           for {
             bands <- self
               .take(1)
@@ -280,14 +280,9 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               .compile
               .toList
               .map(_.flatten)
-            ndtile: MultibandTile = ArrayMultibandTile.empty(
-              IntConstantNoDataCellType,
-              bands.length,
-              256,
-              256
-            )
             mosaic = if (bands.length == 3) {
-              filtered
+              BacksplashMosaic
+                .filterRelevant(self)
                 .flatMap({ relevant =>
                   fs2.Stream.eval {
                     for {
@@ -309,6 +304,8 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                       hists <- histsFiber.join
                     } yield {
                       im map { mbTile =>
+                        logger.debug(
+                          s"N bands in resulting tile: ${mbTile.bands.length}")
                         val time = mbColorSceneTimer.time()
                         val colored =
                           relevant.corrections.colorCorrect(mbTile, hists, None)
@@ -318,16 +315,26 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                     }
                   }
                 })
-                .collect({ case Some(mbTile) => mbTile })
-                .compile
-                .fold(ndtile)({ (mbr1, mbr2) =>
-                  mbr1 merge mbr2
+                .collect({
+                  case Some(mbTile) =>
+                    Raster(mbTile.interpretAs(invisiCellType), extent)
                 })
-                .map(Raster(_, extent))
+                .compile
+                .toList
+                .map(_.reduceOption(_ merge _))
+                .map({
+                  case Some(r) => r
+                  case _       => Raster(invisiTile, extent)
+                })
             } else {
-              BacksplashMosaic.getStoreHistogram(filtered, histStore) map {
-                layerHist =>
-                  filtered
+              logger.debug("Creating single band extent")
+              BacksplashMosaic.getStoreHistogram(
+                BacksplashMosaic.filterRelevant(self),
+                histStore) flatMap { layerHist =>
+                {
+                  logger.debug(s"Got a layer hist: ${layerHist.length}")
+                  BacksplashMosaic
+                    .filterRelevant(self)
                     .map({ relevant =>
                       val time = readSceneExtentTimer.time()
                       val img = relevant.read(extent, cs) map {
@@ -341,14 +348,24 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                             }
                           )
                       }
+                      logger.debug(
+                        s"Colored single band mosaic tile with ${img map {
+                          _.bands.length
+                        }} bands")
                       time.stop()
                       img
                     })
-                    .collect({ case Some(mbtile) => Raster(mbtile, extent) })
-                    .compile
-                    .fold(Raster(ndtile, extent))({ (mbr1, mbr2) =>
-                      mbr1.merge(mbr2, NearestNeighbor)
+                    .collect({
+                      case Some(mbtile) => Raster(mbtile, extent)
                     })
+                    .compile
+                    .toList
+                    .map(_.reduceOption(_ merge _))
+                    .map({
+                      case Some(r) => r
+                      case _       => Raster(invisiTile, extent)
+                    })
+                }
               }
             }
             timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
@@ -367,7 +384,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             .filterRelevant(self)
             .map { relevant =>
               val time = readSceneExtentTimer.time()
-              logger.trace(s"This better be the right extent: $extent")
               val img = relevant.read(extent, cs)
               time.stop()
               img
@@ -393,7 +409,14 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
         val mosaic = BacksplashMosaic
           .filterRelevant(self)
           .flatMap({ img =>
-            fs2.Stream.eval(BacksplashImage.getRasterExtents(img.uri))
+            {
+              fs2.Stream.eval(BacksplashImage.getRasterExtents(img.uri) map {
+                extents =>
+                  extents map {
+                    ReprojectRasterExtent(_, img.rasterSource.crs, WebMercator)
+                  }
+              })
+            }
           })
           .compile
           .toList

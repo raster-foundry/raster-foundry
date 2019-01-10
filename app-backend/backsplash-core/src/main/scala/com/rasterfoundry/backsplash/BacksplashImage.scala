@@ -35,17 +35,20 @@ import scalacache.modes.sync._
   * @param corrections description + operations for how to correct image
   * @param singleBandOptions band + options of how to color a single band
   */
-case class BacksplashImage(imageId: UUID,
-                           projectId: UUID,
-                           uri: String,
-                           @cacheKeyExclude footprint: MultiPolygon,
-                           subsetBands: List[Int],
-                           @cacheKeyExclude corrections: ColorCorrect.Params,
-                           singleBandOptions: Option[SingleBandOptions.Params])
+case class BacksplashImage(
+    imageId: UUID,
+    @cacheKeyExclude projectId: UUID,
+    @cacheKeyExclude uri: String,
+    @cacheKeyExclude footprint: MultiPolygon,
+    subsetBands: List[Int],
+    @cacheKeyExclude corrections: ColorCorrect.Params,
+    @cacheKeyExclude singleBandOptions: Option[SingleBandOptions.Params])
     extends LazyLogging {
 
   implicit val tileCache = Cache.tileCache
   implicit val flags = Cache.tileCacheFlags
+
+  lazy val rasterSource = BacksplashImage.getRasterSource(uri)
 
   /** Read ZXY tile - defers to a private method to enable disable/enabling of cache **/
   def read(z: Int, x: Int, y: Int): Option[MultibandTile] = {
@@ -82,10 +85,9 @@ case class BacksplashImage(imageId: UUID,
         s"Reading Extent ${extent} with CellSize ${cs} - Image: ${imageId} at ${uri}"
       )
       val rs = BacksplashImage.getRasterSource(uri)
-      val destinationExtent = extent.reproject(rs.crs, WebMercator)
       rs.reproject(WebMercator, NearestNeighbor)
         .resampleToGrid(RasterExtent(extent, cs), NearestNeighbor)
-        .read(destinationExtent, subsetBands.toSeq)
+        .read(extent, subsetBands.toSeq)
         .map(_.tile)
     }
   }
@@ -105,5 +107,4 @@ object BacksplashImage extends RasterSourceUtils with LazyLogging {
     rs.resolutions
     rs
   }
-
 }
