@@ -132,12 +132,14 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
               projectedExtent,
               BacksplashImage.tmsLevels(zoom).cellSize)
             resp <- tileValidated match {
-              case Valid(tile) =>
+              case Valid(tile) => {
                 if (respType == tiffType) {
-                  Ok(SinglebandGeoTiff(tile.band(0),
-                                       projectedExtent,
-                                       WebMercator).toByteArray,
-                     tiffType)
+                  Ok(
+                    SinglebandGeoTiff(tile.band(0),
+                                      projectedExtent,
+                                      WebMercator).toByteArray,
+                    tiffType
+                  )
                 } else {
                   val rendered = paintableTool.renderDefinition match {
                     case Some(renderDef) =>
@@ -147,6 +149,7 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
                   }
                   Ok(rendered.bytes, pngType)
                 }
+              }
               case Invalid(e) => BadRequest(s"Could not produce extent: $e")
             }
           } yield resp

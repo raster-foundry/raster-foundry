@@ -80,12 +80,11 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
         val mbtIO = (BacksplashMosaic.filterRelevant(self) map { relevant =>
           logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
           val img = relevant.read(z, x, y)
-          img.map(i => logger.debug(s"Band Count Available: ${i.bandCount}"))
           img
         }).collect({ case Some(mbtile) => mbtile }).compile.toList
         mbtIO.map(_.reduceOption(_ merge _) match {
           case Some(t) => Raster(t, extent)
-          case _       => Raster(invisiTile, extent)
+          case _       => Raster(MultibandTile(invisiTile), extent)
         })
       }
       mtr.timedIO(mosaic, readMosaicTimer).map(RasterLit(_))
@@ -115,13 +114,18 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
         implicit contextShift: ContextShift[IO])
       : (Int, Int, Int) => IO[Literal] =
       (z: Int, x: Int, y: Int) =>
-        for {
+        (for {
           bandCount <- self
             .take(1)
             .map(_.subsetBands.length)
             .compile
             .toList
             .map(_.fold(0)(_ + _))
+          _ <- {
+            if (bandCount == 0) {
+              IO.raiseError(NoDataInRegionException())
+            } else IO.unit
+          }
           filtered = BacksplashMosaic.filterRelevant(self)
           extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
           // for single band imagery, after color correction we have RGBA, so
@@ -171,7 +175,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               .toList
             mergeTiles(ioMBT).map {
               case Some(t) => Raster(t, extent)
-              case _       => Raster(invisiTile, extent)
+              case _       => Raster(MultibandTile(invisiTile), extent)
             }
           } else {
             // Assume that we're in a single band case. It isn't obvious what it would
@@ -191,20 +195,22 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
             for {
               firstImOption <- BacksplashMosaic.first(
                 BacksplashMosaic.filterRelevant(self))
-              histograms <- histStore.projectHistogram(
-                firstImOption map {
-                  _.projectId
-                } getOrElse {
-                  throw MetadataException(
-                    "Cannot produce tiles from empty mosaics")
-                },
-                List(firstImOption flatMap {
-                  _.singleBandOptions map { _.band }
-                } getOrElse {
-                  throw SingleBandOptionsException(
-                    "Must provide band for single band visualization")
-                })
-              )
+              histograms <- {
+                histStore.projectHistogram(
+                  firstImOption map {
+                    _.projectId
+                  } getOrElse {
+                    throw MetadataException(
+                      "Cannot produce tiles from empty mosaics")
+                  },
+                  List(firstImOption flatMap {
+                    _.singleBandOptions map { _.band }
+                  } getOrElse {
+                    throw SingleBandOptionsException(
+                      "Must provide band for single band visualization")
+                  })
+                )
+              }
               multibandTilewithSBO <- ioMBTwithSBO
             } yield {
               val (tiles, sbos) = multibandTilewithSBO.unzip
@@ -230,7 +236,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                         ),
                         extent
                       )
-                    case _ => Raster(invisiTile, extent)
+                    case _ => Raster(MultibandTile(invisiTile), extent)
                   }
 
               }
@@ -239,6 +245,13 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
           timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
         } yield {
           RasterLit(timedMosaic)
+        }).attempt.map {
+          case Left(NoDataInRegionException()) =>
+            RasterLit(
+              Raster(MultibandTile(invisiTile, invisiTile, invisiTile),
+                     Extent(0, 0, 256, 256)))
+          case Left(e)          => throw e
+          case Right(rasterLit) => rasterLit
       }
   }
 
