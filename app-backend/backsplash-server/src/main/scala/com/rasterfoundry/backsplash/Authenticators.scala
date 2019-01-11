@@ -43,9 +43,10 @@ class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator)
 
   val tokensAuthenticator = Kleisli[OptionT[IO, ?], Request[IO], User](
     {
-      case req @ _ -> "tools" /: UUIDWrapper(analysisId) /: _
+      case req @ _ -> UUIDWrapper(analysisId) /: _
             :? TokenQueryParamMatcher(tokenQP)
-            :? MapTokenQueryParamMatcher(mapTokenQP) =>
+            :? MapTokenQueryParamMatcher(mapTokenQP)
+          if req.scriptName == "/tools" =>
         val authHeader: OptionT[IO, Header] =
           OptionT.fromOption(
             req.headers.get(CaseInsensitiveString("Authorization")))
