@@ -63,10 +63,10 @@ case class BacksplashImage(
       implicit @cacheKeyExclude flags: Flags): Option[MultibandTile] =
     memoizeSync(None) {
       logger.debug(s"Reading ${z}-${x}-${y} - Image: ${imageId} at ${uri}")
-      val rs = BacksplashImage.getRasterSource(uri)
       val layoutDefinition = BacksplashImage.tmsLevels(z)
-      logger.debug(s"CELL TYPE: ${rs.cellType}")
-      rs.reproject(WebMercator)
+      logger.debug(s"CELL TYPE: ${rasterSource.cellType}")
+      rasterSource
+        .reproject(WebMercator)
         .tileToLayout(layoutDefinition, NearestNeighbor)
         .read(SpatialKey(x, y), subsetBands) map { tile =>
         tile.mapBands((n: Int, t: Tile) => t.toArrayTile)
@@ -88,9 +88,12 @@ case class BacksplashImage(
       logger.debug(
         s"Reading Extent ${extent} with CellSize ${cs} - Image: ${imageId} at ${uri}"
       )
-      val rs = BacksplashImage.getRasterSource(uri)
-      rs.reproject(WebMercator, NearestNeighbor)
-        .resampleToGrid(RasterExtent(extent, cs), NearestNeighbor)
+      val rasterExtent = RasterExtent(extent, cs)
+      logger.debug(
+        s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)")
+      rasterSource
+        .reproject(WebMercator, NearestNeighbor)
+        .resampleToGrid(rasterExtent, NearestNeighbor)
         .read(extent, subsetBands.toSeq)
         .map(_.tile)
     }

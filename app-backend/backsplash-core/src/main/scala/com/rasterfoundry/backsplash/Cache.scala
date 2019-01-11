@@ -9,7 +9,6 @@ import scalacache.caffeine._
 import scalacache.memcached._
 import scalacache.memoization._
 import scalacache.serialization.binary._
-import scalacache.serialization.gzip.GZippingJavaSerializationAnyRefCodec._
 import net.spy.memcached._
 import java.net.InetSocketAddress
 import scala.collection.JavaConverters._
@@ -19,7 +18,8 @@ object Cache extends LazyLogging {
   class BacksplashConnectionFactory extends DefaultConnectionFactory() {
     override def getClientMode: ClientMode = Config.cache.memcachedClientMode
 
-    override def getOperationTimeout: Long = Config.cache.memcachedTimeout
+    override def getOperationTimeout: Long =
+      Config.cache.memcachedTimeoutMilliseconds
   }
 
   val tileCache: Cache[Option[MultibandTile]] = {
