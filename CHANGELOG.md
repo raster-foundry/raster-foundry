@@ -6,6 +6,7 @@
 - Added caching for histograms, rastersources, and tiles [\#4429](https://github.com/raster-foundry/raster-foundry/pull/4429)[\#4437](https://github.com/raster-foundry/raster-foundry/pull/4437)
 - Made Raster Source configurable via environment variables to more easily test GDAL and GeoTiff Raster Sources [\#4440](https://github.com/raster-foundry/raster-foundry/pull/4440)
 - Parallelized mosaic construction from backsplash images [\#4463](https://github.com/raster-foundry/raster-foundry/pull/4463)
+- Added ProjectLayer datamodel, dao, and migration [\#4460]https://github.com/raster-foundry/raster-foundry/pull/4460()
 
 ### Changed
 - Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
