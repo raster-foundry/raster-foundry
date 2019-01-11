@@ -146,9 +146,20 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       "/healthcheck" -> AutoSlash(new HealthcheckService[IO]().routes)
     )
 
+  val startupBanner =
+    """|    ___                     _               _ __     _                     _
+       |   | _ )   __ _     __     | |__    ___    | '_ \   | |    __ _     ___   | |_
+       |   | _ \  / _` |   / _|    | / /   (_-<    | .__/   | |   / _` |   (_-<   | ' \
+       |   |___/  \__,_|   \__|_   |_\_\   /__/_   |_|__   _|_|_  \__,_|   /__/_  |_||_|
+       | _|'''''|_|'''''|_|'''''|_|'''''|_|'''''|_|'''''|_|'''''|_|'''''|_|'''''|_|'''''|
+       | '`-0-0-''`-0-0-''`-0-0-''`-0-0-''`-0-0-''`-0-0-''`-0-0-''`-0-0-''`-0-0-''`-0-0-'""".stripMargin
+      .split("\n")
+      .toList
+
   def stream =
     BlazeServerBuilder[IO]
       .withExecutionContext(blazeEC)
+      .withBanner(startupBanner)
       .withConnectorPoolSize(Config.parallelism.blazeConnectorPoolSize)
       .bindHttp(8080, "0.0.0.0")
       .withHttpApp(httpApp.orNotFound)
