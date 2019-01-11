@@ -11,6 +11,16 @@ object Config {
     val enableGDAL = rasterSourceConfig.getBoolean("enableGDAL")
   }
 
+  object parallelism {
+
+    /**
+      * Controls the max level of concurrent effects processed with [[fs2.Stream#parEvalMap]] in
+      * [[MosaicImplicits]]
+      **/
+    private val parallelismConfig = config.getConfig("parallelism")
+    val streamConcurrency = parallelismConfig.getInt("core.streamConcurrency")
+  }
+
   object cache {
     private val cacheConfig = config.getConfig("cache")
     val histogramCacheEnable =
@@ -29,7 +39,8 @@ object Config {
         ClientMode.Static
       }
 
-    val memcachedTimeoutMilliseconds = cacheConfig.getInt("core.memcachedTimeoutMilliseconds")
+    val memcachedTimeoutMilliseconds =
+      cacheConfig.getInt("core.memcachedTimeoutMilliseconds")
 
   }
 }

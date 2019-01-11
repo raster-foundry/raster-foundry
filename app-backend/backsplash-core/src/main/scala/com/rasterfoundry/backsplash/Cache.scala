@@ -18,7 +18,8 @@ object Cache extends LazyLogging {
   class BacksplashConnectionFactory extends DefaultConnectionFactory() {
     override def getClientMode: ClientMode = Config.cache.memcachedClientMode
 
-    override def getOperationTimeout: Long = Config.cache.memcachedTimeoutMilliseconds
+    override def getOperationTimeout: Long =
+      Config.cache.memcachedTimeoutMilliseconds
   }
 
   val tileCache: Cache[Option[MultibandTile]] = {
