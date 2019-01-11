@@ -88,9 +88,12 @@ case class BacksplashImage(
       logger.debug(
         s"Reading Extent ${extent} with CellSize ${cs} - Image: ${imageId} at ${uri}"
       )
+      val rasterExtent = RasterExtent(extent, cs)
+      logger.debug(
+        s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)")
       rasterSource
         .reproject(WebMercator, NearestNeighbor)
-        .resampleToGrid(RasterExtent(extent, cs), NearestNeighbor)
+        .resampleToGrid(rasterExtent, NearestNeighbor)
         .read(extent, subsetBands.toSeq)
         .map(_.tile)
     }
