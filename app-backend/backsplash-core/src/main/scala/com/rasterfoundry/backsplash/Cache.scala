@@ -9,7 +9,6 @@ import scalacache.caffeine._
 import scalacache.memcached._
 import scalacache.memoization._
 import scalacache.serialization.binary._
-import scalacache.serialization.gzip.GZippingJavaSerializationAnyRefCodec._
 import net.spy.memcached._
 import java.net.InetSocketAddress
 import scala.collection.JavaConverters._
