@@ -29,7 +29,7 @@ object Config {
         ClientMode.Static
       }
 
-    val memcachedTimeout = cacheConfig.getInt("core.memcachedTimeout")
+    val memcachedTimeoutMilliseconds = cacheConfig.getInt("core.memcachedTimeoutMilliseconds")
 
   }
 }
