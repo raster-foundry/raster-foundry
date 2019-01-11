@@ -132,34 +132,34 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
           // the empty tile needs to be four band as well
           mosaic = if (bandCount == 3) {
             val ioMBT = filtered
-              .flatMap({ relevant =>
-                fs2.Stream.eval {
-                  for {
-                    imFiber <- (IO {
-                      val time = readSceneTmsTimer.time()
-                      logger.debug(
-                        s"Reading Tile ${relevant.imageId} ${z}-${x}-${y}")
-                      val img = relevant.read(z, x, y)
-                      time.stop()
-                      img
-                    }).start
-                    histsFiber <- ({
-                      val time = readSceneHistTimer.time()
-                      logger.debug(
-                        s"Reading Histogram ${relevant.imageId} ${z}-${x}-${y}")
-                      val hists = getHistogramWithCache(relevant)
-                      time.stop()
-                      hists
-                    }).start
-                    im <- imFiber.join
-                    hists <- histsFiber.join
-                  } yield {
+              .parEvalMap(20)({ relevant =>
+                for {
+                  imFiber <- IO {
+                    val time = readSceneTmsTimer.time()
+                    logger.debug(
+                      s"Reading Tile ${relevant.imageId} ${z}-${x}-${y}")
+                    val img = relevant.read(z, x, y)
+                    time.stop()
+                    img
+                  }.start
+                  histsFiber <- {
+                    val time = readSceneHistTimer.time()
+                    logger.debug(
+                      s"Reading Histogram ${relevant.imageId} ${z}-${x}-${y}")
+                    val hists = getHistogramWithCache(relevant)
+                    time.stop()
+                    hists
+                  }.start
+                  hists <- histsFiber.join
+                  im <- imFiber.join
+                  t <- IO.pure {
                     im map {
                       mbTile =>
                         val time = mbColorSceneTimer.time()
                         val noDataValue = getNoDataValue(mbTile.cellType)
                         logger.debug(
-                          s"NODATA Value: ${noDataValue} with CellType: ${mbTile.cellType}")
+                          s"NODATA Value: ${noDataValue} with CellType: ${mbTile.cellType}"
+                        )
                         val colored =
                           relevant.corrections.colorCorrect(mbTile,
                                                             hists,
@@ -168,9 +168,11 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                         colored
                     }
                   }
+                } yield {
+                  t
                 }
               })
-              .collect({ case Some(mbTile) => mbTile })
+              .collect({ case Some(tile) => tile })
               .compile
               .toList
             mergeTiles(ioMBT).map {
