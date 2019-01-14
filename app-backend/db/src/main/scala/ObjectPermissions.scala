@@ -217,7 +217,7 @@ trait ObjectPermissions[Model] {
         Some(ownedF)
       // shared to the requesting user directly, across platform, or due to group membership
       case Some(ownershipType) if ownershipType == "shared" =>
-        if (objectType == ObjectType.Shape) {
+        if (objectType == ObjectType.Shape || objectType == ObjectType.Template) {
           Some(fr"(" ++ acrFilterF ++ fr") AND owner <> ${user.id}")
         } else {
           Some(
