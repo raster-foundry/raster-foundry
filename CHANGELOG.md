@@ -22,6 +22,7 @@
 - Added back the scenes mosaic endpoint [\#4439](https://github.com/raster-foundry/raster-foundry/pull/4439)
 - Fixed quick export of projects and analyses [\#4459](https://github.com/raster-foundry/raster-foundry/pull/4459)
 - Fixed route matching for map token authorization for analyses [\#4463](https://github.com/raster-foundry/raster-foundry/pull/4463)
+- Fixed permission checks for project and project datasource in lab analyses [\#4466](https://github.com/raster-foundry/raster-foundry/pull/4466)
 
 ### Security
 
