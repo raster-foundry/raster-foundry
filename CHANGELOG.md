@@ -7,6 +7,7 @@
 
 ### Changed
 - Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
+- Updated permission check logic for lab templates to make ownership filter work as expected [\#4462](https://github.com/raster-foundry/raster-foundry/pull/4462)
 
 ### Deprecated
 
