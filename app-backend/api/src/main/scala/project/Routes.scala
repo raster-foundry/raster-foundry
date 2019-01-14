@@ -432,9 +432,9 @@ trait ProjectRoutes
             authorizeAsync {
               val authorized = for {
                 authProject <- ProjectDao.authorized(user,
-                  ObjectType.Project,
-                  projectId,
-                  ActionType.View)
+                                                     ObjectType.Project,
+                                                     projectId,
+                                                     ActionType.View)
                 authResult <- (authProject, projectQueryParams.analysisId) match {
                   case (false, Some(analysisId: UUID)) =>
                     ToolRunDao
@@ -872,9 +872,9 @@ trait ProjectRoutes
       authorizeAsync {
         val authorized = for {
           authProject <- ProjectDao.authorized(user,
-            ObjectType.Project,
-            projectId,
-            ActionType.View)
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.View)
           authResult <- (authProject, projectQueryParams.analysisId) match {
             case (false, Some(analysisId: UUID)) =>
               ToolRunDao
