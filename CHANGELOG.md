@@ -12,6 +12,23 @@
 
 ### Deprecated
 
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.16.2](https://github.com/raster-foundry/raster-foundry/tree/1.16.2) (2019-01-14)
+
+### Added
+- Added caching for histograms, rastersources, and tiles [\#4429](https://github.com/raster-foundry/raster-foundry/pull/4429)[\#4437](https://github.com/raster-foundry/raster-foundry/pull/4437)
+- Made Raster Source configurable via environment variables to more easily test GDAL and GeoTiff Raster Sources [\#4440](https://github.com/raster-foundry/raster-foundry/pull/4440)
+- Parallelized mosaic construction from backsplash images [\#4463](https://github.com/raster-foundry/raster-foundry/pull/4463)
+
+### Changed
+
+### Fixed
+
 - Removed faulty no-data interpretation in single band visualization [\#4433](https://github.com/raster-foundry/raster-foundry/pull/4433)
 - Fixed histogram calcuation + sampling logic and analysis rendering [\#4438](https://github.com/raster-foundry/raster-foundry/pull/4438)
 
