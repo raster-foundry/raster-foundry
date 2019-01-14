@@ -179,24 +179,31 @@ trait SceneRoutes
                                        tileFootprint = tileFootprint)
 
       val histogramAndInsertFut = for {
-        hist <- histogram
         insertedScene <- OptionT.liftF(
           SceneDao.insert(updatedScene, user).transact(xa).unsafeToFuture)
-        _ <- OptionT.liftF(
-          // We consider the geotrellis upstring json format to be infallible, and "guarantee" presence
-          // of the right projection
-          parse(hist.toJson.toString) traverse { parsed =>
-            LayerAttributeDao
-              .insertLayerAttribute(
-                LayerAttribute(insertedScene.id.toString,
-                               0,
-                               "histogram",
-                               parsed)
-              )
-              .transact(xa)
-              .unsafeToFuture
-          } map { _.toOption }
-        )
+        _ <- if (!newScene.ingestLocation.isEmpty) {
+          histogram flatMap { hist =>
+            OptionT {
+              parse(hist.toJson.toString) traverse { parsed =>
+                LayerAttributeDao
+                  .insertLayerAttribute(
+                    LayerAttribute(insertedScene.id.toString,
+                                   0,
+                                   "histogram",
+                                   parsed)
+                  )
+                  .transact(xa)
+                  .unsafeToFuture
+              } map { _.toOption }
+            }
+          }
+        } else {
+          // We have to return some kind of successful OptionT, so just provide
+          // a small int value wrapped in a Some()
+          // If we _don't_ do this, we can't post scenes without ingest locations,
+          // which is bad.
+          OptionT(Future.successful(Option(0)))
+        }
       } yield insertedScene
 
       onSuccess(histogramAndInsertFut.value) {
