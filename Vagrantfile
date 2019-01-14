@@ -57,8 +57,6 @@ Vagrant.configure(2) do |config|
   aws_profile = ENV.fetch("RF_AWS_PROFILE", "raster-foundry")
   rf_settings_bucket = ENV.fetch("RF_SETTINGS_BUCKET",
                                 "rasterfoundry-development-config-us-east-1")
-  rf_artifacts_bucket = ENV.fetch("RF_ARTIFACTS_BUCKET",
-                                   "rasterfoundry-global-artifacts-us-east-1")
 
   config.vm.provision "shell", inline: "mkdir -p /vagrant"
   config.vm.provision "ansible_local" do |ansible|
@@ -72,8 +70,7 @@ Vagrant.configure(2) do |config|
     ansible.extra_vars = {
       host_user: host_user,
       aws_profile: aws_profile,
-      rf_settings_bucket: rf_settings_bucket,
-      rf_artifacts_bucket: rf_artifacts_bucket
+      rf_settings_bucket: rf_settings_bucket
     }
   end
 
@@ -82,7 +79,6 @@ Vagrant.configure(2) do |config|
       cd /opt/raster-foundry
       export AWS_PROFILE=#{aws_profile}
       export RF_SETTINGS_BUCKET=#{rf_settings_bucket}
-      export RF_ARTIFACTS_BUCKET=#{rf_artifacts_bucket}
       su vagrant ./scripts/bootstrap
       su vagrant ./scripts/update
     SHELL

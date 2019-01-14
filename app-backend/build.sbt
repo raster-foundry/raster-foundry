@@ -285,7 +285,7 @@ lazy val db = Project("db", file("db"))
       "net.postgis" % "postgis-jdbc" % "2.2.1",
       "net.postgis" % "postgis-jdbc-jtsparser" % "2.2.1",
       "org.locationtech.jts" % "jts-core" % "1.15.0",
-      "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15",
+      "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15"
     )
   })
 
@@ -311,7 +311,7 @@ lazy val datamodel = Project("datamodel", file("datamodel"))
       Dependencies.scalaCheck,
       Dependencies.circeTest,
       Dependencies.jts,
-      "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15" % "test",
+      "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15" % "test"
     )
   })
 
@@ -428,7 +428,7 @@ lazy val geotrellis = Project("geotrellis", file("geotrellis"))
     libraryDependencies ++= Seq(
       Dependencies.geotrellisRaster,
       Dependencies.geotrellisSpark,
-      Dependencies.catsCore,
+      Dependencies.catsCore
     )
   })
 
@@ -471,6 +471,11 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer,
       "org.scalacheck" %% "scalacheck" % Version.scalaCheck,
       "org.apache.spark" %% "spark-core" % "2.4.0" % Provided,
+      "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
+      "com.github.cb372" %% "scalacache-core" % "0.27.0",
+      "com.github.cb372" %% "scalacache-caffeine" % "0.27.0",
+      "com.github.cb372" %% "scalacache-memcached" % "0.27.0" intransitive (),
+      Dependencies.elasticacheClient,
       Dependencies.catsMeow
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
@@ -497,7 +502,10 @@ lazy val backsplashServer = Project("backsplash-server",
       Dependencies.http4sDSL,
       Dependencies.http4sServer,
       Dependencies.mamlJvm,
-      Dependencies.nimbusJose
+      Dependencies.nimbusJose,
+      "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
+      "com.github.cb372" %% "scalacache-core" % "0.27.0",
+      "com.github.cb372" %% "scalacache-caffeine" % "0.27.0"
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))

@@ -47,7 +47,6 @@ Vagrant is used to manage VirtualBox provisioning and configuration. Raster Foun
 ```bash
 export RF_AWS_PROFILE=raster-foundry
 export RF_SETTINGS_BUCKET=rasterfoundry-development-config-us-east-1
-export RF_ARTIFACTS_BUCKET=rasterfoundry-global-artifacts-us-east-1
 ```
 
 After exporting your environment settings, you are ready to get started:

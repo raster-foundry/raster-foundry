@@ -107,7 +107,6 @@ object ColorRampMosaic extends LazyLogging {
                 histogram: List[Histogram[Double]],
                 options: SingleBandOptions.Params): MultibandTile = {
     val singleBandTile = tile.band(0)
-
     val hist: Histogram[Double] = histogram match {
       case Nil =>
         throw MetadataException(
@@ -130,7 +129,8 @@ object ColorRampMosaic extends LazyLogging {
           throw new IllegalArgumentException(message)
       }
 
-    val renderedTile = cmap.render(singleBandTile)
+    val renderedTile =
+      cmap.render(singleBandTile.interpretAs(IntUserDefinedNoDataCellType(0)))
     val r = renderedTile.map(_.red).interpretAs(UByteCellType)
     val g = renderedTile.map(_.green).interpretAs(UByteCellType)
     val b = renderedTile.map(_.blue).interpretAs(UByteCellType)

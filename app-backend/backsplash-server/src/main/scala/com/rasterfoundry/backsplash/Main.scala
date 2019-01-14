@@ -2,6 +2,7 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.database.{
   LayerAttributeDao,
+  SceneDao,
   SceneToProjectDao,
   ToolRunDao
 }
@@ -23,7 +24,7 @@ import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.headers._
-import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig, GZip, Timeout}
+import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig, Timeout}
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
@@ -41,8 +42,13 @@ import java.util.UUID
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.rasterfoundry.database.util.RFTransactor
+import com.typesafe.scalalogging.LazyLogging
+import doobie._
+import doobie.implicits._
+import doobie.postgres._
+import doobie.postgres.implicits._
 
-object Main extends IOApp with HistogramStoreImplicits {
+object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   val dbContextShift: ContextShift[IO] = IO.contextShift(
     ExecutionContext.fromExecutor(
@@ -121,20 +127,46 @@ object Main extends IOApp with HistogramStoreImplicits {
                             toolStoreImplicits,
                             xa).routes))
 
+  val sceneMosaicService: HttpRoutes[IO] =
+    authenticators.tokensAuthMiddleware(
+      AuthedAutoSlash(
+        new SceneService(SceneDao(),
+                         mtr,
+                         mosaicImplicits,
+                         LayerAttributeDao(),
+                         xa).routes
+      )
+    )
+
   val httpApp =
     Router(
-      "/" -> mtr.middleware(GZip(withCORS(withTimeout(mosaicService)))),
-      "/tools" -> mtr.middleware(GZip(withCORS(withTimeout(analysisService)))),
+      "/" -> mtr.middleware(withCORS(withTimeout(mosaicService))),
+      "/scenes" -> mtr.middleware(withCORS(withTimeout(sceneMosaicService))),
+      "/tools" -> mtr.middleware(withCORS(withTimeout(analysisService))),
       "/healthcheck" -> AutoSlash(new HealthcheckService[IO]().routes)
     )
+
+  val startupBanner =
+    """|    ___                     _               _ __     _                     _
+       |   | _ )   __ _     __     | |__    ___    | '_ \   | |    __ _     ___   | |_
+       |   | _ \  / _` |   / _|    | / /   (_-<    | .__/   | |   / _` |   (_-<   | ' \
+       |   |___/  \__,_|   \__|_   |_\_\   /__/_   |_|__   _|_|_  \__,_|   /__/_  |_||_|
+       | _|'''''|_|'''''|_|'''''|_|'''''|_|'''''|_|'''''|_|'''''|_|'''''|_|'''''|_|'''''|
+       | '`-0-0-''`-0-0-''`-0-0-''`-0-0-''`-0-0-''`-0-0-''`-0-0-''`-0-0-''`-0-0-''`-0-0-'""".stripMargin
+      .split("\n")
+      .toList
 
   def stream =
     BlazeServerBuilder[IO]
       .withExecutionContext(blazeEC)
+      .withBanner(startupBanner)
       .withConnectorPoolSize(Config.parallelism.blazeConnectorPoolSize)
       .bindHttp(8080, "0.0.0.0")
       .withHttpApp(httpApp.orNotFound)
       .serve
+
+  val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync
+  logger.info(s"Server Started (${canSelect})")
 
   def run(args: List[String]): IO[ExitCode] =
     for {

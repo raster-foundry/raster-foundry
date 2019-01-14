@@ -13,7 +13,6 @@ node {
     }
 
     env.AWS_DEFAULT_REGION = 'us-east-1'
-    env.RF_ARTIFACTS_BUCKET = 'rasterfoundry-global-artifacts-us-east-1'
 
     // Execute `cibuild` wrapped within a plugin that translates
     // ANSI color codes to something that renders inside the Jenkins

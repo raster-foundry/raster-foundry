@@ -10,7 +10,9 @@ import geotrellis.raster.io._
 import geotrellis.raster.histogram._
 import geotrellis.raster.render._
 import geotrellis.raster.render.png._
+import geotrellis.raster.summary._
 import io.circe.{Encoder, Json, KeyEncoder}
+import io.circe.generic.semiauto._
 import io.circe.parser._
 import io.circe.syntax._
 
@@ -40,4 +42,6 @@ package object server {
     new Encoder[Histogram[Double]] {
       final def apply(hist: Histogram[Double]): Json = hist.toJson.asJson
     }
+
+  implicit val statsEncoder: Encoder[Statistics[Double]] = deriveEncoder
 }

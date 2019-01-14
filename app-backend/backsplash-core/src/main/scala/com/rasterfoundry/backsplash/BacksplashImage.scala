@@ -5,76 +5,123 @@ import java.net.URLDecoder
 import com.rasterfoundry.backsplash.color._
 import geotrellis.vector.{io => _, _}
 import geotrellis.raster.{io => _, _}
-import geotrellis.vector.io.readWktOrWkb
 import geotrellis.raster.histogram._
-import geotrellis.raster.io.geotiff.AutoHigherResolution
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.spark.SpatialKey
-import geotrellis.proj4.{LatLng, WebMercator}
+import geotrellis.proj4.WebMercator
 import geotrellis.server.vlm.RasterSourceUtils
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
-import cats.data.{NonEmptyList => NEL}
-import cats.effect.IO
 import io.circe.syntax._
 import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
-
+import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.gdal.GDALRasterSource
+import geotrellis.raster.MultibandTile
+import scalacache._
+import scalacache.memoization._
+import scalacache.modes.sync._
 
-case class BacksplashImage(imageId: UUID,
-                           uri: String,
-                           footprint: MultiPolygon,
-                           subsetBands: List[Int],
-                           corrections: ColorCorrect.Params,
-                           singleBandOptions: Option[SingleBandOptions.Params],
-                           mtr: MetricsRegistrator)
+/** An image used in a tile or export service, can be color corrected, and requested a subet of the bands from the
+  * image
+  *
+  * If caching is enabled then reads of the source tiles are cached. The image id, uri, subset of bands, single band
+  * options, and either the z-x-y or extent is used to construct a unique key for the tile read.
+  *
+  * NOTE: additional class parameters added to this class that will NOT affect how the source data is read
+  * need to be flagged with the @cacheKeyExclude decorator to avoid unecessarily namespacing values in the keys
+  *
+  * @param imageId UUID of the image (scene) in the database
+  * @param projectId UUID of the layer this image is a part of
+  * @param uri location of the source data
+  * @param footprint extent of data the image covers
+  * @param subsetBands subset of bands to be read from source
+  * @param corrections description + operations for how to correct image
+  * @param singleBandOptions band + options of how to color a single band
+  */
+case class BacksplashImage(
+    imageId: UUID,
+    @cacheKeyExclude projectId: UUID,
+    @cacheKeyExclude uri: String,
+    @cacheKeyExclude footprint: MultiPolygon,
+    subsetBands: List[Int],
+    @cacheKeyExclude corrections: ColorCorrect.Params,
+    @cacheKeyExclude singleBandOptions: Option[SingleBandOptions.Params])
     extends LazyLogging {
 
-  val getRasterSourceTimer =
-    mtr.newTimer(classOf[BacksplashImage], "get-raster-source")
+  implicit val tileCache = Cache.tileCache
+  implicit val flags = Cache.tileCacheFlags
 
-  def read(extent: Extent, cs: CellSize): Option[MultibandTile] = {
-    val time = getRasterSourceTimer.time()
-    val rs = BacksplashImage.getRasterSource(uri)
-    time.stop()
-    val destinationExtent = extent.reproject(rs.crs, WebMercator)
-    rs.reproject(WebMercator, NearestNeighbor)
-      .resampleToGrid(RasterExtent(extent, cs), NearestNeighbor)
-      .read(destinationExtent, subsetBands.toSeq)
-      .map(_.tile)
-  }
+  lazy val rasterSource = BacksplashImage.getRasterSource(uri)
 
+  /** Read ZXY tile - defers to a private method to enable disable/enabling of cache **/
   def read(z: Int, x: Int, y: Int): Option[MultibandTile] = {
-    val time = getRasterSourceTimer.time()
-    val rs = BacksplashImage.getRasterSource(uri)
-    time.stop()
-    val layoutDefinition = BacksplashImage.tmsLevels(z)
-    rs.reproject(WebMercator)
-      .tileToLayout(layoutDefinition, NearestNeighbor)
-      .read(SpatialKey(x, y), subsetBands)
+    readWithCache(z, x, y)
   }
 
-  def colorCorrect(z: Int,
-                   x: Int,
-                   y: Int,
-                   hists: Seq[Histogram[Double]],
-                   nodataValue: Option[Double]): Option[MultibandTile] =
-    read(z, x, y) map {
-      corrections.colorCorrect(_, hists, nodataValue)
+  private def readWithCache(z: Int, x: Int, y: Int)(
+      implicit @cacheKeyExclude flags: Flags): Option[MultibandTile] =
+    memoizeSync(None) {
+      logger.debug(s"Reading ${z}-${x}-${y} - Image: ${imageId} at ${uri}")
+      val layoutDefinition = BacksplashImage.tmsLevels(z)
+      logger.debug(s"CELL TYPE: ${rasterSource.cellType}")
+      rasterSource
+        .reproject(WebMercator)
+        .tileToLayout(layoutDefinition, NearestNeighbor)
+        .read(SpatialKey(x, y), subsetBands) map { tile =>
+        tile.mapBands((n: Int, t: Tile) => t.toArrayTile)
+      }
     }
 
-  def colorCorrect(extent: Extent,
-                   cs: CellSize,
-                   hists: Seq[Histogram[Double]],
-                   nodataValue: Option[Double]) =
-    read(extent, cs) map {
-      corrections.colorCorrect(_, hists, nodataValue)
+  /** Read tile - defers to a private method to enable disable/enabling of cache **/
+  def read(extent: Extent, cs: CellSize): Option[MultibandTile] = {
+    implicit val flags =
+      Flags(Config.cache.tileCacheEnable, Config.cache.tileCacheEnable)
+    logger.debug(s"Tile Cache Status: ${flags}")
+    readWithCache(extent, cs)
+  }
+
+  private def readWithCache(extent: Extent, cs: CellSize)(
+      implicit @cacheKeyExclude flags: Flags
+  ): Option[MultibandTile] = {
+    memoizeSync(None) {
+      logger.debug(
+        s"Reading Extent ${extent} with CellSize ${cs} - Image: ${imageId} at ${uri}"
+      )
+      val rasterExtent = RasterExtent(extent, cs)
+      logger.debug(
+        s"Expecting to read ${rasterExtent.cols * rasterExtent.rows} cells (${rasterExtent.cols} cols, ${rasterExtent.rows} rows)")
+      rasterSource
+        .reproject(WebMercator, NearestNeighbor)
+        .resampleToGrid(rasterExtent, NearestNeighbor)
+        .read(extent, subsetBands.toSeq)
+        .map(_.tile)
     }
+  }
 }
 
 object BacksplashImage extends RasterSourceUtils with LazyLogging {
 
-  def getRasterSource(uri: String): GeoTiffRasterSource =
-    new GeoTiffRasterSource(uri)
+  implicit val rasterSourceCache = Cache.rasterSourceCache
+  implicit val flags = Cache.rasterSourceCacheFlags
+
+  val enableGDAL = Config.RasterSource.enableGDAL
+
+  def getRasterSource(uri: String): RasterSource = {
+    if (enableGDAL) {
+      logger.debug(s"Using GDAL Raster Source: ${uri}")
+      // Do not bother caching - let GDAL internals worry about that
+      GDALRasterSource(URLDecoder.decode(uri))
+    } else {
+      memoizeSync(None) {
+        logger.debug(s"Using GeoTiffRasterSource: ${uri}")
+        val rs = new GeoTiffRasterSource(uri)
+        // access lazy vals so they are cached
+        rs.tiff
+        rs.rasterExtent
+        rs.resolutions
+        rs
+      }
+    }
+  }
 }

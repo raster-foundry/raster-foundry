@@ -17,15 +17,24 @@ class ForeignErrorHandler[F[_], E <: Throwable, U](implicit M: MonadError[F, E])
     with Http4sDsl[F] {
   private def wrapError(t: E): F[Response[F]] = t match {
     case (err: InvariantViolation) =>
-      logger.error(err.getMessage, err.printStackTrace)
+      logger.error(err.getMessage, err)
       throw WrappedDoobieException(err.getMessage)
     case (err: AmazonS3Exception) =>
-      logger.error(err.getMessage, err.printStackTrace)
+      logger.error(err.getMessage, err)
       throw WrappedS3Exception(err.getMessage)
-    case (err: IllegalArgumentException) =>
+    case (err: IllegalArgumentException) => {
+      logger.error(err.getMessage, err)
       throw RequirementFailedException(err.getMessage)
-    case (err: BacksplashException) => throw err
-    case t                          => throw UnknownException(t.getMessage)
+    }
+    case (err: BacksplashException) =>
+      throw {
+        logger.error(err.getMessage, err)
+        err
+      }
+    case t => {
+      logger.error("An unmapped error occurred", t)
+      throw UnknownException(t.getMessage)
+    }
   }
 
   override def handle(service: AuthedService[U, F]): AuthedService[U, F] =

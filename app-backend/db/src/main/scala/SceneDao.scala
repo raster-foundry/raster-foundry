@@ -19,6 +19,8 @@ import io.circe.syntax._
 
 import scala.concurrent.duration._
 
+case class SceneDao()
+
 object SceneDao
     extends Dao[Scene]
     with LazyLogging
@@ -42,6 +44,9 @@ object SceneDao
 
   def getSceneById(id: UUID): ConnectionIO[Option[Scene]] =
     query.filter(id).selectOption
+
+  def streamSceneById(sceneId: UUID): fs2.Stream[ConnectionIO, Scene] =
+    (selectF ++ Fragments.whereAnd(fr"id = ${sceneId}")).query[Scene].stream
 
   def unsafeGetSceneById(id: UUID): ConnectionIO[Scene] =
     query.filter(id).select

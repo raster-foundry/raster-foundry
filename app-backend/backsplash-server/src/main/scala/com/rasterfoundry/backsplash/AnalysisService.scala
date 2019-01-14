@@ -33,6 +33,9 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
     extends ColorImplicits {
 
   import mosaicImplicits._
+
+  implicit val tmsReification = rawMosaicTmsReification
+
   import toolstoreImplicits._
 
   private val pngType = `Content-Type`(MediaType.image.png)
@@ -58,6 +61,25 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
                 Ok(hists.head asJson)
               case Invalid(e) =>
                 BadRequest(s"Unable to produce histogram for $analysisId: $e")
+            }
+          } yield resp
+
+        case GET -> Root / UUIDWrapper(analysisId) / "statistics"
+              :? NodeQueryParamMatcher(node)
+              :? VoidCacheQueryParamMatcher(void) as user =>
+          for {
+            authFiber <- authorizers.authToolRun(user, analysisId).start
+            paintableFiber <- analyses.read(analysisId, node).start
+            _ <- authFiber.join.handleErrorWith { error =>
+              paintableFiber.cancel *> IO.raiseError(error)
+            }
+            paintable <- paintableFiber.join
+            histsValidated <- paintable.histogram(4000)
+            resp <- histsValidated match {
+              case Valid(hists) =>
+                Ok(hists.head.statistics asJson)
+              case Invalid(e) =>
+                BadRequest(s"Unable to produce statistics for $analysisId: $e")
             }
           } yield resp
 
@@ -110,15 +132,24 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
               projectedExtent,
               BacksplashImage.tmsLevels(zoom).cellSize)
             resp <- tileValidated match {
-              case Valid(tile) =>
+              case Valid(tile) => {
                 if (respType == tiffType) {
-                  Ok(SinglebandGeoTiff(tile.band(0),
-                                       projectedExtent,
-                                       WebMercator).toByteArray,
-                     tiffType)
+                  Ok(
+                    SinglebandGeoTiff(tile.band(0),
+                                      projectedExtent,
+                                      WebMercator).toByteArray,
+                    tiffType
+                  )
                 } else {
-                  Ok(tile.band(0).renderPng(ColorRamps.Viridis).bytes, pngType)
+                  val rendered = paintableTool.renderDefinition match {
+                    case Some(renderDef) =>
+                      tile.band(0).renderPng(renderDef)
+                    case _ =>
+                      tile.band(0).renderPng(ColorRamps.Viridis)
+                  }
+                  Ok(rendered.bytes, pngType)
                 }
+              }
               case Invalid(e) => BadRequest(s"Could not produce extent: $e")
             }
           } yield resp

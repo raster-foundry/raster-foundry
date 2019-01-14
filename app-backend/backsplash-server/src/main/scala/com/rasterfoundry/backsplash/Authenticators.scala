@@ -24,18 +24,29 @@ import java.net.URL
 import java.util.UUID
 
 import com.rasterfoundry.backsplash.MetricsRegistrator
+import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
+import scalacache.memoization._
+import scalacache.CatsEffect.modes._
+import scalacache.Flags
 
-class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator) {
+import scala.concurrent.duration._
+
+class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator)
+    extends LazyLogging {
+
+  implicit val cache = Cache.caffeineAuthenticationCache
+  implicit val flags = Cache.authenticationCacheFlags
 
   val verifyJWTTimer = mtr.newTimer(classOf[Authenticators], "verify-jwt")
   val tokenAuthTimer = mtr.newTimer(classOf[Authenticators], "token-auth")
 
   val tokensAuthenticator = Kleisli[OptionT[IO, ?], Request[IO], User](
     {
-      case req @ _ -> "tools" /: UUIDWrapper(analysisId) /: _
+      case req @ _ -> UUIDWrapper(analysisId) /: _
             :? TokenQueryParamMatcher(tokenQP)
-            :? MapTokenQueryParamMatcher(mapTokenQP) =>
+            :? MapTokenQueryParamMatcher(mapTokenQP)
+          if req.scriptName == "/tools" =>
         val authHeader: OptionT[IO, Header] =
           OptionT.fromOption(
             req.headers.get(CaseInsensitiveString("Authorization")))
@@ -88,20 +99,29 @@ class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator) {
   private def userFromMapToken(func: UUID => ConnectionIO[Option[MapToken]],
                                mapTokenId: UUID): OptionT[IO, User] =
     OptionT(func(mapTokenId).transact(xa)) flatMap { mapToken =>
-      OptionT(UserDao.getUserById(mapToken.owner).transact(xa))
+      OptionT(getUserFromJWTwithCache(mapToken.owner))
     }
 
   private def userFromToken(token: String): OptionT[IO, User] = {
     val userFromTokenIO = verifyJWT(token) match {
-      case Right((_, jwtClaims)) =>
-        UserDao
-          .getUserById(jwtClaims.getStringClaim("sub"))
-          .transact(xa)
+      case Right((_, jwtClaims)) => {
+        val userIdFromJWT = jwtClaims.getStringClaim("sub")
+        getUserFromJWTwithCache(userIdFromJWT)
+      }
       case Left(e) =>
         IO(None: Option[User])
     }
     OptionT(mtr.timedIO(userFromTokenIO, tokenAuthTimer))
   }
+
+  private def getUserFromJWTwithCache(userIdFromJWT: String)(
+      implicit flags: Flags): IO[Option[User]] =
+    memoizeF[IO, Option[User]](Some(30.seconds)) {
+      logger.debug(s"Authentication - Getting User ${userIdFromJWT} from DB")
+      UserDao
+        .getUserById(userIdFromJWT)
+        .transact(xa)
+    }
 
   private def userFromPublicProject(id: UUID): OptionT[IO, User] =
     for {
@@ -111,7 +131,7 @@ class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator) {
           .filter(fr"tile_visibility=${Visibility.Public.toString}::visibility")
           .selectOption
           .transact(xa))
-      user <- OptionT(UserDao.getUserById(project.owner).transact(xa))
+      user <- OptionT(getUserFromJWTwithCache(project.owner))
     } yield user
 
   private val configAuth = ConfigFactory.load()
