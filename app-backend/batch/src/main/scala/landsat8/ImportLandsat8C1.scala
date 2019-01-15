@@ -98,9 +98,6 @@ final case class ImportLandsat8C1(
     rootUrl
   }
 
-  // Getting the image size is the only place where the s3 object
-  // is required to exist -- so handle the missing object by returning
-  // a -1 for the image's size
   protected def createThumbnails(
       sceneId: UUID,
       productId: String): List[Thumbnail.Identified] = {
