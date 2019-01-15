@@ -7,8 +7,11 @@ from typing import Any, Dict, List, Tuple
 import uuid
 
 import boto3  # type: ignore
-from shapely.geometry import MultiPolygon, Polygon, mapping  # type: ignore
 
+from rflambda.fields import (
+    FilterFields,
+    Footprints
+)
 from rflambda.landsat8.new_landsat8_event import NewLandsat8Event
 
 logger = logging.getLogger(__name__)
@@ -70,38 +73,6 @@ band_order = {
         'wavelength': [11500, 12510]
     }
 }
-
-
-class FilterFields(object):
-    def __init__(self, cloud_cover: float, sun_azimuth: float,
-                 sun_elevation: float, acquisition_date: str):
-        self.cloud_cover = cloud_cover
-        self.sun_azimuth = sun_azimuth
-        self.sun_elevation = sun_elevation
-        self.acquisition_date = acquisition_date
-
-    def to_dict(self):
-        return dict(
-            cloudCover=self.cloud_cover,
-            sunAzimuth=self.sun_azimuth,
-            sunElevation=self.sun_elevation,
-            acquisitionDate=self.acquisition_date)
-
-
-class Footprints(object):
-    def __init__(self, data_footprint: List[Tuple[float, float]]):
-        """Construct data and tile footprints using the points from product metadata
-
-        Points are assumed to be in ll, lr, ur, ul order
-        """
-
-        data_poly = MultiPolygon(
-            [Polygon(data_footprint + [data_footprint[0]])])
-        tile_poly = MultiPolygon([data_poly.envelope])
-        data_polygon = mapping(data_poly)
-        tile_polygon = mapping(tile_poly)
-        self.data_polygon = data_polygon
-        self.tile_polygon = tile_polygon
 
 
 def get_image_resolution(band_number: int) -> int:
