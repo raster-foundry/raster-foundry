@@ -13,7 +13,7 @@ import com.amazonaws.services.s3.AmazonS3URI
 import com.rasterfoundry.api.scene._
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.common.S3._
+import com.rasterfoundry.common.S3
 import com.rasterfoundry.common.utils.Shapefile
 import com.rasterfoundry.common.{AWSBatch, RollbarNotifier}
 import com.rasterfoundry.akkautil.{
@@ -685,10 +685,12 @@ trait ProjectRoutes
           cal.add(Calendar.DAY_OF_YEAR, 1)
           val s3Uri: AmazonS3URI = new AmazonS3URI(
             user.getDefaultAnnotationShapefileSource(dataBucket))
-          putObject(dataBucket, s3Uri.getKey, zipfile.toJava)
+          val s3Client = S3()
+          s3Client
+            .putObject(dataBucket, s3Uri.getKey, zipfile.toJava)
             .setExpirationTime(cal.getTime)
           zipfile.delete(true)
-          complete(getSignedUrl(dataBucket, s3Uri.getKey).toString())
+          complete(s3Client.getSignedUrl(dataBucket, s3Uri.getKey).toString())
         }
         case _ =>
           complete(

@@ -7,7 +7,6 @@ import akka.http.scaladsl.server.Route
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
-import com.amazonaws.services.s3.AmazonS3URI
 import java.net.URLDecoder
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.common.utils.CogUtils
@@ -275,10 +274,11 @@ trait SceneRoutes
               throw new Exception(
                 "Scene does not exist or is not accessible by this user")
             }
+            val s3Client = S3()
             val whitelist = List(s"s3://$dataBucket")
             (retrievedScene.sceneType, retrievedScene.ingestLocation) match {
               case (Some(SceneType.COG), Some(ingestLocation)) =>
-                val signedUrl = S3.maybeSignUri(ingestLocation, whitelist)
+                val signedUrl = s3Client.maybeSignUri(ingestLocation, whitelist)
                 List(
                   Image.Downloadable(
                     s"${sceneId}_COG.tif",
@@ -289,7 +289,7 @@ trait SceneRoutes
               case _ =>
                 retrievedScene.images map { image =>
                   val downloadUri: String =
-                    S3.maybeSignUri(image.sourceUri, whitelist)
+                    s3Client.maybeSignUri(image.sourceUri, whitelist)
                   image.toDownloadable(downloadUri)
                 }
             }
