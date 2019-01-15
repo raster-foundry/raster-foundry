@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M157 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(157)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(157)(
+    List(
+      sqlu"""
     -- Cascade the deletion of projects so that project layers are also deleted
     ALTER TABLE project_layers
     DROP CONSTRAINT project_layers_project_id_fkey,
@@ -45,5 +46,5 @@ object M157 {
     -- drop scenes_to_projects table after backend is compatible
     DROP TABLE IF EXISTS scenes_to_projects;
     """
-  ))
+    ))
 }
