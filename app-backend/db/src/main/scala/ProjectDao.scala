@@ -34,7 +34,7 @@ object ProjectDao
       visibility, tile_visibility, is_aoi_project,
       aoi_cadence_millis, aois_last_checked, tags, extent,
       manual_order, is_single_band, single_band_options,
-      default_annotation_group, extras
+      default_annotation_group, extras, default_layer
     FROM
   """ ++ tableF
 
@@ -84,44 +84,50 @@ object ProjectDao
     val now = new Timestamp(new java.util.Date().getTime)
     val ownerId = util.Ownership.checkOwner(user, newProject.owner)
     val slug = Project.slugify(newProject.name)
-    (fr"INSERT INTO" ++ tableF ++ fr"""
-        (id, created_at, modified_at, created_by,
-        modified_by, owner, name, slug_label, description,
-        visibility, tile_visibility, is_aoi_project,
-        aoi_cadence_millis, aois_last_checked, tags, extent,
-        manual_order, is_single_band, single_band_options, default_annotation_group,
-        extras)
-      VALUES
-        ($id, $now, $now, ${user.id},
-        ${user.id}, $ownerId, ${newProject.name}, $slug, ${newProject.description},
-        ${newProject.visibility}, ${newProject.tileVisibility}, ${newProject.isAOIProject},
-        ${newProject.aoiCadenceMillis}, $now, ${newProject.tags}, null,
-        TRUE, ${newProject.isSingleBand}, ${newProject.singleBandOptions}, null,
-        ${newProject.extras}
+    for {
+      defaultProjectLayer <- ProjectLayerDao.insertProjectLayer(
+        ProjectLayer(UUID.randomUUID(), now, now, "default_layer", id, "#FFFFFF")
       )
-    """).update.withUniqueGeneratedKeys[Project](
-      "id",
-      "created_at",
-      "modified_at",
-      "created_by",
-      "modified_by",
-      "owner",
-      "name",
-      "slug_label",
-      "description",
-      "visibility",
-      "tile_visibility",
-      "is_aoi_project",
-      "aoi_cadence_millis",
-      "aois_last_checked",
-      "tags",
-      "extent",
-      "manual_order",
-      "is_single_band",
-      "single_band_options",
-      "default_annotation_group",
-      "extras"
-    )
+      project <- (fr"INSERT INTO" ++ tableF ++ fr"""
+          (id, created_at, modified_at, created_by,
+          modified_by, owner, name, slug_label, description,
+          visibility, tile_visibility, is_aoi_project,
+          aoi_cadence_millis, aois_last_checked, tags, extent,
+          manual_order, is_single_band, single_band_options, default_annotation_group,
+          extras, defaultLayer)
+        VALUES
+          ($id, $now, $now, ${user.id},
+          ${user.id}, $ownerId, ${newProject.name}, $slug, ${newProject.description},
+          ${newProject.visibility}, ${newProject.tileVisibility}, ${newProject.isAOIProject},
+          ${newProject.aoiCadenceMillis}, $now, ${newProject.tags}, null,
+          TRUE, ${newProject.isSingleBand}, ${newProject.singleBandOptions}, null,
+          ${newProject.extras}, ${defaultProjectLayer.id}
+        )
+      """).update.withUniqueGeneratedKeys[Project](
+        "id",
+        "created_at",
+        "modified_at",
+        "created_by",
+        "modified_by",
+        "owner",
+        "name",
+        "slug_label",
+        "description",
+        "visibility",
+        "tile_visibility",
+        "is_aoi_project",
+        "aoi_cadence_millis",
+        "aois_last_checked",
+        "tags",
+        "extent",
+        "manual_order",
+        "is_single_band",
+        "single_band_options",
+        "default_annotation_group",
+        "extras",
+        "default_layer"
+      )
+    } yield project
   }
 
   def updateProjectQ(project: Project, id: UUID, user: User): Update0 = {
@@ -145,7 +151,8 @@ object ProjectDao
        is_single_band = ${project.isSingleBand},
        single_band_options = ${project.singleBandOptions},
        default_annotation_group = ${project.defaultAnnotationGroup},
-       extras = ${project.extras}
+       extras = ${project.extras},
+       default_layer = ${project.defaultLayer}
     """ ++ Fragments.whereAndOpt(Some(idFilter))).update
     query
   }
