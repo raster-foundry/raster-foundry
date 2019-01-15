@@ -31,7 +31,7 @@ then
         TILE_SERVER_LOCATION="http://localhost:8081" docker-compose -f docker-compose.java.yml up nginx-backsplash backsplash api-server nginx-api
     else
         TILE_SERVER_LOCATION="http://localhost:9101" \
-        docker-compose up nginx-tiler nginx-api memcached api-server tile-server
+        docker-compose up nginx-api memcached api-server nginx-backsplash backsplash
     fi
     exit
 fi

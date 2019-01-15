@@ -239,7 +239,6 @@ lazy val root = Project("root", file("."))
              migrations,
              datamodel,
              batch,
-             tile,
              tool,
              bridge)
 
@@ -362,43 +361,6 @@ lazy val batch = Project("batch", file("batch"))
       )
       .inAll
   ))
-
-lazy val tile = Project("tile", file("tile"))
-  .dependsOn(datamodel,
-             common % "test->test;compile->compile",
-             akkautil,
-             geotrellis)
-  .dependsOn(tool)
-  .settings(fork in run := true)
-  .settings(commonSettings: _*)
-  .settings({
-    libraryDependencies ++= loggingDependencies ++ testDependencies ++
-      metricsDependencies ++ Seq(
-      Dependencies.spark,
-      Dependencies.geotrellisSpark,
-      Dependencies.geotrellisS3,
-      Dependencies.akkaCirceJson,
-      Dependencies.akkaHttpCors,
-      Dependencies.akkastream,
-      Dependencies.akkaSlf4j,
-      Dependencies.circeCore % "test",
-      Dependencies.circeGeneric % "test",
-      Dependencies.circeParser % "test",
-      Dependencies.circeOptics % "test",
-      Dependencies.scalajHttp % "test"
-    )
-  })
-  .settings(assemblyMergeStrategy in assembly := {
-    case m if m.toLowerCase.endsWith("manifest.mf")     => MergeStrategy.discard
-    case m if m.toLowerCase.matches("meta-inf.*\\.sf$") => MergeStrategy.discard
-    case "reference.conf"                               => MergeStrategy.concat
-    case "application.conf"                             => MergeStrategy.concat
-    case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
-      MergeStrategy.discard
-    case PathList("META-INF", "aop.xml") => aopMerge
-    case _                               => MergeStrategy.first
-  })
-  .settings(test in assembly := {})
 
 lazy val tool = Project("tool", file("tool"))
   .dependsOn(bridge)

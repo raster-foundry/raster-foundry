@@ -40,7 +40,8 @@ final case class ImportLandsat8C1(
   val name = ImportLandsat8C1.name
 
   /** Get S3 client per each call */
-  def s3Client = S3(region = landsat8Config.awsRegion.flatMap { region =>
+  def s3Client =
+    S3(region = landsat8Config.awsRegion.flatMap { region =>
       Some(S3RegionString(region))
     })
 
