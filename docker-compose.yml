@@ -55,8 +55,6 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
-    external_links:
-      - statsd
     depends_on:
       postgres:
         condition: service_healthy

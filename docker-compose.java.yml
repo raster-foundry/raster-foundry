@@ -21,8 +21,6 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
-    external_links:
-      - statsd
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
@@ -79,8 +77,6 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
-    external_links:
-      - statsd
     depends_on:
       postgres:
         condition: service_healthy
@@ -168,13 +164,3 @@ services:
       - 8125:8125/udp
       - 8126:8126
       - 8090:80
-
-  grafana:
-    image: grafana/grafana
-    restart: always
-    ports:
-      - "3000:3000"
-    links:
-      - graphite
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=password

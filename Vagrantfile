@@ -35,10 +35,6 @@ Vagrant.configure(2) do |config|
   config.vm.network :forwarded_port, guest: 8889, host: Integer(ENV.fetch("RF_PORT_8888", 8889))
   # spark driver
   config.vm.network :forwarded_port, guest: 4040, host: Integer(ENV.fetch("RF_PORT_4040", 4040))
-  # graphite ui
-  config.vm.network :forwarded_port, guest: 8181, host: Integer(ENV.fetch("RF_PORT_8181", 8181))
-  # grafana ui
-  config.vm.network :forwarded_port, guest: 3000, host: Integer(ENV.fetch("RF_PORT_4040", 3000))
   # jmx api
   config.vm.network :forwarded_port, guest: 9010, host: Integer(ENV.fetch("RF_PORT_9010", 9010))
   # jmx tile
