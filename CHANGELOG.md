@@ -17,6 +17,8 @@
 
 ### Removed
 
+- Removed legacy tile server subproject and configuration [\#4478](https://github.com/raster-foundry/raster-foundry/pull/4478)
+
 ### Fixed
 
 ### Security
