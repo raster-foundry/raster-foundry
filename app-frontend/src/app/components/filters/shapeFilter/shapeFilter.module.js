@@ -210,7 +210,7 @@ class ShapeFilterController {
                 resolve: {
                     shape: geojson
                 }
-            });
+            }, true, true);
             return modal.result.then((shapes) => {
                 this.shapes = this.shapes.concat(shapes);
                 this.onSearchChange();
