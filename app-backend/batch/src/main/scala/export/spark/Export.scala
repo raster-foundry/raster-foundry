@@ -19,6 +19,7 @@ import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf._
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.utils.CogUtils
+import com.rasterfoundry.common.S3
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel._
@@ -256,7 +257,7 @@ object Export extends SparkJob with Config {
     s"/${ed.output.getURLDecodedSource}/${ed.input.resolution}-${ed.id}-${UUID.randomUUID()}.tiff"
 
   def writeGeoTiffS3[T <: CellGrid, G <: GeoTiff[T]](tiff: G, path: String) = {
-    val s3Uri = new AmazonS3URI(path)
+    val s3Uri = S3.createS3Uri(path)
     val bucket = s3Uri.getBucket
     val key = s3Uri.getKey
     val tiffBytes = tiff.toByteArray
@@ -301,7 +302,7 @@ object Export extends SparkJob with Config {
       }
     }
     case "s3" => {
-      val s3uri = new AmazonS3URI(ed.output.source)
+      val s3uri = S3.createS3Uri(ed.output.source)
       val key = s3uri.getKey
       val bucket = s3uri.getBucket
       writeGeoTiffS3[T, G](tiff, path(ed))

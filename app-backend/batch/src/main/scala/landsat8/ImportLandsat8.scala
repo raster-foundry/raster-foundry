@@ -8,6 +8,7 @@ import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.common.{S3, S3RegionString}
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.datamodel._
 import doobie.util.transactor.Transactor
@@ -30,7 +31,10 @@ final case class ImportLandsat8(
   def runJob(args: List[String]) = ???
 
   /** Get S3 client per each call */
-  def s3Client = S3(region = landsat8Config.awsRegion)
+  def s3Client =
+    S3(region = landsat8Config.awsRegion.flatMap { region =>
+      Some(S3RegionString(region))
+    })
 
   protected def getLandsatPath(productId: String): String = {
     val (wPath, wRow) = productId.substring(3, 6) -> productId.substring(6, 9)

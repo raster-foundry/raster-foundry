@@ -2,24 +2,24 @@ package com.rasterfoundry.batch
 
 import java.io._
 import java.net._
-import java.util.Scanner
+import java.nio.charset.Charset
 
 import cats.implicits._
-import com.amazonaws.auth._
-import com.amazonaws.services.s3.{
-  AmazonS3URI,
-  AmazonS3Client => AWSAmazonS3Client
-}
+import com.rasterfoundry.common.S3
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff.reader.TiffTagsReader
 import geotrellis.raster.io.geotiff.tags.TiffTags
 import geotrellis.spark.io.s3.AmazonS3Client
 import geotrellis.spark.io.s3.util.S3RangeReader
+import com.amazonaws.services.s3.AmazonS3URI
+import io.circe.Json
 import io.circe.parser.parse
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
 
 package object util extends LazyLogging {
+
+  val s3Client = S3()
 
   implicit class ConfigurationMethods(conf: Configuration) {
     @SuppressWarnings(Array("NullParameter"))
@@ -27,7 +27,7 @@ package object util extends LazyLogging {
   }
 
   implicit class InputStreamMethods(is: InputStream) {
-    def toJson = {
+    def toJson: Option[Json] = {
       val lines = scala.io.Source.fromInputStream(is).getLines
       val json = lines.mkString(" ")
       is.close()
@@ -48,10 +48,10 @@ package object util extends LazyLogging {
       TiffTagsReader.read(uri.toString)
     case "s3" | "https" | "http" =>
       val s3Uri = new AmazonS3URI(
-        java.net.URLDecoder.decode(uri.toString, "UTF-8"))
-      val s3Client = new AmazonS3Client(
-        new AWSAmazonS3Client(new DefaultAWSCredentialsProviderChain))
-      val s3RangeReader = S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client)
+        java.net.URLDecoder.decode(uri.toString, "UTF-8")
+      )
+      val client = new AmazonS3Client(s3Client.client)
+      val s3RangeReader = S3RangeReader(s3Uri.getBucket, s3Uri.getKey, client)
       TiffTagsReader.read(s3RangeReader)
     case _ =>
       throw new IllegalArgumentException(s"Resource at $uri is not valid")
@@ -71,9 +71,8 @@ package object util extends LazyLogging {
     case "http" | "https" =>
       uri.toURL.openStream
     case "s3" =>
-      val client = new AWSAmazonS3Client(new DefaultAWSCredentialsProviderChain)
       val s3uri = new AmazonS3URI(uri)
-      client.getObject(s3uri.getBucket, s3uri.getKey).getObjectContent
+      s3Client.getObject(s3uri.getBucket, s3uri.getKey).getObjectContent
     case _ =>
       throw new IllegalArgumentException(s"Resource at $uri is not valid")
   }
@@ -107,10 +106,7 @@ package object util extends LazyLogging {
   def readString(fileUri: URI): String = {
     val is = getStream(fileUri)
     try {
-      // A jdk [input stream -> string] method which avoids the IOUtils' 'toString' deprecation:
-      // https://community.oracle.com/blogs/pat/2004/10/23/stupid-scanner-tricks
-      val scan: Scanner = new Scanner(is).useDelimiter("\\A")
-      if (scan.hasNext()) scan.next() else ""
+      IOUtils.toString(is, Charset.defaultCharset())
     } finally {
       is.close()
     }
