@@ -21,17 +21,11 @@ then
     then
         docker-compose -f "${DIR}/../docker-compose.yml" \
                        -f "${DIR}/../docker-compose.metrics.yml" up
-    elif [ "${1:-}" = "--quiet" ]
-    then
-        shift
-        docker-compose up -d nginx-api nginx-backsplash memcached && \
-            docker-compose logs -f --tail 20 api-server "$@"
-    elif [ "${1:-}" = "--backsplash" ]
-    then
-        TILE_SERVER_LOCATION="http://localhost:8081" docker-compose -f docker-compose.java.yml up nginx-backsplash backsplash api-server nginx-api
     else
-        TILE_SERVER_LOCATION="http://localhost:9101" \
-        docker-compose up nginx-tiler nginx-api memcached api-server tile-server
+        TILE_SERVER_LOCATION="http://localhost:8081" \
+                            docker-compose \
+                            -f docker-compose.java.yml \
+                            up nginx-backsplash backsplash api-server nginx-api
     fi
     exit
 fi

@@ -49,8 +49,6 @@ services:
       dockerfile: Dockerfile.api
     ports:
       - "9100:443"
-    extra_hosts:
-      - "tile-server:127.0.0.1"
     links:
       - api-server
     volumes:

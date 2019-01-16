@@ -32,6 +32,7 @@ trait HistogramStoreImplicits
         }
       }
 
+      @SuppressWarnings(Array("TraversableHead"))
       def projectHistogram(
           self: LayerAttributeDao,
           projectId: UUID,

@@ -25,8 +25,6 @@ services:
       dockerfile: Dockerfile.api
     ports:
       - "9100:443"
-    extra_hosts:
-      - "tile-server:127.0.0.1"
     links:
       - api-server
     volumes:
@@ -51,23 +49,6 @@ services:
       - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
       - ./nginx/etc/nginx/conf.d/backsplash.conf:/etc/nginx/conf.d/default.conf
-
-  nginx-tiler:
-    image: raster-foundry-nginx-tiler
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile.tiler
-    ports:
-      - "9101:443"
-    extra_hosts:
-      - "api-server:127.0.0.1"
-    links:
-      - tile-server
-    volumes:
-      - ./nginx/srv/dist/:/srv/dist/
-      - ./nginx/etc/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/etc/nginx/includes/:/etc/nginx/includes/
-      - ./nginx/etc/nginx/conf.d/tiler.conf:/etc/nginx/conf.d/default.conf
 
   api-server:
     image: openjdk:8-jre
@@ -128,39 +109,6 @@ services:
     command: rf
     links:
       - postgres:database.service.rasterfoundry.internal
-
-  tile-server:
-    image: openjdk:8-jre
-    links:
-      - postgres:database.service.rasterfoundry.internal
-      - memcached:tile-cache.service.rasterfoundry.internal
-    external_links:
-      - statsd
-    env_file: .env
-    environment:
-      - RF_LOG_LEVEL=INFO
-      - COURSIER_CACHE=/root/.coursier
-    ports:
-      - "9900:9900"
-      - "9020:9020"
-    volumes:
-      - ./app-backend/:/opt/raster-foundry/app-backend/
-      - $HOME/.coursier:/root/.coursier
-      - ./.sbt:/root/.sbt
-      - ./.bintray:/root/.bintray
-      - $HOME/.aws:/root/.aws:ro
-      - $HOME/.ivy2:/root/.ivy2
-    working_dir: /opt/raster-foundry/app-backend/
-    entrypoint: ./sbt
-    command:
-      - "tile/run"
-      - "-Dcom.sun.management.jmxremote.rmi.port=9020"
-      - "-Dcom.sun.management.jmxremote=true"
-      - "-Dcom.sun.management.jmxremote.port=9020"
-      - "-Dcom.sun.management.jmxremote.ssl=false"
-      - "-Dcom.sun.management.jmxremote.authenticate=false"
-      - "-Dcom.sun.management.jmxremote.local.only=false"
-      - "-Djava.rmi.server.hostname=localhost"
 
   backsplash:
     image: openjdk:8-jre
