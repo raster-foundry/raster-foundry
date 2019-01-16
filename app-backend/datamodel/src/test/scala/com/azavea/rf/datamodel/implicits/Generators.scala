@@ -382,8 +382,7 @@ object Generators extends ArbitraryInstances {
       tags <- stringListGen
       isSingleBand <- arbitrary[Boolean]
       singleBandOptions <- singleBandOptionsParamsGen map { Some(_) }
-      extras <- Gen.const(().asJson),
-      defaultLayer <- uuidGen
+      extras <- Gen.const(().asJson)
     } yield {
       Project.Create(
         name,
@@ -396,8 +395,7 @@ object Generators extends ArbitraryInstances {
         tags,
         isSingleBand,
         singleBandOptions,
-        Some(extras),
-        defaultLayer
+        Some(extras)
       )
     }
 
