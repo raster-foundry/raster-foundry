@@ -44,7 +44,7 @@ object M157 {
     );
 
     -- drop scenes_to_projects table after backend is compatible
-    DROP TABLE IF EXISTS scenes_to_projects;
+    -- DROP TABLE IF EXISTS scenes_to_projects;
     """
     ))
 }

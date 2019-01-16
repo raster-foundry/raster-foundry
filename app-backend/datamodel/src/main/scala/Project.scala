@@ -34,7 +34,8 @@ final case class Project(id: UUID,
                          isSingleBand: Boolean = false,
                          singleBandOptions: Option[SingleBandOptions.Params],
                          defaultAnnotationGroup: Option[UUID],
-                         extras: Option[Json])
+                         extras: Option[Json],
+                         defaultLayer: UUID)
 
 /** Case class for project creation */
 object Project extends GeoJsonSupport {
@@ -79,7 +80,8 @@ object Project extends GeoJsonSupport {
                           tags: List[String],
                           isSingleBand: Boolean,
                           singleBandOptions: Option[SingleBandOptions.Params],
-                          extras: Option[Json] = Some("{}".asJson))
+                          extras: Option[Json] = Some("{}".asJson),
+                          defaultLayer: UUID = UUID.randomUUID())
       extends OwnerCheck {
     def toProject(user: User): Project = {
       val now = new Timestamp(new java.util.Date().getTime)
@@ -107,7 +109,8 @@ object Project extends GeoJsonSupport {
         isSingleBand = isSingleBand,
         singleBandOptions,
         None,
-        extras
+        extras,
+        defaultLayer
       )
     }
   }
@@ -134,7 +137,8 @@ object Project extends GeoJsonSupport {
             .as[Option[Boolean]]
             .map(_.getOrElse(false)),
           c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
-          c.downField("extras").as[Option[Json]]
+          c.downField("extras").as[Option[Json]],
+          c.downField("defaultLayer").as[UUID]
         ).mapN(Create.apply)
     )
 
@@ -159,7 +163,8 @@ object Project extends GeoJsonSupport {
             .as[Option[Boolean]]
             .map(_.getOrElse(false)),
           c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
-          c.downField("extras").as[Option[Json]]
+          c.downField("extras").as[Option[Json]],
+          c.downField("defaultLayer").as[UUID]
         ).mapN(Create.apply)
     )
 
@@ -187,7 +192,8 @@ object Project extends GeoJsonSupport {
                             manualOrder: Boolean,
                             isSingleBand: Boolean,
                             singleBandOptions: Option[SingleBandOptions.Params],
-                            extras: Option[Json] = Some("{}".asJson))
+                            extras: Option[Json] = Some("{}".asJson),
+                            defaultLayer: UUID = UUID.randomUUID())
 
   object WithUser {
     def apply(project: Project, user: User): WithUser = {
@@ -211,7 +217,8 @@ object Project extends GeoJsonSupport {
         project.manualOrder,
         project.isSingleBand,
         project.singleBandOptions,
-        project.extras
+        project.extras,
+        project.defaultLayer
       )
     }
 
