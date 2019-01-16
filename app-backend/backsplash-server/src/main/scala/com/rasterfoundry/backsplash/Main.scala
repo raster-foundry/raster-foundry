@@ -14,7 +14,6 @@ import cats.effect._
 import cats.implicits._
 import com.olegpy.meow.hierarchy._
 import fs2.Stream
-import geotrellis.gdal.sgdal
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.server._
