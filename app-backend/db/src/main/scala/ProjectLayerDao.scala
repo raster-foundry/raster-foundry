@@ -36,14 +36,14 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
   def insertProjectLayer(
       pl: ProjectLayer
   ): ConnectionIO[ProjectLayer] = {
-    fr"""
-    INSERT INTO project_layers (
-    id, created_at, modified_at, name, project_id, color_group_hex, smart_layer_id, range_start, range_end, geometry"
-    )
+    (fr"INSERT INTO" ++ tableF ++ fr"""
+    (id, created_at, modified_at, name, project_id, color_group_hex,
+    smart_layer_id, range_start, range_end, geometry)
     VALUES
-    (${pl.id}, ${pl.createdAt}, ${pl.modifiedAt}, ${pl.name}, ${pl.projectId}, ${pl.colorGroupHex}, ${pl.smartLayerId},
-     ${pl.rangeStart}, ${pl.rangeEnd}, ${pl.geometry})
-    """.update.withUniqueGeneratedKeys[ProjectLayer](
+      (${pl.id}, ${pl.createdAt}, ${pl.modifiedAt}, ${pl.name}, ${pl.projectId},
+      ${pl.colorGroupHex}, ${pl.smartLayerId}, ${pl.rangeStart}, ${pl.rangeEnd},
+      ${pl.geometry})
+    """).update.withUniqueGeneratedKeys[ProjectLayer](
       "id",
       "created_at",
       "modified_at",
