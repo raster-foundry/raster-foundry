@@ -112,6 +112,8 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
       }
     }
 
+    /** We know the head below is safe because we have to have images to get there */
+    @SuppressWarnings(Array("TraversableHead"))
     def tmsReification(self: BacksplashMosaic, buffer: Int)(
         implicit contextShift: ContextShift[IO])
       : (Int, Int, Int) => IO[Literal] =

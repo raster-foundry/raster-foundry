@@ -63,6 +63,10 @@ object BacksplashMosaic extends ToHistogramStoreOps {
     LayerHistogram.identity(mosaic, 4000)
   }
 
+  /** We're in the non-Nil branch of the match, so we definitely have histograms
+    * at the point where we're asking for the head of the list
+    */
+  @SuppressWarnings(Array("TraversableHead"))
   def getStoreHistogram[T: HistogramStore](mosaic: BacksplashMosaic,
                                            histStore: T)(
       implicit hasRasterExtents: HasRasterExtents[BacksplashMosaic],
