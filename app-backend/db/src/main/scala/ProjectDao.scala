@@ -85,49 +85,64 @@ object ProjectDao
     val ownerId = util.Ownership.checkOwner(user, newProject.owner)
     val slug = Project.slugify(newProject.name)
     for {
-      defaultProjectLayer <- ProjectLayerDao.insertProjectLayer(
-        ProjectLayer(UUID.randomUUID(), now, now, "default_layer", id, "#FFFFFF")
-      )
       project <- (fr"INSERT INTO" ++ tableF ++ fr"""
           (id, created_at, modified_at, created_by,
           modified_by, owner, name, slug_label, description,
           visibility, tile_visibility, is_aoi_project,
           aoi_cadence_millis, aois_last_checked, tags, extent,
           manual_order, is_single_band, single_band_options, default_annotation_group,
-          extras, defaultLayer)
+          extras)
         VALUES
           ($id, $now, $now, ${user.id},
           ${user.id}, $ownerId, ${newProject.name}, $slug, ${newProject.description},
           ${newProject.visibility}, ${newProject.tileVisibility}, ${newProject.isAOIProject},
           ${newProject.aoiCadenceMillis}, $now, ${newProject.tags}, null,
           TRUE, ${newProject.isSingleBand}, ${newProject.singleBandOptions}, null,
-          ${newProject.extras}, ${defaultProjectLayer.id}
+          ${newProject.extras}
         )
       """).update.withUniqueGeneratedKeys[Project](
-        "id",
-        "created_at",
-        "modified_at",
-        "created_by",
-        "modified_by",
-        "owner",
-        "name",
-        "slug_label",
-        "description",
-        "visibility",
-        "tile_visibility",
-        "is_aoi_project",
-        "aoi_cadence_millis",
-        "aois_last_checked",
-        "tags",
-        "extent",
-        "manual_order",
-        "is_single_band",
-        "single_band_options",
-        "default_annotation_group",
-        "extras",
-        "default_layer"
+          "id",
+          "created_at",
+          "modified_at",
+          "created_by",
+          "modified_by",
+          "owner",
+          "name",
+          "slug_label",
+          "description",
+          "visibility",
+          "tile_visibility",
+          "is_aoi_project",
+          "aoi_cadence_millis",
+          "aois_last_checked",
+          "tags",
+          "extent",
+          "manual_order",
+          "is_single_band",
+          "single_band_options",
+          "default_annotation_group",
+          "extras",
+          "default_layer"
+        )
+      defaultProjectLayer <- ProjectLayerDao.insertProjectLayer(
+        ProjectLayer(
+          UUID.randomUUID(),
+          now,
+          now,
+          "default_layer",
+          id,
+          "#FFFFFF",
+          None,
+          None,
+          None,
+          None)
       )
-    } yield project
+      _ <- this.updateProject(
+        project.copy(defaultLayer=Some(defaultProjectLayer.id)),
+        id,
+        user)
+      dbProject <- unsafeGetProjectById(id)
+    } yield dbProject
   }
 
   def updateProjectQ(project: Project, id: UUID, user: User): Update0 = {
