@@ -35,7 +35,7 @@ final case class Project(id: UUID,
                          singleBandOptions: Option[SingleBandOptions.Params],
                          defaultAnnotationGroup: Option[UUID],
                          extras: Option[Json],
-                         defaultLayer: UUID)
+                         defaultLayer: Option[UUID])
 
 /** Case class for project creation */
 object Project extends GeoJsonSupport {
@@ -80,8 +80,7 @@ object Project extends GeoJsonSupport {
                           tags: List[String],
                           isSingleBand: Boolean,
                           singleBandOptions: Option[SingleBandOptions.Params],
-                          extras: Option[Json] = Some("{}".asJson),
-                          defaultLayer: UUID = UUID.randomUUID())
+                          extras: Option[Json] = Some("{}".asJson))
       extends OwnerCheck {
     def toProject(user: User): Project = {
       val now = new Timestamp(new java.util.Date().getTime)
@@ -110,7 +109,7 @@ object Project extends GeoJsonSupport {
         singleBandOptions,
         None,
         extras,
-        defaultLayer
+        None
       )
     }
   }
@@ -137,8 +136,7 @@ object Project extends GeoJsonSupport {
             .as[Option[Boolean]]
             .map(_.getOrElse(false)),
           c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
-          c.downField("extras").as[Option[Json]],
-          c.downField("defaultLayer").as[UUID]
+          c.downField("extras").as[Option[Json]]
         ).mapN(Create.apply)
     )
 
@@ -163,8 +161,7 @@ object Project extends GeoJsonSupport {
             .as[Option[Boolean]]
             .map(_.getOrElse(false)),
           c.downField("singleBandOptions").as[Option[SingleBandOptions.Params]],
-          c.downField("extras").as[Option[Json]],
-          c.downField("defaultLayer").as[UUID]
+          c.downField("extras").as[Option[Json]]
         ).mapN(Create.apply)
     )
 
@@ -193,7 +190,7 @@ object Project extends GeoJsonSupport {
                             isSingleBand: Boolean,
                             singleBandOptions: Option[SingleBandOptions.Params],
                             extras: Option[Json] = Some("{}".asJson),
-                            defaultLayer: UUID = UUID.randomUUID())
+                            defaultLayer: Option[UUID] = None)
 
   object WithUser {
     def apply(project: Project, user: User): WithUser = {
