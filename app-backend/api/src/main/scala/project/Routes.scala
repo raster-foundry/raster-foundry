@@ -430,23 +430,19 @@ trait ProjectRoutes
         authenticate { user =>
           (projectQueryParameters) { projectQueryParams =>
             authorizeAsync {
-              projectQueryParams.analysisId match {
-                // If an analysisId is provided, the authorization is based on the analysis
-                case Some(analysisId: UUID) =>
-                  ToolRunDao
-                    .authorizeReferencedProject(user, analysisId, projectId)
-                    .transact(xa)
-                    .unsafeToFuture
-
-                case _ =>
-                  ProjectDao
-                    .authorized(user,
-                                ObjectType.Project,
-                                projectId,
-                                ActionType.View)
-                    .transact(xa)
-                    .unsafeToFuture
-              }
+              val authorized = for {
+                authProject <- ProjectDao.authorized(user,
+                                                     ObjectType.Project,
+                                                     projectId,
+                                                     ActionType.View)
+                authResult <- (authProject, projectQueryParams.analysisId) match {
+                  case (false, Some(analysisId: UUID)) =>
+                    ToolRunDao
+                      .authorizeReferencedProject(user, analysisId, projectId)
+                  case (_, _) => authProject.pure[ConnectionIO]
+                }
+              } yield authResult
+              authorized.transact(xa).unsafeToFuture
             } {
               rejectEmptyResponse {
                 complete {
@@ -876,20 +872,19 @@ trait ProjectRoutes
   def listProjectDatasources(projectId: UUID): Route = authenticate { user =>
     (projectQueryParameters) { projectQueryParams =>
       authorizeAsync {
-        projectQueryParams.analysisId match {
-          // If an analysisId is provided, the authorization is based on the analysis
-          case Some(analysisId: UUID) =>
-            ToolRunDao
-              .authorizeReferencedProject(user, analysisId, projectId)
-              .transact(xa)
-              .unsafeToFuture
-
-          case _ =>
-            ProjectDao
-              .authorized(user, ObjectType.Project, projectId, ActionType.View)
-              .transact(xa)
-              .unsafeToFuture
-        }
+        val authorized = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.View)
+          authResult <- (authProject, projectQueryParams.analysisId) match {
+            case (false, Some(analysisId: UUID)) =>
+              ToolRunDao
+                .authorizeReferencedProject(user, analysisId, projectId)
+            case (_, _) => authProject.pure[ConnectionIO]
+          }
+        } yield authResult
+        authorized.transact(xa).unsafeToFuture
       } {
         complete {
           ProjectDatasourcesDao
