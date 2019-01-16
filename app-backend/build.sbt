@@ -204,7 +204,6 @@ lazy val migrationsDependencies =
 
 lazy val testDependencies = List(
   Dependencies.scalatest,
-  Dependencies.geotrellisRasterTestkit,
   Dependencies.akkatestkit
 )
 
@@ -409,7 +408,6 @@ lazy val tool = Project("tool", file("tool"))
       Dependencies.sparkCore,
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisRaster,
-      Dependencies.geotrellisRasterTestkit % "test",
       Dependencies.scalatest,
       Dependencies.circeCore,
       Dependencies.circeGeneric,
