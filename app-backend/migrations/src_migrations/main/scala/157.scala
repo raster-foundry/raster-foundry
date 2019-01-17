@@ -13,7 +13,8 @@ object M157 {
     -- Change smart_layer_id column type to nullable uuid
     ALTER TABLE project_layers
     DROP COLUMN smart_layer_id,
-    ADD COLUMN smart_layer_id UUID;
+    ADD COLUMN smart_layer_id UUID,
+    ALTER COLUMN color_group_hex DROP DEFAULT;
 
     -- Add a default_layer_id column to projects table and populate with uuid
     -- these default uuid values are temporary
@@ -24,7 +25,8 @@ object M157 {
     -- Insert default project layers based on project id and project default layer from projects table
     INSERT INTO project_layers (
       SELECT
-        default_layer_id AS id, now() AS created_at, now() AS modified_at, 'Project default layer' AS name, id AS project_id
+        default_layer_id AS id, now() AS created_at, now() AS modified_at,
+        'Project default layer' AS name, id AS project_id, '#FFFFFF' as color_group_hex
       FROM projects
     );
 
