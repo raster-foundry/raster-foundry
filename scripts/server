@@ -1,12 +1,9 @@
 #!/bin/bash
 set -eu
 
-
-DIR="$(dirname "$0")"
-
 function usage() {
     echo -n \
-"Usage: $(basename "$0") [--with-metrics]
+"Usage: $(basename "$0")
 
 Starts servers using docker-compose
 "
@@ -17,10 +14,6 @@ then
     if [ "${1:-}" = "--help" ]
     then
         usage
-    elif [ "${1:-}" = "--with-metrics" ]
-    then
-        docker-compose -f "${DIR}/../docker-compose.yml" \
-                       -f "${DIR}/../docker-compose.metrics.yml" up
     else
         TILE_SERVER_LOCATION="http://localhost:8081" \
                             docker-compose \
