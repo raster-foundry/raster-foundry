@@ -20,10 +20,14 @@
 
 ### Fixed
 - Shapes drawn within the scene search filter context can now be saved [\#4474](https://github.com/raster-foundry/raster-foundry/pull/4474)
-- Made backsplash respect the RF_LOG_LEVEL environment variable [\#4483](https://github.com/raster-foundry/raster-foundry/pull/4483)
 
 ### Security
 - Upgrade webpack-dev-server to address vulnerability (https://nvd.nist.gov/vuln/detail/CVE-2018-14732) [\#4476](https://github.com/raster-foundry/raster-foundry/pull/4476)
+
+## [1.16.3](https://github.com/raster-foundry/raster-foundry/tree/1.16.2) (2019-01-17)
+
+### Fixed
+- Made backsplash respect the RF_LOG_LEVEL environment variable [\#4483](https://github.com/raster-foundry/raster-foundry/pull/4483)
 
 ## [1.16.2](https://github.com/raster-foundry/raster-foundry/tree/1.16.2) (2019-01-14)
 
