@@ -1,18 +1,9 @@
 # Change Log
 
-## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
+## [1.16.3](https://github.com/raster-foundry/raster-foundry/tree/1.16.2) (2019-01-17)
 
 ### Fixed
-
-### Security
+- Made backsplash respect the RF_LOG_LEVEL environment variable [\#4483](https://github.com/raster-foundry/raster-foundry/pull/4483)
 
 ## [1.16.2](https://github.com/raster-foundry/raster-foundry/tree/1.16.2) (2019-01-14)
 
