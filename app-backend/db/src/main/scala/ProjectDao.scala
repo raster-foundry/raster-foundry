@@ -136,7 +136,8 @@ object ProjectDao
                      None,
                      None)
       )
-      updatedProject = project.copy(defaultLayerId = Some(defaultProjectLayer.id))
+      updatedProject = project.copy(
+        defaultLayerId = Some(defaultProjectLayer.id))
       _ <- this.updateProject(updatedProject, id, user)
     } yield updatedProject
   }
