@@ -35,7 +35,7 @@ final case class Project(id: UUID,
                          singleBandOptions: Option[SingleBandOptions.Params],
                          defaultAnnotationGroup: Option[UUID],
                          extras: Option[Json],
-                         defaultLayer: Option[UUID])
+                         defaultLayerId: Option[UUID])
 
 /** Case class for project creation */
 object Project extends GeoJsonSupport {
@@ -190,7 +190,7 @@ object Project extends GeoJsonSupport {
                             isSingleBand: Boolean,
                             singleBandOptions: Option[SingleBandOptions.Params],
                             extras: Option[Json] = Some("{}".asJson),
-                            defaultLayer: Option[UUID] = None)
+                            defaultLayerId: Option[UUID] = None)
 
   object WithUser {
     def apply(project: Project, user: User): WithUser = {
@@ -215,7 +215,7 @@ object Project extends GeoJsonSupport {
         project.isSingleBand,
         project.singleBandOptions,
         project.extras,
-        project.defaultLayer
+        project.defaultLayerId
       )
     }
 

@@ -34,7 +34,7 @@ object ProjectDao
       visibility, tile_visibility, is_aoi_project,
       aoi_cadence_millis, aois_last_checked, tags, extent,
       manual_order, is_single_band, single_band_options,
-      default_annotation_group, extras, default_layer
+      default_annotation_group, extras, default_layer_id
     FROM
   """ ++ tableF
 
@@ -122,13 +122,13 @@ object ProjectDao
         "single_band_options",
         "default_annotation_group",
         "extras",
-        "default_layer"
+        "default_layer_id"
       )
       defaultProjectLayer <- ProjectLayerDao.insertProjectLayer(
         ProjectLayer(UUID.randomUUID(),
                      now,
                      now,
-                     "default_layer",
+                     "Project default layer",
                      id,
                      "#FFFFFF",
                      None,
@@ -136,12 +136,9 @@ object ProjectDao
                      None,
                      None)
       )
-      _ <- this.updateProject(
-        project.copy(defaultLayer = Some(defaultProjectLayer.id)),
-        id,
-        user)
-      dbProject <- unsafeGetProjectById(id)
-    } yield dbProject
+      updatedProject = project.copy(defaultLayerId = Some(defaultProjectLayer.id))
+      _ <- this.updateProject(updatedProject, id, user)
+    } yield updatedProject
   }
 
   def updateProjectQ(project: Project, id: UUID, user: User): Update0 = {
@@ -166,7 +163,7 @@ object ProjectDao
        single_band_options = ${project.singleBandOptions},
        default_annotation_group = ${project.defaultAnnotationGroup},
        extras = ${project.extras},
-       default_layer = ${project.defaultLayer}
+       default_layer_id = ${project.defaultLayerId}
     """ ++ Fragments.whereAndOpt(Some(idFilter))).update
     query
   }
