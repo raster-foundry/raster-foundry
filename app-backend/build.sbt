@@ -442,16 +442,16 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
   .settings(commonSettings: _*)
   .settings(noPublishSettings)
   .settings({
-              libraryDependencies ++= Seq(
-                Dependencies.catsCore,
-                Dependencies.catsEffect,
-                Dependencies.doobieCore,
-                Dependencies.http4sDSL,
-                Dependencies.nimbusJose,
-                "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
-                "com.github.cb372" %% "scalacache-core" % "0.27.0",
-                "com.github.cb372" %% "scalacache-caffeine" % "0.27.0"
-              )
-            })
+    libraryDependencies ++= Seq(
+      Dependencies.catsCore,
+      Dependencies.catsEffect,
+      Dependencies.doobieCore,
+      Dependencies.http4sDSL,
+      Dependencies.nimbusJose,
+      "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
+      "com.github.cb372" %% "scalacache-core" % "0.27.0",
+      "com.github.cb372" %% "scalacache-caffeine" % "0.27.0"
+    )
+  })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
   .settings(addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"))
