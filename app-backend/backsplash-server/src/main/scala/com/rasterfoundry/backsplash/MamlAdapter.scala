@@ -35,12 +35,6 @@ class BacksplashMamlAdapter[HistStore: HistogramStore](
             throw SingleBandOptionsException(
               "Band must be provided to evaluate AST"))
           // This is silly - mostly making up single band options here when all we really need is the band number
-          val singleBandOptions = SingleBandOptions.Params(
-            bandActual,
-            BandDataType.Diverging,
-            0,
-            Json.Null,
-            "Up")
           Map[String, BacksplashMosaic](
             s"${projId.toString}_${bandActual}" -> (
               SceneToProjectDao()
