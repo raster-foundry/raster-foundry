@@ -22,8 +22,6 @@ import org.http4s.server._
 import org.http4s.util.CaseInsensitiveString
 import java.net.URL
 import java.util.UUID
-
-import com.rasterfoundry.backsplash.MetricsRegistrator
 import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
 import scalacache.memoization._
@@ -32,14 +30,10 @@ import scalacache.Flags
 
 import scala.concurrent.duration._
 
-class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator)
-    extends LazyLogging {
+class Authenticators(val xa: Transactor[IO]) extends LazyLogging {
 
   implicit val cache = Cache.caffeineAuthenticationCache
   implicit val flags = Cache.authenticationCacheFlags
-
-  val verifyJWTTimer = mtr.newTimer(classOf[Authenticators], "verify-jwt")
-  val tokenAuthTimer = mtr.newTimer(classOf[Authenticators], "token-auth")
 
   val tokensAuthenticator = Kleisli[OptionT[IO, ?], Request[IO], User](
     {
@@ -111,7 +105,7 @@ class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator)
       case Left(e) =>
         IO(None: Option[User])
     }
-    OptionT(mtr.timedIO(userFromTokenIO, tokenAuthTimer))
+    OptionT(userFromTokenIO)
   }
 
   private def getUserFromJWTwithCache(userIdFromJWT: String)(
@@ -144,10 +138,7 @@ class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator)
   private def verifyJWT(tokenString: String)
     : Either[BadJWTException, (JwtToken, JWTClaimsSet)] = {
     val token: JwtToken = JwtToken(content = tokenString)
-    val time = verifyJWTTimer.time()
-    val tokenValidation = ConfigurableJwtValidator(jwkSet).validate(token)
-    time.stop()
-    tokenValidation
+    ConfigurableJwtValidator(jwkSet).validate(token)
   }
 
   val tokensAuthMiddleware = AuthMiddleware(tokensAuthenticator)

@@ -19,9 +19,8 @@ import io.circe.Json
 
 class BacksplashMamlAdapter[HistStore: HistogramStore](
     mosaicImplicits: MosaicImplicits[HistStore],
-    xa: Transactor[IO],
-    mtr: MetricsRegistrator)
-    extends ProjectStoreImplicits(xa, mtr) {
+    xa: Transactor[IO])
+    extends ProjectStoreImplicits(xa) {
   import mosaicImplicits._
 
   def asMaml(ast: MapAlgebraAST)
@@ -36,12 +35,6 @@ class BacksplashMamlAdapter[HistStore: HistogramStore](
             throw SingleBandOptionsException(
               "Band must be provided to evaluate AST"))
           // This is silly - mostly making up single band options here when all we really need is the band number
-          val singleBandOptions = SingleBandOptions.Params(
-            bandActual,
-            BandDataType.Diverging,
-            0,
-            Json.Null,
-            "Up")
           Map[String, BacksplashMosaic](
             s"${projId.toString}_${bandActual}" -> (
               SceneToProjectDao()

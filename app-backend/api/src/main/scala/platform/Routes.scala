@@ -28,7 +28,6 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import io.circe._
-import kamon.akka.http.KamonTraceDirectives
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
@@ -39,7 +38,6 @@ trait PlatformRoutes
     extends Authentication
     with PaginationDirectives
     with CommonHandlers
-    with KamonTraceDirectives
     with UserErrorHandler
     with QueryParametersCommon {
 
@@ -48,37 +46,25 @@ trait PlatformRoutes
   val platformRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {
-        traceName("platforms-list") {
-          listPlatforms
-        }
+        listPlatforms
       } ~
         post {
-          traceName("platforms-create") {
-            createPlatform
-          }
+          createPlatform
         }
     } ~
       pathPrefix(JavaUUID) { platformId =>
         pathEndOrSingleSlash {
           get {
-            traceName("platforms-get") {
-              getPlatform(platformId)
-            }
+            getPlatform(platformId)
           } ~
             put {
-              traceName("platforms-update") {
-                updatePlatform(platformId)
-              }
+              updatePlatform(platformId)
             } ~
             delete {
-              traceName("platforms-delete") {
-                deletePlatform(platformId)
-              }
+              deletePlatform(platformId)
             } ~
             post {
-              traceName("platforms-set-active-status") {
-                setPlatformStatus(platformId)
-              }
+              setPlatformStatus(platformId)
             }
         } ~
           pathPrefix("members") {
@@ -88,9 +74,7 @@ trait PlatformRoutes
             ) {
               pathEndOrSingleSlash {
                 get {
-                  traceName("platforms-members-list") {
-                    listPlatformMembers(platformId)
-                  }
+                  listPlatformMembers(platformId)
                 }
               }
             }
@@ -103,9 +87,7 @@ trait PlatformRoutes
               pathPrefix("search") {
                 pathEndOrSingleSlash {
                   get {
-                    traceName("platforms-teams-search") {
-                      listPlatformUserTeams(platformId)
-                    }
+                    listPlatformUserTeams(platformId)
                   }
                 }
               }
@@ -118,14 +100,10 @@ trait PlatformRoutes
                 "Resource path invalid"
               ) {
                 get {
-                  traceName("platforms-organizations-list") {
-                    listPlatformOrganizations(platformId)
-                  }
+                  listPlatformOrganizations(platformId)
                 } ~
                   post {
-                    traceName("platforms-organizations-create") {
-                      createOrganization(platformId)
-                    }
+                    createOrganization(platformId)
                   }
               }
             } ~
@@ -139,19 +117,13 @@ trait PlatformRoutes
                     "Resource path invalid"
                   ) {
                     get {
-                      traceName("platforms-organizations-get") {
-                        getOrganization(platformId, orgId)
-                      }
+                      getOrganization(platformId, orgId)
                     } ~
                       put {
-                        traceName("platforms-organizations-update") {
-                          updateOrganization(platformId, orgId)
-                        }
+                        updateOrganization(platformId, orgId)
                       } ~
                       post {
-                        traceName("platform-organization-set-active-status") {
-                          setOrganizationStatus(platformId, orgId)
-                        }
+                        setOrganizationStatus(platformId, orgId)
                       }
                   }
                 } ~
@@ -165,24 +137,16 @@ trait PlatformRoutes
                         "Resource path invalid"
                       ) {
                         get {
-                          traceName("platforms-organizations-members-list") {
-                            listOrganizationMembers(platformId, orgId)
-                          }
+                          listOrganizationMembers(platformId, orgId)
                         } ~
                           post {
-                            traceName("platform-organizations-member-add") {
-                              addUserToOrganization(platformId, orgId)
-                            }
+                            addUserToOrganization(platformId, orgId)
                           }
                       }
                     } ~
                       pathPrefix(Segment) { userId =>
                         delete {
-                          traceName("platform-organizations-member-remove") {
-                            removeUserFromOrganization(platformId,
-                                                       orgId,
-                                                       userId)
-                          }
+                          removeUserFromOrganization(platformId, orgId, userId)
                         }
                       }
                   } ~
@@ -196,14 +160,10 @@ trait PlatformRoutes
                         "Resource path invalid"
                       ) {
                         get {
-                          traceName("platforms-organizations-teams-list") {
-                            listTeams(platformId, orgId)
-                          }
+                          listTeams(platformId, orgId)
                         } ~
                           post {
-                            traceName("platforms-organizations-teams-create") {
-                              createTeam(platformId, orgId)
-                            }
+                            createTeam(platformId, orgId)
                           }
                       }
                     } ~
@@ -217,21 +177,13 @@ trait PlatformRoutes
                             "Resource path invalid"
                           ) {
                             get {
-                              traceName("platforms-organizations-teams-get") {
-                                getTeam(platformId, orgId, teamId)
-                              }
+                              getTeam(platformId, orgId, teamId)
                             } ~
                               put {
-                                traceName(
-                                  "platforms-organizations-teams-update") {
-                                  updateTeam(platformId, orgId, teamId)
-                                }
+                                updateTeam(platformId, orgId, teamId)
                               } ~
                               delete {
-                                traceName(
-                                  "platforms-organizations-teams-delete") {
-                                  deleteTeam(platformId, orgId, teamId)
-                                }
+                                deleteTeam(platformId, orgId, teamId)
                               }
                           }
                         } ~
@@ -245,27 +197,18 @@ trait PlatformRoutes
                             ) {
                               pathEndOrSingleSlash {
                                 get {
-                                  traceName(
-                                    "platforms-organizations-teams-members-list") {
-                                    listTeamMembers(platformId, orgId, teamId)
-                                  }
+                                  listTeamMembers(platformId, orgId, teamId)
                                 } ~
                                   post {
-                                    traceName(
-                                      "platform-organizations-teams-member-add") {
-                                      addUserToTeam(platformId, orgId, teamId)
-                                    }
+                                    addUserToTeam(platformId, orgId, teamId)
                                   }
                               } ~
                                 pathPrefix(Segment) { userId =>
                                   delete {
-                                    traceName(
-                                      "platform-organizations-teams-member-remove") {
-                                      removeUserFromTeam(platformId,
-                                                         orgId,
-                                                         teamId,
-                                                         userId)
-                                    }
+                                    removeUserFromTeam(platformId,
+                                                       orgId,
+                                                       teamId,
+                                                       userId)
                                   }
                                 }
                             }

@@ -121,44 +121,6 @@ lazy val credentialsSettings = Seq(
                 password)).toSeq
 )
 
-// Create a new MergeStrategy for aop.xml files
-val aopMerge = new sbtassembly.MergeStrategy {
-  val name = "aopMerge"
-  import scala.xml._
-  import scala.xml.dtd._
-
-  def apply(tempDir: File,
-            path: String,
-            files: Seq[File]): Either[String, Seq[(File, String)]] = {
-    val dt = DocType("aspectj",
-                     PublicID("-//AspectJ//DTD//EN",
-                              "http://www.eclipse.org/aspectj/dtd/aspectj.dtd"),
-                     Nil)
-    val file = MergeStrategy.createMergeTarget(tempDir, path)
-    val xmls: Seq[Elem] = files.map(XML.loadFile)
-    val aspectsChildren: Seq[Node] =
-      xmls.flatMap(_ \\ "aspectj" \ "aspects" \ "_")
-    val weaverChildren: Seq[Node] =
-      xmls.flatMap(_ \\ "aspectj" \ "weaver" \ "_")
-    val options: String = xmls
-      .map(x => (x \\ "aspectj" \ "weaver" \ "@options").text)
-      .mkString(" ")
-      .trim
-    val weaverAttr =
-      if (options.isEmpty) Null
-      else new UnprefixedAttribute("options", options, Null)
-    val aspects =
-      new Elem(null, "aspects", Null, TopScope, false, aspectsChildren: _*)
-    val weaver =
-      new Elem(null, "weaver", weaverAttr, TopScope, false, weaverChildren: _*)
-    val aspectj =
-      new Elem(null, "aspectj", Null, TopScope, false, aspects, weaver)
-    XML.save(file.toString, aspectj, "UTF-8", xmlDecl = false, dt)
-    IO.append(file, IO.Newline.getBytes(IO.defaultCharset))
-    Right(Seq(file -> path))
-  }
-}
-
 lazy val apiSettings = commonSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
@@ -169,9 +131,8 @@ lazy val apiSettings = commonSettings ++ Seq(
     case n if n.startsWith("META-INF/services") => MergeStrategy.concat
     case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
       MergeStrategy.discard
-    case "META-INF/MANIFEST.MF"          => MergeStrategy.discard
-    case PathList("META-INF", "aop.xml") => aopMerge
-    case _                               => MergeStrategy.first
+    case "META-INF/MANIFEST.MF" => MergeStrategy.discard
+    case _                      => MergeStrategy.first
   },
   resolvers += "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
   resolvers += Resolver.bintrayRepo("azavea", "maven"),
@@ -181,12 +142,6 @@ lazy val apiSettings = commonSettings ++ Seq(
 lazy val loggingDependencies = List(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
   "ch.qos.logback" % "logback-classic" % "1.1.7"
-)
-
-lazy val metricsDependencies = List(
-  Dependencies.kamonCore,
-  Dependencies.kamonStatsd,
-  Dependencies.kamonAkkaHttp
 )
 
 lazy val dbDependencies = List(
@@ -208,7 +163,7 @@ lazy val testDependencies = List(
 )
 
 lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
-  testDependencies ++ metricsDependencies ++ Seq(
+  testDependencies ++ Seq(
   Dependencies.akka,
   Dependencies.akkahttp,
   Dependencies.akkaHttpCors,
@@ -424,11 +379,9 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
   .settings(
     fork in run := true,
     libraryDependencies ++= Seq(
-      "io.dropwizard.metrics" % "metrics-graphite" % "4.0.3",
       "org.http4s" %% "http4s-blaze-server" % Version.http4s,
       "org.http4s" %% "http4s-circe" % Version.http4s,
       "org.http4s" %% "http4s-dsl" % Version.http4s,
-      "org.http4s" %% "http4s-dropwizard-metrics" % Version.http4s,
       "org.scalatest" %% "scalatest" % Version.scalaTest,
       "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer,
       "org.scalacheck" %% "scalacheck" % Version.scalaCheck,
@@ -479,8 +432,7 @@ lazy val backsplashServer = Project("backsplash-server",
     case "application.conf"                             => MergeStrategy.concat
     case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
       MergeStrategy.discard
-    case PathList("META-INF", "aop.xml") => aopMerge
-    case _                               => MergeStrategy.first
+    case _ => MergeStrategy.first
   })
   .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
   .settings(test in assembly := {})

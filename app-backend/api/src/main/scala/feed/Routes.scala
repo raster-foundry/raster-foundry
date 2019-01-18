@@ -6,7 +6,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.Uri.{Path, Query}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling._
-import kamon.akka.http.KamonTraceDirectives
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
@@ -21,15 +20,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-trait FeedRoutes
-    extends UserErrorHandler
-    with FeedQueryParametersDirective
-    with KamonTraceDirectives {
+trait FeedRoutes extends UserErrorHandler with FeedQueryParametersDirective {
   val feedRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {
         (feedQueryParameters) { (feedParams) =>
-          traceName("feed-proxy")
           complete { FeedService.getFeed(feedParams) }
         }
       }
