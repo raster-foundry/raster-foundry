@@ -5,6 +5,7 @@
 - Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Added ProjectLayer datamodel, dao, and migration [\#4460]https://github.com/raster-foundry/raster-foundry/pull/4460()\
 - Added lambda function for reactively processing new Landsat 8 imagery [\#4471](https://github.com/raster-foundry/raster-foundry/pull/4471)
+- Added lambda function for reactively processing new Sentinel-2 imagery [\#4491](https://github.com/raster-foundry/raster-foundry/pull/4491)
 
 ### Changed
 - Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
