@@ -131,8 +131,8 @@ lazy val apiSettings = commonSettings ++ Seq(
     case n if n.startsWith("META-INF/services") => MergeStrategy.concat
     case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
       MergeStrategy.discard
-    case "META-INF/MANIFEST.MF"          => MergeStrategy.discard
-    case _                               => MergeStrategy.first
+    case "META-INF/MANIFEST.MF" => MergeStrategy.discard
+    case _                      => MergeStrategy.first
   },
   resolvers += "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
   resolvers += Resolver.bintrayRepo("azavea", "maven"),
@@ -432,7 +432,7 @@ lazy val backsplashServer = Project("backsplash-server",
     case "application.conf"                             => MergeStrategy.concat
     case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
       MergeStrategy.discard
-    case _                               => MergeStrategy.first
+    case _ => MergeStrategy.first
   })
   .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
   .settings(test in assembly := {})
