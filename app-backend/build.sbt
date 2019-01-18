@@ -424,11 +424,9 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
   .settings(
     fork in run := true,
     libraryDependencies ++= Seq(
-      "io.dropwizard.metrics" % "metrics-graphite" % "4.0.3",
       "org.http4s" %% "http4s-blaze-server" % Version.http4s,
       "org.http4s" %% "http4s-circe" % Version.http4s,
       "org.http4s" %% "http4s-dsl" % Version.http4s,
-      "org.http4s" %% "http4s-dropwizard-metrics" % Version.http4s,
       "org.scalatest" %% "scalatest" % Version.scalaTest,
       "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer,
       "org.scalacheck" %% "scalacheck" % Version.scalaCheck,

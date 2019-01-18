@@ -31,8 +31,7 @@ import HasRasterExtents._
 import TmsReification._
 import com.typesafe.scalalogging.LazyLogging
 
-class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
-                                                 histStore: HistStore)
+class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     extends ToTmsReificationOps
     with ToExtentReificationOps
     with ToHasRasterExtentsOps
@@ -52,16 +51,6 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                                                  256,
                                                  256,
                                                  invisiCellType)
-  val readMosaicTimer =
-    mtr.newTimer(classOf[MosaicImplicits[HistStore]], "read-mosaic")
-  val readSceneTmsTimer =
-    mtr.newTimer(classOf[MosaicImplicits[HistStore]], "read-tms-scene")
-  val readSceneExtentTimer =
-    mtr.newTimer(classOf[MosaicImplicits[HistStore]], "read-extent-scene")
-  val readSceneHistTimer =
-    mtr.newTimer(classOf[MosaicImplicits[HistStore]], "read-scene-hist")
-  val mbColorSceneTimer =
-    mtr.newTimer(classOf[MosaicImplicits[HistStore]], "color-multiband-scene")
 
   def mergeTiles(tiles: IO[List[MultibandTile]]): IO[Option[MultibandTile]] = {
     tiles.map(_.reduceOption((t1: MultibandTile, t2: MultibandTile) => {
@@ -89,7 +78,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
           case _       => Raster(MultibandTile(invisiTile), extent)
         })
       }
-      mtr.timedIO(mosaic, readMosaicTimer).map(RasterLit(_))
+      mosaic.map(RasterLit(_))
     }
   }
 
@@ -139,37 +128,26 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               .parEvalMap(streamConcurrency)({ relevant =>
                 for {
                   imFiber <- IO {
-                    val time = readSceneTmsTimer.time()
                     logger.debug(
                       s"Reading Tile ${relevant.imageId} ${z}-${x}-${y}")
-                    val img = relevant.read(z, x, y)
-                    time.stop()
-                    img
+                    relevant.read(z, x, y)
                   }.start
                   histsFiber <- {
-                    val time = readSceneHistTimer.time()
                     logger.debug(
                       s"Reading Histogram ${relevant.imageId} ${z}-${x}-${y}")
-                    val hists = getHistogramWithCache(relevant)
-                    time.stop()
-                    hists
+                    getHistogramWithCache(relevant)
                   }.start
                   hists <- histsFiber.join
                   im <- imFiber.join
                   renderedTile <- IO.pure {
-                    im map {
-                      mbTile =>
-                        val time = mbColorSceneTimer.time()
-                        val noDataValue = getNoDataValue(mbTile.cellType)
-                        logger.debug(
-                          s"NODATA Value: ${noDataValue} with CellType: ${mbTile.cellType}"
-                        )
-                        val colored =
-                          relevant.corrections.colorCorrect(mbTile,
-                                                            hists,
-                                                            noDataValue)
-                        time.stop()
-                        colored
+                    im map { mbTile =>
+                      val noDataValue = getNoDataValue(mbTile.cellType)
+                      logger.debug(
+                        s"NODATA Value: ${noDataValue} with CellType: ${mbTile.cellType}"
+                      )
+                      relevant.corrections.colorCorrect(mbTile,
+                                                        hists,
+                                                        noDataValue)
                     }
                   }
                 } yield {
@@ -247,9 +225,8 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               }
             }
           }
-          timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
         } yield {
-          RasterLit(timedMosaic)
+          RasterLit(mosaic)
         }).attempt.map {
           case Left(NoDataInRegionException()) =>
             RasterLit(
@@ -305,18 +282,12 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                   {
                     for {
                       imFiber <- IO {
-                        val time = readSceneTmsTimer.time()
                         val img = relevant.read(extent, cs)
-                        time.stop()
                         img
                       }.start
                       histsFiber <- {
-                        val time = readSceneHistTimer.time()
-                        val hists =
-                          histStore.layerHistogram(relevant.imageId,
-                                                   relevant.subsetBands)
-                        time.stop()
-                        hists
+                        histStore.layerHistogram(relevant.imageId,
+                                                 relevant.subsetBands)
                       }.start
                       im <- imFiber.join
                       hists <- histsFiber.join
@@ -324,13 +295,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                         im map { mbTile =>
                           logger.debug(
                             s"N bands in resulting tile: ${mbTile.bands.length}")
-                          val time = mbColorSceneTimer.time()
-                          val colored =
-                            relevant.corrections.colorCorrect(mbTile,
-                                                              hists,
-                                                              None)
-                          time.stop()
-                          colored
+                          relevant.corrections.colorCorrect(mbTile, hists, None)
                         }
                       }
                     } yield {
@@ -359,9 +324,8 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                   BacksplashMosaic
                     .filterRelevant(self)
                     .parEvalMap(streamConcurrency)({ relevant =>
-                      val img = IO {
-                        val time = readSceneExtentTimer.time()
-                        val coloredTile = relevant.read(extent, cs) map {
+                      IO {
+                        relevant.read(extent, cs) map {
                           ColorRampMosaic
                             .colorTile(
                               _,
@@ -373,10 +337,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                               }
                             )
                         }
-                        time.stop()
-                        coloredTile
                       }
-                      img
                     })
                     .collect({
                       case Some(mbtile) => Raster(mbtile, extent)
@@ -391,8 +352,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                 }
               }
             }
-            timedMosaic <- mtr.timedIO(mosaic, readMosaicTimer)
-          } yield RasterLit(timedMosaic)
+          } yield RasterLit(mosaic)
         }
     }
 
@@ -406,13 +366,9 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
           val mosaic = BacksplashMosaic
             .filterRelevant(self)
             .parEvalMap(streamConcurrency) { relevant =>
-              val img = IO {
-                val time = readSceneExtentTimer.time()
-                val tile = relevant.read(extent, cs)
-                time.stop()
-                tile
+              IO {
+                relevant.read(extent, cs)
               }
-              img
             }
             .collect({ case Some(mbTile) => mbTile })
             .compile
@@ -424,7 +380,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
                 case _       => RasterLit(Raster(MultibandTile(invisiTile), extent))
               }
             }
-          mtr.timedIO(mosaic, readMosaicTimer)
+          mosaic
         }
     }
 
@@ -459,7 +415,7 @@ class MosaicImplicits[HistStore: HistogramStore](mtr: MetricsRegistrator,
               }
               updated1 concatNel updated2
           }))
-        mtr.timedIO(mosaic, readMosaicTimer)
+        mosaic
       }
     }
 }
