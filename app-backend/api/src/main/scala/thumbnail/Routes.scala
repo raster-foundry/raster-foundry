@@ -17,7 +17,6 @@ import com.rasterfoundry.common.S3RegionEnum
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-import kamon.akka.http.KamonTraceDirectives
 
 trait ThumbnailRoutes
     extends Authentication
@@ -25,8 +24,7 @@ trait ThumbnailRoutes
     with PaginationDirectives
     with CommonHandlers
     with UserErrorHandler
-    with Config
-    with KamonTraceDirectives {
+    with Config {
 
   val xa: Transactor[IO]
 
@@ -51,7 +49,7 @@ trait ThumbnailRoutes
   @SuppressWarnings(Array("AsInstanceOf"))
   def getThumbnailImage(thumbnailPath: String): Route =
     authenticateWithParameter { _ =>
-      var uriString =
+      val uriString =
         s"http://s3.amazonaws.com/${thumbnailBucket}/${thumbnailPath}"
       val uri = new URI(uriString)
       val s3Object = S3().getObject(uri)

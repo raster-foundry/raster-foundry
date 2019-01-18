@@ -2,7 +2,7 @@ package com.rasterfoundry.api
 
 import java.util.concurrent.Executors
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Terminated}
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import cats.effect.{ContextShift, IO}
@@ -10,7 +10,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.rasterfoundry.akkautil.RFRejectionHandler._
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.database.util.RFTransactor
-import kamon.Kamon
 
 import scala.util.Try
 import doobie.hikari._
@@ -20,7 +19,7 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 object AkkaSystem {
@@ -29,8 +28,6 @@ object AkkaSystem {
 }
 
 object Main extends App with Config with Router {
-
-  Kamon.start()
 
   implicit val system = AkkaSystem.system
   implicit val materializer = AkkaSystem.materializer
@@ -48,9 +45,8 @@ object Main extends App with Config with Router {
   val canSelect = sql"SELECT 1".query[Int].unique.transact(xa).unsafeRunSync
   println(s"Server Started (${canSelect})")
 
-  def terminate(): Unit = {
-    Try(system.terminate())
-    Try(Kamon.shutdown())
+  def terminate(): Future[Terminated] = {
+    system.terminate()
   }
 
   sys.addShutdownHook {
