@@ -401,7 +401,7 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
 
 lazy val backsplashServer = Project("backsplash-server",
                                     file("backsplash-server"))
-  .dependsOn(db, backsplashCore)
+  .dependsOn(http4sUtil, db, backsplashCore)
   .settings(commonSettings: _*)
   .settings(noPublishSettings)
   .settings(fork in run := true)
@@ -436,3 +436,22 @@ lazy val backsplashServer = Project("backsplash-server",
   })
   .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
   .settings(test in assembly := {})
+
+lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
+  .dependsOn(db, datamodel)
+  .settings(commonSettings: _*)
+  .settings(noPublishSettings)
+  .settings({
+              libraryDependencies ++= Seq(
+                Dependencies.catsCore,
+                Dependencies.catsEffect,
+                Dependencies.doobieCore,
+                Dependencies.http4sDSL,
+                Dependencies.nimbusJose,
+                "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
+                "com.github.cb372" %% "scalacache-core" % "0.27.0",
+                "com.github.cb372" %% "scalacache-caffeine" % "0.27.0"
+              )
+            })
+  .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
+  .settings(addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"))
