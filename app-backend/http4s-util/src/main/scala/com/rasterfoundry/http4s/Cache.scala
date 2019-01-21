@@ -9,9 +9,8 @@ import scalacache.CatsEffect.modes._
 
 object Cache extends LazyLogging {
 
-  val authenticationCacheFlags = Flags(Config.cache.authenticationCacheEnable)
+  val authenticationCacheFlags = Flags(Config.cache.authenticationCacheEnable,
+                                       Config.cache.authenticationCacheEnable)
   val caffeineAuthenticationCache: Cache[Option[User]] =
     CaffeineCache[Option[User]]
-  logger.info(s"Authentication Cache Status: ${authenticationCacheFlags}")
-
 }
