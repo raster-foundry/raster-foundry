@@ -358,5 +358,10 @@ object OrganizationDao extends Dao[Organization] with LazyLogging {
       .viewFilter(user)
       .filter(searchParams)
       .list(0, 5, fr"order by name")
+      .map(organizations =>
+        organizations map {
+          _.copy(planetCredential = Credential(Some("")),
+                 dropboxCredential = Credential(Some("")))
+      })
   }
 }

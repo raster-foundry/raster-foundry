@@ -23,10 +23,10 @@ import java.util.UUID
 
 import scala.concurrent.Future
 
-import com.rasterfoundry.database.util.Email
+import com.rasterfoundry.database.util.Sanitization
 import com.rasterfoundry.database.Implicits._
 
-object UserDao extends Dao[User] {
+object UserDao extends Dao[User] with Sanitization {
 
   val tableName = "users"
 
@@ -37,19 +37,6 @@ object UserDao extends Dao[User] {
       email, name, profile_image_uri, is_superuser, is_active, visibility, personal_info
     FROM
   """ ++ tableF
-
-  private def sanitizeUser(user: User): User = {
-    user.copy(
-      planetCredential = Credential(Some("")),
-      dropboxCredential = Credential(Some("")),
-      name = Email.obfuscate(user.name),
-      email = Email.obfuscate(user.email),
-      personalInfo = user.personalInfo.copy(
-        email = Email.obfuscate(user.personalInfo.email),
-        phoneNumber = ""
-      )
-    )
-  }
 
   def filterById(id: String) = {
     query.filter(fr"id = ${id}")
