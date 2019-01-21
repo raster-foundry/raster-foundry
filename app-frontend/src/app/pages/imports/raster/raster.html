@@ -1,16 +1,15 @@
 <div class="container dashboard">
   <div class="row content stack-sm">
     <div class="column-8">
-      <!-- Dashboard Header -->
-      <h3>Imports</h3>
       <div class="dashboard-header">
+        <h3>Imports</h3>
+        <div class="flex-fill"></div>
         <select class="form-control"
                 ng-model="$ctrl.currentOwnershipFilter"
         >
           <option value="owned">Owned by me</option>
           <option value="shared">Shared with me</option>
         </select>
-        <div class="flex-fill"></div>
         <a class="btn btn-primary" ng-click="$ctrl.importModal()">
           Import scenes
         </a>
