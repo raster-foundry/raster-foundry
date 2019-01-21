@@ -4,7 +4,7 @@ import com.rasterfoundry.datamodel.{User, Credential}
 
 trait Sanitization {
 
-  def sanitizeUserContactInfo(user: User): User = {
+  private def sanitizeUserContactInfo(user: User): User = {
     user.copy(
       name = Email.obfuscate(user.name),
       email = Email.obfuscate(user.email),
@@ -15,7 +15,7 @@ trait Sanitization {
     )
   }
 
-  def sanitizeUserCredentials(user: User): User = {
+  private def sanitizeUserCredentials(user: User): User = {
     user.copy(
       planetCredential = Credential(Some("")),
       dropboxCredential = Credential(Some(""))
