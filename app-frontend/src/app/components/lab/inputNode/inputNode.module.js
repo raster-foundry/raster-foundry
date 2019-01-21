@@ -118,7 +118,10 @@ class InputNodeController {
                 component: 'rfProjectSelectModal',
                 resolve: {
                     project: () => this.selectedProject && this.selectedProject.id || false,
-                    content: () => ({title: 'Select a project'})
+                    content: () => ({
+                        title: 'Select a project',
+                        nodeName: this.node.metadata.label
+                    })
                 }
             }).result.then(project => {
                 this.checkValidity();
