@@ -11,8 +11,8 @@ import com.rasterfoundry.datamodel.{
   BatchParams,
   ColorCorrect => RFColorCorrect,
   MosaicDefinition,
-  SceneToProject,
-  SceneToProjectwithSceneType
+  SceneToLayer,
+  SceneToLayerWithSceneType
 }
 import com.typesafe.scalalogging.LazyLogging
 import com.rasterfoundry.datamodel._
@@ -46,11 +46,25 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     """.update.run
   }
 
-  def acceptScenes(projectLayerId: UUID, sceneIds: List[UUID]): ConnectionIO[Int] = {
+  def acceptScenes(projectLayerId: UUID,
+                   sceneIds: List[UUID]): ConnectionIO[Int] = {
     sceneIds.toNel match {
       case Some(ids) => acceptScenes(projectLayerId, ids)
       case _         => 0.pure[ConnectionIO]
     }
+  }
+
+  def acceptScenes(projectLayerId: UUID,
+                   sceneIds: NEL[UUID]): ConnectionIO[Int] = {
+    (
+      fr"""
+        UPDATE scenes_to_layers
+        SET accepted = true
+      """ ++ Fragments.whereAnd(
+        fr"project_layer_id = ${projectLayerId}",
+        Fragments.in(fr"scene_id", sceneIds)
+      )
+    ).update.run
   }
 
   def addSceneOrdering(projectId: UUID): ConnectionIO[Int] = {
@@ -69,8 +83,10 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     """).update.run
   }
 
+  // TODO: update endpoint to accept projectLayerId instead of projectId
+  // since we support setting manual order of scenes within a layer
   def setManualOrder(projectLayerId: UUID,
-                     sceneIds: Seq[UUID],): ConnectionIO[Seq[UUID]] = {
+                     sceneIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = {
     val updates = for {
       i <- sceneIds.indices
     } yield {
@@ -86,7 +102,7 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     } yield sceneIds
   }
 
-  def getMosaicDefinition(projectId: UUID,
+  def getMosaicDefinition(projectLayerId: UUID,
                           polygonOption: Option[Projected[Polygon]],
                           redBand: Option[Int] = None,
                           greenBand: Option[Int] = None,
@@ -95,35 +111,35 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     : Stream[ConnectionIO, MosaicDefinition] = {
     val filters = List(
       polygonOption.map(polygon =>
-        fr"ST_Intersects(scenes_stp.tile_footprint, ${polygon})"),
-      Some(fr"scenes_stp.project_id = ${projectId}"),
-      Some(fr"scenes_stp.accepted = true"),
-      Some(fr"scenes_stp.ingest_status = 'INGESTED'"),
+        fr"ST_Intersects(tile_footprint, ${polygon})"),
+      Some(fr"project_layer_id = ${projectLayerId}"),
+      Some(fr"accepted = true"),
+      Some(fr"ingest_status = 'INGESTED'"),
       sceneIdSubset.toNel map {
         Fragments.in(fr"scene_id", _)
       }
     )
     val select = fr"""
     SELECT
-      scene_id, project_layer_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location,
+      scene_id, project_id, project_layer_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location,
       data_footprint, is_single_band, single_band_options
     FROM (
       scenes_to_layers
     LEFT JOIN
       scenes
-    ON scenes.id = scenes_to_projects.scene_id
-    ) scenes_stp
+    ON scenes.id = scenes_to_layers.scene_id
+    ) scenes_stl
     LEFT JOIN
       project_layers
     ON
-      scenes_stp.project_layer_id = project_layers.id
+      scenes_stl.project_layer_id = project_layers.id
     LEFT JOIN
       projects
     ON
-      scenes_stp.project_id = projects.id
+      project_layers.project_id = projects.id
       """
-    (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scenes_stp.scene_order ASC")
-      .query[SceneToProjectwithSceneType]
+    (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scene_order ASC")
+      .query[SceneToLayerWithSceneType]
       .stream map { stp =>
       {
         Applicative[Option].map3(redBand, greenBand, blueBand) {
@@ -154,5 +170,62 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
         }
       }
     }
+  }
+
+  def getMosaicDefinition(
+      projectLayerId: UUID): Stream[ConnectionIO, MosaicDefinition] = {
+    getMosaicDefinition(projectLayerId, None)
+  }
+
+  def getColorCorrectParams(
+      projectLayerId: UUID,
+      sceneId: UUID): ConnectionIO[ColorCorrect.Params] = {
+    query
+      .filter(
+        fr"project_layer_id = ${projectLayerId} AND scene_id = ${sceneId}")
+      .select
+      .map { stl: SceneToLayer =>
+        stl.colorCorrectParams
+      }
+  }
+
+  def setColorCorrectParams(
+      projectLayerId: UUID,
+      sceneId: UUID,
+      colorCorrectParams: ColorCorrect.Params): ConnectionIO[SceneToLayer] = {
+    fr"""
+      UPDATE scenes_to_layers
+      SET mosaic_definition = ${colorCorrectParams}
+      WHERE project_layer_id = ${projectLayerId} AND scene_id = ${sceneId}
+    """.update.withUniqueGeneratedKeys("scene_id",
+                                       "project_layer_id",
+                                       "accepted",
+                                       "scene_order",
+                                       "mosaic_definition")
+  }
+
+  def setColorCorrectParamsBatch(
+      projectLayerId: UUID,
+      batchParams: BatchParams): ConnectionIO[List[SceneToLayer]] = {
+    batchParams.items
+      .map(params =>
+        setColorCorrectParams(projectLayerId, params.sceneId, params.params))
+      .sequence
+  }
+
+  def setProjectLayerColorBands(
+      projectLayerId: UUID,
+      colorBands: ProjectColorModeParams): ConnectionIO[Int] = {
+    // TODO support setting color band by datasource instead of project wide
+    // if there is not a mosaic definition at this point, then the scene_to_project row was not created correctly
+    (fr"""
+    UPDATE scenes_to_layer
+    SET mosaic_definition = (mosaic_definition || '{"redBand":""" ++ Fragment
+      .const(s"${colorBands.redBand}") ++
+      fr""", "blueBand":""" ++ Fragment.const(s"${colorBands.blueBand}") ++
+      fr""", "greenBand":""" ++ Fragment.const(s"${colorBands.greenBand}") ++
+      fr"""}'::jsonb)
+    WHERE project_layer_id = ${projectLayerId}
+    """).update.run
   }
 }
