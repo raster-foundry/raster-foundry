@@ -138,6 +138,7 @@ final case class User(id: String,
       }
     this.copy(name = scrubbedName)
   }
+
 }
 
 object User {
