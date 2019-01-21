@@ -83,7 +83,9 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     """).update.run
   }
 
-  def moveSceneOrder(projectLayerId: UUID, from: Int, to: Int): ConnectionIO[Int] = {
+  def moveSceneOrder(projectLayerId: UUID,
+                     from: Int,
+                     to: Int): ConnectionIO[Int] = {
     // TODO implement this. Route is currently commented out
     // val updateF = fr"""
     // """
