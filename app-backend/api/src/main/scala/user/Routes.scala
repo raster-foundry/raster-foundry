@@ -84,7 +84,11 @@ trait UserRoutes
   }
 
   def getDbOwnUser: Route = authenticate { user =>
-    complete(UserDao.unsafeGetUserById(user.id).transact(xa).unsafeToFuture())
+    complete(
+      UserDao
+        .unsafeGetUserById(user.id, Some(true))
+        .transact(xa)
+        .unsafeToFuture())
   }
 
   def updateAuth0User: Route = authenticate { user =>
