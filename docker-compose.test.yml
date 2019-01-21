@@ -13,7 +13,7 @@ services:
       dockerfile: Dockerfile.backsplash
 
   app-frontend:
-    image: node:6
+    image: node:10
     working_dir: /opt/raster-foundry/app-frontend/
     volumes:
       - ./app-frontend/.babelrc:/opt/raster-foundry/app-frontend/.babelrc
