@@ -123,7 +123,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
           extent = BacksplashImage.tmsLevels(z).mapTransform.keyToExtent(x, y)
           // for single band imagery, after color correction we have RGBA, so
           // the empty tile needs to be four band as well
-          mosaic = if (bandCount == 3) {
+          mosaic <- if (bandCount == 3) {
             val ioMBT = filtered
               .parEvalMap(streamConcurrency)({ relevant =>
                 for {
@@ -275,7 +275,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
               .compile
               .toList
               .map(_.flatten)
-            mosaic = if (bands.length == 3) {
+            mosaic <- if (bands.length == 3) {
               BacksplashMosaic
                 .filterRelevant(self)
                 .parEvalMap(streamConcurrency)({ relevant =>
