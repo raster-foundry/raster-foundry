@@ -25,7 +25,7 @@ import scalacache.Flags
 
 import scala.concurrent.duration._
 
-class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator)
+class Authenticators(val xa: Transactor[IO])
     extends LazyLogging
     with RFHttp4s.Authenticators {
 
