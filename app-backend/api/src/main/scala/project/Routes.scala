@@ -1053,8 +1053,8 @@ trait ProjectRoutes
                 s"Project ${projectId} does not have a default layer")
           }
           _ <- SceneToProjectDao.setProjectColorBands(projectId, colorBands)
-          rowsAffected <- SceneToLayerDao.setProjectColorBands(projectLayerId,
-                                                               colorBands)
+          rowsAffected <- SceneToLayerDao.setProjectLayerColorBands(projectLayerId,
+                                                                    colorBands)
         } yield { rowsAffected }
 
         onSuccess(setProjectColorBandsIO.transact(xa).unsafeToFuture) { _ =>
@@ -1113,14 +1113,12 @@ trait ProjectRoutes
                 throw new Exception(
                   s"Project ${projectId} does not have a default layer")
             }
-            _ <- SceneToProjectDao.getMosaicDefinition(projectId)
-            result <- SceneToLayerDao.getMosaicDefinition(projectLayerId)
+            _ <- SceneToProjectDao.getMosaicDefinition(projectId).compile.to[List]
+            result <- SceneToLayerDao.getMosaicDefinition(projectLayerId).compile.to[List]
           } yield { result }
 
           getMosaicDefinitionIO
             .transact(xa)
-            .compile
-            .to[List]
             .unsafeToFuture
         }
       }
@@ -1139,7 +1137,7 @@ trait ProjectRoutes
           complete(StatusCodes.RequestEntityTooLarge)
         }
         val scenesAdded =
-          ProjectDao.addScenesToProject(sceneIds, projectId, true)
+          ProjectDao.addScenesToProject(sceneIds, projectId, true, None)
 
         complete { scenesAdded.transact(xa).unsafeToFuture }
       }
