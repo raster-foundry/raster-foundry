@@ -18,6 +18,7 @@
 - Removed unused dependency `geotrellis-raster-testkit`[\#4482](https://github.com/raster-foundry/raster-foundry/pull/4482)
 - Removed legacy tile server subproject and configuration [\#4478](https://github.com/raster-foundry/raster-foundry/pull/4478)
 - Removed unused metrics collection resources and application code [\#4475](https://github.com/raster-foundry/raster-foundry/pull/4475), [\#4493](https://github.com/raster-foundry/raster-foundry/pull/4493)
+- Removed deprecated Gatling load tests [\#4504](https://github.com/raster-foundry/raster-foundry/pull/4504)
 
 ### Fixed
 - Shapes drawn within the scene search filter context can now be saved [\#4474](https://github.com/raster-foundry/raster-foundry/pull/4474)
