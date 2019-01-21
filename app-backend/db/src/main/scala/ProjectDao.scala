@@ -215,13 +215,15 @@ object ProjectDao
     updateStatusQuery.update.run
   }
 
-  def addScenesToProject(sceneIds: List[UUID],
-                         projectId: UUID,
-                         isAccepted: Boolean = true,
-                         projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] = {
+  def addScenesToProject(
+      sceneIds: List[UUID],
+      projectId: UUID,
+      isAccepted: Boolean = true,
+      projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] = {
     sceneIds.toNel match {
-      case Some(ids) => addScenesToProject(ids, projectId, isAccepted, projectLayerIdO)
-      case _         => 0.pure[ConnectionIO]
+      case Some(ids) =>
+        addScenesToProject(ids, projectId, isAccepted, projectLayerIdO)
+      case _ => 0.pure[ConnectionIO]
     }
   }
 
@@ -239,7 +241,8 @@ object ProjectDao
     WHERE projects.id = ${projectId};
     """.update.run
 
-  def sceneIdWithDatasourceF(sceneIds: NonEmptyList[UUID], projectLayerId: UUID): Fragment =
+  def sceneIdWithDatasourceF(sceneIds: NonEmptyList[UUID],
+                             projectLayerId: UUID): Fragment =
     fr"""
       SELECT scenes.id,
             datasources.id,
@@ -267,7 +270,8 @@ object ProjectDao
     (projectLayerIdO, project.defaultLayerId) match {
       case (Some(projectLayerId), _) => projectLayerId
       case (_, Some(defaultLayerId)) => defaultLayerId
-      case _ => throw new Exception(s"Project ${project.id} does not have any layer")
+      case _ =>
+        throw new Exception(s"Project ${project.id} does not have any layer")
     }
 
   def addScenesToProject(sceneIds: NonEmptyList[UUID],
@@ -298,7 +302,8 @@ object ProjectDao
         }
         val insertScenesToProjects =
           "INSERT INTO scenes_to_projects (scene_id, project_id, accepted, scene_order, mosaic_definition) VALUES (?, ?, ?, ?, ?)"
-        Update[SceneToProject](insertScenesToProjects).updateMany(scenesToProject)
+        Update[SceneToProject](insertScenesToProjects)
+          .updateMany(scenesToProject)
       }
       _ <- updateProjectExtentIO(projectId)
       _ <- updateSceneIngestStatus(projectLayerId)
@@ -406,25 +411,30 @@ object ProjectDao
     )
   }
 
-  def replaceScenesInProject(sceneIds: NonEmptyList[UUID],
-                             projectId: UUID,
-                             projectLayerIdO: Option[UUID] = None): ConnectionIO[Iterable[Scene]] =
-  for {
-    project <- ProjectDao.unsafeGetProjectById(projectId)
-    projectLayerId = getProjectLayerId(projectLayerIdO, project)
-    // TODO: delete below one line when we are ready to remove scenes_to_projects table
-    _ <- sql"DELETE FROM scenes_to_projects WHERE project_id = ${projectId}".update.run
-    _ <- sql"DELETE FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId}".update.run
-    _ <- addScenesToProject(sceneIds, projectId, isAccepted = true, projectLayerIdO)
-    scenes <- SceneDao.query
-      .filter(
-        fr"scenes.id IN (SELECT scene_id FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId}")
-      .list
-  } yield scenes
+  def replaceScenesInProject(
+      sceneIds: NonEmptyList[UUID],
+      projectId: UUID,
+      projectLayerIdO: Option[UUID] = None): ConnectionIO[Iterable[Scene]] =
+    for {
+      project <- ProjectDao.unsafeGetProjectById(projectId)
+      projectLayerId = getProjectLayerId(projectLayerIdO, project)
+      // TODO: delete below one line when we are ready to remove scenes_to_projects table
+      _ <- sql"DELETE FROM scenes_to_projects WHERE project_id = ${projectId}".update.run
+      _ <- sql"DELETE FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId}".update.run
+      _ <- addScenesToProject(sceneIds,
+                              projectId,
+                              isAccepted = true,
+                              projectLayerIdO)
+      scenes <- SceneDao.query
+        .filter(
+          fr"scenes.id IN (SELECT scene_id FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId}")
+        .list
+    } yield scenes
 
-  def deleteScenesFromProject(sceneIds: List[UUID],
-                              projectId: UUID,
-                              projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] = {
+  def deleteScenesFromProject(
+      sceneIds: List[UUID],
+      projectId: UUID,
+      projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] = {
     val f: Option[Fragment] = sceneIds.toNel.map(Fragments.in(fr"scene_id", _))
     f match {
       case fragO @ Some(_) =>
@@ -435,19 +445,25 @@ object ProjectDao
           _ <- (fr"DELETE FROM scenes_to_projects" ++
             Fragments.whereAndOpt(f, Some(fr"project_id = ${projectId}"))).update.run
           rowsDeleted <- (fr"DELETE FROM scenes_to_layers" ++
-            Fragments.whereAndOpt(f, Some(fr"project_layer_id = ${projectLayerId}"))).update.run
+            Fragments.whereAndOpt(
+              f,
+              Some(fr"project_layer_id = ${projectLayerId}"))).update.run
           _ <- updateProjectExtentIO(projectId)
         } yield rowsDeleted
       case _ => 0.pure[ConnectionIO]
     }
   }
 
-  def addScenesToProjectFromQuery(sceneParams: CombinedSceneQueryParams,
-                                  projectId: UUID,
-                                  projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] = {
+  def addScenesToProjectFromQuery(
+      sceneParams: CombinedSceneQueryParams,
+      projectId: UUID,
+      projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] = {
     for {
       scenes <- SceneDao.query.filter(sceneParams).list
-      scenesAdded <- addScenesToProject(scenes.map(_.id), projectId, true, projectLayerIdO)
+      scenesAdded <- addScenesToProject(scenes.map(_.id),
+                                        projectId,
+                                        true,
+                                        projectLayerIdO)
     } yield scenesAdded
   }
 
