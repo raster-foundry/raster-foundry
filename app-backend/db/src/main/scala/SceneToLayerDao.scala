@@ -83,8 +83,14 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     """).update.run
   }
 
-  // TODO: update endpoint to accept projectLayerId instead of projectId
-  // since we support setting manual order of scenes within a layer
+  def moveSceneOrder(projectLayerId: UUID, from: Int, to: Int): ConnectionIO[Int] = {
+    // TODO implement this. Route is currently commented out
+    // val updateF = fr"""
+    // """
+    // updateF.update.run
+    ???
+  }
+
   def setManualOrder(projectLayerId: UUID,
                      sceneIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = {
     val updates = for {

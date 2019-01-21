@@ -220,7 +220,7 @@ object SceneWithRelatedDao
     } map { _.head }
   }
 
-  def getScenesToIngest(projectId: UUID): ConnectionIO[List[Scene]] = {
+  def getScenesToIngest(projectLayerId: UUID): ConnectionIO[List[Scene]] = {
     val fragments = List(
       Some(
         fr"""(ingest_status = ${IngestStatus.Queued.toString} :: ingest_status
@@ -228,7 +228,7 @@ object SceneWithRelatedDao
            OR (ingest_status = ${IngestStatus.Failed.toString} :: ingest_status))
         """),
       Some(
-        fr"scenes.id IN (SELECT scene_id FROM scenes_to_projects WHERE project_id = ${projectId})")
+        fr"scenes.id IN (SELECT scene_id FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId})")
     )
     SceneDao.query.filter(fragments).list
   }
