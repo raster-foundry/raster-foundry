@@ -25,6 +25,7 @@
 
 ### Security
 - Upgrade webpack-dev-server to address vulnerability (https://nvd.nist.gov/vuln/detail/CVE-2018-14732) [\#4476](https://github.com/raster-foundry/raster-foundry/pull/4476)
+- Sanitized more user fields in search endpoint [\#4505](https://github.com/raster-foundry/raster-foundry/pull/4505)
 
 ## [1.16.3](https://github.com/raster-foundry/raster-foundry/tree/1.16.2) (2019-01-17)
 
