@@ -82,6 +82,27 @@ trait ProjectRoutes
               deleteProject(projectId)
             }
         } ~
+          pathPrefix("layers") {
+            pathEndOrSingleSlash {
+              post {
+                createProjectLayer(projectId)
+              }
+              get {
+                listProjectLayers(projectId)
+              }
+            } ~
+              pathPrefix(JavaUUID) { layerId =>
+                get {
+                  getProjectLayer(projectId, layerId)
+                } ~
+                  put {
+                    updateProjectLayer(projectId, layerId)
+                  } ~
+                  delete {
+                    deleteProjectLayer(projectId, layerId)
+                  }
+              }
+          } ~
           pathPrefix("project-color-mode") {
             pathEndOrSingleSlash {
               post {
@@ -1244,5 +1265,98 @@ trait ProjectRoutes
       .filter(s => s != "" && s.contains(".Attribute: "))
       .map(_.split(".Attribute: ")(1).split("<")(0))
       .toList
+  }
+
+  def createProjectLayer(projectId: UUID): Route = authenticate { user =>
+    entity(as[ProjectLayer.Create]) { newProjectLayer =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        onSuccess(
+          ProjectLayerDao
+            .insertProjectLayer(newProjectLayer.toProjectLayer)
+            .transact(xa)
+            .unsafeToFuture) { projectLayer =>
+          complete(StatusCodes.Created, projectLayer)
+        }
+      }
+    }
+  }
+
+  def listProjectLayers(projectId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao
+        .authorized(user, ObjectType.Project, projectId, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      complete {
+        ProjectLayerDao
+          .listProjectLayersForProject(projectId)
+          .transact(xa)
+          .unsafeToFuture
+      }
+    }
+  }
+
+  def getProjectLayer(projectId: UUID, layerId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete {
+            ProjectLayerDao
+              .getProjectLayer(projectId, layerId, user)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+  }
+
+  def updateProjectLayer(projectId: UUID, layerId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[ProjectLayer]) { updatedProjectLayer =>
+          onSuccess(
+            ProjectLayerDao
+              .updateProjectLayer(updatedProjectLayer, layerId)
+              .transact(xa)
+              .unsafeToFuture) {
+            completeSingleOrNotFound
+          }
+        }
+      }
+  }
+
+  def deleteProjectLayer(projectId: UUID, layerId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete {
+            ProjectLayerDao
+              .deleteProjectLayer(layerId)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
   }
 }
