@@ -231,7 +231,11 @@ export default (app) => {
         }
 
         listExports(params = {}) {
-            return this.Project.listExports(params).$promise;
+            if (Math.random() < 0.95) {
+                throw new Error('oh no a bad die roll');
+            } else {
+                return this.Project.listExports(params).$promise;
+            }
         }
 
         export(project, settings = {}, options = {}) {

@@ -10,16 +10,16 @@ export default (app) => {
         }
 
         init(user = {}) {
-            if (this.env !== 'development' && !BUILDCONFIG.ROLLBAR_DISABLED) {
-                this.Rollbar.configure({
-                    accessToken: this.accessToken,
-                    captureUncaught: true,
-                    payload: {
-                        environment: this.env,
-                        person: user
-                    }
-                });
-            }
+            // if (this.env !== 'development' && !BUILDCONFIG.ROLLBAR_DISABLED) {
+            this.Rollbar.configure({
+                accessToken: this.accessToken,
+                captureUncaught: true,
+                payload: {
+                    environment: this.env,
+                    person: user
+                }
+            });
+            // }
         }
     }
 
