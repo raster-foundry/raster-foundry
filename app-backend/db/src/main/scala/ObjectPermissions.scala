@@ -92,6 +92,7 @@ trait ObjectPermissions[Model] {
   def getPermissions(
       id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
     for {
+      // TODO restrict to the user's permissions if the user does not have edit permissions
       isValidObject <- isValidObject(id)
       getPermissions <- isValidObject match {
         case false => throw new Exception(s"Invalid ${tableName} object ${id}")
