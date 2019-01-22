@@ -28,6 +28,14 @@ function download_database_backup() {
     popd
 }
 
+function download_development_images() {
+
+    pushd "${DIR}/.."
+    echo "Downloading images from s3"
+    aws s3 sync "s3://${RF_SETTINGS_BUCKET}/development-images/" "data/"
+    popd
+}
+
 function load_database_backup() {
     echo "Drop rasterfoundry database"
     docker-compose \
@@ -54,6 +62,7 @@ then
         docker-compose up -d api-server
         if [ "${1:-}" = "--download" ] || [ ! -f data/database.pgdump ]; then
             download_database_backup
+            download_development_images
         fi
         load_database_backup
         docker-compose rm -sf api-server
