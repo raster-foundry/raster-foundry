@@ -13,15 +13,16 @@ const ProjectItemComponent = {
         onSelect: '&',
         slim: '<',
         hideOptions: '<',
-        platform: '<'
+        platform: '<',
+        user: '<'
     }
 };
 
 class ProjectItemController {
     constructor(
-        $rootScope, $scope, $state, $attrs, $log,
+        $rootScope, $scope, $state, $attrs, $log, $q,
         projectService, mapService, mapUtilsService, authService, modalService,
-        featureFlags
+        permissionsService, featureFlags
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -42,6 +43,15 @@ class ProjectItemController {
             !this.featureFlags.isOnByDefault('project-preview-mini-map');
 
         this.getProjectStatus();
+        if (!this.user || this.hideOptions) {
+            this.permissions = [];
+        } else {
+            this.projectService
+                .getProjectPermissions(this.project, this.user)
+                .then(permissions => {
+                    this.permissions = permissions;
+                });
+        }
     }
 
     getMap() {

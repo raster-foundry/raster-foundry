@@ -26,96 +26,110 @@ class PermissionModalController {
         this.objectOwnerId = this.resolve.object.owner.id || this.resolve.object.owner;
         this.userId = this.authService.user.id;
 
-        if (this.objectOwnerId === this.userId) {
-            this.loading = false;
-            this.rawPermissions = [];
-            this.actionsBuffer = {};
-            this.entityCache = {
-                organization: {},
-                team: {},
-                user: {}
-            };
+        this.loading = false;
+        this.rawPermissions = [];
+        this.actionsBuffer = {};
+        this.entityCache = {
+            organization: {},
+            team: {},
+            user: {}
+        };
 
-            this.actionTypes = [{
-                tag: 'view',
-                label: 'Can view',
-                applies: () => true,
-                actions: ['VIEW'],
-                default: true
-            }, {
-                tag: 'annotate',
-                label: 'Can annotate',
-                applies: (o) => o.toLowerCase() === 'project',
-                actions: ['VIEW', 'ANNOTATE'].sort()
-            }, {
-                tag: 'editNonProject',
-                label: 'Can edit',
-                applies: (o) => o.toLowerCase() !== 'project',
-                actions: ['VIEW', 'EDIT'].sort()
-            }, {
-                tag: 'editProject',
-                label: 'Can edit',
-                applies: (o) => o.toLowerCase() === 'project',
-                actions: ['VIEW', 'ANNOTATE', 'EDIT'].sort()
-            }, {
-                tag: 'deleteNonProject',
-                label: 'Can delete',
-                applies: (o) => o.toLowerCase() !== 'project',
-                actions: ['VIEW', 'EDIT', 'DELETE'].sort()
-            }, {
-                tag: 'deleteProject',
-                label: 'Can delete',
-                applies: (o) => o.toLowerCase() === 'project',
-                actions: ['VIEW', 'ANNOTATE', 'EDIT', 'DELETE'].sort()
-            }];
+        this.actionTypes = [{
+            tag: 'viewNonScene',
+            label: 'Can view',
+            applies: (o) => o.toLowerCase() !== 'scene',
+            actions: ['VIEW'],
+            default: true
+        }, {
+            tag: 'viewScene',
+            label: 'Can view',
+            applies: (o) => o.toLowerCase() === 'scene',
+            actions: ['VIEW', 'DOWNLOAD'],
+            default: true
+        }, {
+            tag: 'annotate',
+            label: 'Can annotate',
+            applies: (o) => o.toLowerCase() === 'project',
+            actions: ['VIEW', 'ANNOTATE'].sort()
+        }, {
+            tag: 'edit',
+            label: 'Can edit',
+            applies: (o) => !['project', 'scene'].includes(o.toLowerCase()),
+            actions: ['VIEW', 'EDIT'].sort()
+        }, {
+            tag: 'editScene',
+            label: 'Can edit',
+            applies: (o) => o.toLowerCase() === 'scene',
+            actions: ['VIEW', 'EDIT', 'DOWNLOAD'].sort()
+        }, {
+            tag: 'editProject',
+            label: 'Can edit',
+            applies: (o) => o.toLowerCase() === 'project',
+            actions: ['VIEW', 'ANNOTATE', 'EDIT'].sort()
+        }, {
+            tag: 'delete',
+            label: 'Can delete',
+            applies: (o) => !['project', 'scene'].includes(o.toLowerCase()),
+            actions: ['VIEW', 'EDIT', 'DELETE'].sort()
+        }, {
+            tag: 'deleteScene',
+            label: 'Can delete',
+            applies: (o) => o.toLowerCase() === 'scene',
+            actions: ['VIEW', 'DOWNLOAD', 'EDIT', 'DELETE'].sort()
+        }, {
+            tag: 'deleteProject',
+            label: 'Can delete',
+            applies: (o) => o.toLowerCase() === 'project',
+            actions: ['VIEW', 'ANNOTATE', 'EDIT', 'DELETE'].sort()
+        }];
 
-            this.subjectTypes = [
-                {
-                    name: 'Everyone',
-                    target: 'PLATFORM',
-                    id: 0,
-                    applies: () =>
-                        this.authService.user.isSuperuser ||
-                        _.find(
-                            this.authService.getUserRoles(),
-                            (userRole) => userRole.groupType === 'PLATFORM' &&
-                                userRole.groupRole === 'ADMIN'
-                        )
-                }, {
-                    name: 'An organization',
-                    singular: 'organization',
-                    plural: 'organizations',
-                    target: 'ORGANIZATION',
-                    id: 1,
-                    applies: () => true
-                }, {
-                    name: 'A team',
-                    singular: 'team',
-                    plural: 'teams',
-                    target: 'TEAM',
-                    id: 2,
-                    applies: () => true
-                }, {
-                    name: 'A user',
-                    singular: 'user',
-                    plural: 'users',
-                    target: 'USER',
-                    id: 3,
-                    applies: () => true
-                }
-            ];
+        this.subjectTypes = [
+            {
+                name: 'Everyone',
+                target: 'PLATFORM',
+                id: 0,
+                applies: () =>
+                    this.authService.user.isSuperuser ||
+                    _.find(
+                        this.authService.getUserRoles(),
+                        (userRole) => userRole.groupType === 'PLATFORM' &&
+                            userRole.groupRole === 'ADMIN'
+                    )
+            }, {
+                name: 'An organization',
+                singular: 'organization',
+                plural: 'organizations',
+                target: 'ORGANIZATION',
+                id: 1,
+                applies: () => true
+            }, {
+                name: 'A team',
+                singular: 'team',
+                plural: 'teams',
+                target: 'TEAM',
+                id: 2,
+                applies: () => true
+            }, {
+                name: 'A user',
+                singular: 'user',
+                plural: 'users',
+                target: 'USER',
+                id: 3,
+                applies: () => true
+            }
+        ];
 
-            this.defaultAction = this.actionTypes.find(a => a.default);
+        this.defaultAction = this.actionTypes.find(a => a.default);
 
-            this.authTarget = {
-                permissionsBase: this.resolve.permissionsBase,
-                objectType: this.resolve.objectType,
-                objectId: this.resolve.object.id
-            };
+        this.authTarget = {
+            permissionsBase: this.resolve.permissionsBase,
+            objectType: this.resolve.objectType,
+            objectId: this.resolve.object.id
+        };
 
-            this.applicableActions = this.getApplicableActions(this.resolve.objectType);
-            this.fetchPermissions();
-        }
+        this.applicableActions = this.getApplicableActions(this.resolve.objectType);
+        this.fetchPermissions();
     }
 
     fetchPermissions() {

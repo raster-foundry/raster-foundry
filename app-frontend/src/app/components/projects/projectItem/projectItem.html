@@ -5,7 +5,7 @@
       <img class="avatar tiny" ng-attr-src="{{ $ctrl.project.owner.profileImageUri }}" ng-if="$ctrl.project.owner.profileImageUri"/>
       <h4 class="project-title" data-title="{{$ctrl.project.name}}">{{$ctrl.project.name}}</h4>
     </a>
-    <div class="project-actions" ng-if="!$ctrl.hideOptions">
+    <div class="project-actions" ng-if="!$ctrl.hideOptions && $ctrl.permissions && $ctrl.permissions.length">
       <a href ng-click="$ctrl.publishModal()">
         <i class="icon-share"></i>
         <span class="sr-only">Publish</span>

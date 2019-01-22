@@ -18,6 +18,7 @@
           ng-model="$ctrl.currentOwnershipFilter"
           ng-change="$ctrl.handleOwnershipFilterChange()"
         >
+          <option value="">All</option>
           <option value="owned">Owned by me</option>
           <option value="shared">Shared with me</option>
         </select>
@@ -55,7 +56,6 @@
         template-data="template"
         on-template-delete="$ctrl.onTemplateDelete(templateId)"
         on-share-click="$ctrl.onTemplateShareClick(template)"
-        is-owned-by-current-user="$ctrl.user.id === template.owner"
       ></rf-template-item>
       <div
         ng-if="!$ctrl.currentQuery && !$ctrl.search && $ctrl.pagination && !$ctrl.pagination.count"

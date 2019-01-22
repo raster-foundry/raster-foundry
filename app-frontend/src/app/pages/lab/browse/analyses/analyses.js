@@ -14,7 +14,7 @@ class LabBrowseAnalysesController {
         this.analysesExports = {};
         this.defaultSortingDirection = 'desc';
         this.defaultSortingField = 'modifiedAt';
-        this.currentOwnershipFilter = 'owned';
+        this.currentOwnershipFilter = this.$state.params.ownership || '';
         this.initSorting();
         this.fetchPage();
         this.selected = new Set();

@@ -3,15 +3,15 @@
 class LabBrowseTemplatesController {
     constructor( // eslint-disable-line max-params
         $log, $scope, $state,
-        analysisService, modalService, paginationService,
-        user, platform
+        analysisService, modalService, paginationService, authService,
+        platform
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
     }
 
     $onInit() {
-        this.currentOwnershipFilter = 'owned';
+        this.currentOwnershipFilter = this.$state.params.ownership || '';
         this.fetchPage();
     }
 
@@ -28,7 +28,9 @@ class LabBrowseTemplatesController {
         }).then(paginatedResponse => {
             this.results = paginatedResponse.results;
             this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page, this.search);
+            this.paginationService.updatePageParam(page, this.search, null, {
+                ownership: this.currentOwnershipFilter
+            });
             if (this.currentQuery === currentQuery) {
                 delete this.fetchError;
             }

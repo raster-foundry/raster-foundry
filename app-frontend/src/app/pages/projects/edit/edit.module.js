@@ -47,6 +47,15 @@ class ProjectsEditController {
                         });
                         this.initColorComposites();
                         this.layerFromProject();
+                        if (!this.authService.user) {
+                            this.permissions = [];
+                        } else {
+                            this.projectService
+                                .getProjectPermissions(this.project, this.authService.user)
+                                .then(permissions => {
+                                    this.permissions = permissions;
+                                });
+                        }
                     },
                     () => {
                         this.loadingProject = false;

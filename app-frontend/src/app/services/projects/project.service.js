@@ -40,7 +40,7 @@ export default (app) => {
     class ProjectService {
         constructor(
             $resource, $location, $http, $q, APP_CONFIG,
-            tokenService, authService, statusService
+            tokenService, authService, statusService, permissionsService
         ) {
             'ngInject';
             // Max scene page size used for limited features on large projects for now.
@@ -50,6 +50,7 @@ export default (app) => {
             this.tokenService = tokenService;
             this.authService = authService;
             this.statusService = statusService;
+            this.permissionsService = permissionsService;
             this.$http = $http;
             this.$location = $location;
             this.$q = $q;
@@ -540,6 +541,30 @@ export default (app) => {
 
         setProjectColorMode(projectId, bands) {
             return this.Project.colorMode({projectId}, bands).$promise;
+        }
+
+        getProjectPermissions(project, user) {
+            //TODO replace uses with permissionsService.getEditableObjectPermission
+            return this.$q((resolve, reject) => {
+                if (project.owner.id === user.id) {
+                    resolve([{actionType: 'Edit'}]);
+                } else {
+                    this.permissionsService.query({
+                        permissionsBase: 'projects',
+                        objectType: 'PROJECT',
+                        objectId: project.id
+                    }).$promise.then(permissions => {
+                        resolve(permissions);
+                    }).catch((e) => {
+                        // can't view permissions, don't have edit
+                        if (e.status === 403) {
+                            resolve([]);
+                        } else {
+                            reject(e);
+                        }
+                    });
+                }
+            });
         }
     }
 
