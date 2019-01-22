@@ -1,7 +1,8 @@
-/* global _ */
 
 import angular from 'angular';
+import { OrderedMap } from 'immutable';
 import importListTpl from './importList.html';
+import _ from 'lodash';
 
 const ImportListComponent = {
     templateUrl: importListTpl,
@@ -16,8 +17,8 @@ const pageSize = '10';
 
 class ImportListController {
     constructor( // eslint-disable-line max-params
-        $rootScope, $log, sceneService, $state,
-        authService, modalService, paginationService,
+        $rootScope, $log, $state, $q,
+        sceneService, authService, modalService, paginationService, permissionsService,
         RasterFoundryRepository
     ) {
         'ngInject';
@@ -31,24 +32,35 @@ class ImportListController {
 
     $onInit() {
         this.populateImportList(this.$state.params.page || 1);
-        this.sceneActions = [
-            {
-                label: 'Modify permissions',
-                onClick: this.shareModal.bind(this),
-                iconClass: 'icon-key'
-            },
-            {
-                label: 'Download',
-                onClick: this.downloadModal.bind(this),
-                iconClass: 'icon-download'
-            },
-            {
-                label: 'Delete',
-                buttonClass: 'btn-danger',
-                iconClass: 'icon-trash',
-                onClick: this.deleteModal.bind(this)
-            }
-        ];
+        const downloadAction = {
+            label: 'Download',
+            onClick: this.downloadModal.bind(this),
+            iconClass: 'icon-download',
+            order: 0
+        };
+        const modifyAction = {
+            label: 'Modify permissions',
+            onClick: this.shareModal.bind(this),
+            iconClass: 'icon-key',
+            order: 1
+        };
+        const deleteAction = {
+            label: 'Delete',
+            buttonClass: 'btn-danger',
+            iconClass: 'icon-trash',
+            onClick: this.deleteModal.bind(this),
+            order: 2
+        };
+        this.sceneActionCatalog = {
+            'VIEW': [],
+            'EDIT': [modifyAction],
+            'DEACTIVATE': [],
+            'ANNOTATE': [],
+            'EXPORT': [],
+            'DOWNLOAD': [downloadAction],
+            'DELETE': [deleteAction]
+        };
+        this.sceneActions = new OrderedMap();
     }
 
     $onChanges(changes) {
@@ -67,14 +79,13 @@ class ImportListController {
         this.loading = true;
         // save off selected scenes so you don't lose them during the refresh
         this.importList = [];
-        this.sceneService.query(
+        this.sceneService.query(Object.assign(
             {
                 sort: 'createdAt,desc',
                 pageSize: pageSize,
                 page: page - 1,
-                ownershipType: this.ownershipType,
                 exactCount: true
-            }
+            }, this.ownershipType ? {ownershipType: this.ownershipType} : null)
         ).then((sceneResult) => {
             this.lastSceneResult = sceneResult;
             this.pagination = this.paginationService.buildPagination(sceneResult);
@@ -82,10 +93,40 @@ class ImportListController {
                 ownership: this.currentOwnershipFilter
             });
             this.importList = this.lastSceneResult.results;
+            this.updateSceneActions();
             this.loading = false;
         }, () => {
             this.errorMsg = 'Server error.';
             this.loading = false;
+        });
+    }
+
+    updateSceneActions() {
+        // TODO make sure this doesn't kill stuff if you do multiple searches / pages in a row
+        this.sceneActions = new OrderedMap();
+        let permissionPromises = this.importList.map((s) => {
+            if (s.owner === this.authService.user.id) {
+                return this.$q.resolve(
+                    Object.keys(this.sceneActionCatalog).map(k => ({actionType: k}))
+                ).then(permissions => ({id: s.id, permissions}));
+            }
+            return this.permissionsService.getEditableObjectPermissions(
+                'scenes', 'SCENE', s, this.authService.user
+            ).then(permissions => ({id: s.id, permissions}));
+        });
+        this.$q.all(permissionPromises).then(scenePermissionList => {
+            this.sceneActions = new OrderedMap(scenePermissionList.map(({id, permissions}) => {
+                return [
+                    id,
+                    _.filter(
+                        _.flatten(
+                            permissions.map(
+                                p => this.sceneActionCatalog[p.actionType]
+                            )
+                        )
+                    )
+                ];
+            }));
         });
     }
 
@@ -117,7 +158,9 @@ class ImportListController {
                 objectName: () => scene.name,
                 platform: () => this.platform
             }
-        }).result.catch(() => {});
+        }).result.then(() => {
+            this.updateSceneActions();
+        }).catch(() => {});
     }
 
     deleteModal(scene) {
@@ -162,29 +205,6 @@ class ImportListController {
     shouldShowImportBox() {
         return !this.loading && this.lastSceneResult &&
             this.lastSceneResult.count === 0 && !this.errorMsg;
-    }
-
-    onActionClick(event, action, scene) {
-        event.stopPropagation();
-        if (action.onClick) {
-            action.onClick(scene);
-        }
-    }
-
-    getActionIcon(action) {
-        let classes = {};
-        if (action.iconClass) {
-            classes[action.iconClass] = true;
-        }
-        return classes;
-    }
-
-    getActionButtonClass(action) {
-        let classes = {};
-        if (action.buttonClass) {
-            classes[action.buttonClass] = true;
-        }
-        return classes;
     }
 }
 

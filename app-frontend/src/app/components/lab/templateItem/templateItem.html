@@ -22,17 +22,17 @@
       <strong>Created by: {{$ctrl.templateOwner}}</strong>
     </div>
   </div>
-  <div uib-dropdown class="dropdown template-delete-dropdown" ng-if="$ctrl.showDelete">
+  <div uib-dropdown class="dropdown template-delete-dropdown" ng-if="$ctrl.showDelete || $ctrl.showShare">
     <button class="btn btn-tiny" uib-dropdown-toggle>
       <i class="icon-menu"></i>
     </button>
     <ul class="dropdown-menu slim dropdown-menu-light dropdown-menu-right" uib-dropdown-menu role="menu" >
-      <li class="dropdown-list-item" ng-if-start="$ctrl.isOwnedByCurrentUser">
+      <li class="dropdown-list-item" ng-if="$ctrl.showShare">
         <a ng-click="$ctrl.onShareClick()">Share</a>
       </li>
-      <li class="dropdown-menu-item divider" ng-if-end>
+      <li class="dropdown-menu-item divider" ng-if="$ctrl.showShare && $ctrl.showDelete">
       </li>
-      <li class="dropdown-menu-item">
+      <li class="dropdown-menu-item" ng-if="$ctrl.showDelete">
         <a class="color-danger" ng-click="$ctrl.onClickDeleteTemplate()">Delete</a>
       </li>
     </ul>

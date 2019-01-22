@@ -105,7 +105,7 @@ export default angular.module('index.components', [
     require('./components/common/paginationCount/paginationCount.js').default.name,
     require('./components/common/paginationControls/paginationControls.js').default.name,
     require('./components/common/navbarSearch/navbarSearch.js').default.name,
-
+    require('./components/common/itemActionButtons/itemActionButtons.js').default.name,
 
     // Single components for new domains
     require('./components/aoiFilterPane/aoiFilterPane.module.js').default.name,

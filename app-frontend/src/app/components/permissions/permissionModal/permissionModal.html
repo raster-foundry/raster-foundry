@@ -8,7 +8,7 @@
   <p>{{$ctrl.resolve.objectName}}</p>
 </div>
 
-<div class="modal-body" ng-if="$ctrl.objectOwnerId === $ctrl.userId">
+<div class="modal-body">
   <div class="modal-inner-container small" ng-if="!$ctrl.loading && (!$ctrl.authService.user.personalInfo.firstName || !$ctrl.authService.user.personalInfo.lastName)">
     <span class="modal-icon">
       <i class="icon-settings"></i>
@@ -161,8 +161,7 @@
   <div class="footer-section left">
     <button type="button" class="btn" ng-click="$ctrl.dismiss()">Close</button>
   </div>
-  <div class="footer-section right"
-        ng-if="$ctrl.objectOwnerId === $ctrl.userId">
+  <div class="footer-section right">
         <button type="button" class="btn btn-primary" ng-click="$ctrl.onSave()">Save Changes</button>
   </div>
 </div>

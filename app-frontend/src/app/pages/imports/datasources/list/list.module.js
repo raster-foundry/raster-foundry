@@ -12,7 +12,12 @@ class DatasourceListController {
 
     $onInit() {
         this.BUILDCONFIG = BUILDCONFIG;
-        this.fetchPage();
+        this.currentOwnershipFilter = this.$state.params.ownership;
+        this.$scope.$watch('$ctrl.currentOwnershipFilter', (current, last) => {
+            if (current !== last || !this.pagination) {
+                this.fetchPage();
+            }
+        });
     }
 
     shouldShowPlaceholder() {
@@ -38,11 +43,14 @@ class DatasourceListController {
             sort: 'createdAt,desc',
             pageSize: this.pageSize,
             page: page - 1,
-            search: this.search
+            search: this.search,
+            ownershipType: this.currentOwnershipFilter
         }).then(paginatedResponse => {
             this.datasources = paginatedResponse.results;
             this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page, this.search);
+            this.paginationService.updatePageParam(page, this.search, null, {
+                ownership: this.currentOwnershipFilter
+            });
             if (this.currentQuery === currentQuery) {
                 delete this.fetchError;
             }
