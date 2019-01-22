@@ -13,7 +13,6 @@ import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import kamon.akka.http.KamonTraceDirectives
 import java.util.UUID
 
 import cats.effect.IO
@@ -29,7 +28,6 @@ trait ToolRoutes
     with ToolQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
-    with KamonTraceDirectives
     with UserErrorHandler {
 
   val xa: Transactor[IO]
@@ -37,67 +35,47 @@ trait ToolRoutes
   val toolRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {
-        traceName("tools-list") {
-          listTools
-        }
+        listTools
       } ~
         post {
-          traceName("tools-create") {
-            createTool
-          }
+          createTool
         }
     } ~
       pathPrefix("validate") {
         post {
-          traceName("ast-validate") {
-            validateAST
-          }
+          validateAST
         }
       } ~
       pathPrefix(JavaUUID) { toolId =>
         pathEndOrSingleSlash {
           get {
-            traceName("tools-detail") {
-              getTool(toolId)
-            }
+            getTool(toolId)
           } ~
             put {
-              traceName("tools-update") {
-                updateTool(toolId)
-              }
+              updateTool(toolId)
             } ~
             delete {
-              traceName("tools-delete") {
-                deleteTool(toolId)
-              }
+              deleteTool(toolId)
             }
         } ~
           pathPrefix("sources") {
             pathEndOrSingleSlash {
               get {
-                traceName("tools-sources") {
-                  getToolSources(toolId)
-                }
+                getToolSources(toolId)
               }
             }
           } ~
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
               put {
-                traceName("replace-tool-permissions") {
-                  replaceToolPermissions(toolId)
-                }
+                replaceToolPermissions(toolId)
               }
             } ~
               post {
-                traceName("add-tool-permission") {
-                  addToolPermission(toolId)
-                }
+                addToolPermission(toolId)
               } ~
               get {
-                traceName("list-tool-permissions") {
-                  listToolPermissions(toolId)
-                }
+                listToolPermissions(toolId)
               } ~
               delete {
                 deleteToolPermissions(toolId)
@@ -106,9 +84,7 @@ trait ToolRoutes
           pathPrefix("actions") {
             pathEndOrSingleSlash {
               get {
-                traceName("list-user-allowed-actions") {
-                  listUserTemplateActions(toolId)
-                }
+                listUserTemplateActions(toolId)
               }
             }
           }

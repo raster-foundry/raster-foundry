@@ -32,8 +32,7 @@ import geotrellis.vector.{Polygon, Projected}
 
 import java.util.UUID
 
-class ProjectStoreImplicits(xa: Transactor[IO], mtr: MetricsRegistrator)
-    extends ToProjectStoreOps {
+class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
   implicit val sceneStore: ProjectStore[SceneDao] = new ProjectStore[SceneDao] {
     def read(
         self: SceneDao,

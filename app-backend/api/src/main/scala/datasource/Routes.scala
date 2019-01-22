@@ -15,7 +15,6 @@ import com.lonelyplanet.akka.http.extensions.{PaginationDirectives, PageRequest}
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.effect.IO
-import kamon.akka.http.KamonTraceDirectives
 
 import java.util.UUID
 import scala.util.{Success, Failure}

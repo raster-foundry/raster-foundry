@@ -3,7 +3,6 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.datamodel.User
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.backsplash.MetricsRegistrator
 import com.rasterfoundry.backsplash.Parameters._
 import cats.Applicative
 import cats.data.{NonEmptyList => NEL}
@@ -28,7 +27,6 @@ import geotrellis.vector.{Polygon, Projected}
 
 class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
     projects: ProjStore,
-    mtr: MetricsRegistrator,
     mosaicImplicits: MosaicImplicits[HistStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO],
                         H: HttpErrorHandler[IO, BacksplashException, User],

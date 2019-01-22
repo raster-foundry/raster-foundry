@@ -5,26 +5,39 @@
 - Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Added ProjectLayer datamodel, dao, and migration [\#4460]https://github.com/raster-foundry/raster-foundry/pull/4460()\
 - Added lambda function for reactively processing new Landsat 8 imagery [\#4471](https://github.com/raster-foundry/raster-foundry/pull/4471)
-- Added a migration that creates relationship among projects, project layers, and scenes and populates corresponding tables. Updated associated data models and `Dao`s. [\#4479](https://github.com/raster-foundry/raster-foundry/pull/4479) 
+- Added lambda function for reactively processing new Sentinel-2 imagery [\#4491](https://github.com/raster-foundry/raster-foundry/pull/4491)
+- Added a migration that creates relationship among projects, project layers, and scenes and populates corresponding tables. Updated associated data models and `Dao`s. [\#4479](https://github.com/raster-foundry/raster-foundry/pull/4479)
 
 ### Changed
 - Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Updated permission check logic for lab templates to make ownership filter work as expected [\#4462](https://github.com/raster-foundry/raster-foundry/pull/4462)
 - Unify S3 client interface usage [\#4441](https://github.com/raster-foundry/raster-foundry/pull/4441)
+- Moved common authentication logic to http4s-util subproject [\#4496](https://github.com/raster-foundry/raster-foundry/pull/4496)
+- Added ability to download images as part of development environment setup [\#4509](https://github.com/raster-foundry/raster-foundry/pull/4509)
 
 ### Deprecated
 
 ### Removed
 - Removed unused dependency `geotrellis-raster-testkit`[\#4482](https://github.com/raster-foundry/raster-foundry/pull/4482)
 - Removed legacy tile server subproject and configuration [\#4478](https://github.com/raster-foundry/raster-foundry/pull/4478)
-- Removed unused metrics collection resources [\#4475](https://github.com/raster-foundry/raster-foundry/pull/4475)
+- Removed unused metrics collection resources and application code [\#4475](https://github.com/raster-foundry/raster-foundry/pull/4475), [\#4493](https://github.com/raster-foundry/raster-foundry/pull/4493)
+- Removed deprecated Gatling load tests [\#4504](https://github.com/raster-foundry/raster-foundry/pull/4504)
 
 ### Fixed
 - Shapes drawn within the scene search filter context can now be saved [\#4474](https://github.com/raster-foundry/raster-foundry/pull/4474)
-- Made backsplash respect the RF_LOG_LEVEL environment variable [\#4483](https://github.com/raster-foundry/raster-foundry/pull/4483)
+- Mosaics are again constructed with rasters instead of with IO[rasters] [\#4498](https://github.com/raster-foundry/raster-foundry/pull/4498)
 
 ### Security
 - Upgrade webpack-dev-server to address vulnerability (https://nvd.nist.gov/vuln/detail/CVE-2018-14732) [\#4476](https://github.com/raster-foundry/raster-foundry/pull/4476)
+
+## [1.16.4](https://github.com/raster-foundry/raster-foundry/tree/1.16.4) (2019-01-21)
+
+- Sanitized more user fields in search endpoint [\#4505](https://github.com/raster-foundry/raster-foundry/pull/4505) and in platform member list and organization search [\#4506](https://github.com/raster-foundry/raster-foundry/pull/4506)
+
+## [1.16.3](https://github.com/raster-foundry/raster-foundry/tree/1.16.3) (2019-01-17)
+
+### Fixed
+- Made backsplash respect the RF_LOG_LEVEL environment variable [\#4483](https://github.com/raster-foundry/raster-foundry/pull/4483)
 
 ## [1.16.2](https://github.com/raster-foundry/raster-foundry/tree/1.16.2) (2019-01-14)
 

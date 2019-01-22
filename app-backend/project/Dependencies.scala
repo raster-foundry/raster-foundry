@@ -57,10 +57,6 @@ object Dependencies {
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
   val jts = "com.vividsolutions" % "jts" % Version.jts
-  val kamonAkka = "io.kamon" %% "kamon-akka" % Version.kamon
-  val kamonAkkaHttp = "io.kamon" %% "kamon-akka-http" % Version.kamonAkkaHttp
-  val kamonCore = "io.kamon" %% "kamon-core" % Version.kamon
-  val kamonStatsd = "io.kamon" %% "kamon-statsd" % Version.kamon
   val mamlJvm = "com.azavea" %% "maml-jvm" % Version.maml
   val mamlSpark = "com.azavea" %% "maml-spark" % Version.maml
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose

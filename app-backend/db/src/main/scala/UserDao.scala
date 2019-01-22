@@ -23,10 +23,10 @@ import java.util.UUID
 
 import scala.concurrent.Future
 
-import com.rasterfoundry.database.util.Email
+import com.rasterfoundry.database.util.Sanitization
 import com.rasterfoundry.database.Implicits._
 
-object UserDao extends Dao[User] {
+object UserDao extends Dao[User] with Sanitization {
 
   val tableName = "users"
 
@@ -47,20 +47,7 @@ object UserDao extends Dao[User] {
       isOwn: Option[Boolean] = Some(true)): ConnectionIO[User] = isOwn match {
     case Some(true) => filterById(id).select
     case _ =>
-      filterById(id).select map { (user: User) =>
-        {
-          user.copy(
-            planetCredential = Credential(Some("")),
-            dropboxCredential = Credential(Some("")),
-            name = Email.obfuscate(user.name),
-            email = Email.obfuscate(user.email),
-            personalInfo = user.personalInfo.copy(
-              email = Email.obfuscate(user.personalInfo.email),
-              phoneNumber = ""
-            )
-          )
-        }
-      }
+      filterById(id).select map { sanitizeUser _ }
   }
 
   def unsafeGetUserPlatform(id: String): ConnectionIO[Platform] =
@@ -283,6 +270,7 @@ object UserDao extends Dao[User] {
       .viewFilter(user)
       .filter(searchParams)
       .list(0, 5, fr"order by name")
+      .map(users => users map { sanitizeUser _ })
   }
 
   def updateOwnUser(user: User): ConnectionIO[Int] = {

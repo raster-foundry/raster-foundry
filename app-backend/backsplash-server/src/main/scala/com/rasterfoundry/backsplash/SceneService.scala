@@ -20,7 +20,6 @@ import java.util.UUID
 
 class SceneService[ProjStore: ProjectStore, HistStore: HistogramStore](
     scenes: ProjStore,
-    mtr: MetricsRegistrator,
     mosaicImplicits: MosaicImplicits[HistStore],
     histStore: HistStore,
     xa: Transactor[IO])(implicit cs: ContextShift[IO],

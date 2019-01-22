@@ -2,17 +2,12 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.database.{MapTokenDao, ProjectDao, UserDao}
-import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.datamodel.{MapToken, Project, User, Visibility}
+import com.rasterfoundry.{http4s => RFHttp4s}
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
-import com.guizmaii.scalajwt.{ConfigurableJwtValidator, JwtToken}
-import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
-import com.nimbusds.jwt.proc.BadJWTException
-import com.nimbusds.jose.proc.SecurityContext
-import com.nimbusds.jwt.JWTClaimsSet
 import com.typesafe.config.ConfigFactory
 import doobie.ConnectionIO
 import doobie.implicits._
@@ -22,8 +17,6 @@ import org.http4s.server._
 import org.http4s.util.CaseInsensitiveString
 import java.net.URL
 import java.util.UUID
-
-import com.rasterfoundry.backsplash.MetricsRegistrator
 import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
 import scalacache.memoization._
@@ -32,14 +25,9 @@ import scalacache.Flags
 
 import scala.concurrent.duration._
 
-class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator)
-    extends LazyLogging {
-
-  implicit val cache = Cache.caffeineAuthenticationCache
-  implicit val flags = Cache.authenticationCacheFlags
-
-  val verifyJWTTimer = mtr.newTimer(classOf[Authenticators], "verify-jwt")
-  val tokenAuthTimer = mtr.newTimer(classOf[Authenticators], "token-auth")
+class Authenticators(val xa: Transactor[IO])
+    extends LazyLogging
+    with RFHttp4s.Authenticators {
 
   val tokensAuthenticator = Kleisli[OptionT[IO, ?], Request[IO], User](
     {
@@ -102,27 +90,6 @@ class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator)
       OptionT(getUserFromJWTwithCache(mapToken.owner))
     }
 
-  private def userFromToken(token: String): OptionT[IO, User] = {
-    val userFromTokenIO = verifyJWT(token) match {
-      case Right((_, jwtClaims)) => {
-        val userIdFromJWT = jwtClaims.getStringClaim("sub")
-        getUserFromJWTwithCache(userIdFromJWT)
-      }
-      case Left(e) =>
-        IO(None: Option[User])
-    }
-    OptionT(mtr.timedIO(userFromTokenIO, tokenAuthTimer))
-  }
-
-  private def getUserFromJWTwithCache(userIdFromJWT: String)(
-      implicit flags: Flags): IO[Option[User]] =
-    memoizeF[IO, Option[User]](Some(30.seconds)) {
-      logger.debug(s"Authentication - Getting User ${userIdFromJWT} from DB")
-      UserDao
-        .getUserById(userIdFromJWT)
-        .transact(xa)
-    }
-
   private def userFromPublicProject(id: UUID): OptionT[IO, User] =
     for {
       project <- OptionT[IO, Project](
@@ -133,22 +100,6 @@ class Authenticators(val xa: Transactor[IO], mtr: MetricsRegistrator)
           .transact(xa))
       user <- OptionT(getUserFromJWTwithCache(project.owner))
     } yield user
-
-  private val configAuth = ConfigFactory.load()
-  private val auth0Config = configAuth.getConfig("auth0")
-
-  private val jwksURL = auth0Config.getString("jwksURL")
-  private val jwkSet: JWKSource[SecurityContext] = new RemoteJWKSet(
-    new URL(jwksURL))
-
-  private def verifyJWT(tokenString: String)
-    : Either[BadJWTException, (JwtToken, JWTClaimsSet)] = {
-    val token: JwtToken = JwtToken(content = tokenString)
-    val time = verifyJWTTimer.time()
-    val tokenValidation = ConfigurableJwtValidator(jwkSet).validate(token)
-    time.stop()
-    tokenValidation
-  }
 
   val tokensAuthMiddleware = AuthMiddleware(tokensAuthenticator)
 }

@@ -34,7 +34,6 @@ import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.shapefile.ShapeFileReader
 import io.circe.generic.JsonCodec
-import kamon.akka.http.KamonTraceDirectives
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Success
@@ -56,7 +55,6 @@ trait ProjectRoutes
     with AWSBatch
     with UserErrorHandler
     with RollbarNotifier
-    with KamonTraceDirectives
     with LazyLogging {
 
   val xa: Transactor[IO]
@@ -66,81 +64,57 @@ trait ProjectRoutes
   val projectRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {
-        traceName("projects-list") {
-          listProjects
-        }
+        listProjects
       } ~
         post {
-          traceName("projects-create") {
-            createProject
-          }
+          createProject
         }
     } ~
       pathPrefix(JavaUUID) { projectId =>
         pathEndOrSingleSlash {
           get {
-            traceName("projects-detail") {
-              getProject(projectId)
-            }
+            getProject(projectId)
           } ~
             put {
-              traceName("projects-update") {
-                updateProject(projectId)
-              }
+              updateProject(projectId)
             } ~
             delete {
-              traceName("projects-delete") {
-                deleteProject(projectId)
-              }
+              deleteProject(projectId)
             }
         } ~
           pathPrefix("project-color-mode") {
             pathEndOrSingleSlash {
               post {
-                traceName("project-set-color-mode") {
-                  setProjectColorMode(projectId)
-                }
+                setProjectColorMode(projectId)
               }
             }
           } ~
           pathPrefix("labels") {
             pathEndOrSingleSlash {
               get {
-                traceName("project-list-labels") {
-                  listLabels(projectId)
-                }
+                listLabels(projectId)
               }
             }
           } ~
           pathPrefix("annotation-groups") {
             pathEndOrSingleSlash {
               get {
-                traceName("projects-list-annotation-groups") {
-                  listAnnotationGroups(projectId)
-                }
+                listAnnotationGroups(projectId)
               } ~
                 post {
-                  traceName("projects-create-annotation-group") {
-                    createAnnotationGroup(projectId)
-                  }
+                  createAnnotationGroup(projectId)
                 }
             } ~
               pathPrefix(JavaUUID) { annotationGroupId =>
                 pathEndOrSingleSlash {
                   get {
-                    traceName("projects-get-annotation-group") {
-                      getAnnotationGroup(projectId, annotationGroupId)
-                    }
+                    getAnnotationGroup(projectId, annotationGroupId)
                   } ~
                     put {
-                      traceName("projects-update-annotation-group") {
-                        updateAnnotationGroup(projectId, annotationGroupId)
-                      }
+                      updateAnnotationGroup(projectId, annotationGroupId)
                     } ~
                     delete {
-                      traceName("projects-delete-annotation-group") {
-                        deleteAnnotationGroup(projectId, annotationGroupId)
-                      }
+                      deleteAnnotationGroup(projectId, annotationGroupId)
                     }
                 } ~
                   pathPrefix("summary") {
@@ -151,64 +125,51 @@ trait ProjectRoutes
           pathPrefix("annotations") {
             pathEndOrSingleSlash {
               get {
-                traceName("projects-list-annotations") {
-                  listAnnotations(projectId)
-                }
+                listAnnotations(projectId)
               } ~
                 post {
-                  traceName("projects-create-annotations") {
-                    createAnnotation(projectId)
-                  }
+                  createAnnotation(projectId)
                 } ~
                 delete {
-                  traceName("projects-delete-annotations") {
-                    deleteProjectAnnotations(projectId)
-                  }
+                  deleteProjectAnnotations(projectId)
                 }
             } ~
               pathPrefix("shapefile") {
                 pathEndOrSingleSlash {
                   get {
-                    traceName("project-annotations-shapefile") {
-                      exportAnnotationShapefile(projectId)
-                    }
+                    exportAnnotationShapefile(projectId)
                   } ~
                     post {
-                      traceName("project-annotations-shapefile-upload") {
-                        authenticate { user =>
-                          val tempFile = ScalaFile.newTemporaryFile()
-                          tempFile.deleteOnExit()
-                          val response =
-                            storeUploadedFile("name", (_) => tempFile.toJava) {
-                              (m, _) =>
-                                processShapefile(projectId, tempFile, m)
-                            }
-                          tempFile.delete()
-                          response
-                        }
+                      authenticate { user =>
+                        val tempFile = ScalaFile.newTemporaryFile()
+                        tempFile.deleteOnExit()
+                        val response =
+                          storeUploadedFile("name", (_) => tempFile.toJava) {
+                            (m, _) =>
+                              processShapefile(projectId, tempFile, m)
+                          }
+                        tempFile.delete()
+                        response
                       }
                     }
                 } ~
                   pathPrefix("import") {
                     pathEndOrSingleSlash {
                       (post & formFieldMap) { fields =>
-                        traceName(
-                          "project-annotations-shapefile-import-with-fields") {
-                          authenticate { user =>
-                            val tempFile = ScalaFile.newTemporaryFile()
-                            tempFile.deleteOnExit()
-                            val response =
-                              storeUploadedFile("shapefile",
-                                                (_) => tempFile.toJava) {
-                                (m, _) =>
-                                  processShapefile(projectId,
-                                                   tempFile,
-                                                   m,
-                                                   Some(fields))
-                              }
-                            tempFile.delete()
-                            response
-                          }
+                        authenticate { user =>
+                          val tempFile = ScalaFile.newTemporaryFile()
+                          tempFile.deleteOnExit()
+                          val response =
+                            storeUploadedFile("shapefile",
+                                              (_) => tempFile.toJava) {
+                              (m, _) =>
+                                processShapefile(projectId,
+                                                 tempFile,
+                                                 m,
+                                                 Some(fields))
+                            }
+                          tempFile.delete()
+                          response
                         }
                       }
                     }
@@ -217,19 +178,13 @@ trait ProjectRoutes
               pathPrefix(JavaUUID) { annotationId =>
                 pathEndOrSingleSlash {
                   get {
-                    traceName("projects-get-annotation") {
-                      getAnnotation(projectId, annotationId)
-                    }
+                    getAnnotation(projectId, annotationId)
                   } ~
                     put {
-                      traceName("projects-update-annotation") {
-                        updateAnnotation(projectId, annotationId)
-                      }
+                      updateAnnotation(projectId, annotationId)
                     } ~
                     delete {
-                      traceName("projects-delete-annotation") {
-                        deleteAnnotation(projectId, annotationId)
-                      }
+                      deleteAnnotation(projectId, annotationId)
                     }
                 }
               }
@@ -237,71 +192,51 @@ trait ProjectRoutes
           pathPrefix("areas-of-interest") {
             pathEndOrSingleSlash {
               get {
-                traceName("projects-list-areas-of-interest") {
-                  listAOIs(projectId)
-                }
+                listAOIs(projectId)
               } ~
                 post {
-                  traceName("projects-create-areas-of-interest") {
-                    createAOI(projectId)
-                  }
+                  createAOI(projectId)
                 }
             }
           } ~
           pathPrefix("datasources") {
             pathEndOrSingleSlash {
               get {
-                traceName("project-list-datasources") {
-                  listProjectDatasources(projectId)
-                }
+                listProjectDatasources(projectId)
               }
             }
           } ~
           pathPrefix("scenes") {
             pathEndOrSingleSlash {
               get {
-                traceName("project-list-scenes") {
-                  listProjectScenes(projectId)
-                }
+                listProjectScenes(projectId)
               } ~
                 post {
-                  traceName("project-add-scenes-list") {
-                    addProjectScenes(projectId)
-                  }
+                  addProjectScenes(projectId)
                 } ~
                 put {
-                  traceName("project-update-scenes-list") {
-                    updateProjectScenes(projectId)
-                  }
+                  updateProjectScenes(projectId)
                 } ~
                 delete {
-                  traceName("project-delete-scenes-list") {
-                    deleteProjectScenes(projectId)
-                  }
+                  deleteProjectScenes(projectId)
                 }
             } ~
               pathPrefix("bulk-add-from-query") {
                 pathEndOrSingleSlash {
                   post {
-                    traceName("project-add-scenes-from-query") {
-                      addProjectScenesFromQueryParams(projectId)
-                    }
+                    addProjectScenesFromQueryParams(projectId)
                   }
                 }
               } ~
               pathPrefix("accept") {
                 post {
-                  traceName("project-accept-scenes-list") {
-                    acceptScenes(projectId)
-                  }
+                  acceptScenes(projectId)
                 }
               } ~
               pathPrefix(JavaUUID) { sceneId =>
                 pathPrefix("accept") {
                   post {
-                    traceName("project-accept-scene") {
-                      acceptScene(projectId, sceneId)
-                    }
+                    acceptScene(projectId, sceneId)
                   }
                 }
               }
@@ -309,29 +244,21 @@ trait ProjectRoutes
           pathPrefix("mosaic") {
             pathEndOrSingleSlash {
               get {
-                traceName("project-get-mosaic-definition") {
-                  getProjectMosaicDefinition(projectId)
-                }
+                getProjectMosaicDefinition(projectId)
               }
             } ~
               pathPrefix(JavaUUID) { sceneId =>
                 get {
-                  traceName("project-get-scene-color-corrections") {
-                    getProjectSceneColorCorrectParams(projectId, sceneId)
-                  }
+                  getProjectSceneColorCorrectParams(projectId, sceneId)
                 } ~
                   put {
-                    traceName("project-set-scene-color-corrections") {
-                      setProjectSceneColorCorrectParams(projectId, sceneId)
-                    }
+                    setProjectSceneColorCorrectParams(projectId, sceneId)
                   }
               } ~
               pathPrefix("bulk-update-color-corrections") {
                 pathEndOrSingleSlash {
                   post {
-                    traceName("project-bulk-update-color-corrections") {
-                      setProjectScenesColorCorrectParams(projectId)
-                    }
+                    setProjectScenesColorCorrectParams(projectId)
                   }
                 }
               }
@@ -339,9 +266,7 @@ trait ProjectRoutes
           pathPrefix("order") {
             pathEndOrSingleSlash {
               put {
-                traceName("projects-set-scene-order") {
-                  setProjectSceneOrder(projectId)
-                }
+                setProjectSceneOrder(projectId)
               }
             } // ~
             // pathPrefix("move") {
@@ -357,20 +282,14 @@ trait ProjectRoutes
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
               put {
-                traceName("replace-project-permissions") {
-                  replaceProjectPermissions(projectId)
-                }
+                replaceProjectPermissions(projectId)
               }
             } ~
               post {
-                traceName("add-project-permission") {
-                  addProjectPermission(projectId)
-                }
+                addProjectPermission(projectId)
               } ~
               get {
-                traceName("list-project-permissions") {
-                  listProjectPermissions(projectId)
-                }
+                listProjectPermissions(projectId)
               } ~
               delete {
                 deleteProjectPermissions(projectId)
@@ -379,9 +298,7 @@ trait ProjectRoutes
           pathPrefix("actions") {
             pathEndOrSingleSlash {
               get {
-                traceName("list-user-allowed-actions") {
-                  listUserProjectActions(projectId)
-                }
+                listUserProjectActions(projectId)
               }
             }
           }

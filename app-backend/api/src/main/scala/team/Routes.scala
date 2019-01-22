@@ -26,8 +26,6 @@ import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-import kamon.akka.http.KamonTraceDirectives
-
 /**
   * Routes for Organizations
   */
@@ -35,17 +33,14 @@ trait TeamRoutes
     extends Authentication
     with PaginationDirectives
     with CommonHandlers
-    with UserErrorHandler
-    with KamonTraceDirectives {
+    with UserErrorHandler {
 
   val xa: Transactor[IO]
 
   val teamRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix(JavaUUID) { teamId =>
       get {
-        traceName("team-detail") {
-          getTeam(teamId)
-        }
+        getTeam(teamId)
       }
     }
   }

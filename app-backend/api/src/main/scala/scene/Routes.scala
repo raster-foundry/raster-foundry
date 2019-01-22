@@ -28,7 +28,6 @@ import geotrellis.raster.{IntArrayTile, MultibandTile}
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
 import io.circe.parser._
-import kamon.akka.http.KamonTraceDirectives
 
 import spray.json._
 import spray.json.DefaultJsonProtocol._
@@ -45,70 +44,51 @@ trait SceneRoutes
     with CommonHandlers
     with AWSBatch
     with UserErrorHandler
-    with HistogramJsonFormats
-    with KamonTraceDirectives {
+    with HistogramJsonFormats {
 
   val xa: Transactor[IO]
 
   val sceneRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {
-        traceName("scenes-list") {
-          listScenes
-        }
+        listScenes
       } ~
         handleExceptions(cogMissingHandler) {
           post {
-            traceName("scenes-create") {
-              createScene
-            }
+            createScene
           }
         }
     } ~
       pathPrefix(JavaUUID) { sceneId =>
         pathEndOrSingleSlash {
           get {
-            traceName("scenes-detail") {
-              getScene(sceneId)
-            }
+            getScene(sceneId)
           } ~
             put {
-              traceName("scenes-update") {
-                updateScene(sceneId)
-              }
+              updateScene(sceneId)
             } ~
             delete {
-              traceName("scenes-delete") {
-                deleteScene(sceneId)
-              }
+              deleteScene(sceneId)
             }
         } ~
           pathPrefix("download") {
             pathEndOrSingleSlash {
               get {
-                traceName("scene-download-url") {
-                  getDownloadUrl(sceneId)
-                }
+                getDownloadUrl(sceneId)
               }
             }
           } ~
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
               put {
-                traceName("replace-scene-permissions") {
-                  replaceScenePermissions(sceneId)
-                }
+                replaceScenePermissions(sceneId)
               }
             } ~
               post {
-                traceName("add-scene-permission") {
-                  addScenePermission(sceneId)
-                }
+                addScenePermission(sceneId)
               } ~
               get {
-                traceName("list-scene-permissions") {
-                  listScenePermissions(sceneId)
-                }
+                listScenePermissions(sceneId)
               } ~
               delete {
                 deleteScenePermissions(sceneId)
@@ -117,9 +97,7 @@ trait SceneRoutes
           pathPrefix("actions") {
             pathEndOrSingleSlash {
               get {
-                traceName("list-user-allowed-actions") {
-                  listUserSceneActions(sceneId)
-                }
+                listUserSceneActions(sceneId)
               }
             }
           } ~

@@ -26,6 +26,7 @@ setup(
     ],
     description="Lambda functions supporting the Raster Foundry web application.",
     install_requires=[
+        "pyproj>=1.9.5.1",
         "rasterfoundry>=1.16.0",
         "shapely>=1.6.4.post2",
         "mypy>=v0.650"
