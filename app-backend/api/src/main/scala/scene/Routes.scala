@@ -285,7 +285,10 @@ trait SceneRoutes
 
   def listScenePermissions(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+      SceneDao
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
     } {
       complete {
         SceneDao
@@ -299,9 +302,10 @@ trait SceneRoutes
   def replaceScenePermissions(sceneId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (SceneDao.query.ownedBy(user, sceneId).exists, acrList traverse { acr =>
-          SceneDao.isValidPermission(acr, user)
-        } map { _.foldLeft(true)(_ && _) }).tupled
+        (SceneDao.authorized(user, ObjectType.Scene, sceneId, ActionType.Edit),
+         acrList traverse { acr =>
+           SceneDao.isValidPermission(acr, user)
+         } map { _.foldLeft(true)(_ && _) }).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
           })
@@ -321,7 +325,7 @@ trait SceneRoutes
   def addScenePermission(sceneId: UUID): Route = authenticate { user =>
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
-        (SceneDao.query.ownedBy(user, sceneId).exists,
+        (SceneDao.authorized(user, ObjectType.Scene, sceneId, ActionType.Edit),
          SceneDao.isValidPermission(acr, user)).tupled
           .map(authTup => authTup._1 && authTup._2)
           .transact(xa)
@@ -346,33 +350,32 @@ trait SceneRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      user.isSuperuser match {
-        case true => complete(List("*"))
-        case false =>
-          onSuccess(
-            SceneWithRelatedDao
-              .unsafeGetScene(sceneId)
-              .transact(xa)
-              .unsafeToFuture
-          ) { scene =>
-            scene.owner == user.id match {
-              case true => complete(List("*"))
-              case false =>
-                complete {
-                  SceneDao
-                    .listUserActions(user, sceneId)
-                    .transact(xa)
-                    .unsafeToFuture
-                }
+      onSuccess(
+        SceneWithRelatedDao
+          .unsafeGetScene(sceneId)
+          .transact(xa)
+          .unsafeToFuture
+      ) { scene =>
+        scene.owner == user.id match {
+          case true => complete(List("*"))
+          case false =>
+            complete {
+              SceneDao
+                .listUserActions(user, sceneId)
+                .transact(xa)
+                .unsafeToFuture
             }
-          }
+        }
       }
     }
   }
 
   def deleteScenePermissions(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+      SceneDao
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
     } {
       complete {
         SceneDao

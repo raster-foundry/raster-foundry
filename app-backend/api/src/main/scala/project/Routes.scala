@@ -283,17 +283,17 @@ trait ProjectRoutes
             pathEndOrSingleSlash {
               put {
                 replaceProjectPermissions(projectId)
-              }
-            } ~
-              post {
-                addProjectPermission(projectId)
               } ~
-              get {
-                listProjectPermissions(projectId)
-              } ~
-              delete {
-                deleteProjectPermissions(projectId)
-              }
+                post {
+                  addProjectPermission(projectId)
+                } ~
+                get {
+                  listProjectPermissions(projectId)
+                } ~
+                delete {
+                  deleteProjectPermissions(projectId)
+                }
+            }
           } ~
           pathPrefix("actions") {
             pathEndOrSingleSlash {
@@ -1046,9 +1046,8 @@ trait ProjectRoutes
 
   def listProjectPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
-        .ownedBy(user, projectId)
-        .exists
+      ProjectDao
+        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
     } {
@@ -1064,9 +1063,10 @@ trait ProjectRoutes
   def replaceProjectPermissions(projectId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (ProjectDao.query
-           .ownedBy(user, projectId)
-           .exists,
+        (ProjectDao.authorized(user,
+                               ObjectType.Project,
+                               projectId,
+                               ActionType.Edit),
          acrList traverse { acr =>
            ProjectDao.isValidPermission(acr, user)
          } map { _.foldLeft(true)(_ && _) }).tupled
@@ -1089,9 +1089,10 @@ trait ProjectRoutes
   def addProjectPermission(projectId: UUID): Route = authenticate { user =>
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
-        (ProjectDao.query
-           .ownedBy(user, projectId)
-           .exists,
+        (ProjectDao.authorized(user,
+                               ObjectType.Project,
+                               projectId,
+                               ActionType.Edit),
          ProjectDao.isValidPermission(acr, user)).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
@@ -1142,9 +1143,8 @@ trait ProjectRoutes
 
   def deleteProjectPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
-        .ownedBy(user, projectId)
-        .exists
+      ProjectDao
+        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
     } {

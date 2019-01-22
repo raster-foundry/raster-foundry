@@ -160,9 +160,11 @@ trait DatasourceRoutes
   def listDatasourcePermissions(datasourceId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        DatasourceDao.query
-          .ownedBy(user, datasourceId)
-          .exists
+        DatasourceDao
+          .authorized(user,
+                      ObjectType.Datasource,
+                      datasourceId,
+                      ActionType.View)
           .transact(xa)
           .unsafeToFuture
       } {
@@ -179,9 +181,10 @@ trait DatasourceRoutes
     user =>
       entity(as[List[ObjectAccessControlRule]]) { acrList =>
         authorizeAsync {
-          (DatasourceDao.query
-             .ownedBy(user, datasourceId)
-             .exists,
+          (DatasourceDao.authorized(user,
+                                    ObjectType.Datasource,
+                                    datasourceId,
+                                    ActionType.Edit),
            acrList traverse { acr =>
              DatasourceDao.isValidPermission(acr, user)
            } map { _.foldLeft(true)(_ && _) }).tupled
@@ -205,9 +208,10 @@ trait DatasourceRoutes
     user =>
       entity(as[ObjectAccessControlRule]) { acr =>
         authorizeAsync {
-          (DatasourceDao.query
-             .ownedBy(user, datasourceId)
-             .exists,
+          (DatasourceDao.authorized(user,
+                                    ObjectType.Datasource,
+                                    datasourceId,
+                                    ActionType.Edit),
            DatasourceDao.isValidPermission(acr, user)).tupled
             .map({ authTup =>
               authTup._1 && authTup._2
@@ -236,26 +240,22 @@ trait DatasourceRoutes
           .transact(xa)
           .unsafeToFuture
       } {
-        user.isSuperuser match {
-          case true => complete(List("*"))
-          case false =>
-            onSuccess(
-              DatasourceDao
-                .unsafeGetDatasourceById(datasourceId)
-                .transact(xa)
-                .unsafeToFuture
-            ) { datasource =>
-              datasource.owner == user.id match {
-                case true => complete(List("*"))
-                case false =>
-                  complete {
-                    DatasourceDao
-                      .listUserActions(user, datasourceId)
-                      .transact(xa)
-                      .unsafeToFuture
-                  }
+        onSuccess(
+          DatasourceDao
+            .unsafeGetDatasourceById(datasourceId)
+            .transact(xa)
+            .unsafeToFuture
+        ) { datasource =>
+          datasource.owner == user.id match {
+            case true => complete(List("*"))
+            case false =>
+              complete {
+                DatasourceDao
+                  .listUserActions(user, datasourceId)
+                  .transact(xa)
+                  .unsafeToFuture
               }
-            }
+          }
         }
       }
   }
@@ -263,9 +263,11 @@ trait DatasourceRoutes
   def deleteDatasourcePermissions(datasourceId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        DatasourceDao.query
-          .ownedBy(user, datasourceId)
-          .exists
+        DatasourceDao
+          .authorized(user,
+                      ObjectType.Datasource,
+                      datasourceId,
+                      ActionType.Edit)
           .transact(xa)
           .unsafeToFuture
       } {

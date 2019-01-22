@@ -156,9 +156,8 @@ trait ToolRunRoutes
 
   def listToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolRunDao.query
-        .ownedBy(user, toolRunId)
-        .exists
+      ToolRunDao
+        .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
     } {
@@ -174,9 +173,10 @@ trait ToolRunRoutes
   def replaceToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (ToolRunDao.query
-           .ownedBy(user, toolRunId)
-           .exists,
+        (ToolRunDao.authorized(user,
+                               ObjectType.Analysis,
+                               toolRunId,
+                               ActionType.Edit),
          acrList traverse { acr =>
            ToolRunDao.isValidPermission(acr, user)
          } map { _.foldLeft(true)(_ && _) }).tupled
@@ -199,9 +199,8 @@ trait ToolRunRoutes
   def addToolRunPermission(toolRunId: UUID): Route = authenticate { user =>
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
-        (ToolRunDao.query
-           .ownedBy(user, toolRunId)
-           .exists,
+        (ToolRunDao
+           .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit),
          ToolRunDao.isValidPermission(acr, user)).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
@@ -222,7 +221,7 @@ trait ToolRunRoutes
   def listUserAnalysisActions(analysisId: UUID): Route = authenticate { user =>
     authorizeAsync {
       ToolRunDao
-        .authorized(user, ObjectType.Analysis, analysisId, ActionType.View)
+        .authorized(user, ObjectType.Analysis, analysisId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
     } {
@@ -253,9 +252,8 @@ trait ToolRunRoutes
 
   def deleteToolRunPermissions(toolRunId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolRunDao.query
-        .ownedBy(user, toolRunId)
-        .exists
+      ToolRunDao
+        .authorized(user, ObjectType.Analysis, toolRunId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
     } {
