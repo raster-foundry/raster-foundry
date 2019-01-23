@@ -289,16 +289,7 @@ trait ProjectRoutes
               put {
                 setProjectSceneOrder(projectId)
               }
-            } // ~
-            // pathPrefix("move") {
-            //   pathPrefix(IntNumber) { from =>
-            //     pathPrefix(IntNumber) { to =>
-            //       traceName("projects-move-scene-order") {
-            //         moveProjectScene(projectId, from, to)
-            //       }
-            //     }
-            //   }
-            // }
+            }
           } ~
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
@@ -851,34 +842,6 @@ trait ProjectRoutes
     }
   }
 
-  def moveProjectScene(projectId: UUID, from: Int, to: Int): Route =
-    authenticate { user =>
-      authorizeAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-          .transact(xa)
-          .unsafeToFuture
-      } {
-        val moveSceneIO = for {
-          project <- ProjectDao.unsafeGetProjectById(projectId)
-          projectLayerId = project.defaultLayerId match {
-            case Some(defaultLayerId) => defaultLayerId
-            case _ =>
-              throw new Exception(
-                s"Project ${projectId} does not have a default layer")
-          }
-          _ <- SceneToProjectDao.moveSceneOrder(projectId, from, to)
-          rowsAffected <- SceneToLayerDao.moveSceneOrder(projectLayerId,
-                                                         from,
-                                                         to)
-        } yield { rowsAffected }
-
-        onSuccess(moveSceneIO.transact(xa).unsafeToFuture) { _ =>
-          complete(StatusCodes.NoContent)
-        }
-      }
-    }
-
   /** Set the manually defined z-ordering for scenes within a given project */
   def setProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
@@ -991,8 +954,8 @@ trait ProjectRoutes
                 s"Project ${projectId} does not have a default layer")
           }
           _ <- SceneToProjectDao.setProjectColorBands(projectId, colorBands)
-          rowsAffected <- SceneToLayerDao.setProjectLayerColorBands(projectLayerId,
-                                                                    colorBands)
+          rowsAffected <- SceneToLayerDao
+            .setProjectLayerColorBands(projectLayerId, colorBands)
         } yield { rowsAffected }
 
         onSuccess(setProjectColorBandsIO.transact(xa).unsafeToFuture) { _ =>
@@ -1051,8 +1014,14 @@ trait ProjectRoutes
                 throw new Exception(
                   s"Project ${projectId} does not have a default layer")
             }
-            _ <- SceneToProjectDao.getMosaicDefinition(projectId).compile.to[List]
-            result <- SceneToLayerDao.getMosaicDefinition(projectLayerId).compile.to[List]
+            _ <- SceneToProjectDao
+              .getMosaicDefinition(projectId)
+              .compile
+              .to[List]
+            result <- SceneToLayerDao
+              .getMosaicDefinition(projectLayerId)
+              .compile
+              .to[List]
           } yield { result }
 
           getMosaicDefinitionIO

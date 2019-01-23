@@ -75,14 +75,6 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     updateF.update.run
   }
 
-  def moveSceneOrder(projectId: UUID, from: Int, to: Int): ConnectionIO[Int] = {
-    // TODO implement this. Route is currently commented out
-    // val updateF = fr"""
-    // """
-    // updateF.update.run
-    ???
-  }
-
   def setManualOrder(projectId: UUID,
                      sceneIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = {
     val updates = for {
@@ -215,11 +207,14 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     // if there is not a mosaic definition at this point, then the scene_to_project row was not created correctly
     (fr"""
     UPDATE scenes_to_projects
-    SET mosaic_definition = (mosaic_definition || '{"redBand":""" ++ Fragment
-      .const(s"${colorBands.redBand}") ++
-      fr""", "blueBand":""" ++ Fragment.const(s"${colorBands.blueBand}") ++
-      fr""", "greenBand":""" ++ Fragment.const(s"${colorBands.greenBand}") ++
-      fr"""}'::jsonb)
+    SET mosaic_definition = 
+      (mosaic_definition ||
+        '{
+          "redBand":${colorBands.redBand},
+          "blueBand":${colorBands.blueBand},
+          "greenBand":${colorBands.greenBand}
+        }'::jsonb
+      )
     WHERE project_id = $projectId
     """).update.run
   }

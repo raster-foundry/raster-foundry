@@ -83,16 +83,6 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     """).update.run
   }
 
-  def moveSceneOrder(projectLayerId: UUID,
-                     from: Int,
-                     to: Int): ConnectionIO[Int] = {
-    // TODO implement this. Route is currently commented out
-    // val updateF = fr"""
-    // """
-    // updateF.update.run
-    ???
-  }
-
   def setManualOrder(projectLayerId: UUID,
                      sceneIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = {
     val updates = for {
@@ -231,13 +221,16 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     // TODO support setting color band by datasource instead of project wide
     // if there is not a mosaic definition at this point, then the scene_to_project row was not created correctly
     (fr"""
-    UPDATE scenes_to_layer
-    SET mosaic_definition = (mosaic_definition || '{"redBand":""" ++ Fragment
-      .const(s"${colorBands.redBand}") ++
-      fr""", "blueBand":""" ++ Fragment.const(s"${colorBands.blueBand}") ++
-      fr""", "greenBand":""" ++ Fragment.const(s"${colorBands.greenBand}") ++
-      fr"""}'::jsonb)
-    WHERE project_layer_id = ${projectLayerId}
-    """).update.run
+    UPDATE scenes_to_layers
+    SET mosaic_definition =
+      (mosaic_definition ||
+        '{
+          "redBand":${colorBands.redBand},
+          "blueBand":${colorBands.blueBand},
+          "greenBand":${colorBands.greenBand}
+        }'::jsonb
+      )
+    WHERE project_layer_id = $projectLayerId
+    """").update.run
   }
 }
