@@ -207,15 +207,15 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     // if there is not a mosaic definition at this point, then the scene_to_project row was not created correctly
     (fr"""
     UPDATE scenes_to_projects
-    SET mosaic_definition = 
+    SET mosaic_definition =
       (mosaic_definition ||
-        '{
-          "redBand":${colorBands.redBand},
-          "blueBand":${colorBands.blueBand},
-          "greenBand":${colorBands.greenBand}
-        }'::jsonb
+        json_build_object(
+          'redBand',${colorBands.redBand},
+          'blueBand',${colorBands.blueBand},
+          'greenBand', ${colorBands.greenBand}
+        )::jsonb
       )
-    WHERE project_id = $projectId
+    WHERE project_id = ${projectId}
     """).update.run
   }
 }

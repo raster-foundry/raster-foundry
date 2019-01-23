@@ -224,13 +224,13 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     UPDATE scenes_to_layers
     SET mosaic_definition =
       (mosaic_definition ||
-        '{
-          "redBand":${colorBands.redBand},
-          "blueBand":${colorBands.blueBand},
-          "greenBand":${colorBands.greenBand}
-        }'::jsonb
+        json_build_object(
+          'redBand',${colorBands.redBand},
+          'blueBand',${colorBands.blueBand},
+          'greenBand', ${colorBands.greenBand}
+        )::jsonb
       )
-    WHERE project_layer_id = $projectLayerId
-    """").update.run
+    WHERE project_layer_id = ${projectLayerId}
+    """).update.run
   }
 }
