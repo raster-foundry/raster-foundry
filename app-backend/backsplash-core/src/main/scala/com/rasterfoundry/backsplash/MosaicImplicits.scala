@@ -24,8 +24,6 @@ import HasRasterExtents._
 import TmsReification._
 import com.typesafe.scalalogging.LazyLogging
 
-import java.util.UUID
-
 class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     extends ToTmsReificationOps
     with ToExtentReificationOps

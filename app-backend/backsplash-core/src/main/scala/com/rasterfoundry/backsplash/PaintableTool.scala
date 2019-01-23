@@ -1,7 +1,6 @@
 package com.rasterfoundry.backsplash
 
 import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
 
 import com.azavea.maml.ast.Expression

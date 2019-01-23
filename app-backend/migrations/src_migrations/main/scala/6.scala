@@ -1,8 +1,5 @@
 import slick.jdbc.PostgresProfile.api._
-import com.liyaos.forklift.slick.{SqlMigration, DBIOMigration}
-
-import java.util.{Calendar, Date, UUID}
-import java.sql.Timestamp
+import com.liyaos.forklift.slick.SqlMigration
 
 object M6 {
   RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(6)(

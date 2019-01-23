@@ -70,6 +70,7 @@ object Dependencies {
   val scalajHttp = "org.scalaj" %% "scalaj-http" % Version.scalajHttp
   val scalatest = "org.scalatest" %% "scalatest" % Version.scalaTest % "test"
   val scopt = "com.github.scopt" %% "scopt" % Version.scopt
+  val decline = "com.monovore" %% "decline" % Version.decline
   val slickMigrationAPI = "io.github.nafg" %% "slick-migration-api" % Version.slickMigrationAPI
   val spark = "org.apache.spark" %% "spark-core" % Version.spark % "provided"
   val sparkCore = "org.apache.spark" %% "spark-core" % Version.spark
