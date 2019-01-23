@@ -91,6 +91,8 @@ services:
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
       - ./app-backend/batch/target/scala-2.11/:/opt/raster-foundry/jars/
+      - ./app-backend/backsplash-export/target/scala-2.11/:/opt/raster-foundry/export/
+      - ./data/:/opt/data/
       - $HOME/.aws:/root/.aws:ro
     build:
       context: ./app-tasks
