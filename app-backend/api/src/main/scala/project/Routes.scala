@@ -87,9 +87,9 @@ trait ProjectRoutes
               post {
                 createProjectLayer(projectId)
               } ~
-              get {
-                listProjectLayers(projectId)
-              }
+                get {
+                  listProjectLayers(projectId)
+                }
             } ~
               pathPrefix(JavaUUID) { layerId =>
                 get {
