@@ -115,6 +115,11 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
         Fragments.in(fr"scene_id", _)
       }
     )
+
+    val orderByF: Fragment = fr"""
+      ORDER BY scenes_stp.scene_order ASC NULLS LAST, (acquisition_date, cloud_cover) ASC
+    """
+
     val select = fr"""
     SELECT
       scene_id, project_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location,
@@ -130,7 +135,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     ON
       scenes_stp.project_id = projects.id
       """
-    (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scenes_stp.scene_order ASC")
+    (select ++ whereAndOpt(filters: _*) ++ orderByF)
       .query[SceneToProjectwithSceneType]
       .stream map { stp =>
       {
