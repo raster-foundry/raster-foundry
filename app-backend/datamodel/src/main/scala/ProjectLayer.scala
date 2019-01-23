@@ -52,6 +52,32 @@ final case class ProjectLayerProperties(projectId: UUID,
                                         rangeEnd: Option[Timestamp])
 
 object ProjectLayer extends LazyLogging {
+  def create = Create.apply _
+
+  @JsonCodec
+  final case class Create(name: String,
+                          projectId: UUID,
+                          colorGroupHex: String,
+                          smartLayerId: Option[UUID],
+                          rangeStart: Option[Timestamp],
+                          rangeEnd: Option[Timestamp],
+                          geometry: Option[Projected[Geometry]]) {
+    def toProjectLayer: ProjectLayer = {
+      val now = new Timestamp(new java.util.Date().getTime)
+      ProjectLayer(
+        UUID.randomUUID,
+        now,
+        now,
+        this.name,
+        this.projectId,
+        this.colorGroupHex,
+        this.smartLayerId,
+        this.rangeStart,
+        this.rangeEnd,
+        this.geometry
+      )
+    }
+  }
   final case class GeoJSON(id: UUID,
                            geometry: Option[Projected[Geometry]],
                            properties: ProjectLayerProperties,

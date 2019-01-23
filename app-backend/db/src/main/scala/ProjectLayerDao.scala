@@ -17,7 +17,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
   val tableName = "project_layers"
 
   val selectF: Fragment =
-    fr"SELECT id, created_at, modified_at, name, project_id, color_group_hex, smart_layer_id, range_start, range_end, geometry" ++ tableF
+    fr"SELECT id, created_at, modified_at, name, project_id, color_group_hex, smart_layer_id, range_start, range_end, geometry from" ++ tableF
 
   def unsafeGetProjectLayerById(
       projectLayerId: UUID): ConnectionIO[ProjectLayer] = {
@@ -63,7 +63,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
     val query = (fr"UPDATE" ++ tableF ++ fr"""SET
       modified_at = ${updateTime},
       name = ${projectLayer.name},
-      colorGroupHex = ${projectLayer.colorGroupHex},
+      color_group_hex = ${projectLayer.colorGroupHex},
       geometry = ${projectLayer.geometry}
     """ ++ Fragments.whereAndOpt(Some(idFilter))).update
     query
@@ -80,7 +80,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
       layerId: UUID,
       user: User
   ): ConnectionIO[Option[ProjectLayer]] =
-    query.filter(fr"project = ${projectId}").filter(layerId).selectOption
+    query.filter(fr"project_id = ${projectId}").filter(layerId).selectOption
 
   def deleteProjectLayer(layerId: UUID): ConnectionIO[Int] =
     for {
