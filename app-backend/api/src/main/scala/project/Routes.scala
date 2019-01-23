@@ -86,7 +86,7 @@ trait ProjectRoutes
             pathEndOrSingleSlash {
               post {
                 createProjectLayer(projectId)
-              }
+              } ~
               get {
                 listProjectLayers(projectId)
               }
