@@ -33,7 +33,7 @@ object Version {
   val maml = "0.1.0"
   val nimbusJose = "0.6.0"
   val postgres = "42.1.1"
-  val rollbar = "1.0.1"
+  val rollbar = "1.4.0"
   val scaffeine = "2.0.0"
   val scala = "2.11.12"
   val scalaCheck = "1.14.0"

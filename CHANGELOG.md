@@ -15,6 +15,7 @@
 - Updated permission check logic for lab templates to make ownership filter work as expected [\#4462](https://github.com/raster-foundry/raster-foundry/pull/4462)
 - Unify S3 client interface usage [\#4441](https://github.com/raster-foundry/raster-foundry/pull/4441)
 - Moved common authentication logic to http4s-util subproject [\#4496](https://github.com/raster-foundry/raster-foundry/pull/4496)
+- Upgraded scala, javascript, and python rollbar clients [\#4502](https://github.com/raster-foundry/raster-foundry/pull/4502)
 - Added ability to download images as part of development environment setup [\#4509](https://github.com/raster-foundry/raster-foundry/pull/4509)
 - Allow users with edit permissions to edit the permissions of objects [\#4490](https://github.com/raster-foundry/raster-foundry/pull/4490)
 
