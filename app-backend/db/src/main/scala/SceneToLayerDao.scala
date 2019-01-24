@@ -11,8 +11,8 @@ import com.rasterfoundry.datamodel.{
   BatchParams,
   ColorCorrect => RFColorCorrect,
   MosaicDefinition,
-  SceneToProject,
-  SceneToProjectwithSceneType
+  SceneToLayer,
+  SceneToLayerWithSceneType
 }
 import com.typesafe.scalalogging.LazyLogging
 import com.rasterfoundry.datamodel._
@@ -25,64 +25,74 @@ import fs2.Stream
 import geotrellis.vector.{MultiPolygon, Polygon, Projected}
 import io.circe.syntax._
 
-case class SceneToProjectDao()
+case class SceneToLayerDao()
 
-object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
+object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
 
-  val tableName = "scenes_to_projects"
+  val tableName = "scenes_to_layers"
 
   val selectF: Fragment = sql"""
     SELECT
-      scene_id, project_id, accepted, scene_order, mosaic_definition
+      scene_id, project_layer_id, accepted, scene_order, mosaic_definition
     FROM
   """ ++ tableF
 
-  /** Unclear what this is supposed to return from the current implementation */
-  def acceptScene(projectId: UUID, sceneId: UUID): ConnectionIO[Int] = {
+  def acceptScene(projectLayerId: UUID, sceneId: UUID): ConnectionIO[Int] = {
     fr"""
-      UPDATE scenes_to_projects SET accepted = true WHERE project_id = ${projectId} AND scene_id = ${sceneId}
+      UPDATE scenes_to_layers
+      SET accepted = true
+      WHERE project_layer_id = ${projectLayerId}
+        AND scene_id = ${sceneId}
     """.update.run
   }
 
-  def acceptScenes(projectId: UUID, sceneIds: List[UUID]): ConnectionIO[Int] = {
+  def acceptScenes(projectLayerId: UUID,
+                   sceneIds: List[UUID]): ConnectionIO[Int] = {
     sceneIds.toNel match {
-      case Some(ids) => acceptScenes(projectId, ids)
+      case Some(ids) => acceptScenes(projectLayerId, ids)
       case _         => 0.pure[ConnectionIO]
     }
   }
 
-  def acceptScenes(projectId: UUID, sceneIds: NEL[UUID]): ConnectionIO[Int] = {
-    val updateF: Fragment = fr"""
-      UPDATE scenes_to_projects
-      SET accepted = true
-    """ ++ Fragments.whereAnd(
-      fr"project_id = $projectId",
-      Fragments.in(fr"scene_id", sceneIds)
-    )
-    updateF.update.run
+  def acceptScenes(projectLayerId: UUID,
+                   sceneIds: NEL[UUID]): ConnectionIO[Int] = {
+    (
+      fr"""
+        UPDATE scenes_to_layers
+        SET accepted = true
+      """ ++ Fragments.whereAnd(
+        fr"project_layer_id = ${projectLayerId}",
+        Fragments.in(fr"scene_id", sceneIds)
+      )
+    ).update.run
   }
 
   def addSceneOrdering(projectId: UUID): ConnectionIO[Int] = {
-    val updateF = fr"""
-    UPDATE scenes_to_projects
-    SET scene_order = rnum
-    (
-    SELECT id, row_number() over (ORDER BY scene_order ASC, acquisition_date ASC, cloud_cover ASC) as rnum,
-    FROM scenes_to_projects join scenes on scenes.id = scene_id where project_id = $projectId
-    ) s
-    WHERE id = s.id
-    """
-    updateF.update.run
+    (fr"""
+      UPDATE scenes_to_layers
+      SET scene_order = s.rnum
+      FROM (
+        SELECT scene_id, project_layer_id, row_number() over (ORDER BY stl.scene_order ASC, scenes.acquisition_date ASC, scenes.cloud_cover ASC) as rnum
+        FROM scenes_to_layers stl
+          JOIN scenes ON scenes.id = stl.scene_id
+          JOIN project_layers pl ON pl.id = stl.project_layer_id
+          WHERE pl.project_id = ${projectId}
+      ) s
+      WHERE scenes_to_layers.project_layer_id = s.project_layer_id
+        AND scenes_to_layers.scene_id = s.scene_id
+    """).update.run
   }
 
-  def setManualOrder(projectId: UUID,
+  def setManualOrder(projectLayerId: UUID,
                      sceneIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = {
     val updates = for {
       i <- sceneIds.indices
     } yield {
       fr"""
-      UPDATE scenes_to_projects SET scene_order = ${i} WHERE project_id = ${projectId} AND scene_id = ${sceneIds(
-        i)}
+      UPDATE scenes_to_layers
+      SET scene_order = ${i}
+      WHERE project_layer_id = ${projectLayerId}
+        AND scene_id = ${sceneIds(i)}
     """.update.run
     }
     for {
@@ -90,7 +100,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     } yield sceneIds
   }
 
-  def getMosaicDefinition(projectId: UUID,
+  def getMosaicDefinition(projectLayerId: UUID,
                           polygonOption: Option[Projected[Polygon]],
                           redBand: Option[Int] = None,
                           greenBand: Option[Int] = None,
@@ -99,36 +109,39 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     : Stream[ConnectionIO, MosaicDefinition] = {
     val filters = List(
       polygonOption.map(polygon =>
-        fr"ST_Intersects(scenes_stp.tile_footprint, ${polygon})"),
-      Some(fr"scenes_stp.project_id = ${projectId}"),
-      Some(fr"scenes_stp.accepted = true"),
-      Some(fr"scenes_stp.ingest_status = 'INGESTED'"),
+        fr"ST_Intersects(tile_footprint, ${polygon})"),
+      Some(fr"project_layer_id = ${projectLayerId}"),
+      Some(fr"accepted = true"),
+      Some(fr"ingest_status = 'INGESTED'"),
       sceneIdSubset.toNel map {
         Fragments.in(fr"scene_id", _)
       }
     )
 
-    val orderByF: Fragment = fr"""
-      ORDER BY scenes_stp.scene_order ASC NULLS LAST, (acquisition_date, cloud_cover) ASC
-    """
+    val orderByF: Fragment =
+      fr"ORDER BY scene_order ASC NULLS LAST, (acquisition_date, cloud_cover) ASC"
 
     val select = fr"""
     SELECT
-      scene_id, project_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location,
+      scene_id, project_id, project_layer_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location,
       data_footprint, is_single_band, single_band_options
     FROM (
-      scenes_to_projects
+      scenes_to_layers
     LEFT JOIN
       scenes
-    ON scenes.id = scenes_to_projects.scene_id
-    ) scenes_stp
+    ON scenes.id = scenes_to_layers.scene_id
+    ) scenes_stl
+    LEFT JOIN
+      project_layers
+    ON
+      scenes_stl.project_layer_id = project_layers.id
     LEFT JOIN
       projects
     ON
-      scenes_stp.project_id = projects.id
+      project_layers.project_id = projects.id
       """
     (select ++ whereAndOpt(filters: _*) ++ orderByF)
-      .query[SceneToProjectwithSceneType]
+      .query[SceneToLayerWithSceneType]
       .stream map { stp =>
       {
         Applicative[Option].map3(redBand, greenBand, blueBand) {
@@ -162,51 +175,53 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
   }
 
   def getMosaicDefinition(
-      projectId: UUID): Stream[ConnectionIO, MosaicDefinition] = {
-    getMosaicDefinition(projectId, None)
+      projectLayerId: UUID): Stream[ConnectionIO, MosaicDefinition] = {
+    getMosaicDefinition(projectLayerId, None)
+  }
+
+  def getColorCorrectParams(
+      projectLayerId: UUID,
+      sceneId: UUID): ConnectionIO[ColorCorrect.Params] = {
+    query
+      .filter(
+        fr"project_layer_id = ${projectLayerId} AND scene_id = ${sceneId}")
+      .select
+      .map { stl: SceneToLayer =>
+        stl.colorCorrectParams
+      }
   }
 
   def setColorCorrectParams(
-      projectId: UUID,
+      projectLayerId: UUID,
       sceneId: UUID,
-      colorCorrectParams: ColorCorrect.Params): ConnectionIO[SceneToProject] = {
+      colorCorrectParams: ColorCorrect.Params): ConnectionIO[SceneToLayer] = {
     fr"""
-      UPDATE scenes_to_projects SET mosaic_definition = ${colorCorrectParams} WHERE project_id = ${projectId} AND scene_id = ${sceneId}
+      UPDATE scenes_to_layers
+      SET mosaic_definition = ${colorCorrectParams}
+      WHERE project_layer_id = ${projectLayerId} AND scene_id = ${sceneId}
     """.update.withUniqueGeneratedKeys("scene_id",
-                                       "project_id",
+                                       "project_layer_id",
                                        "accepted",
                                        "scene_order",
                                        "mosaic_definition")
   }
 
-  def getColorCorrectParams(
-      projectId: UUID,
-      sceneId: UUID): ConnectionIO[ColorCorrect.Params] = {
-    query
-      .filter(fr"project_id = ${projectId} AND scene_id = ${sceneId}")
-      .select
-      .map { stp: SceneToProject =>
-        stp.colorCorrectParams
-      }
-  }
-
   def setColorCorrectParamsBatch(
-      projectId: UUID,
-      batchParams: BatchParams): ConnectionIO[List[SceneToProject]] = {
-    val updates: ConnectionIO[List[SceneToProject]] = batchParams.items
+      projectLayerId: UUID,
+      batchParams: BatchParams): ConnectionIO[List[SceneToLayer]] = {
+    batchParams.items
       .map(params =>
-        setColorCorrectParams(projectId, params.sceneId, params.params))
+        setColorCorrectParams(projectLayerId, params.sceneId, params.params))
       .sequence
-    updates
   }
 
-  def setProjectColorBands(
-      projectId: UUID,
+  def setProjectLayerColorBands(
+      projectLayerId: UUID,
       colorBands: ProjectColorModeParams): ConnectionIO[Int] = {
     // TODO support setting color band by datasource instead of project wide
     // if there is not a mosaic definition at this point, then the scene_to_project row was not created correctly
     (fr"""
-    UPDATE scenes_to_projects
+    UPDATE scenes_to_layers
     SET mosaic_definition =
       (mosaic_definition ||
         json_build_object(
@@ -215,7 +230,7 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
           'greenBand', ${colorBands.greenBand}
         )::jsonb
       )
-    WHERE project_id = ${projectId}
+    WHERE project_layer_id = ${projectLayerId}
     """).update.run
   }
 }
