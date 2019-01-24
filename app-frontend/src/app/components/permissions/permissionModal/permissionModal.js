@@ -1,5 +1,5 @@
-/* global _ */
 import angular from 'angular';
+import _ from 'lodash';
 import tpl from './permissionModal.html';
 
 const PermissionModalComponent = {
@@ -265,6 +265,15 @@ class PermissionModalController {
                 .getOrganization(id)
                 .then(organization => {
                     this.entityCache.organization[id] = organization;
+                }, error => {
+                    if ([403, 404].includes(error.status)) {
+                        this.entityCache.organization[id] = {
+                            name: 'Private Organization',
+                            private: true
+                        };
+                    } else {
+                        this.entityCache.organization[id] = {error};
+                    }
                 });
         }
     }
@@ -279,6 +288,15 @@ class PermissionModalController {
                     // organization logo. We have to get the org to the the logo uri
                     this.fetchCachedOrganizationDetails(team.organizationId);
                     return team;
+                }, error => {
+                    if ([403, 404].includes(error.status)) {
+                        this.entityCache.team[id] = {
+                            name: 'Private Team',
+                            private: true
+                        };
+                    } else {
+                        this.entityCache.team[id] = {error};
+                    }
                 });
         }
     }
@@ -289,6 +307,15 @@ class PermissionModalController {
                 .getUserById(id)
                 .then(user => {
                     this.entityCache.user[id] = user;
+                }, error => {
+                    if ([403, 404].includes(error.status)) {
+                        this.entityCache.user[id] = {
+                            name: 'Private User',
+                            private: true
+                        };
+                    } else {
+                        this.entityCache.user[id] = {error};
+                    }
                 });
         }
     }
