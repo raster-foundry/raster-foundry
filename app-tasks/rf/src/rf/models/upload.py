@@ -7,7 +7,7 @@ class Upload(BaseModel):
     def __init__(self, uploadStatus, fileType, uploadType, files,
                  datasource, metadata, visibility, id=None, createdAt=None,
                  createdBy=None, modifiedAt=None, modifiedBy=None, owner=None,
-                 projectId=None):
+                 projectId=None, layerId=None):
         self.id = id
         self.createdAt = createdAt
         self.createdBy = createdBy
@@ -22,6 +22,7 @@ class Upload(BaseModel):
         self.metadata = metadata
         self.visibility = visibility
         self.projectId = projectId
+        self.layerId = layerId
 
     def to_dict(self):
         return dict(
@@ -38,7 +39,8 @@ class Upload(BaseModel):
             metadata=self.metadata,
             visibility=self.visibility,
             owner=self.owner,
-            projectId=self.projectId
+            projectId=self.projectId,
+            layerId=self.layerId
         )
 
     def update_upload_status(self, status):
@@ -61,7 +63,8 @@ class Upload(BaseModel):
             modifiedAt=d.get('modifiedAt'),
             modifiedBy=d.get('modifiedBy'),
             owner=d.get('owner'),
-            projectId=d.get('projectId')
+            projectId=d.get('projectId'),
+            layerId=d.get('layerId')
         )
 
     @classmethod

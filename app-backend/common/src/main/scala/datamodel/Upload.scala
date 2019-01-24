@@ -21,6 +21,7 @@ final case class Upload(id: UUID,
                         metadata: Json,
                         visibility: Visibility,
                         projectId: Option[UUID],
+                        layerId: Option[UUID],
                         source: Option[String])
 
 object Upload {
@@ -39,6 +40,7 @@ object Upload {
                           owner: Option[String],
                           visibility: Visibility,
                           projectId: Option[UUID],
+                          layerId: Option[UUID],
                           source: Option[String]) {
     def toUpload(user: User,
                  userPlatformAdmin: (UUID, Boolean),
@@ -91,6 +93,7 @@ object Upload {
         this.metadata,
         this.visibility,
         this.projectId,
+        this.layerId,
         this.source
       )
     }
