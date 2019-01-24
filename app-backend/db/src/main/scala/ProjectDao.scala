@@ -41,21 +41,18 @@ object ProjectDao
   type SceneToProject = (UUID, UUID, Boolean, Option[Int], Option[Json])
   type SceneToLayer = (UUID, UUID, Boolean, Option[Int], Option[Json])
 
-  def unsafeGetProjectById(projectId: UUID): ConnectionIO[Project] = {
+  def projectByIdQuery(projectId: UUID): Query0[Project] = {
     val idFilter = Some(fr"id = ${projectId}")
 
     (selectF ++ Fragments.whereAndOpt(idFilter))
       .query[Project]
-      .unique
   }
 
-  def getProjectById(projectId: UUID): ConnectionIO[Option[Project]] = {
-    val idFilter = Some(fr"id = ${projectId}")
+  def unsafeGetProjectById(projectId: UUID): ConnectionIO[Project] =
+    projectByIdQuery(projectId).unique
 
-    (selectF ++ Fragments.whereAndOpt(idFilter))
-      .query[Project]
-      .option
-  }
+  def getProjectById(projectId: UUID): ConnectionIO[Option[Project]] =
+    projectByIdQuery(projectId).option
 
   def listProjects(
       page: PageRequest,

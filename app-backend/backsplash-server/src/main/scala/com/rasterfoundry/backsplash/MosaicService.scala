@@ -70,6 +70,33 @@ class MosaicService[ProjStore: ProjectStore,
               }
             } yield resp
 
+          case GET -> Root / UUIDWrapper(projectId) / "layer" / UUIDWrapper(
+                layerId) / IntVar(z) / IntVar(x) / IntVar(y) :? BandOverrideQueryParamDecoder(
+                bandOverride) as user =>
+            val polygonBbox: Projected[Polygon] =
+              TileUtils.getTileBounds(z, x, y)
+            val eval = LayerTms.identity(
+              layers.read(layerId, Some(polygonBbox), bandOverride, None)
+            )
+
+            for {
+              fiberAuthProject <- authorizers.authProject(user, projectId).start
+              fiberAuthLayer <- authorizers
+                .authProjectLayer(projectId, layerId)
+                .start
+              fiberResp <- eval(z, x, y).start
+              _ <- (fiberAuthProject, fiberAuthLayer).tupled.join
+                .handleErrorWith { error =>
+                  fiberResp.cancel *> IO.raiseError(error)
+                }
+              resp <- fiberResp.join flatMap {
+                case Valid(tile) =>
+                  Ok(tile.renderPng.bytes, pngType)
+                case Invalid(e) =>
+                  BadRequest(s"Could not produce tile: $e")
+              }
+            } yield resp
+
           case GET -> Root / UUIDWrapper(projectId) / "histogram" as user =>
             for {
               authFiber <- authorizers.authProject(user, projectId).start

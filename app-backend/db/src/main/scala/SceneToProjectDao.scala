@@ -97,68 +97,22 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
                           blueBand: Option[Int] = None,
                           sceneIdSubset: List[UUID] = List.empty)
     : Stream[ConnectionIO, MosaicDefinition] = {
-    val filters = List(
-      polygonOption.map(polygon =>
-        fr"ST_Intersects(scenes_stp.tile_footprint, ${polygon})"),
-      Some(fr"scenes_stp.project_id = ${projectId}"),
-      Some(fr"scenes_stp.accepted = true"),
-      Some(fr"scenes_stp.ingest_status = 'INGESTED'"),
-      sceneIdSubset.toNel map {
-        Fragments.in(fr"scene_id", _)
+    for {
+      // Streamed only for correct monadic context
+      layerId <- ProjectDao.projectByIdQuery(projectId).stream map { project =>
+        project.defaultLayerId
       }
-    )
-
-    val orderByF: Fragment = fr"""
-      ORDER BY scenes_stp.scene_order ASC NULLS LAST, (acquisition_date, cloud_cover) ASC
-    """
-
-    val select = fr"""
-    SELECT
-      scene_id, project_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location,
-      data_footprint, is_single_band, single_band_options
-    FROM (
-      scenes_to_projects
-    LEFT JOIN
-      scenes
-    ON scenes.id = scenes_to_projects.scene_id
-    ) scenes_stp
-    LEFT JOIN
-      projects
-    ON
-      scenes_stp.project_id = projects.id
-      """
-    (select ++ whereAndOpt(filters: _*) ++ orderByF)
-      .query[SceneToProjectwithSceneType]
-      .stream map { stp =>
-      {
-        Applicative[Option].map3(redBand, greenBand, blueBand) {
-          case (r, g, b) =>
-            MosaicDefinition(
-              stp.sceneId,
-              stp.colorCorrectParams.copy(
-                redBand = r,
-                greenBand = g,
-                blueBand = b
-              ),
-              stp.sceneType,
-              stp.ingestLocation,
-              stp.dataFootprint flatMap { _.geom.as[MultiPolygon] },
-              stp.isSingleBand,
-              stp.singleBandOptions
-            )
-        } getOrElse {
-          MosaicDefinition(
-            stp.sceneId,
-            stp.colorCorrectParams,
-            stp.sceneType,
-            stp.ingestLocation,
-            stp.dataFootprint flatMap { _.geom.as[MultiPolygon] },
-            stp.isSingleBand,
-            stp.singleBandOptions
-          )
-        }
+      scenes <- layerId map {
+        SceneToLayerDao.getMosaicDefinition(_,
+                                            polygonOption,
+                                            redBand,
+                                            greenBand,
+                                            blueBand,
+                                            sceneIdSubset)
+      } getOrElse {
+        Stream.empty
       }
-    }
+    } yield scenes
   }
 
   def getMosaicDefinition(

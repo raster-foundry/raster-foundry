@@ -90,4 +90,12 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
   def updateProjectLayer(pl: ProjectLayer, plId: UUID): ConnectionIO[Int] = {
     updateProjectLayerQ(pl, plId).run
   }
+
+  def layerIsInProject(layerId: UUID,
+                       projectID: UUID): ConnectionIO[Boolean] = {
+    query.filter(layerId).selectOption map {
+      case Some(projectLayer) => projectLayer.projectId == projectID
+      case _                  => false
+    }
+  }
 }
