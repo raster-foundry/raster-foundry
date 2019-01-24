@@ -70,7 +70,7 @@ class MosaicService[ProjStore: ProjectStore,
               }
             } yield resp
 
-          case GET -> Root / UUIDWrapper(projectId) / "layer" / UUIDWrapper(
+          case GET -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
                 layerId) / IntVar(z) / IntVar(x) / IntVar(y) :? BandOverrideQueryParamDecoder(
                 bandOverride) as user =>
             val polygonBbox: Projected[Polygon] =
