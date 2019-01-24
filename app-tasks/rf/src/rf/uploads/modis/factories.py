@@ -61,7 +61,7 @@ modis_configs = {
 
 
 class MODISSceneFactory(object):
-    def __init__(self, hdf_urls, datasource, upload, project_id=None, visibility=Visibility.PRIVATE, owner=None):
+    def __init__(self, hdf_urls, datasource, upload, project_id=None, layer_id=None, visibility=Visibility.PRIVATE, owner=None):
         """Create factory for generating MODIS scenes
 
         Args:
@@ -69,6 +69,7 @@ class MODISSceneFactory(object):
             datasource (str): ID of MODIS datasource
             upload (str): ID of upload scene creation is associated with
             project_id (str): optional project to associate with uploads
+            layer_id (str): optional layer to associate with uploads
             visibility (str): level of visibility for new scene
             owner (str): optional owner to set for scene
         """
@@ -76,6 +77,7 @@ class MODISSceneFactory(object):
         self.datasource = datasource
         self.upload = upload
         self.project_id = project_id
+        self.layer_id = layer_id
         self.visibility = visibility
         self.owner = owner
 
