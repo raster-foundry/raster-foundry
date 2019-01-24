@@ -76,7 +76,9 @@ class MosaicService[ProjStore: ProjectStore,
             val polygonBbox: Projected[Polygon] =
               TileUtils.getTileBounds(z, x, y)
             val eval = LayerTms.identity(
-              layers.read(layerId, Some(polygonBbox), bandOverride, None)
+              layers.read(layerId, Some(polygonBbox), bandOverride, None) map {
+                _.copy(projectId = projectId)
+              }
             )
 
             for {
