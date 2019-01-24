@@ -9,6 +9,7 @@
 - Added a migration that creates relationship among projects, project layers, and scenes and populates corresponding tables. Updated associated data models and `Dao`s [\#4479](https://github.com/raster-foundry/raster-foundry/pull/4479)
 - CRUDL endpoints for project layers [\#4512](https://github.com/raster-foundry/raster-foundry/pull/4512)
 - Added `SceneToLayer` data model and `SceneToLayerDao`; updated related function calls in `ProjectDao` and project api [\#4513](https://github.com/raster-foundry/raster-foundry/pull/4513)
+- Added TMS route for project layers [\#4523](https://github.com/raster-foundry/raster-foundry/pull/4523)
 
 ### Changed
 - Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
