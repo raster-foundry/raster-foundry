@@ -35,6 +35,7 @@ import java.util.UUID
 
 class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
 
+  @SuppressWarnings(Array("OptionGet"))
   private def mosaicDefinitionToImage(mosaicDefinition: MosaicDefinition,
                                       bandOverride: Option[BandOverride],
                                       projId: UUID): BacksplashImage = {
