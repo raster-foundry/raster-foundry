@@ -1,5 +1,6 @@
 package com.rasterfoundry.backsplash
 
+import cats.implicits._
 import geotrellis.vector.Extent
 import org.http4s._
 import org.http4s.dsl.io._
@@ -16,17 +17,32 @@ object Parameters {
   implicit val uuidQueryParamDecoder: QueryParamDecoder[UUID] =
     QueryParamDecoder[String].map(UUID.fromString)
 
+  object BandOverrideQueryParamDecoder {
+    def unapply(
+        params: Map[String, Seq[String]]): Option[Option[BandOverride]] = {
+      (
+        params.get("redBand") flatMap { _.headOption } map {
+          Integer.parseInt(_)
+        },
+        params.get("greenBand") flatMap { _.headOption } map {
+          Integer.parseInt(_)
+        },
+        params.get("blueBand") flatMap { _.headOption } map {
+          Integer.parseInt(_)
+        }
+      ).tupled map {
+        // We have to wrap the option in another option to get the query param matcher
+        // to emit the correct type
+        case (r, g, b) => Some(BandOverride(r, g, b))
+      }
+    }
+  }
+
   /** Query string query parameters */
   object TokenQueryParamMatcher
       extends OptionalQueryParamDecoderMatcher[String]("token")
   object MapTokenQueryParamMatcher
       extends OptionalQueryParamDecoderMatcher[UUID]("mapToken")
-  object RedBandOptionalQueryParamMatcher
-      extends OptionalQueryParamDecoderMatcher[Int]("redBand")
-  object GreenBandOptionalQueryParamMatcher
-      extends OptionalQueryParamDecoderMatcher[Int]("greenBand")
-  object BlueBandOptionalQueryParamMatcher
-      extends OptionalQueryParamDecoderMatcher[Int]("blueBand")
   object ExtentQueryParamMatcher
       extends QueryParamDecoderMatcher[Extent]("bbox")
   object NodeQueryParamMatcher

@@ -25,8 +25,11 @@ import com.rasterfoundry.common.utils.TileUtils
 import doobie.util.transactor.Transactor
 import geotrellis.vector.{Polygon, Projected}
 
-class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
+class MosaicService[ProjStore: ProjectStore,
+                    LayerStore: ProjectStore,
+                    HistStore: HistogramStore](
     projects: ProjStore,
+    layers: LayerStore,
     mosaicImplicits: MosaicImplicits[HistStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO],
                         H: HttpErrorHandler[IO, BacksplashException, User],
@@ -47,13 +50,7 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
         AuthedService {
           case GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
                 y)
-                :? RedBandOptionalQueryParamMatcher(redOverride)
-                :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
-            val bandOverride =
-              Applicative[Option].map3(redOverride,
-                                       greenOverride,
-                                       blueOverride)(BandOverride.apply)
+                :? BandOverrideQueryParamDecoder(bandOverride) as user =>
             val polygonBbox: Projected[Polygon] =
               TileUtils.getTileBounds(z, x, y)
             val eval =
@@ -92,19 +89,13 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
             } yield resp
 
           case authedReq @ POST -> Root / UUIDWrapper(projectId) / "histogram"
-                :? RedBandOptionalQueryParamMatcher(redOverride)
-                :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
+                :? BandOverrideQueryParamDecoder(overrides) as user =>
             // Compile to a byte array, decode that as a string, and do something with the results
             authedReq.req.body.compile.to[Array] flatMap { uuids =>
               decode[List[UUID]](
                 uuids map { _.toChar } mkString
               ) match {
                 case Right(uuids) =>
-                  val overrides =
-                    (redOverride, greenOverride, blueOverride).mapN {
-                      case (r, g, b) => BandOverride(r, g, b)
-                    }
                   for {
                     authFiber <- authorizers.authProject(user, projectId).start
                     mosaic = projects.read(projectId,
@@ -129,13 +120,7 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
           case authedReq @ GET -> Root / UUIDWrapper(projectId) / "export"
                 :? ExtentQueryParamMatcher(extent)
                 :? ZoomQueryParamMatcher(zoom)
-                :? RedBandOptionalQueryParamMatcher(redOverride)
-                :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
-            val bandOverride =
-              Applicative[Option].map3(redOverride,
-                                       greenOverride,
-                                       blueOverride)(BandOverride.apply)
+                :? BandOverrideQueryParamDecoder(bandOverride) as user =>
             val projectedExtent = extent.reproject(LatLng, WebMercator)
             val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
             val eval = authedReq.req.headers

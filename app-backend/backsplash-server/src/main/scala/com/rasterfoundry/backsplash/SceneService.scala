@@ -40,13 +40,7 @@ class SceneService[ProjStore: ProjectStore, HistStore: HistogramStore](
         AuthedService {
           case GET -> Root / UUIDWrapper(sceneId) / IntVar(z) / IntVar(x) / IntVar(
                 y)
-                :? RedBandOptionalQueryParamMatcher(redOverride)
-                :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
-            val bandOverride =
-              Applicative[Option].map3(redOverride,
-                                       greenOverride,
-                                       blueOverride)(BandOverride.apply)
+                :? BandOverrideQueryParamDecoder(bandOverride) as user =>
             val eval =
               LayerTms.identity(scenes.read(sceneId, None, bandOverride, None))
             for {
