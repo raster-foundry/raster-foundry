@@ -94,7 +94,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
   def layerIsInProject(layerId: UUID,
                        projectID: UUID): ConnectionIO[Boolean] = {
     query.filter(layerId).selectOption map {
-      case Some(projectLayer) => projectLayer.projectId == projectID
+      case Some(projectLayer) => projectLayer.projectId == Option(projectID)
       case _                  => false
     }
   }
