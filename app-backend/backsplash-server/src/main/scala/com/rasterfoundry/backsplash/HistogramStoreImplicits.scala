@@ -20,38 +20,44 @@ trait HistogramStoreImplicits
 
   val xa: Transactor[IO]
 
+  @SuppressWarnings(Array("TraversableHead"))
+  private def mergeHistsForBands(
+      bands: List[Int],
+      hists: List[Array[Histogram[Double]]]): Array[Histogram[Double]] = {
+    val combinedHistogram = hists.foldLeft(
+      Array.fill(hists.head.length)(
+        StreamingHistogram(255): Histogram[Double]))(
+      (histArr1: Array[Histogram[Double]],
+       histArr2: Array[Histogram[Double]]) => {
+        histArr1 zip histArr2 map {
+          case (h1, h2) => h1 merge h2
+        }
+      }
+    )
+    bands.toArray map { band =>
+      combinedHistogram(band)
+    }
+  }
+
   implicit val layerAttributeHistogramStore: HistogramStore[LayerAttributeDao] =
     new HistogramStore[LayerAttributeDao] {
       def layerHistogram(self: LayerAttributeDao,
                          layerId: UUID,
                          subsetBands: List[Int]) = {
-        self.getHistogram[Array[Histogram[Double]]](layerId, xa) map { hists =>
+        self.getHistogram(layerId, xa) map { hists =>
           subsetBands.toArray map { band =>
             hists(band)
           }
         }
       }
 
-      @SuppressWarnings(Array("TraversableHead"))
-      def projectHistogram(
+      def projectLayerHistogram(
           self: LayerAttributeDao,
-          projectId: UUID,
-          subsetBands: List[Int]): IO[Array[Histogram[Double]]] = {
-        self.getProjectHistogram[Array[Histogram[Double]]](projectId, xa) map {
-          hists =>
-            val combinedHistogram = hists.foldLeft(
-              Array.fill(hists.head.length)(
-                StreamingHistogram(255): Histogram[Double]))(
-              (histArr1: Array[Histogram[Double]],
-               histArr2: Array[Histogram[Double]]) => {
-                histArr1 zip histArr2 map {
-                  case (h1, h2) => h1 merge h2
-                }
-              }
-            )
-            subsetBands.toArray map { band =>
-              combinedHistogram(band)
-            }
+          projectLayerId: UUID,
+          subsetBands: List[Int]
+      ): IO[Array[Histogram[Double]]] = {
+        self.getProjectLayerHistogram(projectLayerId, xa) map { hists =>
+          mergeHistsForBands(subsetBands, hists)
         }
       }
     }

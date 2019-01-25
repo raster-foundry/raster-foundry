@@ -35,7 +35,7 @@ final case class Project(id: UUID,
                          singleBandOptions: Option[SingleBandOptions.Params],
                          defaultAnnotationGroup: Option[UUID],
                          extras: Option[Json],
-                         defaultLayerId: Option[UUID])
+                         defaultLayerId: UUID)
 
 /** Case class for project creation */
 object Project extends GeoJsonSupport {
@@ -82,7 +82,7 @@ object Project extends GeoJsonSupport {
                           singleBandOptions: Option[SingleBandOptions.Params],
                           extras: Option[Json] = Some("{}".asJson))
       extends OwnerCheck {
-    def toProject(user: User): Project = {
+    def toProject(user: User, defaultLayerId: UUID): Project = {
       val now = new Timestamp(new java.util.Date().getTime)
 
       val ownerId = checkOwner(user, this.owner)
@@ -109,7 +109,7 @@ object Project extends GeoJsonSupport {
         singleBandOptions,
         None,
         extras,
-        None
+        defaultLayerId
       )
     }
   }
@@ -190,7 +190,7 @@ object Project extends GeoJsonSupport {
                             isSingleBand: Boolean,
                             singleBandOptions: Option[SingleBandOptions.Params],
                             extras: Option[Json] = Some("{}".asJson),
-                            defaultLayerId: Option[UUID] = None)
+                            defaultLayerId: UUID)
 
   object WithUser {
     def apply(project: Project, user: User): WithUser = {

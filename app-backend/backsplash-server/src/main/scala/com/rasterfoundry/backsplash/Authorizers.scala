@@ -2,7 +2,12 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.datamodel.{ActionType, ObjectType, User}
-import com.rasterfoundry.database.{ProjectDao, SceneDao, ToolRunDao}
+import com.rasterfoundry.database.{
+  ProjectDao,
+  ProjectLayerDao,
+  SceneDao,
+  ToolRunDao
+}
 import com.rasterfoundry.database.util.RFTransactor
 import cats.effect._
 import doobie.Transactor
@@ -50,6 +55,14 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
         .transact(xa)
     }
 
+  private def checkProjectLayerCached(projectID: UUID,
+                                      layerID: UUID): IO[Boolean] =
+    memoizeF[IO, Boolean](Some(10.seconds)) {
+      logger.debug(
+        s"Checking whether layer ${layerID} is in project ${projectID}")
+      ProjectLayerDao.layerIsInProject(layerID, projectID).transact(xa)
+    }
+
   def authToolRun(user: User, toolRunId: UUID): IO[Unit] = {
     checkToolRunAuth(user, toolRunId) map {
       case false =>
@@ -75,6 +88,16 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
       case false =>
         throw NotAuthorizedException(
           s"User ${user.id} is not authorized to view scene $sceneId"
+        )
+      case _ => ()
+    }
+  }
+
+  def authProjectLayer(projectID: UUID, layerID: UUID): IO[Unit] = {
+    checkProjectLayerCached(projectID, layerID) map {
+      case false =>
+        throw NotAuthorizedException(
+          s"Layer ${layerID} is not in project ${projectID}"
         )
       case _ => ()
     }

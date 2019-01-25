@@ -158,9 +158,6 @@ object Generators extends ArbitraryInstances {
   private def fileTypeGen: Gen[FileType] =
     Gen.oneOf(FileType.Geotiff, FileType.GeotiffWithMetadata)
 
-  private def userVisibility: Gen[UserVisibility] =
-    Gen.oneOf(UserVisibility.Public, UserVisibility.Private)
-
   private def timestampIn2016Gen: Gen[Timestamp] =
     for {
       year <- Gen.const(2016)
@@ -402,8 +399,11 @@ object Generators extends ArbitraryInstances {
   private def projectGen: Gen[Project] =
     for {
       projCreate <- projectCreateGen
+      defaultLayerId <- uuidGen
       user <- userGen
-    } yield { projCreate.copy(owner = Some(user.id)).toProject(user) }
+    } yield {
+      projCreate.copy(owner = Some(user.id)).toProject(user, defaultLayerId)
+    }
 
   private def sceneFilterFieldsGen: Gen[SceneFilterFields] =
     for {

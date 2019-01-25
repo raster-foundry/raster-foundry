@@ -70,8 +70,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
       val mosaic = {
         val mbtIO = (BacksplashMosaic.filterRelevant(self) map { relevant =>
           logger.debug(s"Band Subset Required: ${relevant.subsetBands}")
-          val img = relevant.read(z, x, y)
-          img
+          relevant.read(z, x, y)
         }).collect({ case Some(mbtile) => mbtile }).compile.toList
         mbtIO.map(_.reduceOption(_ merge _) match {
           case Some(t) => Raster(t, extent)
@@ -179,9 +178,9 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
               firstImOption <- BacksplashMosaic.first(
                 BacksplashMosaic.filterRelevant(self))
               histograms <- {
-                histStore.projectHistogram(
+                histStore.projectLayerHistogram(
                   firstImOption map {
-                    _.projectId
+                    _.projectLayerId
                   } getOrElse {
                     throw MetadataException(
                       "Cannot produce tiles from empty mosaics")

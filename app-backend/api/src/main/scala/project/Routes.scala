@@ -751,14 +751,9 @@ trait ProjectRoutes
         complete {
           val acceptSceneIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            projectLayerId = project.defaultLayerId match {
-              case Some(defaultLayerId) => defaultLayerId
-              case _ =>
-                throw new Exception(
-                  s"Project ${projectId} does not have a default layer")
-            }
             _ <- SceneToProjectDao.acceptScene(projectId, sceneId)
-            rowsAffected <- SceneToLayerDao.acceptScene(projectLayerId, sceneId)
+            rowsAffected <- SceneToLayerDao.acceptScene(project.defaultLayerId,
+                                                        sceneId)
           } yield { rowsAffected }
 
           acceptSceneIO.transact(xa).unsafeToFuture
@@ -780,14 +775,9 @@ trait ProjectRoutes
 
         val acceptScenesIO = for {
           project <- ProjectDao.unsafeGetProjectById(projectId)
-          projectLayerId = project.defaultLayerId match {
-            case Some(defaultLayerId) => defaultLayerId
-            case _ =>
-              throw new Exception(
-                s"Project ${projectId} does not have a default layer")
-          }
           _ <- SceneToProjectDao.acceptScenes(projectId, sceneIds)
-          rowsAffected <- SceneToLayerDao.acceptScenes(projectLayerId, sceneIds)
+          rowsAffected <- SceneToLayerDao.acceptScenes(project.defaultLayerId,
+                                                       sceneIds)
         } yield { rowsAffected }
 
         onSuccess(acceptScenesIO.transact(xa).unsafeToFuture) { updatedOrder =>
@@ -857,14 +847,8 @@ trait ProjectRoutes
 
         val setOrderIO = for {
           project <- ProjectDao.unsafeGetProjectById(projectId)
-          projectLayerId = project.defaultLayerId match {
-            case Some(defaultLayerId) => defaultLayerId
-            case _ =>
-              throw new Exception(
-                s"Project ${projectId} does not have a default layer")
-          }
           _ <- SceneToProjectDao.setManualOrder(projectId, sceneIds)
-          updatedOrder <- SceneToLayerDao.setManualOrder(projectLayerId,
+          updatedOrder <- SceneToLayerDao.setManualOrder(project.defaultLayerId,
                                                          sceneIds)
         } yield { updatedOrder }
 
@@ -887,15 +871,10 @@ trait ProjectRoutes
         complete {
           val getColorCorrectParamsIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            projectLayerId = project.defaultLayerId match {
-              case Some(defaultLayerId) => defaultLayerId
-              case _ =>
-                throw new Exception(
-                  s"Project ${projectId} does not have a default layer")
-            }
             _ <- SceneToProjectDao.getColorCorrectParams(projectId, sceneId)
-            params <- SceneToLayerDao.getColorCorrectParams(projectLayerId,
-                                                            sceneId)
+            params <- SceneToLayerDao.getColorCorrectParams(
+              project.defaultLayerId,
+              sceneId)
           } yield { params }
 
           getColorCorrectParamsIO.transact(xa).unsafeToFuture
@@ -915,16 +894,10 @@ trait ProjectRoutes
         entity(as[ColorCorrect.Params]) { ccParams =>
           val setColorCorrectParamsIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            projectLayerId = project.defaultLayerId match {
-              case Some(defaultLayerId) => defaultLayerId
-              case _ =>
-                throw new Exception(
-                  s"Project ${projectId} does not have a default layer")
-            }
             _ <- SceneToProjectDao.setColorCorrectParams(projectId,
                                                          sceneId,
                                                          ccParams)
-            stl <- SceneToLayerDao.setColorCorrectParams(projectLayerId,
+            stl <- SceneToLayerDao.setColorCorrectParams(project.defaultLayerId,
                                                          sceneId,
                                                          ccParams)
           } yield { stl }
@@ -947,15 +920,9 @@ trait ProjectRoutes
       entity(as[ProjectColorModeParams]) { colorBands =>
         val setProjectColorBandsIO = for {
           project <- ProjectDao.unsafeGetProjectById(projectId)
-          projectLayerId = project.defaultLayerId match {
-            case Some(defaultLayerId) => defaultLayerId
-            case _ =>
-              throw new Exception(
-                s"Project ${projectId} does not have a default layer")
-          }
           _ <- SceneToProjectDao.setProjectColorBands(projectId, colorBands)
           rowsAffected <- SceneToLayerDao
-            .setProjectLayerColorBands(projectLayerId, colorBands)
+            .setProjectLayerColorBands(project.defaultLayerId, colorBands)
         } yield { rowsAffected }
 
         onSuccess(setProjectColorBandsIO.transact(xa).unsafeToFuture) { _ =>
@@ -977,15 +944,9 @@ trait ProjectRoutes
         entity(as[BatchParams]) { params =>
           val setColorCorrectParamsBatchIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            projectLayerId = project.defaultLayerId match {
-              case Some(defaultLayerId) => defaultLayerId
-              case _ =>
-                throw new Exception(
-                  s"Project ${projectId} does not have a default layer")
-            }
             _ <- SceneToProjectDao.setColorCorrectParamsBatch(projectId, params)
-            stl <- SceneToLayerDao.setColorCorrectParamsBatch(projectLayerId,
-                                                              params)
+            stl <- SceneToLayerDao
+              .setColorCorrectParamsBatch(project.defaultLayerId, params)
           } yield { stl }
 
           onSuccess(setColorCorrectParamsBatchIO.transact(xa).unsafeToFuture) {
@@ -1008,18 +969,12 @@ trait ProjectRoutes
         complete {
           val getMosaicDefinitionIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            projectLayerId = project.defaultLayerId match {
-              case Some(defaultLayerId) => defaultLayerId
-              case _ =>
-                throw new Exception(
-                  s"Project ${projectId} does not have a default layer")
-            }
             _ <- SceneToProjectDao
               .getMosaicDefinition(projectId)
               .compile
               .to[List]
             result <- SceneToLayerDao
-              .getMosaicDefinition(projectLayerId)
+              .getMosaicDefinition(project.defaultLayerId)
               .compile
               .to[List]
           } yield { result }

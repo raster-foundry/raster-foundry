@@ -32,7 +32,7 @@ import scalacache.modes.sync._
   * need to be flagged with the @cacheKeyExclude decorator to avoid unecessarily namespacing values in the keys
   *
   * @param imageId UUID of the image (scene) in the database
-  * @param projectId UUID of the layer this image is a part of
+  * @param projectLayerId UUID of the layer this image is a part of
   * @param uri location of the source data
   * @param footprint extent of data the image covers
   * @param subsetBands subset of bands to be read from source
@@ -41,7 +41,7 @@ import scalacache.modes.sync._
   */
 case class BacksplashImage(
     imageId: UUID,
-    @cacheKeyExclude projectId: UUID,
+    @cacheKeyExclude projectLayerId: UUID,
     @cacheKeyExclude uri: String,
     @cacheKeyExclude footprint: MultiPolygon,
     subsetBands: List[Int],

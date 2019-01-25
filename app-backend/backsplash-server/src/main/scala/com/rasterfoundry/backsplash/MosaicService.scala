@@ -25,8 +25,11 @@ import com.rasterfoundry.common.utils.TileUtils
 import doobie.util.transactor.Transactor
 import geotrellis.vector.{Polygon, Projected}
 
-class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
+class MosaicService[ProjStore: ProjectStore,
+                    LayerStore: ProjectStore,
+                    HistStore: HistogramStore](
     projects: ProjStore,
+    layers: LayerStore,
     mosaicImplicits: MosaicImplicits[HistStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO],
                         H: HttpErrorHandler[IO, BacksplashException, User],
@@ -45,26 +48,25 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
     H.handle {
       ForeignError.handle {
         AuthedService {
-          case GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
-                y)
-                :? RedBandOptionalQueryParamMatcher(redOverride)
-                :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
-            val bandOverride =
-              Applicative[Option].map3(redOverride,
-                                       greenOverride,
-                                       blueOverride)(BandOverride.apply)
+          case GET -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
+                layerId) / IntVar(z) / IntVar(x) / IntVar(y) :? BandOverrideQueryParamDecoder(
+                bandOverride) as user =>
             val polygonBbox: Projected[Polygon] =
               TileUtils.getTileBounds(z, x, y)
-            val eval =
-              LayerTms.identity(
-                projects.read(projectId, Some(polygonBbox), bandOverride, None))
+            val eval = LayerTms.identity(
+              layers.read(layerId, Some(polygonBbox), bandOverride, None)
+            )
+
             for {
-              fiberAuth <- authorizers.authProject(user, projectId).start
+              fiberAuthProject <- authorizers.authProject(user, projectId).start
+              fiberAuthLayer <- authorizers
+                .authProjectLayer(projectId, layerId)
+                .start
               fiberResp <- eval(z, x, y).start
-              _ <- fiberAuth.join.handleErrorWith { error =>
-                fiberResp.cancel *> IO.raiseError(error)
-              }
+              _ <- (fiberAuthProject, fiberAuthLayer).tupled.join
+                .handleErrorWith { error =>
+                  fiberResp.cancel *> IO.raiseError(error)
+                }
               resp <- fiberResp.join flatMap {
                 case Valid(tile) =>
                   Ok(tile.renderPng.bytes, pngType)
@@ -92,19 +94,13 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
             } yield resp
 
           case authedReq @ POST -> Root / UUIDWrapper(projectId) / "histogram"
-                :? RedBandOptionalQueryParamMatcher(redOverride)
-                :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
+                :? BandOverrideQueryParamDecoder(overrides) as user =>
             // Compile to a byte array, decode that as a string, and do something with the results
             authedReq.req.body.compile.to[Array] flatMap { uuids =>
               decode[List[UUID]](
                 uuids map { _.toChar } mkString
               ) match {
                 case Right(uuids) =>
-                  val overrides =
-                    (redOverride, greenOverride, blueOverride).mapN {
-                      case (r, g, b) => BandOverride(r, g, b)
-                    }
                   for {
                     authFiber <- authorizers.authProject(user, projectId).start
                     mosaic = projects.read(projectId,
@@ -129,13 +125,7 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
           case authedReq @ GET -> Root / UUIDWrapper(projectId) / "export"
                 :? ExtentQueryParamMatcher(extent)
                 :? ZoomQueryParamMatcher(zoom)
-                :? RedBandOptionalQueryParamMatcher(redOverride)
-                :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
-            val bandOverride =
-              Applicative[Option].map3(redOverride,
-                                       greenOverride,
-                                       blueOverride)(BandOverride.apply)
+                :? BandOverrideQueryParamDecoder(bandOverride) as user =>
             val projectedExtent = extent.reproject(LatLng, WebMercator)
             val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
             val eval = authedReq.req.headers
