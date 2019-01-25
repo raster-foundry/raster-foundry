@@ -17,18 +17,11 @@
       scene="scene"
       repository="$ctrl.repository"
       ng-repeat="scene in $ctrl.importList track by scene.id">
-    <div class="btn-group" ng-if="$ctrl.sceneActions && $ctrl.sceneActions.length">
-      <button type="button"
-              class="btn btn-small"
-              ng-class="$ctrl.getActionButtonClass(action)"
-              ng-repeat="action in $ctrl.sceneActions"
-              ng-click="$ctrl.onActionClick($event, action, scene)">
-        <span class="sr-only">
-          {{action.label}}
-        </span>
-        <i class="{{action.iconClass}}"></i>
-      </button>
-    </div>
+    <rf-item-action-buttons class="btn-group"
+                            actions="$ctrl.sceneActions"
+                            item="scene"
+    >
+    </rf-item-action-buttons>
   </rf-scene-item>
 </div>
 <div class="list-group text-center">

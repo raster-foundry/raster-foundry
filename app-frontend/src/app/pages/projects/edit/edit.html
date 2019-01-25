@@ -40,7 +40,7 @@
     <a href
        ng-click="$ctrl.openShareModal()"
        data-title="Share"
-       ng-if="$ctrl.projectOwnerId === $ctrl.actingUserId">
+       ng-if="$ctrl.permissions && $ctrl.permissions.length">
       <i class="icon-key"></i>
       <span>Permissions</span>
     </a>

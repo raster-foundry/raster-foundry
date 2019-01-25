@@ -9,7 +9,7 @@
         </a>
         <a href
            ng-click="$ctrl.permissionsModal()"
-           ng-if="$ctrl.analysis.owner === $ctrl.user.id"
+           ng-if="$ctrl.permissions && $ctrl.permissions.length"
         >
           <i class="icon-key"></i>
           <span>Permissions</span>

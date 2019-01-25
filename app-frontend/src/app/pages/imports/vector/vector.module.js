@@ -7,7 +7,12 @@ class VectorListController {
     }
 
     $onInit() {
-        this.fetchPage();
+        this.currentOwnershipFilter = this.$state.params.ownership || '';
+        this.$scope.$watch('$ctrl.currentOwnershipFilter', (current, last) => {
+            if (current !== last || !this.pagination) {
+                this.fetchPage();
+            }
+        });
     }
 
     shouldShowShapeList() {
@@ -24,14 +29,18 @@ class VectorListController {
         this.search = search && search.length ? search : null;
         delete this.fetchError;
         this.results = [];
-        const currentQuery = this.shapesService.fetchShapes({
+        const currentQuery = this.shapesService.fetchShapes(Object.assign({
             page: page ? page - 1 : 0,
             pageSize: 10,
             search: this.search
-        }).then((paginatedResponse) => {
+        }, this.currentOwnershipFilter ? {
+            ownershipType: this.currentOwnershipFilter
+        } : null)).then((paginatedResponse) => {
             this.results = paginatedResponse.features;
             this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page, this.search);
+            this.paginationService.updatePageParam(page, this.search, null, {
+                ownership: this.currentOwnershipFilter
+            });
             if (this.currentQuery === currentQuery) {
                 delete this.fetchError;
             }

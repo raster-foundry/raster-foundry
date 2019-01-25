@@ -411,14 +411,14 @@ function labStates($stateProvider) {
         })
         .state('lab.browse.templates', {
             title: 'Analysis Search',
-            url: '/templates?page&search&query&analysiscategory&analysistag',
+            url: '/templates?page&search&query&analysiscategory&analysistag&ownership',
             templateUrl: labBrowseTemplatesTpl,
             controller: 'LabBrowseTemplatesController',
             controllerAs: '$ctrl'
         })
         .state('lab.browse.analyses', {
             title: 'Analyses',
-            url: '/analyses?page&search&sort',
+            url: '/analyses?page&search&sort&ownership',
             templateUrl: labBrowseAnalysesTpl,
             controller: 'LabBrowseAnalysesController',
             controllerAs: '$ctrl'
@@ -481,7 +481,7 @@ function importStates($stateProvider) {
         })
         .state('imports.vectors', {
             title: 'Vectors',
-            url: '/vectors?page&search',
+            url: '/vectors?page&search&ownership',
             templateUrl: vectorListTpl,
             controller: 'VectorListController',
             controllerAs: '$ctrl'
@@ -495,7 +495,7 @@ function importStates($stateProvider) {
         })
         .state('imports.datasources.list', {
             title: 'Datasources',
-            url: '/list?page&search',
+            url: '/list?page&search&ownership',
             templateUrl: importsDatasourcesListTpl,
             controller: 'DatasourceListController',
             controllerAs: '$ctrl'
