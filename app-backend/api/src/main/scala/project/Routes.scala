@@ -96,44 +96,49 @@ trait ProjectRoutes
                   get {
                     getProjectLayer(projectId, layerId)
                   } ~
-                  put {
-                    updateProjectLayer(projectId, layerId)
-                  } ~
-                  delete {
-                    deleteProjectLayer(projectId, layerId)
-                  }
-                } ~
-                pathPrefix("mosaic") {
-                  pathEndOrSingleSlash {
-                    get {
-                      getProjectLayerMosaicDefinition(projectId, layerId)
+                    put {
+                      updateProjectLayer(projectId, layerId)
+                    } ~
+                    delete {
+                      deleteProjectLayer(projectId, layerId)
                     }
-                  } ~
-                    pathPrefix(JavaUUID) { sceneId =>
-                      pathEndOrSingleSlash {
-                        get {
-                          getProjectLayerSceneColorCorrectParams(projectId, layerId, sceneId)
-                        } ~
-                        put {
-                          setProjectLayerSceneColorCorrectParams(projectId, layerId, sceneId)
-                        }
+                } ~
+                  pathPrefix("mosaic") {
+                    pathEndOrSingleSlash {
+                      get {
+                        getProjectLayerMosaicDefinition(projectId, layerId)
                       }
                     } ~
-                    pathPrefix("bulk-update-color-corrections") {
-                      pathEndOrSingleSlash {
-                        post {
-                          setProjectLayerScenesColorCorrectParams(projectId, layerId)
+                      pathPrefix(JavaUUID) { sceneId =>
+                        pathEndOrSingleSlash {
+                          get {
+                            getProjectLayerSceneColorCorrectParams(projectId,
+                                                                   layerId,
+                                                                   sceneId)
+                          } ~
+                            put {
+                              setProjectLayerSceneColorCorrectParams(projectId,
+                                                                     layerId,
+                                                                     sceneId)
+                            }
+                        }
+                      } ~
+                      pathPrefix("bulk-update-color-corrections") {
+                        pathEndOrSingleSlash {
+                          post {
+                            setProjectLayerScenesColorCorrectParams(projectId,
+                                                                    layerId)
+                          }
                         }
                       }
-                    }
-                } ~
-                pathPrefix("order") {
-                  pathEndOrSingleSlash {
-                    put {
-                      setProjectLayerSceneOrder(projectId, layerId)
+                  } ~
+                  pathPrefix("order") {
+                    pathEndOrSingleSlash {
+                      put {
+                        setProjectLayerSceneOrder(projectId, layerId)
+                      }
                     }
                   }
-                }
               }
           } ~
           pathPrefix("project-color-mode") {
@@ -1368,10 +1373,14 @@ trait ProjectRoutes
   def updateProjectLayer(projectId: UUID, layerId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-          .transact(xa)
-          .unsafeToFuture
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.Edit)
+          layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
       } {
         entity(as[ProjectLayer]) { updatedProjectLayer =>
           onSuccess(
@@ -1388,10 +1397,14 @@ trait ProjectRoutes
   def deleteProjectLayer(projectId: UUID, layerId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-          .transact(xa)
-          .unsafeToFuture
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.Edit)
+          layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
       } {
         rejectEmptyResponse {
           complete {
@@ -1404,13 +1417,19 @@ trait ProjectRoutes
       }
   }
 
-  def getProjectLayerMosaicDefinition(projectId: UUID, projectLayerId: UUID): Route = authenticate {
-    user =>
+  def getProjectLayerMosaicDefinition(projectId: UUID,
+                                      projectLayerId: UUID): Route =
+    authenticate { user =>
       authorizeAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.View)
-          .transact(xa)
-          .unsafeToFuture
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.View)
+          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
+                                                         projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
       } {
         rejectEmptyResponse {
           complete {
@@ -1423,15 +1442,22 @@ trait ProjectRoutes
           }
         }
       }
-  }
+    }
 
-  def getProjectLayerSceneColorCorrectParams(projectId: UUID, projectLayerId: UUID, sceneId: UUID): Route =
+  def getProjectLayerSceneColorCorrectParams(projectId: UUID,
+                                             projectLayerId: UUID,
+                                             sceneId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.View)
-          .transact(xa)
-          .unsafeToFuture
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.View)
+          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
+                                                         projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
       } {
         complete {
           SceneToLayerDao
@@ -1442,58 +1468,72 @@ trait ProjectRoutes
       }
     }
 
-  def setProjectLayerSceneColorCorrectParams(projectId: UUID, projectLayerId: UUID, sceneId: UUID): Route =
+  def setProjectLayerSceneColorCorrectParams(projectId: UUID,
+                                             projectLayerId: UUID,
+                                             sceneId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-          .transact(xa)
-          .unsafeToFuture
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.Edit)
+          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
+                                                         projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
       } {
         entity(as[ColorCorrect.Params]) { ccParams =>
           onSuccess(
             SceneToLayerDao
-              .setColorCorrectParams(
-                projectLayerId,
-                sceneId,
-                ccParams)
+              .setColorCorrectParams(projectLayerId, sceneId, ccParams)
               .transact(xa)
-              .unsafeToFuture) {
-            stl =>
-              complete(StatusCodes.NoContent)
+              .unsafeToFuture) { stl =>
+            complete(StatusCodes.NoContent)
           }
         }
       }
     }
 
-    def setProjectLayerScenesColorCorrectParams(projectId: UUID, projectLayerId: UUID): Route = authenticate {
-      user =>
-        authorizeAsync {
-          ProjectDao
-            .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-            .transact(xa)
-            .unsafeToFuture
-        } {
-          entity(as[BatchParams]) { params =>
-            onSuccess(
-              SceneToLayerDao
-                .setColorCorrectParamsBatch(projectLayerId, params)
-                .transact(xa)
-                .unsafeToFuture
-              ) {
-              scenesToLayer =>
-                complete(StatusCodes.NoContent)
-            }
+  def setProjectLayerScenesColorCorrectParams(projectId: UUID,
+                                              projectLayerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.Edit)
+          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
+                                                         projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
+      } {
+        entity(as[BatchParams]) { params =>
+          onSuccess(
+            SceneToLayerDao
+              .setColorCorrectParamsBatch(projectLayerId, params)
+              .transact(xa)
+              .unsafeToFuture
+          ) { scenesToLayer =>
+            complete(StatusCodes.NoContent)
           }
         }
+      }
     }
 
-    def setProjectLayerSceneOrder(projectId: UUID, projectLayerId: UUID): Route = authenticate { user =>
+  def setProjectLayerSceneOrder(projectId: UUID, projectLayerId: UUID): Route =
+    authenticate { user =>
       authorizeAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-          .transact(xa)
-          .unsafeToFuture
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.Edit)
+          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
+                                                         projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
       } {
         entity(as[Seq[UUID]]) { sceneIds =>
           if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
@@ -1505,7 +1545,7 @@ trait ProjectRoutes
               .setManualOrder(projectLayerId, sceneIds)
               .transact(xa)
               .unsafeToFuture
-            ) { updatedOrder =>
+          ) { updatedOrder =>
             complete(StatusCodes.NoContent)
           }
         }
