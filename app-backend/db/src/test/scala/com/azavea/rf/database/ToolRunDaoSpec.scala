@@ -120,9 +120,44 @@ class ToolRunDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
-         projCreate: Project.Create,
+         templateCreate: Tool.Create,
          toolRunCreate: ToolRun.Create) =>
           {
+            val toolRunInsertIO = for {
+              (_, dbUser) <- insertUserAndOrg(user, org)
+              dbTemplate <- ToolDao.insert(templateCreate, dbUser)
+              withTemplateId = toolRunCreate.copy(
+                templateId = Some(dbTemplate.id))
+              inserted <- ToolRunDao.insertToolRun(withTemplateId, dbUser)
+            } yield (withTemplateId.templateId, inserted)
+
+            val (templateIdCheck, insertedToolRun) =
+              xa.use(t => toolRunInsertIO.transact(t)).unsafeRunSync
+
+            assert(
+              insertedToolRun.name == toolRunCreate.name,
+              "Names should match after db"
+            )
+            assert(
+              insertedToolRun.visibility == toolRunCreate.visibility,
+              "Visibility should match after db"
+            )
+            assert(
+              insertedToolRun.projectId == toolRunCreate.projectId,
+              "ProjectIds should match after db"
+            )
+            assert(
+              insertedToolRun.projectLayerId == toolRunCreate.projectLayerId,
+              "ProjectLayerIds should match after db"
+            )
+            assert(
+              insertedToolRun.templateId == templateIdCheck,
+              "TemplateIds should match after db"
+            )
+            assert(
+              insertedToolRun.executionParameters == toolRunCreate.executionParameters,
+              "ExecutionParameters should match after db"
+            )
             true
           }
       }

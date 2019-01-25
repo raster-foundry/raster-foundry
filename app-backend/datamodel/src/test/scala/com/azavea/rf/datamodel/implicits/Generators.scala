@@ -709,6 +709,34 @@ object Generators extends ArbitraryInstances {
       }, actionType)
     }
 
+  private def toolCreateGen: Gen[Tool.Create] =
+    for {
+      title <- nonEmptyStringGen
+      description <- nonEmptyStringGen
+      requirements <- nonEmptyStringGen
+      license <- Gen.const("BSD-3")
+      visibility <- visibilityGen
+      compatibleDataSources <- Gen.const(List.empty)
+      owner <- Gen.const(None)
+      stars <- Gen.const(9999.9f) // good tools only :sunglasses:
+      definition <- Gen.const(().asJson)
+      // not super into dealing with tags or categories in testing-land right now
+      tags <- Gen.const(Seq.empty)
+      categories <- Gen.const(Seq.empty)
+    } yield {
+      Tool.Create(title,
+                  description,
+                  requirements,
+                  license,
+                  visibility,
+                  compatibleDataSources,
+                  owner,
+                  stars,
+                  definition,
+                  tags,
+                  categories)
+    }
+
   private def toolRunCreateGen: Gen[ToolRun.Create] =
     for {
       name <- Gen.option(nonEmptyStringGen)
@@ -872,6 +900,9 @@ object Generators extends ArbitraryInstances {
         Gen.nonEmptyListOf[ObjectAccessControlRule](
           arbitrary[ObjectAccessControlRule])
       }
+
+    implicit def arbToolCreate: Arbitrary[Tool.Create] =
+      Arbitrary { toolCreateGen }
 
     implicit def arbToolRunCreate: Arbitrary[ToolRun.Create] =
       Arbitrary { toolRunCreateGen }
