@@ -92,15 +92,48 @@ trait ProjectRoutes
                 }
             } ~
               pathPrefix(JavaUUID) { layerId =>
-                get {
-                  getProjectLayer(projectId, layerId)
-                } ~
+                pathEndOrSingleSlash {
+                  get {
+                    getProjectLayer(projectId, layerId)
+                  } ~
                   put {
                     updateProjectLayer(projectId, layerId)
                   } ~
                   delete {
                     deleteProjectLayer(projectId, layerId)
                   }
+                } ~
+                pathPrefix("mosaic") {
+                  pathEndOrSingleSlash {
+                    get {
+                      getProjectLayerMosaicDefinition(projectId, layerId)
+                    }
+                  } ~
+                    pathPrefix(JavaUUID) { sceneId =>
+                      pathEndOrSingleSlash {
+                        get {
+                          getProjectLayerSceneColorCorrectParams(projectId, layerId, sceneId)
+                        } ~
+                        put {
+                          setProjectLayerSceneColorCorrectParams(projectId, layerId, sceneId)
+                        }
+                      }
+                    } ~
+                    pathPrefix("bulk-update-color-corrections") {
+                      pathEndOrSingleSlash {
+                        post {
+                          setProjectLayerScenesColorCorrectParams(projectId, layerId)
+                        }
+                      }
+                    }
+                } ~
+                pathPrefix("order") {
+                  pathEndOrSingleSlash {
+                    put {
+                      setProjectLayerSceneOrder(projectId, layerId)
+                    }
+                  }
+                }
               }
           } ~
           pathPrefix("project-color-mode") {
@@ -1370,4 +1403,113 @@ trait ProjectRoutes
         }
       }
   }
+
+  def getProjectLayerMosaicDefinition(projectId: UUID, projectLayerId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete {
+            SceneToLayerDao
+              .getMosaicDefinition(projectLayerId)
+              .compile
+              .to[List]
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+  }
+
+  def getProjectLayerSceneColorCorrectParams(projectId: UUID, projectLayerId: UUID, sceneId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          SceneToLayerDao
+            .getColorCorrectParams(projectLayerId, sceneId)
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
+    }
+
+  def setProjectLayerSceneColorCorrectParams(projectId: UUID, projectLayerId: UUID, sceneId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[ColorCorrect.Params]) { ccParams =>
+          onSuccess(
+            SceneToLayerDao
+              .setColorCorrectParams(
+                projectLayerId,
+                sceneId,
+                ccParams)
+              .transact(xa)
+              .unsafeToFuture) {
+            stl =>
+              complete(StatusCodes.NoContent)
+          }
+        }
+      }
+    }
+
+    def setProjectLayerScenesColorCorrectParams(projectId: UUID, projectLayerId: UUID): Route = authenticate {
+      user =>
+        authorizeAsync {
+          ProjectDao
+            .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+            .transact(xa)
+            .unsafeToFuture
+        } {
+          entity(as[BatchParams]) { params =>
+            onSuccess(
+              SceneToLayerDao
+                .setColorCorrectParamsBatch(projectLayerId, params)
+                .transact(xa)
+                .unsafeToFuture
+              ) {
+              scenesToLayer =>
+                complete(StatusCodes.NoContent)
+            }
+          }
+        }
+    }
+
+    def setProjectLayerSceneOrder(projectId: UUID, projectLayerId: UUID): Route = authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[Seq[UUID]]) { sceneIds =>
+          if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+            complete(StatusCodes.RequestEntityTooLarge)
+          }
+
+          onSuccess(
+            SceneToLayerDao
+              .setManualOrder(projectLayerId, sceneIds)
+              .transact(xa)
+              .unsafeToFuture
+            ) { updatedOrder =>
+            complete(StatusCodes.NoContent)
+          }
+        }
+      }
+    }
+
 }
