@@ -36,7 +36,7 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
   val selectF = sql"""
     SELECT
       distinct(id), name, created_at, created_by, modified_at, modified_by, owner, visibility,
-      execution_parameters
+      project_id, project_layer_id, template_id, execution_parameters
     FROM
   """ ++ tableF
 
@@ -48,10 +48,11 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
     sql"""
           INSERT INTO tool_runs
             (id, name, created_at, created_by, modified_at, modified_by, owner, visibility,
-             execution_parameters)
+             execution_parameters, project_id, project_layer_id, template_id)
           VALUES
             (${id}, ${newRun.name}, ${now}, ${user.id}, ${now}, ${user.id}, ${newRun.owner
-      .getOrElse(user.id)}, ${newRun.visibility}, ${newRun.executionParameters})
+      .getOrElse(user.id)}, ${newRun.visibility}, ${newRun.executionParameters},
+             ${newRun.projectId}, ${newRun.projectLayerId}, ${newRun.templateId})
        """.update.withUniqueGeneratedKeys[ToolRun](
       "id",
       "name",
@@ -61,6 +62,9 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
       "modified_by",
       "owner",
       "visibility",
+      "project_id",
+      "project_layer_id",
+      "template_id",
       "execution_parameters"
     )
   }
