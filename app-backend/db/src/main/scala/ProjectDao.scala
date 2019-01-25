@@ -83,20 +83,32 @@ object ProjectDao
     val ownerId = util.Ownership.checkOwner(user, newProject.owner)
     val slug = Project.slugify(newProject.name)
     for {
+      defaultProjectLayer <- ProjectLayerDao.insertProjectLayer(
+        ProjectLayer(UUID.randomUUID(),
+                     now,
+                     now,
+                     "Project default layer",
+                     None,
+                     "#FFFFFF",
+                     None,
+                     None,
+                     None,
+                     None)
+      )
       project <- (fr"INSERT INTO" ++ tableF ++ fr"""
           (id, created_at, modified_at, created_by,
           modified_by, owner, name, slug_label, description,
           visibility, tile_visibility, is_aoi_project,
           aoi_cadence_millis, aois_last_checked, tags, extent,
           manual_order, is_single_band, single_band_options, default_annotation_group,
-          extras)
+          extras, default_layer_id)
         VALUES
           ($id, $now, $now, ${user.id},
           ${user.id}, $ownerId, ${newProject.name}, $slug, ${newProject.description},
           ${newProject.visibility}, ${newProject.tileVisibility}, ${newProject.isAOIProject},
           ${newProject.aoiCadenceMillis}, $now, ${newProject.tags}, null,
           TRUE, ${newProject.isSingleBand}, ${newProject.singleBandOptions}, null,
-          ${newProject.extras}
+          ${newProject.extras}, ${defaultProjectLayer.id}
         )
       """).update.withUniqueGeneratedKeys[Project](
         "id",
@@ -122,22 +134,9 @@ object ProjectDao
         "extras",
         "default_layer_id"
       )
-      defaultProjectLayer <- ProjectLayerDao.insertProjectLayer(
-        ProjectLayer(UUID.randomUUID(),
-                     now,
-                     now,
-                     "Project default layer",
-                     id,
-                     "#FFFFFF",
-                     None,
-                     None,
-                     None,
-                     None)
-      )
-      updatedProject = project.copy(
-        defaultLayerId = Some(defaultProjectLayer.id))
-      _ <- this.updateProject(updatedProject, id, user)
-    } yield updatedProject
+      updatedLayer = defaultProjectLayer.copy(projectId = Some(project.id))
+      _ <- ProjectLayerDao.updateProjectLayer(updatedLayer, updatedLayer.id)
+    } yield project
   }
 
   def updateProjectQ(project: Project, id: UUID, user: User): Update0 = {
@@ -266,9 +265,9 @@ object ProjectDao
   def getProjectLayerId(projectLayerIdO: Option[UUID], project: Project): UUID =
     (projectLayerIdO, project.defaultLayerId) match {
       case (Some(projectLayerId), _) => projectLayerId
-      case (_, Some(defaultLayerId)) => defaultLayerId
+      case (_, defaultLayerId)       => defaultLayerId
       case _ =>
-        throw new Exception(s"Project ${project.id} does not have any layer")
+        throw new Exception(s"Project ${project.id} does not have any layers")
     }
 
   def addScenesToProject(sceneIds: NonEmptyList[UUID],

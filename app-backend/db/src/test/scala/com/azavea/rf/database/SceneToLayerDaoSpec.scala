@@ -48,17 +48,11 @@ class SceneToLayerDaoSpec
               _ <- ProjectDao.addScenesToProject(scenesInsert map { _.id },
                                                  dbProject.id,
                                                  false)
-              projectLayerId = dbProject.defaultLayerId match {
-                case Some(defaultLayerId) => defaultLayerId
-                case _ =>
-                  throw new Exception(
-                    s"Project ${dbProject.id} does not have a default layer")
-              }
               acceptedSceneCount <- SceneToLayerDao.acceptScenes(
-                projectLayerId,
+                dbProject.defaultLayerId,
                 scenesInsert map { _.id })
               stls <- SceneToLayerDao.query
-                .filter(fr"project_layer_id = ${projectLayerId}")
+                .filter(fr"project_layer_id = ${dbProject.defaultLayerId}")
                 .list
             } yield (acceptedSceneCount, stls)
 
@@ -98,22 +92,16 @@ class SceneToLayerDaoSpec
               _ <- ProjectDao.addScenesToProject(scenesInsert map { _.id },
                                                  dbProject.id,
                                                  false)
-              projectLayerId = dbProject.defaultLayerId match {
-                case Some(defaultLayerId) => defaultLayerId
-                case _ =>
-                  throw new Exception(
-                    s"Project ${dbProject.id} does not have a default layer")
-              }
-              _ <- SceneToLayerDao.setManualOrder(projectLayerId,
+              _ <- SceneToLayerDao.setManualOrder(dbProject.defaultLayerId,
                                                   scenesInsert map { _.id })
               mds <- SceneToLayerDao
-                .getMosaicDefinition(projectLayerId,
+                .getMosaicDefinition(dbProject.defaultLayerId,
                                      None,
                                      sceneIdSubset = selectedSceneIds)
                 .compile
                 .to[List]
               stls <- SceneToLayerDao.query
-                .filter(fr"project_layer_id = ${projectLayerId}")
+                .filter(fr"project_layer_id = ${dbProject.defaultLayerId}")
                 .filter(selectedSceneIds.toNel map {
                   Fragments.in(fr"scene_id", _)
                 })

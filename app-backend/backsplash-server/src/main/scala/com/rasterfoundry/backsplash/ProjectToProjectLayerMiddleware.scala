@@ -38,19 +38,9 @@ object ProjectToProjectLayerMiddleware {
                     .getProjectById(projectId)
                     .transact(xa)
                 } map { _.defaultLayerId }
-                resp <- defaultLayerId match {
-                  case Some(defaultId) =>
-                    val newRequest =
-                      req.withPathInfo(
-                        s"/${projectId}/layers/${defaultId}/${z}/${x}/${y}")
-                    service(newRequest)
-                  case _ =>
-                    OptionT.liftF {
-                      Forbidden(
-                        "Resource does not exist or user is not authorized to access this resource"
-                      )
-                    }
-                }
+                resp <- service(
+                  req.withPathInfo(
+                    s"/${projectId}/layers/${defaultLayerId}/${z}/${x}/${y}"))
               } yield resp
             case _ =>
               service(req)

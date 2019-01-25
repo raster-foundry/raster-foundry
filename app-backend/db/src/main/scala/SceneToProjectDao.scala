@@ -102,16 +102,12 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
       layerId <- ProjectDao.projectByIdQuery(projectId).stream map { project =>
         project.defaultLayerId
       }
-      scenes <- layerId map {
-        SceneToLayerDao.getMosaicDefinition(_,
-                                            polygonOption,
-                                            redBand,
-                                            greenBand,
-                                            blueBand,
-                                            sceneIdSubset)
-      } getOrElse {
-        Stream.empty
-      }
+      scenes <- SceneToLayerDao.getMosaicDefinition(layerId,
+                                                    polygonOption,
+                                                    redBand,
+                                                    greenBand,
+                                                    blueBand,
+                                                    sceneIdSubset)
     } yield scenes
   }
 

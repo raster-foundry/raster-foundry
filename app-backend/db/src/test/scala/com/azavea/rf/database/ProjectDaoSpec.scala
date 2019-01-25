@@ -82,7 +82,8 @@ class ProjectDaoSpec
             val updateProjectWithUpdatedIO = projInsertWithUserAndOrgIO flatMap {
               case (dbProject: Project, dbUser: User, dbOrg: Organization) => {
                 val fixedUpUpdateProject =
-                  fixupProjectCreate(dbUser, updateProject).toProject(dbUser)
+                  fixupProjectCreate(dbUser, updateProject)
+                    .toProject(dbUser, dbProject.defaultLayerId)
                 ProjectDao.updateProject(fixedUpUpdateProject,
                                          dbProject.id,
                                          dbUser) flatMap {

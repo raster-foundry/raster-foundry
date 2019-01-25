@@ -18,7 +18,7 @@ final case class ProjectLayer(id: UUID,
                               createdAt: Timestamp,
                               modifiedAt: Timestamp,
                               name: String,
-                              projectId: UUID,
+                              projectId: Option[UUID],
                               colorGroupHex: String,
                               smartLayerId: Option[UUID],
                               rangeStart: Option[Timestamp],
@@ -42,7 +42,7 @@ final case class ProjectLayer(id: UUID,
 }
 
 @JsonCodec
-final case class ProjectLayerProperties(projectId: UUID,
+final case class ProjectLayerProperties(projectId: Option[UUID],
                                         createdAt: Timestamp,
                                         modifiedAt: Timestamp,
                                         name: String,
@@ -56,7 +56,7 @@ object ProjectLayer extends LazyLogging {
 
   @JsonCodec
   final case class Create(name: String,
-                          projectId: UUID,
+                          projectId: Option[UUID],
                           colorGroupHex: String,
                           smartLayerId: Option[UUID],
                           rangeStart: Option[Timestamp],
