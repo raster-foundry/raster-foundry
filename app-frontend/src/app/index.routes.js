@@ -1,4 +1,6 @@
 /* eslint max-len: 0 */
+import _ from 'lodash';
+
 import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
 
@@ -16,6 +18,7 @@ import projectsModule from './pages/projects/projects.module';
 import projectsTpl from './pages/projects/projects.html';
 import projectsNavbarTpl from './pages/projects/navbar/navbar.html';
 import projectsEditTpl from './pages/projects/edit/edit.html';
+
 import projectsEditColorTpl from './pages/projects/edit/color/color.html';
 import projectsEditColormodeTpl from './pages/projects/edit/colormode/colormode.html';
 import projectsAdvancedColorTpl from './pages/projects/edit/advancedcolor/advancedcolor.html';
@@ -82,6 +85,7 @@ import platformSettingsTpl from './pages/admin/platform/settings/settings.html';
 import platformSettingsEmailTpl from './pages/admin/platform/settings/email/email.html';
 import platformProjectsTpl from './pages/admin/platform/projects/projects.html';
 import platformRastersTpl from './pages/admin/platform/rasters/rasters.html';
+
 import platformVectorsTpl from './pages/admin/platform/vectors/vectors.html';
 import platformDatasourcesTpl from './pages/admin/platform/datasources/datasources.html';
 import platformTemplatesTpl from './pages/admin/platform/templates/templates.html';
@@ -96,6 +100,173 @@ import teamDatasourcesTpl from './pages/admin/team/datasources/datasources.html'
 import teamTemplatesTpl from './pages/admin/team/templates/templates.html';
 import teamAnalysesTpl from './pages/admin/team/analyses/analyses.html';
 
+import { projectResolves } from './components/pages/projects';
+
+
+function shareStatesV2($stateProvider) {
+    $stateProvider
+        .state('/v2/share/?mapToken')
+        .state('/v2/share/project/:projectId?mapToken')
+        .state('/v2/share/layer/:layerId?mapToken')
+    ;
+}
+
+function projectStatesV2($stateProvider) {
+    let addScenesQueryParams = [
+        'maxCloudCover',
+        'minCloudCover',
+        'minAcquisitionDatetime',
+        'maxAcquisitionDatetime',
+        'datasource',
+        'maxSunAzimuth',
+        'minSunAzimuth',
+        'maxSunElevation',
+        'minSunElevation',
+        'bbox',
+        'point',
+        'ingested',
+        'owner'
+    ].join('&');
+
+    $stateProvider
+        .state('projects-v2', {
+            parent: 'root',
+            title: 'Project List',
+            url: '/v2/projects?page&search&ownership',
+            component: 'rfProjectListPage',
+            resolve: projectResolves.resolve
+        })
+        .state('project', {
+            parent: 'root',
+            title: 'Project',
+            url: '/v2/project/:projectId',
+            component: 'rfProjectPage',
+            resolve: Object.assign({
+                projectId: ['$transition$', ($transition$) => $transition$.params().projectId]
+            }, projectResolves.resolve),
+            redirectTo: 'project.layers'
+        })
+        .state('project.layers', {
+            title: 'Project Layers',
+            url: '/layers',
+            component: 'rfProjectLayersPage'
+        })
+        .state('project.analyses', {
+            title: 'Project Analyses',
+            url: '/analyses',
+            component: 'rfProjectAnalysesPage'
+        })
+        .state('project.settings', {
+            title: 'Project Settings',
+            url: '/settings',
+            component: 'rfProjectSettingsPage',
+            redirectTo: 'project.settings.options'
+        })
+        .state('project.settings.options', {
+            title: 'Project Options',
+            url: '/options',
+            component: 'rfProjectOptionsPage'
+        })
+        .state('project.settings.publishing', {
+            title: 'Project Publishing',
+            url: '/publishing',
+            component: 'rfProjectPublishingPage'
+        })
+        .state('project.settings.permissions', {
+            title: 'Project Permissions',
+            url: '/permissions',
+            component: 'rfProjectPermissionsPage'
+        })
+        .state('project.layer', {
+            title: 'Project Layer',
+            url: '/layer/:layerId',
+            resolve: {
+                layerId: ['$transition$', ($transition$) => $transition$.params().layerId]
+            },
+            component: 'rfProjectLayerPage'
+        })
+        .state('project.layer.aoi', {
+            title: 'Project Layer AOI',
+            url: '/aoi',
+            component: 'rfProjectLayerAoiPage'
+        })
+        .state('project.layer.colormode', {
+            title: 'Project Layer Colormode',
+            url: '/colormode',
+            component: 'rfProjectLayerColormodePage'
+        })
+        .state('project.layer.corrections', {
+            title: 'Project Layer Corrections',
+            url: '/corrections',
+            component: 'rfProjectLayerCorrectionsPage'
+        })
+        .state('project.layer.scenes', {
+            title: 'Project Layer Scenes',
+            url: '/scenes',
+            component: 'rfProjectLayerScenesPage'
+        })
+        .state('project.layer.scenes.browse', {
+            title: 'Find Scenes',
+            url: '/browse?' + addScenesQueryParams,
+            component: 'rfProjectLayerScenesBrowsePage'
+        })
+        .state('project.layer.exports', {
+            title: 'Project Layer Exports',
+            url: '/exports',
+            component: 'rfProjectLayerExportsPage'
+        })
+        .state('project.layer.export', {
+            title: 'Project Layer Export',
+            url: '/export',
+            component: 'rfProjectLayerExportPage'
+        })
+        .state('project.layer.annotations', {
+            title: 'Project Layer Annotations',
+            url: '/annotations',
+            component: 'rfProjectLayerAnnotationsPage'
+        })
+        .state('project.layer.annotate', {
+            title: 'Project Layer Annotate',
+            url: '/annotate',
+            component: 'rfProjectLayerAnnotatePage'
+        })
+        .state('project.analyses.compare', {
+            title: 'Compare Project Analyses',
+            url: '/compare',
+            component: 'rfProjectAnalysesComparePage'
+        })
+        .state('project.analyses.settings', {
+            title: 'Project Analyses Settings',
+            url: '/settings',
+            component: 'rfProjectAnalysesSettingsPage',
+            redirectTo: 'project.analyses.settings.options'
+        })
+        .state('project.analyses.settings.options', {
+            title: 'Project Analyses Options',
+            url: '/options',
+            component: 'rfProjectAnalysesOptionsPage'
+        })
+        .state('project.analyses.settings.masking', {
+            title: 'Project Analyses Masking',
+            url: '/masking',
+            component: 'rfProjectAnalysesMaskingPage'
+        })
+        .state('project.analyses.settings.publishing', {
+            title: 'Project Analyses Publishing',
+            url: '/publishing',
+            component: 'rfProjectAnalysesPublishingPage'
+        })
+        .state('project.analyses.settings.permissions', {
+            title: 'Project Analyses Permissions',
+            url: '/permissions',
+            component: 'rfProjectAnalysesPermissionsPage'
+        })
+        .state('project.analyses.visualize', {
+            title: 'Project Analyses Visualization',
+            url: '/visualize',
+            component: 'rfProjectAnalysesVisualizePage'
+        });
+}
 
 function projectEditStates($stateProvider) {
     let addScenesQueryParams = [
@@ -763,6 +934,7 @@ function routeConfig(
 
     loginStates($stateProvider);
     projectStates($stateProvider);
+    projectStatesV2($stateProvider);
     settingsStates($stateProvider);
     labStates($stateProvider);
     shareStates($stateProvider);

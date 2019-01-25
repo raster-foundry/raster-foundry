@@ -1,4 +1,5 @@
 /* eslint-disable */
+import pages from './components/pages';
 export default angular.module('index.components', [
     //admin components
     require('./components/admin/editableLogo/editableLogo.js').default.name,
@@ -32,6 +33,7 @@ export default angular.module('index.components', [
     require('./components/projects/projectCreateModal/projectCreateModal.module.js').default.name,
     require('./components/projects/projectExportModal/projectExportModal.module.js').default.name,
     require('./components/projects/annotateSidebarItem/annotateSidebarItem.module.js').default.name,
+    require('./components/projects/projectLayerCreateModal/projectLayerCreateModal.js').default.name,
 
     // datasource components
     require('./components/datasources/datasourceItem/datasourceItem.module.js').default.name,
@@ -58,8 +60,7 @@ export default angular.module('index.components', [
     // map components
     require('./components/map/mapContainer/mapContainer.module.js').default.name,
     require('./components/map/staticMap/staticMap.module.js').default.name,
-    require('./components/map/drawToolbar/drawToolbar.module.js').default.name,
-    require('./components/map/labMap/labMap.module.js').default.name,
+    require('./components/map/drawToolbar/drawToolbar.module.js').default.name, require('./components/map/labMap/labMap.module.js').default.name,
     require('./components/map/mapSearchModal/mapSearchModal.module.js').default.name,
     require('./components/map/annotateToolbar/annotateToolbar.module.js').default.name,
     require('./components/map/measurementPopup/measurementPopup.module.js').default.name,
@@ -119,5 +120,8 @@ export default angular.module('index.components', [
     require('./components/histogram/channelHistogram/channelHistogram.module.js').default.name,
     require('./components/histogram/nodeHistogram/nodeHistogram.module.js').default.name,
     require('./components/histogram/histogramBreakpoint/histogramBreakpoint.module.js').default.name,
-    require('./components/histogram/reclassifyHistogram/reclassifyHistogram.module.js').default.name
+    require('./components/histogram/reclassifyHistogram/reclassifyHistogram.module.js').default.name,
+
+    // pages
+    ...pages
 ]);
