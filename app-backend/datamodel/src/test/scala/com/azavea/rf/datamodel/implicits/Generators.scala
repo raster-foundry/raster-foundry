@@ -715,7 +715,15 @@ object Generators extends ArbitraryInstances {
       visibility <- visibilityGen
       executionParameters <- Gen.const(().asJson)
       owner <- Gen.const(None)
-    } yield { ToolRun.Create(name, visibility, executionParameters, owner) }
+    } yield {
+      ToolRun.Create(name,
+                     visibility,
+                     None,
+                     None,
+                     None,
+                     executionParameters,
+                     owner)
+    }
 
   private def mapTokenCreateGen: Gen[MapToken.Create] =
     nonEmptyStringGen map { name =>
