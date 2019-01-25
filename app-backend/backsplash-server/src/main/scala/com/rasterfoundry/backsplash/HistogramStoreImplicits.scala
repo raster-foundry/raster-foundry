@@ -20,6 +20,7 @@ trait HistogramStoreImplicits
 
   val xa: Transactor[IO]
 
+  @SuppressWarnings(Array("TraversableHead"))
   private def mergeHistsForBands(
       bands: List[Int],
       hists: List[Array[Histogram[Double]]]): Array[Histogram[Double]] = {
