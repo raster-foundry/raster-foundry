@@ -40,6 +40,9 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
     FROM
   """ ++ tableF
 
+  def unsafeGetToolRunById(toolRunId: UUID): ConnectionIO[ToolRun] =
+    query.filter(toolRunId).select
+
   def insertToolRun(newRun: ToolRun.Create,
                     user: User): ConnectionIO[ToolRun] = {
     val now = new Timestamp(new java.util.Date().getTime())

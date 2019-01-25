@@ -128,4 +128,44 @@ class ToolRunDaoSpec
       }
     }
   }
+
+  test("update tool run") {
+    check {
+      forAll {
+        (
+            user: User.Create,
+            org: Organization.Create,
+            toolRunCreate1: ToolRun.Create,
+            toolRunCreate2: ToolRun.Create
+        ) =>
+          {
+            val insertAndUpdateIO = for {
+              (_, dbUser) <- insertUserAndOrg(user, org)
+              inserted1 <- ToolRunDao.insertToolRun(toolRunCreate1, dbUser)
+              inserted2 <- ToolRunDao.insertToolRun(toolRunCreate2, dbUser)
+              _ <- ToolRunDao.updateToolRun(inserted2, inserted1.id, dbUser)
+              fetched <- ToolRunDao.unsafeGetToolRunById(inserted1.id)
+            } yield { (fetched, inserted2) }
+
+            val (retrieved, updateRecord) =
+              xa.use(t => insertAndUpdateIO.transact(t)).unsafeRunSync
+
+            assert(
+              retrieved.name == updateRecord.name,
+              "Names should match after db"
+            )
+            assert(
+              retrieved.visibility == updateRecord.visibility,
+              "Visibility should match after db"
+            )
+            assert(
+              retrieved.executionParameters == updateRecord.executionParameters,
+              "ExecutionParameters should match after db"
+            )
+            true
+          }
+      }
+
+    }
+  }
 }
