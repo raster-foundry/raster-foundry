@@ -136,7 +136,9 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   val httpApp =
     Router(
-      "/" -> withCORS(withTimeout(mosaicService)),
+      "/" -> ProjectToProjectLayerMiddleware(
+        withCORS(withTimeout(mosaicService)),
+        xa),
       "/scenes" -> withCORS(withTimeout(sceneMosaicService)),
       "/tools" -> withCORS(withTimeout(analysisService)),
       "/healthcheck" -> AutoSlash(new HealthcheckService[IO]().routes)

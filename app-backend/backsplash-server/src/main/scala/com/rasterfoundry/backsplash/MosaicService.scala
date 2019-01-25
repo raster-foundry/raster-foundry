@@ -48,37 +48,13 @@ class MosaicService[ProjStore: ProjectStore,
     H.handle {
       ForeignError.handle {
         AuthedService {
-          case GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
-                y)
-                :? BandOverrideQueryParamDecoder(bandOverride) as user =>
-            val polygonBbox: Projected[Polygon] =
-              TileUtils.getTileBounds(z, x, y)
-            val eval =
-              LayerTms.identity(
-                projects.read(projectId, Some(polygonBbox), bandOverride, None))
-            for {
-              fiberAuth <- authorizers.authProject(user, projectId).start
-              fiberResp <- eval(z, x, y).start
-              _ <- fiberAuth.join.handleErrorWith { error =>
-                fiberResp.cancel *> IO.raiseError(error)
-              }
-              resp <- fiberResp.join flatMap {
-                case Valid(tile) =>
-                  Ok(tile.renderPng.bytes, pngType)
-                case Invalid(e) =>
-                  BadRequest(s"Could not produce tile: $e")
-              }
-            } yield resp
-
           case GET -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
                 layerId) / IntVar(z) / IntVar(x) / IntVar(y) :? BandOverrideQueryParamDecoder(
                 bandOverride) as user =>
             val polygonBbox: Projected[Polygon] =
               TileUtils.getTileBounds(z, x, y)
             val eval = LayerTms.identity(
-              layers.read(layerId, Some(polygonBbox), bandOverride, None) map {
-                _.copy(projectId = projectId)
-              }
+              layers.read(layerId, Some(polygonBbox), bandOverride, None)
             )
 
             for {
