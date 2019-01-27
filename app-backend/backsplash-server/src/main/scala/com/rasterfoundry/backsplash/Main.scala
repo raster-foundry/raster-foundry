@@ -141,7 +141,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
         xa),
       "/scenes" -> withCORS(withTimeout(sceneMosaicService)),
       "/tools" -> withCORS(withTimeout(analysisService)),
-      "/healthcheck" -> AutoSlash(new HealthcheckService[IO]().routes)
+      "/healthcheck" -> AutoSlash(new HealthcheckService(xa).routes)
     )
 
   val startupBanner =

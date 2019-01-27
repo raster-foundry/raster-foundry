@@ -5,6 +5,7 @@ object Version {
   val akkaHttpCors = "0.2.2"
   val akkaHttpExtensions = "0.4.13"
   val akkaSlf4j = "2.4.11"
+  val apacheCommonsEmail = "1.5"
   val auth0 = "1.5.0"
   val awsBatchSdk = "1.11.196"
   val awsStsSdk = "1.11.232"
@@ -46,5 +47,5 @@ object Version {
   val scopt = "3.5.0"
   val slickMigrationAPI = "0.4.0"
   val spark = "2.2.0"
-  val apacheCommonsEmail = "1.5"
+  val sup = "0.2.1"
 }
