@@ -47,5 +47,5 @@ object Version {
   val scopt = "3.5.0"
   val slickMigrationAPI = "0.4.0"
   val spark = "2.2.0"
-  val sup = "0.2.1"
+  val sup = "0.2.0"
 }
