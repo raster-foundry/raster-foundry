@@ -100,7 +100,7 @@ import teamDatasourcesTpl from './pages/admin/team/datasources/datasources.html'
 import teamTemplatesTpl from './pages/admin/team/templates/templates.html';
 import teamAnalysesTpl from './pages/admin/team/analyses/analyses.html';
 
-import { projectResolves } from './components/pages/projects';
+import { projectResolves } from './components/pages/project';
 
 
 function shareStatesV2($stateProvider) {
@@ -129,32 +129,33 @@ function projectStatesV2($stateProvider) {
     ].join('&');
 
     $stateProvider
-        .state('projects-v2', {
-            parent: 'root',
-            title: 'Project List',
-            url: '/v2/projects?page&search&ownership',
-            component: 'rfProjectsPage',
-            resolve: projectResolves.resolve
-        })
         .state('project', {
             parent: 'root',
             title: 'Project',
             url: '/v2/project/:projectId',
             component: 'rfProjectPage',
             resolve: Object.assign({
-                projectId: ['$transition$', ($transition$) => $transition$.params().projectId]
+                projectId: ['$transition$', ($transition$) => $transition$.params().projectId],
+                project: [
+                    '$transition$', 'projectService',
+                    ($transition$, projectService) =>
+                        projectService.fetchProject($transition$.params().projectId)
+                ]
             }, projectResolves.resolve),
             redirectTo: 'project.layers'
         })
         .state('project.layers', {
             title: 'Project Layers',
-            url: '/layers',
-            component: 'rfProjectLayersPage'
+            url: '/layers?page',
+            component: 'rfProjectLayersPage',
+            params: {
+                page: { dynamic: true }
+            }
         })
     // top level project routes
         .state('project.analyses', {
             title: 'Project Analyses',
-            url: '/analyses',
+            url: '/analyses?page&search',
             component: 'rfProjectAnalysesPage'
         })
         .state('project.settings', {
@@ -189,7 +190,7 @@ function projectStatesV2($stateProvider) {
         })
         .state('project.layer.scenes', {
             title: 'Project Layer Scenes',
-            url: '/scenes',
+            url: '/scenes?page',
             component: 'rfProjectLayerScenesPage'
         })
         .state('project.layer.scenes.browse', {
@@ -199,7 +200,7 @@ function projectStatesV2($stateProvider) {
         })
         .state('project.layer.exports', {
             title: 'Project Layer Exports',
-            url: '/exports',
+            url: '/exports?page&search',
             component: 'rfProjectLayerExportsPage'
         })
         .state('project.layer.export', {
@@ -209,7 +210,7 @@ function projectStatesV2($stateProvider) {
         })
         .state('project.layer.annotations', {
             title: 'Project Layer Annotations',
-            url: '/annotations',
+            url: '/annotations?page',
             component: 'rfProjectLayerAnnotationsPage'
         })
         .state('project.layer.annotate', {
@@ -220,7 +221,7 @@ function projectStatesV2($stateProvider) {
     // Project analyses routes
         .state('project.analyses.compare', {
             title: 'Compare Project Analyses',
-            url: '/compare',
+            url: '/compare?id',
             component: 'rfProjectAnalysesComparePage'
         })
         .state('project.analyses.settings', {

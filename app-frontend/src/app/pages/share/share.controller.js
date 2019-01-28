@@ -47,7 +47,7 @@ export default class ShareController {
     }
 
     addProjectLayer() {
-        let url = this.projectService.getProjectLayerURL(
+        let url = this.projectService.getProjectTileURL(
             this.project,
             {token: this.authService.token()}
         );

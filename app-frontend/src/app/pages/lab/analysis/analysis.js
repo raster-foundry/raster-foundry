@@ -140,7 +140,7 @@ class LabAnalysisController {
                     project: node.projId
                 }).then((mapToken) => {
                     this.publishModal(
-                        this.projectService.getProjectLayerURL(
+                        this.projectService.getProjectTileURL(
                             node.projId, {mapToken: mapToken.id}
                         )
                     );
@@ -238,7 +238,7 @@ class LabAnalysisController {
             let labNode = this.nodes.get(id);
             // let labNode = this.findNodeinAST(id, this.analysis.executionParameters);
             if (labNode.type === 'projectSrc') {
-                return this.projectService.getProjectLayerURL({
+                return this.projectService.getProjectTileURL({
                     id: labNode.projId
                 }, {
                     token: token

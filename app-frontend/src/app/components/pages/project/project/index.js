@@ -1,18 +1,35 @@
+import {Map} from 'immutable';
 import tpl from './index.html';
 
 class ProjectPageController {
     constructor(
-        $rootScope
+        $rootScope, $state, $location, mapService, mapUtilsService,
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
+    }
+
+    $postLink() {
+        if (!this.$location.search().bbox) {
+            this.fitProjectExtent();
+        }
+    }
+
+    getMap() {
+        return this.mapService.getMap('project');
+    }
+
+    fitProjectExtent() {
+        this.getMap().then(m => {
+            this.mapUtilsService.fitMapToProject(m, this.project);
+        });
     }
 }
 
 const component = {
     bindings: {
         projectId: '<',
-        user: '<'
+        project: '<'
     },
     templateUrl: tpl,
     controller: ProjectPageController.name

@@ -1,3 +1,44 @@
-<div>Project page for {{$ctrl.projectId}}</div>
-<div>user = {{$ctrl.user}}</div>
-<ui-view></ui-view>
+<div class="navbar light-navbar">
+  <div class="navbar-section">
+    <nav>
+      <a ui-sref="project.layers"
+      ng-class="{
+        active: ('project.layers' | includedByState)
+      }"
+      >Layers</a>
+    </nav>
+    <nav>
+      <a ui-sref="project.analyses"
+         ng-class="{
+                  active: ('project.analyses' | includedByState)
+                  }"
+      >Analyses</a>
+    </nav>
+  </div>
+  <div class="navbar-section secondary">
+    <nav>
+      <a>Smart Layers</a>
+    </nav>
+    <nav>
+      <a ui-sref="project.settings"
+         ng-class="{
+                  active: ('project.settings' | includedByState)
+                  }"
+      ><i class="icon-settings" title="Project Settings"></i></a>
+    </nav>
+  </div>
+</div>
+<div class="container column-stretch container-not-scrollable"
+     ng-show="('project.settings' | includedByState)"
+     ui-view></div>
+<div class="container column-stretch container-not-scrollable"
+     ng-show="!('project.settings' | includedByState)">
+  <div class="sidebar" ui-view></div>
+  <div class="main">
+    <rf-map-container map-id="project"
+                      ng-show="!$ctrl.showPreviewmap"
+                      initial-center="$ctrl.initialCenter"
+                      initial-zoom="$ctrl.initialZoom">
+    </rf-map-container>
+  </div>
+</div>

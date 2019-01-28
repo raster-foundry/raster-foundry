@@ -137,7 +137,7 @@ class ProjectsEditController {
     }
 
     layerFromProject() {
-        let url = this.projectService.getProjectLayerURL(
+        let url = this.projectService.getProjectTileURL(
             this.project,
             {token: this.authService.token()}
         );
@@ -207,7 +207,7 @@ class ProjectsEditController {
             component: 'rfProjectPublishModal',
             resolve: {
                 project: () => this.project,
-                tileUrl: () => this.projectService.getProjectLayerURL(this.project),
+                tileUrl: () => this.projectService.getProjectTileURL(this.project),
                 shareUrl: () => this.projectService.getProjectShareURL(this.project)
             }
         }).result.catch(() => {});

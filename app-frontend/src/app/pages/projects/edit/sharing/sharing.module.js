@@ -98,7 +98,7 @@ class SharingController {
 
     initTileURL() {
         if (this.project) {
-            const tileUrl = this.projectService.getProjectLayerURL(this.project);
+            const tileUrl = this.projectService.getProjectTileURL(this.project);
             let zxyUrl = tileUrl
                 .replace('{z}', `{${urlMappings.standard.z}}`)
                 .replace('{x}', `{${urlMappings.standard.x}}`)
