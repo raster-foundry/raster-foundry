@@ -65,7 +65,8 @@ class HealthcheckService(xa: Transactor[IO])(implicit timer: Timer[IO],
   val routes: HttpRoutes[IO] =
     HttpRoutes.of {
       case GET -> Root =>
-        val healthcheck = HealthReporter.fromChecks(dbHealth, cacheHealth)
+        val healthcheck = (dbHealth |+| cacheHealth)
+          .through(mods.recoverToSick)
         healthcheck.check flatMap { check =>
           if (check.value.reduce.isHealthy) Ok("A-ok")
           else {
