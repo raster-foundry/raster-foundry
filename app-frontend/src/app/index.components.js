@@ -1,5 +1,6 @@
 /* eslint-disable */
 import pages from './components/pages';
+import projectComponents from './components/projects';
 export default angular.module('index.components', [
     //admin components
     require('./components/admin/editableLogo/editableLogo.js').default.name,
@@ -27,6 +28,7 @@ export default angular.module('index.components', [
     require('./components/vectors/vectorNameModal/vectorNameModal.module.js').default.name,
 
     // project components
+    ...projectComponents,
     require('./components/projects/projectItem/projectItem.module.js').default.name,
     require('./components/projects/projectPublishModal/projectPublishModal.module.js').default.name,
     require('./components/projects/projectSelectModal/projectSelectModal.module.js').default.name,

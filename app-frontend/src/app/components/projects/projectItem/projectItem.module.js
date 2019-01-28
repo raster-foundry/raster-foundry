@@ -65,7 +65,7 @@ class ProjectItemController {
     }
 
     addProjectLayer() {
-        let url = this.projectService.getProjectLayerURL(
+        let url = this.projectService.getProjectTileURL(
             this.project,
             {token: this.authService.token()}
         );
@@ -113,7 +113,7 @@ class ProjectItemController {
             component: 'rfProjectPublishModal',
             resolve: {
                 project: () => this.project,
-                tileUrl: () => this.projectService.getProjectLayerURL(this.project),
+                tileUrl: () => this.projectService.getProjectTileURL(this.project),
                 shareUrl: () => this.projectService.getProjectShareURL(this.project)
             }
         }).result.catch(() => {});

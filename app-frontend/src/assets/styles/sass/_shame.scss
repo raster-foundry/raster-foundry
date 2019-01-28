@@ -594,6 +594,10 @@ rf-project-editor .leaflet-tile {
   text-align: left;
 }
 
+.layer-item-tooltip {
+    left-align: left;
+}
+
 .nvd3.nv-line {
   .nv-point {
     display: none;
@@ -2056,6 +2060,10 @@ rf-node-selector {
       }
     }
   }
+  &.drop-left {
+      left: initial;
+      right: 0;
+  }
 }
 .leaflet-frame {
   position: absolute;
@@ -3229,4 +3237,36 @@ rf-navbar-search {
   i {
     color: $white;
   }
+}
+
+.layer-item-swatch {
+    height: 1em;
+    width: 1em;
+    border-radius: 2px;
+    background: $white;
+}
+
+.btn[uib-dropdown].open {
+    z-index: 100;
+}
+
+.menu-separator {
+    height: .2em;
+    width: 100%;
+    border-top: 1 px solid #ccc;
+}
+
+rf-project-layers-page {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: $off-white;
+
+    rf-layer-item {
+        display: block;
+        background: $white;
+        border: 1px solid $gray-lightest;
+        border-radius: 3px;
+        margin: .25em;
+    }
 }

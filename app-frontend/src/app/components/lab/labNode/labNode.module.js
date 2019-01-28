@@ -169,7 +169,7 @@ class LabNodeController {
                     project: this.node.projId
                 }).then((mapToken) => {
                     this.publishModal(
-                        this.projectService.getProjectLayerURL(
+                        this.projectService.getProjectTileURL(
                             this.node.projId, {mapToken: mapToken.id}
                         )
                     );
