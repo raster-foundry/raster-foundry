@@ -421,7 +421,7 @@ object ProjectDao
                               projectLayerIdO)
       scenes <- SceneDao.query
         .filter(
-          fr"scenes.id IN (SELECT scene_id FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId}")
+          fr"scenes.id IN (SELECT scene_id FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId})")
         .list
     } yield scenes
 
@@ -446,19 +446,6 @@ object ProjectDao
         } yield rowsDeleted
       case _ => 0.pure[ConnectionIO]
     }
-  }
-
-  def addScenesToProjectFromQuery(
-      sceneParams: CombinedSceneQueryParams,
-      projectId: UUID,
-      projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] = {
-    for {
-      scenes <- SceneDao.query.filter(sceneParams).list
-      scenesAdded <- addScenesToProject(scenes.map(_.id),
-                                        projectId,
-                                        true,
-                                        projectLayerIdO)
-    } yield scenesAdded
   }
 
   // head is safe here, because we're looking up users from the ids in projects, and the map was

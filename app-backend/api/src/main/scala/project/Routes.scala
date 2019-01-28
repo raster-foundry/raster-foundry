@@ -253,6 +253,29 @@ trait ProjectRoutes
                                                            annotationGroupId)
                           }
                       }
+                  } ~
+                  pathPrefix("scenes") {
+                    pathEndOrSingleSlash {
+                      get {
+                        listLayerScenes(projectId, layerId)
+                      } ~
+                        post {
+                          addProjectScenes(projectId, Some(layerId))
+                        } ~
+                        put {
+                          updateProjectScenes(projectId, Some(layerId))
+                        } ~
+                        delete {
+                          deleteProjectScenes(projectId, Some(layerId))
+                        }
+                    }
+                  } ~
+                  pathPrefix("datasources") {
+                    pathEndOrSingleSlash {
+                      get {
+                        listLayerDatsources(projectId, layerId)
+                      }
+                    }
                   }
               }
           } ~
@@ -400,13 +423,6 @@ trait ProjectRoutes
                   deleteProjectScenes(projectId)
                 }
             } ~
-              pathPrefix("bulk-add-from-query") {
-                pathEndOrSingleSlash {
-                  post {
-                    addProjectScenesFromQueryParams(projectId)
-                  }
-                }
-              } ~
               pathPrefix("accept") {
                 post {
                   acceptScenes(projectId)
@@ -1132,26 +1148,57 @@ trait ProjectRoutes
     }
   }
 
-  def addProjectScenes(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[NonEmptyList[UUID]]) { sceneIds =>
-        if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-          complete(StatusCodes.RequestEntityTooLarge)
-        }
-        val scenesAdded =
-          ProjectDao.addScenesToProject(sceneIds, projectId, true, None)
+  def addProjectScenes(projectId: UUID, layerId: Option[UUID] = None): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[NonEmptyList[UUID]]) { sceneIds =>
+          if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+            complete(StatusCodes.RequestEntityTooLarge)
+          }
+          val scenesAdded =
+            ProjectDao.addScenesToProject(sceneIds, projectId, true, layerId)
 
-        complete { scenesAdded.transact(xa).unsafeToFuture }
+          complete { scenesAdded.transact(xa).unsafeToFuture }
+        }
       }
     }
-  }
 
-  def addProjectScenesFromQueryParams(projectId: UUID): Route = authenticate {
+  def updateProjectScenes(projectId: UUID,
+                          layerId: Option[UUID] = None): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[Seq[UUID]]) { sceneIds =>
+          if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+            complete(StatusCodes.RequestEntityTooLarge)
+          }
+
+          sceneIds.toList.toNel match {
+            case Some(ids) => {
+              complete {
+                ProjectDao
+                  .replaceScenesInProject(ids, projectId, layerId)
+                  .transact(xa)
+                  .unsafeToFuture()
+              }
+            }
+            case _ => complete(StatusCodes.BadRequest)
+          }
+        }
+      }
+    }
+
+  def deleteProjectScenes(projectId: UUID,
+                          layerId: Option[UUID] = None): Route = authenticate {
     user =>
       authorizeAsync {
         ProjectDao
@@ -1159,66 +1206,20 @@ trait ProjectRoutes
           .transact(xa)
           .unsafeToFuture
       } {
-        entity(as[CombinedSceneQueryParams]) { combinedSceneQueryParams =>
+        entity(as[Seq[UUID]]) { sceneIds =>
+          if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+            complete(StatusCodes.RequestEntityTooLarge)
+          }
+
           onSuccess(
             ProjectDao
-              .addScenesToProjectFromQuery(combinedSceneQueryParams, projectId)
+              .deleteScenesFromProject(sceneIds.toList, projectId, layerId)
               .transact(xa)
-              .unsafeToFuture()) { scenesAdded =>
-            complete((StatusCodes.Created, scenesAdded))
+              .unsafeToFuture()) { _ =>
+            complete(StatusCodes.NoContent)
           }
         }
       }
-  }
-
-  def updateProjectScenes(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[Seq[UUID]]) { sceneIds =>
-        if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-          complete(StatusCodes.RequestEntityTooLarge)
-        }
-
-        sceneIds.toList.toNel match {
-          case Some(ids) => {
-            complete {
-              ProjectDao
-                .replaceScenesInProject(ids, projectId)
-                .transact(xa)
-                .unsafeToFuture()
-            }
-          }
-          case _ => complete(StatusCodes.BadRequest)
-        }
-      }
-    }
-  }
-
-  def deleteProjectScenes(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[Seq[UUID]]) { sceneIds =>
-        if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-          complete(StatusCodes.RequestEntityTooLarge)
-        }
-
-        onSuccess(
-          ProjectDao
-            .deleteScenesFromProject(sceneIds.toList, projectId)
-            .transact(xa)
-            .unsafeToFuture()) { _ =>
-          complete(StatusCodes.NoContent)
-        }
-      }
-    }
   }
 
   def listProjectPermissions(projectId: UUID): Route = authenticate { user =>
@@ -1632,6 +1633,52 @@ trait ProjectRoutes
               .unsafeToFuture
           ) { updatedOrder =>
             complete(StatusCodes.NoContent)
+          }
+        }
+      }
+    }
+  def listLayerScenes(projectId: UUID, layerId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        (withPagination & sceneQueryParameters) { (page, sceneParams) =>
+          complete {
+            ProjectLayerScenesDao
+              .listLayerScenes(layerId, page, sceneParams)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+  }
+
+  def listLayerDatsources(projectId: UUID, layerId: UUID): Route =
+    authenticate { user =>
+      (projectQueryParameters) { projectQueryParams =>
+        authorizeAsync {
+          val authorized = for {
+            authProject <- ProjectDao.authorized(user,
+                                                 ObjectType.Project,
+                                                 projectId,
+                                                 ActionType.View)
+            authResult <- (authProject, projectQueryParams.analysisId) match {
+              case (false, Some(analysisId: UUID)) =>
+                ToolRunDao
+                  .authorizeReferencedProject(user, analysisId, projectId)
+              case (_, _) => authProject.pure[ConnectionIO]
+            }
+          } yield authResult
+          authorized.transact(xa).unsafeToFuture
+        } {
+          complete {
+            ProjectLayerDatasourcesDao
+              .listProjectLayerDatasources(projectId, layerId)
+              .transact(xa)
+              .unsafeToFuture
           }
         }
       }
