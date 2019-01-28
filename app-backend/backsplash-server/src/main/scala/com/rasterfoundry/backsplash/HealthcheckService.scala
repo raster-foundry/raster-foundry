@@ -11,7 +11,7 @@ import doobie.implicits._
 import io.circe.Json
 import org.http4s._
 import org.http4s.circe._
-import org.http4s.dsl.Http4sDsl
+import org.http4s.dsl._
 import scalacache.modes.sync._
 import sup._
 
@@ -21,42 +21,56 @@ class HealthcheckService(xa: Transactor[IO])(implicit timer: Timer[IO],
                                              contextShift: ContextShift[IO])
     extends Http4sDsl[IO] {
 
-  private def dbHealth: HealthCheck[IO, Id] =
+  private def timeoutToSick(check: HealthCheck[IO, Id]): HealthCheck[IO, Id] =
     HealthCheck
-      .liftFBoolean(
-        // select things from the db
-        fr"select name from licenses limit 1;"
-          .query[String]
-          .to[List]
-          .transact(xa)
-          .map(_ => true)
+      .race(
+        check,
+        HealthCheck.liftF[IO, Id](
+          IO.sleep(3 seconds) map { _ =>
+            HealthResult.one(Health.sick)
+          }
+        )
       )
-      .through(mods.timeoutToSick(3 seconds))
+      .transform(healthIO =>
+        healthIO map {
+          case HealthResult(eitherK) =>
+            eitherK.run match {
+              case (Right(r)) => HealthResult.one(r)
+              case (Left(l))  => HealthResult.one(l)
+            }
+      })
 
-  private def cacheHealth: HealthCheck[IO, Id] =
-    HealthCheck
-      .liftFBoolean(
-        IO { tileCache.get("bogus") } map { _ =>
-          true
-        }
-      )
-      .through(mods.timeoutToSick(3 seconds))
+  private def dbHealth =
+    timeoutToSick(
+      HealthCheck
+        .liftF[IO, Id](
+          // select things from the db
+          fr"select name from licenses limit 1;"
+            .query[String]
+            .to[List]
+            .transact(xa)
+            .map(_ => HealthResult.one(Health.healthy))
+        )
+    )
+
+  private def cacheHealth =
+    timeoutToSick(
+      HealthCheck
+        .liftF[IO, Id](
+          IO { tileCache.get("bogus") } map { _ =>
+            HealthResult.one(Health.healthy)
+          }
+        ))
 
   val routes: HttpRoutes[IO] =
     HttpRoutes.of {
       case GET -> Root =>
-        // timeout or recover to sick, so that if either the cache / db are reachable but not responding
-        // or unreachable, we still return a 503
-        val healthcheck = (dbHealth |+| cacheHealth)
-          .through(
-            mods.timeoutToSick(7 seconds)
-          )
-          .through(
-            mods.recoverToSick
-          )
+        val healthcheck = HealthReporter.fromChecks(dbHealth, cacheHealth)
         healthcheck.check flatMap { check =>
           if (check.value.reduce.isHealthy) Ok("A-ok")
-          else ServiceUnavailable("No good")
+          else {
+            ServiceUnavailable("Postgres or memcached unavailable")
+          }
         }
     }
 }
