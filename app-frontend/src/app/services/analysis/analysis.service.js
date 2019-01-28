@@ -330,7 +330,7 @@ export default (app) => {
             // 'executionParameters' instead.
             return {
                 visibility: 'PRIVATE',
-                template: template.id,
+                templateId: template.id,
                 executionParameters: angular.copy(template.definition)
             };
         }

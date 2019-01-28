@@ -243,6 +243,9 @@ lazy val db = Project("db", file("db"))
       "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15"
     )
   })
+  .settings(
+    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
+  )
 
 lazy val migrations = Project("migrations", file("migrations"))
   .settings(commonSettings: _*)

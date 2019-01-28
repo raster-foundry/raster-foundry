@@ -15,6 +15,9 @@ final case class ToolRun(id: UUID,
                          modifiedBy: String,
                          owner: String,
                          visibility: Visibility,
+                         projectId: Option[UUID],
+                         projectLayerId: Option[UUID],
+                         templateId: Option[UUID],
                          executionParameters: Json)
 
 object ToolRun {
@@ -24,6 +27,9 @@ object ToolRun {
   @JsonCodec
   final case class Create(name: Option[String],
                           visibility: Visibility,
+                          projectId: Option[UUID],
+                          projectLayerId: Option[UUID],
+                          templateId: Option[UUID],
                           executionParameters: Json,
                           owner: Option[String])
       extends OwnerCheck {
@@ -42,6 +48,9 @@ object ToolRun {
         user.id,
         ownerId,
         visibility,
+        projectId,
+        projectLayerId,
+        templateId,
         executionParameters
       )
     }
