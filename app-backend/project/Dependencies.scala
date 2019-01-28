@@ -73,4 +73,5 @@ object Dependencies {
   val slickMigrationAPI = "io.github.nafg" %% "slick-migration-api" % Version.slickMigrationAPI
   val spark = "org.apache.spark" %% "spark-core" % Version.spark % "provided"
   val sparkCore = "org.apache.spark" %% "spark-core" % Version.spark
+  val sup = "com.kubukoz" %% "sup-core" % Version.sup
 }

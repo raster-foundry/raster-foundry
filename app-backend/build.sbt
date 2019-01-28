@@ -421,6 +421,7 @@ lazy val backsplashServer = Project("backsplash-server",
       Dependencies.http4sServer,
       Dependencies.mamlJvm,
       Dependencies.nimbusJose,
+      Dependencies.sup,
       "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
       "com.github.cb372" %% "scalacache-core" % "0.27.0",
       "com.github.cb372" %% "scalacache-caffeine" % "0.27.0"
