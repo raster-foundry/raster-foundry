@@ -8,11 +8,11 @@ const component = {
     bindings: {
     },
     templateUrl: tpl,
-    controller: ProjectSettingsPageController.constructor.name
+    controller: ProjectSettingsPageController.name
 };
 
 export default angular
     .module('components.pages.project.settings', [])
-    .controller(ProjectSettingsPageController.constructor.name, ProjectSettingsPageController)
+    .controller(ProjectSettingsPageController.name, ProjectSettingsPageController)
     .component('rfProjectSettingsPage', component)
     .name;

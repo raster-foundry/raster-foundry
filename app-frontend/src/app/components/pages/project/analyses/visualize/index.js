@@ -9,11 +9,11 @@ const component = {
         projectId: '<'
     },
     templateUrl: tpl,
-    controller: AnalysesVisualizeController.constructor.name
+    controller: AnalysesVisualizeController.name
 };
 
 export default angular
     .module('components.pages.project.analyses.visualize', [])
-    .controller(AnalysesVisualizeController.constructor.name, AnalysesVisualizeController)
+    .controller(AnalysesVisualizeController.name, AnalysesVisualizeController)
     .component('rfProjectAnalysesVisualizePage', component)
     .name;

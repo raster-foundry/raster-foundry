@@ -8,11 +8,11 @@ const component = {
     bindings: {
     },
     templateUrl: tpl,
-    controller: LayerScenesBrowseController.constructor.name
+    controller: LayerScenesBrowseController.name
 };
 
 export default angular
     .module('components.pages.project.layers.scenes.browse', [])
-    .controller(LayerScenesBrowseController.constructor.name, LayerScenesBrowseController)
+    .controller(LayerScenesBrowseController.name, LayerScenesBrowseController)
     .component('rfProjectLayerScenesBrowsePage', component)
     .name;

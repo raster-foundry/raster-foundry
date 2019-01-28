@@ -10,11 +10,11 @@ const component = {
         layerId: '<'
     },
     templateUrl: tpl,
-    controller: ProjectLayerController.constructor.name
+    controller: ProjectLayerController.name
 };
 
 export default angular
     .module('components.pages.project.layer.page', [])
-    .controller(ProjectLayerController.constructor.name, ProjectLayerController)
+    .controller(ProjectLayerController.name, ProjectLayerController)
     .component('rfProjectLayerPage', component)
     .name;

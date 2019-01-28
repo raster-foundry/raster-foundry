@@ -8,11 +8,11 @@ const component = {
     bindings: {
     },
     templateUrl: tpl,
-    controller: ProjectPublishingController.constructor.name
+    controller: ProjectPublishingController.name
 };
 
 export default angular
     .module('components.pages.projects.settings.publishing', [])
-    .controller(ProjectPublishingController.constructor.name, ProjectPublishingController)
+    .controller(ProjectPublishingController.name, ProjectPublishingController)
     .component('rfProjectPublishingPage', component)
     .name;
