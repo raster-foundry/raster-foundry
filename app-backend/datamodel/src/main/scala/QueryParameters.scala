@@ -296,7 +296,8 @@ object ToolCategoryQueryParameters {
 
 final case class ToolRunQueryParameters(createdBy: Option[String] = None,
                                         projectId: Option[UUID] = None,
-                                        toolId: Option[UUID] = None)
+                                        templateId: Option[UUID] = None,
+                                        projectLayerId: Option[UUID] = None)
 
 object ToolRunQueryParameters {
   implicit def encToolRunQueryParameters: Encoder[ToolRunQueryParameters] =
