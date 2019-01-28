@@ -8,11 +8,11 @@ const component = {
     bindings: {
     },
     templateUrl: tpl,
-    controller: AnalysesPermissionsController.constructor.name
+    controller: AnalysesPermissionsController.name
 };
 
 export default angular
     .module('components.pages.project.analyses.permissions', [])
-    .controller(AnalysesPermissionsController.constructor.name, AnalysesPermissionsController)
+    .controller(AnalysesPermissionsController.name, AnalysesPermissionsController)
     .component('rfProjectAnalysesPermissionsPage', component)
     .name;

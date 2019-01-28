@@ -8,11 +8,11 @@ const component = {
     bindings: {
     },
     templateUrl: tpl,
-    controller: LayerExportCreateController.constructor.name
+    controller: LayerExportCreateController.name
 };
 
 export default angular
     .module('components.pages.project.layer.export', [])
-    .controller(LayerExportCreateController.constructor.name, LayerExportCreateController)
+    .controller(LayerExportCreateController.name, LayerExportCreateController)
     .component('rfProjectLayerExportPage', component)
     .name;

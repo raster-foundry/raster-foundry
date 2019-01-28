@@ -8,11 +8,11 @@ const component = {
     bindings: {
     },
     templateUrl: tpl,
-    controller: ProjectLayerAnnotateController.constructor.name
+    controller: ProjectLayerAnnotateController.name
 };
 
 export default angular
     .module('components.pages.project.layer.annotate', [])
-    .controller(ProjectLayerAnnotateController.constructor.name, ProjectLayerAnnotateController)
+    .controller(ProjectLayerAnnotateController.name, ProjectLayerAnnotateController)
     .component('rfProjectLayerAnnotatePage', component)
     .name;

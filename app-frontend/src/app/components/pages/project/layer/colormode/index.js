@@ -8,11 +8,11 @@ const component = {
     bindings: {
     },
     templateUrl: tpl,
-    controller: LayerColormodeController.constructor.name
+    controller: LayerColormodeController.name
 };
 
 export default angular
     .module('components.pages.project.layer.colormode', [])
-    .controller(LayerColormodeController.constructor.name, LayerColormodeController)
+    .controller(LayerColormodeController.name, LayerColormodeController)
     .component('rfProjectLayerColormodePage', component)
     .name;

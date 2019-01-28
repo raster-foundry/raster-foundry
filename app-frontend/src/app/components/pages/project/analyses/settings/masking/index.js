@@ -8,13 +8,13 @@ const component = {
     bindings: {
     },
     templateUrl: tpl,
-    controller: AnalysesMaskingController.constructor.name
+    controller: AnalysesMaskingController.name
 };
 
 export default angular
     .module('components.pages.project.analyses.settings.masking', [])
     .controller(
-        AnalysesMaskingController.constructor.name,
+        AnalysesMaskingController.name,
         AnalysesMaskingController)
     .component('rfProjectAnalysesMaskingPage', component)
     .name;

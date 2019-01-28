@@ -1,8 +1,11 @@
 import tpl from './index.html';
 
 class ProjectPageController {
-    constructor(user) {
+    constructor(
+        $rootScope
+    ) {
         'ngInject';
+        $rootScope.autoInject(this, arguments);
     }
 }
 
@@ -12,11 +15,11 @@ const component = {
         user: '<'
     },
     templateUrl: tpl,
-    controller: ProjectPageController.constructor.name
+    controller: ProjectPageController.name
 };
 
 export default angular
     .module('components.pages.project.page', [])
-    .controller(ProjectPageController.constructor.name, ProjectPageController)
+    .controller(ProjectPageController.name, ProjectPageController)
     .component('rfProjectPage', component)
     .name;

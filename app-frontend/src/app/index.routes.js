@@ -133,7 +133,7 @@ function projectStatesV2($stateProvider) {
             parent: 'root',
             title: 'Project List',
             url: '/v2/projects?page&search&ownership',
-            component: 'rfProjectListPage',
+            component: 'rfProjectsPage',
             resolve: projectResolves.resolve
         })
         .state('project', {

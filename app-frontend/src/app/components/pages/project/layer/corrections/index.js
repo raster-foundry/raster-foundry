@@ -8,11 +8,11 @@ const component = {
     bindings: {
     },
     templateUrl: tpl,
-    controller: LayerCorrectionsController.constructor.name
+    controller: LayerCorrectionsController.name
 };
 
 export default angular
     .module('components.pages.project.layer.corrections', [])
-    .controller(LayerCorrectionsController.constructor.name, LayerCorrectionsController)
+    .controller(LayerCorrectionsController.name, LayerCorrectionsController)
     .component('rfProjectLayerCorrectionsPage', component)
     .name;

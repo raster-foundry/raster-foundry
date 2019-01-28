@@ -8,11 +8,11 @@ const component = {
     bindings: {
     },
     templateUrl: tpl,
-    controller: AnalysesCompareController.constructor.name
+    controller: AnalysesCompareController.name
 };
 
 export default angular
     .module('components.pages.project.analyses.compare', [])
-    .controller(AnalysesCompareController.constructor.name, AnalysesCompareController)
+    .controller(AnalysesCompareController.name, AnalysesCompareController)
     .component('rfProjectAnalysesComparePage', component)
     .name;
