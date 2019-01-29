@@ -205,7 +205,7 @@ trait ProjectRoutes
                         val response =
                           storeUploadedFile("name", (_) => tempFile.toJava) {
                             (m, _) =>
-                              processShapefile(projectId, tempFile, m)
+                              processShapefile(projectId, tempFile, m, None, None)
                           }
                         tempFile.delete()
                         response
@@ -225,7 +225,8 @@ trait ProjectRoutes
                                 processShapefile(projectId,
                                                  tempFile,
                                                  m,
-                                                 Some(fields))
+                                                 Some(fields),
+                                                 None)
                             }
                           tempFile.delete()
                           response
@@ -479,8 +480,9 @@ trait ProjectRoutes
         .unsafeToFuture
     } {
       complete {
+        // it looks for default project layer if projectLayerIdO is not provided
         AnnotationGroupDao
-          .listAnnotationGroupsForProject(projectId)
+          .listForProject(projectId)
           .transact(xa)
           .unsafeToFuture
       }
@@ -496,6 +498,7 @@ trait ProjectRoutes
     } {
       entity(as[AnnotationGroup.Create]) { agCreate =>
         complete {
+          // it uses default project layer if projectLayerIdO is not provided
           AnnotationGroupDao
             .createAnnotationGroup(projectId, agCreate, user)
             .transact(xa)
@@ -551,7 +554,7 @@ trait ProjectRoutes
         entity(as[AnnotationGroup]) { annotationGroup =>
           complete {
             AnnotationGroupDao
-              .updateAnnotationGroup(annotationGroup, agId, user)
+              .updateAnnotationGroup(projectId, annotationGroup, agId, user)
               .transact(xa)
               .unsafeToFuture
           }
@@ -586,10 +589,10 @@ trait ProjectRoutes
       (withPagination & annotationQueryParams) {
         (page: PageRequest, queryParams: AnnotationQueryParameters) =>
           complete {
-            AnnotationDao.query
-              .filter(fr"project_id=$projectId")
-              .filter(queryParams)
-              .page(page)
+            // it looks for default project layer
+            // if projectLayerIdO is not provided as the last param
+            AnnotationDao.listByLayer(
+              projectId, page, queryParams)
               .transact(xa)
               .unsafeToFuture
               .map { p =>
@@ -613,6 +616,8 @@ trait ProjectRoutes
       entity(as[AnnotationFeatureCollectionCreate]) { fc =>
         val annotationsCreate = fc.features map { _.toAnnotationCreate }
         onSuccess(
+          // if projectLayerIdO is not provided as the last param
+          // it will look for the default project layer
           AnnotationDao
             .insertAnnotations(annotationsCreate.toList, projectId, user)
             .transact(xa)
@@ -629,36 +634,39 @@ trait ProjectRoutes
   }
 
   def exportAnnotationShapefile(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      onSuccess(
-        AnnotationDao.query
-          .filter(fr"project_id=$projectId")
-          .list
+    (annotationExportQueryParameters) { annotationExportQP =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
-          .unsafeToFuture) {
-        case annotations @ (annotation: List[Annotation]) => {
-          val zipfile: ScalaFile =
-            AnnotationShapefileService.annotationsToShapefile(annotations)
-          val cal: Calendar = Calendar.getInstance()
-          cal.add(Calendar.DAY_OF_YEAR, 1)
-          val s3Uri: AmazonS3URI = new AmazonS3URI(
-            user.getDefaultAnnotationShapefileSource(dataBucket))
-          val s3Client = S3()
-          s3Client
-            .putObject(dataBucket, s3Uri.getKey, zipfile.toJava)
-            .setExpirationTime(cal.getTime)
-          zipfile.delete(true)
-          complete(s3Client.getSignedUrl(dataBucket, s3Uri.getKey).toString())
+          .unsafeToFuture
+      } {
+        // it exports default project layer annotations if exportAll is None or Some(false)
+        // it exports all annotations if exportAll is true
+        onSuccess(
+          AnnotationDao
+            .listForExport(projectId, annotationExportQP)
+            .transact(xa)
+            .unsafeToFuture) {
+          case annotations @ (annotation: List[Annotation]) => {
+            val zipfile: ScalaFile =
+              AnnotationShapefileService.annotationsToShapefile(annotations)
+            val cal: Calendar = Calendar.getInstance()
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+            val s3Uri: AmazonS3URI = new AmazonS3URI(
+              user.getDefaultAnnotationShapefileSource(dataBucket))
+            val s3Client = S3()
+            s3Client
+              .putObject(dataBucket, s3Uri.getKey, zipfile.toJava)
+              .setExpirationTime(cal.getTime)
+            zipfile.delete(true)
+            complete(s3Client.getSignedUrl(dataBucket, s3Uri.getKey).toString())
+          }
+          case _ =>
+            complete(
+              throw new Exception(
+                "Annotations do not exist or are not accessible by this user"))
         }
-        case _ =>
-          complete(
-            throw new Exception(
-              "Annotations do not exist or are not accessible by this user"))
       }
     }
   }
@@ -673,9 +681,8 @@ trait ProjectRoutes
       } {
         rejectEmptyResponse {
           complete {
-            AnnotationDao.query
-              .filter(annotationId)
-              .selectOption
+            AnnotationDao
+              .getAnnotationById(projectId, annotationId)
               .transact(xa)
               .unsafeToFuture
               .map {
@@ -698,7 +705,7 @@ trait ProjectRoutes
           updatedAnnotation: Annotation.GeoJSON =>
             onSuccess(
               AnnotationDao
-                .updateAnnotation(updatedAnnotation.toAnnotation, user)
+                .updateAnnotation(projectId, updatedAnnotation.toAnnotation, user)
                 .transact(xa)
                 .unsafeToFuture) { count =>
               completeSingleOrNotFound(count)
@@ -716,9 +723,8 @@ trait ProjectRoutes
           .unsafeToFuture
       } {
         onSuccess(
-          AnnotationDao.query
-            .filter(annotationId)
-            .delete
+          AnnotationDao
+            .deleteById(projectId,annotationId)
             .transact(xa)
             .unsafeToFuture) {
           completeSingleOrNotFound
@@ -733,10 +739,10 @@ trait ProjectRoutes
         .transact(xa)
         .unsafeToFuture
     } {
+      // if projectLayerIdO is not provided as the last param
+      // it will look for the default project layer
       onSuccess(
-        AnnotationDao.query
-          .filter(fr"project_id = ${projectId}")
-          .delete
+        AnnotationDao.deleteByProjectLayer(projectId)
           .transact(xa)
           .unsafeToFuture) {
         completeSomeOrNotFound
@@ -1230,7 +1236,8 @@ trait ProjectRoutes
   def processShapefile(projectId: UUID,
                        tempFile: ScalaFile,
                        fileMetadata: FileInfo,
-                       propsO: Option[Map[String, String]] = None): Route =
+                       propsO: Option[Map[String, String]] = None,
+                       projectLayerIdO: Option[UUID]): Route =
     authenticate { user =>
       {
         val unzipped = tempFile.unzip()
@@ -1253,7 +1260,7 @@ trait ProjectRoutes
           case (true, true) => {
             propsO match {
               case Some(props) =>
-                processShapefileImport(matches, prj, props, user, projectId)
+                processShapefileImport(matches, prj, props, user, projectId, projectLayerIdO)
               case _ =>
                 complete(StatusCodes.OK, processShapefileUpload(matches))
             }
@@ -1266,7 +1273,8 @@ trait ProjectRoutes
                              prj: Iterator[ScalaFile],
                              props: Map[String, String],
                              user: User,
-                             projectId: UUID): Route = {
+                             projectId: UUID,
+                             projectLayerIdO: Option[UUID]): Route = {
     val shapefilePath = matches.next.toString
     val prjPath: String = prj.next.toString
     val projectionSource = scala.io.Source.fromFile(prjPath)
@@ -1294,7 +1302,7 @@ trait ProjectRoutes
       case Right(annotationCreates) => {
         complete(
           StatusCodes.Created,
-          (AnnotationDao.insertAnnotations(annotationCreates, projectId, user)
+          (AnnotationDao.insertAnnotations(annotationCreates, projectId, user, projectLayerIdO)
             map { (anns: List[Annotation]) =>
               anns map { _.toGeoJSONFeature }
             }).transact(xa).unsafeToFuture
