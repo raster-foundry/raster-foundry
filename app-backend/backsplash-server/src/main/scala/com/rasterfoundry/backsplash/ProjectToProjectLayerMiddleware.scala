@@ -1,9 +1,6 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.backsplash.Parameters.{
-  BandOverrideQueryParamDecoder,
-  UUIDWrapper
-}
+import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.database.ProjectDao
 
 import cats.data._
@@ -14,7 +11,15 @@ import doobie.implicits._
 import org.http4s._
 import org.http4s.dsl.io._
 
+import java.util.UUID
+
 object ProjectToProjectLayerMiddleware {
+  private def getDefaultLayerId(projectId: UUID,
+                                xa: Transactor[IO]): OptionT[IO, UUID] =
+    OptionT { ProjectDao.getProjectById(projectId).transact(xa) } map {
+      _.defaultLayerId
+    }
+
   def apply(
       service: HttpRoutes[IO],
       xa: Transactor[IO]): Kleisli[OptionT[IO, ?], Request[IO], Response[IO]] =
@@ -33,15 +38,47 @@ object ProjectToProjectLayerMiddleware {
                   y)
                   :? BandOverrideQueryParamDecoder(bandOverride) =>
               for {
-                defaultLayerId <- OptionT {
-                  ProjectDao
-                    .getProjectById(projectId)
-                    .transact(xa)
-                } map { _.defaultLayerId }
+                defaultLayerId <- getDefaultLayerId(projectId, xa)
                 resp <- service(
                   req.withPathInfo(
                     s"/${projectId}/layers/${defaultLayerId}/${z}/${x}/${y}"))
               } yield resp
+
+            case GET -> Root / UUIDWrapper(projectId) / "histogram" :? BandOverrideQueryParamDecoder(
+                  bandOverride) =>
+              for {
+                defaultLayerId <- getDefaultLayerId(projectId, xa)
+                resp <- service(
+                  req.withPathInfo(
+                    s"/${projectId}/layers/${defaultLayerId}/histogram"
+                  )
+                )
+              } yield resp
+
+            case POST -> Root / UUIDWrapper(projectId) / "histogram" :? BandOverrideQueryParamDecoder(
+                  bandOverride) =>
+              for {
+                defaultLayerId <- getDefaultLayerId(projectId, xa)
+                resp <- service(
+                  req.withPathInfo(
+                    s"/${projectId}/layers/${defaultLayerId}/histogram"
+                  )
+                )
+              } yield resp
+
+            case GET -> Root / UUIDWrapper(projectId) / "export"
+                  :? ExtentQueryParamMatcher(extent)
+                  :? ZoomQueryParamMatcher(zoom)
+                  :? BandOverrideQueryParamDecoder(bandOverride) =>
+              for {
+                defaultLayerId <- getDefaultLayerId(projectId, xa)
+                resp <- service(
+                  req.withPathInfo(
+                    s"/${projectId}/layers/${defaultLayerId}/export"
+                  )
+                )
+              } yield resp
+
             case _ =>
               service(req)
           }
