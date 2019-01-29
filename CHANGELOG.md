@@ -3,7 +3,7 @@
 
 ### Added
 - Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
-- Added ProjectLayer datamodel, dao, and migration [\#4460]https://github.com/raster-foundry/raster-foundry/pull/4460()\
+- Added ProjectLayer datamodel, dao, and migration [\#4460](https://github.com/raster-foundry/raster-foundry/pull/4460)
 - Added lambda function for reactively processing new Landsat 8 imagery [\#4471](https://github.com/raster-foundry/raster-foundry/pull/4471)
 - Added lambda function for reactively processing new Sentinel-2 imagery [\#4491](https://github.com/raster-foundry/raster-foundry/pull/4491)
 - Added a migration that creates relationship among projects, project layers, and scenes and populates corresponding tables. Updated associated data models and `Dao`s [\#4479](https://github.com/raster-foundry/raster-foundry/pull/4479)
