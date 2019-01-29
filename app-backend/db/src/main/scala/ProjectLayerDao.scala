@@ -64,7 +64,8 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
       modified_at = ${updateTime},
       name = ${projectLayer.name},
       color_group_hex = ${projectLayer.colorGroupHex},
-      geometry = ${projectLayer.geometry}
+      geometry = ${projectLayer.geometry},
+      project_id = ${projectLayer.projectId}
     """ ++ Fragments.whereAndOpt(Some(idFilter))).update
     query
   }
