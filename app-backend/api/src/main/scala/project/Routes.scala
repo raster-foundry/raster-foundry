@@ -1342,11 +1342,13 @@ trait ProjectRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      complete {
-        ProjectLayerDao
-          .listProjectLayersForProject(projectId)
-          .transact(xa)
-          .unsafeToFuture
+      (withPagination) { (page) =>
+        complete {
+          ProjectLayerDao
+            .listProjectLayersForProject(page, projectId)
+            .transact(xa)
+            .unsafeToFuture
+        }
       }
     }
   }

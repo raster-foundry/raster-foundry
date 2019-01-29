@@ -12,6 +12,7 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import com.lonelyplanet.akka.http.extensions.PageRequest
 
 object ProjectLayerDao extends Dao[ProjectLayer] {
   val tableName = "project_layers"
@@ -25,12 +26,11 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
   }
 
   def listProjectLayersForProject(
-      projectId: UUID): ConnectionIO[List[ProjectLayer]] = {
-    (selectF ++ Fragments.whereAndOpt(fr"project_id = ${projectId}".some))
-      .query[ProjectLayer]
-      .stream
-      .compile
-      .toList
+      page: PageRequest,
+      projectId: UUID): ConnectionIO[PaginatedResponse[ProjectLayer]] = {
+    query
+      .filter(fr"project_id = ${projectId}")
+      .page(page)
   }
 
   def insertProjectLayer(
