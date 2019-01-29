@@ -205,7 +205,11 @@ trait ProjectRoutes
                         val response =
                           storeUploadedFile("name", (_) => tempFile.toJava) {
                             (m, _) =>
-                              processShapefile(projectId, tempFile, m, None, None)
+                              processShapefile(projectId,
+                                               tempFile,
+                                               m,
+                                               None,
+                                               None)
                           }
                         tempFile.delete()
                         response
@@ -591,8 +595,8 @@ trait ProjectRoutes
           complete {
             // it looks for default project layer
             // if projectLayerIdO is not provided as the last param
-            AnnotationDao.listByLayer(
-              projectId, page, queryParams)
+            AnnotationDao
+              .listByLayer(projectId, page, queryParams)
               .transact(xa)
               .unsafeToFuture
               .map { p =>
@@ -703,11 +707,10 @@ trait ProjectRoutes
       } {
         entity(as[Annotation.GeoJSON]) {
           updatedAnnotation: Annotation.GeoJSON =>
-            onSuccess(
-              AnnotationDao
-                .updateAnnotation(projectId, updatedAnnotation.toAnnotation, user)
-                .transact(xa)
-                .unsafeToFuture) { count =>
+            onSuccess(AnnotationDao
+              .updateAnnotation(projectId, updatedAnnotation.toAnnotation, user)
+              .transact(xa)
+              .unsafeToFuture) { count =>
               completeSingleOrNotFound(count)
             }
         }
@@ -724,7 +727,7 @@ trait ProjectRoutes
       } {
         onSuccess(
           AnnotationDao
-            .deleteById(projectId,annotationId)
+            .deleteById(projectId, annotationId)
             .transact(xa)
             .unsafeToFuture) {
           completeSingleOrNotFound
@@ -742,7 +745,8 @@ trait ProjectRoutes
       // if projectLayerIdO is not provided as the last param
       // it will look for the default project layer
       onSuccess(
-        AnnotationDao.deleteByProjectLayer(projectId)
+        AnnotationDao
+          .deleteByProjectLayer(projectId)
           .transact(xa)
           .unsafeToFuture) {
         completeSomeOrNotFound
@@ -1260,7 +1264,12 @@ trait ProjectRoutes
           case (true, true) => {
             propsO match {
               case Some(props) =>
-                processShapefileImport(matches, prj, props, user, projectId, projectLayerIdO)
+                processShapefileImport(matches,
+                                       prj,
+                                       props,
+                                       user,
+                                       projectId,
+                                       projectLayerIdO)
               case _ =>
                 complete(StatusCodes.OK, processShapefileUpload(matches))
             }
@@ -1302,7 +1311,10 @@ trait ProjectRoutes
       case Right(annotationCreates) => {
         complete(
           StatusCodes.Created,
-          (AnnotationDao.insertAnnotations(annotationCreates, projectId, user, projectLayerIdO)
+          (AnnotationDao.insertAnnotations(annotationCreates,
+                                           projectId,
+                                           user,
+                                           projectLayerIdO)
             map { (anns: List[Annotation]) =>
               anns map { _.toGeoJSONFeature }
             }).transact(xa).unsafeToFuture

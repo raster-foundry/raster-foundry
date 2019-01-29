@@ -2,8 +2,9 @@ import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.SqlMigration
 
 object M162 {
-  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(162)(List(
-    sqlu"""
+  RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(162)(
+    List(
+      sqlu"""
     ALTER TABLE annotations
       ADD COLUMN project_layer_id UUID,
       ADD CONSTRAINT annotations_project_layer_id_fkey
@@ -36,5 +37,5 @@ object M162 {
       ALTER COLUMN project_layer_id
       SET NOT NULL;
     """
-  ))
+    ))
 }

@@ -440,7 +440,8 @@ object AnnotationQueryParameters {
     deriveDecoder[AnnotationQueryParameters]
 }
 
-final case class AnnotationExportQueryParameters(exportAll: Option[Boolean] = None)
+final case class AnnotationExportQueryParameters(
+    exportAll: Option[Boolean] = None)
 
 object AnnotationExportQueryParameters {
   implicit def encAnnotationExportQueryParameters

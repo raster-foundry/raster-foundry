@@ -29,8 +29,12 @@ object AnnotationDao extends Dao[Annotation] {
   def unsafeGetAnnotationById(annotationId: UUID): ConnectionIO[Annotation] =
     query.filter(annotationId).select
 
-  def getAnnotationById(projectId: UUID, annotationId: UUID): ConnectionIO[Option[Annotation]] =
-    query.filter(fr"project_id = ${projectId}").filter(annotationId).selectOption
+  def getAnnotationById(projectId: UUID,
+                        annotationId: UUID): ConnectionIO[Option[Annotation]] =
+    query
+      .filter(fr"project_id = ${projectId}")
+      .filter(annotationId)
+      .selectOption
 
   def listAnnotationsForProject(
       projectId: UUID): ConnectionIO[List[Annotation]] = {
@@ -42,22 +46,26 @@ object AnnotationDao extends Dao[Annotation] {
   }
 
   def listForExport(
-    projectId: UUID, annotationExportQP: AnnotationExportQueryParameters
-  ): ConnectionIO[List[Annotation]] = for {
-    project <- ProjectDao.unsafeGetProjectById(projectId)
-    projectLayerF = annotationExportQP.exportAll match {
-      case Some(true) => fr""
-      case _ => fr"project_layer_id=${project.defaultLayerId}"
-    }
-    annotations <- AnnotationDao.query
-      .filter(fr"project_id=$projectId")
-      .filter(projectLayerF)
-      .list
-  } yield { annotations }
+      projectId: UUID,
+      annotationExportQP: AnnotationExportQueryParameters
+  ): ConnectionIO[List[Annotation]] =
+    for {
+      project <- ProjectDao.unsafeGetProjectById(projectId)
+      projectLayerF = annotationExportQP.exportAll match {
+        case Some(true) => fr""
+        case _          => fr"project_layer_id=${project.defaultLayerId}"
+      }
+      annotations <- AnnotationDao.query
+        .filter(fr"project_id=$projectId")
+        .filter(projectLayerF)
+        .list
+    } yield { annotations }
 
   def listByLayer(
-    projectId: UUID, page: PageRequest, queryParams: AnnotationQueryParameters,
-    projectLayerIdO: Option[UUID] = None
+      projectId: UUID,
+      page: PageRequest,
+      queryParams: AnnotationQueryParameters,
+      projectLayerIdO: Option[UUID] = None
   ): ConnectionIO[PaginatedResponse[Annotation]] =
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
@@ -159,7 +167,9 @@ object AnnotationDao extends Dao[Annotation] {
     """).update.run
   }
 
-  def listProjectLabels(projectId: UUID, projectLayerIdO: Option[UUID] = None): ConnectionIO[List[String]] = {
+  def listProjectLabels(
+      projectId: UUID,
+      projectLayerIdO: Option[UUID] = None): ConnectionIO[List[String]] = {
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
       projectLayerId = ProjectDao.getProjectLayerId(projectLayerIdO, project)
@@ -174,7 +184,9 @@ object AnnotationDao extends Dao[Annotation] {
   def deleteByAnnotationGroup(annotationGroupId: UUID): ConnectionIO[Int] =
     query.filter(fr"annotation_group = ${annotationGroupId}").delete
 
-  def deleteByProjectLayer(projectId: UUID, projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] =
+  def deleteByProjectLayer(
+      projectId: UUID,
+      projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] =
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
       projectLayerId = ProjectDao.getProjectLayerId(projectLayerIdO, project)

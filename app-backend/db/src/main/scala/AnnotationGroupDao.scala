@@ -30,19 +30,15 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
     query.filter(groupId).select
   }
 
-  def listForProject(
-      projectId: UUID,
-      projectLayerIdO: Option[UUID] = None): ConnectionIO[List[AnnotationGroup]] = {
+  def listForProject(projectId: UUID, projectLayerIdO: Option[UUID] = None)
+    : ConnectionIO[List[AnnotationGroup]] = {
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
       projectLayerId = ProjectDao.getProjectLayerId(projectLayerIdO, project)
       agList <- (selectF ++ Fragments.whereAndOpt(
         Some(fr"project_id = ${projectId}"),
         Some(fr"project_layer_id = ${projectLayerId}")
-      )).query[AnnotationGroup]
-        .stream
-        .compile
-        .toList
+      )).query[AnnotationGroup].stream.compile.toList
     } yield { agList }
   }
 
@@ -91,12 +87,13 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
       agCreate: AnnotationGroup.Create,
       user: User,
       projectLayerIdO: Option[UUID] = None
-  ): ConnectionIO[AnnotationGroup] = for {
-    project <- ProjectDao.unsafeGetProjectById(projectId)
-    projectLayerId = ProjectDao.getProjectLayerId(projectLayerIdO, project)
-    insertedAG <- insertAnnotationGroup(agCreate.toAnnotationGroup(projectId, user, projectLayerId))
-  } yield { insertedAG }
-
+  ): ConnectionIO[AnnotationGroup] =
+    for {
+      project <- ProjectDao.unsafeGetProjectById(projectId)
+      projectLayerId = ProjectDao.getProjectLayerId(projectLayerIdO, project)
+      insertedAG <- insertAnnotationGroup(
+        agCreate.toAnnotationGroup(projectId, user, projectLayerId))
+    } yield { insertedAG }
 
   def getAnnotationGroup(projectId: UUID,
                          agId: UUID): ConnectionIO[Option[AnnotationGroup]] =
