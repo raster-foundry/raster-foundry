@@ -6,9 +6,12 @@ import com.rasterfoundry.database.Implicits._
 
 import doobie._
 import doobie.implicits._
+import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
+
+import java.util.UUID
 
 class ToolRunDaoSpec
     extends FunSuite
@@ -197,6 +200,182 @@ class ToolRunDaoSpec
               retrieved.executionParameters == updateRecord.executionParameters,
               "ExecutionParameters should match after db"
             )
+            true
+          }
+      }
+
+    }
+  }
+
+  test("filter for tool runs with a project id") {
+    check {
+      forAll {
+        (user: User.Create,
+         org: Organization.Create,
+         projCreate: Project.Create,
+         toolRunCreate: ToolRun.Create) =>
+          {
+            val listIO = for {
+              (_, dbUser, dbProject) <- insertUserOrgProject(user,
+                                                             org,
+                                                             projCreate)
+              withProject = toolRunCreate.copy(projectId = Some(dbProject.id))
+              queryParams = CombinedToolRunQueryParameters(
+                toolRunParams = ToolRunQueryParameters(
+                  projectId = Some(dbProject.id)
+                )
+              )
+              otherQueryParams = CombinedToolRunQueryParameters(
+                toolRunParams = ToolRunQueryParameters(
+                  projectId = Some(UUID.randomUUID)
+                )
+              )
+              _ <- ToolRunDao.insertToolRun(withProject, dbUser)
+              listedGood <- ToolRunDao
+                .authQuery(dbUser,
+                           ObjectType.Analysis,
+                           Some("owned"),
+                           None,
+                           None)
+                .filter(queryParams)
+                .list
+              listedBad <- ToolRunDao
+                .authQuery(dbUser,
+                           ObjectType.Analysis,
+                           Some("owned"),
+                           None,
+                           None)
+                .filter(otherQueryParams)
+                .list
+            } yield { (listedGood, listedBad) }
+
+            val (good, bad) = xa.use(t => listIO.transact(t)).unsafeRunSync
+            assert(
+              good.length == 1,
+              "Only the tool run we just created should have come back from the good list")
+            assert(good.head.name == toolRunCreate.name,
+                   "And its name should match")
+            assert(
+              bad.length == 0,
+              "Nothing should have come back from the project id filter that was random")
+
+            true
+          }
+      }
+
+    }
+  }
+
+  test("filter for tool runs with a template id") {
+    check {
+      forAll {
+        (user: User.Create,
+         org: Organization.Create,
+         templateCreate: Tool.Create,
+         toolRunCreate: ToolRun.Create) =>
+          {
+            val listIO = for {
+              (_, dbUser) <- insertUserAndOrg(user, org)
+              dbTemplate <- ToolDao.insert(templateCreate, dbUser)
+              withTemplateId = toolRunCreate.copy(
+                templateId = Some(dbTemplate.id))
+              queryParams = CombinedToolRunQueryParameters(
+                toolRunParams = ToolRunQueryParameters(
+                  templateId = Some(dbTemplate.id)
+                )
+              )
+              otherQueryParams = CombinedToolRunQueryParameters(
+                toolRunParams = ToolRunQueryParameters(
+                  templateId = Some(UUID.randomUUID)
+                )
+              )
+              _ <- ToolRunDao.insertToolRun(withTemplateId, dbUser)
+              listedGood <- ToolRunDao
+                .authQuery(dbUser,
+                           ObjectType.Analysis,
+                           Some("owned"),
+                           None,
+                           None)
+                .filter(queryParams)
+                .list
+              listedBad <- ToolRunDao
+                .authQuery(dbUser,
+                           ObjectType.Analysis,
+                           Some("owned"),
+                           None,
+                           None)
+                .filter(otherQueryParams)
+                .list
+            } yield { (listedGood, listedBad) }
+
+            val (good, bad) = xa.use(t => listIO.transact(t)).unsafeRunSync
+            assert(
+              good.length == 1,
+              "Only the tool run we just created should have come back from the good list")
+            assert(good.head.name == toolRunCreate.name,
+                   "And its name should match")
+            assert(
+              bad.length == 0,
+              "Nothing should have come back from the project id filter that was random")
+            true
+          }
+      }
+
+    }
+  }
+
+  test("filter for tool runs with a project layer id") {
+    check {
+      forAll {
+        (user: User.Create,
+         org: Organization.Create,
+         projCreate: Project.Create,
+         toolRunCreate: ToolRun.Create) =>
+          {
+            val listIO = for {
+              (_, dbUser, dbProject) <- insertUserOrgProject(user,
+                                                             org,
+                                                             projCreate)
+              withProjectLayer = toolRunCreate.copy(
+                projectLayerId = Some(dbProject.defaultLayerId))
+              queryParams = CombinedToolRunQueryParameters(
+                toolRunParams = ToolRunQueryParameters(
+                  projectLayerId = Some(dbProject.defaultLayerId)
+                )
+              )
+              otherQueryParams = CombinedToolRunQueryParameters(
+                toolRunParams = ToolRunQueryParameters(
+                  projectLayerId = Some(UUID.randomUUID)
+                )
+              )
+              _ <- ToolRunDao.insertToolRun(withProjectLayer, dbUser)
+              listedGood <- ToolRunDao
+                .authQuery(dbUser,
+                           ObjectType.Analysis,
+                           Some("owned"),
+                           None,
+                           None)
+                .filter(queryParams)
+                .list
+              listedBad <- ToolRunDao
+                .authQuery(dbUser,
+                           ObjectType.Analysis,
+                           Some("owned"),
+                           None,
+                           None)
+                .filter(otherQueryParams)
+                .list
+            } yield { (listedGood, listedBad) }
+
+            val (good, bad) = xa.use(t => listIO.transact(t)).unsafeRunSync
+            assert(
+              good.length == 1,
+              "Only the tool run we just created should have come back from the good list")
+            assert(good.head.name == toolRunCreate.name,
+                   "And its name should match")
+            assert(
+              bad.length == 0,
+              "Nothing should have come back from the project id filter that was random")
             true
           }
       }

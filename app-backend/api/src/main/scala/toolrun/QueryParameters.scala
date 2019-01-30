@@ -12,7 +12,8 @@ trait ToolRunQueryParametersDirective extends QueryParametersCommon {
     (
       'createdBy.as[String].?,
       'projectId.as[UUID].?,
-      'toolId.as[UUID].?
+      'templateId.as[UUID].?,
+      'projectLayerId.as[UUID].?
     )).as(ToolRunQueryParameters.apply _)
 
   val toolRunQueryParameters = (
