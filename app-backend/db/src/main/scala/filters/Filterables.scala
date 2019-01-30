@@ -235,9 +235,6 @@ trait Filterables extends RFMeta with LazyLogging {
             combinedToolRunParams.toolRunParams.templateId.map({ templateId =>
               fr"template_id = ${templateId}"
             }),
-            combinedToolRunParams.toolRunParams.projectId.map({ projectId =>
-              fr"project_id = ${projectId}"
-            }),
             combinedToolRunParams.toolRunParams.projectLayerId.map({
               projectLayerId =>
                 fr"project_layer_id = ${projectLayerId}"
