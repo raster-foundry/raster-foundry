@@ -13,8 +13,8 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import java.util.UUID
 
+import java.util.UUID
 import java.sql.Timestamp
 
 object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {

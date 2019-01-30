@@ -6,7 +6,6 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import cats.implicits._
-
 import Fragments.in
 
 object Filters {

@@ -1,15 +1,13 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-import java.util.UUID
-
-import cats.data._
-import cats.implicits._
 import com.rasterfoundry.common.AWSBatch
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.color._
+
 import com.lonelyplanet.akka.http.extensions.PageRequest
+import cats.data._
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -17,6 +15,9 @@ import doobie.postgres.circe.jsonb.implicits._
 import io.circe._
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
+
+import java.sql.Timestamp
+import java.util.UUID
 
 object ProjectDao
     extends Dao[Project]

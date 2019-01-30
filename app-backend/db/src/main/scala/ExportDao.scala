@@ -3,10 +3,10 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 import com.rasterfoundry.common.ast.MapAlgebraAST._
 import com.rasterfoundry.common.ast._
-
-import cats.implicits._
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.Implicits._
+
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._

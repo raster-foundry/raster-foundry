@@ -1,6 +1,8 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.database.Implicits._
+
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -9,8 +11,6 @@ import cats.data._
 import cats.implicits._
 
 import java.util.UUID
-
-import com.rasterfoundry.database.Implicits._
 
 object ImageWithRelatedDao extends Dao[Image.WithRelated] {
   val tableName = "images"

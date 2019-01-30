@@ -2,7 +2,8 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
 
-import doobie._, doobie.implicits._
+import doobie._
+import doobie.implicits._
 import doobie.hikari._
 import doobie.postgres.implicits._
 import cats.effect._

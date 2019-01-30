@@ -1,13 +1,14 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-import java.util.UUID
-
 import com.rasterfoundry.common.datamodel._
+
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+
+import java.sql.Timestamp
+import java.util.UUID
 
 object AnnotationGroupDao extends Dao[AnnotationGroup] {
 

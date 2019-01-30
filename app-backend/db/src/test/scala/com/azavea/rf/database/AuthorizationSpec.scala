@@ -2,6 +2,7 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
+
 import doobie._
 import doobie.implicits._
 import org.scalacheck.Prop.forAll

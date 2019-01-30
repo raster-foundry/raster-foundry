@@ -7,7 +7,6 @@ import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
-
 import com.typesafe.scalalogging.LazyLogging
 
 class UserDaoSpec
