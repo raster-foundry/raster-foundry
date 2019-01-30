@@ -30,6 +30,7 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
     query.filter(groupId).select
   }
 
+  // look for default project layer if projectLayerIdO is not provided
   def listForProject(projectId: UUID, projectLayerIdO: Option[UUID] = None)
     : ConnectionIO[List[AnnotationGroup]] = {
     for {
@@ -82,6 +83,7 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
     """ ++ Fragments.whereAndOpt(Some(idFilter), Some(projectFilter))).update
   }
 
+  // use default project layer if projectLayerIdO is not provided
   def createAnnotationGroup(
       projectId: UUID,
       agCreate: AnnotationGroup.Create,

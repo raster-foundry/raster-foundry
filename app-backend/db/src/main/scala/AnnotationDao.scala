@@ -45,6 +45,8 @@ object AnnotationDao extends Dao[Annotation] {
       .toList
   }
 
+  // list default project layer annotations if exportAll is None or Some(false)
+  // list all annotations if exportAll is true
   def listForExport(
       projectId: UUID,
       annotationExportQP: AnnotationExportQueryParameters
@@ -61,6 +63,8 @@ object AnnotationDao extends Dao[Annotation] {
         .list
     } yield { annotations }
 
+  // look for default project layer
+  // if projectLayerIdO is not provided as the last param
   def listByLayer(
       projectId: UUID,
       page: PageRequest,
@@ -77,6 +81,8 @@ object AnnotationDao extends Dao[Annotation] {
         .page(page)
     } yield { annotations }
 
+  // look for the default project layer
+  // if projectLayerIdO is not provided as the last param
   def insertAnnotations(
       annotations: List[Annotation.Create],
       projectId: UUID,
@@ -184,6 +190,8 @@ object AnnotationDao extends Dao[Annotation] {
   def deleteByAnnotationGroup(annotationGroupId: UUID): ConnectionIO[Int] =
     query.filter(fr"annotation_group = ${annotationGroupId}").delete
 
+  // look for the default project layer
+  // if projectLayerIdO is not provided as the last param
   def deleteByProjectLayer(
       projectId: UUID,
       projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] =

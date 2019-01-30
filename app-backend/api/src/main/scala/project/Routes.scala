@@ -1,6 +1,6 @@
 package com.rasterfoundry.api.project
 
-import java.util.{Calendar, UUID}
+import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
@@ -9,11 +9,9 @@ import better.files.{File => ScalaFile}
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits._
-import com.amazonaws.services.s3.AmazonS3URI
 import com.rasterfoundry.api.scene._
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.common.S3
 import com.rasterfoundry.common.utils.Shapefile
 import com.rasterfoundry.common.{AWSBatch, RollbarNotifier}
 import com.rasterfoundry.akkautil.{
@@ -484,7 +482,6 @@ trait ProjectRoutes
         .unsafeToFuture
     } {
       complete {
-        // it looks for default project layer if projectLayerIdO is not provided
         AnnotationGroupDao
           .listForProject(projectId)
           .transact(xa)
@@ -502,7 +499,6 @@ trait ProjectRoutes
     } {
       entity(as[AnnotationGroup.Create]) { agCreate =>
         complete {
-          // it uses default project layer if projectLayerIdO is not provided
           AnnotationGroupDao
             .createAnnotationGroup(projectId, agCreate, user)
             .transact(xa)
@@ -593,8 +589,6 @@ trait ProjectRoutes
       (withPagination & annotationQueryParams) {
         (page: PageRequest, queryParams: AnnotationQueryParameters) =>
           complete {
-            // it looks for default project layer
-            // if projectLayerIdO is not provided as the last param
             AnnotationDao
               .listByLayer(projectId, page, queryParams)
               .transact(xa)
@@ -620,8 +614,6 @@ trait ProjectRoutes
       entity(as[AnnotationFeatureCollectionCreate]) { fc =>
         val annotationsCreate = fc.features map { _.toAnnotationCreate }
         onSuccess(
-          // if projectLayerIdO is not provided as the last param
-          // it will look for the default project layer
           AnnotationDao
             .insertAnnotations(annotationsCreate.toList, projectId, user)
             .transact(xa)
@@ -645,26 +637,15 @@ trait ProjectRoutes
           .transact(xa)
           .unsafeToFuture
       } {
-        // it exports default project layer annotations if exportAll is None or Some(false)
-        // it exports all annotations if exportAll is true
         onSuccess(
           AnnotationDao
             .listForExport(projectId, annotationExportQP)
             .transact(xa)
             .unsafeToFuture) {
           case annotations @ (annotation: List[Annotation]) => {
-            val zipfile: ScalaFile =
-              AnnotationShapefileService.annotationsToShapefile(annotations)
-            val cal: Calendar = Calendar.getInstance()
-            cal.add(Calendar.DAY_OF_YEAR, 1)
-            val s3Uri: AmazonS3URI = new AmazonS3URI(
-              user.getDefaultAnnotationShapefileSource(dataBucket))
-            val s3Client = S3()
-            s3Client
-              .putObject(dataBucket, s3Uri.getKey, zipfile.toJava)
-              .setExpirationTime(cal.getTime)
-            zipfile.delete(true)
-            complete(s3Client.getSignedUrl(dataBucket, s3Uri.getKey).toString())
+            complete(
+              AnnotationShapefileService.getAnnotationShapefileDownloadUrl(annotations, user)
+            )
           }
           case _ =>
             complete(
@@ -742,8 +723,6 @@ trait ProjectRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      // if projectLayerIdO is not provided as the last param
-      // it will look for the default project layer
       onSuccess(
         AnnotationDao
           .deleteByProjectLayer(projectId)
