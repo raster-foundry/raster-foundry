@@ -66,7 +66,7 @@ class ProjectLayerDatasourceDaoSpec
                       dbProject.id,
                       dbProject.defaultLayerId
                     ) map { datasources: List[Datasource] =>
-                      (List(datasource), datasources)
+                      (dbScenes.map { _.datasource }, datasources)
                     }
                   }
                 }
@@ -76,13 +76,15 @@ class ProjectLayerDatasourceDaoSpec
             val (insertedDatasources, listedDatasources) =
               xa.use(t => datasourceListIO.transact(t)).unsafeRunSync
             val insertedIds = insertedDatasources.toSet map {
-              (datasource: Datasource) =>
+              (datasource: Datasource.Thin) =>
                 datasource.id
             }
+            // println(insertedDatasources)
             val listedIds = listedDatasources.toSet map {
               (datasource: Datasource) =>
                 datasource.id
             }
+            // println(listedIds)
             insertedIds == listedIds
           }
       }
