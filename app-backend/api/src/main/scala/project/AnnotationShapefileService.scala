@@ -51,7 +51,8 @@ object AnnotationShapefileService extends LazyLogging with Config {
     zipfile
   }
 
-  def getAnnotationShapefileDownloadUrl(annotations: List[Annotation], user: User): String = {
+  def getAnnotationShapefileDownloadUrl(annotations: List[Annotation],
+                                        user: User): String = {
     val zipfile: File = annotationsToShapefile(annotations)
     val cal: Calendar = Calendar.getInstance()
     val s3Client = S3()

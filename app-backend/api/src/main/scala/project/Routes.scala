@@ -644,7 +644,8 @@ trait ProjectRoutes
             .unsafeToFuture) {
           case annotations @ (annotation: List[Annotation]) => {
             complete(
-              AnnotationShapefileService.getAnnotationShapefileDownloadUrl(annotations, user)
+              AnnotationShapefileService
+                .getAnnotationShapefileDownloadUrl(annotations, user)
             )
           }
           case _ =>
