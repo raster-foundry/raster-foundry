@@ -1,13 +1,11 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-import java.util.{Date, UUID}
-
-import cats.implicits._
 import com.rasterfoundry.common.AWSBatch
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.color._
-import com.rasterfoundry.datamodel.{Scene, User, _}
+import com.rasterfoundry.common.datamodel.color._
+import com.rasterfoundry.common.datamodel.{Scene, User, _}
+
+import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
@@ -18,6 +16,8 @@ import geotrellis.vector.{Polygon, Projected}
 import io.circe.syntax._
 
 import scala.concurrent.duration._
+import java.sql.Timestamp
+import java.util.{Date, UUID}
 
 case class SceneDao()
 

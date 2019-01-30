@@ -1,8 +1,8 @@
 package com.rasterfoundry.batch.util
 
-import java.io.{ObjectInputStream, ObjectOutputStream}
-
 import org.apache.hadoop.conf.Configuration
+
+import java.io.{ObjectInputStream, ObjectOutputStream}
 
 /**
   * Serializable [[Configuration]] wrapper

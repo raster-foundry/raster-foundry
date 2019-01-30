@@ -1,11 +1,8 @@
 package com.rasterfoundry.batch
 
-import java.io._
-import java.net._
-import java.nio.charset.Charset
+import com.rasterfoundry.common.S3
 
 import cats.implicits._
-import com.rasterfoundry.common.S3
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster.io.geotiff.reader.TiffTagsReader
 import geotrellis.raster.io.geotiff.tags.TiffTags
@@ -16,6 +13,10 @@ import io.circe.Json
 import io.circe.parser.parse
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.conf.Configuration
+
+import java.io._
+import java.net._
+import java.nio.charset.Charset
 
 package object util extends LazyLogging {
 

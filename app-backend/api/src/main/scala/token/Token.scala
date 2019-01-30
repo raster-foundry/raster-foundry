@@ -12,7 +12,7 @@ import com.rasterfoundry.api.utils.{
   Config,
   ManagementBearerToken
 }
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.datamodel.User
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import de.heikoseeberger.akkahttpcirce._
 import io.circe.generic.JsonCodec

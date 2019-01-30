@@ -1,6 +1,6 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel.FeatureFlag
+import com.rasterfoundry.common.datamodel.FeatureFlag
 import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._

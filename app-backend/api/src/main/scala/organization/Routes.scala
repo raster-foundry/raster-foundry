@@ -7,7 +7,7 @@ import com.rasterfoundry.akkautil.{
 }
 import com.rasterfoundry.database.OrganizationDao
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.api.utils.Config
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes

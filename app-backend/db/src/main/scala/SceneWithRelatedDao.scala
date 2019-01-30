@@ -1,17 +1,18 @@
 package com.rasterfoundry.database
 
-import java.util.UUID
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.common.datamodel.{Scene, User, _}
 
 import cats.data._
 import cats.implicits._
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.{Scene, User, _}
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+
+import java.util.UUID
 
 object SceneWithRelatedDao
     extends Dao[Scene.WithRelated]

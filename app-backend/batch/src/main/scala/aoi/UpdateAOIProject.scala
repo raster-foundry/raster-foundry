@@ -1,11 +1,5 @@
 package com.rasterfoundry.batch.aoi
 
-import java.sql.Timestamp
-import java.time.Instant
-import java.util.UUID
-
-import cats.effect.IO
-import cats.implicits._
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf.Config
@@ -14,7 +8,10 @@ import com.rasterfoundry.common.notification.Email.NotificationEmail
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
+
+import cats.effect.IO
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -25,6 +22,10 @@ import io.circe.Decoder.Result
 import io.circe._
 import geotrellis.vector._
 import org.apache.commons.mail.Email
+
+import java.sql.Timestamp
+import java.time.Instant
+import java.util.UUID
 
 final case class UpdateAOIProject(projectId: UUID)(
     implicit val xa: Transactor[IO])

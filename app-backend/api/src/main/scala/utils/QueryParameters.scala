@@ -1,7 +1,7 @@
 package com.rasterfoundry.api.utils.queryparams
 
 import com.rasterfoundry.api._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters

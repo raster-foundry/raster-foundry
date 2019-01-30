@@ -1,7 +1,7 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.datamodel.{ActionType, ObjectType, User}
+import com.rasterfoundry.common.datamodel.{ActionType, ObjectType, User}
 import com.rasterfoundry.database.{
   ProjectDao,
   ProjectLayerDao,
@@ -9,11 +9,10 @@ import com.rasterfoundry.database.{
   ToolRunDao
 }
 import com.rasterfoundry.database.util.RFTransactor
+
 import cats.effect._
 import doobie.Transactor
 import doobie.implicits._
-import java.util.UUID
-
 import com.typesafe.scalalogging.LazyLogging
 import scalacache._
 import scalacache.caffeine._
@@ -21,6 +20,7 @@ import scalacache.memoization._
 import scalacache.CatsEffect.modes._
 
 import scala.concurrent.duration._
+import java.util.UUID
 
 class Authorizers(xa: Transactor[IO]) extends LazyLogging {
 

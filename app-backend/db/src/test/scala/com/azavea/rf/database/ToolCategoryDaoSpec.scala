@@ -1,6 +1,6 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel.{ToolCategory, User}
+import com.rasterfoundry.common.datamodel.{ToolCategory, User}
 import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._

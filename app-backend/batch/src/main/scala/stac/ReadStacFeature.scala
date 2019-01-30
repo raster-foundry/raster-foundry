@@ -1,16 +1,12 @@
 package com.rasterfoundry.batch.stac
 
-import java.net.URI
-import java.sql.Timestamp
-import java.util.UUID
-
-import cats.effect.IO
 import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{SceneDao, UserDao}
-import com.rasterfoundry.datamodel.{stac, _}
+import com.rasterfoundry.common.datamodel._
 import com.typesafe.scalalogging.LazyLogging
+
 import doobie.ConnectionIO
 import doobie.implicits._
 import doobie.util.transactor.Transactor
@@ -18,12 +14,15 @@ import geotrellis.proj4.CRS
 import io.circe.generic.JsonCodec
 import io.circe.parser._
 import io.circe.syntax._
+import cats.effect.IO
 import geotrellis.vector._
 import javax.imageio.ImageIO
 
 import scala.io.Source
 import scala.util._
-
+import java.net.URI
+import java.sql.Timestamp
+import java.util.UUID
 @JsonCodec
 final case class MetadataWithStartStop(start: Timestamp, end: Timestamp)
 

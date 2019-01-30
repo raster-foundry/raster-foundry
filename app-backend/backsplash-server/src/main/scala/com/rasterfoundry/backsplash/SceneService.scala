@@ -4,7 +4,7 @@ import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.datamodel.User
 
 import cats.Applicative
 import cats.data.Validated._

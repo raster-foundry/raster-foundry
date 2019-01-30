@@ -12,7 +12,7 @@ import com.rasterfoundry.database.{
   UserDao,
   UserGroupRoleDao
 }
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 

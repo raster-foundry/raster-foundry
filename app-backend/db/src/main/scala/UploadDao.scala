@@ -2,7 +2,8 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.notification._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
+
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -13,6 +14,7 @@ import cats.data._
 import cats.effect.IO
 import cats.implicits._
 import cats.syntax._
+
 import java.util.UUID
 
 object UploadDao extends Dao[Upload] {
