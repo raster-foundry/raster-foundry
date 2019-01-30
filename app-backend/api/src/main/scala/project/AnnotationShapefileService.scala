@@ -1,10 +1,14 @@
 package com.rasterfoundry.api.project
 
 import better.files._
+import java.util.Calendar
 
-import com.rasterfoundry.datamodel.Annotation
+import com.rasterfoundry.datamodel.{Annotation, User}
+import com.rasterfoundry.api.utils.Config
 import com.typesafe.scalalogging.LazyLogging
 import com.vividsolutions.jts.{geom => jts}
+import com.amazonaws.services.s3.AmazonS3URI
+import com.rasterfoundry.common.S3
 import geotrellis.geotools._
 import geotrellis.proj4.CRS
 import geotrellis.vector._
@@ -27,7 +31,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem
 
 import java.util.{HashMap => JHashMap}
 
-object AnnotationShapefileService extends LazyLogging {
+object AnnotationShapefileService extends LazyLogging with Config {
 
   def annotationsToShapefile(annotations: Seq[Annotation]): File = {
 
@@ -45,6 +49,22 @@ object AnnotationShapefileService extends LazyLogging {
       directory.zipTo(destination = zipfile)
     }
     zipfile
+  }
+
+  def getAnnotationShapefileDownloadUrl(annotations: List[Annotation],
+                                        user: User): String = {
+    val zipfile: File = annotationsToShapefile(annotations)
+    val cal: Calendar = Calendar.getInstance()
+    val s3Client = S3()
+    val s3Uri: AmazonS3URI = new AmazonS3URI(
+      user.getDefaultAnnotationShapefileSource(dataBucket))
+
+    cal.add(Calendar.DAY_OF_YEAR, 1)
+    s3Client
+      .putObject(dataBucket, s3Uri.getKey, zipfile.toJava)
+      .setExpirationTime(cal.getTime)
+    zipfile.delete(true)
+    s3Client.getSignedUrl(dataBucket, s3Uri.getKey).toString()
   }
 
   // TODO: Update this to use GeoTrellis's build in conversion once the id bug is fixed:

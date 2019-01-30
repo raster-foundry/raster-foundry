@@ -152,4 +152,9 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         searchParams &
         activationParams
     ).as(TeamQueryParameters.apply _)
+
+  def annotationExportQueryParameters =
+    parameters(
+      'exportAll.as[Boolean].?
+    ).as(AnnotationExportQueryParameters.apply _)
 }

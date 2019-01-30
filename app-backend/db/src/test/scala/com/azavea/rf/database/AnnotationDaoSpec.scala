@@ -158,10 +158,13 @@ class AnnotationDaoSpec
                   .toAnnotation(
                     dbProject.id,
                     dbUser,
-                    firstAnnotation.annotationGroup
+                    firstAnnotation.annotationGroup,
+                    dbProject.defaultLayerId
                   )
                   .copy(id = annotationId)
-                AnnotationDao.updateAnnotation(newAnnotation, dbUser) flatMap {
+                AnnotationDao.updateAnnotation(dbProject.id,
+                                               newAnnotation,
+                                               dbUser) flatMap {
                   (affectedRows: Int) =>
                     {
                       AnnotationDao.unsafeGetAnnotationById(annotationId) map {

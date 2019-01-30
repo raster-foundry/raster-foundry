@@ -34,7 +34,8 @@ final case class Annotation(id: UUID,
                             geometry: Option[Projected[Geometry]],
                             annotationGroup: UUID,
                             labeledBy: Option[String],
-                            verifiedBy: Option[String])
+                            verifiedBy: Option[String],
+                            projectLayerId: UUID)
     extends GeoJSONSerializable[Annotation.GeoJSON] {
   def toGeoJSONFeature: Annotation.GeoJSON = Annotation.GeoJSON(
     this.id,
@@ -53,7 +54,8 @@ final case class Annotation(id: UUID,
       this.quality,
       this.annotationGroup,
       this.labeledBy,
-      this.verifiedBy
+      this.verifiedBy,
+      this.projectLayerId
     )
   )
 }
@@ -72,7 +74,8 @@ final case class AnnotationProperties(projectId: UUID,
                                       quality: Option[AnnotationQuality],
                                       annotationGroup: UUID,
                                       labeledBy: Option[String] = None,
-                                      verifiedBy: Option[String] = None)
+                                      verifiedBy: Option[String] = None,
+                                      projectLayerId: UUID)
 
 @JsonCodec
 final case class AnnotationPropertiesCreate(owner: Option[String],
@@ -199,7 +202,8 @@ object Annotation extends LazyLogging {
         geometry,
         properties.annotationGroup,
         properties.labeledBy,
-        properties.verifiedBy
+        properties.verifiedBy,
+        properties.projectLayerId
       )
     }
   }
@@ -219,7 +223,8 @@ object Annotation extends LazyLogging {
 
     def toAnnotation(projectId: UUID,
                      user: User,
-                     defaultAnnotationGroup: UUID): Annotation = {
+                     defaultAnnotationGroup: UUID,
+                     projectLayerId: UUID): Annotation = {
       val now = new Timestamp(new java.util.Date().getTime)
       val ownerId = checkOwner(user, this.owner)
       Annotation(
@@ -241,7 +246,8 @@ object Annotation extends LazyLogging {
         geometry,
         annotationGroup.getOrElse(defaultAnnotationGroup),
         labeledBy,
-        verifiedBy
+        verifiedBy,
+        projectLayerId
       )
     }
   }

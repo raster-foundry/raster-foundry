@@ -18,20 +18,29 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
   val tableName = "annotation_groups"
 
   val selectF: Fragment =
-    fr"SELECT id, name, created_at, created_by, modified_at, modified_by, project_id, default_style from" ++ tableF
+    fr"""
+      SELECT
+        id, name, created_at, created_by, modified_at, modified_by,
+        project_id, default_style, project_layer_id
+      FROM
+    """ ++ tableF
 
   def unsafeGetAnnotationGroupById(
       groupId: UUID): ConnectionIO[AnnotationGroup] = {
     query.filter(groupId).select
   }
 
-  def listAnnotationGroupsForProject(
-      projectId: UUID): ConnectionIO[List[AnnotationGroup]] = {
-    (selectF ++ Fragments.whereAndOpt(fr"project_id = ${projectId}".some))
-      .query[AnnotationGroup]
-      .stream
-      .compile
-      .toList
+  // look for default project layer if projectLayerIdO is not provided
+  def listForProject(projectId: UUID, projectLayerIdO: Option[UUID] = None)
+    : ConnectionIO[List[AnnotationGroup]] = {
+    for {
+      project <- ProjectDao.unsafeGetProjectById(projectId)
+      projectLayerId = ProjectDao.getProjectLayerId(projectLayerIdO, project)
+      agList <- (selectF ++ Fragments.whereAndOpt(
+        Some(fr"project_id = ${projectId}"),
+        Some(fr"project_layer_id = ${projectLayerId}")
+      )).query[AnnotationGroup].stream.compile.toList
+    } yield { agList }
   }
 
   def insertAnnotationGroup(
@@ -39,11 +48,12 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
   ): ConnectionIO[AnnotationGroup] = {
     fr"""
     INSERT INTO annotation_groups (
-    id, name, created_at, created_by, modified_at, modified_by, project_id, default_style
+    id, name, created_at, created_by, modified_at, modified_by,
+    project_id, default_style, project_layer_id
     )
     VALUES
     (${ag.id}, ${ag.name}, ${ag.createdAt}, ${ag.createdBy}, ${ag.modifiedAt},
-     ${ag.modifiedBy}, ${ag.projectId}, ${ag.defaultStyle})
+     ${ag.modifiedBy}, ${ag.projectId}, ${ag.defaultStyle}, ${ag.projectLayerId})
     """.update.withUniqueGeneratedKeys[AnnotationGroup](
       "id",
       "name",
@@ -52,30 +62,40 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
       "modified_at",
       "modified_by",
       "project_id",
-      "default_style"
+      "default_style",
+      "project_layer_id"
     )
   }
-  def updateAnnotationGroupQ(annotationGroup: AnnotationGroup,
+  def updateAnnotationGroupQ(projectId: UUID,
+                             annotationGroup: AnnotationGroup,
                              id: UUID,
                              user: User): Update0 = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
     val idFilter = fr"id = ${id}"
+    val projectFilter = fr"project_id = ${projectId}"
 
-    val query = (fr"UPDATE" ++ tableF ++ fr"""SET
+    (fr"UPDATE" ++ tableF ++ fr"""SET
        modified_at = ${updateTime},
        modified_by = ${user.id},
        name = ${annotationGroup.name},
-       default_style = ${annotationGroup.defaultStyle}
-    """ ++ Fragments.whereAndOpt(Some(idFilter))).update
-    query
+       default_style = ${annotationGroup.defaultStyle},
+       project_layer_id = ${annotationGroup.projectLayerId}
+    """ ++ Fragments.whereAndOpt(Some(idFilter), Some(projectFilter))).update
   }
 
+  // use default project layer if projectLayerIdO is not provided
   def createAnnotationGroup(
       projectId: UUID,
       agCreate: AnnotationGroup.Create,
-      user: User
+      user: User,
+      projectLayerIdO: Option[UUID] = None
   ): ConnectionIO[AnnotationGroup] =
-    insertAnnotationGroup(agCreate.toAnnotationGroup(projectId, user))
+    for {
+      project <- ProjectDao.unsafeGetProjectById(projectId)
+      projectLayerId = ProjectDao.getProjectLayerId(projectLayerIdO, project)
+      insertedAG <- insertAnnotationGroup(
+        agCreate.toAnnotationGroup(projectId, user, projectLayerId))
+    } yield { insertedAG }
 
   def getAnnotationGroup(projectId: UUID,
                          agId: UUID): ConnectionIO[Option[AnnotationGroup]] =
@@ -130,10 +150,11 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
         .delete
     } yield deleteCount
 
-  def updateAnnotationGroup(ag: AnnotationGroup,
+  def updateAnnotationGroup(projectId: UUID,
+                            ag: AnnotationGroup,
                             agId: UUID,
                             user: User): ConnectionIO[Int] = {
-    updateAnnotationGroupQ(ag, agId, user).run
+    updateAnnotationGroupQ(projectId, ag, agId, user).run
   }
 
 }

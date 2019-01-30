@@ -17,12 +17,15 @@ final case class AnnotationGroup(id: UUID,
                                  modifiedAt: Timestamp,
                                  modifiedBy: String,
                                  projectId: UUID,
-                                 defaultStyle: Option[Json])
+                                 defaultStyle: Option[Json],
+                                 projectLayerId: UUID)
 
 object AnnotationGroup {
   @JsonCodec
   final case class Create(name: String, defaultStyle: Option[Json]) {
-    def toAnnotationGroup(projectId: UUID, user: User): AnnotationGroup = {
+    def toAnnotationGroup(projectId: UUID,
+                          user: User,
+                          projectLayerId: UUID): AnnotationGroup = {
       val now = new Timestamp(new java.util.Date().getTime)
       AnnotationGroup(
         UUID.randomUUID,
@@ -32,7 +35,8 @@ object AnnotationGroup {
         now,
         user.id,
         projectId,
-        defaultStyle
+        defaultStyle,
+        projectLayerId
       )
     }
   }

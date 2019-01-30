@@ -440,6 +440,19 @@ object AnnotationQueryParameters {
     : Decoder[AnnotationQueryParameters] =
     deriveDecoder[AnnotationQueryParameters]
 }
+
+final case class AnnotationExportQueryParameters(
+    exportAll: Option[Boolean] = None)
+
+object AnnotationExportQueryParameters {
+  implicit def encAnnotationExportQueryParameters
+    : Encoder[AnnotationExportQueryParameters] =
+    deriveEncoder[AnnotationExportQueryParameters]
+  implicit def decAnnotationExportQueryParameters
+    : Decoder[PlatformIdQueryParameters] =
+    deriveDecoder[PlatformIdQueryParameters]
+}
+
 final case class ShapeQueryParameters(
     orgParams: OrgQueryParameters = OrgQueryParameters(),
     userParams: UserQueryParameters = UserQueryParameters(),
