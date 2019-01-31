@@ -178,6 +178,13 @@ export default (app) => {
                             projectId: '@projectId'
                         }
                     },
+                    createLayer: {
+                        method: 'POST',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers`,
+                        params: {
+                            projectId: '@projectId'
+                        }
+                    },
                     deleteLayer: {
                         method: 'DELETE',
                         url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers/:layerId`,
@@ -599,6 +606,10 @@ export default (app) => {
 
         getProjectLayers(projectId, params = {}) {
             return this.Project.listLayers({...params, projectId}).$promise;
+        }
+
+        createProjectLayer(projectId, params = {}) {
+            return this.Project.createLayer({projectId}, params).$promise;
         }
 
         deleteProjectLayer(projectId, layerId) {
