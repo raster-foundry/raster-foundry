@@ -151,6 +151,7 @@ function projectStatesV2($stateProvider) {
             url: '/layers',
             component: 'rfProjectLayersPage'
         })
+    // top level project routes
         .state('project.analyses', {
             title: 'Project Analyses',
             url: '/analyses',
@@ -162,21 +163,6 @@ function projectStatesV2($stateProvider) {
             component: 'rfProjectSettingsPage',
             redirectTo: 'project.settings.options'
         })
-        .state('project.settings.options', {
-            title: 'Project Options',
-            url: '/options',
-            component: 'rfProjectOptionsPage'
-        })
-        .state('project.settings.publishing', {
-            title: 'Project Publishing',
-            url: '/publishing',
-            component: 'rfProjectPublishingPage'
-        })
-        .state('project.settings.permissions', {
-            title: 'Project Permissions',
-            url: '/permissions',
-            component: 'rfProjectPermissionsPage'
-        })
         .state('project.layer', {
             title: 'Project Layer',
             url: '/layer/:layerId',
@@ -185,6 +171,7 @@ function projectStatesV2($stateProvider) {
             },
             component: 'rfProjectLayerPage'
         })
+    // project layer routes
         .state('project.layer.aoi', {
             title: 'Project Layer AOI',
             url: '/aoi',
@@ -230,6 +217,7 @@ function projectStatesV2($stateProvider) {
             url: '/annotate',
             component: 'rfProjectLayerAnnotatePage'
         })
+    // Project analyses routes
         .state('project.analyses.compare', {
             title: 'Compare Project Analyses',
             url: '/compare',
@@ -265,6 +253,22 @@ function projectStatesV2($stateProvider) {
             title: 'Project Analyses Visualization',
             url: '/visualize',
             component: 'rfProjectAnalysesVisualizePage'
+        })
+    // project settings routes
+        .state('project.settings.options', {
+            title: 'Project Options',
+            url: '/options',
+            component: 'rfProjectOptionsPage'
+        })
+        .state('project.settings.publishing', {
+            title: 'Project Publishing',
+            url: '/publishing',
+            component: 'rfProjectPublishingPage'
+        })
+        .state('project.settings.permissions', {
+            title: 'Project Permissions',
+            url: '/permissions',
+            component: 'rfProjectPermissionsPage'
         });
 }
 
