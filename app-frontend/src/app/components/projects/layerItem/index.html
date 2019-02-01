@@ -25,7 +25,7 @@
     <div>{{$ctrl.layer.createdAt | date}}</div>
   </div>
   <div class="list-group-right">
-    <button class="btn btn-text btn-transparent"
+    <div class="btn btn-text btn-transparent"
             ng-show="!$ctrl.hasGeom"
     >
       <span class="icon-warning color-danger"
@@ -35,8 +35,8 @@
             tooltip-class="layer-item-tooltip"
             tooltip-side="left"
       ></span>
-    </button>
-    <button class="btn btn-text btn-transparent"
+    </div>
+    <div class="btn btn-text btn-transparent"
             ng-click="$ctrl.onHide({layerId: $ctrl.layer.id})"
     >
       <span class="icon-eye"
@@ -55,8 +55,8 @@
             tooltip-side="left"
             ng-if="!$ctrl.visible"
       ></span>
-    </button>
-    <button class="btn btn-text btn-transparent"
+    </div>
+    <div class="btn btn-text btn-transparent"
             uib-dropdown
             ng-show="$ctrl.layerActions && $ctrl.layerActions.length"
             uib-dropdown-toggle
@@ -69,6 +69,6 @@
           <span class="menu-separator" ng-show="action.separator"></span>
         </li>
       </ul>
-    </button>
+    </div>
   </div>
 </div>
