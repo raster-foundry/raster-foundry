@@ -31,7 +31,7 @@ object Version {
   val http4s = "0.20.0-M4"
   val json4s = "3.5.0"
   val jts = "1.13"
-  val maml = "0.1.0JS"
+  val maml = "0.1.0"
   val nimbusJose = "0.6.0"
   val postgres = "42.1.1"
   val rollbar = "1.4.0"
