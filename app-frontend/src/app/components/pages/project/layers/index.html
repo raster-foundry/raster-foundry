@@ -1,7 +1,7 @@
-<div class="sidebar-actions-group">
-  <button class="btn btn-small btn-transparent" ng-click="$ctrl.showNewLayerModal()">
+<div class="sidebar-actions-group" ng-show="$ctrl.selected.size === 0">
+  <a class="btn btn-small btn-transparent" ng-click="$ctrl.showNewLayerModal()">
     <i class="icon-plus"></i> New Layer
-  </button>
+  </a>
   <div style="flex: 1;"></div>
   <div class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
     Layer Visibility
@@ -12,6 +12,25 @@
         <a href ng-click="$ctrl.showPageLayers()">Show all on page</a></li>
     </ul>
   </div>
+</div>
+<div class="selected-actions-group" ng-show="$ctrl.selected.size > 0">
+  <rf-selected-actions-bar
+      checked="$ctrl.allVisibleSelected()"
+      on-click="$ctrl.selectAll()"
+      action-text="$ctrl.selectText"
+  >
+    <div class="btn btn-transparent" uib-dropdown uib-dropdown-toggle>
+      Create...
+      <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
+        <li role="menuitem">
+          <a ng-click="$ctrl.createAnalysis()">Analysis</a></li>
+      </ul>
+    </div>
+    <button class="btn btn-transparent"
+            ng-click="$ctrl.removeScenes($ctrl.selected.valueSeq().toArray())">
+      Delete
+    </button>
+  </rf-selected-actions-bar>
 </div>
 <div class="sidebar-scrollable list-group">
   <rf-layer-item

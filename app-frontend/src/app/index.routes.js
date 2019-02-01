@@ -1,5 +1,6 @@
 /* eslint max-len: 0 */
 import _ from 'lodash';
+import {Map} from 'immutable';
 
 import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
@@ -112,7 +113,7 @@ function shareStatesV2($stateProvider) {
 }
 
 function projectStatesV2($stateProvider) {
-    let addScenesQueryParams = [
+    let addScenesQueryParamsList = [
         'maxCloudCover',
         'minCloudCover',
         'minAcquisitionDatetime',
@@ -126,7 +127,12 @@ function projectStatesV2($stateProvider) {
         'point',
         'ingested',
         'owner'
-    ].join('&');
+    ];
+    let dynamicSceneParams = addScenesQueryParamsList.reduce(
+        (acc, param) => acc.set(param, {dynamic: true}),
+        new Map()
+    ).toJSON();
+    let addScenesQueryParams = addScenesQueryParamsList.join('&');
 
     $stateProvider
         .state('project', {
@@ -196,10 +202,14 @@ function projectStatesV2($stateProvider) {
                 'projectlayernav@root': {
                     component: 'rfProjectLayersNav'
                 },
+                'navbar-secondary': {
+                    component: 'rfProjectLayerSecondaryNavbar'
+                },
                 '': {
                     component: 'rfProjectLayerPage'
                 }
-            }
+            },
+            redirectTo: 'project.layer.scenes'
         })
     // project layer routes
         .state('project.layer.aoi', {
@@ -222,10 +232,15 @@ function projectStatesV2($stateProvider) {
             url: '/scenes?page',
             component: 'rfProjectLayerScenesPage'
         })
-        .state('project.layer.scenes.browse', {
+        .state('project.layer.browse', {
             title: 'Find Scenes',
             url: '/browse?' + addScenesQueryParams,
-            component: 'rfProjectLayerScenesBrowsePage'
+            views: {
+                'project-sidemodal@project': {
+                    component: 'rfProjectLayerScenesBrowsePage'
+                }
+            },
+            params: dynamicSceneParams
         })
         .state('project.layer.exports', {
             title: 'Project Layer Exports',
@@ -241,11 +256,6 @@ function projectStatesV2($stateProvider) {
             title: 'Project Layer Annotations',
             url: '/annotations?page',
             component: 'rfProjectLayerAnnotationsPage'
-        })
-        .state('project.layer.annotate', {
-            title: 'Project Layer Annotate',
-            url: '/annotate',
-            component: 'rfProjectLayerAnnotatePage'
         })
     // Project analyses routes
         .state('project.analyses.compare', {

@@ -59,7 +59,8 @@ $navbar-secondary-height: 4.7rem !default;
   ); // Fixes flex + height issue in some browsers
 
   .secondary-navbar ~ &,
-  .light-navbar ~ & {
+  .light-navbar ~ &,
+  &.with-secondary-navbar {
     height: calc(100vh - #{$navbar-height + $navbar-secondary-height});
     max-height: calc(
       100vh - #{$navbar-height + $navbar-secondary-height}

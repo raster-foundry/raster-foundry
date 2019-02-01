@@ -1,0 +1,43 @@
+<div class="navbar light-navbar">
+  <div class="navbar-section">
+    <nav>
+      <a ui-sref="project.layer.scenes"
+         ng-class="{
+                  active: ('project.layer.scenes' | includedByState) ||
+                          ('project.layer.browse' | includedByState)
+                  }"
+      >Images</a>
+    </nav>
+    <nav>
+      <a ui-sref="project.layer.annotations"
+         ng-class="{
+                  active: ('project.layer.annotations' | includedByState)
+                  }"
+      >Annotations</a>
+    </nav>
+    <nav>
+      <a ui-sref="project.layer.colormode"
+         ng-class="{
+                  active: ('project.layer.colormode' | includedByState) ||
+                          ('project.layer.corrections' | includedByState)
+                  }"
+      >Color options</a>
+    </nav>
+  </div>
+  <div class="navbar-section secondary">
+    <nav>
+      <a ui-sref="project.layer.aoi"
+         ng-class="{
+                  active: ('project.layer.aoi' | includedByState)
+                  }">
+        Area of interest</a>
+    </nav>
+    <nav>
+      <a ui-sref="project.layer.settings"
+         ng-class="{
+                  active: ('project.layer.settings' | includedByState)
+                  }"
+      ><i class="icon-settings" title="Project Settings"></i></a>
+    </nav>
+  </div>
+</div>

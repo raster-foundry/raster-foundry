@@ -224,19 +224,11 @@ class ProjectLayersPageController {
         }
     }
 
-    mapLayerFromLayer(layer) {
-        let url = this.projectService.getProjectLayerTileUrl(
-            this.project, layer, {token: this.authService.token()}
-        );
-        let mapLayer = L.tileLayer(url, {
-            maxZoom: 30
-        });
-        return mapLayer;
-    }
-
     syncMapLayersToVisible() {
         // TODO do this more efficiently (don't re-add existing layers)
-        let mapLayers = this.visible.toArray().map(this.mapLayerFromLayer.bind(this));
+        let mapLayers = this.visible
+            .toArray()
+            .map(layer => this.projectService.mapLayerFromLayer(this.project, layer));
         this.getMap().then(map => {
             map.setLayer('Project Layers', mapLayers, true);
         });

@@ -249,6 +249,8 @@ div.checkbox {
   align-items: center;
   margin: 0;
   color: $text-base;
+  user-select: none;
+  cursor: pointer;
 
   label {
     margin: 0 5px;
@@ -306,10 +308,21 @@ div.checkbox {
 
     &:not(.custom-icon):before,
     &.custom-icon i {
+      content: "\e911"; // see fontello.css .icon-check:before
       visibility: visible;
       opacity: 1;
       transform: scale(1);
     }
+  }
+
+  &.partial-active {
+      transition: 0.2s ease-in-out color;
+      &:before {
+          content: "\e92c";
+          visibility: visible;
+          opacity: 1;
+          transform: scale(1);
+      }
   }
 
   &:not(.active) {
