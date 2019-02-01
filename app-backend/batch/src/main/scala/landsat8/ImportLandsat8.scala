@@ -1,20 +1,20 @@
 package com.rasterfoundry.batch.landsat8
 
-import java.time.{LocalDate, ZoneOffset}
-import java.util.UUID
-
-import cats.effect.IO
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.{S3, S3RegionString}
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
+
+import cats.effect.IO
 import doobie.util.transactor.Transactor
 import jp.ne.opt.chronoscala.Imports._
 
 import scala.util.{Failure, Success, Try}
+import java.time.{LocalDate, ZoneOffset}
+import java.util.UUID
 
 @deprecated(
   message =

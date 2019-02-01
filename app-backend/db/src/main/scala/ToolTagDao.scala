@@ -1,9 +1,8 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.{ToolTag, User}
+import com.rasterfoundry.common.datamodel.{ToolTag, User}
+
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -12,7 +11,9 @@ import cats._
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
+
 import java.util.UUID
+import java.sql.Timestamp
 
 object ToolTagDao extends Dao[ToolTag] {
 

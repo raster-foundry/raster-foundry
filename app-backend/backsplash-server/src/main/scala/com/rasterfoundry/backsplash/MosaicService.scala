@@ -1,9 +1,11 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.datamodel.User
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.Parameters._
+import com.rasterfoundry.common.utils.TileUtils
+
 import cats.Applicative
 import cats.data.{NonEmptyList => NEL}
 import cats.data.Validated._
@@ -19,11 +21,10 @@ import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
-import java.util.UUID
-
-import com.rasterfoundry.common.utils.TileUtils
 import doobie.util.transactor.Transactor
 import geotrellis.vector.{Polygon, Projected}
+
+import java.util.UUID
 
 class MosaicService[LayerStore: ProjectStore, HistStore: HistogramStore](
     layers: LayerStore,

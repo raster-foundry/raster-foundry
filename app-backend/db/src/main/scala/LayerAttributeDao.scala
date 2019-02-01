@@ -3,7 +3,7 @@ package com.rasterfoundry.database
 import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.LayerAttribute
+import com.rasterfoundry.common.datamodel.LayerAttribute
 import doobie.Fragments._
 import doobie._
 import doobie.implicits._

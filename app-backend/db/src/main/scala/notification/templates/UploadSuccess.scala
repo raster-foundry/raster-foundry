@@ -1,12 +1,13 @@
 package com.rasterfoundry.database.notification.templates
 
-import java.util.UUID
+import com.rasterfoundry.database._
+import com.rasterfoundry.common.datamodel._
 
 import cats.implicits._
-import com.rasterfoundry.database._
-import com.rasterfoundry.datamodel._
 import doobie.ConnectionIO
 import doobie.implicits._
+
+import java.util.UUID
 
 final case class UploadSuccess(uploadId: UUID, platformId: UUID) {
   def build: ConnectionIO[EmailData] = {

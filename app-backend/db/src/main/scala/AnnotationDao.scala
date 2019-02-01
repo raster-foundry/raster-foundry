@@ -3,7 +3,7 @@ package com.rasterfoundry.database
 import java.util.UUID
 
 import cats.implicits._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util._
 import doobie._

@@ -6,8 +6,8 @@ import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.{SceneDao, SceneToLayerDao, SceneToProjectDao}
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.datamodel.MosaicDefinition
-import com.rasterfoundry.datamodel.color.{
+import com.rasterfoundry.common.datamodel.MosaicDefinition
+import com.rasterfoundry.common.datamodel.color.{
   BandGamma => RFBandGamma,
   PerBandClipping => RFPerBandClipping,
   MultiBandClipping => RFMultiBandClipping,
@@ -24,6 +24,7 @@ import com.rasterfoundry.backsplash.color.{
   SingleBandOptions => BSSingleBandOptions,
   _
 }
+
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.IO
 import cats.implicits._

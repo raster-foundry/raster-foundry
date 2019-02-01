@@ -1,14 +1,12 @@
 package com.rasterfoundry.api.project
 
-import better.files._
-import java.util.Calendar
-
-import com.rasterfoundry.datamodel.{Annotation, User}
+import com.rasterfoundry.common.datamodel.{Annotation, User}
+import com.rasterfoundry.common.S3
 import com.rasterfoundry.api.utils.Config
+
 import com.typesafe.scalalogging.LazyLogging
 import com.vividsolutions.jts.{geom => jts}
 import com.amazonaws.services.s3.AmazonS3URI
-import com.rasterfoundry.common.S3
 import geotrellis.geotools._
 import geotrellis.proj4.CRS
 import geotrellis.vector._
@@ -28,8 +26,10 @@ import org.geotools.referencing.{CRS => geotoolsCRS}
 import org.geotools.referencing.crs.DefaultGeographicCRS
 import org.opengis.feature.simple.SimpleFeature
 import org.opengis.referencing.crs.CoordinateReferenceSystem
+import better.files._
 
 import java.util.{HashMap => JHashMap}
+import java.util.Calendar
 
 object AnnotationShapefileService extends LazyLogging with Config {
 

@@ -1,11 +1,5 @@
 package com.rasterfoundry.batch.landsat8
 
-import java.io.File
-import java.time.{LocalDate, ZoneOffset}
-import java.util.UUID
-
-import cats.effect.IO
-import cats.implicits._
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util.isUriExists
 import com.rasterfoundry.batch.util.conf.Config
@@ -15,21 +9,27 @@ import com.rasterfoundry.common.utils.AntimeridianUtils
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
+
+import cats.effect.IO
+import cats.implicits._
 import com.github.tototoshi.csv._
 import doobie.free.connection.ConnectionIO
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-import geotrellis.proj4.CRS
 import io.circe._
 import io.circe.syntax._
+import geotrellis.proj4.CRS
 import geotrellis.vector._
 
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.immutable.ParSeq
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.sys.process._
+import java.io.File
+import java.time.{LocalDate, ZoneOffset}
+import java.util.UUID
 
 final case class ImportLandsat8C1(
     startDate: LocalDate = LocalDate.now(ZoneOffset.UTC),

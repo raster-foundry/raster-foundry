@@ -1,21 +1,12 @@
 package com.rasterfoundry.database
 
-import java.util.UUID
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.common.datamodel._
 
 import cats.Applicative
 import cats.data.{NonEmptyList => NEL, _}
 import cats.implicits._
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.datamodel.{
-  BatchParams,
-  ColorCorrect => RFColorCorrect,
-  MosaicDefinition,
-  SceneToLayer,
-  SceneToLayerWithSceneType
-}
-import com.typesafe.scalalogging.LazyLogging
-import com.rasterfoundry.datamodel._
 import doobie._
 import doobie.Fragments._
 import doobie.implicits._
@@ -24,6 +15,9 @@ import doobie.postgres.implicits._
 import fs2.Stream
 import geotrellis.vector.{MultiPolygon, Polygon, Projected}
 import io.circe.syntax._
+import com.typesafe.scalalogging.LazyLogging
+
+import java.util.UUID
 
 case class SceneToLayerDao()
 

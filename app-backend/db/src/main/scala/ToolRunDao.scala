@@ -1,18 +1,17 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.datamodel.{
+import com.rasterfoundry.common.datamodel.{
   ToolRun,
   User,
   ObjectType,
   GroupType,
   ActionType
 }
-import com.rasterfoundry.tool.ast._
-import com.rasterfoundry.tool.ast.MapAlgebraAST._
+import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
+import com.rasterfoundry.common.ast.MapAlgebraAST._
+import com.rasterfoundry.common.ast._
 
 import doobie._
 import doobie.implicits._
@@ -23,9 +22,10 @@ import cats._
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
-import java.util.UUID
 
 import scala.concurrent.Future
+import java.sql.Timestamp
+import java.util.UUID
 
 case class ToolRunDao()
 

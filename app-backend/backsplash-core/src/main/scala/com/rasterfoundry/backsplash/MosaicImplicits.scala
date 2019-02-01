@@ -1,10 +1,9 @@
 package com.rasterfoundry.backsplash
 
-import java.util.UUID
-
 import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
+
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.vector._
 import geotrellis.raster._
@@ -30,6 +29,8 @@ import ExtentReification._
 import HasRasterExtents._
 import TmsReification._
 import com.typesafe.scalalogging.LazyLogging
+
+import java.util.UUID
 
 class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     extends ToTmsReificationOps

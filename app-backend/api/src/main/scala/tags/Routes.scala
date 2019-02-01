@@ -6,7 +6,7 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database.ToolTagDao
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives

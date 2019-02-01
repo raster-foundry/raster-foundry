@@ -1,12 +1,11 @@
 package geotrellis.spark.io.postgres
 
-import java.util.concurrent.Executors
+import com.rasterfoundry.common.Config
+import com.rasterfoundry.database.LayerAttributeDao
+import com.rasterfoundry.common.datamodel.LayerAttribute
 
 import cats.effect.IO
 import cats.implicits._
-import com.rasterfoundry.common.Config
-import com.rasterfoundry.database.LayerAttributeDao
-import com.rasterfoundry.datamodel.LayerAttribute
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
@@ -23,6 +22,7 @@ import spray.json._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, ExecutionContext, Future}
+import java.util.concurrent.Executors
 
 object PostgresAttributeStoreThreadPool {
   implicit lazy val ec: ExecutionContext =

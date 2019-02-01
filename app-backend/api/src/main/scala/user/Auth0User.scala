@@ -12,7 +12,7 @@ import com.rasterfoundry.api.utils.{
   ManagementBearerToken
 }
 import com.rasterfoundry.database.UserDao
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.datamodel.User
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._

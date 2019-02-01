@@ -15,7 +15,6 @@ import io.circe.{Encoder, Json, KeyEncoder}
 import io.circe.generic.semiauto._
 import io.circe.parser._
 import io.circe.syntax._
-
 import spray.json._
 import DefaultJsonProtocol._
 

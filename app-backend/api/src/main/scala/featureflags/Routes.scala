@@ -7,7 +7,7 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database.FeatureFlagDao
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._

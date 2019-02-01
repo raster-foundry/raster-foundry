@@ -7,7 +7,12 @@ import com.rasterfoundry.database.{
   SceneToProjectDao,
   ToolRunDao
 }
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.MosaicImplicits
+import com.rasterfoundry.backsplash.Parameters._
+import com.rasterfoundry.database.util.RFTransactor
+
 import cats.Applicative
 import cats.data.OptionT
 import cats.data.Validated._
@@ -29,23 +34,17 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
 import org.http4s.util.CaseInsensitiveString
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.FiniteDuration
-import java.util.concurrent.{Executors, TimeUnit}
-
-import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.backsplash.MosaicImplicits
-import com.rasterfoundry.backsplash.Parameters._
-import java.util.UUID
-
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.rasterfoundry.database.util.RFTransactor
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.FiniteDuration
+import java.util.concurrent.{Executors, TimeUnit}
+import java.util.UUID
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 

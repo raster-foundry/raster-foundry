@@ -1,6 +1,6 @@
 package com.rasterfoundry.database.meta
 
-import com.rasterfoundry.datamodel.AOI
+import com.rasterfoundry.common.datamodel.AOI
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.Implicits._
 

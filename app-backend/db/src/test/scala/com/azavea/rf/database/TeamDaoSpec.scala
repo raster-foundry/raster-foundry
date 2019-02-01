@@ -2,8 +2,8 @@ package com.rasterfoundry.database
 
 import java.sql.Timestamp
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database._
 import doobie._

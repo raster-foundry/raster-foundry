@@ -3,28 +3,27 @@ package com.rasterfoundry.api.toolrun
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.common._
 import com.rasterfoundry.common.ast._
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.tool.ast.MapAlgebraAST
-import com.rasterfoundry.tool.eval.PureInterpreter
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.ast.MapAlgebraAST
+import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.database.ToolRunDao
+
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import cats.implicits._
-import java.util.UUID
-
 import cats.effect.IO
-import com.rasterfoundry.database.ToolRunDao
 import doobie.util.transactor.Transactor
-
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import doobie._
 import doobie.implicits._
 import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
+
+import java.util.UUID
+import scala.concurrent.ExecutionContext.Implicits.global
 
 trait ToolRunRoutes
     extends Authentication

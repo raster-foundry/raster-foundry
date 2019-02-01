@@ -4,7 +4,7 @@ import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.filter.Filters._
 import com.rasterfoundry.database.notification.{GroupNotifier, MessageType}
 import com.rasterfoundry.database.notification.templates.PlainGroupRequest
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 
 import doobie._, doobie.implicits._
 import doobie.postgres._, doobie.postgres.implicits._

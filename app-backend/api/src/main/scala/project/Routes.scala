@@ -21,8 +21,8 @@ import com.rasterfoundry.akkautil.{
 }
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.datamodel.GeoJsonCodec._
-import com.rasterfoundry.datamodel.{Annotation, _}
+import com.rasterfoundry.common.datamodel.GeoJsonCodec._
+import com.rasterfoundry.common.datamodel.{Annotation, _}
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
