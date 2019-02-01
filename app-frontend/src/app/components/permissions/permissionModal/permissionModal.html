@@ -160,7 +160,7 @@
           <div class="subtitle">Team</div>
         </div>
         <div class="labels" ng-if="$ctrl.entityCache.team[id] && !$ctrl.entityCache.team[id].name">
-          <div><i class="icon-warning"></i> Error fetching team<div>
+          <div><i class="icon-warning"></i> Error fetching team</div>
         </div>
       </rf-permission-item>
       <rf-permission-item
@@ -184,7 +184,7 @@
           <div class="subtitle">User</div>
         </div>
         <div class="labels" ng-if="$ctrl.entityCache.user[id] && !$ctrl.entityCache.user[id].name">
-          <div><i class="icon-warning"></i> Error fetching user<div>
+          <div><i class="icon-warning"></i> Error fetching user</div>
           <div class="subtitle">User</div>
         </div>
       </rf-permission-item>
@@ -197,6 +197,6 @@
     <button type="button" class="btn" ng-click="$ctrl.dismiss()">Close</button>
   </div>
   <div class="footer-section right">
-        <button type="button" class="btn btn-primary" ng-click="$ctrl.onSave()">Save Changes</button>
+    <button type="button" class="btn btn-primary" ng-click="$ctrl.onSave()">Save Changes</button>
   </div>
 </div>

@@ -261,7 +261,7 @@ class PermissionModalController {
 
     fetchCachedOrganizationDetails(id) {
         if (!this.entityCache.organization[id]) {
-            this.organizationService
+            return this.organizationService
                 .getOrganization(id)
                 .then(organization => {
                     this.entityCache.organization[id] = organization;
@@ -276,6 +276,7 @@ class PermissionModalController {
                     }
                 });
         }
+        return Promise.resolve();
     }
 
     fetchCachedTeamDetails(id) {
@@ -421,10 +422,25 @@ class PermissionModalController {
             this.teamService.searchTeams(searchTerm, this.resolve.platform.id).then(results => {
                 // Only use results if the request is the most recent
                 if (this.lastRequestTime === thisRequestTime) {
-                    results.forEach(t => this.fetchCachedOrganizationDetails(t.organizationId));
+                    Promise.all(
+                        results.map(t => this.fetchCachedOrganizationDetails(t.organizationId))
+                    ).then(() => {
+                        this.$scope.$evalAsync(() => {
+                            // eslint-disable-next-line
+                            this.suggestions = results.map(team => ({
+                                label: team.name,
+                                avatar: _.get(
+                                    this.entityCache,
+                                    ['organization', team.organizationId, 'logoUri'],
+                                    ''
+                                ),
+                                id: team.id
+                            }));
+                        });
+                    });
                     this.suggestions = results.map(team => ({
                         label: team.name,
-                        avatar: this.entityCache.organization[team.organizationId].logoUri,
+                        avatar: '',
                         id: team.id
                     }));
                 }
