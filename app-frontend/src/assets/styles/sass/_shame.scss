@@ -3261,6 +3261,7 @@ rf-project-layers-page {
     display: flex;
     flex-direction: column;
     background: $off-white;
+    min-height: 0; // firefox flexbox compatability
 
     rf-layer-item {
         display: block;
