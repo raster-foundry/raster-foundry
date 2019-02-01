@@ -90,6 +90,13 @@
       border-bottom: 1px solid $brand-primary;
       margin-bottom: -1px;
     }
+
+    &[ui-view] {
+        > {
+            flex: 1;
+            display: f
+        }
+    }
   }
 
   &.light-navbar {

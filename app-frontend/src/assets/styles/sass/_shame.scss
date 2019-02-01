@@ -592,6 +592,9 @@ rf-project-editor .leaflet-tile {
 .rf-tooltip {
   min-width: 250px;
   text-align: left;
+  &.shrink {
+      min-width: 0;
+  }
 }
 
 .layer-item-tooltip {
@@ -3261,19 +3264,23 @@ rf-navbar-search {
 }
 
 rf-project-layers-page,
-rf-project-analyses-page {
+rf-project-analyses-page,
+rf-project-layer-page,
+rf-project-layer-scenes-browse-page {
     flex: 1;
     display: flex;
     flex-direction: column;
     background: $off-white;
     min-height: 0; // firefox flexbox compatability
+    height: 100%;
 
-    rf-layer-item {
+    rf-layer-item,
+    rf-project-scene-item {
         display: block;
         background: $white;
         border: 1px solid $gray-lightest;
         border-radius: 3px;
-        margin: .25em;
+        margin: .5em;
     }
 }
 
@@ -3286,4 +3293,109 @@ rf-project-analyses-page {
     justify-content: space-between;
     flex-direction: column;
     align-self: stretch;
+}
+
+.project-side-modal {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    background: $off-white;
+    display: block;
+    // TODO replace other styles with this once we remove the other components
+    rf-scene-filter-pane {
+        .filter {
+            label,
+            .selectize-input {
+                color: $shade-dark;
+            }
+            .selectize-input {
+                background-color: $white;
+                border-color: $shade-light;
+                color: $shade-dark;
+            }
+        }
+        .browse-source-drop-down {
+            background-color: $white;
+            border-color: $shade-light;
+            color: $shade-dark;
+        }
+        .form-group.all-in-one.input-dark {
+            border-color: $shade-light;
+            background-color: $white;
+            .input {
+                color: $shade-dark;
+            }
+        }
+        .date-range-select > *,
+        .date-range-select i {
+            color: $shade-dark;
+        }
+        .shapefilter-box {
+            background: $white;
+            border: 1px solid $shade-light;
+            color: $shade-dark;
+        }
+        .btn-toggle {
+            &.active {
+                background: $brand-primary;
+                border-color: $brand-primary;
+                color: $white;
+            }
+            background: $white;
+            border-color: $shade-light;
+            color: $brand-primary;
+        }
+    }
+}
+
+rf-project-page {
+    display: block;
+    position: relative;
+}
+
+.separator {
+    flex: 1;
+}
+
+.selected-actions-group {
+    a {
+        box-shadow: initial;
+        padding: 1.25rem 1rem;
+        margin: 0.25rem;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    rf-selected-actions-bar {
+        width: 100%;
+        background: $white;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 0.5rem;
+    }
+
+    .navbar-section {
+        flex: initial;
+    }
+
+    .select-button {
+        box-shadow: initial;
+        padding: 0.55rem 1rem;
+        margin: 0.6rem;
+        border: 1px solid $shade-light;
+        border-radius: 1.5em;
+        background: $white;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        label.checkbox {
+            &:after {
+                border: 2px solid $shade-light;
+            }
+            cursor: pointer;
+        }
+    }
 }
