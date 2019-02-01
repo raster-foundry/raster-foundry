@@ -14,7 +14,6 @@ RUN set -ex \
        build-essential \
        imagemagick \
     ' \
-    && echo 'deb http://http.us.debian.org/debian main non-free contrib' > /etc/apt/sources.list.d/sid.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends ${gdalDeps} wget \
     && pip install --no-cache-dir \
