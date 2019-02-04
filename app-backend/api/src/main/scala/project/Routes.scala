@@ -273,7 +273,7 @@ trait ProjectRoutes
                   pathPrefix("datasources") {
                     pathEndOrSingleSlash {
                       get {
-                        listLayerDatsources(projectId, layerId)
+                        listLayerDatasources(projectId, layerId)
                       }
                     }
                   }
@@ -1656,7 +1656,7 @@ trait ProjectRoutes
       }
   }
 
-  def listLayerDatsources(projectId: UUID, layerId: UUID): Route =
+  def listLayerDatasources(projectId: UUID, layerId: UUID): Route =
     authenticate { user =>
       (projectQueryParameters) { projectQueryParams =>
         authorizeAsync {
