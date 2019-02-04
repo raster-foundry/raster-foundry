@@ -121,44 +121,6 @@ lazy val credentialsSettings = Seq(
                 password)).toSeq
 )
 
-// Create a new MergeStrategy for aop.xml files
-val aopMerge = new sbtassembly.MergeStrategy {
-  val name = "aopMerge"
-  import scala.xml._
-  import scala.xml.dtd._
-
-  def apply(tempDir: File,
-            path: String,
-            files: Seq[File]): Either[String, Seq[(File, String)]] = {
-    val dt = DocType("aspectj",
-                     PublicID("-//AspectJ//DTD//EN",
-                              "http://www.eclipse.org/aspectj/dtd/aspectj.dtd"),
-                     Nil)
-    val file = MergeStrategy.createMergeTarget(tempDir, path)
-    val xmls: Seq[Elem] = files.map(XML.loadFile)
-    val aspectsChildren: Seq[Node] =
-      xmls.flatMap(_ \\ "aspectj" \ "aspects" \ "_")
-    val weaverChildren: Seq[Node] =
-      xmls.flatMap(_ \\ "aspectj" \ "weaver" \ "_")
-    val options: String = xmls
-      .map(x => (x \\ "aspectj" \ "weaver" \ "@options").text)
-      .mkString(" ")
-      .trim
-    val weaverAttr =
-      if (options.isEmpty) Null
-      else new UnprefixedAttribute("options", options, Null)
-    val aspects =
-      new Elem(null, "aspects", Null, TopScope, false, aspectsChildren: _*)
-    val weaver =
-      new Elem(null, "weaver", weaverAttr, TopScope, false, weaverChildren: _*)
-    val aspectj =
-      new Elem(null, "aspectj", Null, TopScope, false, aspects, weaver)
-    XML.save(file.toString, aspectj, "UTF-8", xmlDecl = false, dt)
-    IO.append(file, IO.Newline.getBytes(IO.defaultCharset))
-    Right(Seq(file -> path))
-  }
-}
-
 lazy val apiSettings = commonSettings ++ Seq(
   fork in run := true,
   connectInput in run := true,
@@ -169,9 +131,8 @@ lazy val apiSettings = commonSettings ++ Seq(
     case n if n.startsWith("META-INF/services") => MergeStrategy.concat
     case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
       MergeStrategy.discard
-    case "META-INF/MANIFEST.MF"          => MergeStrategy.discard
-    case PathList("META-INF", "aop.xml") => aopMerge
-    case _                               => MergeStrategy.first
+    case "META-INF/MANIFEST.MF" => MergeStrategy.discard
+    case _                      => MergeStrategy.first
   },
   resolvers += "Open Source Geospatial Foundation Repo" at "http://download.osgeo.org/webdav/geotools/",
   resolvers += Resolver.bintrayRepo("azavea", "maven"),
@@ -181,12 +142,6 @@ lazy val apiSettings = commonSettings ++ Seq(
 lazy val loggingDependencies = List(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.5.0",
   "ch.qos.logback" % "logback-classic" % "1.1.7"
-)
-
-lazy val metricsDependencies = List(
-  Dependencies.kamonCore,
-  Dependencies.kamonStatsd,
-  Dependencies.kamonAkkaHttp
 )
 
 lazy val dbDependencies = List(
@@ -204,12 +159,11 @@ lazy val migrationsDependencies =
 
 lazy val testDependencies = List(
   Dependencies.scalatest,
-  Dependencies.geotrellisRasterTestkit,
   Dependencies.akkatestkit
 )
 
 lazy val apiDependencies = dbDependencies ++ migrationsDependencies ++
-  testDependencies ++ metricsDependencies ++ Seq(
+  testDependencies ++ Seq(
   Dependencies.akka,
   Dependencies.akkahttp,
   Dependencies.akkaHttpCors,
@@ -237,14 +191,12 @@ lazy val root = Project("root", file("."))
              db,
              common,
              migrations,
-             datamodel,
              batch,
-             tile,
-             tool,
-             bridge)
+             backsplashCore,
+             backsplashServer)
 
 lazy val api = Project("api", file("api"))
-  .dependsOn(db, datamodel, common % "test->test;compile->compile", akkautil)
+  .dependsOn(db, common % "test->test;compile->compile", akkautil)
   .settings(apiSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
@@ -252,7 +204,6 @@ lazy val api = Project("api", file("api"))
   })
 
 lazy val common = Project("common", file("common"))
-  .dependsOn(datamodel)
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= testDependencies ++ Seq(
@@ -261,17 +212,30 @@ lazy val common = Project("common", file("common"))
       Dependencies.scaffeine,
       Dependencies.elasticacheClient,
       Dependencies.geotrellisS3,
+      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisGeotools,
+      Dependencies.geotrellisVectorTestkit,
+      Dependencies.geotools,
+      Dependencies.jts,
+      Dependencies.sparkCore,
       Dependencies.findbugAnnotations,
+      Dependencies.circeCore,
+      Dependencies.circeParser,
+      Dependencies.circeOptics,
+      Dependencies.circeTest,
+      Dependencies.circeGenericExtras,
       Dependencies.chill,
       Dependencies.catsCore,
       Dependencies.awsBatchSdk,
       Dependencies.rollbar,
-      Dependencies.apacheCommonsEmail
+      Dependencies.apacheCommonsEmail,
+      Dependencies.scalaCheck,
+      "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15"
     )
   })
 
 lazy val db = Project("db", file("db"))
-  .dependsOn(datamodel % "compile->compile;test->test", common)
+  .dependsOn(common % "compile->compile;test->test")
   .settings(commonSettings: _*)
   .settings({
     libraryDependencies ++= dbDependencies ++ loggingDependencies ++ Seq(
@@ -282,12 +246,16 @@ lazy val db = Project("db", file("db"))
       Dependencies.doobieScalatest,
       Dependencies.doobiePostgres,
       Dependencies.doobiePostgresCirce,
+      Dependencies.scalaCheck,
       "net.postgis" % "postgis-jdbc" % "2.2.1",
       "net.postgis" % "postgis-jdbc-jtsparser" % "2.2.1",
       "org.locationtech.jts" % "jts-core" % "1.15.0",
       "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15"
     )
   })
+  .settings(
+    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
+  )
 
 lazy val migrations = Project("migrations", file("migrations"))
   .settings(commonSettings: _*)
@@ -296,27 +264,8 @@ lazy val migrations = Project("migrations", file("migrations"))
     libraryDependencies ++= migrationsDependencies
   })
 
-lazy val datamodel = Project("datamodel", file("datamodel"))
-  .dependsOn(tool, bridge)
-  .settings(commonSettings: _*)
-  .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
-  .settings({
-    libraryDependencies ++= loggingDependencies ++ Seq(
-      Dependencies.geotrellisVectorTestkit,
-      Dependencies.geotrellisRaster,
-      Dependencies.geotrellisGeotools,
-      Dependencies.geotools,
-      Dependencies.circeCore,
-      Dependencies.circeGenericExtras,
-      Dependencies.scalaCheck,
-      Dependencies.circeTest,
-      Dependencies.jts,
-      "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15" % "test"
-    )
-  })
-
 lazy val batch = Project("batch", file("batch"))
-  .dependsOn(common, datamodel, tool, bridge, geotrellis)
+  .dependsOn(common, geotrellis)
   .settings(commonSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
@@ -363,65 +312,8 @@ lazy val batch = Project("batch", file("batch"))
       .inAll
   ))
 
-lazy val tile = Project("tile", file("tile"))
-  .dependsOn(datamodel,
-             common % "test->test;compile->compile",
-             akkautil,
-             geotrellis)
-  .dependsOn(tool)
-  .settings(fork in run := true)
-  .settings(commonSettings: _*)
-  .settings({
-    libraryDependencies ++= loggingDependencies ++ testDependencies ++
-      metricsDependencies ++ Seq(
-      Dependencies.spark,
-      Dependencies.geotrellisSpark,
-      Dependencies.geotrellisS3,
-      Dependencies.akkaCirceJson,
-      Dependencies.akkaHttpCors,
-      Dependencies.akkastream,
-      Dependencies.akkaSlf4j,
-      Dependencies.circeCore % "test",
-      Dependencies.circeGeneric % "test",
-      Dependencies.circeParser % "test",
-      Dependencies.circeOptics % "test",
-      Dependencies.scalajHttp % "test"
-    )
-  })
-  .settings(assemblyMergeStrategy in assembly := {
-    case m if m.toLowerCase.endsWith("manifest.mf")     => MergeStrategy.discard
-    case m if m.toLowerCase.matches("meta-inf.*\\.sf$") => MergeStrategy.discard
-    case "reference.conf"                               => MergeStrategy.concat
-    case "application.conf"                             => MergeStrategy.concat
-    case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
-      MergeStrategy.discard
-    case PathList("META-INF", "aop.xml") => aopMerge
-    case _                               => MergeStrategy.first
-  })
-  .settings(test in assembly := {})
-
-lazy val tool = Project("tool", file("tool"))
-  .dependsOn(bridge)
-  .settings(commonSettings: _*)
-  .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
-  .settings({
-    libraryDependencies ++= loggingDependencies ++ Seq(
-      Dependencies.sparkCore,
-      Dependencies.geotrellisSpark,
-      Dependencies.geotrellisRaster,
-      Dependencies.geotrellisRasterTestkit % "test",
-      Dependencies.scalatest,
-      Dependencies.circeCore,
-      Dependencies.circeGeneric,
-      Dependencies.circeParser,
-      Dependencies.circeOptics,
-      Dependencies.scalaCheck,
-      Dependencies.mamlJvm
-    )
-  })
-
 lazy val geotrellis = Project("geotrellis", file("geotrellis"))
-  .dependsOn(db, common, datamodel)
+  .dependsOn(db, common)
   .settings(commonSettings: _*)
   .settings(noPublishSettings)
   .settings({
@@ -444,37 +336,24 @@ lazy val akkautil = Project("akkautil", file("akkautil"))
     )
   })
 
-lazy val bridge = Project("bridge", file("bridge"))
-  .settings(commonSettings: _*)
-  .settings({
-    libraryDependencies ++= loggingDependencies ++ Seq(
-      Dependencies.circeCore,
-      Dependencies.circeGeneric,
-      Dependencies.circeParser,
-      Dependencies.geotrellisVector,
-      Dependencies.scalaLogging
-    )
-  })
-
 // maml / better-abstracted tile server
 lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
+  .dependsOn(common)
   .settings(commonSettings: _*)
   .settings(
     fork in run := true,
     libraryDependencies ++= Seq(
-      "io.dropwizard.metrics" % "metrics-graphite" % "4.0.3",
       "org.http4s" %% "http4s-blaze-server" % Version.http4s,
       "org.http4s" %% "http4s-circe" % Version.http4s,
       "org.http4s" %% "http4s-dsl" % Version.http4s,
-      "org.http4s" %% "http4s-dropwizard-metrics" % Version.http4s,
       "org.scalatest" %% "scalatest" % Version.scalaTest,
       "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer,
-      "org.scalacheck" %% "scalacheck" % Version.scalaCheck,
       "org.apache.spark" %% "spark-core" % "2.4.0" % Provided,
       "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
       "com.github.cb372" %% "scalacache-core" % "0.27.0",
       "com.github.cb372" %% "scalacache-caffeine" % "0.27.0",
       "com.github.cb372" %% "scalacache-memcached" % "0.27.0" intransitive (),
+      Dependencies.scalaCheck,
       Dependencies.elasticacheClient,
       Dependencies.catsMeow
     ),
@@ -486,7 +365,7 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
 
 lazy val backsplashServer = Project("backsplash-server",
                                     file("backsplash-server"))
-  .dependsOn(db, backsplashCore)
+  .dependsOn(http4sUtil, db, backsplashCore)
   .settings(commonSettings: _*)
   .settings(noPublishSettings)
   .settings(fork in run := true)
@@ -503,6 +382,7 @@ lazy val backsplashServer = Project("backsplash-server",
       Dependencies.http4sServer,
       Dependencies.mamlJvm,
       Dependencies.nimbusJose,
+      Dependencies.sup,
       "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
       "com.github.cb372" %% "scalacache-core" % "0.27.0",
       "com.github.cb372" %% "scalacache-caffeine" % "0.27.0"
@@ -517,8 +397,26 @@ lazy val backsplashServer = Project("backsplash-server",
     case "application.conf"                             => MergeStrategy.concat
     case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
       MergeStrategy.discard
-    case PathList("META-INF", "aop.xml") => aopMerge
-    case _                               => MergeStrategy.first
+    case _ => MergeStrategy.first
   })
   .settings(assemblyJarName in assembly := "backsplash-assembly.jar")
   .settings(test in assembly := {})
+
+lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
+  .dependsOn(db)
+  .settings(commonSettings: _*)
+  .settings(noPublishSettings)
+  .settings({
+    libraryDependencies ++= Seq(
+      Dependencies.catsCore,
+      Dependencies.catsEffect,
+      Dependencies.doobieCore,
+      Dependencies.http4sDSL,
+      Dependencies.nimbusJose,
+      "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
+      "com.github.cb372" %% "scalacache-core" % "0.27.0",
+      "com.github.cb372" %% "scalacache-caffeine" % "0.27.0"
+    )
+  })
+  .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
+  .settings(addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"))

@@ -1,6 +1,11 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.backsplash._
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.Parameters._
+import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
+
 import cats.data.Validated._
 import cats.effect.{ContextShift, IO, Fiber}
 import cats.implicits._
@@ -14,17 +19,11 @@ import org.http4s.dsl.io._
 import org.http4s.headers._
 import org.http4s.circe._
 import org.http4s.util.CaseInsensitiveString
-import com.rasterfoundry.backsplash._
-import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.backsplash.MetricsRegistrator
-import com.rasterfoundry.backsplash.Parameters._
-import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
 import doobie.util.transactor.Transactor
 
 @SuppressWarnings(Array("TraversableHead"))
 class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
     analyses: Param,
-    mtr: MetricsRegistrator,
     mosaicImplicits: MosaicImplicits[HistStore],
     toolstoreImplicits: ToolStoreImplicits[HistStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO],

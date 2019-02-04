@@ -1,4 +1,4 @@
-/* global BUILDCONFIG, _ */
+/* global BUILDCONFIG  */
 import angular from 'angular';
 import templateItemTpl from './templateItem.html';
 const TemplateItemComponent = {
@@ -6,12 +6,14 @@ const TemplateItemComponent = {
     controller: 'TemplateItemController',
     bindings: {
         templateData: '<',
-        onTemplateDelete: '&'
+        onTemplateDelete: '&',
+        onShareClick: '&',
+        hideActions: '<'
     }
 };
 
 class TemplateItemController {
-    constructor($rootScope, $log, userService, analysisService) {
+    constructor($rootScope, $log, userService, analysisService, permissionsService, authService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
         this.BUILDCONFIG = BUILDCONFIG;
@@ -19,7 +21,26 @@ class TemplateItemController {
 
     $onInit() {
         this.getTemplateOwner();
-        this.getUserTemplateActions();
+        this.getTemplatePermissions(this.templateData);
+    }
+
+    getTemplatePermissions(template) {
+        this.permissionsService
+            .getEditableObjectPermissions('tools', 'TEMPLATE', template, this.authService.user)
+            .then(permissions => {
+                this.permissions = permissions.map((p) => p.actionType);
+                this.showShare = this.showDelete = false;
+                if (this.permissions
+                    .filter(p => ['*', 'edit'].includes(p.toLowerCase()))
+                    .length > 0) {
+                    this.showShare = true;
+                }
+                if (this.permissions
+                    .filter(p => ['*', 'delete'].includes(p.toLowerCase()))
+                    .length > 0) {
+                    this.showDelete = true;
+                }
+            });
     }
 
     getTemplateOwner() {
@@ -35,14 +56,6 @@ class TemplateItemController {
         }
     }
 
-    getUserTemplateActions() {
-        this.analysisService.getTemplateActions(this.templateData.id).then(actionsArray => {
-            if (_.get(_.intersection(actionsArray, ['*', 'DELETE']), 'length')) {
-                this.showDelete = true;
-            }
-        });
-    }
-
     onClickDeleteTemplate() {
         this.onTemplateDelete({templateId: this.templateData.id});
     }
@@ -53,6 +66,8 @@ class TemplateItemController {
             `${user.personalInfo.firstName.trim()} ${user.personalInfo.lastName.trim()}` :
             user.name || 'Anonymous';
     }
+
+
 }
 
 const TemplateItemModule = angular.module('components.lab.toolItem', []);

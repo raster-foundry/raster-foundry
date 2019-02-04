@@ -13,8 +13,8 @@ import com.rasterfoundry.akkautil._
 import com.rasterfoundry.common._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.ShapeDao
-import com.rasterfoundry.datamodel.GeoJsonCodec._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel.GeoJsonCodec._
+import com.rasterfoundry.common.datamodel._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
@@ -240,7 +240,10 @@ trait ShapeRoutes
 
   def listShapePermissions(shapeId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
+      ShapeDao
+        .authorized(user, ObjectType.Shape, shapeId, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
     } {
       complete {
         ShapeDao
@@ -254,9 +257,10 @@ trait ShapeRoutes
   def replaceShapePermissions(shapeId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (ShapeDao.query.ownedBy(user, shapeId).exists, acrList traverse { acr =>
-          ShapeDao.isValidPermission(acr, user)
-        } map { _.foldLeft(true)(_ && _) }).tupled
+        (ShapeDao.authorized(user, ObjectType.Shape, shapeId, ActionType.Edit),
+         acrList traverse { acr =>
+           ShapeDao.isValidPermission(acr, user)
+         } map { _.foldLeft(true)(_ && _) }).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
           })
@@ -276,7 +280,7 @@ trait ShapeRoutes
   def addShapePermission(shapeId: UUID): Route = authenticate { user =>
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
-        (ShapeDao.query.ownedBy(user, shapeId).exists,
+        (ShapeDao.authorized(user, ObjectType.Shape, shapeId, ActionType.Edit),
          ShapeDao.isValidPermission(acr, user)).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
@@ -301,30 +305,29 @@ trait ShapeRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      user.isSuperuser match {
-        case true => complete(List("*"))
-        case false =>
-          onSuccess(
-            ShapeDao.unsafeGetShapeById(shapeId).transact(xa).unsafeToFuture
-          ) { shape =>
-            shape.owner == user.id match {
-              case true => complete(List("*"))
-              case false =>
-                complete {
-                  ShapeDao
-                    .listUserActions(user, shapeId)
-                    .transact(xa)
-                    .unsafeToFuture
-                }
+      onSuccess(
+        ShapeDao.unsafeGetShapeById(shapeId).transact(xa).unsafeToFuture
+      ) { shape =>
+        shape.owner == user.id match {
+          case true => complete(List("*"))
+          case false =>
+            complete {
+              ShapeDao
+                .listUserActions(user, shapeId)
+                .transact(xa)
+                .unsafeToFuture
             }
-          }
+        }
       }
     }
   }
 
   def deleteShapePermissions(shapeId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ShapeDao.query.ownedBy(user, shapeId).exists.transact(xa).unsafeToFuture
+      ShapeDao
+        .authorized(user, ObjectType.Shape, shapeId, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
     } {
       complete {
         ShapeDao

@@ -13,7 +13,7 @@ import com.rasterfoundry.akkautil.{
 import com.rasterfoundry.common.AWSBatch
 import com.rasterfoundry.database.UploadDao
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._

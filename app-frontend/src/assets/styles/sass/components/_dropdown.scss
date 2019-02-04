@@ -40,12 +40,20 @@
   background-clip: padding-box;
   font-size: 1.3rem;
 
+  &.slim {
+    padding: 0px;
+  }
+
   // Dividers (basically an hr) within the dropdown
   .divider {
     height: 1px;
     margin: 10px 0;
     overflow: hidden;
     background-color: $shade-normal;
+  }
+
+  &.slim .divider {
+    margin: 0;
   }
 
   // Links within the dropdown menu

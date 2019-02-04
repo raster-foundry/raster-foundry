@@ -7,7 +7,7 @@ import { getNodeDefinition } from '_redux/node-utils';
 
 class LabNodeController {
     constructor($ngRedux, $scope, $log, $element, modalService, tokenService,
-                projectService, APP_CONFIG, $rootScope) {
+        projectService, APP_CONFIG, $rootScope) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
 
@@ -169,7 +169,7 @@ class LabNodeController {
                     project: this.node.projId
                 }).then((mapToken) => {
                     this.publishModal(
-                        this.projectService.getProjectLayerURL(
+                        this.projectService.getProjectTileURL(
                             this.node.projId, {mapToken: mapToken.id}
                         )
                     );
@@ -209,7 +209,8 @@ const LabNodeComponent = {
     controller: LabNodeController,
     bindings: {
         nodeId: '<',
-        model: '<'
+        model: '<',
+        enableSharing: '<'
     }
 };
 

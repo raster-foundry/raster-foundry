@@ -2,12 +2,14 @@
 import { FrameView } from '../../../components/map/labMap/frame.module.js';
 import LabActions from '_redux/actions/lab-actions';
 import NodeActions from '_redux/actions/node-actions';
+import autoInject from '_appRoot/autoInject';
 
 class LabAnalysisController {
     constructor(
         $ngRedux, $scope, $rootScope, $state, $timeout, $element, $window, $document, modalService,
         mapService, projectService, authService, mapUtilsService, analysisService, tokenService,
-        APP_CONFIG
+        platform, user, permissionsService,
+        APP_CONFIG,
     ) {
         'ngInject';
         $scope.autoInject(this, arguments);
@@ -17,8 +19,7 @@ class LabAnalysisController {
         return {
             analysis: state.lab.analysis,
             nodes: state.lab.nodes,
-            previewNodes: state.lab.previewNodes,
-            user: state.api.user
+            previewNodes: state.lab.previewNodes
         };
     }
 
@@ -27,19 +28,17 @@ class LabAnalysisController {
         this.showDiagram = true;
         this.analysisId = this.$state.params.analysisid;
 
-        let userWatch = this.$scope.$watch('$ctrl.user', user => {
-            if (user) {
-                this.initAnalysis();
-                userWatch();
-            }
-        });
+        let unsubscribe = this.$ngRedux.connect(
+            this.mapStateToThis,
+            Object.assign({}, LabActions, NodeActions)
+        )(this);
 
+        this.$scope.$on('$destroy', unsubscribe);
         this.$scope.$on('$destroy', () => {
             $('body').css({overflow: ''});
         });
-        $('body').css({overflow: 'hidden'});
 
-        this.singlePreviewPosition = {x: 0, offset: 10, side: 'none'};
+        $('body').css({overflow: 'hidden'});
 
         this.$scope.$watch('$ctrl.previewNodes', (nodes) => {
             if (nodes && nodes.length) {
@@ -49,11 +48,8 @@ class LabAnalysisController {
             }
         });
 
-        let unsubscribe = this.$ngRedux.connect(
-            this.mapStateToThis,
-            Object.assign({}, LabActions, NodeActions)
-        )(this);
-        this.$scope.$on('$destroy', unsubscribe);
+        this.singlePreviewPosition = {x: 0, offset: 10, side: 'none'};
+        this.initAnalysis();
     }
 
     getMap() {
@@ -69,6 +65,20 @@ class LabAnalysisController {
         } else if (!this.analysisId) {
             this.$state.go('lab.browse.analyses');
         }
+        let watchAnalysis = this.$scope.$watch('$ctrl.analysis', (current) => {
+            if (current) {
+                this.fetchAnalysisPermissions(current);
+                watchAnalysis();
+            }
+        });
+    }
+
+    fetchAnalysisPermissions(analysis) {
+        this.permissionsService
+            .getEditableObjectPermissions('tool-runs', 'ANALYSIS', analysis, this.authService.user)
+            .then(permissions => {
+                this.permissions = permissions;
+            });
     }
 
     onAnalysisParameterChange(nodeid, project, band, override, renderDef, position) {
@@ -130,7 +140,7 @@ class LabAnalysisController {
                     project: node.projId
                 }).then((mapToken) => {
                     this.publishModal(
-                        this.projectService.getProjectLayerURL(
+                        this.projectService.getProjectTileURL(
                             node.projId, {mapToken: mapToken.id}
                         )
                     );
@@ -228,7 +238,7 @@ class LabAnalysisController {
             let labNode = this.nodes.get(id);
             // let labNode = this.findNodeinAST(id, this.analysis.executionParameters);
             if (labNode.type === 'projectSrc') {
-                return this.projectService.getProjectLayerURL({
+                return this.projectService.getProjectTileURL({
                     id: labNode.projId
                 }, {
                     token: token
@@ -351,7 +361,9 @@ class LabAnalysisController {
                         this.$timeout(() => {
                             let s = this.analysisService.generateSourcesFromAST(this.analysis);
                             let firstSourceId = Object.keys(s)[0];
-                            this.projectService.fetchProject(s[firstSourceId].projId).then(p => {
+                            this.projectService.fetchProject(s[firstSourceId].projId, {
+                                analysisId: this.analysisId
+                            }).then(p => {
                                 this.fitProjectExtent(p);
                             });
                         });
@@ -562,8 +574,41 @@ class LabAnalysisController {
             this.onSingleSelect(nodeId);
         }
     }
+
+    permissionsModal() {
+        this.modalService.open({
+            component: 'rfPermissionModal',
+            resolve: {
+                object: () => this.analysis,
+                permissionsBase: () => 'tool-runs',
+                objectType: () => 'ANALYSIS',
+                objectName: () => this.analysis.name,
+                platform: () => this.platform
+            }
+        }).result.then(() => this.fetchAnalysisPermissions(this.analysis));
+    }
 }
 
-
-export default angular.module('pages.lab.analysis', [])
+const LabAnalysisModule = angular
+    .module('pages.lab.analysis', [])
     .controller('LabAnalysisController', LabAnalysisController);
+
+LabAnalysisModule.resolve = {
+    user: ($stateParams, authService) => {
+        return authService.getCurrentUser();
+    },
+    userRoles: (authService) => {
+        return authService.fetchUserRoles();
+    },
+    platform: (userRoles, platformService) => {
+        const platformRole = userRoles.find(r =>
+            r.groupType === 'PLATFORM'
+        );
+
+        return platformService.getPlatform(platformRole.groupId);
+    }
+};
+
+autoInject(LabAnalysisModule);
+
+export default LabAnalysisModule;

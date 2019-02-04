@@ -1,7 +1,7 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
@@ -158,10 +158,13 @@ class AnnotationDaoSpec
                   .toAnnotation(
                     dbProject.id,
                     dbUser,
-                    firstAnnotation.annotationGroup
+                    firstAnnotation.annotationGroup,
+                    dbProject.defaultLayerId
                   )
                   .copy(id = annotationId)
-                AnnotationDao.updateAnnotation(newAnnotation, dbUser) flatMap {
+                AnnotationDao.updateAnnotation(dbProject.id,
+                                               newAnnotation,
+                                               dbUser) flatMap {
                   (affectedRows: Int) =>
                     {
                       AnnotationDao.unsafeGetAnnotationById(annotationId) map {

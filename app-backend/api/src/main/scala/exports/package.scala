@@ -8,10 +8,13 @@ import java.util.Date
 import com.amazonaws.services.s3.AmazonS3URI
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.common.S3
-import com.rasterfoundry.datamodel.{Export, ExportOptions, User}
+import com.rasterfoundry.common.datamodel.{Export, ExportOptions, User}
 import io.circe.syntax._
 
 package object exports extends Config {
+
+  val s3Client = S3()
+
   implicit def listUrlToListString(urls: List[URL]): List[String] =
     urls.map(_.toString)
 
@@ -19,7 +22,7 @@ package object exports extends Config {
     def getSignedUrls(): List[URL] = {
       (exportOptions.source.getScheme match {
         case "s3" | "s3a" | "s3n" =>
-          Some(S3.getSignedUrls(exportOptions.source))
+          Some(s3Client.getSignedUrls(exportOptions.source))
         case _ => None
       }).getOrElse(Nil)
     }
@@ -27,17 +30,17 @@ package object exports extends Config {
     def getObjectKeys(): List[String] = {
       (exportOptions.source.getScheme match {
         case "s3" | "s3a" | "s3n" =>
-          Some(S3.getObjectKeys(exportOptions.source))
+          Some(s3Client.getObjectKeys(exportOptions.source))
         case _ => None
       }).getOrElse(Nil)
     }
 
     def getSignedUrl(objectKey: String): URL = {
-      val amazonURI = new AmazonS3URI(exportOptions.source + "/" + objectKey)
+      val amazonURI = S3.createS3Uri(exportOptions.source + "/" + objectKey)
       val bucket: String = amazonURI.getBucket
       val key: String = URLDecoder.decode(amazonURI.getKey, UTF_8.toString())
       (exportOptions.source.getScheme match {
-        case "s3" | "s3a" | "s3n" => Some(S3.getSignedUrl(bucket, key))
+        case "s3" | "s3a" | "s3n" => Some(s3Client.getSignedUrl(bucket, key))
         case _                    => None
       }).getOrElse(new URL(""))
     }
@@ -46,12 +49,12 @@ package object exports extends Config {
   implicit class UserMethods(user: User) {
     def createDefaultExportSource(export: Export): URI = {
       val uri = user.getDefaultExportSource(export, dataBucket)
-      val amazonURI = new AmazonS3URI(uri)
+      val amazonURI = S3.createS3Uri(uri)
       val (bucket, key) = amazonURI.getBucket -> amazonURI.getKey
       val now = new Timestamp(new Date().getTime)
 
-      if (!S3.doesObjectExist(bucket, s"${key}/RFUploadAccessTestFile")) {
-        S3.putObjectString(
+      if (!s3Client.doesObjectExist(bucket, s"${key}/RFUploadAccessTestFile")) {
+        s3Client.putObjectString(
           dataBucket,
           s"${key}/RFUploadAccessTestFile",
           s"Allow Upload Access for RF: ${key} at ${now.toString}"

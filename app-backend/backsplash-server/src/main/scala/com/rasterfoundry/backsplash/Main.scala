@@ -3,10 +3,16 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.database.{
   LayerAttributeDao,
   SceneDao,
+  SceneToLayerDao,
   SceneToProjectDao,
   ToolRunDao
 }
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.MosaicImplicits
+import com.rasterfoundry.backsplash.Parameters._
+import com.rasterfoundry.database.util.RFTransactor
+
 import cats.Applicative
 import cats.data.OptionT
 import cats.data.Validated._
@@ -14,7 +20,6 @@ import cats.effect._
 import cats.implicits._
 import com.olegpy.meow.hierarchy._
 import fs2.Stream
-import geotrellis.gdal.sgdal
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.server._
@@ -29,24 +34,17 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
 import org.http4s.util.CaseInsensitiveString
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.FiniteDuration
-import java.util.concurrent.{Executors, TimeUnit}
-
-import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.backsplash.MosaicImplicits
-import com.rasterfoundry.backsplash.Parameters._
-import com.rasterfoundry.backsplash.MetricsRegistrator
-import java.util.UUID
-
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.rasterfoundry.database.util.RFTransactor
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.FiniteDuration
+import java.util.concurrent.{Executors, TimeUnit}
+import java.util.UUID
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
@@ -74,9 +72,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       new ThreadFactoryBuilder().setNameFormat("blaze-cached-%d").build())
   )
 
-  val mtr = new MetricsRegistrator()
-
-  val projectStoreImplicits = new ProjectStoreImplicits(xa, mtr)
+  val projectStoreImplicits = new ProjectStoreImplicits(xa)
   import projectStoreImplicits.projectStore
 
   val timeout: FiniteDuration =
@@ -108,21 +104,21 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       OptionT.pure[IO](Response[IO](Status.GatewayTimeout))
     )(service)
 
-  val authenticators = new Authenticators(xa, mtr)
+  val authenticators = new Authenticators(xa)
 
-  val mosaicImplicits = new MosaicImplicits(mtr, LayerAttributeDao())
-  val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa, mtr)
+  val mosaicImplicits = new MosaicImplicits(LayerAttributeDao())
+  val toolStoreImplicits = new ToolStoreImplicits(mosaicImplicits, xa)
   import toolStoreImplicits._
 
   val mosaicService: HttpRoutes[IO] =
-    authenticators.tokensAuthMiddleware(AuthedAutoSlash(
-      new MosaicService(SceneToProjectDao(), mtr, mosaicImplicits, xa).routes))
+    authenticators.tokensAuthMiddleware(
+      AuthedAutoSlash(
+        new MosaicService(SceneToLayerDao(), mosaicImplicits, xa).routes))
 
   val analysisService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
       AuthedAutoSlash(
         new AnalysisService(ToolRunDao(),
-                            mtr,
                             mosaicImplicits,
                             toolStoreImplicits,
                             xa).routes))
@@ -130,20 +126,18 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   val sceneMosaicService: HttpRoutes[IO] =
     authenticators.tokensAuthMiddleware(
       AuthedAutoSlash(
-        new SceneService(SceneDao(),
-                         mtr,
-                         mosaicImplicits,
-                         LayerAttributeDao(),
-                         xa).routes
+        new SceneService(SceneDao(), mosaicImplicits, LayerAttributeDao(), xa).routes
       )
     )
 
   val httpApp =
     Router(
-      "/" -> mtr.middleware(withCORS(withTimeout(mosaicService))),
-      "/scenes" -> mtr.middleware(withCORS(withTimeout(sceneMosaicService))),
-      "/tools" -> mtr.middleware(withCORS(withTimeout(analysisService))),
-      "/healthcheck" -> AutoSlash(new HealthcheckService[IO]().routes)
+      "/" -> ProjectToProjectLayerMiddleware(
+        withCORS(withTimeout(mosaicService)),
+        xa),
+      "/scenes" -> withCORS(withTimeout(sceneMosaicService)),
+      "/tools" -> withCORS(withTimeout(analysisService)),
+      "/healthcheck" -> AutoSlash(new HealthcheckService(xa).routes)
     )
 
   val startupBanner =
@@ -170,7 +164,6 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   def run(args: List[String]): IO[ExitCode] =
     for {
-      _ <- IO { mtr.reportToGraphite(Config.server.graphiteUrl) }
       exit <- stream.compile.drain.map(_ => ExitCode.Success)
     } yield exit
 }

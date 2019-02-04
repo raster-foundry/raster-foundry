@@ -1,7 +1,7 @@
 package com.rasterfoundry.akkautil
 
-import java.net.URL
-import java.util.UUID
+import com.rasterfoundry.database._
+import com.rasterfoundry.common.datamodel._
 
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
@@ -9,8 +9,6 @@ import akka.http.scaladsl.server._
 import cats.effect.IO
 import cats.implicits._
 import cats.data._
-import com.rasterfoundry.database._
-import com.rasterfoundry.datamodel._
 import com.guizmaii.scalajwt.{ConfigurableJwtValidator, JwtToken}
 import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
 import com.nimbusds.jose.proc.SecurityContext
@@ -24,6 +22,8 @@ import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 
 import scala.concurrent.Future
+import java.net.URL
+import java.util.UUID
 
 trait Authentication extends Directives with LazyLogging {
 

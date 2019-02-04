@@ -7,8 +7,9 @@ import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.ToolRunDao
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.tool
-import com.rasterfoundry.tool.ast.MapAlgebraAST
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.ast.MapAlgebraAST
+import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 
 import cats.effect.IO
 import cats.implicits._
@@ -19,28 +20,27 @@ import java.util.UUID
 
 class ToolStoreImplicits[HistStore: HistogramStore](
     mosaicImplicits: MosaicImplicits[HistStore],
-    xa: Transactor[IO],
-    mtr: MetricsRegistrator)
-    extends ProjectStoreImplicits(xa, mtr) {
+    xa: Transactor[IO])
+    extends ProjectStoreImplicits(xa) {
 
   import mosaicImplicits._
   implicit val tmsReification = rawMosaicTmsReification
 
-  val mamlAdapter = new BacksplashMamlAdapter(mosaicImplicits, xa, mtr)
+  val mamlAdapter = new BacksplashMamlAdapter(mosaicImplicits, xa)
 
-  private def toolToColorRd(toolRd: tool.RenderDefinition): RenderDefinition = {
+  private def toolToColorRd(toolRd: RenderDefinition): RenderDefinition = {
     val scaleOpt = toolRd.scale match {
-      case tool.Continuous      => Continuous
-      case tool.Sequential      => Sequential
-      case tool.Diverging       => Diverging
-      case tool.Qualitative(fb) => Qualitative(fb)
+      case Continuous      => Continuous
+      case Sequential      => Sequential
+      case Diverging       => Diverging
+      case Qualitative(fb) => Qualitative(fb)
     }
 
     val clipOpt = toolRd.clip match {
-      case tool.ClipNone  => ClipNone
-      case tool.ClipLeft  => ClipLeft
-      case tool.ClipRight => ClipRight
-      case tool.ClipBoth  => ClipBoth
+      case ClipNone  => ClipNone
+      case ClipLeft  => ClipLeft
+      case ClipRight => ClipRight
+      case ClipBoth  => ClipBoth
     }
 
     RenderDefinition(toolRd.breakpoints, scaleOpt, clipOpt)

@@ -1,6 +1,6 @@
 package com.rasterfoundry.api.project
 
-import java.util.{Calendar, UUID}
+import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
@@ -9,11 +9,9 @@ import better.files.{File => ScalaFile}
 import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits._
-import com.amazonaws.services.s3.AmazonS3URI
 import com.rasterfoundry.api.scene._
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
-import com.rasterfoundry.common.S3._
 import com.rasterfoundry.common.utils.Shapefile
 import com.rasterfoundry.common.{AWSBatch, RollbarNotifier}
 import com.rasterfoundry.akkautil.{
@@ -23,8 +21,8 @@ import com.rasterfoundry.akkautil.{
 }
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.datamodel.GeoJsonCodec._
-import com.rasterfoundry.datamodel.{Annotation, _}
+import com.rasterfoundry.common.datamodel.GeoJsonCodec._
+import com.rasterfoundry.common.datamodel.{Annotation, _}
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
@@ -34,7 +32,6 @@ import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.shapefile.ShapeFileReader
 import io.circe.generic.JsonCodec
-import kamon.akka.http.KamonTraceDirectives
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Success
@@ -56,7 +53,6 @@ trait ProjectRoutes
     with AWSBatch
     with UserErrorHandler
     with RollbarNotifier
-    with KamonTraceDirectives
     with LazyLogging {
 
   val xa: Transactor[IO]
@@ -66,81 +62,116 @@ trait ProjectRoutes
   val projectRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {
-        traceName("projects-list") {
-          listProjects
-        }
+        listProjects
       } ~
         post {
-          traceName("projects-create") {
-            createProject
-          }
+          createProject
         }
     } ~
       pathPrefix(JavaUUID) { projectId =>
         pathEndOrSingleSlash {
           get {
-            traceName("projects-detail") {
-              getProject(projectId)
-            }
+            getProject(projectId)
           } ~
             put {
-              traceName("projects-update") {
-                updateProject(projectId)
-              }
+              updateProject(projectId)
             } ~
             delete {
-              traceName("projects-delete") {
-                deleteProject(projectId)
-              }
+              deleteProject(projectId)
             }
         } ~
+          pathPrefix("layers") {
+            pathEndOrSingleSlash {
+              post {
+                createProjectLayer(projectId)
+              } ~
+                get {
+                  listProjectLayers(projectId)
+                }
+            } ~
+              pathPrefix(JavaUUID) { layerId =>
+                pathEndOrSingleSlash {
+                  get {
+                    getProjectLayer(projectId, layerId)
+                  } ~
+                    put {
+                      updateProjectLayer(projectId, layerId)
+                    } ~
+                    delete {
+                      deleteProjectLayer(projectId, layerId)
+                    }
+                } ~
+                  pathPrefix("mosaic") {
+                    pathEndOrSingleSlash {
+                      get {
+                        getProjectLayerMosaicDefinition(projectId, layerId)
+                      }
+                    } ~
+                      pathPrefix(JavaUUID) { sceneId =>
+                        pathEndOrSingleSlash {
+                          get {
+                            getProjectLayerSceneColorCorrectParams(projectId,
+                                                                   layerId,
+                                                                   sceneId)
+                          } ~
+                            put {
+                              setProjectLayerSceneColorCorrectParams(projectId,
+                                                                     layerId,
+                                                                     sceneId)
+                            }
+                        }
+                      } ~
+                      pathPrefix("bulk-update-color-corrections") {
+                        pathEndOrSingleSlash {
+                          post {
+                            setProjectLayerScenesColorCorrectParams(projectId,
+                                                                    layerId)
+                          }
+                        }
+                      }
+                  } ~
+                  pathPrefix("order") {
+                    pathEndOrSingleSlash {
+                      put {
+                        setProjectLayerSceneOrder(projectId, layerId)
+                      }
+                    }
+                  }
+              }
+          } ~
           pathPrefix("project-color-mode") {
             pathEndOrSingleSlash {
               post {
-                traceName("project-set-color-mode") {
-                  setProjectColorMode(projectId)
-                }
+                setProjectColorMode(projectId)
               }
             }
           } ~
           pathPrefix("labels") {
             pathEndOrSingleSlash {
               get {
-                traceName("project-list-labels") {
-                  listLabels(projectId)
-                }
+                listLabels(projectId)
               }
             }
           } ~
           pathPrefix("annotation-groups") {
             pathEndOrSingleSlash {
               get {
-                traceName("projects-list-annotation-groups") {
-                  listAnnotationGroups(projectId)
-                }
+                listAnnotationGroups(projectId)
               } ~
                 post {
-                  traceName("projects-create-annotation-group") {
-                    createAnnotationGroup(projectId)
-                  }
+                  createAnnotationGroup(projectId)
                 }
             } ~
               pathPrefix(JavaUUID) { annotationGroupId =>
                 pathEndOrSingleSlash {
                   get {
-                    traceName("projects-get-annotation-group") {
-                      getAnnotationGroup(projectId, annotationGroupId)
-                    }
+                    getAnnotationGroup(projectId, annotationGroupId)
                   } ~
                     put {
-                      traceName("projects-update-annotation-group") {
-                        updateAnnotationGroup(projectId, annotationGroupId)
-                      }
+                      updateAnnotationGroup(projectId, annotationGroupId)
                     } ~
                     delete {
-                      traceName("projects-delete-annotation-group") {
-                        deleteAnnotationGroup(projectId, annotationGroupId)
-                      }
+                      deleteAnnotationGroup(projectId, annotationGroupId)
                     }
                 } ~
                   pathPrefix("summary") {
@@ -151,64 +182,56 @@ trait ProjectRoutes
           pathPrefix("annotations") {
             pathEndOrSingleSlash {
               get {
-                traceName("projects-list-annotations") {
-                  listAnnotations(projectId)
-                }
+                listAnnotations(projectId)
               } ~
                 post {
-                  traceName("projects-create-annotations") {
-                    createAnnotation(projectId)
-                  }
+                  createAnnotation(projectId)
                 } ~
                 delete {
-                  traceName("projects-delete-annotations") {
-                    deleteProjectAnnotations(projectId)
-                  }
+                  deleteProjectAnnotations(projectId)
                 }
             } ~
               pathPrefix("shapefile") {
                 pathEndOrSingleSlash {
                   get {
-                    traceName("project-annotations-shapefile") {
-                      exportAnnotationShapefile(projectId)
-                    }
+                    exportAnnotationShapefile(projectId)
                   } ~
                     post {
-                      traceName("project-annotations-shapefile-upload") {
-                        authenticate { user =>
-                          val tempFile = ScalaFile.newTemporaryFile()
-                          tempFile.deleteOnExit()
-                          val response =
-                            storeUploadedFile("name", (_) => tempFile.toJava) {
-                              (m, _) =>
-                                processShapefile(projectId, tempFile, m)
-                            }
-                          tempFile.delete()
-                          response
-                        }
+                      authenticate { user =>
+                        val tempFile = ScalaFile.newTemporaryFile()
+                        tempFile.deleteOnExit()
+                        val response =
+                          storeUploadedFile("name", (_) => tempFile.toJava) {
+                            (m, _) =>
+                              processShapefile(projectId,
+                                               tempFile,
+                                               m,
+                                               None,
+                                               None)
+                          }
+                        tempFile.delete()
+                        response
                       }
                     }
                 } ~
                   pathPrefix("import") {
                     pathEndOrSingleSlash {
                       (post & formFieldMap) { fields =>
-                        traceName(
-                          "project-annotations-shapefile-import-with-fields") {
-                          authenticate { user =>
-                            val tempFile = ScalaFile.newTemporaryFile()
-                            tempFile.deleteOnExit()
-                            val response =
-                              storeUploadedFile("shapefile",
-                                                (_) => tempFile.toJava) {
-                                (m, _) =>
-                                  processShapefile(projectId,
-                                                   tempFile,
-                                                   m,
-                                                   Some(fields))
-                              }
-                            tempFile.delete()
-                            response
-                          }
+                        authenticate { user =>
+                          val tempFile = ScalaFile.newTemporaryFile()
+                          tempFile.deleteOnExit()
+                          val response =
+                            storeUploadedFile("shapefile",
+                                              (_) => tempFile.toJava) {
+                              (m, _) =>
+                                processShapefile(projectId,
+                                                 tempFile,
+                                                 m,
+                                                 Some(fields),
+                                                 None)
+                            }
+                          tempFile.delete()
+                          response
                         }
                       }
                     }
@@ -217,19 +240,13 @@ trait ProjectRoutes
               pathPrefix(JavaUUID) { annotationId =>
                 pathEndOrSingleSlash {
                   get {
-                    traceName("projects-get-annotation") {
-                      getAnnotation(projectId, annotationId)
-                    }
+                    getAnnotation(projectId, annotationId)
                   } ~
                     put {
-                      traceName("projects-update-annotation") {
-                        updateAnnotation(projectId, annotationId)
-                      }
+                      updateAnnotation(projectId, annotationId)
                     } ~
                     delete {
-                      traceName("projects-delete-annotation") {
-                        deleteAnnotation(projectId, annotationId)
-                      }
+                      deleteAnnotation(projectId, annotationId)
                     }
                 }
               }
@@ -237,71 +254,51 @@ trait ProjectRoutes
           pathPrefix("areas-of-interest") {
             pathEndOrSingleSlash {
               get {
-                traceName("projects-list-areas-of-interest") {
-                  listAOIs(projectId)
-                }
+                listAOIs(projectId)
               } ~
                 post {
-                  traceName("projects-create-areas-of-interest") {
-                    createAOI(projectId)
-                  }
+                  createAOI(projectId)
                 }
             }
           } ~
           pathPrefix("datasources") {
             pathEndOrSingleSlash {
               get {
-                traceName("project-list-datasources") {
-                  listProjectDatasources(projectId)
-                }
+                listProjectDatasources(projectId)
               }
             }
           } ~
           pathPrefix("scenes") {
             pathEndOrSingleSlash {
               get {
-                traceName("project-list-scenes") {
-                  listProjectScenes(projectId)
-                }
+                listProjectScenes(projectId)
               } ~
                 post {
-                  traceName("project-add-scenes-list") {
-                    addProjectScenes(projectId)
-                  }
+                  addProjectScenes(projectId)
                 } ~
                 put {
-                  traceName("project-update-scenes-list") {
-                    updateProjectScenes(projectId)
-                  }
+                  updateProjectScenes(projectId)
                 } ~
                 delete {
-                  traceName("project-delete-scenes-list") {
-                    deleteProjectScenes(projectId)
-                  }
+                  deleteProjectScenes(projectId)
                 }
             } ~
               pathPrefix("bulk-add-from-query") {
                 pathEndOrSingleSlash {
                   post {
-                    traceName("project-add-scenes-from-query") {
-                      addProjectScenesFromQueryParams(projectId)
-                    }
+                    addProjectScenesFromQueryParams(projectId)
                   }
                 }
               } ~
               pathPrefix("accept") {
                 post {
-                  traceName("project-accept-scenes-list") {
-                    acceptScenes(projectId)
-                  }
+                  acceptScenes(projectId)
                 }
               } ~
               pathPrefix(JavaUUID) { sceneId =>
                 pathPrefix("accept") {
                   post {
-                    traceName("project-accept-scene") {
-                      acceptScene(projectId, sceneId)
-                    }
+                    acceptScene(projectId, sceneId)
                   }
                 }
               }
@@ -309,29 +306,21 @@ trait ProjectRoutes
           pathPrefix("mosaic") {
             pathEndOrSingleSlash {
               get {
-                traceName("project-get-mosaic-definition") {
-                  getProjectMosaicDefinition(projectId)
-                }
+                getProjectMosaicDefinition(projectId)
               }
             } ~
               pathPrefix(JavaUUID) { sceneId =>
                 get {
-                  traceName("project-get-scene-color-corrections") {
-                    getProjectSceneColorCorrectParams(projectId, sceneId)
-                  }
+                  getProjectSceneColorCorrectParams(projectId, sceneId)
                 } ~
                   put {
-                    traceName("project-set-scene-color-corrections") {
-                      setProjectSceneColorCorrectParams(projectId, sceneId)
-                    }
+                    setProjectSceneColorCorrectParams(projectId, sceneId)
                   }
               } ~
               pathPrefix("bulk-update-color-corrections") {
                 pathEndOrSingleSlash {
                   post {
-                    traceName("project-bulk-update-color-corrections") {
-                      setProjectScenesColorCorrectParams(projectId)
-                    }
+                    setProjectScenesColorCorrectParams(projectId)
                   }
                 }
               }
@@ -339,49 +328,30 @@ trait ProjectRoutes
           pathPrefix("order") {
             pathEndOrSingleSlash {
               put {
-                traceName("projects-set-scene-order") {
-                  setProjectSceneOrder(projectId)
-                }
+                setProjectSceneOrder(projectId)
               }
-            } // ~
-            // pathPrefix("move") {
-            //   pathPrefix(IntNumber) { from =>
-            //     pathPrefix(IntNumber) { to =>
-            //       traceName("projects-move-scene-order") {
-            //         moveProjectScene(projectId, from, to)
-            //       }
-            //     }
-            //   }
-            // }
+            }
           } ~
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
               put {
-                traceName("replace-project-permissions") {
-                  replaceProjectPermissions(projectId)
-                }
-              }
-            } ~
-              post {
-                traceName("add-project-permission") {
+                replaceProjectPermissions(projectId)
+              } ~
+                post {
                   addProjectPermission(projectId)
-                }
-              } ~
-              get {
-                traceName("list-project-permissions") {
+                } ~
+                get {
                   listProjectPermissions(projectId)
+                } ~
+                delete {
+                  deleteProjectPermissions(projectId)
                 }
-              } ~
-              delete {
-                deleteProjectPermissions(projectId)
-              }
+            }
           } ~
           pathPrefix("actions") {
             pathEndOrSingleSlash {
               get {
-                traceName("list-user-allowed-actions") {
-                  listUserProjectActions(projectId)
-                }
+                listUserProjectActions(projectId)
               }
             }
           }
@@ -428,19 +398,30 @@ trait ProjectRoutes
         }
       case _ =>
         authenticate { user =>
-          authorizeAsync {
-            ProjectDao
-              .authorized(user, ObjectType.Project, projectId, ActionType.View)
-              .transact(xa)
-              .unsafeToFuture
-          } {
-            rejectEmptyResponse {
-              complete {
-                ProjectDao.query
-                  .filter(projectId)
-                  .selectOption
-                  .transact(xa)
-                  .unsafeToFuture
+          (projectQueryParameters) { projectQueryParams =>
+            authorizeAsync {
+              val authorized = for {
+                authProject <- ProjectDao.authorized(user,
+                                                     ObjectType.Project,
+                                                     projectId,
+                                                     ActionType.View)
+                authResult <- (authProject, projectQueryParams.analysisId) match {
+                  case (false, Some(analysisId: UUID)) =>
+                    ToolRunDao
+                      .authorizeReferencedProject(user, analysisId, projectId)
+                  case (_, _) => authProject.pure[ConnectionIO]
+                }
+              } yield authResult
+              authorized.transact(xa).unsafeToFuture
+            } {
+              rejectEmptyResponse {
+                complete {
+                  ProjectDao.query
+                    .filter(projectId)
+                    .selectOption
+                    .transact(xa)
+                    .unsafeToFuture
+                }
               }
             }
           }
@@ -502,7 +483,7 @@ trait ProjectRoutes
     } {
       complete {
         AnnotationGroupDao
-          .listAnnotationGroupsForProject(projectId)
+          .listForProject(projectId)
           .transact(xa)
           .unsafeToFuture
       }
@@ -573,7 +554,7 @@ trait ProjectRoutes
         entity(as[AnnotationGroup]) { annotationGroup =>
           complete {
             AnnotationGroupDao
-              .updateAnnotationGroup(annotationGroup, agId, user)
+              .updateAnnotationGroup(projectId, annotationGroup, agId, user)
               .transact(xa)
               .unsafeToFuture
           }
@@ -608,10 +589,8 @@ trait ProjectRoutes
       (withPagination & annotationQueryParams) {
         (page: PageRequest, queryParams: AnnotationQueryParameters) =>
           complete {
-            AnnotationDao.query
-              .filter(fr"project_id=$projectId")
-              .filter(queryParams)
-              .page(page)
+            AnnotationDao
+              .listByLayer(projectId, page, queryParams)
               .transact(xa)
               .unsafeToFuture
               .map { p =>
@@ -651,34 +630,29 @@ trait ProjectRoutes
   }
 
   def exportAnnotationShapefile(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      onSuccess(
-        AnnotationDao.query
-          .filter(fr"project_id=$projectId")
-          .list
+    (annotationExportQueryParameters) { annotationExportQP =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
           .transact(xa)
-          .unsafeToFuture) {
-        case annotations @ (annotation: List[Annotation]) => {
-          val zipfile: ScalaFile =
-            AnnotationShapefileService.annotationsToShapefile(annotations)
-          val cal: Calendar = Calendar.getInstance()
-          cal.add(Calendar.DAY_OF_YEAR, 1)
-          val s3Uri: AmazonS3URI = new AmazonS3URI(
-            user.getDefaultAnnotationShapefileSource(dataBucket))
-          putObject(dataBucket, s3Uri.getKey, zipfile.toJava)
-            .setExpirationTime(cal.getTime)
-          zipfile.delete(true)
-          complete(getSignedUrl(dataBucket, s3Uri.getKey).toString())
+          .unsafeToFuture
+      } {
+        onSuccess(
+          AnnotationDao
+            .listForExport(projectId, annotationExportQP)
+            .transact(xa)
+            .unsafeToFuture) {
+          case annotations @ (annotation: List[Annotation]) => {
+            complete(
+              AnnotationShapefileService
+                .getAnnotationShapefileDownloadUrl(annotations, user)
+            )
+          }
+          case _ =>
+            complete(
+              throw new Exception(
+                "Annotations do not exist or are not accessible by this user"))
         }
-        case _ =>
-          complete(
-            throw new Exception(
-              "Annotations do not exist or are not accessible by this user"))
       }
     }
   }
@@ -693,9 +667,8 @@ trait ProjectRoutes
       } {
         rejectEmptyResponse {
           complete {
-            AnnotationDao.query
-              .filter(annotationId)
-              .selectOption
+            AnnotationDao
+              .getAnnotationById(projectId, annotationId)
               .transact(xa)
               .unsafeToFuture
               .map {
@@ -716,11 +689,10 @@ trait ProjectRoutes
       } {
         entity(as[Annotation.GeoJSON]) {
           updatedAnnotation: Annotation.GeoJSON =>
-            onSuccess(
-              AnnotationDao
-                .updateAnnotation(updatedAnnotation.toAnnotation, user)
-                .transact(xa)
-                .unsafeToFuture) { count =>
+            onSuccess(AnnotationDao
+              .updateAnnotation(projectId, updatedAnnotation.toAnnotation, user)
+              .transact(xa)
+              .unsafeToFuture) { count =>
               completeSingleOrNotFound(count)
             }
         }
@@ -736,9 +708,8 @@ trait ProjectRoutes
           .unsafeToFuture
       } {
         onSuccess(
-          AnnotationDao.query
-            .filter(annotationId)
-            .delete
+          AnnotationDao
+            .deleteById(projectId, annotationId)
             .transact(xa)
             .unsafeToFuture) {
           completeSingleOrNotFound
@@ -754,9 +725,8 @@ trait ProjectRoutes
         .unsafeToFuture
     } {
       onSuccess(
-        AnnotationDao.query
-          .filter(fr"project_id = ${projectId}")
-          .delete
+        AnnotationDao
+          .deleteByProjectLayer(projectId)
           .transact(xa)
           .unsafeToFuture) {
         completeSomeOrNotFound
@@ -807,10 +777,14 @@ trait ProjectRoutes
           .unsafeToFuture
       } {
         complete {
-          SceneToProjectDao
-            .acceptScene(projectId, sceneId)
-            .transact(xa)
-            .unsafeToFuture
+          val acceptSceneIO = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            _ <- SceneToProjectDao.acceptScene(projectId, sceneId)
+            rowsAffected <- SceneToLayerDao.acceptScene(project.defaultLayerId,
+                                                        sceneId)
+          } yield { rowsAffected }
+
+          acceptSceneIO.transact(xa).unsafeToFuture
         }
       }
   }
@@ -827,11 +801,14 @@ trait ProjectRoutes
           complete(StatusCodes.RequestEntityTooLarge)
         }
 
-        onSuccess(
-          SceneToProjectDao
-            .acceptScenes(projectId, sceneIds)
-            .transact(xa)
-            .unsafeToFuture) { updatedOrder =>
+        val acceptScenesIO = for {
+          project <- ProjectDao.unsafeGetProjectById(projectId)
+          _ <- SceneToProjectDao.acceptScenes(projectId, sceneIds)
+          rowsAffected <- SceneToLayerDao.acceptScenes(project.defaultLayerId,
+                                                       sceneIds)
+        } yield { rowsAffected }
+
+        onSuccess(acceptScenesIO.transact(xa).unsafeToFuture) { updatedOrder =>
           complete(StatusCodes.NoContent)
         }
       }
@@ -857,38 +834,31 @@ trait ProjectRoutes
   }
 
   def listProjectDatasources(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      complete {
-        ProjectDatasourcesDao
-          .listProjectDatasources(projectId)
-          .transact(xa)
-          .unsafeToFuture
-      }
-    }
-  }
-
-  def moveProjectScene(projectId: UUID, from: Int, to: Int): Route =
-    authenticate { user =>
+    (projectQueryParameters) { projectQueryParams =>
       authorizeAsync {
-        ProjectDao
-          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-          .transact(xa)
-          .unsafeToFuture
+        val authorized = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.View)
+          authResult <- (authProject, projectQueryParams.analysisId) match {
+            case (false, Some(analysisId: UUID)) =>
+              ToolRunDao
+                .authorizeReferencedProject(user, analysisId, projectId)
+            case (_, _) => authProject.pure[ConnectionIO]
+          }
+        } yield authResult
+        authorized.transact(xa).unsafeToFuture
       } {
-        onSuccess(
-          SceneToProjectDao
-            .moveSceneOrder(projectId, from, to)
+        complete {
+          ProjectDatasourcesDao
+            .listProjectDatasources(projectId)
             .transact(xa)
-            .unsafeToFuture) { _ =>
-          complete(StatusCodes.NoContent)
+            .unsafeToFuture
         }
       }
     }
+  }
 
   /** Set the manually defined z-ordering for scenes within a given project */
   def setProjectSceneOrder(projectId: UUID): Route = authenticate { user =>
@@ -903,11 +873,14 @@ trait ProjectRoutes
           complete(StatusCodes.RequestEntityTooLarge)
         }
 
-        onSuccess(
-          SceneToProjectDao
-            .setManualOrder(projectId, sceneIds)
-            .transact(xa)
-            .unsafeToFuture) { updatedOrder =>
+        val setOrderIO = for {
+          project <- ProjectDao.unsafeGetProjectById(projectId)
+          _ <- SceneToProjectDao.setManualOrder(projectId, sceneIds)
+          updatedOrder <- SceneToLayerDao.setManualOrder(project.defaultLayerId,
+                                                         sceneIds)
+        } yield { updatedOrder }
+
+        onSuccess(setOrderIO.transact(xa).unsafeToFuture) { updatedOrder =>
           complete(StatusCodes.NoContent)
         }
       }
@@ -924,10 +897,15 @@ trait ProjectRoutes
           .unsafeToFuture
       } {
         complete {
-          SceneToProjectDao
-            .getColorCorrectParams(projectId, sceneId)
-            .transact(xa)
-            .unsafeToFuture
+          val getColorCorrectParamsIO = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            _ <- SceneToProjectDao.getColorCorrectParams(projectId, sceneId)
+            params <- SceneToLayerDao.getColorCorrectParams(
+              project.defaultLayerId,
+              sceneId)
+          } yield { params }
+
+          getColorCorrectParamsIO.transact(xa).unsafeToFuture
         }
       }
     }
@@ -942,12 +920,19 @@ trait ProjectRoutes
           .unsafeToFuture
       } {
         entity(as[ColorCorrect.Params]) { ccParams =>
-          onSuccess(
-            SceneToProjectDao
-              .setColorCorrectParams(projectId, sceneId, ccParams)
-              .transact(xa)
-              .unsafeToFuture) { sceneToProject =>
-            complete(StatusCodes.NoContent)
+          val setColorCorrectParamsIO = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            _ <- SceneToProjectDao.setColorCorrectParams(projectId,
+                                                         sceneId,
+                                                         ccParams)
+            stl <- SceneToLayerDao.setColorCorrectParams(project.defaultLayerId,
+                                                         sceneId,
+                                                         ccParams)
+          } yield { stl }
+
+          onSuccess(setColorCorrectParamsIO.transact(xa).unsafeToFuture) {
+            stl =>
+              complete(StatusCodes.NoContent)
           }
         }
       }
@@ -961,11 +946,14 @@ trait ProjectRoutes
         .unsafeToFuture
     } {
       entity(as[ProjectColorModeParams]) { colorBands =>
-        onSuccess(
-          SceneToProjectDao
-            .setProjectColorBands(projectId, colorBands)
-            .transact(xa)
-            .unsafeToFuture) { _ =>
+        val setProjectColorBandsIO = for {
+          project <- ProjectDao.unsafeGetProjectById(projectId)
+          _ <- SceneToProjectDao.setProjectColorBands(projectId, colorBands)
+          rowsAffected <- SceneToLayerDao
+            .setProjectLayerColorBands(project.defaultLayerId, colorBands)
+        } yield { rowsAffected }
+
+        onSuccess(setProjectColorBandsIO.transact(xa).unsafeToFuture) { _ =>
           complete(StatusCodes.NoContent)
         }
       }
@@ -982,12 +970,16 @@ trait ProjectRoutes
           .unsafeToFuture
       } {
         entity(as[BatchParams]) { params =>
-          onSuccess(
-            SceneToProjectDao
-              .setColorCorrectParamsBatch(projectId, params)
-              .transact(xa)
-              .unsafeToFuture) { scenesToProject =>
-            complete(StatusCodes.NoContent)
+          val setColorCorrectParamsBatchIO = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            _ <- SceneToProjectDao.setColorCorrectParamsBatch(projectId, params)
+            stl <- SceneToLayerDao
+              .setColorCorrectParamsBatch(project.defaultLayerId, params)
+          } yield { stl }
+
+          onSuccess(setColorCorrectParamsBatchIO.transact(xa).unsafeToFuture) {
+            scenesToProject =>
+              complete(StatusCodes.NoContent)
           }
         }
       }
@@ -1003,11 +995,20 @@ trait ProjectRoutes
     } {
       rejectEmptyResponse {
         complete {
-          SceneToProjectDao
-            .getMosaicDefinition(projectId)
+          val getMosaicDefinitionIO = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            _ <- SceneToProjectDao
+              .getMosaicDefinition(projectId)
+              .compile
+              .to[List]
+            result <- SceneToLayerDao
+              .getMosaicDefinition(project.defaultLayerId)
+              .compile
+              .to[List]
+          } yield { result }
+
+          getMosaicDefinitionIO
             .transact(xa)
-            .compile
-            .to[List]
             .unsafeToFuture
         }
       }
@@ -1026,7 +1027,7 @@ trait ProjectRoutes
           complete(StatusCodes.RequestEntityTooLarge)
         }
         val scenesAdded =
-          ProjectDao.addScenesToProject(sceneIds, projectId, true)
+          ProjectDao.addScenesToProject(sceneIds, projectId, true, None)
 
         complete { scenesAdded.transact(xa).unsafeToFuture }
       }
@@ -1105,9 +1106,8 @@ trait ProjectRoutes
 
   def listProjectPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
-        .ownedBy(user, projectId)
-        .exists
+      ProjectDao
+        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
     } {
@@ -1123,9 +1123,10 @@ trait ProjectRoutes
   def replaceProjectPermissions(projectId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (ProjectDao.query
-           .ownedBy(user, projectId)
-           .exists,
+        (ProjectDao.authorized(user,
+                               ObjectType.Project,
+                               projectId,
+                               ActionType.Edit),
          acrList traverse { acr =>
            ProjectDao.isValidPermission(acr, user)
          } map { _.foldLeft(true)(_ && _) }).tupled
@@ -1148,9 +1149,10 @@ trait ProjectRoutes
   def addProjectPermission(projectId: UUID): Route = authenticate { user =>
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
-        (ProjectDao.query
-           .ownedBy(user, projectId)
-           .exists,
+        (ProjectDao.authorized(user,
+                               ObjectType.Project,
+                               projectId,
+                               ActionType.Edit),
          ProjectDao.isValidPermission(acr, user)).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
@@ -1201,9 +1203,8 @@ trait ProjectRoutes
 
   def deleteProjectPermissions(projectId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ProjectDao.query
-        .ownedBy(user, projectId)
-        .exists
+      ProjectDao
+        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
         .transact(xa)
         .unsafeToFuture
     } {
@@ -1219,7 +1220,8 @@ trait ProjectRoutes
   def processShapefile(projectId: UUID,
                        tempFile: ScalaFile,
                        fileMetadata: FileInfo,
-                       propsO: Option[Map[String, String]] = None): Route =
+                       propsO: Option[Map[String, String]] = None,
+                       projectLayerIdO: Option[UUID]): Route =
     authenticate { user =>
       {
         val unzipped = tempFile.unzip()
@@ -1242,7 +1244,12 @@ trait ProjectRoutes
           case (true, true) => {
             propsO match {
               case Some(props) =>
-                processShapefileImport(matches, prj, props, user, projectId)
+                processShapefileImport(matches,
+                                       prj,
+                                       props,
+                                       user,
+                                       projectId,
+                                       projectLayerIdO)
               case _ =>
                 complete(StatusCodes.OK, processShapefileUpload(matches))
             }
@@ -1255,7 +1262,8 @@ trait ProjectRoutes
                              prj: Iterator[ScalaFile],
                              props: Map[String, String],
                              user: User,
-                             projectId: UUID): Route = {
+                             projectId: UUID,
+                             projectLayerIdO: Option[UUID]): Route = {
     val shapefilePath = matches.next.toString
     val prjPath: String = prj.next.toString
     val projectionSource = scala.io.Source.fromFile(prjPath)
@@ -1283,7 +1291,10 @@ trait ProjectRoutes
       case Right(annotationCreates) => {
         complete(
           StatusCodes.Created,
-          (AnnotationDao.insertAnnotations(annotationCreates, projectId, user)
+          (AnnotationDao.insertAnnotations(annotationCreates,
+                                           projectId,
+                                           user,
+                                           projectLayerIdO)
             map { (anns: List[Annotation]) =>
               anns map { _.toGeoJSONFeature }
             }).transact(xa).unsafeToFuture
@@ -1304,4 +1315,243 @@ trait ProjectRoutes
       .map(_.split(".Attribute: ")(1).split("<")(0))
       .toList
   }
+
+  def createProjectLayer(projectId: UUID): Route = authenticate { user =>
+    entity(as[ProjectLayer.Create]) { newProjectLayer =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        onSuccess(
+          ProjectLayerDao
+            .insertProjectLayer(newProjectLayer.toProjectLayer)
+            .transact(xa)
+            .unsafeToFuture) { projectLayer =>
+          complete(StatusCodes.Created, projectLayer)
+        }
+      }
+    }
+  }
+
+  def listProjectLayers(projectId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao
+        .authorized(user, ObjectType.Project, projectId, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      (withPagination) { (page) =>
+        complete {
+          ProjectLayerDao
+            .listProjectLayersForProject(page, projectId)
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
+    }
+  }
+
+  def getProjectLayer(projectId: UUID, layerId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete {
+            ProjectLayerDao
+              .getProjectLayer(projectId, layerId, user)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+  }
+
+  def updateProjectLayer(projectId: UUID, layerId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.Edit)
+          layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
+      } {
+        entity(as[ProjectLayer]) { updatedProjectLayer =>
+          onSuccess(
+            ProjectLayerDao
+              .updateProjectLayer(updatedProjectLayer, layerId)
+              .transact(xa)
+              .unsafeToFuture) {
+            completeSingleOrNotFound
+          }
+        }
+      }
+  }
+
+  def deleteProjectLayer(projectId: UUID, layerId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.Edit)
+          layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete {
+            ProjectLayerDao
+              .deleteProjectLayer(layerId)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+  }
+
+  def getProjectLayerMosaicDefinition(projectId: UUID,
+                                      projectLayerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.View)
+          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
+                                                         projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
+      } {
+        rejectEmptyResponse {
+          complete {
+            SceneToLayerDao
+              .getMosaicDefinition(projectLayerId)
+              .compile
+              .to[List]
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+
+  def getProjectLayerSceneColorCorrectParams(projectId: UUID,
+                                             projectLayerId: UUID,
+                                             sceneId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.View)
+          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
+                                                         projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
+      } {
+        complete {
+          SceneToLayerDao
+            .getColorCorrectParams(projectLayerId, sceneId)
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
+    }
+
+  def setProjectLayerSceneColorCorrectParams(projectId: UUID,
+                                             projectLayerId: UUID,
+                                             sceneId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.Edit)
+          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
+                                                         projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
+      } {
+        entity(as[ColorCorrect.Params]) { ccParams =>
+          onSuccess(
+            SceneToLayerDao
+              .setColorCorrectParams(projectLayerId, sceneId, ccParams)
+              .transact(xa)
+              .unsafeToFuture) { stl =>
+            complete(StatusCodes.NoContent)
+          }
+        }
+      }
+    }
+
+  def setProjectLayerScenesColorCorrectParams(projectId: UUID,
+                                              projectLayerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.Edit)
+          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
+                                                         projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
+      } {
+        entity(as[BatchParams]) { params =>
+          onSuccess(
+            SceneToLayerDao
+              .setColorCorrectParamsBatch(projectLayerId, params)
+              .transact(xa)
+              .unsafeToFuture
+          ) { scenesToLayer =>
+            complete(StatusCodes.NoContent)
+          }
+        }
+      }
+    }
+
+  def setProjectLayerSceneOrder(projectId: UUID, projectLayerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        val authIO: ConnectionIO[Boolean] = for {
+          authProject <- ProjectDao.authorized(user,
+                                               ObjectType.Project,
+                                               projectId,
+                                               ActionType.Edit)
+          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
+                                                         projectId)
+        } yield { authProject && layerExist }
+        authIO.transact(xa).unsafeToFuture
+      } {
+        entity(as[Seq[UUID]]) { sceneIds =>
+          if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+            complete(StatusCodes.RequestEntityTooLarge)
+          }
+
+          onSuccess(
+            SceneToLayerDao
+              .setManualOrder(projectLayerId, sceneIds)
+              .transact(xa)
+              .unsafeToFuture
+          ) { updatedOrder =>
+            complete(StatusCodes.NoContent)
+          }
+        }
+      }
+    }
+
 }

@@ -1,16 +1,21 @@
 <div class="container dashboard">
   <div class="row content stack-sm">
     <div class="column-8">
-
-      <!-- Dashboard Header -->
       <div class="dashboard-header">
-        <h1 class="h3">Datasources</h1>
+        <h3>Datasources</h3>
         <div class="flex-fill"></div>
         <rf-search on-search="$ctrl.fetchPage(1, value)"
                    value="$ctrl.search"
                    placeholder="Search for datasources"
                    auto-focus="true">
         </rf-search>
+        <select class="form-control"
+                ng-model="$ctrl.currentOwnershipFilter"
+        >
+          <option value="">All</option>
+          <option value="owned">Owned by me</option>
+          <option value="shared">Shared with me</option>
+        </select>
         <a class="btn btn-primary" ng-click="$ctrl.createDatasourceModal()">
           New datasource
         </a>
@@ -37,8 +42,9 @@
       <!-- Datasources empty state -->
       <div class="cta-row" ng-if="$ctrl.shouldShowPlaceholder()">
         <rf-call-to-action-item
-          title="You haven't created any datasources yet"
-          class="panel panel-off-white">
+            title="You haven't created any datasources yet"
+            class="panel panel-off-white"
+            ng-if="$ctrl.currentOwnershipFilter === 'owned'">
           <div class="cta-flex-text">
             You can create a new datasource by linking {{$ctrl.BUILDCONFIG.APP_NAME}} with various kinds of imagery sources
             like your computer, Amazon S3 Buckets, DropBox, and many other sources.
@@ -49,6 +55,14 @@
           <div class="cta-text">
             <a>Getting started with Datasources</a>
           </div>
+        </rf-call-to-action-item>
+        <rf-call-to-action-item
+            ng-if="$ctrl.currentOwnershipFilter === 'shared'"
+            title="No datasources have been shared with you yet"
+            class="panel panel-off-white">
+          <p class="pb-25">
+            Once another user shares a datasource with you or with organizations or teams you're a part of, you'll be able to see it here.
+          </p>
         </rf-call-to-action-item>
       </div>
       <div class="cta-row" ng-show="$ctrl.shouldShowEmptySearch()">
@@ -82,7 +96,6 @@
       </div>
       <!-- Datasource List -->
 
-
       <!-- Datasource pagination -->
       <rf-pagination-controls
           ng-show="!$ctrl.fetchError"
@@ -90,21 +103,6 @@
           is-loading="$ctrl.currentQuery"
           on-change="$ctrl.fetchPage(value)"
       ></rf-pagination-controls>
-
-      <!-- Placeholder, show only when loading is complete and no datasources were found-->
-      <div class="cta-row" ng-if="$ctrl.shouldShowPlaceholder()">
-        <rf-call-to-action-item title="You haven't created any datasources yet">
-          <div class="cta-flex-text">
-            You can create a new datasource by linking {{$ctrl.BUILDCONFIG.APP_NAME}} with various kinds of imagery sources like your comptuer, Amazon S3 Buckets, DropBox, and many other sources.
-          </div>
-          <div class="cta-button-row">
-            <a class="btn btn-primary">Create a new Datasource</a>
-          </div>
-          <div class="cta-text">
-            <a>Getting started with Datasources</a>
-          </div>
-        </rf-call-to-action-item>
-      </div>
 
     </div>
     <div class="column spacer"></div>

@@ -42,7 +42,6 @@ object Dependencies {
   val geotools = "org.geotools" % "gt-shapefile" % Version.geotools
   val geotrellisGeotools = "org.locationtech.geotrellis" %% "geotrellis-geotools" % Version.geotrellis
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
-  val geotrellisRasterTestkit = "org.locationtech.geotrellis" %% "geotrellis-raster-testkit" % Version.geotrellis
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
   val geotrellisServer = "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer
   val geotrellisShapefile = "org.locationtech.geotrellis" %% "geotrellis-shapefile" % Version.geotrellis
@@ -58,10 +57,6 @@ object Dependencies {
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
   val jts = "com.vividsolutions" % "jts" % Version.jts
-  val kamonAkka = "io.kamon" %% "kamon-akka" % Version.kamon
-  val kamonAkkaHttp = "io.kamon" %% "kamon-akka-http" % Version.kamonAkkaHttp
-  val kamonCore = "io.kamon" %% "kamon-core" % Version.kamon
-  val kamonStatsd = "io.kamon" %% "kamon-statsd" % Version.kamon
   val mamlJvm = "com.azavea" %% "maml-jvm" % Version.maml
   val mamlSpark = "com.azavea" %% "maml-spark" % Version.maml
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
@@ -78,4 +73,5 @@ object Dependencies {
   val slickMigrationAPI = "io.github.nafg" %% "slick-migration-api" % Version.slickMigrationAPI
   val spark = "org.apache.spark" %% "spark-core" % Version.spark % "provided"
   val sparkCore = "org.apache.spark" %% "spark-core" % Version.spark
+  val sup = "com.kubukoz" %% "sup-core" % Version.sup
 }

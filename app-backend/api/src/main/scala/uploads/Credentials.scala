@@ -3,36 +3,32 @@ package com.rasterfoundry.api.uploads
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 
-import com.amazonaws.auth.{
-  AWSCredentials,
-  AWSSessionCredentials,
-  AWSStaticCredentialsProvider
-}
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.amazonaws.auth.{AWSCredentials, AWSSessionCredentials}
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityRequest
 import com.rasterfoundry.api.utils.Config
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.S3
+import com.rasterfoundry.common.datamodel.User
 import com.typesafe.scalalogging.LazyLogging
 import io.circe.generic.JsonCodec
+
 @JsonCodec
-final case class Credentials(
-    AccessKeyId: String,
-    Expiration: String,
-    SecretAccessKey: String,
-    SessionToken: String
-) extends AWSCredentials
+final case class Credentials(AccessKeyId: String,
+                             Expiration: String,
+                             SecretAccessKey: String,
+                             SessionToken: String)
+    extends AWSCredentials
     with AWSSessionCredentials {
-  override def getAWSAccessKeyId = this.AccessKeyId
-  override def getAWSSecretKey = this.SecretAccessKey
-  override def getSessionToken = this.SessionToken
+  override def getAWSAccessKeyId: String = this.AccessKeyId
+
+  override def getAWSSecretKey: String = this.SecretAccessKey
+
+  override def getSessionToken: String = this.SessionToken
 }
 
 @JsonCodec
-final case class CredentialsWithBucketPath(
-    credentials: Credentials,
-    bucketPath: String
-)
+final case class CredentialsWithBucketPath(credentials: Credentials,
+                                           bucketPath: String)
 
 object CredentialsService extends Config with LazyLogging {
 
@@ -60,20 +56,17 @@ object CredentialsService extends Config with LazyLogging {
       stsCredentials.getSessionToken
     )
 
-    val s3 = AmazonS3ClientBuilder.standard
-      .withCredentials(new AWSStaticCredentialsProvider(credentials))
-      .withRegion(region)
-      .build()
+    val s3Client = S3()
 
     // Add timestamp object to test credentials
     val now = new Timestamp(new Date().getTime)
-    s3.putObject(
+    s3Client.putObjectString(
       dataBucket,
       s"${path}/RFUploadAccessTestFile",
       s"Allow Upload Access for RF: ${path} at ${now.toString}"
     )
 
-    val bucketUrl = s3.getUrl(dataBucket, path)
+    val bucketUrl = s3Client.getS3Url(dataBucket, path)
 
     CredentialsWithBucketPath(credentials, bucketUrl.toString)
   }

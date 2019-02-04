@@ -1,22 +1,24 @@
 package com.rasterfoundry.batch.export
 
-import java.util.UUID
-
-import cats.effect.IO
-import cats.implicits._
 import com.rasterfoundry.batch._
 import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.common.S3
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{ExportDao, UserDao}
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
+
+import cats.effect.IO
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import io.circe.syntax._
+
+import java.util.UUID
 
 final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
     implicit xa: Transactor[IO])
@@ -25,7 +27,7 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
   val name = CreateExportDef.name
 
   /** Get S3 client per each call */
-  def s3Client = S3(region = None)
+  def s3Client = S3()
 
   @SuppressWarnings(Array("CatchThrowable"))
   protected def writeExportDefToS3(exportDef: ExportDefinition,
@@ -35,7 +37,7 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
       s"Uploading export definition ${exportDef.id.toString} to S3 at s3://${bucket}/${key}")
 
     try {
-      s3Client.putObject(bucket, key, exportDef.asJson.toString)
+      s3Client.putObjectString(bucket, key, exportDef.asJson.toString)
     } catch {
       case e: Throwable => {
         logger.error(

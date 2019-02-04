@@ -1,22 +1,18 @@
 package com.rasterfoundry.batch.sentinel2
 
-import java.net.URI
-import java.security.InvalidParameterException
-import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
-import java.util.UUID
-import java.util.concurrent.Executors
-
-import cats.effect.{IO, Resource}
-import cats.implicits._
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.utils.AntimeridianUtils
+import com.rasterfoundry.common.{S3, S3RegionString}
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
+
+import cats.effect.{IO, Resource}
+import cats.implicits._
 import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
@@ -26,6 +22,12 @@ import io.circe.syntax._
 import geotrellis.proj4._
 import geotrellis.vector._
 import geotrellis.vector.io._
+
+import java.net.URI
+import java.security.InvalidParameterException
+import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
+import java.util.UUID
+import java.util.concurrent.Executors
 
 final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(
                                    ZoneOffset.UTC))(implicit xa: Transactor[IO])
@@ -53,7 +55,10 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(
   val name = ImportSentinel2.name
 
   /** Get S3 client per each call */
-  def s3Client = S3(region = sentinel2Config.awsRegion)
+  def s3Client =
+    S3(region = sentinel2Config.awsRegion.flatMap { region =>
+      Some(S3RegionString(region))
+    })
 
   def createImages(sceneId: UUID,
                    infoPath: Option[String],

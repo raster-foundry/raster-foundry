@@ -153,4 +153,11 @@ object MigrationSummary {
   M152
   M153
   M154
+  M155
+  M156
+  M157
+  M158
+  M160
+  M161
+  M162
 }

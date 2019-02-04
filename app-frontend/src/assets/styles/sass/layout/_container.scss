@@ -22,7 +22,7 @@
 
     &.dashboard {
       width: 100%;
-	    max-width: 1200px;
+      max-width: 1200px;
 
       > .row {
         flex: 1;
@@ -40,9 +40,9 @@
 }
 
 .container {
-	width: 100%;
-	// max-width: 1160px;
-	margin: auto;
+  width: 100%;
+  // max-width: 1160px;
+  margin: auto;
   display: flex;
 }
 
@@ -51,16 +51,29 @@ $navbar-secondary-height: 4.7rem !default;
 
 .container-not-scrollable {
   height: calc(100vh - #{$navbar-height});
-  max-height: calc(100vh - #{$navbar-height}); // Fixes flex + height issue in some browsers
-  min-height: calc(100vh - #{$navbar-height}); // Fixes flex + height issue in some browsers
+  max-height: calc(
+    100vh - #{$navbar-height}
+  ); // Fixes flex + height issue in some browsers
+  min-height: calc(
+    100vh - #{$navbar-height}
+  ); // Fixes flex + height issue in some browsers
 
-  .secondary-navbar ~ & {
+  .secondary-navbar ~ &,
+  .light-navbar ~ & {
     height: calc(100vh - #{$navbar-height + $navbar-secondary-height});
-    max-height: calc(100vh - #{$navbar-height + $navbar-secondary-height}); // Fixes flex + height issue in some browsers
-    min-height: calc(100vh - #{$navbar-height + $navbar-secondary-height}); // Fixes flex + height issue in some browsers
+    max-height: calc(
+      100vh - #{$navbar-height + $navbar-secondary-height}
+    ); // Fixes flex + height issue in some browsers
+    min-height: calc(
+      100vh - #{$navbar-height + $navbar-secondary-height}
+    ); // Fixes flex + height issue in some browsers
   }
 }
 
-.admin-settings{
+.admin-settings {
   margin-left: 2rem;
+}
+
+.vertical-container {
+  margin-bottom: 2rem;
 }

@@ -1,7 +1,7 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
@@ -80,9 +80,9 @@ class AnnotationGroupDaoSpec
                                                                 agc3,
                                                                 dbUser)
               p1AnnotationGroups <- AnnotationGroupDao
-                .listAnnotationGroupsForProject(dbProject1.id)
+                .listForProject(dbProject1.id)
               p2AnnotationGroups <- AnnotationGroupDao
-                .listAnnotationGroupsForProject(dbProject2.id)
+                .listForProject(dbProject2.id)
             } yield
               (agDb1, agDb2, agDb3, p1AnnotationGroups, p2AnnotationGroups)
 
@@ -132,7 +132,7 @@ class AnnotationGroupDaoSpec
                 .filter(fr"project_id=${dbProject.id}")
                 .list
               projectAnnotationGroups <- AnnotationGroupDao
-                .listAnnotationGroupsForProject(dbProject.id)
+                .listForProject(dbProject.id)
             } yield
               (ag1annotations,
                ag2annotations,
@@ -186,7 +186,7 @@ class AnnotationGroupDaoSpec
                 .filter(fr"project_id=${dbProject.id}")
                 .list
               projectAnnotationGroups <- AnnotationGroupDao
-                .listAnnotationGroupsForProject(dbProject.id)
+                .listForProject(dbProject.id)
               annotationGroupSummary <- AnnotationGroupDao
                 .getAnnotationGroupSummary(annotationGroupDB.id)
             } yield (annotationGroupSummary, annotationsDB)
@@ -242,7 +242,7 @@ class AnnotationGroupDaoSpec
                 .filter(fr"project_id=${dbProject.id}")
                 .list
               projectAnnotationGroups <- AnnotationGroupDao
-                .listAnnotationGroupsForProject(dbProject.id)
+                .listForProject(dbProject.id)
               updatedProject <- ProjectDao.unsafeGetProjectById(dbProject.id)
             } yield (projectAnnotationGroups, updatedProject)
 

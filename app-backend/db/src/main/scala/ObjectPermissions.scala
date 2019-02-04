@@ -1,6 +1,6 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.Implicits._
 import doobie._
 import doobie.implicits._
@@ -92,6 +92,7 @@ trait ObjectPermissions[Model] {
   def getPermissions(
       id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
     for {
+      // TODO restrict to the user's permissions if the user does not have edit permissions
       isValidObject <- isValidObject(id)
       getPermissions <- isValidObject match {
         case false => throw new Exception(s"Invalid ${tableName} object ${id}")
@@ -217,7 +218,7 @@ trait ObjectPermissions[Model] {
         Some(ownedF)
       // shared to the requesting user directly, across platform, or due to group membership
       case Some(ownershipType) if ownershipType == "shared" =>
-        if (objectType == ObjectType.Shape) {
+        if (objectType == ObjectType.Shape || objectType == ObjectType.Template) {
           Some(fr"(" ++ acrFilterF ++ fr") AND owner <> ${user.id}")
         } else {
           Some(

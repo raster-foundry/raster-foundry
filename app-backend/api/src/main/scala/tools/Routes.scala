@@ -3,33 +3,31 @@ package com.rasterfoundry.api.tool
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.common._
 import com.rasterfoundry.common.ast._
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.tool.ast._
-import com.rasterfoundry.tool.ast.codec._
+import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
+import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.filter.Filterables._
+import com.rasterfoundry.database.ToolDao
+
 import io.circe._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
-import kamon.akka.http.KamonTraceDirectives
-import java.util.UUID
-
 import cats.effect.IO
-import com.rasterfoundry.database.ToolDao
 import doobie._
 import doobie.implicits._
 import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
 
+import java.util.UUID
+
 trait ToolRoutes
     extends Authentication
     with ToolQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
-    with KamonTraceDirectives
     with UserErrorHandler {
 
   val xa: Transactor[IO]
@@ -37,67 +35,42 @@ trait ToolRoutes
   val toolRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {
-        traceName("tools-list") {
-          listTools
-        }
+        listTools
       } ~
         post {
-          traceName("tools-create") {
-            createTool
-          }
+          createTool
         }
     } ~
-      pathPrefix("validate") {
-        post {
-          traceName("ast-validate") {
-            validateAST
-          }
-        }
-      } ~
       pathPrefix(JavaUUID) { toolId =>
         pathEndOrSingleSlash {
           get {
-            traceName("tools-detail") {
-              getTool(toolId)
-            }
+            getTool(toolId)
           } ~
             put {
-              traceName("tools-update") {
-                updateTool(toolId)
-              }
+              updateTool(toolId)
             } ~
             delete {
-              traceName("tools-delete") {
-                deleteTool(toolId)
-              }
+              deleteTool(toolId)
             }
         } ~
           pathPrefix("sources") {
             pathEndOrSingleSlash {
               get {
-                traceName("tools-sources") {
-                  getToolSources(toolId)
-                }
+                getToolSources(toolId)
               }
             }
           } ~
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
               put {
-                traceName("replace-tool-permissions") {
-                  replaceToolPermissions(toolId)
-                }
+                replaceToolPermissions(toolId)
               }
             } ~
               post {
-                traceName("add-tool-permission") {
-                  addToolPermission(toolId)
-                }
+                addToolPermission(toolId)
               } ~
               get {
-                traceName("list-tool-permissions") {
-                  listToolPermissions(toolId)
-                }
+                listToolPermissions(toolId)
               } ~
               delete {
                 deleteToolPermissions(toolId)
@@ -106,9 +79,7 @@ trait ToolRoutes
           pathPrefix("actions") {
             pathEndOrSingleSlash {
               get {
-                traceName("list-user-allowed-actions") {
-                  listUserTemplateActions(toolId)
-                }
+                listUserTemplateActions(toolId)
               }
             }
           }
@@ -212,25 +183,12 @@ trait ToolRoutes
     }
   }
 
-  def validateAST: Route = authenticate { user =>
-    entity(as[Json]) { jsonAst =>
-      {
-        complete {
-          jsonAst.as[MapAlgebraAST] match {
-            case Right(ast) =>
-              validateTree[Unit](ast)
-              (StatusCodes.OK, ast)
-            case Left(msg) =>
-              (StatusCodes.BadRequest, "Unable to parse json as MapAlgebra AST")
-          }
-        }
-      }
-    }
-  }
-
   def listToolPermissions(toolId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
+      ToolDao
+        .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
     } {
       complete {
         ToolDao
@@ -244,9 +202,10 @@ trait ToolRoutes
   def replaceToolPermissions(toolId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (ToolDao.query.ownedBy(user, toolId).exists, acrList traverse { acr =>
-          ToolDao.isValidPermission(acr, user)
-        } map { _.foldLeft(true)(_ && _) }).tupled
+        (ToolDao.authorized(user, ObjectType.Template, toolId, ActionType.Edit),
+         acrList traverse { acr =>
+           ToolDao.isValidPermission(acr, user)
+         } map { _.foldLeft(true)(_ && _) }).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
           })
@@ -266,7 +225,7 @@ trait ToolRoutes
   def addToolPermission(toolId: UUID): Route = authenticate { user =>
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
-        (ToolDao.query.ownedBy(user, toolId).exists,
+        (ToolDao.authorized(user, ObjectType.Template, toolId, ActionType.Edit),
          ToolDao.isValidPermission(acr, user)).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
@@ -314,7 +273,10 @@ trait ToolRoutes
 
   def deleteToolPermissions(toolId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      ToolDao.query.ownedBy(user, toolId).exists.transact(xa).unsafeToFuture
+      ToolDao
+        .authorized(user, ObjectType.Template, toolId, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
     } {
       complete {
         ToolDao

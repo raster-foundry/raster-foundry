@@ -3,7 +3,7 @@ package com.rasterfoundry.common.utils
 import com.rasterfoundry.common.cache._
 import com.rasterfoundry.common.cache.kryo._
 import com.rasterfoundry.common.{Config => CommonConfig}
-import com.rasterfoundry.datamodel.TiffWithMetadata
+import com.rasterfoundry.common.datamodel.TiffWithMetadata
 
 import com.amazonaws.services.s3.AmazonS3URI
 import geotrellis.vector._

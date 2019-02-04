@@ -14,6 +14,7 @@ class LabBrowseAnalysesController {
         this.analysesExports = {};
         this.defaultSortingDirection = 'desc';
         this.defaultSortingField = 'modifiedAt';
+        this.currentOwnershipFilter = this.$state.params.ownership || '';
         this.initSorting();
         this.fetchPage();
         this.selected = new Set();
@@ -43,7 +44,8 @@ class LabBrowseAnalysesController {
             pageSize: 10,
             page: page - 1,
             sort: this.serializeSort(),
-            search: this.search
+            search: this.search,
+            ownershipType: this.currentOwnershipFilter
         }).then(paginatedResponse => {
             this.analyses = paginatedResponse.results;
             this.pagination = this.paginationService.buildPagination(paginatedResponse);
@@ -193,6 +195,10 @@ class LabBrowseAnalysesController {
                 this.analysesExports[analysisId] = firstPageExports.count;
             }
         });
+    }
+
+    handleOwnershipFilterChange(newFilterValue) {
+        this.fetchPage(1);
     }
 }
 

@@ -4,12 +4,11 @@ import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.notification.Email.NotificationEmail
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.notification.templates._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 
 import cats.implicits._
 import doobie.ConnectionIO
 import doobie.implicits._
-
 import org.apache.commons.mail.{Email, EmailException}
 
 import java.util.UUID

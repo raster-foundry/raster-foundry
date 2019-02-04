@@ -2,14 +2,8 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.Page
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.{
-  Scene,
-  SceneFilterFields,
-  SceneStatusFields,
-  User,
-  Visibility
-}
+import com.rasterfoundry.common.datamodel._
+
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -46,7 +40,11 @@ object ProjectScenesDao extends Dao[Scene] {
       case _          => fr"accepted = true"
     }
 
-    val manualOrder = Map("scene_order" -> Order.Asc, "id" -> Order.Asc)
+    // we don't need to specify NULLS LAST for scene_order ASC,
+    // since it is the default when sorting ASC,
+    val manualOrder = Map("scene_order" -> Order.Asc,
+                          "acquisition_date" -> Order.Asc,
+                          "cloud_cover" -> Order.Asc)
     val autoOrder =
       Map("acquisition_date" -> Order.Asc, "cloud_cover" -> Order.Asc)
     val filterQ = query

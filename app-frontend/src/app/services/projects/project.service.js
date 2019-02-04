@@ -40,7 +40,7 @@ export default (app) => {
     class ProjectService {
         constructor(
             $resource, $location, $http, $q, APP_CONFIG,
-            tokenService, authService, statusService
+            tokenService, authService, statusService, permissionsService
         ) {
             'ngInject';
             // Max scene page size used for limited features on large projects for now.
@@ -50,6 +50,7 @@ export default (app) => {
             this.tokenService = tokenService;
             this.authService = authService;
             this.statusService = statusService;
+            this.permissionsService = permissionsService;
             this.$http = $http;
             this.$location = $location;
             this.$q = $q;
@@ -169,6 +170,21 @@ export default (app) => {
                         params: {
                             projectId: '@projectId'
                         }
+                    },
+                    listLayers: {
+                        method: 'GET',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers`,
+                        params: {
+                            projectId: '@projectId'
+                        }
+                    },
+                    deleteLayer: {
+                        method: 'DELETE',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers/:layerId`,
+                        params: {
+                            projectId: '@projectId',
+                            layerId: '@layerId'
+                        }
                     }
                 }
             );
@@ -226,8 +242,8 @@ export default (app) => {
             });
         }
 
-        fetchProject(id) {
-            return this.Project.get({id}).$promise;
+        fetchProject(id, params = {}) {
+            return this.Project.get({...params, id}).$promise;
         }
 
         listExports(params = {}) {
@@ -341,8 +357,8 @@ export default (app) => {
             ).$promise;
         }
 
-        getProjectDatasources(projectId) {
-            return this.Project.projectDatasources({projectId}).$promise;
+        getProjectDatasources(projectId, params = {}) {
+            return this.Project.projectDatasources({...params, projectId}).$promise;
         }
 
         getProjectStatus(projectId) {
@@ -412,13 +428,24 @@ export default (app) => {
             ).$promise;
         }
 
-        getProjectLayerURL(project, params) {
+        getProjectTileURL(project, params) {
             let projectId = typeof project === 'object' ? project.id : project;
             let queryParams = params || {};
             queryParams.tag = new Date().getTime();
             let formattedParams = L.Util.getParamString(queryParams);
 
             return `${this.tileServer}/${projectId}/{z}/{x}/{y}/${formattedParams}`;
+        }
+
+        getProjectLayerTileUrl(project, layer, params) {
+            let projectId = typeof project === 'object' ? project.id : project;
+            let layerId = typeof layer === 'object' ? layer.id : layer;
+            let queryParams = params || {};
+            queryParams.tag = new Date().getTime();
+            let formattedParams = L.Util.getParamString(queryParams);
+
+            return `${this.tileServer}/${projectId}/layers` +
+                `/${layerId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
         getProjectShareLayerURL(project, token) {
@@ -540,6 +567,42 @@ export default (app) => {
 
         setProjectColorMode(projectId, bands) {
             return this.Project.colorMode({projectId}, bands).$promise;
+        }
+
+        getProjectPermissions(project, user) {
+            //TODO replace uses with permissionsService.getEditableObjectPermission
+            return this.$q((resolve, reject) => {
+                if (project.owner.id === user.id || project.owner === user.id) {
+                    resolve([
+                        {actionType: 'Edit'},
+                        {actionType: 'View'},
+                        {actionType: 'Delete'}
+                    ]);
+                } else {
+                    this.permissionsService.query({
+                        permissionsBase: 'projects',
+                        objectType: 'PROJECT',
+                        objectId: project.id
+                    }).$promise.then(permissions => {
+                        resolve(permissions);
+                    }).catch((e) => {
+                        // can't view permissions, don't have edit
+                        if (e.status === 403) {
+                            resolve([]);
+                        } else {
+                            reject(e);
+                        }
+                    });
+                }
+            });
+        }
+
+        getProjectLayers(projectId, params = {}) {
+            return this.Project.listLayers({...params, projectId}).$promise;
+        }
+
+        deleteProjectLayer(projectId, layerId) {
+            return this.Project.deleteLayer({projectId, layerId}).$promise;
         }
     }
 

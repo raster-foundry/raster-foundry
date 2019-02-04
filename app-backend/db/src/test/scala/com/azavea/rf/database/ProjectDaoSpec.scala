@@ -3,8 +3,8 @@ package com.rasterfoundry.database
 import java.sql.Timestamp
 import scala.util.Random
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
 import doobie._
 import doobie.implicits._
@@ -82,7 +82,8 @@ class ProjectDaoSpec
             val updateProjectWithUpdatedIO = projInsertWithUserAndOrgIO flatMap {
               case (dbProject: Project, dbUser: User, dbOrg: Organization) => {
                 val fixedUpUpdateProject =
-                  fixupProjectCreate(dbUser, updateProject).toProject(dbUser)
+                  fixupProjectCreate(dbUser, updateProject)
+                    .toProject(dbUser, dbProject.defaultLayerId)
                 ProjectDao.updateProject(fixedUpUpdateProject,
                                          dbProject.id,
                                          dbUser) flatMap {

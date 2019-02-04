@@ -1,6 +1,6 @@
 package com.rasterfoundry.database.util
 
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.filter.Filterables
 
 import doobie._

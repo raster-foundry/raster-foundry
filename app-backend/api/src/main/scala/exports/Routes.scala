@@ -12,7 +12,7 @@ import com.rasterfoundry.akkautil._
 import com.rasterfoundry.common._
 import com.rasterfoundry.database.ExportDao
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._

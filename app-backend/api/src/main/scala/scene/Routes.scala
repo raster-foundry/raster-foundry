@@ -7,7 +7,6 @@ import akka.http.scaladsl.server.Route
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
-import com.amazonaws.services.s3.AmazonS3URI
 import java.net.URLDecoder
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.common.utils.CogUtils
@@ -19,7 +18,7 @@ import com.rasterfoundry.akkautil.{
 }
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
@@ -29,7 +28,6 @@ import geotrellis.raster.{IntArrayTile, MultibandTile}
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
 import io.circe.parser._
-import kamon.akka.http.KamonTraceDirectives
 
 import spray.json._
 import spray.json.DefaultJsonProtocol._
@@ -46,70 +44,51 @@ trait SceneRoutes
     with CommonHandlers
     with AWSBatch
     with UserErrorHandler
-    with HistogramJsonFormats
-    with KamonTraceDirectives {
+    with HistogramJsonFormats {
 
   val xa: Transactor[IO]
 
   val sceneRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
       get {
-        traceName("scenes-list") {
-          listScenes
-        }
+        listScenes
       } ~
         handleExceptions(cogMissingHandler) {
           post {
-            traceName("scenes-create") {
-              createScene
-            }
+            createScene
           }
         }
     } ~
       pathPrefix(JavaUUID) { sceneId =>
         pathEndOrSingleSlash {
           get {
-            traceName("scenes-detail") {
-              getScene(sceneId)
-            }
+            getScene(sceneId)
           } ~
             put {
-              traceName("scenes-update") {
-                updateScene(sceneId)
-              }
+              updateScene(sceneId)
             } ~
             delete {
-              traceName("scenes-delete") {
-                deleteScene(sceneId)
-              }
+              deleteScene(sceneId)
             }
         } ~
           pathPrefix("download") {
             pathEndOrSingleSlash {
               get {
-                traceName("scene-download-url") {
-                  getDownloadUrl(sceneId)
-                }
+                getDownloadUrl(sceneId)
               }
             }
           } ~
           pathPrefix("permissions") {
             pathEndOrSingleSlash {
               put {
-                traceName("replace-scene-permissions") {
-                  replaceScenePermissions(sceneId)
-                }
+                replaceScenePermissions(sceneId)
               }
             } ~
               post {
-                traceName("add-scene-permission") {
-                  addScenePermission(sceneId)
-                }
+                addScenePermission(sceneId)
               } ~
               get {
-                traceName("list-scene-permissions") {
-                  listScenePermissions(sceneId)
-                }
+                listScenePermissions(sceneId)
               } ~
               delete {
                 deleteScenePermissions(sceneId)
@@ -118,9 +97,7 @@ trait SceneRoutes
           pathPrefix("actions") {
             pathEndOrSingleSlash {
               get {
-                traceName("list-user-allowed-actions") {
-                  listUserSceneActions(sceneId)
-                }
+                listUserSceneActions(sceneId)
               }
             }
           } ~
@@ -179,24 +156,31 @@ trait SceneRoutes
                                        tileFootprint = tileFootprint)
 
       val histogramAndInsertFut = for {
-        hist <- histogram
         insertedScene <- OptionT.liftF(
           SceneDao.insert(updatedScene, user).transact(xa).unsafeToFuture)
-        _ <- OptionT.liftF(
-          // We consider the geotrellis upstring json format to be infallible, and "guarantee" presence
-          // of the right projection
-          parse(hist.toJson.toString) traverse { parsed =>
-            LayerAttributeDao
-              .insertLayerAttribute(
-                LayerAttribute(insertedScene.id.toString,
-                               0,
-                               "histogram",
-                               parsed)
-              )
-              .transact(xa)
-              .unsafeToFuture
-          } map { _.toOption }
-        )
+        _ <- if (!newScene.ingestLocation.isEmpty) {
+          histogram flatMap { hist =>
+            OptionT {
+              parse(hist.toJson.toString) traverse { parsed =>
+                LayerAttributeDao
+                  .insertLayerAttribute(
+                    LayerAttribute(insertedScene.id.toString,
+                                   0,
+                                   "histogram",
+                                   parsed)
+                  )
+                  .transact(xa)
+                  .unsafeToFuture
+              } map { _.toOption }
+            }
+          }
+        } else {
+          // We have to return some kind of successful OptionT, so just provide
+          // a small int value wrapped in a Some()
+          // If we _don't_ do this, we can't post scenes without ingest locations,
+          // which is bad.
+          OptionT(Future.successful(Option(0)))
+        }
       } yield insertedScene
 
       onSuccess(histogramAndInsertFut.value) {
@@ -275,10 +259,11 @@ trait SceneRoutes
               throw new Exception(
                 "Scene does not exist or is not accessible by this user")
             }
+            val s3Client = S3()
             val whitelist = List(s"s3://$dataBucket")
             (retrievedScene.sceneType, retrievedScene.ingestLocation) match {
               case (Some(SceneType.COG), Some(ingestLocation)) =>
-                val signedUrl = S3.maybeSignUri(ingestLocation, whitelist)
+                val signedUrl = s3Client.maybeSignUri(ingestLocation, whitelist)
                 List(
                   Image.Downloadable(
                     s"${sceneId}_COG.tif",
@@ -289,7 +274,7 @@ trait SceneRoutes
               case _ =>
                 retrievedScene.images map { image =>
                   val downloadUri: String =
-                    S3.maybeSignUri(image.sourceUri, whitelist)
+                    s3Client.maybeSignUri(image.sourceUri, whitelist)
                   image.toDownloadable(downloadUri)
                 }
             }
@@ -300,7 +285,10 @@ trait SceneRoutes
 
   def listScenePermissions(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+      SceneDao
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
     } {
       complete {
         SceneDao
@@ -314,9 +302,10 @@ trait SceneRoutes
   def replaceScenePermissions(sceneId: UUID): Route = authenticate { user =>
     entity(as[List[ObjectAccessControlRule]]) { acrList =>
       authorizeAsync {
-        (SceneDao.query.ownedBy(user, sceneId).exists, acrList traverse { acr =>
-          SceneDao.isValidPermission(acr, user)
-        } map { _.foldLeft(true)(_ && _) }).tupled
+        (SceneDao.authorized(user, ObjectType.Scene, sceneId, ActionType.Edit),
+         acrList traverse { acr =>
+           SceneDao.isValidPermission(acr, user)
+         } map { _.foldLeft(true)(_ && _) }).tupled
           .map({ authTup =>
             authTup._1 && authTup._2
           })
@@ -336,7 +325,7 @@ trait SceneRoutes
   def addScenePermission(sceneId: UUID): Route = authenticate { user =>
     entity(as[ObjectAccessControlRule]) { acr =>
       authorizeAsync {
-        (SceneDao.query.ownedBy(user, sceneId).exists,
+        (SceneDao.authorized(user, ObjectType.Scene, sceneId, ActionType.Edit),
          SceneDao.isValidPermission(acr, user)).tupled
           .map(authTup => authTup._1 && authTup._2)
           .transact(xa)
@@ -361,33 +350,32 @@ trait SceneRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      user.isSuperuser match {
-        case true => complete(List("*"))
-        case false =>
-          onSuccess(
-            SceneWithRelatedDao
-              .unsafeGetScene(sceneId)
-              .transact(xa)
-              .unsafeToFuture
-          ) { scene =>
-            scene.owner == user.id match {
-              case true => complete(List("*"))
-              case false =>
-                complete {
-                  SceneDao
-                    .listUserActions(user, sceneId)
-                    .transact(xa)
-                    .unsafeToFuture
-                }
+      onSuccess(
+        SceneWithRelatedDao
+          .unsafeGetScene(sceneId)
+          .transact(xa)
+          .unsafeToFuture
+      ) { scene =>
+        scene.owner == user.id match {
+          case true => complete(List("*"))
+          case false =>
+            complete {
+              SceneDao
+                .listUserActions(user, sceneId)
+                .transact(xa)
+                .unsafeToFuture
             }
-          }
+        }
       }
     }
   }
 
   def deleteScenePermissions(sceneId: UUID): Route = authenticate { user =>
     authorizeAsync {
-      SceneDao.query.ownedBy(user, sceneId).exists.transact(xa).unsafeToFuture
+      SceneDao
+        .authorized(user, ObjectType.Scene, sceneId, ActionType.Edit)
+        .transact(xa)
+        .unsafeToFuture
     } {
       complete {
         SceneDao

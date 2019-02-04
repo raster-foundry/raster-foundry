@@ -1,18 +1,19 @@
 package com.rasterfoundry.batch.aoi
 
-import java.util.UUID
-
-import cats.effect.IO
-import cats.syntax.option._
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.{AWSBatch, RollbarNotifier}
 import com.rasterfoundry.database.util.RFTransactor
+
+import cats.effect.IO
+import cats.syntax.option._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import doobie.{ConnectionIO, Fragment, Fragments}
+
+import java.util.UUID
 
 final case class FindAOIProjects(implicit val xa: Transactor[IO])
     extends Config

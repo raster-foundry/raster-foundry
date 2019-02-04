@@ -50,11 +50,6 @@
         <div ng-if="$ctrl.currentParsingError" class="color-danger text-center form-group">
           {{$ctrl.currentParsingError}}
         </div>
-        <div class="form-group">
-          <label for="name">Make this template publicly available?</label>
-          <rf-toggle value="$ctrl.templateIsPublic()" on-change="$ctrl.onVisibilityChange(value)">
-          </rf-toggle>
-        </div>
         <div ng-if="$ctrl.currentError" class="color-danger text-center form-group">
           {{$ctrl.currentError}}
         </div>

@@ -3,7 +3,7 @@ package com.rasterfoundry.database
 import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.LayerAttribute
+import com.rasterfoundry.common.datamodel.LayerAttribute
 import doobie.Fragments._
 import doobie._
 import doobie.implicits._
@@ -16,26 +16,29 @@ import DefaultJsonProtocol._
 import java.util.UUID
 
 import geotrellis.raster.histogram.{Histogram, StreamingHistogram}
+import geotrellis.raster.io.json._
 import io.circe.{Encoder, Json}
 import io.circe.parser.parse
 
-case class LayerAttributeDao() {
-  def getHistogram[T: JsonFormat](layerId: UUID, xa: Transactor[IO]): IO[T] = {
+case class LayerAttributeDao() extends HistogramJsonFormats {
+  def getHistogram(layerId: UUID,
+                   xa: Transactor[IO]): IO[Array[Histogram[Double]]] = {
     LayerAttributeDao
       .unsafeGetAttribute(LayerId(layerId.toString, 0), "histogram")
       .transact(xa)
       .map({ attr =>
-        attr.value.noSpaces.parseJson.convertTo[T]
+        attr.value.noSpaces.parseJson.convertTo[Array[Histogram[Double]]]
       })
   }
 
-  def getProjectHistogram[T: JsonFormat](projectId: UUID,
-                                         xa: Transactor[IO]): IO[List[T]] = {
+  def getProjectLayerHistogram(
+      projectLayerId: UUID,
+      xa: Transactor[IO]): IO[List[Array[Histogram[Double]]]] = {
     LayerAttributeDao
-      .getProjectHistogram(projectId)
+      .getProjectLayerHistogram(projectLayerId)
       .transact(xa)
       .map(_.map({ attr =>
-        attr.value.noSpaces.parseJson.convertTo[T]
+        attr.value.noSpaces.parseJson.convertTo[Array[Histogram[Double]]]
       }))
   }
 }
@@ -57,6 +60,17 @@ object LayerAttributeDao extends Dao[LayerAttribute] {
       .filter(fr"zoom = 0")
       .filter(
         fr"layer_name in (SELECT scene_id :: varchar(255) from scenes_to_projects where project_id = ${projectId})"
+      )
+      .list
+  }
+
+  def getProjectLayerHistogram(
+      projectLayerId: UUID): ConnectionIO[List[LayerAttribute]] = {
+    query
+      .filter(fr"name = 'histogram'")
+      .filter(fr"zoom = 0")
+      .filter(
+        fr"layer_name in (SELECT scene_id :: varchar(255) from scenes_to_layers where project_layer_id = ${projectLayerId})"
       )
       .list
   }

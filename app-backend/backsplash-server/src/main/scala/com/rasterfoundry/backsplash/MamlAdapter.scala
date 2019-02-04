@@ -1,7 +1,11 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.database.SceneToProjectDao
-import com.rasterfoundry.tool.ast.{MapAlgebraAST, NodeMetadata}
+import com.rasterfoundry.common.ast.{MapAlgebraAST, NodeMetadata}
+import com.rasterfoundry.backsplash._
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.database.util.RFTransactor
+
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{NeighborhoodConversion, ClassMap => MamlClassMap}
 import geotrellis.vector.io._
@@ -9,19 +13,13 @@ import cats._
 import cats.effect.IO
 import cats.implicits._
 import doobie.implicits._
-import com.rasterfoundry.backsplash._
-import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.datamodel.{BandDataType, SingleBandOptions}
-import com.rasterfoundry.tool.ast.MapAlgebraAST.{CogRaster, SceneRaster}
 import doobie.util.transactor.Transactor
 import io.circe.Json
 
 class BacksplashMamlAdapter[HistStore: HistogramStore](
     mosaicImplicits: MosaicImplicits[HistStore],
-    xa: Transactor[IO],
-    mtr: MetricsRegistrator)
-    extends ProjectStoreImplicits(xa, mtr) {
+    xa: Transactor[IO])
+    extends ProjectStoreImplicits(xa) {
   import mosaicImplicits._
 
   def asMaml(ast: MapAlgebraAST)
@@ -36,12 +34,6 @@ class BacksplashMamlAdapter[HistStore: HistogramStore](
             throw SingleBandOptionsException(
               "Band must be provided to evaluate AST"))
           // This is silly - mostly making up single band options here when all we really need is the band number
-          val singleBandOptions = SingleBandOptions.Params(
-            bandActual,
-            BandDataType.Diverging,
-            0,
-            Json.Null,
-            "Up")
           Map[String, BacksplashMosaic](
             s"${projId.toString}_${bandActual}" -> (
               SceneToProjectDao()
@@ -72,9 +64,9 @@ class BacksplashMamlAdapter[HistStore: HistogramStore](
 
         // TODO: Remove COG & Scene Raster once Old Tile Server is GONE
         // https://github.com/raster-foundry/raster-foundry/issues/4168
-        case CogRaster(_, _, _, _, _, _)         => ???
-        case SceneRaster(_, _, _, _, _)          => ???
-        case MapAlgebraAST.Constant(_, const, _) => DblLit(const)
+        case MapAlgebraAST.CogRaster(_, _, _, _, _, _) => ???
+        case MapAlgebraAST.SceneRaster(_, _, _, _, _)  => ???
+        case MapAlgebraAST.Constant(_, const, _)       => DblLit(const)
         case MapAlgebraAST.LiteralTile(_, lt, _) =>
           throw MetadataException(
             "No literal tiles should appear on pre-MAML RFML tools")

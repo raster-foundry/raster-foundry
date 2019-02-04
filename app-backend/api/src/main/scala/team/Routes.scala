@@ -7,7 +7,7 @@ import com.rasterfoundry.akkautil.{
 }
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
@@ -26,8 +26,6 @@ import doobie.Fragments.in
 import doobie.postgres._
 import doobie.postgres.implicits._
 
-import kamon.akka.http.KamonTraceDirectives
-
 /**
   * Routes for Organizations
   */
@@ -35,17 +33,14 @@ trait TeamRoutes
     extends Authentication
     with PaginationDirectives
     with CommonHandlers
-    with UserErrorHandler
-    with KamonTraceDirectives {
+    with UserErrorHandler {
 
   val xa: Transactor[IO]
 
   val teamRoutes: Route = handleExceptions(userExceptionHandler) {
     pathPrefix(JavaUUID) { teamId =>
       get {
-        traceName("team-detail") {
-          getTeam(teamId)
-        }
+        getTeam(teamId)
       }
     }
   }

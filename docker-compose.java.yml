@@ -21,8 +21,6 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
-    external_links:
-      - statsd
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
@@ -49,8 +47,6 @@ services:
       dockerfile: Dockerfile.api
     ports:
       - "9100:443"
-    extra_hosts:
-      - "tile-server:127.0.0.1"
     links:
       - api-server
     volumes:
@@ -81,8 +77,6 @@ services:
     links:
       - postgres:database.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
-    external_links:
-      - statsd
     depends_on:
       postgres:
         condition: service_healthy
@@ -135,10 +129,10 @@ services:
       - BLAZE_CONNECTOR_POOL_SIZE=4
       - POSTGRES_DB_POOL_SIZE=32
       - HIKARI_CONNECTION_THREADS=16
+      - RF_AUTHENTICATION_CACHE_ENABLE=true
       - BACKSPLASH_HISTOGRAM_CACHE_ENABLE=true
       - BACKSPLASH_TILE_CACHE_ENABLE=true
       - BACKSPLASH_AUTHORIZATION_CACHE_ENABLE=true
-      - BACKSPLASH_AUTHENTICATION_CACHE_ENABLE=true
       - BACKSPLASH_RASTERSOURCE_CACHE_ENABLE=true
       - BACKSPLASH_ENABLE_GDAL=false
       - BACKSPLASH_CORE_STREAM_CONCURRENCY=16
@@ -170,13 +164,3 @@ services:
       - 8125:8125/udp
       - 8126:8126
       - 8090:80
-
-  grafana:
-    image: grafana/grafana
-    restart: always
-    ports:
-      - "3000:3000"
-    links:
-      - graphite
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=password

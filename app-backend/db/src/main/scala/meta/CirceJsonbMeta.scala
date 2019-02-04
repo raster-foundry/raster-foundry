@@ -1,5 +1,8 @@
 package com.rasterfoundry.database.meta
 
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.ColorCorrect._
+
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -13,8 +16,6 @@ import cats.syntax.either._
 import io.circe._
 import io.circe.syntax._
 import org.postgresql.util.PGobject
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.ColorCorrect._
 
 import scala.reflect.runtime.universe.TypeTag
 import java.net.URI

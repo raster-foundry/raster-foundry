@@ -18,7 +18,6 @@ object AuthedAutoSlash {
       implicit F: MonoidK[OptionT[F, ?]],
       ev: Functor[F]): AuthedService[T, F] = Kleisli { authedReq =>
     {
-      // TODO: this doesn't compile anymore :(
       http(authedReq) <+> {
         val pathInfo = authedReq.req.pathInfo
         val scriptName = authedReq.req.scriptName

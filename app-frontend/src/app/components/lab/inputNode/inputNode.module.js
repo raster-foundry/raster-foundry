@@ -16,7 +16,7 @@ const InputNodeComponent = {
 
 class InputNodeController {
     constructor(
-        modalService, datasourceService, projectService, sceneService,
+        modalService, datasourceService, projectService,
         $q, $scope, $ngRedux, $log, $rootScope
     ) {
         'ngInject';
@@ -37,6 +37,7 @@ class InputNodeController {
             this.mapStateToThis.bind(this),
             Object.assign({}, LabActions, NodeActions)
         )(this);
+
         this.$scope.$on('$destroy', unsubscribe);
 
         this.$scope.$watch('$ctrl.node', (node, oldNode) => {
@@ -58,7 +59,9 @@ class InputNodeController {
                 this.selectedProject &&
                 this.node.projId !== this.selectedProject.id
             ) {
-                this.projectService.fetchProject(this.node.projId).then(p => {
+                this.projectService.fetchProject(this.node.projId, {
+                    analysisId: this.analysis.id
+                }).then(p => {
                     this.selectedProject = p;
                     this.fetchDatasources(p.id);
                     this.checkValidity();
@@ -68,6 +71,7 @@ class InputNodeController {
             this.selectedBand = this.node.band ?
                 +this.node.band :
                 this.node.band;
+            this.manualBand = this.selectedBand;
             this.checkValidity();
         }
     }
@@ -75,7 +79,9 @@ class InputNodeController {
     fetchDatasources(projectId) {
         if (this.selectedProject) {
             this.fetchingDatasources = true;
-            this.projectService.getProjectDatasources(projectId).then(
+            this.projectService.getProjectDatasources(projectId, {
+                analysisId: this.analysis.id
+            }).then(
                 datasources => {
                     this.datasources = datasources;
                     this.bands = this.datasourceService.getUnifiedBands(this.datasources);
@@ -112,7 +118,10 @@ class InputNodeController {
                 component: 'rfProjectSelectModal',
                 resolve: {
                     project: () => this.selectedProject && this.selectedProject.id || false,
-                    content: () => ({title: 'Select a project'})
+                    content: () => ({
+                        title: 'Select a project',
+                        nodeName: this.node.metadata.label
+                    })
                 }
             }).result.then(project => {
                 this.checkValidity();

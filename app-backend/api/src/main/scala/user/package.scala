@@ -1,5 +1,5 @@
 package com.rasterfoundry.api
 
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 
 package object user

@@ -1,21 +1,12 @@
 package com.rasterfoundry.database
 
-import java.util.UUID
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.RFTransactor
+import com.rasterfoundry.common.datamodel._
 
 import cats.Applicative
 import cats.data.{NonEmptyList => NEL, _}
 import cats.implicits._
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.datamodel.{
-  BatchParams,
-  ColorCorrect => RFColorCorrect,
-  MosaicDefinition,
-  SceneToProject,
-  SceneToProjectwithSceneType
-}
-import com.typesafe.scalalogging.LazyLogging
-import com.rasterfoundry.datamodel._
 import doobie._
 import doobie.Fragments._
 import doobie.implicits._
@@ -24,6 +15,9 @@ import doobie.postgres.implicits._
 import fs2.Stream
 import geotrellis.vector.{MultiPolygon, Polygon, Projected}
 import io.circe.syntax._
+import com.typesafe.scalalogging.LazyLogging
+
+import java.util.UUID
 
 case class SceneToProjectDao()
 
@@ -75,14 +69,6 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     updateF.update.run
   }
 
-  def moveSceneOrder(projectId: UUID, from: Int, to: Int): ConnectionIO[Int] = {
-    // TODO implement this. Route is currently commented out
-    // val updateF = fr"""
-    // """
-    // updateF.update.run
-    ???
-  }
-
   def setManualOrder(projectId: UUID,
                      sceneIds: Seq[UUID]): ConnectionIO[Seq[UUID]] = {
     val updates = for {
@@ -105,63 +91,18 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
                           blueBand: Option[Int] = None,
                           sceneIdSubset: List[UUID] = List.empty)
     : Stream[ConnectionIO, MosaicDefinition] = {
-    val filters = List(
-      polygonOption.map(polygon =>
-        fr"ST_Intersects(scenes_stp.tile_footprint, ${polygon})"),
-      Some(fr"scenes_stp.project_id = ${projectId}"),
-      Some(fr"scenes_stp.accepted = true"),
-      Some(fr"scenes_stp.ingest_status = 'INGESTED'"),
-      sceneIdSubset.toNel map {
-        Fragments.in(fr"scene_id", _)
+    for {
+      // Streamed only for correct monadic context
+      layerId <- ProjectDao.projectByIdQuery(projectId).stream map { project =>
+        project.defaultLayerId
       }
-    )
-    val select = fr"""
-    SELECT
-      scene_id, project_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location,
-      data_footprint, is_single_band, single_band_options
-    FROM (
-      scenes_to_projects
-    LEFT JOIN
-      scenes
-    ON scenes.id = scenes_to_projects.scene_id
-    ) scenes_stp
-    LEFT JOIN
-      projects
-    ON
-      scenes_stp.project_id = projects.id
-      """
-    (select ++ whereAndOpt(filters: _*) ++ fr"ORDER BY scenes_stp.scene_order ASC")
-      .query[SceneToProjectwithSceneType]
-      .stream map { stp =>
-      {
-        Applicative[Option].map3(redBand, greenBand, blueBand) {
-          case (r, g, b) =>
-            MosaicDefinition(
-              stp.sceneId,
-              stp.colorCorrectParams.copy(
-                redBand = r,
-                greenBand = g,
-                blueBand = b
-              ),
-              stp.sceneType,
-              stp.ingestLocation,
-              stp.dataFootprint flatMap { _.geom.as[MultiPolygon] },
-              stp.isSingleBand,
-              stp.singleBandOptions
-            )
-        } getOrElse {
-          MosaicDefinition(
-            stp.sceneId,
-            stp.colorCorrectParams,
-            stp.sceneType,
-            stp.ingestLocation,
-            stp.dataFootprint flatMap { _.geom.as[MultiPolygon] },
-            stp.isSingleBand,
-            stp.singleBandOptions
-          )
-        }
-      }
-    }
+      scenes <- SceneToLayerDao.getMosaicDefinition(layerId,
+                                                    polygonOption,
+                                                    redBand,
+                                                    greenBand,
+                                                    blueBand,
+                                                    sceneIdSubset)
+    } yield scenes
   }
 
   def getMosaicDefinition(
@@ -210,12 +151,15 @@ object SceneToProjectDao extends Dao[SceneToProject] with LazyLogging {
     // if there is not a mosaic definition at this point, then the scene_to_project row was not created correctly
     (fr"""
     UPDATE scenes_to_projects
-    SET mosaic_definition = (mosaic_definition || '{"redBand":""" ++ Fragment
-      .const(s"${colorBands.redBand}") ++
-      fr""", "blueBand":""" ++ Fragment.const(s"${colorBands.blueBand}") ++
-      fr""", "greenBand":""" ++ Fragment.const(s"${colorBands.greenBand}") ++
-      fr"""}'::jsonb)
-    WHERE project_id = $projectId
+    SET mosaic_definition =
+      (mosaic_definition ||
+        json_build_object(
+          'redBand',${colorBands.redBand},
+          'blueBand',${colorBands.blueBand},
+          'greenBand', ${colorBands.greenBand}
+        )::jsonb
+      )
+    WHERE project_id = ${projectId}
     """).update.run
   }
 }

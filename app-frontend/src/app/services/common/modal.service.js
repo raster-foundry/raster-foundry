@@ -3,11 +3,14 @@ export default (app) => {
         constructor($uibModal) {
             this.$uibModal = $uibModal;
             this.activeModal = false;
+            this.persistentModal = false;
         }
 
-        open(modalConfig, closeActive = true) {
+        open(modalConfig, closeActive = true, persist = false) {
+            this.persistentModal = persist;
+
             if (closeActive) {
-                this.closeActiveModal();
+                this.closeActiveModal(true);
             }
 
             this.activeModal = this.$uibModal.open(modalConfig);
@@ -17,8 +20,8 @@ export default (app) => {
             return this.activeModal;
         }
 
-        closeActiveModal() {
-            if (this.activeModal) {
+        closeActiveModal(force = false) {
+            if (this.activeModal && (force || !this.persistentModal)) {
                 this.activeModal.dismiss();
             }
         }

@@ -11,7 +11,7 @@ export default (app) => {
             this.$compile = $compile;
         }
 
-        init(joint) {
+        init(joint, data = {}) {
             if (this.joint) {
                 return;
             }
@@ -34,13 +34,19 @@ export default (app) => {
             });
 
             joint.shapes.html.ElementView = joint.dia.ElementView.extend({
-                template: '<rf-lab-node node-id="nodeId" model="model"></rf-lab-node>',
+                template:
+                    `<rf-lab-node node-id="nodeId"
+                                  model="model"
+                                  enable-sharing="data.enableSharing"
+                    ></rf-lab-node>`,
                 initialize: function () {
                     _.bindAll(this, 'updateBox');
                     joint.dia.ElementView.prototype.initialize.apply(this, arguments);
                     this.model.on('change', this.updateBox, this);
                     this.$box = angular.element(this.template);
                     this.scope = $rootScope.$new();
+
+                    this.scope.data = data;
 
                     $compile(this.$box)(this.scope);
 

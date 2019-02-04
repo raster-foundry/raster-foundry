@@ -1,34 +1,35 @@
 package com.rasterfoundry.batch.landsat8
 
-import java.io.File
-import java.time.{LocalDate, ZoneOffset}
-import java.util.UUID
-
-import cats.effect.IO
-import cats.implicits._
 import com.rasterfoundry.batch.Job
-import com.rasterfoundry.batch.util.{S3, isUriExists}
+import com.rasterfoundry.batch.util.isUriExists
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
+import com.rasterfoundry.common.{S3, S3RegionString}
 import com.rasterfoundry.common.utils.AntimeridianUtils
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
+
+import cats.effect.IO
+import cats.implicits._
 import com.github.tototoshi.csv._
 import doobie.free.connection.ConnectionIO
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
-import geotrellis.proj4.CRS
 import io.circe._
 import io.circe.syntax._
+import geotrellis.proj4.CRS
 import geotrellis.vector._
 
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.collection.parallel.immutable.ParSeq
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.sys.process._
+import java.io.File
+import java.time.{LocalDate, ZoneOffset}
+import java.util.UUID
 
 final case class ImportLandsat8C1(
     startDate: LocalDate = LocalDate.now(ZoneOffset.UTC),
@@ -39,7 +40,10 @@ final case class ImportLandsat8C1(
   val name = ImportLandsat8C1.name
 
   /** Get S3 client per each call */
-  def s3Client = S3(region = landsat8Config.awsRegion)
+  def s3Client =
+    S3(region = landsat8Config.awsRegion.flatMap { region =>
+      Some(S3RegionString(region))
+    })
 
   // Eagerly get existing scene names
   val previousDay = startDate.minusDays(1)
@@ -95,9 +99,6 @@ final case class ImportLandsat8C1(
     rootUrl
   }
 
-  // Getting the image size is the only place where the s3 object
-  // is required to exist -- so handle the missing object by returning
-  // a -1 for the image's size
   protected def createThumbnails(
       sceneId: UUID,
       productId: String): List[Thumbnail.Identified] = {

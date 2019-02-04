@@ -6,12 +6,6 @@ services:
       context: ./nginx
       dockerfile: Dockerfile.api
 
-  nginx-tiler:
-    image: raster-foundry-nginx-tiler:${GIT_COMMIT:-latest}
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile.tiler
-
   nginx-backsplash:
     image: raster-foundry-nginx-backsplash:${GIT_COMMIT:-latest}
     build:
@@ -19,7 +13,7 @@ services:
       dockerfile: Dockerfile.backsplash
 
   app-frontend:
-    image: node:6
+    image: node:10
     working_dir: /opt/raster-foundry/app-frontend/
     volumes:
       - ./app-frontend/.babelrc:/opt/raster-foundry/app-frontend/.babelrc
@@ -40,12 +34,6 @@ services:
     image: raster-foundry-api-server:${GIT_COMMIT:-latest}
     build:
       context: ./app-backend/api
-      dockerfile: Dockerfile
-
-  tile-server:
-    image: raster-foundry-tile-server:${GIT_COMMIT:-latest}
-    build:
-      context: ./app-backend/tile
       dockerfile: Dockerfile
 
   backsplash:
@@ -69,30 +57,6 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./app-tasks/rf/:/opt/raster-foundry/app-tasks/rf/
-
-  gatling-sbt:
-    image: openjdk:8-jre
-    environment:
-      - COURSIER_CACHE=/root/.coursier
-      - RF_API_HOST
-      - RF_PROJECT_IDS
-      - TOKEN_ROUTE
-      - REFRESH_TOKEN
-      - RANDOM_SEED
-      - PROJECT_ROUTE
-      - USER_COUNT
-      - RAMPUP_TIME
-      - BACKSPLASH_TMS_URL_TEMPLATE
-      - MIN_ZOOM
-      - MAX_ZOOM
-    volumes:
-      - ./gatling:/opt/gatling
-      - $HOME/.coursier:/root/.coursier
-      - $HOME/.sbt:/root/.sbt
-      - $HOME/.ivy2:/root/.ivy2
-      - $HOME/.aws:/root/.aws:ro
-    working_dir: /opt/gatling/
-    entrypoint: ./sbt
 
   build:
     image: raster-foundry-build:${GIT_COMMIT:-latest}

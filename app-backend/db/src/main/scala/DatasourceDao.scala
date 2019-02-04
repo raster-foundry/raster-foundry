@@ -4,7 +4,7 @@ import java.sql.Timestamp
 import java.util.UUID
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._
 import doobie.implicits._

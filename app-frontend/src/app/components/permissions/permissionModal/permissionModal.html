@@ -8,13 +8,13 @@
   <p>{{$ctrl.resolve.objectName}}</p>
 </div>
 
-<div class="modal-body" ng-if="$ctrl.objectOwnerId === $ctrl.userId">
+<div class="modal-body">
   <div class="modal-inner-container small" ng-if="!$ctrl.loading && (!$ctrl.authService.user.personalInfo.firstName || !$ctrl.authService.user.personalInfo.lastName)">
     <span class="modal-icon">
       <i class="icon-settings"></i>
     </span>
     <h2>Update your information</h2>
-    <p>Sharing requires you to have associated to your account so we can let other users know who is sharing with them.</p>
+    <p>Sharing requires you to have a name associated with your account so we can let other users know who is sharing with them.</p>
     <a ui-sref="user.settings.profile({userId: 'me'})" class="btn btn-primary">Update your personal information</a>
   </div>
 
@@ -93,7 +93,7 @@
       <div class="empty-state" ng-if="!$ctrl.loading && !$ctrl.permissionCount">
         No permissions are currently configured
       </div>
-      <rf-permission-item 
+      <rf-permission-item
         actions="$ctrl.applicableActions"
         ng-repeat="(id, actionSet) in $ctrl.actionsBuffer.PLATFORM"
         current-action-tag="actionSet.tag"
@@ -106,7 +106,7 @@
         </div>
         <div class="labels">Everyone</div>
       </rf-permission-item>
-      <rf-permission-item 
+      <rf-permission-item
         actions="$ctrl.applicableActions"
         ng-repeat="(id, actionSet) in $ctrl.actionsBuffer.ORGANIZATION"
         current-action-tag="actionSet.tag"
@@ -116,12 +116,24 @@
         <div ng-if="$ctrl.entityCache.organization[id].logoUri">
           <img class="avatar user-avatar" ng-src="{{$ctrl.entityCache.organization[id].logoUri}}"/>
         </div>
-        <div class="labels">
-          <div>{{ $ctrl.entityCache.organization[id].name || 'Loading organization' }}</div>
+        <div class="labels" ng-if="$ctrl.entityCache.organization[id].name">
+          <div>
+            {{ $ctrl.entityCache.organization[id].name }}
+            <i class="icon-help"
+               ng-if="$ctrl.entityCache.organization[id].private"
+               title="You do not have permissions to view this organization"></i>
+          </div>
           <div class="subtitle">Organization</div>
         </div>
+        <div class="labels" ng-if="!$ctrl.entityCache.organization[id]">
+          <div>Loading Organization...</div>
+          <div class="subtitle">Organization</div>
+        </div>
+        <div class="labels" ng-if="$ctrl.entityCache.organization[id] && !$ctrl.entityCache.organization[id].name">
+          <div><i class="icon-warning"></i> Error fetching organization</div>
+        </div>
       </rf-permission-item>
-      <rf-permission-item 
+      <rf-permission-item
         actions="$ctrl.applicableActions"
         ng-repeat="(id, actionSet) in $ctrl.actionsBuffer.TEAM"
         current-action-tag="actionSet.tag"
@@ -134,12 +146,24 @@
                 ng-src="{{$ctrl.entityCache.organization[$ctrl.entityCache.team[id].organizationId].logoUri}}"
           />
         </div>
-        <div class="labels">
-          <div>{{ $ctrl.entityCache.team[id].name || 'Loading team' }}</div>
+        <div class="labels" ng-if="$ctrl.entityCache.team[id]">
+          <div>
+            {{ $ctrl.entityCache.team[id].name}}
+            <i class="icon-help"
+               ng-if="$ctrl.entityCache.team[id].private"
+               title="You do not have permissions to view this team"></i>
+          </div>
           <div class="subtitle">Team</div>
         </div>
+        <div class="labels" ng-if="!$ctrl.entityCache.team[id]">
+          <div>Loading team...</div>
+          <div class="subtitle">Team</div>
+        </div>
+        <div class="labels" ng-if="$ctrl.entityCache.team[id] && !$ctrl.entityCache.team[id].name">
+          <div><i class="icon-warning"></i> Error fetching team</div>
+        </div>
       </rf-permission-item>
-      <rf-permission-item 
+      <rf-permission-item
         actions="$ctrl.applicableActions"
         ng-repeat="(id, actionSet) in $ctrl.actionsBuffer.USER"
         current-action-tag="actionSet.tag"
@@ -149,8 +173,19 @@
         <div ng-if="$ctrl.entityCache.user[id].profileImageUri">
           <img class="avatar user-avatar" ng-src="{{$ctrl.entityCache.user[id].profileImageUri}}"/>
         </div>
-        <div class="labels">
-          <div>{{ $ctrl.entityCache.user[id].name || 'Loading user' }}</div>
+        <div class="labels" ng-if="$ctrl.entityCache.user[id].name">
+          <div>
+            {{ $ctrl.entityCache.user[id].name }}
+            <div class="subtitle">User</div>
+          </div>
+        </div>
+        <div class="labels" ng-if="!$ctrl.entityCache.user[id]">
+          <div>Loading User...</div>
+          <div class="subtitle">User</div>
+        </div>
+        <div class="labels" ng-if="$ctrl.entityCache.user[id] && !$ctrl.entityCache.user[id].name">
+          <div><i class="icon-warning"></i> Error fetching user</div>
+          <div class="subtitle">User</div>
         </div>
       </rf-permission-item>
     </div>
@@ -161,8 +196,7 @@
   <div class="footer-section left">
     <button type="button" class="btn" ng-click="$ctrl.dismiss()">Close</button>
   </div>
-  <div class="footer-section right" 
-        ng-if="$ctrl.objectOwnerId === $ctrl.userId">
-        <button type="button" class="btn btn-primary" ng-click="$ctrl.onSave()">Save Changes</button>
+  <div class="footer-section right">
+    <button type="button" class="btn btn-primary" ng-click="$ctrl.onSave()">Save Changes</button>
   </div>
 </div>

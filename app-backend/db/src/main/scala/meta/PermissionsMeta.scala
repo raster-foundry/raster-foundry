@@ -1,6 +1,7 @@
 package com.rasterfoundry.database.meta
 
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
+
 import cats._
 import cats.effect.IO
 import cats.implicits._

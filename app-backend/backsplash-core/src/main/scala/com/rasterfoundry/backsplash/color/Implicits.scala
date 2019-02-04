@@ -1,5 +1,7 @@
 package com.rasterfoundry.backsplash.color
 
+import com.rasterfoundry.common.datamodel._
+
 import geotrellis.raster.{io => _, _}
 import geotrellis.raster.render._
 import geotrellis.raster.render.png._
@@ -8,7 +10,6 @@ import io.circe.generic.semiauto._
 
 import scala.math.abs
 import scala.util.Try
-
 import java.util.Arrays.binarySearch
 
 trait Implicits {

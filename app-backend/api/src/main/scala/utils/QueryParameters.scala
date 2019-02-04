@@ -1,7 +1,7 @@
 package com.rasterfoundry.api.utils.queryparams
 
 import com.rasterfoundry.api._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
@@ -40,7 +40,10 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         searchParams &
         ownershipTypeQueryParameters &
         groupQueryParameters &
-        tagQueryParameters
+        tagQueryParameters &
+        parameters(
+          'analysisId.as[UUID].?
+        )
     ).as(ProjectQueryParameters.apply _)
 
   def aoiQueryParameters =
@@ -149,4 +152,9 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
         searchParams &
         activationParams
     ).as(TeamQueryParameters.apply _)
+
+  def annotationExportQueryParameters =
+    parameters(
+      'exportAll.as[Boolean].?
+    ).as(AnnotationExportQueryParameters.apply _)
 }

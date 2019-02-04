@@ -1,0 +1,74 @@
+<div class="list-group-item">
+  <div class="list-item-left-actions">
+    <label class="checkbox layer-checkbox list-item-{{$ctrl.layer.id}}"
+           ng-class="{
+                  active: $ctrl.selected
+                  }"
+    >
+      <input type="checkbox"
+             ng-checked="$ctrl.selected"
+             ng-click="$ctrl.onSelect({layerId: $ctrl.layer.id})"
+      />
+    </label>
+    <style>
+     label.checkbox.list-item-{{$ctrl.layer.id}}::after {
+         border: 2px solid {{$ctrl.color}};
+     }
+    </style>
+    <div ng-attr-title="Drag to reorder this layer">
+      <i class="icon-gripper"></i>
+    </div>
+  </div>
+  <div class="list-group-overflow">
+    <div><strong>{{$ctrl.layer.name}}</strong></div>
+    <div ng-show="$ctrl.layer.subtext"><span>{{$ctrl.layer.subtext}}</span></div>
+    <div>{{$ctrl.layer.createdAt | date}}</div>
+  </div>
+  <div class="list-group-right">
+    <div class="btn btn-text btn-transparent"
+            ng-show="!$ctrl.hasGeom"
+    >
+      <span class="icon-warning color-danger"
+            tooltips
+            tooltip-template="No AOI defined for this layer"
+            tooltip-size="small"
+            tooltip-class="layer-item-tooltip"
+            tooltip-side="left"
+      ></span>
+    </div>
+    <div class="btn btn-text btn-transparent"
+            ng-click="$ctrl.onHide({layerId: $ctrl.layer.id})"
+    >
+      <span class="icon-eye"
+            tooltips
+            tooltip-template="Hide layer on map"
+            tooltip-size="small"
+            tooltip-class="layer-item-tooltip"
+            tooltip-side="left"
+            ng-if="$ctrl.visible"
+      ></span>
+      <span class="icon-eye-off"
+            tooltips
+            tooltip-template="Show layer on map"
+            tooltip-size="small"
+            tooltip-class="layer-item-tooltip"
+            tooltip-side="left"
+            ng-if="!$ctrl.visible"
+      ></span>
+    </div>
+    <div class="btn btn-text btn-transparent"
+            uib-dropdown
+            ng-show="$ctrl.layerActions && $ctrl.layerActions.length"
+            uib-dropdown-toggle
+    >
+      <i class="icon-menu"></i>
+      <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
+        <li role="menuitem"
+            ng-repeat="action in $ctrl.layerActions">
+          <a href ng-click="action.callback()" ng-show="action.name">{{action.name}}</a>
+          <span class="menu-separator" ng-show="action.separator"></span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

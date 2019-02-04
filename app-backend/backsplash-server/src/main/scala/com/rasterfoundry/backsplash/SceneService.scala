@@ -4,7 +4,7 @@ import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.datamodel.User
 
 import cats.Applicative
 import cats.data.Validated._
@@ -20,7 +20,6 @@ import java.util.UUID
 
 class SceneService[ProjStore: ProjectStore, HistStore: HistogramStore](
     scenes: ProjStore,
-    mtr: MetricsRegistrator,
     mosaicImplicits: MosaicImplicits[HistStore],
     histStore: HistStore,
     xa: Transactor[IO])(implicit cs: ContextShift[IO],
@@ -41,13 +40,7 @@ class SceneService[ProjStore: ProjectStore, HistStore: HistogramStore](
         AuthedService {
           case GET -> Root / UUIDWrapper(sceneId) / IntVar(z) / IntVar(x) / IntVar(
                 y)
-                :? RedBandOptionalQueryParamMatcher(redOverride)
-                :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
-            val bandOverride =
-              Applicative[Option].map3(redOverride,
-                                       greenOverride,
-                                       blueOverride)(BandOverride.apply)
+                :? BandOverrideQueryParamDecoder(bandOverride) as user =>
             val eval =
               LayerTms.identity(scenes.read(sceneId, None, bandOverride, None))
             for {

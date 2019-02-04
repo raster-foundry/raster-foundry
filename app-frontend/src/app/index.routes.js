@@ -1,12 +1,16 @@
 /* eslint max-len: 0 */
+import _ from 'lodash';
+
 import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
 
 import labBrowseTpl from './pages/lab/browse/browse.html';
+import labBrowseModule from './pages/lab/browse/browse';
 import labBrowseAnalysesTpl from './pages/lab/browse/analyses/analyses.html';
 import labBrowseTemplatesTpl from './pages/lab/browse/templates/templates.html';
 import labTemplateTpl from './pages/lab/template/template.html';
 import labAnalysisTpl from './pages/lab/analysis/analysis.html';
+import labAnalysisModule from './pages/lab/analysis/analysis';
 import labStartAnalysisTpl from './pages/lab/startAnalysis/startAnalysis.html';
 import labNavbarTpl from './pages/lab/navbar/navbar.html';
 
@@ -14,6 +18,7 @@ import projectsModule from './pages/projects/projects.module';
 import projectsTpl from './pages/projects/projects.html';
 import projectsNavbarTpl from './pages/projects/navbar/navbar.html';
 import projectsEditTpl from './pages/projects/edit/edit.html';
+
 import projectsEditColorTpl from './pages/projects/edit/color/color.html';
 import projectsEditColormodeTpl from './pages/projects/edit/colormode/colormode.html';
 import projectsAdvancedColorTpl from './pages/projects/edit/advancedcolor/advancedcolor.html';
@@ -80,6 +85,7 @@ import platformSettingsTpl from './pages/admin/platform/settings/settings.html';
 import platformSettingsEmailTpl from './pages/admin/platform/settings/email/email.html';
 import platformProjectsTpl from './pages/admin/platform/projects/projects.html';
 import platformRastersTpl from './pages/admin/platform/rasters/rasters.html';
+
 import platformVectorsTpl from './pages/admin/platform/vectors/vectors.html';
 import platformDatasourcesTpl from './pages/admin/platform/datasources/datasources.html';
 import platformTemplatesTpl from './pages/admin/platform/templates/templates.html';
@@ -94,6 +100,178 @@ import teamDatasourcesTpl from './pages/admin/team/datasources/datasources.html'
 import teamTemplatesTpl from './pages/admin/team/templates/templates.html';
 import teamAnalysesTpl from './pages/admin/team/analyses/analyses.html';
 
+import { projectResolves } from './components/pages/project';
+
+
+function shareStatesV2($stateProvider) {
+    $stateProvider
+        .state('/v2/share/?mapToken')
+        .state('/v2/share/project/:projectId?mapToken')
+        .state('/v2/share/layer/:layerId?mapToken')
+    ;
+}
+
+function projectStatesV2($stateProvider) {
+    let addScenesQueryParams = [
+        'maxCloudCover',
+        'minCloudCover',
+        'minAcquisitionDatetime',
+        'maxAcquisitionDatetime',
+        'datasource',
+        'maxSunAzimuth',
+        'minSunAzimuth',
+        'maxSunElevation',
+        'minSunElevation',
+        'bbox',
+        'point',
+        'ingested',
+        'owner'
+    ].join('&');
+
+    $stateProvider
+        .state('project', {
+            parent: 'root',
+            title: 'Project',
+            url: '/v2/project/:projectId',
+            component: 'rfProjectPage',
+            resolve: Object.assign({
+                projectId: ['$transition$', ($transition$) => $transition$.params().projectId],
+                project: [
+                    '$transition$', 'projectService',
+                    ($transition$, projectService) =>
+                        projectService.fetchProject($transition$.params().projectId)
+                ]
+            }, projectResolves.resolve),
+            redirectTo: 'project.layers'
+        })
+        .state('project.layers', {
+            title: 'Project Layers',
+            url: '/layers?page',
+            component: 'rfProjectLayersPage',
+            params: {
+                page: { dynamic: true }
+            }
+        })
+    // top level project routes
+        .state('project.analyses', {
+            title: 'Project Analyses',
+            url: '/analyses?page&search',
+            component: 'rfProjectAnalysesPage'
+        })
+        .state('project.settings', {
+            title: 'Project Settings',
+            url: '/settings',
+            component: 'rfProjectSettingsPage',
+            redirectTo: 'project.settings.options'
+        })
+        .state('project.layer', {
+            title: 'Project Layer',
+            url: '/layer/:layerId',
+            resolve: {
+                layerId: ['$transition$', ($transition$) => $transition$.params().layerId]
+            },
+            component: 'rfProjectLayerPage'
+        })
+    // project layer routes
+        .state('project.layer.aoi', {
+            title: 'Project Layer AOI',
+            url: '/aoi',
+            component: 'rfProjectLayerAoiPage'
+        })
+        .state('project.layer.colormode', {
+            title: 'Project Layer Colormode',
+            url: '/colormode',
+            component: 'rfProjectLayerColormodePage'
+        })
+        .state('project.layer.corrections', {
+            title: 'Project Layer Corrections',
+            url: '/corrections',
+            component: 'rfProjectLayerCorrectionsPage'
+        })
+        .state('project.layer.scenes', {
+            title: 'Project Layer Scenes',
+            url: '/scenes?page',
+            component: 'rfProjectLayerScenesPage'
+        })
+        .state('project.layer.scenes.browse', {
+            title: 'Find Scenes',
+            url: '/browse?' + addScenesQueryParams,
+            component: 'rfProjectLayerScenesBrowsePage'
+        })
+        .state('project.layer.exports', {
+            title: 'Project Layer Exports',
+            url: '/exports?page&search',
+            component: 'rfProjectLayerExportsPage'
+        })
+        .state('project.layer.export', {
+            title: 'Project Layer Export',
+            url: '/export',
+            component: 'rfProjectLayerExportPage'
+        })
+        .state('project.layer.annotations', {
+            title: 'Project Layer Annotations',
+            url: '/annotations?page',
+            component: 'rfProjectLayerAnnotationsPage'
+        })
+        .state('project.layer.annotate', {
+            title: 'Project Layer Annotate',
+            url: '/annotate',
+            component: 'rfProjectLayerAnnotatePage'
+        })
+    // Project analyses routes
+        .state('project.analyses.compare', {
+            title: 'Compare Project Analyses',
+            url: '/compare?id',
+            component: 'rfProjectAnalysesComparePage'
+        })
+        .state('project.analyses.settings', {
+            title: 'Project Analyses Settings',
+            url: '/settings',
+            component: 'rfProjectAnalysesSettingsPage',
+            redirectTo: 'project.analyses.settings.options'
+        })
+        .state('project.analyses.settings.options', {
+            title: 'Project Analyses Options',
+            url: '/options',
+            component: 'rfProjectAnalysesOptionsPage'
+        })
+        .state('project.analyses.settings.masking', {
+            title: 'Project Analyses Masking',
+            url: '/masking',
+            component: 'rfProjectAnalysesMaskingPage'
+        })
+        .state('project.analyses.settings.publishing', {
+            title: 'Project Analyses Publishing',
+            url: '/publishing',
+            component: 'rfProjectAnalysesPublishingPage'
+        })
+        .state('project.analyses.settings.permissions', {
+            title: 'Project Analyses Permissions',
+            url: '/permissions',
+            component: 'rfProjectAnalysesPermissionsPage'
+        })
+        .state('project.analyses.visualize', {
+            title: 'Project Analyses Visualization',
+            url: '/visualize',
+            component: 'rfProjectAnalysesVisualizePage'
+        })
+    // project settings routes
+        .state('project.settings.options', {
+            title: 'Project Options',
+            url: '/options',
+            component: 'rfProjectOptionsPage'
+        })
+        .state('project.settings.publishing', {
+            title: 'Project Publishing',
+            url: '/publishing',
+            component: 'rfProjectPublishingPage'
+        })
+        .state('project.settings.permissions', {
+            title: 'Project Permissions',
+            url: '/permissions',
+            component: 'rfProjectPermissionsPage'
+        });
+}
 
 function projectEditStates($stateProvider) {
     let addScenesQueryParams = [
@@ -396,25 +574,27 @@ function labStates($stateProvider) {
                     controller: 'LabAnalysisController',
                     controllerAs: '$ctrl'
                 }
-            }
+            },
+            resolve: labAnalysisModule.resolve
         })
         .state('lab.browse', {
             url: '/browse',
             templateUrl: labBrowseTpl,
             controller: 'LabBrowseController',
             controllerAs: '$ctrl',
-            redirectTo: 'lab.browse.analyses'
+            redirectTo: 'lab.browse.analyses',
+            resolve: labBrowseModule.resolve
         })
         .state('lab.browse.templates', {
             title: 'Analysis Search',
-            url: '/templates?page&search&query&analysiscategory&analysistag',
+            url: '/templates?page&search&query&analysiscategory&analysistag&ownership',
             templateUrl: labBrowseTemplatesTpl,
             controller: 'LabBrowseTemplatesController',
             controllerAs: '$ctrl'
         })
         .state('lab.browse.analyses', {
             title: 'Analyses',
-            url: '/analyses?page&search&sort',
+            url: '/analyses?page&search&sort&ownership',
             templateUrl: labBrowseAnalysesTpl,
             controller: 'LabBrowseAnalysesController',
             controllerAs: '$ctrl'
@@ -477,7 +657,7 @@ function importStates($stateProvider) {
         })
         .state('imports.vectors', {
             title: 'Vectors',
-            url: '/vectors?page&search',
+            url: '/vectors?page&search&ownership',
             templateUrl: vectorListTpl,
             controller: 'VectorListController',
             controllerAs: '$ctrl'
@@ -491,7 +671,7 @@ function importStates($stateProvider) {
         })
         .state('imports.datasources.list', {
             title: 'Datasources',
-            url: '/list?page&search',
+            url: '/list?page&search&ownership',
             templateUrl: importsDatasourcesListTpl,
             controller: 'DatasourceListController',
             controllerAs: '$ctrl'
@@ -759,6 +939,7 @@ function routeConfig(
 
     loginStates($stateProvider);
     projectStates($stateProvider);
+    projectStatesV2($stateProvider);
     settingsStates($stateProvider);
     labStates($stateProvider);
     shareStates($stateProvider);

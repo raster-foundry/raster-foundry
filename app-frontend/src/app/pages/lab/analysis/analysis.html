@@ -1,3 +1,23 @@
+<div class="navbar secondary-navbar">
+  <div class="container dashboard">
+    <div class="navbar-section primary">
+      <nav>
+        <a ui-sref="lab.analysis({analysisid: $ctrl.analysis.id, analysis: $ctrl.analysis})"
+           ui-sref-active="active">
+          <i class="icon-model"></i>
+          <span>Diagram</span>
+        </a>
+        <a href
+           ng-click="$ctrl.permissionsModal()"
+           ng-if="$ctrl.permissions && $ctrl.permissions.length"
+        >
+          <i class="icon-key"></i>
+          <span>Permissions</span>
+        </a>
+      </nav>
+    </div>
+  </div>
+</div>
 <div class="container column-stretch container-not-scrollable">
   <div class="main with-position">
     <div class="lab-container">
@@ -64,6 +84,7 @@
          ng-show="!!$ctrl.showDiagram || !$ctrl.isShowingPreview">
         <rf-diagram-container
             ng-if="$ctrl.analysis && $ctrl.analysis.id === $ctrl.analysisId"
+            enable-node-sharing="$ctrl.analysis.owner === $ctrl.user.id"
             class="with-position"
         >
         </rf-diagram-container>

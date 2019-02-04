@@ -69,7 +69,7 @@
     "ng-file-upload": "^12.2.13",
     "ng-infinite-scroll": "~1.3.0",
     "ng-redux": "^3.5.2",
-    "ng-rollbar": "^1.9.2",
+    "ng-rollbar": "^2.4.2",
     "ob-daterangepicker": "^0.10.3",
     "plyr": "^3.0.2",
     "postcss-preset-env": "^6.0.10",
@@ -136,7 +136,7 @@
     "webpack": "4.20.2",
     "webpack-bundle-analyzer": "^3.0.3",
     "webpack-cli": "^3.1.2",
-    "webpack-dev-server": "3.1.9",
+    "webpack-dev-server": "3.1.14",
     "webpack-merge": "4.1.4",
     "yarn": "1.10.1"
   },

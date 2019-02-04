@@ -1,17 +1,45 @@
 # Change Log
-
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
-- Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
-- Added ProjectLayer datamodel, dao, and migration [\#4460]https://github.com/raster-foundry/raster-foundry/pull/4460()\
-- Added lambda function for reactively processing new Landsat 8 imagery [\#4471](https://github.com/raster-foundry/raster-foundry/pull/4471)
-- Added lambda function for reactively processing new Sentinel-2 imagery [\#4491](https://github.com/raster-foundry/raster-foundry/pull/4491)
 
 ### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.17.0](https://github.com/raster-foundry/raster-foundry/tree/1.17.0) (2019-02-04)
+
+### Added
+- Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
+- Added ProjectLayer datamodel, dao, and migration [\#4460](https://github.com/raster-foundry/raster-foundry/pull/4460)
+- Added lambda function for reactively processing new Landsat 8 imagery [\#4471](https://github.com/raster-foundry/raster-foundry/pull/4471)
+- Added lambda function for reactively processing new Sentinel-2 imagery [\#4491](https://github.com/raster-foundry/raster-foundry/pull/4491)
+- Added a migration that creates relationship among projects, project layers, and scenes and populates corresponding tables. Updated associated data models and `Dao`s [\#4479](https://github.com/raster-foundry/raster-foundry/pull/4479)
+- CRUDL endpoints for project layers [\#4512](https://github.com/raster-foundry/raster-foundry/pull/4512)
+- Added `SceneToLayer` data model and `SceneToLayerDao`; updated related function calls in `ProjectDao` and project api [\#4513](https://github.com/raster-foundry/raster-foundry/pull/4513)
+- Added a migration that creates relationship among projects, project layers, and scenes and populates corresponding tables. Updated associated data models and `Dao`s. [\#4479](https://github.com/raster-foundry/raster-foundry/pull/4479)
+- Allow sharing most objects when you have edit permissions granted to you [\#4514](https://github.com/raster-foundry/raster-foundry/pull/4514)
+- Added TMS route for project layers [\#4523](https://github.com/raster-foundry/raster-foundry/pull/4523)
+- Added TMS, quick export, and histogram routes for project layers [\#4523](https://github.com/raster-foundry/raster-foundry/pull/4523), [\#4553](https://github.com/raster-foundry/raster-foundry/pull/4553)
+- Added project, project layer, and template ID fields to tool runs for later filtering [\#4546](https://github.com/raster-foundry/raster-foundry/pull/4546) and to API routes as filter fields [\#4551](https://github.com/raster-foundry/raster-foundry/pull/4551)
+- Added project layer mosaic and scene order endpoint [\#4547](https://github.com/raster-foundry/raster-foundry/pull/4547)
+- Add Layer ID to Annotations and Annotation Groups [\#4558](https://github.com/raster-foundry/raster-foundry/pull/4558)
+
+### Changed
+- Reorganized project structure to simplify dependency graph (`tool` was mostly removed; `tool`s still-relevant pieces, `bridge`, and `datamodel` moved into the project `common`) [\#4564](https://github.com/raster-foundry/raster-foundry/pull/4564)
 - Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Updated permission check logic for lab templates to make ownership filter work as expected [\#4462](https://github.com/raster-foundry/raster-foundry/pull/4462)
 - Unify S3 client interface usage [\#4441](https://github.com/raster-foundry/raster-foundry/pull/4441)
+- Moved common authentication logic to http4s-util subproject [\#4496](https://github.com/raster-foundry/raster-foundry/pull/4496)
+- Upgraded scala, javascript, and python rollbar clients [\#4502](https://github.com/raster-foundry/raster-foundry/pull/4502)
+- Added ability to download images as part of development environment setup [\#4509](https://github.com/raster-foundry/raster-foundry/pull/4509)
+- Allow users with edit permissions to edit the permissions of objects [\#4490](https://github.com/raster-foundry/raster-foundry/pull/4490)
 
 ### Deprecated
 
@@ -19,10 +47,13 @@
 - Removed unused dependency `geotrellis-raster-testkit`[\#4482](https://github.com/raster-foundry/raster-foundry/pull/4482)
 - Removed legacy tile server subproject and configuration [\#4478](https://github.com/raster-foundry/raster-foundry/pull/4478)
 - Removed unused metrics collection resources and application code [\#4475](https://github.com/raster-foundry/raster-foundry/pull/4475), [\#4493](https://github.com/raster-foundry/raster-foundry/pull/4493)
+- Removed deprecated Gatling load tests [\#4504](https://github.com/raster-foundry/raster-foundry/pull/4504)
 
 ### Fixed
 - Shapes drawn within the scene search filter context can now be saved [\#4474](https://github.com/raster-foundry/raster-foundry/pull/4474)
 - Mosaics are again constructed with rasters instead of with IO[rasters] [\#4498](https://github.com/raster-foundry/raster-foundry/pull/4498)
+- Improved healthcheck logic in backsplash healthcheck endpoint [\#4548](https://github.com/raster-foundry/raster-foundry/pull/4548)
+- Fixed bug for publishing project page [\#4578](https://github.com/raster-foundry/raster-foundry/pull/4578)
 
 ### Security
 - Upgrade webpack-dev-server to address vulnerability (https://nvd.nist.gov/vuln/detail/CVE-2018-14732) [\#4476](https://github.com/raster-foundry/raster-foundry/pull/4476)
@@ -53,9 +84,11 @@
 ### Removed
 
 ### Fixed
+
 - Added back the scenes mosaic endpoint [\#4439](https://github.com/raster-foundry/raster-foundry/pull/4439)
 - Fixed quick export of projects and analyses [\#4459](https://github.com/raster-foundry/raster-foundry/pull/4459)
 - Fixed route matching for map token authorization for analyses [\#4463](https://github.com/raster-foundry/raster-foundry/pull/4463)
+- Fixed permission checks for project and project datasource in lab analyses [\#4466](https://github.com/raster-foundry/raster-foundry/pull/4466)
 
 ### Security
 
@@ -66,6 +99,7 @@
 - In this release, we have added more fields to platform email settings to make it work better. We strongly suggest platform admins to go to your platform email settings and fill in **all fields**.
 
 ### Added
+- Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Added a support email field to platform email settings [\#4353](https://github.com/raster-foundry/raster-foundry/pull/4353)
 - Supported team creation on user's team list page [\#4345](https://github.com/raster-foundry/raster-foundry/pull/4345)
 - Use java's gdal bindings for tile IO in backsplash and better separate concerns between fetching imagery and talking to the database / users [\#4339](https://github.com/raster-foundry/raster-foundry/pull/4339)
@@ -79,6 +113,7 @@
 
 ### Changed
 
+- Only analyses owned by the current user are displayed in the analysis browsing UI [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Reorganized scala dependencies for package cleanliness and smaller bundles [\#4301](https://github.com/raster-foundry/raster-foundry/pull/4301)
 - If users are not requesting their own info, the returned other users' personal info are protected [\#4360](https://github.com/raster-foundry/raster-foundry/pull/4360)
 - Changed the data model of the return of `users/me/roles` endpoint [\#4375](https://github.com/raster-foundry/raster-foundry/pull/4375)
