@@ -4,12 +4,7 @@ import com.rasterfoundry.database.Implicits._
 
 import doobie._, doobie.implicits._
 import doobie.hikari._
-import doobie.hikari.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
-import doobie.util.ExecutionContexts
-import cats._
-import cats.data._
 import cats.effect._
 import cats.implicits._
 

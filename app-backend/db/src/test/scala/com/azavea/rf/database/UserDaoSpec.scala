@@ -2,17 +2,11 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
 
-import doobie._, doobie.implicits._
-import cats._, cats.data._, cats.effect.IO
-import cats.syntax.either._
-import doobie.postgres._, doobie.postgres.implicits._
+import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
-
-import scala.util.Random
 
 import com.typesafe.scalalogging.LazyLogging
 
