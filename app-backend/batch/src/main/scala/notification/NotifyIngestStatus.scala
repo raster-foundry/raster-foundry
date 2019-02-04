@@ -8,7 +8,6 @@ import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{PlatformDao, ProjectDao, SceneDao}
 import com.rasterfoundry.common.datamodel._
-import com.typesafe.scalalogging.LazyLogging
 
 import cats.effect.IO
 import cats.implicits._

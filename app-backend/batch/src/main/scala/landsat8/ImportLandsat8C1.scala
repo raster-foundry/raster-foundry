@@ -7,7 +7,6 @@ import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.{S3, S3RegionString}
 import com.rasterfoundry.common.utils.AntimeridianUtils
 import com.rasterfoundry.database._
-import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.common.datamodel._
 
@@ -23,9 +22,6 @@ import io.circe.syntax._
 import geotrellis.proj4.CRS
 import geotrellis.vector._
 
-import scala.collection.parallel.ForkJoinTaskSupport
-import scala.collection.parallel.immutable.ParSeq
-import scala.concurrent.forkjoin.ForkJoinPool
 import scala.sys.process._
 import java.io.File
 import java.time.{LocalDate, ZoneOffset}
