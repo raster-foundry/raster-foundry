@@ -69,7 +69,7 @@ lazy val commonSettings = Seq(
   autoCompilerPlugins := true,
   addCompilerPlugin(
     "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
-    addCompilerPlugin(scalafixSemanticdb) // enable SemanticDB
+  addCompilerPlugin(scalafixSemanticdb) // enable SemanticDB
 ) ++ publishSettings
 
 lazy val noPublishSettings = Seq(
