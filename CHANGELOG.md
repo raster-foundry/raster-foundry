@@ -2,6 +2,20 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [1.17.0](https://github.com/raster-foundry/raster-foundry/tree/1.17.0) (2019-02-04)
+
+### Added
 - Templates can now be shared and filtered by ownership [\#4357](https://github.com/raster-foundry/raster-foundry/pull/4357)
 - Added ProjectLayer datamodel, dao, and migration [\#4460](https://github.com/raster-foundry/raster-foundry/pull/4460)
 - Added lambda function for reactively processing new Landsat 8 imagery [\#4471](https://github.com/raster-foundry/raster-foundry/pull/4471)
