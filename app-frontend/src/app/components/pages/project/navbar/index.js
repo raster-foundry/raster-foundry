@@ -4,7 +4,7 @@ import {Set} from 'immutable';
 
 class ProjectLayersNavController {
     constructor(
-        $rootScope, $state, $log,
+        $rootScope, $state, $log, $scope,
         projectService, paginationService, modalService, authService, mapService
     ) {
         'ngInject';
@@ -13,22 +13,74 @@ class ProjectLayersNavController {
 
     $onInit() {
         this.navs = [];
-        const stateName = this.$state.current.name;
-        this.$log.log(this.$state.current);
-        if (
-            stateName === 'project.layers' ||
-            stateName === 'project.analyses' ||
-            stateName === 'project.settings.options'
-        ) {
-            this.navs.push({
-                title: this.project.name,
-                sref: `project.layers({projectId: '${this.project.id}'})`,
-                click: true
-            });
-        }
+        this.$scope.$watch('$ctrl.$state.current', this.onStateChange.bind(this));
     }
 
-    $onDestroy() {
+    onStateChange(stateCurrent) {
+        const state = this.$state;
+        if (!state) {
+            return;
+        }
+        this.$log.log(state);
+        this.navs = [];
+        if (
+            state.includes('project.layers') ||
+            state.includes('project.analyses') ||
+            state.includes('project.settings') ||
+            state.includes('project.layer')
+        ) {
+            this.navs.push(
+                {
+                    title: this.project.name,
+                    sref: `project.layers({projectId: '${this.project.id}'})`
+                }
+            );
+        }
+
+        if (state.includes('project.settings')) {
+            this.navs.push(
+                {
+                    title: 'Settings',
+                    sref: `project.settings({projectId: '${this.project.id}'})`
+                }
+            );
+        }
+
+        if (state.includes('project.layer')) {
+            this.navs.push(
+                {
+                    title: this.layer.name,
+                    sref: `project.layer({
+                        projectId: '${this.project.id}',
+                        layerId: '${this.layer.id}'
+                    })`
+                }
+            );
+        }
+
+        if (state.includes('project.layer.corrections')) {
+            this.navs.push(
+                {
+                    title: 'Color correct',
+                    sref: `project.layer.corrections({
+                        projectId: '${this.project.id}',
+                        layerId: '${this.layer.id}'
+                    })`
+                }
+            );
+        }
+
+        if (state.includes('project.layer.scenes.browse')) {
+            this.navs.push(
+                {
+                    title: 'Browse imagery',
+                    sref: `project.layer.scenes.browse({
+                        projectId: '${this.project.id}',
+                        layerId: '${this.layer.id}'
+                    })`
+                }
+            );
+        }
     }
 }
 
@@ -37,7 +89,8 @@ const component = {
         user: '<',
         userRoles: '<',
         project: '<?',
-        layerId: '<?'
+        layerId: '<?',
+        layer: '<?'
     },
     templateUrl: tpl,
     controller: ProjectLayersNavController.name
