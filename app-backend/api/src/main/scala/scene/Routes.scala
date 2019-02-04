@@ -7,7 +7,6 @@ import akka.http.scaladsl.server.Route
 import cats.data._
 import cats.effect.IO
 import cats.implicits._
-import java.net.URLDecoder
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.common.utils.CogUtils
 import com.rasterfoundry.common.{AWSBatch, S3}
@@ -22,7 +21,6 @@ import com.rasterfoundry.common.datamodel._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.raster.{IntArrayTile, MultibandTile}
 import geotrellis.raster.histogram.Histogram

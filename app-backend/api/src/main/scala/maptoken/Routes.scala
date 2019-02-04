@@ -12,7 +12,6 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database._
-import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
 import doobie.util.transactor.Transactor
@@ -21,11 +20,6 @@ import com.rasterfoundry.common.datamodel._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.Fragments
-import doobie.postgres._
-import doobie.postgres.implicits._
-
-import scala.concurrent.Future
 
 trait MapTokenRoutes
     extends Authentication

@@ -7,18 +7,12 @@ import com.rasterfoundry.database.filter.Filterables._
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
-import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import cats.effect.IO
 
 import doobie._
 import doobie.implicits._
-import doobie.Fragments.in
-import doobie.postgres._
-import doobie.postgres.implicits._
-
-import scala.util.{Success, Failure}
 
 trait ToolCategoryRoutes
     extends Authentication

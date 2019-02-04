@@ -22,10 +22,9 @@ import org.geotools.feature.simple.{
   SimpleFeatureBuilder,
   SimpleFeatureTypeBuilder
 }
-import org.geotools.referencing.{CRS => geotoolsCRS}
+import org.geotools.referencing.{CRS => _}
 import org.geotools.referencing.crs.DefaultGeographicCRS
 import org.opengis.feature.simple.SimpleFeature
-import org.opengis.referencing.crs.CoordinateReferenceSystem
 import better.files._
 
 import java.util.{HashMap => JHashMap}
@@ -39,7 +38,7 @@ object AnnotationShapefileService extends LazyLogging with Config {
 
     val featureCollection = new DefaultFeatureCollection()
     annotationFeatures.foreach(feature => {
-      val x = featureCollection.add(feature)
+      featureCollection.add(feature)
     })
 
     val zipfile = File.newTemporaryFile("export", ".zip")
