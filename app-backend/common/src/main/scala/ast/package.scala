@@ -1,18 +1,9 @@
 package com.rasterfoundry.common
 
-import com.rasterfoundry.common.datamodel.{Tool, ToolRun, User}
-
-import geotrellis.raster.render._
-import cats._
-import cats.data._
-import cats.implicits._
-import cats.data.Validated.{Invalid, Valid}
 import io.circe._
 import io.circe.optics.JsonPath._
 
-import java.lang.IllegalArgumentException
 import java.util.UUID
-import scala.concurrent.{ExecutionContext, Future}
 
 package object ast {
 

@@ -9,7 +9,6 @@ import geotrellis.raster.render._
 import geotrellis.raster.mapalgebra.focal._
 import cats.syntax.either._
 import spray.json._
-import DefaultJsonProtocol._
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.semiauto._

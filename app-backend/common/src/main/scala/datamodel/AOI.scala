@@ -4,7 +4,6 @@ import java.sql.Timestamp
 import java.time.Instant
 import java.util.{Date, UUID}
 
-import geotrellis.vector.{Geometry, Projected}
 import io.circe._
 import io.circe.generic.JsonCodec
 

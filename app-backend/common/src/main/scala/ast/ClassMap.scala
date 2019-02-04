@@ -1,6 +1,5 @@
 package com.rasterfoundry.common.ast
 
-import io.circe.generic.JsonCodec
 import geotrellis.raster._
 import geotrellis.raster.render._
 import spire.std.any._

@@ -19,7 +19,6 @@ import org.apache.commons.io.IOUtils
 
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
-import scala.util.Properties
 import scala.collection.mutable
 
 sealed trait S3Region

@@ -1,6 +1,5 @@
 package com.rasterfoundry.common.datamodel
 
-import io.circe.generic.JsonCodec
 import io.circe.generic.semiauto._
 
 case class HistogramAttribute(

@@ -3,7 +3,6 @@ package com.rasterfoundry.common.notification.Email
 import com.rasterfoundry.common.RollbarNotifier
 
 import org.apache.commons.mail._
-import org.apache.commons.mail.Email._
 import org.apache.commons.mail.HtmlEmail
 
 import java.lang.IllegalArgumentException
