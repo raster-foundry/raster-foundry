@@ -6,6 +6,7 @@ import projectPage from './project';
 import layersPage from './layers';
 import settingsPages from './settings';
 import analysesPages from './analyses';
+import navbar from './navbar';
 
 const projectResolves = {
     resolve: {
@@ -49,5 +50,6 @@ export default [
     projectPage,
     ...layerPages,
     ...settingsPages,
-    ...analysesPages
+    ...analysesPages,
+    navbar
 ];

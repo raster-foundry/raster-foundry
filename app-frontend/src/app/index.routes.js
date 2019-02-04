@@ -147,7 +147,14 @@ function projectStatesV2($stateProvider) {
         .state('project.layers', {
             title: 'Project Layers',
             url: '/layers?page',
-            component: 'rfProjectLayersPage',
+            views: {
+                'projectlayernav@root': {
+                    component: 'rfProjectLayersNav'
+                },
+                '': {
+                    component: 'rfProjectLayersPage'
+                }
+            },
             params: {
                 page: { dynamic: true }
             }
@@ -156,7 +163,14 @@ function projectStatesV2($stateProvider) {
         .state('project.analyses', {
             title: 'Project Analyses',
             url: '/analyses?page&search',
-            component: 'rfProjectAnalysesPage'
+            views: {
+                'projectlayernav@root': {
+                    component: 'rfProjectLayersNav'
+                },
+                '': {
+                    component: 'rfProjectAnalysesPage'
+                }
+            }
         })
         .state('project.settings', {
             title: 'Project Settings',
@@ -259,7 +273,14 @@ function projectStatesV2($stateProvider) {
         .state('project.settings.options', {
             title: 'Project Options',
             url: '/options',
-            component: 'rfProjectOptionsPage'
+            views: {
+                'projectlayernav@root': {
+                    component: 'rfProjectLayersNav'
+                },
+                '': {
+                    component: 'rfProjectOptionsPage'
+                }
+            }
         })
         .state('project.settings.publishing', {
             title: 'Project Publishing',

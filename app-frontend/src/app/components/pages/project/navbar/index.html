@@ -1,0 +1,10 @@
+<span ng-repeat="nav in $ctrl.navs">
+  <i class="icon-caret-right" style="color: white"></i>
+  <a ui-sref="nav.sref"
+     ui-sref-active="active"
+     ng-if="nav.click"
+     ng-class="{'layer-nav-active': $index === $ctrl.navs.length -1 }">
+    {{nav.title}}
+  </a>
+  <span ng-if="!nav.click">{{nav.title}}</span>
+</span>
