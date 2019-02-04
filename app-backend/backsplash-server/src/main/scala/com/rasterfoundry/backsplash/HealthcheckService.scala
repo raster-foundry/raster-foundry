@@ -3,14 +3,11 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash.Cache.tileCache
 
 import cats._
-import cats.data._
 import cats.effect._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
-import io.circe.Json
 import org.http4s._
-import org.http4s.circe._
 import org.http4s.dsl._
 import scalacache.modes.sync._
 import sup._

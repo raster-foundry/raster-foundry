@@ -7,7 +7,6 @@ import com.typesafe.scalalogging.LazyLogging
 import org.http4s._
 import org.http4s.dsl._
 
-
 sealed trait BacksplashException extends Exception
 // When there's something wrong with stored metadata for the calculations we'd like to do
 final case class MetadataException(message: String) extends BacksplashException

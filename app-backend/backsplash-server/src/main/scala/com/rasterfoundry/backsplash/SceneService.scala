@@ -7,7 +7,6 @@ import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.common.datamodel.User
 import com.rasterfoundry.common.utils.TileUtils
 
-import cats.Applicative
 import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
@@ -16,8 +15,6 @@ import geotrellis.server._
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
-
-import java.util.UUID
 
 class SceneService[ProjStore: ProjectStore, HistStore: HistogramStore](
     scenes: ProjStore,

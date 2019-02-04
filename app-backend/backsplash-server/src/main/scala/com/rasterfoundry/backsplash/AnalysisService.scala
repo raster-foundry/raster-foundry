@@ -7,7 +7,7 @@ import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
 
 import cats.data.Validated._
-import cats.effect.{ContextShift, IO, Fiber}
+import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.{io => _, _}
