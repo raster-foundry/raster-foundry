@@ -1,18 +1,10 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util._
 
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
+import doobie.implicits._
 
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-import com.lonelyplanet.akka.http.extensions.PageRequest
 
-import scala.concurrent.Future
-import java.sql.Timestamp
-import java.util.{Date, UUID}
 
 object LicenseDao extends Dao[License] {
 

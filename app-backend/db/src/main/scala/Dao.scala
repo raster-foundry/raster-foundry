@@ -10,7 +10,6 @@ import com.rasterfoundry.common.datamodel._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import doobie.{LogHandler => _, _}
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.log._
 import doobie.util.{Read, Write}

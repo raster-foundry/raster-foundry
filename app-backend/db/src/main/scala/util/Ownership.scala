@@ -3,8 +3,6 @@ package com.rasterfoundry.database.util
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.filter.Filterables
 
-import doobie._
-import doobie.implicits._
 
 object Ownership extends Filterables {
 

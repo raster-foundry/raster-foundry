@@ -1,23 +1,18 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.common.datamodel._
 
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import cats._
-import cats.data._
-import cats.effect.IO
 import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 
-import java.util.{Date, UUID}
+import java.util.UUID
 import java.sql.Timestamp
 
-import scala.concurrent.Future
 
 object TeamDao extends Dao[Team] {
   val tableName = "teams"

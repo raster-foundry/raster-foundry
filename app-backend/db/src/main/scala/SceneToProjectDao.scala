@@ -1,20 +1,15 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.common.datamodel._
 
-import cats.Applicative
-import cats.data.{NonEmptyList => NEL, _}
+import cats.data.{NonEmptyList => NEL}
 import cats.implicits._
 import doobie._
-import doobie.Fragments._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import fs2.Stream
-import geotrellis.vector.{MultiPolygon, Polygon, Projected}
-import io.circe.syntax._
+import geotrellis.vector.{Polygon, Projected}
 import com.typesafe.scalalogging.LazyLogging
 
 import java.util.UUID

@@ -6,14 +6,12 @@ import java.util.UUID
 import cats.data._
 import cats.implicits._
 import com.rasterfoundry.common.AWSBatch
-import com.rasterfoundry.database.util.Page
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.color._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import io.circe._
