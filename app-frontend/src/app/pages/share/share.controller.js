@@ -47,10 +47,11 @@ export default class ShareController {
     }
 
     addProjectLayer() {
-        let url = this.projectService.getProjectTileURL(
-            this.project,
-            {token: this.authService.token()}
-        );
+        // Only set query parameters if token is present to prevent serializing a null
+        // token as a string in query parameters
+        let token = this.authService.token();
+        let queryParameters = token ? {token: token} : null;
+        let url = this.projectService.getProjectTileURL(this.project, queryParameters);
         let layer = L.tileLayer(url, {maxZoom: 30});
 
         this.getMap().then(m => {
