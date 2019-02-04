@@ -13,7 +13,6 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import java.util.UUID
 import java.sql.Timestamp
 
-
 object TeamDao extends Dao[Team] {
   val tableName = "teams"
 

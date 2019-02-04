@@ -4,7 +4,6 @@ import com.rasterfoundry.common.datamodel.{ToolCategory, User}
 
 import doobie._, doobie.implicits._
 
-
 object ToolCategoryDao extends Dao[ToolCategory] {
 
   val tableName = "tool_categories"

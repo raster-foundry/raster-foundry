@@ -7,8 +7,6 @@ import doobie.implicits._
 import doobie.postgres.implicits._
 import cats.implicits._
 
-
-
 object BandDao extends Dao[Band] {
 
   val tableName = "bands"

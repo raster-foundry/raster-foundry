@@ -4,8 +4,6 @@ import com.rasterfoundry.common.datamodel._
 
 import doobie.implicits._
 
-
-
 object LicenseDao extends Dao[License] {
 
   val tableName = "licenses"

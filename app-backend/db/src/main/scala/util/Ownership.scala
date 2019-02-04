@@ -3,7 +3,6 @@ package com.rasterfoundry.database.util
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.filter.Filterables
 
-
 object Ownership extends Filterables {
 
   def checkOwner(createUser: User, ownerUserId: Option[String]): String = {

@@ -8,7 +8,6 @@ import doobie.postgres.circe.jsonb.implicits._
 import cats.data._
 import cats.implicits._
 
-
 import java.util.UUID
 
 import com.rasterfoundry.database.Implicits._

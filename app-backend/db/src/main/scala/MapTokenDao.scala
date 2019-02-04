@@ -9,7 +9,6 @@ import cats.implicits._
 import java.sql.Timestamp
 import java.util.UUID
 
-
 object MapTokenDao extends Dao[MapToken] {
 
   val tableName = "map_tokens"
