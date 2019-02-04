@@ -39,10 +39,9 @@ class ProjectDatasourcesDaoSpec
             val expected = expected1 + expected2
 
             val createDsIO = for {
-              orgUserProjectInsert <- insertUserOrgProject(userCreate,
-                                                           orgCreate,
-                                                           project)
-              (dbOrg, dbUser, dbProject) = orgUserProjectInsert
+              (_, dbUser, dbProject) <- insertUserOrgProject(userCreate,
+                                                             orgCreate,
+                                                             project)
               dsInsert1 <- fixupDatasource(dsCreate1, dbUser)
               dsInsert2 <- fixupDatasource(dsCreate2, dbUser)
               dsInsert3 <- fixupDatasource(dsCreate3, dbUser)

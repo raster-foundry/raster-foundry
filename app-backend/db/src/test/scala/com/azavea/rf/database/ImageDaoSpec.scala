@@ -25,8 +25,7 @@ class ImageDaoSpec
          scene: Scene.Create,
          image: Image.Banded) => {
           val sceneInsertIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (insertedOrg, insertedUser) = orgAndUser
+            (_, insertedUser) <- insertUserAndOrg(user, org)
             datasource <- unsafeGetRandomDatasource
             insertedScene <- SceneDao.insert(
               fixupSceneCreate(insertedUser, datasource, scene),
@@ -64,8 +63,7 @@ class ImageDaoSpec
          imageBanded: Image.Banded,
          imageUpdate: Image) => {
           val sceneInsertIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (insertedOrg, insertedUser) = orgAndUser
+            (_, insertedUser) <- insertUserAndOrg(user, org)
             datasource <- unsafeGetRandomDatasource
             insertedScene <- SceneDao.insert(
               fixupSceneCreate(insertedUser, datasource, scene),

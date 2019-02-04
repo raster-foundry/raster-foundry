@@ -53,8 +53,7 @@ class AnnotationDaoSpec
          labelerC: User.Create) =>
           {
             val annotationsInsertIO = for {
-              oupInsert <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = oupInsert
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               labeler <- UserDao.create(labelerC)
               insertedAnnotations <- AnnotationDao.insertAnnotations(
                 annotations.map(annotationCreate =>
@@ -130,8 +129,7 @@ class AnnotationDaoSpec
          verifierCreate: User.Create) =>
           {
             val annotationInsertWithUserAndProjectIO = for {
-              oupInsert <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = oupInsert
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               annotations <- AnnotationDao.insertAnnotations(
                 List(annotationInsert),
                 dbProject.id,

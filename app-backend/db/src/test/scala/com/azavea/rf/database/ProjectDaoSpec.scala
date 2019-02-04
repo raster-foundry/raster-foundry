@@ -145,8 +145,7 @@ class ProjectDaoSpec
          pageRequest: PageRequest) =>
           {
             val projectsListIO = for {
-              orgAndUser <- insertUserAndOrg(user, org)
-              (dbOrg, dbUser) = orgAndUser
+              (_, dbUser) <- insertUserAndOrg(user, org)
               _ <- ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
                                             dbUser)
               listedProjects <- {
@@ -185,8 +184,7 @@ class ProjectDaoSpec
          datasource: Datasource.Create) =>
           {
             val addScenesIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               dbDatasource <- fixupDatasource(datasource, dbUser)
               insertedScenes <- scenes traverse { scene =>
                 SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene),
@@ -246,8 +244,7 @@ class ProjectDaoSpec
          datasource: Datasource.Create) =>
           {
             val listScenesIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               dbDatasource <- fixupDatasource(datasource, dbUser)
               scenes <- scenes traverse { scene =>
                 SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene),

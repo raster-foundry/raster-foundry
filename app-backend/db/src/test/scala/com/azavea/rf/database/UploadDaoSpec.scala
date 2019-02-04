@@ -30,11 +30,10 @@ class UploadDaoSpec
          upload: Upload.Create) =>
           {
             val uploadInsertIO = for {
-              orgUserProject <- insertUserOrgPlatProject(user,
-                                                         org,
-                                                         platform,
-                                                         project)
-              (dbUser, dbOrg, _, dbProject) = orgUserProject
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               datasource <- unsafeGetRandomDatasource
               insertedUpload <- UploadDao.insert(
                 fixupUploadCreate(dbUser, dbProject, datasource, upload),

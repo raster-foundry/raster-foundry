@@ -29,8 +29,7 @@ class ProjectScenesDaoSpec
          csq: CombinedSceneQueryParams) =>
           {
             val scenesInsertWithUserProjectIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               datasource <- DatasourceDao.create(dsCreate.toDatasource(dbUser),
                                                  dbUser)
               scenesInsert <- (scenes map {

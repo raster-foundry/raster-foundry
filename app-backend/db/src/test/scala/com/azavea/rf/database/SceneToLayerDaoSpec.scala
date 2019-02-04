@@ -75,8 +75,7 @@ class SceneToLayerDaoSpec
          csq: CombinedSceneQueryParams) =>
           {
             val mdAndStpsIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               datasource <- DatasourceDao.create(dsCreate.toDatasource(dbUser),
                                                  dbUser)
               scenesInsert <- (scenes map {
@@ -104,7 +103,7 @@ class SceneToLayerDaoSpec
                 .list
             } yield (mds, stls, selectedSceneIds)
 
-            val (mds, stls, selectedIds) =
+            val (mds, stls, _) =
               xa.use(t => mdAndStpsIO.transact(t)).unsafeRunSync
 
             // Mapping of scene ids to scene order

@@ -73,8 +73,7 @@ class AoiDaoSpec
          shapeUpdate: Shape.Create) =>
           {
             val aoiInsertWithOrgUserProjectIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               shape <- ShapeDao.insertShape(shapeInsert, dbUser)
               dbAoi <- AoiDao.createAOI(
                 fixupAoiCreate(dbUser, dbProject, aoiInsert, shape),
@@ -87,11 +86,7 @@ class AoiDaoSpec
               updatedAoi <- AoiDao.unsafeGetAoiById(dbAoi.id)
             } yield
               (dbAoi, shape, updatedRows, updatedAoi, newShape) //shape, aoi, dbOrg, dbUser, dbProject, update, updatedRows, updatedAoi)
-            val (originalAoi,
-                 originalShape,
-                 affectedRows,
-                 updatedAoi,
-                 updatedShape) = xa
+            val (_, _, affectedRows, updatedAoi, updatedShape) = xa
               .use(t => aoiInsertWithOrgUserProjectIO.transact(t))
               .unsafeRunSync
 
@@ -153,8 +148,9 @@ class AoiDaoSpec
          aois2: List[AOI.Create]) =>
           {
             val aoisInsertWithProjectUserIO = for {
-              userOrgProj1 <- insertUserOrgProject(user, org, project1)
-              (dbOrg, dbUser, dbProject1) = userOrgProj1
+              (_, dbUser, dbProject1) <- insertUserOrgProject(user,
+                                                              org,
+                                                              project1)
               dbProject2 <- ProjectDao.insertProject(
                 fixupProjectCreate(dbUser, project2),
                 dbUser)

@@ -21,8 +21,7 @@ class DatasourceDaoSpec
          orgCreate: Organization.Create,
          dsCreate: Datasource.Create) => {
           val createDsIO = for {
-            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
-            (orgInsert, userInsert) = orgAndUserInsert
+            (_, userInsert) <- insertUserAndOrg(userCreate, orgCreate)
             dsInsert <- fixupDatasource(dsCreate, userInsert)
           } yield dsInsert
           val createDs = xa.use(t => createDsIO.transact(t)).unsafeRunSync
@@ -39,8 +38,7 @@ class DatasourceDaoSpec
          orgCreate: Organization.Create,
          dsCreate: Datasource.Create) => {
           val getDsIO = for {
-            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
-            (orgInsert, userInsert) = orgAndUserInsert
+            (_, userInsert) <- insertUserAndOrg(userCreate, orgCreate)
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             dsGet <- DatasourceDao.getDatasourceById(dsInsert.id)
           } yield dsGet
@@ -58,8 +56,7 @@ class DatasourceDaoSpec
          orgCreate: Organization.Create,
          dsCreate: Datasource.Create) => {
           val getDsUnsafeIO = for {
-            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
-            (orgInsert, userInsert) = orgAndUserInsert
+            (_, userInsert) <- insertUserAndOrg(userCreate, orgCreate)
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             dsGetUnsafe <- DatasourceDao.unsafeGetDatasourceById(dsInsert.id)
           } yield dsGetUnsafe
@@ -78,8 +75,7 @@ class DatasourceDaoSpec
          dsCreate: Datasource.Create,
          dsUpdate: Datasource.Create) => {
           val updateDsIO = for {
-            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
-            (orgInsert, userInsert) = orgAndUserInsert
+            (_, userInsert) <- insertUserAndOrg(userCreate, orgCreate)
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             dsUpdated <- fixupDatasource(dsUpdate, userInsert)
             rowUpdated <- DatasourceDao.updateDatasource(dsUpdated,
@@ -107,8 +103,7 @@ class DatasourceDaoSpec
          orgCreate: Organization.Create,
          dsCreate: Datasource.Create) => {
           val deleteDsIO = for {
-            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
-            (orgInsert, userInsert) = orgAndUserInsert
+            (_, userInsert) <- insertUserAndOrg(userCreate, orgCreate)
             dsInsert <- fixupDatasource(dsCreate, userInsert)
             rowDeleted <- DatasourceDao.deleteDatasource(dsInsert.id)
           } yield rowDeleted
@@ -132,8 +127,7 @@ class DatasourceDaoSpec
          orgCreate: Organization.Create,
          dsCreate: Datasource.Create) => {
           val isDsDeletableIO = for {
-            orgAndOwnerInsert <- insertUserAndOrg(ownerCreate, orgCreate)
-            (orgInsert, ownerInsert) = orgAndOwnerInsert
+            (_, ownerInsert) <- insertUserAndOrg(ownerCreate, orgCreate)
             userInsert <- UserDao.create(userCreate)
             dsInsert <- fixupDatasource(dsCreate, ownerInsert)
             isDeletableUser <- DatasourceDao.isDeletable(dsInsert.id,
@@ -164,8 +158,7 @@ class DatasourceDaoSpec
          orgCreate: Organization.Create,
          dsCreate: Datasource.Create) => {
           val isDsDeletableIO = for {
-            orgAndOwnerInsert <- insertUserAndOrg(ownerCreate, orgCreate)
-            (orgInsert, ownerInsert) = orgAndOwnerInsert
+            (_, ownerInsert) <- insertUserAndOrg(ownerCreate, orgCreate)
             dsInsert <- fixupDatasource(dsCreate, ownerInsert)
             _ <- DatasourceDao.addPermission(
               dsInsert.id,
@@ -196,11 +189,10 @@ class DatasourceDaoSpec
          upload: Upload.Create) => {
           @SuppressWarnings(Array("TraversableHead"))
           val isDsDeletableIO = for {
-            orgUserPlatProject <- insertUserOrgPlatProject(userCreate,
-                                                           orgCreate,
-                                                           platform,
-                                                           project)
-            (dbUser, dbOrg, dbPlatform, dbProject) = orgUserPlatProject
+            (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(userCreate,
+                                                                  orgCreate,
+                                                                  platform,
+                                                                  project)
             datasource <- fixupDatasource(dsCreate, dbUser)
             _ <- UploadDao.insert(
               fixupUploadCreate(dbUser, dbProject, datasource, upload),

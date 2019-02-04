@@ -52,13 +52,12 @@ class UserDaoSpec
               orgCreate
                 .copy(platformId = insertedPlatform.id)
                 .toOrganization(true))
-            newUserAndRoles <- {
+            (newUser, _) <- {
               val newUserFields =
                 jwtFields.copy(platformId = insertedPlatform.id,
                                organizationId = insertedOrg.id)
               UserDao.createUserWithJWT(creatingUser, newUserFields)
             }
-            (newUser, roles) = newUserAndRoles
             userRoles <- UserGroupRoleDao.listByUser(newUser)
           } yield (newUser, userRoles)
 
@@ -304,7 +303,7 @@ class UserDaoSpec
           }
           xa.use(t => orgsIO.transact(t)).unsafeRunSync
 
-          val (u1, u2, u3, u4, u1users, u2users, u3users, u3usersAdmin) =
+          val (u1, _, u3, u4, u1users, u2users, u3users, u3usersAdmin) =
             xa.use(t => orgsIO.transact(t)).unsafeRunSync
           val u1userids = u1users.toSet.map { u: User =>
             u.id

@@ -26,8 +26,7 @@ class SceneDaoSpec
         (user: User.Create, org: Organization.Create, scene: Scene.Create) =>
           {
             val sceneInsertIO = for {
-              orgAndUser <- insertUserAndOrg(user, org)
-              (dbOrg, dbUser) = orgAndUser
+              (_, dbUser) <- insertUserAndOrg(user, org)
               datasource <- unsafeGetRandomDatasource
               fixedUpSceneCreate = fixupSceneCreate(dbUser, datasource, scene)
               sceneInsert <- SceneDao.insert(fixedUpSceneCreate, dbUser)
@@ -72,8 +71,7 @@ class SceneDaoSpec
         (user: User.Create, org: Organization.Create, scene: Scene.Create) =>
           {
             val sceneInsertIO = for {
-              orgAndUser <- insertUserAndOrg(user, org)
-              (dbOrg, dbUser) = orgAndUser
+              (_, dbUser) <- insertUserAndOrg(user, org)
               datasource <- unsafeGetRandomDatasource
               fixedUpSceneCreate = fixupSceneCreate(dbUser, datasource, scene)
               sceneInsert <- SceneDao.insertMaybe(fixedUpSceneCreate, dbUser)
@@ -124,8 +122,7 @@ class SceneDaoSpec
          updateScene: Scene.Create) =>
           {
             val sceneUpdateIO = for {
-              orgAndUser <- insertUserAndOrg(user, org)
-              (dbOrg, dbUser) = orgAndUser
+              (_, dbUser) <- insertUserAndOrg(user, org)
               datasource <- unsafeGetRandomDatasource
               fixedUpSceneCreate = fixupSceneCreate(dbUser,
                                                     datasource,

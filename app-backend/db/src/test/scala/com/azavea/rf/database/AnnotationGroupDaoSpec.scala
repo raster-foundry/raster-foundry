@@ -37,7 +37,7 @@ class AnnotationGroupDaoSpec
                 }
               }
             }
-            val (annotationGroup, dbUser, dbProject) = xa
+            val (annotationGroup, _, _) = xa
               .use(t =>
                 annotationGroupInsertWithUserAndProjectIO
                   .transact(t))
@@ -62,8 +62,9 @@ class AnnotationGroupDaoSpec
          agc3: AnnotationGroup.Create) =>
           {
             val annotationGroupIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project1)
-              (dbOrg, dbUser, dbProject1) = orgUserProject
+              (_, dbUser, dbProject1) <- insertUserOrgProject(user,
+                                                              org,
+                                                              project1)
               dbProject2 <- ProjectDao.insertProject(project2, dbUser)
               agDb1 <- AnnotationGroupDao.createAnnotationGroup(dbProject1.id,
                                                                 agc1,
@@ -81,7 +82,7 @@ class AnnotationGroupDaoSpec
             } yield
               (agDb1, agDb2, agDb3, p1AnnotationGroups, p2AnnotationGroups)
 
-            val (ag1, ag2, ag3, p1ag, p2ag) =
+            val (_, _, _, p1ag, p2ag) =
               xa.use(t => annotationGroupIO.transact(t)).unsafeRunSync()
 
             assert(p1ag.length == 2 && p2ag.length == 1,
@@ -104,8 +105,9 @@ class AnnotationGroupDaoSpec
          agc2Annotations: List[Annotation.Create]) =>
           {
             val annotationGroupIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project1)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user,
+                                                             org,
+                                                             project1)
               agDb1 <- AnnotationGroupDao.createAnnotationGroup(dbProject.id,
                                                                 agc1,
                                                                 dbUser)
@@ -135,7 +137,7 @@ class AnnotationGroupDaoSpec
                projectAnnotationGroups,
                deleteCount)
 
-            val (deletedAnnotations,
+            val (_,
                  remainingAnnotations,
                  projectAnnotations,
                  projectAnnotationGroups,
@@ -166,8 +168,7 @@ class AnnotationGroupDaoSpec
          agAnnotations: List[Annotation.Create]) =>
           {
             val annotationGroupIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               annotationGroupDB <- AnnotationGroupDao.createAnnotationGroup(
                 dbProject.id,
                 ag,
@@ -226,8 +227,9 @@ class AnnotationGroupDaoSpec
          annotations: List[Annotation.Create]) =>
           {
             val annotationGroupIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project1)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user,
+                                                             org,
+                                                             project1)
               dbAnnotations <- AnnotationDao.insertAnnotations(
                 annotations,
                 dbProject.id,
