@@ -12,7 +12,7 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import geotrellis.vector.{Polygon, Projected}
+import geotrellis.vector.{Geometry, Polygon, Projected}
 import io.circe.syntax._
 
 import scala.concurrent.duration._
@@ -45,8 +45,15 @@ object SceneDao
   def getSceneById(id: UUID): ConnectionIO[Option[Scene]] =
     query.filter(id).selectOption
 
-  def streamSceneById(sceneId: UUID): fs2.Stream[ConnectionIO, Scene] =
-    (selectF ++ Fragments.whereAnd(fr"id = ${sceneId}")).query[Scene].stream
+  def streamSceneById(sceneId: UUID, footprint: Option[Projected[Polygon]])(
+      implicit Filter: Filterable[Any, Projected[Geometry]])
+    : fs2.Stream[ConnectionIO, Scene] =
+    (selectF ++ Fragments.whereAndOpt(
+      (Some(fr"id = ${sceneId}") +: (footprint map {
+        Filter.toFilters(_)
+      } getOrElse { List.empty })): _*))
+      .query[Scene]
+      .stream
 
   def unsafeGetSceneById(id: UUID): ConnectionIO[Scene] =
     query.filter(id).select

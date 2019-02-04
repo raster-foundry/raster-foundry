@@ -5,6 +5,7 @@ import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.common.utils.TileUtils
 
 import cats.Applicative
 import cats.data.Validated._
@@ -41,8 +42,10 @@ class SceneService[ProjStore: ProjectStore, HistStore: HistogramStore](
           case GET -> Root / UUIDWrapper(sceneId) / IntVar(z) / IntVar(x) / IntVar(
                 y)
                 :? BandOverrideQueryParamDecoder(bandOverride) as user =>
+            val bbox = TileUtils.getTileBounds(z, x, y)
             val eval =
-              LayerTms.identity(scenes.read(sceneId, None, bandOverride, None))
+              LayerTms.identity(
+                scenes.read(sceneId, Some(bbox), bandOverride, None))
             for {
               fiberAuth <- authorizers.authScene(user, sceneId).start
               fiberResp <- eval(z, x, y).start
