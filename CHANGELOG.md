@@ -13,6 +13,11 @@
 
 ### Security
 
+## [1.17.1](https://github.com/raster-foundry/raster-foundry/tree/1.17.1) (2019-02-04)
+
+### Fixed
+- Removed references from old tileserver from Jenkinsfile.release
+
 ## [1.17.0](https://github.com/raster-foundry/raster-foundry/tree/1.17.0) (2019-02-04)
 
 ### Added
