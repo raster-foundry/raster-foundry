@@ -32,8 +32,10 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-Xmax-classfile-name",
     "100",
+    "-Yrangepos",
     "-Ywarn-value-discard",
     "-Ywarn-unused",
+    "-Ywarn-unused-import",
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth",
     "100"
@@ -66,7 +68,8 @@ lazy val commonSettings = Seq(
   // https://www.scala-sbt.org/0.13/docs/Compiler-Plugins.html
   autoCompilerPlugins := true,
   addCompilerPlugin(
-    "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+    "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+    addCompilerPlugin(scalafixSemanticdb) // enable SemanticDB
 ) ++ publishSettings
 
 lazy val noPublishSettings = Seq(
