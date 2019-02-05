@@ -28,7 +28,8 @@ const component = {
         selected: '<',
         onSelect: '&',
         visible: '<',
-        onHide: '&'
+        onHide: '&',
+        isAnalysis: '<?'
     },
     templateUrl: tpl,
     controller: LayerItemController.name,

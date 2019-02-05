@@ -7,6 +7,7 @@ export default (app) => {
             this.$http = $http;
             this.$q = $q;
             this.authService = authService;
+            this.tileServer = APP_CONFIG.tileServerLocation;
             this.Template = $resource(
                 `${BUILDCONFIG.API_HOST}/api/tools/:id/`, {
                     id: '@properties.id'
@@ -52,17 +53,23 @@ export default (app) => {
                         method: 'PUT'
                     },
                     histogram: {
-                        url: `${APP_CONFIG.tileServerLocation}/tools/:analysisId/histogram/`,
+                        url: `${this.tileServer}/tools/:analysisId/histogram/`,
                         method: 'GET',
                         cache: false
                     },
                     statistics: {
-                        url: `${APP_CONFIG.tileServerLocation}/tools/:analysisId/statistics/`,
+                        url: `${this.tileServer}/tools/:analysisId/statistics/`,
                         method: 'GET',
                         cache: false
                     },
                     delete: {
                         method: 'DELETE'
+                    },
+                    actions: {
+                        url: `${BUILDCONFIG.API_HOST}/api/tool-runs/:id/actions/`,
+                        method: 'GET',
+                        cache: false,
+                        isArray: true
                     }
                 }
             );
@@ -347,6 +354,17 @@ export default (app) => {
                 this.isLoadingTemplate = false;
             });
             return request;
+        }
+
+        getAnalysisActions(id) {
+            return this.Analysis.actions({id}).$promise;
+        }
+
+        getAnalysisTileUrl(analysisId, nodeId = null) {
+            const token = this.authService.token();
+            const node = nodeId ? `&node=${nodeId}` : '';
+            return `${this.tileServer}/tools/${analysisId}/{z}/{x}/{y}` +
+                `?token=${token}${node}&tag=${new Date().getTime()}`;
         }
 
         // @TODO: implement getting related tags and categories

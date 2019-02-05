@@ -197,10 +197,10 @@ trait ObjectPermissions[Model] {
                     tableNameO: Option[String] = None): Option[Fragment] = {
     val tableName: String = tableNameO match {
       case Some(tableName) => s"${tableName}."
-      case _ => ""
+      case _               => ""
     }
     val ownedF: Fragment =
-      Fragment.const(s"${tableName}owner = '${user.id}'")
+      Fragment.const(s"${tableName}owner =") ++ fr"${user.id}"
     val visibilityF: Fragment =
       createVisibilityF(objectType, actionType, tableName)
     val sharedF: Fragment =
@@ -209,7 +209,8 @@ trait ObjectPermissions[Model] {
     val inheritedF: Fragment =
       createInheritedF(user, actionType, groupTypeO, groupIdO)
     val acrFilterF
-      : Fragment = Fragment.const("array_cat(") ++ sharedF ++ Fragment.const(",") ++ inheritedF ++ Fragment.const(s") && ${tableName}acrs")
+      : Fragment = fr"array_cat(" ++ sharedF ++ fr"," ++ inheritedF ++ fr") &&" ++ Fragment
+      .const(s"${tableName}acrs")
 
     ownershipTypeO match {
       // owned by the requesting user only
@@ -218,17 +219,23 @@ trait ObjectPermissions[Model] {
       // shared to the requesting user directly, across platform, or due to group membership
       case Some(ownershipType) if ownershipType == "shared" =>
         if (objectType == ObjectType.Shape || objectType == ObjectType.Template) {
-          Some(fr"(" ++ acrFilterF ++ fr") AND" ++ Fragment.const(s"${tableName}owner <> ${user.id}"))
-        } else {
           Some(
-            Fragment.const(s"${tableName}visibility != 'PUBLIC' AND (") ++ acrFilterF ++ Fragment.const(s") AND ${tableName}owner <> ${user.id}"))
+            fr"(" ++ acrFilterF ++ fr") AND" ++ Fragment.const(
+              s"${tableName}owner") ++ fr"<> ${user.id}")
+        } else {
+          Some(Fragment
+            .const(s"${tableName}visibility") ++ fr" != 'PUBLIC' AND (" ++ acrFilterF ++ fr") AND " ++ Fragment
+            .const(s"${tableName}owner") ++ fr"<> ${user.id}")
         }
       // shared to the requesting user due to group membership
       case Some(ownershipType) if ownershipType == "inherited" =>
         if (objectType == ObjectType.Shape) {
           Some(inheritedF ++ Fragment.const(s"&& ${tableName}acrs"))
         } else {
-          Some(Fragment.const(s"${tableName}visibility != 'PUBLIC' AND (") ++ inheritedF ++ Fragment.const(s"&& ${tableName}acrs)"))
+          Some(
+            Fragment
+              .const(s"${tableName}visibility") ++ fr"!= 'PUBLIC' AND (" ++ inheritedF ++ Fragment
+              .const(s"&& ${tableName}acrs)"))
         }
       // the default
       case _ =>
