@@ -42,7 +42,8 @@ class ProjectLayersPageController {
     }
 
     fetchPage(page = this.$state.params.page || 1) {
-        this.layerList = [];
+        let layerList = [];
+        this.itemList = [];
         this.layerActions = {};
         const currentQuery = this.projectService.getProjectLayers(
             this.project.id,
@@ -51,8 +52,8 @@ class ProjectLayersPageController {
                 page: page - 1
             }
         ).then((paginatedResponse) => {
-            this.layerList = paginatedResponse.results;
-            this.layerList.forEach((layer) => {
+            layerList = paginatedResponse.results;
+            layerList.forEach((layer) => {
                 layer.subtext = '';
                 if (layer.id === this.project.defaultLayerId) {
                     layer.subtext += 'Default layer';
@@ -61,11 +62,13 @@ class ProjectLayersPageController {
                     layer.subtext += layer.subtext.length ? ', Smart layer' : 'Smart Layer';
                 }
             });
-            const defaultLayer = this.layerList.find(l => l.id === this.project.defaultLayerId);
-            this.layerActions = this.layerList.map(
+            const defaultLayer = layerList.find(l => l.id === this.project.defaultLayerId);
+            this.layerActions = layerList.map(
                 (l) => this.addLayerActions(l, defaultLayer === l)
             );
-
+            this.itemList = layerList.map(layer => {
+                return this.createItemInfo(layer);
+            });
             this.pagination = this.paginationService.buildPagination(paginatedResponse);
             this.paginationService.updatePageParam(page);
             if (this.currentQuery === currentQuery) {
@@ -146,11 +149,11 @@ class ProjectLayersPageController {
         ];
     }
 
-    onSelect(layerId) {
-        if (this.selected.has(layerId)) {
-            this.selected = this.selected.delete(layerId);
+    onSelect(id) {
+        if (this.selected.has(id)) {
+            this.selected = this.selected.delete(id);
         } else {
-            this.selected = this.selected.add(layerId);
+            this.selected = this.selected.add(id);
         }
     }
 
@@ -158,11 +161,11 @@ class ProjectLayersPageController {
         return this.selected.has(layerId);
     }
 
-    onHide(layerId) {
-        if (this.visible.has(layerId)) {
-            this.visible = this.visible.delete(layerId);
+    onHide(id) {
+        if (this.visible.has(id)) {
+            this.visible = this.visible.delete(id);
         } else {
-            this.visible = this.visible.add(layerId);
+            this.visible = this.visible.add(id);
         }
         this.syncMapLayersToVisible();
     }
@@ -209,7 +212,7 @@ class ProjectLayersPageController {
     }
 
     showPageLayers() {
-        this.visible = this.visible.union(this.layerList.map(l => l.id));
+        this.visible = this.visible.union(this.itemList.map(l => l.id));
         this.syncMapLayersToVisible();
     }
 
@@ -250,6 +253,17 @@ class ProjectLayersPageController {
         modal.result
             .then(() => this.fetchPage())
             .catch(() => {});
+    }
+
+    createItemInfo(layer) {
+        return {
+            id: layer.id,
+            name: layer.name,
+            subtext: layer.subtext,
+            date: layer.createdAt,
+            colorGroupHex: layer.colorGroupHex,
+            geometry: layer.geometry
+        };
     }
 }
 
