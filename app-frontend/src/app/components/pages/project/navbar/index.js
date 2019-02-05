@@ -4,8 +4,7 @@ import {Set} from 'immutable';
 
 class ProjectLayersNavController {
     constructor(
-        $rootScope, $state, $log, $scope,
-        projectService, paginationService, modalService, authService, mapService
+        $rootScope, $state, $scope
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
