@@ -1,11 +1,9 @@
 package com.rasterfoundry.batch.landsat8
 
 import com.rasterfoundry.batch.Job
-import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.{S3, S3RegionString}
-import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.common.datamodel._
 
 import cats.effect.IO

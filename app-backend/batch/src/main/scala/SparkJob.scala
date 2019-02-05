@@ -1,8 +1,6 @@
 package com.rasterfoundry.batch
 
-import com.rasterfoundry.common.RollbarNotifier
-
-import cats.effect.{IO, Resource, IOApp, ExitCode}
+import cats.effect.{IO, Resource, IOApp}
 
 import org.apache.spark._
 

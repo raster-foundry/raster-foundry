@@ -1,14 +1,12 @@
 package com.rasterfoundry.api.tool
 
 import com.rasterfoundry.akkautil._
-import com.rasterfoundry.common._
 import com.rasterfoundry.common.ast._
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.ToolDao
 
-import io.circe._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import cats.implicits._
@@ -17,9 +15,6 @@ import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import cats.effect.IO
 import doobie._
 import doobie.implicits._
-import doobie.Fragments.in
-import doobie.postgres._
-import doobie.postgres.implicits._
 
 import java.util.UUID
 

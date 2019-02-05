@@ -7,14 +7,12 @@ import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.utils.AntimeridianUtils
 import com.rasterfoundry.common.{S3, S3RegionString}
 import com.rasterfoundry.database._
-import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.common.datamodel._
 
-import cats.effect.{IO, Resource}
+import cats.effect.IO
 import cats.implicits._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import io.circe._
@@ -27,7 +25,6 @@ import java.net.URI
 import java.security.InvalidParameterException
 import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
 import java.util.UUID
-import java.util.concurrent.Executors
 
 final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(
                                    ZoneOffset.UTC))(implicit xa: Transactor[IO])
@@ -175,11 +172,6 @@ final case class ImportSentinel2(startDate: LocalDate = LocalDate.now(
     val correctedDataFootprint = AntimeridianUtils.correctDataFootprint(
       intersects,
       dataFootprint,
-      sentinel2Config.targetProjCRS
-    )
-    val correctedTileFootprint = AntimeridianUtils.correctTileFootprint(
-      intersects,
-      tileFootprint,
       sentinel2Config.targetProjCRS
     )
     val awsBase = s"https://${sentinel2Config.bucketName}.s3.amazonaws.com"

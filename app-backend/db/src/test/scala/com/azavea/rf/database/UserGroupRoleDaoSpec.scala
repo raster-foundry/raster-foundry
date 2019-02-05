@@ -2,24 +2,12 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
-import doobie._
 import doobie.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
 import cats.implicits._
-import cats.syntax.either._
 import com.lonelyplanet.akka.http.extensions.PageRequest
-import doobie.postgres._
-import doobie.postgres.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
-import io.circe._
-import io.circe.syntax._
-import java.util.UUID
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class UserGroupRoleDaoSpec
     extends FunSuite

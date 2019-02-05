@@ -8,7 +8,6 @@ import com.rasterfoundry.common.ast.MapAlgebraAST
 import geotrellis.vector.MultiPolygon
 import io.circe._
 import io.circe.generic.semiauto._
-import io.circe.parser._
 import io.circe.syntax._
 
 final case class InputDefinition(resolution: Int, style: InputStyle)

@@ -1,8 +1,6 @@
 package com.rasterfoundry.database.meta
 
 import doobie._
-import doobie.postgres._
-import doobie.postgres.implicits._
 import doobie.postgres.pgisimplicits._
 import doobie.util.invariant.InvalidObjectMapping
 import geotrellis.vector._

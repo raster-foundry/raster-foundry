@@ -28,7 +28,6 @@ import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.shapefile.ShapeFileReader
 import io.circe.generic.JsonCodec

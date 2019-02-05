@@ -5,10 +5,8 @@ import java.util.UUID
 import cats.implicits._
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util._
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 
@@ -45,7 +43,8 @@ object AnnotationDao extends Dao[Annotation] {
       .toList
   }
 
-  def listForExport(projectF: Fragment, layerF: Fragment): ConnectionIO[List[Annotation]] =
+  def listForExport(projectF: Fragment,
+                    layerF: Fragment): ConnectionIO[List[Annotation]] =
     AnnotationDao.query.filter(projectF).filter(layerF).list
 
   // list default project layer annotations if exportAll is None or Some(false)
@@ -65,7 +64,8 @@ object AnnotationDao extends Dao[Annotation] {
       )
     } yield { annotations }
 
-  def listForLayerExport(projectId: UUID, layerId: UUID): ConnectionIO[List[Annotation]] =
+  def listForLayerExport(projectId: UUID,
+                         layerId: UUID): ConnectionIO[List[Annotation]] =
     listForExport(fr"project_id=$projectId", fr"project_layer_id=$layerId")
 
   // look for default project layer

@@ -2,15 +2,12 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
 
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.lonelyplanet.akka.http.extensions.PageRequest
 
-import doobie._, doobie.implicits._
-import cats._, cats.data._, cats.effect.IO
+import doobie.implicits._
 import cats.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import org.scalacheck.Prop.{forAll, exists}
+import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
 
@@ -91,8 +88,7 @@ class SceneWithRelatedDaoSpec
          scenes: List[Scene.Create]) =>
           {
             val scenesInsertWithUserProjectIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               datasource <- unsafeGetRandomDatasource
               scenesInsert <- (scenes map {
                 fixupSceneCreate(dbUser, datasource, _)

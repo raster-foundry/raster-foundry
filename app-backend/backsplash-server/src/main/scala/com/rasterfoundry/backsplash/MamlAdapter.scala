@@ -4,17 +4,11 @@ import com.rasterfoundry.database.SceneToProjectDao
 import com.rasterfoundry.common.ast.{MapAlgebraAST, NodeMetadata}
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.util.RFTransactor
 
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{NeighborhoodConversion, ClassMap => MamlClassMap}
-import geotrellis.vector.io._
-import cats._
 import cats.effect.IO
-import cats.implicits._
-import doobie.implicits._
 import doobie.util.transactor.Transactor
-import io.circe.Json
 
 class BacksplashMamlAdapter[HistStore: HistogramStore](
     mosaicImplicits: MosaicImplicits[HistStore],

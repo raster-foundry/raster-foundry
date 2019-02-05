@@ -6,10 +6,8 @@ import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.common.utils.TileUtils
 
-import cats.Applicative
-import cats.data.{NonEmptyList => NEL}
 import cats.data.Validated._
-import cats.effect.{ContextShift, Fiber, IO}
+import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff

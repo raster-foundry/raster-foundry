@@ -67,7 +67,6 @@ object AntimeridianUtils extends LazyLogging {
       inputCRS: CRS,
       outputCRS: CRS): Projected[MultiPolygon] = {
     val latLngFootprint = multi.reproject(inputCRS, LatLng)
-    val antiMeridian = Projected(Line(Point(180, -90), Point(180, 90)), 4326)
     val longitudeShifted = MultiPolygon(
       latLngFootprint.polygons.map(
         poly => Polygon(poly.vertices.map(shiftPoint(_, 0, 1, false, 360)))
@@ -113,7 +112,6 @@ object AntimeridianUtils extends LazyLogging {
                          targetCRS: CRS): Projected[MultiPolygon] = {
 
     val latLngFootprint = multi.reproject(targetCRS, LatLng)
-    val antiMeridian = Projected(Line(Point(180, -90), Point(180, 90)), 4326)
     val longitudeShifted = MultiPolygon(
       latLngFootprint.polygons.map(
         poly => Polygon(poly.vertices.map(shiftPoint(_, 0, 1, false, 360)))

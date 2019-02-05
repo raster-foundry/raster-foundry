@@ -5,10 +5,9 @@ import java.util.UUID
 
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
-import com.vividsolutions.jts.{geom => jts}
 import geotrellis.geotools._
 import geotrellis.proj4.{CRS, WebMercator}
-import geotrellis.vector.{Geometry, Projected, io => _, _}
+import geotrellis.vector.{Geometry, Projected, io => _}
 import geotrellis.vector.reproject.Reproject
 import io.circe.generic.JsonCodec
 import io.circe.generic.extras._

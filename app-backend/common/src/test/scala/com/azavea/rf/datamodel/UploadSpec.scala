@@ -1,6 +1,5 @@
 package com.rasterfoundry.common.datamodel
 
-import io.circe._
 import io.circe.syntax._
 import org.scalatest._
 

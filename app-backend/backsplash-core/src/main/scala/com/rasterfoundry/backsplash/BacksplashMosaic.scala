@@ -1,18 +1,11 @@
 package com.rasterfoundry.backsplash
 
 import geotrellis.vector._
-import geotrellis.raster._
 import geotrellis.raster.histogram._
-import geotrellis.raster.resample.NearestNeighbor
-import geotrellis.proj4.CRS
 import geotrellis.server._
 
-import com.azavea.maml.ast._
-import com.azavea.maml.eval._
-
-import cats._
 import cats.implicits._
-import cats.data.{NonEmptyList => NEL}
+import cats.data.{NonEmptyList => _}
 import cats.data.Validated._
 import cats.effect._
 

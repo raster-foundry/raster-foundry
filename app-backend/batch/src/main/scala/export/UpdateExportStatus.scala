@@ -9,7 +9,6 @@ import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.common.datamodel._
 
-import com.typesafe.scalalogging.LazyLogging
 import cats.effect.IO
 import cats.implicits._
 import doobie.{ConnectionIO, Transactor}

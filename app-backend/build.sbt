@@ -32,8 +32,10 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-Xmax-classfile-name",
     "100",
+    "-Yrangepos",
     "-Ywarn-value-discard",
     "-Ywarn-unused",
+    "-Ywarn-unused-import",
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth",
     "100"
@@ -66,7 +68,9 @@ lazy val commonSettings = Seq(
   // https://www.scala-sbt.org/0.13/docs/Compiler-Plugins.html
   autoCompilerPlugins := true,
   addCompilerPlugin(
-    "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+    "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+  addCompilerPlugin(scalafixSemanticdb), // enable SemanticDB
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
 ) ++ publishSettings
 
 lazy val noPublishSettings = Seq(
@@ -254,8 +258,7 @@ lazy val db = Project("db", file("db"))
     )
   })
   .settings(
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
-  )
+    )
 
 lazy val migrations = Project("migrations", file("migrations"))
   .settings(commonSettings: _*)
@@ -358,7 +361,6 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.catsMeow
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
     addCompilerPlugin(
       "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
@@ -389,7 +391,6 @@ lazy val backsplashServer = Project("backsplash-server",
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
-  .settings(addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"))
   .settings(assemblyMergeStrategy in assembly := {
     case m if m.toLowerCase.endsWith("manifest.mf")     => MergeStrategy.discard
     case m if m.toLowerCase.matches("meta-inf.*\\.sf$") => MergeStrategy.discard
@@ -419,4 +420,3 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
-  .settings(addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"))

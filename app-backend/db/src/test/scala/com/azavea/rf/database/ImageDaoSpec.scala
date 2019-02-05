@@ -1,25 +1,11 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
-import doobie._
 import doobie.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
-import cats.syntax.either._
-import doobie.postgres._
-import doobie.postgres.implicits._
-import doobie.scalatest.imports._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
-import io.circe._
-import io.circe.syntax._
-import java.util.UUID
 
 /** We only need to test inserting a single image and listing images because inserting
   *  many is tested in inserting a scene from a Scene.Create
@@ -39,8 +25,7 @@ class ImageDaoSpec
          scene: Scene.Create,
          image: Image.Banded) => {
           val sceneInsertIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (insertedOrg, insertedUser) = orgAndUser
+            (_, insertedUser) <- insertUserAndOrg(user, org)
             datasource <- unsafeGetRandomDatasource
             insertedScene <- SceneDao.insert(
               fixupSceneCreate(insertedUser, datasource, scene),
@@ -78,8 +63,7 @@ class ImageDaoSpec
          imageBanded: Image.Banded,
          imageUpdate: Image) => {
           val sceneInsertIO = for {
-            orgAndUser <- insertUserAndOrg(user, org)
-            (insertedOrg, insertedUser) = orgAndUser
+            (_, insertedUser) <- insertUserAndOrg(user, org)
             datasource <- unsafeGetRandomDatasource
             insertedScene <- SceneDao.insert(
               fixupSceneCreate(insertedUser, datasource, scene),

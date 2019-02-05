@@ -9,7 +9,6 @@ import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import geotrellis.vector.{Geometry, Polygon, Projected}

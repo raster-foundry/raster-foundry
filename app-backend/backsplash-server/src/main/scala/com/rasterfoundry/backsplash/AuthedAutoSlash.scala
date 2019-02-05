@@ -4,8 +4,6 @@ import cats._
 import cats.data._
 import cats.implicits._
 import org.http4s._
-import org.http4s.server._
-import org.http4s.server.middleware._
 
 /** Removes a trailing slash from [[Request]] path
   *

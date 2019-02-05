@@ -1,7 +1,7 @@
 package com.rasterfoundry.common.datamodel
 
 import com.rasterfoundry.common._
-import geotrellis.vector.{MultiPolygon, Projected}
+import geotrellis.vector.MultiPolygon
 import io.circe.Json
 import io.circe.generic.JsonCodec
 

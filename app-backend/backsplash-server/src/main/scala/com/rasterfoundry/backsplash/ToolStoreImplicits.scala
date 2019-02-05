@@ -1,12 +1,9 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash._
-import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
-import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.ToolRunDao
-import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.ast.MapAlgebraAST
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._

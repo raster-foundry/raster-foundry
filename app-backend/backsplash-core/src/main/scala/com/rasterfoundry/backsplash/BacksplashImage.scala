@@ -5,13 +5,11 @@ import java.net.URLDecoder
 import com.rasterfoundry.backsplash.color._
 import geotrellis.vector.{io => _, _}
 import geotrellis.raster.{io => _, _}
-import geotrellis.raster.histogram._
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.spark.SpatialKey
 import geotrellis.proj4.WebMercator
 import geotrellis.server.vlm.RasterSourceUtils
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
-import io.circe.syntax._
 import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging

@@ -4,47 +4,29 @@ import com.rasterfoundry.database.{
   LayerAttributeDao,
   SceneDao,
   SceneToLayerDao,
-  SceneToProjectDao,
   ToolRunDao
 }
 import com.rasterfoundry.common.datamodel.User
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.MosaicImplicits
-import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.database.util.RFTransactor
 
-import cats.Applicative
 import cats.data.OptionT
-import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
 import com.olegpy.meow.hierarchy._
-import fs2.Stream
-import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.raster.io.geotiff.MultibandGeoTiff
-import geotrellis.server._
-import io.circe._
-import io.circe.syntax._
 import org.http4s._
-import org.http4s.circe._
-import org.http4s.dsl.io._
-import org.http4s.headers._
 import org.http4s.server.middleware.{AutoSlash, CORS, CORSConfig, Timeout}
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.Router
 import org.http4s.syntax.kleisli._
-import org.http4s.util.CaseInsensitiveString
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.typesafe.scalalogging.LazyLogging
-import doobie._
 import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.{Executors, TimeUnit}
-import java.util.UUID
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
@@ -73,7 +55,6 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   )
 
   val projectStoreImplicits = new ProjectStoreImplicits(xa)
-  import projectStoreImplicits.projectStore
 
   val timeout: FiniteDuration =
     new FiniteDuration(Config.server.timeoutSeconds, TimeUnit.SECONDS)

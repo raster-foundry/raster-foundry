@@ -3,15 +3,11 @@ package com.rasterfoundry.database
 import java.sql.Timestamp
 import java.util.UUID
 
-import cats.implicits._
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util._
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
-import doobie.postgres.circe.jsonb.implicits._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 
 object ProjectLayerDao extends Dao[ProjectLayer] {

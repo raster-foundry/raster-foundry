@@ -8,7 +8,6 @@ import com.rasterfoundry.common.datamodel._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 
