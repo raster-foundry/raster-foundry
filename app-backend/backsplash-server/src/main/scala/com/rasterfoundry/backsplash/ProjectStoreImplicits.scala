@@ -5,6 +5,7 @@ import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.{SceneDao, SceneToLayerDao, SceneToProjectDao}
+import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.common.datamodel.MosaicDefinition
 import com.rasterfoundry.common.datamodel.color.{
   BandGamma => RFBandGamma,
