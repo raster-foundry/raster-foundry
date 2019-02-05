@@ -14,6 +14,8 @@
 
 ### Fixed
 
+- Included geometry filter in backsplash scene service to prevent erroneous 500s [\#4580](https://github.com/raster-foundry/raster-foundry/pull/4580)
+
 ### Security
 
 ## [1.17.1](https://github.com/raster-foundry/raster-foundry/tree/1.17.1) (2019-02-04)

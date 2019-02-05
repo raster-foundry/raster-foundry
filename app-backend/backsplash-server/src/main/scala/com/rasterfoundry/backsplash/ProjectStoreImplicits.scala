@@ -5,6 +5,7 @@ import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.{SceneDao, SceneToLayerDao, SceneToProjectDao}
+import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.common.datamodel.MosaicDefinition
 import com.rasterfoundry.common.datamodel.color.{
@@ -122,7 +123,7 @@ class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
         window: Option[Projected[Polygon]],
         bandOverride: Option[BandOverride],
         imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage] = {
-      SceneDao.streamSceneById(projId).transact(xa) map { scene =>
+      SceneDao.streamSceneById(projId, window).transact(xa) map { scene =>
         // We don't actually have a project, so just make something up
         val randomProjectId = UUID.randomUUID
         val ingestLocation = scene.ingestLocation getOrElse {
