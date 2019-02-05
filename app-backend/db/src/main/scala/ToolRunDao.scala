@@ -144,13 +144,13 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
         .pure[ConnectionIO]
     } yield result
 
-  def listAnalysesWithRelated(
-      user: User,
-      pageRequest: PageRequest,
-      projectId: UUID,
-      ownershipTypeO: Option[String] = None,
-      groupTypeO: Option[GroupType] = None,
-      groupIdO: Option[UUID] = None): ConnectionIO[PaginatedResponse[ToolRunWithRelated]] = {
+  def listAnalysesWithRelated(user: User,
+                              pageRequest: PageRequest,
+                              projectId: UUID,
+                              ownershipTypeO: Option[String] = None,
+                              groupTypeO: Option[GroupType] = None,
+                              groupIdO: Option[UUID] = None)
+    : ConnectionIO[PaginatedResponse[ToolRunWithRelated]] = {
     val selectF: Fragment = fr"""
         SELECT tr.id, tr.name, tr.created_at, tr.created_by, tr.modified_at,
           tr.modified_by, tr.owner, tr.visibility, tr.project_id, tr.project_layer_id,
@@ -165,12 +165,12 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
     val filters: List[Option[Fragment]] = List(
       Some(fr"tr.project_id = ${projectId}"),
       queryObjectsF(user,
-          ObjectType.Analysis,
-          ActionType.View,
-          ownershipTypeO,
-          groupTypeO,
-          groupIdO,
-          Some("tr"))
+                    ObjectType.Analysis,
+                    ActionType.View,
+                    ownershipTypeO,
+                    groupTypeO,
+                    groupIdO,
+                    Some("tr"))
     )
     val countF: Fragment = fr"SELECT count(distinct(tr.id))" ++ fromF
 

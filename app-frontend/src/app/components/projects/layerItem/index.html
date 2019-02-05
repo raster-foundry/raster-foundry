@@ -18,53 +18,47 @@
   </div>
   <div class="list-group-overflow">
     <div><strong>{{$ctrl.itemInfo.name}}</strong></div>
-    <div ng-show="$ctrl.itemInfo.subtext"><span>{{$ctrl.itemInfo.subtext}}</span></div>
+    <div ng-if="$ctrl.itemInfo.subtext"><span>{{$ctrl.itemInfo.subtext}}</span></div>
     <div>{{$ctrl.itemInfo.date | date}}</div>
   </div>
   <div class="list-group-right list-group-vertical">
     <div>
       <div class="btn btn-text btn-transparent"
-           ng-show="!$ctrl.hasGeom"
-      >
+           ng-if="!$ctrl.hasGeom && !$ctrl.isAnalysis">
         <span class="icon-warning color-danger"
               tooltips
               tooltip-template="No AOI defined for this layer"
               tooltip-size="small"
               tooltip-class="layer-item-tooltip"
-              tooltip-side="left"
-        ></span>
+              tooltip-side="left"></span>
       </div>
       <div class="btn btn-text btn-transparent"
-           ng-click="$ctrl.onHide({id: $ctrl.itemInfo.id})"
-      >
+           ng-click="$ctrl.onHide({id: $ctrl.itemInfo.id})">
         <span class="icon-eye"
               tooltips
               tooltip-template="Hide layer on map"
               tooltip-size="small"
               tooltip-class="layer-item-tooltip"
               tooltip-side="left"
-              ng-if="$ctrl.visible"
-        ></span>
+              ng-if="$ctrl.visible"></span>
         <span class="icon-eye-off"
               tooltips
               tooltip-template="Show layer on map"
               tooltip-size="small"
               tooltip-class="layer-item-tooltip"
               tooltip-side="left"
-              ng-if="!$ctrl.visible"
-        ></span>
+              ng-if="!$ctrl.visible"></span>
       </div>
       <div class="btn btn-text btn-transparent"
            uib-dropdown
-           ng-show="$ctrl.itemActions && $ctrl.itemActions.length"
-           uib-dropdown-toggle
-      >
+           ng-if="$ctrl.itemActions && $ctrl.itemActions.length"
+           uib-dropdown-toggle>
         <i class="icon-menu"></i>
         <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
           <li role="menuitem"
               ng-repeat="action in $ctrl.itemActions">
-            <a href ng-click="action.callback()" ng-show="action.name">{{action.name}}</a>
-            <span class="menu-separator" ng-show="action.separator"></span>
+            <a href ng-click="action.callback()" ng-if="action.name">{{action.name}}</a>
+            <span class="menu-separator" ng-if="action.separator"></span>
           </li>
         </ul>
       </div>

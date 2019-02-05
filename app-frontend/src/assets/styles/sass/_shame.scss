@@ -3257,10 +3257,11 @@ rf-navbar-search {
 .menu-separator {
     height: .2em;
     width: 100%;
-    border-top: 1 px solid #ccc;
+    border-top: 1px solid #ccc;
 }
 
-rf-project-layers-page {
+rf-project-layers-page,
+rf-project-analyses-page {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -3286,4 +3287,3 @@ rf-project-layers-page {
     flex-direction: column;
     align-self: stretch;
 }
-

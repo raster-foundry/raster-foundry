@@ -623,6 +623,10 @@ export default (app) => {
             return this.Project.listLayers({...params, projectId}).$promise;
         }
 
+        getProjectLayer(projectId, layerId) {
+            return this.Project.getLayer({projectId, layerId}).$promise;
+        }
+
         createProjectLayer(projectId, params = {}) {
             return this.Project.createLayer({projectId}, params).$promise;
         }
