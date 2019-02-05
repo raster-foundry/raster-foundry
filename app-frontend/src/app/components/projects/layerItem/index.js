@@ -9,23 +9,22 @@ class LayerItemController {
 
     $onInit() {
         const rx = /^#(?:[0-9a-f]{3}){1,2}$/i;
-        const color = _.get(this.layer, 'colorGroupHex');
+        const color = _.get(this.itemInfo, 'colorGroupHex');
         if (color.match(rx)) {
             this.color = color;
         } else {
             this.color = 'white';
         }
 
-        const geometry = _.get(this.layer, 'colorGroupHex');
-        this.hasGeom = _.get(geometry, 'features.length');
+        const geometry = _.get(this.itemInfo, 'colorGroupHex');
+        this.hasGeom = _.get(this.itemInfo, 'geometry.features.length');
     }
 }
 
 const component = {
     bindings: {
-        layer: '<',
-        layerActions: '<',
-        subtext: '<',
+        itemInfo: '<',
+        itemActions: '<',
         selected: '<',
         onSelect: '&',
         visible: '<',

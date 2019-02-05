@@ -12,19 +12,17 @@
         <a href ng-click="$ctrl.showPageLayers()">Show all on page</a></li>
     </ul>
   </div>
-
 </div>
 <div class="sidebar-scrollable list-group">
   <rf-layer-item
-      layer="layer"
-      layer-actions="$ctrl.layerActions[$index]"
-      subtext="layer.subtext"
-      selected="$ctrl.isSelected(layer.id)"
-      on-select="$ctrl.onSelect(layerId)"
-      visible="$ctrl.isVisible(layer.id)"
-      on-hide="$ctrl.onHide(layerId)"
-      ng-repeat="layer in $ctrl.layerList track by layer.id">
-    <rf-layer-stats scene-count="$ctrl.getSceneCount(layer.id)"></rf-layer-stats">
+      item-info="item"
+      item-actions="$ctrl.layerActions[$index]"
+      selected="$ctrl.isSelected(item.id)"
+      on-select="$ctrl.onSelect(id)"
+      visible="$ctrl.isVisible(item.id)"
+      on-hide="$ctrl.onHide(id)"
+      ng-repeat="item in $ctrl.itemList track by item.id">
+    <rf-layer-stats scene-count="$ctrl.getSceneCount(item.id)"></rf-layer-stats">
   </rf-layer-item>
   <rf-pagination-controls
       pagination="$ctrl.pagination"

@@ -1,25 +1,25 @@
 <div class="list-group-item">
   <div class="list-item-left-actions">
-    <label class="checkbox layer-checkbox list-item-{{$ctrl.layer.id}}"
+    <label class="checkbox layer-checkbox list-item-{{$ctrl.itemInfo.id}}"
            ng-class="{
                   active: $ctrl.selected
                   }"
     >
       <input type="checkbox"
              ng-checked="$ctrl.selected"
-             ng-click="$ctrl.onSelect({layerId: $ctrl.layer.id})"
+             ng-click="$ctrl.onSelect({id: $ctrl.itemInfo.id})"
       />
     </label>
     <style>
-     label.checkbox.list-item-{{$ctrl.layer.id}}::after {
+     label.checkbox.list-item-{{$ctrl.itemInfo.id}}::after {
          border: 2px solid {{$ctrl.color}};
      }
     </style>
   </div>
   <div class="list-group-overflow">
-    <div><strong>{{$ctrl.layer.name}}</strong></div>
-    <div ng-show="$ctrl.layer.subtext"><span>{{$ctrl.layer.subtext}}</span></div>
-    <div>{{$ctrl.layer.createdAt | date}}</div>
+    <div><strong>{{$ctrl.itemInfo.name}}</strong></div>
+    <div ng-show="$ctrl.itemInfo.subtext"><span>{{$ctrl.itemInfo.subtext}}</span></div>
+    <div>{{$ctrl.itemInfo.date | date}}</div>
   </div>
   <div class="list-group-right list-group-vertical">
     <div>
@@ -35,7 +35,7 @@
         ></span>
       </div>
       <div class="btn btn-text btn-transparent"
-           ng-click="$ctrl.onHide({layerId: $ctrl.layer.id})"
+           ng-click="$ctrl.onHide({id: $ctrl.itemInfo.id})"
       >
         <span class="icon-eye"
               tooltips
@@ -56,13 +56,13 @@
       </div>
       <div class="btn btn-text btn-transparent"
            uib-dropdown
-           ng-show="$ctrl.layerActions && $ctrl.layerActions.length"
+           ng-show="$ctrl.itemActions && $ctrl.itemActions.length"
            uib-dropdown-toggle
       >
         <i class="icon-menu"></i>
         <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
           <li role="menuitem"
-              ng-repeat="action in $ctrl.layerActions">
+              ng-repeat="action in $ctrl.itemActions">
             <a href ng-click="action.callback()" ng-show="action.name">{{action.name}}</a>
             <span class="menu-separator" ng-show="action.separator"></span>
           </li>

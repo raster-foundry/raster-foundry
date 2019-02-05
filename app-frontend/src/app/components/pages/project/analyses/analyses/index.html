@@ -1,2 +1,18 @@
-<div>analyses</div>
-<ui-view></ui-view>
+<div class="sidebar-actions-group">
+  <div style="flex: 1;"></div>
+  <select class="btn btn-small btn-transparent"
+          ng-model="$ctrl.ordering">
+    <option value="">Newest</option>
+    <option value="manual">Manual</option>
+    <option value="date">Date</option>
+  </select>
+  <div class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
+    Layer Visibility
+    <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
+      <li role="menuitem">
+        <a href ng-click="$ctrl.showDefaultLayer()">Show only default</a></li>
+      <li role="menuitem">
+        <a href ng-click="$ctrl.showPageLayers()">Show all on page</a></li>
+    </ul>
+  </div>
+</div>
