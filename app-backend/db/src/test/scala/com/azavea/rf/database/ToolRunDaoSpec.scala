@@ -3,6 +3,7 @@ package com.rasterfoundry.database
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
+import com.lonelyplanet.akka.http.extensions.PageRequest
 
 import doobie.implicits._
 import org.scalacheck.Prop.forAll
@@ -377,7 +378,58 @@ class ToolRunDaoSpec
             true
           }
       }
+    }
+  }
 
+  test("list analysis with related with projectId passed in should include info from project layer and template") {
+    check {
+      forAll {
+        (user: User.Create,
+         org: Organization.Create,
+         projCreate: Project.Create,
+         toolCreate: Tool.Create,
+         toolRunCreate: ToolRun.Create,
+         page: PageRequest) =>
+          {
+            val listAnalysesWithRelatedIO = for {
+              (_, dbUser, dbProject) <- insertUserOrgProject(user,
+                                                             org,
+                                                             projCreate)
+              dbTemplate <- ToolDao.insert(toolCreate, dbUser)
+              withRelated = toolRunCreate.copy(
+                projectId = Some(dbProject.id),
+                projectLayerId = Some(dbProject.defaultLayerId),
+                templateId = Some(dbTemplate.id)
+              )
+              dbAnalysis <- ToolRunDao.insertToolRun(withRelated, dbUser)
+              projectLayer <- ProjectLayerDao.unsafeGetProjectLayerById(dbProject.defaultLayerId)
+              analysisWithRelated <- ToolRunDao.listAnalysesWithRelated(dbUser, page, dbProject.id)
+            } yield { (analysisWithRelated, projectLayer, dbTemplate, dbAnalysis) }
+
+            val (analysisWithRelatedPaged, projectLayer, dbTemplate, dbAnalysis) = xa.use(t => listAnalysesWithRelatedIO.transact(t)).unsafeRunSync
+            val analysisWithRelated = ToolRunWithRelated(
+              dbAnalysis.id,
+              dbAnalysis.name,
+              dbAnalysis.createdAt,
+              dbAnalysis.createdBy,
+              dbAnalysis.modifiedAt,
+              dbAnalysis.modifiedBy,
+              dbAnalysis.owner,
+              dbAnalysis.visibility,
+              dbAnalysis.projectId,
+              dbAnalysis.projectLayerId,
+              dbAnalysis.templateId,
+              dbAnalysis.executionParameters,
+              dbTemplate.title,
+              projectLayer.colorGroupHex,
+              projectLayer.geometry
+            )
+
+            assert(analysisWithRelatedPaged.results.head == analysisWithRelated,
+                   "Listed analysis should be the same as the one inserted")
+            true
+          }
+      }
     }
   }
 }
