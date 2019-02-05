@@ -13,73 +13,63 @@ class ProjectLayersNavController {
 
     $onInit() {
         this.navs = [];
-        this.$scope.$watch('$ctrl.$state.current', this.onStateChange.bind(this));
+        this.$scope.$watch('$ctrl.$state.current', this.onStateCurrentChange.bind(this));
     }
 
-    onStateChange(stateCurrent) {
-        const state = this.$state;
-        if (!state) {
+    onStateCurrentChange(stateCurrent) {
+        if (!this.$state) {
             return;
         }
-        this.$log.log(state);
+
         this.navs = [];
+
         if (
-            state.includes('project.layers') ||
-            state.includes('project.analyses') ||
-            state.includes('project.settings') ||
-            state.includes('project.layer')
+            this.$state.includes('project.layers') ||
+            this.$state.includes('project.analyses') ||
+            this.$state.includes('project.settings') ||
+            this.$state.includes('project.layer')
         ) {
-            this.navs.push(
-                {
-                    title: this.project.name,
-                    sref: `project.layers({projectId: '${this.project.id}'})`
-                }
-            );
+            this.navs.push({
+                title: this.project.name,
+                sref: `project.layers({projectId: '${this.project.id}'})`
+            });
         }
 
-        if (state.includes('project.settings')) {
-            this.navs.push(
-                {
-                    title: 'Settings',
-                    sref: `project.settings({projectId: '${this.project.id}'})`
-                }
-            );
+        if (this.$state.includes('project.settings')) {
+            this.navs.push({
+                title: 'Settings',
+                sref: `project.settings({projectId: '${this.project.id}'})`
+            });
         }
 
-        if (state.includes('project.layer')) {
-            this.navs.push(
-                {
-                    title: this.layer.name,
-                    sref: `project.layer({
-                        projectId: '${this.project.id}',
-                        layerId: '${this.layer.id}'
-                    })`
-                }
-            );
+        if (this.$state.includes('project.layer')) {
+            this.navs.push({
+                title: this.layer.name,
+                sref: `project.layer({
+                    projectId: '${this.project.id}',
+                    layerId: '${this.layer.id}'
+                })`
+            });
         }
 
-        if (state.includes('project.layer.corrections')) {
-            this.navs.push(
-                {
-                    title: 'Color correct',
-                    sref: `project.layer.corrections({
-                        projectId: '${this.project.id}',
-                        layerId: '${this.layer.id}'
-                    })`
-                }
-            );
+        if (this.$state.includes('project.layer.corrections')) {
+            this.navs.push({
+                title: 'Color correct',
+                sref: `project.layer.corrections({
+                    projectId: '${this.project.id}',
+                    layerId: '${this.layer.id}'
+                })`
+            });
         }
 
-        if (state.includes('project.layer.scenes.browse')) {
-            this.navs.push(
-                {
-                    title: 'Browse imagery',
-                    sref: `project.layer.scenes.browse({
-                        projectId: '${this.project.id}',
-                        layerId: '${this.layer.id}'
-                    })`
-                }
-            );
+        if (this.$state.includes('project.layer.scenes.browse')) {
+            this.navs.push({
+                title: 'Browse imagery',
+                sref: `project.layer.scenes.browse({
+                    projectId: '${this.project.id}',
+                    layerId: '${this.layer.id}'
+                })`
+            });
         }
     }
 }
