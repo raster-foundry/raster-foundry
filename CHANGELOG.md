@@ -9,6 +9,7 @@
 - CRUDL endpoints for project layer scenes [\#4550](https://github.com/raster-foundry/raster-foundry/pull/4550)
 - Added publishing of lambda functions to CI build process [\#4586](https://github.com/raster-foundry/raster-foundry/pull/4586)
 - Added tile server support for masked analyses [\#4571](https://github.com/raster-foundry/raster-foundry/pull/4571)
+- Added project layer navigation bar [\#4581](https://github.com/raster-foundry/raster-foundry/pull/4581)
 
 ### Changed
 
