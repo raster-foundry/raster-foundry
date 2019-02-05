@@ -143,7 +143,7 @@ trait Authentication extends Directives with LazyLogging {
                                            user: User)
         // All users will have a platform role, either added by a migration or created with the user if they are new
         val query = for {
-          (_, roles) <- UserDao.getUserAndActiveRolesById(userId).flatMap {
+          (user, roles) <- UserDao.getUserAndActiveRolesById(userId).flatMap {
             case UserOptionAndRoles(Some(user), roles) =>
               (user, roles).pure[ConnectionIO]
             case UserOptionAndRoles(None, _) =>

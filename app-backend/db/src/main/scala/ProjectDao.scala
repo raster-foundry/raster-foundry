@@ -529,8 +529,12 @@ object ProjectDao
       .filter(objectId)
       .exists
 
-  def authProjectLayerExist(projectId: UUID, layerId: UUID, user: User, actionType: ActionType): ConnectionIO[Boolean] = for {
-    authProject <- authorized(user, ObjectType.Project, projectId, actionType)
-    layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
-  } yield { authProject && layerExist }
+  def authProjectLayerExist(projectId: UUID,
+                            layerId: UUID,
+                            user: User,
+                            actionType: ActionType): ConnectionIO[Boolean] =
+    for {
+      authProject <- authorized(user, ObjectType.Project, projectId, actionType)
+      layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
+    } yield { authProject && layerExist }
 }

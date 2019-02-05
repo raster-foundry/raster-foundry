@@ -43,7 +43,8 @@ object AnnotationDao extends Dao[Annotation] {
       .toList
   }
 
-  def listForExport(projectF: Fragment, layerF: Fragment): ConnectionIO[List[Annotation]] =
+  def listForExport(projectF: Fragment,
+                    layerF: Fragment): ConnectionIO[List[Annotation]] =
     AnnotationDao.query.filter(projectF).filter(layerF).list
 
   // list default project layer annotations if exportAll is None or Some(false)
@@ -63,7 +64,8 @@ object AnnotationDao extends Dao[Annotation] {
       )
     } yield { annotations }
 
-  def listForLayerExport(projectId: UUID, layerId: UUID): ConnectionIO[List[Annotation]] =
+  def listForLayerExport(projectId: UUID,
+                         layerId: UUID): ConnectionIO[List[Annotation]] =
     listForExport(fr"project_id=$projectId", fr"project_layer_id=$layerId")
 
   // look for default project layer

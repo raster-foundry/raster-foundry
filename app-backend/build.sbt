@@ -258,7 +258,7 @@ lazy val db = Project("db", file("db"))
     )
   })
   .settings(
-  )
+    )
 
 lazy val migrations = Project("migrations", file("migrations"))
   .settings(commonSettings: _*)
