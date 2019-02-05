@@ -6,7 +6,9 @@ import com.rasterfoundry.common.datamodel.{
   User,
   ObjectType,
   GroupType,
-  ActionType
+  ActionType,
+  ToolRunWithRelated,
+  PaginatedResponse
 }
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 import com.rasterfoundry.common.ast._
@@ -16,6 +18,8 @@ import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import cats.implicits._
+import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
+import com.rasterfoundry.database.util._
 
 import java.sql.Timestamp
 import java.util.UUID
@@ -139,4 +143,57 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
         .contains(projectId))
         .pure[ConnectionIO]
     } yield result
+
+  def listAnalysesWithRelated(
+      user: User,
+      pageRequest: PageRequest,
+      projectId: UUID,
+      ownershipTypeO: Option[String] = None,
+      groupTypeO: Option[GroupType] = None,
+      groupIdO: Option[UUID] = None): ConnectionIO[PaginatedResponse[ToolRunWithRelated]] = {
+    val selectF: Fragment = fr"""
+        SELECT tr.id, tr.name, tr.created_at, tr.created_by, tr.modified_at,
+          tr.modified_by, tr.owner, tr.visibility, tr.project_id, tr.project_layer_id,
+          tr.template_id, tr.execution_parameters, t.title template_title,
+          pl.color_group_hex layer_color_group_hex, pl.geometry layer_geometry
+      """
+    val fromF: Fragment = fr"""
+        FROM tool_runs tr
+        JOIN tools t on t.id = tr.template_id
+        JOIN project_layers pl on pl.id = tr.project_layer_id
+      """
+    val filters: List[Option[Fragment]] = List(
+      Some(fr"tr.project_id = ${projectId}"),
+      queryObjectsF(user,
+          ObjectType.Analysis,
+          ActionType.View,
+          ownershipTypeO,
+          groupTypeO,
+          groupIdO,
+          Some("tr"))
+    )
+    val countF: Fragment = fr"SELECT count(distinct(tr.id))" ++ fromF
+
+    for {
+      page <- (selectF ++ fromF ++ Fragments.whereAndOpt(filters: _*) ++ Page(
+        pageRequest.copy(
+          sort = pageRequest.sort ++ Map("tr.modified_at" -> Order.Desc,
+                                         "tr.id" -> Order.Desc))))
+        .query[ToolRunWithRelated]
+        .to[List]
+      count <- (countF ++ Fragments.whereAndOpt(filters: _*))
+        .query[Int]
+        .unique
+    } yield {
+      val hasPrevious = pageRequest.offset > 0
+      val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
+
+      PaginatedResponse[ToolRunWithRelated](count,
+                                            hasPrevious,
+                                            hasNext,
+                                            pageRequest.offset,
+                                            pageRequest.limit,
+                                            page)
+    }
+  }
 }

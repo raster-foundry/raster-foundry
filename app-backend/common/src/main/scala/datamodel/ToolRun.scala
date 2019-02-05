@@ -2,6 +2,7 @@ package com.rasterfoundry.common.datamodel
 
 import java.sql.Timestamp
 import java.util.UUID
+import geotrellis.vector.{Geometry, Projected}
 
 import io.circe._
 import io.circe.generic.JsonCodec
@@ -56,3 +57,20 @@ object ToolRun {
     }
   }
 }
+
+@JsonCodec
+final case class ToolRunWithRelated(id: UUID,
+                                    name: Option[String],
+                                    createdAt: Timestamp,
+                                    createdBy: String,
+                                    modifiedAt: Timestamp,
+                                    modifiedBy: String,
+                                    owner: String,
+                                    visibility: Visibility,
+                                    projectId: Option[UUID],
+                                    projectLayerId: Option[UUID],
+                                    templateId: Option[UUID],
+                                    executionParameters: Json,
+                                    templateTitle: String,
+                                    layerColorGroupHex: String,
+                                    layerGeometry: Option[Projected[Geometry]])
