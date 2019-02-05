@@ -138,9 +138,6 @@ class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
         val imageBandOverride = bandOverride map { ovr =>
           List(ovr.red, ovr.green, ovr.blue)
         } getOrElse { List(0, 1, 2) }
-        // we could also look this up by the datasource at some point -- which would
-        // probably help with
-        // https://github.com/raster-foundry/raster-foundry/issues/4468
         val colorCorrectParams = ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
         BacksplashImage(
           scene.id,
