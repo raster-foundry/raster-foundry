@@ -7,7 +7,7 @@ import geotrellis.raster.histogram._
 import geotrellis.raster.render._
 import io.circe._
 
-case class NodeMetadata(
+final case class NodeMetadata(
     label: Option[String] = None,
     description: Option[String] = None,
     histogram: Option[Histogram[Double]] = None,

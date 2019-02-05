@@ -6,7 +6,7 @@ import com.azavea.maml.ast.codec.tree._
 import geotrellis.vector.MultiPolygon
 import _root_.io.circe.generic.semiauto._
 
-case class AnalysisExportSource(
+final case class AnalysisExportSource(
     zoom: Int,
     area: MultiPolygon,
     ast: Expression,

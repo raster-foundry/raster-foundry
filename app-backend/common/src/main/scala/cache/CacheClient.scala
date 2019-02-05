@@ -51,7 +51,10 @@ class CacheClient(client: => MemcachedClient)
     body(abbreviateKey(key))
 
   def delete(key: String): Unit =
-    if (cacheEnabled) withAbbreviatedKey(key)(client.delete)
+    if (cacheEnabled) {
+      withAbbreviatedKey(key)(client.delete)
+      ()
+    } else { () }
 
   def setValue[T](key: String, value: T, ttlSeconds: Int = 0): Unit =
     withAbbreviatedKey(key) { key =>

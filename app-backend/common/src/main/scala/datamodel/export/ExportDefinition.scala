@@ -10,7 +10,7 @@ import cats.implicits._
 import java.util.UUID
 
 // The information necessary to export a tif
-case class ExportDefinition[SourceDefinition: Encoder: Decoder](
+final case class ExportDefinition[SourceDefinition](
     id: UUID,
     source: SourceDefinition,
     output: OutputDefinition
@@ -18,10 +18,10 @@ case class ExportDefinition[SourceDefinition: Encoder: Decoder](
 
 object ExportDefinition {
 
-  implicit def encodeExportDefinition[SourceDefinition: Encoder: Decoder]
+  implicit def encodeExportDefinition[SourceDefinition : Encoder]
     : Encoder[ExportDefinition[SourceDefinition]] =
     new Encoder[ExportDefinition[SourceDefinition]] {
-      final def apply(exportDef: ExportDefinition[SourceDefinition]): Json =
+      def apply(exportDef: ExportDefinition[SourceDefinition]): Json =
         Json.obj(
           ("id", exportDef.id.asJson),
           ("src", exportDef.source.asJson),
@@ -29,10 +29,10 @@ object ExportDefinition {
         )
     }
 
-  implicit def decodeExportDefinition[SourceDefinition: Encoder: Decoder]
+  implicit def decodeExportDefinition[SourceDefinition : Decoder]
     : Decoder[ExportDefinition[SourceDefinition]] =
     new Decoder[ExportDefinition[SourceDefinition]] {
-      final def apply(
+      def apply(
           c: HCursor): Decoder.Result[ExportDefinition[SourceDefinition]] =
         for {
           id <- c.downField("id").as[UUID]

@@ -4,7 +4,7 @@ import geotrellis.raster._
 import geotrellis.raster.render._
 import spire.std.any._
 
-case class ClassMap(
+final case class ClassMap(
     classifications: Map[Double, Int]
 ) {
   // How exposed should this be to the api?
@@ -33,7 +33,7 @@ case class ClassMap(
 }
 
 object ClassMap {
-  case class Options(
+  final case class Options(
       boundaryType: ClassBoundaryType = LessThanOrEqualTo,
       ndValue: Int = NODATA,
       fallback: Int = NODATA

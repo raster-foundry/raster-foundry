@@ -3,7 +3,7 @@ package com.rasterfoundry.common.datamodel
 import io.circe.generic.JsonCodec
 
 @JsonCodec
-case class ObjectAccessControlRule(
+final case class ObjectAccessControlRule(
     subjectType: SubjectType,
     subjectId: Option[String],
     actionType: ActionType

@@ -23,18 +23,18 @@ trait MapAlgebraUtilityCodecs {
   implicit def mapAlgebraEncoder: Encoder[MapAlgebraAST]
 
   implicit val decodeKeyDouble: KeyDecoder[Double] = new KeyDecoder[Double] {
-    final def apply(key: String): Option[Double] = Try(key.toDouble).toOption
+    def apply(key: String): Option[Double] = Try(key.toDouble).toOption
   }
   implicit val encodeKeyDouble: KeyEncoder[Double] = new KeyEncoder[Double] {
-    final def apply(key: Double): String = key.toString
+    def apply(key: Double): String = key.toString
   }
 
   implicit val decodeKeyUUID: KeyDecoder[UUID] = new KeyDecoder[UUID] {
-    final def apply(key: String): Option[UUID] =
+    def apply(key: String): Option[UUID] =
       Try(UUID.fromString(key)).toOption
   }
   implicit val encodeKeyUUID: KeyEncoder[UUID] = new KeyEncoder[UUID] {
-    final def apply(key: UUID): String = key.toString
+    def apply(key: UUID): String = key.toString
   }
 
   implicit lazy val classBoundaryDecoder: Decoder[ClassBoundaryType] =
@@ -49,23 +49,26 @@ trait MapAlgebraUtilityCodecs {
           s"'$unrecognized' is not a recognized ClassBoundaryType")
     }
 
+  /** Can't map a partial function here it seems since what comes before the `cbType =>`
+    * isn't mappable
+    */
   implicit lazy val classBoundaryEncoder: Encoder[ClassBoundaryType] =
     Encoder.encodeString.contramap[ClassBoundaryType]({ cbType =>
-      cbType match {
+      Option(cbType) map {
         case LessThan             => "lessThan"
         case LessThanOrEqualTo    => "lessThanOrEqualTo"
         case Exact                => "exact"
         case GreaterThanOrEqualTo => "greaterThanOrEqualTo"
         case GreaterThan          => "greaterThan"
-        case unrecognized =>
-          throw new InvalidParameterException(
-            s"'$unrecognized' is not a recognized ClassBoundaryType")
+      } getOrElse {
+        throw new InvalidParameterException(
+          s"'$cbType' is not a recognized ClassBoundaryType")
       }
     })
 
   implicit val neighborhoodDecoder: Decoder[Neighborhood] =
     Decoder.instance[Neighborhood] { n =>
-      n._type match {
+      n.typeOpt match {
         case Some("square")  => n.as[Square]
         case Some("circle")  => n.as[Circle]
         case Some("nesw")    => n.as[Nesw]
@@ -80,7 +83,7 @@ trait MapAlgebraUtilityCodecs {
 
   implicit val neighborhoodEncoder: Encoder[Neighborhood] =
     new Encoder[Neighborhood] {
-      final def apply(n: Neighborhood): Json = n match {
+      def apply(n: Neighborhood): Json = n match {
         case square: Square   => square.asJson
         case circle: Circle   => circle.asJson
         case nesw: Nesw       => nesw.asJson
@@ -122,7 +125,7 @@ trait MapAlgebraUtilityCodecs {
   implicit val colorRampDecoder: Decoder[ColorRamp] =
     Decoder[Vector[Int]].map({ ColorRamp(_) })
   implicit val colorRampEncoder: Encoder[ColorRamp] = new Encoder[ColorRamp] {
-    final def apply(cRamp: ColorRamp): Json = cRamp.colors.toArray.asJson
+    def apply(cRamp: ColorRamp): Json = cRamp.colors.toArray.asJson
   }
 
   implicit val histogramDecoder: Decoder[Histogram[Double]] =
@@ -131,14 +134,14 @@ trait MapAlgebraUtilityCodecs {
     }
   implicit val histogramEncoder: Encoder[Histogram[Double]] =
     new Encoder[Histogram[Double]] {
-      final def apply(hist: Histogram[Double]): Json = hist.toJson.asJson
+      def apply(hist: Histogram[Double]): Json = hist.toJson.asJson
     }
 
   implicit val statsDecoder: Decoder[Statistics[Double]] = deriveDecoder
   implicit val statsEncoder: Encoder[Statistics[Double]] = deriveEncoder
 
   implicit val sprayJsonEncoder: Encoder[JsValue] = new Encoder[JsValue] {
-    final def apply(jsvalue: JsValue): Json =
+    def apply(jsvalue: JsValue): Json =
       parse(jsvalue.compactPrint) match {
         case Right(success) => success
         case Left(fail)     => throw fail
@@ -147,7 +150,7 @@ trait MapAlgebraUtilityCodecs {
 
   val defaultClassMapDecoder: Decoder[ClassMap] = deriveDecoder[ClassMap]
   val hexClassMapDecoder: Decoder[ClassMap] = new Decoder[ClassMap] {
-    final def apply(c: HCursor): Decoder.Result[ClassMap] = {
+    def apply(c: HCursor): Decoder.Result[ClassMap] = {
       for {
         hexes <- c.downField("classifications").as[Map[Double, String]]
       } yield {

@@ -4,7 +4,7 @@ import com.rasterfoundry.common._
 import geotrellis.vector.MultiPolygon
 import _root_.io.circe.generic.semiauto._
 
-case class MosaicExportSource(
+final case class MosaicExportSource(
     zoom: Int,
     area: MultiPolygon,
     layers: List[(String, List[Int], Option[Double])]
