@@ -51,7 +51,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                            pip install -t opt/ ./
             cp -r "${DIR}/../app-lambda/rflambda/" "${DIR}/../app-lambda/opt/"
             pushd "${DIR}/../app-lambda/opt/"
-              zip -9 -r ../package.zip *
+              zip -9 -r ../package.zip ./*
             popd
 
             echo "Uploading Lambda Function"
