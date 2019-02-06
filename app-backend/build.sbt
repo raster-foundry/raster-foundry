@@ -399,6 +399,15 @@ lazy val backsplashExport =
         "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
       assemblyJarName in assembly := "backsplash-export-assembly.jar"
     )
+    .settings(assemblyMergeStrategy in assembly := {
+      case m if m.toLowerCase.endsWith("manifest.mf")     => MergeStrategy.discard
+      case m if m.toLowerCase.matches("meta-inf.*\\.sf$") => MergeStrategy.discard
+      case "reference.conf"                               => MergeStrategy.concat
+      case "application.conf"                             => MergeStrategy.concat
+      case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
+        MergeStrategy.discard
+      case _ => MergeStrategy.first
+    })
 
 lazy val backsplashServer = Project("backsplash-server",
                                     file("backsplash-server"))
