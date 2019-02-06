@@ -13,6 +13,8 @@ import cats.effect._
 import com.typesafe.scalalogging._
 
 trait ExportableInstances extends LazyLogging {
+  // This is fine because `hasNext` should *never* return true when `allTiles` is empty
+  @SuppressWarnings(Array("TraversableHead"))
   implicit def exportableAnalysis =
     new Exportable[ExportDefinition[AnalysisExportSource]] {
       def keyedTileSegments(
@@ -83,6 +85,8 @@ trait ExportableInstances extends LazyLogging {
 
   implicit val exportableMosaic =
     new Exportable[ExportDefinition[MosaicExportSource]] {
+      // This is fine because `hasNext` should *never* return true when `allTiles` is empty
+      @SuppressWarnings(Array("TraversableHead"))
       def keyedTileSegments(
           self: ExportDefinition[MosaicExportSource],
           zoom: Int
@@ -113,11 +117,22 @@ trait ExportableInstances extends LazyLogging {
                   List(self.source.area.reproject(LatLng, WebMercator)),
                   Rasterizer.Options.DEFAULT)
               case _ =>
-                val bands = self.source.layers.head._2
+                val bandCount = {
+                  val first =
+                    self.source.layers.headOption
+                      .getOrElse(throw new Exception(
+                        "Tile location list must contain *some* tile locations"))
+                  val explicitBandcount = first._2.length
+                  if (explicitBandcount < 1) {
+                    getRasterSource(first._1).bandCount
+                  } else {
+                    explicitBandcount
+                  }
+                }
                 logger.debug(
-                  s"Generating empty tile @${zoom}/${x}/${y} with bands ${bands.length}")
+                  s"Generating empty tile @${zoom}/${x}/${y} with bands ${bandCount}")
                 MultibandTile(
-                  bands.map(_ => TileReification.invisiTile).toArray)
+                  (1 to bandCount).map(_ => TileReification.invisiTile).toArray)
             }
             val xLoc = x - minTileX
             val yLoc = y - minTileY
