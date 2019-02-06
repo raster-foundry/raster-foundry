@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Dict, Any
 
@@ -12,7 +13,8 @@ class NewLandsat8Event(object):
 
     @classmethod
     def parse(cls, sourceEvent: Dict[Any, Any]):
-        bucket = sourceEvent['Records'][0]['s3']['bucket']['name']
-        index_key = sourceEvent['Records'][0]['s3']['object']['key']
+        s3_event = json.loads(sourceEvent['Records'][0]['Sns']['Message'])
+        bucket = s3_event['Records'][0]['s3']['bucket']['name']
+        index_key = s3_event['Records'][0]['s3']['object']['key']
         prefix = os.path.dirname(index_key)
         return NewLandsat8Event(bucket, prefix)
