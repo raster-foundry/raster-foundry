@@ -45,6 +45,7 @@ object Version {
   val scalajHttp = "2.3.0"
   val scapegoat = "1.3.7"
   val scopt = "3.5.0"
+  val decline = "0.6.0"
   val slickMigrationAPI = "0.4.0"
   val spark = "2.2.0"
   val sup = "0.2.0"

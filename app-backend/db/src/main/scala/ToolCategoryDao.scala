@@ -2,7 +2,8 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.datamodel.{ToolCategory, User}
 
-import doobie._, doobie.implicits._
+import doobie._
+import doobie.implicits._
 
 object ToolCategoryDao extends Dao[ToolCategory] {
 

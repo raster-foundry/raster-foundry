@@ -1,11 +1,13 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.common.datamodel._
+
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
 import cats.implicits._
+
 import java.sql.Timestamp
 import java.util.UUID
 

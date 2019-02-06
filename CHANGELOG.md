@@ -3,6 +3,7 @@
 
 ### Added
 
+- Added new export utility as replacement for the old (non-functioning) spark-based export [\#4589](https://github.com/raster-foundry/raster-foundry/pull/4589)
 - Added project layer creation workflow's modal on UI [\#4575](https://github.com/raster-foundry/raster-foundry/pull/4575)
 - Added project layer Annotation related endpoints [\#4569](https://github.com/raster-foundry/raster-foundry/pull/4569)
 - CRUDL endpoints for project layer scenes [\#4550](https://github.com/raster-foundry/raster-foundry/pull/4550)

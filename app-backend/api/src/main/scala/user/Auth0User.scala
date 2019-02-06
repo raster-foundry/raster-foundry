@@ -1,5 +1,7 @@
 package com.rasterfoundry.api.user
 
+import com.rasterfoundry.common.datamodel.User
+
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
@@ -10,7 +12,6 @@ import com.rasterfoundry.api.utils.{
   Config,
   ManagementBearerToken
 }
-import com.rasterfoundry.common.datamodel.User
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
@@ -21,6 +22,7 @@ import io.circe.syntax._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
+
 @JsonCodec
 final case class Auth0User(
     email: Option[String],

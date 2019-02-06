@@ -1,16 +1,17 @@
 package com.rasterfoundry.database
 
-import scala.util.Random
-
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
+
 import doobie.implicits._
 import cats.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
 import com.lonelyplanet.akka.http.extensions.PageRequest
+
+import scala.util.Random
 
 class ProjectDaoSpec
     extends FunSuite
