@@ -5,6 +5,7 @@
 
 - Added project layer creation workflow's modal on UI [\#4575](https://github.com/raster-foundry/raster-foundry/pull/4575)
 - Added project layer Annotation related endpoints [\#4569](https://github.com/raster-foundry/raster-foundry/pull/4569)
+- CRUDL endpoints for project layer scenes [\#4550](https://github.com/raster-foundry/raster-foundry/pull/4550)
 
 ### Changed
 
@@ -33,7 +34,6 @@
 - Added lambda function for reactively processing new Sentinel-2 imagery [\#4491](https://github.com/raster-foundry/raster-foundry/pull/4491)
 - Added a migration that creates relationship among projects, project layers, and scenes and populates corresponding tables. Updated associated data models and `Dao`s [\#4479](https://github.com/raster-foundry/raster-foundry/pull/4479)
 - CRUDL endpoints for project layers [\#4512](https://github.com/raster-foundry/raster-foundry/pull/4512)
-- CRUDL endpoints for project layer scenes [\#4550](https://github.com/raster-foundry/raster-foundry/pull/4550)
 - Added project layer mosaic and scene order endpoint [\#4547](https://github.com/raster-foundry/raster-foundry/pull/4547)
 - Added `SceneToLayer` data model and `SceneToLayerDao`; updated related function calls in `ProjectDao` and project api [\#4513](https://github.com/raster-foundry/raster-foundry/pull/4513)
 - Added a migration that creates relationship among projects, project layers, and scenes and populates corresponding tables. Updated associated data models and `Dao`s. [\#4479](https://github.com/raster-foundry/raster-foundry/pull/4479)
