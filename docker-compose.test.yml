@@ -77,3 +77,9 @@ services:
       - $HOME/.gnupg:/root/.gnupg:ro
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
+
+  lambda:
+    image: python:3.6
+    volumes:
+      - ./app-lambda/:/opt/raster-foundry/app-lambda/
+    working_dir: /opt/raster-foundry/app-lambda/
