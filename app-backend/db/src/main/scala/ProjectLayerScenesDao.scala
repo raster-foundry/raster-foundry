@@ -2,7 +2,6 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.common.datamodel._
-
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -14,52 +13,46 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 
 import java.util.UUID
 
-object ProjectScenesDao extends Dao[Scene] {
-  val tableName = "scenes_to_projects INNER JOIN scenes ON scene_id = id"
+object ProjectLayerScenesDao extends Dao[Scene] {
+  val tableName =
+    "scenes_to_layers s2l INNER JOIN scenes s ON s2l.scene_id = s.id"
   val selectF = fr"""
       SELECT
-      id, created_at, created_by, modified_at, modified_by, owner,
-          visibility, tags,
-          datasource, scene_metadata, name, tile_footprint,
-          data_footprint, metadata_files, ingest_location, cloud_cover,
-          acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
-          boundary_status, ingest_status, scene_type FROM""" ++ tableF
+      s.id, s.created_at, s.created_by, s.modified_at, s.modified_by, s.owner,
+          s.visibility, s.tags,
+          s.datasource, s.scene_metadata, s.name, s.tile_footprint,
+          s.data_footprint, s.metadata_files, s.ingest_location, s.cloud_cover,
+          s.acquisition_date, s.sun_azimuth, s.sun_elevation, s.thumbnail_status,
+          s.boundary_status, s.ingest_status, s.scene_type FROM""" ++ tableF
 
-  def listProjectScenes(
-      projectId: UUID,
+  def listLayerScenes(
+      layerId: UUID,
       pageRequest: PageRequest,
-      sceneParams: CombinedSceneQueryParams
+      sceneParams: ProjectSceneQueryParameters
   ): ConnectionIO[PaginatedResponse[Scene.ProjectScene]] = {
 
-    val projectQuery = ProjectDao.query.filter(projectId).select
-    val andPendingF: Fragment = sceneParams.sceneParams.pending match {
-      case Some(true) => fr"accepted = false"
-      case _          => fr"accepted = true"
+    val layerQuery = ProjectLayerDao.query.filter(layerId).select
+    val andPendingF: Fragment = sceneParams.accepted match {
+      case Some(true) => fr"accepted = true"
+      case _          => fr"accepted = false"
     }
 
-    // we don't need to specify NULLS LAST for scene_order ASC,
-    // since it is the default when sorting ASC,
     val manualOrder = Map(
       "scene_order" -> Order.Asc,
       "acquisition_date" -> Order.Asc,
       "cloud_cover" -> Order.Asc
     )
-    val autoOrder =
-      Map("acquisition_date" -> Order.Asc, "cloud_cover" -> Order.Asc)
     val filterQ = query
-      .filter(fr"project_id = ${projectId}")
+      .filter(fr"project_layer_id = ${layerId}")
       .filter(andPendingF)
       .filter(sceneParams)
 
     val paginatedScenes = for {
-      project <- projectQuery
-      page <- project.manualOrder match {
-        case true => filterQ.page(pageRequest, manualOrder)
-        case _    => filterQ.page(pageRequest, autoOrder)
-      }
+      layer <- layerQuery
+      page <- filterQ.page(pageRequest, manualOrder)
     } yield page
     paginatedScenes.flatMap { (pr: PaginatedResponse[Scene]) =>
-      scenesToProjectScenes(pr.results.toList, projectId).map(
+      scenesToProjectScenes(pr.results.toList, layerId).map(
         projectScenes =>
           PaginatedResponse[Scene.ProjectScene](
             pr.count,
@@ -77,13 +70,13 @@ object ProjectScenesDao extends Dao[Scene] {
   @SuppressWarnings(Array("TraversableHead"))
   def scenesToProjectScenes(
       scenes: List[Scene],
-      projectId: UUID
+      layerId: UUID
   ): ConnectionIO[List[Scene.ProjectScene]] = {
     // "The astute among you will note that we don’t actually need a monad to do this;
     // an applicative functor is all we need here."
     // let's roll, doobie
     val componentsIO: ConnectionIO[
-      (List[Thumbnail], List[Datasource], List[SceneToProject])
+      (List[Thumbnail], List[Datasource], List[SceneToLayer])
     ] = {
       val thumbnails = SceneWithRelatedDao.getScenesThumbnails(scenes map {
         _.id
@@ -91,23 +84,20 @@ object ProjectScenesDao extends Dao[Scene] {
       val datasources = SceneWithRelatedDao.getScenesDatasources(scenes map {
         _.datasource
       })
-      val sceneToProjects = SceneWithRelatedDao.getSceneToProjects(scenes map {
+      val sceneToLayers = SceneWithRelatedDao.getScenesToLayers(scenes map {
         _.id
-      }, projectId)
-      (thumbnails, datasources, sceneToProjects).tupled
+      }, layerId)
+      (thumbnails, datasources, sceneToLayers).tupled
     }
 
     componentsIO map {
-      case (thumbnails, datasources, sceneToProjects) => {
+      case (thumbnails, datasources, sceneToLayers) => {
         val groupedThumbs = thumbnails.groupBy(_.sceneId)
         scenes map { scene: Scene =>
           scene.projectSceneFromComponents(
             groupedThumbs.getOrElse(scene.id, List.empty[Thumbnail]),
             datasources.filter(_.id == scene.datasource).head,
-            sceneToProjects
-              .find(_.sceneId == scene.id)
-              .map(_.sceneOrder)
-              .flatten
+            sceneToLayers.find(_.sceneId == scene.id).map(_.sceneOrder).flatten
           )
         }
       }

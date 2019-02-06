@@ -111,6 +111,20 @@ object SceneWithRelatedDao
         List.empty[SceneToProject].pure[ConnectionIO]
     }
 
+  def getScenesToLayers(
+      sceneIds: List[UUID],
+      layerId: UUID
+  ): ConnectionIO[List[SceneToLayer]] =
+    sceneIds.toNel match {
+      case Some(ids) =>
+        SceneToLayerDao.query
+          .filter(Fragments.in(fr"scene_id", ids))
+          .filter(fr"project_layer_id=$layerId")
+          .list
+      case _ =>
+        List.empty[SceneToLayer].pure[ConnectionIO]
+    }
+
   // We know the datasources list head exists because of the foreign key relationship
   @SuppressWarnings(Array("FilterDotHead", "TraversableHead"))
   def scenesToSceneBrowse(

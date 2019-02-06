@@ -200,6 +200,21 @@ trait Filterables extends RFMeta with LazyLogging {
           )
     }
 
+  implicit val projectSceneQueryParameters
+    : Filterable[Any, ProjectSceneQueryParameters] =
+    Filterable[Any, ProjectSceneQueryParameters] { params =>
+      List(
+        params.ingested.map({
+          case true => fr"ingest_status = 'INGESTED'"
+          case _    => fr"ingest_status != 'INGESTED'"
+        }),
+        params.ingestStatus.toList.toNel.map({ statuses =>
+          Fragments.in(fr"ingest_status",
+                       statuses.map(IngestStatus.fromString(_)))
+        })
+      )
+    }
+
   implicit val mapTokenQueryParametersFilter
     : Filterable[Any, CombinedMapTokenQueryParameters] =
     Filterable[Any, CombinedMapTokenQueryParameters] {

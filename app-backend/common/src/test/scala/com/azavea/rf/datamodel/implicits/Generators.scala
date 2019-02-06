@@ -170,8 +170,8 @@ object Generators extends ArbitraryInstances {
     for {
       width <- Gen.choose(100, 50000)
       height <- Gen.choose(100, 50000)
-      centerX <- Gen.choose(-2E7, 2E7)
-      centerY <- Gen.choose(-2E7, 2E7)
+      centerX <- Gen.choose(-2e7, 2e7)
+      centerY <- Gen.choose(-2e7, 2e7)
     } yield {
       Rectangle()
         .withWidth(width)
@@ -606,6 +606,9 @@ object Generators extends ArbitraryInstances {
   private def combinedSceneQueryParamsGen: Gen[CombinedSceneQueryParams] =
     Gen.const(CombinedSceneQueryParams())
 
+  private def projectSceneQueryParametersGen: Gen[ProjectSceneQueryParameters] =
+    Gen.const(ProjectSceneQueryParameters())
+
   private def teamCreateGen: Gen[Team.Create] =
     for {
       orgId <- uuidGen
@@ -724,17 +727,19 @@ object Generators extends ArbitraryInstances {
       tags <- Gen.const(Seq.empty)
       categories <- Gen.const(Seq.empty)
     } yield {
-      Tool.Create(title,
-                  description,
-                  requirements,
-                  license,
-                  visibility,
-                  compatibleDataSources,
-                  owner,
-                  stars,
-                  definition,
-                  tags,
-                  categories)
+      Tool.Create(
+        title,
+        description,
+        requirements,
+        license,
+        visibility,
+        compatibleDataSources,
+        owner,
+        stars,
+        definition,
+        tags,
+        categories
+      )
     }
 
   private def toolRunCreateGen: Gen[ToolRun.Create] =
@@ -744,13 +749,15 @@ object Generators extends ArbitraryInstances {
       executionParameters <- Gen.const(().asJson)
       owner <- Gen.const(None)
     } yield {
-      ToolRun.Create(name,
-                     visibility,
-                     None,
-                     None,
-                     None,
-                     executionParameters,
-                     owner)
+      ToolRun.Create(
+        name,
+        visibility,
+        None,
+        None,
+        None,
+        executionParameters,
+        owner
+      )
     }
 
   private def mapTokenCreateGen: Gen[MapToken.Create] =
@@ -771,6 +778,10 @@ object Generators extends ArbitraryInstances {
       : Arbitrary[CombinedSceneQueryParams] = Arbitrary {
       combinedSceneQueryParamsGen
     }
+
+    implicit def arbProjectsceneQueryParameters
+      : Arbitrary[ProjectSceneQueryParameters] =
+      Arbitrary { projectSceneQueryParametersGen }
 
     implicit def arbAnnotationCreate: Arbitrary[Annotation.Create] = Arbitrary {
       annotationCreateGen
@@ -898,7 +909,8 @@ object Generators extends ArbitraryInstances {
       : Arbitrary[List[ObjectAccessControlRule]] =
       Arbitrary {
         Gen.nonEmptyListOf[ObjectAccessControlRule](
-          arbitrary[ObjectAccessControlRule])
+          arbitrary[ObjectAccessControlRule]
+        )
       }
 
     implicit def arbToolCreate: Arbitrary[Tool.Create] =

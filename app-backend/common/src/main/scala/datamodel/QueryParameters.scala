@@ -20,11 +20,13 @@ object ThumbnailQueryParameters {
 
 /** Case class for combined params for images */
 /** Query parameters specific to image files */
-final case class ImageQueryParameters(minRawDataBytes: Option[Long] = None,
-                                      maxRawDataBytes: Option[Long] = None,
-                                      minResolution: Option[Float] = None,
-                                      maxResolution: Option[Float] = None,
-                                      scene: Iterable[UUID] = Seq.empty[UUID])
+final case class ImageQueryParameters(
+    minRawDataBytes: Option[Long] = None,
+    maxRawDataBytes: Option[Long] = None,
+    minResolution: Option[Float] = None,
+    maxResolution: Option[Float] = None,
+    scene: Iterable[UUID] = Seq.empty[UUID]
+)
 
 object ImageQueryParameters {
   implicit def encImageQueryParameters: Encoder[ImageQueryParameters] =
@@ -133,6 +135,20 @@ object ProjectQueryParameters {
     deriveDecoder[ProjectQueryParameters]
 }
 
+final case class ProjectSceneQueryParameters(
+    ingested: Option[Boolean] = None,
+    ingestStatus: Iterable[String] = Seq.empty[String],
+    accepted: Option[Boolean] = Some(true)
+)
+
+object ProjectSceneQueryParameters {
+  implicit def encProjectSceneQueryParameters
+    : Encoder[ProjectSceneQueryParameters] =
+    deriveEncoder[ProjectSceneQueryParameters]
+  implicit def decProjectQueryParameters: Decoder[ProjectSceneQueryParameters] =
+    deriveDecoder[ProjectSceneQueryParameters]
+}
+
 final case class AoiQueryParameters(
     orgParams: OrgQueryParameters = OrgQueryParameters(),
     userParams: UserQueryParameters = UserQueryParameters(),
@@ -166,9 +182,11 @@ object CombinedToolQueryParameters {
     deriveDecoder[CombinedToolQueryParameters]
 }
 
-final case class FootprintQueryParameters(x: Option[Double] = None,
-                                          y: Option[Double] = None,
-                                          bbox: Option[String] = None)
+final case class FootprintQueryParameters(
+    x: Option[Double] = None,
+    y: Option[Double] = None,
+    bbox: Option[String] = None
+)
 
 object FootprintQueryParameters {
   implicit def encFootprintQueryParameters: Encoder[FootprintQueryParameters] =
@@ -194,7 +212,8 @@ object CombinedFootprintQueryParams {
 
 /** Common query parameters for models that have organization attributes */
 final case class OrgQueryParameters(
-    organizations: Iterable[UUID] = Seq.empty[UUID])
+    organizations: Iterable[UUID] = Seq.empty[UUID]
+)
 
 object OrgQueryParameters {
   implicit def encOrgQueryParameters: Encoder[OrgQueryParameters] =
@@ -204,8 +223,10 @@ object OrgQueryParameters {
 }
 
 /** Query parameters to filter by only users */
-final case class UserAuditQueryParameters(createdBy: Option[String] = None,
-                                          modifiedBy: Option[String] = None)
+final case class UserAuditQueryParameters(
+    createdBy: Option[String] = None,
+    modifiedBy: Option[String] = None
+)
 
 object UserAuditQueryParameters {
   implicit def encUserAuditQueryParameters: Encoder[UserAuditQueryParameters] =
@@ -244,8 +265,10 @@ object OwnershipTypeQueryParameters {
 }
 
 /** Query parameters to filter by group membership*/
-final case class GroupQueryParameters(groupType: Option[GroupType] = None,
-                                      groupId: Option[UUID] = None)
+final case class GroupQueryParameters(
+    groupType: Option[GroupType] = None,
+    groupId: Option[UUID] = None
+)
 
 object GroupQueryParameters {
   implicit def encGroupQueryParameters: Encoder[GroupQueryParameters] =
@@ -294,10 +317,12 @@ object ToolCategoryQueryParameters {
     deriveDecoder[ToolCategoryQueryParameters]
 }
 
-final case class ToolRunQueryParameters(createdBy: Option[String] = None,
-                                        projectId: Option[UUID] = None,
-                                        templateId: Option[UUID] = None,
-                                        projectLayerId: Option[UUID] = None)
+final case class ToolRunQueryParameters(
+    createdBy: Option[String] = None,
+    projectId: Option[UUID] = None,
+    templateId: Option[UUID] = None,
+    projectLayerId: Option[UUID] = None
+)
 
 object ToolRunQueryParameters {
   implicit def encToolRunQueryParameters: Encoder[ToolRunQueryParameters] =
@@ -357,8 +382,10 @@ object DatasourceQueryParameters {
     deriveDecoder[DatasourceQueryParameters]
 }
 
-final case class MapTokenQueryParameters(name: Option[String] = None,
-                                         projectId: Option[UUID] = None)
+final case class MapTokenQueryParameters(
+    name: Option[String] = None,
+    projectId: Option[UUID] = None
+)
 
 object MapTokenQueryParameters {
   implicit def encMapTokenQueryParameters: Encoder[MapTokenQueryParameters] =
@@ -382,9 +409,11 @@ object CombinedMapTokenQueryParameters {
     deriveDecoder[CombinedMapTokenQueryParameters]
 }
 
-final case class UploadQueryParameters(datasource: Option[UUID] = None,
-                                       uploadStatus: Option[String] = None,
-                                       projectId: Option[UUID] = None)
+final case class UploadQueryParameters(
+    datasource: Option[UUID] = None,
+    uploadStatus: Option[String] = None,
+    projectId: Option[UUID] = None
+)
 
 object UploadQueryParameters {
   implicit def encUploadQueryParameters: Encoder[UploadQueryParameters] =
@@ -393,11 +422,12 @@ object UploadQueryParameters {
     deriveDecoder[UploadQueryParameters]
 }
 
-final case class ExportQueryParameters(organization: Option[UUID] = None,
-                                       project: Option[UUID] = None,
-                                       analysis: Option[UUID] = None,
-                                       exportStatus: Iterable[String] =
-                                         Seq.empty[String])
+final case class ExportQueryParameters(
+    organization: Option[UUID] = None,
+    project: Option[UUID] = None,
+    analysis: Option[UUID] = None,
+    exportStatus: Iterable[String] = Seq.empty[String]
+)
 
 object ExportQueryParameters {
   implicit def encExportQueryParameters: Encoder[ExportQueryParameters] =
@@ -442,7 +472,8 @@ object AnnotationQueryParameters {
 }
 
 final case class AnnotationExportQueryParameters(
-    exportAll: Option[Boolean] = None)
+    exportAll: Option[Boolean] = None
+)
 
 object AnnotationExportQueryParameters {
   implicit def encAnnotationExportQueryParameters
@@ -555,13 +586,15 @@ object OrganizationQueryParameters {
     deriveDecoder[OrganizationQueryParameters]
 }
 
-final case class SceneThumbnailQueryParameters(width: Option[Int],
-                                               height: Option[Int],
-                                               token: String,
-                                               red: Option[Int],
-                                               green: Option[Int],
-                                               blue: Option[Int],
-                                               floor: Option[Int])
+final case class SceneThumbnailQueryParameters(
+    width: Option[Int],
+    height: Option[Int],
+    token: String,
+    red: Option[Int],
+    green: Option[Int],
+    blue: Option[Int],
+    floor: Option[Int]
+)
 
 object SceneThumbnailQueryParameters {
   implicit def encSceneThumbnailQueryParameters
