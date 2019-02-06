@@ -32,13 +32,13 @@ object ProjectLayerScenesDao extends Dao[Scene] {
   def listLayerScenes(
       layerId: UUID,
       pageRequest: PageRequest,
-      sceneParams: CombinedSceneQueryParams
+      sceneParams: ProjectSceneQueryParameters
   ): ConnectionIO[PaginatedResponse[Scene.ProjectScene]] = {
 
     val layerQuery = ProjectLayerDao.query.filter(layerId).select
-    val andPendingF: Fragment = sceneParams.sceneParams.pending match {
-      case Some(true) => fr"accepted = false"
-      case _          => fr"accepted = true"
+    val andPendingF: Fragment = sceneParams.accepted match {
+      case Some(true) => fr"accepted = true"
+      case _          => fr"accepted = false"
     }
 
     val manualOrder = Map(

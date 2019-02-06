@@ -47,6 +47,7 @@ trait ProjectRoutes
     with Config
     with QueryParametersCommon
     with SceneQueryParameterDirective
+    with ProjectSceneQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
     with AWSBatch
@@ -1637,6 +1638,7 @@ trait ProjectRoutes
         }
       }
     }
+
   def listLayerScenes(projectId: UUID, layerId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
@@ -1645,7 +1647,7 @@ trait ProjectRoutes
           .transact(xa)
           .unsafeToFuture
       } {
-        (withPagination & sceneQueryParameters) { (page, sceneParams) =>
+        (withPagination & projectSceneQueryParameters) { (page, sceneParams) =>
           complete {
             ProjectLayerScenesDao
               .listLayerScenes(layerId, page, sceneParams)
