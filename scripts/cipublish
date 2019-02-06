@@ -45,7 +45,22 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 run --rm --no-deps \
                 build backsplash-server/assembly
 
-            # Build publishable sbt projects as SNAPSHOT artifacts and 
+            echo "Building lambda functions"
+            docker-compose -f "${DIR}/../docker-compose.test.yml" \
+                           run --rm --no-deps lambda \
+                           pip install -t opt/ ./
+            cp -r "${DIR}/../app-lambda/rflambda/" "${DIR}/../app-lambda/opt/"
+            pushd "${DIR}/../app-lambda/opt/"
+              zip -9 -r ../package.zip ./*
+            popd
+
+            echo "Uploading Lambda Function"
+            aws s3 cp \
+                "${DIR}/../app-lambda/package.zip" \
+                "s3://${RF_ARTIFACTS_BUCKET}/lambda-functions/package-${GIT_COMMIT}.zip"
+            rm "${DIR}/../app-lambda/package.zip"
+
+            # Build publishable sbt projects as SNAPSHOT artifacts and
             # publish to Sonatype OSSRH (Snapshot Repository).
             if [ "$(whoami)" == "jenkins" ]; then
                 echo "Publishing SNAPSHOT artifacts to Sonatype OSSRH (Snapshot Repository)"

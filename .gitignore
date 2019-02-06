@@ -111,3 +111,5 @@ dist/
 scratch/
 
 stats.json
+app-lambda/opt/*
+/app-lambda/package.sh
