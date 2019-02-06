@@ -1,5 +1,6 @@
 /* globals BUILDCONFIG */
 import angular from 'angular';
+import { min, range, isUndefined } from 'lodash';
 
 class NewExportController {
     constructor(
@@ -47,7 +48,17 @@ class NewExportController {
 
         this.projectEditService.fetchCurrentProject().then(project => {
             this.project = project;
+        }).then( () => {
+            this.projectService.getProjectDatasources(this.project.id).then(
+                datasources => {
+                    let minBands = min(datasources.map((datasource) => {
+                        return datasource.bands.length;
+                    }));
+                    this.defaultBands = range(0, minBands);
+                }
+            );
         });
+
 
         this.$scope.$on('$destroy', this.$onDestroy.bind(this));
     }
@@ -96,6 +107,7 @@ class NewExportController {
             this.exportOptions,
             this.getCurrentProcessingOption().exportOptions,
             this.mask ? {mask: this.mask} : {},
+            this.bands ? {bands: this.bands} : {bands: this.defaultBands},
             options
         );
     }
@@ -214,7 +226,9 @@ class NewExportController {
         if (this.getCurrentTarget().value === 'externalS3') {
             validationState = validationState && this.exportTargetURI;
         }
-        return validationState && this.mask !== undefined;
+        return validationState &&
+            !isUndefined(this.mask) &&
+            !isUndefined(this.defaultBands);
     }
 
     startExport() {
@@ -245,6 +259,8 @@ class NewExportController {
     }
 
     createBasicExport() {
+        let exportOpts = this.getExportOptions();
+        console.log(exportOpts);
         this.projectService
             .export(this.project,
                     {exportType: this.getCurrentTarget().value === 'dropbox' ? 'Dropbox' : 'S3' },
