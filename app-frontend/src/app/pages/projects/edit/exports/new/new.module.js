@@ -107,7 +107,7 @@ class NewExportController {
             this.exportOptions,
             this.getCurrentProcessingOption().exportOptions,
             this.mask ? {mask: this.mask} : {},
-            this.bands ? {bands: this.bands} : {bands: this.defaultBands},
+            {bands: this.defaultBands},
             options
         );
     }
