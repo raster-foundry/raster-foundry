@@ -53,6 +53,7 @@ final case class SceneQueryParameters(
     bbox: Iterable[String] = Seq.empty[String],
     point: Option[String] = None,
     project: Option[UUID] = None,
+    layer: Option[UUID] = None,
     ingested: Option[Boolean] = None,
     ingestStatus: Iterable[String] = Seq.empty[String],
     pending: Option[Boolean] = None,

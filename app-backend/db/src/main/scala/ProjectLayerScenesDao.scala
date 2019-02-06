@@ -46,10 +46,12 @@ object ProjectLayerScenesDao extends Dao[Scene] {
   ): ConnectionIO[PaginatedResponse[Scene.ProjectScene]] = {
 
     val layerQuery = ProjectLayerDao.query.filter(layerId).select
-    val andPendingF: Fragment = sceneParams.accepted match {
-      case Some(true) => fr"accepted = true"
-      case _          => fr"accepted = false"
-    }
+    val andPendingF: Option[Fragment] =
+      sceneParams.accepted match {
+        case Some(true)  => Some(fr"accepted = true")
+        case Some(false) => Some(fr"accepted = false")
+        case _           => None
+      }
 
     val manualOrder = Map(
       "scene_order" -> Order.Asc,
