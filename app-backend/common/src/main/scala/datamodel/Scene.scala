@@ -89,7 +89,8 @@ final case class Scene(
   def browseFromComponents(
       thumbnails: List[Thumbnail],
       datasource: Datasource,
-      inProject: Option[Boolean]
+      inProject: Option[Boolean],
+      inLayer: Option[Boolean]
   ): Scene.Browse = Scene.Browse(
     this.id,
     this.createdAt,
@@ -110,7 +111,8 @@ final case class Scene(
     this.filterFields,
     this.statusFields,
     this.sceneType,
-    inProject
+    inProject,
+    inLayer
   )
 
   def projectSceneFromComponents(
@@ -258,7 +260,8 @@ object Scene {
       filterFields: SceneFilterFields = new SceneFilterFields(),
       statusFields: SceneStatusFields,
       sceneType: Option[SceneType] = None,
-      inProject: Option[Boolean] = None
+      inProject: Option[Boolean] = None,
+      inLayer: Option[Boolean] = None
   ) {
     def toScene: Scene =
       Scene(
