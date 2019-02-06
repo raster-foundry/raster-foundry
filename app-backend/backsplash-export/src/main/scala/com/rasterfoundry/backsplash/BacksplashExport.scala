@@ -30,6 +30,11 @@ import scala.concurrent.ExecutionContext
   * Point this command line utility at a serialized version of any type that
   *  has a valid [[Exportable]] instance; it will produce an appropriate tiff
   *  and upload said tiff to the desired output location
+  *
+  * To extend this program with a new type (perhaps sourcing raster data in
+  *  some way not anticipated here), add a new typeclass instance for the new
+  *  export definition, add the type in question to the [[Exports]] type below,
+  *  and ensure that SerDe behaviors are provided as well
   */
 object BacksplashExport
     extends CommandApp(

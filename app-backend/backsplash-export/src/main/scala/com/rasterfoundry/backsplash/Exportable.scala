@@ -10,7 +10,7 @@ import cats.effect._
 import java.util.UUID
 
 /**
-  * Allows types to define exp
+  * Allows arbitrary types to encode exports by writing the appropriate instances
   */
 @typeclass trait Exportable[A] {
   @op("keyedTileSegments") def keyedTileSegments(self: A, zoom: Int)(
