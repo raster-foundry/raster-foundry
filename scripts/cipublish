@@ -49,7 +49,9 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             docker-compose -f "${DIR}/../docker-compose.test.yml" \
                            run --rm --no-deps lambda \
                            pip install -t opt/ ./
-            cp -r "${DIR}/../app-lambda/rflambda/" "${DIR}/../app-lambda/opt/"
+            docker-compose -f "${DIR}/../docker-compose.test.yml" \
+                           run --rm --no-deps lambda \
+                           cp -r "/opt/raster-foundry/app-lambda/rflambda/" "/opt/raster-foundry/app-lambda/opt/"
             pushd "${DIR}/../app-lambda/opt/"
               zip -9 -r ../package.zip ./*
             popd
