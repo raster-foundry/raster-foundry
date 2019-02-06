@@ -3,6 +3,8 @@ package com.rasterfoundry.common.ast
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{NeighborhoodConversion, ClassMap => MamlClassMap}
 
+import geotrellis.vector.io.json.Implicits._
+
 object MamlConversion {
   def fromDeprecatedAST(ast: MapAlgebraAST): Expression = {
 
@@ -15,11 +17,6 @@ object MamlConversion {
           RasterVar(s"${projId.toString}_${bandActual}")
         }
 
-        // TODO: Remove COG & Scene Raster once Old Tile Server is GONE
-        // https://github.com/raster-foundry/raster-foundry/issues/4168
-        // They can only be removed once they're also removed from batch
-        case CogRaster(_, _, _, _, _, _)         => ???
-        case SceneRaster(_, _, _, _, _)          => ???
         case MapAlgebraAST.Constant(_, const, _) => DblLit(const)
         case MapAlgebraAST.LiteralTile(_, lt, _) =>
           throw new Exception(
