@@ -368,33 +368,37 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
   )
 
 // maml / better-abstracted tile server
-lazy val backsplashExport = Project("backsplash-export", file("backsplash-export"))
-  .dependsOn(common)
-  .settings(commonSettings: _*)
-  .settings(resolvers += Resolver.file("local", file(Path.userHome.absolutePath + "/.ivy2/local"))(Resolver.ivyStylePatterns))
-  .settings(
-    fork in run := true,
-    libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % Version.scalaTest,
-      "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer,
-      "org.scalacheck" %% "scalacheck" % Version.scalaCheck,
-      "org.apache.spark" %% "spark-core" % "2.4.0" % Provided,
-      Dependencies.commonsIO,
-      Dependencies.decline,
-      Dependencies.geotrellisS3,
-      Dependencies.geotrellisUtil,
-      Dependencies.geotrellisRaster,
-      Dependencies.geotrellisSpark,
-      Dependencies.catsEffect,
-      Dependencies.elasticacheClient,
-      Dependencies.scalajHttp
-    ),
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
-    addCompilerPlugin(
-      "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
-    assemblyJarName in assembly := "backsplash-export-assembly.jar"
-  )
+lazy val backsplashExport =
+  Project("backsplash-export", file("backsplash-export"))
+    .dependsOn(common)
+    .settings(commonSettings: _*)
+    .settings(
+      resolvers += Resolver
+        .file("local", file(Path.userHome.absolutePath + "/.ivy2/local"))(
+          Resolver.ivyStylePatterns))
+    .settings(
+      fork in run := true,
+      libraryDependencies ++= Seq(
+        "org.scalatest" %% "scalatest" % Version.scalaTest,
+        "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer,
+        "org.scalacheck" %% "scalacheck" % Version.scalaCheck,
+        "org.apache.spark" %% "spark-core" % "2.4.0" % Provided,
+        Dependencies.commonsIO,
+        Dependencies.decline,
+        Dependencies.geotrellisS3,
+        Dependencies.geotrellisUtil,
+        Dependencies.geotrellisRaster,
+        Dependencies.geotrellisSpark,
+        Dependencies.catsEffect,
+        Dependencies.elasticacheClient,
+        Dependencies.scalajHttp
+      ),
+      addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
+      addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
+      addCompilerPlugin(
+        "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+      assemblyJarName in assembly := "backsplash-export-assembly.jar"
+    )
 
 lazy val backsplashServer = Project("backsplash-server",
                                     file("backsplash-server"))
