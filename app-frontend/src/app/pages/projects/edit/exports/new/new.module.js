@@ -214,7 +214,7 @@ class NewExportController {
         if (this.getCurrentTarget().value === 'externalS3') {
             validationState = validationState && this.exportTargetURI;
         }
-        return validationState;
+        return validationState && this.mask !== undefined;
     }
 
     startExport() {

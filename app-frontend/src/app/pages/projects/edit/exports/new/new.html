@@ -20,7 +20,6 @@
     <button class="btn btn-default fixedwidth" ng-click="$ctrl.startDrawing()">
       Define area to export
     </button>
-    <i class="icon-info"></i>
   </li>
   <!-- Opens the output processing panel -->
   <!-- <li class="separator">
@@ -55,7 +54,6 @@
         </li>
       </ul>
     </div>
-    <i class="icon-info"></i>
   </li>
   <li ng-class="{'separator': !$ctrl.shouldShowTargetParams()}" ng-if="$ctrl.enableExportTargets">
     <span class="label">Export to...</span>
@@ -72,7 +70,6 @@
         </li>
       </ul>
     </div>
-    <i class="icon-info"></i>
   </li>
   <li class="separator" ng-show="$ctrl.shouldShowTargetParams()">
     <input type="url" class="form-control slim" placeholder="S3 Bucket URI" ng-model="$ctrl.exportTargetURI">
@@ -96,7 +93,6 @@
         </li>
       </ul>
     </div>
-    <i class="icon-info"></i>
   </li>
 </ul>
 <div class="sidebar-content" ng-if="$ctrl.project">
