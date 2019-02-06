@@ -30,4 +30,4 @@ def handler(event: eventType, context: Dict[str, Any]):
     logger.info('Sending scene to the Raster Foundry API at %s', api_host)
     result = rf_api.client.Imagery.post_scenes(scene=scene_to_post).result()
     logger.info('Scene %s created successfully', event.scene_name)
-    return result
+    return "Success - {} Created".format(event.scene_name)
