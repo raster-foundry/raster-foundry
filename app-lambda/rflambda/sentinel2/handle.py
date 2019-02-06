@@ -9,5 +9,6 @@ logger = logging.getLogger(__name__)
 
 def handle(event: Dict[str, Any], context: Dict[str, Any]):
     logger.info('Parsing s3 information from SNS event')
+    logger.debug('Event: %s', event)
     parsed_event = NewSentinel2Event.parse(event)
     return handler(parsed_event, context)
