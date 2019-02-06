@@ -39,7 +39,19 @@ object TileReification extends LazyLogging {
       ): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
         val ld = tmsLevels(z)
         val extent = ld.mapTransform.keyToExtent(x, y)
-        val bandCount = self.head._2.length
+        val bandCount = {
+          val first =
+            self.headOption
+              .getOrElse(
+                throw new Exception(
+                  "Tile location list must contain *some* tile locations"))
+          val explicitBandcount = first._2.length
+          if (explicitBandcount < 1) {
+            getRasterSource(first._1).bandCount
+          } else {
+            explicitBandcount
+          }
+        }
         val subTilesIO: IO[List[Option[MultibandTile]]] =
           self.traverse {
             case (uri, bands, ndOverride) =>
