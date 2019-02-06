@@ -34,7 +34,7 @@
             - "{{ nexus_http_port }}:8081"
           volumes:
             - "/opt/nexus-data:/nexus-data"
-          restart: on-failure
+          restart: always
           logging:
             driver: syslog
             options:

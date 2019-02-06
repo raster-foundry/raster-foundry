@@ -1,12 +1,9 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel.FeatureFlag
+import com.rasterfoundry.common.datamodel.FeatureFlag
 
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-
-import java.util.UUID
+import doobie.implicits._
+import doobie.postgres.implicits._
 
 object FeatureFlagDao extends Dao[FeatureFlag] {
 

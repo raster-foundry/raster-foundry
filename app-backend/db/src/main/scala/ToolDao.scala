@@ -1,29 +1,21 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.{
-  ToolRun,
+import com.rasterfoundry.common.datamodel.{
+  Tool,
   User,
   ObjectType,
   GroupType,
   ActionType
 }
+
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
-import cats.implicits._
 import java.util.UUID
 
-import scala.concurrent.Future
-
-import com.rasterfoundry.datamodel.Tool
+import java.sql.Timestamp
 
 object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
   val tableName = "tools"

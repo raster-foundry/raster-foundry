@@ -4,7 +4,9 @@ import angular from 'angular';
 
 export default (app) => {
     class PermissionsService {
-        constructor($resource) {
+        constructor($resource, $q, authService) {
+            this.$q = $q;
+            this.authService = authService;
             this.Permissions = $resource(
                 `${BUILDCONFIG.API_HOST}/api/:permissionsBase/:objectId/permissions`, {
                     permissionsBase: '@permissionsBase',
@@ -57,6 +59,32 @@ export default (app) => {
                     { permissionsBase, objectId }
                 )
             ).$promise;
+        }
+
+        getEditableObjectPermissions(permissionsBase, objectType, object) {
+            return this.$q((resolve, reject) => {
+                const user = this.authService.user;
+                const roleSubjectIds = this.authService.userRoles.map(r => r.groupId);
+                const matchingIds = [user.id, ...roleSubjectIds];
+                if (object.owner === user.id || object.owner.id === user.id) {
+                    resolve([{actionType: '*'}]);
+                } else {
+                    this.query({
+                        permissionsBase,
+                        objectType,
+                        objectId: object.id
+                    }).$promise.then(permissions => {
+                        resolve(permissions.filter(p => matchingIds.includdes(p.subjectId)));
+                    }).catch((e) => {
+                        // can't view permissions, don't have edit
+                        if (e.status === 403) {
+                            resolve([]);
+                        } else {
+                            reject(e);
+                        }
+                    });
+                }
+            });
         }
     }
 

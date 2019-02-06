@@ -3,36 +3,22 @@ package com.rasterfoundry.batch.cogMetadata
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.common.RollbarNotifier
 import com.rasterfoundry.common.utils.CogUtils
-import com.rasterfoundry.datamodel.{
-  LayerAttribute,
-  Scene,
-  SceneType,
-  TiffWithMetadata
-}
+import com.rasterfoundry.common.datamodel.{LayerAttribute, TiffWithMetadata}
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.{LayerAttributeDao, SceneDao}
 
-import cats.data._
-import cats.effect.{ExitCode, IO, IOApp}
-import cats.syntax._
+import cats.effect.IO
 import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
-
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
-
 import io.circe.parser._
-import io.circe.syntax._
-
 import spray.json.DefaultJsonProtocol._
 import spray.json._
 
 import scala.concurrent.ExecutionContext
-
 import java.util.UUID
 
 object HistogramBackfill

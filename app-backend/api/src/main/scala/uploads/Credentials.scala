@@ -8,7 +8,7 @@ import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityRequest
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.common.S3
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.datamodel.User
 import com.typesafe.scalalogging.LazyLogging
 import io.circe.generic.JsonCodec
 

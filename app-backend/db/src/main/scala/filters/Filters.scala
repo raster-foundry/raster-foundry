@@ -1,13 +1,13 @@
 package com.rasterfoundry.database.filter
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.database._
+import com.rasterfoundry.common.datamodel._
 
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
+import doobie._
+import doobie.implicits._
+import doobie.postgres.implicits._
+import cats.implicits._
 
-import Fragments.{in, whereAndOpt}
+import Fragments.in
 
 object Filters {
 

@@ -1,25 +1,12 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database._
-import doobie._
 import doobie.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
-import cats.syntax.either._
-import doobie.postgres._
-import doobie.postgres.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
-import io.circe._
-import io.circe.syntax._
-import java.util.UUID
 import com.lonelyplanet.akka.http.extensions.PageRequest
 
 class TeamDaoSpec
@@ -335,7 +322,7 @@ class TeamDaoSpec
                 insertedTeam.id)
             } yield { (originalUserGroupRole, updatedUserGroupRoles) }
 
-            val (dbOldUGR, dbNewUGRs) =
+            val (_, dbNewUGRs) =
               xa.use(t => setTeamRoleIO.transact(t)).unsafeRunSync
 
             assert(dbNewUGRs.filter((ugr) => ugr.isActive == false).size == 1,
@@ -362,7 +349,7 @@ class TeamDaoSpec
               userOrgPlatform <- insertUserOrgPlatform(userCreate,
                                                        orgCreate,
                                                        platform)
-              (dbUser, dbOrg, dbPlatform) = userOrgPlatform
+              (dbUser, dbOrg, _) = userOrgPlatform
               team1 <- TeamDao.create(fixupTeam(teamCreate1, dbOrg, dbUser))
               team2 <- TeamDao.create(fixupTeam(teamCreate2, dbOrg, dbUser))
               _ <- UserGroupRoleDao.create(

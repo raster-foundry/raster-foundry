@@ -7,24 +7,18 @@ import com.rasterfoundry.akkautil.{
 }
 import com.rasterfoundry.database.OrganizationDao
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.datamodel._
 import com.rasterfoundry.api.utils.Config
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.model.StatusCodes
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import java.util.UUID
 
 import cats.effect.IO
 
 import doobie.util.transactor.Transactor
-import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.Fragments.in
-import doobie.postgres._
-import doobie.postgres.implicits._
 
 trait OrganizationRoutes
     extends Authentication

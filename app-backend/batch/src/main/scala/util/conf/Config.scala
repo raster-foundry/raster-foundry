@@ -1,8 +1,7 @@
 package com.rasterfoundry.batch.util.conf
 
-import java.util.UUID
+import com.rasterfoundry.common.datamodel.Band
 
-import com.rasterfoundry.datamodel.Band
 import com.dropbox.core.v2.DbxClientV2
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig}
 import com.typesafe.config.ConfigFactory
@@ -10,6 +9,8 @@ import geotrellis.proj4.CRS
 import net.ceedubs.ficus.Ficus
 import net.ceedubs.ficus.readers.ArbitraryTypeReader
 import shapeless.syntax.typeable._
+
+import java.util.UUID
 
 trait Config {
 

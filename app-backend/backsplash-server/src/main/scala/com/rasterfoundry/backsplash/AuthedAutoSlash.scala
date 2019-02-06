@@ -4,8 +4,6 @@ import cats._
 import cats.data._
 import cats.implicits._
 import org.http4s._
-import org.http4s.server._
-import org.http4s.server.middleware._
 
 /** Removes a trailing slash from [[Request]] path
   *
@@ -18,7 +16,6 @@ object AuthedAutoSlash {
       implicit F: MonoidK[OptionT[F, ?]],
       ev: Functor[F]): AuthedService[T, F] = Kleisli { authedReq =>
     {
-      // TODO: this doesn't compile anymore :(
       http(authedReq) <+> {
         val pathInfo = authedReq.req.pathInfo
         val scriptName = authedReq.req.scriptName

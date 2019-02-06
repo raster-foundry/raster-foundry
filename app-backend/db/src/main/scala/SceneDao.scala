@@ -1,23 +1,22 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-import java.util.{Date, UUID}
-
-import cats.implicits._
 import com.rasterfoundry.common.AWSBatch
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.color._
-import com.rasterfoundry.datamodel.{Scene, User, _}
+import com.rasterfoundry.common.datamodel.color._
+import com.rasterfoundry.common.datamodel.{Scene, User, _}
+
+import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import geotrellis.vector.{Polygon, Projected}
+import geotrellis.vector.{Geometry, Polygon, Projected}
 import io.circe.syntax._
 
 import scala.concurrent.duration._
+import java.sql.Timestamp
+import java.util.{Date, UUID}
 
 case class SceneDao()
 
@@ -45,8 +44,15 @@ object SceneDao
   def getSceneById(id: UUID): ConnectionIO[Option[Scene]] =
     query.filter(id).selectOption
 
-  def streamSceneById(sceneId: UUID): fs2.Stream[ConnectionIO, Scene] =
-    (selectF ++ Fragments.whereAnd(fr"id = ${sceneId}")).query[Scene].stream
+  def streamSceneById(sceneId: UUID, footprint: Option[Projected[Polygon]])(
+      implicit Filter: Filterable[Any, Projected[Geometry]])
+    : fs2.Stream[ConnectionIO, Scene] =
+    (selectF ++ Fragments.whereAndOpt(
+      (Some(fr"id = ${sceneId}") +: (footprint map {
+        Filter.toFilters(_)
+      } getOrElse { List.empty })): _*))
+      .query[Scene]
+      .stream
 
   def unsafeGetSceneById(id: UUID): ConnectionIO[Scene] =
     query.filter(id).select

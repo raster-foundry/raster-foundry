@@ -4,9 +4,9 @@ import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.common.utils.TileUtils
 
-import cats.Applicative
 import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
@@ -15,8 +15,6 @@ import geotrellis.server._
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
-
-import java.util.UUID
 
 class SceneService[ProjStore: ProjectStore, HistStore: HistogramStore](
     scenes: ProjStore,
@@ -40,15 +38,11 @@ class SceneService[ProjStore: ProjectStore, HistStore: HistogramStore](
         AuthedService {
           case GET -> Root / UUIDWrapper(sceneId) / IntVar(z) / IntVar(x) / IntVar(
                 y)
-                :? RedBandOptionalQueryParamMatcher(redOverride)
-                :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
-            val bandOverride =
-              Applicative[Option].map3(redOverride,
-                                       greenOverride,
-                                       blueOverride)(BandOverride.apply)
+                :? BandOverrideQueryParamDecoder(bandOverride) as user =>
+            val bbox = TileUtils.getTileBounds(z, x, y)
             val eval =
-              LayerTms.identity(scenes.read(sceneId, None, bandOverride, None))
+              LayerTms.identity(
+                scenes.read(sceneId, Some(bbox), bandOverride, None))
             for {
               fiberAuth <- authorizers.authScene(user, sceneId).start
               fiberResp <- eval(z, x, y).start

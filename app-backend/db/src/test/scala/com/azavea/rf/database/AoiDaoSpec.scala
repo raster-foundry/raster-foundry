@@ -1,19 +1,11 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
 
-import io.circe._
-import io.circe.syntax._
-import doobie._, doobie.implicits._
-import cats._, cats.data._, cats.effect.IO
+import doobie.implicits._
 import cats.implicits._
-import cats.syntax.either._
 import com.lonelyplanet.akka.http.extensions.PageRequest
-import doobie.postgres._, doobie.postgres.implicits._
-import doobie.scalatest.imports._
-import geotrellis.vector._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
@@ -81,8 +73,7 @@ class AoiDaoSpec
          shapeUpdate: Shape.Create) =>
           {
             val aoiInsertWithOrgUserProjectIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               shape <- ShapeDao.insertShape(shapeInsert, dbUser)
               dbAoi <- AoiDao.createAOI(
                 fixupAoiCreate(dbUser, dbProject, aoiInsert, shape),
@@ -95,11 +86,7 @@ class AoiDaoSpec
               updatedAoi <- AoiDao.unsafeGetAoiById(dbAoi.id)
             } yield
               (dbAoi, shape, updatedRows, updatedAoi, newShape) //shape, aoi, dbOrg, dbUser, dbProject, update, updatedRows, updatedAoi)
-            val (originalAoi,
-                 originalShape,
-                 affectedRows,
-                 updatedAoi,
-                 updatedShape) = xa
+            val (_, _, affectedRows, updatedAoi, updatedShape) = xa
               .use(t => aoiInsertWithOrgUserProjectIO.transact(t))
               .unsafeRunSync
 
@@ -161,8 +148,9 @@ class AoiDaoSpec
          aois2: List[AOI.Create]) =>
           {
             val aoisInsertWithProjectUserIO = for {
-              userOrgProj1 <- insertUserOrgProject(user, org, project1)
-              (dbOrg, dbUser, dbProject1) = userOrgProj1
+              (_, dbUser, dbProject1) <- insertUserOrgProject(user,
+                                                              org,
+                                                              project1)
               dbProject2 <- ProjectDao.insertProject(
                 fixupProjectCreate(dbUser, project2),
                 dbUser)

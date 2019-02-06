@@ -3,15 +3,12 @@ package com.rasterfoundry.database
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.filter.Filters._
 import com.rasterfoundry.database.notification.{GroupNotifier, MessageType}
-import com.rasterfoundry.database.notification.templates.PlainGroupRequest
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 
 import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import doobie.util.transactor.Transactor
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
+import doobie.postgres.implicits._
+import cats._, cats.implicits._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
-import io.circe._
 
 import java.util.UUID
 

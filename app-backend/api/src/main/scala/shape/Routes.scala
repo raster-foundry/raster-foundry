@@ -10,16 +10,14 @@ import cats.effect.IO
 import cats.implicits._
 import com.rasterfoundry.api.utils.queryparams.QueryParametersCommon
 import com.rasterfoundry.akkautil._
-import com.rasterfoundry.common._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.ShapeDao
-import com.rasterfoundry.datamodel.GeoJsonCodec._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel.GeoJsonCodec._
+import com.rasterfoundry.common.datamodel._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.shapefile.ShapeFileReader

@@ -1,19 +1,13 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
 
 import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import doobie.scalatest.imports._
-import cats._, cats.data._, cats.effect.IO
-import cats.syntax.either._
+import cats.effect.IO
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
-
-import java.util.UUID
 
 class AnnotationDaoSpec
     extends FunSuite
@@ -59,8 +53,7 @@ class AnnotationDaoSpec
          labelerC: User.Create) =>
           {
             val annotationsInsertIO = for {
-              oupInsert <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = oupInsert
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               labeler <- UserDao.create(labelerC)
               insertedAnnotations <- AnnotationDao.insertAnnotations(
                 annotations.map(annotationCreate =>
@@ -136,8 +129,7 @@ class AnnotationDaoSpec
          verifierCreate: User.Create) =>
           {
             val annotationInsertWithUserAndProjectIO = for {
-              oupInsert <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = oupInsert
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               annotations <- AnnotationDao.insertAnnotations(
                 List(annotationInsert),
                 dbProject.id,
@@ -158,10 +150,13 @@ class AnnotationDaoSpec
                   .toAnnotation(
                     dbProject.id,
                     dbUser,
-                    firstAnnotation.annotationGroup
+                    firstAnnotation.annotationGroup,
+                    dbProject.defaultLayerId
                   )
                   .copy(id = annotationId)
-                AnnotationDao.updateAnnotation(newAnnotation, dbUser) flatMap {
+                AnnotationDao.updateAnnotation(dbProject.id,
+                                               newAnnotation,
+                                               dbUser) flatMap {
                   (affectedRows: Int) =>
                     {
                       AnnotationDao.unsafeGetAnnotationById(annotationId) map {

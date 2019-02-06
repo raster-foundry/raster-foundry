@@ -1,30 +1,14 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.{
-  User,
-  UserRole,
-  Credential,
-  UserVisibility,
-  OrganizationType
-}
-import doobie._
-import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
-import doobie.postgres.circe.jsonb.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
-import cats.implicits._
-import java.util.UUID
-
-import scala.concurrent.Future
-
+import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.util.Sanitization
 import com.rasterfoundry.database.Implicits._
+
+import doobie._
+import doobie.implicits._
+import cats.implicits._
+
+import java.sql.Timestamp
 
 object UserDao extends Dao[User] with Sanitization {
 

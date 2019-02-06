@@ -1,13 +1,9 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
 
-import doobie._, doobie.implicits._
-import cats._, cats.data._, cats.effect.IO
-import cats.syntax.either._
-import doobie.postgres._, doobie.postgres.implicits._
+import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
@@ -34,11 +30,10 @@ class UploadDaoSpec
          upload: Upload.Create) =>
           {
             val uploadInsertIO = for {
-              orgUserProject <- insertUserOrgPlatProject(user,
-                                                         org,
-                                                         platform,
-                                                         project)
-              (dbUser, dbOrg, _, dbProject) = orgUserProject
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               datasource <- unsafeGetRandomDatasource
               insertedUpload <- UploadDao.insert(
                 fixupUploadCreate(dbUser, dbProject, datasource, upload),

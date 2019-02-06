@@ -1,12 +1,9 @@
 package com.rasterfoundry.backsplash.server
 
 import org.http4s._
-import org.http4s.server._
-import org.http4s.server.middleware._
 
 import cats._
 import cats.data._
-import cats.implicits._
 
 /** Removes the given prefix from the beginning of the path of the [[Request]].
   */

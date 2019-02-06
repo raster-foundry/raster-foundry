@@ -15,7 +15,6 @@ import com.rasterfoundry.akkautil.{
 import com.rasterfoundry.common.S3
 import com.rasterfoundry.common.S3RegionEnum
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 
 trait ThumbnailRoutes

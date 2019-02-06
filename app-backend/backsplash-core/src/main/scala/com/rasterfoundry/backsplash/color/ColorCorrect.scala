@@ -2,7 +2,6 @@ package com.rasterfoundry.backsplash.color
 
 import io.circe.generic.JsonCodec
 import geotrellis.raster._
-import geotrellis.raster.equalization.HistogramEqualization
 import geotrellis.raster.histogram.Histogram
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.commons.math3.util.FastMath

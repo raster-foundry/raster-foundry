@@ -5,6 +5,7 @@ object Version {
   val akkaHttpCors = "0.2.2"
   val akkaHttpExtensions = "0.4.13"
   val akkaSlf4j = "2.4.11"
+  val apacheCommonsEmail = "1.5"
   val auth0 = "1.5.0"
   val awsBatchSdk = "1.11.196"
   val awsStsSdk = "1.11.232"
@@ -33,7 +34,7 @@ object Version {
   val maml = "0.1.0"
   val nimbusJose = "0.6.0"
   val postgres = "42.1.1"
-  val rollbar = "1.0.1"
+  val rollbar = "1.4.0"
   val scaffeine = "2.0.0"
   val scala = "2.11.12"
   val scalaCheck = "1.14.0"
@@ -46,5 +47,5 @@ object Version {
   val scopt = "3.5.0"
   val slickMigrationAPI = "0.4.0"
   val spark = "2.2.0"
-  val apacheCommonsEmail = "1.5"
+  val sup = "0.2.0"
 }

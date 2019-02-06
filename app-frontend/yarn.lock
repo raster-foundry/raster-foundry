@@ -7453,10 +7453,10 @@ ng-redux@^3.5.2:
     lodash.map "^4.6.0"
     redux "^3.7.2"
 
-ng-rollbar@^1.9.2:
-  version "1.9.2"
-  resolved "https://registry.yarnpkg.com/ng-rollbar/-/ng-rollbar-1.9.2.tgz#5146533f8bcf1f0955548c67ff1822b5d26595a8"
-  integrity sha1-UUZTP4vPHwlVVIxn/xgitdJllag=
+ng-rollbar@^2.4.2:
+  version "2.4.2"
+  resolved "https://registry.yarnpkg.com/ng-rollbar/-/ng-rollbar-2.4.2.tgz#c7f30d98ce05e46ad6f7e046acd0685c2bfb7a96"
+  integrity sha512-sGLWZ7usulGK0mSoAWx7me7JJHL5nNQTKfPO5ElVsn+aTAC7n6PjKJxBJVhsu81Z5PQeoS/UFrNVrChdhKyd+Q==
 
 ngtemplate-loader@2.0.1:
   version "2.0.1"

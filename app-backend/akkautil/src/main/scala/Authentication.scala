@@ -1,16 +1,13 @@
 package com.rasterfoundry.akkautil
 
-import java.net.URL
-import java.util.UUID
+import com.rasterfoundry.database._
+import com.rasterfoundry.common.datamodel._
 
 import akka.http.scaladsl.model.headers.HttpChallenge
 import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsRejected
 import akka.http.scaladsl.server._
 import cats.effect.IO
 import cats.implicits._
-import cats.data._
-import com.rasterfoundry.database._
-import com.rasterfoundry.datamodel._
 import com.guizmaii.scalajwt.{ConfigurableJwtValidator, JwtToken}
 import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
 import com.nimbusds.jose.proc.SecurityContext
@@ -20,10 +17,11 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 
 import scala.concurrent.Future
+import java.net.URL
+import java.util.UUID
 
 trait Authentication extends Directives with LazyLogging {
 
@@ -145,13 +143,12 @@ trait Authentication extends Directives with LazyLogging {
                                            user: User)
         // All users will have a platform role, either added by a migration or created with the user if they are new
         val query = for {
-          userAndRoles <- UserDao.getUserAndActiveRolesById(userId).flatMap {
+          (user, roles) <- UserDao.getUserAndActiveRolesById(userId).flatMap {
             case UserOptionAndRoles(Some(user), roles) =>
               (user, roles).pure[ConnectionIO]
             case UserOptionAndRoles(None, _) =>
               createUserWithRoles(userId, email, name, picture, jwtClaims)
           }
-          (user, roles) = userAndRoles
           platformRole = roles.find(role =>
             role.groupType == GroupType.Platform)
           plat <- platformRole match {
@@ -264,8 +261,7 @@ trait Authentication extends Directives with LazyLogging {
       newUserWithRoles <- {
         UserDao.createUserWithJWT(systemUser, jwtUser)
       }
-      (newUser, roles) = newUserWithRoles
-    } yield (newUser, roles)
+    } yield newUserWithRoles
   }
 
   /**

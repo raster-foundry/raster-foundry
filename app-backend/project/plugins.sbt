@@ -21,3 +21,7 @@ addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.10")
 
 addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.3")
+
+addSbtPlugin("com.github.cb372" % "sbt-explicit-dependencies" % "0.2.8")
+
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.1")

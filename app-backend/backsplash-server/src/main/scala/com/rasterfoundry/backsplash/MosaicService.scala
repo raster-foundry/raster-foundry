@@ -1,13 +1,13 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.datamodel.User
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.Parameters._
-import cats.Applicative
-import cats.data.{NonEmptyList => NEL}
+import com.rasterfoundry.common.utils.TileUtils
+
 import cats.data.Validated._
-import cats.effect.{ContextShift, Fiber, IO}
+import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
@@ -19,14 +19,13 @@ import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.headers._
 import org.http4s.util.CaseInsensitiveString
-import java.util.UUID
-
-import com.rasterfoundry.common.utils.TileUtils
 import doobie.util.transactor.Transactor
 import geotrellis.vector.{Polygon, Projected}
 
-class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
-    projects: ProjStore,
+import java.util.UUID
+
+class MosaicService[LayerStore: ProjectStore, HistStore: HistogramStore](
+    layers: LayerStore,
     mosaicImplicits: MosaicImplicits[HistStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO],
                         H: HttpErrorHandler[IO, BacksplashException, User],
@@ -45,26 +44,25 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
     H.handle {
       ForeignError.handle {
         AuthedService {
-          case GET -> Root / UUIDWrapper(projectId) / IntVar(z) / IntVar(x) / IntVar(
-                y)
-                :? RedBandOptionalQueryParamMatcher(redOverride)
-                :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
-            val bandOverride =
-              Applicative[Option].map3(redOverride,
-                                       greenOverride,
-                                       blueOverride)(BandOverride.apply)
+          case GET -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
+                layerId) / IntVar(z) / IntVar(x) / IntVar(y) :? BandOverrideQueryParamDecoder(
+                bandOverride) as user =>
             val polygonBbox: Projected[Polygon] =
               TileUtils.getTileBounds(z, x, y)
-            val eval =
-              LayerTms.identity(
-                projects.read(projectId, Some(polygonBbox), bandOverride, None))
+            val eval = LayerTms.identity(
+              layers.read(layerId, Some(polygonBbox), bandOverride, None)
+            )
+
             for {
-              fiberAuth <- authorizers.authProject(user, projectId).start
+              fiberAuthProject <- authorizers.authProject(user, projectId).start
+              fiberAuthLayer <- authorizers
+                .authProjectLayer(projectId, layerId)
+                .start
               fiberResp <- eval(z, x, y).start
-              _ <- fiberAuth.join.handleErrorWith { error =>
-                fiberResp.cancel *> IO.raiseError(error)
-              }
+              _ <- (fiberAuthProject, fiberAuthLayer).tupled.join
+                .handleErrorWith { error =>
+                  fiberResp.cancel *> IO.raiseError(error)
+                }
               resp <- fiberResp.join flatMap {
                 case Valid(tile) =>
                   Ok(tile.renderPng.bytes, pngType)
@@ -73,10 +71,12 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
               }
             } yield resp
 
-          case GET -> Root / UUIDWrapper(projectId) / "histogram" as user =>
+          case GET -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
+                layerId) / "histogram" :? BandOverrideQueryParamDecoder(
+                overrides) as user =>
             for {
               authFiber <- authorizers.authProject(user, projectId).start
-              mosaic = projects.read(projectId, None, None, None)
+              mosaic = layers.read(layerId, None, overrides, None)
               histFiber <- LayerHistogram.identity(mosaic, 4000).start
               _ <- authFiber.join.handleErrorWith { error =>
                 histFiber.cancel *> IO.raiseError(error)
@@ -91,26 +91,18 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
               }
             } yield resp
 
-          case authedReq @ POST -> Root / UUIDWrapper(projectId) / "histogram"
-                :? RedBandOptionalQueryParamMatcher(redOverride)
-                :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
+          case authedReq @ POST -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
+                layerId) / "histogram"
+                :? BandOverrideQueryParamDecoder(overrides) as user =>
             // Compile to a byte array, decode that as a string, and do something with the results
             authedReq.req.body.compile.to[Array] flatMap { uuids =>
               decode[List[UUID]](
                 uuids map { _.toChar } mkString
               ) match {
                 case Right(uuids) =>
-                  val overrides =
-                    (redOverride, greenOverride, blueOverride).mapN {
-                      case (r, g, b) => BandOverride(r, g, b)
-                    }
                   for {
                     authFiber <- authorizers.authProject(user, projectId).start
-                    mosaic = projects.read(projectId,
-                                           None,
-                                           overrides,
-                                           uuids.toNel)
+                    mosaic = layers.read(layerId, None, overrides, uuids.toNel)
                     histFiber <- LayerHistogram.identity(mosaic, 4000).start
                     _ <- authFiber.join.handleErrorWith { error =>
                       histFiber.cancel *> IO.raiseError(error)
@@ -122,36 +114,36 @@ class MosaicService[ProjStore: ProjectStore, HistStore: HistogramStore](
                     }
                   } yield resp
                 case _ =>
-                  BadRequest("Could not decode body as sequence of UUIDs")
+                  BadRequest(
+                    """
+                    | Could not decode body as sequence of UUIDs.
+                    | Format should be, e.g.,
+                    | ["342a82e2-a5c1-4b35-bb6b-0b9dd6a52fa7", "8f3bb3fc-4bd6-49e8-9b25-6fa075cc0c77
+"]""".trim.stripMargin)
               }
             }
 
-          case authedReq @ GET -> Root / UUIDWrapper(projectId) / "export"
+          case authedReq @ GET -> Root / UUIDWrapper(projectId) / "layers" / UUIDWrapper(
+                layerId) / "export"
                 :? ExtentQueryParamMatcher(extent)
                 :? ZoomQueryParamMatcher(zoom)
-                :? RedBandOptionalQueryParamMatcher(redOverride)
-                :? GreenBandOptionalQueryParamMatcher(greenOverride)
-                :? BlueBandOptionalQueryParamMatcher(blueOverride) as user =>
-            val bandOverride =
-              Applicative[Option].map3(redOverride,
-                                       greenOverride,
-                                       blueOverride)(BandOverride.apply)
+                :? BandOverrideQueryParamDecoder(bandOverride) as user =>
             val projectedExtent = extent.reproject(LatLng, WebMercator)
             val cellSize = BacksplashImage.tmsLevels(zoom).cellSize
             val eval = authedReq.req.headers
               .get(CaseInsensitiveString("Accept")) match {
               case Some(Header(_, "image/tiff")) =>
                 LayerExtent.identity(
-                  projects.read(projectId,
-                                Some(Projected(projectedExtent, 3857)),
-                                bandOverride,
-                                None))(rawMosaicExtentReification, cs)
+                  layers.read(layerId,
+                              Some(Projected(projectedExtent, 3857)),
+                              bandOverride,
+                              None))(rawMosaicExtentReification, cs)
               case _ =>
                 LayerExtent.identity(
-                  projects.read(projectId,
-                                Some(Projected(projectedExtent, 3857)),
-                                bandOverride,
-                                None))(paintedMosaicExtentReification, cs)
+                  layers.read(layerId,
+                              Some(Projected(projectedExtent, 3857)),
+                              bandOverride,
+                              None))(paintedMosaicExtentReification, cs)
             }
             for {
               authFiber <- authorizers.authProject(user, projectId).start

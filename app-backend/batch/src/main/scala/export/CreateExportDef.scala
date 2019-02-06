@@ -1,9 +1,5 @@
 package com.rasterfoundry.batch.export
 
-import java.util.UUID
-
-import cats.effect.IO
-import cats.implicits._
 import com.rasterfoundry.batch._
 import com.rasterfoundry.batch.util._
 import com.rasterfoundry.batch.util.conf.Config
@@ -12,12 +8,16 @@ import com.rasterfoundry.common.S3
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{ExportDao, UserDao}
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
+
+import cats.effect.IO
+import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import io.circe.syntax._
+
+import java.util.UUID
 
 final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
     implicit xa: Transactor[IO])

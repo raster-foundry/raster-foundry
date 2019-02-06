@@ -2,7 +2,6 @@ package com.rasterfoundry.batch
 
 import com.rasterfoundry.batch.aoi.FindAOIProjects
 import com.rasterfoundry.batch.cogMetadata.HistogramBackfill
-import com.rasterfoundry.batch.export.spark.Export
 import com.rasterfoundry.batch.export.{CreateExportDef, UpdateExportStatus}
 import com.rasterfoundry.batch.healthcheck.HealthCheck
 import com.rasterfoundry.batch.aoi.UpdateAOIProject
@@ -15,7 +14,6 @@ object Main {
   val modules = Map[String, Array[String] => Unit](
     CreateExportDef.name -> (CreateExportDef.main(_)),
     UpdateExportStatus.name -> (UpdateExportStatus.main(_)),
-    Export.name -> (Export.main(_)),
     FindAOIProjects.name -> (FindAOIProjects.main(_)),
     HealthCheck.name -> (HealthCheck.main(_)),
     HistogramBackfill.name -> (HistogramBackfill.main(_)),

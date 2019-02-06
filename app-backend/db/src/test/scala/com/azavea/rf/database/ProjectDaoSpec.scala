@@ -1,28 +1,16 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
 import scala.util.Random
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
-import doobie._
 import doobie.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
 import cats.implicits._
-import cats.syntax._
-import doobie.postgres._
-import doobie.postgres.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
-import io.circe._
-import io.circe.syntax._
 import com.lonelyplanet.akka.http.extensions.PageRequest
-import java.util.UUID
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class ProjectDaoSpec
     extends FunSuite
@@ -82,7 +70,8 @@ class ProjectDaoSpec
             val updateProjectWithUpdatedIO = projInsertWithUserAndOrgIO flatMap {
               case (dbProject: Project, dbUser: User, dbOrg: Organization) => {
                 val fixedUpUpdateProject =
-                  fixupProjectCreate(dbUser, updateProject).toProject(dbUser)
+                  fixupProjectCreate(dbUser, updateProject)
+                    .toProject(dbUser, dbProject.defaultLayerId)
                 ProjectDao.updateProject(fixedUpUpdateProject,
                                          dbProject.id,
                                          dbUser) flatMap {
@@ -156,8 +145,7 @@ class ProjectDaoSpec
          pageRequest: PageRequest) =>
           {
             val projectsListIO = for {
-              orgAndUser <- insertUserAndOrg(user, org)
-              (dbOrg, dbUser) = orgAndUser
+              (_, dbUser) <- insertUserAndOrg(user, org)
               _ <- ProjectDao.insertProject(fixupProjectCreate(dbUser, project),
                                             dbUser)
               listedProjects <- {
@@ -196,8 +184,7 @@ class ProjectDaoSpec
          datasource: Datasource.Create) =>
           {
             val addScenesIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               dbDatasource <- fixupDatasource(datasource, dbUser)
               insertedScenes <- scenes traverse { scene =>
                 SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene),
@@ -257,8 +244,7 @@ class ProjectDaoSpec
          datasource: Datasource.Create) =>
           {
             val listScenesIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               dbDatasource <- fixupDatasource(datasource, dbUser)
               scenes <- scenes traverse { scene =>
                 SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene),

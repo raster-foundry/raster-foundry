@@ -1,19 +1,11 @@
 package com.rasterfoundry.database.meta
 
-import com.rasterfoundry.datamodel.AOI
-import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database._
 
 import doobie._, doobie.implicits._
-import cats._, cats.data._, cats.effect.IO
-import cats.syntax.either._
 import io.circe._
 import io.circe.syntax._
-import doobie.postgres._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import doobie.util.invariant.InvalidObjectMapping
-import doobie.scalatest.imports._
 import org.scalatest._
 
 class CirceJsonbMetaSpec extends FunSpec with Matchers with DBTestConfig {

@@ -12,13 +12,12 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.dropbox.core.{DbxAppInfo, DbxRequestConfig, DbxWebAuth}
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 
 import scala.collection.JavaConverters._
@@ -101,7 +100,6 @@ trait UserRoutes
 
   def getDropboxAccessToken: Route = authenticate { user =>
     entity(as[DropboxAuthRequest]) { dbxAuthRequest =>
-      val redirectURI = dbxAuthRequest.redirectURI
       val (dbxKey, dbxSecret) =
         (sys.env.get("DROPBOX_KEY"), sys.env.get("DROPBOX_SECRET")) match {
           case (Some(key), Some(secret)) => (key, secret)

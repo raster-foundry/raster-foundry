@@ -9,6 +9,13 @@
                    placeholder="Search for shapes"
                    auto-focus="true">
         </rf-search>
+        <select class="form-control"
+                ng-model="$ctrl.currentOwnershipFilter"
+        >
+          <option value="">All</option>
+          <option value="owned">Owned by me</option>
+          <option value="shared">Shared with me</option>
+        </select>
         <button type="button" class="btn btn-primary" ng-click="$ctrl.importModal()">
           Import shape
         </button>
@@ -44,7 +51,7 @@
         <rf-call-to-action-item
             title="You haven't imported any shapes"
             class="panel panel-off-white"
-            ng-if="!$ctrl.currentQuery && !$ctrl.search && $ctrl.pagination && !$ctrl.pagination.count">
+            ng-if="$ctrl.currentOwnershipFilter === 'owned' && !$ctrl.currentQuery && !$ctrl.search && $ctrl.pagination && !$ctrl.pagination.count">
           <p class="pb-25">
             Every shape that you import or create will be listed here.
             After you have imported one or more shapes, you can return to this page to view them.
@@ -53,6 +60,14 @@
           <a class="btn btn-primary" ng-click="$ctrl.importModal()">Import Shape</a>
           <p>
             <a>Getting started with Shapes</a>
+          </p>
+        </rf-call-to-action-item>
+        <rf-call-to-action-item
+            ng-if="$ctrl.currentOwnershipFilter === 'shared' && !$ctrl.currentQuery && !$ctrl.search && $ctrl.pagination && !$ctrl.pagination.count"
+            title="No shapes have been shared with you yet"
+            class="panel panel-off-white">
+          <p class="pb-25">
+            Once another user shares vector data with you or with organizations or teams you're a part of, you'll be able to see it here.
           </p>
         </rf-call-to-action-item>
         <div ng-show="!$ctrl.currentQuery && $ctrl.search && !$ctrl.pagination.count">

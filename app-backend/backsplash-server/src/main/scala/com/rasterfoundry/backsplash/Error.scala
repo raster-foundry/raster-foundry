@@ -8,7 +8,6 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.util.invariant.InvariantViolation
 import org.http4s._
 import org.http4s.dsl._
-import org.http4s.dsl.io._
 import java.lang.IllegalArgumentException
 
 class ForeignErrorHandler[F[_], E <: Throwable, U](implicit M: MonadError[F, E])

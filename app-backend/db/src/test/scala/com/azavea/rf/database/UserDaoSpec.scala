@@ -1,18 +1,12 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
 
-import doobie._, doobie.implicits._
-import cats._, cats.data._, cats.effect.IO
-import cats.syntax.either._
-import doobie.postgres._, doobie.postgres.implicits._
+import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
-
-import scala.util.Random
 
 import com.typesafe.scalalogging.LazyLogging
 
@@ -58,13 +52,12 @@ class UserDaoSpec
               orgCreate
                 .copy(platformId = insertedPlatform.id)
                 .toOrganization(true))
-            newUserAndRoles <- {
+            (newUser, _) <- {
               val newUserFields =
                 jwtFields.copy(platformId = insertedPlatform.id,
                                organizationId = insertedOrg.id)
               UserDao.createUserWithJWT(creatingUser, newUserFields)
             }
-            (newUser, roles) = newUserAndRoles
             userRoles <- UserGroupRoleDao.listByUser(newUser)
           } yield (newUser, userRoles)
 
@@ -310,7 +303,7 @@ class UserDaoSpec
           }
           xa.use(t => orgsIO.transact(t)).unsafeRunSync
 
-          val (u1, u2, u3, u4, u1users, u2users, u3users, u3usersAdmin) =
+          val (u1, _, u3, u4, u1users, u2users, u3users, u3usersAdmin) =
             xa.use(t => orgsIO.transact(t)).unsafeRunSync
           val u1userids = u1users.toSet.map { u: User =>
             u.id

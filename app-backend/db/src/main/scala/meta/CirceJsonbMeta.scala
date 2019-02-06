@@ -1,20 +1,12 @@
 package com.rasterfoundry.database.meta
 
+import com.rasterfoundry.common.datamodel._
+
 import doobie._
-import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
-import doobie.util.invariant.InvalidObjectMapping
 import doobie.postgres.circe.jsonb.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
 import cats.syntax.either._
 import io.circe._
 import io.circe.syntax._
-import org.postgresql.util.PGobject
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.ColorCorrect._
 
 import scala.reflect.runtime.universe.TypeTag
 import java.net.URI

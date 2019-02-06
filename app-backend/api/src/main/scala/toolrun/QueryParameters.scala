@@ -4,7 +4,7 @@ import java.util.UUID
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.api.utils.queryparams._
 
 trait ToolRunQueryParametersDirective extends QueryParametersCommon {
@@ -12,7 +12,8 @@ trait ToolRunQueryParametersDirective extends QueryParametersCommon {
     (
       'createdBy.as[String].?,
       'projectId.as[UUID].?,
-      'toolId.as[UUID].?
+      'templateId.as[UUID].?,
+      'projectLayerId.as[UUID].?
     )).as(ToolRunQueryParameters.apply _)
 
   val toolRunQueryParameters = (

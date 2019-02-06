@@ -1,12 +1,9 @@
 package com.rasterfoundry.database.util
 
 import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
 import doobie.util.fragment.Fragment
-import cats.Reducible
 import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
-import doobie.Fragments
 
 object Page {
 

@@ -1,18 +1,18 @@
 package com.rasterfoundry.database.filter
 
-import java.util.UUID
-
-import cats.implicits._
 import com.rasterfoundry.database.Filterable
 import com.rasterfoundry.database.meta.RFMeta
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
+
+import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.Fragments.in
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import geotrellis.vector._
+
+import java.util.UUID
 
 @SuppressWarnings(Array("CatchException", "ListAppend"))
 trait Filterables extends RFMeta with LazyLogging {
@@ -232,8 +232,12 @@ trait Filterables extends RFMeta with LazyLogging {
             combinedToolRunParams.toolRunParams.projectId.map({ projectId =>
               fr"project_id = ${projectId}"
             }),
-            combinedToolRunParams.toolRunParams.toolId.map({ toolId =>
-              fr"tool_id = ${toolId}"
+            combinedToolRunParams.toolRunParams.templateId.map({ templateId =>
+              fr"template_id = ${templateId}"
+            }),
+            combinedToolRunParams.toolRunParams.projectLayerId.map({
+              projectLayerId =>
+                fr"project_layer_id = ${projectLayerId}"
             })
           )
     }

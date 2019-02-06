@@ -1,25 +1,13 @@
 package com.rasterfoundry.backsplash
 
-import com.rasterfoundry.database.ToolRunDao
-import com.rasterfoundry.database.util.RFTransactor
-
-import cats.effect.IO
-import doobie.implicits._
-import geotrellis.raster.{io => _, Tile}
 import geotrellis.raster.io._
 import geotrellis.raster.histogram._
-import geotrellis.raster.render._
-import geotrellis.raster.render.png._
 import geotrellis.raster.summary._
 import io.circe.{Encoder, Json, KeyEncoder}
 import io.circe.generic.semiauto._
 import io.circe.parser._
 import io.circe.syntax._
-
 import spray.json._
-import DefaultJsonProtocol._
-
-import java.util.UUID
 
 package object server {
 

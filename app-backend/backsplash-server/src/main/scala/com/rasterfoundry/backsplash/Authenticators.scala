@@ -1,29 +1,23 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.Parameters._
-import com.rasterfoundry.database.{MapTokenDao, ProjectDao, UserDao}
+import com.rasterfoundry.database.{MapTokenDao, ProjectDao}
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.datamodel.{MapToken, Project, User, Visibility}
+import com.rasterfoundry.common.datamodel.{MapToken, Project, User, Visibility}
 import com.rasterfoundry.{http4s => RFHttp4s}
+
 import cats.data._
 import cats.effect.IO
-import cats.implicits._
-import com.typesafe.config.ConfigFactory
 import doobie.ConnectionIO
 import doobie.implicits._
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.server._
 import org.http4s.util.CaseInsensitiveString
-import java.net.URL
-import java.util.UUID
 import com.typesafe.scalalogging.LazyLogging
 import doobie.util.transactor.Transactor
-import scalacache.memoization._
-import scalacache.CatsEffect.modes._
-import scalacache.Flags
 
-import scala.concurrent.duration._
+import java.util.UUID
 
 class Authenticators(val xa: Transactor[IO])
     extends LazyLogging

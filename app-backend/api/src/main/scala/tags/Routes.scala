@@ -6,22 +6,18 @@ import com.rasterfoundry.akkautil.{
   UserErrorHandler
 }
 import com.rasterfoundry.database.ToolTagDao
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import io.circe._
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 
-import scala.util.{Failure, Success}
 import java.util.UUID
 
 import cats.effect.IO
 import com.rasterfoundry.database.filter.Filterables._
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
 
 trait ToolTagRoutes
     extends Authentication

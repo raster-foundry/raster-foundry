@@ -5,13 +5,11 @@ import java.net.URLDecoder
 import com.rasterfoundry.backsplash.color._
 import geotrellis.vector.{io => _, _}
 import geotrellis.raster.{io => _, _}
-import geotrellis.raster.histogram._
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.spark.SpatialKey
 import geotrellis.proj4.WebMercator
 import geotrellis.server.vlm.RasterSourceUtils
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
-import io.circe.syntax._
 import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
@@ -32,7 +30,7 @@ import scalacache.modes.sync._
   * need to be flagged with the @cacheKeyExclude decorator to avoid unecessarily namespacing values in the keys
   *
   * @param imageId UUID of the image (scene) in the database
-  * @param projectId UUID of the layer this image is a part of
+  * @param projectLayerId UUID of the layer this image is a part of
   * @param uri location of the source data
   * @param footprint extent of data the image covers
   * @param subsetBands subset of bands to be read from source
@@ -41,7 +39,7 @@ import scalacache.modes.sync._
   */
 case class BacksplashImage(
     imageId: UUID,
-    @cacheKeyExclude projectId: UUID,
+    @cacheKeyExclude projectLayerId: UUID,
     @cacheKeyExclude uri: String,
     @cacheKeyExclude footprint: MultiPolygon,
     subsetBands: List[Int],

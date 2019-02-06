@@ -1,8 +1,13 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.datamodel.User
+import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.backsplash._
+import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.backsplash.Parameters._
+import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
+
 import cats.data.Validated._
-import cats.effect.{ContextShift, IO, Fiber}
+import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.{io => _, _}
@@ -14,10 +19,6 @@ import org.http4s.dsl.io._
 import org.http4s.headers._
 import org.http4s.circe._
 import org.http4s.util.CaseInsensitiveString
-import com.rasterfoundry.backsplash._
-import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.backsplash.Parameters._
-import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
 import doobie.util.transactor.Transactor
 
 @SuppressWarnings(Array("TraversableHead"))

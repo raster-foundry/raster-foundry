@@ -7,9 +7,8 @@ import com.rasterfoundry.common.notification.Email.NotificationEmail
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 
-import com.typesafe.scalalogging.LazyLogging
 import cats.effect.IO
 import cats.implicits._
 import doobie.{ConnectionIO, Transactor}

@@ -32,8 +32,10 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-Xmax-classfile-name",
     "100",
+    "-Yrangepos",
     "-Ywarn-value-discard",
     "-Ywarn-unused",
+    "-Ywarn-unused-import",
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth",
     "100"
@@ -66,7 +68,9 @@ lazy val commonSettings = Seq(
   // https://www.scala-sbt.org/0.13/docs/Compiler-Plugins.html
   autoCompilerPlugins := true,
   addCompilerPlugin(
-    "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+    "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+  addCompilerPlugin(scalafixSemanticdb), // enable SemanticDB
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
 ) ++ publishSettings
 
 lazy val noPublishSettings = Seq(
@@ -191,15 +195,12 @@ lazy val root = Project("root", file("."))
              db,
              common,
              migrations,
-             datamodel,
              batch,
-             tool,
-             bridge,
              backsplashCore,
              backsplashServer)
 
 lazy val api = Project("api", file("api"))
-  .dependsOn(db, datamodel, common % "test->test;compile->compile", akkautil)
+  .dependsOn(db, common % "test->test;compile->compile", akkautil)
   .settings(apiSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("hseeberger", "maven"))
   .settings({
@@ -207,7 +208,6 @@ lazy val api = Project("api", file("api"))
   })
 
 lazy val common = Project("common", file("common"))
-  .dependsOn(datamodel)
   .settings(apiSettings: _*)
   .settings({
     libraryDependencies ++= testDependencies ++ Seq(
@@ -216,17 +216,30 @@ lazy val common = Project("common", file("common"))
       Dependencies.scaffeine,
       Dependencies.elasticacheClient,
       Dependencies.geotrellisS3,
+      Dependencies.geotrellisSpark,
+      Dependencies.geotrellisGeotools,
+      Dependencies.geotrellisVectorTestkit,
+      Dependencies.geotools,
+      Dependencies.jts,
+      Dependencies.sparkCore,
       Dependencies.findbugAnnotations,
+      Dependencies.circeCore,
+      Dependencies.circeParser,
+      Dependencies.circeOptics,
+      Dependencies.circeTest,
+      Dependencies.circeGenericExtras,
       Dependencies.chill,
       Dependencies.catsCore,
       Dependencies.awsBatchSdk,
       Dependencies.rollbar,
-      Dependencies.apacheCommonsEmail
+      Dependencies.apacheCommonsEmail,
+      Dependencies.scalaCheck,
+      "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15"
     )
   })
 
 lazy val db = Project("db", file("db"))
-  .dependsOn(datamodel % "compile->compile;test->test", common)
+  .dependsOn(common % "compile->compile;test->test")
   .settings(commonSettings: _*)
   .settings({
     libraryDependencies ++= dbDependencies ++ loggingDependencies ++ Seq(
@@ -237,12 +250,15 @@ lazy val db = Project("db", file("db"))
       Dependencies.doobieScalatest,
       Dependencies.doobiePostgres,
       Dependencies.doobiePostgresCirce,
+      Dependencies.scalaCheck,
       "net.postgis" % "postgis-jdbc" % "2.2.1",
       "net.postgis" % "postgis-jdbc-jtsparser" % "2.2.1",
       "org.locationtech.jts" % "jts-core" % "1.15.0",
       "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15"
     )
   })
+  .settings(
+    )
 
 lazy val migrations = Project("migrations", file("migrations"))
   .settings(commonSettings: _*)
@@ -251,27 +267,8 @@ lazy val migrations = Project("migrations", file("migrations"))
     libraryDependencies ++= migrationsDependencies
   })
 
-lazy val datamodel = Project("datamodel", file("datamodel"))
-  .dependsOn(tool, bridge)
-  .settings(commonSettings: _*)
-  .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
-  .settings({
-    libraryDependencies ++= loggingDependencies ++ Seq(
-      Dependencies.geotrellisVectorTestkit,
-      Dependencies.geotrellisRaster,
-      Dependencies.geotrellisGeotools,
-      Dependencies.geotools,
-      Dependencies.circeCore,
-      Dependencies.circeGenericExtras,
-      Dependencies.scalaCheck,
-      Dependencies.circeTest,
-      Dependencies.jts,
-      "com.lonelyplanet" %% "akka-http-extensions" % "0.4.15" % "test"
-    )
-  })
-
 lazy val batch = Project("batch", file("batch"))
-  .dependsOn(common, datamodel, tool, bridge, geotrellis)
+  .dependsOn(common, geotrellis)
   .settings(commonSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
@@ -318,27 +315,8 @@ lazy val batch = Project("batch", file("batch"))
       .inAll
   ))
 
-lazy val tool = Project("tool", file("tool"))
-  .dependsOn(bridge)
-  .settings(commonSettings: _*)
-  .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
-  .settings({
-    libraryDependencies ++= loggingDependencies ++ Seq(
-      Dependencies.sparkCore,
-      Dependencies.geotrellisSpark,
-      Dependencies.geotrellisRaster,
-      Dependencies.scalatest,
-      Dependencies.circeCore,
-      Dependencies.circeGeneric,
-      Dependencies.circeParser,
-      Dependencies.circeOptics,
-      Dependencies.scalaCheck,
-      Dependencies.mamlJvm
-    )
-  })
-
 lazy val geotrellis = Project("geotrellis", file("geotrellis"))
-  .dependsOn(db, common, datamodel)
+  .dependsOn(db, common)
   .settings(commonSettings: _*)
   .settings(noPublishSettings)
   .settings({
@@ -361,20 +339,9 @@ lazy val akkautil = Project("akkautil", file("akkautil"))
     )
   })
 
-lazy val bridge = Project("bridge", file("bridge"))
-  .settings(commonSettings: _*)
-  .settings({
-    libraryDependencies ++= loggingDependencies ++ Seq(
-      Dependencies.circeCore,
-      Dependencies.circeGeneric,
-      Dependencies.circeParser,
-      Dependencies.geotrellisVector,
-      Dependencies.scalaLogging
-    )
-  })
-
 // maml / better-abstracted tile server
 lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
+  .dependsOn(common)
   .settings(commonSettings: _*)
   .settings(
     fork in run := true,
@@ -384,17 +351,16 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       "org.http4s" %% "http4s-dsl" % Version.http4s,
       "org.scalatest" %% "scalatest" % Version.scalaTest,
       "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer,
-      "org.scalacheck" %% "scalacheck" % Version.scalaCheck,
       "org.apache.spark" %% "spark-core" % "2.4.0" % Provided,
       "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
       "com.github.cb372" %% "scalacache-core" % "0.27.0",
       "com.github.cb372" %% "scalacache-caffeine" % "0.27.0",
       "com.github.cb372" %% "scalacache-memcached" % "0.27.0" intransitive (),
+      Dependencies.scalaCheck,
       Dependencies.elasticacheClient,
       Dependencies.catsMeow
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
     addCompilerPlugin(
       "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
@@ -418,13 +384,13 @@ lazy val backsplashServer = Project("backsplash-server",
       Dependencies.http4sServer,
       Dependencies.mamlJvm,
       Dependencies.nimbusJose,
+      Dependencies.sup,
       "com.github.cb372" %% "scalacache-cats-effect" % "0.27.0",
       "com.github.cb372" %% "scalacache-core" % "0.27.0",
       "com.github.cb372" %% "scalacache-caffeine" % "0.27.0"
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
-  .settings(addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"))
   .settings(assemblyMergeStrategy in assembly := {
     case m if m.toLowerCase.endsWith("manifest.mf")     => MergeStrategy.discard
     case m if m.toLowerCase.matches("meta-inf.*\\.sf$") => MergeStrategy.discard
@@ -438,7 +404,7 @@ lazy val backsplashServer = Project("backsplash-server",
   .settings(test in assembly := {})
 
 lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
-  .dependsOn(db, datamodel)
+  .dependsOn(db)
   .settings(commonSettings: _*)
   .settings(noPublishSettings)
   .settings({
@@ -454,4 +420,3 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
-  .settings(addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"))

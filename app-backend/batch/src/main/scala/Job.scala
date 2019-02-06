@@ -1,11 +1,9 @@
 package com.rasterfoundry.batch
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-import cats.effect._
-import cats.implicits._
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
+
+import cats.effect._
 
 import scala.concurrent.forkjoin.ForkJoinPool
 

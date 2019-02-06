@@ -1,23 +1,12 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
-import doobie._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
 import doobie.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
-import cats.syntax.either._
-import doobie.postgres._
-import doobie.postgres.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
-import io.circe._
-import io.circe.syntax._
 import com.lonelyplanet.akka.http.extensions.PageRequest
-import java.util.UUID
 
 class PlatformDaoSpec
     extends FunSuite
@@ -50,12 +39,7 @@ class PlatformDaoSpec
          orgCreate: Organization.Create,
          platform: Platform) =>
           {
-            val insertPlatformIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-              (_, dbUser) = orgAndUser
-              insertedPlatform <- PlatformDao.create(platform)
-            } yield { insertedPlatform }
-
+            val insertPlatformIO = PlatformDao.create(platform)
             val dbPlatform =
               xa.use(t => insertPlatformIO.transact(t)).unsafeRunSync
 
@@ -116,8 +100,6 @@ class PlatformDaoSpec
          platform: Platform) =>
           {
             val deletePlatformWithPlatformIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-              (_, dbUser) = orgAndUser
               insertedPlatform <- PlatformDao.create(platform)
               deletePlatform <- PlatformDao.delete(insertedPlatform.id)
               byIdPlatform <- PlatformDao.getPlatformById(insertedPlatform.id)
@@ -143,8 +125,7 @@ class PlatformDaoSpec
         ) =>
           {
             val addPlatformRoleWithPlatformIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-              (org, dbUser) = orgAndUser
+              (_, dbUser) <- insertUserAndOrg(userCreate, orgCreate)
               insertedPlatform <- PlatformDao.create(platform)
               insertedUserGroupRole <- PlatformDao.addUserRole(
                 dbUser,
@@ -186,8 +167,7 @@ class PlatformDaoSpec
         ) =>
           {
             val setPlatformRoleIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-              (org, dbUser) = orgAndUser
+              (_, dbUser) <- insertUserAndOrg(userCreate, orgCreate)
               insertedPlatform <- PlatformDao.create(platform)
               originalUserGroupRole <- PlatformDao.addUserRole(
                 dbUser,
@@ -203,7 +183,7 @@ class PlatformDaoSpec
               (insertedPlatform, originalUserGroupRole, updatedUserGroupRoles)
             }
 
-            val (dbPlatform, dbOldUGR, dbNewUGRs) =
+            val (_, dbOldUGR, dbNewUGRs) =
               xa.use(t => setPlatformRoleIO.transact(t)).unsafeRunSync
 
             assert(dbNewUGRs.filter((ugr) => ugr.isActive == true).size == 1,
@@ -238,8 +218,7 @@ class PlatformDaoSpec
         ) =>
           {
             val setPlatformRoleIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-              (org, dbUser) = orgAndUser
+              (_, dbUser) <- insertUserAndOrg(userCreate, orgCreate)
               insertedPlatform <- PlatformDao.create(platform)
               originalUserGroupRole <- PlatformDao.addUserRole(
                 dbUser,
@@ -254,7 +233,7 @@ class PlatformDaoSpec
               (insertedPlatform, originalUserGroupRole, updatedUserGroupRoles)
             }
 
-            val (dbPlatform, dbOldUGR, dbNewUGRs) =
+            val (_, _, dbNewUGRs) =
               xa.use(t => setPlatformRoleIO.transact(t)).unsafeRunSync
 
             assert(dbNewUGRs.filter((ugr) => ugr.isActive == false).size == 1,
@@ -399,11 +378,11 @@ class PlatformDaoSpec
         ) =>
           {
             val puIO = for {
-              userOrgPlatProject <- insertUserOrgPlatProject(userCreate,
-                                                             orgCreate,
-                                                             platform,
-                                                             projectCreate)
-              (dbUser, dbOrg, dbPlatform, dbProject) = userOrgPlatProject
+              (dbUser, _, dbPlatform, dbProject) <- insertUserOrgPlatProject(
+                userCreate,
+                orgCreate,
+                platform,
+                projectCreate)
               datasource <- unsafeGetRandomDatasource
               sceneInsert <- SceneDao.insert(fixupSceneCreate(dbUser,
                                                               datasource,
@@ -415,7 +394,7 @@ class PlatformDaoSpec
                 sceneInsert.owner)
             } yield (dbUser, dbPlatform, dbProject, pUO)
 
-            val (dbUser, dbPlatform, dbProject, pU) =
+            val (dbUser, dbPlatform, _, pU) =
               xa.use(t => puIO.transact(t)).unsafeRunSync
 
             assert(pU.platId == dbPlatform.id, "; platform ID don't match")

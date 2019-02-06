@@ -2,15 +2,10 @@ package com.rasterfoundry.backsplash.error
 
 import cats._
 import cats.data._
-import cats.effect._
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import org.http4s._
 import org.http4s.dsl._
-import org.http4s.dsl.io._
-import org.http4s.implicits._
-
-import java.lang.IllegalArgumentException
 
 sealed trait BacksplashException extends Exception
 // When there's something wrong with stored metadata for the calculations we'd like to do

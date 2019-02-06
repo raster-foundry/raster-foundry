@@ -1,15 +1,10 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel.Generators.Implicits._
-import com.rasterfoundry.datamodel.LayerAttribute
-import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
+import com.rasterfoundry.common.datamodel.LayerAttribute
 
-import doobie._, doobie.implicits._
-import cats._, cats.data._, cats.effect.IO
+import doobie.implicits._
 import cats.implicits._
-import cats.syntax.either._
-import doobie.postgres._, doobie.postgres.implicits._
-import io.circe.syntax._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers

@@ -1,11 +1,9 @@
 package com.rasterfoundry.database.meta
 
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import doobie.util.invariant.InvalidObjectMapping
-import cats._, cats.data._, cats.effect.IO
+import doobie._
+import doobie.postgres.implicits._
 
 trait EnumMeta {
   implicit val annotationQualityMeta: Meta[AnnotationQuality] =

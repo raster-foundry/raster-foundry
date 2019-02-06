@@ -5,10 +5,9 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.sql.Timestamp
 import java.util.Date
 
-import com.amazonaws.services.s3.AmazonS3URI
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.common.S3
-import com.rasterfoundry.datamodel.{Export, ExportOptions, User}
+import com.rasterfoundry.common.datamodel.{Export, ExportOptions, User}
 import io.circe.syntax._
 
 package object exports extends Config {

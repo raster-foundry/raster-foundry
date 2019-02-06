@@ -1,21 +1,17 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.datamodel._
-import com.rasterfoundry.datamodel.Generators.Implicits._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.datamodel.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
 
-import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
+import com.lonelyplanet.akka.http.extensions.PageRequest
 
 import doobie._, doobie.implicits._
-import cats._, cats.data._, cats.effect.IO
 import cats.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import org.scalacheck.Prop.{forAll, exists}
+import doobie.postgres.implicits._
+import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
-
-import java.sql.Timestamp
-import java.time.LocalDate
 
 class SceneToProjectDaoSpec
     extends FunSuite
@@ -35,8 +31,7 @@ class SceneToProjectDaoSpec
          csq: CombinedSceneQueryParams) =>
           {
             val acceptedSceneAndStpIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               datasource <- DatasourceDao.create(dsCreate.toDatasource(dbUser),
                                                  dbUser)
               scenesInsert <- (scenes map {
@@ -78,8 +73,7 @@ class SceneToProjectDaoSpec
          csq: CombinedSceneQueryParams) =>
           {
             val mdAndStpsIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
               datasource <- DatasourceDao.create(dsCreate.toDatasource(dbUser),
                                                  dbUser)
               scenesInsert <- (scenes map {
@@ -107,7 +101,7 @@ class SceneToProjectDaoSpec
                 .list
             } yield (mds, stps, selectedSceneIds)
 
-            val (mds, stps, selectedIds) =
+            val (mds, stps, _) =
               xa.use(t => mdAndStpsIO.transact(t)).unsafeRunSync
 
             // Mapping of scene ids to scene order

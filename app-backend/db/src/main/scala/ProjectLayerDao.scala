@@ -3,21 +3,18 @@ package com.rasterfoundry.database
 import java.sql.Timestamp
 import java.util.UUID
 
-import cats.implicits._
-import com.rasterfoundry.datamodel._
+import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util._
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
-import doobie.postgres.circe.jsonb.implicits._
+import com.lonelyplanet.akka.http.extensions.PageRequest
 
 object ProjectLayerDao extends Dao[ProjectLayer] {
   val tableName = "project_layers"
 
   val selectF: Fragment =
-    fr"SELECT id, created_at, modified_at, name, project_id, color_group_hex, smart_layer_id, range_start, range_end, geometry" ++ tableF
+    fr"SELECT id, created_at, modified_at, name, project_id, color_group_hex, smart_layer_id, range_start, range_end, geometry from" ++ tableF
 
   def unsafeGetProjectLayerById(
       projectLayerId: UUID): ConnectionIO[ProjectLayer] = {
@@ -25,12 +22,11 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
   }
 
   def listProjectLayersForProject(
-      projectId: UUID): ConnectionIO[List[ProjectLayer]] = {
-    (selectF ++ Fragments.whereAndOpt(fr"project_id = ${projectId}".some))
-      .query[ProjectLayer]
-      .stream
-      .compile
-      .toList
+      page: PageRequest,
+      projectId: UUID): ConnectionIO[PaginatedResponse[ProjectLayer]] = {
+    query
+      .filter(fr"project_id = ${projectId}")
+      .page(page)
   }
 
   def insertProjectLayer(
@@ -63,8 +59,9 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
     val query = (fr"UPDATE" ++ tableF ++ fr"""SET
       modified_at = ${updateTime},
       name = ${projectLayer.name},
-      colorGroupHex = ${projectLayer.colorGroupHex},
-      geometry = ${projectLayer.geometry}
+      color_group_hex = ${projectLayer.colorGroupHex},
+      geometry = ${projectLayer.geometry},
+      project_id = ${projectLayer.projectId}
     """ ++ Fragments.whereAndOpt(Some(idFilter))).update
     query
   }
@@ -80,7 +77,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
       layerId: UUID,
       user: User
   ): ConnectionIO[Option[ProjectLayer]] =
-    query.filter(fr"project = ${projectId}").filter(layerId).selectOption
+    query.filter(fr"project_id = ${projectId}").filter(layerId).selectOption
 
   def deleteProjectLayer(layerId: UUID): ConnectionIO[Int] =
     for {
@@ -89,5 +86,13 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
 
   def updateProjectLayer(pl: ProjectLayer, plId: UUID): ConnectionIO[Int] = {
     updateProjectLayerQ(pl, plId).run
+  }
+
+  def layerIsInProject(layerId: UUID,
+                       projectID: UUID): ConnectionIO[Boolean] = {
+    query.filter(layerId).selectOption map {
+      case Some(projectLayer) => projectLayer.projectId == Option(projectID)
+      case _                  => false
+    }
   }
 }

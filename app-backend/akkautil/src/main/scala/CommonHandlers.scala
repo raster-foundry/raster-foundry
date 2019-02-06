@@ -3,14 +3,12 @@ package com.rasterfoundry.akkautil
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{RequestContext, RouteResult}
 import akka.http.scaladsl.server.{StandardRoute, ExceptionHandler}
-import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.{
   RouteDirectives,
   FutureDirectives,
   CompleteOrRecoverWithMagnet
 }
 import io.circe._
-import cats.syntax.show
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
