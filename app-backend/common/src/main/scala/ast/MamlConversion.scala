@@ -16,6 +16,10 @@ object MamlConversion {
           val bandActual = band.getOrElse(1)
           RasterVar(s"${projId.toString}_${bandActual}")
         }
+        case MapAlgebraAST.LayerRaster(_, layerId, band, celltype, _) => {
+          val bandActual = band.getOrElse(1)
+          RasterVar(s"${layerId.toString}_${bandActual}")
+        }
 
         case MapAlgebraAST.Constant(_, const, _) => DblLit(const)
         case MapAlgebraAST.LiteralTile(_, lt, _) =>
