@@ -32,7 +32,7 @@ final case class RequirementFailedException(message: String)
 final case class WrappedDoobieException(message: String)
     extends BacksplashException
 // When an area is requested completely outside the extent of a project/scene/analysis
-final case class NoDataInRegionException() extends BacksplashException
+case object NoDataInRegionException extends BacksplashException
 
 // When we get any S3 error
 final case class WrappedS3Exception(message: String) extends BacksplashException
@@ -54,7 +54,7 @@ class BacksplashHttpErrorHandler[F[_], U](
     case UnknownSceneTypeException(m)  => BadRequest(m)
     case BadAnalysisASTException(m)    => BadRequest(m)
     case RequirementFailedException(m) => BadRequest(m)
-    case NoDataInRegionException()     => BadRequest("No Data in Region")
+    case NoDataInRegionException => BadRequest("No Data in Region")
     case t @ NotAuthorizedException(_) =>
       Forbidden(
         "Resource does not exist or user is not authorized to access this resource")
