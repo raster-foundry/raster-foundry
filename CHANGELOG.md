@@ -22,6 +22,7 @@
 - Added publishing of lambda functions to CI build process [\#4586](https://github.com/raster-foundry/raster-foundry/pull/4586)
 - Added tile server support for masked analyses [\#4571](https://github.com/raster-foundry/raster-foundry/pull/4571)
 - Added project layer navigation bar [\#4581](https://github.com/raster-foundry/raster-foundry/pull/4581)
+- Added backend support for rendering tiles and fetching histograms for analyses with project layers at their leaves [\#4603](https://github.com/raster-foundry/raster-foundry/pull/4603)
 
 ### Fixed
 
