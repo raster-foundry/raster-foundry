@@ -4,7 +4,7 @@ import {Set} from 'immutable';
 
 class ProjectLayersNavController {
     constructor(
-        $rootScope, $state, $scope
+        $rootScope, $state, $scope, $transitions
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -12,21 +12,21 @@ class ProjectLayersNavController {
 
     $onInit() {
         this.navs = [];
-        this.$scope.$watch('$ctrl.$state.current', this.onStateCurrentChange.bind(this));
+        this.onStateCurrentChange(this.$state.current);
+        this.$transitions.onSuccess({}, transition => {
+            const toState = transition.to();
+            this.onStateCurrentChange(toState);
+        });
     }
 
     onStateCurrentChange(stateCurrent) {
-        if (!this.$state) {
-            return;
-        }
-
         this.navs = [];
 
         if (
-            this.$state.includes('project.layers') ||
-            this.$state.includes('project.analyses') ||
-            this.$state.includes('project.settings') ||
-            this.$state.includes('project.layer')
+            stateCurrent.name === 'project.layers' ||
+            stateCurrent.name.includes('project.analyses') ||
+            stateCurrent.name.includes('project.settings') ||
+            stateCurrent.name.includes('project.layer')
         ) {
             this.navs.push({
                 title: this.project.name,
@@ -34,14 +34,16 @@ class ProjectLayersNavController {
             });
         }
 
-        if (this.$state.includes('project.settings')) {
+        if (stateCurrent.name.includes('project.settings')) {
             this.navs.push({
                 title: 'Settings',
                 sref: `project.settings({projectId: '${this.project.id}'})`
             });
         }
 
-        if (this.$state.includes('project.layer')) {
+        if (stateCurrent.name === 'project.layer' ||
+            stateCurrent.name.includes('project.layer.')
+        ) {
             this.navs.push({
                 title: this.layer.name,
                 sref: `project.layer({
@@ -51,7 +53,7 @@ class ProjectLayersNavController {
             });
         }
 
-        if (this.$state.includes('project.layer.corrections')) {
+        if (stateCurrent.name.includes('project.layer.corrections')) {
             this.navs.push({
                 title: 'Color correct',
                 sref: `project.layer.corrections({
@@ -61,7 +63,7 @@ class ProjectLayersNavController {
             });
         }
 
-        if (this.$state.includes('project.layer.scenes.browse')) {
+        if (stateCurrent.name.includes('project.layer.scenes.browse')) {
             this.navs.push({
                 title: 'Browse imagery',
                 sref: `project.layer.scenes.browse({
