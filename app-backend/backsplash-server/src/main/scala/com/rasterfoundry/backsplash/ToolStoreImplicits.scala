@@ -10,7 +10,7 @@ import com.rasterfoundry.common.ast.MapAlgebraAST
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 
 import cats.effect.IO
-import com.typesafe.scalalogging.LazyLogging
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 
