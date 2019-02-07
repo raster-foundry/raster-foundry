@@ -20,7 +20,8 @@ import cats.implicits._
 import java.sql.Timestamp
 import java.util.UUID
 
-case class ToolRunDao()
+@SuppressWarnings(Array("EmptyCaseClass"))
+final case class ToolRunDao()
 
 object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
 

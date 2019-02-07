@@ -152,7 +152,7 @@ object SceneWithRelatedDao
           scene.browseFromComponents(
             groupedThumbs.getOrElse(scene.id, List.empty[Thumbnail]),
             datasources.filter(_.id == scene.datasource).head,
-            inProjects.filter(_._1 == scene.id).headOption.map(_._2)
+            inProjects.find(_._1 == scene.id).map(_._2)
           )
         }
     }

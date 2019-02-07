@@ -18,7 +18,8 @@ import scala.concurrent.duration._
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 
-case class SceneDao()
+@SuppressWarnings(Array("EmptyCaseClass"))
+final case class SceneDao()
 
 object SceneDao
     extends Dao[Scene]
@@ -259,8 +260,7 @@ object SceneDao
     for {
       sceneO <- SceneDao.query.filter(sceneId).filter(polygonF).selectOption
     } yield {
-      sceneO match {
-        case Some(scene: Scene) =>
+      sceneO map { (scene: Scene) =>
           Seq(
             MosaicDefinition(
               scene.id,
@@ -288,8 +288,7 @@ object SceneDao
               false,
               Some(().asJson)
             ))
-        case _ => Seq.empty
-      }
+      } getOrElse { Seq.empty }
     }
   }
 

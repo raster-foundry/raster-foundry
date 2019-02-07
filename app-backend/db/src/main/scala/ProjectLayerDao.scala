@@ -56,7 +56,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
 
   def updateProjectLayerQ(projectLayer: ProjectLayer, id: UUID): Update0 = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
-    val idFilter = fr"id = ${projectLayer.id}"
+    val idFilter = fr"id = ${id}"
     val query = (fr"UPDATE" ++ tableF ++ fr"""SET
       modified_at = ${updateTime},
       name = ${projectLayer.name},
@@ -68,15 +68,13 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
   }
 
   def createProjectLayer(
-      projectId: UUID,
       projectLayer: ProjectLayer
   ): ConnectionIO[ProjectLayer] =
     insertProjectLayer(projectLayer)
 
   def getProjectLayer(
       projectId: UUID,
-      layerId: UUID,
-      user: User
+      layerId: UUID
   ): ConnectionIO[Option[ProjectLayer]] =
     query.filter(fr"project_id = ${projectId}").filter(layerId).selectOption
 

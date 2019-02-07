@@ -87,18 +87,15 @@ trait ObjectPermissions[Model] {
 
   def getPermissions(
       id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
-    for {
-      // TODO restrict to the user's permissions if the user does not have edit permissions
-      isValidObject <- isValidObject(id)
-      getPermissions <- isValidObject match {
+      isValidObject(id) flatMap {
         case false => throw new Exception(s"Invalid ${tableName} object ${id}")
         case true =>
           getPermissionsF(id)
             .query[List[String]]
             .unique
             .map(acrStringsToList(_))
+
       }
-    } yield { getPermissions }
 
   def addPermission(id: UUID, acr: ObjectAccessControlRule)
     : ConnectionIO[List[Option[ObjectAccessControlRule]]] =

@@ -18,7 +18,7 @@ final case class ExportDefinition[SourceDefinition](
 
 object ExportDefinition {
 
-  implicit def encodeExportDefinition[SourceDefinition : Encoder]
+  implicit def encodeExportDefinition[SourceDefinition: Encoder]
     : Encoder[ExportDefinition[SourceDefinition]] =
     new Encoder[ExportDefinition[SourceDefinition]] {
       def apply(exportDef: ExportDefinition[SourceDefinition]): Json =
@@ -29,7 +29,7 @@ object ExportDefinition {
         )
     }
 
-  implicit def decodeExportDefinition[SourceDefinition : Decoder]
+  implicit def decodeExportDefinition[SourceDefinition: Decoder]
     : Decoder[ExportDefinition[SourceDefinition]] =
     new Decoder[ExportDefinition[SourceDefinition]] {
       def apply(
