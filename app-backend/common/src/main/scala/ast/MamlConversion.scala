@@ -3,23 +3,21 @@ package com.rasterfoundry.common.ast
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{NeighborhoodConversion, ClassMap => MamlClassMap}
 
+import geotrellis.vector.io.json.Implicits._
+
 object MamlConversion {
   def fromDeprecatedAST(ast: MapAlgebraAST): Expression = {
 
     def eval(ast: MapAlgebraAST): Expression = {
 
-      val args = ast.args.map(eval)
+      val args: List[Expression] = ast.args.map(eval)
       ast match {
         case MapAlgebraAST.ProjectRaster(_, projId, band, celltype, _) => {
           val bandActual = band.getOrElse(1)
           RasterVar(s"${projId.toString}_${bandActual}")
         }
 
-        // TODO: Remove COG & Scene Raster once Old Tile Server is GONE
-        // https://github.com/raster-foundry/raster-foundry/issues/4168
-        case MapAlgebraAST.CogRaster(_, _, _, _, _, _) => ???
-        case MapAlgebraAST.SceneRaster(_, _, _, _, _)  => ???
-        case MapAlgebraAST.Constant(_, const, _)       => DblLit(const)
+        case MapAlgebraAST.Constant(_, const, _) => DblLit(const)
         case MapAlgebraAST.LiteralTile(_, lt, _) =>
           throw new Exception(
             "No literal tiles should appear on pre-MAML RFML tools")
@@ -34,9 +32,8 @@ object MamlConversion {
         case MapAlgebraAST.Min(_, _, _)            => Min(args)
         case MapAlgebraAST.Classification(_, _, _, classmap) =>
           Classification(args, MamlClassMap(classmap.classifications))
-        // TODO: Reimplement Masking https://github.com/raster-foundry/raster-foundry/issues/4169
-        case MapAlgebraAST.Masking(_, _, _, mask) => ???
-        //  Masking(args :+ GeomJson(mask.toGeoJson))
+        case MapAlgebraAST.Masking(_, _, _, mask) =>
+          Masking(GeomLit(mask.toGeoJson.toString) +: args)
         case MapAlgebraAST.Equality(_, _, _)       => Equal(args)
         case MapAlgebraAST.Inequality(_, _, _)     => Unequal(args)
         case MapAlgebraAST.Greater(_, _, _)        => Greater(args)

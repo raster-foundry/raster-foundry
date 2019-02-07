@@ -46,7 +46,6 @@ object MapAlgebraAST {
 
     val symbol: String
 
-    @SuppressWarnings(Array("TraversableHead"))
     def find(id: UUID): Option[MapAlgebraAST] =
       if (this.id == id)
         Some(this)
