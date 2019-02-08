@@ -16,9 +16,8 @@ import doobie.implicits._
 
 import java.util.UUID
 
-class ToolStoreImplicits[HistStore](
-    mosaicImplicits: MosaicImplicits[HistStore],
-    xa: Transactor[IO])
+class ToolStoreImplicits[HistStore](mosaicImplicits: MosaicImplicits[HistStore],
+                                    xa: Transactor[IO])
     extends ProjectStoreImplicits(xa)
     with LazyLogging {
 
@@ -71,6 +70,7 @@ class ToolStoreImplicits[HistStore](
 
   implicit val toolRunDaoStore: ToolStore[ToolRunDao] =
     new ToolStore[ToolRunDao] {
+
       /** Unclear what un-matching this would even be -- I think scapegoat was mad about the
         * de-sugared code? Annoying
         */

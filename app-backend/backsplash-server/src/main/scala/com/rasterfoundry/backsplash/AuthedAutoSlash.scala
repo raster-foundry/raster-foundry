@@ -13,26 +13,27 @@ import org.http4s._
   */
 object AuthedAutoSlash {
   def apply[T, F[_]](http: AuthedService[T, F])(
-      implicit F: MonoidK[OptionT[F, ?]]): AuthedService[T, F] = Kleisli { authedReq =>
-    {
-      http(authedReq) <+> {
-        val pathInfo = authedReq.req.pathInfo
-        val scriptName = authedReq.req.scriptName
+      implicit F: MonoidK[OptionT[F, ?]]): AuthedService[T, F] = Kleisli {
+    authedReq =>
+      {
+        http(authedReq) <+> {
+          val pathInfo = authedReq.req.pathInfo
+          val scriptName = authedReq.req.scriptName
 
-        if (pathInfo.isEmpty || pathInfo.charAt(pathInfo.length - 1) != '/') {
-          F.empty
-        } else if (scriptName.isEmpty) {
-          // Request has not been translated already
-          http.apply(
-            authedReq.copy(req = authedReq.req.withPathInfo(
-              pathInfo.substring(0, pathInfo.length - 1))))
-        } else {
-          val translated = AuthedTranslateUri(scriptName)(http)
-          translated.apply(
-            authedReq.copy(req = authedReq.req.withPathInfo(
-              pathInfo.substring(0, pathInfo.length - 1))))
+          if (pathInfo.isEmpty || pathInfo.charAt(pathInfo.length - 1) != '/') {
+            F.empty
+          } else if (scriptName.isEmpty) {
+            // Request has not been translated already
+            http.apply(
+              authedReq.copy(req = authedReq.req.withPathInfo(
+                pathInfo.substring(0, pathInfo.length - 1))))
+          } else {
+            val translated = AuthedTranslateUri(scriptName)(http)
+            translated.apply(
+              authedReq.copy(req = authedReq.req.withPathInfo(
+                pathInfo.substring(0, pathInfo.length - 1))))
+          }
         }
       }
-    }
   }
 }

@@ -34,8 +34,7 @@ object AuthedTranslateUri {
 
     }
 
-  private def setCaret[F[_]](req: Request[F],
-                                      newCaret: Int): Request[F] = {
+  private def setCaret[F[_]](req: Request[F], newCaret: Int): Request[F] = {
     val oldCaret = req.attributes
       .get(Request.Keys.PathInfoCaret)
       .getOrElse(0)

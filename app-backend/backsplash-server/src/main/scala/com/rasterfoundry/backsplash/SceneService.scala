@@ -16,7 +16,7 @@ import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
 
-class SceneService[ProjStore : ProjectStore, HistStore](
+class SceneService[ProjStore: ProjectStore, HistStore](
     scenes: ProjStore,
     mosaicImplicits: MosaicImplicits[HistStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO],
