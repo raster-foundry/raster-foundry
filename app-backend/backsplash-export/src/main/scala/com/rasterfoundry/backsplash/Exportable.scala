@@ -28,16 +28,19 @@ import cats.effect._
 
   @op("exportDestination") def exportDestination(self: A): String
 
-  @op("toGeoTiff") def toGeoTiff(self: A, compression: Compression)(
+  /** It's fine, maybe */
+  @op("toGeoTiff")
+  def toGeoTiff(self: A, compression: Compression)(
       implicit cs: ContextShift[IO]): MultibandGeoTiff = {
-    val tifftile = GeoTiffBuilder[MultibandTile]
+    @SuppressWarnings(Array("AsInstanceOf"))
+    def tifftile: GeoTiffMultibandTile = GeoTiffBuilder[MultibandTile]
       .makeTile(
         keyedTileSegments(self, exportZoom(self)),
         segmentLayout = segmentLayout(self),
         cellType = exportCellType(self),
         compression = compression
       )
-      .asInstanceOf[GeoTiffMultibandTile] // This hurts :(
+      .asInstanceOf[GeoTiffMultibandTile]
     val latLngExtent = exportExtent(self)
     val tilesForExtent = TilesForExtent.latLng(latLngExtent, exportZoom(self))
     val outputExtent =
