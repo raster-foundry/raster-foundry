@@ -1,9 +1,5 @@
 FROM quay.io/azavea/openjdk-gdal:2.3-jdk8-slim
 
-ENV SPARK_VERSION 2.1.0
-ENV HADOOP_VERSION 2.7
-ENV PATH=${PATH}:/usr/lib/spark/sbin:/usr/lib/spark/bin
-
 COPY rf/requirements.txt /tmp/
 RUN set -ex \
     && gdalDeps=' \
@@ -21,10 +17,7 @@ RUN set -ex \
     && pip install --no-cache-dir -r /tmp/requirements.txt \
     && apt-get purge -y build-essential python-dev \
     && apt-get -y autoremove \
-    && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /usr/lib/spark \
-    && wget -qO- http://d3kbcqa49mib13.cloudfront.net/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz \
-      | tar -xzC /usr/lib/spark --strip-components=1
+    && rm -rf /var/lib/apt/lists/*
 
 COPY jars/ /opt/raster-foundry/jars/
 
