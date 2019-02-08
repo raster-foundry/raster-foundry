@@ -20,6 +20,7 @@
 
 - Removed unused imports and assignments [\#4579](https://github.com/raster-foundry/raster-foundry/pull/4579)
 - Included geometry filter in backsplash scene service to prevent erroneous 500s [\#4580](https://github.com/raster-foundry/raster-foundry/pull/4580)
+- Made scapegoat less angry [\#4611](https://github.com/raster-foundry/raster-foundry/pull/4611)
 
 ### Security
 

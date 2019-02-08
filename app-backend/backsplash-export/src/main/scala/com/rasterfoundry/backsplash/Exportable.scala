@@ -28,10 +28,10 @@ import cats.effect._
 
   @op("exportDestination") def exportDestination(self: A): String
 
-  /** It's fine, maybe */
   @op("toGeoTiff")
   def toGeoTiff(self: A, compression: Compression)(
       implicit cs: ContextShift[IO]): MultibandGeoTiff = {
+    /** It's fine, maybe */
     @SuppressWarnings(Array("AsInstanceOf"))
     def tifftile: GeoTiffMultibandTile = GeoTiffBuilder[MultibandTile]
       .makeTile(
