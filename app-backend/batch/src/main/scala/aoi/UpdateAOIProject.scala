@@ -3,7 +3,7 @@ package com.rasterfoundry.batch.aoi
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
-import com.rasterfoundry.common.notification.Email.NotificationEmail
+import com.rasterfoundry.common.notification.Email.{EmailConfig, NotificationEmail}
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.util.RFTransactor
@@ -100,11 +100,11 @@ final case class UpdateAOIProject(projectId: UUID)(
             val (subject, html, plain) =
               aoiEmailContent(project, platform, user, sceneCount)
             email
-              .setEmail(host,
+              .setEmail(EmailConfig(host,
                         port,
                         encryption,
                         platSmtpUserName,
-                        pw,
+                        pw),
                         userEmail,
                         subject,
                         html,

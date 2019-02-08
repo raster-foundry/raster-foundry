@@ -42,6 +42,7 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
 
     try {
       s3Client.putObjectString(bucket, key, exportDef.noSpaces)
+      ()
     } catch {
       case e: Throwable => {
         logger.error(
