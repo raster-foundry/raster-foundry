@@ -15,7 +15,7 @@ trait MapAlgebraLeafCodecs {
   /** TODO: Add codec paths besides `raster source` and `operation` when supported */
   implicit def mapAlgebraLeafDecoder =
     Decoder.instance[MapAlgebraAST.MapAlgebraLeaf] { ma =>
-      ma._type match {
+      ma.typeOpt match {
         case Some("ref") =>
           ma.as[MapAlgebraAST.ToolReference]
         case Some("const") =>
@@ -31,7 +31,7 @@ trait MapAlgebraLeafCodecs {
 
   implicit def mapAlgebraLeafEncoder: Encoder[MapAlgebraAST.MapAlgebraLeaf] =
     new Encoder[MapAlgebraAST.MapAlgebraLeaf] {
-      final def apply(ast: MapAlgebraAST.MapAlgebraLeaf): Json = ast match {
+      def apply(ast: MapAlgebraAST.MapAlgebraLeaf): Json = ast match {
         case reference: MapAlgebraAST.ToolReference =>
           reference.asJson
         case const: MapAlgebraAST.Constant =>

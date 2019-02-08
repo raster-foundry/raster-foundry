@@ -2,7 +2,7 @@ package com.rasterfoundry.common.datamodel
 
 import io.circe.generic.semiauto._
 
-case class HistogramAttribute(
+final case class HistogramAttribute(
     buckets: List[(Float, Int)],
     maximum: Float,
     minimum: Float,

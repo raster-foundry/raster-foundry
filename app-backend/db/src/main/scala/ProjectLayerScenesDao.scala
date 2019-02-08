@@ -67,7 +67,7 @@ object ProjectLayerScenesDao extends Dao[Scene] {
   }
 
   // We know the datasources list head exists because of the foreign key relationship
-  @SuppressWarnings(Array("TraversableHead"))
+  @SuppressWarnings(Array("OptionGet"))
   def scenesToProjectScenes(
       scenes: List[Scene],
       layerId: UUID
@@ -96,7 +96,7 @@ object ProjectLayerScenesDao extends Dao[Scene] {
         scenes map { scene: Scene =>
           scene.projectSceneFromComponents(
             groupedThumbs.getOrElse(scene.id, List.empty[Thumbnail]),
-            datasources.filter(_.id == scene.datasource).head,
+            datasources.find(_.id == scene.datasource).get,
             sceneToLayers.find(_.sceneId == scene.id).map(_.sceneOrder).flatten
           )
         }

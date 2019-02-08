@@ -22,8 +22,8 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 sealed trait S3Region
-case class S3RegionEnum(s3Region: Regions) extends S3Region
-case class S3RegionString(s3Region: String) extends S3Region
+final case class S3RegionEnum(s3Region: Regions) extends S3Region
+final case class S3RegionString(s3Region: String) extends S3Region
 
 final case class S3(credentialsProviderChain: AWSCredentialsProvider =
                       new DefaultAWSCredentialsProviderChain,

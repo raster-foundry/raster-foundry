@@ -44,6 +44,7 @@ object Main extends App with Config with Router {
 
   sys.addShutdownHook {
     terminate()
+    ()
   }
 
   Http().bindAndHandle(routes, httpHost, httpPort)

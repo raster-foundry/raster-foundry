@@ -24,7 +24,7 @@ import geotrellis.vector.{Polygon, Projected}
 
 import java.util.UUID
 
-class MosaicService[LayerStore: ProjectStore, HistStore: HistogramStore](
+class MosaicService[LayerStore: ProjectStore, HistStore](
     layers: LayerStore,
     mosaicImplicits: MosaicImplicits[HistStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO],

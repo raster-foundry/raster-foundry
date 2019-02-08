@@ -247,8 +247,8 @@ object ColorCorrect extends LazyLogging {
             rgbHist: Array[Histogram[Double]],
             params: Params,
             nodataValue: Option[Double]): MultibandTile = {
-    var _rgbTile = rgbTile
-    var _rgbHist = rgbHist
+    val _rgbTile = rgbTile
+    val _rgbHist = rgbHist
     val gammas = params.getGamma
 
     val layerRgbClipping = {

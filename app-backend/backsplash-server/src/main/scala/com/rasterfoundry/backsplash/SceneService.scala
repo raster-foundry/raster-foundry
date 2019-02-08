@@ -16,10 +16,9 @@ import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.headers._
 
-class SceneService[ProjStore: ProjectStore, HistStore: HistogramStore](
+class SceneService[ProjStore: ProjectStore, HistStore](
     scenes: ProjStore,
     mosaicImplicits: MosaicImplicits[HistStore],
-    histStore: HistStore,
     xa: Transactor[IO])(implicit cs: ContextShift[IO],
                         H: HttpErrorHandler[IO, BacksplashException, User],
                         ForeignError: HttpErrorHandler[IO, Throwable, User])

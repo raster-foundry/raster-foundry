@@ -92,6 +92,7 @@ object ReadStacFeature extends Config with LazyLogging {
               s"Test run, so scene was not actually created:\n${scene}")
           case _ =>
             writeSceneToDb(scene)
+            ()
         }
       case Left(error) =>
         logger.error(

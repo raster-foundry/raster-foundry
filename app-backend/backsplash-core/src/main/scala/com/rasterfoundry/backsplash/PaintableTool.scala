@@ -29,8 +29,7 @@ object PaintableTool {
       expr: Expression,
       paramMap: Map[String, Param],
       renderDef: Option[RenderDefinition],
-      interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT,
-      paint: Boolean = true // whether to paint the tile or return raw values
+      interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
   ): PaintableTool = new PaintableTool {
 
     def tms(z: Int, x: Int, y: Int)(

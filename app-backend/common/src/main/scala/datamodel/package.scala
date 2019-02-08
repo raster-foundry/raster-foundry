@@ -22,10 +22,10 @@ import scala.util._
 trait JsonCodecs {
   // Double key serialization
   implicit val decodeKeyDouble: KeyDecoder[Double] = new KeyDecoder[Double] {
-    final def apply(key: String): Option[Double] = Try(key.toDouble).toOption
+    def apply(key: String): Option[Double] = Try(key.toDouble).toOption
   }
   implicit val encodeKeyDouble: KeyEncoder[Double] = new KeyEncoder[Double] {
-    final def apply(key: Double): String = key.toString
+    def apply(key: Double): String = key.toString
   }
 
   // RGBA deserialization

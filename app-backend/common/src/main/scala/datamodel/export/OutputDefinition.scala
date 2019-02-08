@@ -3,7 +3,7 @@ package com.rasterfoundry.common.datamodel.export
 import geotrellis.proj4.CRS
 import _root_.io.circe.generic.semiauto._
 
-case class OutputDefinition(
+final case class OutputDefinition(
     crs: Option[CRS],
     destination: String,
     dropboxCredential: Option[String]

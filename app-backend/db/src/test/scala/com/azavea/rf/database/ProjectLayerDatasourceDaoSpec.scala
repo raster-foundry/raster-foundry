@@ -56,7 +56,6 @@ class ProjectLayerDatasourceDaoSpec
                 ) flatMap { _ =>
                   {
                     ProjectLayerDatasourcesDao.listProjectLayerDatasources(
-                      dbProject.id,
                       dbProject.defaultLayerId
                     ) map { datasources: List[Datasource] =>
                       (dbScenes.map { _.datasource }, datasources)

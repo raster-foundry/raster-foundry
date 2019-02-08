@@ -1483,7 +1483,7 @@ trait ProjectRoutes
         rejectEmptyResponse {
           complete {
             ProjectLayerDao
-              .getProjectLayer(projectId, layerId, user)
+              .getProjectLayer(projectId, layerId)
               .transact(xa)
               .unsafeToFuture
           }
@@ -1678,7 +1678,7 @@ trait ProjectRoutes
         } {
           complete {
             ProjectLayerDatasourcesDao
-              .listProjectLayerDatasources(projectId, layerId)
+              .listProjectLayerDatasources(layerId)
               .transact(xa)
               .unsafeToFuture
           }

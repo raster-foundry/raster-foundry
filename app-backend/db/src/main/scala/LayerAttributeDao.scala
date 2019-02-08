@@ -17,7 +17,8 @@ import geotrellis.raster.io.json._
 
 import java.util.UUID
 
-case class LayerAttributeDao() extends HistogramJsonFormats {
+@SuppressWarnings(Array("EmptyCaseClass"))
+final case class LayerAttributeDao() extends HistogramJsonFormats {
   def getHistogram(layerId: UUID,
                    xa: Transactor[IO]): IO[Array[Histogram[Double]]] = {
     LayerAttributeDao

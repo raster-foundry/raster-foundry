@@ -17,8 +17,6 @@ import doobie.implicits._
 
 import java.util.UUID
 
-import java.util.UUID
-
 trait ToolRunRoutes
     extends Authentication
     with PaginationDirectives
