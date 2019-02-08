@@ -1,7 +1,10 @@
 package com.rasterfoundry.database.notification
 
 import com.rasterfoundry.common.RollbarNotifier
-import com.rasterfoundry.common.notification.Email.{EmailConfig, NotificationEmail}
+import com.rasterfoundry.common.notification.Email.{
+  EmailConfig,
+  NotificationEmail
+}
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.notification.templates._
 import com.rasterfoundry.common.datamodel._

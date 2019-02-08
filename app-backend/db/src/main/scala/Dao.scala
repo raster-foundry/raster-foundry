@@ -198,8 +198,7 @@ object Dao extends LazyLogging {
       }
     }
 
-    def pageOffset[T: Read](
-        pageRequest: PageRequest): ConnectionIO[List[T]] =
+    def pageOffset[T: Read](pageRequest: PageRequest): ConnectionIO[List[T]] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(pageRequest))
         .query[T]
         .to[List]

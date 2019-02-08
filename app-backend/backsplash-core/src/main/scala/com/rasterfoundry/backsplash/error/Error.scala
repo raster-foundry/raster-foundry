@@ -54,7 +54,7 @@ class BacksplashHttpErrorHandler[F[_], U](
     case UnknownSceneTypeException(m)  => BadRequest(m)
     case BadAnalysisASTException(m)    => BadRequest(m)
     case RequirementFailedException(m) => BadRequest(m)
-    case NoDataInRegionException => BadRequest("No Data in Region")
+    case NoDataInRegionException       => BadRequest("No Data in Region")
     case t @ NotAuthorizedException(_) =>
       Forbidden(
         "Resource does not exist or user is not authorized to access this resource")

@@ -74,7 +74,7 @@ trait MapAlgebraOperationCodecs extends MapAlgebraUtilityCodecs {
 
   implicit lazy val encodeOperations: Encoder[MapAlgebraAST.Operation] =
     new Encoder[MapAlgebraAST.Operation] {
-      final def apply(op: MapAlgebraAST.Operation): Json = op match {
+      def apply(op: MapAlgebraAST.Operation): Json = op match {
         case addition: MapAlgebraAST.Addition =>
           addition.asJson
         case subtraction: MapAlgebraAST.Subtraction =>

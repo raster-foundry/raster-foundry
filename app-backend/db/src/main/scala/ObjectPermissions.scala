@@ -87,15 +87,15 @@ trait ObjectPermissions[Model] {
 
   def getPermissions(
       id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
-      isValidObject(id) flatMap {
-        case false => throw new Exception(s"Invalid ${tableName} object ${id}")
-        case true =>
-          getPermissionsF(id)
-            .query[List[String]]
-            .unique
-            .map(acrStringsToList(_))
+    isValidObject(id) flatMap {
+      case false => throw new Exception(s"Invalid ${tableName} object ${id}")
+      case true =>
+        getPermissionsF(id)
+          .query[List[String]]
+          .unique
+          .map(acrStringsToList(_))
 
-      }
+    }
 
   def addPermission(id: UUID, acr: ObjectAccessControlRule)
     : ConnectionIO[List[Option[ObjectAccessControlRule]]] =

@@ -261,33 +261,33 @@ object SceneDao
       sceneO <- SceneDao.query.filter(sceneId).filter(polygonF).selectOption
     } yield {
       sceneO map { (scene: Scene) =>
-          Seq(
-            MosaicDefinition(
-              scene.id,
-              ColorCorrect.Params(
-                redBand,
-                greenBand,
-                blueBand,
-                BandGamma(enabled = false, None, None, None),
-                PerBandClipping(enabled = false,
-                                None,
-                                None,
-                                None,
-                                None,
-                                None,
-                                None),
-                MultiBandClipping(enabled = false, None, None),
-                SigmoidalContrast(enabled = false, None, None),
-                Saturation(enabled = false, None),
-                Equalization(false),
-                AutoWhiteBalance(false)
-              ),
-              scene.sceneType,
-              scene.ingestLocation,
-              scene.dataFootprint map { _.geom },
-              false,
-              Some(().asJson)
-            ))
+        Seq(
+          MosaicDefinition(
+            scene.id,
+            ColorCorrect.Params(
+              redBand,
+              greenBand,
+              blueBand,
+              BandGamma(enabled = false, None, None, None),
+              PerBandClipping(enabled = false,
+                              None,
+                              None,
+                              None,
+                              None,
+                              None,
+                              None),
+              MultiBandClipping(enabled = false, None, None),
+              SigmoidalContrast(enabled = false, None, None),
+              Saturation(enabled = false, None),
+              Equalization(false),
+              AutoWhiteBalance(false)
+            ),
+            scene.sceneType,
+            scene.ingestLocation,
+            scene.dataFootprint map { _.geom },
+            false,
+            Some(().asJson)
+          ))
       } getOrElse { Seq.empty }
     }
   }

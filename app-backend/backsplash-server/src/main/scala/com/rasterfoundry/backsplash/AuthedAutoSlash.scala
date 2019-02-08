@@ -13,8 +13,7 @@ import org.http4s._
   */
 object AuthedAutoSlash {
   def apply[T, F[_]](http: AuthedService[T, F])(
-      implicit F: MonoidK[OptionT[F, ?]],
-      ev: Functor[F]): AuthedService[T, F] = Kleisli { authedReq =>
+      implicit F: MonoidK[OptionT[F, ?]]): AuthedService[T, F] = Kleisli { authedReq =>
     {
       http(authedReq) <+> {
         val pathInfo = authedReq.req.pathInfo

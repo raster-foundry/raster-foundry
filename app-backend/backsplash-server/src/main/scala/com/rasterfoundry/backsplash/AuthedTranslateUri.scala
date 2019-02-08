@@ -10,8 +10,7 @@ import cats.data._
 object AuthedTranslateUri {
 
   def apply[F[_], T](prefix: String)(http: AuthedService[T, F])(
-      implicit F: MonoidK[OptionT[F, ?]],
-      ev: Functor[F]): AuthedService[T, F] =
+      implicit F: MonoidK[OptionT[F, ?]]): AuthedService[T, F] =
     if (prefix.isEmpty || prefix == "/") http
     else {
       val (slashedPrefix, unslashedPrefix) =
@@ -35,7 +34,7 @@ object AuthedTranslateUri {
 
     }
 
-  private def setCaret[F[_]: Functor](req: Request[F],
+  private def setCaret[F[_]](req: Request[F],
                                       newCaret: Int): Request[F] = {
     val oldCaret = req.attributes
       .get(Request.Keys.PathInfoCaret)

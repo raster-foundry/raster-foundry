@@ -1,7 +1,6 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash._
-import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.database.{SceneDao, SceneToLayerDao, SceneToProjectDao}
@@ -137,7 +136,7 @@ class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
         val imageBandOverride = bandOverride map { ovr =>
           List(ovr.red, ovr.green, ovr.blue)
         } getOrElse { List(0, 1, 2) }
-        val colorCorrectParams = ColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
+        val colorCorrectParams = BSColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
         BacksplashImage(
           scene.id,
           randomProjectId,

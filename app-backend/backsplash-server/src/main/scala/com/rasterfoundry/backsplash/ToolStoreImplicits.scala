@@ -10,14 +10,13 @@ import com.rasterfoundry.common.ast.MapAlgebraAST
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 
 import cats.effect.IO
-import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 
 import java.util.UUID
 
-class ToolStoreImplicits[HistStore: HistogramStore](
+class ToolStoreImplicits[HistStore](
     mosaicImplicits: MosaicImplicits[HistStore],
     xa: Transactor[IO])
     extends ProjectStoreImplicits(xa)
@@ -72,6 +71,10 @@ class ToolStoreImplicits[HistStore: HistogramStore](
 
   implicit val toolRunDaoStore: ToolStore[ToolRunDao] =
     new ToolStore[ToolRunDao] {
+      /** Unclear what un-matching this would even be -- I think scapegoat was mad about the
+        * de-sugared code? Annoying
+        */
+      @SuppressWarnings(Array("PartialFunctionInsteadOfMatch"))
       def read(self: ToolRunDao,
                analysisId: UUID,
                nodeId: Option[UUID]): IO[PaintableTool] =
