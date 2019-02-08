@@ -31,16 +31,18 @@ import cats.effect._
   @op("toGeoTiff")
   def toGeoTiff(self: A, compression: Compression)(
       implicit cs: ContextShift[IO]): MultibandGeoTiff = {
+
     /** It's fine, maybe */
     @SuppressWarnings(Array("AsInstanceOf"))
-    def tifftile: GeoTiffMultibandTile = GeoTiffBuilder[MultibandTile]
-      .makeTile(
-        keyedTileSegments(self, exportZoom(self)),
-        segmentLayout = segmentLayout(self),
-        cellType = exportCellType(self),
-        compression = compression
-      )
-      .asInstanceOf[GeoTiffMultibandTile]
+    def tifftile: GeoTiffMultibandTile =
+      GeoTiffBuilder[MultibandTile]
+        .makeTile(
+          keyedTileSegments(self, exportZoom(self)),
+          segmentLayout = segmentLayout(self),
+          cellType = exportCellType(self),
+          compression = compression
+        )
+        .asInstanceOf[GeoTiffMultibandTile]
     val latLngExtent = exportExtent(self)
     val tilesForExtent = TilesForExtent.latLng(latLngExtent, exportZoom(self))
     val outputExtent =
