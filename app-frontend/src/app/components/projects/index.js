@@ -1,7 +1,7 @@
 import layerItem from './layerItem';
-import navBar from './navBar';
+import navbar from './navbar';
 
 export default [
     layerItem,
-    navBar
+    navbar
 ];
