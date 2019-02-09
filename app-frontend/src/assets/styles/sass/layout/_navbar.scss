@@ -24,7 +24,8 @@
       }
     }
 
-    a.active {
+    a.active,
+    a.layer-nav-active {
       color: $white;
       background: $shade-dark;
     }
@@ -201,6 +202,10 @@
         background-color: $shade-dark;
       }
     }
+  }
+
+  .navbar-caret-right{
+    color: $white
   }
 }
 

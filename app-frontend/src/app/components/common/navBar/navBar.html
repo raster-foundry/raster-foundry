@@ -16,8 +16,8 @@
     <a ui-sref="home" class="brand">
       <img ng-attr-src="{{$ctrl.assetLogo}}" style="max-width: 50px;">
     </a>
-    <span class="navbar-vertical-divider"></span>
-    <nav>
+    <nav ng-if="!$ctrl.isProjectLayersNavBar()">
+      <span class="navbar-vertical-divider"></span>
       <a ui-sref="home"
          ui-sref-active="active">
         <i class="icon-home"></i>
@@ -42,6 +42,9 @@
         <span ng-if="!$ctrl.hideLabels()">Lab</span>
       </a>
       <span ui-view="navmenu"></span>
+    </nav>
+    <nav ng-if="$ctrl.isProjectLayersNavBar()">
+      <span ui-view="projectlayernav"></span>
     </nav>
   </div>
 
