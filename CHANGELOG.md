@@ -3,6 +3,18 @@
 
 ### Added
 
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+## [1.18.0](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-11)
+
+### Added
+
 - Added new export utility as replacement for the old (non-functioning) spark-based export [\#4589](https://github.com/raster-foundry/raster-foundry/pull/4589)
 - Added project layer creation workflow's modal on UI [\#4575](https://github.com/raster-foundry/raster-foundry/pull/4575)
 - Added project layer Annotation related endpoints [\#4569](https://github.com/raster-foundry/raster-foundry/pull/4569)
@@ -10,12 +22,6 @@
 - Added publishing of lambda functions to CI build process [\#4586](https://github.com/raster-foundry/raster-foundry/pull/4586)
 - Added tile server support for masked analyses [\#4571](https://github.com/raster-foundry/raster-foundry/pull/4571)
 - Added project layer navigation bar [\#4581](https://github.com/raster-foundry/raster-foundry/pull/4581)
-
-### Changed
-
-### Deprecated
-
-### Removed
 
 ### Fixed
 
