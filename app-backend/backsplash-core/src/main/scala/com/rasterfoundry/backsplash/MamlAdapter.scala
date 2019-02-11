@@ -10,7 +10,7 @@ import com.rasterfoundry.backsplash.error._
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{ClassMap => _}
 
-class BacksplashMamlAdapter[HistStore: HistogramStore,
+class BacksplashMamlAdapter[HistStore,
                             ProjStore: ProjectStore,
                             LayerStore: ProjectStore](
     mosaicImplicits: MosaicImplicits[HistStore],

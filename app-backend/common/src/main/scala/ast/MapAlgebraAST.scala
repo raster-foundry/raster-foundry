@@ -673,6 +673,7 @@ object MapAlgebraAST {
                            band: Option[Int],
                            celltype: Option[CellType],
                            metadata: Option[NodeMetadata])
+      extends MapAlgebraLeaf
       with RFMLRaster {
     val `type` = "projectSrc"
     def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List(this)
