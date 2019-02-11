@@ -20,8 +20,8 @@ trait MapAlgebraLeafCodecs {
           ma.as[MapAlgebraAST.ToolReference]
         case Some("const") =>
           ma.as[MapAlgebraAST.Constant]
-        case Some("sceneSrc") =>
-          ma.as[MapAlgebraAST.SceneRaster]
+        case Some("layerSrc") =>
+          ma.as[MapAlgebraAST.LayerRaster]
         case Some("projectSrc") =>
           ma.as[MapAlgebraAST.ProjectRaster]
         case _ =>
@@ -36,8 +36,8 @@ trait MapAlgebraLeafCodecs {
           reference.asJson
         case const: MapAlgebraAST.Constant =>
           const.asJson
-        case sceneSrc: MapAlgebraAST.SceneRaster =>
-          sceneSrc.asJson
+        case layerSrc: MapAlgebraAST.LayerRaster =>
+          layerSrc.asJson
         case projectSrc: MapAlgebraAST.ProjectRaster =>
           projectSrc.asJson
         case _ =>
@@ -45,17 +45,17 @@ trait MapAlgebraLeafCodecs {
       }
     }
 
-  implicit lazy val decodeSceneSource: Decoder[MapAlgebraAST.SceneRaster] =
-    Decoder.forProduct5("id", "sceneId", "band", "celltype", "metadata")(
-      MapAlgebraAST.SceneRaster.apply)
-  implicit lazy val encodeSceneSource: Encoder[MapAlgebraAST.SceneRaster] =
+  implicit lazy val decodeLayerSource: Decoder[MapAlgebraAST.LayerRaster] =
+    Decoder.forProduct5("id", "layerId", "band", "celltype", "metadata")(
+      MapAlgebraAST.LayerRaster.apply)
+  implicit lazy val encodeLayerSource: Encoder[MapAlgebraAST.LayerRaster] =
     Encoder.forProduct6("type",
                         "id",
-                        "sceneId",
+                        "layerId",
                         "band",
                         "celltype",
                         "metadata")(src =>
-      (src.`type`, src.id, src.sceneId, src.band, src.celltype, src.metadata))
+      (src.`type`, src.id, src.layerId, src.band, src.celltype, src.metadata))
 
   implicit lazy val decodeProjectSource: Decoder[MapAlgebraAST.ProjectRaster] =
     Decoder.forProduct5("id", "projId", "band", "celltype", "metadata")(
