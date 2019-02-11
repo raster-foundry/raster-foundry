@@ -4,7 +4,6 @@ import java.net.{URI, URL}
 import java.nio.charset.Charset
 import java.nio.file.Paths
 
-import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.spark.io.http.util.HttpRangeReader
 import geotrellis.spark.io.s3.AmazonS3Client

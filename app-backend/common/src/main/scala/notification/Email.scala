@@ -3,10 +3,17 @@ package com.rasterfoundry.common.notification.Email
 import com.rasterfoundry.common.RollbarNotifier
 
 import org.apache.commons.mail._
-import org.apache.commons.mail.Email._
 import org.apache.commons.mail.HtmlEmail
 
 import java.lang.IllegalArgumentException
+
+final case class EmailConfig(
+    host: String,
+    port: Int,
+    encryption: String,
+    uName: String,
+    uPw: String
+)
 
 class NotificationEmail extends RollbarNotifier {
 
@@ -33,11 +40,7 @@ class NotificationEmail extends RollbarNotifier {
   def platformNotSubscribedWarning(platId: String): String =
     s"Platform ${platId} did not subscribe to this notification service."
 
-  def setEmail(host: String,
-               port: Int,
-               encryption: String,
-               uName: String,
-               uPw: String,
+  def setEmail(conf: EmailConfig,
                to: String,
                subject: String,
                bodyHtml: String,
@@ -49,15 +52,15 @@ class NotificationEmail extends RollbarNotifier {
 
     try {
       email.setDebug(true)
-      email.setHostName(host)
-      if (encryption == "starttls") {
+      email.setHostName(conf.host)
+      if (conf.encryption == "starttls") {
         email.setStartTLSEnabled(true)
-        email.setSmtpPort(port);
+        email.setSmtpPort(conf.port);
       } else {
         email.setSSLOnConnect(true)
-        email.setSslSmtpPort(port.toString)
+        email.setSslSmtpPort(conf.port.toString)
       }
-      email.setAuthenticator(new DefaultAuthenticator(uName, uPw))
+      email.setAuthenticator(new DefaultAuthenticator(conf.uName, conf.uPw))
       email.setFrom(emailFrom, emailFromDisplayName)
       email.setSubject(subject)
       email.setHtmlMsg(bodyHtml)

@@ -20,6 +20,4 @@ final case class HadoopConfiguration(var conf: Configuration)
     conf.readFields(in)
   }
 
-  private def readObjectNoData(): Unit =
-    conf = new Configuration()
 }

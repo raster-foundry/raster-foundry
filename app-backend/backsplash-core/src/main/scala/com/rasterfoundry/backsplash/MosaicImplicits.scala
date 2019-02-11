@@ -4,23 +4,17 @@ import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 
-import geotrellis.proj4.{LatLng, WebMercator}
+import geotrellis.proj4.WebMercator
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.histogram._
 import geotrellis.raster.reproject._
-import geotrellis.raster.resample.NearestNeighbor
-import geotrellis.proj4.CRS
 import geotrellis.server._
 import com.azavea.maml.ast._
-import com.azavea.maml.eval._
-import cats._
 import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
-import cats.data.Validated._
 import cats.effect._
 import scalacache._
-import scalacache.caffeine._
 import scalacache.memoization._
 import scalacache.CatsEffect.modes._
 import ProjectStore._
@@ -29,8 +23,6 @@ import ExtentReification._
 import HasRasterExtents._
 import TmsReification._
 import com.typesafe.scalalogging.LazyLogging
-
-import java.util.UUID
 
 class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
     extends ToTmsReificationOps
@@ -116,7 +108,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
             .map(_.fold(0)(_ + _))
           _ <- {
             if (bandCount == 0) {
-              IO.raiseError(NoDataInRegionException())
+              IO.raiseError(NoDataInRegionException)
             } else IO.unit
           }
           filtered = BacksplashMosaic.filterRelevant(self)
@@ -228,7 +220,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         } yield {
           RasterLit(mosaic)
         }).attempt.map {
-          case Left(NoDataInRegionException()) =>
+          case Left(NoDataInRegionException) =>
             RasterLit(
               Raster(MultibandTile(invisiTile, invisiTile, invisiTile),
                      Extent(0, 0, 256, 256)))

@@ -2,8 +2,6 @@ package com.rasterfoundry.common.datamodel
 
 import geotrellis.vector.{Geometry, Projected}
 
-import io.circe.generic.JsonCodec
-
 trait GeoJSONFeature {
   val id: Any
   val properties: Any

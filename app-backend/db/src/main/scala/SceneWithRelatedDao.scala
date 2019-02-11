@@ -8,7 +8,6 @@ import cats.implicits._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 
@@ -112,6 +111,20 @@ object SceneWithRelatedDao
         List.empty[SceneToProject].pure[ConnectionIO]
     }
 
+  def getScenesToLayers(
+      sceneIds: List[UUID],
+      layerId: UUID
+  ): ConnectionIO[List[SceneToLayer]] =
+    sceneIds.toNel match {
+      case Some(ids) =>
+        SceneToLayerDao.query
+          .filter(Fragments.in(fr"scene_id", ids))
+          .filter(fr"project_layer_id=$layerId")
+          .list
+      case _ =>
+        List.empty[SceneToLayer].pure[ConnectionIO]
+    }
+
   // We know the datasources list head exists because of the foreign key relationship
   @SuppressWarnings(Array("FilterDotHead", "TraversableHead"))
   def scenesToSceneBrowse(
@@ -139,7 +152,7 @@ object SceneWithRelatedDao
           scene.browseFromComponents(
             groupedThumbs.getOrElse(scene.id, List.empty[Thumbnail]),
             datasources.filter(_.id == scene.datasource).head,
-            inProjects.filter(_._1 == scene.id).headOption.map(_._2)
+            inProjects.find(_._1 == scene.id).map(_._2)
           )
         }
     }

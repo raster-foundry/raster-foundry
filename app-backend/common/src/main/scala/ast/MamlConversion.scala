@@ -1,77 +1,28 @@
-package com.rasterfoundry.backsplash.server
-
-import com.rasterfoundry.database.SceneToProjectDao
-import com.rasterfoundry.common.ast.{MapAlgebraAST, NodeMetadata}
-import com.rasterfoundry.backsplash._
-import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.util.RFTransactor
+package com.rasterfoundry.common.ast
 
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{NeighborhoodConversion, ClassMap => MamlClassMap}
-import geotrellis.vector.io._
-import cats._
-import cats.effect.IO
-import cats.implicits._
-import doobie.implicits._
-import doobie.util.transactor.Transactor
-import io.circe.Json
 
-class BacksplashMamlAdapter[HistStore: HistogramStore](
-    mosaicImplicits: MosaicImplicits[HistStore],
-    xa: Transactor[IO])
-    extends ProjectStoreImplicits(xa) {
-  import mosaicImplicits._
+import geotrellis.vector.io.json.Implicits._
 
-  def asMaml(ast: MapAlgebraAST)
-    : (Expression, Option[NodeMetadata], Map[String, BacksplashMosaic]) = {
-
-    def evalParams(ast: MapAlgebraAST): Map[String, BacksplashMosaic] = {
-      val args = ast.args.map(evalParams)
-
-      ast match {
-        case MapAlgebraAST.ProjectRaster(_, projId, band, celltype, _) => {
-          val bandActual = band.getOrElse(
-            throw SingleBandOptionsException(
-              "Band must be provided to evaluate AST"))
-          // This is silly - mostly making up single band options here when all we really need is the band number
-          Map[String, BacksplashMosaic](
-            s"${projId.toString}_${bandActual}" -> (
-              SceneToProjectDao()
-                .read(
-                  projId,
-                  None,
-                  None,
-                  None
-                ) map { backsplashIm =>
-                backsplashIm.copy(subsetBands = List(bandActual))
-              }
-            )
-          )
-        }
-        case _ =>
-          args.foldLeft(Map.empty[String, BacksplashMosaic])((a, b) => a ++ b)
-      }
-    }
+object MamlConversion {
+  def fromDeprecatedAST(ast: MapAlgebraAST): Expression = {
 
     def eval(ast: MapAlgebraAST): Expression = {
 
-      val args = ast.args.map(eval)
+      val args: List[Expression] = ast.args.map(eval)
       ast match {
         case MapAlgebraAST.ProjectRaster(_, projId, band, celltype, _) => {
           val bandActual = band.getOrElse(1)
           RasterVar(s"${projId.toString}_${bandActual}")
         }
 
-        // TODO: Remove COG & Scene Raster once Old Tile Server is GONE
-        // https://github.com/raster-foundry/raster-foundry/issues/4168
-        case MapAlgebraAST.CogRaster(_, _, _, _, _, _) => ???
-        case MapAlgebraAST.SceneRaster(_, _, _, _, _)  => ???
-        case MapAlgebraAST.Constant(_, const, _)       => DblLit(const)
+        case MapAlgebraAST.Constant(_, const, _) => DblLit(const)
         case MapAlgebraAST.LiteralTile(_, lt, _) =>
-          throw MetadataException(
+          throw new Exception(
             "No literal tiles should appear on pre-MAML RFML tools")
         case MapAlgebraAST.ToolReference(_, _) =>
-          throw MetadataException("Tool references not yet supported via MAML")
+          throw new Exception("Tool references not yet supported via MAML")
         /* --- LOCAL OPERATIONS --- */
         case MapAlgebraAST.Addition(_, _, _)       => Addition(args)
         case MapAlgebraAST.Subtraction(_, _, _)    => Subtraction(args)
@@ -81,9 +32,8 @@ class BacksplashMamlAdapter[HistStore: HistogramStore](
         case MapAlgebraAST.Min(_, _, _)            => Min(args)
         case MapAlgebraAST.Classification(_, _, _, classmap) =>
           Classification(args, MamlClassMap(classmap.classifications))
-        // TODO: Reimplement Masking https://github.com/raster-foundry/raster-foundry/issues/4169
-        case MapAlgebraAST.Masking(_, _, _, mask) => ???
-        //  Masking(args :+ GeomJson(mask.toGeoJson))
+        case MapAlgebraAST.Masking(_, _, _, mask) =>
+          Masking(GeomLit(mask.toGeoJson.toString) +: args)
         case MapAlgebraAST.Equality(_, _, _)       => Equal(args)
         case MapAlgebraAST.Inequality(_, _, _)     => Unequal(args)
         case MapAlgebraAST.Greater(_, _, _)        => Greater(args)
@@ -136,6 +86,6 @@ class BacksplashMamlAdapter[HistStore: HistogramStore](
       }
     }
 
-    (eval(ast), ast.metadata, evalParams(ast))
+    eval(ast)
   }
 }

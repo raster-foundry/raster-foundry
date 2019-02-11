@@ -1,17 +1,14 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-import java.util.UUID
-
-import cats.implicits._
 import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util._
+
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+
+import java.sql.Timestamp
+import java.util.UUID
 
 object AnnotationGroupDao extends Dao[AnnotationGroup] {
 
@@ -101,44 +98,56 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
                          agId: UUID): ConnectionIO[Option[AnnotationGroup]] =
     query.filter(fr"project_id = $projectId").filter(agId).selectOption
 
-  def getAnnotationGroupSummary(
-      annotationGroupId: UUID): ConnectionIO[List[LabelSummary]] = {
-    val queryString =
-      sql"""
-           SELECT
-               annots.label, jsonb_object_agg(annots.quality, coalesce(counts.count, 0)) as counts
-           FROM (
-               SELECT
-                   DISTINCT annotation_group,
-                   label,
-                   vals.quality
-               FROM
-                   annotations,
-                   (
-                       SELECT
-                           unnest(enum_range(NULL::annotation_quality)) AS quality) AS vals
-              WHERE annotation_group = ${annotationGroupId}
-              ) AS annots
-               LEFT JOIN (
-                   SELECT
-                       annotation_group,
-                       count(*),
-                       label,
-                       coalesce(quality, 'YES'::annotation_quality) as quality
-                   FROM
-                       annotations
-                   WHERE
-                       annotation_group = ${annotationGroupId}
-                   GROUP BY
-                       quality,
-                       label,
-                       annotation_group) counts ON annots.annotation_group = counts.annotation_group
-               AND counts.label = annots.label
-               AND annots.quality = counts.quality
-           GROUP BY annots.label
+  def getAnnotationGroupSummaryF(annotationGroupId: UUID,
+                                 layerId: UUID): Fragment = sql"""
+    SELECT
+        annots.label, jsonb_object_agg(annots.quality, coalesce(counts.count, 0)) as counts
+    FROM (
+        SELECT
+            DISTINCT annotation_group,
+            label,
+            vals.quality
+        FROM
+            annotations,
+            (
+                SELECT
+                    unnest(enum_range(NULL::annotation_quality)) AS quality) AS vals
+       WHERE annotation_group = ${annotationGroupId}
+       AND project_layer_id = ${layerId}
+       ) AS annots
+        LEFT JOIN (
+            SELECT
+                annotation_group,
+                count(*),
+                label,
+                coalesce(quality, 'YES'::annotation_quality) as quality
+            FROM
+                annotations
+            WHERE
+                annotation_group = ${annotationGroupId}
+            AND project_layer_id = ${layerId}
+            GROUP BY
+                quality,
+                label,
+                annotation_group) counts ON annots.annotation_group = counts.annotation_group
+        AND counts.label = annots.label
+        AND annots.quality = counts.quality
+    GROUP BY annots.label
+  """
 
-         """
-    queryString.query[LabelSummary].to[List]
+  // get annotation group summary by project layer
+  // if layerId not provided, look at the default project layer
+  def getAnnotationGroupSummary(
+      projectId: UUID,
+      annotationGroupId: UUID,
+      layerIdO: Option[UUID] = None): ConnectionIO[List[LabelSummary]] = {
+    for {
+      project <- ProjectDao.unsafeGetProjectById(projectId)
+      layerId = ProjectDao.getProjectLayerId(layerIdO, project)
+      summary <- getAnnotationGroupSummaryF(annotationGroupId, layerId)
+        .query[LabelSummary]
+        .to[List]
+    } yield { summary }
   }
 
   def deleteAnnotationGroup(projectId: UUID, agId: UUID): ConnectionIO[Int] =
@@ -156,5 +165,4 @@ object AnnotationGroupDao extends Dao[AnnotationGroup] {
                             user: User): ConnectionIO[Int] = {
     updateAnnotationGroupQ(projectId, ag, agId, user).run
   }
-
 }

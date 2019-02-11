@@ -1,26 +1,24 @@
 package com.rasterfoundry.database
 
+import com.rasterfoundry.common.datamodel.LayerAttribute
+
 import cats.effect.IO
 import cats.implicits._
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.common.datamodel.LayerAttribute
 import doobie.Fragments._
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import geotrellis.spark.LayerId
 import spray.json._
 import DefaultJsonProtocol._
+import geotrellis.spark.LayerId
+import geotrellis.raster.histogram.Histogram
+import geotrellis.raster.io.json._
+
 import java.util.UUID
 
-import geotrellis.raster.histogram.{Histogram, StreamingHistogram}
-import geotrellis.raster.io.json._
-import io.circe.{Encoder, Json}
-import io.circe.parser.parse
-
-case class LayerAttributeDao() extends HistogramJsonFormats {
+@SuppressWarnings(Array("EmptyCaseClass"))
+final case class LayerAttributeDao() extends HistogramJsonFormats {
   def getHistogram(layerId: UUID,
                    xa: Transactor[IO]): IO[Array[Histogram[Double]]] = {
     LayerAttributeDao

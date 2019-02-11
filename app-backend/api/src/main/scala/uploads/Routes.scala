@@ -17,7 +17,6 @@ import com.rasterfoundry.common.datamodel._
 import com.lonelyplanet.akka.http.extensions.{PageRequest, PaginationDirectives}
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 
 trait UploadRoutes

@@ -7,7 +7,6 @@ import com.rasterfoundry.database.util.RFTransactor
 
 import cats.effect.IO
 import cats.syntax.option._
-import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
@@ -57,6 +56,7 @@ final case class FindAOIProjects(implicit val xa: Transactor[IO])
     val projectIds = aoiProjectsToUpdate.transact(xa).unsafeRunSync
     logger.info(s"Found the following projects to update: ${projectIds}")
     projectIds.map(kickoffAOIUpdateProject)
+    ()
   }
 }
 

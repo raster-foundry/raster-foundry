@@ -21,7 +21,8 @@
       }
     }
 
-    a.active {
+    a.active,
+    a.layer-nav-active {
       color: $brand-primary;
       background: none;
 
@@ -57,6 +58,10 @@
         background-color: darken($shade-light, 5%);
       }
     }
+  }
+
+  .navbar-caret-right{
+    color: $brand-primary
   }
 }
 

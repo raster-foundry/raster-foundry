@@ -1,6 +1,5 @@
 package com.rasterfoundry.api
 
-import akka.http.scaladsl.model.HttpMethods._
 import com.rasterfoundry.api.aoi.AoiRoutes
 import com.rasterfoundry.api.config.ConfigRoutes
 import com.rasterfoundry.api.datasource.DatasourceRoutes
@@ -25,8 +24,10 @@ import com.rasterfoundry.api.user.UserRoutes
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.api.license.LicenseRoutes
 import com.rasterfoundry.api.team.TeamRoutes
+
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import ch.megard.akka.http.cors.scaladsl.settings._
+import akka.http.scaladsl.model.HttpMethods._
 
 import scala.collection.immutable.Seq
 

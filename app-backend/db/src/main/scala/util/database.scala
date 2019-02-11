@@ -1,8 +1,6 @@
 package com.rasterfoundry.database.util
 
 import cats.effect._
-import cats.implicits._
-import doobie.util.ExecutionContexts
 import doobie.hikari.HikariTransactor
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 

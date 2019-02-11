@@ -11,6 +11,24 @@
 
 ### Fixed
 
+## [1.18.0](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-11)
+
+### Added
+
+- Added new export utility as replacement for the old (non-functioning) spark-based export [\#4589](https://github.com/raster-foundry/raster-foundry/pull/4589)
+- Added project layer creation workflow's modal on UI [\#4575](https://github.com/raster-foundry/raster-foundry/pull/4575)
+- Added project layer Annotation related endpoints [\#4569](https://github.com/raster-foundry/raster-foundry/pull/4569)
+- CRUDL endpoints for project layer scenes [\#4550](https://github.com/raster-foundry/raster-foundry/pull/4550)
+- Added publishing of lambda functions to CI build process [\#4586](https://github.com/raster-foundry/raster-foundry/pull/4586)
+- Added tile server support for masked analyses [\#4571](https://github.com/raster-foundry/raster-foundry/pull/4571)
+- Added project layer navigation bar [\#4581](https://github.com/raster-foundry/raster-foundry/pull/4581)
+
+### Fixed
+
+- Removed unused imports and assignments [\#4579](https://github.com/raster-foundry/raster-foundry/pull/4579)
+- Included geometry filter in backsplash scene service to prevent erroneous 500s [\#4580](https://github.com/raster-foundry/raster-foundry/pull/4580)
+- Made scapegoat less angry [\#4611](https://github.com/raster-foundry/raster-foundry/pull/4611)
+
 ### Security
 
 ## [1.17.1](https://github.com/raster-foundry/raster-foundry/tree/1.17.1) (2019-02-04)
@@ -27,6 +45,7 @@
 - Added lambda function for reactively processing new Sentinel-2 imagery [\#4491](https://github.com/raster-foundry/raster-foundry/pull/4491)
 - Added a migration that creates relationship among projects, project layers, and scenes and populates corresponding tables. Updated associated data models and `Dao`s [\#4479](https://github.com/raster-foundry/raster-foundry/pull/4479)
 - CRUDL endpoints for project layers [\#4512](https://github.com/raster-foundry/raster-foundry/pull/4512)
+- Added project layer mosaic and scene order endpoint [\#4547](https://github.com/raster-foundry/raster-foundry/pull/4547)
 - Added `SceneToLayer` data model and `SceneToLayerDao`; updated related function calls in `ProjectDao` and project api [\#4513](https://github.com/raster-foundry/raster-foundry/pull/4513)
 - Added a migration that creates relationship among projects, project layers, and scenes and populates corresponding tables. Updated associated data models and `Dao`s. [\#4479](https://github.com/raster-foundry/raster-foundry/pull/4479)
 - Allow sharing most objects when you have edit permissions granted to you [\#4514](https://github.com/raster-foundry/raster-foundry/pull/4514)

@@ -8,11 +8,12 @@ import io.circe._
 import io.circe.generic.JsonCodec
 
 @JsonCodec
-final case class SceneFilterFields(cloudCover: Option[Float] = None,
-                                   acquisitionDate: Option[java.sql.Timestamp] =
-                                     None,
-                                   sunAzimuth: Option[Float] = None,
-                                   sunElevation: Option[Float] = None)
+final case class SceneFilterFields(
+    cloudCover: Option[Float] = None,
+    acquisitionDate: Option[java.sql.Timestamp] = None,
+    sunAzimuth: Option[Float] = None,
+    sunElevation: Option[Float] = None
+)
 
 object SceneFilterFields {
   def tupled = (SceneFilterFields.apply _).tupled
@@ -22,9 +23,11 @@ object SceneFilterFields {
 }
 
 @JsonCodec
-final case class SceneStatusFields(thumbnailStatus: JobStatus,
-                                   boundaryStatus: JobStatus,
-                                   ingestStatus: IngestStatus)
+final case class SceneStatusFields(
+    thumbnailStatus: JobStatus,
+    boundaryStatus: JobStatus,
+    ingestStatus: IngestStatus
+)
 
 object SceneStatusFields {
   def tupled = (SceneStatusFields.apply _).tupled
@@ -55,9 +58,11 @@ final case class Scene(
 ) {
   def toScene: Scene = this
 
-  def withRelatedFromComponents(images: List[Image.WithRelated],
-                                thumbnails: List[Thumbnail],
-                                datasource: Datasource): Scene.WithRelated =
+  def withRelatedFromComponents(
+      images: List[Image.WithRelated],
+      thumbnails: List[Thumbnail],
+      datasource: Datasource
+  ): Scene.WithRelated =
     Scene.WithRelated(
       this.id,
       this.createdAt,
@@ -111,7 +116,7 @@ final case class Scene(
   def projectSceneFromComponents(
       thumbnails: List[Thumbnail],
       datasource: Datasource,
-      sceneToProject: Option[SceneToProject]
+      sceneOrder: Option[Int]
   ): Scene.ProjectScene = Scene.ProjectScene(
     this.id,
     this.createdAt,
@@ -132,7 +137,7 @@ final case class Scene(
     this.filterFields,
     this.statusFields,
     this.sceneType,
-    sceneToProject.map(_.sceneOrder).flatten
+    sceneOrder
   )
 }
 
@@ -140,24 +145,24 @@ object Scene {
 
   /** Case class extracted from a POST request */
   @JsonCodec
-  final case class Create(id: Option[UUID],
-                          visibility: Visibility,
-                          tags: List[String],
-                          datasource: UUID,
-                          sceneMetadata: Json,
-                          name: String,
-                          owner: Option[String],
-                          tileFootprint: Option[Projected[MultiPolygon]],
-                          dataFootprint: Option[Projected[MultiPolygon]],
-                          metadataFiles: List[String],
-                          images: List[Image.Banded],
-                          thumbnails: List[Thumbnail.Identified],
-                          ingestLocation: Option[String],
-                          filterFields: SceneFilterFields =
-                            new SceneFilterFields(),
-                          statusFields: SceneStatusFields,
-                          sceneType: Option[SceneType] = None)
-      extends OwnerCheck {
+  final case class Create(
+      id: Option[UUID],
+      visibility: Visibility,
+      tags: List[String],
+      datasource: UUID,
+      sceneMetadata: Json,
+      name: String,
+      owner: Option[String],
+      tileFootprint: Option[Projected[MultiPolygon]],
+      dataFootprint: Option[Projected[MultiPolygon]],
+      metadataFiles: List[String],
+      images: List[Image.Banded],
+      thumbnails: List[Thumbnail.Identified],
+      ingestLocation: Option[String],
+      filterFields: SceneFilterFields = new SceneFilterFields(),
+      statusFields: SceneStatusFields,
+      sceneType: Option[SceneType] = None
+  ) extends OwnerCheck {
     def toScene(user: User): Scene = {
       val now = new Timestamp(new java.util.Date().getTime)
 
@@ -187,27 +192,28 @@ object Scene {
   }
 
   @JsonCodec
-  final case class WithRelated(id: UUID,
-                               createdAt: Timestamp,
-                               createdBy: String,
-                               modifiedAt: Timestamp,
-                               modifiedBy: String,
-                               owner: String,
-                               visibility: Visibility,
-                               tags: List[String],
-                               datasource: Datasource.Thin,
-                               sceneMetadata: Json,
-                               name: String,
-                               tileFootprint: Option[Projected[MultiPolygon]],
-                               dataFootprint: Option[Projected[MultiPolygon]],
-                               metadataFiles: List[String],
-                               images: List[Image.WithRelated],
-                               thumbnails: List[Thumbnail],
-                               ingestLocation: Option[String],
-                               filterFields: SceneFilterFields =
-                                 new SceneFilterFields(),
-                               statusFields: SceneStatusFields,
-                               sceneType: Option[SceneType] = None) {
+  final case class WithRelated(
+      id: UUID,
+      createdAt: Timestamp,
+      createdBy: String,
+      modifiedAt: Timestamp,
+      modifiedBy: String,
+      owner: String,
+      visibility: Visibility,
+      tags: List[String],
+      datasource: Datasource.Thin,
+      sceneMetadata: Json,
+      name: String,
+      tileFootprint: Option[Projected[MultiPolygon]],
+      dataFootprint: Option[Projected[MultiPolygon]],
+      metadataFiles: List[String],
+      images: List[Image.WithRelated],
+      thumbnails: List[Thumbnail],
+      ingestLocation: Option[String],
+      filterFields: SceneFilterFields = new SceneFilterFields(),
+      statusFields: SceneStatusFields,
+      sceneType: Option[SceneType] = None
+  ) {
     def toScene: Scene =
       Scene(
         id,
@@ -278,7 +284,7 @@ object Scene {
   }
 
   @JsonCodec
-  case class ProjectScene(
+  final case class ProjectScene(
       id: UUID,
       createdAt: Timestamp,
       createdBy: String,

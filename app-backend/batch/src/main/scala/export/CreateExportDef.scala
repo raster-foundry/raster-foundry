@@ -14,8 +14,8 @@ import cats.effect.IO
 import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
+import io.circe._
 import io.circe.syntax._
 
 import java.util.UUID
@@ -30,18 +30,23 @@ final case class CreateExportDef(exportId: UUID, bucket: String, key: String)(
   def s3Client = S3()
 
   @SuppressWarnings(Array("CatchThrowable"))
-  protected def writeExportDefToS3(exportDef: ExportDefinition,
+  protected def writeExportDefToS3(exportDef: Json,
                                    bucket: String,
                                    key: String): Unit = {
+    val id = {
+      val cursor = exportDef.hcursor
+      cursor.downField("id").as[String]
+    }
     logger.info(
-      s"Uploading export definition ${exportDef.id.toString} to S3 at s3://${bucket}/${key}")
+      s"Uploading export definition ${id.toString} to S3 at s3://${bucket}/${key}")
 
     try {
-      s3Client.putObjectString(bucket, key, exportDef.asJson.toString)
+      s3Client.putObjectString(bucket, key, exportDef.noSpaces)
+      ()
     } catch {
       case e: Throwable => {
         logger.error(
-          s"Failed to put export definition ${exportDef.id} => ${bucket}/${key}")
+          s"Failed to put export definition ${id} => ${bucket}/${key}")
         throw e
       }
     }

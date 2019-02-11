@@ -1,17 +1,13 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util.Page
 import com.rasterfoundry.common.datamodel._
 
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import cats._
-import cats.data._
-import cats.effect.IO
 import cats.implicits._
 
 import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
@@ -29,10 +25,11 @@ object ProjectScenesDao extends Dao[Scene] {
           acquisition_date, sun_azimuth, sun_elevation, thumbnail_status,
           boundary_status, ingest_status, scene_type FROM""" ++ tableF
 
-  def listProjectScenes(projectId: UUID,
-                        pageRequest: PageRequest,
-                        sceneParams: CombinedSceneQueryParams)
-    : ConnectionIO[PaginatedResponse[Scene.ProjectScene]] = {
+  def listProjectScenes(
+      projectId: UUID,
+      pageRequest: PageRequest,
+      sceneParams: CombinedSceneQueryParams
+  ): ConnectionIO[PaginatedResponse[Scene.ProjectScene]] = {
 
     val projectQuery = ProjectDao.query.filter(projectId).select
     val andPendingF: Fragment = sceneParams.sceneParams.pending match {
@@ -42,9 +39,11 @@ object ProjectScenesDao extends Dao[Scene] {
 
     // we don't need to specify NULLS LAST for scene_order ASC,
     // since it is the default when sorting ASC,
-    val manualOrder = Map("scene_order" -> Order.Asc,
-                          "acquisition_date" -> Order.Asc,
-                          "cloud_cover" -> Order.Asc)
+    val manualOrder = Map(
+      "scene_order" -> Order.Asc,
+      "acquisition_date" -> Order.Asc,
+      "cloud_cover" -> Order.Asc
+    )
     val autoOrder =
       Map("acquisition_date" -> Order.Asc, "cloud_cover" -> Order.Asc)
     val filterQ = query
@@ -75,15 +74,17 @@ object ProjectScenesDao extends Dao[Scene] {
   }
 
   // We know the datasources list head exists because of the foreign key relationship
-  @SuppressWarnings(Array("TraversableHead"))
+  @SuppressWarnings(Array("OptionGet"))
   def scenesToProjectScenes(
       scenes: List[Scene],
-      projectId: UUID): ConnectionIO[List[Scene.ProjectScene]] = {
+      projectId: UUID
+  ): ConnectionIO[List[Scene.ProjectScene]] = {
     // "The astute among you will note that we don’t actually need a monad to do this;
     // an applicative functor is all we need here."
     // let's roll, doobie
     val componentsIO: ConnectionIO[
-      (List[Thumbnail], List[Datasource], List[SceneToProject])] = {
+      (List[Thumbnail], List[Datasource], List[SceneToProject])
+    ] = {
       val thumbnails = SceneWithRelatedDao.getScenesThumbnails(scenes map {
         _.id
       })
@@ -102,8 +103,11 @@ object ProjectScenesDao extends Dao[Scene] {
         scenes map { scene: Scene =>
           scene.projectSceneFromComponents(
             groupedThumbs.getOrElse(scene.id, List.empty[Thumbnail]),
-            datasources.filter(_.id == scene.datasource).head,
-            sceneToProjects.find(_.sceneId == scene.id)
+            datasources.find(_.id == scene.datasource).get,
+            sceneToProjects
+              .find(_.sceneId == scene.id)
+              .map(_.sceneOrder)
+              .flatten
           )
         }
       }

@@ -3,10 +3,8 @@ package com.rasterfoundry.api.feed
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.Uri.{Path, Query}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling._
-import com.lonelyplanet.akka.http.extensions.PageRequest
 import com.typesafe.scalalogging.LazyLogging
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import akka.http.scaladsl.server.Directives._

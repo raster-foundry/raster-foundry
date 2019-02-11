@@ -5,8 +5,6 @@ import akka.http.scaladsl.model._
 import StatusCodes._
 import Directives._
 
-import scala.util.matching.Regex
-
 object RFRejectionHandler {
   implicit val rfRejectionHandler: RejectionHandler = RejectionHandler
     .newBuilder()

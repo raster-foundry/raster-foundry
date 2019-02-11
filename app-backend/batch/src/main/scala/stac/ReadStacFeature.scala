@@ -92,6 +92,7 @@ object ReadStacFeature extends Config with LazyLogging {
               s"Test run, so scene was not actually created:\n${scene}")
           case _ =>
             writeSceneToDb(scene)
+            ()
         }
       case Left(error) =>
         logger.error(
@@ -261,7 +262,6 @@ object ReadStacFeature extends Config with LazyLogging {
       val thumb = ImageIO.read(getStream(new URI(link.href), rootUri))
       // create thumbnail
       val width = thumb.getWidth
-      val height = thumb.getHeight
       Some(
         Thumbnail.Identified(
           id = None,

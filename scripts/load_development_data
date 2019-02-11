@@ -39,11 +39,11 @@ function download_development_images() {
 function load_database_backup() {
     echo "Drop rasterfoundry database"
     docker-compose \
-        exec -T postgres gosu postgres dropdb rasterfoundry
+        exec -T postgres dropdb -U rasterfoundry rasterfoundry
 
     echo "Create rasterfoundry database"
     docker-compose \
-        exec -T postgres gosu postgres createdb rasterfoundry
+        exec -T postgres createdb -U rasterfoundry rasterfoundry
 
     echo "Restore database from backup"
     # Command to create database backup

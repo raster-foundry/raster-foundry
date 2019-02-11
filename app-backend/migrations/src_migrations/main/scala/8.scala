@@ -1,8 +1,6 @@
 import slick.jdbc.PostgresProfile.api._
 import com.liyaos.forklift.slick.{SqlMigration}
 
-import java.util.{Calendar, Date, UUID}
-
 object M8 {
 
   RFMigrations.migrations = RFMigrations.migrations :+ SqlMigration(8)(

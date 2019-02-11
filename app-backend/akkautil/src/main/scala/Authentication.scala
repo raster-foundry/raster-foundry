@@ -8,7 +8,6 @@ import akka.http.scaladsl.server.AuthenticationFailedRejection.CredentialsReject
 import akka.http.scaladsl.server._
 import cats.effect.IO
 import cats.implicits._
-import cats.data._
 import com.guizmaii.scalajwt.{ConfigurableJwtValidator, JwtToken}
 import com.nimbusds.jose.jwk.source.{JWKSource, RemoteJWKSet}
 import com.nimbusds.jose.proc.SecurityContext
@@ -18,7 +17,6 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 
 import scala.concurrent.Future
@@ -130,7 +128,7 @@ trait Authentication extends Directives with LazyLogging {
     )
   }
 
-  @SuppressWarnings(Array("TraversableHead"))
+  @SuppressWarnings(Array("TraversableHead", "PartialFunctionInsteadOfMatch"))
   def authenticateWithToken(tokenString: String): Directive1[User] = {
     val result = verifyJWT(tokenString)
     result match {
@@ -145,13 +143,12 @@ trait Authentication extends Directives with LazyLogging {
                                            user: User)
         // All users will have a platform role, either added by a migration or created with the user if they are new
         val query = for {
-          userAndRoles <- UserDao.getUserAndActiveRolesById(userId).flatMap {
+          (user, roles) <- UserDao.getUserAndActiveRolesById(userId).flatMap {
             case UserOptionAndRoles(Some(user), roles) =>
               (user, roles).pure[ConnectionIO]
             case UserOptionAndRoles(None, _) =>
               createUserWithRoles(userId, email, name, picture, jwtClaims)
           }
-          (user, roles) = userAndRoles
           platformRole = roles.find(role =>
             role.groupType == GroupType.Platform)
           plat <- platformRole match {
@@ -264,8 +261,7 @@ trait Authentication extends Directives with LazyLogging {
       newUserWithRoles <- {
         UserDao.createUserWithJWT(systemUser, jwtUser)
       }
-      (newUser, roles) = newUserWithRoles
-    } yield (newUser, roles)
+    } yield newUserWithRoles
   }
 
   /**

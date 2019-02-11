@@ -2,7 +2,6 @@ package com.rasterfoundry.backsplash.color
 
 import io.circe.generic.JsonCodec
 import geotrellis.raster._
-import geotrellis.raster.equalization.HistogramEqualization
 import geotrellis.raster.histogram.Histogram
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.commons.math3.util.FastMath
@@ -248,8 +247,8 @@ object ColorCorrect extends LazyLogging {
             rgbHist: Array[Histogram[Double]],
             params: Params,
             nodataValue: Option[Double]): MultibandTile = {
-    var _rgbTile = rgbTile
-    var _rgbHist = rgbHist
+    val _rgbTile = rgbTile
+    val _rgbHist = rgbHist
     val gammas = params.getGamma
 
     val layerRgbClipping = {

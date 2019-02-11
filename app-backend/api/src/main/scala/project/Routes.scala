@@ -28,7 +28,6 @@ import com.typesafe.scalalogging.LazyLogging
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 import geotrellis.shapefile.ShapeFileReader
 import io.circe.generic.JsonCodec
@@ -48,6 +47,7 @@ trait ProjectRoutes
     with Config
     with QueryParametersCommon
     with SceneQueryParameterDirective
+    with ProjectSceneQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
     with AWSBatch
@@ -134,6 +134,147 @@ trait ProjectRoutes
                     pathEndOrSingleSlash {
                       put {
                         setProjectLayerSceneOrder(projectId, layerId)
+                      }
+                    }
+                  } ~
+                  pathPrefix("labels") {
+                    pathEndOrSingleSlash {
+                      get {
+                        listLayerLabels(projectId, layerId)
+                      }
+                    }
+                  } ~
+                  pathPrefix("annotations") {
+                    pathEndOrSingleSlash {
+                      get {
+                        listLayerAnnotations(projectId, layerId)
+                      } ~
+                        post {
+                          createLayerAnnotation(projectId, layerId)
+                        } ~
+                        delete {
+                          deleteLayerAnnotations(projectId, layerId)
+                        }
+                    } ~
+                      pathPrefix(JavaUUID) { annotationId =>
+                        pathEndOrSingleSlash {
+                          get {
+                            getLayerAnnotation(projectId, annotationId, layerId)
+                          } ~
+                            put {
+                              updateLayerAnnotation(projectId,
+                                                    annotationId,
+                                                    layerId)
+                            } ~
+                            delete {
+                              deleteLayerAnnotation(projectId,
+                                                    annotationId,
+                                                    layerId)
+                            }
+                        }
+                      } ~
+                      pathPrefix("shapefile") {
+                        pathEndOrSingleSlash {
+                          get {
+                            exportLayerAnnotationShapefile(projectId, layerId)
+                          } ~
+                            post {
+                              authenticate { user =>
+                                val tempFile = ScalaFile.newTemporaryFile()
+                                tempFile.deleteOnExit()
+                                val response =
+                                  storeUploadedFile("name",
+                                                    (_) => tempFile.toJava) {
+                                    (m, _) =>
+                                      processShapefile(projectId,
+                                                       tempFile,
+                                                       m,
+                                                       None,
+                                                       Some(layerId))
+                                  }
+                                tempFile.delete()
+                                response
+                              }
+                            }
+                        } ~
+                          pathPrefix("import") {
+                            pathEndOrSingleSlash {
+                              (post & formFieldMap) { fields =>
+                                authenticate { user =>
+                                  val tempFile = ScalaFile.newTemporaryFile()
+                                  tempFile.deleteOnExit()
+                                  val response =
+                                    storeUploadedFile("shapefile",
+                                                      (_) => tempFile.toJava) {
+                                      (m, _) =>
+                                        processShapefile(projectId,
+                                                         tempFile,
+                                                         m,
+                                                         Some(fields),
+                                                         Some(layerId))
+                                    }
+                                  tempFile.delete()
+                                  response
+                                }
+                              }
+                            }
+                          }
+                      }
+                  } ~
+                  pathPrefix("annotation-groups") {
+                    pathEndOrSingleSlash {
+                      get {
+                        listLayerAnnotationGroups(projectId, layerId)
+                      } ~
+                        post {
+                          createLayerAnnotationGroup(projectId, layerId)
+                        }
+                    } ~
+                      pathPrefix(JavaUUID) { annotationGroupId =>
+                        pathEndOrSingleSlash {
+                          get {
+                            getLayerAnnotationGroup(projectId,
+                                                    layerId,
+                                                    annotationGroupId)
+                          } ~
+                            put {
+                              updateLayerAnnotationGroup(projectId,
+                                                         layerId,
+                                                         annotationGroupId)
+                            } ~
+                            delete {
+                              deleteLayerAnnotationGroup(projectId,
+                                                         layerId,
+                                                         annotationGroupId)
+                            }
+                        } ~
+                          pathPrefix("summary") {
+                            getLayerAnnotationGroupSummary(projectId,
+                                                           layerId,
+                                                           annotationGroupId)
+                          }
+                      }
+                  } ~
+                  pathPrefix("scenes") {
+                    pathEndOrSingleSlash {
+                      get {
+                        listLayerScenes(projectId, layerId)
+                      } ~
+                        post {
+                          addProjectScenes(projectId, Some(layerId))
+                        } ~
+                        put {
+                          updateProjectScenes(projectId, Some(layerId))
+                        } ~
+                        delete {
+                          deleteProjectScenes(projectId, Some(layerId))
+                        }
+                    }
+                  } ~
+                  pathPrefix("datasources") {
+                    pathEndOrSingleSlash {
+                      get {
+                        listLayerDatasources(projectId, layerId)
                       }
                     }
                   }
@@ -283,13 +424,6 @@ trait ProjectRoutes
                   deleteProjectScenes(projectId)
                 }
             } ~
-              pathPrefix("bulk-add-from-query") {
-                pathEndOrSingleSlash {
-                  post {
-                    addProjectScenesFromQueryParams(projectId)
-                  }
-                }
-              } ~
               pathPrefix("accept") {
                 post {
                   acceptScenes(projectId)
@@ -536,7 +670,7 @@ trait ProjectRoutes
       } {
         complete {
           AnnotationGroupDao
-            .getAnnotationGroupSummary(annotationGroupId)
+            .getAnnotationGroupSummary(projectId, annotationGroupId)
             .transact(xa)
             .unsafeToFuture
         }
@@ -639,7 +773,7 @@ trait ProjectRoutes
       } {
         onSuccess(
           AnnotationDao
-            .listForExport(projectId, annotationExportQP)
+            .listForProjectExport(projectId, annotationExportQP)
             .transact(xa)
             .unsafeToFuture) {
           case annotations @ (annotation: List[Annotation]) => {
@@ -1015,26 +1149,57 @@ trait ProjectRoutes
     }
   }
 
-  def addProjectScenes(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[NonEmptyList[UUID]]) { sceneIds =>
-        if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-          complete(StatusCodes.RequestEntityTooLarge)
-        }
-        val scenesAdded =
-          ProjectDao.addScenesToProject(sceneIds, projectId, true, None)
+  def addProjectScenes(projectId: UUID, layerId: Option[UUID] = None): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[NonEmptyList[UUID]]) { sceneIds =>
+          if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+            complete(StatusCodes.RequestEntityTooLarge)
+          }
+          val scenesAdded =
+            ProjectDao.addScenesToProject(sceneIds, projectId, true, layerId)
 
-        complete { scenesAdded.transact(xa).unsafeToFuture }
+          complete { scenesAdded.transact(xa).unsafeToFuture }
+        }
       }
     }
-  }
 
-  def addProjectScenesFromQueryParams(projectId: UUID): Route = authenticate {
+  def updateProjectScenes(projectId: UUID,
+                          layerId: Option[UUID] = None): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[Seq[UUID]]) { sceneIds =>
+          if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+            complete(StatusCodes.RequestEntityTooLarge)
+          }
+
+          sceneIds.toList.toNel match {
+            case Some(ids) => {
+              complete {
+                ProjectDao
+                  .replaceScenesInProject(ids, projectId, layerId)
+                  .transact(xa)
+                  .unsafeToFuture()
+              }
+            }
+            case _ => complete(StatusCodes.BadRequest)
+          }
+        }
+      }
+    }
+
+  def deleteProjectScenes(projectId: UUID,
+                          layerId: Option[UUID] = None): Route = authenticate {
     user =>
       authorizeAsync {
         ProjectDao
@@ -1042,66 +1207,20 @@ trait ProjectRoutes
           .transact(xa)
           .unsafeToFuture
       } {
-        entity(as[CombinedSceneQueryParams]) { combinedSceneQueryParams =>
+        entity(as[Seq[UUID]]) { sceneIds =>
+          if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
+            complete(StatusCodes.RequestEntityTooLarge)
+          }
+
           onSuccess(
             ProjectDao
-              .addScenesToProjectFromQuery(combinedSceneQueryParams, projectId)
+              .deleteScenesFromProject(sceneIds.toList, projectId, layerId)
               .transact(xa)
-              .unsafeToFuture()) { scenesAdded =>
-            complete((StatusCodes.Created, scenesAdded))
+              .unsafeToFuture()) { _ =>
+            complete(StatusCodes.NoContent)
           }
         }
       }
-  }
-
-  def updateProjectScenes(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[Seq[UUID]]) { sceneIds =>
-        if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-          complete(StatusCodes.RequestEntityTooLarge)
-        }
-
-        sceneIds.toList.toNel match {
-          case Some(ids) => {
-            complete {
-              ProjectDao
-                .replaceScenesInProject(ids, projectId)
-                .transact(xa)
-                .unsafeToFuture()
-            }
-          }
-          case _ => complete(StatusCodes.BadRequest)
-        }
-      }
-    }
-  }
-
-  def deleteProjectScenes(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      entity(as[Seq[UUID]]) { sceneIds =>
-        if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
-          complete(StatusCodes.RequestEntityTooLarge)
-        }
-
-        onSuccess(
-          ProjectDao
-            .deleteScenesFromProject(sceneIds.toList, projectId)
-            .transact(xa)
-            .unsafeToFuture()) { _ =>
-          complete(StatusCodes.NoContent)
-        }
-      }
-    }
   }
 
   def listProjectPermissions(projectId: UUID): Route = authenticate { user =>
@@ -1364,7 +1483,7 @@ trait ProjectRoutes
         rejectEmptyResponse {
           complete {
             ProjectLayerDao
-              .getProjectLayer(projectId, layerId, user)
+              .getProjectLayer(projectId, layerId)
               .transact(xa)
               .unsafeToFuture
           }
@@ -1375,14 +1494,10 @@ trait ProjectRoutes
   def updateProjectLayer(projectId: UUID, layerId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        val authIO: ConnectionIO[Boolean] = for {
-          authProject <- ProjectDao.authorized(user,
-                                               ObjectType.Project,
-                                               projectId,
-                                               ActionType.Edit)
-          layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
-        } yield { authProject && layerExist }
-        authIO.transact(xa).unsafeToFuture
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
       } {
         entity(as[ProjectLayer]) { updatedProjectLayer =>
           onSuccess(
@@ -1399,14 +1514,10 @@ trait ProjectRoutes
   def deleteProjectLayer(projectId: UUID, layerId: UUID): Route = authenticate {
     user =>
       authorizeAsync {
-        val authIO: ConnectionIO[Boolean] = for {
-          authProject <- ProjectDao.authorized(user,
-                                               ObjectType.Project,
-                                               projectId,
-                                               ActionType.Edit)
-          layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
-        } yield { authProject && layerExist }
-        authIO.transact(xa).unsafeToFuture
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
       } {
         rejectEmptyResponse {
           complete {
@@ -1419,24 +1530,18 @@ trait ProjectRoutes
       }
   }
 
-  def getProjectLayerMosaicDefinition(projectId: UUID,
-                                      projectLayerId: UUID): Route =
+  def getProjectLayerMosaicDefinition(projectId: UUID, layerId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
-        val authIO: ConnectionIO[Boolean] = for {
-          authProject <- ProjectDao.authorized(user,
-                                               ObjectType.Project,
-                                               projectId,
-                                               ActionType.View)
-          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
-                                                         projectId)
-        } yield { authProject && layerExist }
-        authIO.transact(xa).unsafeToFuture
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
       } {
         rejectEmptyResponse {
           complete {
             SceneToLayerDao
-              .getMosaicDefinition(projectLayerId)
+              .getMosaicDefinition(layerId)
               .compile
               .to[List]
               .transact(xa)
@@ -1447,23 +1552,18 @@ trait ProjectRoutes
     }
 
   def getProjectLayerSceneColorCorrectParams(projectId: UUID,
-                                             projectLayerId: UUID,
+                                             layerId: UUID,
                                              sceneId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
-        val authIO: ConnectionIO[Boolean] = for {
-          authProject <- ProjectDao.authorized(user,
-                                               ObjectType.Project,
-                                               projectId,
-                                               ActionType.View)
-          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
-                                                         projectId)
-        } yield { authProject && layerExist }
-        authIO.transact(xa).unsafeToFuture
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
       } {
         complete {
           SceneToLayerDao
-            .getColorCorrectParams(projectLayerId, sceneId)
+            .getColorCorrectParams(layerId, sceneId)
             .transact(xa)
             .unsafeToFuture
         }
@@ -1471,24 +1571,19 @@ trait ProjectRoutes
     }
 
   def setProjectLayerSceneColorCorrectParams(projectId: UUID,
-                                             projectLayerId: UUID,
+                                             layerId: UUID,
                                              sceneId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
-        val authIO: ConnectionIO[Boolean] = for {
-          authProject <- ProjectDao.authorized(user,
-                                               ObjectType.Project,
-                                               projectId,
-                                               ActionType.Edit)
-          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
-                                                         projectId)
-        } yield { authProject && layerExist }
-        authIO.transact(xa).unsafeToFuture
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
       } {
         entity(as[ColorCorrect.Params]) { ccParams =>
           onSuccess(
             SceneToLayerDao
-              .setColorCorrectParams(projectLayerId, sceneId, ccParams)
+              .setColorCorrectParams(layerId, sceneId, ccParams)
               .transact(xa)
               .unsafeToFuture) { stl =>
             complete(StatusCodes.NoContent)
@@ -1498,23 +1593,18 @@ trait ProjectRoutes
     }
 
   def setProjectLayerScenesColorCorrectParams(projectId: UUID,
-                                              projectLayerId: UUID): Route =
+                                              layerId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
-        val authIO: ConnectionIO[Boolean] = for {
-          authProject <- ProjectDao.authorized(user,
-                                               ObjectType.Project,
-                                               projectId,
-                                               ActionType.Edit)
-          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
-                                                         projectId)
-        } yield { authProject && layerExist }
-        authIO.transact(xa).unsafeToFuture
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
       } {
         entity(as[BatchParams]) { params =>
           onSuccess(
             SceneToLayerDao
-              .setColorCorrectParamsBatch(projectLayerId, params)
+              .setColorCorrectParamsBatch(layerId, params)
               .transact(xa)
               .unsafeToFuture
           ) { scenesToLayer =>
@@ -1524,18 +1614,13 @@ trait ProjectRoutes
       }
     }
 
-  def setProjectLayerSceneOrder(projectId: UUID, projectLayerId: UUID): Route =
+  def setProjectLayerSceneOrder(projectId: UUID, layerId: UUID): Route =
     authenticate { user =>
       authorizeAsync {
-        val authIO: ConnectionIO[Boolean] = for {
-          authProject <- ProjectDao.authorized(user,
-                                               ObjectType.Project,
-                                               projectId,
-                                               ActionType.Edit)
-          layerExist <- ProjectLayerDao.layerIsInProject(projectLayerId,
-                                                         projectId)
-        } yield { authProject && layerExist }
-        authIO.transact(xa).unsafeToFuture
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
       } {
         entity(as[Seq[UUID]]) { sceneIds =>
           if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
@@ -1544,7 +1629,7 @@ trait ProjectRoutes
 
           onSuccess(
             SceneToLayerDao
-              .setManualOrder(projectLayerId, sceneIds)
+              .setManualOrder(layerId, sceneIds)
               .transact(xa)
               .unsafeToFuture
           ) { updatedOrder =>
@@ -1554,4 +1639,346 @@ trait ProjectRoutes
       }
     }
 
+  def listLayerScenes(projectId: UUID, layerId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        (withPagination & projectSceneQueryParameters) { (page, sceneParams) =>
+          complete {
+            ProjectLayerScenesDao
+              .listLayerScenes(layerId, page, sceneParams)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+  }
+
+  def listLayerDatasources(projectId: UUID, layerId: UUID): Route =
+    authenticate { user =>
+      (projectQueryParameters) { projectQueryParams =>
+        authorizeAsync {
+          val authorized = for {
+            authProject <- ProjectDao.authorized(user,
+                                                 ObjectType.Project,
+                                                 projectId,
+                                                 ActionType.View)
+            authResult <- (authProject, projectQueryParams.analysisId) match {
+              case (false, Some(analysisId: UUID)) =>
+                ToolRunDao
+                  .authorizeReferencedProject(user, analysisId, projectId)
+              case (_, _) => authProject.pure[ConnectionIO]
+            }
+          } yield authResult
+          authorized.transact(xa).unsafeToFuture
+        } {
+          complete {
+            ProjectLayerDatasourcesDao
+              .listProjectLayerDatasources(layerId)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+
+  def listLayerLabels(projectId: UUID, layerId: UUID): Route = authenticate {
+    user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          AnnotationDao
+            .listProjectLabels(projectId, Some(layerId))
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
+  }
+
+  def listLayerAnnotations(projectId: UUID, layerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        (withPagination & annotationQueryParams) {
+          (page: PageRequest, queryParams: AnnotationQueryParameters) =>
+            complete {
+              AnnotationDao
+                .listByLayer(projectId, page, queryParams, Some(layerId))
+                .transact(xa)
+                .unsafeToFuture
+                .map { p =>
+                  {
+                    fromPaginatedResponseToGeoJson[Annotation,
+                                                   Annotation.GeoJSON](p)
+                  }
+                }
+            }
+        }
+      }
+    }
+
+  def createLayerAnnotation(projectId: UUID, layerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[AnnotationFeatureCollectionCreate]) { fc =>
+          val annotationsCreate = fc.features map { _.toAnnotationCreate }
+          onSuccess(
+            AnnotationDao
+              .insertAnnotations(annotationsCreate.toList,
+                                 projectId,
+                                 user,
+                                 Some(layerId))
+              .transact(xa)
+              .unsafeToFuture
+              .map { annotations: List[Annotation] =>
+                fromSeqToFeatureCollection[Annotation, Annotation.GeoJSON](
+                  annotations)
+              }
+          ) { createdAnnotation =>
+            complete((StatusCodes.Created, createdAnnotation))
+          }
+        }
+      }
+    }
+
+  def deleteLayerAnnotations(projectId: UUID, layerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        onSuccess(
+          AnnotationDao
+            .deleteByProjectLayer(projectId, Some(layerId))
+            .transact(xa)
+            .unsafeToFuture) {
+          completeSomeOrNotFound
+        }
+      }
+    }
+
+  def getLayerAnnotation(projectId: UUID,
+                         annotationId: UUID,
+                         layerId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao
+        .authProjectLayerExist(projectId, layerId, user, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      rejectEmptyResponse {
+        complete {
+          AnnotationDao
+            .getAnnotationById(projectId, annotationId)
+            .transact(xa)
+            .unsafeToFuture
+            .map {
+              _ map { _.toGeoJSONFeature }
+            }
+        }
+      }
+    }
+  }
+  def updateLayerAnnotation(projectId: UUID,
+                            annotationId: UUID,
+                            layerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[Annotation.GeoJSON]) {
+          updatedAnnotation: Annotation.GeoJSON =>
+            onSuccess(AnnotationDao
+              .updateAnnotation(projectId, updatedAnnotation.toAnnotation, user)
+              .transact(xa)
+              .unsafeToFuture) { count =>
+              completeSingleOrNotFound(count)
+            }
+        }
+      }
+    }
+
+  def deleteLayerAnnotation(projectId: UUID,
+                            annotationId: UUID,
+                            layerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        onSuccess(
+          AnnotationDao
+            .deleteById(projectId, annotationId)
+            .transact(xa)
+            .unsafeToFuture) {
+          completeSingleOrNotFound
+        }
+      }
+    }
+
+  def exportLayerAnnotationShapefile(projectId: UUID, layerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        onSuccess(
+          AnnotationDao
+            .listForLayerExport(projectId, layerId)
+            .transact(xa)
+            .unsafeToFuture) {
+          case annotations @ (annotation: List[Annotation]) => {
+            complete(
+              AnnotationShapefileService
+                .getAnnotationShapefileDownloadUrl(annotations, user)
+            )
+          }
+          case _ =>
+            complete(
+              throw new Exception(
+                "Annotations do not exist or are not accessible by this user"))
+        }
+      }
+    }
+
+  def listLayerAnnotationGroups(projectId: UUID, layerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          AnnotationGroupDao
+            .listForProject(projectId, Some(layerId))
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
+    }
+
+  def createLayerAnnotationGroup(projectId: UUID, layerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[AnnotationGroup.Create]) { agCreate =>
+          complete {
+            AnnotationGroupDao
+              .createAnnotationGroup(projectId, agCreate, user, Some(layerId))
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+
+  def getLayerAnnotationGroup(projectId: UUID,
+                              layerId: UUID,
+                              agId: UUID): Route = authenticate { user =>
+    authorizeAsync {
+      ProjectDao
+        .authProjectLayerExist(projectId, layerId, user, ActionType.View)
+        .transact(xa)
+        .unsafeToFuture
+    } {
+      complete {
+        AnnotationGroupDao
+          .getAnnotationGroup(projectId, agId)
+          .transact(xa)
+          .unsafeToFuture
+      }
+    }
+  }
+
+  def updateLayerAnnotationGroup(projectId: UUID,
+                                 layerId: UUID,
+                                 agId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[AnnotationGroup]) { annotationGroup =>
+          complete {
+            AnnotationGroupDao
+              .updateAnnotationGroup(projectId, annotationGroup, agId, user)
+              .transact(xa)
+              .unsafeToFuture
+          }
+        }
+      }
+    }
+
+  def deleteLayerAnnotationGroup(projectId: UUID,
+                                 layerId: UUID,
+                                 agId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.Annotate)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          AnnotationGroupDao
+            .deleteAnnotationGroup(projectId, agId)
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
+    }
+
+  def getLayerAnnotationGroupSummary(projectId: UUID,
+                                     layerId: UUID,
+                                     annotationGroupId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          AnnotationGroupDao
+            .getAnnotationGroupSummary(projectId,
+                                       annotationGroupId,
+                                       Some(layerId))
+            .transact(xa)
+            .unsafeToFuture
+        }
+      }
+    }
 }

@@ -1,7 +1,6 @@
 package com.rasterfoundry.backsplash
 
 import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.color.{Implicits => ColorImplicits}
 
 import com.azavea.maml.ast.Expression
@@ -12,7 +11,6 @@ import geotrellis.raster._
 import geotrellis.vector._
 import geotrellis.server._
 import cats.effect._
-import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 
 sealed trait PaintableTool extends ColorImplicits with LazyLogging {
@@ -31,8 +29,7 @@ object PaintableTool {
       expr: Expression,
       paramMap: Map[String, Param],
       renderDef: Option[RenderDefinition],
-      interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT,
-      paint: Boolean = true // whether to paint the tile or return raw values
+      interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
   ): PaintableTool = new PaintableTool {
 
     def tms(z: Int, x: Int, y: Int)(

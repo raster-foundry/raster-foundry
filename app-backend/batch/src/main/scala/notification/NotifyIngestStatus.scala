@@ -3,12 +3,11 @@ package com.rasterfoundry.batch.notification
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
-import com.rasterfoundry.common.notification.Email.NotificationEmail
+import com.rasterfoundry.common.notification.Email.{EmailConfig, NotificationEmail}
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{PlatformDao, ProjectDao, SceneDao}
 import com.rasterfoundry.common.datamodel._
-import com.typesafe.scalalogging.LazyLogging
 
 import cats.effect.IO
 import cats.implicits._
@@ -177,11 +176,11 @@ final case class NotifyIngestStatus(sceneId: UUID)(
               val (ingestEmailSubject, htmlBody, plainBody) =
                 createIngestEmailContentForConsumers(pU, scene, ingestStatus)
               email
-                .setEmail(host,
+                .setEmail(EmailConfig(host,
                           port,
                           encryption,
                           platSmtpUserName,
-                          pw,
+                          pw),
                           userEmail,
                           ingestEmailSubject,
                           htmlBody,
@@ -233,11 +232,11 @@ final case class NotifyIngestStatus(sceneId: UUID)(
             val (ingestEmailSubject, htmlBody, plainBody) =
               createIngestEmailContentForOwner(pO, scene, ingestStatus)
             email
-              .setEmail(host,
+              .setEmail(EmailConfig(host,
                         port,
                         encryption,
                         platSmtpUserName,
-                        pw,
+                        pw),
                         userEmail,
                         ingestEmailSubject,
                         htmlBody,
@@ -272,6 +271,7 @@ final case class NotifyIngestStatus(sceneId: UUID)(
                                          ingestStatus)
       case _ => logger.warn(s"Scene ${sceneId} is not in any project yet.")
     }
+    ()
   }
 
   def notifyOwners(scene: Scene, ingestStatus: String): Unit = {

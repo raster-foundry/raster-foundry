@@ -8,14 +8,11 @@ import com.rasterfoundry.database.{
   SceneDao,
   ToolRunDao
 }
-import com.rasterfoundry.database.util.RFTransactor
 
 import cats.effect._
 import doobie.Transactor
 import doobie.implicits._
 import com.typesafe.scalalogging.LazyLogging
-import scalacache._
-import scalacache.caffeine._
 import scalacache.memoization._
 import scalacache.CatsEffect.modes._
 

@@ -2,15 +2,9 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
+
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
-import cats.syntax.either._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
@@ -47,8 +41,7 @@ class AuthorizationSpec
               } yield { (dbUser1, dbUser2, dbOrg1) }
 
             val usersAuthedIO: ConnectionIO[(Boolean, Boolean)] = for {
-              users <- usersWithOrgOneIO
-              (user1, user2, dbOrg1) = users
+              (user1, user2, _) <- usersWithOrgOneIO
               project <- ProjectDao.insertProject(
                 fixupProjectCreate(user1, projectCreate).copy(
                   visibility = Visibility.Private),
@@ -106,8 +99,7 @@ class AuthorizationSpec
             } yield { (dbUser1, dbUser2, dbOrg1, dbPlatform1) }
 
             val usersAuthedIO = for {
-              usersOrgPlatform <- usersAndOrgOnePlatformOneIO
-              (user1, user2, org1, platform1) = usersOrgPlatform
+              (user1, user2, _, platform1) <- usersAndOrgOnePlatformOneIO
               project <- ProjectDao.insertProject(
                 fixupProjectCreate(user1, projectCreate).copy(
                   visibility = Visibility.Private),
@@ -215,10 +207,9 @@ class AuthorizationSpec
           {
             val insertManyAcrsIO = for {
               dbPlatform <- PlatformDao.create(platform)
-              orgUser <- insertUserAndOrg(
+              (_, user) <- insertUserAndOrg(
                 userCreate,
                 orgCreate.copy(platformId = dbPlatform.id))
-              (org, user) = orgUser
               project <- ProjectDao.insertProject(
                 fixupProjectCreate(user, projectCreate).copy(
                   visibility = Visibility.Private),
@@ -253,10 +244,9 @@ class AuthorizationSpec
           {
             val listUserActionsIO = for {
               dbPlatform <- PlatformDao.create(platform)
-              orgUser <- insertUserAndOrg(
+              (_, user) <- insertUserAndOrg(
                 userCreate,
                 orgCreate.copy(platformId = dbPlatform.id))
-              (org, user) = orgUser
               project <- ProjectDao.insertProject(
                 fixupProjectCreate(user, projectCreate).copy(
                   visibility = Visibility.Private),
@@ -295,10 +285,9 @@ class AuthorizationSpec
           {
             val listUserActionsIO = for {
               dbPlatform <- PlatformDao.create(platform)
-              orgUser <- insertUserAndOrg(
+              (_, user) <- insertUserAndOrg(
                 userCreate,
                 orgCreate.copy(platformId = dbPlatform.id))
-              (org, user) = orgUser
               project <- ProjectDao.insertProject(
                 fixupProjectCreate(user, projectCreate).copy(
                   visibility = Visibility.Private),
@@ -375,10 +364,9 @@ class AuthorizationSpec
           {
             val listUserActionsIO = for {
               dbPlatform <- PlatformDao.create(platform)
-              orgUser <- insertUserAndOrg(
+              (_, user) <- insertUserAndOrg(
                 userCreate,
                 orgCreate.copy(platformId = dbPlatform.id))
-              (org, user) = orgUser
               project <- ProjectDao.insertProject(
                 fixupProjectCreate(user, projectCreate).copy(
                   visibility = Visibility.Private),

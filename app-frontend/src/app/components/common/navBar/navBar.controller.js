@@ -140,4 +140,8 @@ export default class NavBarController {
     logout() {
         this.authService.logout();
     }
+
+    isProjectLayersNavBar() {
+        return this.$state.includes('project');
+    }
 }

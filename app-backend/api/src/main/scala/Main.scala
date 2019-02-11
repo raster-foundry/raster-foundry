@@ -11,16 +11,9 @@ import com.rasterfoundry.akkautil.RFRejectionHandler._
 import com.rasterfoundry.api.utils.Config
 import com.rasterfoundry.database.util.RFTransactor
 
-import scala.util.Try
-import doobie.hikari._
-import doobie.hikari.implicits._
-import doobie._
 import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
 
 object AkkaSystem {
   implicit val system = ActorSystem("rf-system")
@@ -51,6 +44,7 @@ object Main extends App with Config with Router {
 
   sys.addShutdownHook {
     terminate()
+    ()
   }
 
   Http().bindAndHandle(routes, httpHost, httpPort)

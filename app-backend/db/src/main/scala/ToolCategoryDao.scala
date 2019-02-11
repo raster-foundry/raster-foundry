@@ -1,14 +1,9 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.common.datamodel.{ToolCategory, User}
 
-import doobie._, doobie.implicits._
-import doobie.postgres._, doobie.postgres.implicits._
-import cats._, cats.data._, cats.effect.IO, cats.implicits._
-
-import java.sql.Timestamp
-import java.util.UUID
+import doobie._
+import doobie.implicits._
 
 object ToolCategoryDao extends Dao[ToolCategory] {
 

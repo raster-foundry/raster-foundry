@@ -4,9 +4,7 @@ import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
 import com.rasterfoundry.database.Implicits._
 
-import doobie._
 import doobie.implicits._
-import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers

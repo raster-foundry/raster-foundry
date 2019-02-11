@@ -5,8 +5,6 @@ import com.rasterfoundry.common.datamodel.User
 import com.typesafe.scalalogging.LazyLogging
 import scalacache._
 import scalacache.caffeine._
-import scalacache.memoization._
-import scalacache.CatsEffect.modes._
 
 object Cache extends LazyLogging {
 

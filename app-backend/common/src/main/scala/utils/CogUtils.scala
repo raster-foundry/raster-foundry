@@ -5,10 +5,8 @@ import com.rasterfoundry.common.cache.kryo._
 import com.rasterfoundry.common.{Config => CommonConfig}
 import com.rasterfoundry.common.datamodel.TiffWithMetadata
 
-import com.amazonaws.services.s3.AmazonS3URI
 import geotrellis.vector._
 import geotrellis.raster._
-import geotrellis.raster.crop._
 import geotrellis.raster.resample._
 import geotrellis.raster.histogram._
 import geotrellis.raster.reproject._
@@ -17,9 +15,6 @@ import geotrellis.raster.io.geotiff.reader.{GeoTiffReader, TiffTagsReader}
 import geotrellis.util._
 import geotrellis.proj4._
 import geotrellis.spark._
-import geotrellis.spark.io._
-import geotrellis.spark.io.s3._
-import geotrellis.spark.io.s3.util._
 import geotrellis.spark.tiling._
 import geotrellis.vector.Projected
 
@@ -30,7 +25,6 @@ import cats.data._
 import cats.implicits._
 
 import scala.concurrent._
-import java.net.URLDecoder
 
 object CogUtils {
   lazy val cacheConfig = CommonConfig.memcached
@@ -182,9 +176,6 @@ object CogUtils {
           val cellSize = CellSize(tiff.extent, width, height)
           val overview =
             closestTiffOverview(tiff, cellSize, AutoHigherResolution)
-          val overviewRasterCellSize = overview.raster.cellSize
-          val overviewExtentWidth = overview.extent.width
-          val overviewExtentHeight = overview.extent.height
           val normalized = tiff.tile.bandCount match {
             case x if x >= 3 => {
               val tile = Raster(overview.tile, overview.extent).tile

@@ -1,18 +1,15 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-import java.util.UUID
-
-import cats.implicits._
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util._
+
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
-import doobie.postgres.circe.jsonb.implicits._
 import com.lonelyplanet.akka.http.extensions.PageRequest
+
+import java.sql.Timestamp
+import java.util.UUID
 
 object ProjectLayerDao extends Dao[ProjectLayer] {
   val tableName = "project_layers"
@@ -59,7 +56,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
 
   def updateProjectLayerQ(projectLayer: ProjectLayer, id: UUID): Update0 = {
     val updateTime = new Timestamp((new java.util.Date()).getTime)
-    val idFilter = fr"id = ${projectLayer.id}"
+    val idFilter = fr"id = ${id}"
     val query = (fr"UPDATE" ++ tableF ++ fr"""SET
       modified_at = ${updateTime},
       name = ${projectLayer.name},
@@ -71,15 +68,13 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
   }
 
   def createProjectLayer(
-      projectId: UUID,
       projectLayer: ProjectLayer
   ): ConnectionIO[ProjectLayer] =
     insertProjectLayer(projectLayer)
 
   def getProjectLayer(
       projectId: UUID,
-      layerId: UUID,
-      user: User
+      layerId: UUID
   ): ConnectionIO[Option[ProjectLayer]] =
     query.filter(fr"project_id = ${projectId}").filter(layerId).selectOption
 

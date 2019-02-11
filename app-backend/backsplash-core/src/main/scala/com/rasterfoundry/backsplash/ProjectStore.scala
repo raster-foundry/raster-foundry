@@ -1,15 +1,12 @@
 package com.rasterfoundry.backsplash
 
 import cats.data.{NonEmptyList => NEL}
-import cats.effect._
-import com.azavea.maml.ast._
 import geotrellis.vector.{Polygon, Projected}
-import geotrellis.server._
 import simulacrum._
 
 import java.util.UUID
 
-case class BandOverride(
+final case class BandOverride(
     red: Int,
     green: Int,
     blue: Int

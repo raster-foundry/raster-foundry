@@ -78,9 +78,6 @@ object WhiteBalance {
 
     type MemoizedFn = Memo[I, K, O]
 
-    implicit def encode(input: MemoizedFn#Input): MemoizedFn#Key =
-      (input._1, input._2, input._3)
-
     def rgbToYuv(rb: Int, gb: Int, bb: Int): YUV = {
       val (r, g, b) = (rb, gb, bb)
       val W_r = 0.299
@@ -150,7 +147,7 @@ object WhiteBalance {
         rgb => {
           val bands =
             rgb.toList.map((i: Int) => if (isData(i)) Some(i) else None)
-          val r :: g :: b :: xs = bands
+          val r :: g :: b :: _ = bands
           val rgbs = (r, g, b)
           val yuv = rgbs match {
             case (Some(rd), Some(gr), Some(bl)) => Some(RgbToYuv(rd, gr, bl))

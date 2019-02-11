@@ -1,40 +1,31 @@
 package com.rasterfoundry.common
 
-import com.rasterfoundry.common.datamodel.{Tool, ToolRun, User}
-
-import geotrellis.raster.render._
-import cats._
-import cats.data._
-import cats.implicits._
-import cats.data.Validated.{Invalid, Valid}
 import io.circe._
 import io.circe.optics.JsonPath._
 
-import java.lang.IllegalArgumentException
 import java.util.UUID
-import scala.concurrent.{ExecutionContext, Future}
 
 package object ast {
 
   implicit class CirceMapAlgebraJsonMethods(val self: Json) {
-    def _id: Option[UUID] =
+    def idOpt: Option[UUID] =
       root.id.string.getOption(self).map(UUID.fromString(_))
-    def _type: Option[String] = root.`type`.string.getOption(self)
-    def _label: Option[String] = root.metadata.label.string.getOption(self)
-    def _symbol: Option[String] =
+    def typeOpt: Option[String] = root.`type`.string.getOption(self)
+    def labelOpt: Option[String] = root.metadata.label.string.getOption(self)
+    def symbolOpt: Option[String] =
       root.selectDynamic("apply").string.getOption(self)
 
-    def _keys: Seq[String] =
-      root.obj.getOption(self).map(_.keys.toSeq).getOrElse(Seq())
+    def keysSeq: Seq[String] =
+      root.obj.getOption(self).map(_.keys.toSeq).getOrElse(Seq.empty)
   }
 
   implicit class CirceMapAlgebraHCursorMethods(val self: HCursor) {
-    def _id: Option[UUID] = self.value._id
-    def _type: Option[String] = self.value._type
-    def _label: Option[String] = self.value._label
-    def _symbol: Option[String] = self.value._symbol
+    def idOpt: Option[UUID] = self.value.idOpt
+    def typeOpt: Option[String] = self.value.typeOpt
+    def labelOpt: Option[String] = self.value.labelOpt
+    def symbolOpt: Option[String] = self.value.symbolOpt
 
-    def _keys: Seq[String] = self.value._keys
+    def keysSeq: Seq[String] = self.value.keysSeq
   }
 
   implicit class MapAlgebraASTHelperMethods(val self: MapAlgebraAST) {

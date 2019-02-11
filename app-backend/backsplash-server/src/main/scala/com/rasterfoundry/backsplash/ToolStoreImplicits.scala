@@ -1,32 +1,31 @@
 package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash._
-import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
-import com.rasterfoundry.backsplash.color._
 import com.rasterfoundry.backsplash.error._
+import com.rasterfoundry.database.SceneToProjectDao
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.ToolRunDao
-import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.ast.MapAlgebraAST
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 
 import cats.effect.IO
-import cats.implicits._
+import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 
 import java.util.UUID
 
-class ToolStoreImplicits[HistStore: HistogramStore](
-    mosaicImplicits: MosaicImplicits[HistStore],
-    xa: Transactor[IO])
-    extends ProjectStoreImplicits(xa) {
+class ToolStoreImplicits[HistStore](mosaicImplicits: MosaicImplicits[HistStore],
+                                    xa: Transactor[IO])
+    extends ProjectStoreImplicits(xa)
+    with LazyLogging {
 
   import mosaicImplicits._
   implicit val tmsReification = rawMosaicTmsReification
 
-  val mamlAdapter = new BacksplashMamlAdapter(mosaicImplicits, xa)
+  val mamlAdapter =
+    new BacksplashMamlAdapter(mosaicImplicits, SceneToProjectDao())
 
   private def toolToColorRd(toolRd: RenderDefinition): RenderDefinition = {
     val scaleOpt = toolRd.scale match {
@@ -53,8 +52,11 @@ class ToolStoreImplicits[HistStore: HistogramStore](
         _.executionParameters
       }
     } yield {
-      val decoded = executionParams.as[MapAlgebraAST].toOption getOrElse {
-        throw MetadataException(s"Could not decode AST for $analysisId")
+      val decoded = executionParams.as[MapAlgebraAST] match {
+        case Right(x) => x
+        case Left(e) =>
+          logger.error(e.getMessage)
+          throw MetadataException(s"Could not decode AST for $analysisId")
       }
       nodeId map {
         decoded
@@ -68,6 +70,11 @@ class ToolStoreImplicits[HistStore: HistogramStore](
 
   implicit val toolRunDaoStore: ToolStore[ToolRunDao] =
     new ToolStore[ToolRunDao] {
+
+      /** Unclear what un-matching this would even be -- I think scapegoat was mad about the
+        * de-sugared code? Annoying
+        */
+      @SuppressWarnings(Array("PartialFunctionInsteadOfMatch"))
       def read(self: ToolRunDao,
                analysisId: UUID,
                nodeId: Option[UUID]): IO[PaintableTool] =

@@ -15,7 +15,6 @@ import com.rasterfoundry.akkautil.{
 import com.rasterfoundry.common.S3
 import com.rasterfoundry.common.S3RegionEnum
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
-import doobie.postgres.implicits._
 import doobie.util.transactor.Transactor
 
 trait ThumbnailRoutes
@@ -68,7 +67,7 @@ trait ThumbnailRoutes
     authenticateWithParameter { _ =>
       val bucketAndPrefix =
         sentinelS3client.bucketAndPrefixFromURI(
-          new URI(URLDecoder.decode(thumbnailUri)))
+          new URI(URLDecoder.decode(thumbnailUri, "UTF-8")))
       val s3Object =
         sentinelS3client.getObject(bucketAndPrefix._1, bucketAndPrefix._2, true)
       val metaData = S3.getObjectMetadata(s3Object)

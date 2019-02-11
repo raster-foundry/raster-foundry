@@ -1,20 +1,16 @@
 package com.rasterfoundry.backsplash.server
 
 import org.http4s._
-import org.http4s.server._
-import org.http4s.server.middleware._
 
 import cats._
 import cats.data._
-import cats.implicits._
 
 /** Removes the given prefix from the beginning of the path of the [[Request]].
   */
 object AuthedTranslateUri {
 
   def apply[F[_], T](prefix: String)(http: AuthedService[T, F])(
-      implicit F: MonoidK[OptionT[F, ?]],
-      ev: Functor[F]): AuthedService[T, F] =
+      implicit F: MonoidK[OptionT[F, ?]]): AuthedService[T, F] =
     if (prefix.isEmpty || prefix == "/") http
     else {
       val (slashedPrefix, unslashedPrefix) =
@@ -38,8 +34,7 @@ object AuthedTranslateUri {
 
     }
 
-  private def setCaret[F[_]: Functor](req: Request[F],
-                                      newCaret: Int): Request[F] = {
+  private def setCaret[F[_]](req: Request[F], newCaret: Int): Request[F] = {
     val oldCaret = req.attributes
       .get(Request.Keys.PathInfoCaret)
       .getOrElse(0)

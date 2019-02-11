@@ -5,10 +5,8 @@ import java.util.UUID
 import cats.implicits._
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.database.util._
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import com.lonelyplanet.akka.http.extensions.PageRequest
 
@@ -45,23 +43,30 @@ object AnnotationDao extends Dao[Annotation] {
       .toList
   }
 
+  def listForExport(projectF: Fragment,
+                    layerF: Fragment): ConnectionIO[List[Annotation]] =
+    AnnotationDao.query.filter(projectF).filter(layerF).list
+
   // list default project layer annotations if exportAll is None or Some(false)
   // list all annotations if exportAll is true
-  def listForExport(
+  def listForProjectExport(
       projectId: UUID,
       annotationExportQP: AnnotationExportQueryParameters
   ): ConnectionIO[List[Annotation]] =
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
-      projectLayerF = annotationExportQP.exportAll match {
-        case Some(true) => fr""
-        case _          => fr"project_layer_id=${project.defaultLayerId}"
-      }
-      annotations <- AnnotationDao.query
-        .filter(fr"project_id=$projectId")
-        .filter(projectLayerF)
-        .list
+      annotations <- listForExport(
+        fr"project_id=$projectId",
+        annotationExportQP.exportAll match {
+          case Some(true) => fr""
+          case _          => fr"project_layer_id=${project.defaultLayerId}"
+        }
+      )
     } yield { annotations }
+
+  def listForLayerExport(projectId: UUID,
+                         layerId: UUID): ConnectionIO[List[Annotation]] =
+    listForExport(fr"project_id=$projectId", fr"project_layer_id=$layerId")
 
   // look for default project layer
   // if projectLayerIdO is not provided as the last param

@@ -6,7 +6,6 @@ import geotrellis.raster.{io => _, _}
 import geotrellis.raster.render._
 import geotrellis.raster.render.png._
 import io.circe.{Decoder, Encoder, KeyEncoder, KeyDecoder}
-import io.circe.generic.semiauto._
 
 import scala.math.abs
 import scala.util.Try
@@ -16,10 +15,10 @@ trait Implicits {
 
   // Without this keyencoder/keydecoder we can't derive serialization for render defs
   implicit val decodeKeyDouble: KeyDecoder[Double] = new KeyDecoder[Double] {
-    final def apply(key: String): Option[Double] = Try(key.toDouble).toOption
+    def apply(key: String): Option[Double] = Try(key.toDouble).toOption
   }
   implicit val encodeKeyDouble: KeyEncoder[Double] = new KeyEncoder[Double] {
-    final def apply(key: Double): String = key.toString
+    def apply(key: Double): String = key.toString
   }
 
   // necessary for fallbacks in RenderDefinition
@@ -50,7 +49,7 @@ trait Implicits {
       "#" + rgba.red.toHexString + rgba.blue.toHexString + rgba.green.toHexString + rgba.alpha.toHexString
     }
 
-  implicit class renderTileWithDefinition(tile: Tile) {
+  implicit class RenderTileWithDefinition(tile: Tile) {
 
     /** This function produces a function from cell value to color appropriate to the color
       * space defined by the provided [[RenderDefinition]]
@@ -62,7 +61,7 @@ trait Implicits {
       }
 
     /** RGB color interpolation logic */
-    private def RgbLerp(color1: RGBA, color2: RGBA, proportion: Double): Int = {
+    private def rgbLerp(color1: RGBA, color2: RGBA, proportion: Double): Int = {
       val r = (color1.red + (color2.red - color1.red) * proportion).toInt
       val g = (color1.green + (color2.green - color1.green) * proportion).toInt
       val b = (color1.blue + (color2.blue - color1.blue) * proportion).toInt
@@ -99,7 +98,7 @@ trait Implicits {
           val higher = breaks(higherIdx)
           val proportion = (dbl - lower) / (higher - lower)
 
-          RgbLerp(colors(lowerIdx), colors(higherIdx), proportion)
+          rgbLerp(colors(lowerIdx), colors(higherIdx), proportion)
         } else {
           // Direct hit
           colors(insertionPoint)

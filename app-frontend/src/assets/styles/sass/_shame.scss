@@ -727,6 +727,10 @@ rf-box-select-item{
   margin: 0 0 2rem 0;
 }
 
+.modal-content-header-thin {
+  margin: 0 0 1rem 0;
+}
+
 .list-group-item.no-flex {
   display: block;
 }
@@ -3270,4 +3274,8 @@ rf-project-layers-page {
         border-radius: 3px;
         margin: .25em;
     }
+}
+
+.form-control.color-picker {
+  cursor: pointer;
 }

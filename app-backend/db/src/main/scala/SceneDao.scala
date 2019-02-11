@@ -9,17 +9,17 @@ import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
-import geotrellis.vector.{Polygon, Projected}
+import geotrellis.vector.{Geometry, Polygon, Projected}
 import io.circe.syntax._
 
 import scala.concurrent.duration._
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 
-case class SceneDao()
+@SuppressWarnings(Array("EmptyCaseClass"))
+final case class SceneDao()
 
 object SceneDao
     extends Dao[Scene]
@@ -45,8 +45,15 @@ object SceneDao
   def getSceneById(id: UUID): ConnectionIO[Option[Scene]] =
     query.filter(id).selectOption
 
-  def streamSceneById(sceneId: UUID): fs2.Stream[ConnectionIO, Scene] =
-    (selectF ++ Fragments.whereAnd(fr"id = ${sceneId}")).query[Scene].stream
+  def streamSceneById(sceneId: UUID, footprint: Option[Projected[Polygon]])(
+      implicit Filter: Filterable[Any, Projected[Geometry]])
+    : fs2.Stream[ConnectionIO, Scene] =
+    (selectF ++ Fragments.whereAndOpt(
+      (Some(fr"id = ${sceneId}") +: (footprint map {
+        Filter.toFilters(_)
+      } getOrElse { List.empty })): _*))
+      .query[Scene]
+      .stream
 
   def unsafeGetSceneById(id: UUID): ConnectionIO[Scene] =
     query.filter(id).select
@@ -253,37 +260,35 @@ object SceneDao
     for {
       sceneO <- SceneDao.query.filter(sceneId).filter(polygonF).selectOption
     } yield {
-      sceneO match {
-        case Some(scene: Scene) =>
-          Seq(
-            MosaicDefinition(
-              scene.id,
-              ColorCorrect.Params(
-                redBand,
-                greenBand,
-                blueBand,
-                BandGamma(enabled = false, None, None, None),
-                PerBandClipping(enabled = false,
-                                None,
-                                None,
-                                None,
-                                None,
-                                None,
-                                None),
-                MultiBandClipping(enabled = false, None, None),
-                SigmoidalContrast(enabled = false, None, None),
-                Saturation(enabled = false, None),
-                Equalization(false),
-                AutoWhiteBalance(false)
-              ),
-              scene.sceneType,
-              scene.ingestLocation,
-              scene.dataFootprint map { _.geom },
-              false,
-              Some(().asJson)
-            ))
-        case _ => Seq.empty
-      }
+      sceneO map { (scene: Scene) =>
+        Seq(
+          MosaicDefinition(
+            scene.id,
+            ColorCorrect.Params(
+              redBand,
+              greenBand,
+              blueBand,
+              BandGamma(enabled = false, None, None, None),
+              PerBandClipping(enabled = false,
+                              None,
+                              None,
+                              None,
+                              None,
+                              None,
+                              None),
+              MultiBandClipping(enabled = false, None, None),
+              SigmoidalContrast(enabled = false, None, None),
+              Saturation(enabled = false, None),
+              Equalization(false),
+              AutoWhiteBalance(false)
+            ),
+            scene.sceneType,
+            scene.ingestLocation,
+            scene.dataFootprint map { _.geom },
+            false,
+            Some(().asJson)
+          ))
+      } getOrElse { Seq.empty }
     }
   }
 

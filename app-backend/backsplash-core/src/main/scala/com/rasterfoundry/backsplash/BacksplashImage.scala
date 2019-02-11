@@ -5,13 +5,11 @@ import java.net.URLDecoder
 import com.rasterfoundry.backsplash.color._
 import geotrellis.vector.{io => _, _}
 import geotrellis.raster.{io => _, _}
-import geotrellis.raster.histogram._
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.spark.SpatialKey
 import geotrellis.proj4.WebMercator
 import geotrellis.server.vlm.RasterSourceUtils
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
-import io.circe.syntax._
 import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
@@ -39,7 +37,7 @@ import scalacache.modes.sync._
   * @param corrections description + operations for how to correct image
   * @param singleBandOptions band + options of how to color a single band
   */
-case class BacksplashImage(
+final case class BacksplashImage(
     imageId: UUID,
     @cacheKeyExclude projectLayerId: UUID,
     @cacheKeyExclude uri: String,
@@ -111,7 +109,7 @@ object BacksplashImage extends RasterSourceUtils with LazyLogging {
     if (enableGDAL) {
       logger.debug(s"Using GDAL Raster Source: ${uri}")
       // Do not bother caching - let GDAL internals worry about that
-      GDALRasterSource(URLDecoder.decode(uri))
+      GDALRasterSource(URLDecoder.decode(uri, "UTF-8"))
     } else {
       memoizeSync(None) {
         logger.debug(s"Using GeoTiffRasterSource: ${uri}")

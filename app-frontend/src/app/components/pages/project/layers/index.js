@@ -230,6 +230,19 @@ class ProjectLayersPageController {
             map.setLayer('Project Layers', mapLayers, true);
         });
     }
+
+    showNewLayerModal() {
+        const modal = this.modalService.open({
+            component: 'rfProjectLayerCreateModal',
+            resolve: {
+                projectId: () => this.project.id
+            }
+        });
+
+        modal.result
+            .then(() => this.fetchPage())
+            .catch(() => {});
+    }
 }
 
 const component = {

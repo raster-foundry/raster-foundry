@@ -6,17 +6,9 @@ import com.rasterfoundry.database.Implicits._
 
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
-import doobie.postgres.implicits._
-import doobie.postgres.circe.jsonb.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
 import cats.implicits._
 
-import scala.concurrent.Future
 import java.sql.Timestamp
-import java.util.UUID
 
 object UserDao extends Dao[User] with Sanitization {
 

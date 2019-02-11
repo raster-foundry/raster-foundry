@@ -46,7 +46,6 @@ object MapAlgebraAST {
 
     val symbol: String
 
-    @SuppressWarnings(Array("TraversableHead"))
     def find(id: UUID): Option[MapAlgebraAST] =
       if (this.id == id)
         Some(this)
@@ -73,9 +72,9 @@ object MapAlgebraAST {
   }
 
   /** Operations which should only have one argument. */
-  case class Addition(args: List[MapAlgebraAST],
-                      id: UUID,
-                      metadata: Option[NodeMetadata])
+  final case class Addition(args: List[MapAlgebraAST],
+                            id: UUID,
+                            metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "+"
 
@@ -85,9 +84,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Subtraction(args: List[MapAlgebraAST],
-                         id: UUID,
-                         metadata: Option[NodeMetadata])
+  final case class Subtraction(args: List[MapAlgebraAST],
+                               id: UUID,
+                               metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "-"
 
@@ -97,9 +96,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Multiplication(args: List[MapAlgebraAST],
-                            id: UUID,
-                            metadata: Option[NodeMetadata])
+  final case class Multiplication(args: List[MapAlgebraAST],
+                                  id: UUID,
+                                  metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "*"
 
@@ -109,9 +108,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Division(args: List[MapAlgebraAST],
-                      id: UUID,
-                      metadata: Option[NodeMetadata])
+  final case class Division(args: List[MapAlgebraAST],
+                            id: UUID,
+                            metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "/"
 
@@ -121,9 +120,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Max(args: List[MapAlgebraAST],
-                 id: UUID,
-                 metadata: Option[NodeMetadata])
+  final case class Max(args: List[MapAlgebraAST],
+                       id: UUID,
+                       metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "max"
 
@@ -133,9 +132,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Min(args: List[MapAlgebraAST],
-                 id: UUID,
-                 metadata: Option[NodeMetadata])
+  final case class Min(args: List[MapAlgebraAST],
+                       id: UUID,
+                       metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "min"
 
@@ -145,9 +144,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Equality(args: List[MapAlgebraAST],
-                      id: UUID,
-                      metadata: Option[NodeMetadata])
+  final case class Equality(args: List[MapAlgebraAST],
+                            id: UUID,
+                            metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "=="
 
@@ -157,9 +156,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Inequality(args: List[MapAlgebraAST],
-                        id: UUID,
-                        metadata: Option[NodeMetadata])
+  final case class Inequality(args: List[MapAlgebraAST],
+                              id: UUID,
+                              metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "!="
 
@@ -169,9 +168,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Greater(args: List[MapAlgebraAST],
-                     id: UUID,
-                     metadata: Option[NodeMetadata])
+  final case class Greater(args: List[MapAlgebraAST],
+                           id: UUID,
+                           metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = ">"
 
@@ -181,9 +180,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class GreaterOrEqual(args: List[MapAlgebraAST],
-                            id: UUID,
-                            metadata: Option[NodeMetadata])
+  final case class GreaterOrEqual(args: List[MapAlgebraAST],
+                                  id: UUID,
+                                  metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = ">="
 
@@ -193,9 +192,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Less(args: List[MapAlgebraAST],
-                  id: UUID,
-                  metadata: Option[NodeMetadata])
+  final case class Less(args: List[MapAlgebraAST],
+                        id: UUID,
+                        metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "<"
 
@@ -205,9 +204,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class LessOrEqual(args: List[MapAlgebraAST],
-                         id: UUID,
-                         metadata: Option[NodeMetadata])
+  final case class LessOrEqual(args: List[MapAlgebraAST],
+                               id: UUID,
+                               metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "<="
 
@@ -217,9 +216,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class And(args: List[MapAlgebraAST],
-                 id: UUID,
-                 metadata: Option[NodeMetadata])
+  final case class And(args: List[MapAlgebraAST],
+                       id: UUID,
+                       metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "and"
 
@@ -229,9 +228,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Or(args: List[MapAlgebraAST],
-                id: UUID,
-                metadata: Option[NodeMetadata])
+  final case class Or(args: List[MapAlgebraAST],
+                      id: UUID,
+                      metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "or"
 
@@ -241,9 +240,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Xor(args: List[MapAlgebraAST],
-                 id: UUID,
-                 metadata: Option[NodeMetadata])
+  final case class Xor(args: List[MapAlgebraAST],
+                       id: UUID,
+                       metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "xor"
 
@@ -253,9 +252,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Pow(args: List[MapAlgebraAST],
-                 id: UUID,
-                 metadata: Option[NodeMetadata])
+  final case class Pow(args: List[MapAlgebraAST],
+                       id: UUID,
+                       metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "^"
 
@@ -265,9 +264,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Atan2(args: List[MapAlgebraAST],
-                   id: UUID,
-                   metadata: Option[NodeMetadata])
+  final case class Atan2(args: List[MapAlgebraAST],
+                         id: UUID,
+                         metadata: Option[NodeMetadata])
       extends Operation {
     val symbol = "atan2"
 
@@ -279,10 +278,10 @@ object MapAlgebraAST {
 
   sealed trait UnaryOperation extends Operation with Serializable
 
-  case class Masking(args: List[MapAlgebraAST],
-                     id: UUID,
-                     metadata: Option[NodeMetadata],
-                     mask: MultiPolygon)
+  final case class Masking(args: List[MapAlgebraAST],
+                           id: UUID,
+                           metadata: Option[NodeMetadata],
+                           mask: MultiPolygon)
       extends UnaryOperation {
     val symbol = "mask"
 
@@ -292,10 +291,10 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Classification(args: List[MapAlgebraAST],
-                            id: UUID,
-                            metadata: Option[NodeMetadata],
-                            classMap: ClassMap)
+  final case class Classification(args: List[MapAlgebraAST],
+                                  id: UUID,
+                                  metadata: Option[NodeMetadata],
+                                  classMap: ClassMap)
       extends UnaryOperation {
     val symbol = "classify"
 
@@ -305,9 +304,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class IsDefined(args: List[MapAlgebraAST],
-                       id: UUID,
-                       metadata: Option[NodeMetadata])
+  final case class IsDefined(args: List[MapAlgebraAST],
+                             id: UUID,
+                             metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "isdefined"
 
@@ -317,9 +316,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class IsUndefined(args: List[MapAlgebraAST],
-                         id: UUID,
-                         metadata: Option[NodeMetadata])
+  final case class IsUndefined(args: List[MapAlgebraAST],
+                               id: UUID,
+                               metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "isundefined"
 
@@ -329,9 +328,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class SquareRoot(args: List[MapAlgebraAST],
-                        id: UUID,
-                        metadata: Option[NodeMetadata])
+  final case class SquareRoot(args: List[MapAlgebraAST],
+                              id: UUID,
+                              metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "sqrt"
 
@@ -341,9 +340,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Log(args: List[MapAlgebraAST],
-                 id: UUID,
-                 metadata: Option[NodeMetadata])
+  final case class Log(args: List[MapAlgebraAST],
+                       id: UUID,
+                       metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "log"
 
@@ -353,9 +352,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Log10(args: List[MapAlgebraAST],
-                   id: UUID,
-                   metadata: Option[NodeMetadata])
+  final case class Log10(args: List[MapAlgebraAST],
+                         id: UUID,
+                         metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "log10"
 
@@ -365,9 +364,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Round(args: List[MapAlgebraAST],
-                   id: UUID,
-                   metadata: Option[NodeMetadata])
+  final case class Round(args: List[MapAlgebraAST],
+                         id: UUID,
+                         metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "round"
 
@@ -377,9 +376,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Floor(args: List[MapAlgebraAST],
-                   id: UUID,
-                   metadata: Option[NodeMetadata])
+  final case class Floor(args: List[MapAlgebraAST],
+                         id: UUID,
+                         metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "floor"
 
@@ -389,9 +388,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Ceil(args: List[MapAlgebraAST],
-                  id: UUID,
-                  metadata: Option[NodeMetadata])
+  final case class Ceil(args: List[MapAlgebraAST],
+                        id: UUID,
+                        metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "ceil"
 
@@ -401,9 +400,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class NumericNegation(args: List[MapAlgebraAST],
-                             id: UUID,
-                             metadata: Option[NodeMetadata])
+  final case class NumericNegation(args: List[MapAlgebraAST],
+                                   id: UUID,
+                                   metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "neg"
 
@@ -413,9 +412,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class LogicalNegation(args: List[MapAlgebraAST],
-                             id: UUID,
-                             metadata: Option[NodeMetadata])
+  final case class LogicalNegation(args: List[MapAlgebraAST],
+                                   id: UUID,
+                                   metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "not"
 
@@ -425,9 +424,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Abs(args: List[MapAlgebraAST],
-                 id: UUID,
-                 metadata: Option[NodeMetadata])
+  final case class Abs(args: List[MapAlgebraAST],
+                       id: UUID,
+                       metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "abs"
 
@@ -437,9 +436,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Sin(args: List[MapAlgebraAST],
-                 id: UUID,
-                 metadata: Option[NodeMetadata])
+  final case class Sin(args: List[MapAlgebraAST],
+                       id: UUID,
+                       metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "sin"
 
@@ -449,9 +448,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Cos(args: List[MapAlgebraAST],
-                 id: UUID,
-                 metadata: Option[NodeMetadata])
+  final case class Cos(args: List[MapAlgebraAST],
+                       id: UUID,
+                       metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "cos"
 
@@ -461,9 +460,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Tan(args: List[MapAlgebraAST],
-                 id: UUID,
-                 metadata: Option[NodeMetadata])
+  final case class Tan(args: List[MapAlgebraAST],
+                       id: UUID,
+                       metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "tan"
 
@@ -473,9 +472,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Sinh(args: List[MapAlgebraAST],
-                  id: UUID,
-                  metadata: Option[NodeMetadata])
+  final case class Sinh(args: List[MapAlgebraAST],
+                        id: UUID,
+                        metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "sinh"
 
@@ -485,9 +484,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Cosh(args: List[MapAlgebraAST],
-                  id: UUID,
-                  metadata: Option[NodeMetadata])
+  final case class Cosh(args: List[MapAlgebraAST],
+                        id: UUID,
+                        metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "cosh"
 
@@ -497,9 +496,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Tanh(args: List[MapAlgebraAST],
-                  id: UUID,
-                  metadata: Option[NodeMetadata])
+  final case class Tanh(args: List[MapAlgebraAST],
+                        id: UUID,
+                        metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "tanh"
 
@@ -509,9 +508,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Asin(args: List[MapAlgebraAST],
-                  id: UUID,
-                  metadata: Option[NodeMetadata])
+  final case class Asin(args: List[MapAlgebraAST],
+                        id: UUID,
+                        metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "asin"
 
@@ -521,9 +520,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Acos(args: List[MapAlgebraAST],
-                  id: UUID,
-                  metadata: Option[NodeMetadata])
+  final case class Acos(args: List[MapAlgebraAST],
+                        id: UUID,
+                        metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "acos"
 
@@ -533,9 +532,9 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class Atan(args: List[MapAlgebraAST],
-                  id: UUID,
-                  metadata: Option[NodeMetadata])
+  final case class Atan(args: List[MapAlgebraAST],
+                        id: UUID,
+                        metadata: Option[NodeMetadata])
       extends UnaryOperation {
     val symbol = "atan"
 
@@ -549,10 +548,10 @@ object MapAlgebraAST {
     def neighborhood: Neighborhood
   }
 
-  case class FocalMax(args: List[MapAlgebraAST],
-                      id: UUID,
-                      metadata: Option[NodeMetadata],
-                      neighborhood: Neighborhood)
+  final case class FocalMax(args: List[MapAlgebraAST],
+                            id: UUID,
+                            metadata: Option[NodeMetadata],
+                            neighborhood: Neighborhood)
       extends FocalOperation {
     val symbol = "focalMax"
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST =
@@ -561,10 +560,10 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class FocalMin(args: List[MapAlgebraAST],
-                      id: UUID,
-                      metadata: Option[NodeMetadata],
-                      neighborhood: Neighborhood)
+  final case class FocalMin(args: List[MapAlgebraAST],
+                            id: UUID,
+                            metadata: Option[NodeMetadata],
+                            neighborhood: Neighborhood)
       extends FocalOperation {
     val symbol = "focalMin"
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST =
@@ -573,10 +572,10 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class FocalMean(args: List[MapAlgebraAST],
-                       id: UUID,
-                       metadata: Option[NodeMetadata],
-                       neighborhood: Neighborhood)
+  final case class FocalMean(args: List[MapAlgebraAST],
+                             id: UUID,
+                             metadata: Option[NodeMetadata],
+                             neighborhood: Neighborhood)
       extends FocalOperation {
     val symbol = "focalMean"
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST =
@@ -585,10 +584,10 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class FocalMedian(args: List[MapAlgebraAST],
-                         id: UUID,
-                         metadata: Option[NodeMetadata],
-                         neighborhood: Neighborhood)
+  final case class FocalMedian(args: List[MapAlgebraAST],
+                               id: UUID,
+                               metadata: Option[NodeMetadata],
+                               neighborhood: Neighborhood)
       extends FocalOperation {
     val symbol = "focalMedian"
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST =
@@ -597,10 +596,10 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class FocalMode(args: List[MapAlgebraAST],
-                       id: UUID,
-                       metadata: Option[NodeMetadata],
-                       neighborhood: Neighborhood)
+  final case class FocalMode(args: List[MapAlgebraAST],
+                             id: UUID,
+                             metadata: Option[NodeMetadata],
+                             neighborhood: Neighborhood)
       extends FocalOperation {
     val symbol = "focalMode"
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST =
@@ -609,10 +608,10 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class FocalSum(args: List[MapAlgebraAST],
-                      id: UUID,
-                      metadata: Option[NodeMetadata],
-                      neighborhood: Neighborhood)
+  final case class FocalSum(args: List[MapAlgebraAST],
+                            id: UUID,
+                            metadata: Option[NodeMetadata],
+                            neighborhood: Neighborhood)
       extends FocalOperation {
     val symbol = "focalSum"
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST =
@@ -621,10 +620,10 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class FocalStdDev(args: List[MapAlgebraAST],
-                         id: UUID,
-                         metadata: Option[NodeMetadata],
-                         neighborhood: Neighborhood)
+  final case class FocalStdDev(args: List[MapAlgebraAST],
+                               id: UUID,
+                               metadata: Option[NodeMetadata],
+                               neighborhood: Neighborhood)
       extends FocalOperation {
     val symbol = "focalStdDev"
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST =
@@ -642,9 +641,9 @@ object MapAlgebraAST {
     def withArgs(newArgs: List[MapAlgebraAST]): MapAlgebraAST = this
   }
 
-  case class Constant(id: UUID,
-                      constant: Double,
-                      metadata: Option[NodeMetadata])
+  final case class Constant(id: UUID,
+                            constant: Double,
+                            metadata: Option[NodeMetadata])
       extends MapAlgebraLeaf {
     val `type` = "const"
     def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List()
@@ -656,7 +655,9 @@ object MapAlgebraAST {
   }
 
   /** Map Algebra sources */
-  case class LiteralTile(id: UUID, lt: Tile, metadata: Option[NodeMetadata])
+  final case class LiteralTile(id: UUID,
+                               lt: Tile,
+                               metadata: Option[NodeMetadata])
       extends MapAlgebraLeaf {
     val `type` = "rasterLiteral"
     def sources: Seq[MapAlgebraAST.MapAlgebraLeaf] = List(this)
@@ -667,11 +668,11 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class SceneRaster(id: UUID,
-                         sceneId: UUID,
-                         band: Option[Int],
-                         celltype: Option[CellType],
-                         metadata: Option[NodeMetadata])
+  final case class SceneRaster(id: UUID,
+                               sceneId: UUID,
+                               band: Option[Int],
+                               celltype: Option[CellType],
+                               metadata: Option[NodeMetadata])
       extends MapAlgebraLeaf
       with RFMLRaster {
     val `type` = "sceneSrc"
@@ -683,12 +684,12 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class CogRaster(id: UUID,
-                       sceneId: UUID,
-                       band: Option[Int],
-                       celltype: Option[CellType],
-                       metadata: Option[NodeMetadata],
-                       location: String)
+  final case class CogRaster(id: UUID,
+                             sceneId: UUID,
+                             band: Option[Int],
+                             celltype: Option[CellType],
+                             metadata: Option[NodeMetadata],
+                             location: String)
       extends MapAlgebraLeaf
       with RFMLRaster {
     val `type` = "cogSrc"
@@ -700,11 +701,11 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class ProjectRaster(id: UUID,
-                           projId: UUID,
-                           band: Option[Int],
-                           celltype: Option[CellType],
-                           metadata: Option[NodeMetadata])
+  final case class ProjectRaster(id: UUID,
+                                 projId: UUID,
+                                 band: Option[Int],
+                                 celltype: Option[CellType],
+                                 metadata: Option[NodeMetadata])
       extends MapAlgebraLeaf
       with RFMLRaster {
     val `type` = "projectSrc"
@@ -717,7 +718,8 @@ object MapAlgebraAST {
 
   }
 
-  case class ToolReference(id: UUID, toolId: UUID) extends MapAlgebraLeaf {
+  final case class ToolReference(id: UUID, toolId: UUID)
+      extends MapAlgebraLeaf {
     val `type` = "ref"
 
     def metadata: Option[NodeMetadata] = None

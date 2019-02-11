@@ -26,7 +26,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     else
         echo "Pulling down configuration settings for test environment"
-        
+
         ./scripts/bootstrap --env
         ./scripts/bootstrap --sbtopts
 
@@ -53,6 +53,15 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
         cp "${DIR}/../app-backend/batch/target/scala-2.11/batch-assembly.jar" \
            "${DIR}/../app-tasks/jars/batch-assembly.jar"
+
+
+        docker-compose \
+            -f "${DIR}/../docker-compose.test.yml" \
+            run --rm --no-deps \
+            build backsplash-export/assembly
+
+        cp "${DIR}/../app-backend/backsplash-export/target/scala-2.11/backsplash-export-assembly.jar" \
+           "${DIR}/../app-tasks/jars/backsplash-export-assembly.jar"
 
         echo "Building Batch container image"
         GIT_COMMIT="${GIT_COMMIT}" docker-compose \

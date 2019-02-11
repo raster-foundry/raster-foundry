@@ -3,13 +3,12 @@ package com.rasterfoundry.batch.export
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
-import com.rasterfoundry.common.notification.Email.NotificationEmail
+import com.rasterfoundry.common.notification.Email.{EmailConfig, NotificationEmail}
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.common.datamodel._
 
-import com.typesafe.scalalogging.LazyLogging
 import cats.effect.IO
 import cats.implicits._
 import doobie.{ConnectionIO, Transactor}
@@ -172,11 +171,11 @@ final case class UpdateExportStatus(
             val (subject, html, plain) =
               exportEmailContent(status, user, platform, name, id, exportType)
             email
-              .setEmail(host,
+              .setEmail(EmailConfig(host,
                         port,
                         encryption,
                         platSmtpUserName,
-                        pw,
+                        pw),
                         userEmail,
                         subject,
                         html,

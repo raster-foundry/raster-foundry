@@ -1,8 +1,8 @@
 package com.rasterfoundry.database
 
-import java.io.ByteArrayInputStream
-import java.sql.Timestamp
-import java.util.UUID
+import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.common.datamodel._
+import com.rasterfoundry.common.S3
 
 import cats.implicits._
 import com.amazonaws.services.s3.model.{CannedAccessControlList, ObjectMetadata}
@@ -10,14 +10,13 @@ import com.lonelyplanet.akka.http.extensions.{PageRequest, Order}
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import geotrellis.spark.io.s3.AmazonS3Client
 import org.apache.commons.codec.binary.{Base64 => ApacheBase64}
 
-import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.common.datamodel._
-import com.rasterfoundry.common.S3
+import java.io.ByteArrayInputStream
+import java.sql.Timestamp
+import java.util.UUID
 
 object OrganizationDao extends Dao[Organization] with LazyLogging {
 

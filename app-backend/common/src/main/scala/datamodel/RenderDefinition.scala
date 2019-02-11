@@ -1,6 +1,5 @@
 package com.rasterfoundry.common.datamodel
 
-import cats.syntax.either._
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.semiauto._

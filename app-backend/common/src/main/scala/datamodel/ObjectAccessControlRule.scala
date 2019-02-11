@@ -1,12 +1,9 @@
 package com.rasterfoundry.common.datamodel
 
-import java.sql.Timestamp
-import java.util.UUID
-
 import io.circe.generic.JsonCodec
 
 @JsonCodec
-case class ObjectAccessControlRule(
+final case class ObjectAccessControlRule(
     subjectType: SubjectType,
     subjectId: Option[String],
     actionType: ActionType

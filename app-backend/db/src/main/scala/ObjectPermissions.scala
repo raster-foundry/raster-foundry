@@ -4,11 +4,7 @@ import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.Implicits._
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
-import cats._
-import cats.data._
-import cats.effect.IO
 import cats.implicits._
 import java.util.UUID
 
@@ -91,18 +87,15 @@ trait ObjectPermissions[Model] {
 
   def getPermissions(
       id: UUID): ConnectionIO[List[Option[ObjectAccessControlRule]]] =
-    for {
-      // TODO restrict to the user's permissions if the user does not have edit permissions
-      isValidObject <- isValidObject(id)
-      getPermissions <- isValidObject match {
-        case false => throw new Exception(s"Invalid ${tableName} object ${id}")
-        case true =>
-          getPermissionsF(id)
-            .query[List[String]]
-            .unique
-            .map(acrStringsToList(_))
-      }
-    } yield { getPermissions }
+    isValidObject(id) flatMap {
+      case false => throw new Exception(s"Invalid ${tableName} object ${id}")
+      case true =>
+        getPermissionsF(id)
+          .query[List[String]]
+          .unique
+          .map(acrStringsToList(_))
+
+    }
 
   def addPermission(id: UUID, acr: ObjectAccessControlRule)
     : ConnectionIO[List[Option[ObjectAccessControlRule]]] =

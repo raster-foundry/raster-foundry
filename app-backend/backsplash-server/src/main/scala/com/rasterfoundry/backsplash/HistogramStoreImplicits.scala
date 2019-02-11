@@ -7,12 +7,8 @@ import com.rasterfoundry.database.LayerAttributeDao
 import doobie.Transactor
 import geotrellis.raster.histogram._
 import geotrellis.raster.io.json._
-import geotrellis.spark.LayerId
 
 import java.util.UUID
-
-import spray.json._
-import DefaultJsonProtocol._
 
 trait HistogramStoreImplicits
     extends ToHistogramStoreOps

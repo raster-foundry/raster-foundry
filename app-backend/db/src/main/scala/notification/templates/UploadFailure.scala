@@ -1,7 +1,6 @@
 package com.rasterfoundry.database.notification.templates
 
 import com.rasterfoundry.database._
-import com.rasterfoundry.common.datamodel._
 
 import doobie.ConnectionIO
 

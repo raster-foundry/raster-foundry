@@ -1,24 +1,23 @@
 package com.rasterfoundry.database
 
-import java.sql.Timestamp
-import java.util.UUID
-
-import cats.data._
-import cats.implicits._
 import com.rasterfoundry.common.AWSBatch
-import com.rasterfoundry.database.util.Page
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.color._
+
 import com.lonelyplanet.akka.http.extensions.PageRequest
+import cats.data._
+import cats.implicits._
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import io.circe._
 import io.circe.optics.JsonPath._
 import io.circe.syntax._
+
+import java.sql.Timestamp
+import java.util.UUID
 
 object ProjectDao
     extends Dao[Project]
@@ -423,7 +422,7 @@ object ProjectDao
                               projectLayerIdO)
       scenes <- SceneDao.query
         .filter(
-          fr"scenes.id IN (SELECT scene_id FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId}")
+          fr"scenes.id IN (SELECT scene_id FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId})")
         .list
     } yield scenes
 
@@ -448,19 +447,6 @@ object ProjectDao
         } yield rowsDeleted
       case _ => 0.pure[ConnectionIO]
     }
-  }
-
-  def addScenesToProjectFromQuery(
-      sceneParams: CombinedSceneQueryParams,
-      projectId: UUID,
-      projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] = {
-    for {
-      scenes <- SceneDao.query.filter(sceneParams).list
-      scenesAdded <- addScenesToProject(scenes.map(_.id),
-                                        projectId,
-                                        true,
-                                        projectLayerIdO)
-    } yield scenesAdded
   }
 
   // head is safe here, because we're looking up users from the ids in projects, and the map was
@@ -530,4 +516,13 @@ object ProjectDao
       .filter(authorizedF(user, objectType, actionType))
       .filter(objectId)
       .exists
+
+  def authProjectLayerExist(projectId: UUID,
+                            layerId: UUID,
+                            user: User,
+                            actionType: ActionType): ConnectionIO[Boolean] =
+    for {
+      authProject <- authorized(user, ObjectType.Project, projectId, actionType)
+      layerExist <- ProjectLayerDao.layerIsInProject(layerId, projectId)
+    } yield { authProject && layerExist }
 }

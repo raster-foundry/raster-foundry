@@ -1,7 +1,10 @@
 package com.rasterfoundry.database.notification
 
 import com.rasterfoundry.common.RollbarNotifier
-import com.rasterfoundry.common.notification.Email.NotificationEmail
+import com.rasterfoundry.common.notification.Email.{
+  EmailConfig,
+  NotificationEmail
+}
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.notification.templates._
 import com.rasterfoundry.common.datamodel._
@@ -26,11 +29,13 @@ object Notify extends RollbarNotifier {
         case "" => ().pure[ConnectionIO]
         case s => {
           val preparedEmail = email.setEmail(
-            publicSettings.emailSmtpHost,
-            publicSettings.emailSmtpPort,
-            publicSettings.emailSmtpEncryption,
-            publicSettings.emailSmtpUserName,
-            privateSettings.emailPassword,
+            EmailConfig(
+              publicSettings.emailSmtpHost,
+              publicSettings.emailSmtpPort,
+              publicSettings.emailSmtpEncryption,
+              publicSettings.emailSmtpUserName,
+              privateSettings.emailPassword
+            ),
             to,
             subject,
             messageRich,
@@ -62,8 +67,6 @@ object Notify extends RollbarNotifier {
       platform <- PlatformDao.unsafeGetPlatformById(platformId)
       publicSettings = platform.publicSettings
       privateSettings = platform.privateSettings
-      platformHost = publicSettings.platformHost.getOrElse(
-        "app.rasterfoundry.com")
       emailData <- builder(messageType)
       _ <- logger.debug("Fetching users").pure[ConnectionIO]
       recipients <- userFinder(messageType)

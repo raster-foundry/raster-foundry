@@ -1,18 +1,11 @@
 package com.rasterfoundry.backsplash
 
 import geotrellis.vector._
-import geotrellis.raster._
 import geotrellis.raster.histogram._
-import geotrellis.raster.resample.NearestNeighbor
-import geotrellis.proj4.CRS
 import geotrellis.server._
 
-import com.azavea.maml.ast._
-import com.azavea.maml.eval._
-
-import cats._
 import cats.implicits._
-import cats.data.{NonEmptyList => NEL}
+import cats.data.{NonEmptyList => _}
 import cats.data.Validated._
 import cats.effect._
 
@@ -64,9 +57,11 @@ object BacksplashMosaic extends ToHistogramStoreOps {
   }
 
   /** We're in the non-Nil branch of the match, so we definitely have histograms
-    * at the point where we're asking for the head of the list
+    * at the point where we're asking for the head of the list.
+    * Also, messing with the map instead of match thing messes up the types for reasons
+    * that I disagree with, so suppressing.
     */
-  @SuppressWarnings(Array("TraversableHead"))
+  @SuppressWarnings(Array("TraversableHead", "PartialFunctionInsteadOfMatch"))
   def getStoreHistogram[T: HistogramStore](mosaic: BacksplashMosaic,
                                            histStore: T)(
       implicit hasRasterExtents: HasRasterExtents[BacksplashMosaic],

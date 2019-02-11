@@ -20,7 +20,6 @@
     <button class="btn btn-default fixedwidth" ng-click="$ctrl.startDrawing()">
       Define area to export
     </button>
-    <i class="icon-info"></i>
   </li>
   <!-- Opens the output processing panel -->
   <!-- <li class="separator">
@@ -38,25 +37,6 @@
     <i class="icon-info"></i>
   </li> -->
   <!-- Dropdown for output processing -->
-  <li class="separator">
-    <span class="label">Output Processing</span>
-    <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
-      <a class="btn dropdown-label">
-        {{$ctrl.getCurrentProcessingOption().label}}
-      </a>
-      <button type="button" class="btn btn-default dropdown-toggle">
-        <i class="icon-caret-down"></i>
-      </button>
-      <ul class="dropdown-menu dropdown-menu-light" uib-dropdown-menu role="menu">
-        <li ng-repeat="option in $ctrl.availableProcessingOptions" role="menuitem">
-          <a ng-click="$ctrl.onOutputProcessingChange(option)">
-            {{option.label}}
-          </a>
-        </li>
-      </ul>
-    </div>
-    <i class="icon-info"></i>
-  </li>
   <li ng-class="{'separator': !$ctrl.shouldShowTargetParams()}" ng-if="$ctrl.enableExportTargets">
     <span class="label">Export to...</span>
     <div class="dropdown btn-group fixedwidth" uib-dropdown uib-dropdown-toggle>
@@ -72,7 +52,6 @@
         </li>
       </ul>
     </div>
-    <i class="icon-info"></i>
   </li>
   <li class="separator" ng-show="$ctrl.shouldShowTargetParams()">
     <input type="url" class="form-control slim" placeholder="S3 Bucket URI" ng-model="$ctrl.exportTargetURI">
@@ -96,7 +75,6 @@
         </li>
       </ul>
     </div>
-    <i class="icon-info"></i>
   </li>
 </ul>
 <div class="sidebar-content" ng-if="$ctrl.project">

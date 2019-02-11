@@ -9,7 +9,6 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.Fragments.in
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import geotrellis.vector._
 
@@ -199,6 +198,21 @@ trait Filterables extends RFMeta with LazyLogging {
               case _ => None
             }
           )
+    }
+
+  implicit val projectSceneQueryParameters
+    : Filterable[Any, ProjectSceneQueryParameters] =
+    Filterable[Any, ProjectSceneQueryParameters] { params =>
+      List(
+        params.ingested.map({
+          case true => fr"ingest_status = 'INGESTED'"
+          case _    => fr"ingest_status != 'INGESTED'"
+        }),
+        params.ingestStatus.toList.toNel.map({ statuses =>
+          Fragments.in(fr"ingest_status",
+                       statuses.map(IngestStatus.fromString(_)))
+        })
+      )
     }
 
   implicit val mapTokenQueryParametersFilter

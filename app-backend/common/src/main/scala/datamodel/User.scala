@@ -111,9 +111,6 @@ final case class User(id: String,
                       isActive: Boolean,
                       visibility: UserVisibility,
                       personalInfo: User.PersonalInfo) {
-  private val rootOrganizationId =
-    UUID.fromString("9e2bef18-3f46-426b-a5bd-9913ee1ff840")
-
   def getDefaultExportSource(export: Export, dataBucket: String): URI =
     new URI(
       s"s3://$dataBucket/user-exports/${URLEncoder.encode(id, "UTF-8")}/${export.id}"

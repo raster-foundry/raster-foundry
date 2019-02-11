@@ -2,19 +2,11 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.datamodel.{User, Organization, Shape}
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
-import com.rasterfoundry.database.Implicits._
 
-import doobie._, doobie.implicits._
-import cats._, cats.data._, cats.effect.IO
-import cats.syntax.either._
-import cats.syntax.option._
-import doobie.postgres._, doobie.postgres.implicits._
-import doobie.scalatest.imports._
+import doobie.implicits._
 import org.scalacheck.Prop.forAll
 import org.scalatest._
 import org.scalatest.prop.Checkers
-
-import geotrellis.vector.{MultiPolygon, Polygon, Point}
 
 class ShapeDaoSpec
     extends FunSuite

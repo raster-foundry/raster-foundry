@@ -133,7 +133,6 @@ function projectStatesV2($stateProvider) {
             parent: 'root',
             title: 'Project',
             url: '/v2/project/:projectId',
-            component: 'rfProjectPage',
             resolve: Object.assign({
                 projectId: ['$transition$', ($transition$) => $transition$.params().projectId],
                 project: [
@@ -142,15 +141,23 @@ function projectStatesV2($stateProvider) {
                         projectService.fetchProject($transition$.params().projectId)
                 ]
             }, projectResolves.resolve),
-            redirectTo: 'project.layers'
+            redirectTo: 'project.layers',
+            views: {
+                'projectlayernav': {
+                    component: 'rfProjectLayersNav'
+                },
+                '': {
+                    component: 'rfProjectPage'
+                }
+            }
         })
         .state('project.layers', {
             title: 'Project Layers',
             url: '/layers?page',
-            component: 'rfProjectLayersPage',
             params: {
                 page: { dynamic: true }
-            }
+            },
+            component: 'rfProjectLayersPage'
         })
     // top level project routes
         .state('project.analyses', {
@@ -161,16 +168,38 @@ function projectStatesV2($stateProvider) {
         .state('project.settings', {
             title: 'Project Settings',
             url: '/settings',
-            component: 'rfProjectSettingsPage',
-            redirectTo: 'project.settings.options'
+            redirectTo: 'project.settings.options',
+            views: {
+                'projectlayernav@root': {
+                    component: 'rfProjectLayersNav'
+                },
+                '': {
+                    component: 'rfProjectSettingsPage'
+                }
+            }
         })
         .state('project.layer', {
             title: 'Project Layer',
             url: '/layer/:layerId',
             resolve: {
-                layerId: ['$transition$', ($transition$) => $transition$.params().layerId]
+                layerId: ['$transition$', ($transition$) => $transition$.params().layerId],
+                layer: [
+                    '$transition$', 'projectService',
+                    ($transition$, projectService) =>
+                        projectService.getProjectLayer(
+                            $transition$.params().projectId,
+                            $transition$.params().layerId
+                        )
+                ]
             },
-            component: 'rfProjectLayerPage'
+            views: {
+                'projectlayernav@root': {
+                    component: 'rfProjectLayersNav'
+                },
+                '': {
+                    component: 'rfProjectLayerPage'
+                }
+            }
         })
     // project layer routes
         .state('project.layer.aoi', {

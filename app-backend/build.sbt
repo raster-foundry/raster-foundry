@@ -32,8 +32,10 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-Xmax-classfile-name",
     "100",
+    "-Yrangepos",
     "-Ywarn-value-discard",
     "-Ywarn-unused",
+    "-Ywarn-unused-import",
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth",
     "100"
@@ -66,7 +68,9 @@ lazy val commonSettings = Seq(
   // https://www.scala-sbt.org/0.13/docs/Compiler-Plugins.html
   autoCompilerPlugins := true,
   addCompilerPlugin(
-    "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+    "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+  addCompilerPlugin(scalafixSemanticdb), // enable SemanticDB
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
 ) ++ publishSettings
 
 lazy val noPublishSettings = Seq(
@@ -193,7 +197,8 @@ lazy val root = Project("root", file("."))
              migrations,
              batch,
              backsplashCore,
-             backsplashServer)
+             backsplashServer,
+             backsplashExport)
 
 lazy val api = Project("api", file("api"))
   .dependsOn(db, common % "test->test;compile->compile", akkautil)
@@ -215,6 +220,7 @@ lazy val common = Project("common", file("common"))
       Dependencies.geotrellisSpark,
       Dependencies.geotrellisGeotools,
       Dependencies.geotrellisVectorTestkit,
+      Dependencies.mamlJvm,
       Dependencies.geotools,
       Dependencies.jts,
       Dependencies.sparkCore,
@@ -254,8 +260,7 @@ lazy val db = Project("db", file("db"))
     )
   })
   .settings(
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4")
-  )
+    )
 
 lazy val migrations = Project("migrations", file("migrations"))
   .settings(commonSettings: _*)
@@ -265,7 +270,7 @@ lazy val migrations = Project("migrations", file("migrations"))
   })
 
 lazy val batch = Project("batch", file("batch"))
-  .dependsOn(common, geotrellis)
+  .dependsOn(common, backsplashCore, geotrellis)
   .settings(commonSettings: _*)
   .settings(resolvers += Resolver.bintrayRepo("azavea", "maven"))
   .settings(resolvers += Resolver.bintrayRepo("azavea", "geotrellis"))
@@ -358,10 +363,52 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       Dependencies.catsMeow
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
     addCompilerPlugin(
       "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
   )
+
+// maml / better-abstracted tile server
+lazy val backsplashExport =
+  Project("backsplash-export", file("backsplash-export"))
+    .dependsOn(common)
+    .settings(commonSettings: _*)
+    .settings(
+      resolvers += Resolver
+        .file("local", file(Path.userHome.absolutePath + "/.ivy2/local"))(
+          Resolver.ivyStylePatterns))
+    .settings(
+      fork in run := true,
+      libraryDependencies ++= Seq(
+        "org.scalatest" %% "scalatest" % Version.scalaTest,
+        "com.azavea" %% "geotrellis-server-core" % Version.geotrellisServer,
+        "org.scalacheck" %% "scalacheck" % Version.scalaCheck,
+        "org.apache.spark" %% "spark-core" % "2.4.0" % Provided,
+        Dependencies.commonsIO,
+        Dependencies.decline,
+        Dependencies.geotrellisS3,
+        Dependencies.geotrellisUtil,
+        Dependencies.geotrellisRaster,
+        Dependencies.geotrellisSpark,
+        Dependencies.catsEffect,
+        Dependencies.elasticacheClient,
+        Dependencies.scalajHttp
+      ),
+      addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
+      addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"),
+      addCompilerPlugin(
+        "org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+      assemblyJarName in assembly := "backsplash-export-assembly.jar"
+    )
+    .settings(assemblyMergeStrategy in assembly := {
+      case m if m.toLowerCase.endsWith("manifest.mf") => MergeStrategy.discard
+      case m if m.toLowerCase.matches("meta-inf.*\\.sf$") =>
+        MergeStrategy.discard
+      case "reference.conf"   => MergeStrategy.concat
+      case "application.conf" => MergeStrategy.concat
+      case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
+        MergeStrategy.discard
+      case _ => MergeStrategy.first
+    })
 
 lazy val backsplashServer = Project("backsplash-server",
                                     file("backsplash-server"))
@@ -389,7 +436,6 @@ lazy val backsplashServer = Project("backsplash-server",
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
-  .settings(addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"))
   .settings(assemblyMergeStrategy in assembly := {
     case m if m.toLowerCase.endsWith("manifest.mf")     => MergeStrategy.discard
     case m if m.toLowerCase.matches("meta-inf.*\\.sf$") => MergeStrategy.discard
@@ -419,4 +465,3 @@ lazy val http4sUtil = Project("http4s-util", file("http4s-util"))
     )
   })
   .settings(addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"))
-  .settings(addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.2.4"))

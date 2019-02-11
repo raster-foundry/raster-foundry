@@ -3,8 +3,6 @@ package com.rasterfoundry.common.datamodel
 import io.circe._
 import cats.syntax.either._
 
-import java.util.UUID
-
 sealed abstract class GroupType(val repr: String) {
   override def toString = repr
 }

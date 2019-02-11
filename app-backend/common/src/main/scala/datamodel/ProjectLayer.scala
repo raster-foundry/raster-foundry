@@ -1,14 +1,8 @@
 package com.rasterfoundry.common.datamodel
 
-import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
-import cats.syntax.either._
-import geotrellis.vector.io.json.GeoJsonSupport
 import geotrellis.vector.{Geometry, Projected}
-import io.circe._
 import io.circe.generic.JsonCodec
-import io.circe.generic.semiauto._
-import io.circe.syntax._
 
 import java.sql.Timestamp
 import java.util.UUID
