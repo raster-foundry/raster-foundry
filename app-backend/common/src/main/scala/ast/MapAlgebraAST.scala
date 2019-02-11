@@ -669,10 +669,10 @@ object MapAlgebraAST {
   }
 
   final case class ProjectRaster(id: UUID,
-                           projId: UUID,
-                           band: Option[Int],
-                           celltype: Option[CellType],
-                           metadata: Option[NodeMetadata])
+                                 projId: UUID,
+                                 band: Option[Int],
+                                 celltype: Option[CellType],
+                                 metadata: Option[NodeMetadata])
       extends MapAlgebraLeaf
       with RFMLRaster {
     val `type` = "projectSrc"
@@ -686,10 +686,10 @@ object MapAlgebraAST {
   }
 
   final case class LayerRaster(id: UUID,
-                         layerId: UUID,
-                         band: Option[Int],
-                         celltype: Option[CellType],
-                         metadata: Option[NodeMetadata])
+                               layerId: UUID,
+                               band: Option[Int],
+                               celltype: Option[CellType],
+                               metadata: Option[NodeMetadata])
       extends MapAlgebraLeaf
       with RFMLRaster {
     val `type` = "layerSrc"

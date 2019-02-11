@@ -37,7 +37,7 @@ object MamlConversion {
         case MapAlgebraAST.Classification(_, _, _, classmap) =>
           Classification(args, MamlClassMap(classmap.classifications))
         case MapAlgebraAST.Masking(_, _, _, mask) =>
-          Masking(GeomLit(mask.toGeoJson.toString) +: args)
+          Masking(GeomLit(mask.toGeoJson) +: args)
         case MapAlgebraAST.Equality(_, _, _)       => Equal(args)
         case MapAlgebraAST.Inequality(_, _, _)     => Unequal(args)
         case MapAlgebraAST.Greater(_, _, _)        => Greater(args)
