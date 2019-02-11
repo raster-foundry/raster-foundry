@@ -54,7 +54,7 @@
     "bootstrap-sass": "~3.3.6",
     "d3": "5.7.0",
     "es6-map": "^0.1.5",
-    "gdal-js": "^1.1.0",
+    "gdal-js": "^1.1.2",
     "immutable": "^3.8.2",
     "jointjs": "~2.1.4",
     "jquery": "~3.1.1",
