@@ -47,7 +47,6 @@ form.add-permission-form {
 .permission-item,
 rf-permission-item {
     padding: 1em;
-    border-bottom: 1px solid $gray-lightest;
     display: flex;
     align-items: center;
     subject,
@@ -77,6 +76,12 @@ rf-permission-item {
         flex-shrink: 0;
         display: flex;
         white-space: nowrap;
+        align-items: center;
+        label {
+            font-weight: bold;
+            font-size: 1.3rem;
+            margin: 0 1.5rem 0 0;
+        }
         select {
             font-size: 1.3rem;
             margin-right: 0.5em;

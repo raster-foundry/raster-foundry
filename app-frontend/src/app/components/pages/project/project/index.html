@@ -1,31 +1,30 @@
-<div class="navbar light-navbar">
-  <div class="navbar-section">
-    <nav>
-      <a ui-sref="project.layers"
-      ng-class="{
-        active: ('project.layers' | includedByState)
-      }"
-      >Layers</a>
-    </nav>
-    <nav>
-      <a ui-sref="project.analyses"
-         ng-class="{
-                  active: ('project.analyses' | includedByState)
-                  }"
-      >Analyses</a>
-    </nav>
-  </div>
-  <div class="navbar-section secondary">
-    <nav>
-      <a>Smart Layers</a>
-    </nav>
-    <nav>
-      <a ui-sref="project.settings"
-         ng-class="{
-                  active: ('project.settings' | includedByState)
-                  }"
-      ><i class="icon-settings" title="Project Settings"></i></a>
-    </nav>
+<div ui-view="navbar-secondary">
+  <div class="navbar light-navbar">
+    <div class="navbar-section" >
+      <nav>
+        <a ui-sref="project.layers"
+        ng-class="{
+          active: ('project.layers' | includedByState)
+        }"
+        >Layers</a>
+      </nav>
+      <nav>
+        <a ui-sref="project.analyses"
+           ng-class="{
+                    active: ('project.analyses' | includedByState)
+                    }"
+        >Analyses</a>
+      </nav>
+    </div>
+    <div class="navbar-section secondary">
+      <nav>
+        <a ui-sref="project.settings"
+           ng-class="{
+                    active: ('project.settings' | includedByState)
+                    }"
+        >Settings</a>
+      </nav>
+    </div>
   </div>
 </div>
 <div class="container column-stretch container-not-scrollable"

@@ -161,8 +161,15 @@ function projectStatesV2($stateProvider) {
         .state('project.settings', {
             title: 'Project Settings',
             url: '/settings',
-            component: 'rfProjectSettingsPage',
-            redirectTo: 'project.settings.options'
+            redirectTo: 'project.settings.options',
+            views: {
+                'navbar-secondary': {
+                    component: 'rfProjectSettingsNavbar'
+                },
+                '': {
+                    component: 'rfProjectSettingsPage'
+                }
+            }
         })
         .state('project.layer', {
             title: 'Project Layer',
@@ -433,7 +440,7 @@ function projectStates($stateProvider) {
             templateUrl: projectsTpl,
             controller: 'ProjectsController',
             controllerAs: '$ctrl',
-            abstract: true,
+            redirectTo: 'projects.list',
             resolve: projectsModule.resolve
         })
         .state('projects.list', {

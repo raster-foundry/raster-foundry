@@ -42,6 +42,9 @@ form {
 
 .input-group {
   display: flex;
+  *:not(:first-child) {
+    margin-left: 1rem !important;
+  }
 }
 
 label,
@@ -149,6 +152,15 @@ input[type="radio"] {
   margin-top: 5px;
   margin-bottom: 0;
   color: lighten($text-base, 10%);
+  font-style: italic;
+}
+
+.help-text {
+  display: block;
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  color: lighten($text-base, 25%);
+  font-style: italic;
 }
 
 /**
