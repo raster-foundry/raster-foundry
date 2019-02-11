@@ -6,6 +6,7 @@
 ### Changed
 
 - Updated default project layer color group hex code [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
+- Updated gdal-js [\#4618](https://github.com/raster-foundry/raster-foundry/pull/4618)
 
 ### Deprecated
 
