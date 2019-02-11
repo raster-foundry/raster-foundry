@@ -34,12 +34,15 @@
 - Added publishing of lambda functions to CI build process [\#4586](https://github.com/raster-foundry/raster-foundry/pull/4586)
 - Added tile server support for masked analyses [\#4571](https://github.com/raster-foundry/raster-foundry/pull/4571)
 - Added project layer navigation bar [\#4581](https://github.com/raster-foundry/raster-foundry/pull/4581)
+- Added layer parameter to /api/scenes and added inLayer property to scene browse responses [\#4615](https://github.com/raster-foundry/raster-foundry/pull/4615)
 
 ### Fixed
 
 - Removed unused imports and assignments [\#4579](https://github.com/raster-foundry/raster-foundry/pull/4579)
 - Included geometry filter in backsplash scene service to prevent erroneous 500s [\#4580](https://github.com/raster-foundry/raster-foundry/pull/4580)
 - Made scapegoat less angry [\#4611](https://github.com/raster-foundry/raster-foundry/pull/4611)
+- Set hasNext correctly on /api/scenes when there are more than 100 scenes [\#4615](https://github.com/raster-foundry/raster-foundry/pull/4615)
+- Use sane default when the accepted query parameter is not set on /api/project/{}/layer/{}/scenes [\#4615](https://github.com/raster-foundry/raster-foundry/pull/4615)
 
 ### Security
 
