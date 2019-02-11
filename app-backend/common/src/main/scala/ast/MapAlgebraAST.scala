@@ -668,7 +668,7 @@ object MapAlgebraAST {
       copy(metadata = Some(newMd))
   }
 
-  case class ProjectRaster(id: UUID,
+  final case class ProjectRaster(id: UUID,
                            projId: UUID,
                            band: Option[Int],
                            celltype: Option[CellType],
@@ -685,7 +685,7 @@ object MapAlgebraAST {
 
   }
 
-  case class LayerRaster(id: UUID,
+  final case class LayerRaster(id: UUID,
                          layerId: UUID,
                          band: Option[Int],
                          celltype: Option[CellType],
