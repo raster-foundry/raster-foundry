@@ -5,9 +5,13 @@
 
 ### Changed
 
+- Updated default project layer color group hex code [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
+
 ### Deprecated
 
 ### Removed
+
+- Removed layer re-ordering, layer sorting, layer type selection from UI [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
 
 ### Fixed
 

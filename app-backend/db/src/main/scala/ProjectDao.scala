@@ -88,7 +88,7 @@ object ProjectDao
                      now,
                      "Project default layer",
                      None,
-                     "#FFFFFF",
+                     "#738FFC",
                      None,
                      None,
                      None,
