@@ -260,7 +260,6 @@ class NewExportController {
 
     createBasicExport() {
         let exportOpts = this.getExportOptions();
-        console.log(exportOpts);
         this.projectService
             .export(this.project,
                     {exportType: this.getCurrentTarget().value === 'dropbox' ? 'Dropbox' : 'S3' },
