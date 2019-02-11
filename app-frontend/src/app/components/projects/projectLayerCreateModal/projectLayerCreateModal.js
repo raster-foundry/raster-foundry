@@ -22,7 +22,6 @@ class ProjectLayerCreateModalController {
     }
 
     $onInit() {
-        this.showSmartLayerOption = false;
         this.setProjectLayerCreate();
     }
 
