@@ -28,7 +28,7 @@ object ExportDao extends Dao[Export] {
     SELECT
       id, created_at, created_by, modified_at, modified_by, owner,
       project_id, export_status, export_type,
-      visibility, toolrun_id, export_options
+      visibility, toolrun_id, export_options, project_layer_id
     FROM
   """ ++ tableF
 
@@ -44,11 +44,12 @@ object ExportDao extends Dao[Export] {
     (insertF ++ fr"""
         id, created_at, created_by, modified_at, modified_by, owner,
         project_id, export_status, export_type,
-        visibility, toolrun_id, export_options
+        visibility, toolrun_id, export_options, project_layer_id
       ) VALUES (
         ${UUID.randomUUID}, NOW(), ${user.id}, NOW(), ${user.id}, ${ownerId},
         ${export.projectId}, ${export.exportStatus}, ${export.exportType},
-        ${export.visibility}, ${export.toolRunId}, ${export.exportOptions}
+        ${export.visibility}, ${export.toolRunId}, ${export.exportOptions},
+        ${export.projectLayerId}
       )
     """).update.withUniqueGeneratedKeys[Export](
       "id",
@@ -62,7 +63,8 @@ object ExportDao extends Dao[Export] {
       "export_type",
       "visibility",
       "toolrun_id",
-      "export_options"
+      "export_options",
+      "project_layer_id"
     )
   }
 
