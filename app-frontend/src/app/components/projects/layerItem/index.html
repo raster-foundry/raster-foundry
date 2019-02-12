@@ -54,8 +54,8 @@
                  tooltip-class="layer-item-tooltip"
                  tooltip-side="left"></span>
       </div>
-
       <div class="btn btn-text btn-transparent"
+           ng-show="$ctrl.onHide"
            ng-click="$ctrl.onHide({id: $ctrl.itemInfo.id})">
         <span class="icon-eye"
               tooltips

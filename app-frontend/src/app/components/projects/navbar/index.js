@@ -26,6 +26,7 @@ class ProjectLayersNavController {
             stateCurrent.name === 'project.layers' ||
             stateCurrent.name.includes('project.analyses') ||
             stateCurrent.name.includes('project.settings') ||
+            stateCurrent.name.includes('project.create-analysis') ||
             stateCurrent.name.includes('project.layer')
         ) {
             this.navs.push({
@@ -38,6 +39,12 @@ class ProjectLayersNavController {
             this.navs.push({
                 title: 'Settings',
                 sref: `project.settings({projectId: '${this.project.id}'})`
+            });
+        }
+
+        if (stateCurrent.name.includes('project.create-analysis')) {
+            this.navs.push({
+                title: 'Create Analysis'
             });
         }
 
