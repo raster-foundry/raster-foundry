@@ -10,9 +10,12 @@ import com.rasterfoundry.backsplash.error._
 import com.azavea.maml.ast._
 import com.azavea.maml.util.{ClassMap => _}
 
-class BacksplashMamlAdapter[HistStore, ProjStore: ProjectStore](
+class BacksplashMamlAdapter[HistStore,
+                            ProjStore: ProjectStore,
+                            LayerStore: ProjectStore](
     mosaicImplicits: MosaicImplicits[HistStore],
-    projStore: ProjStore) {
+    projStore: ProjStore,
+    layerStore: LayerStore) {
   import mosaicImplicits._
 
   def asMaml(ast: MapAlgebraAST)
@@ -36,6 +39,20 @@ class BacksplashMamlAdapter[HistStore, ProjStore: ProjectStore](
                   None,
                   None
                 ) map { backsplashIm =>
+                backsplashIm.copy(subsetBands = List(bandActual))
+              }
+            )
+          )
+        }
+        case MapAlgebraAST.LayerRaster(_, layerId, band, _, _) => {
+          val bandActual = band.getOrElse(
+            throw SingleBandOptionsException(
+              "Band must be provided to evaluate AST")
+          )
+          Map[String, BacksplashMosaic](
+            s"${layerId.toString}_${bandActual}" -> (
+              layerStore
+                .read(layerId, None, None, None) map { backsplashIm =>
                 backsplashIm.copy(subsetBands = List(bandActual))
               }
             )
