@@ -19,16 +19,11 @@ class LayerItemController {
         const geometry = _.get(this.layer, 'colorGroupHex');
         this.hasGeom = _.get(geometry, 'features.length');
     }
-
-    getSceneCount() {
-        return this.layerStats ? this.layerStats[this.layer.id] : null;
-    }
 }
 
 const component = {
     bindings: {
         layer: '<',
-        layerStats: '<',
         layerActions: '<',
         subtext: '<',
         selected: '<',
@@ -37,7 +32,8 @@ const component = {
         onHide: '&'
     },
     templateUrl: tpl,
-    controller: LayerItemController.name
+    controller: LayerItemController.name,
+    transclude: true
 };
 
 export default angular

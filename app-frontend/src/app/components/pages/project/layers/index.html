@@ -17,7 +17,6 @@
 <div class="sidebar-scrollable list-group">
   <rf-layer-item
       layer="layer"
-      layer-stats="$ctrl.layerStats"
       layer-actions="$ctrl.layerActions[$index]"
       subtext="layer.subtext"
       selected="$ctrl.isSelected(layer.id)"
@@ -25,6 +24,7 @@
       visible="$ctrl.isVisible(layer.id)"
       on-hide="$ctrl.onHide(layerId)"
       ng-repeat="layer in $ctrl.layerList track by layer.id">
+    <rf-layer-stats scene-count="$ctrl.getSceneCount(layer.id)"></rf-layer-stats">
   </rf-layer-item>
   <rf-pagination-controls
       pagination="$ctrl.pagination"

@@ -37,6 +37,10 @@ class ProjectLayersPageController {
         return this.mapService.getMap('project');
     }
 
+    getSceneCount(layerId) {
+        return this.layerStats ? this.layerStats[layerId] : null;
+    }
+
     fetchPage(page = this.$state.params.page || 1) {
         this.layerList = [];
         this.layerActions = {};
