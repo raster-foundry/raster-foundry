@@ -3,7 +3,7 @@ import tpl from './index.html';
 
 class ProjectPageController {
     constructor(
-        $rootScope, $state, $location, mapService, mapUtilsService,
+        $rootScope, $state, $location, $transitions, mapService, mapUtilsService,
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -13,6 +13,15 @@ class ProjectPageController {
         if (!this.$location.search().bbox) {
             this.fitProjectExtent();
         }
+        this.getMap().then((map) => {
+            this.$transitions.onFinish({
+                to: 'project.*'
+            }, (transition) => {
+                if (!transition.to().name.includes('create-analysis')) {
+                    map.map.invalidateSize();
+                }
+            });
+        });
     }
 
     getMap() {

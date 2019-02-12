@@ -294,6 +294,30 @@ function projectStatesV2($stateProvider) {
             url: '/visualize',
             component: 'rfProjectAnalysesVisualizePage'
         })
+        .state('project.analysis', {
+            title: 'Project Analysis',
+            url: '/analysis/:analsisId',
+            component: 'rfProjectAnalysis'
+        })
+        .state('project.create-analysis', {
+            title: 'Create project analysis',
+            url: '/create-analysis?page&search',
+            component: 'rfProjectCreateAnalysisPage',
+            params: {
+                layers: {
+                    array: true
+                },
+                page: {
+                    dynamic: true
+                },
+                search: {
+                    dynamic: true
+                }
+            },
+            resolve: {
+                layers: ['$transition$', ($transition$) => $transition$.params().layers]
+            }
+        })
     // project settings routes
         .state('project.settings.options', {
             title: 'Project Options',
