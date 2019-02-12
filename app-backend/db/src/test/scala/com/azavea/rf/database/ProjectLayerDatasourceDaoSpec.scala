@@ -31,7 +31,7 @@ class ProjectLayerDatasourceDaoSpec
           {
             val scenesInsertWithUserProjectIO = for {
               orgUserProject <- insertUserOrgProject(user, org, project)
-              (dbOrg, dbUser, dbProject) = orgUserProject
+              (_, dbUser, dbProject) = orgUserProject
               datasource <- DatasourceDao.create(
                 dsCreate.toDatasource(dbUser),
                 dbUser
