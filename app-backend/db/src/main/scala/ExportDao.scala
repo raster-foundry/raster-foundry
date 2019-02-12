@@ -116,19 +116,22 @@ object ExportDao extends Dao[Export] {
         // Exporting a project layer
         case (Some(projectId), Some(projectLayerId), None) =>
           for {
-            isLayerInProject <- ProjectLayerDao.layerIsInProject(projectLayerId, projectId)
+            isLayerInProject <- ProjectLayerDao.layerIsInProject(projectLayerId,
+                                                                 projectId)
             mosaicExportSourceList <- isLayerInProject match {
               case true =>
                 mosaicInput(projectLayerId, exportOptions).map(_.asJson)
               case false =>
-                throw new Exception(s"Layer ${projectLayerId} is not in project ${projectId}")
+                throw new Exception(
+                  s"Layer ${projectLayerId} is not in project ${projectId}")
             }
           } yield { mosaicExportSourceList }
         // Exporting a project
         case (Some(projectId), None, None) =>
           for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            mosaicExportSourceList <- mosaicInput(project.defaultLayerId, exportOptions).map(_.asJson)
+            mosaicExportSourceList <- mosaicInput(project.defaultLayerId,
+                                                  exportOptions).map(_.asJson)
           } yield { mosaicExportSourceList }
         case (None, None, None) =>
           throw new Exception(
