@@ -47,7 +47,7 @@ object TileReification extends LazyLogging {
                   "Tile location list must contain *some* tile locations"))
           val explicitBandcount = first._2.length
           if (explicitBandcount < 1) {
-            getRasterSource(first._1).bandCount
+            RasterSources.getOrUpdate(first._1).bandCount
           } else {
             explicitBandcount
           }
@@ -56,7 +56,8 @@ object TileReification extends LazyLogging {
           self.traverse {
             case (uri, bands, ndOverride) =>
               IO {
-                getRasterSource(uri)
+                RasterSources
+                  .getOrUpdate(uri)
                   .reproject(WebMercator, NearestNeighbor)
                   .tileToLayout(ld, NearestNeighbor)
                   .read(SpatialKey(x, y), bands) match {
@@ -115,7 +116,8 @@ object TileReification extends LazyLogging {
         val subTilesIO: IO[List[Option[MultibandTile]]] = self.traverse {
           case (uri, band, ndOverride) =>
             IO {
-              getRasterSource(uri)
+              RasterSources
+                .getOrUpdate(uri)
                 .reproject(WebMercator, NearestNeighbor)
                 .tileToLayout(ld, NearestNeighbor)
                 .read(SpatialKey(x, y), Seq(band)) match {

@@ -124,7 +124,7 @@ trait ExportableInstances extends LazyLogging {
                         "Tile location list must contain *some* tile locations"))
                   val explicitBandcount = first._2.length
                   if (explicitBandcount < 1) {
-                    getRasterSource(first._1).bandCount
+                    RasterSources.getOrUpdate(first._1).bandCount
                   } else {
                     explicitBandcount
                   }
