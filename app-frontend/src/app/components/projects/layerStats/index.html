@@ -1,3 +1,5 @@
 <div ng-if="$ctrl.sceneCount">
-  {{ $ctrl.sceneCount }} images
+  <ng-pluralize count="$ctrl.sceneCount"
+                when="{'one': '{} image', 'other': '{} images'}">
+  </ng-pluralize>
 </div>
