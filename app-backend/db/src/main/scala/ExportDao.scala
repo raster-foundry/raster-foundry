@@ -109,14 +109,28 @@ object ExportDao extends Dao[Export] {
 
       logger.info(s"Project id when getting input style: ${export.projectId}")
       logger.info(s"Tool run id when getting input style: ${export.toolRunId}")
-      (export.projectId, export.toolRunId) match {
+      (export.projectId, export.projectLayerId, export.toolRunId) match {
         // Exporting a tool-run
-        case (_, Some(toolRunId)) =>
+        case (_, _, Some(toolRunId)) =>
           astInput(toolRunId, exportOptions).map(_.asJson)
+        // Exporting a project layer
+        case (Some(projectId), Some(projectLayerId), None) =>
+          for {
+            isLayerInProject <- ProjectLayerDao.layerIsInProject(projectLayerId, projectId)
+            mosaicExportSourceList <- isLayerInProject match {
+              case true =>
+                mosaicInput(projectLayerId, exportOptions).map(_.asJson)
+              case false =>
+                throw new Exception(s"Layer ${projectLayerId} is not in project ${projectId}")
+            }
+          } yield { mosaicExportSourceList }
         // Exporting a project
-        case (Some(projectId), None) =>
-          mosaicInput(projectId, exportOptions).map(_.asJson)
-        case (None, None) =>
+        case (Some(projectId), None, None) =>
+          for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            mosaicExportSourceList <- mosaicInput(project.defaultLayerId, exportOptions).map(_.asJson)
+          } yield { mosaicExportSourceList }
+        case (None, None, None) =>
           throw new Exception(
             s"Export Definitions ${export.id} does not have project or ast input defined")
       }
@@ -179,10 +193,10 @@ object ExportDao extends Dao[Export] {
   }
 
   private def mosaicInput(
-      projectId: UUID,
+      layerId: UUID,
       exportOptions: ExportOptions
   ): ConnectionIO[MosaicExportSource] = {
-    SceneToProjectDao.getMosaicDefinition(projectId).compile.toList map { mds =>
+    SceneToLayerDao.getMosaicDefinition(layerId).compile.toList map { mds =>
       // we definitely need NoData but it isn't obviously available :(
       val ndOverride: Option[Double] = None
       val layers = mds.map { md =>
