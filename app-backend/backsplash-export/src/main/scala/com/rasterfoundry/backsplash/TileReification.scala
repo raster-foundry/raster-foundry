@@ -56,30 +56,34 @@ object TileReification extends LazyLogging {
           self.parTraverse {
             case (uri, bands, ndOverride) =>
               IO {
-                RasterSources
-                  .getOrUpdate(uri)
-                  .reproject(WebMercator, NearestNeighbor)
-                  .tileToLayout(ld, NearestNeighbor)
-                  .read(SpatialKey(x, y), bands) match {
-                  case Some(mbtile) =>
-                    logger.debug(
-                      s"--HIT-- uri: ${uri}; celltype: ${mbtile.cellType}, zxy: $z/$x/$y")
-                    logger.trace(s"b1 hash: ${md5Hash(
-                      mbtile.band(0).toArray.take(100).mkString(""))}, vals ${mbtile.band(0).toArray.take(10).toList}")
-                    logger.trace(s"b2 hash: ${md5Hash(
-                      mbtile.band(1).toArray.take(100).mkString(""))}, vals ${mbtile.band(1).toArray.take(10).toList}")
-                    logger.trace(s"b3 hash: ${md5Hash(
-                      mbtile.band(2).toArray.take(100).mkString(""))}, vals ${mbtile.band(2).toArray.take(10).toList}")
+                val rs = RasterSources.getOrUpdate(uri)
+                if (rs.extent.intersects(extent)) {
+                  rs.reproject(WebMercator, NearestNeighbor)
+                    .tileToLayout(ld, NearestNeighbor)
+                    .read(SpatialKey(x, y), bands) match {
+                    case Some(mbtile) =>
+                      logger.debug(
+                        s"--HIT-- uri: ${uri}; celltype: ${mbtile.cellType}, zxy: $z/$x/$y")
+                      mbtile.bands.zipWithIndex.map {
+                        case (band, idx) =>
+                          logger.trace(s"b$idx hash: ${md5Hash(
+                            band.toArray.take(100).mkString(""))}, vals ${band.toArray.take(10).toList}")
+                      }
 
-                    ndOverride.map { nd =>
-                      val currentCT = mbtile.cellType
-                      mbtile.interpretAs(currentCT.withNoData(Some(nd)))
-                    } orElse {
-                      Some(mbtile)
-                    }
-                  case None =>
-                    logger.debug(s"--MISS-- uri: ${uri}; zxy: $z/$x/$y")
-                    None
+                      ndOverride.map { nd =>
+                        val currentCT = mbtile.cellType
+                        mbtile.interpretAs(currentCT.withNoData(Some(nd)))
+                      } orElse {
+                        Some(mbtile)
+                      }
+                    case None =>
+                      logger.debug(
+                        s"--CRITICAL MISS-- uri: ${uri}; zxy: $z/$x/$y")
+                      None
+                  }
+                } else {
+                  logger.debug(s"--MISS-- uri: ${uri}; zxy: $z/$x/$y")
+                  None
                 }
               }
           }
@@ -116,23 +120,27 @@ object TileReification extends LazyLogging {
         val subTilesIO: IO[List[Option[MultibandTile]]] = self.parTraverse {
           case (uri, band, ndOverride) =>
             IO {
-              RasterSources
-                .getOrUpdate(uri)
-                .reproject(WebMercator, NearestNeighbor)
-                .tileToLayout(ld, NearestNeighbor)
-                .read(SpatialKey(x, y), Seq(band)) match {
-                case Some(tile) =>
-                  logger.debug(
-                    s"--HIT-- uri: ${uri}; celltype: ${tile.cellType}, zxy: $z/$x/$y")
-                  ndOverride.map { nd =>
-                    val currentCT = tile.cellType
-                    tile.interpretAs(currentCT.withNoData(Some(nd)))
-                  } orElse {
-                    Some(tile)
-                  }
-                case None =>
-                  logger.debug(s"--MISS-- uri: ${uri}; zxy: $z/$x/$y")
-                  None
+              val rs = RasterSources.getOrUpdate(uri)
+              if (rs.extent.intersects(extent)) {
+                rs.reproject(WebMercator, NearestNeighbor)
+                  .tileToLayout(ld, NearestNeighbor)
+                  .read(SpatialKey(x, y), Seq(band)) match {
+                  case Some(tile) =>
+                    logger.debug(
+                      s"--HIT-- uri: ${uri}; celltype: ${tile.cellType}, zxy: $z/$x/$y")
+                    ndOverride.map { nd =>
+                      val currentCT = tile.cellType
+                      tile.interpretAs(currentCT.withNoData(Some(nd)))
+                    } orElse {
+                      Some(tile)
+                    }
+                  case None =>
+                    logger.debug(s"--MISS-- uri: ${uri}; zxy: $z/$x/$y")
+                    None
+                }
+              } else {
+                logger.debug(s"--MISS-- uri: ${uri}; zxy: $z/$x/$y")
+                None
               }
             }
         }
