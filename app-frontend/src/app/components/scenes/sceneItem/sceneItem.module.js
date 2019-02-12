@@ -68,17 +68,43 @@ class SceneItemController {
         }
     }
 
+    rgbFromBands(dsBands) {
+        let redBand = _.get(this.datasource.bands.find(x => {
+            return x.name.toLowerCase() === 'red';
+        }), 'number');
+        let greenBand = _.get(this.datasource.bands.find(x => {
+            return x.name.toLowerCase() === 'green';
+        }), 'number');
+        let blueBand = _.get(this.datasource.bands.find(x => {
+            return x.name.toLowerCase() === 'blue';
+        }), 'number');
+        return [redBand, greenBand, blueBand];
+    }
+
     updateThumbnails() {
         if (this.scene.sceneType === 'COG') {
-            let redBand = _.get(this.datasource.bands.find(x => {
-                return x.name.toLowerCase() === 'red';
-            }), 'number');
-            let greenBand = _.get(this.datasource.bands.find(x => {
-                return x.name.toLowerCase() === 'green';
-            }), 'number');
-            let blueBand = _.get(this.datasource.bands.find(x => {
-                return x.name.toLowerCase() === 'blue';
-            }), 'number');
+            let naturalComposite = _.find(
+                this.datasource.composites,
+                (value) => {
+                    return value.label.toLowerCase().includes('natural');
+                }
+            );
+            let defaultComposite = _.find(
+                this.datasource.composites,
+                (value) => {
+                    return value.label.toLowerCase().includes('default');
+                }
+            );
+            let headComposite = _.first(_.values(this.datasource.composites)) || null;
+            let resolvedComposite = naturalComposite || defaultComposite || headComposite;
+            let redBand, greenBand, blueBand = (
+                resolvedComposite ?
+                    (
+                        resolvedComposite.value.redBand,
+                        resolvedComposite.value.greenBand,
+                        resolvedComposite.value.blueBand
+                    ) :
+                    this.rgbFromBands(this.datasource.bands));
             let bands = {};
             let atLeastThreeBands = this.datasource.bands.length >= 3;
             if (atLeastThreeBands) {
