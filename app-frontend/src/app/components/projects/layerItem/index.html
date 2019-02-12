@@ -20,6 +20,8 @@
     <div><strong>{{$ctrl.layer.name}}</strong></div>
     <div ng-show="$ctrl.layer.subtext"><span>{{$ctrl.layer.subtext}}</span></div>
     <div>{{$ctrl.layer.createdAt | date}}</div>
+    <rf-layer-stats
+        scene-count="$ctrl.getSceneCount()"></rf-layer-stats>
   </div>
   <div class="list-group-right">
     <div class="btn btn-text btn-transparent"
