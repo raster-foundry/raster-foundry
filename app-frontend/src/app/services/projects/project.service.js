@@ -186,6 +186,13 @@ export default (app) => {
                             layerId: '@layerId'
                         }
                     },
+                    getLayerStats: {
+                        method: 'GET',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers/stats`,
+                        params: {
+                            projectId: '@projectId'
+                        }
+                    },
                     createLayer: {
                         method: 'POST',
                         url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers`,
@@ -622,6 +629,10 @@ export default (app) => {
 
         getProjectLayer(projectId, layerId) {
             return this.Project.getLayer({projectId, layerId}).$promise;
+        }
+
+        getProjectLayerStats(projectId) {
+            return this.Project.getLayerStats({projectId}).$promise;
         }
 
         deleteProjectLayer(projectId, layerId) {

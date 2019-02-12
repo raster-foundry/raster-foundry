@@ -3279,3 +3279,11 @@ rf-project-layers-page {
 .form-control.color-picker {
   cursor: pointer;
 }
+
+.list-group-vertical {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    align-self: stretch;
+}
+

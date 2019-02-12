@@ -24,6 +24,7 @@
       visible="$ctrl.isVisible(layer.id)"
       on-hide="$ctrl.onHide(layerId)"
       ng-repeat="layer in $ctrl.layerList track by layer.id">
+    <rf-layer-stats scene-count="$ctrl.getSceneCount(layer.id)"></rf-layer-stats">
   </rf-layer-item>
   <rf-pagination-controls
       pagination="$ctrl.pagination"

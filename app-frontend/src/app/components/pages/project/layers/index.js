@@ -19,6 +19,10 @@ class ProjectLayersPageController {
             permissions => {
                 this.permissions = permissions.map(p => p.actionType);
             });
+        this.projectService.getProjectLayerStats(this.project.id).then(
+            layerSceneCounts => {
+                this.layerStats = layerSceneCounts;
+            });
         this.fetchPage();
     }
 
@@ -31,6 +35,10 @@ class ProjectLayersPageController {
 
     getMap() {
         return this.mapService.getMap('project');
+    }
+
+    getSceneCount(layerId) {
+        return this.layerStats ? this.layerStats[layerId] : null;
     }
 
     fetchPage(page = this.$state.params.page || 1) {

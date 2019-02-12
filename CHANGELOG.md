@@ -3,6 +3,7 @@
 
 ### Added
 - Added backend support for rendering tiles and fetching histograms for analyses with project layers at their leaves [\#4603](https://github.com/raster-foundry/raster-foundry/pull/4603)
+- Added scene counts to project layer items [\#4625](https://github.com/raster-foundry/raster-foundry/pull/4625)
 
 ### Changed
 

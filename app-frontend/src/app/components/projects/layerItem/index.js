@@ -32,7 +32,8 @@ const component = {
         onHide: '&'
     },
     templateUrl: tpl,
-    controller: LayerItemController.name
+    controller: LayerItemController.name,
+    transclude: true
 };
 
 export default angular

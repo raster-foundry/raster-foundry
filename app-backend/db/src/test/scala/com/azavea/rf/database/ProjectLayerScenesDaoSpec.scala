@@ -85,4 +85,63 @@ class LayerScenesDaoSpec
       }
     }
   }
+
+  test("count scenes in layers for a project") {
+    check {
+      forAll {
+        (
+            user: User.Create,
+            org: Organization.Create,
+            project: Project.Create,
+            layersWithScenes: List[(ProjectLayer.Create, List[Scene.Create])],
+            dsCreate: Datasource.Create
+        ) =>
+          {
+            val countsWithCountedIO = for {
+              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
+              dbDatasource <- fixupDatasource(dsCreate, dbUser)
+              dbLayersWithSceneCounts <- layersWithScenes traverse {
+                case (projectLayerCreate, scenesList) =>
+                  for {
+                    dbProjectLayer <- ProjectLayerDao.insertProjectLayer(
+                      projectLayerCreate
+                        .copy(projectId = Some(dbProject.id))
+                        .toProjectLayer
+                    )
+                    dbScenes <- scenesList traverse { scene =>
+                      SceneDao.insert(fixupSceneCreate(dbUser,
+                                                       dbDatasource,
+                                                       scene),
+                                      dbUser)
+                    }
+                    _ <- ProjectDao.addScenesToProject(dbScenes map { _.id },
+                                                       dbProject.id,
+                                                       true,
+                                                       Some(dbProjectLayer.id))
+                  } yield { (dbProjectLayer.id, dbScenes.length) }
+              }
+              counted <- ProjectLayerScenesDao.countLayerScenes(dbProject.id)
+            } yield (counted, dbLayersWithSceneCounts)
+
+            val (counted, expectedCounts) =
+              xa.use(t => countsWithCountedIO.transact(t)) map {
+                case (tups1, tups2) => (Map(tups1: _*), Map(tups2: _*))
+              } unsafeRunSync
+
+            val expectation =
+              if (counted.isEmpty) {
+                expectedCounts.values.foldLeft(0)(_ + _) == 0
+              } else {
+                expectedCounts.filter(kvPair => kvPair._2 != 0) == counted
+              }
+
+            assert(
+              expectation,
+              "Counts by layer id should equal the counts of scenes added to each layer")
+
+            true
+          }
+      }
+    }
+  }
 }
