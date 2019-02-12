@@ -53,7 +53,7 @@ object TileReification extends LazyLogging {
           }
         }
         val subTilesIO: IO[List[Option[MultibandTile]]] =
-          self.traverse {
+          self.parTraverse {
             case (uri, bands, ndOverride) =>
               IO {
                 RasterSources
@@ -113,7 +113,7 @@ object TileReification extends LazyLogging {
       ): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
         val ld = tmsLevels(z)
         val extent = ld.mapTransform.keyToExtent(x, y)
-        val subTilesIO: IO[List[Option[MultibandTile]]] = self.traverse {
+        val subTilesIO: IO[List[Option[MultibandTile]]] = self.parTraverse {
           case (uri, band, ndOverride) =>
             IO {
               RasterSources
