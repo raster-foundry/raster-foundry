@@ -19,8 +19,7 @@ final case class Datasource(id: UUID,
                             extras: Json,
                             bands: Json,
                             licenseName: Option[String]) {
-  def toThin: Datasource.Thin =
-    Datasource.Thin(this.bands, this.composites, this.name, this.id)
+  def toThin: Datasource.Thin = Datasource.Thin(this.bands, this.name, this.id)
 
   def defaultColorComposite: Option[ColorComposite] =
     this.composites
@@ -39,10 +38,7 @@ object Datasource {
   def create = Create.apply _
 
   @JsonCodec
-  final case class Thin(bands: Json,
-                        composites: Map[String, ColorComposite],
-                        name: String,
-                        id: UUID)
+  final case class Thin(bands: Json, name: String, id: UUID)
 
   @JsonCodec
   final case class Create(name: String,
