@@ -133,6 +133,9 @@ object ExportDao extends Dao[Export] {
             mosaicExportSourceList <- mosaicInput(project.defaultLayerId,
                                                   exportOptions).map(_.asJson)
           } yield { mosaicExportSourceList }
+        case (None, Some(projectLayerId), None) =>
+          throw new Exception(
+            s"Export Definitions ${export.id} does not have a project id to export layer ${projectLayerId}")
         case (None, None, None) =>
           throw new Exception(
             s"Export Definitions ${export.id} does not have project or ast input defined")
