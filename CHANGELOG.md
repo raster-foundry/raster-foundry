@@ -17,6 +17,8 @@
 
 ### Fixed
 
+- Unified coloring for scene detail modal scene preview and map scene preview [\#4630](https://github.com/raster-foundry/raster-foundry/pull/4630)
+
 ## [1.18.0](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-11)
 
 ### Added
