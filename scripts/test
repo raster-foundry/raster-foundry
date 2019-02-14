@@ -1,11 +1,10 @@
 #!/bin/bash
+
 set -e
 
 if [[ -n "${RF_DEBUG}" ]]; then
     set -x
 fi
-
-GIT_COMMIT="${GIT_COMMIT:-latest}"
 
 function usage() {
     echo -n \
@@ -14,10 +13,10 @@ Run various test suites.
 "
 }
 
-if [ "${BASH_SOURCE[0]}" = "${0}" ]
-then
-    if [ "${1:-}" = "--help" ]
-    then
+GIT_COMMIT="${GIT_COMMIT:-latest}"
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
         usage
     else
         if which shellcheck &>/dev/null; then
@@ -56,5 +55,4 @@ then
             run --rm api-server test
 
     fi
-    exit
 fi

@@ -8,15 +8,14 @@ fi
 
 function usage() {
     echo -n \
-         "Usage: $(basename "$0")
+"Usage: $(basename "$0")
+
 Attempts to setup the project's development environment.
 "
 }
 
-if [ "${BASH_SOURCE[0]}" = "${0}" ]
-then
-    if [ "${1:-}" = "--help" ]
-    then
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
         usage
     else
         # Ensure that a directory exists to house AWS profiles.

@@ -7,11 +7,10 @@ fi
 
 DIR="$(dirname "$0")"
 
-
 function usage() {
-
     echo -n \
 "Usage: $(basename "$0")
+
 Setup external project dependencies.
 "
 }
@@ -40,11 +39,8 @@ function run_database_migrations() {
         run --rm api-server "mg apply"
 }
 
-
-if [ "${BASH_SOURCE[0]}" = "${0}" ]
-then
-    if [ "${1:-}" = "--help" ]
-    then
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
         usage
     else
         echo "Updating Scala dependencies"
@@ -56,15 +52,16 @@ then
         echo "Running application database migrations"
         run_database_migrations
 
-        echo "Building static asset bundle"
+        echo "Updating frontend dependencies"
         docker-compose \
             -f "${DIR}/../docker-compose.yml" \
             -f "${DIR}/../docker-compose.test.yml" \
             run --rm app-frontend install
+
+        echo "Building static asset bundle"
         docker-compose \
             -f "${DIR}/../docker-compose.yml" \
             -f "${DIR}/../docker-compose.test.yml" \
             run --rm app-frontend run build
     fi
-    exit
 fi

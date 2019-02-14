@@ -6,27 +6,27 @@ if [[ -n "${RF_DEBUG}" ]]; then
     set -x
 fi
 
+DIR="$(dirname "$0")"
+
+function usage() {
+    echo -n \
+"Usage: $(basename "$0")
+
+Build application for staging or release.
+"
+}
+
 if [[ -n "${GIT_COMMIT}" ]]; then
     GIT_COMMIT="${GIT_COMMIT:0:7}"
 else
     GIT_COMMIT="$(git rev-parse --short HEAD)"
 fi
 
-DIR="$(dirname "$0")"
-
-function usage() {
-    echo -n \
-"Usage: $(basename "$0")
-Build application for staging or release.
-"
-}
-
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
     else
         echo "Pulling down configuration settings for test environment"
-
         ./scripts/bootstrap --env
         ./scripts/bootstrap --sbtopts
 
@@ -53,7 +53,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
 
         cp "${DIR}/../app-backend/batch/target/scala-2.11/batch-assembly.jar" \
            "${DIR}/../app-tasks/jars/batch-assembly.jar"
-
 
         docker-compose \
             -f "${DIR}/../docker-compose.test.yml" \

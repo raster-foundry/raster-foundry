@@ -60,7 +60,7 @@ services:
         condition: service_healthy
     env_file: .env
     environment:
-      - RF_LOG_LEVEL=INFO
+      - RF_LOG_LEVEL=DEBUG
       - TILE_SERVER_LOCATION=
       - COURSIER_CACHE=/root/.coursier
     ports:
@@ -69,12 +69,12 @@ services:
     volumes:
       - ./app-backend/:/opt/raster-foundry/app-backend/
       - ./scratch/:/opt/raster-foundry/scratch/
-      - $HOME/.coursier:/root/.coursier
-      - ./.sbt:/root/.sbt
-      - ./.bintray:/root/.bintray
-      - $HOME/.aws:/root/.aws:ro
-      - $HOME/.ivy2:/root/.ivy2
       - ./data/:/opt/data/
+      - $HOME/.sbt:/root/.sbt
+      - $HOME/.coursier:/root/.coursier
+      - ./.bintray:/root/.bintray
+      - $HOME/.ivy2:/root/.ivy2
+      - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
     command:
@@ -143,13 +143,13 @@ services:
       - "8080:8080"
       - "9030:9030"
     volumes:
-      - $HOME/.sbt:/root/.sbt
       - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./data/:/opt/data/
+      - $HOME/.sbt:/root/.sbt
       - $HOME/.coursier:/root/.coursier
       - ./.bintray:/root/.bintray
-      - $HOME/.aws:/root/.aws:ro
       - $HOME/.ivy2:/root/.ivy2
-      - ./data/:/opt/data/
+      - $HOME/.aws:/root/.aws:ro
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
     command:
