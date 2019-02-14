@@ -18,7 +18,8 @@ import scala.concurrent.duration._
 import java.sql.Timestamp
 import java.util.{Date, UUID}
 
-case class SceneDao()
+@SuppressWarnings(Array("EmptyCaseClass"))
+final case class SceneDao()
 
 object SceneDao
     extends Dao[Scene]
@@ -259,37 +260,35 @@ object SceneDao
     for {
       sceneO <- SceneDao.query.filter(sceneId).filter(polygonF).selectOption
     } yield {
-      sceneO match {
-        case Some(scene: Scene) =>
-          Seq(
-            MosaicDefinition(
-              scene.id,
-              ColorCorrect.Params(
-                redBand,
-                greenBand,
-                blueBand,
-                BandGamma(enabled = false, None, None, None),
-                PerBandClipping(enabled = false,
-                                None,
-                                None,
-                                None,
-                                None,
-                                None,
-                                None),
-                MultiBandClipping(enabled = false, None, None),
-                SigmoidalContrast(enabled = false, None, None),
-                Saturation(enabled = false, None),
-                Equalization(false),
-                AutoWhiteBalance(false)
-              ),
-              scene.sceneType,
-              scene.ingestLocation,
-              scene.dataFootprint map { _.geom },
-              false,
-              Some(().asJson)
-            ))
-        case _ => Seq.empty
-      }
+      sceneO map { (scene: Scene) =>
+        Seq(
+          MosaicDefinition(
+            scene.id,
+            ColorCorrect.Params(
+              redBand,
+              greenBand,
+              blueBand,
+              BandGamma(enabled = false, None, None, None),
+              PerBandClipping(enabled = false,
+                              None,
+                              None,
+                              None,
+                              None,
+                              None,
+                              None),
+              MultiBandClipping(enabled = false, None, None),
+              SigmoidalContrast(enabled = false, None, None),
+              Saturation(enabled = false, None),
+              Equalization(false),
+              AutoWhiteBalance(false)
+            ),
+            scene.sceneType,
+            scene.ingestLocation,
+            scene.dataFootprint map { _.geom },
+            false,
+            Some(().asJson)
+          ))
+      } getOrElse { Seq.empty }
     }
   }
 

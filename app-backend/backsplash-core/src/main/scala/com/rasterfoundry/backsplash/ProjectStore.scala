@@ -6,7 +6,7 @@ import simulacrum._
 
 import java.util.UUID
 
-case class BandOverride(
+final case class BandOverride(
     red: Int,
     green: Int,
     blue: Int

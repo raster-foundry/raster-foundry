@@ -136,7 +136,7 @@ def run_export(export_s3_uri, export_id):
 
     command = [
         'java', '-jar',
-        '/opt/raster-foundry/export/backsplash-export-assembly.jar', '-d',
+        '/opt/raster-foundry/jars/backsplash-export-assembly.jar', '-d',
         export_s3_uri
     ]
     subprocess.check_call(command)

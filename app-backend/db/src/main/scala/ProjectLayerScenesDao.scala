@@ -25,6 +25,20 @@ object ProjectLayerScenesDao extends Dao[Scene] {
           s.acquisition_date, s.sun_azimuth, s.sun_elevation, s.thumbnail_status,
           s.boundary_status, s.ingest_status, s.scene_type FROM""" ++ tableF
 
+  def countLayerScenes(
+      projectId: UUID
+  ): ConnectionIO[List[(UUID, Int)]] = {
+    (Fragment.const(
+      """
+      | SELECT project_layer_id, count(1)
+      | FROM
+      | (scenes_to_layers JOIN project_layers ON scenes_to_layers.project_layer_id = project_layers.id) s2lpl
+      | JOIN projects ON s2lpl.project_id = projects.id
+      """.trim.stripMargin) ++ Fragments.whereAnd(fr"project_id = ${projectId}") ++ fr"GROUP BY project_layer_id")
+      .query[(UUID, Int)]
+      .to[List]
+  }
+
   def listLayerScenes(
       layerId: UUID,
       pageRequest: PageRequest,
@@ -67,14 +81,11 @@ object ProjectLayerScenesDao extends Dao[Scene] {
   }
 
   // We know the datasources list head exists because of the foreign key relationship
-  @SuppressWarnings(Array("TraversableHead"))
+  @SuppressWarnings(Array("OptionGet"))
   def scenesToProjectScenes(
       scenes: List[Scene],
       layerId: UUID
   ): ConnectionIO[List[Scene.ProjectScene]] = {
-    // "The astute among you will note that we don’t actually need a monad to do this;
-    // an applicative functor is all we need here."
-    // let's roll, doobie
     val componentsIO: ConnectionIO[
       (List[Thumbnail], List[Datasource], List[SceneToLayer])
     ] = {
@@ -96,7 +107,7 @@ object ProjectLayerScenesDao extends Dao[Scene] {
         scenes map { scene: Scene =>
           scene.projectSceneFromComponents(
             groupedThumbs.getOrElse(scene.id, List.empty[Thumbnail]),
-            datasources.filter(_.id == scene.datasource).head,
+            datasources.find(_.id == scene.datasource).get,
             sceneToLayers.find(_.sceneId == scene.id).map(_.sceneOrder).flatten
           )
         }

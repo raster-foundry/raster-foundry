@@ -22,7 +22,7 @@ import org.http4s.util.CaseInsensitiveString
 import doobie.util.transactor.Transactor
 
 @SuppressWarnings(Array("TraversableHead"))
-class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
+class AnalysisService[Param: ToolStore, HistStore](
     analyses: Param,
     mosaicImplicits: MosaicImplicits[HistStore],
     toolstoreImplicits: ToolStoreImplicits[HistStore],
@@ -54,13 +54,13 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
               paintableFiber.cancel *> IO.raiseError(error)
             }
             paintable <- paintableFiber.join
-            histsValidated <- paintable.histogram(4000)
-            resp <- histsValidated match {
+            histsValidated <- paintable.histogram(4000) map {
               case Valid(hists) =>
                 Ok(hists.head asJson)
               case Invalid(e) =>
                 BadRequest(s"Unable to produce histogram for $analysisId: $e")
             }
+            resp <- histsValidated
           } yield resp
 
         case GET -> Root / UUIDWrapper(analysisId) / "statistics"
@@ -73,13 +73,13 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
               paintableFiber.cancel *> IO.raiseError(error)
             }
             paintable <- paintableFiber.join
-            histsValidated <- paintable.histogram(4000)
-            resp <- histsValidated match {
+            histsValidated <- paintable.histogram(4000) map {
               case Valid(hists) =>
                 Ok(hists.head.statistics asJson)
               case Invalid(e) =>
                 BadRequest(s"Unable to produce statistics for $analysisId: $e")
             }
+            resp <- histsValidated
           } yield resp
 
         case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(
@@ -92,8 +92,7 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
               paintableFiber.cancel *> IO.raiseError(error)
             }
             paintable <- paintableFiber.join
-            tileValidated <- paintable.tms(z, x, y)
-            resp <- tileValidated match {
+            tileValidated <- paintable.tms(z, x, y) map {
               case Valid(tile) =>
                 Ok(
                   paintable.renderDefinition map { renderDef =>
@@ -106,6 +105,7 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
               case Invalid(e) =>
                 BadRequest(s"Unable to produce tile for $analysisId: $e")
             }
+            resp <- tileValidated
           } yield resp
 
         case authedReq @ GET -> Root / UUIDWrapper(analysisId) / "raw"
@@ -129,8 +129,7 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
             paintableTool <- paintableFiber.join
             tileValidated <- paintableTool.extent(
               projectedExtent,
-              BacksplashImage.tmsLevels(zoom).cellSize)
-            resp <- tileValidated match {
+              BacksplashImage.tmsLevels(zoom).cellSize) map {
               case Valid(tile) => {
                 if (respType == tiffType) {
                   Ok(
@@ -151,6 +150,7 @@ class AnalysisService[Param: ToolStore, HistStore: HistogramStore](
               }
               case Invalid(e) => BadRequest(s"Could not produce extent: $e")
             }
+            resp <- tileValidated
           } yield resp
       }
     }

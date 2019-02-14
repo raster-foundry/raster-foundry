@@ -14,7 +14,7 @@ trait MapAlgebraCodec
 
   /** TODO: Add codec paths besides `raster source` and `operation` when supported */
   implicit def mapAlgebraDecoder = Decoder.instance[MapAlgebraAST] { ma =>
-    ma._symbol match {
+    ma.symbolOpt match {
       case Some(_) =>
         ma.as[MapAlgebraAST.Operation]
       case None =>
@@ -24,7 +24,7 @@ trait MapAlgebraCodec
 
   implicit def mapAlgebraEncoder: Encoder[MapAlgebraAST] =
     new Encoder[MapAlgebraAST] {
-      final def apply(ast: MapAlgebraAST): Json = ast match {
+      def apply(ast: MapAlgebraAST): Json = ast match {
         case operation: MapAlgebraAST.Operation =>
           operation.asJson
         case leaf: MapAlgebraAST.MapAlgebraLeaf =>

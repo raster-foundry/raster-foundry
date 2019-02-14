@@ -1,2 +1,28 @@
-<div>analyses</div>
-<ui-view></ui-view>
+<div class="sidebar-actions-group">
+  <div style="flex: 1;"></div>
+  <div class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
+    Analysis Visibility
+    <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
+      <li role="menuitem">
+        <a href ng-click="$ctrl.showFirstAnalysis()">Show only first</a></li>
+      <li role="menuitem">
+        <a href ng-click="$ctrl.showAllAnalyses()">Show all on page</a></li>
+    </ul>
+  </div>
+</div>
+<div class="sidebar-scrollable list-group">
+  <rf-layer-item
+      is-analysis="true"
+      item-info="item"
+      item-actions="$ctrl.itemActions[$index]"
+      visible="$ctrl.isVisible(item.id)"
+      on-hide="$ctrl.onHide(id)"
+      ng-repeat="item in $ctrl.itemList track by item.id">
+  </rf-layer-item>
+  <rf-pagination-controls
+      pagination="$ctrl.pagination"
+      is-loading="$ctrl.currentQuery"
+      on-change="$ctrl.fetchPage(value)"
+      ng-show="!$ctrl.currentQuery && !$ctrl.fetchError"
+  ></rf-pagination-controls>
+</div>

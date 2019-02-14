@@ -56,6 +56,7 @@ final case class FindAOIProjects(implicit val xa: Transactor[IO])
     val projectIds = aoiProjectsToUpdate.transact(xa).unsafeRunSync
     logger.info(s"Found the following projects to update: ${projectIds}")
     projectIds.map(kickoffAOIUpdateProject)
+    ()
   }
 }
 

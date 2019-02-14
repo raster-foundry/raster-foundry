@@ -19,7 +19,6 @@ object ProjectLayerDatasourcesDao extends Dao[Datasource] {
         d.name, d.visibility, d.composites, d.extras, d.bands, d.license_name
           FROM""" ++ tableF
   def listProjectLayerDatasources(
-      projectId: UUID,
       projectLayerId: UUID
   ): ConnectionIO[List[Datasource]] = {
     query.filter(fr"sl.project_layer_id=$projectLayerId").list

@@ -2,7 +2,7 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.SceneToProjectDao
+import com.rasterfoundry.database.{SceneToLayerDao, SceneToProjectDao}
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.ToolRunDao
 import com.rasterfoundry.common.datamodel._
@@ -10,16 +10,14 @@ import com.rasterfoundry.common.ast.MapAlgebraAST
 import com.rasterfoundry.common.ast.codec.MapAlgebraCodec._
 
 import cats.effect.IO
-import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 
 import java.util.UUID
 
-class ToolStoreImplicits[HistStore: HistogramStore](
-    mosaicImplicits: MosaicImplicits[HistStore],
-    xa: Transactor[IO])
+class ToolStoreImplicits[HistStore](mosaicImplicits: MosaicImplicits[HistStore],
+                                    xa: Transactor[IO])
     extends ProjectStoreImplicits(xa)
     with LazyLogging {
 
@@ -27,7 +25,9 @@ class ToolStoreImplicits[HistStore: HistogramStore](
   implicit val tmsReification = rawMosaicTmsReification
 
   val mamlAdapter =
-    new BacksplashMamlAdapter(mosaicImplicits, SceneToProjectDao())
+    new BacksplashMamlAdapter(mosaicImplicits,
+                              SceneToProjectDao(),
+                              SceneToLayerDao())
 
   private def toolToColorRd(toolRd: RenderDefinition): RenderDefinition = {
     val scaleOpt = toolRd.scale match {
@@ -72,6 +72,11 @@ class ToolStoreImplicits[HistStore: HistogramStore](
 
   implicit val toolRunDaoStore: ToolStore[ToolRunDao] =
     new ToolStore[ToolRunDao] {
+
+      /** Unclear what un-matching this would even be -- I think scapegoat was mad about the
+        * de-sugared code? Annoying
+        */
+      @SuppressWarnings(Array("PartialFunctionInsteadOfMatch"))
       def read(self: ToolRunDao,
                analysisId: UUID,
                nodeId: Option[UUID]): IO[PaintableTool] =

@@ -17,8 +17,6 @@ import doobie.implicits._
 
 import java.util.UUID
 
-import java.util.UUID
-
 trait ToolRunRoutes
     extends Authentication
     with PaginationDirectives
@@ -68,16 +66,31 @@ trait ToolRunRoutes
   def listToolRuns: Route = authenticate { user =>
     (withPagination & toolRunQueryParameters) { (page, runParams) =>
       complete {
-        ToolRunDao
-          .authQuery(user,
-                     ObjectType.Analysis,
-                     runParams.ownershipTypeParams.ownershipType,
-                     runParams.groupQueryParameters.groupType,
-                     runParams.groupQueryParameters.groupId)
-          .filter(runParams)
-          .page(page)
-          .transact(xa)
-          .unsafeToFuture
+        runParams.toolRunParams.projectId match {
+          case Some(projectId) =>
+            ToolRunDao
+              .listAnalysesWithRelated(
+                user,
+                page,
+                projectId,
+                runParams.ownershipTypeParams.ownershipType,
+                runParams.groupQueryParameters.groupType,
+                runParams.groupQueryParameters.groupId
+              )
+              .transact(xa)
+              .unsafeToFuture
+          case _ =>
+            ToolRunDao
+              .authQuery(user,
+                         ObjectType.Analysis,
+                         runParams.ownershipTypeParams.ownershipType,
+                         runParams.groupQueryParameters.groupType,
+                         runParams.groupQueryParameters.groupId)
+              .filter(runParams)
+              .page(page)
+              .transact(xa)
+              .unsafeToFuture
+        }
       }
     }
   }

@@ -108,7 +108,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
             .map(_.fold(0)(_ + _))
           _ <- {
             if (bandCount == 0) {
-              IO.raiseError(NoDataInRegionException())
+              IO.raiseError(NoDataInRegionException)
             } else IO.unit
           }
           filtered = BacksplashMosaic.filterRelevant(self)
@@ -220,7 +220,7 @@ class MosaicImplicits[HistStore: HistogramStore](histStore: HistStore)
         } yield {
           RasterLit(mosaic)
         }).attempt.map {
-          case Left(NoDataInRegionException()) =>
+          case Left(NoDataInRegionException) =>
             RasterLit(
               Raster(MultibandTile(invisiTile, invisiTile, invisiTile),
                      Extent(0, 0, 256, 256)))

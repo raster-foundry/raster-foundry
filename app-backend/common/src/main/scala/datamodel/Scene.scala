@@ -284,7 +284,7 @@ object Scene {
   }
 
   @JsonCodec
-  case class ProjectScene(
+  final case class ProjectScene(
       id: UUID,
       createdAt: Timestamp,
       createdBy: String,

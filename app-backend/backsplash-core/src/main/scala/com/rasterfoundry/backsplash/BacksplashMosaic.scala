@@ -57,9 +57,11 @@ object BacksplashMosaic extends ToHistogramStoreOps {
   }
 
   /** We're in the non-Nil branch of the match, so we definitely have histograms
-    * at the point where we're asking for the head of the list
+    * at the point where we're asking for the head of the list.
+    * Also, messing with the map instead of match thing messes up the types for reasons
+    * that I disagree with, so suppressing.
     */
-  @SuppressWarnings(Array("TraversableHead"))
+  @SuppressWarnings(Array("TraversableHead", "PartialFunctionInsteadOfMatch"))
   def getStoreHistogram[T: HistogramStore](mosaic: BacksplashMosaic,
                                            histStore: T)(
       implicit hasRasterExtents: HasRasterExtents[BacksplashMosaic],

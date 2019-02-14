@@ -3,12 +3,6 @@
     <i class="icon-plus"></i> New Layer
   </button>
   <div style="flex: 1;"></div>
-  <select class="btn btn-small btn-transparent"
-          ng-model="$ctrl.ordering">
-    <option value="">Newest</option>
-    <option value="manual">Manual</option>
-    <option value="date">Date</option>
-  </select>
   <div class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
     Layer Visibility
     <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
@@ -18,18 +12,17 @@
         <a href ng-click="$ctrl.showPageLayers()">Show all on page</a></li>
     </ul>
   </div>
-
 </div>
 <div class="sidebar-scrollable list-group">
   <rf-layer-item
-      layer="layer"
-      layer-actions="$ctrl.layerActions[$index]"
-      subtext="layer.subtext"
-      selected="$ctrl.isSelected(layer.id)"
-      on-select="$ctrl.onSelect(layerId)"
-      visible="$ctrl.isVisible(layer.id)"
-      on-hide="$ctrl.onHide(layerId)"
-      ng-repeat="layer in $ctrl.layerList track by layer.id">
+      item-info="item"
+      item-actions="$ctrl.layerActions[$index]"
+      selected="$ctrl.isSelected(item.id)"
+      on-select="$ctrl.onSelect(id)"
+      visible="$ctrl.isVisible(item.id)"
+      on-hide="$ctrl.onHide(id)"
+      ng-repeat="item in $ctrl.itemList track by item.id">
+    <rf-layer-stats scene-count="$ctrl.getSceneCount(item.id)"></rf-layer-stats">
   </rf-layer-item>
   <rf-pagination-controls
       pagination="$ctrl.pagination"

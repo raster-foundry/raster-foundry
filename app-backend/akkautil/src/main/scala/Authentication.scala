@@ -128,7 +128,7 @@ trait Authentication extends Directives with LazyLogging {
     )
   }
 
-  @SuppressWarnings(Array("TraversableHead"))
+  @SuppressWarnings(Array("TraversableHead", "PartialFunctionInsteadOfMatch"))
   def authenticateWithToken(tokenString: String): Directive1[User] = {
     val result = verifyJWT(tokenString)
     result match {

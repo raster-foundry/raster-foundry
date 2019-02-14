@@ -2,6 +2,28 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+- Added backend support for rendering tiles and fetching histograms for analyses with project layers at their leaves [\#4603](https://github.com/raster-foundry/raster-foundry/pull/4603)
+- Added scene counts to project layer items [\#4625](https://github.com/raster-foundry/raster-foundry/pull/4625)
+- Added project analyses list view [\#4585](https://github.com/raster-foundry/raster-foundry/pull/4585)
+- Added backend support for project layer async exports [\#4619](https://github.com/raster-foundry/raster-foundry/pull/4619)
+
+### Changed
+
+- Updated default project layer color group hex code [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
+- Updated `gdal-js` and `requests` [\#4618](https://github.com/raster-foundry/raster-foundry/pull/4618)
+- Swap trash icon for "Remove" text on scene item components [\#4621](https://github.com/raster-foundry/raster-foundry/pull/4621)
+
+### Deprecated
+
+### Removed
+
+- Removed layer re-ordering, layer sorting, layer type selection from UI [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
+
+### Fixed
+
+## [1.18.0](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-11)
+
+### Added
 
 - Added new export utility as replacement for the old (non-functioning) spark-based export [\#4589](https://github.com/raster-foundry/raster-foundry/pull/4589)
 - Added project layer creation workflow's modal on UI [\#4575](https://github.com/raster-foundry/raster-foundry/pull/4575)
@@ -9,17 +31,13 @@
 - CRUDL endpoints for project layer scenes [\#4550](https://github.com/raster-foundry/raster-foundry/pull/4550)
 - Added publishing of lambda functions to CI build process [\#4586](https://github.com/raster-foundry/raster-foundry/pull/4586)
 - Added tile server support for masked analyses [\#4571](https://github.com/raster-foundry/raster-foundry/pull/4571)
-
-### Changed
-
-### Deprecated
-
-### Removed
+- Added project layer navigation bar [\#4581](https://github.com/raster-foundry/raster-foundry/pull/4581)
 
 ### Fixed
 
 - Removed unused imports and assignments [\#4579](https://github.com/raster-foundry/raster-foundry/pull/4579)
 - Included geometry filter in backsplash scene service to prevent erroneous 500s [\#4580](https://github.com/raster-foundry/raster-foundry/pull/4580)
+- Made scapegoat less angry [\#4611](https://github.com/raster-foundry/raster-foundry/pull/4611)
 
 ### Security
 
@@ -46,6 +64,7 @@
 - Added project, project layer, and template ID fields to tool runs for later filtering [\#4546](https://github.com/raster-foundry/raster-foundry/pull/4546) and to API routes as filter fields [\#4551](https://github.com/raster-foundry/raster-foundry/pull/4551)
 - Added project layer mosaic and scene order endpoint [\#4547](https://github.com/raster-foundry/raster-foundry/pull/4547)
 - Add Layer ID to Annotations and Annotation Groups [\#4558](https://github.com/raster-foundry/raster-foundry/pull/4558)
+- Support uploads to project layers on the API [#\4524](https://github.com/raster-foundry/raster-foundry/pull/4524)
 
 ### Changed
 - Reorganized project structure to simplify dependency graph (`tool` was mostly removed; `tool`s still-relevant pieces, `bridge`, and `datamodel` moved into the project `common`) [\#4564](https://github.com/raster-foundry/raster-foundry/pull/4564)

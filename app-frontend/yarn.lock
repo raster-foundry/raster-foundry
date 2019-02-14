@@ -4963,6 +4963,11 @@ gdal-js@^1.1.0:
   resolved "https://registry.yarnpkg.com/gdal-js/-/gdal-js-1.1.0.tgz#78da0e024f98e122206e64ae4f627662acfee5ad"
   integrity sha1-eNoOAk+Y4SIgbmSuT2J2Yqz+5a0=
 
+gdal-js@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/gdal-js/-/gdal-js-1.1.2.tgz#40ab4ee0131cca204da4e23fe937b8cc0af80cff"
+  integrity sha1-QKtO4BMcyiBNpOI/6Te4zAr4DP8=
+
 generate-function@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/generate-function/-/generate-function-2.0.0.tgz#6858fe7c0969b7d4e9093337647ac79f60dfbe74"

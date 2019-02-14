@@ -19,6 +19,8 @@ import doobie.util.transactor.Transactor
 
 import java.util.UUID
 
+/** List append is slow for large lists -- but we have a list of 3 elements */
+@SuppressWarnings(Array("ListAppend"))
 class Authenticators(val xa: Transactor[IO])
     extends LazyLogging
     with RFHttp4s.Authenticators {

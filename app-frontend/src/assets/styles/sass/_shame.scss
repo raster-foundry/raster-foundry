@@ -3257,17 +3257,19 @@ rf-navbar-search {
 .menu-separator {
     height: .2em;
     width: 100%;
-    border-top: 1 px solid #ccc;
+    border-top: 1px solid #ccc;
 }
 
-rf-project-layers-page {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: $off-white;
-  min-height: 0; // firefox flexbox compatability
 
+rf-project-layers-page,
+rf-project-analyses-page {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: $off-white;
+    min-height: 0; // firefox flexbox compatability
 }
+
 rf-layer-item {
   display: block;
   background: $white;
@@ -3372,4 +3374,11 @@ rf-project-publishing-page {
 
 .form-control.color-picker {
   cursor: pointer;
+}
+
+.list-group-vertical {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    align-self: stretch;
 }

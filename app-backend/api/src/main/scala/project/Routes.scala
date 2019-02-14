@@ -88,6 +88,12 @@ trait ProjectRoutes
                 get {
                   listProjectLayers(projectId)
                 }
+            } ~ pathPrefix("stats") {
+              pathEndOrSingleSlash {
+                get {
+                  getProjectLayerSceneCounts(projectId)
+                }
+              }
             } ~
               pathPrefix(JavaUUID) { layerId =>
                 pathEndOrSingleSlash {
@@ -1483,7 +1489,7 @@ trait ProjectRoutes
         rejectEmptyResponse {
           complete {
             ProjectLayerDao
-              .getProjectLayer(projectId, layerId, user)
+              .getProjectLayer(projectId, layerId)
               .transact(xa)
               .unsafeToFuture
           }
@@ -1678,7 +1684,7 @@ trait ProjectRoutes
         } {
           complete {
             ProjectLayerDatasourcesDao
-              .listProjectLayerDatasources(projectId, layerId)
+              .listProjectLayerDatasources(layerId)
               .transact(xa)
               .unsafeToFuture
           }
@@ -1977,6 +1983,24 @@ trait ProjectRoutes
                                        annotationGroupId,
                                        Some(layerId))
             .transact(xa)
+            .unsafeToFuture
+        }
+      }
+    }
+
+  def getProjectLayerSceneCounts(projectId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        complete {
+          ProjectLayerScenesDao
+            .countLayerScenes(projectId)
+            .transact(xa)
+            .map(Map(_: _*))
             .unsafeToFuture
         }
       }

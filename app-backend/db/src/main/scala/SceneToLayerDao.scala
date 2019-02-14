@@ -16,7 +16,8 @@ import com.typesafe.scalalogging.LazyLogging
 
 import java.util.UUID
 
-case class SceneToLayerDao()
+@SuppressWarnings(Array("EmptyCaseClass"))
+final case class SceneToLayerDao()
 
 object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
 

@@ -27,10 +27,13 @@ class PlanetSceneFactory(object):
     """
 
     def __init__(self, planet_ids, datasource, upload_id, client,
-                 project_id=None, visibility=Visibility.PRIVATE, tags=[],
+                 project_id=None, layer_id=None, visibility=Visibility.PRIVATE, tags=[],
                  owner=None):
         self.upload_id = upload_id
         self.isProjectUpload = project_id is not None
+        self.project_id = project_id
+        self.isLayerUpload = layer_id is not None
+        self.layer_id = layer_id
         self.datasource = datasource
         self.visibility = visibility
         self.tags = tags

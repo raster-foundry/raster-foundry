@@ -571,6 +571,7 @@ object Generators extends ArbitraryInstances {
       owner <- Gen.const(None)
       visibility <- visibilityGen
       projectId <- Gen.const(None)
+      layerId <- Gen.const(None)
       source <- Gen.oneOf(nonEmptyStringGen map { Some(_) }, Gen.const(None))
     } yield {
       Upload.Create(
@@ -583,6 +584,7 @@ object Generators extends ArbitraryInstances {
         owner,
         visibility,
         projectId,
+        layerId,
         source
       )
     }
@@ -765,6 +767,25 @@ object Generators extends ArbitraryInstances {
       MapToken.Create(name, None, None, None)
     }
 
+  private def projectLayerCreateGen: Gen[ProjectLayer.Create] =
+    for {
+      name <- nonEmptyStringGen
+      projectId <- Gen.const(None)
+      colorGroupHex <- Gen.const("#ABCDEF")
+      smartLayerId <- Gen.const(None)
+      rangeStart <- Gen.const(None)
+      rangeEnd <- Gen.const(None)
+      geometry <- Gen.const(None)
+    } yield {
+      ProjectLayer.Create(name,
+                          projectId,
+                          colorGroupHex,
+                          smartLayerId,
+                          rangeStart,
+                          rangeEnd,
+                          geometry)
+    }
+
   object Implicits {
     implicit def arbCredential: Arbitrary[Credential] = Arbitrary {
       credentialGen
@@ -921,5 +942,17 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbMapTokenCreate: Arbitrary[MapToken.Create] =
       Arbitrary { mapTokenCreateGen }
+
+    implicit def arbProjectLayerCreate: Arbitrary[ProjectLayer.Create] =
+      Arbitrary { projectLayerCreateGen }
+
+    implicit def arbProjectLayerCreateWithScenes
+      : Arbitrary[List[(ProjectLayer.Create, List[Scene.Create])]] = {
+      val tupGen = for {
+        projectLayerCreate <- arbitrary[ProjectLayer.Create]
+        sceneCreates <- arbitrary[List[Scene.Create]]
+      } yield { (projectLayerCreate, sceneCreates) }
+      Arbitrary { Gen.listOfN(5, tupGen) }
+    }
   }
 }
