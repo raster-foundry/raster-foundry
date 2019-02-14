@@ -270,26 +270,32 @@ object ExportDao extends Dao[Export] {
     ON
       stp.scene_id = scenes.id
     """ ++ Fragments.whereAndOpt(
-      projToIngestLoc.keys.toList.toNel.map(ids =>
-        Fragments.in(fr"stp.project_id", ids))
+      projToIngestLoc.keys.toList
+        .map(_._1)
+        .toNel
+        .map(ids => Fragments.in(fr"stp.project_id", ids))
     ) ++ fr"GROUP BY stp.project_id"
     val projectSceneLocs = for {
       stps <- sceneProjectSelect
         .query[(UUID, List[UUID], List[String])]
         .to[List]
     } yield {
-      stps.flatMap {
-        case (pID, sID, loc) =>
-          if (loc.isEmpty) {
-            None
-          } else {
-            Some(
-              s"${pID}_${projToIngestLoc(pID)._2}" ->
-                loc.map({
-                  (_, projToIngestLoc(pID)._2, projToIngestLoc(pID)._3)
-                }))
-          }
+      val projectSources = stps.map {
+        case (projectId, sceneIds, locations) =>
+          (projectId, (sceneIds, locations))
       }.toMap
+
+      projToIngestLoc.flatMap {
+        case ((projectId, nodeId), params) =>
+          val key = s"${projectId}_${params.band}"
+          projectSources.get(projectId) match {
+            case Some((sceneIds, locations)) => {
+              val value = locations.map((_, params.band, params.nodataOverride))
+              Some(key -> value)
+            }
+            case _ => None
+          }
+      }
     }
     projectSceneLocs
   }
