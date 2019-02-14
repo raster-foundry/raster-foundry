@@ -215,9 +215,11 @@ object ExportDao extends Dao[Export] {
   private def projectIngestLocs(ast: MapAlgebraAST)
     : ConnectionIO[Map[String, List[(String, Int, Option[Double])]]] = {
 
-    final case class Parameters(nodeId: UUID, band: Int, nodataOverride: Option[Double])
+    final case class Parameters(projectId: UUID,
+                                band: Int,
+                                nodataOverride: Option[Double])
 
-    val projToIngestLoc: Map[(UUID, UUID), Parameters] = {
+    val projToIngestLoc: Set[Parameters] = {
       logger.debug(s"AST TILE SOURCES: ${ast.tileSources}")
       logger.debug(s"AST ${ast.asJson}")
       ast.tileSources.flatMap { s =>
@@ -225,7 +227,6 @@ object ExportDao extends Dao[Export] {
         s match {
           case s: ProjectRaster =>
             val projectId = s.projId
-            val nodeId = s.id
             val band = s.band.getOrElse(1)
             // This really, really needs to be fixed upstream.
             val ndOverride = s.celltype.flatMap {
@@ -252,11 +253,11 @@ object ExportDao extends Dao[Export] {
               case FloatUserDefinedNoDataCellType(nd)  => Some(nd.toDouble)
               case DoubleUserDefinedNoDataCellType(nd) => Some(nd)
             }
-            Some((projectId, nodeId) -> Parameters(nodeId, band, ndOverride))
+            Some(Parameters(projectId, band, ndOverride))
           case _ =>
             None
         }
-      }.toMap
+      }
     }
     logger.debug(s"Project Ingest Locations: ${projToIngestLoc}")
     logger.debug(s"Working with this many projects: ${projToIngestLoc.size}")
@@ -270,8 +271,8 @@ object ExportDao extends Dao[Export] {
     ON
       stp.scene_id = scenes.id
     """ ++ Fragments.whereAndOpt(
-      projToIngestLoc.keys.toList
-        .map(_._1)
+      projToIngestLoc.toList
+        .map(_.projectId)
         .toNel
         .map(ids => Fragments.in(fr"stp.project_id", ids))
     ) ++ fr"GROUP BY stp.project_id"
@@ -286,16 +287,18 @@ object ExportDao extends Dao[Export] {
       }.toMap
 
       projToIngestLoc.flatMap {
-        case ((projectId, nodeId), params) =>
-          val key = s"${projectId}_${params.band}"
+        case parameters =>
+          val projectId = parameters.projectId
+          val band = parameters.band
+          val key = s"${projectId}_${band}"
           projectSources.get(projectId) match {
             case Some((sceneIds, locations)) => {
-              val value = locations.map((_, params.band, params.nodataOverride))
+              val value = locations.map((_, band, parameters.nodataOverride))
               Some(key -> value)
             }
             case _ => None
           }
-      }
+      }.toMap
     }
     projectSceneLocs
   }
