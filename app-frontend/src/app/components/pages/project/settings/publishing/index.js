@@ -1,15 +1,19 @@
 import tpl from './index.html';
+import _ from 'lodash';
+import { Set } from 'immutable';
 
 class ProjectPublishingController {
     constructor(
         $rootScope, $q, $log, $window, $state, $timeout,
-        projectService, tokenService, authService
+        projectService, tokenService, authService, paginationService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
+        this.selectedLayers = new Set();
+        this.layerUrls = [];
         this.tileUrl = this.projectService.getProjectTileURL(this.project);
         this.urlMappings = {
             standard: {
@@ -75,7 +79,121 @@ class ProjectPublishingController {
             arcGIS: null
         };
 
-        this.hydrateTileUrls();
+        if (_.get(this, 'activePolicy.enum') === 'PRIVATE') {
+            this.updateMapToken();
+        }
+        this.fetchPage();
+    }
+
+    fetchPage(page = this.$state.params.page || 1) {
+        this.layerList = [];
+        this.layerActions = {};
+        const currentQuery = this.projectService.getProjectLayers(
+            this.project.id,
+            {
+                pageSize: 30,
+                page: page - 1
+            }
+        ).then((paginatedResponse) => {
+            this.layerList = paginatedResponse.results;
+            this.layerList.forEach((layer) => {
+                layer.subtext = '';
+                if (layer.id === this.project.defaultLayerId) {
+                    layer.subtext += 'Default layer';
+                }
+                if (layer.smartLayerId) {
+                    layer.subtext += layer.subtext.length ? ', Smart layer' : 'Smart Layer';
+                }
+            });
+            const defaultLayer = this.layerList.find(l => l.id === this.project.defaultLayerId);
+            this.layerActions = [];
+
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page);
+            if (this.currentQuery === currentQuery) {
+                delete this.fetchError;
+            }
+        }, (e) => {
+            if (this.currentQuery === currentQuery) {
+                this.fetchError = e;
+            }
+        }).finally(() => {
+            if (this.currentQuery === currentQuery) {
+                delete this.currentQuery;
+            }
+        });
+        this.currentQuery = currentQuery;
+        return currentQuery;
+    }
+
+    onSelect(layer) {
+        const without = this.selectedLayers.filter(i => i.id !== layer.id);
+        if (without.size !== this.selectedLayers.size) {
+            this.selectedLayers = without;
+        } else {
+            this.selectedLayers = this.selectedLayers.add(layer);
+        }
+        this.updateLayerURLs();
+    }
+
+    updateMapToken() {
+        return this.tokenService
+            .getOrCreateProjectMapToken(this.project)
+            .then(t => {
+                this.mapToken = t;
+                return t;
+            });
+    }
+
+    updateLayerURLs() {
+        const zxy = (url, layer) => {
+            const m = this.urlMappings.standard;
+            return url
+                .replace('{layerId}', layer.id)
+                .replace('{z}', `{${m.z}}`)
+                .replace('{x}', `{${m.x}}`)
+                .replace('{y}', `{${m.y}}`);
+        };
+        const arcGis = (url, layer) => {
+            const m = this.urlMappings.arcGIS;
+            return url
+                .replace('{layerId}', layer.id)
+                .replace('{z}', `{${m.z}}`)
+                .replace('{x}', `{${m.x}}`)
+                .replace('{y}', `{${m.y}}`);
+        };
+        if (this.activePolicy && this.activePolicy.enum !== 'PRIVATE') {
+            const layerUrl = this.projectService.getProjectLayerTileUrl(this.project, '{layerId}', {
+                tag: new Date().getTime()
+            });
+            this.layerZXYURL = l => zxy(layerUrl, l);
+            this.layerArcGISURL = l => arcGis(layerUrl, l);
+        } else {
+            this.updateMapToken()
+                .then(t => {
+                    this.mapToken = t;
+                    const layerUrl = this.projectService.getProjectLayerTileUrl(this.project, '{layerId}', {
+                        mapToken: this.mapToken.id,
+                        tag: new Date().getTime()
+                    });
+                    this.layerZXYURL = l => zxy(layerUrl, l);
+                    this.layerArcGISURL = l => arcGis(layerUrl, l);
+                });
+        }
+    }
+
+    getLayerUrl(layer, mapping) {
+        const url = this.projectService.getProjectLayerTileUrl(this.project, layer);
+        const m = this.urlMappings[mapping];
+        return url
+            .replace('{z}', `{${m.z}}`)
+            .replace('{x}', `{${m.x}}`)
+            .replace('{y}', `{${m.y}}`);
+    }
+
+
+    isSelected(layer) {
+        return this.selectedLayers.has(layer);
     }
 
     updateShareUrl() {
@@ -114,38 +232,7 @@ class ProjectPublishingController {
                 this.activePolicy = oldPolicy;
             });
         }
-        this.hydrateTileUrls();
-    }
-
-    hydrateTileUrls() {
-        let zxyUrl = this.tileUrl
-            .replace('{z}', `{${this.urlMappings.standard.z}}`)
-            .replace('{x}', `{${this.urlMappings.standard.x}}`)
-            .replace('{y}', `{${this.urlMappings.standard.y}}`);
-        let arcGISUrl = this.tileUrl
-            .replace('{z}', `{${this.urlMappings.arcGIS.z}}`)
-            .replace('{x}', `{${this.urlMappings.arcGIS.x}}`)
-            .replace('{y}', `{${this.urlMappings.arcGIS.y}}`);
-
-        if (this.templateTitle) {
-            this.tileLayerUrls.arcGIS = `${arcGISUrl}`;
-            this.tileLayerUrls.standard = `${zxyUrl}`;
-            this.analysisToken = this.tileUrl.split('?mapToken=')[1].split('&node=')[0];
-        } else {
-            // eslint-disable-next-line no-lonely-if
-            if (this.activePolicy && this.activePolicy.enum !== 'PRIVATE') {
-                this.tileLayerUrls.arcGIS = `${arcGISUrl}`;
-                this.tileLayerUrls.standard = `${zxyUrl}`;
-            } else {
-                this.tokenService.getOrCreateProjectMapToken(this.project).then(
-                    (mapToken) => {
-                        this.mapToken = mapToken;
-                        this.tileLayerUrls.standard = `${zxyUrl}&mapToken=${mapToken.id}`;
-                        this.tileLayerUrls.arcGIS = `${arcGISUrl}&mapToken=${mapToken.id}`;
-                    }
-                );
-            }
-        }
+        this.updateLayerURLs();
     }
 
     onCopyClick(e, url, type) {

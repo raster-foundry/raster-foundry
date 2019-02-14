@@ -88,10 +88,13 @@
       </div>
   </div>
   <div class="page-card page-card-form">
-    <div class="permission-list">
-      <div class="empty-state" ng-if="!$ctrl.loading && !$ctrl.permissionCount">
-        No permissions are currently configured
-      </div>
+    <div class="page-card-content center" ng-if="!$ctrl.loading && !$ctrl.permissionCount">
+      <span class="modal-icon">
+        <i class="icon-info"></i>
+      </span>
+      <p>No permissions have been added yet</p>
+    </div>
+    <div class="permission-list" ng-if="$ctrl.permissionCount">
       <rf-permission-item
         actions="$ctrl.applicableActions"
         ng-repeat="(id, actionSet) in $ctrl.actionsBuffer.PLATFORM"
