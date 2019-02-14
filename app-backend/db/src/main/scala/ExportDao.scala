@@ -214,42 +214,52 @@ object ExportDao extends Dao[Export] {
   // Returns ID as string and a list of location/band/ndoverride
   private def projectIngestLocs(ast: MapAlgebraAST)
     : ConnectionIO[Map[String, List[(String, Int, Option[Double])]]] = {
-    val projToIngestLoc: Map[UUID, (UUID, Int, Option[Double])] =
-      ast.tileSources.flatMap {
-        case s: ProjectRaster =>
-          val projectId = s.projId
-          val nodeId = s.id
-          val band = s.band.getOrElse(1)
-          // This really, really needs to be fixed upstream.
-          val ndOverride = s.celltype.flatMap {
-            case BitCellType                         => None
-            case ByteCellType                        => None
-            case UByteCellType                       => None
-            case ShortCellType                       => None
-            case UShortCellType                      => None
-            case IntCellType                         => None
-            case FloatCellType                       => None
-            case DoubleCellType                      => None
-            case ByteConstantNoDataCellType          => Some(Byte.MinValue.toDouble)
-            case UByteConstantNoDataCellType         => Some(0.toDouble)
-            case ShortConstantNoDataCellType         => Some(Short.MinValue.toDouble)
-            case UShortConstantNoDataCellType        => Some(0.toDouble)
-            case IntConstantNoDataCellType           => Some(Int.MinValue.toDouble)
-            case FloatConstantNoDataCellType         => Some(Double.NaN)
-            case DoubleConstantNoDataCellType        => Some(Double.NaN)
-            case ByteUserDefinedNoDataCellType(nd)   => Some(nd.toDouble)
-            case UByteUserDefinedNoDataCellType(nd)  => Some(nd.toDouble)
-            case ShortUserDefinedNoDataCellType(nd)  => Some(nd.toDouble)
-            case UShortUserDefinedNoDataCellType(nd) => Some(nd.toDouble)
-            case IntUserDefinedNoDataCellType(nd)    => Some(nd.toDouble)
-            case FloatUserDefinedNoDataCellType(nd)  => Some(nd.toDouble)
-            case DoubleUserDefinedNoDataCellType(nd) => Some(nd)
-          }
-          Some(projectId -> (nodeId, band, ndOverride))
-        case _ =>
-          None
-      }.toMap
 
+    final case class Parameters(projectId: UUID,
+                                band: Int,
+                                nodataOverride: Option[Double])
+
+    val projToIngestLoc: Set[Parameters] = {
+      logger.debug(s"AST TILE SOURCES: ${ast.tileSources}")
+      logger.debug(s"AST ${ast.asJson}")
+      ast.tileSources.flatMap { s =>
+        logger.debug(s"RFML RASTER: ${s}")
+        s match {
+          case s: ProjectRaster =>
+            val projectId = s.projId
+            val band = s.band.getOrElse(1)
+            // This really, really needs to be fixed upstream.
+            val ndOverride = s.celltype.flatMap {
+              case BitCellType                         => None
+              case ByteCellType                        => None
+              case UByteCellType                       => None
+              case ShortCellType                       => None
+              case UShortCellType                      => None
+              case IntCellType                         => None
+              case FloatCellType                       => None
+              case DoubleCellType                      => None
+              case ByteConstantNoDataCellType          => Some(Byte.MinValue.toDouble)
+              case UByteConstantNoDataCellType         => Some(0.toDouble)
+              case ShortConstantNoDataCellType         => Some(Short.MinValue.toDouble)
+              case UShortConstantNoDataCellType        => Some(0.toDouble)
+              case IntConstantNoDataCellType           => Some(Int.MinValue.toDouble)
+              case FloatConstantNoDataCellType         => Some(Double.NaN)
+              case DoubleConstantNoDataCellType        => Some(Double.NaN)
+              case ByteUserDefinedNoDataCellType(nd)   => Some(nd.toDouble)
+              case UByteUserDefinedNoDataCellType(nd)  => Some(nd.toDouble)
+              case ShortUserDefinedNoDataCellType(nd)  => Some(nd.toDouble)
+              case UShortUserDefinedNoDataCellType(nd) => Some(nd.toDouble)
+              case IntUserDefinedNoDataCellType(nd)    => Some(nd.toDouble)
+              case FloatUserDefinedNoDataCellType(nd)  => Some(nd.toDouble)
+              case DoubleUserDefinedNoDataCellType(nd) => Some(nd)
+            }
+            Some(Parameters(projectId, band, ndOverride))
+          case _ =>
+            None
+        }
+      }
+    }
+    logger.debug(s"Project Ingest Locations: ${projToIngestLoc}")
     logger.debug(s"Working with this many projects: ${projToIngestLoc.size}")
 
     val sceneProjectSelect = fr"""
@@ -261,24 +271,32 @@ object ExportDao extends Dao[Export] {
     ON
       stp.scene_id = scenes.id
     """ ++ Fragments.whereAndOpt(
-      projToIngestLoc.keys.toList.toNel.map(ids =>
-        Fragments.in(fr"stp.project_id", ids))
+      projToIngestLoc.toList
+        .map(_.projectId)
+        .toNel
+        .map(ids => Fragments.in(fr"stp.project_id", ids))
     ) ++ fr"GROUP BY stp.project_id"
     val projectSceneLocs = for {
       stps <- sceneProjectSelect
         .query[(UUID, List[UUID], List[String])]
         .to[List]
     } yield {
-      stps.flatMap {
-        case (pID, sID, loc) =>
-          if (loc.isEmpty) {
-            None
-          } else {
-            Some(
-              s"${pID}_${projToIngestLoc(pID)._2}" ->
-                loc.map({
-                  (_, projToIngestLoc(pID)._2, projToIngestLoc(pID)._3)
-                }))
+      val projectSources = stps.map {
+        case (projectId, sceneIds, locations) =>
+          (projectId, (sceneIds, locations))
+      }.toMap
+
+      projToIngestLoc.flatMap {
+        case parameters =>
+          val projectId = parameters.projectId
+          val band = parameters.band
+          val key = s"${projectId}_${band}"
+          projectSources.get(projectId) match {
+            case Some((sceneIds, locations)) => {
+              val value = locations.map((_, band, parameters.nodataOverride))
+              Some(key -> value)
+            }
+            case _ => None
           }
       }.toMap
     }
