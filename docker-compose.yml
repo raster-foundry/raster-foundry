@@ -61,7 +61,7 @@ services:
     env_file: .env
     environment:
       - RF_LOG_LEVEL=INFO
-      - TILE_SERVER_LOCATION=http://localhost:8080
+      - TILE_SERVER_LOCATION=
       - COURSIER_CACHE=/root/.coursier
     ports:
       - "9000:9000"
@@ -74,6 +74,7 @@ services:
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
       - $HOME/.ivy2:/root/.ivy2
+      - ./data/:/opt/data/
     working_dir: /opt/raster-foundry/app-backend/
     entrypoint: ./sbt
     command:
@@ -111,19 +112,33 @@ services:
       - postgres:database.service.rasterfoundry.internal
 
   backsplash:
-    image: openjdk:8-jre
-    build:
-      context: app-backend
-      dockerfile: Dockerfile.backsplash
+    image: quay.io/azavea/openjdk-gdal:2.3.2-jdk8-slim
     depends_on:
       postgres:
         condition: service_healthy
     links:
       - postgres:database.service.rasterfoundry.internal
+      - graphite:graphite.service.rasterfoundry.internal
+      - memcached:tile-cache.service.rasterfoundry.internal
     env_file: .env
     environment:
       - RF_LOG_LEVEL=DEBUG
       - COURSIER_CACHE=/root/.coursier
+      - VSI_CACHE=TRUE
+      - GDAL_CACHEMAX=1000
+      - DB_THREADPOOL_THREADS=16
+      - HTTP4S_THREADPOOL_THREADS=16
+      - BLAZE_THREADPOOL_THREADS=4
+      - BLAZE_CONNECTOR_POOL_SIZE=4
+      - POSTGRES_DB_POOL_SIZE=32
+      - HIKARI_CONNECTION_THREADS=16
+      - RF_AUTHENTICATION_CACHE_ENABLE=true
+      - BACKSPLASH_HISTOGRAM_CACHE_ENABLE=true
+      - BACKSPLASH_TILE_CACHE_ENABLE=true
+      - BACKSPLASH_AUTHORIZATION_CACHE_ENABLE=true
+      - BACKSPLASH_RASTERSOURCE_CACHE_ENABLE=true
+      - BACKSPLASH_ENABLE_GDAL=false
+      - BACKSPLASH_CORE_STREAM_CONCURRENCY=16
     ports:
       - "8080:8080"
       - "9030:9030"
@@ -134,15 +149,24 @@ services:
       - ./.bintray:/root/.bintray
       - $HOME/.aws:/root/.aws:ro
       - $HOME/.ivy2:/root/.ivy2
+      - ./data/:/opt/data/
     working_dir: /opt/raster-foundry/app-backend/
-    entrypoint: sbt
+    entrypoint: ./sbt
     command:
       - "backsplash-server/run"
-      - "-J-Dcom.sun.management.jmxremote.rmi.port=9030"
-      - "-J-Dcom.sun.management.jmxremote=true"
-      - "-J-Dcom.sun.management.jmxremote.port=9030"
-      - "-J-Dcom.sun.management.jmxremote.ssl=false"
-      - "-J-Dcom.sun.management.jmxremote.authenticate=false"
-      - "-J-Dcom.sun.management.jmxremote.local.only=false"
-      - "-J-DXmx3G"
+      - "-Dcom.sun.management.jmxremote.rmi.port=9030"
+      - "-Dcom.sun.management.jmxremote=true"
+      - "-Dcom.sun.management.jmxremote.port=9030"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
+      - "-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-Dcom.sun.management.jmxremote.local.only=false"
       - "-Djava.rmi.server.hostname=localhost"
+
+  graphite:
+    image: graphiteapp/graphite-statsd
+    ports:
+      - 2003-2004:2003-2004
+      - 2023-2024:2023-2024
+      - 8125:8125/udp
+      - 8126:8126
+      - 8090:80

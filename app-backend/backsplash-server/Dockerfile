@@ -1,4 +1,4 @@
-FROM daunnc/openjdk-gdal:2.3.2
+FROM quay.io/azavea/openjdk-gdal:2.3.2-jdk8-slim
 
 ENV ASPECTJ_WEAVER_VERSION 1.8.10
 

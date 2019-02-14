@@ -13,18 +13,16 @@ Example: ./scripts/console api-server \"./sbt\"
 }
 
 
-if [ "${BASH_SOURCE[0]}" = "${0}" ]
-then
-    if [ "${1:-}" = "--help" ]
-    then
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
         usage
-    elif [ "${1:-}" = "sbt" ]
-    then
-        docker-compose -f "${DIR}/../docker-compose.java.yml" \
-                       run sbt
+    elif [ "${1:-}" = "sbt" ]; then
+        docker-compose \
+            run --rm --no-deps --entrypoint "./sbt" api-server 
     else
-        docker-compose run --rm --service-ports --entrypoint \
-                       "/bin/bash -c" "$1" "${@:2}"
+        docker-compose \
+            run --rm --no-deps --service-ports \
+            --entrypoint "/bin/bash -c" \
+            "$1" "${@:2}"
     fi
-    exit
 fi
