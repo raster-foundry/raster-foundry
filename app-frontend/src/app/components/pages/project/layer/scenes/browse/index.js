@@ -292,7 +292,7 @@ class LayerScenesBrowseController {
     }
 
     allVisibleSelected() {
-        let sceneSet = new Set(this.sceneList.map(s => s.id));
+        let sceneSet = new Set(this.sceneList.map(s => s.id).filter(s => !s.inLayer));
         return this.selected.keySeq().toSet().intersect(sceneSet).size === sceneSet.size;
     }
 
@@ -311,7 +311,7 @@ class LayerScenesBrowseController {
         if (this.allVisibleSelected()) {
             this.selectText = 'Clear selected';
         } else {
-            this.selectText = 'Select all visible';
+            this.selectText = 'Select listed';
         }
     }
 
