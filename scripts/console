@@ -6,8 +6,6 @@ if [[ -n "${RF_DEBUG}" ]]; then
     set -x
 fi
 
-DIR="$(dirname "$0")"
-
 function usage() {
     echo -n \
 "Usage: $(basename "$0") SERVICE COMMAND[S]
