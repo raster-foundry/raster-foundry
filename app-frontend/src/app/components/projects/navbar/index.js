@@ -14,7 +14,6 @@ class ProjectLayersNavController {
         this.navs = [];
         this.onStateCurrentChange(this.$state.current);
         this.$transitions.onSuccess({}, transition => {
-            this.$log.info('transition:', transition);
             const toState = transition.to();
             this.onStateCurrentChange(toState);
         });
