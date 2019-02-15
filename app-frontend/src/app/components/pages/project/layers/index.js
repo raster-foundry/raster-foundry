@@ -121,7 +121,7 @@ class ProjectLayersPageController {
             menu: true
         };
         const importAction = {
-            name: 'Import',
+            name: 'Import imagery',
             callback: () => this.modalService.open({
                 component: 'rfSceneImportModal',
                 resolve: {
@@ -130,6 +130,13 @@ class ProjectLayersPageController {
                     origin: () => 'project'
                 }
             })
+        };
+        const browseAction = {
+            name: 'Browse for imagery',
+            callback: () => this.$state.go(
+                'project.layer.browse',
+                {projectId: this.project.id, layerId: layer.id}
+            )
         };
         const settingsAction = {
             name: 'Settings',
@@ -149,7 +156,7 @@ class ProjectLayersPageController {
         };
 
         const unimplementedActions = [publishAction, exportAction, settingsAction];
-        const layerActions = [editAction, importAction];
+        const layerActions = [editAction, importAction, browseAction];
         if (!isDefaultLayer) {
             layerActions.push(setDefaultAction);
         }
