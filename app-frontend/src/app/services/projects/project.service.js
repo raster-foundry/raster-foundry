@@ -226,15 +226,6 @@ export default (app) => {
                             projectId: '@projectId',
                             layerId: '@layerId'
                         }
-                    },
-                    addScenesToLayer: {
-                        method: 'POST',
-                        // eslint-disable-next-line max-len
-                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers/:layerId/scenes/`,
-                        params: {
-                            projectId: '@projectId',
-                            layerId: '@layerId'
-                        }
                     }
                 }
             );
