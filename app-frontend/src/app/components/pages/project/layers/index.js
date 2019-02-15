@@ -120,6 +120,24 @@ class ProjectLayersPageController {
             ),
             menu: true
         };
+        const importAction = {
+            name: 'Import imagery',
+            callback: () => this.modalService.open({
+                component: 'rfSceneImportModal',
+                resolve: {
+                    project: () => this.project,
+                    layer: () => layer,
+                    origin: () => 'project'
+                }
+            })
+        };
+        const browseAction = {
+            name: 'Browse for imagery',
+            callback: () => this.$state.go(
+                'project.layer.browse',
+                {projectId: this.project.id, layerId: layer.id}
+            )
+        };
         const settingsAction = {
             name: 'Settings',
             callback: () => this.$state.go(
@@ -138,15 +156,12 @@ class ProjectLayersPageController {
         };
 
         const unimplementedActions = [publishAction, exportAction, settingsAction];
-        const layerActions = [editAction];
+        const layerActions = [editAction, importAction, browseAction];
         if (!isDefaultLayer) {
             layerActions.push(setDefaultAction);
         }
 
-        return [
-            editAction,
-            ...!isDefaultLayer ? [setDefaultAction, deleteAction] : []
-        ];
+        return layerActions;
     }
 
     allVisibleSelected() {

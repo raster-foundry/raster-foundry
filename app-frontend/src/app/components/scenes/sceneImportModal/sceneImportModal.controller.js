@@ -42,23 +42,29 @@ export default class SceneImportModalController {
             this.gdalImportError = true;
             this.$log.error('There was an error while fetching the gdal dependencies.');
         }, 'gdal');
+
         this.initSteps();
         this.importType = 'local';
+
         this.s3Config = {
             bucket: '',
             prefix: ''
         };
+
         this.cogConfig = {
             url: ''
         };
+
         this.isCog = false;
         this.planetSceneIds = '';
         this.selectedFileDatasets = [];
         this.selectedFiles = [];
+
         this.sceneData = {
             acquisitionDate: new Date(),
             cloudCover: 0
         };
+
         this.uploadProgressPct = {};
         this.uploadProgressFlexString = {};
         this.abortedUploadCount = 0;
@@ -365,7 +371,8 @@ export default class SceneImportModalController {
         this.sceneService.createCogScene({
             metadata: this.sceneData,
             location: this.cogConfig.url,
-            projectId: _.get(this, 'resolve.project.id') || false
+            projectId: _.get(this, 'resolve.project.id', false),
+            layerId: _.get(this, 'resolve.layer.id', false)
         }, this.datasource).then(() => {
             this.handleNext();
         }, err => {
@@ -409,7 +416,7 @@ export default class SceneImportModalController {
             visibility: 'PRIVATE',
             organizationId: user.organizationId,
             metadata: {acquisitionDate: this.sceneData.acquisitionDate,
-                       cloudCover: this.sceneData.cloudCover}
+                cloudCover: this.sceneData.cloudCover}
         };
 
         if (this.importType === 'local') {
@@ -441,6 +448,9 @@ export default class SceneImportModalController {
 
         if (this.resolve.project) {
             uploadObject.projectId = this.resolve.project.id;
+        }
+        if (this.resolve.layer) {
+            uploadObject.layerId = this.resolve.layer.id;
         }
 
         return this.uploadService.create(uploadObject);
@@ -551,7 +561,8 @@ export default class SceneImportModalController {
                     return this.sceneService.createCogScene({
                         metadata: this.sceneData,
                         location: encodeURI(f),
-                        projectId: _.get(this, 'resolve.project.id') || false
+                        projectId: _.get(this, 'resolve.project.id', false),
+                        layerId: _.get(this, 'resolve.layer.id', false)
                     }, this.datasource);
                 }));
             } else {
@@ -591,7 +602,7 @@ export default class SceneImportModalController {
         let datasetPromises = files.map(file => {
             return this.$q.resolve(loamOpen(file))
                 .catch((error) => {
-                    //eslint-disable-next-line
+                    // eslint-disable-next-line
                     console.log("Error in loam caught", error);
                 });
         });
@@ -664,7 +675,7 @@ export default class SceneImportModalController {
             .finally(() => {
                 this.isLoadingDatasources = false;
             }
-        );
+            );
     }
 
     preventInterruptions() {

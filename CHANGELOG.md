@@ -6,6 +6,7 @@
 - Added scene counts to project layer items [\#4625](https://github.com/raster-foundry/raster-foundry/pull/4625)
 - Added project analyses list view [\#4585](https://github.com/raster-foundry/raster-foundry/pull/4585)
 - Added backend support for project layer async exports [\#4619](https://github.com/raster-foundry/raster-foundry/pull/4619)
+- Added front-end support for importing to project layers [\#4646](https://github.com/raster-foundry/raster-foundry/pull/4646)
 
 ### Changed
 
