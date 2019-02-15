@@ -4,13 +4,16 @@ import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.common.datamodel.User
+import com.rasterfoundry.common.datamodel.{BandOverride, User}
 import com.rasterfoundry.common.utils.TileUtils
+import com.rasterfoundry.database.SceneDao
 
 import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
+import doobie.implicits._
 import doobie.util.transactor.Transactor
+import geotrellis.raster.CellSize
 import geotrellis.server._
 import org.http4s._
 import org.http4s.dsl.io._
@@ -49,6 +52,50 @@ class SceneService[ProjStore: ProjectStore, HistStore](
                 fiberResp.cancel *> IO.raiseError(error)
               }
               resp <- fiberResp.join flatMap {
+                case Valid(tile) =>
+                  Ok(tile.renderPng.bytes, pngType)
+                case Invalid(e) =>
+                  BadRequest(s"Could not produce tile: $e")
+              }
+            } yield resp
+
+          case GET -> Root / UUIDWrapper(sceneId) / "thumbnail"
+                :? BandOverrideQueryParamDecoder(bandOverride)
+                :? ThumbnailQueryParamDecoder(thumbnailSize) as user =>
+            def getEval(ovr: BandOverride) =
+              LayerExtent.identity(scenes.read(sceneId, None, Some(ovr), None))
+            for {
+              authFiber <- authorizers.authScene(user, sceneId).start
+              bandsFiber <- bandOverride match {
+                case Some(b) => IO.pure(b).start
+                case None =>
+                  SceneDao
+                    .getSceneDatasource(sceneId)
+                    .transact(xa)
+                    .map(
+                      _.defaultColorComposite map { _.value } getOrElse {
+                        BandOverride(0, 1, 2)
+                      }
+                    )
+                    .start
+              }
+              footprintFiber <- SceneDao
+                .unsafeGetSceneById(sceneId)
+                .transact(xa)
+                .map(scene => scene.dataFootprint orElse scene.tileFootprint)
+                .start
+              _ <- authFiber.join.handleErrorWith { error =>
+                bandsFiber.cancel *> footprintFiber.cancel *> IO.raiseError(
+                  error)
+              }
+              (width, height) = thumbnailSize
+              footprint <- footprintFiber.join
+              bands <- bandsFiber.join
+              eval = getEval(bands)
+              extent = footprint.get.envelope
+              xSize = extent.width / width
+              ySize = extent.height / height
+              resp <- eval(extent, CellSize(xSize, ySize)) flatMap {
                 case Valid(tile) =>
                   Ok(tile.renderPng.bytes, pngType)
                 case Invalid(e) =>

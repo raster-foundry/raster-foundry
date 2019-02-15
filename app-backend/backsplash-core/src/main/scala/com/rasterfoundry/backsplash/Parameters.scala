@@ -4,6 +4,7 @@ import com.rasterfoundry.common.datamodel.BandOverride
 
 import cats.implicits._
 import geotrellis.vector.Extent
+import io.circe.parser._
 import org.http4s._
 import org.http4s.dsl.io._
 
@@ -46,6 +47,20 @@ object Parameters {
     }
   }
 
+  object ThumbnailQueryParamDecoder {
+    def unapply(params: Map[String, Seq[String]]): Option[(Int, Int)] = {
+      val width: Option[Int] =
+        params.get("width") flatMap { _.headOption } flatMap {
+          decode[Int](_).toOption
+        }
+      val height: Option[Int] =
+        params.get("height") flatMap { _.headOption } flatMap {
+          decode[Int](_).toOption
+        }
+      (width, height).tupled orElse { Some((128, 128)) }
+    }
+  }
+
   /** Query string query parameters */
   object TokenQueryParamMatcher
       extends OptionalQueryParamDecoderMatcher[String]("token")
@@ -60,6 +75,8 @@ object Parameters {
   object VoidCacheQueryParamMatcher
       extends QueryParamDecoderMatcher[Boolean]("voidCache")
   object ZoomQueryParamMatcher extends QueryParamDecoderMatcher[Int]("zoom")
+  object BrightnessFloorQueryParamMatcher
+      extends QueryParamDecoderMatcher[Int]("floor")
 
   /** Path Parameters */
   object UUIDWrapper {
