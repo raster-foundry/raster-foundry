@@ -1,6 +1,13 @@
 import _ from 'lodash';
 
-export default (entity, permissionsBase, entityType, platform, bufferChanges, afterSave) => class permissionsUI {
+export default (
+    entity,
+    permissionsBase,
+    entityType,
+    platform,
+    bufferChanges,
+    afterSave
+) => class permissionsUI {
     constructor(
         $rootScope, $scope, $element, $timeout, $q,
         permissionsService, organizationService, teamService, userService, authService
