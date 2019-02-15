@@ -120,6 +120,17 @@ class ProjectLayersPageController {
             ),
             menu: true
         };
+        const importAction = {
+            name: 'Import',
+            callback: () => this.modalService.open({
+                component: 'rfSceneImportModal',
+                resolve: {
+                    project: () => this.project,
+                    layer: () => layer,
+                    origin: () => 'project'
+                }
+            })
+        };
         const settingsAction = {
             name: 'Settings',
             callback: () => this.$state.go(
@@ -138,15 +149,12 @@ class ProjectLayersPageController {
         };
 
         const unimplementedActions = [publishAction, exportAction, settingsAction];
-        const layerActions = [editAction];
+        const layerActions = [editAction, importAction];
         if (!isDefaultLayer) {
             layerActions.push(setDefaultAction);
         }
 
-        return [
-            editAction,
-            ...!isDefaultLayer ? [setDefaultAction, deleteAction] : []
-        ];
+        return layerActions;
     }
 
     allVisibleSelected() {

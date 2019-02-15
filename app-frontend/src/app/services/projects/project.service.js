@@ -226,6 +226,15 @@ export default (app) => {
                             projectId: '@projectId',
                             layerId: '@layerId'
                         }
+                    },
+                    addScenesToLayer: {
+                        method: 'POST',
+                        // eslint-disable-next-line max-len
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers/:layerId/scenes/`,
+                        params: {
+                            projectId: '@projectId',
+                            layerId: '@layerId'
+                        }
                     }
                 }
             );
@@ -353,7 +362,8 @@ export default (app) => {
 
         addScenesToLayer(projectId, layerId, sceneIds) {
             return this.Project.addScenesToLayer(
-                {projectId, layerId}, sceneIds
+                {projectId, layerId},
+                sceneIds
             ).$promise;
         }
 
@@ -637,7 +647,7 @@ export default (app) => {
         }
 
         getProjectPermissions(project, user) {
-            //TODO replace uses with permissionsService.getEditableObjectPermission
+            // TODO replace uses with permissionsService.getEditableObjectPermission
             return this.$q((resolve, reject) => {
                 if (project.owner.id === user.id || project.owner === user.id) {
                     resolve([
