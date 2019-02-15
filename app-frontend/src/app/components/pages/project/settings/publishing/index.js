@@ -172,10 +172,11 @@ class ProjectPublishingController {
             this.updateMapToken()
                 .then(t => {
                     this.mapToken = t;
-                    const layerUrl = this.projectService.getProjectLayerTileUrl(this.project, '{layerId}', {
-                        mapToken: this.mapToken.id,
-                        tag: new Date().getTime()
-                    });
+                    const layerUrl = this.projectService
+                        .getProjectLayerTileUrl(this.project, '{layerId}', {
+                            mapToken: this.mapToken.id,
+                            tag: new Date().getTime()
+                        });
                     this.layerZXYURL = l => zxy(layerUrl, l);
                     this.layerArcGISURL = l => arcGis(layerUrl, l);
                 });
