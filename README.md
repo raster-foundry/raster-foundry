@@ -131,31 +131,32 @@ Due to active development to Raster Foundry, some aspects of theming might break
 The Vagrant configuration maps the following host ports to services running in the virtual machines. Ports can be overridden for individual developers using environment variables
 
 | Service                   | Port                            | Environment Variable |
-|---------------------------|---------------------------------|----------------------|
+| ------------------------- | ------------------------------- | -------------------- |
 | Application Frontend      | [`9091`](http://localhost:9091) | `RF_PORT_9091`       |
 | Nginx (api)               | [`9100`](http://localhost:9100) | `RF_PORT_9100`       |
-| Nginx (tiler)             | [`9101`](http://localhost:9101) | `RF_PORT_9101`       |
+| Nginx (tiler)             | [`9101`](http://localhost:8081) | `RF_PORT_8081`       |
 | Application Server (akka) | [`9000`](http://localhost:9000) | `RF_PORT_9000`       |
-| Tile Server (akka)        | [`9900`](http://localhost:9900) | `RF_PORT_9900`       |
+| Tile Server (http4s)      | [`9900`](http://localhost:8080) | `RF_PORT_8080`       |
+| Application Server (JMX)  | `9010`                          | `RF_PORT_9010`       |
+| Tile Server (JMX)         | `9030`                          | `RF_PORT_9030`       |
 
 ## Scripts
 
 Helper and development scripts are located in the `./scripts` directory at the root of this project. These scripts are designed to encapsulate and perform commonly used actions such as starting a development server, accessing a development console, or running tests.
 
-| Script Name               | Purpose                                                      |
-|---------------------------|--------------------------------------------------------------|
-| `bootstrap`               | Pulls/builds necessary containers                            |
-| `setup`                   | Provision development VM                                     |
-| `update`                  | Runs migrations, installs dependencies, etc.                 |
-| `server`                  | Starts a development server                                  |
-| `console`                 | Gives access to a running container via `docker-compose run` |
-| `psql`                    | Drops you into a `psql` console.                             |
-| `test`                    | Runs tests and linters for project                           |
-| `cibuild`                 | Invoked by CI server and makes use of `test`.                |
-| `cipublish`               | Publish container images to container image repositories.    |
-| `load_development_data`   | Load data for development purposes from S3                   |
-| `publish-jars`            | Publish JAR artifacts to S3                                  |
-| `rsync-back`              | Perform a one-way `rsync` from the VM to the host.           |
+| Script Name             | Purpose                                                      |
+| ----------------------- | ------------------------------------------------------------ |
+| `bootstrap`             | Pulls/builds necessary containers                            |
+| `setup`                 | Provision development VM                                     |
+| `update`                | Runs migrations, installs dependencies, etc.                 |
+| `server`                | Starts a development server                                  |
+| `console`               | Gives access to a running container via `docker-compose run` |
+| `psql`                  | Drops you into a `psql` console.                             |
+| `test`                  | Runs tests and linters for project                           |
+| `cibuild`               | Invoked by CI server and makes use of `test`.                |
+| `cipublish`             | Publish container images to container image repositories.    |
+| `load_development_data` | Load data for development purposes from S3                   |
+| `rsync-back`            | Perform a one-way `rsync` from the VM to the host.           |
 
 ## Testing
 
