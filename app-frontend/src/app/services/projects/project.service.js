@@ -91,6 +91,15 @@ export default (app) => {
                             projectId: '@projectId'
                         }
                     },
+                    addScenesToLayer: {
+                        method: 'POST',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/` +
+                            'layers/:layerId/scenes/',
+                        params: {
+                            projectId: '@projectId',
+                            layerId: '@layerId'
+                        }
+                    },
                     projectDatasources: {
                         method: 'GET',
                         cache: false,
@@ -106,6 +115,16 @@ export default (app) => {
                         url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/scenes`,
                         params: {
                             projectId: '@projectId'
+                        }
+                    },
+                    layerScenes: {
+                        method: 'GET',
+                        cache: false,
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/`
+                            + 'layers/:layerId/scenes',
+                        params: {
+                            projectId: '@projectId',
+                            layerId: '@layerId'
                         }
                     },
                     projectAois: {
@@ -332,6 +351,12 @@ export default (app) => {
             ).$promise;
         }
 
+        addScenesToLayer(projectId, layerId, sceneIds) {
+            return this.Project.addScenesToLayer(
+                {projectId, layerId}, sceneIds
+            ).$promise;
+        }
+
         getProjectCorners(id) {
             // TODO Use project extent instead here
             throw new Error('ERROR: Update project.service getProjectCorners to use the ' +
@@ -379,6 +404,17 @@ export default (app) => {
             ).$promise;
         }
 
+        getProjectLayerScenes(projectId, layerId, params = {}) {
+            return this.Project.layerScenes(
+                Object.assign({}, {
+                    projectId, layerId,
+                    pending: false,
+                    page: 0,
+                    pageSize: 30
+                }, params)
+            ).$promise;
+        }
+
         getProjectDatasources(projectId, params = {}) {
             return this.Project.projectDatasources({...params, projectId}).$promise;
         }
@@ -417,6 +453,15 @@ export default (app) => {
             return this.$http({
                 method: 'DELETE',
                 url: `${BUILDCONFIG.API_HOST}/api/projects/${projectId}/scenes/`,
+                data: scenes,
+                headers: {'Content-Type': 'application/json;charset=utf-8'}
+            });
+        }
+
+        removeScenesFromLayer(projectId, layerId, scenes) {
+            return this.$http({
+                method: 'DELETE',
+                url: `${BUILDCONFIG.API_HOST}/api/projects/${projectId}/layers/${layerId}/scenes/`,
                 data: scenes,
                 headers: {'Content-Type': 'application/json;charset=utf-8'}
             });
@@ -632,9 +677,6 @@ export default (app) => {
             return this.Project.createLayer({projectId}, params).$promise;
         }
 
-        getProjectLayer(projectId, layerId) {
-            return this.Project.getLayer({projectId, layerId}).$promise;
-        }
 
         getProjectLayerStats(projectId) {
             return this.Project.getLayerStats({projectId}).$promise;
@@ -642,6 +684,18 @@ export default (app) => {
 
         deleteProjectLayer(projectId, layerId) {
             return this.Project.deleteLayer({projectId, layerId}).$promise;
+        }
+
+        mapLayerFromLayer(
+            project, layer, tag = (new Date()).valueOf(), token = this.authService.token()
+        ) {
+            let url = this.getProjectLayerTileUrl(
+                project, layer, {token, tag}
+            );
+            let mapLayer = L.tileLayer(url, {
+                maxZoom: 30
+            });
+            return mapLayer;
         }
     }
 

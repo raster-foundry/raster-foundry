@@ -13,7 +13,6 @@ import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import io.circe._
-import io.circe.optics.JsonPath._
 import io.circe.syntax._
 
 import java.sql.Timestamp
@@ -323,14 +322,12 @@ object ProjectDao
                           projectLayerId: UUID,
                           datasource: Datasource,
                           isAccepted: Boolean): SceneToLayer = {
-    val composites = datasource.composites
-    val redBandPath = root.natural.selectDynamic("value").redBand.int
-    val greenBandPath = root.natural.selectDynamic("value").greenBand.int
-    val blueBandPath = root.natural.selectDynamic("value").blueBand.int
-
-    val redBand = redBandPath.getOption(composites).getOrElse(0)
-    val greenBand = greenBandPath.getOption(composites).getOrElse(1)
-    val blueBand = blueBandPath.getOption(composites).getOrElse(2)
+    val naturalComposites = datasource.composites.get("natural")
+    val (redBand, greenBand, blueBand) = naturalComposites map { composite =>
+      (composite.value.redBand,
+       composite.value.greenBand,
+       composite.value.blueBand)
+    } getOrElse { (0, 1, 2) }
     (
       sceneId,
       projectLayerId,
@@ -367,14 +364,12 @@ object ProjectDao
                             projectId: UUID,
                             datasource: Datasource,
                             isAccepted: Boolean): SceneToProject = {
-    val composites = datasource.composites
-    val redBandPath = root.natural.selectDynamic("value").redBand.int
-    val greenBandPath = root.natural.selectDynamic("value").greenBand.int
-    val blueBandPath = root.natural.selectDynamic("value").blueBand.int
-
-    val redBand = redBandPath.getOption(composites).getOrElse(0)
-    val greenBand = greenBandPath.getOption(composites).getOrElse(1)
-    val blueBand = blueBandPath.getOption(composites).getOrElse(2)
+    val naturalComposites = datasource.composites.get("natural")
+    val (redBand, greenBand, blueBand) = naturalComposites map { composite =>
+      (composite.value.redBand,
+       composite.value.greenBand,
+       composite.value.blueBand)
+    } getOrElse { (0, 1, 2) }
     (
       sceneId,
       projectId,

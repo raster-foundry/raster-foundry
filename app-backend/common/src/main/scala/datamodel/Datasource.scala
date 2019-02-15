@@ -15,11 +15,20 @@ final case class Datasource(id: UUID,
                             owner: String,
                             name: String,
                             visibility: Visibility,
-                            composites: Json,
+                            composites: Map[String, ColorComposite],
                             extras: Json,
                             bands: Json,
                             licenseName: Option[String]) {
   def toThin: Datasource.Thin = Datasource.Thin(this.bands, this.name, this.id)
+
+  def defaultColorComposite: Option[ColorComposite] =
+    this.composites
+      .filter(_._1.toLowerCase.contains("natural"))
+      .values
+      .headOption orElse this.composites
+      .filter(_._1.toLowerCase.contains("default"))
+      .values
+      .headOption orElse this.composites.values.headOption
 }
 
 object Datasource {
@@ -35,7 +44,7 @@ object Datasource {
   final case class Create(name: String,
                           visibility: Visibility,
                           owner: Option[String],
-                          composites: Json,
+                          composites: Map[String, ColorComposite],
                           extras: Json,
                           bands: Json,
                           licenseName: Option[String])

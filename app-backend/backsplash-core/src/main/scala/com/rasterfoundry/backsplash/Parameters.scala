@@ -1,5 +1,7 @@
 package com.rasterfoundry.backsplash
 
+import com.rasterfoundry.common.datamodel.BandOverride
+
 import cats.implicits._
 import geotrellis.vector.Extent
 import org.http4s._

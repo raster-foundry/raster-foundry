@@ -28,6 +28,7 @@ trait SceneQueryParameterDirective extends QueryParametersCommon {
       'bbox.as[String].*,
       'point.as[String].?,
       'project.as[UUID].?,
+      'layer.as[UUID].?,
       'ingested.as[Boolean].?,
       'ingestStatus.as[String].*,
       'pending.as[Boolean].?,

@@ -128,7 +128,10 @@ class FilterPaneController {
 
         this.debouncedOnRepositoryChange({
             fetchScenes: this.currentRepository.service.fetchScenes(
-                this.filterParams, this.$state.params.projectid
+                this.filterParams,
+                // support old routes
+                this.$state.params.projectId || this.$state.params.projectid,
+                this.$state.params.layerId
             ),
             repository: this.currentRepository
         });

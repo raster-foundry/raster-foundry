@@ -137,7 +137,7 @@ export default (app) => {
           Function chain:
           (filters) => (bbox) => () => Future(next page of scenes)
         */
-        fetchScenes(filters, projectId) {
+        fetchScenes(filters, projectId, layerId) {
             if (filters.shape && typeof filters.shape === 'object') {
                 filters.shape = filters.shape.id;
             }
@@ -160,17 +160,22 @@ export default (app) => {
                                 page,
                                 bbox,
                                 maxCreateDatetime: requestTime,
-                                project: projectId
+                                project: projectId,
+                                layer: layerId
                             }, params)
                         ).then((response) => {
                             // We aren't supporting concurrent scene paged requests
                             page = page + 1;
                             hasNext = response.hasNext;
+                            let count = 100;
+                            let calcCount = 20 * (page - 1) + response.results.length;
+                            count = count > calcCount ? count : calcCount;
                             resolve({
                                 scenes: response.results,
                                 hasNext,
                                 count: response.count >= 100 ?
-                                    'at least 100' : this.$filter('number')(response.count)
+                                    `at least ${count}` :
+                                    this.$filter('number')(response.count)
                             });
                         }, (error) => {
                             reject({
@@ -231,6 +236,10 @@ export default (app) => {
          */
         addToProject(projectId, scenes) {
             return this.projectService.addScenes(projectId, scenes.map(scene => scene.id));
+        }
+
+        addToLayer(projectId, layerId, scenes) {
+            return this.projectService.addScenesToLayer(projectId, layerId, scenes.map(s => s.id));
         }
 
         getScenePermissions(scene) {

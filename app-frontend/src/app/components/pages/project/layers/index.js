@@ -149,6 +149,30 @@ class ProjectLayersPageController {
         ];
     }
 
+    allVisibleSelected() {
+        let layerSet = new Set(this.itemList.map(l => l.id));
+        return this.selected.intersect(layerSet).size === layerSet.size;
+    }
+
+    selectAll() {
+        if (this.allVisibleSelected()) {
+            this.selected = this.selected.clear();
+        } else {
+            this.selected = this.selected.union(
+                this.itemList.map(i => i.id)
+            );
+        }
+        this.updateSelectText();
+    }
+
+    updateSelectText() {
+        if (this.allVisibleSelected()) {
+            this.selectText = 'Clear selected';
+        } else {
+            this.selectText = 'Select listed';
+        }
+    }
+
     onSelect(id) {
         if (this.selected.has(id)) {
             this.selected = this.selected.delete(id);
@@ -224,19 +248,11 @@ class ProjectLayersPageController {
         }
     }
 
-    mapLayerFromLayer(layer) {
-        let url = this.projectService.getProjectLayerTileUrl(
-            this.project, layer, {token: this.authService.token()}
-        );
-        let mapLayer = L.tileLayer(url, {
-            maxZoom: 30
-        });
-        return mapLayer;
-    }
-
     syncMapLayersToVisible() {
         // TODO do this more efficiently (don't re-add existing layers)
-        let mapLayers = this.visible.toArray().map(this.mapLayerFromLayer.bind(this));
+        let mapLayers = this.visible
+            .toArray()
+            .map(layer => this.projectService.mapLayerFromLayer(this.project, layer));
         this.getMap().then(map => {
             map.setLayer('Project Layers', mapLayers, true);
         });

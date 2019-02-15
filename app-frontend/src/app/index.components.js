@@ -1,6 +1,7 @@
 /* eslint-disable */
 import pages from './components/pages';
 import projectComponents from './components/projects';
+import sceneComponents from './components/scenes';
 export default angular.module('index.components', [
     //admin components
     require('./components/admin/editableLogo/editableLogo.js').default.name,
@@ -21,6 +22,7 @@ export default angular.module('index.components', [
     require('./components/scenes/sceneDownloadModal/sceneDownloadModal.module.js').default.name,
     require('./components/scenes/sceneFilterPane/sceneFilterPane.module.js').default.name,
     require('./components/scenes/planetSceneDetailModal/planetSceneDetailModal.module.js').default.name,
+    ...sceneComponents,
 
     // vector components
     require('./components/vectors/vectorImportModal/vectorImportModal.module.js').default.name,

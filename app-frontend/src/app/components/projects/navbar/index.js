@@ -4,7 +4,7 @@ import {Set} from 'immutable';
 
 class ProjectLayersNavController {
     constructor(
-        $rootScope, $state, $scope, $transitions
+        $rootScope, $state, $scope, $transitions, $log
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -45,10 +45,10 @@ class ProjectLayersNavController {
             stateCurrent.name.includes('project.layer.')
         ) {
             this.navs.push({
-                title: this.layer.name,
+                title: this.layer && this.layer.name,
                 sref: `project.layer({
                     projectId: '${this.project.id}',
-                    layerId: '${this.layer.id}'
+                    layerId: '${this.layer && this.layer.id}'
                 })`
             });
         }
@@ -58,7 +58,7 @@ class ProjectLayersNavController {
                 title: 'Color correct',
                 sref: `project.layer.corrections({
                     projectId: '${this.project.id}',
-                    layerId: '${this.layer.id}'
+                    layerId: '${this.layer && this.layer.id}'
                 })`
             });
         }
@@ -68,7 +68,7 @@ class ProjectLayersNavController {
                 title: 'Browse imagery',
                 sref: `project.layer.scenes.browse({
                     projectId: '${this.project.id}',
-                    layerId: '${this.layer.id}'
+                    layerId: '${this.layer && this.layer.id}'
                 })`
             });
         }
