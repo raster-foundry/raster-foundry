@@ -1,5 +1,9 @@
 FROM quay.io/azavea/openjdk-gdal:2.3.2-jdk8-slim
 
+RUN \
+      addgroup -S rf \
+      && adduser -D -S -h /var/lib/rf -s /sbin/nologin -G rf rf
+
 COPY ./target/scala-2.11/backsplash-assembly.jar /var/lib/rf/
 
 USER rf
