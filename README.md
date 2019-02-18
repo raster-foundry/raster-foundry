@@ -1,6 +1,16 @@
 # Raster Foundry
 
-## Getting Started
+- [Getting Started](#getting-started)
+  - [Requirements](#requirements)
+  - [Setting Up AWS Account](#setting-up-aws-account)
+  - [Setting Development Environment Variables](#setting-development-environment-variables)
+- [Development](#development)
+  - [Migrations](#migrations)
+  - [Testing](#testing)
+  - [Frontend Development](#frontend-development)
+    -[Frontend Theming](#frontend-theming)
+- [Ports](#ports)
+- [Scripts](#scripts)
 
 A virtual machine is used to encapsulate Docker dependencies. `docker-compose` is used within the VM to manage running the application and developing against it.
 
@@ -15,7 +25,7 @@ A virtual machine is used to encapsulate Docker dependencies. `docker-compose` i
 - [Rollbar Account](https://rollbar.com/) (error reporting -- optional)
 - [Scalafmt](https://scalameta.org/scalafmt/docs/installation.html) (formatting scala code -- optional, but builds CI will fail if you introduce formatting that's not compliant with its results) 
 
-#### Setting Up AWS Account
+### Setting Up AWS Account
 
 There are a set of tasks necessary before starting development in order to provision Raster Foundry. Raster Foundry depends heavily on AWS resources and using AWS resources to manage secrets/containers/artifacts in development. If only local development is being done, the primary resource that will be used are S3 buckets to store secrets.
 
@@ -31,7 +41,7 @@ $ aws configure --profile raster-foundry
 
 You will be prompted for an access key and secret key.
 
-#### Setting Development Environment Variables
+### Setting Development Environment Variables
 
 The `.env.template` file is a template file with environment variables that get injected into running containers during development. This file should be copied into the AWS config bucket created after filling in sensitive information (replacing all `PLACEHOLDER` values with appropriate values for your AWS setup). When provisioning this file is copied to the development environment and injected into containers with `docker-compose`.
 
@@ -41,40 +51,40 @@ Additionally, if you want to exercise token management in the application, you n
 
 The last thing to set up with Auth0 are the allowed callback URLs and logout URLs. These need to be edited to allow interaction for local development from `localhost:9091` and `localhost:9100`.
 
-### Development
+## Development
 
-Vagrant is used to manage VirtualBox provisioning and configuration. Raster Foundry follows the approach outlined [here](https://githubengineering.com/scripts-to-rule-them-all/) ("Scripts to Rule Them All") to have as consistent a development experience as possible. Almost all interaction with consoles and servers can be managed via calls to a script located in `./scripts`. Default values for the S3 config and data buckets in addition to AWS profile will be used if they are not set with an environment variable. Before running vagrant, these should be injected into your shell environment:
+Vagrant is used to provision development environments contained within a VirtualBox VM. Raster Foundry follows the approach outlined [here](https://githubengineering.com/scripts-to-rule-them-all/) ("Scripts to Rule Them All") to have as consistent a development experience as possible. Almost all interaction with consoles and servers can be managed via calls to a script located in `./scripts`. Default values for the S3 config and data buckets in addition to AWS profile will be used if they are not set with an environment variable. 
+
+Before provisioning the development environment, make sure you've defined these environment variables:
+
 ```bash
 export RF_AWS_PROFILE=raster-foundry
 export RF_SETTINGS_BUCKET=rasterfoundry-development-config-us-east-1
 export RF_ARTIFACTS_BUCKET=rasterfoundry-global-artifacts-us-east-1
 ```
 
-After exporting your environment settings, you are ready to get started:
+Next, run `setup` to bring up the development environment:
 
 ```bash
 $ ./scripts/setup
-$ vagrant ssh
-$ ./scripts/server
 ```
 
-Use `./scripts/setup` to provision a virtual machine. During provisioning `docker` and `docker-compose` will be installed on the guest machine. Additionally, docker images will be downloaded for the database and created for the `akka-http` application server.
+Once `setup` is complete, you can access the VM and bring up the Raster Foundry application using `server`:
 
-The guest machine shares folders with the host using `rsync`. In order to sync files from the host to the guest, run `vagrant rsync-auto` in another tab. If you have generated files in the guest that you'd like to copy back into the host machine, run `scripts/rsync-back` from the host.
+```bash
+$ vagrant ssh
+vagrant@vagrant:/opt/raster-foundry$ ./scripts/server
+```
 
-Once the machine is provisioned you can start services or development by ssh-ing into the machine (`vagrant ssh`) and using the helper scripts in the `/opt/raster-foundry/scripts` directory.
+If you make changes to the application code, you can recompile the application using `update`:
 
-If you do not have a development database to seed your database with, you will need to initialize the database with `mg init` inside an `sbt` console `./scripts/console api-server ./sbt`
+```bash
+vagrant@vagrant:/opt/raster-foundry$ ./scripts/update
+```
 
-Development workflow varies by developer, but a typical development experience might include the following:
+During provisioning `docker` and `docker-compose` will be installed on the guest machine. Additionally, project `.env` files will be pulled down from the `RF_SETTINGS_BUCKET` S3 bucket with `scripts/bootstrap`. Finally, `scripts/update` will be called, which will get the project in a state where we can bring the application online.
 
- - Create a new feature branch
- - Start up the vagrant machine with `./scripts/setup`
- - Sync watched files by running `vagrant rsync-auto` in another tab.
- - Get an `sbt` console open using `./scripts/console api-server ./sbt`
- - Make changes to Scala code
- - Try compiling (`~compile`) or running the service to inspect it (`~api/run`)
- - Extract files generated in the VM with `./scripts/rsync-back`
+The guest machine shares folders with the host using `rsync`. In order to sync files from the host to the guest, run `vagrant rsync-auto` in another tab. If you have generated files in the guest that you'd like to copy back into the host machine, run `scripts/rsync-back` from the hosts.
 
 ### Migrations
 
@@ -84,7 +94,7 @@ To initialize migrations on a database for the first time, run `mg init` within 
 
 The workflow for creating a new migration is:
 
- - Open an `sbt` console using `./scripts/console api-server ./sbt`
+ - Open an `sbt` console using `./scripts/console sbt`
  - Run `mg new s` for a `SQL` migration
    - The migration file is output to `migrations/src_migrations/main/scala/{VERSION_NUM}.scala`
  - Edit this file to perform the desired migration logic
@@ -93,11 +103,17 @@ The workflow for creating a new migration is:
    - Press `ENTER` once the migration command has completed
  - `mg update` will create a symlink with an absolute path to the migration. This path won't work in all environments, so you should run `./scripts/fix-migration migration_number` from the vm to update the symlink to a relative path.
 
-#### Frontend Development
+### Testing
+
+Run all the tests:
+
+```bash
+$ ./scripts/test
+```
+
+### Frontend Development
 
 To do frontend development you will want to install [`nvm`](https://github.com/creationix/nvm#install-script) and use at least version 6.9+ (`lts/boron`). Once using `nvm`, install [yarn](https://yarnpkg.com/) with `npm install -g yarn`. After following the directions above for starting the VM, start the API server and other backend services by running `./scripts/server`.
-
-
 
 Then _outside_ the VM, while the server is still running, run `yarn run start` while inside the `app-frontend/` directory. This will start a `webpack-dev-server` on port 9091 that will auto-reload after javascript and styling changes.
 
@@ -144,24 +160,16 @@ The Vagrant configuration maps the following host ports to services running in t
 
 Helper and development scripts are located in the `./scripts` directory at the root of this project. These scripts are designed to encapsulate and perform commonly used actions such as starting a development server, accessing a development console, or running tests.
 
-| Script Name             | Purpose                                                      |
-| ----------------------- | ------------------------------------------------------------ |
-| `bootstrap`             | Pulls/builds necessary containers                            |
-| `setup`                 | Provision development VM                                     |
-| `update`                | Runs migrations, installs dependencies, etc.                 |
-| `server`                | Starts a development server                                  |
-| `console`               | Gives access to a running container via `docker-compose run` |
-| `psql`                  | Drops you into a `psql` console.                             |
-| `test`                  | Runs tests and linters for project                           |
-| `cibuild`               | Invoked by CI server and makes use of `test`.                |
-| `cipublish`             | Publish container images to container image repositories.    |
-| `load_development_data` | Load data for development purposes from S3                   |
-| `rsync-back`            | Perform a one-way `rsync` from the VM to the host.           |
-
-## Testing
-
-Run all the tests:
-
-```bash
-$ ./scripts/test
-```
+| Script Name             | Purpose                                                                  |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `bootstrap`             | Bootstraps development environment (downloads `.env` files from S3, etc) |
+| `setup`                 | Provisions development VM                                                |
+| `update`                | Update project dependencies before running `server`                      |
+| `server`                | Starts a development server                                              |
+| `console`               | Gives access to a running container via `docker-compose run`             |
+| `psql`                  | Drops you into a `psql` console                                          |
+| `test`                  | Runs tests and linters for project                                       |
+| `cibuild`               | Invoked by CI server and makes use of `test`                             |
+| `cipublish`             | Publish container images to container image repositories                 |
+| `load_development_data` | Load data for development purposes from S3                               |
+| `rsync-back`            | Perform a one-way `rsync` from the VM to the host                        |
