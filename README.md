@@ -11,6 +11,8 @@
 - [Ports](#ports)
 - [Scripts](#scripts)
 
+## Getting Started
+
 A virtual machine is used to encapsulate Docker dependencies. `docker-compose` is used within the VM to manage running the application and developing against it.
 
 ### Requirements
