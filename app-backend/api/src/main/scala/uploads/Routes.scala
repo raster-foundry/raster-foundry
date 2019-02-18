@@ -3,7 +3,8 @@ package com.rasterfoundry.api.uploads
 import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.headers.HttpChallenge
+import akka.http.scaladsl.server.{AuthenticationFailedRejection, Route}
 import cats.effect.IO
 import com.rasterfoundry.akkautil.{
   Authentication,
@@ -172,17 +173,24 @@ trait UploadRoutes
     authorizeAsync {
       UploadDao.query.ownedBy(user, uploadId).exists.transact(xa).unsafeToFuture
     } {
-      extractTokenHeader { jwt =>
-        onSuccess(
-          UploadDao.query
-            .filter(uploadId)
-            .selectOption
-            .transact(xa)
-            .unsafeToFuture) {
-          case Some(_) =>
-            complete(CredentialsService.getCredentials(user, uploadId, jwt))
-          case None => complete(StatusCodes.NotFound)
-        }
+      extractTokenHeader {
+        case Some(jwt) =>
+          onSuccess(
+            UploadDao.query
+              .filter(uploadId)
+              .selectOption
+              .transact(xa)
+              .unsafeToFuture) {
+            case Some(_) =>
+              complete(CredentialsService.getCredentials(user, uploadId, jwt))
+            case None => complete(StatusCodes.NotFound)
+          }
+        case _ =>
+          reject(
+            AuthenticationFailedRejection(
+              AuthenticationFailedRejection.CredentialsMissing,
+              HttpChallenge("Bearer", "https://rasterfoundry.com")
+            ))
       }
     }
   }

@@ -45,8 +45,11 @@ trait Authentication extends Directives with LazyLogging {
     * Authenticates user based on bearer token (JWT)
     */
   def authenticate: Directive1[User] = {
-    extractTokenHeader.flatMap { token =>
-      authenticateWithToken(token)
+    extractTokenHeader.flatMap {
+      case Some(token) =>
+        authenticateWithToken(token)
+      case None =>
+        reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
     }
   }
 
@@ -267,12 +270,8 @@ trait Authentication extends Directives with LazyLogging {
   /**
     * Helper directive to extract token header
     */
-  def extractTokenHeader: Directive1[String] = {
-    optionalHeaderValueByName("Authorization").flatMap {
-      case Some(tokenString) => provide(tokenString.split(" ").last)
-      case _ =>
-        reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
-    }
+  def extractTokenHeader: Directive1[Option[String]] = {
+    optionalHeaderValueByName("Authorization")
   }
 
   /**

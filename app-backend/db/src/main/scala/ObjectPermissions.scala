@@ -215,7 +215,7 @@ trait ObjectPermissions[Model] {
     ownershipTypeO match {
       // owned by the requesting user only
       case Some("owned") =>
-        ownedF
+        Some(ownedF)
       // shared to the requesting user directly, across platform, or due to group membership
       case Some("shared") =>
         if (objectType == ObjectType.Shape || objectType == ObjectType.Template) {
