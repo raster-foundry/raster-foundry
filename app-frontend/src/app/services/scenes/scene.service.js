@@ -176,7 +176,8 @@ export default (app) => {
                 params: {
                     width,
                     height,
-                    token
+                    token,
+                    floor
                 }
             }).then(
                 (response) => {

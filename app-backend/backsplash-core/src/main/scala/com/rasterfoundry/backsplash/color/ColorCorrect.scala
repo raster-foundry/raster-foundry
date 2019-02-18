@@ -42,24 +42,11 @@ object ColorCorrect extends LazyLogging {
       2 -> (if (gamma.enabled) gamma.blueGamma else None)
     )
 
-    @SuppressWarnings(Array("CollectionIndexOnNonIndexedSeq"))
-    def reorderBands(
-        tile: MultibandTile,
-        hist: Seq[Histogram[Double]]
-    ): (MultibandTile, Array[Histogram[Double]]) = {
-      logger.trace(
-        s"RedBand: ${redBand}, GreenBand: ${greenBand}, BlueBand: ${blueBand}")
-      logger.trace(s"RedHist: ${hist(redBand).statistics()}\n GreenHist: ${hist(
-        greenBand).statistics()}\n BlueHist: ${hist(blueBand).statistics()}")
-      (tile.subsetBands(redBand, greenBand, blueBand),
-       Array(hist(redBand), hist(greenBand), hist(blueBand)))
-    }
-
     def colorCorrect(tile: MultibandTile,
                      hist: Seq[Histogram[Double]],
                      nodataValue: Option[Double]): MultibandTile = {
-      val (rgbTile, rgbHist) = reorderBands(tile, hist)
-      ColorCorrect(rgbTile, rgbHist, this, nodataValue)
+      val rgbHist = Array(redBand, greenBand, blueBand) map { hist(_) }
+      ColorCorrect(tile, rgbHist, this, nodataValue)
     }
 
     def withBands(red: Int, green: Int, blue: Int) =

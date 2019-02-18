@@ -2,6 +2,7 @@ package com.rasterfoundry.backsplash
 
 import com.rasterfoundry.common.datamodel.BandOverride
 
+import cats.Applicative
 import cats.implicits._
 import geotrellis.vector.Extent
 import io.circe.parser._
@@ -13,6 +14,8 @@ import scala.util.Try
 import java.util.UUID
 
 object Parameters {
+
+  final case class ThumbnailSize(width: Int, height: Int)
 
   /** Query param decoders */
   implicit val extentQueryParamDecoder: QueryParamDecoder[Extent] =
@@ -48,7 +51,7 @@ object Parameters {
   }
 
   object ThumbnailQueryParamDecoder {
-    def unapply(params: Map[String, Seq[String]]): Option[(Int, Int)] = {
+    def unapply(params: Map[String, Seq[String]]): Option[ThumbnailSize] = {
       val width: Option[Int] =
         params.get("width") flatMap { _.headOption } flatMap {
           decode[Int](_).toOption
@@ -57,7 +60,9 @@ object Parameters {
         params.get("height") flatMap { _.headOption } flatMap {
           decode[Int](_).toOption
         }
-      (width, height).tupled orElse { Some((128, 128)) }
+      Applicative[Option].map2(width, height)(ThumbnailSize.apply _) orElse {
+        Some(ThumbnailSize(128, 128))
+      }
     }
   }
 
@@ -76,7 +81,7 @@ object Parameters {
       extends QueryParamDecoderMatcher[Boolean]("voidCache")
   object ZoomQueryParamMatcher extends QueryParamDecoderMatcher[Int]("zoom")
   object BrightnessFloorQueryParamMatcher
-      extends QueryParamDecoderMatcher[Int]("floor")
+      extends OptionalQueryParamDecoderMatcher[Int]("floor")
 
   /** Path Parameters */
   object UUIDWrapper {

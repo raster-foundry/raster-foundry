@@ -21,7 +21,7 @@ const SceneItemComponent = {
 class SceneItemController {
     constructor(
         $rootScope, $scope, $attrs, $element, $timeout, $document,
-        mapService, modalService, sceneService, authService
+        modalService, sceneService, authService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);

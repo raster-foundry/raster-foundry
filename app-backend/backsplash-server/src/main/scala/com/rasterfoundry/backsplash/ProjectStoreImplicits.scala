@@ -147,15 +147,7 @@ class ProjectStoreImplicits(xa: Transactor[IO])
         val imageBandOverride = bandOverride map { ovr =>
           List(ovr.redBand, ovr.greenBand, ovr.blueBand)
         } getOrElse { List(0, 1, 2) }
-        val colorCorrectParams = compositeO map { composite =>
-          BSColorCorrect.paramsFromBandSpecOnly(
-            composite.value.redBand,
-            composite.value.greenBand,
-            composite.value.blueBand
-          )
-        } getOrElse {
-          BSColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
-        }
+        val colorCorrectParams = BSColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
         logger.debug(s"Chosen color correction: ${colorCorrectParams}")
         BacksplashImage(
           scene.id,
