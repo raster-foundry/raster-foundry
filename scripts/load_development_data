@@ -1,16 +1,14 @@
 #!/bin/bash
+
 set -e
 
 if [[ -n "${RF_DEBUG}" ]]; then
     set -x
 fi
 
-source "scripts/update"
-
 DIR="$(dirname "$0")"
 
 function usage() {
-
     echo -n \
 "Usage: $(basename "$0") [--download]
 
@@ -21,7 +19,6 @@ and overwrites the existing dump.
 }
 
 function download_database_backup() {
-
     pushd "${DIR}/.."
     echo "Downloading database from s3"
     aws s3 cp "s3://${RF_SETTINGS_BUCKET}/database.pgdump" "data/database.pgdump"
@@ -29,7 +26,6 @@ function download_database_backup() {
 }
 
 function download_development_images() {
-
     pushd "${DIR}/.."
     echo "Downloading images from s3"
     aws s3 sync "s3://${RF_SETTINGS_BUCKET}/development-images/" "data/"
@@ -39,23 +35,24 @@ function download_development_images() {
 function load_database_backup() {
     echo "Drop rasterfoundry database"
     docker-compose \
-        exec -T postgres dropdb -U rasterfoundry rasterfoundry
+        exec -T postgres \
+        dropdb -U rasterfoundry rasterfoundry
 
     echo "Create rasterfoundry database"
     docker-compose \
-        exec -T postgres createdb -U rasterfoundry rasterfoundry
+        exec -T postgres \
+        createdb -U rasterfoundry rasterfoundry
 
     echo "Restore database from backup"
     # Command to create database backup
-    # gosu postgres pg_dump -Fc rasterfoundry > database.pgdump
+    # pg_dump -Fc rasterfoundry > database.pgdump
     docker-compose \
-        exec -T postgres pg_restore -U rasterfoundry -Fc -d rasterfoundry /tmp/data/database.pgdump
+        exec -T postgres \
+        pg_restore -U rasterfoundry -Fc -d rasterfoundry /tmp/data/database.pgdump
 }
 
-if [ "${BASH_SOURCE[0]}" = "${0}" ]
-then
-    if [ "${1:-}" = "--help" ]
-    then
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    if [ "${1:-}" = "--help" ]; then
         usage
     else
         # API server won't start until Postgres is passing Health Checks
@@ -65,7 +62,11 @@ then
             download_development_images
         fi
         load_database_backup
+
+        echo "Running application database migrations"
+        source "${DIR}/update"
+        run_database_migrations
+
         docker-compose rm -sf api-server
     fi
-    exit
 fi

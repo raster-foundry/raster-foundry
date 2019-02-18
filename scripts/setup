@@ -18,8 +18,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
     else
-        # Ensure that a directory exists to house AWS profiles.
-        mkdir -p "${HOME}/.aws"
+        # https://github.com/raster-foundry/raster-foundry/pull/3800
         mkdir -p "nginx/srv/dist/"
 
         vagrant up --provision

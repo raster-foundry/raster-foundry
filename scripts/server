@@ -10,7 +10,7 @@ function usage() {
     echo -n \
 "Usage: $(basename "$0")
 
-Starts servers using docker-compose
+Starts application services using docker-compose.
 "
 }
 
