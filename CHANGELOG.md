@@ -7,6 +7,7 @@
 - Added project analyses list view [\#4585](https://github.com/raster-foundry/raster-foundry/pull/4585)
 - Added backend support for project layer async exports [\#4619](https://github.com/raster-foundry/raster-foundry/pull/4619)
 - Added front-end support for importing to project layers [\#4646](https://github.com/raster-foundry/raster-foundry/pull/4646)
+- Enhanced project layer lists to support list access with map tokens and to public projects [\#4656](https://github.com/raster-foundry/raster-foundry/pull/4656)
 - Added project layer export list UI [\#4663](https://github.com/raster-foundry/raster-foundry/pull/4663)
 - Added layer ID query parameter to export list endpoint [\#4663](https://github.com/raster-foundry/raster-foundry/pull/4663)
 
