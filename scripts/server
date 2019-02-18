@@ -17,15 +17,8 @@ Starts servers using docker-compose
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
-    elif [ "${1:-}" = "--java" ]; then
-        TILE_SERVER_LOCATION="http://localhost:8081" \
-            docker-compose \
-            -f docker-compose.yml \
-            -f docker-compose.java.yml \
-            up nginx-backsplash backsplash api-server nginx-api
     else
         TILE_SERVER_LOCATION="http://localhost:8081" \
             docker-compose \
             up nginx-backsplash backsplash api-server nginx-api
-    fi
 fi

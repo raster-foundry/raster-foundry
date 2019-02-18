@@ -44,10 +44,13 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         usage
     else
         echo "Updating Scala dependencies"
-        docker-compose up -d api-server
+        docker-compose \
+            run --rm --no-deps sbt \
+            api/assembly
 
-        docker-compose exec -T api-server ./sbt update
-        docker-compose rm -sf api-server
+        docker-compose \
+            run --rm --no-deps sbt \
+            backsplash-server/assembly
 
         echo "Running application database migrations"
         run_database_migrations

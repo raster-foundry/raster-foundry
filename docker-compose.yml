@@ -75,10 +75,9 @@ services:
       - ./.bintray:/root/.bintray
       - $HOME/.ivy2:/root/.ivy2
       - $HOME/.aws:/root/.aws:ro
-    working_dir: /opt/raster-foundry/app-backend/
-    entrypoint: ./sbt
+    working_dir: /opt/raster-foundry/app-backend/api/target/scala-2.11/
+    entrypoint: java
     command:
-      - "api/run"
       - "-Dcom.sun.management.jmxremote.rmi.port=9010"
       - "-Dcom.sun.management.jmxremote=true"
       - "-Dcom.sun.management.jmxremote.port=9010"
@@ -86,6 +85,8 @@ services:
       - "-Dcom.sun.management.jmxremote.authenticate=false"
       - "-Dcom.sun.management.jmxremote.local.only=false"
       - "-Djava.rmi.server.hostname=localhost"
+      - "-jar"
+      - "api-assembly.jar"
 
   batch:
     image: raster-foundry-batch
@@ -118,7 +119,6 @@ services:
         condition: service_healthy
     links:
       - postgres:database.service.rasterfoundry.internal
-      - graphite:graphite.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
     env_file: .env
     environment:
@@ -150,10 +150,9 @@ services:
       - ./.bintray:/root/.bintray
       - $HOME/.ivy2:/root/.ivy2
       - $HOME/.aws:/root/.aws:ro
-    working_dir: /opt/raster-foundry/app-backend/
-    entrypoint: ./sbt
+    working_dir: /opt/raster-foundry/app-backend/backsplash-server/target/scala-2.11/
+    entrypoint: java
     command:
-      - "backsplash-server/run"
       - "-Dcom.sun.management.jmxremote.rmi.port=9030"
       - "-Dcom.sun.management.jmxremote=true"
       - "-Dcom.sun.management.jmxremote.port=9030"
@@ -161,12 +160,28 @@ services:
       - "-Dcom.sun.management.jmxremote.authenticate=false"
       - "-Dcom.sun.management.jmxremote.local.only=false"
       - "-Djava.rmi.server.hostname=localhost"
+      - "-jar"
+      - "backsplash-assembly.jar"
 
-  graphite:
-    image: graphiteapp/graphite-statsd
-    ports:
-      - 2003-2004:2003-2004
-      - 2023-2024:2023-2024
-      - 8125:8125/udp
-      - 8126:8126
-      - 8090:80
+  sbt:
+    image: quay.io/azavea/openjdk-gdal:2.3.2-jdk8-slim
+    depends_on:
+      postgres:
+        condition: service_healthy
+    links:
+      - postgres:database.service.rasterfoundry.internal
+      - memcached:tile-cache.service.rasterfoundry.internal
+    env_file: .env
+    environment:
+      - RF_LOG_LEVEL=DEBUG
+      - COURSIER_CACHE=/root/.coursier
+    volumes:
+      - ./app-backend/:/opt/raster-foundry/app-backend/
+      - ./data/:/opt/data/
+      - $HOME/.sbt:/root/.sbt
+      - $HOME/.coursier:/root/.coursier
+      - ./.bintray:/root/.bintray
+      - $HOME/.ivy2:/root/.ivy2
+      - $HOME/.aws:/root/.aws:ro
+    working_dir: /opt/raster-foundry/app-backend/
+    entrypoint: ./sbt
