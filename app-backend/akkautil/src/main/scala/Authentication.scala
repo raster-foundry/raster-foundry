@@ -20,6 +20,7 @@ import doobie.implicits._
 import doobie.util.transactor.Transactor
 
 import scala.concurrent.Future
+import scala.util.Try
 import java.net.URL
 import java.util.UUID
 
@@ -47,7 +48,7 @@ trait Authentication extends Directives with LazyLogging {
   def authenticate: Directive1[User] = {
     extractTokenHeader.flatMap {
       case Some(token) =>
-        authenticateWithToken(token)
+        authenticateWithToken(token.split(" ").last)
       case None =>
         reject(AuthenticationFailedRejection(CredentialsRejected, challenge))
     }
@@ -272,6 +273,17 @@ trait Authentication extends Directives with LazyLogging {
     */
   def extractTokenHeader: Directive1[Option[String]] = {
     optionalHeaderValueByName("Authorization")
+  }
+
+  /**
+    * Helper directive to extract maptoken param
+    */
+  def extractMapTokenParam: Directive1[Option[UUID]] = {
+    parameter('mapToken.?) flatMap { mapTokenO =>
+      provide(mapTokenO flatMap { tokenString =>
+        Try { UUID.fromString(tokenString) } toOption
+      })
+    }
   }
 
   /**

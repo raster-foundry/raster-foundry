@@ -3,8 +3,8 @@ package com.rasterfoundry.api.project
 import java.util.UUID
 
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.directives.FileInfo
+import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.directives._
 import better.files.{File => ScalaFile}
 import cats.data.NonEmptyList
 import cats.effect.IO
@@ -32,8 +32,10 @@ import doobie.util.transactor.Transactor
 import geotrellis.shapefile.ShapeFileReader
 import io.circe.generic.JsonCodec
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Success
+
 @JsonCodec
 final case class BulkAcceptParams(sceneIds: List[UUID])
 
@@ -45,6 +47,7 @@ final case class AnnotationFeatureCollectionCreate(
 trait ProjectRoutes
     extends Authentication
     with Config
+    with Directives
     with QueryParametersCommon
     with SceneQueryParameterDirective
     with ProjectSceneQueryParameterDirective
@@ -58,6 +61,44 @@ trait ProjectRoutes
   val xa: Transactor[IO]
 
   val BULK_OPERATION_MAX_LIMIT = 100
+
+  private def projectAuthFromMapTokenO(mapTokenO: Option[UUID],
+                                       projectId: UUID): Directive0 = {
+    mapTokenO map { mapToken =>
+      authorizeAsync {
+        MapTokenDao
+          .checkProject(projectId)(mapToken)
+          .transact(xa)
+          .map({
+            case Some(_) => true
+            case _       => false
+          })
+          .unsafeToFuture
+      }
+    } getOrElse { reject(AuthorizationFailedRejection) }
+  }
+
+  private def projectAuthFromTokenO(tokenO: Option[String],
+                                    projectId: UUID): Directive0 = {
+    authorizeAsync {
+      tokenO map { token =>
+        verifyJWT(token) traverse {
+          case (_, jwtClaims) =>
+            val userId = jwtClaims.getStringClaim("sub")
+            for {
+              user <- UserDao.unsafeGetUserById(userId)
+              projectAuth <- ProjectDao.authorized(user,
+                                                   ObjectType.Project,
+                                                   projectId,
+                                                   ActionType.View)
+            } yield projectAuth
+        } map {
+          case Right(result) => result
+          case Left(_)       => false
+        } transact (xa) unsafeToFuture
+      } getOrElse { Future.successful(false) }
+    }
+  }
 
   val projectRoutes: Route = handleExceptions(userExceptionHandler) {
     pathEndOrSingleSlash {
@@ -1460,21 +1501,20 @@ trait ProjectRoutes
     }
   }
 
-  def listProjectLayers(projectId: UUID): Route = authenticate { user =>
-    authorizeAsync {
-      ProjectDao
-        .authorized(user, ObjectType.Project, projectId, ActionType.View)
-        .transact(xa)
-        .unsafeToFuture
-    } {
-      (withPagination) { (page) =>
-        complete {
-          ProjectLayerDao
-            .listProjectLayersForProject(page, projectId)
-            .transact(xa)
-            .unsafeToFuture
+  def listProjectLayers(projectId: UUID): Route = extractTokenHeader { tokenO =>
+    extractMapTokenParam { mapTokenO =>
+      (projectAuthFromMapTokenO(mapTokenO, projectId) |
+        projectAuthFromTokenO(tokenO, projectId)) {
+        (withPagination) { (page) =>
+          complete {
+            ProjectLayerDao
+              .listProjectLayersForProject(page, projectId)
+              .transact(xa)
+              .unsafeToFuture
+          }
         }
       }
+
     }
   }
 
