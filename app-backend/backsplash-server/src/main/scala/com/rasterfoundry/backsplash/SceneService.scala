@@ -107,7 +107,9 @@ class SceneService[ProjStore: ProjectStore, HistStore](
               bands <- bandsFiber.join
               eval = LayerExtent.identity(
                 scenes.read(sceneId, None, Some(bands), None))
-              extent = footprint.get.envelope
+              extent = footprint map { _.envelope } getOrElse {
+                throw MetadataException(s"Scene $sceneId does not have a footprint")
+              }
               xSize = extent.width / thumbnailSize.width
               ySize = extent.height / thumbnailSize.height
               resp <- eval(extent, CellSize(xSize, ySize)) flatMap {
