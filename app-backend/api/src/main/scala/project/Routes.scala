@@ -62,6 +62,17 @@ trait ProjectRoutes
 
   val BULK_OPERATION_MAX_LIMIT = 100
 
+  private def projectIsPublic(projectId: UUID): Directive0 = {
+    authorizeAsync {
+      ProjectDao
+        .unsafeGetProjectById(projectId)
+        .transact(xa)
+        .unsafeToFuture map {
+        _.visibility == Visibility.Public
+      }
+    }
+  }
+
   private def projectAuthFromMapTokenO(mapTokenO: Option[UUID],
                                        projectId: UUID): Directive0 = {
     mapTokenO map { mapToken =>
@@ -1504,7 +1515,7 @@ trait ProjectRoutes
   def listProjectLayers(projectId: UUID): Route = extractTokenHeader { tokenO =>
     extractMapTokenParam { mapTokenO =>
       (projectAuthFromMapTokenO(mapTokenO, projectId) |
-        projectAuthFromTokenO(tokenO, projectId)) {
+        projectAuthFromTokenO(tokenO, projectId) | projectIsPublic(projectId)) {
         (withPagination) { (page) =>
           complete {
             ProjectLayerDao
