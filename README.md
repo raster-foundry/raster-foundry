@@ -6,9 +6,8 @@
   - [Setting Development Environment Variables](#setting-development-environment-variables)
 - [Development](#development)
   - [Migrations](#migrations)
-  - [Testing](#testing)
   - [Frontend Development](#frontend-development)
-    -[Frontend Theming](#frontend-theming)
+  - [Frontend Theming](#frontend-theming)
 - [Ports](#ports)
 - [Scripts](#scripts)
 
@@ -82,6 +81,12 @@ If you make changes to the application code, you can recompile the application u
 vagrant@vagrant:/opt/raster-foundry$ ./scripts/update
 ```
 
+To run application tests, use `test`:
+
+```bash
+vagrant@vagrant:/opt/raster-foundry$ ./scripts/test
+```
+
 During provisioning `docker` and `docker-compose` will be installed on the guest machine. Additionally, project `.env` files will be pulled down from the `RF_SETTINGS_BUCKET` S3 bucket with `scripts/bootstrap`. Finally, `scripts/update` will be called, which will get the project in a state where we can bring the application online.
 
 The guest machine shares folders with the host using `rsync`. In order to sync files from the host to the guest, run `vagrant rsync-auto` in another tab. If you have generated files in the guest that you'd like to copy back into the host machine, run `scripts/rsync-back` from the hosts.
@@ -103,14 +108,6 @@ The workflow for creating a new migration is:
    - Press `ENTER` once the migration command has completed
  - `mg update` will create a symlink with an absolute path to the migration. This path won't work in all environments, so you should run `./scripts/fix-migration migration_number` from the vm to update the symlink to a relative path.
 
-### Testing
-
-Run all the tests:
-
-```bash
-$ ./scripts/test
-```
-
 ### Frontend Development
 
 To do frontend development you will want to install [`nvm`](https://github.com/creationix/nvm#install-script) and use at least version 6.9+ (`lts/boron`). Once using `nvm`, install [yarn](https://yarnpkg.com/) with `npm install -g yarn`. After following the directions above for starting the VM, start the API server and other backend services by running `./scripts/server`.
@@ -128,7 +125,7 @@ To run tests you can do one of the following (in order of speed):
  - Run `yarn run test` outside the VM (or `yarn run test-watch`)
  - Run `./scripts/test` inside the VM (will also run additional project tests)
 
-#### Frontend Theming
+### Frontend Theming
 
 Frontend theming should only be used if you intend on forking and white labeling the application. Theming of the frontend application can be done easily with a few tweaks to the `scss`. To get theming working correctly, follow these instructions:
 
