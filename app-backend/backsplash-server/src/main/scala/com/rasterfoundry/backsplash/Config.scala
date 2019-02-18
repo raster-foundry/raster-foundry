@@ -17,7 +17,6 @@ object Config {
   object server {
     private val serverConfig = config.getConfig("server")
     val timeoutSeconds = serverConfig.getInt("timeoutSeconds")
-    val graphiteUrl = serverConfig.getString("graphiteUrl")
   }
 
   object cache {

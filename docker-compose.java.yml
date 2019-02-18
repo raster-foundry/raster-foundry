@@ -115,7 +115,6 @@ services:
         condition: service_healthy
     links:
       - postgres:database.service.rasterfoundry.internal
-      - graphite:graphite.service.rasterfoundry.internal
       - memcached:tile-cache.service.rasterfoundry.internal
     env_file: .env
     environment:
@@ -155,12 +154,3 @@ services:
       - "-Djava.rmi.server.hostname=localhost"
       - "-jar"
       - "backsplash-assembly.jar"
-
-  graphite:
-    image: graphiteapp/graphite-statsd
-    ports:
-      - 2003-2004:2003-2004
-      - 2023-2024:2023-2024
-      - 8125:8125/udp
-      - 8126:8126
-      - 8090:80
