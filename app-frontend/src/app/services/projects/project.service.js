@@ -304,7 +304,8 @@ export default (app) => {
                 exportStatus: 'NOTEXPORTED',
                 exportType: 'S3',
                 visibility: 'PRIVATE',
-                exportOptions: finalOptions
+                exportOptions: finalOptions,
+                projectLayerId: project.defaultLayerId
             };
 
             const finalSettings = Object.assign(defaultSettings, settings);
