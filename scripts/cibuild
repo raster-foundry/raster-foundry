@@ -30,11 +30,13 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         ./scripts/bootstrap --env
         ./scripts/bootstrap --sbtopts
 
-        echo "Building static asset bundle"
+        echo "Updating frontend dependencies"
         docker-compose \
             -f "${DIR}/../docker-compose.yml" \
             -f "${DIR}/../docker-compose.test.yml" \
             run --rm app-frontend install
+
+        echo "Building static asset bundle"
         docker-compose \
             -f "${DIR}/../docker-compose.yml" \
             -f "${DIR}/../docker-compose.test.yml" \

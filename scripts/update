@@ -28,15 +28,15 @@ function run_database_migrations() {
     else
         # Initialize the database for migrations.
         docker-compose \
-            run --rm api-server "mg init"
+            run --rm sbt \
+            "migrations/run init"
     fi
 
     # Run database migrations. The way scala-forklift works requires this to be called twice:
     # the first run figures out the migrations to run and the second run applies them.
     docker-compose \
-        run --rm api-server "mg update"
-    docker-compose \
-        run --rm api-server "mg apply"
+        run --rm sbt \
+        ";migrations/run update;migrations/run apply"
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
@@ -46,11 +46,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "Updating Scala dependencies"
         docker-compose \
             run --rm --no-deps sbt \
-            api/assembly
-
-        docker-compose \
-            run --rm --no-deps sbt \
-            backsplash-server/assembly
+            ";api/assembly;backsplash-server/assembly"
 
         echo "Running application database migrations"
         run_database_migrations
