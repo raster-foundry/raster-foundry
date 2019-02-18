@@ -322,6 +322,9 @@ trait Filterables extends RFMeta with LazyLogging {
           exportParams.analysis.map({ analysisId =>
             fr"toolrun_id = $analysisId"
           }),
+          exportParams.layer.map({ layerId =>
+            fr"project_layer_id = $layerId"
+          }),
           exportParams.exportStatus.toList.toNel.map({ statuses =>
             val exportStatuses = statuses.map({ status =>
               try ExportStatus.fromString(status)

@@ -427,7 +427,8 @@ final case class ExportQueryParameters(
     organization: Option[UUID] = None,
     project: Option[UUID] = None,
     analysis: Option[UUID] = None,
-    exportStatus: Iterable[String] = Seq.empty[String]
+    exportStatus: Iterable[String] = Seq.empty[String],
+    layer: Option[UUID] = None
 )
 
 object ExportQueryParameters {
