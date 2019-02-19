@@ -162,20 +162,17 @@ export default (app) => {
                      red = 0, green = 1, blue = 2, floor = 25) {
             return this.$http({
                 method: 'GET',
-                url: `${BUILDCONFIG.API_HOST}/api/scenes/${sceneId}/thumbnail`,
+                url: `${this.tileServer}/scenes/${sceneId}/thumbnail`,
                 headers: {
                     'Authorization': 'Bearer ' + token,
                     'Content-Type': 'arraybuffer'
                 },
                 responseType: 'arraybuffer',
                 params: {
-                    red,
-                    green,
-                    blue,
-                    floor,
                     width,
                     height,
-                    token
+                    token,
+                    floor
                 }
             }).then(
                 (response) => {
