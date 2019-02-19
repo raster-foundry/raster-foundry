@@ -37,7 +37,6 @@ trait SceneRoutes
     extends Authentication
     with Config
     with SceneQueryParameterDirective
-    with ThumbnailQueryParameterDirective
     with PaginationDirectives
     with CommonHandlers
     with AWSBatch
@@ -101,9 +100,6 @@ trait SceneRoutes
           } ~
           pathPrefix("datasource") {
             pathEndOrSingleSlash { getSceneDatasource(sceneId) }
-          } ~
-          pathPrefix("thumbnail") {
-            pathEndOrSingleSlash { getSceneThumbnail(sceneId) }
           }
       }
   }
@@ -399,81 +395,5 @@ trait SceneRoutes
           complete { datasourceO }
       }
     }
-  }
-
-  // Safe to `bands.head`, since construction of a MultibandTile requires at least one band, so it's
-  // impossible to have an empty one
-  @SuppressWarnings(Array("TraversableHead"))
-  def getSceneThumbnail(sceneId: UUID): Route = authenticateWithParameter {
-    user =>
-      {
-        thumbnailQueryParameters { thumbnailParams =>
-          {
-            authorizeAsync {
-              SceneDao
-                .authQuery(user, ObjectType.Scene)
-                .filter(sceneId)
-                .exists
-                .transact(xa)
-                .unsafeToFuture
-            } {
-              complete {
-                SceneDao
-                  .unsafeGetSceneById(sceneId)
-                  .transact(xa)
-                  .unsafeToFuture >>= {
-                  case Scene(_,
-                             _,
-                             _,
-                             _,
-                             _,
-                             _,
-                             _,
-                             _,
-                             _,
-                             _,
-                             _,
-                             _,
-                             _,
-                             _,
-                             Some(ingestLocation),
-                             _,
-                             _,
-                             Some(SceneType.COG)) =>
-                    CogUtils
-                      .thumbnail(
-                        ingestLocation,
-                        thumbnailParams.width,
-                        thumbnailParams.height,
-                        thumbnailParams.red,
-                        thumbnailParams.green,
-                        thumbnailParams.blue,
-                        thumbnailParams.floor
-                      )
-                      .map(
-                        (tile: MultibandTile) => {
-                          tile match {
-                            case t if t.bands.length >= 3 =>
-                              HttpEntity(MediaTypes.`image/png`,
-                                         tile.renderPng.bytes)
-                            case t if t.bands.nonEmpty =>
-                              HttpEntity(MediaTypes.`image/png`,
-                                         tile.bands.head.renderPng.bytes)
-                            case t =>
-                              HttpEntity(
-                                MediaTypes.`image/png`,
-                                IntArrayTile.fill(0, 256, 256).renderPng.bytes)
-                          }
-                        }
-                      )
-                      .value
-                  case _ =>
-                    Future.successful(None)
-                }
-              }
-            }
-          }
-        }
-      }
   }
 }

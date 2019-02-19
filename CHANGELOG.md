@@ -23,6 +23,7 @@
 ### Fixed
 
 - Unified coloring for scene detail modal scene preview and map scene preview [\#4630](https://github.com/raster-foundry/raster-foundry/pull/4630)
+- Moved scene thumbnail endpoint to the tile server for consistent rendering with previews [\#4651](https://github.com/raster-foundry/raster-foundry/pull/4651)
 
 ## [1.18.0](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-11)
 
