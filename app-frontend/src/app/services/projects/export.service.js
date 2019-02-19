@@ -26,6 +26,9 @@ export default (app) => {
                     createExport: {
                         method: 'POST',
                         url: `${BUILDCONFIG.API_HOST}/api/exports/`
+                    },
+                    delete: {
+                        method: 'DELETE'
                     }
                 }
             );
@@ -42,7 +45,7 @@ export default (app) => {
                     .getFiles({ exportId: exportObject.id }).$promise
                     .then(files => {
                         resolve(files.map(f => {
-                            //eslint-disable-next-line
+                            // eslint-disable-next-line
                             return `${BUILDCONFIG.API_HOST}/api/exports/${exportObject.id}/files/${f}?token=${token}`;
                         }));
                     });
@@ -152,6 +155,14 @@ export default (app) => {
             }
 
             return targets;
+        }
+
+        deleteExport(id) {
+            return this.Export.delete({id}).$promise;
+        }
+
+        deleteExports(ids) {
+            return this.$q.all(ids.map(id => this.deleteExport(id)));
         }
     }
 
