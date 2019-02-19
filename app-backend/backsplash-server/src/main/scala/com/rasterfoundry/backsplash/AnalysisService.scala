@@ -9,7 +9,7 @@ import org.http4s._
 import org.http4s.dsl.io._
 
 class AnalysisService[Param, HistStore](
-    algebra: AnalysisAlgebra[Param, HistStore])(
+    analysisManager: AnalysisManager[Param, HistStore])(
     implicit H: HttpErrorHandler[IO, BacksplashException, User],
     ForeignError: HttpErrorHandler[IO, Throwable, User]) {
 
@@ -18,22 +18,27 @@ class AnalysisService[Param, HistStore](
       AuthedService {
         case GET -> Root / UUIDWrapper(analysisId) / "histogram"
               :? NodeQueryParamMatcher(node) as user =>
-          algebra.histogram(user, analysisId, node)
+          analysisManager.histogram(user, analysisId, node)
 
         case GET -> Root / UUIDWrapper(analysisId) / "statistics"
               :? NodeQueryParamMatcher(node) as user =>
-          algebra.statistics(user, analysisId, node)
+          analysisManager.statistics(user, analysisId, node)
 
         case GET -> Root / UUIDWrapper(analysisId) / IntVar(z) / IntVar(x) / IntVar(
               y)
               :? NodeQueryParamMatcher(node) as user =>
-          algebra.tile(user, analysisId, node, z, x, y)
+          analysisManager.tile(user, analysisId, node, z, x, y)
 
         case authedReq @ GET -> Root / UUIDWrapper(analysisId) / "raw"
               :? ExtentQueryParamMatcher(extent)
               :? ZoomQueryParamMatcher(zoom)
               :? NodeQueryParamMatcher(node) as user =>
-          algebra.export(authedReq, user, analysisId, node, extent, zoom)
+          analysisManager.export(authedReq,
+                                 user,
+                                 analysisId,
+                                 node,
+                                 extent,
+                                 zoom)
       }
     }
   }

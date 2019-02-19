@@ -27,7 +27,7 @@ import java.util.UUID
 class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
     layers: LayerStore,
     mosaicImplicits: MosaicImplicits[HistStore],
-    analysisAlgebra: AnalysisAlgebra[ToolStore, HistStore],
+    analysisManager: AnalysisManager[ToolStore, HistStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO],
                         H: HttpErrorHandler[IO, BacksplashException, User],
                         ForeignError: HttpErrorHandler[IO, Throwable, User]) {
@@ -173,7 +173,7 @@ class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
                 :? NodeQueryParamMatcher(node) as user =>
             for {
               authFiber <- authorizers.authProject(user, projectId).start
-              respFiber <- analysisAlgebra
+              respFiber <- analysisManager
                 .tile(user, analysisId, node, z, x, y)
                 .start
               _ <- authFiber.join.handleErrorWith { error =>
@@ -186,7 +186,7 @@ class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
                 analysisId) / "histogram" :? NodeQueryParamMatcher(node) as user =>
             for {
               authFiber <- authorizers.authProject(user, projectId).start
-              respFiber <- analysisAlgebra
+              respFiber <- analysisManager
                 .histogram(user, analysisId, node)
                 .start
               _ <- authFiber.join.handleErrorWith { error =>
@@ -199,7 +199,7 @@ class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
                 analysisId) / "statistics" :? NodeQueryParamMatcher(node) as user =>
             for {
               authFiber <- authorizers.authProject(user, projectId).start
-              respFiber <- analysisAlgebra
+              respFiber <- analysisManager
                 .statistics(user, analysisId, node)
                 .start
               _ <- authFiber.join.handleErrorWith { error =>
@@ -217,7 +217,7 @@ class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
               authFiber <- authorizers
                 .authProjectAnalysis(user, projectId, analysisId)
                 .start
-              respFiber <- analysisAlgebra
+              respFiber <- analysisManager
                 .export(authedReq, user, analysisId, node, extent, zoom)
                 .start
               _ <- authFiber.join.handleErrorWith { error =>

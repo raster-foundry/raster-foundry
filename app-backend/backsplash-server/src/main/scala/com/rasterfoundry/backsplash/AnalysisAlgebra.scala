@@ -23,7 +23,7 @@ import org.http4s.util.CaseInsensitiveString
 import java.util.UUID
 
 @SuppressWarnings(Array("TraversableHead"))
-class AnalysisAlgebra[Param: ToolStore, HistStore](
+class AnalysisManager[Param: ToolStore, HistStore](
     analyses: Param,
     mosaicImplicits: MosaicImplicits[HistStore],
     toolstoreImplicits: ToolStoreImplicits[HistStore],
