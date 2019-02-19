@@ -13,7 +13,7 @@ import cats.effect._
 import cats.implicits._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
-import geotrellis.raster.{CellSize, Tile}
+import geotrellis.raster.CellSize
 import geotrellis.vector._
 import geotrellis.server._
 import org.http4s._
@@ -72,22 +72,15 @@ class SceneService[ProjStore: ProjectStore, HistStore](
             for {
               authFiber <- authorizers.authScene(user, sceneId).start
               bandsFiber <- getDefaultSceneBands(sceneId)
-              footprintFiber <- getSceneFootprint(sceneId)
               _ <- authFiber.join.handleErrorWith { error =>
-                bandsFiber.cancel *> footprintFiber.cancel *> IO.raiseError(
-                  error)
+                bandsFiber.cancel *> IO.raiseError(error)
               }
-              footprint <- footprintFiber.join
               bands <- bandsFiber.join
               eval = LayerTms.identity(
                 scenes.read(sceneId, Some(bbox), Some(bands), None))
               resp <- eval(z, x, y) flatMap {
                 case Valid(tile) =>
-                  Ok(tile
-                       .mapBands((_: Int, t: Tile) => t.rescale(0, 255))
-                       .renderPng
-                       .bytes,
-                     pngType)
+                  Ok(tile.renderPng.bytes, pngType)
                 case Invalid(e) =>
                   BadRequest(s"Could not produce tile: $e")
               }
@@ -106,7 +99,9 @@ class SceneService[ProjStore: ProjectStore, HistStore](
               footprint <- footprintFiber.join
               bands <- bandsFiber.join
               eval = LayerExtent.identity(
-                scenes.read(sceneId, None, Some(bands), None))
+                scenes.read(sceneId, None, Some(bands), None))(
+                paintedMosaicExtentReification,
+                cs)
               extent = footprint map { _.envelope } getOrElse {
                 throw MetadataException(
                   s"Scene $sceneId does not have a footprint")
@@ -115,11 +110,7 @@ class SceneService[ProjStore: ProjectStore, HistStore](
               ySize = extent.height / thumbnailSize.height
               resp <- eval(extent, CellSize(xSize, ySize)) flatMap {
                 case Valid(tile) =>
-                  Ok(tile
-                       .mapBands((_: Int, t: Tile) => t.rescale(0, 255))
-                       .renderPng
-                       .bytes,
-                     pngType)
+                  Ok(tile.renderPng.bytes, pngType)
                 case Invalid(e) =>
                   BadRequest(s"Could not produce tile: $e")
               }
