@@ -244,7 +244,7 @@ function projectStatesV2($stateProvider) {
         })
         .state('project.layer.exports', {
             title: 'Project Layer Exports',
-            url: '/exports?page&search',
+            url: '/exports?page',
             component: 'rfProjectLayerExportsPage'
         })
         .state('project.layer.export', {

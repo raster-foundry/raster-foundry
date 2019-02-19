@@ -148,7 +148,7 @@ export default (app) => {
                     },
                     listExports: {
                         method: 'GET',
-                        url: `${BUILDCONFIG.API_HOST}/api/exports?project=:project`,
+                        url: `${BUILDCONFIG.API_HOST}/api/exports?project=:project&layer=:layer`,
                         params: {
                             project: '@project'
                         }
@@ -225,6 +225,15 @@ export default (app) => {
                         params: {
                             projectId: '@projectId',
                             layerId: '@layerId'
+                        }
+                    },
+                    actions: {
+                        method: 'GET',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/actions`,
+                        cache: false,
+                        isArray: true,
+                        params: {
+                            projectId: '@projectId'
                         }
                     }
                 }
@@ -697,6 +706,10 @@ export default (app) => {
                 maxZoom: 30
             });
             return mapLayer;
+        }
+
+        getAllowedActions(projectId) {
+            return this.Project.actions({projectId}).$promise;
         }
     }
 

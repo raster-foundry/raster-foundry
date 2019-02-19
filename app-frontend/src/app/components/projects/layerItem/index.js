@@ -29,7 +29,9 @@ const component = {
         onSelect: '&',
         visible: '<',
         onHide: '&',
-        isAnalysis: '<?'
+        isAnalysis: '<?',
+        isExport: '<?',
+        onDownloadExport: '&?'
     },
     templateUrl: tpl,
     controller: LayerItemController.name,
