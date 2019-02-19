@@ -9,6 +9,7 @@ import com.rasterfoundry.database.{
   ToolRunDao
 }
 
+import cats.Applicative
 import cats.effect._
 import doobie.Transactor
 import doobie.implicits._
@@ -60,6 +61,14 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
       ProjectLayerDao.layerIsInProject(layerID, projectID).transact(xa)
     }
 
+  private def checkProjectAnalysisCached(projectId: UUID,
+                                         analysisId: UUID): IO[Boolean] =
+    memoizeF[IO, Boolean](Some(10.seconds)) {
+      logger.debug(
+        s"Checking whether analysis $analysisId references project $projectId")
+      ToolRunDao.analysisReferencesProject(analysisId, projectId).transact(xa)
+    }
+
   def authToolRun(user: User, toolRunId: UUID): IO[Unit] = {
     checkToolRunAuth(user, toolRunId) map {
       case false =>
@@ -95,6 +104,20 @@ class Authorizers(xa: Transactor[IO]) extends LazyLogging {
       case false =>
         throw NotAuthorizedException(
           s"Layer ${layerID} is not in project ${projectID}"
+        )
+      case _ => ()
+    }
+  }
+
+  def authProjectAnalysis(user: User,
+                          projectId: UUID,
+                          analysisId: UUID): IO[Unit] = {
+    Applicative[IO].map2(
+      checkProjectAuthCached(user, projectId),
+      checkProjectAnalysisCached(projectId, analysisId))(_ && _) map {
+      case false =>
+        throw NotAuthorizedException(
+          s"Analysis $analysisId does not reference project $projectId"
         )
       case _ => ()
     }

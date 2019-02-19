@@ -203,4 +203,8 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
                                             page)
     }
   }
+
+  def analysisReferencesProject(analysisId: UUID,
+                                projectId: UUID): ConnectionIO[Boolean] =
+    query.filter(fr"project_id = $projectId").filter(analysisId).exists
 }

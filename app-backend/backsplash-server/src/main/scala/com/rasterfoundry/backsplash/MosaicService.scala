@@ -24,9 +24,10 @@ import geotrellis.vector.{Polygon, Projected}
 
 import java.util.UUID
 
-class MosaicService[LayerStore: ProjectStore, HistStore](
+class MosaicService[LayerStore: ProjectStore, HistStore, ToolStore](
     layers: LayerStore,
     mosaicImplicits: MosaicImplicits[HistStore],
+    analysisAlgebra: AnalysisAlgebra[ToolStore, HistStore],
     xa: Transactor[IO])(implicit cs: ContextShift[IO],
                         H: HttpErrorHandler[IO, BacksplashException, User],
                         ForeignError: HttpErrorHandler[IO, Throwable, User]) {
@@ -165,6 +166,64 @@ class MosaicService[LayerStore: ProjectStore, HistStore](
                   }
                 case Invalid(e) => BadRequest(s"Could not produce extent: $e")
               }
+            } yield resp
+
+          case GET -> Root / UUIDWrapper(projectId) / "analyses" / UUIDWrapper(
+                analysisId) / IntVar(z) / IntVar(x) / IntVar(y)
+                :? NodeQueryParamMatcher(node) as user =>
+            for {
+              authFiber <- authorizers.authProject(user, projectId).start
+              respFiber <- analysisAlgebra
+                .tile(user, analysisId, node, z, x, y)
+                .start
+              _ <- authFiber.join.handleErrorWith { error =>
+                respFiber.cancel *> IO.raiseError(error)
+              }
+              resp <- respFiber.join
+            } yield resp
+
+          case GET -> Root / UUIDWrapper(projectId) / "analyses" / UUIDWrapper(
+                analysisId) / "histogram" :? NodeQueryParamMatcher(node) as user =>
+            for {
+              authFiber <- authorizers.authProject(user, projectId).start
+              respFiber <- analysisAlgebra
+                .histogram(user, analysisId, node)
+                .start
+              _ <- authFiber.join.handleErrorWith { error =>
+                respFiber.cancel *> IO.raiseError(error)
+              }
+              resp <- respFiber.join
+            } yield resp
+
+          case GET -> Root / UUIDWrapper(projectId) / "analyses" / UUIDWrapper(
+                analysisId) / "statistics" :? NodeQueryParamMatcher(node) as user =>
+            for {
+              authFiber <- authorizers.authProject(user, projectId).start
+              respFiber <- analysisAlgebra
+                .statistics(user, analysisId, node)
+                .start
+              _ <- authFiber.join.handleErrorWith { error =>
+                respFiber.cancel *> IO.raiseError(error)
+              }
+              resp <- respFiber.join
+            } yield resp
+
+          case authedReq @ GET -> Root / UUIDWrapper(projectId) / "analyses" / UUIDWrapper(
+                analysisId) / "raw"
+                :? ExtentQueryParamMatcher(extent)
+                :? ZoomQueryParamMatcher(zoom)
+                :? NodeQueryParamMatcher(node) as user =>
+            for {
+              authFiber <- authorizers
+                .authProjectAnalysis(user, projectId, analysisId)
+                .start
+              respFiber <- analysisAlgebra
+                .export(authedReq, user, analysisId, node, extent, zoom)
+                .start
+              _ <- authFiber.join.handleErrorWith { error =>
+                respFiber.cancel *> IO.raiseError(error)
+              }
+              resp <- respFiber.join
             } yield resp
         }
       }
