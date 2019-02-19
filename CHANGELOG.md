@@ -5,6 +5,7 @@
 - Added backend support for rendering tiles and fetching histograms for analyses with project layers at their leaves [\#4603](https://github.com/raster-foundry/raster-foundry/pull/4603)
 - Added scene counts to project layer items [\#4625](https://github.com/raster-foundry/raster-foundry/pull/4625)
 - Added project analyses list view [\#4585](https://github.com/raster-foundry/raster-foundry/pull/4585)
+- Added project analyses create view [\#4659](https://github.com/raster-foundry/raster-foundry/pull/4659)
 - Added backend support for project layer async exports [\#4619](https://github.com/raster-foundry/raster-foundry/pull/4619)
 - Added front-end support for importing to project layers [\#4646](https://github.com/raster-foundry/raster-foundry/pull/4646)
 - Added project layer export list UI [\#4663](https://github.com/raster-foundry/raster-foundry/pull/4663)
