@@ -20,8 +20,8 @@ then
         usage
     elif [ "${1:-}" = "sbt" ]
     then
-        docker-compose -f "${DIR}/../docker-compose.java.yml" \
-                       run sbt
+        docker-compose \
+            run --rm --no-deps sbt
     else
         docker-compose run --rm --service-ports --entrypoint \
                        "/bin/bash -c" "$1" "${@:2}"
