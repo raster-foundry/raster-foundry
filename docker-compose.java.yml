@@ -15,7 +15,7 @@ services:
       start_period: 10s
 
   sbt:
-    image: daunnc/openjdk-gdal:2.3.2
+    image: quay.io/azavea/openjdk-gdal:2.3.2-jdk8-slim
     build:
       context: app-backend
     links:
@@ -106,10 +106,7 @@ services:
       - "api-assembly.jar"
 
   backsplash:
-    image: daunnc/openjdk-gdal:2.3.2
-    build:
-      context: app-backend
-      dockerfile: Dockerfile.backsplash
+    image: quay.io/azavea/openjdk-gdal:2.3.2-jdk8-slim
     depends_on:
       postgres:
         condition: service_healthy
