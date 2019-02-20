@@ -3,7 +3,10 @@ package com.rasterfoundry.batch.notification
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
-import com.rasterfoundry.common.notification.Email.{EmailConfig, NotificationEmail}
+import com.rasterfoundry.common.notification.Email.{
+  EmailConfig,
+  NotificationEmail
+}
 import com.rasterfoundry.database.filter.Filterables._
 import com.rasterfoundry.database.util.RFTransactor
 import com.rasterfoundry.database.{PlatformDao, ProjectDao, SceneDao}
@@ -176,17 +179,15 @@ final case class NotifyIngestStatus(sceneId: UUID)(
               val (ingestEmailSubject, htmlBody, plainBody) =
                 createIngestEmailContentForConsumers(pU, scene, ingestStatus)
               email
-                .setEmail(EmailConfig(host,
-                          port,
-                          encryption,
-                          platSmtpUserName,
-                          pw),
-                          userEmail,
-                          ingestEmailSubject,
-                          htmlBody,
-                          plainBody,
-                          pU.pubSettings.emailFrom,
-                          pU.pubSettings.emailFromDisplayName)
+                .setEmail(
+                  EmailConfig(host, port, encryption, platSmtpUserName, pw),
+                  userEmail,
+                  ingestEmailSubject,
+                  htmlBody,
+                  plainBody,
+                  pU.pubSettings.emailFrom,
+                  pU.pubSettings.emailFromDisplayName
+                )
                 .map((configuredEmail: Email) => configuredEmail.send)
               logger.info(s"Notified project owner ${pU.uId}.")
             case _ =>
@@ -232,17 +233,15 @@ final case class NotifyIngestStatus(sceneId: UUID)(
             val (ingestEmailSubject, htmlBody, plainBody) =
               createIngestEmailContentForOwner(pO, scene, ingestStatus)
             email
-              .setEmail(EmailConfig(host,
-                        port,
-                        encryption,
-                        platSmtpUserName,
-                        pw),
-                        userEmail,
-                        ingestEmailSubject,
-                        htmlBody,
-                        plainBody,
-                        pO.pubSettings.emailFrom,
-                        pO.pubSettings.emailFromDisplayName)
+              .setEmail(
+                EmailConfig(host, port, encryption, platSmtpUserName, pw),
+                userEmail,
+                ingestEmailSubject,
+                htmlBody,
+                plainBody,
+                pO.pubSettings.emailFrom,
+                pO.pubSettings.emailFromDisplayName
+              )
               .map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified scene owner ${pO.uId}.")
           case _ =>

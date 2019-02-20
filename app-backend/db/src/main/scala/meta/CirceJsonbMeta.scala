@@ -20,6 +20,9 @@ object CirceJsonbMeta {
 }
 
 trait CirceJsonbMeta {
+  implicit val compositeMeta: Meta[Map[String, ColorComposite]] =
+    CirceJsonbMeta[Map[String, ColorComposite]]
+
   implicit val credentialMeta: Meta[Credential] =
     CirceJsonbMeta[Credential]
 

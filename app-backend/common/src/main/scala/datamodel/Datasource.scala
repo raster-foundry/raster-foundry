@@ -1,10 +1,12 @@
 package com.rasterfoundry.common.datamodel
 
-import java.sql.Timestamp
-import java.util.UUID
-
+import cats.Applicative
+import cats.implicits._
 import io.circe._
 import io.circe.generic.JsonCodec
+
+import java.sql.Timestamp
+import java.util.UUID
 
 @JsonCodec
 final case class Datasource(id: UUID,
@@ -15,11 +17,32 @@ final case class Datasource(id: UUID,
                             owner: String,
                             name: String,
                             visibility: Visibility,
-                            composites: Json,
+                            composites: Map[String, ColorComposite],
                             extras: Json,
                             bands: Json,
                             licenseName: Option[String]) {
   def toThin: Datasource.Thin = Datasource.Thin(this.bands, this.name, this.id)
+
+  def colorCompositeFromBands: Option[ColorComposite] = {
+    val bandCreates = this.bands.as[List[Band.Create]].toOption
+    val redBand = bandCreates flatMap { _.find(_.name.toLowerCase == "red") }
+    val greenBand = bandCreates flatMap {
+      _.find(_.name.toLowerCase == "green")
+    }
+    val blueBand = bandCreates flatMap { _.find(_.name.toLowerCase == "blue") }
+    Applicative[Option].map3(redBand, greenBand, blueBand)(
+      (r: Band.Create, g: Band.Create, b: Band.Create) =>
+        ColorComposite("derived", BandOverride(r.number, g.number, b.number)))
+  }
+
+  def defaultColorComposite: Option[ColorComposite] =
+    this.composites
+      .filter(_._1.toLowerCase.contains("natural"))
+      .values
+      .headOption orElse this.composites
+      .filter(_._1.toLowerCase.contains("default"))
+      .values
+      .headOption orElse this.colorCompositeFromBands orElse this.composites.values.headOption
 }
 
 object Datasource {
@@ -35,7 +58,7 @@ object Datasource {
   final case class Create(name: String,
                           visibility: Visibility,
                           owner: Option[String],
-                          composites: Json,
+                          composites: Map[String, ColorComposite],
                           extras: Json,
                           bands: Json,
                           licenseName: Option[String])

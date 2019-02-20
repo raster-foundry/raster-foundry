@@ -3,9 +3,14 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.{SceneDao, SceneToLayerDao, SceneToProjectDao}
+import com.rasterfoundry.database.{
+  DatasourceDao,
+  SceneDao,
+  SceneToLayerDao,
+  SceneToProjectDao
+}
 import com.rasterfoundry.database.Implicits._
-import com.rasterfoundry.common.datamodel.MosaicDefinition
+import com.rasterfoundry.common.datamodel.{BandOverride, MosaicDefinition}
 import com.rasterfoundry.common.datamodel.color.{
   BandGamma => RFBandGamma,
   PerBandClipping => RFPerBandClipping,
@@ -13,11 +18,7 @@ import com.rasterfoundry.common.datamodel.color.{
   SigmoidalContrast => RFSigmoidalContrast,
   Saturation => RFSaturation
 }
-import com.rasterfoundry.backsplash.{
-  ProjectStore,
-  BandOverride,
-  BacksplashImage
-}
+import com.rasterfoundry.backsplash.{ProjectStore, BacksplashImage}
 import com.rasterfoundry.backsplash.color.{
   ColorCorrect => BSColorCorrect,
   SingleBandOptions => BSSingleBandOptions,
@@ -27,13 +28,16 @@ import com.rasterfoundry.backsplash.color.{
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.IO
 import cats.implicits._
+import com.typesafe.scalalogging.LazyLogging
 import doobie._
 import doobie.implicits._
 import geotrellis.vector.{Polygon, Projected}
 
 import java.util.UUID
 
-class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
+class ProjectStoreImplicits(xa: Transactor[IO])
+    extends ToProjectStoreOps
+    with LazyLogging {
 
   @SuppressWarnings(Array("OptionGet"))
   private def mosaicDefinitionToImage(mosaicDefinition: MosaicDefinition,
@@ -63,7 +67,7 @@ class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
       }
     } else {
       bandOverride map { ovr =>
-        List(ovr.red, ovr.green, ovr.blue)
+        List(ovr.redBand, ovr.greenBand, ovr.blueBand)
       } getOrElse {
         List(
           mosaicDefinition.colorCorrections.redBand,
@@ -121,7 +125,14 @@ class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
         window: Option[Projected[Polygon]],
         bandOverride: Option[BandOverride],
         imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage] = {
-      SceneDao.streamSceneById(projId, window).transact(xa) map { scene =>
+      for {
+        scene <- SceneDao.streamSceneById(projId, window).transact(xa)
+        compositeO <- fs2.Stream.eval {
+          DatasourceDao.unsafeGetDatasourceById(scene.datasource).transact(xa)
+        } map {
+          _.defaultColorComposite
+        }
+      } yield {
         // We don't actually have a project, so just make something up
         val randomProjectId = UUID.randomUUID
         val ingestLocation = scene.ingestLocation getOrElse {
@@ -134,9 +145,10 @@ class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
           )
         }
         val imageBandOverride = bandOverride map { ovr =>
-          List(ovr.red, ovr.green, ovr.blue)
+          List(ovr.redBand, ovr.greenBand, ovr.blueBand)
         } getOrElse { List(0, 1, 2) }
         val colorCorrectParams = BSColorCorrect.paramsFromBandSpecOnly(0, 1, 2)
+        logger.debug(s"Chosen color correction: ${colorCorrectParams}")
         BacksplashImage(
           scene.id,
           randomProjectId,
@@ -161,9 +173,9 @@ class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
         SceneToProjectDao.getMosaicDefinition(
           projId,
           window,
-          bandOverride map { _.red },
-          bandOverride map { _.green },
-          bandOverride map { _.blue },
+          bandOverride map { _.redBand },
+          bandOverride map { _.greenBand },
+          bandOverride map { _.blueBand },
           imageSubset map { _.toList } getOrElse List.empty) map {
           mosaicDefinitionToImage(_, bandOverride, projId)
         } transact (xa)
@@ -183,9 +195,9 @@ class ProjectStoreImplicits(xa: Transactor[IO]) extends ToProjectStoreOps {
         SceneToLayerDao.getMosaicDefinition(
           projId,
           window,
-          bandOverride map { _.red },
-          bandOverride map { _.green },
-          bandOverride map { _.blue },
+          bandOverride map { _.redBand },
+          bandOverride map { _.greenBand },
+          bandOverride map { _.blueBand },
           imageSubset map { _.toList } getOrElse List.empty) map {
           mosaicDefinitionToImage(_, bandOverride, projId)
         } transact (xa)

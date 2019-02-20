@@ -3,7 +3,10 @@ package com.rasterfoundry.batch.export
 import com.rasterfoundry.batch.Job
 import com.rasterfoundry.batch.util.conf.Config
 import com.rasterfoundry.common.RollbarNotifier
-import com.rasterfoundry.common.notification.Email.{EmailConfig, NotificationEmail}
+import com.rasterfoundry.common.notification.Email.{
+  EmailConfig,
+  NotificationEmail
+}
 import com.rasterfoundry.database._
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.util.RFTransactor
@@ -171,17 +174,14 @@ final case class UpdateExportStatus(
             val (subject, html, plain) =
               exportEmailContent(status, user, platform, name, id, exportType)
             email
-              .setEmail(EmailConfig(host,
-                        port,
-                        encryption,
-                        platSmtpUserName,
-                        pw),
-                        userEmail,
-                        subject,
-                        html,
-                        plain,
-                        pub.emailFrom,
-                        pub.emailFromDisplayName)
+              .setEmail(
+                EmailConfig(host, port, encryption, platSmtpUserName, pw),
+                userEmail,
+                subject,
+                html,
+                plain,
+                pub.emailFrom,
+                pub.emailFromDisplayName)
               .map((configuredEmail: Email) => configuredEmail.send)
             logger.info(s"Notified owner ${user.id} about export ${exportId}.")
           case _ =>
