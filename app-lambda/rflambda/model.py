@@ -28,6 +28,8 @@ def handler(event: eventType, context: Dict[str, Any]):
     scene_to_post = create_l8.create_scene(event) if isinstance(
         event, NewLandsat8Event) else create_s2.create_scene(event)
     logger.info('Sending scene to the Raster Foundry API at %s', api_host)
-    result = rf_api.client.Imagery.post_scenes(scene=scene_to_post).result()
+    result = rf_api.client.Imagery.post_scenes(
+        scene=scene_to_post,
+        _request_options={'headers': {'User-Agent': 'RFLambda'}}).result()
     logger.info('Scene %s created successfully', event.scene_name)
     return f'Success - {event.scene_name} Created'
