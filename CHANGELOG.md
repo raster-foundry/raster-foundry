@@ -22,8 +22,11 @@
 
 - Removed layer re-ordering, layer sorting, layer type selection from UI [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
 
+## [1.18.1](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-20)
+
 ### Fixed
 
+- Fixed an export bug that caused export failures when using more than one band from the same project [\#4636](https://github.com/raster-foundry/raster-foundry/pull/4636)
 - Unified coloring for scene detail modal scene preview and map scene preview [\#4630](https://github.com/raster-foundry/raster-foundry/pull/4630)
 - Moved scene thumbnail endpoint to the tile server for consistent rendering with previews [\#4651](https://github.com/raster-foundry/raster-foundry/pull/4651)
 
