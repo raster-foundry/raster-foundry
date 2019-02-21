@@ -50,7 +50,7 @@ trait ProjectAuthorizationDirectives extends Authentication with Directives {
                             projectId: UUID): Directive0 = {
     authorizeAsync {
       tokenO map { token =>
-        verifyJWT(token) traverse {
+        verifyJWT(token.split(" ").last) traverse {
           case (_, jwtClaims) =>
             val userId = jwtClaims.getStringClaim("sub")
             for {
