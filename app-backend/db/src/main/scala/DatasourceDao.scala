@@ -19,7 +19,7 @@ object DatasourceDao
 
   val selectF: Fragment = sql"""
       SELECT
-        distinct(id), created_at, created_by, modified_at, modified_by, owner,
+        id, created_at, created_by, modified_at, modified_by, owner,
         name, visibility, composites, extras, bands, license_name
       FROM
     """ ++ tableF

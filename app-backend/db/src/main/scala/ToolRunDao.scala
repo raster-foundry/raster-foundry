@@ -33,7 +33,7 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
 
   val selectF = sql"""
     SELECT
-      distinct(id), name, created_at, created_by, modified_at, modified_by, owner, visibility,
+      id, name, created_at, created_by, modified_at, modified_by, owner, visibility,
       project_id, project_layer_id, template_id, execution_parameters
     FROM
   """ ++ tableF
@@ -179,7 +179,7 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
                       Some("tr"))
       }
     )
-    val countF: Fragment = fr"SELECT count(distinct(tr.id))" ++ fromF
+    val countF: Fragment = fr"SELECT count(tr.id)" ++ fromF
 
     for {
       page <- (selectF ++ fromF ++ Fragments.whereAndOpt(filters: _*) ++ Page(

@@ -57,10 +57,17 @@ class SceneWithRelatedDaoSpec
               listedScenes <- SceneWithRelatedDao.listAuthorizedScenes(
                 pageRequest,
                 CombinedSceneQueryParams(),
+                dbUser1
+              )
+              listedScenesWithDS <- SceneWithRelatedDao.listAuthorizedScenes(
+                pageRequest,
+                CombinedSceneQueryParams(
+                  sceneParams =
+                    SceneQueryParameters(datasource = Seq(datasource1.id))),
                 dbUser1)
-            } yield { (dbScenes1, listedScenes) }
+            } yield { (dbScenes1, listedScenes, listedScenesWithDS) }
 
-            val (insertedScenes, listedScenes) =
+            val (insertedScenes, listedScenes, listedWithDS) =
               xa.use(t => scenesIO.transact(t)).unsafeRunSync
             val insertedNamesSet = insertedScenes.toSet map {
               (scene: Scene.WithRelated) =>
@@ -73,6 +80,14 @@ class SceneWithRelatedDaoSpec
             assert(
               listedNamesSet.intersect(insertedNamesSet) == listedNamesSet,
               "listed scenes should be a strict subset of inserted scenes by user 1")
+            assert(
+              scenes1.length == listedWithDS.count,
+              "Listing with datasource should count the same number of scenes we started with"
+            )
+            assert(
+              listedWithDS.results.length == listedWithDS.count,
+              "Listing with datasource should return from the db the same number of scenes we started with"
+            )
             true
           }
       }

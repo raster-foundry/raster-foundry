@@ -158,7 +158,7 @@ object Dao extends LazyLogging {
       tableF: Fragment,
       filters: List[Option[Fragment]]) {
 
-    val countF: Fragment = fr"SELECT count(distinct(id)) FROM" ++ tableF
+    val countF: Fragment = fr"SELECT count(id) FROM" ++ tableF
     val deleteF: Fragment = fr"DELETE FROM" ++ tableF
     val existF: Fragment = fr"SELECT 1 FROM" ++ tableF
 
@@ -256,9 +256,7 @@ object Dao extends LazyLogging {
           .unique
       over100IO.flatMap(over100 => {
         (exactCountOption, over100) match {
-          case (Some(true), _) =>
-            countQuery.query[Int].unique
-          case (_, false) =>
+          case (Some(true), _) | (_, false) =>
             countQuery.query[Int].unique
           case _ =>
             100.pure[ConnectionIO]

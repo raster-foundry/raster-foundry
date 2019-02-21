@@ -23,7 +23,7 @@ object ShapeDao extends Dao[Shape] with ObjectPermissions[Shape] {
 
   val selectF = sql"""
     SELECT
-      distinct(id), created_at, created_by, modified_at, modified_by, owner,
+      id, created_at, created_by, modified_at, modified_by, owner,
       name, description, geometry
     FROM
   """ ++ tableF
