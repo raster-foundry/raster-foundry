@@ -5,6 +5,9 @@
 
 from setuptools import setup, find_packages
 
+import rflambda
+
+
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
@@ -35,12 +38,12 @@ setup(
     long_description=readme,
     include_package_data=True,
     keywords='raster earth-observation geospatial geospatial-processing',
-    name='app-lambda',
-    packages=find_packages(include=['app_lambda']),
+    name='rflambda',
+    packages=find_packages(include=['rflambda']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/jisantuc/app_lambda',
-    version='0.1.0',
+    url='https://github.com/raster-foundry/raster-foundry',
+    version=rflambda.__version__,
     zip_safe=False,
 )

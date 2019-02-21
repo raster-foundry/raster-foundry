@@ -4,6 +4,7 @@ from typing import Any, Dict, Union
 
 from rasterfoundry.api import API  # type: ignore
 
+from rflambda.version import __version__
 from rflambda.landsat8.new_landsat8_event import NewLandsat8Event
 from rflambda.sentinel2.new_sentinel2_event import NewSentinel2Event
 import rflambda.landsat8.create_scene as create_l8
@@ -28,8 +29,13 @@ def handler(event: eventType, context: Dict[str, Any]):
     scene_to_post = create_l8.create_scene(event) if isinstance(
         event, NewLandsat8Event) else create_s2.create_scene(event)
     logger.info('Sending scene to the Raster Foundry API at %s', api_host)
+    request_options = {
+        'headers': {
+            'User-Agent': 'RFLambda {version}'.format(version=__version__)
+        }
+    }
     result = rf_api.client.Imagery.post_scenes(
         scene=scene_to_post,
-        _request_options={'headers': {'User-Agent': 'RFLambda'}}).result()
+        _request_options=request_options).result()
     logger.info('Scene %s created successfully', event.scene_name)
     return f'Success - {event.scene_name} Created'
