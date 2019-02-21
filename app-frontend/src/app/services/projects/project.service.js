@@ -235,7 +235,7 @@ export default (app) => {
                         url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers/:layerId`,
                         params: {
                             projectId: '@projectId',
-                            layerId: '@layerId'
+                            layerId: '@id'
                         }
                     },
                     deleteLayer: {
@@ -735,6 +735,10 @@ export default (app) => {
 
         deleteProjectLayer(projectId, layerId) {
             return this.Project.deleteLayer({projectId, layerId}).$promise;
+        }
+
+        updateProjectLayer(params) {
+            return this.Project.updateLayer(params).$promise;
         }
 
         mapLayerFromLayer(
