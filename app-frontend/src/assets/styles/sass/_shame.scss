@@ -3549,3 +3549,9 @@ rf-project-page {
 .export-date-subtext {
     font-size: 12px;
 }
+
+rf-aoi-draw-toolbar {
+  position: absolute;
+  width: 100vw;
+  z-index: 1200;
+}

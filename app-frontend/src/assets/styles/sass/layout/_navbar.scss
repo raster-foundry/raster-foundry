@@ -118,6 +118,11 @@
               color: $shade-dark;
               background: $off-white;
           }
+
+          &.aoi-draw-toolbar-menu {
+            padding: 0.5rem 1rem;
+            box-shadow: none;
+          }
       }
 
       a.active {
@@ -226,6 +231,17 @@
     flex: none;
     align-items: center;
     text-align: right;
+
+    &.aoi-draw-toolbar-right {
+      margin-left: auto;
+    }
+  }
+
+  &.aoi-draw-toolbar-left {
+    width: 40rem;
+    background: $off-white;
+    border-right: 1px solid $gray-lightest;
+    flex: none;
   }
 }
 
