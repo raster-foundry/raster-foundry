@@ -17,7 +17,6 @@ then
     else
         TILE_SERVER_LOCATION="http://localhost:8081" \
                             docker-compose \
-                            -f docker-compose.java.yml \
                             up nginx-backsplash backsplash api-server nginx-api
     fi
     exit
