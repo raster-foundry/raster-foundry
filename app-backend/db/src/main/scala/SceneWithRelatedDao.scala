@@ -5,7 +5,7 @@ import com.rasterfoundry.common.datamodel.{Scene, User, _}
 
 import cats.data._
 import cats.implicits._
-import com.lonelyplanet.akka.http.extensions.PageRequest
+import com.lonelyplanet.akka.http.extensions.{Order, PageRequest}
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -42,11 +42,11 @@ object SceneWithRelatedDao
           .filter(shapeO map { _.geometry })
           .filter(sceneParams)
       }
-      scenes <- sceneSearchBuilder.list(
-        pageRequest.offset * pageRequest.limit,
-        pageRequest.limit + 1,
-        fr"ORDER BY coalesce (acquisition_date, created_at) DESC, id DESC"
-      )
+      scenes <- sceneSearchBuilder.page(
+        pageRequest,
+        Map("acquisitionDatetime" -> Order.Desc) ++ pageRequest.sort,
+        false
+      ) map { _.results toList }
       sceneBrowses <- scenesToSceneBrowse(
         scenes,
         sceneParams.sceneParams.project,
@@ -57,7 +57,6 @@ object SceneWithRelatedDao
     } yield {
       val hasPrevious = pageRequest.offset > 0
       val hasNext = sceneBrowses.size > pageRequest.limit
-      //((pageRequest.offset + 1) * pageRequest.limit) < count
       PaginatedResponse[Scene.Browse](
         count,
         hasPrevious,

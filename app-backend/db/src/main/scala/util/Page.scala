@@ -74,7 +74,13 @@ object Page {
         case None => Fragment.empty
       }
 
-    orderBy ++ fr"LIMIT $limit OFFSET $offset"
+    println(s"Offset is: $offset")
+    println(s"Limit is: $limit")
+    println(s"Sort is: $orderBy")
+
+    Fragment.empty
+
+    // orderBy ++ fr"LIMIT $limit OFFSET $offset"
   }
 
   def apply(pageRequest: Option[PageRequest]): Fragment = pageRequest match {

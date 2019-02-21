@@ -71,12 +71,10 @@ class ProjectLayerDatasourceDaoSpec
               (datasource: Datasource.Thin) =>
                 datasource.id
             }
-            // println(insertedDatasources)
             val listedIds = listedDatasources.toSet map {
               (datasource: Datasource) =>
                 datasource.id
             }
-            // println(listedIds)
             insertedIds == listedIds
           }
       }

@@ -204,19 +204,21 @@ object Dao extends LazyLogging {
         .to[List]
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page[T: Read](
-        pageRequest: PageRequest,
-        selectF: Fragment,
-        countF: Fragment,
-        orderClause: Map[String, Order]): ConnectionIO[PaginatedResponse[T]] = {
+    def page[T: Read](pageRequest: PageRequest,
+                      selectF: Fragment,
+                      countF: Fragment,
+                      orderClause: Map[String, Order],
+                      doCount: Boolean): ConnectionIO[PaginatedResponse[T]] = {
       for {
         page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(
           pageRequest.copy(sort = orderClause ++ pageRequest.sort)))
           .query[T]
           .to[List]
-        count <- (countF ++ Fragments.whereAndOpt(filters: _*))
-          .query[Int]
-          .unique
+        count <- if (doCount) {
+          (countF ++ Fragments.whereAndOpt(filters: _*))
+            .query[Int]
+            .unique
+        } else { (-1).pure[ConnectionIO] }
       } yield {
         val hasPrevious = pageRequest.offset > 0
         val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
@@ -233,10 +235,15 @@ object Dao extends LazyLogging {
     /** Provide a list of responses within the PaginatedResponse wrapper */
     def page(pageRequest: PageRequest, orderClause: Map[String, Order])
       : ConnectionIO[PaginatedResponse[Model]] =
-      page(pageRequest, selectF, countF, orderClause)
+      page(pageRequest, selectF, countF, orderClause, true)
+
+    def page(pageRequest: PageRequest,
+             orderClause: Map[String, Order],
+             doCount: Boolean): ConnectionIO[PaginatedResponse[Model]] =
+      page(pageRequest, selectF, countF, orderClause, doCount)
 
     def page(pageRequest: PageRequest): ConnectionIO[PaginatedResponse[Model]] =
-      page(pageRequest, selectF, countF, Map.empty[String, Order])
+      page(pageRequest, selectF, countF, Map.empty[String, Order], true)
 
     def listQ(pageRequest: PageRequest): Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(Some(pageRequest)))

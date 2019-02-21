@@ -322,7 +322,7 @@ object UserGroupRoleDao extends Dao[UserGroupRole] {
           .page[User.WithGroupRole](page, sf, cf, orderClauseO match {
             case Some(orderClause) => orderClause
             case None              => Map.empty[String, Order]
-          })
+          }, true)
       }
     } yield { result }
   }
