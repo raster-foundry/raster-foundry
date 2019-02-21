@@ -12,10 +12,12 @@ import {propertiesToAnnotationFeature, wrapFeatureCollection} from '_redux/annot
 const RED = '#E57373';
 const BLUE = '#3388FF';
 
+const mapLayerName = 'Project Layer';
+
 class LayerAnnotationsController {
     constructor( // eslint-disable-line max-params
         $log, $state, $rootScope, $scope, $anchorScroll, $timeout, $element, $window, $ngRedux,
-        mapService, hotkeys, localStorage
+        mapService, hotkeys, localStorage, projectService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -77,8 +79,8 @@ class LayerAnnotationsController {
         this.bindHotkeys();
 
         this.resetAnnotations();
-        this.setProjectId(this.$state.params.projectId);
-        this.setLayerId(this.$state.params.layerId);
+        this.setProjectId(this.project.id);
+        this.setLayerId(this.layer.id);
 
         this.$element.on('click', () => {
             this.deleteClickedHighlight();
@@ -106,6 +108,7 @@ class LayerAnnotationsController {
             }
         });
         this.getMap().then(this.setProjectMap);
+        this.setMapLayers();
     }
 
     $onDestroy() {
@@ -119,10 +122,24 @@ class LayerAnnotationsController {
         });
         this.setProjectId(null);
         this.setLayerId(null);
+        this.removeMapLayers();
     }
 
     getMap() {
         return this.mapService.getMap('project');
+    }
+
+    setMapLayers() {
+        let mapLayer = this.projectService.mapLayerFromLayer(this.project, this.layer);
+        return this.getMap().then(map => {
+            map.setLayer(mapLayerName, mapLayer, true);
+        });
+    }
+
+    removeMapLayers() {
+        return this.getMap().then(map => {
+            map.deleteLayers(mapLayerName);
+        });
     }
 
     retryFetches() {
@@ -538,13 +555,15 @@ class LayerAnnotationsController {
 
 const component = {
     bindings: {
+        project: '<',
+        layer: '<'
     },
     templateUrl: tpl,
     controller: LayerAnnotationsController.name
 };
 
 export default angular
-    .module('components.pages.project.layer.annotations', [])
+    .module('components.pages.project.layer.annotations', ['cfp.hotkeys'])
     .controller(LayerAnnotationsController.name, LayerAnnotationsController)
     .component('rfProjectLayerAnnotationsPage', component)
     .name;
