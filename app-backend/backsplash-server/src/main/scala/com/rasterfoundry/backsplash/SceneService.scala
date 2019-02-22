@@ -25,9 +25,7 @@ import java.util.UUID
 class SceneService[ProjStore: ProjectStore, HistStore](
     scenes: ProjStore,
     mosaicImplicits: MosaicImplicits[HistStore],
-    xa: Transactor[IO])(implicit cs: ContextShift[IO],
-                        H: HttpErrorHandler[IO, BacksplashException, User],
-                        ForeignError: HttpErrorHandler[IO, Throwable, User])
+    xa: Transactor[IO])(implicit cs: ContextShift[IO])
     extends ToProjectStoreOps {
 
   import mosaicImplicits._
@@ -63,59 +61,53 @@ class SceneService[ProjStore: ProjectStore, HistStore](
   val authorizers = new Authorizers(xa)
 
   val routes: AuthedService[User, IO] =
-    H.handle {
-      ForeignError.handle {
-        AuthedService {
-          case GET -> Root / UUIDWrapper(sceneId) / IntVar(z) / IntVar(x) / IntVar(
-                y) as user =>
-            val bbox = TileUtils.getTileBounds(z, x, y)
-            for {
-              authFiber <- authorizers.authScene(user, sceneId).start
-              bandsFiber <- getDefaultSceneBands(sceneId)
-              _ <- authFiber.join.handleErrorWith { error =>
-                bandsFiber.cancel *> IO.raiseError(error)
-              }
-              bands <- bandsFiber.join
-              eval = LayerTms.identity(
-                scenes.read(sceneId, Some(bbox), Some(bands), None))
-              resp <- eval(z, x, y) flatMap {
-                case Valid(tile) =>
-                  Ok(tile.renderPng.bytes, pngType)
-                case Invalid(e) =>
-                  BadRequest(s"Could not produce tile: $e")
-              }
-            } yield resp
+    AuthedService {
+      case GET -> Root / UUIDWrapper(sceneId) / IntVar(z) / IntVar(x) / IntVar(
+            y) as user =>
+        val bbox = TileUtils.getTileBounds(z, x, y)
+        for {
+          authFiber <- authorizers.authScene(user, sceneId).start
+          bandsFiber <- getDefaultSceneBands(sceneId)
+          _ <- authFiber.join.handleErrorWith { error =>
+            bandsFiber.cancel *> IO.raiseError(error)
+          }
+          bands <- bandsFiber.join
+          eval = LayerTms.identity(
+            scenes.read(sceneId, Some(bbox), Some(bands), None))
+          resp <- eval(z, x, y) flatMap {
+            case Valid(tile) =>
+              Ok(tile.renderPng.bytes, pngType)
+            case Invalid(e) =>
+              BadRequest(s"Could not produce tile: $e")
+          }
+        } yield resp
 
-          case GET -> Root / UUIDWrapper(sceneId) / "thumbnail"
-                :? ThumbnailQueryParamDecoder(thumbnailSize) as user =>
-            for {
-              authFiber <- authorizers.authScene(user, sceneId).start
-              bandsFiber <- getDefaultSceneBands(sceneId)
-              footprintFiber <- getSceneFootprint(sceneId)
-              _ <- authFiber.join.handleErrorWith { error =>
-                bandsFiber.cancel *> footprintFiber.cancel *> IO.raiseError(
-                  error)
-              }
-              footprint <- footprintFiber.join
-              bands <- bandsFiber.join
-              eval = LayerExtent.identity(
-                scenes.read(sceneId, None, Some(bands), None))(
-                paintedMosaicExtentReification,
-                cs)
-              extent = footprint map { _.envelope } getOrElse {
-                throw MetadataException(
-                  s"Scene $sceneId does not have a footprint")
-              }
-              xSize = extent.width / thumbnailSize.width
-              ySize = extent.height / thumbnailSize.height
-              resp <- eval(extent, CellSize(xSize, ySize)) flatMap {
-                case Valid(tile) =>
-                  Ok(tile.renderPng.bytes, pngType)
-                case Invalid(e) =>
-                  BadRequest(s"Could not produce tile: $e")
-              }
-            } yield resp
-        }
-      }
+      case GET -> Root / UUIDWrapper(sceneId) / "thumbnail"
+            :? ThumbnailQueryParamDecoder(thumbnailSize) as user =>
+        for {
+          authFiber <- authorizers.authScene(user, sceneId).start
+          bandsFiber <- getDefaultSceneBands(sceneId)
+          footprintFiber <- getSceneFootprint(sceneId)
+          _ <- authFiber.join.handleErrorWith { error =>
+            bandsFiber.cancel *> footprintFiber.cancel *> IO.raiseError(error)
+          }
+          footprint <- footprintFiber.join
+          bands <- bandsFiber.join
+          eval = LayerExtent.identity(
+            scenes.read(sceneId, None, Some(bands), None))(
+            paintedMosaicExtentReification,
+            cs)
+          extent = footprint map { _.envelope } getOrElse {
+            throw MetadataException(s"Scene $sceneId does not have a footprint")
+          }
+          xSize = extent.width / thumbnailSize.width
+          ySize = extent.height / thumbnailSize.height
+          resp <- eval(extent, CellSize(xSize, ySize)) flatMap {
+            case Valid(tile) =>
+              Ok(tile.renderPng.bytes, pngType)
+            case Invalid(e) =>
+              BadRequest(s"Could not produce tile: $e")
+          }
+        } yield resp
     }
 }

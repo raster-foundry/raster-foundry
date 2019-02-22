@@ -26,12 +26,16 @@ trait RollbarNotifier extends LazyLogging {
       .build())
 
   def sendError(e: Throwable): Unit = {
-    if (this.environment != "development")
+    if (this.environment != "development") {
       rollbarClient.error(e)
+    } else {
+      logger.error("What I would have sent to rollbar:", e)
+    }
   }
 
   def sendError(s: String): Unit = {
-    if (this.environment != "development")
+    if (this.environment != "development") {
       rollbarClient.error(s)
+    }
   }
 }
