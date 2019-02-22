@@ -18,6 +18,11 @@ import org.opengis.feature.simple.SimpleFeature
 import org.opengis.referencing.crs.CoordinateReferenceSystem
 
 @JsonCodec
+final case class AnnotationFeatureCollectionCreate(
+    features: Seq[Annotation.GeoJSONFeatureCreate]
+)
+
+@JsonCodec
 final case class Annotation(id: UUID,
                             projectId: UUID,
                             createdAt: Timestamp,

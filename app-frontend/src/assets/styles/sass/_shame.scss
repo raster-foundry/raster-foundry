@@ -3252,15 +3252,29 @@ rf-navbar-search {
 rf-project-layers-page,
 rf-project-analyses-page,
 rf-project-layer-page,
+rf-project-layer-exports-page,
+rf-project-layer-scenes-page,
 rf-project-layer-scenes-browse-page,
 rf-project-layer-exports-page,
-rf-project-create-analysis-page {
+rf-project-create-analysis-page,
+rf-project-layer-annotations-page {
   flex: 1;
   display: flex;
   flex-direction: column;
   background: $off-white;
   min-height: 0; // firefox flexbox compatability
   height: 100%;
+  ui-view {
+    flex: 1;
+    overflow: hidden;
+  }
+  rf-layer-item,
+  rf-project-scene-item {
+    display: block;
+    background: $white;
+    border: 1px solid $gray-lightest;
+    border-radius: 3px;
+    margin: 0.5em;
 }
 
 rf-layer-item,

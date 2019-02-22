@@ -217,15 +217,15 @@ class AnnotateController {
     updateLabelInputs(features) {
         return [{'name': 'All', 'id': 0}].concat(
             _.chain(features)
-            .map(f => {
-                return {
-                    'name': f.properties.label,
-                    'id': f.properties.label + (new Date().getTime()).toString()
-                };
-            })
-            .uniqBy('name')
-            .sortBy('id')
-            .value()
+                .map(f => {
+                    return {
+                        'name': f.properties.label,
+                        'id': f.properties.label + new Date().getTime().toString()
+                    };
+                })
+                .uniqBy('name')
+                .sortBy('id')
+                .value()
         );
     }
 
@@ -261,9 +261,9 @@ class AnnotateController {
     addEmptyAnnotation(shape) {
         let labelFromFilter = this.filterLabel.name === 'All' ? '' : this.filterLabel.name;
         const label = this.annotationTemplate ?
-              this.annotationTemplate.properties.label : labelFromFilter;
+            this.annotationTemplate.properties.label : labelFromFilter;
         const description = this.annotationTemplate ?
-              this.annotationTemplate.properties.description : '';
+            this.annotationTemplate.properties.description : '';
 
         let annotationCollection = wrapFeatureCollection(
             propertiesToAnnotationFeature({
@@ -351,7 +351,7 @@ class AnnotateController {
         if (
             target.feature.geometry.type === 'Polygon' ||
             target.feature.geometry.type === 'MultiPolygon'
-          ) {
+        ) {
             target.setStyle({'color': color});
         } else if (target.feature.geometry.type === 'Point') {
             target.setIcon(L.divIcon({'className': iconClass}));
@@ -518,7 +518,6 @@ class AnnotateController {
         bindings.forEach(binding => this.hotkeys.add(binding));
         this.hotkeys.bindTo(this.$scope);
     }
-
 }
 
 const AnnotateModule = angular.module('pages.projects.edit.annotate', ['cfp.hotkeys']);

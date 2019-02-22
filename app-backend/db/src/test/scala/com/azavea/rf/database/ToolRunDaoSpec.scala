@@ -381,7 +381,8 @@ class ToolRunDaoSpec
     }
   }
 
-  test("list analysis with related with projectId passed in should include info from project layer and template") {
+  test(
+    "list analysis with related with projectId passed in should include info from project layer and template") {
     check {
       forAll {
         (user: User.Create,
@@ -402,11 +403,21 @@ class ToolRunDaoSpec
                 templateId = Some(dbTemplate.id)
               )
               dbAnalysis <- ToolRunDao.insertToolRun(withRelated, dbUser)
-              projectLayer <- ProjectLayerDao.unsafeGetProjectLayerById(dbProject.defaultLayerId)
-              analysisWithRelated <- ToolRunDao.listAnalysesWithRelated(dbUser, page, dbProject.id)
-            } yield { (analysisWithRelated, projectLayer, dbTemplate, dbAnalysis) }
+              projectLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
+                dbProject.defaultLayerId)
+              analysisWithRelated <- ToolRunDao.listAnalysesWithRelated(
+                Some(dbUser),
+                page,
+                dbProject.id)
+            } yield {
+              (analysisWithRelated, projectLayer, dbTemplate, dbAnalysis)
+            }
 
-            val (analysisWithRelatedPaged, projectLayer, dbTemplate, dbAnalysis) = xa.use(t => listAnalysesWithRelatedIO.transact(t)).unsafeRunSync
+            val (analysisWithRelatedPaged,
+                 projectLayer,
+                 dbTemplate,
+                 dbAnalysis) =
+              xa.use(t => listAnalysesWithRelatedIO.transact(t)).unsafeRunSync
             val analysisWithRelated = ToolRunWithRelated(
               dbAnalysis.id,
               dbAnalysis.name,

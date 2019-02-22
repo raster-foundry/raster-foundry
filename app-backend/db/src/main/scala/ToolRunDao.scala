@@ -144,7 +144,12 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
         .pure[ConnectionIO]
     } yield result
 
-  def listAnalysesWithRelated(user: User,
+  /** List analyses with related information from project layers
+    *
+    * user is optional because it's possible to invoke this from map token or public
+    * authorization, in which case we don't have a user for ownership filtering
+    */
+  def listAnalysesWithRelated(user: Option[User],
                               pageRequest: PageRequest,
                               projectId: UUID,
                               ownershipTypeO: Option[String] = None,
@@ -164,13 +169,15 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
       """
     val filters: List[Option[Fragment]] = List(
       Some(fr"tr.project_id = ${projectId}"),
-      queryObjectsF(user,
-                    ObjectType.Analysis,
-                    ActionType.View,
-                    ownershipTypeO,
-                    groupTypeO,
-                    groupIdO,
-                    Some("tr"))
+      user flatMap {
+        queryObjectsF(_,
+                      ObjectType.Analysis,
+                      ActionType.View,
+                      ownershipTypeO,
+                      groupTypeO,
+                      groupIdO,
+                      Some("tr"))
+      }
     )
     val countF: Fragment = fr"SELECT count(distinct(tr.id))" ++ fromF
 
@@ -196,4 +203,8 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
                                             page)
     }
   }
+
+  def analysisReferencesProject(analysisId: UUID,
+                                projectId: UUID): ConnectionIO[Boolean] =
+    query.filter(fr"project_id = $projectId").filter(analysisId).exists
 }

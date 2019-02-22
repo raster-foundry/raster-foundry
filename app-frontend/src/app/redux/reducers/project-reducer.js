@@ -2,7 +2,7 @@
 import typeToReducer from 'type-to-reducer';
 
 import {
-    PROJECT_SET_MAP, PROJECT_SET_ID, PROJECT_EDIT_LAYER
+    PROJECT_SET_MAP, PROJECT_SET_ID, PROJECT_EDIT_LAYER, PROJECT_LAYER_SET_ID
 } from '_redux/actions/project-actions';
 const GREEN = '#81C784';
 
@@ -20,6 +20,12 @@ export const projectReducer = typeToReducer({
         return Object.assign({}, state, {
             projectId: action.payload
         });
+    },
+    [PROJECT_LAYER_SET_ID]: (state, action) => {
+        return {
+            ...state,
+            layerId: action.payload
+        };
     },
     [PROJECT_EDIT_LAYER]: {
         START: (state, action) => {
