@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import tpl from './index.html';
-import {Set} from 'immutable';
+import {Set, Map} from 'immutable';
 
 class ProjectLayersPageController {
     constructor(
@@ -12,7 +12,7 @@ class ProjectLayersPageController {
     }
 
     $onInit() {
-        this.selected = new Set();
+        this.selected = new Map();
         this.visible = new Set([this.project.defaultLayerId]);
         this.syncMapLayersToVisible();
         this.projectService.getProjectPermissions(this.project, this.user).then(
@@ -104,6 +104,11 @@ class ProjectLayersPageController {
             callback: () => this.setProjectDefaultLayer(layer),
             menu: true
         };
+        const createAnalysisAction = {
+            name: 'Create analysis',
+            callback: () => this.createAnalysis(layer),
+            menu: true
+        };
         const publishAction = {
             name: 'Publishing',
             callback: () => this.$state.go(
@@ -156,25 +161,25 @@ class ProjectLayersPageController {
         };
 
         const unimplementedActions = [publishAction, exportAction, settingsAction];
-        const layerActions = [editAction, importAction, browseAction];
-        if (!isDefaultLayer) {
-            layerActions.push(setDefaultAction);
-        }
+        const layerActions = [editAction, createAnalysisAction, importAction, browseAction];
 
-        return layerActions;
+        return [
+            ...layerActions,
+            ...!isDefaultLayer ? [setDefaultAction, deleteAction] : []
+        ];
     }
 
     allVisibleSelected() {
         let layerSet = new Set(this.itemList.map(l => l.id));
-        return this.selected.intersect(layerSet).size === layerSet.size;
+        return layerSet.intersect(this.selected.keySeq()).size === layerSet.size;
     }
 
     selectAll() {
         if (this.allVisibleSelected()) {
             this.selected = this.selected.clear();
         } else {
-            this.selected = this.selected.union(
-                this.itemList.map(i => i.id)
+            this.selected = this.selected.merge(
+                new Map(this.itemList.map(i => [i.id, i]))
             );
         }
         this.updateSelectText();
@@ -192,7 +197,8 @@ class ProjectLayersPageController {
         if (this.selected.has(id)) {
             this.selected = this.selected.delete(id);
         } else {
-            this.selected = this.selected.add(id);
+            const layer = this.itemList.find(l => l.id === id);
+            this.selected = this.selected.set(id, layer);
         }
     }
 
@@ -219,6 +225,14 @@ class ProjectLayersPageController {
         })).then(() => {
             this.$state.go('.', {}, {inherit: true, reload: true});
         });
+    }
+
+    createAnalysis(layer) {
+        let layers = this.selected.valueSeq().toArray();
+        if (layer) {
+            layers = [layer];
+        }
+        this.$state.go('project.create-analysis', {layers});
     }
 
     deleteProjectLayer(layer) {

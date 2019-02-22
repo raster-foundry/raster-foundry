@@ -188,3 +188,8 @@
 .no-padding {
   padding: 0 !important;
 }
+
+.fit-height {
+    max-height: 100%;
+    overflow: auto;
+}

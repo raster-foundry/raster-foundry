@@ -1,0 +1,29 @@
+<div class="list-group-item">
+  <div class="list-group-overflow">
+    <div class="list-group-left">
+      <div class="list-item-left-actions" ng-show="$ctrl.onSelect">
+        <label class="checkbox layer-checkbox list-item-{{$ctrl.id}}"
+               ng-class="{
+                      active: $ctrl.selected
+                      }"
+        >
+          <input type="checkbox"
+                 ng-checked="$ctrl.selected"
+                 ng-click="$ctrl.onSelect({id: $ctrl.id})"
+          />
+        </label>
+        <style ng-if="$ctrl.color">
+         label.checkbox.list-item-{{$ctrl.id}}::after {
+             border: 2px solid {{$ctrl.color}};
+         }
+        </style>
+      </div>
+      <div><strong>{{$ctrl.title}}</strong></div>
+      <div ng-show="$ctrl.subtitle"><span>{{$ctrl.subtitle}}</span></div>
+      <div>{{$ctrl.date | date}}</div>
+    </div>
+  </div>
+  <div class="list-group-right">
+    <ng-transclude></ng-transclude>
+  </div>
+</div>

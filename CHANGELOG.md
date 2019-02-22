@@ -5,6 +5,7 @@
 - Added backend support for rendering tiles and fetching histograms for analyses with project layers at their leaves [\#4603](https://github.com/raster-foundry/raster-foundry/pull/4603)
 - Added scene counts to project layer items [\#4625](https://github.com/raster-foundry/raster-foundry/pull/4625)
 - Added project analyses list view [\#4585](https://github.com/raster-foundry/raster-foundry/pull/4585)
+- Added project analyses create view [\#4659](https://github.com/raster-foundry/raster-foundry/pull/4659)
 - Added backend support for project layer async exports [\#4619](https://github.com/raster-foundry/raster-foundry/pull/4619)
 - Added front-end support for importing to project layers [\#4646](https://github.com/raster-foundry/raster-foundry/pull/4646)
 - Added project layer export list UI [\#4663](https://github.com/raster-foundry/raster-foundry/pull/4663)
@@ -22,8 +23,11 @@
 
 - Removed layer re-ordering, layer sorting, layer type selection from UI [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
 
+## [1.18.1](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-20)
+
 ### Fixed
 
+- Fixed an export bug that caused export failures when using more than one band from the same project [\#4636](https://github.com/raster-foundry/raster-foundry/pull/4636)
 - Unified coloring for scene detail modal scene preview and map scene preview [\#4630](https://github.com/raster-foundry/raster-foundry/pull/4630)
 - Moved scene thumbnail endpoint to the tile server for consistent rendering with previews [\#4651](https://github.com/raster-foundry/raster-foundry/pull/4651)
 

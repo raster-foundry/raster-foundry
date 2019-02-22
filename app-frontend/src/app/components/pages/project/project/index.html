@@ -1,10 +1,9 @@
-<div ui-view="navbar-secondary">
-    <div class="navbar light-navbar">
-        <div class="navbar-section">
-            <nav>
-                <a
-                    ui-sref="project.layers"
-                    ng-class="{
+<div ui-view="navbar-secondary" ng-show="!('project.create-analysis' | includedByState)">
+  <div class="navbar light-navbar">
+    <div class="navbar-section">
+      <nav>
+        <a ui-sref="project.layers"
+           ng-class="{
                     active: ('project.layers' | includedByState)
                     }"
                     >Layers</a
@@ -32,6 +31,31 @@
             </nav>
         </div>
     </div>
+  </div>
+</div>
+<div class="container column-stretch container-not-scrollable"
+     ng-class="{
+            'with-secondary-navbar':
+              ('project.settings' | includedByState)
+            }"
+     ng-show="
+            ('project.settings' | includedByState) ||
+            ('project.create-analysis' | includedByState)
+            "
+     ui-view></div>
+<div class="container column-stretch container-not-scrollable with-secondary-navbar"
+     ng-show="
+            !('project.settings' | includedByState) &&
+            !('project.create-analysis' | includedByState)
+            ">
+  <div class="sidebar" ui-view></div>
+  <div class="main">
+    <rf-map-container map-id="project"
+                      ng-show="!$ctrl.showPreviewmap"
+                      initial-center="$ctrl.initialCenter"
+                      initial-zoom="$ctrl.initialZoom">
+    </rf-map-container>
+  </div>
 </div>
 <div
     class="container column-stretch container-not-scrollable with-secondary-navbar"

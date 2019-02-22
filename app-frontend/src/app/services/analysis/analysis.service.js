@@ -39,6 +39,7 @@ export default (app) => {
                     id: '@id'
                 }, {
                     create: {
+                        url: `${BUILDCONFIG.API_HOST}/api/tool-runs/`,
                         method: 'POST'
                     },
                     get: {
@@ -175,10 +176,12 @@ export default (app) => {
                 (user) => {
                     return this.Analysis.create(Object.assign(analysis, {
                         organizationId: user.organizationId
-                    })).$promise;
+                    })).$promise.catch(e => {
+                        throw e;
+                    });
                 },
-                () => {
-
+                (e) => {
+                    throw e;
                 }
             );
         }

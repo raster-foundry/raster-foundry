@@ -1,0 +1,132 @@
+<div class="container column-stretch container-not-scrollable">
+  <div class="sidebar">
+    <div class="sidebar-actions-group" ng-show="$ctrl.selected.size === 0">
+      <a class="btn btn-small btn-transparent"
+         ui-sref="project">
+        <i class="icon-caret-left"></i>Back
+      </a>
+    </div>
+    <div class="selected-actions-group" ng-show="$ctrl.selected.size > 0">
+      <rf-selected-actions-bar
+          checked="$ctrl.allVisibleSelected()"
+          on-click="$ctrl.selectAll()"
+          action-text="$ctrl.selectText"
+      >
+        <button class="btn btn-transparent"
+                ng-click="$ctrl.removeLayers()">
+          Remove
+        </button>
+      </rf-selected-actions-bar>
+    </div>
+    <div class="sidebar-scrollable list-group">
+      <rf-layer-item
+          ng-repeat="layer in $ctrl.layerList track by layer.id"
+          item-info="layer"
+          item-actions="$ctrl.layerActions.get(layer.id)"
+          selected="$ctrl.isSelected(layer.id)"
+          on-select="$ctrl.onSelect(id)"
+      >
+      </rf-layer-item>
+    </div>
+  </div>
+  <div class="container fit-height column-stretch analysis-list">
+    <div class="row content stack-sm">
+      <div class="column-12">
+        <div class="dashboard-header">
+          <h3>Choose an analysis to run</h3>
+          <div class="flex-fill"></div>
+          <rf-search on-search="$ctrl.fetchTemplates(1, value)"  value="$ctrl.search"  placeholder="Search for analysis" auto-focus="false">
+          </rf-search>
+          <select
+              class="form-control"
+              ng-model="$ctrl.currentOwnershipFilter"
+              ng-change="$ctrl.handleOwnershipFilterChange()"
+          >
+            <option value="">All</option>
+            <option value="owned">Owned by me</option>
+            <option value="shared">Shared with me</option>
+          </select>
+        </div>
+        <div class="column-spacer"></div>
+        <div class="column-9">
+          <div class="text-center" ng-show="$ctrl.currentTemplateQuery">
+            <div>Loading Templates</div>
+            <span class="list-placeholder h3">
+              <i
+                  class="icon-load animate-spin"
+                  ng-class="{'stop': !$ctrl.currentTemplateQuery}"
+              ></i>
+            </span>
+          </div>
+        </div>
+        <rf-pagination-count
+            ng-if="!$ctrl.currentTemplateQuery && !$ctrl.templateFetchError && $ctrl.pagination.count"
+            start-index="$ctrl.pagination.startingItem"
+            end-index="$ctrl.pagination.endingItem"
+            total="$ctrl.pagination.count"
+            item-name="analyses"
+        >
+          <span ng-if="$ctrl.search">while searching for <strong>{{ $ctrl.search }}</strong></span>
+        </rf-pagination-count>
+        <div class="row stack-sm">
+          <div class="column-6 flex-display" ng-show="$ctrl.creationPromise">
+            Creating analyses...
+          </div>
+          <div class="column-12 flex-display color-danger" ng-show="$ctrl.createError">
+            API Error: There was an error while creating analyses.<br />
+            Please try another template or contact support for more information.
+          </div>
+          <div class="column-6 flex-display"
+               ng-repeat="analysis in $ctrl.templateList track by analysis.id"
+               ng-show="!$ctrl.creationPromise"
+          >
+            <rf-list-item
+                class="clickable"
+                ng-click="$ctrl.onAnalysisClick($event, analysis)"
+                data-title="analysis.title"
+                data-date="analysis.createdAt"
+                data-subtitle="$ctrl.templateCreators.get(analysis.id)"
+            >
+              <div class="btn btn-text btn-transparent"
+                ng-repeat="action in $ctrl.itemActions.get(analysis.id) | filter: {menu: false}"
+                ng-attr-title="{{action.name}}"
+                ng-click="action.callback($event)"
+              >
+                <span ng-attr-class="{{action.icon}}"
+                      tooltips
+                      tooltip-template="{{action.tooltip}}"
+                      tooltip-size="small"
+                      tooltip-class="layer-item-tooltip"
+                      tooltip-side="left"
+                      tooltip-hidden="!$ctrl.action.tooltip"
+                ></span>
+              </div>
+              <button class="btn btn-text btn-transparent"
+                      uib-dropdown
+                      ng-show="($ctrl.itemActions.get(analysis.id) | filter: {menu: true}).length > 0"
+                      uib-dropdown-toggle
+              >
+                <i class="icon-menu"></i>
+                <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
+                  <li role="menuitem"
+                      ng-repeat="action in $ctrl.itemActions.get(scene.id) | filter: {menu: true}">
+                    <a href ng-click="action.callback($event)"
+                       ng-show="action.name"
+                       ng-attr-title="{{action.title}}">{{action.name}}</a>
+                    <span class="menu-separator" ng-show="action.separator"></span>
+                  </li>
+                </ul>
+              </button>
+            </rf-list-item>
+          </div>
+        </div>
+        <rf-pagination-controls
+            pagination="$ctrl.pagination"
+            is-loading="$ctrl.currentTemplateQuery"
+            on-change="$ctrl.fetchTemplates(value)"
+            ng-show="!$ctrl.currentTemplateQuery && !$ctrl.templateFetchError"
+        ></rf-pagination-controls>
+      </div>
+    </div>
+  </div>
+</div>
