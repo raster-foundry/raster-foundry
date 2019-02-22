@@ -28,14 +28,20 @@ def handler(event: eventType, context: Dict[str, Any]):
     logger.info('Creating scene from parsed SNS event')
     scene_to_post = create_l8.create_scene(event) if isinstance(
         event, NewLandsat8Event) else create_s2.create_scene(event)
+
     logger.info('Sending scene to the Raster Foundry API at %s', api_host)
+    git_commit = os.getenv('GIT_COMMIT', 'dev')
     request_options = {
         'headers': {
-            'User-Agent': 'RFLambda {version}'.format(version=__version__)
+            'User-Agent': 'RFLambda {pyversion}-{git_commit}'.format(
+                pyversion=__version__,
+                git_commit=git_commit
+            )
         }
     }
     result = rf_api.client.Imagery.post_scenes(
         scene=scene_to_post,
         _request_options=request_options).result()
+
     logger.info('Scene %s created successfully', event.scene_name)
     return f'Success - {event.scene_name} Created'
