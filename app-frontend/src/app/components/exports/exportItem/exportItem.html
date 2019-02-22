@@ -3,7 +3,7 @@
 </div>
 <div class="list-group-item {{$ctrl.isDisabled ? 'is-disabled' : ''}}">
   <div class="list-group-overflow">
-    <div class="text-overflow-ellipsis">
+    <div class="text-overflow-ellipsis" title="{{$ctrl.export.createdAt | date : 'medium'}}">
       <strong class="color-dark">{{$ctrl.export.createdAt | date : 'medium'}}</strong>
     </div>
   </div>
