@@ -3278,6 +3278,119 @@ rf-project-layer-annotations-page {
   }
 }
 
+rf-layer-item,
+rf-project-scene-item {
+  display: block;
+  background: $white;
+  border: 1px solid $gray-lightest;
+  border-radius: $border-radius-base;
+  margin: 0.5em;
+}
+
+rf-project-settings-page,
+rf-project-options-page,
+rf-project-permissions-page,
+rf-project-publishing-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f4f5f7;
+  .sidebar {
+    background: #f4f5f7;
+    overflow-y: auto;
+  }
+}
+
+rf-project-publishing-page {
+  flex-direction: row;
+}
+.page-content-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 3rem;
+  overflow-y: auto;
+}
+
+.page-header {
+  flex: none;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  margin-bottom: 2rem;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 0;
+  }
+}
+
+.page-card {
+  flex: none;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: $border-radius-base;
+  padding: 2rem;
+  box-shadow: 0px 3px 8px rgba($shade-normal, 0.2);
+  margin-bottom: 3rem;
+}
+
+.page-card-header {
+  margin-bottom: 2rem;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 0;
+  }
+}
+
+.page-card-content {
+  flex: none;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  &.center {
+    text-align: center;
+  }
+}
+
+.page-card-section:not(:last-child) {
+  margin-bottom: 2rem;
+}
+
+.page-card-form {
+  .input-group input {
+    width: 350px;
+  }
+  .input-group button {
+    min-width: 100px;
+    text-align: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .form-group {
+    button {
+      margin-left: 1rem;
+    }
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
 rf-project-create-analysis-page {
     flex: 1;
     display: flex;
@@ -3292,9 +3405,6 @@ rf-project-create-analysis-page {
     .analysis-list {
         margin-top: 0;
         background: $white;
-    }
-
-    .analysis-list-header {
     }
 }
 

@@ -515,12 +515,13 @@ export default (app) => {
             return `${this.tileServer}/${projectId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
-        getProjectLayerTileUrl(project, layer, params) {
+        getProjectLayerTileUrl(project, layer, params = {}, tag = new Date().getTime()) {
             let projectId = typeof project === 'object' ? project.id : project;
             let layerId = typeof layer === 'object' ? layer.id : layer;
-            let queryParams = params || {};
-            queryParams.tag = new Date().getTime();
-            let formattedParams = L.Util.getParamString(queryParams);
+            let formattedParams = L.Util.getParamString({
+                tag,
+                ...params
+            });
 
             return `${this.tileServer}/${projectId}/layers` +
                 `/${layerId}/{z}/{x}/{y}/${formattedParams}`;

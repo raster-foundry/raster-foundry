@@ -13,7 +13,7 @@ class LayerItemController {
         if (color && color.match(rx)) {
             this.color = color;
         } else {
-            this.color = 'white';
+            this.color = 'gray';
         }
 
         const geometry = _.get(this.itemInfo, 'colorGroupHex');

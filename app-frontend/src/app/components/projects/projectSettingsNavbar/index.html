@@ -1,0 +1,34 @@
+<div class="navbar light-navbar">
+    <div class="navbar-section">
+      <nav>
+        <a
+          ui-sref="project.settings.options"
+          ng-class="{
+            active: ('project.settings.options' | includedByState)
+          }"
+        >
+          Options
+        </a>
+      </nav>
+      <nav>
+        <a
+          ui-sref="project.settings.publishing"
+          ng-class="{
+            active: ('project.settings.publishing' | includedByState)
+          }"
+        >
+          Publishing
+        </a>
+      </nav>
+      <nav>
+        <a
+          ui-sref="project.settings.permissions"
+          ng-class="{
+            active: ('project.settings.permissions' | includedByState)
+          }"
+        >
+          Permissions
+        </a>
+      </nav>
+    </div>
+  </div>
