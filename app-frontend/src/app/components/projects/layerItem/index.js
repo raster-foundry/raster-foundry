@@ -10,7 +10,7 @@ class LayerItemController {
     $onInit() {
         const rx = /^#(?:[0-9a-f]{3}){1,2}$/i;
         const color = _.get(this.itemInfo, 'colorGroupHex');
-        if (color.match(rx)) {
+        if (color && color.match(rx)) {
             this.color = color;
         } else {
             this.color = 'gray';

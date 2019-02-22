@@ -1,176 +1,241 @@
-
-  <div class="sidebar">
-    <rf-layer-item
-        layer="layer"
-        layer-actions="[]"
-        subtext="layer.subtext"
-        selected="$ctrl.isSelected(layer)"
-        on-select="$ctrl.onSelect(layer)"
-        ng-repeat="layer in $ctrl.layerList track by layer.id">
-    </rf-layer-item>
-    <rf-pagination-controls
-        pagination="$ctrl.pagination"
-        is-loading="$ctrl.currentQuery"
-        on-change="$ctrl.fetchPage(value)"
-        ng-show="!$ctrl.currentQuery && !$ctrl.fetchError"
-    ></rf-pagination-controls>
+<div class="sidebar">
+  <rf-layer-item
+    item-info="layer"
+    item-actions="[]"
+    selected="$ctrl.isSelected(layer)"
+    on-select="$ctrl.onSelect(layer)"
+    ng-repeat="layer in $ctrl.layerList track by layer.id"
+  >
+  </rf-layer-item>
+  <rf-pagination-controls
+    pagination="$ctrl.pagination"
+    is-loading="$ctrl.currentQuery"
+    on-change="$ctrl.fetchPage(value)"
+    ng-show="!$ctrl.currentQuery && !$ctrl.fetchError"
+  ></rf-pagination-controls>
+</div>
+<div class="main page-content-container">
+  <div class="page-header">
+    <h3>
+      Publishing
+    </h3>
   </div>
-  <div class="main page-content-container">
-    <div class="page-header">
-      <h3>
-        Publishing
-      </h3>
-    </div>
-    <div class="page-card">
-      <div class="form-group">
-        <label>Project ID</label>
-        <div class="input-group">
-          <input id="tile-link" type="text" class="form-control"
-                  value="{{$ctrl.project.id}}" readonly>
-          <button class="btn btn-link btn-square btn-icon"
-                  clipboard text="$ctrl.project.id"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.project.id, 'projectId')"
-                  tooltips
-                  tooltip-size="small"
-                  tooltip-side="top right"
-                  tooltip-template="Copy project id">
-            <i class="icon-copy color-base"
-                aria-hidden="true"
-                ng-show="$ctrl.copyType !== 'token'"><span class="sr-only">Copy Project ID</span></i>
-            <i class="icon-check color-green"
-                aria-hidden="true"
-                ng-show="$ctrl.copyType === 'token'"></i>
-          </button>
-        </div>
-      </div>
-      <div class="page-card-section">
-        <label>Project privacy</label>
-        <div class="input-group">
-          <label class="checkbox radio"
-                  ng-repeat="policy in $ctrl.sharePolicies"
-                  ng-if="policy.enabled"
-                  ng-click="$ctrl.onPolicyChange(policy)"
-                  ng-class="{'active': policy.active}"
-                  ng-disabled="!policy.enabled">
-            <input type="radio"
-                    name="{{policy.label}}"
-                    ng-checked="policy.active"
-                    ng-disabled="!policy.enabled">
-            {{policy.label}}
-          </label>
-        </div>
-      </div>
-      <div ng-if="$ctrl.activePolicy.enum === 'PRIVATE'" class="form-group">
-        <label>Project Map Token</label>
-        <div class="input-group">
-          <input id="tile-link" type="text" class="form-control"
-                  value="{{$ctrl.mapToken.id}}" readonly>
-          <button class="btn btn-link btn-square btn-icon"
-                  clipboard text="$ctrl.mapToken.id"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.mapToken.id, 'token')"
-                  tooltips
-                  tooltip-size="small"
-                  tooltip-side="top right"
-                  tooltip-template="Copy token">
-            <i class="icon-copy color-base"
-                aria-hidden="true"
-                ng-show="$ctrl.copyType !== 'token'"><span class="sr-only">Copy token</span></i>
-            <i class="icon-check color-green"
-                aria-hidden="true"
-                ng-show="$ctrl.copyType === 'token'"></i>
-          </button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="published-link">Published page</label>
-        <div class="input-group">
-          <input id="published-link" type="text" class="form-control"
-                  value="{{$ctrl.shareUrl}}" readonly>
-          <button class="btn btn-link btn-square btn-icon"
-                  clipboard text="$ctrl.shareUrl"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')"
-                  tooltips
-                  tooltip-size="small"
-                  tooltip-side="top right"
-                  tooltip-template="Copy URL">
-            <i class="icon-copy color-base"
-                aria-hidden="true"
-                ng-show="$ctrl.copyType !== 'page'"><span class="sr-only">Copy URL</span></i>
-            <i class="icon-check color-green"
-                aria-hidden="true"
-                ng-show="$ctrl.copyType === 'page'"></i>
-          </button>
-        </div>
+  <div class="page-card">
+    <div class="form-group">
+      <label>Project ID</label>
+      <div class="input-group">
+        <input
+          id="tile-link"
+          type="text"
+          class="form-control"
+          value="{{ $ctrl.project.id }}"
+          readonly
+        />
+        <button
+          class="btn btn-link btn-square btn-icon"
+          clipboard
+          text="$ctrl.project.id"
+          ng-click="$ctrl.onCopyClick($event, $ctrl.project.id, 'projectId')"
+          tooltips
+          tooltip-size="small"
+          tooltip-side="top right"
+          tooltip-template="Copy project id"
+        >
+          <i
+            class="icon-copy color-base"
+            aria-hidden="true"
+            ng-show="$ctrl.copyType !== 'token'"
+            ><span class="sr-only">Copy Project ID</span></i
+          >
+          <i
+            class="icon-check color-green"
+            aria-hidden="true"
+            ng-show="$ctrl.copyType === 'token'"
+          ></i>
+        </button>
       </div>
     </div>
-    <div class="page-header">
-      <h3>
-        Tile layer URLs
-      </h3>
-    </div>
-    <div
-      ng-if="!$ctrl.selectedLayers.size"
-      class="page-card"
-    >
-      <div class="page-card-content center">
-        <span class="modal-icon">
-          <i class="icon-info"></i>
-        </span>
-        <p>Select a layer from the list to view its tile layer URLs</p>
+    <div class="page-card-section">
+      <label>Project privacy</label>
+      <div class="input-group">
+        <label
+          class="radio"
+          ng-repeat="policy in $ctrl.sharePolicies"
+          ng-if="policy.enabled"
+          ng-click="$ctrl.onPolicyChange(policy)"
+          ng-class="{'active': policy.active}"
+          ng-disabled="!policy.enabled"
+        >
+          <input
+            type="radio"
+            name="{{ policy.label }}"
+            ng-checked="policy.active"
+            ng-disabled="!policy.enabled"
+          />
+          {{ policy.label }}
+        </label>
       </div>
     </div>
-    <div
-      ng-if="$ctrl.selectedLayers.size"
-      class="page-card"
-      ng-repeat="layer in $ctrl.selectedLayers.toArray()"
-    >
-      <div class="page-card-section">
-        <h4>{{layer.name}}</h4>
+    <div ng-if="$ctrl.activePolicy.enum === 'PRIVATE'" class="form-group">
+      <label>Project Map Token</label>
+      <div class="input-group">
+        <input
+          id="tile-link"
+          type="text"
+          class="form-control"
+          value="{{ $ctrl.mapToken.id }}"
+          readonly
+        />
+        <button
+          class="btn btn-link btn-square btn-icon"
+          clipboard
+          text="$ctrl.mapToken.id"
+          ng-click="$ctrl.onCopyClick($event, $ctrl.mapToken.id, 'token')"
+          tooltips
+          tooltip-size="small"
+          tooltip-side="top right"
+          tooltip-template="Copy token"
+        >
+          <i
+            class="icon-copy color-base"
+            aria-hidden="true"
+            ng-show="$ctrl.copyType !== 'token'"
+            ><span class="sr-only">Copy token</span></i
+          >
+          <i
+            class="icon-check color-green"
+            aria-hidden="true"
+            ng-show="$ctrl.copyType === 'token'"
+          ></i>
+        </button>
       </div>
-      <div class="page-card-header">
-        <h5>Base Layer</h5>
-      </div>
-      <div class="form-group">
-        <label for="published-link">ZXY Tile Layer URL</label>
-        <div class="input-group">
-          <input id="published-link" type="text" class="form-control"
-                  value="{{$ctrl.layerZXYURL(layer)}}" readonly>
-          <button class="btn btn-link btn-square btn-icon"
-                  clipboard text="$ctrl.shareUrl"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')"
-                  tooltips
-                  tooltip-size="small"
-                  tooltip-side="top right"
-                  tooltip-template="Copy URL">
-            <i class="icon-copy color-base"
-                aria-hidden="true"
-                ng-show="$ctrl.copyType !== 'page'"><span class="sr-only">Copy URL</span></i>
-            <i class="icon-check color-green"
-                aria-hidden="true"
-                ng-show="$ctrl.copyType === 'page'"></i>
-          </button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="published-link">ArcGIS Tile Layer URL</label>
-        <div class="input-group">
-          <input id="published-link" type="text" class="form-control"
-                  value="{{$ctrl.layerArcGISURL(layer)}}" readonly>
-          <button class="btn btn-link btn-square btn-icon"
-                  clipboard text="$ctrl.shareUrl"
-                  ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')"
-                  tooltips
-                  tooltip-size="small"
-                  tooltip-side="top right"
-                  tooltip-template="Copy URL">
-            <i class="icon-copy color-base"
-                aria-hidden="true"
-                ng-show="$ctrl.copyType !== 'page'"><span class="sr-only">Copy URL</span></i>
-            <i class="icon-check color-green"
-                aria-hidden="true"
-                ng-show="$ctrl.copyType === 'page'"></i>
-          </button>
-        </div>
+    </div>
+    <div class="form-group">
+      <label for="published-link">Published page</label>
+      <div class="input-group">
+        <input
+          id="published-link"
+          type="text"
+          class="form-control"
+          value="{{ $ctrl.shareUrl }}"
+          readonly
+        />
+        <button
+          class="btn btn-link btn-square btn-icon"
+          clipboard
+          text="$ctrl.shareUrl"
+          ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')"
+          tooltips
+          tooltip-size="small"
+          tooltip-side="top right"
+          tooltip-template="Copy URL"
+        >
+          <i
+            class="icon-copy color-base"
+            aria-hidden="true"
+            ng-show="$ctrl.copyType !== 'page'"
+            ><span class="sr-only">Copy URL</span></i
+          >
+          <i
+            class="icon-check color-green"
+            aria-hidden="true"
+            ng-show="$ctrl.copyType === 'page'"
+          ></i>
+        </button>
       </div>
     </div>
   </div>
+  <div class="page-header">
+    <h3>
+      Tile layer URLs
+    </h3>
+  </div>
+  <div ng-if="!$ctrl.selectedLayers.size" class="page-card">
+    <div class="page-card-content center">
+      <span class="modal-icon">
+        <i class="icon-info"></i>
+      </span>
+      <p>Select a layer from the list to view its tile layer URLs</p>
+    </div>
+  </div>
+  <div
+    ng-if="$ctrl.selectedLayers.size"
+    class="page-card"
+    ng-repeat="layer in $ctrl.selectedLayers.toArray()"
+  >
+    <div class="page-card-section">
+      <h4>{{ layer.name }}</h4>
+    </div>
+    <div class="page-card-header">
+      <h5>Base Layer</h5>
+    </div>
+    <div class="form-group">
+      <label for="published-link">ZXY Tile Layer URL</label>
+      <div class="input-group">
+        <input
+          id="published-link"
+          type="text"
+          class="form-control"
+          value="{{ $ctrl.layerZXYURL(layer) }}"
+          readonly
+        />
+        <button
+          class="btn btn-link btn-square btn-icon"
+          clipboard
+          text="$ctrl.shareUrl"
+          ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')"
+          tooltips
+          tooltip-size="small"
+          tooltip-side="top right"
+          tooltip-template="Copy URL"
+        >
+          <i
+            class="icon-copy color-base"
+            aria-hidden="true"
+            ng-show="$ctrl.copyType !== 'page'"
+            ><span class="sr-only">Copy URL</span></i
+          >
+          <i
+            class="icon-check color-green"
+            aria-hidden="true"
+            ng-show="$ctrl.copyType === 'page'"
+          ></i>
+        </button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="published-link">ArcGIS Tile Layer URL</label>
+      <div class="input-group">
+        <input
+          id="published-link"
+          type="text"
+          class="form-control"
+          value="{{ $ctrl.layerArcGISURL(layer) }}"
+          readonly
+        />
+        <button
+          class="btn btn-link btn-square btn-icon"
+          clipboard
+          text="$ctrl.shareUrl"
+          ng-click="$ctrl.onCopyClick($event, $ctrl.shareUrl, 'page')"
+          tooltips
+          tooltip-size="small"
+          tooltip-side="top right"
+          tooltip-template="Copy URL"
+        >
+          <i
+            class="icon-copy color-base"
+            aria-hidden="true"
+            ng-show="$ctrl.copyType !== 'page'"
+            ><span class="sr-only">Copy URL</span></i
+          >
+          <i
+            class="icon-check color-green"
+            aria-hidden="true"
+            ng-show="$ctrl.copyType === 'page'"
+          ></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
