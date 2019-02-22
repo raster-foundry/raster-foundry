@@ -4,14 +4,15 @@
 ### Added
 - Added backend support for rendering tiles and fetching histograms for analyses with project layers at their leaves [\#4603](https://github.com/raster-foundry/raster-foundry/pull/4603)
 - Added scene counts to project layer items [\#4625](https://github.com/raster-foundry/raster-foundry/pull/4625)
-- Added project analyses list view [\#4585](https://github.com/raster-foundry/raster-foundry/pull/4585)
-- Added project analyses create view [\#4659](https://github.com/raster-foundry/raster-foundry/pull/4659)
+- Added project layer analyses list view [\#4585](https://github.com/raster-foundry/raster-foundry/pull/4585)
+- Added project layer analyses create view [\#4659](https://github.com/raster-foundry/raster-foundry/pull/4659)
 - Added backend support for project layer async exports [\#4619](https://github.com/raster-foundry/raster-foundry/pull/4619)
 - Added front-end support for importing to project layers [\#4646](https://github.com/raster-foundry/raster-foundry/pull/4646)
 - Enhanced project layer lists to support list access with map tokens and to public projects [\#4656](https://github.com/raster-foundry/raster-foundry/pull/4656)
 - Added project layer export list UI [\#4663](https://github.com/raster-foundry/raster-foundry/pull/4663)
 - Added layer ID query parameter to export list endpoint [\#4663](https://github.com/raster-foundry/raster-foundry/pull/4663)
-
+- Added project layer annotation UI support [\#4665](https://github.com/raster-foundry/raster-foundry/pull/4665)
+- Added project settings pages for v2 UI [\#4637](https://github.com/raster-foundry/raster-foundry/pull/4637)
 ### Changed
 
 - Updated default project layer color group hex code [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
