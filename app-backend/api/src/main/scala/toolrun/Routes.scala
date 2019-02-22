@@ -70,7 +70,7 @@ trait ToolRunRoutes
           case Some(projectId) =>
             ToolRunDao
               .listAnalysesWithRelated(
-                user,
+                Some(user),
                 page,
                 projectId,
                 runParams.ownershipTypeParams.ownershipType,

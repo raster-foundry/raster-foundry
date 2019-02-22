@@ -214,10 +214,10 @@ trait ObjectPermissions[Model] {
 
     ownershipTypeO match {
       // owned by the requesting user only
-      case Some(ownershipType) if ownershipType == "owned" =>
+      case Some("owned") =>
         Some(ownedF)
       // shared to the requesting user directly, across platform, or due to group membership
-      case Some(ownershipType) if ownershipType == "shared" =>
+      case Some("shared") =>
         if (objectType == ObjectType.Shape || objectType == ObjectType.Template) {
           Some(
             fr"(" ++ acrFilterF ++ fr") AND" ++ Fragment.const(
@@ -228,7 +228,7 @@ trait ObjectPermissions[Model] {
             .const(s"${tableName}owner") ++ fr"<> ${user.id}")
         }
       // shared to the requesting user due to group membership
-      case Some(ownershipType) if ownershipType == "inherited" =>
+      case Some("inherited") =>
         if (objectType == ObjectType.Shape) {
           Some(inheritedF ++ Fragment.const(s"&& ${tableName}acrs"))
         } else {
