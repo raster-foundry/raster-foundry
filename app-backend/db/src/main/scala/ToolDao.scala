@@ -22,7 +22,7 @@ object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
 
   val selectF = sql"""
     SELECT
-      distinct(id), created_at, modified_at, created_by, modified_by, owner, title,
+      id, created_at, modified_at, created_by, modified_by, owner, title,
       description, requirements, license, visibility, compatible_data_sources, stars, definition
     FROM """ ++ tableF
 

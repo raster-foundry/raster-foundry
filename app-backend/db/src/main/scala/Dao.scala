@@ -158,7 +158,7 @@ object Dao extends LazyLogging {
       tableF: Fragment,
       filters: List[Option[Fragment]]) {
 
-    val countF: Fragment = fr"SELECT count(distinct(id)) FROM" ++ tableF
+    val countF: Fragment = fr"SELECT count(id) FROM" ++ tableF
     val deleteF: Fragment = fr"DELETE FROM" ++ tableF
     val existF: Fragment = fr"SELECT 1 FROM" ++ tableF
 
@@ -204,19 +204,21 @@ object Dao extends LazyLogging {
         .to[List]
 
     /** Provide a list of responses within the PaginatedResponse wrapper */
-    def page[T: Read](
-        pageRequest: PageRequest,
-        selectF: Fragment,
-        countF: Fragment,
-        orderClause: Map[String, Order]): ConnectionIO[PaginatedResponse[T]] = {
+    def page[T: Read](pageRequest: PageRequest,
+                      selectF: Fragment,
+                      countF: Fragment,
+                      orderClause: Map[String, Order],
+                      doCount: Boolean): ConnectionIO[PaginatedResponse[T]] = {
       for {
         page <- (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(
           pageRequest.copy(sort = orderClause ++ pageRequest.sort)))
           .query[T]
           .to[List]
-        count <- (countF ++ Fragments.whereAndOpt(filters: _*))
-          .query[Int]
-          .unique
+        count <- if (doCount) {
+          (countF ++ Fragments.whereAndOpt(filters: _*))
+            .query[Int]
+            .unique
+        } else { (-1).pure[ConnectionIO] }
       } yield {
         val hasPrevious = pageRequest.offset > 0
         val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
@@ -233,10 +235,15 @@ object Dao extends LazyLogging {
     /** Provide a list of responses within the PaginatedResponse wrapper */
     def page(pageRequest: PageRequest, orderClause: Map[String, Order])
       : ConnectionIO[PaginatedResponse[Model]] =
-      page(pageRequest, selectF, countF, orderClause)
+      page(pageRequest, selectF, countF, orderClause, true)
+
+    def page(pageRequest: PageRequest,
+             orderClause: Map[String, Order],
+             doCount: Boolean): ConnectionIO[PaginatedResponse[Model]] =
+      page(pageRequest, selectF, countF, orderClause, doCount)
 
     def page(pageRequest: PageRequest): ConnectionIO[PaginatedResponse[Model]] =
-      page(pageRequest, selectF, countF, Map.empty[String, Order])
+      page(pageRequest, selectF, countF, Map.empty[String, Order], true)
 
     def listQ(pageRequest: PageRequest): Query0[Model] =
       (selectF ++ Fragments.whereAndOpt(filters: _*) ++ Page(Some(pageRequest)))
@@ -256,9 +263,7 @@ object Dao extends LazyLogging {
           .unique
       over100IO.flatMap(over100 => {
         (exactCountOption, over100) match {
-          case (Some(true), _) =>
-            countQuery.query[Int].unique
-          case (_, false) =>
+          case (Some(true), _) | (_, false) =>
             countQuery.query[Int].unique
           case _ =>
             100.pure[ConnectionIO]
