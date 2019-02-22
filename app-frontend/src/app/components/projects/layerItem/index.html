@@ -1,14 +1,10 @@
 <div class="list-group-item">
   <div class="list-item-left-actions">
     <label class="checkbox layer-checkbox list-item-{{$ctrl.itemInfo.id}}"
-           ng-class="{
-                  active: $ctrl.selected
-                  }"
-    >
+           ng-class="{active: $ctrl.selected}">
       <input type="checkbox"
              ng-checked="$ctrl.selected"
-             ng-click="$ctrl.onSelect({id: $ctrl.itemInfo.id})"
-      />
+             ng-click="$ctrl.onSelect({id: $ctrl.itemInfo.id})"/>
     </label>
     <style>
      label.checkbox.list-item-{{$ctrl.itemInfo.id}}::after {
@@ -19,12 +15,28 @@
   <div class="list-group-overflow">
     <div><strong>{{$ctrl.itemInfo.name}}</strong></div>
     <div ng-if="$ctrl.itemInfo.subtext"><span>{{$ctrl.itemInfo.subtext}}</span></div>
-    <div>{{$ctrl.itemInfo.date | date}}</div>
+    <div ng-class="{'export-date-subtext': $ctrl.isExport}">
+      <span ng-if="$ctrl.isExport">{{$ctrl.itemInfo.date | date: 'medium'}}</span>
+      <span ng-if="!$ctrl.isExport">{{$ctrl.itemInfo.date | date}}</span>
+      <span class="color-danger export-status"
+            ng-if="$ctrl.isExport && $ctrl.itemInfo && $ctrl.itemInfo.exportStatus === 'FAILED'">
+            <i>Failed</i>
+      </span>
+      <span class="color-green export-status"
+            ng-if="$ctrl.isExport && $ctrl.itemInfo && $ctrl.itemInfo.exportStatus === 'EXPORTED'">
+            <i>Complete</i>
+      </span>
+      <span class="color-warning export-status"
+            ng-if="$ctrl.isExport && $ctrl.itemInfo && $ctrl.itemInfo.exportStatus !== 'FAILED' && $ctrl.itemInfo.exportStatus !== 'EXPORTED'">
+            <i>Processing</i>
+            <span class="icon-load"></span>
+      </span>
+    </div>
   </div>
   <div class="list-group-right list-group-vertical">
     <div>
       <div class="btn btn-text btn-transparent"
-           ng-if="!$ctrl.hasGeom && !$ctrl.isAnalysis">
+           ng-if="!$ctrl.hasGeom && !$ctrl.isAnalysis && !$ctrl.isExport">
         <span class="icon-warning color-danger"
               tooltips
               tooltip-template="No AOI defined for this layer"
@@ -33,6 +45,17 @@
               tooltip-side="left"></span>
       </div>
       <div class="btn btn-text btn-transparent"
+           ng-click="$ctrl.onDownloadExport({id: $ctrl.itemInfo.id})"
+           ng-if="$ctrl.isExport && $ctrl.itemInfo && $ctrl.itemInfo.exportStatus === 'EXPORTED'">
+           <span class="icon-download"
+                 tooltips
+                 tooltip-template="Download export"
+                 tooltip-size="small"
+                 tooltip-class="layer-item-tooltip"
+                 tooltip-side="left"></span>
+      </div>
+      <div class="btn btn-text btn-transparent"
+           ng-show="$ctrl.onHide"
            ng-click="$ctrl.onHide({id: $ctrl.itemInfo.id})">
         <span class="icon-eye"
               tooltips

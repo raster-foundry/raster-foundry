@@ -2,6 +2,7 @@
 import pages from './components/pages';
 import projectComponents from './components/projects';
 import sceneComponents from './components/scenes';
+import commonComponents from './components/common';
 export default angular.module('index.components', [
     //admin components
     require('./components/admin/editableLogo/editableLogo.js').default.name,
@@ -111,6 +112,7 @@ export default angular.module('index.components', [
     require('./components/common/paginationControls/paginationControls.js').default.name,
     require('./components/common/navbarSearch/navbarSearch.js').default.name,
     require('./components/common/itemActionButtons/itemActionButtons.js').default.name,
+    ...commonComponents,
 
     // Single components for new domains
     require('./components/aoiFilterPane/aoiFilterPane.module.js').default.name,

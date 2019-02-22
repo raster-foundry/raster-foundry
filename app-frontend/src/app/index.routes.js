@@ -247,7 +247,7 @@ function projectStatesV2($stateProvider) {
         })
         .state('project.layer.exports', {
             title: 'Project Layer Exports',
-            url: '/exports?page&search',
+            url: '/exports?page',
             component: 'rfProjectLayerExportsPage'
         })
         .state('project.layer.export', {
@@ -296,6 +296,30 @@ function projectStatesV2($stateProvider) {
             title: 'Project Analyses Visualization',
             url: '/visualize',
             component: 'rfProjectAnalysesVisualizePage'
+        })
+        .state('project.analysis', {
+            title: 'Project Analysis',
+            url: '/analysis/:analsisId',
+            component: 'rfProjectAnalysis'
+        })
+        .state('project.create-analysis', {
+            title: 'Create project analysis',
+            url: '/create-analysis?page&search',
+            component: 'rfProjectCreateAnalysisPage',
+            params: {
+                layers: {
+                    array: true
+                },
+                page: {
+                    dynamic: true
+                },
+                search: {
+                    dynamic: true
+                }
+            },
+            resolve: {
+                layers: ['$transition$', ($transition$) => $transition$.params().layers]
+            }
         })
     // project settings routes
         .state('project.settings.options', {

@@ -26,10 +26,12 @@ const component = {
         itemInfo: '<',
         itemActions: '<',
         selected: '<',
-        onSelect: '&',
+        onSelect: '&?',
         visible: '<',
-        onHide: '&',
-        isAnalysis: '<?'
+        onHide: '&?',
+        isAnalysis: '<?',
+        isExport: '<?',
+        onDownloadExport: '&?'
     },
     templateUrl: tpl,
     controller: LayerItemController.name,

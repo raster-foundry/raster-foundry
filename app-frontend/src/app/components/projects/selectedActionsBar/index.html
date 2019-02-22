@@ -6,7 +6,8 @@
                   }"
     >
       <input type="checkbox"
-             ng-checked="$ctrl.checked">
+             ng-checked="$ctrl.checked"
+             ng-click="$ctrl.onClick()">
     </label>
     {{ $ctrl.actionText || 'Select all'}}
   </button>

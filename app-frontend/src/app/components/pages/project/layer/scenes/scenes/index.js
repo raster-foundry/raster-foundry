@@ -119,6 +119,7 @@ class LayerScenesController {
             component: 'rfSceneImportModal',
             resolve: {
                 project: () => this.project,
+                layer: () => this.layer,
                 origin: () => 'project'
             }
         });
