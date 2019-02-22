@@ -14,6 +14,7 @@
 - Added project layer annotation UI support [\#4665](https://github.com/raster-foundry/raster-foundry/pull/4665)
 - Added project settings pages for v2 UI [\#4637](https://github.com/raster-foundry/raster-foundry/pull/4637)
 - Added owner query parameter to tools and tool-runs endpoints, support multiple owner qp's on applicable endpoints [\#4689](https://github.com/raster-foundry/raster-foundry/pull/4689)
+- Added Rollbar error reporting to backsplash [\#4691](https://github.com/raster-foundry/raster-foundry/pull/4691)
 
 ### Changed
 
