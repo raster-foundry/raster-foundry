@@ -2,6 +2,7 @@
 ## [Unreleased](https://github.com/raster-foundry/raster-foundry/tree/develop)
 
 ### Added
+
 - Added backend support for rendering tiles and fetching histograms for analyses with project layers at their leaves [\#4603](https://github.com/raster-foundry/raster-foundry/pull/4603)
 - Added scene counts to project layer items [\#4625](https://github.com/raster-foundry/raster-foundry/pull/4625)
 - Added project layer analyses list view [\#4585](https://github.com/raster-foundry/raster-foundry/pull/4585)
@@ -26,6 +27,10 @@
 ### Removed
 
 - Removed layer re-ordering, layer sorting, layer type selection from UI [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
+
+### Fixed
+
+- Fixed a bug in V2 UI so that views don't show up twice [\#4690](https://github.com/raster-foundry/raster-foundry/pull/4690)
 
 ## [1.18.1](https://github.com/raster-foundry/raster-foundry/tree/1.18.0) (2019-02-20)
 
