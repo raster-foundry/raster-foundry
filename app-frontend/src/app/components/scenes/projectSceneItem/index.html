@@ -41,12 +41,10 @@
     </div>
   </div>
   <div class="list-group-overflow">
-    <div>
-      <span title="{{$ctrl.scene.name}}">
-        <strong class="color-dark">
-          {{($ctrl.getReferenceDate() | date : 'mediumDate' : '+0000') + ' (UTC)'}}
-        </strong>
-      </span>
+    <div class="text-overflow-ellipsis" title="{{$ctrl.scene.name}}">
+      <strong class="color-dark">
+        {{($ctrl.getReferenceDate() | date : 'mediumDate' : '+0000') + ' (UTC)'}}
+      </strong>
     </div>
     <div>
       <span>{{$ctrl.scene.datasource.name}}</span>

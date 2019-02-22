@@ -3,10 +3,8 @@
 </div>
 <div class="list-group-item {{$ctrl.isDisabled ? 'is-disabled' : ''}}">
   <div class="list-group-overflow">
-    <div>
-      <span>
-        <strong class="color-dark">{{$ctrl.export.createdAt | date : 'medium'}}</strong>
-      </span>
+    <div class="text-overflow-ellipsis">
+      <strong class="color-dark">{{$ctrl.export.createdAt | date : 'medium'}}</strong>
     </div>
   </div>
   <div class="list-group-right">
