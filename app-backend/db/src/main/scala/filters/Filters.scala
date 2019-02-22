@@ -25,7 +25,11 @@ object Filters {
   }
 
   def ownerQP(ownerParams: OwnerQueryParameters): List[Option[Fragment]] = {
-    List(ownerParams.owner.map(owner => fr"owner = $owner"))
+    List(
+      ownerParams.owner.toList.toNel
+        .map({ owners =>
+          Fragments.in(fr"owner", owners)
+        }))
   }
 
   def organizationQP(orgParams: OrgQueryParameters): List[Option[Fragment]] = {

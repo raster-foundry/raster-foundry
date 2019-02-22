@@ -74,7 +74,7 @@ export default (app) => {
                         objectType,
                         objectId: object.id
                     }).$promise.then(permissions => {
-                        resolve(permissions.filter(p => matchingIds.includdes(p.subjectId)));
+                        resolve(permissions.filter(p => matchingIds.includes(p.subjectId)));
                     }).catch((e) => {
                         // can't view permissions, don't have edit
                         if (e.status === 403) {

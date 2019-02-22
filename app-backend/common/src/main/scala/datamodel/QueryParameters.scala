@@ -169,6 +169,7 @@ final case class CombinedToolQueryParameters(
     userParams: UserQueryParameters = UserQueryParameters(),
     timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
     searchParams: SearchQueryParameters = SearchQueryParameters(),
+    ownerQueryParams: OwnerQueryParameters = OwnerQueryParameters(),
     ownershipTypeParams: OwnershipTypeQueryParameters =
       OwnershipTypeQueryParameters(),
     groupQueryParameters: GroupQueryParameters = GroupQueryParameters()
@@ -237,7 +238,8 @@ object UserAuditQueryParameters {
 }
 
 /** Query parameters to filter by owners */
-final case class OwnerQueryParameters(owner: Option[String] = None)
+final case class OwnerQueryParameters(
+    owner: Iterable[String] = List.empty[String])
 
 object OwnerQueryParameters {
   implicit def encOwnerQueryParameters: Encoder[OwnerQueryParameters] =
@@ -335,6 +337,7 @@ object ToolRunQueryParameters {
 final case class CombinedToolRunQueryParameters(
     toolRunParams: ToolRunQueryParameters = ToolRunQueryParameters(),
     timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
+    ownerParams: OwnerQueryParameters = OwnerQueryParameters(),
     ownershipTypeParams: OwnershipTypeQueryParameters =
       OwnershipTypeQueryParameters(),
     groupQueryParameters: GroupQueryParameters = GroupQueryParameters(),

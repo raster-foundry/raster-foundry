@@ -57,7 +57,7 @@ trait QueryParametersCommon extends QueryParameterDeserializers {
 
   def ownerQueryParameters =
     parameters(
-      'owner.as[String].?
+      'owner.as[String].*
     ).as(OwnerQueryParameters.apply _)
 
   def ownershipTypeQueryParameters =
