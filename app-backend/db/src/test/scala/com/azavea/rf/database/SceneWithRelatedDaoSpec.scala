@@ -90,7 +90,7 @@ class SceneWithRelatedDaoSpec
               "Listing with datasource should count the same number of scenes we started with"
             )
             assert(
-              listedWithDS.results.length == listedWithDS.count,
+              listedWithDS.results.length == (listedWithDS.count `min` pageRequest.limit),
               "Listing with datasource should return from the db the same number of scenes we started with"
             )
             true

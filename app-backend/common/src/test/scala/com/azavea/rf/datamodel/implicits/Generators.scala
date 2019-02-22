@@ -34,7 +34,7 @@ object Generators extends ArbitraryInstances {
     Gen.containerOf[List, Char](Gen.alphaChar) map { _.mkString }
 
   private def pageRequestGen: Gen[PageRequest] =
-    Gen.const(PageRequest(0, 20, Map("created_at" -> Order.Desc)))
+    Gen.const(PageRequest(0, 10, Map("created_at" -> Order.Desc)))
 
   private def userRoleGen: Gen[UserRole] =
     Gen.oneOf(UserRoleRole, Viewer, Admin)
@@ -861,6 +861,9 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbListSceneCreate: Arbitrary[List[Scene.Create]] = Arbitrary {
       Gen.oneOf(
+        // 11 is one more than the size of the pageRequest that we'll generate, so this allows
+        // testing paging and counting correctly
+        Gen.listOfN(11, sceneCreateGen),
         Gen.listOfN(7, sceneCreateGen),
         Gen.listOfN(0, sceneCreateGen)
       )

@@ -63,7 +63,7 @@ object SceneWithRelatedDao
         hasNext,
         pageRequest.offset,
         pageRequest.limit,
-        sceneBrowses.dropRight(1)
+        sceneBrowses.take(pageRequest.limit)
       )
     }
 
