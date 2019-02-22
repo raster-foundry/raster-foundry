@@ -18,7 +18,7 @@
           ng-model="$ctrl.currentOwnershipFilter"
           ng-change="$ctrl.handleOwnershipFilterChange()"
         >
-          <option value="">Platform</option>
+          <option value="">{{$ctrl.BUILDCONFIG.APP_NAME}}</option>
           <option value="all">All</option>
           <option value="owned">Owned by me</option>
           <option value="shared">Shared with me</option>
