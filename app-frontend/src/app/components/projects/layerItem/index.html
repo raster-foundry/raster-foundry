@@ -13,7 +13,7 @@
     </style>
   </div>
   <div class="list-group-overflow">
-    <div><strong>{{$ctrl.itemInfo.name}}</strong></div>
+    <div class="text-overflow-ellipsis"><strong>{{$ctrl.itemInfo.name}}</strong></div>
     <div ng-if="$ctrl.itemInfo.subtext"><span>{{$ctrl.itemInfo.subtext}}</span></div>
     <div ng-class="{'export-date-subtext': $ctrl.isExport}">
       <span ng-if="$ctrl.isExport">{{$ctrl.itemInfo.date | date: 'medium'}}</span>
