@@ -66,7 +66,7 @@ class ProjectScenesDaoSpec
               (scene: Scene.ProjectScene) =>
                 scene.id
             }
-            insertedIds == listedIds
+            (insertedIds & listedIds) == listedIds
           }
       }
     }

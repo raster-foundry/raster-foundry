@@ -80,7 +80,8 @@ class LayerScenesDaoSpec
               (scene: Scene.ProjectScene) =>
                 scene.id
             }
-            insertedIds == listedIds
+            // page request can ask for fewer scenes than the number we inserted
+            (insertedIds & listedIds) == listedIds
           }
       }
     }
