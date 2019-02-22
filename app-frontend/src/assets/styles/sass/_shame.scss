@@ -3275,6 +3275,7 @@ rf-project-layer-annotations-page {
     border: 1px solid $gray-lightest;
     border-radius: 3px;
     margin: 0.5em;
+  }
 }
 
 rf-layer-item,
@@ -3404,9 +3405,6 @@ rf-project-create-analysis-page {
     .analysis-list {
         margin-top: 0;
         background: $white;
-    }
-
-    .analysis-list-header {
     }
 }
 
