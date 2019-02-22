@@ -70,10 +70,6 @@ class SceneWithRelatedDaoSpec
             val (insertedScenes, listedScenes, listedWithDS) =
               xa.use(t => scenesIO.transact(t)).unsafeRunSync
 
-            println(s"Original length: ${scenes1.length}")
-            println(s"Listed length: ${listedWithDS.results.length}")
-            println(s"Listed count: ${listedWithDS.count}")
-
             val insertedNamesSet = insertedScenes.toSet map {
               (scene: Scene.WithRelated) =>
                 scene.name
