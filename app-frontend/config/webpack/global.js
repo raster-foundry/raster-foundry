@@ -21,6 +21,7 @@ const HERE_APP_CODE = '5pn07ENomTHOap0u7nQSFA';
 
 const INTERCOM_APP_ID = '';
 const GOOGLE_TAG_ID = 'GTM-54XHDBP';
+const PLATFORM_USERS = JSON.stringify(['default']);
 
 const basemaps = JSON.stringify({
     layers: {
@@ -319,7 +320,8 @@ module.exports = function (_path) {
                         'https://blog.rasterfoundry.com/latest?format=json'
                     ),
                     MAP_CENTER: JSON.stringify([-6.8, 39.2]),
-                    MAP_ZOOM: 5
+                    MAP_ZOOM: 5,
+                    PLATFORM_USERS: PLATFORM_USERS
                 },
                 'HELPCONFIG': {
                     API_DOCS_URL: JSON.stringify('https://docs.rasterfoundry.com/'),

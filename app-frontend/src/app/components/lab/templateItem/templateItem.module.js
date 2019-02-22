@@ -44,7 +44,7 @@ class TemplateItemController {
     }
 
     getTemplateOwner() {
-        if (this.templateData.owner === 'default') {
+        if (this.BUILDCONFIG.PLATFORM_USERS.includes(this.templateData.owner)) {
             this.templateOwner = this.BUILDCONFIG.APP_NAME;
         } else {
             this.userService.getUserById(this.templateData.owner).then(user => {

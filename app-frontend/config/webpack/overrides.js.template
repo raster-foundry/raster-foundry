@@ -40,6 +40,8 @@ const basemaps = JSON.stringify({
     default: 'Light'
 });
 
+const PLATFORM_USERS = JSON.stringify(['default']);
+
 module.exports = function (_path) {
     return {
         plugins: [
@@ -65,7 +67,8 @@ module.exports = function (_path) {
                     LOGOFILE: JSON.stringify('raster-foundry-logo.svg'),
                     LOGOURL: JSON.stringify(false),
                     FAVICON_DIR: JSON.stringify('/favicon'),
-                    FEED_SOURCE: JSON.stringify(FEED_SOURCE)
+                    FEED_SOURCE: JSON.stringify(FEED_SOURCE),
+                    PLATFORM_USERS: PLATFORM_USERS
                 },
                 'HELPCONFIG': {
                     HELP_DOCS: JSON.stringify(HELP_DOCS)
