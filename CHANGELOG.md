@@ -13,6 +13,8 @@
 - Added layer ID query parameter to export list endpoint [\#4663](https://github.com/raster-foundry/raster-foundry/pull/4663)
 - Added project layer annotation UI support [\#4665](https://github.com/raster-foundry/raster-foundry/pull/4665)
 - Added project settings pages for v2 UI [\#4637](https://github.com/raster-foundry/raster-foundry/pull/4637)
+- Added owner query parameter to tools and tool-runs endpoints, support multiple owner qp's on applicable endpoints [\#4689](https://github.com/raster-foundry/raster-foundry/pull/4689)
+
 ### Changed
 
 - Updated default project layer color group hex code [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
