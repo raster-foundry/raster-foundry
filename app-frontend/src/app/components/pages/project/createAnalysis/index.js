@@ -241,7 +241,11 @@ class ProjectCreateAnalysisPageController {
             projectId: this.project.id,
             projectLayerId: layer.id,
             templateId: template.id,
-            executionParameters: _.cloneDeep(template.definition)
+            executionParameters: layer.geometry ? {
+                id: this.uuid4.generate(),
+                args: [_.cloneDeep(template.definition)],
+                mask: layer.geometry
+            } : _.cloneDeep(template.definition)
         };
         let root = analysis.executionParameters;
         let nodes = root.args ? [...root.args] : [];

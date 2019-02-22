@@ -17,7 +17,7 @@ class LayerItemController {
         }
 
         const geometry = _.get(this.itemInfo, 'colorGroupHex');
-        this.hasGeom = _.get(this.itemInfo, 'geometry.features.length');
+        this.hasGeom = _.get(this.itemInfo, 'geometry.type');
     }
 }
 
