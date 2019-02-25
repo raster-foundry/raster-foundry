@@ -293,7 +293,8 @@ class LayerScenesBrowseController {
 
     allVisibleSelected() {
         let sceneSet = new Set(this.sceneList.map(s => s.id).filter(s => !s.inLayer));
-        return this.selected.keySeq().toSet().intersect(sceneSet).size === sceneSet.size;
+        return this.selected.size &&
+            this.selected.keySeq().toSet().intersect(sceneSet).size === sceneSet.size;
     }
 
     selectAll() {

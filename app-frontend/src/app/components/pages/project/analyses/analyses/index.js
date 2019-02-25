@@ -2,6 +2,7 @@ import tpl from './index.html';
 import {colorStopsToRange, createRenderDefinition} from '_redux/histogram-utils';
 import {nodesFromAst, astFromNodes} from '_redux/node-utils';
 import _ from 'lodash';
+import {Map, Set} from 'immutable';
 
 class AnalysesListController {
     constructor(
@@ -14,7 +15,9 @@ class AnalysesListController {
     }
 
     $onInit() {
-        this.visible = new Set([]);
+        this.visible = new Set();
+        this.selected = new Map();
+        this.itemActions = new Map();
         this.syncMapLayersToVisible();
         this.fetchPage();
     }
@@ -30,22 +33,20 @@ class AnalysesListController {
     }
 
     showFirstAnalysis() {
-        this.visible.clear();
-        this.visible.add(this.itemList[0].id);
+        this.visible = this.visible.clear();
+        this.visible = this.visible.add(this.itemList[0].id);
         this.syncMapLayersToVisible();
     }
 
     showAllAnalyses() {
         this.itemList.forEach(item => {
-            this.visible.add(item.id);
+            this.visible = this.visible.add(item.id);
         });
         this.syncMapLayersToVisible();
     }
 
     fetchPage(page = this.$state.params.page || 1) {
-        this.analysisList = [];
         this.itemList = [];
-        this.itemActions = [];
         const currentQuery = this.analysisService.fetchAnalyses(
             {
                 pageSize: 30,
@@ -53,22 +54,16 @@ class AnalysesListController {
                 projectId: this.project.id
             }
         ).then((paginatedAnalyses) => {
-            this.analysisList = paginatedAnalyses.results;
+            this.itemList = paginatedAnalyses.results;
             this.pagination = this.paginationService.buildPagination(paginatedAnalyses);
             this.paginationService.updatePageParam(page);
             if (this.currentQuery === currentQuery) {
                 delete this.fetchError;
             }
-            if (paginatedAnalyses.count) {
-                this.itemList = this.analysisList.map(analysis => {
-                    this.getAnalysisActions(analysis);
-                    return this.createItemInfo(analysis);
-                });
-                if (parseInt(page, 10) === 1) {
-                    this.visible.add(this.itemList[0].id);
-                    this.syncMapLayersToVisible();
-                }
-            }
+            this.itemActions = new Map(this.itemList.map(a => [a.id, []]));
+            this.itemList.forEach(analysis => {
+                this.getAnalysisActions(analysis);
+            });
         }).catch((e) => {
             if (this.currentQuery === currentQuery) {
                 this.fetchError = e;
@@ -86,31 +81,42 @@ class AnalysesListController {
         this.analysisService
             .getAnalysisActions(analysis.id)
             .then(actions => {
-                const isEditAllowed = actions.includes('*') || actions.includes('EDIT');
-                const isDeleteAllowed = actions.includes('*') || actions.includes('DELETE');
-                if (isEditAllowed) {
-                    this.itemActions.push(this.createItemActions(analysis, isDeleteAllowed));
-                } else {
-                    this.itemActions.push([]);
+                if (this.itemActions.has(analysis.id)) {
+                    const isEditAllowed = actions.includes('*') || actions.includes('EDIT');
+                    const isDeleteAllowed = actions.includes('*') || actions.includes('DELETE');
+                    if (isEditAllowed) {
+                        this.itemActions = this.itemActions.set(
+                            analysis.id, this.createItemActions(analysis, isDeleteAllowed));
+                    }
                 }
             });
     }
 
-    createItemInfo(analysis) {
-        return {
-            id: analysis.id,
-            name: analysis.name,
-            subtext: analysis.templateTitle,
-            date: analysis.modifiedAt,
-            colorGroupHex: analysis.layerColorGroupHex,
-            geometry: analysis.layerGeometry
-        };
-    }
-
     createItemActions(analysis, isDeleteAllowed) {
+        const previewAction = {
+            icons: [
+                {
+                    icon: 'icon-eye',
+                    isActive: () => this.visible.has(analysis.id)
+                }, {
+                    icon: 'icon-eye-off',
+                    isActive: () => !this.visible.has(analysis.id)
+                }
+            ],
+            name: 'Preview',
+            tooltip: 'Show/hide on map',
+            callback: () => this.onHide(analysis.id),
+            menu: false
+        };
         const editAction = {
             name: 'Edit',
-            callback: () => {},
+            callback: () => {
+                this.editAnalyses(analysis);
+                // this.$state.go('project.analysis', {
+                //     analysisId: [analysis.id],
+                //     analysis: [analysis]
+                // });
+            },
             menu: true,
             separator: true
         };
@@ -135,7 +141,7 @@ class AnalysesListController {
             menu: true
         };
 
-        let actions = [editAction];
+        let actions = [previewAction, editAction];
 
         if (isDeleteAllowed) {
             actions.push(deleteAction);
@@ -146,9 +152,9 @@ class AnalysesListController {
 
     onHide(id) {
         if (this.visible.has(id)) {
-            this.visible.delete(id);
+            this.visible = this.visible.delete(id);
         } else {
-            this.visible.add(id);
+            this.visible = this.visible.add(id);
         }
         this.syncMapLayersToVisible();
     }
@@ -184,7 +190,7 @@ class AnalysesListController {
     }
 
     syncMapLayersToVisible() {
-        const visibleAnalysisIds = Array.from(this.visible);
+        const visibleAnalysisIds = this.visible.toArray();
         this.getMap().then(map => {
             this.$q.all(
                 visibleAnalysisIds.map(this.mapLayerFromAnalysis.bind(this)),
@@ -219,6 +225,78 @@ class AnalysesListController {
             this.analysisService.deleteAnalysis(analysis.id).then(() => {
                 this.fetchPage();
             });
+        });
+    }
+
+    onToggle(id) {
+        if (this.selected.has(id)) {
+            this.selected = this.selected.delete(id);
+        } else {
+            const analysis = this.itemList.find(a => a.id === id);
+            this.selected = this.selected.set(id, analysis);
+        }
+        this.updateSelectText();
+    }
+
+    allVisibleSelected() {
+        const templateId = _.get(this.selected.values().next(), 'value.templateId');
+        let itemSet = new Set(
+            this.itemList
+                .filter(i => i.templateId === templateId)
+                .map(l => l.id));
+        return this.selected.size &&
+            itemSet.intersect(this.selected.keySeq()).size === itemSet.size;
+    }
+
+    selectAll() {
+        if (this.allVisibleSelected()) {
+            this.selected = this.selected.clear();
+        } else {
+            const templateId = _.get(this.selected.values().next(), 'value.templateId');
+            this.selected = this.selected.merge(
+                new Map(
+                    this.itemList
+                        .filter(i => i.templateId === templateId)
+                        .map(i => [i.id, i]))
+            );
+        }
+        this.updateSelectText();
+    }
+
+    updateSelectText() {
+        if (this.allVisibleSelected()) {
+            this.selectText = 'Clear selected';
+        } else {
+            this.selectText = 'Select group';
+        }
+    }
+
+    isSelectable(item) {
+        if (this.selected.size) {
+            const templateId = _.get(this.selected.values().next(), 'value.templateId');
+            return item.templateId === templateId;
+        }
+        return true;
+    }
+
+    editAnalyses(analysis) {
+        let analyses = analysis ? [analysis] : this.selected.valueSeq().toArray();
+        this.modalService.open({
+            component: 'rfAnalysisEditModal',
+            resolve: {
+                analyses: () => analyses
+            }
+        }).result.then((updates) => {
+            if (updates) {
+                this.selected = this.selected.clear();
+                this.fetchPage();
+                const oldVisible = this.visible;
+                this.syncMapLayersToVisible().then(() => {
+                    this.visible = oldVisible;
+                    this.syncMapLayersToVisible();
+                });
+            }
+        }).catch(() => {
         });
     }
 }

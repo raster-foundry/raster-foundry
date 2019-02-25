@@ -3605,3 +3605,11 @@ rf-aoi-draw-toolbar {
         }
     }
 }
+.modal-aoi-map-container {
+    width: 100%;
+    height: 255px;
+    rf-static-map {
+        width: 100%;
+        height: 100%;
+    }
+}

@@ -242,7 +242,7 @@ class LayerExportsController {
 
     allVisibleSelected() {
         const exportSet = new Map(this.exportList.map(e => [e.id, e]));
-        return exportSet.size === this.selected.size;
+        return this.selected.size && exportSet.size === this.selected.size;
     }
 
     updateSelectText() {

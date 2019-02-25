@@ -299,8 +299,34 @@ function projectStatesV2($stateProvider) {
         })
         .state('project.analysis', {
             title: 'Project Analysis',
-            url: '/analysis/:analsisId',
-            component: 'rfProjectAnalysis'
+            url: '/analysis/?analysisId',
+            component: 'rfProjectAnalysisPage',
+            params: {
+                analysis: {
+                    array: true
+                },
+                analysisId: {
+                    array: true
+                }
+            },
+            resolve: {
+                analyses: [
+                    '$transition$', 'analysisService', '$q',
+                    ($transition$, analysisService, $q) => {
+                        if ($transition$.params().analysis &&
+                            $transition$.params().analysis.length) {
+                            return $transition$.params().analyses;
+                        }
+                        const analysisIds = $transition$.params().analysisId;
+                        if (!analysisIds.length) {
+                            return $q.resolve();
+                        }
+                        return $q.all(
+                            analysisIds
+                                .map((analysis) => analysisService.getAnalysis(analysis)));
+                    }
+                ]
+            }
         })
         .state('project.create-analysis', {
             title: 'Create project analysis',

@@ -5,6 +5,7 @@ import selectedActionsBar from './selectedActionsBar';
 import navbar from './navbar';
 import projectSettingsNavbar from './projectSettingsNavbar';
 import aoiDrawToolbar from './aoiDrawToolbar';
+import analysisEditModal from './analysisEditModal';
 
 export default [
     layerItem,
@@ -13,5 +14,6 @@ export default [
     projectLayerSecondaryNavbar,
     selectedActionsBar,
     navbar,
-    aoiDrawToolbar
+    aoiDrawToolbar,
+    analysisEditModal
 ];

@@ -1,6 +1,6 @@
-<div class="sidebar-actions-group">
+<div class="sidebar-actions-group" ng-show="$ctrl.selected.size === 0">
   <div style="flex: 1;"></div>
-  <div class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
+  <a class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
     Analysis Visibility
     <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
       <li role="menuitem">
@@ -8,17 +8,52 @@
       <li role="menuitem">
         <a href ng-click="$ctrl.showAllAnalyses()">Show all on page</a></li>
     </ul>
-  </div>
+  </a>
+</div>
+<div class="selected-actions-group" ng-show="$ctrl.selected.size > 0">
+  <rf-selected-actions-bar
+      checked="$ctrl.allVisibleSelected()"
+      on-click="$ctrl.selectAll()"
+      action-text="$ctrl.selectText"
+  >
+    <button class="btn btn-transparent"
+            ng-click="$ctrl.editAnalyses()">
+      Edit
+    </button>
+    <button class="btn btn-transparent"
+            ng-click="$ctrl.removeScenes($ctrl.selected.valueSeq().toArray())">
+      Delete
+    </button>
+  </rf-selected-actions-bar>
 </div>
 <div class="sidebar-scrollable list-group">
-  <rf-layer-item
-      is-analysis="true"
-      item-info="item"
-      item-actions="$ctrl.itemActions[$index]"
-      visible="$ctrl.isVisible(item.id)"
-      on-hide="$ctrl.onHide(id)"
+  <div class="disabled-overlay" ng-show="$ctrl.updatePromise">
+    <span class="list-placeholder">
+      <i class="icon-load animate-spin"
+         ng-class="{'stop': !$ctrl.updatePromise}"></i>
+    </span>
+  </div>
+  <rf-list-item
       ng-repeat="item in $ctrl.itemList track by item.id">
-  </rf-layer-item>
+    <item-selector>
+      <rf-list-item-selector
+          id="item.id"
+          selected="$ctrl.selected.has(item.id)"
+          disable-selection="!$ctrl.isSelectable(item)"
+          on-select="$ctrl.onToggle(id)"
+          color="item.layerColorGrouphex"
+      ></rf-list-item-selector>
+    </item-selector>
+    <item-title><strong>{{item.name}}</strong></item-title>
+    <item-subtitle><span>{{item.templateTitle}}</span></item-subtitle>
+    <item-date>{{item.modifiedAt | date}}</item-date>
+    <item-actions>
+      <rf-list-item-visibility
+          visible="$ctrl.visible.has(item.id)"
+          on-toggle="$ctrl.visible.onHide(id)"></rf-list-item-visibility>
+      <rf-list-item-actions actions="$ctrl.itemActions.get(item.id)"></rf-list-item-actions>
+    </item-actions>
+  </rf-list-item>
   <rf-pagination-controls
       pagination="$ctrl.pagination"
       is-loading="$ctrl.currentQuery"
