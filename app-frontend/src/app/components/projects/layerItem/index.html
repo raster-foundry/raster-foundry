@@ -36,7 +36,8 @@
   <div class="list-group-right list-group-vertical">
     <div>
       <div class="btn btn-text btn-transparent"
-           ng-if="!$ctrl.hasGeom && !$ctrl.isAnalysis && !$ctrl.isExport">
+           ng-if="!$ctrl.hasGeom && !$ctrl.isAnalysis && !$ctrl.isExport"
+           ng-click="$ctrl.goToAoiDef({id: $ctrl.itemInfo.id})">
         <span class="icon-warning color-danger"
               tooltips
               tooltip-template="No AOI defined for this layer"

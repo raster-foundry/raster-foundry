@@ -37,6 +37,7 @@
       on-select="$ctrl.onSelect(id)"
       visible="$ctrl.isVisible(item.id)"
       on-hide="$ctrl.onHide(id)"
+      go-to-aoi-def="$ctrl.goToAoiDef(id)"
       ng-repeat="item in $ctrl.itemList track by item.id">
     <rf-layer-stats scene-count="$ctrl.getSceneCount(item.id)"></rf-layer-stats">
   </rf-layer-item>

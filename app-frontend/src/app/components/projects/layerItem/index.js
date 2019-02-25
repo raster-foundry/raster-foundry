@@ -2,7 +2,7 @@ import tpl from './index.html';
 import _ from 'lodash';
 
 class LayerItemController {
-    constructor($rootScope, $scope, $state, projectService) {
+    constructor($rootScope, $scope, $state, $log, projectService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -31,7 +31,9 @@ const component = {
         onHide: '&?',
         isAnalysis: '<?',
         isExport: '<?',
-        onDownloadExport: '&?'
+        isAoi: '<?',
+        onDownloadExport: '&?',
+        goToAoiDef: '&?'
     },
     templateUrl: tpl,
     controller: LayerItemController.name,
