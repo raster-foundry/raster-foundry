@@ -23,7 +23,8 @@ object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
   val selectF = sql"""
     SELECT
       id, created_at, modified_at, created_by, modified_by, owner, title,
-      description, requirements, license, visibility, compatible_data_sources, stars, definition
+      description, requirements, license, visibility, compatible_data_sources, stars, definition,
+      single_source
     FROM """ ++ tableF
 
   def insert(newTool: Tool.Create, user: User): ConnectionIO[Tool] = {
@@ -34,11 +35,12 @@ object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
     sql"""
        INSERT INTO tools
          (id, created_at, modified_at, created_by, modified_by, owner, title,
-          description, requirements, license, visibility, compatible_data_sources, stars, definition)
+          description, requirements, license, visibility, compatible_data_sources, stars, definition,
+          single_source)
        VALUES
          (${id}, ${now}, ${now}, ${user.id}, ${user.id}, ${ownerId}, ${newTool.title},
           ${newTool.description}, ${newTool.requirements}, ${newTool.license}, ${newTool.visibility},
-          ${newTool.compatibleDataSources}, ${newTool.stars}, ${newTool.definition})
+          ${newTool.compatibleDataSources}, ${newTool.stars}, ${newTool.definition}, ${newTool.singleSource})
        """.update.withUniqueGeneratedKeys[Tool](
       "id",
       "created_at",
@@ -53,7 +55,8 @@ object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
       "visibility",
       "compatible_data_sources",
       "stars",
-      "definition"
+      "definition",
+      "single_source"
     )
   }
 
@@ -72,7 +75,8 @@ object ToolDao extends Dao[Tool] with ObjectPermissions[Tool] {
          visibility = ${tool.visibility},
          compatible_data_sources = ${tool.compatibleDataSources},
          stars = ${tool.stars},
-         definition = ${tool.definition}
+         definition = ${tool.definition},
+         single_source = ${tool.singleSource}
      """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 

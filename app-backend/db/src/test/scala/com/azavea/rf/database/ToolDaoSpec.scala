@@ -9,4 +9,6 @@ class ToolDaoSpec extends FunSuite with Matchers with DBTestConfig {
       .unsafeRunSync
       .length should be >= 0
   }
+
+  // TODO add select and update tests (that will have to test creation)
 }

@@ -17,11 +17,12 @@ final case class Tool(id: UUID,
                       title: String,
                       description: String,
                       requirements: String,
-                      license: String,
+                      license: Option[Int],
                       visibility: Visibility,
                       compatibleDataSources: List[String] = List.empty,
                       stars: Float = 0.0f,
-                      definition: Json) {
+                      definition: Json,
+                      singleSource: Boolean) {
   def withRelatedFromComponents(
       toolTags: Seq[ToolTag],
       toolCategories: Seq[ToolCategory],
@@ -42,6 +43,7 @@ final case class Tool(id: UUID,
     this.compatibleDataSources,
     this.stars,
     this.definition,
+    this.singleSource,
     toolTags,
     toolCategories
   )
@@ -64,6 +66,7 @@ final case class Tool(id: UUID,
     this.compatibleDataSources,
     this.stars,
     this.definition,
+    this.singleSource,
     toolTagIds,
     toolCategorySlugs
   )
@@ -79,12 +82,13 @@ object Tool {
   final case class Create(title: String,
                           description: String,
                           requirements: String,
-                          license: String,
+                          license: Option[Int],
                           visibility: Visibility,
                           compatibleDataSources: List[String],
                           owner: Option[String],
                           stars: Float,
                           definition: Json,
+                          singleSource: Boolean,
                           tags: Seq[UUID],
                           categories: Seq[String])
       extends OwnerCheck {
@@ -109,7 +113,8 @@ object Tool {
         visibility,
         compatibleDataSources,
         stars,
-        definition
+        definition,
+        singleSource
       )
 
       val toolTagToTools = tags.map(tagId => ToolTagToTool(tagId, toolId))
@@ -143,11 +148,12 @@ object Tool {
                                title: String,
                                description: String,
                                requirements: String,
-                               license: String,
+                               license: Option[Int],
                                visibility: Visibility,
                                compatibleDataSources: List[String] = List.empty,
                                stars: Float = 0.0f,
                                definition: Json,
+                               singleSource: Boolean,
                                tags: Seq[ToolTag],
                                categories: Seq[ToolCategory])
 
@@ -186,12 +192,13 @@ object Tool {
                                     title: String,
                                     description: String,
                                     requirements: String,
-                                    license: String,
+                                    license: Option[Int],
                                     visibility: Visibility,
                                     compatibleDataSources: List[String] =
                                       List.empty,
                                     stars: Float = 0.0f,
                                     definition: Json,
+                                    singleSource: Boolean,
                                     tags: Seq[UUID],
                                     categories: Seq[String])
 }
