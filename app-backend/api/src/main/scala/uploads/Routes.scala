@@ -182,7 +182,10 @@ trait UploadRoutes
               .transact(xa)
               .unsafeToFuture) {
             case Some(_) =>
-              complete(CredentialsService.getCredentials(user, uploadId, jwt))
+              complete(
+                CredentialsService.getCredentials(user,
+                                                  uploadId,
+                                                  jwt.split(" ").last))
             case None => complete(StatusCodes.NotFound)
           }
         case _ =>
