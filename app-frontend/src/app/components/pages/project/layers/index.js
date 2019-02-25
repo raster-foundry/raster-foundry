@@ -310,6 +310,10 @@ class ProjectLayersPageController {
             geometry: layer.geometry
         };
     }
+
+    goToAoiDef(id) {
+        this.$state.go('project.layer.aoi', {layerId: id, projectId: this.project.id});
+    }
 }
 
 const component = {

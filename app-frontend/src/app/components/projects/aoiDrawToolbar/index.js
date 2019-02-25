@@ -1,16 +1,10 @@
 import tpl from './index.html';
+import turfBbox from '@turf/bbox';
 
 const GREEN = '#81C784';
 const RED = '#E57373';
 const AOILAYER = 'Drawn AOI';
 const EDITLAYER = 'Edit Layer';
-
-const drawShapeOptions = {
-    weight: 2,
-    fillOpacity: 0.2,
-    color: GREEN,
-    fillColor: GREEN
-};
 
 const editShapeOptions = {
     fillColor: RED,
@@ -72,20 +66,18 @@ class AoiDrawToolbarController {
     }
 
     setAoi() {
-        this.$log.log('layerAoi', this.layerAoi);
         if (this.layerAoi) {
-            this.$log.log(this.layerAoi);
             this.showAoi(this.layerAoi);
         }
     }
 
     setDrawHandlers(mapWrapper) {
         this.drawRectangleHandler = new L.Draw.Rectangle(mapWrapper.map, {
-            shapeOptions: drawShapeOptions
+            shapeOptions: this.getShapeOptions(this.layerAoiColor)
         });
         this.drawPolygonHandler = new L.Draw.Polygon(mapWrapper.map, {
             allowIntersection: false,
-            shapeOptions: drawShapeOptions
+            shapeOptions: this.getShapeOptions(this.layerAoiColor)
         });
     }
 
@@ -126,7 +118,14 @@ class AoiDrawToolbarController {
 
     showAoi(aoiGeojson) {
         this.getMap().then(mapWrapper => {
-            mapWrapper.setGeojson(this.aoiLayerName, aoiGeojson, {});
+            mapWrapper.setGeojson(
+                this.aoiLayerName,
+                aoiGeojson,
+                {}
+            );
+            const bbox = turfBbox(this.layerAoi);
+            const bounds = L.latLngBounds(L.latLng(bbox[1], bbox[0]), L.latLng(bbox[3], bbox[2]));
+            mapWrapper.map.fitBounds(bounds);
         });
     }
 
@@ -209,12 +208,22 @@ class AoiDrawToolbarController {
             mapWrapper.deleteLayers(this.editLayerName);
         });
     }
+
+    getShapeOptions(color) {
+        return {
+            weight: 2,
+            fillOpacity: 0.2,
+            color: color || GREEN,
+            fillColor: color || GREEN
+        };
+    }
 }
 
 const component = {
     bindings: {
         mapId: '<',
         layerAoi: '<?',
+        layerAoiColor: '<?',
         geomDrawType: '<',
         filterList: '<?',
         selectedGeom: '<?',

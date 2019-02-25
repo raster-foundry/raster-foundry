@@ -2060,6 +2060,18 @@ rf-node-selector {
         left: initial;
         right: 0;
     }
+<<<<<<< HEAD
+=======
+  }
+  &.drop-left {
+    left: initial;
+    right: 0;
+
+    &.aoi-draw-dropdown {
+      z-index: 1060;
+    }
+  }
+>>>>>>> Add layer AOI UI and use AOI draw component
 }
 .leaflet-frame {
     position: absolute;
@@ -3258,7 +3270,8 @@ rf-project-layer-scenes-browse-page,
 rf-project-layer-exports-page,
 rf-project-create-analysis-page,
 rf-project-layer-annotations-page,
-rf-project-layer-colormode-page {
+rf-project-layer-colormode-page,
+rf-project-layer-aoi-page {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -3276,6 +3289,12 @@ rf-project-layer-colormode-page {
         border: 1px solid $gray-lightest;
         border-radius: 3px;
         margin: 0.5em;
+    }
+
+    rf-layer-item {
+      .with-aoi-component {
+        z-index: 1040;
+      }
     }
 }
 
@@ -3553,5 +3572,5 @@ rf-project-page {
 rf-aoi-draw-toolbar {
   position: absolute;
   width: 100vw;
-  z-index: 1200;
+  z-index: 1040;
 }
