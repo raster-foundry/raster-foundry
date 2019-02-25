@@ -22,6 +22,7 @@
 - Updated default project layer color group hex code [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
 - Updated `gdal-js` and `requests` [\#4618](https://github.com/raster-foundry/raster-foundry/pull/4618)
 - Swap trash icon for "Remove" text on scene item components [\#4621](https://github.com/raster-foundry/raster-foundry/pull/4621)
+- Bumped Nginx buffer size for scene creation requests [\#4672](https://github.com/raster-foundry/raster-foundry/pull/4672)
 
 ### Deprecated
 

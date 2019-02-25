@@ -15,4 +15,4 @@ dropbox==9.0.0
 rasterfoundry==0.7.1
 psycopg2-binary==2.7.6
 requests==2.21.0
-six>=1.11.0
+six==1.11
