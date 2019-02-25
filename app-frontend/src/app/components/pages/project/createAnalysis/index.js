@@ -245,6 +245,7 @@ class ProjectCreateAnalysisPageController {
                 id: this.uuid4.generate(),
                 args: [_.cloneDeep(template.definition)],
                 mask: layer.geometry,
+                apply: 'mask',
                 metadata: {
                     label: 'Layer Mask',
                     collapsable: false
