@@ -236,7 +236,7 @@ class ProjectCreateAnalysisPageController {
         // use template to create an analysis for layer
         const analysis = {
             id: this.uuid4.generate(),
-            name: template.title,
+            name: `${template.title}: ${layer.name}`,
             visibility: 'PRIVATE',
             projectId: this.project.id,
             projectLayerId: layer.id,
@@ -244,13 +244,20 @@ class ProjectCreateAnalysisPageController {
             executionParameters: layer.geometry ? {
                 id: this.uuid4.generate(),
                 args: [_.cloneDeep(template.definition)],
-                mask: layer.geometry
+                mask: layer.geometry,
+                metadata: {
+                    label: 'Layer Mask',
+                    collapsable: false
+                }
             } : _.cloneDeep(template.definition)
         };
         let root = analysis.executionParameters;
         let nodes = root.args ? [...root.args] : [];
         while (nodes.length) {
             const node = nodes.pop();
+            if (node.args && node.args.length) {
+                nodes = nodes.concat(node.args);
+            }
             if (['projectSrc', 'layerSrc'].includes(_.get(node, 'type'))) {
                 Object.assign(node, {
                     type: 'layerSrc',
