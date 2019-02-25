@@ -2059,19 +2059,11 @@ rf-node-selector {
     &.drop-left {
         left: initial;
         right: 0;
-    }
-<<<<<<< HEAD
-=======
-  }
-  &.drop-left {
-    left: initial;
-    right: 0;
 
-    &.aoi-draw-dropdown {
-      z-index: 1060;
+        &.aoi-draw-dropdown {
+            z-index: 1060;
+        }
     }
-  }
->>>>>>> Add layer AOI UI and use AOI draw component
 }
 .leaflet-frame {
     position: absolute;
@@ -3573,4 +3565,5 @@ rf-aoi-draw-toolbar {
   position: absolute;
   width: 100vw;
   z-index: 1040;
+  bottom: 100%;
 }
