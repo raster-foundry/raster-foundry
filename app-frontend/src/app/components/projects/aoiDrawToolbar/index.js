@@ -1,5 +1,6 @@
 import tpl from './index.html';
 import turfBbox from '@turf/bbox';
+import _ from 'lodash';
 
 const GREEN = '#81C784';
 const RED = '#E57373';
@@ -13,10 +14,7 @@ const editShapeOptions = {
 };
 
 class AoiDrawToolbarController {
-    constructor(
-        $rootScope, $scope, $state, $log,
-        mapService
-    ) {
+    constructor($rootScope, $scope, $state, $log, mapService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -25,17 +23,29 @@ class AoiDrawToolbarController {
         this.setComponentStyle();
         this.setMapEvents();
 
+        this.selectedFilterName = this.filterList && this.filterList[0].name;
         this.isDrawnAoi = false;
         this.isDrawingAoi = false;
         this.isEditingAoi = false;
         this.aoiLayerName = AOILAYER;
         this.editLayerName = EDITLAYER;
+
+        this.$scope.$watch('$ctrl.layerAoiGeom', this.onLayerAoiGeomChange.bind(this), true);
     }
 
-    $onChanges(changes) {
-        if (changes.layerAoi && changes.layerAoi.currentValue) {
-            this.layerAoi = changes.layerAoi.currentValue;
+    onLayerAoiGeomChange(layerAoiGeom) {
+        if (layerAoiGeom && layerAoiGeom.type) {
+            this.isDrawnAoi = true;
+            this.aoiGeojson = {
+                geometry: layerAoiGeom,
+                properties: {}
+            };
             this.setAoi();
+        } else {
+            this.isDrawnAoi = false;
+            delete this.aoiGeojson;
+            this.removeDrawnAoi();
+            this.removeEditAoi();
         }
     }
 
@@ -46,29 +56,24 @@ class AoiDrawToolbarController {
         this.removeDrawnAoi();
     }
 
+    isValidGeometry() {
+        return _.get(this, 'aoiGeojson.geometry.type');
+    }
+
     setComponentStyle() {
         const navebarClass = '.navbar.light-navbar';
         const height = angular.element(document.querySelector(navebarClass))[0].offsetHeight;
         this.eleStyle = {
-            top: `${-height}px`,
             height: `${height}px`
         };
-        this.leftStyle = {height: `${height}px`};
+        this.leftStyle = { height: `${height}px` };
     }
 
     setMapEvents() {
-        this.getMap().then((mapWrapper) => {
-            this.listeners = [
-                mapWrapper.on(L.Draw.Event.CREATED, this.createShape.bind(this))
-            ];
+        this.getMap().then(mapWrapper => {
+            this.listeners = [mapWrapper.on(L.Draw.Event.CREATED, this.createShape.bind(this))];
             this.setDrawHandlers(mapWrapper);
         });
-    }
-
-    setAoi() {
-        if (this.layerAoi) {
-            this.showAoi(this.layerAoi);
-        }
     }
 
     setDrawHandlers(mapWrapper) {
@@ -86,12 +91,17 @@ class AoiDrawToolbarController {
     }
 
     onChangeFilter(id) {
-        this.disableDrawHandlers();
-        this.onChangeFilterList({id});
+        const selectedFilter = this.filterList.find(fl => fl.id === id);
+        if (selectedFilter) {
+            this.selectedFilterName = selectedFilter.name;
+            this.disableDrawHandlers();
+            this.onChangeFilterList({ id });
+        }
     }
 
     onDrawAoi() {
         this.isDrawingAoi = true;
+        this.onShapeOp({ isInProgress: true });
         if (this.geomDrawType.toUpperCase() === 'POLYGON') {
             this.drawPolygonHandler.enable();
         }
@@ -111,25 +121,29 @@ class AoiDrawToolbarController {
     createShape(e) {
         this.isDrawnAoi = true;
         this.isDrawingAoi = false;
+        this.onShapeOp({ isInProgress: false });
         this.aoiGeojson = e.layer.toGeoJSON();
-        this.layerAoi = this.aoiGeojson.geometry;
         this.setAoi();
     }
 
-    showAoi(aoiGeojson) {
+    setAoi() {
+        const geom = this.aoiGeojson.geometry;
+        if (geom) {
+            this.showAoi(geom);
+        }
+    }
+
+    showAoi(aoiPolygonGeojson) {
         this.getMap().then(mapWrapper => {
-            mapWrapper.setGeojson(
-                this.aoiLayerName,
-                aoiGeojson,
-                {}
-            );
-            const bbox = turfBbox(this.layerAoi);
+            mapWrapper.setGeojson(this.aoiLayerName, aoiPolygonGeojson, {});
+            const bbox = turfBbox(aoiPolygonGeojson);
             const bounds = L.latLngBounds(L.latLng(bbox[1], bbox[0]), L.latLng(bbox[3], bbox[2]));
             mapWrapper.map.fitBounds(bounds);
         });
     }
 
     onClickCancel() {
+        this.onShapeOp({ isInProgress: false });
         this.disableDrawHandlers();
         this.onCancel();
     }
@@ -142,14 +156,14 @@ class AoiDrawToolbarController {
     }
 
     removeDrawnAoi() {
-        this.getMap().then((mapWrapper) => {
+        this.getMap().then(mapWrapper => {
             mapWrapper.deleteGeojson(this.aoiLayerName);
         });
     }
 
     removeMapListeners() {
-        this.getMap().then((mapWrapper) => {
-            this.listeners.forEach((listener) => {
+        this.getMap().then(mapWrapper => {
+            this.listeners.forEach(listener => {
                 mapWrapper.off(listener);
             });
         });
@@ -158,15 +172,27 @@ class AoiDrawToolbarController {
     onClickDeleteAoi() {
         this.isDrawnAoi = false;
         this.removeDrawnAoi();
-        delete this.layerAoi;
+        this.onShapeOp({ isInProgress: false });
+        this.aoiGeojson = {};
     }
 
     onClickEditAoi() {
-        if (this.layerAoi) {
+        const geom = _.get(this, 'aoiGeojson.geometry');
+        if (geom) {
+            let coordinates = [];
+            const geomType = geom.type;
+
             this.isEditingAoi = true;
-            this.editLayer = L.polygon(
-                this.layerAoi.coordinates[0].map(c => [c[1], c[0]]), editShapeOptions);
+            this.onShapeOp({ isInProgress: this.isEditingAoi });
+
+            if (geomType && geomType.toUpperCase() === 'MULTIPOLYGON') {
+                coordinates = geom.coordinates[0][0].map(c => [c[1], c[0]]);
+            } else {
+                coordinates = geom.coordinates[0].map(c => [c[1], c[0]]);
+            }
+
             this.removeDrawnAoi();
+            this.editLayer = L.polygon(coordinates, editShapeOptions);
             this.getMap().then(mapWrapper => {
                 this.editHandler = new L.EditToolbar.Edit(mapWrapper.map, {
                     featureGroup: L.featureGroup([this.editLayer])
@@ -178,18 +204,18 @@ class AoiDrawToolbarController {
     }
 
     onClickCancelEdit() {
-        this.isEditingAoi = false;
-        this.disableEditHandler();
-        this.removeEditAoi();
-        this.setAoi();
-        delete this.editLayer;
+        this.clearEditState();
     }
 
     onClickConfirmEdit() {
         this.aoiGeojson = this.editLayer.toGeoJSON();
-        this.layerAoi = this.aoiGeojson.geometry;
-        this.isEditingAoi = false;
         this.isDrawnAoi = true;
+        this.clearEditState();
+    }
+
+    clearEditState() {
+        this.isEditingAoi = false;
+        this.onShapeOp({ isInProgress: false });
         this.disableEditHandler();
         this.removeEditAoi();
         this.setAoi();
@@ -222,14 +248,15 @@ class AoiDrawToolbarController {
 const component = {
     bindings: {
         mapId: '<',
-        layerAoi: '<?',
+        layerAoiGeom: '<?',
         layerAoiColor: '<?',
         geomDrawType: '<',
         filterList: '<?',
         selectedGeom: '<?',
         onConfirmAoi: '&',
         onCancel: '&',
-        onChangeFilterList: '&?'
+        onChangeFilterList: '&?',
+        onShapeOp: '&?'
     },
     templateUrl: tpl,
     controller: AoiDrawToolbarController.name
@@ -238,5 +265,4 @@ const component = {
 export default angular
     .module('components.projects.aoiDrawToolbar', [])
     .controller(AoiDrawToolbarController.name, AoiDrawToolbarController)
-    .component('rfAoiDrawToolbar', component)
-    .name;
+    .component('rfAoiDrawToolbar', component).name;

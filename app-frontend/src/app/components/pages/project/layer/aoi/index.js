@@ -44,7 +44,7 @@ class ProjectLayerAoiController {
                 this.$log.error(err);
             });
         this.dataType = this.filterList[0].type;
-        this.fetchPage(1, this.filterList[0].id);
+        this.fetchPage();
         this.displayAoiSource = this.filterList[0].name;
     }
 
@@ -69,90 +69,136 @@ class ProjectLayerAoiController {
         });
     }
 
-    fetchPage(page = 1, typeId) {
+    fetchLayerAoiList(page) {
         this.itemList = [];
         let fetchedList = [];
-        this.dataType = this.filterList.find(fl => fl.id === typeId).type;
-        const query = this.getQueryByType(page);
-
-        const currentQuery = query.then((paginatedResponse) => {
-            if (this.dataType === 'AOI') {
+        const currentQuery = this.projectService
+            .getProjectLayers(this.project.id, {pageSize: 30, page: page - 1})
+            .then((paginatedResponse) => {
                 fetchedList = paginatedResponse.results;
-            } else {
-                fetchedList = paginatedResponse.features;
-            }
-
-            this.itemList = _.compact(fetchedList.map(fl => {
-                if (this.dataType === 'AOI' && !fl.geometry) {
-                    return 0;
+                this.itemList = fetchedList.filter(
+                    fl => fl.geometry && fl.id !== this.layer.id
+                ).map(fl => {
+                    return {
+                        id: fl.id,
+                        name: fl.name,
+                        subtext: '',
+                        date: fl.createdAt,
+                        colorGroupHex: fl.colorGroupHex,
+                        geometry: fl.geometry
+                    };
+                });
+                if (this.itemList.length) {
+                    this.onSelect(this.layer.id);
                 }
-                return this.createItemInfo(fl);
-            }));
-
-            if (this.dataType === 'AOI') {
-                this.onSelect(this.layer.id);
-            } else {
-                this.onSelect(this.itemList[0].id);
-            }
-
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page);
-            if (this.currentQuery === currentQuery) {
-                delete this.fetchError;
-            }
-        }, (e) => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
+                this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                this.paginationService.updatePageParam(page);
+                if (this.currentQuery === currentQuery) {
+                    delete this.fetchError;
+                }
+            })
+            .catch((e) => {
+                if (this.currentQuery === currentQuery) {
+                    this.fetchError = e;
+                }
+            })
+            .finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
+            });
         this.currentQuery = currentQuery;
         return currentQuery;
     }
 
-    getQueryByType(page) {
-        return this.dataType === 'AOI' ?
-            this.projectService.getProjectLayers(
-                this.project.id,
-                {
-                    pageSize: 30,
-                    page: page - 1
+    fetchVectorDataList(page) {
+        this.itemList = [];
+        let fetchedList = [];
+
+        const currentQuery = this.shapesService.query({pageSize: 30, page: page - 1})
+            .then((paginatedResponse) => {
+                fetchedList = paginatedResponse.features;
+                this.itemList = fetchedList.map(fl => {
+                    return {
+                        id: fl.id,
+                        name: fl.properties.name,
+                        subtext: '',
+                        date: fl.properties.createdAt,
+                        colorGroupHex: defaultColor,
+                        geometry: fl.geometry
+                    };
+                });
+                this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                this.paginationService.updatePageParam(page);
+                if (this.currentQuery === currentQuery) {
+                    delete this.fetchError;
                 }
-            ) :
-            this.shapesService.query(
-                {
-                    pageSize: 30,
-                    page: page - 1
+            })
+            .catch((e) => {
+                if (this.currentQuery === currentQuery) {
+                    this.fetchError = e;
                 }
-            );
+            })
+            .finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
+            });
+        this.currentQuery = currentQuery;
+        return currentQuery;
     }
 
-    onConfirmAoi(aoi, isSaveShape) {
-        // save layer aoi here
-        const updatedLayer = Object.assign({}, this.layer, {geometry: aoi});
+    fetchPage(page = 1) {
+        if (this.dataType.toUpperCase() === 'AOI') {
+            this.fetchLayerAoiList(page);
+        }
+
+        if (this.dataType.toUpperCase() === 'VECTOR') {
+            this.fetchVectorDataList(page);
+        }
+    }
+
+    onConfirmAoi(aoiGeojson, isSaveShape) {
+        const geom = this.getMultipolygonGeom(aoiGeojson);
+        if (!geom) {
+            this.$window.alert('The supplied AOI geometry is incorrect. Please try again.');
+            return;
+        }
+        const layerGeomToUpdate = this.generateFeature(geom);
+        const updatedLayer = Object.assign({}, this.layer, {geometry: layerGeomToUpdate});
         this.projectService
             .updateProjectLayer(updatedLayer)
             .then(newLayer => {
                 this.layer = newLayer;
                 this.layerGeom = this.layer.geometry;
-                if (!isSaveShape) {
-                    this.$state.go('project.layer');
-                } else {
+                if (isSaveShape) {
                     this.openShapeModal(this.layer);
+                } else {
+                    this.$state.go('project.layer');
                 }
             })
             .catch(err => {
                 this.$log.error(err);
-                this.$window.alert('There is an error updating this layer\'s AOI.'
+                this.$window.alert('There was an error updating this layer\'s AOI.'
                     + ' Please try again later');
             });
     }
 
+    getMultipolygonGeom(aoiGeojson) {
+        const geomType = _.get(aoiGeojson, 'geometry.type');
+        if (geomType && geomType.toUpperCase() === 'POLYGON') {
+            return {
+                type: 'MultiPolygon',
+                coordinates: [aoiGeojson.geometry.coordinates]
+            };
+        } else if (geomType && geomType.toUpperCase() === 'MULTIPOLYGON') {
+            return aoiGeojson.geometry;
+        }
+        return 0;
+    }
+
     formatDateDisplay(date) {
-        return date.length ? this.moment.utc(date).format('LL') + ' (UTC)' : 'MM/DD/YYYY';
+        return date.length ? this.moment.utc(date).format('LLL') + ' (UTC)' : 'MM/DD/YYYY';
     }
 
     openShapeModal(layer) {
@@ -160,37 +206,52 @@ class ProjectLayerAoiController {
             component: 'rfEnterTokenModal',
             resolve: {
                 title: () => 'Enter a name for the vector data',
-                token: () => `${layer.name} AOI `
+                token: () => `${this.project.name} - ${layer.name} AOI `
                     + `- ${this.formatDateDisplay(layer.createdAt)}`
             }
         });
 
         modal.result.then((name) => {
+            const geom = this.getMultipolygonGeom(layer.geometry);
+
+            if (!geom) {
+                this.$window('The supplied geometry is incorrect, please try again.');
+                return;
+            }
+
             this.shapesService
-                .createShape(this.generateShapeCreate(name, layer.geometry))
+                .createShape(this.generateFeatureCollection(geom, name))
                 .then(() => {
                     this.$state.go('project.layer');
                 })
                 .catch(err => {
-                    this.$window.alert('There is an error adding this layer\'s AOI as vector data.'
+                    this.$window.alert('There was an error adding this layer\'s AOI as vector data.'
                         + ' Please try again later');
                     this.$log.error(err);
                 });
         }).catch(() => {});
     }
 
-    generateShapeCreate(name, geometry) {
+    generateFeatureCollection(geometry, name = '') {
         return {
             type: 'FeatureCollection',
-            features: [
-                {
-                    type: 'Feature',
-                    properties: { name },
-                    geometry,
-                    id: this.uuid4.generate()
-                }
-            ]
+            features: [this.generateFeature(geometry, name)]
         };
+    }
+
+    generateFeature(geometry, name = '') {
+        let result = {
+            type: 'Feature',
+            properties: {},
+            geometry
+        };
+
+        if (name.length) {
+            result.id = this.uuid4.generate();
+            result.properties = { name };
+        }
+
+        return result;
     }
 
     onCancelDrawAoi() {
@@ -198,52 +259,35 @@ class ProjectLayerAoiController {
     }
 
     onChangeFilterList(filterId) {
-        this.fetchPage(1, filterId);
+        this.dataType = this.filterList.find(fl => fl.id === filterId).type;
+        this.fetchPage();
         this.displayAoiSource = this.filterList.find(fl => fl.id === filterId).name;
     }
 
-    createItemInfo(fl) {
-        if (this.dataType === 'AOI') {
-            return {
-                id: fl.id,
-                name: fl.name,
-                subtext: '',
-                date: fl.createdAt,
-                colorGroupHex: fl.colorGroupHex,
-                geometry: fl.geometry
-            };
-        }
-
-        if (this.dataType === 'VECTOR') {
-            return {
-                id: fl.id,
-                name: fl.properties.name,
-                subtext: '',
-                date: fl.properties.createdAt,
-                colorGroupHex: defaultColor,
-                geometry: fl.geometry
-            };
-        }
-
-        return 0;
-    }
-
     onSelect(id) {
-        this.selected.clear();
-        if (!this.selected.has(id)) {
+        if (!this.isSelected(id)) {
             const item = this.itemList.find(itm => itm.id === id);
-            this.selected.set(id, item);
-            if (this.dataType === 'AOI') {
+            if (item) {
+                this.selected.clear();
+                this.selected.set(id, item);
                 this.layerGeom = item.geometry;
-            } else {
-                this.layerGeom = item.geometry;
+                this.$scope.$evalAsync();
             }
+        } else {
+            this.layerGeom = null;
+            this.selected.clear();
         }
     }
-
 
     isSelected(id) {
         return this.selected.has(id);
+    }
+
+    onShapeOp(isInProgress) {
+        this.disableCheckbox = isInProgress;
+        if (!isInProgress) {
+            this.selected.clear();
+        }
     }
 }
 
