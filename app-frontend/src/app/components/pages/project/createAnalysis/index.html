@@ -19,14 +19,22 @@
       </rf-selected-actions-bar>
     </div>
     <div class="sidebar-scrollable list-group">
-      <rf-layer-item
-          ng-repeat="layer in $ctrl.layerList track by layer.id"
-          item-info="layer"
-          item-actions="$ctrl.layerActions.get(layer.id)"
-          selected="$ctrl.isSelected(layer.id)"
-          on-select="$ctrl.onSelect(id)"
-      >
-      </rf-layer-item>
+      <rf-list-item ng-repeat="layer in $ctrl.layerList track by layer.id">
+        <item-selector>
+          <rf-list-item-selector
+              id="layer.id"
+              selected="$ctrl.isSelected(layer.id)"
+              on-select="$ctrl.onSelect(id)"
+              color="layer.colorGroupHex"
+          ></rf-list-item-selector></item-selector>
+        <item-title><strong>{{layer.name}}</strong></item-title>
+        <item-date>{{layer.date | date}}</item-date>
+        <item-actions>
+          <rf-list-item-actions
+              actions="$ctrl.layerActions.get(layer.id)" >
+          </rf-list-item-actions>
+        </item-actions>
+      </rf-list-item>
     </div>
   </div>
   <div class="container fit-height column-stretch analysis-list">
@@ -80,43 +88,13 @@
                ng-repeat="analysis in $ctrl.templateList track by analysis.id"
                ng-show="!$ctrl.creationPromise"
           >
-            <rf-list-item
-                class="clickable"
-                ng-click="$ctrl.onAnalysisClick($event, analysis)"
-                data-title="analysis.title"
-                data-date="analysis.createdAt"
-                data-subtitle="$ctrl.templateCreators.get(analysis.id)"
-            >
-              <div class="btn btn-text btn-transparent"
-                ng-repeat="action in $ctrl.itemActions.get(analysis.id) | filter: {menu: false}"
-                ng-attr-title="{{action.name}}"
-                ng-click="action.callback($event)"
-              >
-                <span ng-attr-class="{{action.icon}}"
-                      tooltips
-                      tooltip-template="{{action.tooltip}}"
-                      tooltip-size="small"
-                      tooltip-class="layer-item-tooltip"
-                      tooltip-side="left"
-                      tooltip-hidden="!$ctrl.action.tooltip"
-                ></span>
-              </div>
-              <button class="btn btn-text btn-transparent"
-                      uib-dropdown
-                      ng-show="($ctrl.itemActions.get(analysis.id) | filter: {menu: true}).length > 0"
-                      uib-dropdown-toggle
-              >
-                <i class="icon-menu"></i>
-                <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
-                  <li role="menuitem"
-                      ng-repeat="action in $ctrl.itemActions.get(scene.id) | filter: {menu: true}">
-                    <a href ng-click="action.callback($event)"
-                       ng-show="action.name"
-                       ng-attr-title="{{action.title}}">{{action.name}}</a>
-                    <span class="menu-separator" ng-show="action.separator"></span>
-                  </li>
-                </ul>
-              </button>
+            <rf-list-item class="clickable" ng-click="$ctrl.onAnalysisClick($event, analysis)">
+              <item-title><strong>{{analysis.title}}</strong></item-title>
+              <item-subtitle><span>{{$ctrl.templateCreators.get(analysis.id)}}</span></item-subtitle>
+              <item-date>{{analysis.createdAt | date}}</item-date>
+              <item-actions>
+                <rf-list-item-actions actions="$ctrl.itemActions.get(analysis.id)"></rf-list-item-actions>
+              </item-actions>
             </rf-list-item>
           </div>
         </div>

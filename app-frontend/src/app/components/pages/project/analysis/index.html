@@ -1,1 +1,13 @@
-project analysis page
+<div class="sidebar-actions-group">
+  <div class="btn btn-small btn-transparent" ui-sref="project.analyses">
+    <span class="icon-caret-left"></span>
+    Back
+  </div>
+  <div class="flex: 1;"></div>
+  <div class="btn btn-small btn-transparent">Hide all</div>
+</div>
+<div class="sidebar-scrollable list-group">
+  <rf-list-item ng-repeat="analysis in $ctrl.analysisList">
+    <item-selector></item-selector>
+  </rf-list-item>
+</div>
