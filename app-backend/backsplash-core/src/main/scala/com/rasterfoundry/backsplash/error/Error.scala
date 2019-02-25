@@ -41,9 +41,9 @@ final case class WrappedS3Exception(message: String) extends BacksplashException
 private[backsplash] final case class UnknownException(message: String)
     extends BacksplashException
 
-class BacksplashHttpErrorHandler[F[_], U](
+class BacksplashHttpErrorHandler[F[_]](
     implicit M: MonadError[F, BacksplashException])
-    extends HttpErrorHandler[F, BacksplashException, U]
+    extends HttpErrorHandler[F, BacksplashException]
     with Http4sDsl[F]
     with LazyLogging {
   private val handler: BacksplashException => F[Response[F]] = {
@@ -67,15 +67,14 @@ class BacksplashHttpErrorHandler[F[_], U](
       InternalServerError(m)
   }
 
-  override def handle(service: AuthedService[U, F]): AuthedService[U, F] =
+  override def handle(service: HttpRoutes[F]): HttpRoutes[F] =
     ServiceHttpErrorHandler(service)(handler)
 }
 
 object ServiceHttpErrorHandler {
-  def apply[F[_], E, U](service: AuthedService[U, F])(
-      handler: E => F[Response[F]])(
-      implicit ev: ApplicativeError[F, E]): AuthedService[U, F] =
-    Kleisli { req: AuthedRequest[F, U] =>
+  def apply[F[_], E, U](service: HttpRoutes[F])(handler: E => F[Response[F]])(
+      implicit ev: ApplicativeError[F, E]): HttpRoutes[F] =
+    Kleisli { req: Request[F] =>
       OptionT {
         service(req).value.handleErrorWith { e =>
           handler(e).map(Option(_))
@@ -84,11 +83,11 @@ object ServiceHttpErrorHandler {
     }
 }
 
-trait HttpErrorHandler[F[_], E <: Throwable, U] extends LazyLogging {
-  def handle(service: AuthedService[U, F]): AuthedService[U, F]
+trait HttpErrorHandler[F[_], E <: Throwable] extends LazyLogging {
+  def handle(service: HttpRoutes[F]): HttpRoutes[F]
 }
 
 object HttpErrorHandler {
-  def apply[F[_], E <: Throwable, U](implicit ev: HttpErrorHandler[F, E, U]) =
+  def apply[F[_], E <: Throwable](implicit ev: HttpErrorHandler[F, E]) =
     ev
 }

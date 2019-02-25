@@ -6,7 +6,6 @@ import com.rasterfoundry.database.{
   SceneToLayerDao,
   ToolRunDao
 }
-import com.rasterfoundry.common.datamodel.User
 import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.MosaicImplicits
 import com.rasterfoundry.database.util.RFTransactor
@@ -59,12 +58,14 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
   val timeout: FiniteDuration =
     new FiniteDuration(Config.server.timeoutSeconds, TimeUnit.SECONDS)
 
-  implicit val backsplashErrorHandler
-    : HttpErrorHandler[IO, BacksplashException, User] =
-    new BacksplashHttpErrorHandler[IO, User]
+  val backsplashErrorHandler: HttpErrorHandler[IO, BacksplashException] =
+    new BacksplashHttpErrorHandler[IO]
 
-  implicit val foreignErrorHandler: HttpErrorHandler[IO, Throwable, User] =
-    new ForeignErrorHandler[IO, Throwable, User]
+  val foreignErrorHandler: HttpErrorHandler[IO, Throwable] =
+    new ForeignErrorHandler[IO, Throwable]
+
+  val rollbarReporter: RollbarReporter[IO] =
+    new RollbarReporter()
 
   def withCORS(svc: HttpRoutes[IO]): HttpRoutes[IO] =
     CORS(
@@ -84,6 +85,15 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       timeout,
       OptionT.pure[IO](Response[IO](Status.GatewayTimeout))
     )(service)
+
+  def errorHandling(service: HttpRoutes[IO]): HttpRoutes[IO] =
+    backsplashErrorHandler.handle {
+      rollbarReporter.handle {
+        foreignErrorHandler.handle {
+          service
+        }
+      }
+    }
 
   val authenticators = new Authenticators(xa)
 
@@ -113,7 +123,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       )
     )
 
-  val httpApp =
+  val httpApp = errorHandling {
     Router(
       "/" -> ProjectToProjectLayerMiddleware(
         withCORS(withTimeout(mosaicService)),
@@ -122,6 +132,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       "/tools" -> withCORS(withTimeout(analysisService)),
       "/healthcheck" -> AutoSlash(new HealthcheckService(xa).routes)
     )
+  }
 
   val startupBanner =
     """|    ___                     _               _ __     _                     _
