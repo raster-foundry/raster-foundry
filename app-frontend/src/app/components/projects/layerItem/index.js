@@ -16,8 +16,13 @@ class LayerItemController {
             this.color = 'gray';
         }
 
-        const geometry = _.get(this.itemInfo, 'colorGroupHex');
         this.hasGeom = _.get(this.itemInfo, 'geometry.type');
+    }
+
+    $onChanges(changes) {
+        if (changes.disableCheckbox && changes.disableCheckbox.currentValue) {
+            this.disableCheckbox = changes.disableCheckbox.currentValue;
+        }
     }
 }
 
@@ -33,7 +38,8 @@ const component = {
         isExport: '<?',
         isAoi: '<?',
         onDownloadExport: '&?',
-        goToAoiDef: '&?'
+        goToAoiDef: '&?',
+        disableCheckbox: '<?'
     },
     templateUrl: tpl,
     controller: LayerItemController.name,
