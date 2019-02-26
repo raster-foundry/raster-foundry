@@ -117,6 +117,17 @@ export default (app) => {
                             projectId: '@projectId'
                         }
                     },
+                    layerDatasources: {
+                        method: 'GET',
+                        cache: false,
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/` +
+                            'layers/:layerId/datasources',
+                        params: {
+                            projectId: '@projectId',
+                            layerId: '@layerId'
+                        },
+                        isArray: true
+                    },
                     layerScenes: {
                         method: 'GET',
                         cache: false,
@@ -219,6 +230,14 @@ export default (app) => {
                             projectId: '@projectId'
                         }
                     },
+                    updateLayer: {
+                        method: 'PUT',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers/:layerId`,
+                        params: {
+                            projectId: '@projectId',
+                            layerId: '@layerId'
+                        }
+                    },
                     deleteLayer: {
                         method: 'DELETE',
                         url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers/:layerId`,
@@ -234,6 +253,15 @@ export default (app) => {
                         isArray: true,
                         params: {
                             projectId: '@projectId'
+                        }
+                    },
+                    colorModeForLayer: {
+                        method: 'POST',
+                        url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/` +
+                            'layers/:layerId/color-mode/',
+                        params: {
+                            projectId: '@projectId',
+                            layerId: '@layerId'
                         }
                     }
                 }
@@ -430,6 +458,10 @@ export default (app) => {
             return this.Project.projectDatasources({...params, projectId}).$promise;
         }
 
+        getProjectLayerDatasources(projectId, layerId, params = {}) {
+            return this.Project.layerDatasources({...params, projectId, layerId}).$promise;
+        }
+
         getProjectStatus(projectId) {
             return this.$q.all({
                 allScenes: this.getProjectScenes(
@@ -484,6 +516,10 @@ export default (app) => {
 
         updateProject(params) {
             return this.Project.updateProject(params).$promise;
+        }
+
+        updateLayer(params) {
+            return this.Project.updateLayer(params).$promise;
         }
 
         createAOI(project, params) {
@@ -646,6 +682,10 @@ export default (app) => {
 
         setProjectColorMode(projectId, bands) {
             return this.Project.colorMode({projectId}, bands).$promise;
+        }
+
+        setProjectLayerColorMode(projectId, layerId, bands) {
+            return this.Project.colorModeForLayer({projectId, layerId}, bands).$promise;
         }
 
         getProjectPermissions(project, user) {

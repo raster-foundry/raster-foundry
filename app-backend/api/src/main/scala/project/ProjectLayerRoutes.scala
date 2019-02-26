@@ -296,4 +296,25 @@ trait ProjectLayerRoutes
       }
     }
 
+  def setProjectLayerColorMode(projectId: UUID, layerId: UUID) =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authorized(user, ObjectType.Project, projectId, ActionType.Edit)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[ProjectColorModeParams]) { colorBands =>
+          val setProjectLayerColorBandsIO = for {
+            rowsAffected <- SceneToLayerDao
+              .setProjectLayerColorBands(layerId, colorBands)
+          } yield { rowsAffected }
+
+          onSuccess(setProjectLayerColorBandsIO.transact(xa).unsafeToFuture) {
+            _ =>
+              complete(StatusCodes.NoContent)
+          }
+        }
+      }
+    }
 }

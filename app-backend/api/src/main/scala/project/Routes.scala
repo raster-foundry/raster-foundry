@@ -104,6 +104,13 @@ trait ProjectRoutes
                       deleteProjectLayer(projectId, layerId)
                     }
                 } ~
+                  pathPrefix("color-mode") {
+                    pathEndOrSingleSlash {
+                      post {
+                        setProjectLayerColorMode(projectId, layerId)
+                      }
+                    }
+                  } ~
                   pathPrefix("mosaic") {
                     pathEndOrSingleSlash {
                       get {
