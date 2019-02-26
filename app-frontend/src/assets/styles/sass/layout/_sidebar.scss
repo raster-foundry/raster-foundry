@@ -160,6 +160,9 @@
 .sidebar-scrollable {
     overflow: auto;
     flex: 1;
+    &.with-padding {
+        padding: 1rem;
+    }
 }
 
 .sidebar-category {
