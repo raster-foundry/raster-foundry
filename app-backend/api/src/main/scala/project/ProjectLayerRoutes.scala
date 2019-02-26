@@ -310,8 +310,9 @@ trait ProjectLayerRoutes
               .setProjectLayerColorBands(layerId, colorBands)
           } yield { rowsAffected }
 
-          onSuccess(setProjectLayerColorBandsIO.transact(xa).unsafeToFuture) { _ =>
-            complete(StatusCodes.NoContent)
+          onSuccess(setProjectLayerColorBandsIO.transact(xa).unsafeToFuture) {
+            _ =>
+              complete(StatusCodes.NoContent)
           }
         }
       }
