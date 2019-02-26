@@ -1,5 +1,6 @@
 /* global BUILDCONFIG */
 import { Set, Map } from 'immutable';
+import L from 'leaflet';
 import _ from 'lodash';
 import tpl from './index.html';
 
@@ -244,7 +245,7 @@ class ProjectCreateAnalysisPageController {
             executionParameters: layer.geometry ? {
                 id: this.uuid4.generate(),
                 args: [_.cloneDeep(template.definition)],
-                mask: layer.geometry,
+                mask: this.reprojectGeometry(layer.geometry),
                 apply: 'mask',
                 metadata: {
                     label: 'Layer Mask',
@@ -268,6 +269,26 @@ class ProjectCreateAnalysisPageController {
             }
         }
         return analysis;
+    }
+
+    reprojectGeometry(geom) {
+        // assume single multipolygon feature
+        if (geom.type.toLowerCase() !== 'multipolygon') {
+            throw new Error('Tried to reproject a shape that isn\'t a multipolygon');
+        }
+
+        const polygons = geom.coordinates[0];
+        const reprojected = Object.assign({}, geom, {
+            coordinates: [
+                polygons.map(
+                    polygon =>
+                        polygon
+                            .map(([lng, lat]) => L.CRS.EPSG3857.project({lat, lng}))
+                            .map(({x, y}) => [x, y])
+                )
+            ]
+        });
+        return reprojected;
     }
 
     removeLayers() {
