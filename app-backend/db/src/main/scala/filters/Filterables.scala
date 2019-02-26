@@ -96,7 +96,8 @@ trait Filterables extends RFMeta with LazyLogging {
           Filters.searchQP(
             toolParams.searchParams,
             List("title", "description")
-          )
+          ) ++
+          Filters.toolQP(toolParams.toolParams)
     }
 
   implicit val annotationQueryparamsFilter

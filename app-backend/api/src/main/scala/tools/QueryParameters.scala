@@ -3,10 +3,18 @@ package com.rasterfoundry.api.tool
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.api.utils.queryparams._
 
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.directives.ParameterDirectives.parameters
+
 trait ToolQueryParameterDirective extends QueryParametersCommon {
+
+  val toolSpecificQueryParams = parameters(
+    'singleSource.as[Boolean].?
+  ).as(ToolQueryParameters.apply _)
   def combinedToolQueryParams =
     (
-      orgQueryParams &
+      toolSpecificQueryParams &
+        orgQueryParams &
         userQueryParameters &
         timestampQueryParameters &
         searchParams &

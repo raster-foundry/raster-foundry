@@ -163,8 +163,20 @@ object AoiQueryParameters {
     deriveDecoder[AoiQueryParameters]
 }
 
+final case class ToolQueryParameters(
+    singleSource: Option[Boolean] = None
+)
+
+object ToolQueryParameters {
+  implicit def encToolQueryParameters: Encoder[ToolQueryParameters] =
+    deriveEncoder[ToolQueryParameters]
+  implicit def decToolQueryParameters: Decoder[ToolQueryParameters] =
+    deriveDecoder[ToolQueryParameters]
+}
+
 /** Combined tool query parameters */
 final case class CombinedToolQueryParameters(
+    toolParams: ToolQueryParameters = ToolQueryParameters(),
     orgParams: OrgQueryParameters = OrgQueryParameters(),
     userParams: UserQueryParameters = UserQueryParameters(),
     timestampParams: TimestampQueryParameters = TimestampQueryParameters(),
