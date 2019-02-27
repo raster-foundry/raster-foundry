@@ -44,7 +44,7 @@
           color="item.layerColorGrouphex"
       ></rf-list-item-selector>
     </item-selector>
-    <item-title><strong>{{item.name}}</strong></item-title>
+    <item-title><strong ng-attr-title="{{item.name}}">{{item.name}}</strong></item-title>
     <item-subtitle><span>{{item.templateTitle}}</span></item-subtitle>
     <item-date>{{item.modifiedAt | date}}</item-date>
     <item-actions>

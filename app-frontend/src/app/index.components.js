@@ -3,6 +3,7 @@ import pages from './components/pages';
 import projectComponents from './components/projects';
 import sceneComponents from './components/scenes';
 import commonComponents from './components/common';
+import exportComponents from './components/exports';
 export default angular.module('index.components', [
     //admin components
     require('./components/admin/editableLogo/editableLogo.js').default.name,
@@ -92,6 +93,7 @@ export default angular.module('index.components', [
     require('./components/filters/shapeFilter/shapeFilter.module.js').default.name,
     require('./components/filters/sliderFilter/sliderFilter.module.js').default.name,
     require('./components/filters/tagFilter/tagFilter.module.js').default.name,
+    ...exportComponents,
 
 
     // common components (no domain)

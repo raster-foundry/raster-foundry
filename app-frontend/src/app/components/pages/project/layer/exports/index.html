@@ -1,6 +1,8 @@
 <div class="sidebar-actions-group"  ng-show="$ctrl.selected.size === 0">
   <div>
-    <a class="btn btn-small btn-transparent" ui-sref="project.layer.export" ng-if="$ctrl.isExportAllowed">
+    <a class="btn btn-small btn-transparent"
+       ui-sref="project.layer.export"
+       ng-if="$ctrl.actionPermissions.export">
       <i class="icon-plus"></i>New export
     </a>
   </div>
@@ -12,7 +14,7 @@
       on-click="$ctrl.selectAll()"
       action-text="$ctrl.selectText">
     <button class="btn btn-transparent"
-            ng-click="$ctrl.deleteExports($ctrl.selectedToArray())">
+            ng-click="$ctrl.deleteExports($ctrl.selected.keySeq().toArray())">
       Delete
     </button>
   </rf-selected-actions-bar>
@@ -49,17 +51,23 @@
   </div>
 </div>
 <div class="sidebar-scrollable list-group">
-  <rf-layer-item
-      is-export="true"
-      item-info="item"
-      item-actions="$ctrl.itemActions[$index]"
-      selected="$ctrl.isSelected(item.id)"
-      on-select="$ctrl.onSelect(id)"
-      visible="$ctrl.isVisible(item.id)"
-      on-hide="$ctrl.onHide(id)"
-      ng-repeat="item in $ctrl.itemList track by item.id"
-      on-download-export="$ctrl.onDownloadExport(id)">
-  </rf-layer-item>
+  <rf-list-item ng-repeat="export in $ctrl.exportList track by export.id">
+    <item-selector>
+      <rf-list-item-selector
+          id="export.id"
+          selected="$ctrl.isSelected(export.id)"
+          on-select="$ctrl.onSelect(id)"
+          color="$ctrl.layer.colorGroupHex"
+      ></rf-list-item-selector></item-selector>
+    <item-title>
+      <strong ng-attr-title="{{$ctrl.formatDateDisplay(export.createdAt)}}">
+        {{$ctrl.formatDateDisplay(export.createdAt)}}</strong></item-title>
+    <item-subtitle><rf-export-status export="export"></rf-export-status></item-subtitle>
+    <item-date>{{export.createdAt | date}}</item-date>
+    <item-actions>
+      <rf-list-item-actions actions="$ctrl.exportActions.get(export.id)"></rf-list-item-actions>
+    </item-actions>
+  </rf-list-item>
   <rf-pagination-controls
       pagination="$ctrl.pagination"
       is-loading="$ctrl.currentQuery"

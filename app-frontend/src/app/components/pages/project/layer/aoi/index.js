@@ -86,12 +86,10 @@ class ProjectLayerAoiController {
             .then(paginatedResponse => {
                 fetchedList = paginatedResponse.results;
                 this.itemList = fetchedList
-                    .filter(fl => fl.geometry && fl.id !== this.layer.id)
-                    .map(fl => {
+                    .filter(fl => fl.geometry && fl.id !== this.layer.id).map(fl => {
                         return {
                             id: fl.id,
                             name: fl.name,
-                            subtext: '',
                             date: fl.createdAt,
                             colorGroupHex: fl.colorGroupHex,
                             geometry: fl.geometry
@@ -132,7 +130,6 @@ class ProjectLayerAoiController {
                     return {
                         id: fl.id,
                         name: fl.properties.name,
-                        subtext: '',
                         date: fl.properties.createdAt,
                         colorGroupHex: defaultColor,
                         geometry: fl.geometry

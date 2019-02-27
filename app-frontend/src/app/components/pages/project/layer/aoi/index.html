@@ -52,14 +52,18 @@
   </div>
 </div>
 <div class="sidebar-scrollable list-group">
-  <rf-layer-item
-      is-aoi="true"
-      item-info="item"
-      selected="$ctrl.isSelected(item.id)"
-      on-select="$ctrl.onSelect(id)"
-      disable-checkbox="$ctrl.disableCheckbox"
-      ng-repeat="item in $ctrl.itemList track by item.id">
-  </rf-layer-item>
+  <rf-list-item ng-repeat="item in $ctrl.itemList track by item.id">
+    <item-selector>
+      <rf-list-item-selector
+          id="item.id"
+          selected="$ctrl.isSelected(item.id)"
+          on-select="$ctrl.onSelect(id)"
+          color="item.colorGroupHex"
+          disable-selection="$ctrl.disableCheckbox"
+      ></rf-list-item-selector></item-selector>
+    <item-title><strong ng-attr-title="{{item.name}}">{{item.name}}</strong></item-title>
+    <item-date>{{item.date | date}}</item-date>
+  </rf-list-item>
   <rf-pagination-controls
       pagination="$ctrl.pagination"
       is-loading="$ctrl.currentQuery"

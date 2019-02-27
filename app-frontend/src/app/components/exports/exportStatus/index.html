@@ -1,0 +1,9 @@
+<i class="color-danger"
+   ng-if="$ctrl.export.exportStatus === 'FAILED'">Failed</i>
+<i class="color-green"
+   ng-if="$ctrl.export.exportStatus === 'EXPORTED'">Complete</i>
+<i class="color-warning"
+   ng-if="$ctrl.export.exportStatus !== 'FAILED' && $ctrl.export.exportStatus !== 'EXPORTED'">
+  Processing
+  <i class="icon-load animate-spin"></i>
+</i>
