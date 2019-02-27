@@ -63,7 +63,8 @@ class ProjectCreateAnalysisPageController {
         let params = {
             sort: 'createdAt,desc',
             pageSize: 10,
-            page: page - 1
+            page: page - 1,
+            singleSource: true
         };
 
         if (this.search) {
