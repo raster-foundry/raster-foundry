@@ -265,9 +265,9 @@ class AnalysesListController {
 
     updateSelectText() {
         if (this.allVisibleSelected()) {
-            this.selectText = 'Clear selected';
+            this.selectText = `Clear selected (${this.selected.size})`;
         } else {
-            this.selectText = 'Select group';
+            this.selectText = `Select all listed (${this.selected.size})`;
         }
     }
 

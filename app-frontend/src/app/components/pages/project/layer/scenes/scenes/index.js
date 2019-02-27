@@ -177,9 +177,9 @@ class LayerScenesController {
 
     updateSelectText() {
         if (this.allVisibleSelected()) {
-            this.selectText = 'Clear selected';
+            this.selectText = `Clear selected (${this.selected.size})`;
         } else {
-            this.selectText = 'Select all visible';
+            this.selectText = `Select all listed (${this.selected.size})`;
         }
     }
 

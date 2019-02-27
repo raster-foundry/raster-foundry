@@ -42,8 +42,7 @@ class ProjectLayersPageController {
     }
 
     fetchPage(page = this.$state.params.page || 1) {
-        let layerList = [];
-        this.itemList = [];
+        this.layerList = [];
         this.layerActions = {};
         const currentQuery = this.projectService.getProjectLayers(
             this.project.id,
@@ -52,8 +51,8 @@ class ProjectLayersPageController {
                 page: page - 1
             }
         ).then((paginatedResponse) => {
-            layerList = paginatedResponse.results;
-            layerList.forEach((layer) => {
+            this.layerList = paginatedResponse.results;
+            this.layerList.forEach((layer) => {
                 layer.subtext = '';
                 if (layer.id === this.project.defaultLayerId) {
                     layer.subtext += 'Default layer';
@@ -62,13 +61,10 @@ class ProjectLayersPageController {
                     layer.subtext += layer.subtext.length ? ', Smart layer' : 'Smart Layer';
                 }
             });
-            const defaultLayer = layerList.find(l => l.id === this.project.defaultLayerId);
-            this.layerActions = layerList.map(
+            const defaultLayer = this.layerList.find(l => l.id === this.project.defaultLayerId);
+            this.layerActions = this.layerList.map(
                 (l) => this.addLayerActions(l, defaultLayer === l)
             );
-            this.itemList = layerList.map(layer => {
-                return this.createItemInfo(layer);
-            });
             this.pagination = this.paginationService.buildPagination(paginatedResponse);
             this.paginationService.updatePageParam(page);
             if (this.currentQuery === currentQuery) {
@@ -91,6 +87,33 @@ class ProjectLayersPageController {
         if (!this.permissions.includes('Edit')) {
             return [];
         }
+        const alertAoiAction = {
+            icon: 'icon-warning color-danger',
+            name: 'Edit AOI',
+            tooltip: 'No AOI defined for this layer',
+            callback: () => this.goToAoiDef(layer.id),
+            menu: false
+        };
+        const editAoiAction = {
+            name: 'Edit AOI',
+            callback: () => this.goToAoiDef(layer.id),
+            menu: true
+        };
+        const previewAction = {
+            icons: [
+                {
+                    icon: 'icon-eye',
+                    isActive: () => this.visible.has(layer.id)
+                }, {
+                    icon: 'icon-eye-off',
+                    isActive: () => !this.visible.has(layer.id)
+                }
+            ],
+            name: 'Preview',
+            tooltip: 'Show/hide on map',
+            callback: () => this.onHide(layer.id),
+            menu: false
+        };
         const editAction = {
             name: 'Edit',
             callback: () => this.$state.go(
@@ -161,16 +184,19 @@ class ProjectLayersPageController {
         };
 
         const unimplementedActions = [publishAction, exportAction, settingsAction];
-        const layerActions = [editAction, createAnalysisAction, importAction, browseAction];
+        const layerActions = [
+            editAction, editAoiAction, createAnalysisAction, importAction, browseAction
+        ];
 
         return [
+            ...!_.get(layer, 'geometry.type') ? [alertAoiAction] : [],
             ...layerActions,
             ...!isDefaultLayer ? [setDefaultAction, deleteAction] : []
         ];
     }
 
     allVisibleSelected() {
-        let layerSet = new Set(this.itemList.map(l => l.id));
+        let layerSet = new Set(this.layerList.map(l => l.id));
         return layerSet.intersect(this.selected.keySeq()).size === layerSet.size;
     }
 
@@ -179,7 +205,7 @@ class ProjectLayersPageController {
             this.selected = this.selected.clear();
         } else {
             this.selected = this.selected.merge(
-                new Map(this.itemList.map(i => [i.id, i]))
+                new Map(this.layerList.map(i => [i.id, i]))
             );
         }
         this.updateSelectText();
@@ -187,9 +213,9 @@ class ProjectLayersPageController {
 
     updateSelectText() {
         if (this.allVisibleSelected()) {
-            this.selectText = 'Clear selected';
+            this.selectText = `Clear selected (${this.selected.size})`;
         } else {
-            this.selectText = 'Select listed';
+            this.selectText = `Select all listed (${this.selected.size})`;
         }
     }
 
@@ -197,7 +223,7 @@ class ProjectLayersPageController {
         if (this.selected.has(id)) {
             this.selected = this.selected.delete(id);
         } else {
-            const layer = this.itemList.find(l => l.id === id);
+            const layer = this.layerList.find(l => l.id === id);
             this.selected = this.selected.set(id, layer);
         }
     }
@@ -213,10 +239,6 @@ class ProjectLayersPageController {
             this.visible = this.visible.add(id);
         }
         this.syncMapLayersToVisible();
-    }
-
-    isVisible(layerId) {
-        return this.visible.has(layerId);
     }
 
     setProjectDefaultLayer(layer) {
@@ -265,7 +287,7 @@ class ProjectLayersPageController {
     }
 
     showPageLayers() {
-        this.visible = this.visible.union(this.itemList.map(l => l.id));
+        this.visible = this.visible.union(this.layerList.map(l => l.id));
         this.syncMapLayersToVisible();
     }
 

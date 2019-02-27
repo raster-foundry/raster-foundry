@@ -1,4 +1,3 @@
-import layerItem from './layerItem';
 import layerStats from './layerStats';
 import projectLayerSecondaryNavbar from './projectLayerSecondaryNavbar';
 import selectedActionsBar from './selectedActionsBar';
@@ -8,7 +7,6 @@ import aoiDrawToolbar from './aoiDrawToolbar';
 import analysisEditModal from './analysisEditModal';
 
 export default [
-    layerItem,
     projectSettingsNavbar,
     layerStats,
     projectLayerSecondaryNavbar,

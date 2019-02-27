@@ -27,7 +27,7 @@
               on-select="$ctrl.onSelect(id)"
               color="layer.colorGroupHex"
           ></rf-list-item-selector></item-selector>
-        <item-title><strong>{{layer.name}}</strong></item-title>
+        <item-title><strong ng-attr-title="{{layer.name}}">{{layer.name}}</strong></item-title>
         <item-date>{{layer.date | date}}</item-date>
         <item-actions>
           <rf-list-item-actions
@@ -89,7 +89,7 @@
                ng-show="!$ctrl.creationPromise"
           >
             <rf-list-item class="clickable" ng-click="$ctrl.onAnalysisClick($event, analysis)">
-              <item-title><strong>{{analysis.title}}</strong></item-title>
+              <item-title><strong ng-attr-title="{{analysis.title}}">{{analysis.title}}</strong></item-title>
               <item-subtitle><span>{{$ctrl.templateCreators.get(analysis.id)}}</span></item-subtitle>
               <item-date>{{analysis.createdAt | date}}</item-date>
               <item-actions>

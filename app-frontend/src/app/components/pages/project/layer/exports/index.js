@@ -1,4 +1,5 @@
 import tpl from './index.html';
+import { OrderedMap, Set } from 'immutable';
 import _ from 'lodash';
 
 const mapLayerName = 'Project Layer';
@@ -17,9 +18,10 @@ class LayerExportsController {
     }
 
     $onInit() {
-        this.selected = new Map([]);
-        this.visible = new Set([]);
-        this.fetchPage();
+        this.selected = new OrderedMap();
+        this.visible = new Set();
+        this.exportList = [];
+        this.currentQuery = this.getPermissions().then(() => this.fetchPage());
         this.setMapLayers();
     }
 
@@ -28,11 +30,23 @@ class LayerExportsController {
         this.removeExportAois();
     }
 
+    getPermissions() {
+        return this.projectService
+            .getAllowedActions(this.project.id)
+            .then((actions) => {
+                const deleteAllowed = _.intersection(actions, deleteActions).length;
+                const exportAllowed = _.intersection(actions, exportActions).length;
+                this.actionPermissions = {
+                    delete: deleteAllowed,
+                    export: exportAllowed
+                };
+            });
+    }
+
     fetchPage(page = this.$state.params.page || 1) {
         delete this.fetchError;
         this.exportList = [];
-        this.itemList = [];
-        this.itemActions = [];
+        this.exportActions = new OrderedMap();
         const currentQuery = this.projectService.listExports(
             {
                 sort: 'createdAt,desc',
@@ -42,26 +56,15 @@ class LayerExportsController {
                 layer: this.layer.id
             }
         ).then((paginatedResponse) => {
-            this.projectService
-                .getAllowedActions(this.project.id)
-                .then((actions) => {
-                    this.isDeleteAllowed = _.intersection(actions, deleteActions).length;
-                    this.isExportAllowed = _.intersection(actions, exportActions).length;
-
-                    this.exportList = paginatedResponse.results;
-                    this.exportList.forEach(e => {
-                        e.subtext = '';
-                    });
-                    this.itemList = this.exportList.map(expt => {
-                        this.getExportActions(expt);
-                        return this.createItemInfo(expt);
-                    });
-                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
-                    this.paginationService.updatePageParam(page);
-                    if (this.currentQuery === currentQuery) {
-                        delete this.fetchError;
-                    }
-                });
+            this.exportList = paginatedResponse.results;
+            this.exportActions = new OrderedMap(
+                this.exportList.map(expt => [expt.id, this.createExportActions(expt)])
+            );
+            this.pagination = this.paginationService.buildPagination(paginatedResponse);
+            this.paginationService.updatePageParam(page);
+            if (this.currentQuery === currentQuery) {
+                delete this.fetchError;
+            }
         }, (e) => {
             if (this.currentQuery === currentQuery) {
                 this.fetchError = e;
@@ -98,25 +101,40 @@ class LayerExportsController {
         });
     }
 
-    getExportActions(expt) {
-        if (!this.isDeleteAllowed) {
-            this.itemActions.push([]);
-        } else {
-            this.itemActions.push(this.createItemActions(expt));
-        }
-    }
-
-    createItemActions(expt) {
+    createExportActions(exportItem) {
+        const previewAction = {
+            icons: [
+                {
+                    icon: 'icon-eye',
+                    isActive: () => this.visible.has(exportItem.id)
+                }, {
+                    icon: 'icon-eye-off',
+                    isActive: () => !this.visible.has(exportItem.id)
+                }
+            ],
+            name: 'Preview',
+            tooltip: 'Show/hide on bounds on map',
+            callback: () => this.onHide(exportItem.id),
+            menu: false
+        };
+        const downloadAction = {
+            icon: 'icon-download',
+            name: 'Download',
+            tooltip: 'Download',
+            callback: () => this.onDownloadExport(exportItem.id),
+            menu: false
+        };
         const deleteAction = {
             name: 'Delete export',
-            callback: () => this.deleteExports([expt]),
+            callback: () => this.deleteExports([exportItem]),
             menu: true
         };
-        return [deleteAction];
-    }
-
-    selectedToArray() {
-        return Array.from(this.selected.values());
+        const defaultActions = [previewAction];
+        return [
+            ...defaultActions,
+            ...exportItem.exportStatus === 'EXPORTED' ? [downloadAction] : [],
+            ...this.actionPermissions.delete ? [deleteAction] : []
+        ];
     }
 
     deleteExports(exports) {
@@ -166,11 +184,11 @@ class LayerExportsController {
 
     onHide(id) {
         if (this.visible.has(id)) {
-            this.visible.delete(id);
+            this.visible = this.visible.delete(id);
         } else {
-            this.visible.add(id);
+            this.visible = this.visible.add(id);
         }
-        this.syncGeoJsonLayersToVisible(Array.from(this.visible));
+        this.syncGeoJsonLayersToVisible(this.visible.toArray());
     }
 
     syncGeoJsonLayersToVisible(visibleExportIds) {
@@ -218,19 +236,20 @@ class LayerExportsController {
 
     selectAll() {
         if (this.allVisibleSelected()) {
-            // this.selected.clear();
-            this.selected = new Map([]);
+            this.selected = new OrderedMap();
         } else {
-            this.selected = new Map(this.exportList.map(e => [e.id, e]));
+            this.selected = this.selected.merge(
+                new OrderedMap(this.exportList.map(e => [e.id, e]))
+            );
         }
         this.updateSelectText();
     }
 
     onSelect(id) {
         if (this.selected.has(id)) {
-            this.selected.delete(id);
+            this.selected = this.selected.delete(id);
         } else {
-            this.selected.set(id, this.exportList.find(e => e.id === id));
+            this.selected = this.selected.set(id, this.exportList.find(e => e.id === id));
         }
         this.updateSelectText();
     }
@@ -241,15 +260,15 @@ class LayerExportsController {
     }
 
     allVisibleSelected() {
-        const exportSet = new Map(this.exportList.map(e => [e.id, e]));
-        return this.selected.size && exportSet.size === this.selected.size;
+        const exportSet = new Set(this.exportList.map(l => l.id));
+        return exportSet.intersect(this.selected.keySeq()).size === exportSet.size;
     }
 
     updateSelectText() {
         if (this.allVisibleSelected()) {
-            this.selectText = 'Clear selected';
+            this.selectText = `Clear selected (${this.selected.size})`;
         } else {
-            this.selectText = 'Select all listed';
+            this.selectText = `Select all listed (${this.selected.size})`;
         }
     }
 }
