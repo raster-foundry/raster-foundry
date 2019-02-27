@@ -18,6 +18,7 @@
 - Added owner query parameter to tools and tool-runs endpoints, support multiple owner qp's on applicable endpoints [\#4689](https://github.com/raster-foundry/raster-foundry/pull/4689)
 - Added Rollbar error reporting to backsplash [\#4691](https://github.com/raster-foundry/raster-foundry/pull/4691)
 - Added PLATFORM_USERS webpack overrides variable and make default platform filter use those ids [\#4692](https://github.com/raster-foundry/raster-foundry/pull/4692)
+- Added flag for whether tools can sensibly be run with only a single layer as input [\#4701](https://github.com/raster-foundry/raster-foundry/pull/4701)
 
 ### Changed
 
@@ -26,6 +27,7 @@
 - Swap trash icon for "Remove" text on scene item components [\#4621](https://github.com/raster-foundry/raster-foundry/pull/4621)
 - Bumped Nginx buffer size for scene creation requests [\#4672](https://github.com/raster-foundry/raster-foundry/pull/4672)
 - Use layer geometry to add a mask when creating analyses [\#4694](https://github.com/raster-foundry/raster-foundry/pull/4694)
+- Made tools reference licenses by id [\#4701](https://github.com/raster-foundry/raster-foundry/pull/4701)
 
 ### Deprecated
 

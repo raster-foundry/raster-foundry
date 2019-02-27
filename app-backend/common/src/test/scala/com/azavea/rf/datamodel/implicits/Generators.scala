@@ -719,12 +719,13 @@ object Generators extends ArbitraryInstances {
       title <- nonEmptyStringGen
       description <- nonEmptyStringGen
       requirements <- nonEmptyStringGen
-      license <- Gen.const("BSD-3")
+      license <- Gen.const(Option.empty[Int])
       visibility <- visibilityGen
       compatibleDataSources <- Gen.const(List.empty)
       owner <- Gen.const(None)
       stars <- Gen.const(9999.9f) // good tools only :sunglasses:
       definition <- Gen.const(().asJson)
+      singleSource <- arbitrary[Boolean]
       // not super into dealing with tags or categories in testing-land right now
       tags <- Gen.const(Seq.empty)
       categories <- Gen.const(Seq.empty)
@@ -739,6 +740,7 @@ object Generators extends ArbitraryInstances {
         owner,
         stars,
         definition,
+        singleSource,
         tags,
         categories
       )
@@ -939,6 +941,14 @@ object Generators extends ArbitraryInstances {
 
     implicit def arbToolCreate: Arbitrary[Tool.Create] =
       Arbitrary { toolCreateGen }
+
+    implicit def arbListToolCreate: Arbitrary[List[Tool.Create]] =
+      Arbitrary {
+        Gen.oneOf(
+          Gen.listOfN(7, toolCreateGen),
+          Gen.listOfN(0, toolCreateGen)
+        )
+      }
 
     implicit def arbToolRunCreate: Arbitrary[ToolRun.Create] =
       Arbitrary { toolRunCreateGen }

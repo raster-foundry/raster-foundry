@@ -10,6 +10,12 @@ import Fragments.in
 
 object Filters {
 
+  def toolQP(toolParams: ToolQueryParameters): List[Option[Fragment]] = {
+    List(toolParams.singleSource map { p =>
+      fr"single_source = $p"
+    })
+  }
+
   def userQP(userParams: UserQueryParameters): List[Option[Fragment]] = {
     onlyUserQP(userParams.onlyUserParams) :::
       ownerQP(userParams.ownerParams) :::
