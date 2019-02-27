@@ -8,16 +8,19 @@ import java.sql.Timestamp
 import java.util.UUID
 
 @JsonCodec
-final case class ProjectLayer(id: UUID,
-                              createdAt: Timestamp,
-                              modifiedAt: Timestamp,
-                              name: String,
-                              projectId: Option[UUID],
-                              colorGroupHex: String,
-                              smartLayerId: Option[UUID],
-                              rangeStart: Option[Timestamp],
-                              rangeEnd: Option[Timestamp],
-                              geometry: Option[Projected[Geometry]])
+final case class ProjectLayer(
+    id: UUID,
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    name: String,
+    projectId: Option[UUID],
+    colorGroupHex: String,
+    smartLayerId: Option[UUID],
+    rangeStart: Option[Timestamp],
+    rangeEnd: Option[Timestamp],
+    geometry: Option[Projected[Geometry]],
+    isSingleBand: Boolean,
+    singleBandOptions: Option[SingleBandOptions.Params])
     extends GeoJSONSerializable[ProjectLayer.GeoJSON] {
   def toGeoJSONFeature: ProjectLayer.GeoJSON = ProjectLayer.GeoJSON(
     this.id,
@@ -30,20 +33,25 @@ final case class ProjectLayer(id: UUID,
       this.colorGroupHex,
       this.smartLayerId,
       this.rangeStart,
-      this.rangeEnd
+      this.rangeEnd,
+      this.isSingleBand,
+      this.singleBandOptions
     )
   )
 }
 
 @JsonCodec
-final case class ProjectLayerProperties(projectId: Option[UUID],
-                                        createdAt: Timestamp,
-                                        modifiedAt: Timestamp,
-                                        name: String,
-                                        colorGroupHex: String,
-                                        smartLayerId: Option[UUID],
-                                        rangeStart: Option[Timestamp],
-                                        rangeEnd: Option[Timestamp])
+final case class ProjectLayerProperties(
+    projectId: Option[UUID],
+    createdAt: Timestamp,
+    modifiedAt: Timestamp,
+    name: String,
+    colorGroupHex: String,
+    smartLayerId: Option[UUID],
+    rangeStart: Option[Timestamp],
+    rangeEnd: Option[Timestamp],
+    isSingleBand: Boolean,
+    singleBandOptions: Option[SingleBandOptions.Params])
 
 object ProjectLayer extends LazyLogging {
   def create = Create.apply _
@@ -55,7 +63,9 @@ object ProjectLayer extends LazyLogging {
                           smartLayerId: Option[UUID],
                           rangeStart: Option[Timestamp],
                           rangeEnd: Option[Timestamp],
-                          geometry: Option[Projected[Geometry]]) {
+                          geometry: Option[Projected[Geometry]],
+                          isSingleBand: Boolean,
+                          singleBandOptions: Option[SingleBandOptions.Params]) {
     def toProjectLayer: ProjectLayer = {
       val now = new Timestamp(new java.util.Date().getTime)
       ProjectLayer(
@@ -68,7 +78,9 @@ object ProjectLayer extends LazyLogging {
         this.smartLayerId,
         this.rangeStart,
         this.rangeEnd,
-        this.geometry
+        this.geometry,
+        this.isSingleBand,
+        this.singleBandOptions
       )
     }
   }
@@ -88,7 +100,9 @@ object ProjectLayer extends LazyLogging {
         properties.smartLayerId,
         properties.rangeStart,
         properties.rangeEnd,
-        geometry
+        geometry,
+        properties.isSingleBand,
+        properties.singleBandOptions
       )
     }
   }
