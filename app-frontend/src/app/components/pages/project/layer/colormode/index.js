@@ -113,8 +113,6 @@ class LayerColormodeController {
             );
         });
 
-        console.log(key);
-
         if (!key) {
             this.initCustomColorMode();
             return 'custom';
