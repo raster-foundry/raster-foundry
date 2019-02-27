@@ -27,6 +27,7 @@
 - Added project layer export creation UI [\#4718](https://github.com/raster-foundry/raster-foundry/pull/4718)
 - Enforced project layer AOI existence when browsing for scenes [\#4724](https://github.com/raster-foundry/raster-foundry/pull/4724)
 - Made templates editable except for their formulas [\#4729](https://github.com/raster-foundry/raster-foundry/pull/4729)
+- Added project analyses edit modal for v2 UI [\#4709](https://github.com/raster-foundry/raster-foundry/pull/4709)
 
 ### Changed
 
