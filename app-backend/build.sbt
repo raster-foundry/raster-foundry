@@ -33,12 +33,14 @@ lazy val commonSettings = Seq(
     "-Xmax-classfile-name",
     "100",
     "-Yrangepos",
-    "-Ywarn-value-discard",
-    "-Ywarn-unused",
-    "-Ywarn-unused-import",
     "-Ypartial-unification",
     "-Ypatmat-exhaust-depth",
     "100"
+  ),
+  scalacOptions in (Compile) ++= Seq(
+    "-Ywarn-value-discard",
+    "-Ywarn-unused",
+    "-Ywarn-unused-import"
   ),
   // https://github.com/sbt/sbt/issues/3570
   updateOptions := updateOptions.value.withGigahorse(false),
