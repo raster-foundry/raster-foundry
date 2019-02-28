@@ -203,6 +203,15 @@ object Dao extends LazyLogging {
         .query[T]
         .to[List]
 
+    def hasNext(pageRequest: PageRequest,
+                selectF: Fragment): ConnectionIO[Boolean] = {
+      (existF ++ Fragments.whereAndOpt(filters: _*) ++ Page(
+        pageRequest.copy(offset = pageRequest.offset + 1)))
+        .query[Boolean]
+        .to[List]
+        .map(_.nonEmpty)
+    }
+
     /** Provide a list of responses within the PaginatedResponse wrapper */
     def page[T: Read](pageRequest: PageRequest,
                       selectF: Fragment,
@@ -214,14 +223,19 @@ object Dao extends LazyLogging {
           pageRequest.copy(sort = orderClause ++ pageRequest.sort)))
           .query[T]
           .to[List]
-        count <- if (doCount) {
+        (count, hasNext) <- if (doCount) {
           (countF ++ Fragments.whereAndOpt(filters: _*))
             .query[Int]
-            .unique
-        } else { (-1).pure[ConnectionIO] }
+            .unique map { count =>
+            (count, (pageRequest.offset * pageRequest.limit) + 1 < count)
+          }
+        } else {
+          hasNext(pageRequest, selectF) map {
+            (-1, _)
+          }
+        }
       } yield {
         val hasPrevious = pageRequest.offset > 0
-        val hasNext = (pageRequest.offset * pageRequest.limit) + 1 < count
 
         PaginatedResponse[T](count,
                              hasPrevious,
