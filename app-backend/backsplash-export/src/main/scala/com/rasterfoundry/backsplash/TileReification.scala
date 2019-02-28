@@ -9,24 +9,41 @@ import geotrellis.server._
 import com.azavea.maml.ast._
 import cats.effect._
 import cats.implicits._
+import com.rasterfoundry.backsplash.ExportConfig
 import com.typesafe.scalalogging.LazyLogging
 
 object TileReification extends LazyLogging {
-  val tmsLevels: Array[LayoutDefinition] = {
-    val scheme = ZoomedLayoutScheme(WebMercator, 256)
-    for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
-  }.toArray
 
-  private def md5Hash(text: String): String =
-    java.security.MessageDigest
-      .getInstance("MD5")
-      .digest(text.getBytes())
-      .map(0xFF & _)
-      .map { "%02x".format(_) }
-      .foldLeft("") { _ + _ }
+  private val tileSize = ExportConfig.Export.tileSize
 
-  val invisiCellType = DoubleConstantNoDataCellType
-  val invisiTile = ArrayTile.empty(invisiCellType, 256, 256)
+  def getLayoutDefinition(zoom: Int): LayoutDefinition = {
+    val webMercator = ZoomedLayoutScheme(WebMercator, 256)
+    val cellSize = webMercator.levelForZoom(zoom).layout.cellSize
+    FloatingLayoutScheme(tileSize)
+      .levelFor(WebMercator.worldExtent, cellSize)
+      .layout
+  }
+
+  def getNoDataValue(cellType: CellType): Option[Double] = {
+    cellType match {
+      case ByteUserDefinedNoDataCellType(value)   => Some(value.toDouble)
+      case UByteUserDefinedNoDataCellType(value)  => Some(value.toDouble)
+      case UByteConstantNoDataCellType            => Some(0)
+      case ShortUserDefinedNoDataCellType(value)  => Some(value.toDouble)
+      case UShortUserDefinedNoDataCellType(value) => Some(value.toDouble)
+      case UShortConstantNoDataCellType           => Some(0)
+      case IntUserDefinedNoDataCellType(value)    => Some(value.toDouble)
+      case FloatUserDefinedNoDataCellType(value)  => Some(value.toDouble)
+      case DoubleUserDefinedNoDataCellType(value) => Some(value.toDouble)
+      case _: NoNoData                            => Some(Double.NaN)
+      case _: ConstantNoData[_]                   => Some(Double.NaN)
+    }
+  }
+
+  val invisiCellType: DoubleConstantNoDataCellType.type =
+    DoubleConstantNoDataCellType
+  val invisiTile: MutableArrayTile =
+    ArrayTile.empty(invisiCellType, tileSize, tileSize)
 
   implicit val mosaicExportTmsReification =
     new TmsReification[List[(String, List[Int], Option[Double])]] {
@@ -37,8 +54,9 @@ object TileReification extends LazyLogging {
                          buffer: Int)(
           implicit contextShift: ContextShift[IO]
       ): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
-        val ld = tmsLevels(z)
-        val extent = ld.mapTransform.keyToExtent(x, y)
+        val layoutDefinition = getLayoutDefinition(z)
+        val extent = layoutDefinition.mapTransform.keyToExtent(x, y)
+        logger.debug(s"Extent of Tile ($x, $y): ${extent}")
         val bandCount = {
           val first =
             self.headOption
@@ -56,30 +74,24 @@ object TileReification extends LazyLogging {
           self.parTraverse {
             case (uri, bands, ndOverride) =>
               IO {
-                val rs = RasterSources.getOrUpdate(uri)
+                val rs = RasterSources
+                  .getOrUpdate(uri)
+                  .reproject(WebMercator, NearestNeighbor)
+                logger.debug(s"Raster Source Extent: ${rs.extent}")
                 if (rs.extent.intersects(extent)) {
-                  rs.reproject(WebMercator, NearestNeighbor)
-                    .tileToLayout(ld, NearestNeighbor)
+                  rs.tileToLayout(layoutDefinition, NearestNeighbor)
                     .read(SpatialKey(x, y), bands) match {
-                    case Some(mbtile) =>
-                      logger.debug(
-                        s"--HIT-- uri: ${uri}; celltype: ${mbtile.cellType}, zxy: $z/$x/$y")
-                      mbtile.bands.zipWithIndex.map {
-                        case (band, idx) =>
-                          logger.trace(s"b$idx hash: ${md5Hash(
-                            band.toArray.take(100).mkString(""))}, vals ${band.toArray.take(10).toList}")
-                      }
-
-                      ndOverride.map { nd =>
-                        val currentCT = mbtile.cellType
-                        mbtile.interpretAs(currentCT.withNoData(Some(nd)))
-                      } orElse {
-                        Some(mbtile)
-                      }
-                    case None =>
+                    case Some(mbtile) => {
+                      val noDataValue = getNoDataValue(mbtile.cellType)
+                      Some(
+                        mbtile.interpretAs(
+                          mbtile.cellType.withNoData(noDataValue)))
+                    }
+                    case None => {
                       logger.debug(
                         s"--CRITICAL MISS-- uri: ${uri}; zxy: $z/$x/$y")
                       None
+                    }
                   }
                 } else {
                   logger.debug(s"--MISS-- uri: ${uri}; zxy: $z/$x/$y")
@@ -90,7 +102,7 @@ object TileReification extends LazyLogging {
         val exportTile: IO[Raster[MultibandTile]] = subTilesIO.map { subtiles =>
           subtiles.flatten.reduceOption({ (t1, t2) =>
             logger.debug(
-              s"Merging celltypes ct1: ${t1.cellType}; ct2: ${t2.cellType}")
+              s"Merging celltypes ct1: ${t1.cellType} ; ct2: ${t2.cellType}")
             t1 merge t2
           }) match {
             case Some(mbtile) =>
@@ -115,25 +127,22 @@ object TileReification extends LazyLogging {
                          buffer: Int)(
           implicit contextShift: ContextShift[IO]
       ): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
-        val ld = tmsLevels(z)
-        val extent = ld.mapTransform.keyToExtent(x, y)
+        val layoutDefinition = getLayoutDefinition(z)
+        val extent = layoutDefinition.mapTransform.keyToExtent(x, y)
         val subTilesIO: IO[List[Option[MultibandTile]]] = self.parTraverse {
           case (uri, band, ndOverride) =>
             IO {
               val rs = RasterSources.getOrUpdate(uri)
               if (rs.extent.intersects(extent)) {
                 rs.reproject(WebMercator, NearestNeighbor)
-                  .tileToLayout(ld, NearestNeighbor)
+                  .tileToLayout(layoutDefinition, NearestNeighbor)
                   .read(SpatialKey(x, y), Seq(band)) match {
                   case Some(tile) =>
                     logger.debug(
                       s"--HIT-- uri: ${uri}; celltype: ${tile.cellType}, zxy: $z/$x/$y")
-                    ndOverride.map { nd =>
-                      val currentCT = tile.cellType
-                      tile.interpretAs(currentCT.withNoData(Some(nd)))
-                    } orElse {
-                      Some(tile)
-                    }
+                    val noDataValue = getNoDataValue(tile.cellType)
+                    Some(
+                      tile.interpretAs(tile.cellType.withNoData(noDataValue)))
                   case None =>
                     logger.debug(s"--MISS-- uri: ${uri}; zxy: $z/$x/$y")
                     None

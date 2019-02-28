@@ -2,7 +2,6 @@ package com.rasterfoundry.backsplash.export
 
 import com.rasterfoundry.common.datamodel.export._
 import TileReification._
-
 import geotrellis.raster._
 import geotrellis.proj4._
 import geotrellis.raster.rasterize.Rasterizer
@@ -44,7 +43,10 @@ trait ExportableInstances extends LazyLogging {
               case Valid(mbtile) =>
                 logger.debug(s"Constructed Multiband tile @${zoom}/$x/$y")
                 val tileExtent =
-                  TileReification.tmsLevels(zoom).mapTransform.keyToExtent(x, y)
+                  TileReification
+                    .getLayoutDefinition(zoom)
+                    .mapTransform
+                    .keyToExtent(x, y)
                 mbtile.mask(
                   tileExtent,
                   List(self.source.area.reproject(LatLng, WebMercator)),
@@ -111,7 +113,10 @@ trait ExportableInstances extends LazyLogging {
                 logger.debug(
                   s"Constructed Multiband tile @${zoom}/$x/$y with bands ${mbtile.bandCount}")
                 val tileExtent =
-                  TileReification.tmsLevels(zoom).mapTransform.keyToExtent(x, y)
+                  TileReification
+                    .getLayoutDefinition(zoom)
+                    .mapTransform
+                    .keyToExtent(x, y)
                 mbtile.mask(
                   tileExtent,
                   List(self.source.area.reproject(LatLng, WebMercator)),
