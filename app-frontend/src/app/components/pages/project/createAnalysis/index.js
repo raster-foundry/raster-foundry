@@ -63,7 +63,8 @@ class ProjectCreateAnalysisPageController {
         let params = {
             sort: 'createdAt,desc',
             pageSize: 10,
-            page: page - 1
+            page: page - 1,
+            singleSource: true
         };
 
         if (this.search) {
@@ -77,7 +78,7 @@ class ProjectCreateAnalysisPageController {
             this.templateList = paginatedResponse.results;
             this.itemActions = new Map(this.templateList.map(this.addItemActions.bind(this)));
             this.fetchCreators(this.templateList).then((creators) => {
-                if (creators.has(_.first(this.templateList).id)) {
+                if (creators.has(_.get(_.first(this.templateList), 'id'))) {
                     this.templateCreators = creators;
                 }
             });
