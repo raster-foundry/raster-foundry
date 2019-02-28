@@ -108,6 +108,8 @@ services:
       - RF_HOST=http://rasterfoundry.com:9000
       - LOCAL_INGEST_CORES=2
       - LOCAL_INGEST_MEM_GB=4
+      - EXPORT_TILE_SIZE=1024
+      - BACKSPLASH_ENABLE_GDAL=false
     command: rf
     links:
       - postgres:database.service.rasterfoundry.internal
