@@ -113,8 +113,6 @@ class LayerColormodeController {
             );
         });
 
-        console.log(key);
-
         if (!key) {
             this.initCustomColorMode();
             return 'custom';
@@ -413,7 +411,7 @@ class LayerColormodeController {
     }
 
     navToCorrections() {
-        this.$state.go('projects.edit.advancedcolor');
+        this.$state.go('project.layer.corrections');
     }
 }
 

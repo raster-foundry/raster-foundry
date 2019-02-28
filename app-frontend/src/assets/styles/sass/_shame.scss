@@ -3344,6 +3344,12 @@ rf-project-publishing-page {
     padding: 2rem;
     box-shadow: 0px 3px 8px rgba($shade-normal, 0.2);
     margin-bottom: 3rem;
+    &.slim {
+        padding: 1rem;
+    }
+    &.cozy {
+        margin-bottom: 1.5rem;
+    }
 }
 
 .page-card-header {
@@ -3500,32 +3506,17 @@ rf-project-page {
     flex: 1;
 }
 
-.selected-actions-group {
-    a {
-        box-shadow: initial;
-        padding: 1.25rem 1rem;
-        margin: 0.25rem;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-    }
-
-    rf-selected-actions-bar {
-        width: 100%;
-        background: $white;
-        display: flex;
-        justify-content: space-between;
-        padding: 0 0.5rem;
-    }
-
-    .navbar-section {
-        flex: initial;
-    }
+rf-selected-actions-bar {
+    width: 100%;
+    background: $white;
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 1.5rem;
+    box-shadow: 0px 3px 8px rgba($shade-normal, 0.1);
 
     .select-button {
         box-shadow: initial;
-        padding: 0.55rem 1rem;
-        margin: 0.6rem;
+        padding: 0.5rem 1rem;
         border: 1px solid $shade-light;
         border-radius: 1.5em;
         background: $white;
@@ -3534,6 +3525,7 @@ rf-project-page {
         align-items: center;
 
         label.checkbox {
+            font-size: 1.3rem;
             &:after {
                 border: 2px solid $shade-light;
             }
@@ -3548,4 +3540,17 @@ rf-project-page {
 
 .export-date-subtext {
     font-size: 12px;
+}
+
+.btn-no-left-margin {
+    margin-left: 0;
+    padding-left: 0;
+    i {
+        margin-left: 0;
+        padding-left: 0;
+    }
+}
+
+.indented {
+    padding-left: 3.5rem;
 }
