@@ -132,7 +132,9 @@ object TileReification extends LazyLogging {
         val subTilesIO: IO[List[Option[MultibandTile]]] = self.parTraverse {
           case (uri, band, ndOverride) =>
             IO {
-              val rs = RasterSources.getOrUpdate(uri)
+              val rs = RasterSources
+                .getOrUpdate(uri)
+                .reproject(WebMercator, NearestNeighbor)
               if (rs.extent.intersects(extent)) {
                 rs.reproject(WebMercator, NearestNeighbor)
                   .tileToLayout(layoutDefinition, NearestNeighbor)
