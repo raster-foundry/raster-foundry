@@ -13,13 +13,7 @@ ADD COLUMN
 
 UPDATE project_layers
 SET
-  is_single_band = projects.is_single_band
-FROM projects
-WHERE
-  projects.id = project_layers.project_id;
-
-UPDATE project_layers
-SET
+  is_single_band = projects.is_single_band,
   single_band_options = projects.single_band_options
 FROM projects
 WHERE
