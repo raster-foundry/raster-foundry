@@ -104,7 +104,6 @@ object ProjectLayer extends LazyLogging with JsonCodecs {
        rangeStart: Option[Timestamp],
        rangeEnd: Option[Timestamp],
        geometry: Option[Projected[Geometry]]) => {
-        println("At least attempting to decode")
         Create(
           name,
           projectId,
