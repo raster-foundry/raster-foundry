@@ -122,6 +122,27 @@ trait ProjectLayerRoutes
       }
   }
 
+  def splitProjectLayer(projectId: UUID, layerId: UUID): Route =
+    authenticate { user =>
+      authorizeAsync {
+        ProjectDao
+          .authProjectLayerExist(projectId, layerId, user, ActionType.View)
+          .transact(xa)
+          .unsafeToFuture
+      } {
+        entity(as[SplitOptions]) { splitOptions =>
+          onSuccess(
+            ProjectLayerDao
+              .splitProjectLayer(projectId, layerId, splitOptions, user)
+              .transact(xa)
+              .unsafeToFuture
+          ) { splitLayers =>
+            complete(StatusCodes.Created, splitLayers)
+          }
+        }
+      }
+    }
+
   def getProjectLayerMosaicDefinition(projectId: UUID, layerId: UUID): Route =
     authenticate { user =>
       authorizeAsync {

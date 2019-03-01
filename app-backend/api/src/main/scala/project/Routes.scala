@@ -104,6 +104,13 @@ trait ProjectRoutes
                       deleteProjectLayer(projectId, layerId)
                     }
                 } ~
+                  pathPrefix("split") {
+                    pathEndOrSingleSlash {
+                      post {
+                        splitProjectLayer(projectId, layerId)
+                      }
+                    }
+                  } ~
                   pathPrefix("color-mode") {
                     pathEndOrSingleSlash {
                       post {
