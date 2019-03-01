@@ -1,1 +1,67 @@
-Export
+<div class="sidebar-overlay" ng-if="$ctrl.isDrawAoiClicked || $ctrl.isDrawing"></div>
+<rf-aoi-draw-toolbar
+  ng-if="$ctrl.isDrawAoiClicked"
+  map-id="$ctrl.mapId"
+  geom-draw-type="$ctrl.geomDrawType"
+  on-cancel="$ctrl.onCancelDrawAoi()"
+  on-confirm-aoi="$ctrl.onConfirmAoi(aoiGeojson, isSaveShape)"
+  on-shape-op="$ctrl.onShapeOp(isInProgress)""
+  >
+</rf-aoi-draw-toolbar>
+<div class="sidebar-scrollable with-padding">
+  <div class="page-card page-card-form with-thin-bottom-margin">
+    <div class="form-group" ng-if="$ctrl.availableTargets && $ctrl.availableTargets.length">
+      <label for="export-target">Export to</label>
+      <div class="input-group">
+        <select
+          class="form-control"
+          name="export-target"
+          ng-model="$ctrl.exportTarget"
+          ng-change="$ctrl.onExportTargetChange()"
+        >
+        <option value={{target.value}} ng-repeat="target in $ctrl.availableTargets track by $index">
+          {{target.label}}
+        </option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" ng-if="$ctrl.availableResolutions && $ctrl.availableResolutions.length">
+      <label for="export-resolution">Zoom level</label>
+      <div class="input-group">
+        <select
+          class="form-control"
+          name="export-resolution"
+          ng-model="$ctrl.resolution"
+          ng-change="$ctrl.onResolutionChange()"
+        >
+          <option value="{{resolution.value.toString()}}" ng-repeat="resolution in $ctrl.availableResolutions track by $index">
+            {{resolution.value}} ({{resolution.label}}&sup2;)
+          </option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" ng-if="$ctrl.availableResolutions && $ctrl.availableResolutions.length">
+      <label>Area to export</label>
+      <div class="sidebar-actions-group">
+        <p>Define an area you want to export.</p>
+        <div class="column-4 nogutter btn-group">
+          <button
+            type="button"
+            class="btn btn-gohst"
+            ng-click="$ctrl.onClickDefineAoi()"
+          >
+            Define
+          </button>
+        </div>
+      </div>
+    </div>
+</div>
+<button
+  type="button"
+  class="btn btn-light"
+  ng-class="{'btn-primary': $ctrl.isValidExportDef()}"
+  ng-disabled="!$ctrl.isValidExportDef()"
+  ng-click="$ctrl.onClickCreateExport()"
+>
+  Create export
+</button>
