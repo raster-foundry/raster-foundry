@@ -39,6 +39,21 @@ object ProjectLayerScenesDao extends Dao[Scene] {
       .to[List]
   }
 
+  def listLayerScenesRaw(
+      layerId: UUID,
+      splitOptions: SplitOptions): ConnectionIO[List[Scene.ProjectScene]] = {
+    val sceneParams = CombinedSceneQueryParams(
+      sceneParams = SceneQueryParameters(
+        minAcquisitionDatetime = Some(splitOptions.rangeStart),
+        maxAcquisitionDatetime = Some(splitOptions.rangeEnd)
+      ))
+    query
+      .filter(fr"project_layer_id = ${layerId}")
+      .filter(sceneParams)
+      .list
+      .flatMap(scenesToProjectScenes(_, layerId))
+  }
+
   def listLayerScenes(
       layerId: UUID,
       pageRequest: PageRequest,
@@ -64,7 +79,6 @@ object ProjectLayerScenesDao extends Dao[Scene] {
       .filter(sceneParams)
 
     val paginatedScenes = for {
-      layer <- layerQuery
       page <- filterQ.page(pageRequest, manualOrder)
     } yield page
     paginatedScenes.flatMap { (pr: PaginatedResponse[Scene]) =>

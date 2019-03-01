@@ -6,6 +6,8 @@ import geotrellis.vector.{Geometry, Projected}
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.JsonCodec
 import io.circe.generic.semiauto._
+import io.circe._
+import cats.syntax.either._
 
 import java.sql.Timestamp
 import java.util.UUID
@@ -42,6 +44,9 @@ final case class ProjectLayer(
     )
   )
 }
+final case class LayerQueryResult(timestamp: Option[Timestamp],
+                                  datasource: Option[UUID],
+                                  count: Int)
 
 @JsonCodec
 final case class ProjectLayerProperties(
