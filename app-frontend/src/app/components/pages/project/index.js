@@ -5,7 +5,6 @@ import layerPages from './layer';
 import projectPage from './project';
 import layersPage from './layers';
 import createAnalysisPage from './createAnalysis';
-import analysisPage from './analysis';
 import settingsPages from './settings';
 import analysesPages from './analyses';
 
@@ -50,7 +49,6 @@ export default [
     layersPage,
     projectPage,
     createAnalysisPage,
-    analysisPage,
     ...layerPages,
     ...settingsPages,
     ...analysesPages

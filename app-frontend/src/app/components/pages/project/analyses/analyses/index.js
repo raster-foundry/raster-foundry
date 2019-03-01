@@ -108,14 +108,16 @@ class AnalysesListController {
             callback: () => this.onHide(analysis.id),
             menu: false
         };
+        const selectGroupAction = {
+            name: 'Select group',
+            callback: () => this.selectGroup(analysis),
+            tooltip: 'Select all analyses which can be edited at the same time as this one.',
+            menu: true
+        };
         const editAction = {
             name: 'Edit',
             callback: () => {
                 this.editAnalyses(analysis);
-                // this.$state.go('project.analysis', {
-                //     analysisId: [analysis.id],
-                //     analysis: [analysis]
-                // });
             },
             menu: true,
             separator: true
@@ -141,13 +143,13 @@ class AnalysesListController {
             menu: true
         };
 
-        let actions = [previewAction, editAction];
+        const commonActions = [previewAction, editAction];
 
-        if (isDeleteAllowed) {
-            actions.push(deleteAction);
-        }
-
-        return actions;
+        return [
+            ...!this.selected.size ? [selectGroupAction] : [],
+            ...commonActions,
+            ...isDeleteAllowed ? [deleteAction] : []
+        ];
     }
 
     onHide(id) {
@@ -239,27 +241,49 @@ class AnalysesListController {
     }
 
     allVisibleSelected() {
-        const templateId = _.get(this.selected.values().next(), 'value.templateId');
+        // const templateId = _.get(this.selected.values().next(), 'value.templateId');
         let itemSet = new Set(
             this.itemList
-                .filter(i => i.templateId === templateId)
+                // .filter(i => i.templateId === templateId)
                 .map(l => l.id));
         return this.selected.size &&
             itemSet.intersect(this.selected.keySeq()).size === itemSet.size;
+    }
+
+    isSelectable(item) {
+        if (this.selected.size) {
+            const templateId = _.get(this.selected.values().next(), 'value.templateId');
+            return item.templateId === templateId;
+        }
+        return true;
+    }
+
+    canEditSelection() {
+        const templateIds = new Set(this.selected.valueSeq().map(v => v.templateId));
+        return templateIds.size <= 1;
     }
 
     selectAll() {
         if (this.allVisibleSelected()) {
             this.selected = this.selected.clear();
         } else {
-            const templateId = _.get(this.selected.values().next(), 'value.templateId');
             this.selected = this.selected.merge(
                 new Map(
                     this.itemList
-                        .filter(i => i.templateId === templateId)
                         .map(i => [i.id, i]))
             );
         }
+        this.updateSelectText();
+    }
+
+    selectGroup(analysis) {
+        const templateId = analysis.templateId;
+        this.selected = this.selected.merge(
+            new Map(
+                this.itemList
+                    .filter(i => i.templateId === templateId)
+                    .map(i => [i.id, i]))
+        );
         this.updateSelectText();
     }
 
@@ -269,14 +293,6 @@ class AnalysesListController {
         } else {
             this.selectText = `Select all listed (${this.selected.size})`;
         }
-    }
-
-    isSelectable(item) {
-        if (this.selected.size) {
-            const templateId = _.get(this.selected.values().next(), 'value.templateId');
-            return item.templateId === templateId;
-        }
-        return true;
     }
 
     editAnalyses(analysis) {

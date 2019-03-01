@@ -16,10 +16,20 @@
       on-click="$ctrl.selectAll()"
       action-text="$ctrl.selectText"
   >
-    <button class="btn btn-transparent"
-            ng-click="$ctrl.editAnalyses()">
-      Edit
-    </button>
+    <span
+        tooltips
+        tooltip-template="Edit analyses created from the same template"
+        tooltip-size="small"
+        tooltip-class="rf-tooltip shrink"
+        tooltip-side="bottom"
+    >
+      <button class="btn btn-transparent"
+              ng-click="$ctrl.editAnalyses()"
+              ng-disabled="!$ctrl.canEditSelection()"
+      >
+        Edit
+      </button>
+    </span>
     <button class="btn btn-transparent"
             ng-click="$ctrl.removeScenes($ctrl.selected.valueSeq().toArray())">
       Delete
@@ -39,7 +49,6 @@
       <rf-list-item-selector
           id="item.id"
           selected="$ctrl.selected.has(item.id)"
-          disable-selection="!$ctrl.isSelectable(item)"
           on-select="$ctrl.onToggle(id)"
           color="item.layerColorGrouphex"
       ></rf-list-item-selector>
