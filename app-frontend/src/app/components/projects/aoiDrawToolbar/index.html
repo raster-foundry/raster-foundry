@@ -1,0 +1,95 @@
+<div class="navbar light-navbar"
+     ng-style="$ctrl.eleStyle">
+  <div class="navbar-section aoi-draw-toolbar-left"
+       ng-style="$ctrl.leftStyle">
+    <button class="btn btn-small btn-transparent"
+            ng-click="$ctrl.onDrawAoi()"
+            ng-disabled="$ctrl.isDrawingAoi"
+            ng-if="!$ctrl.isValidGeometry()">
+      <i class="icon-plus"></i> Draw AOI
+    </button>
+    <button class="btn btn-small btn-transparent"
+            ng-if="$ctrl.isValidGeometry()"
+            ng-disabled="$ctrl.isEditingAoi"
+            uib-dropdown
+            uib-dropdown-toggle>
+      <i class="icon-pencil"></i>Edit AOI<i class="icon-caret-down"></i>
+      <ul class="dropdown-menu dropdown-menu-light drop-left aoi-draw-dropdown"
+          role="menu"
+          uib-dropdown-menu >
+        <li role="menuitem">
+          <a class="aoi-draw-toolbar-menu"
+             ng-click="$ctrl.onClickEditAoi()">
+             Edit
+          </a>
+        </li>
+        <li role="menuitem">
+          <a class="aoi-draw-toolbar-menu"
+             ng-click="$ctrl.onClickDeleteAoi()">
+             Delete
+          </a>
+        </li>
+      </ul>
+    </button>
+    <div style="flex: 1;"></div>
+    <div class="btn btn-small btn-transparent"
+         ng-disabled="$ctrl.isDrawingAoi || $ctrl.isEditingAoi"
+         ng-if="$ctrl.filterList.length"
+         uib-dropdown
+         uib-dropdown-toggle>
+      {{$ctrl.selectedFilterName}}<i class="icon-caret-down"></i>
+      <ul class="dropdown-menu dropdown-menu-light drop-left"
+          role="menu"
+          uib-dropdown-menu >
+        <li role="menuitem"
+            ng-repeat="filter in $ctrl.filterList track by filter.id">
+          <a class="aoi-draw-toolbar-menu"
+             ng-click="$ctrl.onChangeFilter(filter.id)">
+            {{filter.name}}
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="navbar-section secondary aoi-draw-toolbar-right"
+       ng-if="!$ctrl.isEditingAoi">
+    <div class="btn btn-small btn-transparent"
+         ng-click="$ctrl.onClickCancel()">
+      Cancel
+    </div>
+    <div class="btn btn-small btn-primary"
+         ng-disabled="!$ctrl.isDrawnAoi || $ctrl.isEditingAoi"
+         uib-dropdown
+         uib-dropdown-toggle>
+      Confirm
+      <i class="icon-caret-down"></i>
+      <ul class="dropdown-menu dropdown-menu-light drop-left"
+          role="menu"
+          uib-dropdown-menu>
+        <li role="menuitem">
+          <a class="aoi-draw-toolbar-menu"
+             ng-click="$ctrl.onClickConfirmAOI(false)">
+             Confirm AOI
+          </a>
+        </li>
+        <li role="menuitem">
+          <a class="aoi-draw-toolbar-menu"
+             ng-click="$ctrl.onClickConfirmAOI(true)">
+             Confirm AOI and save as shape
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="navbar-section secondary aoi-draw-toolbar-right"
+       ng-if="$ctrl.isEditingAoi">
+    <div class="btn btn-small btn-transparent"
+         ng-click="$ctrl.onClickCancelEdit()">
+      Cancel Edit
+    </div>
+    <div class="btn btn-small btn-transparent"
+         ng-click="$ctrl.onClickConfirmEdit()">
+      Confirm Edit
+    </div>
+  </div>
+</div>

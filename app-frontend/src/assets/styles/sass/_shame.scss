@@ -2059,6 +2059,10 @@ rf-node-selector {
     &.drop-left {
         left: initial;
         right: 0;
+
+        &.aoi-draw-dropdown {
+            z-index: 1060;
+        }
     }
 }
 .leaflet-frame {
@@ -3258,7 +3262,8 @@ rf-project-layer-scenes-browse-page,
 rf-project-layer-exports-page,
 rf-project-create-analysis-page,
 rf-project-layer-annotations-page,
-rf-project-layer-colormode-page {
+rf-project-layer-colormode-page,
+rf-project-layer-aoi-page {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -3276,6 +3281,12 @@ rf-project-layer-colormode-page {
         border: 1px solid $gray-lightest;
         border-radius: 3px;
         margin: 0.5em;
+    }
+
+    rf-layer-item {
+      .with-aoi-component {
+        z-index: 1040;
+      }
     }
 }
 
@@ -3548,4 +3559,11 @@ rf-project-page {
 
 .export-date-subtext {
     font-size: 12px;
+}
+
+rf-aoi-draw-toolbar {
+  position: absolute;
+  width: 100vw;
+  z-index: 1040;
+  bottom: 100%;
 }
