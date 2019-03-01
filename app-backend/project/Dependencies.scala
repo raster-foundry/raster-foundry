@@ -24,7 +24,7 @@ object Dependencies {
   val circeCore = "io.circe" %% "circe-core" % Version.circe
   val circeGeneric = "io.circe" %% "circe-generic" % Version.circe
   val circeGenericExtras = "io.circe" %% "circe-generic-extras" % Version.circe
-  val circeOptics = "io.circe" %% "circe-optics" % Version.circe
+  val circeOptics = "io.circe" %% "circe-optics" % Version.circeOptics
   val circeParser = "io.circe" %% "circe-parser" % Version.circe
   val circeTest = "io.circe" %% "circe-testing" % Version.circe % "test"
   val commonsIO = "commons-io" % "commons-io" % Version.commonsIO

@@ -58,9 +58,6 @@ final case class ProjectLayerProperties(
 
 object ProjectLayer extends LazyLogging with JsonCodecs {
 
-  implicit val projGeomODecoder: Decoder[Option[Projected[Geometry]]] =
-    implicitly
-
   final case class Create(name: String,
                           projectId: Option[UUID],
                           colorGroupHex: String,
@@ -106,16 +103,20 @@ object ProjectLayer extends LazyLogging with JsonCodecs {
        smartLayerId: Option[UUID],
        rangeStart: Option[Timestamp],
        rangeEnd: Option[Timestamp],
-       geometry: Option[Projected[Geometry]]) =>
-        Create(name,
-               projectId,
-               colorGroupHex,
-               smartLayerId,
-               rangeStart,
-               rangeEnd,
-               geometry,
-               false,
-               None)) or Decoder.forProduct9(
+       geometry: Option[Projected[Geometry]]) => {
+        println("At least attempting to decode")
+        Create(
+          name,
+          projectId,
+          colorGroupHex,
+          smartLayerId,
+          rangeStart,
+          rangeEnd,
+          geometry,
+          false,
+          None
+        )
+      }) or Decoder.forProduct9(
       "name",
       "projectId",
       "colorGroupHex",
@@ -126,7 +127,6 @@ object ProjectLayer extends LazyLogging with JsonCodecs {
       "isSingleBand",
       "singleBandOptions"
     )(Create.apply _)
-  }
 
   final case class GeoJSON(id: UUID,
                            geometry: Option[Projected[Geometry]],
