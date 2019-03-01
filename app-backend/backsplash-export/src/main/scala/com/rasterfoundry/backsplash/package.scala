@@ -9,21 +9,26 @@ import geotrellis.vector.{Extent, Point}
 import geotrellis.contrib.vlm._
 import geotrellis.contrib.vlm.geotiff._
 import geotrellis.contrib.vlm.gdal._
-
-import java.net.{URLDecoder}
+import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
 import com.typesafe.scalalogging.LazyLogging
 
 package object export extends LazyLogging {
 
+  private val tileSize = ExportConfig.Export.tileSize
+
   def getTileXY(lat: Double,
                 lng: Double,
                 zoom: Int,
                 displayProjection: CRS = WebMercator): (Int, Int) = {
     val p = Point(lng, lat).reproject(LatLng, displayProjection)
-    val SpatialKey(x, y) = ZoomedLayoutScheme(displayProjection)
-      .levelForZoom(zoom)
+
+    val webMercator = ZoomedLayoutScheme(WebMercator, 256)
+    val cellSize = webMercator.levelForZoom(zoom).layout.cellSize
+
+    val SpatialKey(x, y) = FloatingLayoutScheme(tileSize)
+      .levelFor(WebMercator.worldExtent, cellSize)
       .layout
       .mapTransform(p)
     (x, y)
@@ -38,22 +43,22 @@ package object export extends LazyLogging {
     logger.info(s"Minimum Tile: ${maxTileCol}, ${maxTileRow}")
     logger.info(s"Maximum Tile: ${minTileCol}, ${minTileRow}")
 
-    val tileCols = (minTileCol - maxTileCol + 1) * 256
-    val tileRows = (minTileRow - maxTileRow + 1) * 256
+    val tileCols = minTileCol - maxTileCol + 1
+    val tileRows = minTileRow - maxTileRow + 1
     logger.info(s"Columns: ${tileCols}, Rows: ${tileRows}")
     val tileLayout =
-      TileLayout(tileCols / 256, tileRows / 256, 256, 256)
+      TileLayout(tileCols, tileRows, tileSize, tileSize)
     GeoTiffSegmentLayout(
-      tileCols,
-      tileRows,
+      tileCols * tileSize,
+      tileRows * tileSize,
       tileLayout,
-      Tiled,
+      Tiled(tileSize, tileSize),
       PixelInterleave
     )
   }
 
   def getRasterSource(uri: String): RasterSource = {
-    val enableGDAL = false // for now
+    val enableGDAL = ExportConfig.RasterSource.enableGDAL
     if (enableGDAL) {
       GDALRasterSource(
         URLDecoder.decode(uri, StandardCharsets.UTF_8.toString()))
