@@ -31,9 +31,7 @@ trait AWSBatch extends RollbarNotifier with LazyLogging {
     logger.info(s"Using ${awsbatchConfig.environment} in AWS Batch")
 
     val runBatch: Boolean = {
-      awsbatchConfig.environment
-        .toLowerCase() == "staging" || awsbatchConfig.environment
-        .toLowerCase() == "production"
+      List("production", "staging").contains(awsbatchConfig.environment.toLowerCase())
     }
 
     if (runBatch) {
