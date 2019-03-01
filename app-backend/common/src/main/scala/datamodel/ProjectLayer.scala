@@ -126,6 +126,7 @@ object ProjectLayer extends LazyLogging with JsonCodecs {
       "isSingleBand",
       "singleBandOptions"
     )(Create.apply _)
+  }
 
   final case class GeoJSON(id: UUID,
                            geometry: Option[Projected[Geometry]],
