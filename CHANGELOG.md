@@ -19,7 +19,6 @@
 - Added Rollbar error reporting to backsplash [\#4691](https://github.com/raster-foundry/raster-foundry/pull/4691)
 - Added PLATFORM_USERS webpack overrides variable and make default platform filter use those ids [\#4692](https://github.com/raster-foundry/raster-foundry/pull/4692)
 - Added flag for whether tools can sensibly be run with only a single layer as input [\#4701](https://github.com/raster-foundry/raster-foundry/pull/4701) and used it to filter templates for layer analysis creation [\#4711](https://github.com/raster-foundry/raster-foundry/pull/4711)
-- Added flag for whether tools can sensibly be run with only a single layer as input [\#4701](https://github.com/raster-foundry/raster-foundry/pull/4701)
 - Added single band options to project layers [\#4712](https://github.com/raster-foundry/raster-foundry/pull/4712)
 
 ### Changed
