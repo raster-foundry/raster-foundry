@@ -3598,4 +3598,10 @@ rf-aoi-draw-toolbar {
     width: 100vw;
     z-index: 1040;
     bottom: 100%;
+
+    button {
+        &.btn-aoi-actions {
+            margin-left: 1rem;
+        }
+    }
 }
