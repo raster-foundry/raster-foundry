@@ -778,6 +778,8 @@ object Generators extends ArbitraryInstances {
       rangeStart <- Gen.const(None)
       rangeEnd <- Gen.const(None)
       geometry <- Gen.const(None)
+      isSingleBand <- Gen.const(false)
+      singleBandOptions <- Gen.const(None)
     } yield {
       ProjectLayer.Create(name,
                           projectId,
@@ -785,7 +787,9 @@ object Generators extends ArbitraryInstances {
                           smartLayerId,
                           rangeStart,
                           rangeEnd,
-                          geometry)
+                          geometry,
+                          isSingleBand,
+                          singleBandOptions)
     }
 
   object Implicits {

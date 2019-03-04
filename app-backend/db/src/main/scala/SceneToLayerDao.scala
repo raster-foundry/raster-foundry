@@ -127,10 +127,6 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
       project_layers
     ON
       scenes_stl.project_layer_id = project_layers.id
-    LEFT JOIN
-      projects
-    ON
-      project_layers.project_id = projects.id
       """
     (select ++ whereAndOpt(filters: _*) ++ orderByF)
       .query[SceneToLayerWithSceneType]
