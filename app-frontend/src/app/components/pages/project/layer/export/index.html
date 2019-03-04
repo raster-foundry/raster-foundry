@@ -3,6 +3,7 @@
   ng-if="$ctrl.isDrawAoiClicked"
   map-id="$ctrl.mapId"
   geom-draw-type="$ctrl.geomDrawType"
+  layer-aoi-geom="$ctrl.layerGeom"
   on-cancel="$ctrl.onCancelDrawAoi()"
   on-confirm-aoi="$ctrl.onConfirmAoi(aoiGeojson, isSaveShape)"
   on-shape-op="$ctrl.onShapeOp(isInProgress)""
@@ -25,6 +26,14 @@
         </select>
       </div>
     </div>
+    <div class="form-group" ng-if="$ctrl.exportTarget === 'externalS3'">
+      <div class="input-group">
+        <input type="url"
+               class="form-control"
+               placeholder="S3 Bucket URI"
+               ng-model="$ctrl.exportSource">
+      </div>
+    </div>
     <div class="form-group" ng-if="$ctrl.availableResolutions && $ctrl.availableResolutions.length">
       <label for="export-resolution">Zoom level</label>
       <div class="input-group">
@@ -32,7 +41,6 @@
           class="form-control"
           name="export-resolution"
           ng-model="$ctrl.resolution"
-          ng-change="$ctrl.onResolutionChange()"
         >
           <option value="{{resolution.value.toString()}}" ng-repeat="resolution in $ctrl.availableResolutions track by $index">
             {{resolution.value}} ({{resolution.label}}&sup2;)
@@ -50,7 +58,7 @@
             class="btn btn-gohst"
             ng-click="$ctrl.onClickDefineAoi()"
           >
-            Define
+            {{$ctrl.mask.type ? 'Update' : 'Define'}}
           </button>
         </div>
       </div>
@@ -63,5 +71,5 @@
   ng-disabled="!$ctrl.isValidExportDef()"
   ng-click="$ctrl.onClickCreateExport()"
 >
-  Create export
+  {{$ctrl.isCreatingExport ? 'Creating export...' : 'Create export'}}
 </button>

@@ -1,5 +1,6 @@
+/* globals BUILDCONFIG */
 import tpl from './index.html';
-import _ from 'lodash';
+import { min, range, get } from 'lodash';
 
 const mapName = 'project';
 const mapLayerName = 'Project Layer';
@@ -12,6 +13,7 @@ class LayerExportCreateController {
         $scope,
         $state,
         $log,
+        $timeout,
         moment,
         projectService,
         mapService,
@@ -27,8 +29,12 @@ class LayerExportCreateController {
     $onInit() {
         this.initExportTarget();
         this.initResolutions();
+        this.initMask();
+        this.getDefaultBands();
         this.setMapLayers();
         this.initAoiDrawToolbar();
+
+        this.isCreatingExport = false;
     }
 
     $onDestroy() {
@@ -36,26 +42,34 @@ class LayerExportCreateController {
         this.removeExportAois();
     }
 
-    initAoiDrawToolbar() {
-        this.mapId = mapName;
-        this.geomDrawType = geomDrawType;
-        this.isDrawAoiClicked = false;
-    }
-
     initExportTarget() {
         this.availableTargets = this.exportService.getAvailableTargets();
         const defaultTarget = this.availableTargets.find(target => target.default);
-        if (defaultTarget) {
-            this.exportTarget = defaultTarget.value;
-        }
+        this.exportTarget = defaultTarget.value || this.availableTargets[0];
+        this.exportSource = '';
+        this.exportType = 'S3';
     }
 
     initResolutions() {
         this.availableResolutions = this.exportService.getAvailableResolutions();
-        const defaultResolution = this.availableResolutions[0];
-        if (defaultResolution) {
-            this.resolution = defaultResolution.value.toString();
-        }
+        const defaultRes = this.availableResolutions[0];
+        const defaultVal = defaultRes.value;
+        this.resolution = defaultVal ? defaultVal.toString() : '9';
+    }
+
+    initMask() {
+        this.mask = {};
+    }
+
+    getDefaultBands() {
+        this.projectService.getProjectDatasources(this.project.id).then(datasources => {
+            let minBands = min(
+                datasources.map(datasource => {
+                    return datasource.bands.length;
+                })
+            );
+            this.defaultBands = range(0, minBands);
+        });
     }
 
     getMap() {
@@ -67,6 +81,13 @@ class LayerExportCreateController {
         return this.getMap().then(map => {
             map.setLayer(mapLayerName, mapLayer, true);
         });
+    }
+
+    initAoiDrawToolbar() {
+        this.mapId = mapName;
+        this.geomDrawType = geomDrawType;
+        this.isDrawAoiClicked = false;
+        this.layerGeom = {};
     }
 
     removeMapLayers() {
@@ -83,6 +104,9 @@ class LayerExportCreateController {
 
     onCancelDrawAoi() {
         this.isDrawAoiClicked = false;
+        if (this.mask.type) {
+            this.displayExportAoi();
+        }
     }
 
     onConfirmAoi(aoiGeojson, isSaveShape) {
@@ -90,6 +114,7 @@ class LayerExportCreateController {
         const geom = this.getMultiPolygon(aoiGeojson);
         if (geom) {
             this.mask = geom;
+            this.displayExportAoi();
             if (isSaveShape) {
                 this.openShapeModal(geom);
             }
@@ -98,8 +123,14 @@ class LayerExportCreateController {
         }
     }
 
+    displayExportAoi() {
+        this.getMap().then(map => {
+            map.setGeojson(shapeLayerName, this.mask);
+        });
+    }
+
     getMultiPolygon(aoiGeojson) {
-        const geomType = _.get(aoiGeojson, 'geometry.type');
+        const geomType = get(aoiGeojson, 'geometry.type');
         if (geomType && geomType.toUpperCase() === 'POLYGON') {
             return {
                 type: 'MultiPolygon',
@@ -113,15 +144,29 @@ class LayerExportCreateController {
 
     onClickDefineAoi() {
         this.isDrawAoiClicked = true;
+        this.layerGeom = {};
+        this.removeExportAois();
+        if (this.mask.type) {
+            this.layerGeom = this.mask;
+        }
     }
 
     isValidExportDef() {
-        const isValidTarget = _.get(this, 'exportTarget.value');
-        const isValidResolution = _.get(this, 'resolution');
-        const maskType = _.get(this, 'mask.type');
-        const isValidMask = maskType ? maskType.toUpperCase() === 'FEATURECOLLECTION' : false;
+        const isValidType = this.exportType === 'S3' || this.exportType === 'Dropbox';
+        const isValidResolution = this.availableResolutions
+            .map(res => res.value)
+            .includes(parseInt(this.resolution, 10));
+        const maskType = get(this, 'mask.type');
+        const isValidMask = maskType ? maskType.toUpperCase() === 'MULTIPOLYGON' : false;
+        const isValidBands = !!get(this, 'defaultBands.length');
 
-        return isValidTarget && isValidResolution && isValidMask;
+        let result = isValidType && isValidResolution && isValidMask && isValidBands;
+
+        if (this.exportTarget !== 'internalS3') {
+            result = result && get(this, 'exportSource.length');
+        }
+
+        return result;
     }
 
     onShapeOp(isInProgress) {
@@ -160,21 +205,106 @@ class LayerExportCreateController {
     }
 
     getExportSettings() {
-        // TODO: get exportType
         return {
-            exportType: '',
+            exportType: this.exportType,
             projectLayerId: this.layer.id
         };
     }
 
     getExportOptions() {
-        // TODO: get bands
-        return {
+        let result = {
             resolution: parseInt(this.resolution, 10),
             raw: false,
             mask: this.mask,
-            bands: []
+            bands: this.defaultBands
         };
+
+        if (this.exportTarget !== 'internalS3') {
+            result.source = this.exportSource;
+        }
+
+        return result;
+    }
+
+    onExportTargetChange() {
+        this.exportSource = '';
+        this.exportType = 'S3';
+        if (this.exportTarget === 'dropbox') {
+            this.exportType = 'Dropbox';
+            const hasDropbox =
+                this.authService.user.dropboxCredential &&
+                this.authService.user.dropboxCredential.length;
+            if (hasDropbox) {
+                let appName = BUILDCONFIG.APP_NAME.toLowerCase().replace(' ', '-');
+                this.exportSource = `dropbox:///${appName}/projects/${this.project.id}/layer/${
+                    this.layer.id
+                }`;
+            } else {
+                this.displayDropboxModal();
+            }
+        }
+    }
+
+    displayDropboxModal() {
+        this.modalService
+            .open({
+                component: 'rfConfirmationModal',
+                resolve: {
+                    title: () => 'You don\'t have Dropbox credential set',
+                    content: () => 'Go to your API connections page and set one?',
+                    confirmText: () => 'Add Dropbox credential',
+                    cancelText: () => 'Cancel'
+                }
+            })
+            .result.then(resp => {
+                this.$state.go('user.settings.connections', { userId: 'me' });
+            })
+            .catch(() => {});
+    }
+
+    onClickCreateExport() {
+        this.isCreatingExport = true;
+        this.projectService
+            .export(this.project, this.getExportSettings(), this.getExportOptions())
+            .then(() => {
+                this.finishExport();
+            })
+            .catch(err => {
+                this.isCreatingExport = false;
+                this.displayErrorModal();
+                this.$log.log(err);
+            });
+    }
+
+    displayErrorModal() {
+        const modal = this.modalService.open({
+            component: 'rfFeedbackModal',
+            resolve: {
+                title: () => 'Error',
+                subtitle: () => 'There was an error creating this export',
+                content: () =>
+                    '<h2>Error</h2>' + '<p>There was an error when creating this export.</p>',
+                feedbackIconType: () => 'danger',
+                feedbackIcon: () => 'icon-warning',
+                feedbackBtnType: () => 'btn-danger',
+                feedbackBtnText: () => 'Retry?',
+                cancelText: () => 'Cancel'
+            }
+        });
+        modal.result.then(() => {
+            this.initExportTarget();
+            this.initResolutions();
+            this.initMask();
+        });
+    }
+
+    finishExport() {
+        this.$timeout(() => {
+            this.$state.go('project.layer.exports', {
+                projectId: this.project.id,
+                layerId: this.layer.id
+            });
+        }, 500);
     }
 }
 
