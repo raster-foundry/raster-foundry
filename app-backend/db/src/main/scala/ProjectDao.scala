@@ -4,7 +4,6 @@ import com.rasterfoundry.common.AWSBatch
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.common.datamodel.color._
-
 import com.lonelyplanet.akka.http.extensions.PageRequest
 import cats.data._
 import cats.implicits._
@@ -14,8 +13,8 @@ import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import io.circe._
 import io.circe.syntax._
-
 import java.sql.Timestamp
+import java.time.temporal.IsoFields
 import java.util.UUID
 
 object ProjectDao
@@ -76,6 +75,8 @@ object ProjectDao
 
   def insertProject(newProject: Project.Create,
                     user: User): ConnectionIO[Project] = {
+    val s: Scene = ???
+    s.filterFields.acquisitionDate.get.toLocalDateTime.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)
     val id = UUID.randomUUID()
     val now = new Timestamp(new java.util.Date().getTime)
     val ownerId = util.Ownership.checkOwner(user, newProject.owner)

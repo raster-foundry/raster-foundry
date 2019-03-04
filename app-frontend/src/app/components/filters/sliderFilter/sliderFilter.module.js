@@ -16,6 +16,7 @@ class SliderFilterController {
     }
 
     $onChanges(changes) {
+
         if (changes.filter && changes.filter.currentValue) {
             this.filter = changes.filter.currentValue;
 

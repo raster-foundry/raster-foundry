@@ -92,6 +92,11 @@
     height: 26px;
     margin: 0;
 
+    &.filter-slider {
+        margin-top: 1.0rem;
+        margin-bottom: -0.5rem;
+    }
+
     .rz-bar-wrapper {
         height: auto;
         margin-top: 0;

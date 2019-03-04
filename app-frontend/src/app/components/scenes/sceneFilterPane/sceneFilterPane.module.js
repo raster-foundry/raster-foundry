@@ -112,8 +112,11 @@ class FilterPaneController {
         });
     }
 
-    onFilterChange(filter, filterParams) {
-        if (filter) {
+  onFilterChange(filter, filterParams, deleteFilterBoolean) {
+
+        if (filter.param === 'ingested' && filterParams.ingested === false) {
+            delete this.filterParams[filter.param];
+        } else if (filter) {
             this.filterParams = Object.assign({}, this.filterParams, filterParams);
             this.initializedFilters = this.initializedFilters.add(filter.label);
         }

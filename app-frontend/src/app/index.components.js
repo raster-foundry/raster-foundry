@@ -92,6 +92,7 @@ export default angular.module('index.components', [
     require('./components/filters/shapeFilter/shapeFilter.module.js').default.name,
     require('./components/filters/sliderFilter/sliderFilter.module.js').default.name,
     require('./components/filters/tagFilter/tagFilter.module.js').default.name,
+    require('./components/filters/ingestedFilter/ingestedFilter.module.js').default.name,
 
 
     // common components (no domain)
