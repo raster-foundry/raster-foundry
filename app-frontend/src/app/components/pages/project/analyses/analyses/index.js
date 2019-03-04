@@ -1,9 +1,11 @@
 import tpl from './index.html';
+import {colorStopsToRange, createRenderDefinition} from '_redux/histogram-utils';
+import {nodesFromAst, astFromNodesStateless} from '_redux/node-utils';
 import _ from 'lodash';
 
 class AnalysesListController {
     constructor(
-        $rootScope, $scope, $state,
+        $q, $rootScope, $scope, $state,
         mapService, projectService, analysisService, paginationService,
         authService, modalService
     ) {
@@ -156,18 +158,43 @@ class AnalysesListController {
     }
 
     mapLayerFromAnalysis(analysisId) {
-        const tileUrl = this.analysisService.getAnalysisTileUrl(analysisId);
-        return L.tileLayer(tileUrl, {maxZoom: 30});
+        return this.analysisService.getAnalysis(analysisId).then(analysis => {
+            this.analysisService.getNodeHistogram(analysisId).then(histogram => {
+                let {
+                    renderDefinition,
+                    histogramOptions
+                } = createRenderDefinition(histogram);
+                let newNodeDefinition = Object.assign(
+                    {}, analysis.executionParameters,
+                    {
+                        metadata: Object.assign({}, analysis.executionParameters.metadata, {
+                            renderDefinition,
+                            histogramOptions
+                        })
+                    }
+                );
+                let nodes = nodesFromAst(analysis.executionParameters);
+                let updatedAnalysis = astFromNodesStateless(analysis, nodes, [newNodeDefinition]);
+                return this.analysisService.updateAnalysis(updatedAnalysis);
+            });
+        }).then( () => {
+            const tileUrl = this.analysisService.getAnalysisTileUrl(analysisId);
+            return L.tileLayer(tileUrl, {maxZoom: 30});
+        });
     }
 
     syncMapLayersToVisible() {
         const visibleAnalysisIds = Array.from(this.visible);
         this.getMap().then(map => {
-            map.setLayer(
-                'Project Analyses',
+            this.$q.all(
                 visibleAnalysisIds.map(this.mapLayerFromAnalysis.bind(this)),
-                true
-            );
+            ).then( layers => {
+                map.setLayer(
+                    'Project Analyses',
+                    layers,
+                    true
+                );
+            });
         });
     }
 
