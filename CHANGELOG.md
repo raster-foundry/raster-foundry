@@ -24,6 +24,7 @@
 - Added AOI creation UI and component [\#4702](https://github.com/raster-foundry/raster-foundry/pull/4702)
 - Added single band options to project layers [\#4712](https://github.com/raster-foundry/raster-foundry/pull/4712)
 - Added project layer export creation UI [\#4718](https://github.com/raster-foundry/raster-foundry/pull/4718)
+- Enforced project layer AOI existence when browsing for scenes [\#4724](https://github.com/raster-foundry/raster-foundry/pull/4724)
 
 ### Changed
 

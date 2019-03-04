@@ -1,13 +1,19 @@
 import tpl from './index.html';
 import { Set, Map } from 'immutable';
-import _ from 'lodash';
+import { get } from 'lodash';
 
 const mapLayerName = 'Project Layer';
 
 class LayerScenesController {
     constructor(
-        $rootScope, $scope, $state,
-        projectService, RasterFoundryRepository, paginationService, modalService, authService,
+        $rootScope,
+        $scope,
+        $state,
+        projectService,
+        RasterFoundryRepository,
+        paginationService,
+        modalService,
+        authService,
         mapService
     ) {
         'ngInject';
@@ -18,7 +24,7 @@ class LayerScenesController {
         this.selected = new Map();
         this.permissionsPromise = this.projectService
             .getProjectPermissions(this.project, this.authService.user)
-            .then((permissions) => {
+            .then(permissions => {
                 this.permissions = permissions;
             });
         this.fetchPage();
@@ -46,36 +52,39 @@ class LayerScenesController {
         });
     }
 
-
     fetchPage(page = this.$state.params.page || 1, filter, order) {
         // TODO do we need to list ingesting scenes? that stuff goes under filter?
         // this.getIngestingSceneCount();
         delete this.fetchError;
         this.sceneList = [];
-        const currentQuery = this.projectService.getProjectLayerScenes(
-            this.projectId,
-            this.layerId,
-            {
+        const currentQuery = this.projectService
+            .getProjectLayerScenes(this.projectId, this.layerId, {
                 pageSize: this.projectService.scenePageSize,
                 page: page - 1
-            }
-        ).then((paginatedResponse) => {
-            this.sceneList = paginatedResponse.results;
-            this.sceneActions = new Map(this.sceneList.map(this.addSceneActions.bind(this)));
-            this.pagination = this.paginationService.buildPagination(paginatedResponse);
-            this.paginationService.updatePageParam(page);
-            if (this.currentQuery === currentQuery) {
-                delete this.fetchError;
-            }
-        }, (e) => {
-            if (this.currentQuery === currentQuery) {
-                this.fetchError = e;
-            }
-        }).finally(() => {
-            if (this.currentQuery === currentQuery) {
-                delete this.currentQuery;
-            }
-        });
+            })
+            .then(
+                paginatedResponse => {
+                    this.sceneList = paginatedResponse.results;
+                    this.sceneActions = new Map(
+                        this.sceneList.map(this.addSceneActions.bind(this))
+                    );
+                    this.pagination = this.paginationService.buildPagination(paginatedResponse);
+                    this.paginationService.updatePageParam(page);
+                    if (this.currentQuery === currentQuery) {
+                        delete this.fetchError;
+                    }
+                },
+                e => {
+                    if (this.currentQuery === currentQuery) {
+                        this.fetchError = e;
+                    }
+                }
+            )
+            .finally(() => {
+                if (this.currentQuery === currentQuery) {
+                    delete this.currentQuery;
+                }
+            });
         this.currentQuery = currentQuery;
         return currentQuery;
     }
@@ -89,24 +98,29 @@ class LayerScenesController {
 
     addSceneActions(scene) {
         // details, view layers, hide (unapprove), remove (delete from layer)
-        let actions = [{
-            name: 'Remove',
-            title: 'Remove image from layer',
-            callback: () => this.removeScenes([scene]),
-            menu: true
-        }];
+        let actions = [
+            {
+                name: 'Remove',
+                title: 'Remove image from layer',
+                callback: () => this.removeScenes([scene]),
+                menu: true
+            }
+        ];
 
         if (this.hasDownloadPermission(scene)) {
             actions.unshift({
                 icon: 'icon-download',
                 name: 'Download',
                 title: 'Download raw image data',
-                callback: () => this.modalService.open({
-                    component: 'rfSceneDownloadModal',
-                    resolve: {
-                        scene: () => scene
-                    }
-                }).result.catch(() => {}),
+                callback: () =>
+                    this.modalService
+                        .open({
+                            component: 'rfSceneDownloadModal',
+                            resolve: {
+                                scene: () => scene
+                            }
+                        })
+                        .result.catch(() => {}),
                 menu: false
             });
         }
@@ -124,9 +138,7 @@ class LayerScenesController {
             }
         });
 
-        activeModal
-            .result
-            .catch(() => {});
+        activeModal.result.catch(() => {});
     }
 
     isSelected(scene) {
@@ -144,7 +156,12 @@ class LayerScenesController {
 
     allVisibleSelected() {
         let sceneSet = new Set(this.sceneList.map(s => s.id));
-        return this.selected.keySeq().toSet().intersect(sceneSet).size === sceneSet.size;
+        return (
+            this.selected
+                .keySeq()
+                .toSet()
+                .intersect(sceneSet).size === sceneSet.size
+        );
     }
 
     selectAll() {
@@ -152,7 +169,7 @@ class LayerScenesController {
             this.selected = this.selected.clear();
         } else {
             this.selected = this.selected.merge(
-                _.filter(this.sceneList.map(s => [s.id, s]), s => !s.inLayer)
+                this.sceneList.map(s => [s.id, s]).filter(s => !s.inLayer)
             );
         }
         this.updateSelectText();
@@ -167,10 +184,44 @@ class LayerScenesController {
     }
 
     browseScenes() {
-        this.getMap().then(mapWrapper => {
-            const bbox = mapWrapper.map.getBounds().toBBoxString();
-            this.$state.go('project.layer.browse', {bbox});
+        // we cannot just use this.layer here to access its AOI since it might be out of date
+        this.projectService.getProjectLayer(this.projectId, this.layerId).then(resp => {
+            this.layer = resp;
+            if (get(this.layer, 'geometry.type')) {
+                this.getMap().then(mapWrapper => {
+                    const bbox = mapWrapper.map.getBounds().toBBoxString();
+                    this.$state.go('project.layer.browse', { bbox });
+                });
+            } else {
+                this.showRouteToAoiCreateModal();
+            }
         });
+    }
+
+    showRouteToAoiCreateModal() {
+        this.modalService
+            .open({
+                component: 'rfFeedbackModal',
+                resolve: {
+                    title: () => 'No AOI defined on this layer',
+                    content: () =>
+                        '<h2>Do you wish to add layer AOI?</h2>' +
+                        '<p>An area of interest (AOI) is required on your layer ' +
+                        'to browse scenes. Go to layer AOI creation page to add one.</p>',
+                    feedbackIconType: () => 'warning',
+                    feedbackIcon: () => 'icon-warning',
+                    feedbackBtnType: () => 'btn-warning',
+                    feedbackBtnText: () => 'Add layer AOI',
+                    cancelText: () => 'Cancel'
+                }
+            })
+            .result.then(resp => {
+                this.$state.go('project.layer.aoi', {
+                    layerId: this.layerId,
+                    projectId: this.projectId
+                });
+            })
+            .catch(() => {});
     }
 
     removeScenes(scenes) {
@@ -182,7 +233,7 @@ class LayerScenesController {
                 // reset hovered scene outlines
                 // re-render project layer
                 let idSet = new Set(sceneIds);
-                this.selected = this.selected.filterNot((scene) => idSet.has(scene.id));
+                this.selected = this.selected.filterNot(scene => idSet.has(scene.id));
                 this.fetchPage();
                 this.removeMapLayers().then(() => this.setMapLayers());
             },
@@ -208,5 +259,4 @@ const component = {
 export default angular
     .module('components.pages.project.scenes.page', [])
     .controller(LayerScenesController.name, LayerScenesController)
-    .component('rfProjectLayerScenesPage', component)
-    .name;
+    .component('rfProjectLayerScenesPage', component).name;
