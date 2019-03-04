@@ -183,6 +183,20 @@ export default (app) => {
             ).$promise;
         }
 
+        bulkUpdateForLayer(projectId, layerId, sceneIds, data) {
+            const resolvedColorCorrection = data || this.getDefaultColorCorrection();
+            const bulkData = sceneIds.map(s => {
+                return {
+                    sceneId: s,
+                    params: resolvedColorCorrection
+                };
+            });
+            return this.bulkColorCorrect.createForLayer(
+                { projectId, layerId},
+                { items: bulkData }
+            ).$promise;
+        }
+
         bulkUpdateColorMode(projectId, corrections, bands) {
             const resolvedBands = bands ||
                   (({redBand, greenBand, blueBand, mode}) =>

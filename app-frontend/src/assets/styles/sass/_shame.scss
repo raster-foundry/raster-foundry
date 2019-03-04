@@ -3263,6 +3263,7 @@ rf-project-layer-exports-page,
 rf-project-create-analysis-page,
 rf-project-layer-annotations-page,
 rf-project-layer-colormode-page,
+rf-project-layer-corrections-page,
 rf-project-layer-aoi-page {
     flex: 1;
     display: flex;
@@ -3355,6 +3356,12 @@ rf-project-publishing-page {
     padding: 2rem;
     box-shadow: 0px 3px 8px rgba($shade-normal, 0.2);
     margin-bottom: 3rem;
+    &.slim {
+        padding: 1.25rem 1rem;
+    }
+    &.cozy {
+        margin-bottom: 1.5rem;
+    }
 }
 
 .page-card-header {
@@ -3366,6 +3373,9 @@ rf-project-publishing-page {
     h5,
     h6 {
         margin: 0;
+    }
+    &.cozy {
+        margin-bottom: 1rem;
     }
 }
 
@@ -3379,8 +3389,14 @@ rf-project-publishing-page {
     }
 }
 
-.page-card-section:not(:last-child) {
-    margin-bottom: 2rem;
+.page-card-section {
+    position: relative;
+    &:not(:last-child) {
+        margin-bottom: 2rem;
+        &.cozy {
+            margin-bottom: 1rem;
+        }
+    }
 }
 
 .page-card-form {
@@ -3511,45 +3527,32 @@ rf-project-page {
     flex: 1;
 }
 
-.selected-actions-group {
-    a {
-        box-shadow: initial;
-        padding: 1.25rem 1rem;
-        margin: 0.25rem;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-    }
+rf-selected-actions-bar {
+    width: 100%;
+    background: $white;
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 1.5rem;
+    box-shadow: 0px 3px 8px rgba($shade-normal, 0.1);
+}
 
-    rf-selected-actions-bar {
-        width: 100%;
-        background: $white;
-        display: flex;
-        justify-content: space-between;
-        padding: 0 0.5rem;
-    }
+.select-button {
+    box-shadow: initial;
+    padding: 0.5rem 1rem;
+    border: 1px solid $shade-light;
+    border-radius: 1.5em;
+    background: $white;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    align-self: center;
 
-    .navbar-section {
-        flex: initial;
-    }
-
-    .select-button {
-        box-shadow: initial;
-        padding: 0.55rem 1rem;
-        margin: 0.6rem;
-        border: 1px solid $shade-light;
-        border-radius: 1.5em;
-        background: $white;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-
-        label.checkbox {
-            &:after {
-                border: 2px solid $shade-light;
-            }
-            cursor: pointer;
+    label.checkbox {
+        font-size: 1.3rem;
+        &:after {
+            border: 2px solid $shade-light;
         }
+        cursor: pointer;
     }
 }
 
@@ -3561,6 +3564,38 @@ rf-project-page {
     font-size: 12px;
 }
 
+.btn-no-left-margin {
+    margin-left: 0;
+    padding-left: 0;
+    i {
+        margin-left: 0;
+        padding-left: 0;
+    }
+}
+
+.indented {
+    padding-left: 2.5rem;
+}
+
+.color-correct-card {
+    .input-group.filter-input-group {
+        margin-bottom: 1.2rem;
+    }
+    label.checkbox {
+        font-size: 1.4rem;
+    }
+}
+
+.disabled-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: -4px;
+    left: -4px;
+    background: rgba(255, 255, 255, 0.5);
+    z-index: 1400;
+}
 rf-aoi-draw-toolbar {
   position: absolute;
   width: 100vw;

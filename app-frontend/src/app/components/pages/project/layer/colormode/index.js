@@ -411,7 +411,7 @@ class LayerColormodeController {
     }
 
     navToCorrections() {
-        this.$state.go('projects.edit.advancedcolor');
+        this.$state.go('project.layer.corrections');
     }
 }
 

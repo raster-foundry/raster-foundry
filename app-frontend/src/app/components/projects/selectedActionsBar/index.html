@@ -1,20 +1,21 @@
-<div class="navbar-section">
-  <button class="btn select-button" ng-click="$ctrl.onClick()">
-    <label class="checkbox"
-           ng-class="{
+<div>
+    <button class="btn select-button btn-tiny" ng-click="$ctrl.onClick()">
+        <label
+            class="checkbox"
+            ng-class="{
                   active: $ctrl.checked
                   }"
-    >
-      <input type="checkbox"
-             ng-checked="$ctrl.checked"
-             ng-click="$ctrl.onClick()">
-    </label>
-    {{ $ctrl.actionText || 'Select all'}}
-  </button>
+        >
+            <input
+                type="checkbox"
+                ng-checked="$ctrl.checked"
+                ng-click="$ctrl.onClick()"
+            />
+        </label>
+        <span>
+            {{ $ctrl.actionText || 'Select all' }}
+        </span>
+    </button>
 </div>
-<div class="separator"></div>
-<div class="navbar-section">
-  <div class="navbar-section">
-    <ng-transclude></ng-transclude>
-  </div>
-</div>
+<div class="flex-fill"></div>
+<div ng-transclude></div>
