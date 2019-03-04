@@ -91,6 +91,8 @@ object ProjectDao
                      None,
                      None,
                      None,
+                     None,
+                     false,
                      None)
       )
       project <- (fr"INSERT INTO" ++ tableF ++ fr"""
@@ -176,6 +178,13 @@ object ProjectDao
         case _ =>
           0.pure[ConnectionIO]
       }
+      defaultLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
+        dbProject.defaultLayerId)
+      _ <- ProjectLayerDao.updateProjectLayer(
+        defaultLayer.copy(isSingleBand = project.isSingleBand,
+                          singleBandOptions = project.singleBandOptions),
+        dbProject.defaultLayerId
+      )
       updateProject <- updateProjectQ(project, id, user).run
     } yield updateProject
   }

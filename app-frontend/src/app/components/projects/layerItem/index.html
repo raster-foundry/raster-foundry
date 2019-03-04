@@ -1,10 +1,12 @@
-<div class="list-group-item">
+<div class="list-group-item"
+     ng-class="{'with-aoi-component': $ctrl.isAoi}">
   <div class="list-item-left-actions">
     <label class="checkbox layer-checkbox list-item-{{$ctrl.itemInfo.id}}"
            ng-class="{active: $ctrl.selected}">
       <input type="checkbox"
              ng-checked="$ctrl.selected"
-             ng-click="$ctrl.onSelect({id: $ctrl.itemInfo.id})"/>
+             ng-click="$ctrl.onSelect({id: $ctrl.itemInfo.id})"
+             ng-disabled="$ctrl.disableCheckbox" />
     </label>
     <style>
      label.checkbox.list-item-{{$ctrl.itemInfo.id}}::after {
@@ -36,7 +38,8 @@
   <div class="list-group-right list-group-vertical">
     <div>
       <div class="btn btn-text btn-transparent"
-           ng-if="!$ctrl.hasGeom && !$ctrl.isAnalysis && !$ctrl.isExport">
+           ng-if="!$ctrl.hasGeom && !$ctrl.isAnalysis && !$ctrl.isExport"
+           ng-click="$ctrl.goToAoiDef({id: $ctrl.itemInfo.id})">
         <span class="icon-warning color-danger"
               tooltips
               tooltip-template="No AOI defined for this layer"
@@ -56,7 +59,8 @@
       </div>
       <div class="btn btn-text btn-transparent"
            ng-show="$ctrl.onHide"
-           ng-click="$ctrl.onHide({id: $ctrl.itemInfo.id})">
+           ng-click="$ctrl.onHide({id: $ctrl.itemInfo.id})"
+           ng-if="!$ctrl.isAoi">
         <span class="icon-eye"
               tooltips
               tooltip-template="Hide layer on map"

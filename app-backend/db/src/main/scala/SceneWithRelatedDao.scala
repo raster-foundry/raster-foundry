@@ -42,13 +42,13 @@ object SceneWithRelatedDao
           .filter(shapeO map { _.geometry })
           .filter(sceneParams)
       }
-      scenes <- sceneSearchBuilder.page(
+      scenesPage <- sceneSearchBuilder.page(
         pageRequest,
         Map("acquisitionDatetime" -> Order.Desc) ++ pageRequest.sort,
         false
-      ) map { _.results toList }
+      )
       sceneBrowses <- scenesToSceneBrowse(
-        scenes,
+        scenesPage.results toList,
         sceneParams.sceneParams.project,
         sceneParams.sceneParams.layer
       )
@@ -56,11 +56,10 @@ object SceneWithRelatedDao
         sceneParams.sceneSearchModeParams.exactCount)
     } yield {
       val hasPrevious = pageRequest.offset > 0
-      val hasNext = sceneBrowses.size > pageRequest.limit
       PaginatedResponse[Scene.Browse](
         count,
         hasPrevious,
-        hasNext,
+        scenesPage.hasNext,
         pageRequest.offset,
         pageRequest.limit,
         sceneBrowses.take(pageRequest.limit)

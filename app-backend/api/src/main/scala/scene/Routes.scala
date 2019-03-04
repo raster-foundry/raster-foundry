@@ -2,7 +2,7 @@ package com.rasterfoundry.api.scene
 
 import java.util.UUID
 
-import akka.http.scaladsl.model.{HttpEntity, MediaTypes, StatusCodes}
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Route
 import cats.data._
 import cats.effect.IO
@@ -22,7 +22,6 @@ import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
-import geotrellis.raster.{IntArrayTile, MultibandTile}
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.json.HistogramJsonFormats
 import io.circe.parser._

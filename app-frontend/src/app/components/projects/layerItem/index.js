@@ -2,7 +2,7 @@ import tpl from './index.html';
 import _ from 'lodash';
 
 class LayerItemController {
-    constructor($rootScope, $scope, $state, projectService) {
+    constructor($rootScope, $scope, $state, $log, projectService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -16,8 +16,13 @@ class LayerItemController {
             this.color = 'gray';
         }
 
-        const geometry = _.get(this.itemInfo, 'colorGroupHex');
         this.hasGeom = _.get(this.itemInfo, 'geometry.type');
+    }
+
+    $onChanges(changes) {
+        if (changes.disableCheckbox && changes.disableCheckbox.currentValue) {
+            this.disableCheckbox = changes.disableCheckbox.currentValue;
+        }
     }
 }
 
@@ -31,7 +36,10 @@ const component = {
         onHide: '&?',
         isAnalysis: '<?',
         isExport: '<?',
-        onDownloadExport: '&?'
+        isAoi: '<?',
+        onDownloadExport: '&?',
+        goToAoiDef: '&?',
+        disableCheckbox: '<?'
     },
     templateUrl: tpl,
     controller: LayerItemController.name,
