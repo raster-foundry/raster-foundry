@@ -30,6 +30,11 @@ object SceneWithRelatedDao
         case Some(shpId) => ShapeDao.getShapeById(shpId)
         case _           => None.pure[ConnectionIO]
       }
+      projectLayerShapeO <- sceneParams.sceneParams.projectLayerShape match {
+        case Some(projectLayerId) =>
+          ProjectLayerDao.query.filter(fr"id = ${projectLayerId}").selectOption
+        case _ => None.pure[ConnectionIO]
+      }
       sceneSearchBuilder = {
         SceneDao
           .authQuery(
@@ -40,6 +45,7 @@ object SceneWithRelatedDao
             sceneParams.groupQueryParameters.groupId
           )
           .filter(shapeO map { _.geometry })
+          .filter(projectLayerShapeO map { _.geometry })
           .filter(sceneParams)
       }
       scenesPage <- sceneSearchBuilder.page(

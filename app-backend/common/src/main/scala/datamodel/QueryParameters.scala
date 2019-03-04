@@ -57,7 +57,8 @@ final case class SceneQueryParameters(
     ingested: Option[Boolean] = None,
     ingestStatus: Iterable[String] = Seq.empty[String],
     pending: Option[Boolean] = None,
-    shape: Option[UUID] = None
+    shape: Option[UUID] = None,
+    projectLayerShape: Option[UUID] = None
 ) {
   val bboxPolygon: Option[Seq[Projected[Polygon]]] =
     BboxUtil.toBboxPolygon(bbox)
