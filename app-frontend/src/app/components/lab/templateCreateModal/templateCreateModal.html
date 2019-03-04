@@ -30,6 +30,24 @@
                 ng-disabled="$ctrl.isProcessing">
         </div>
         <div class="form-group">
+          <label for="name">This template can be run with only one project</label>
+          <rf-toggle value="$ctrl.templateBuffer.singleSource" on-change="$ctrl.toggleTemplateSingleSource()">
+          </rf-toggle>
+        </div>
+        <div class="form-group">
+          <label for="license">License (optional)</label>
+          <select
+              class="form-control"
+              name="license"
+              ng-model="$ctrl.templateBuffer.license">
+            <option ng-repeat="license in $ctrl.availableLicenses"
+                    value="{{ license.id }}"
+                    >
+              {{ license.shortName }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group" ng-if="!$ctrl.editing">
           <label for="name">Template Definition</label>
           <p>
             Enter an algebraic expression that represents the operation to compute. Here are some hints:
@@ -68,8 +86,14 @@
     </div>
     <div class="footer-section right">
       <button type="button" class="btn btn-primary"
-              ng-if="!$ctrl.isProcessing"
-              ng-click="$ctrl.createTemplate()"
+              ng-if="!$ctrl.isProcessing && $ctrl.editing""
+              ng-click="$ctrl.flushBuffer()"
+              ng-disabled="!$ctrl.isValid()">
+        Update Template
+      </button>
+      <button type="button" class="btn btn-primary"
+              ng-if="!$ctrl.isProcessing && !$ctrl.editing""
+              ng-click="$ctrl.flushBuffer()"
               ng-disabled="!$ctrl.isValid()">
         Create Template
       </button>

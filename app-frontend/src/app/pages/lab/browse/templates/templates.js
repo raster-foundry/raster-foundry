@@ -79,6 +79,18 @@ class LabBrowseTemplatesController {
             }
         });
     }
+
+    onTemplateEditClick(template) {
+        this.modalService.open({
+            component: 'rfTemplateCreateModal',
+            resolve: {
+                existingTemplate: () => template
+            }
+        }).result.then( data => {
+            let idx = this.results.findIndex( tpl => tpl.id === data.id );
+            this.results[idx] = data;
+        });
+    }
 }
 
 export default angular.module('pages.lab.browse.results', [])
