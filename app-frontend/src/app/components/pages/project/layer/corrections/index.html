@@ -5,7 +5,7 @@
     <div>
         <button
             class="btn btn-tiny btn-transparent btn-no-left-margin"
-            ng-click="$ctrl.toggleIsCorrecting(false)"
+            ng-click="$ctrl.onToggleIsCorrecting(false)"
         >
             <i class="icon-caret-left"></i> Back
         </button>
@@ -16,7 +16,7 @@
         </strong>
     </div>
     <div>
-        <button class="btn btn-tiny btn-transparent" ng-click="">
+        <button class="btn btn-tiny btn-transparent" ng-click="$ctrl.onResetAll()">
             Reset all
         </button>
     </div>
@@ -30,7 +30,7 @@
 >
     <button
         class="btn btn-tiny btn-transparent"
-        ng-click="$ctrl.toggleIsCorrecting(true)"
+        ng-click="$ctrl.onToggleIsCorrecting(true)"
     >
         Color correct
     </button>
@@ -131,7 +131,7 @@
     <div>
         <button
             class="btn btn-tiny btn-transparent btn-no-left-margin"
-            ng-click="$ctrl.toggleIsCorrecting(false)"
+            ng-click="$ctrl.onToggleIsCorrecting(false)"
         >
             <i class="icon-caret-left"></i> Back
         </button>
@@ -142,50 +142,56 @@
         </strong>
     </div>
     <div>
-        <button class="btn btn-tiny btn-transparent" ng-click="">
+        <button class="btn btn-tiny btn-transparent" ng-click="$ctrl.onResetSelection()">
             Reset
         </button>
     </div>
 </div>
 
 <div class="sidebar-scrollable with-padding" ng-if="$ctrl.isCorrecting">
-    <div class="page-card slim cozy">
-        <div class="input-group page-card-header">
+    <div class="page-card color-correct-card slim cozy">
+        <div class="input-group page-card-header cozy">
             <label
                 class="checkbox no-margin"
                 ng-class="{
-                active: $ctrl.checked
+                active: $ctrl.correction.sigmoidalContrast.enabled
                 }"
             >
                 <input
                     type="checkbox"
-                    ng-checked="$ctrl.checked"
-                    ng-click="$ctrl.onClick()"
+                    ng-checked="$ctrl.correction.sigmoidalContrast.enabled"
+                    ng-click="$ctrl.onToggleFilter('sigmoidalContrast')"
                 />
             </label>
             <div class="font-600">Brightness and contrast</div>
         </div>
         <div class="indented">
-            <div class="page-card-section">
-                <div class="input-group">
+            <div
+                class="page-card-section cozy"
+                ng-class="{'disabled-overlay': !$ctrl.correction.sigmoidalContrast.enabled}"
+            >
+                <div class="input-group filter-input-group">
                     <label>Threshold</label>
                     <span class="font-size-small">{{
                         $ctrl.correction.sigmoidalContrast.alpha
                     }}</span>
                 </div>
-                <br />
                 <rzslider
                     class="light-light"
                     rz-slider-model="$ctrl.correction.sigmoidalContrast.alpha"
                     rz-slider-options="$ctrl.alphaOptions"
                 ></rzslider>
             </div>
-            <div class="page-card-section">
-                <div class="input-group">
+            <div
+                class="page-card-section cozy"
+                ng-class="{'disabled-overlay': !$ctrl.correction.sigmoidalContrast.enabled}"
+            >
+                <div class="input-group filter-input-group">
                     <label>Contrast</label>
-                    <span>{{ $ctrl.correction.sigmoidalContrast.beta }}</span>
+                    <span class="font-size-small">{{
+                        $ctrl.correction.sigmoidalContrast.beta
+                    }}</span>
                 </div>
-                <br />
                 <rzslider
                     class="light-light"
                     rz-slider-model="$ctrl.correction.sigmoidalContrast.beta"
@@ -194,38 +200,154 @@
             </div>
         </div>
     </div>
-    <div class="page-card slim cozy">
-        <div class="input-group">
+    <div class="page-card color-correct-card slim cozy">
+        <div class="input-group page-card-header cozy">
             <label
                 class="checkbox no-margin"
                 ng-class="{
-                active: $ctrl.checked
+                    active: $ctrl.correction.gamma.enabled
                 }"
             >
                 <input
                     type="checkbox"
-                    ng-checked="$ctrl.checked"
-                    ng-click="$ctrl.onClick()"
+                    ng-checked="$ctrl.correction.gamma.enabled"
+                    ng-click="$ctrl.onToggleFilter('gamma')"
                 />
             </label>
             <div class="font-600">Color balance</div>
         </div>
+        <div class="indented">
+            <div
+                class="page-card-section cozy"
+                ng-class="{'disabled-overlay': !$ctrl.correction.gamma.enabled}"
+            >
+                <div class="input-group">
+                    <div class="flex-fill help-text font-size-tiny">
+                        Adjust gamma of all channels together
+                    </div>
+                    <button
+                        class="btn select-button btn-tiny"
+                        ng-click="$ctrl.onToggleGammaLink()"
+                    >
+                        <label
+                            class="checkbox"
+                            ng-class="{
+                              active: $ctrl.gammaLink
+                            }"
+                        >
+                            <input
+                                type="checkbox"
+                                ng-checked="$ctrl.gammaLink"
+                                ng-click="$ctrl.onToggleGammaLink()"
+                            />
+                        </label>
+                        <span>
+                            Equal channels
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <div
+                class="page-card-section cozy"
+                ng-class="{'disabled-overlay': !$ctrl.correction.gamma.enabled}"
+                ng-if="$ctrl.gammaLink"
+            >
+                <div class="input-group filter-input-group">
+                    <label>All Channels (RGB)</label>
+                    <span class="font-size-small">{{ $ctrl.singleGammaProxy }}</span>
+                </div>
+                <rzslider
+                    class="light-light"
+                    rz-slider-model="$ctrl.singleGammaProxy"
+                    rz-slider-options="$ctrl.singleGammaOptions"
+                ></rzslider>
+            </div>
+            <div
+                class="page-card-section cozy"
+                ng-class="{'disabled-overlay': !$ctrl.correction.gamma.enabled}"
+                ng-if="!$ctrl.gammaLink"
+            >
+                <div class="input-group filter-input-group">
+                    <label>Red</label>
+                    <span class="font-size-small">{{
+                        $ctrl.correction.gamma.redGamma
+                    }}</span>
+                </div>
+                <rzslider
+                    class="light-light"
+                    rz-slider-model="$ctrl.correction.gamma.redGamma"
+                    rz-slider-options="$ctrl.redGammaOptions"
+                ></rzslider>
+            </div>
+            <div
+                class="page-card-section cozy"
+                ng-class="{'disabled-overlay': !$ctrl.correction.gamma.enabled}"
+                ng-if="!$ctrl.gammaLink"
+            >
+                <div class="input-group filter-input-group">
+                    <label>Green</label>
+                    <span class="font-size-small">{{
+                        $ctrl.correction.gamma.greenGamma
+                    }}</span>
+                </div>
+                <rzslider
+                    class="light-light"
+                    rz-slider-model="$ctrl.correction.gamma.greenGamma"
+                    rz-slider-options="$ctrl.greenGammaOptions"
+                ></rzslider>
+            </div>
+            <div
+                class="page-card-section cozy"
+                ng-class="{'disabled-overlay': !$ctrl.correction.gamma.enabled}"
+                ng-if="!$ctrl.gammaLink"
+            >
+                <div class="input-group filter-input-group">
+                    <label>Blue</label>
+                    <span class="font-size-small">{{
+                        $ctrl.correction.gamma.blueGamma
+                    }}</span>
+                </div>
+                <rzslider
+                    class="light-light"
+                    rz-slider-model="$ctrl.correction.gamma.blueGamma"
+                    rz-slider-options="$ctrl.blueGammaOptions"
+                ></rzslider>
+            </div>
+        </div>
     </div>
-    <div class="page-card slim cozy">
-        <div class="input-group">
+    <div class="page-card color-correct-card slim cozy">
+        <div class="input-group page-card-header cozy">
             <label
                 class="checkbox no-margin"
                 ng-class="{
-            active: $ctrl.checked
-            }"
+                    active: $ctrl.correction.saturation.enabled
+                }"
             >
                 <input
                     type="checkbox"
-                    ng-checked="$ctrl.checked"
-                    ng-click="$ctrl.onClick()"
+                    ng-checked="$ctrl.correction.saturation.enabled"
+                    ng-click="$ctrl.onToggleFilter('saturation')"
                 />
             </label>
             <div class="font-600">Saturation</div>
+        </div>
+        <div class="indented">
+            <div
+                class="page-card-section cozy"
+                ng-class="{'disabled-overlay': !$ctrl.correction.saturation.enabled}"
+            >
+                <div class="input-group filter-input-group">
+                    <label>Saturation</label>
+                    <span class="font-size-small">{{
+                        $ctrl.correction.saturation.saturation
+                    }}</span>
+                </div>
+                <rzslider
+                    class="light-light"
+                    rz-slider-model="$ctrl.correction.saturation.saturation"
+                    rz-slider-options="$ctrl.saturationOptions"
+                ></rzslider>
+            </div>
         </div>
     </div>
 </div>

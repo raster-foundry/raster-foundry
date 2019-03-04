@@ -89,7 +89,7 @@
 
 .rzslider.light-light {
     display: block;
-    height: 40px;
+    height: 26px;
     margin: 0;
 
     .rz-bar-wrapper {
@@ -137,9 +137,10 @@
     .rz-limit {
         display: block;
         padding: 0px;
-        bottom: 1.8rem;
+        bottom: 0;
         margin-top: 0;
         font-size: 1.2rem;
+        color: $gray-lighter;
     }
 
     .rz-ticks {
