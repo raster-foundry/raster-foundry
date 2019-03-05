@@ -17,6 +17,7 @@
 - Added project settings pages for v2 UI [\#4637](https://github.com/raster-foundry/raster-foundry/pull/4637)
 - Added project layer color-mode UI [\#4706](https://github.com/raster-foundry/raster-foundry/pull/4706)
 - Added project layer color-correction UI [\#4722](https://github.com/raster-foundry/raster-foundry/pull/4722)
+- Added single-band color-mode support to project layer color-mode UI [\#4728](https://github.com/raster-foundry/raster-foundry/pull/4728)
 - Added owner query parameter to tools and tool-runs endpoints, support multiple owner qp's on applicable endpoints [\#4689](https://github.com/raster-foundry/raster-foundry/pull/4689)
 - Added Rollbar error reporting to backsplash [\#4691](https://github.com/raster-foundry/raster-foundry/pull/4691)
 - Added PLATFORM_USERS webpack overrides variable and make default platform filter use those ids [\#4692](https://github.com/raster-foundry/raster-foundry/pull/4692)
