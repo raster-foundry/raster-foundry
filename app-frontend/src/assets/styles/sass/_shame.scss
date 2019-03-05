@@ -1722,10 +1722,13 @@ rf-node-statistics {
 }
 
 .input-node-input-label {
-    display: flex;
     align-items: center;
     padding: 0.8rem 1rem;
     font-weight: 600;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    min-width: 0;
 }
 
 .input-data {

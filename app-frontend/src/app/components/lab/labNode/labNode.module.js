@@ -6,8 +6,17 @@ import NodeActions from '_redux/actions/node-actions';
 import { getNodeDefinition } from '_redux/node-utils';
 
 class LabNodeController {
-    constructor($ngRedux, $scope, $log, $element, modalService, tokenService,
-        projectService, APP_CONFIG, $rootScope) {
+    constructor(
+        $ngRedux,
+        $scope,
+        $log,
+        $element,
+        modalService,
+        tokenService,
+        projectService,
+        APP_CONFIG,
+        $rootScope
+    ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
 
@@ -33,19 +42,19 @@ class LabNodeController {
         )(this);
         this.listeners = [
             this.$scope.$on('$destroy', unsubscribe),
-            this.$scope.$watch('$ctrl.readonly', (readonly) => {
+            this.$scope.$watch('$ctrl.readonly', readonly => {
                 if (readonly && !this.isCollapsed) {
                     this.toggleCollapse();
                 }
             }),
-            this.$scope.$watch('$ctrl.selectingNode', (selectingNode) => {
+            this.$scope.$watch('$ctrl.selectingNode', selectingNode => {
                 if (selectingNode) {
                     this.$element.addClass('selectable-node');
                 } else {
                     this.$element.removeClass('selectable-node');
                 }
             }),
-            this.$scope.$watch('$ctrl.selectedNode', (selectedNode) => {
+            this.$scope.$watch('$ctrl.selectedNode', selectedNode => {
                 if (selectedNode === this.nodeId) {
                     this.$element.addClass('selected-node');
                 } else {
@@ -59,9 +68,9 @@ class LabNodeController {
         this.baseWidth = 400;
         this.histogramHeight = 250;
         this.statisticsHeight = 260;
-        if (this.ifCellType('const')) {
+        if (this.ifCellType(['const'])) {
             this.model.resize(this.baseWidth, 125);
-        } else if (this.ifCellType('classify')) {
+        } else if (this.ifCellType(['classify'])) {
             this.model.resize(this.baseWidth, 275);
         }
     }
@@ -71,7 +80,7 @@ class LabNodeController {
     }
 
     $onDestroy() {
-        this.listeners.forEach((l) => l());
+        this.listeners.forEach(l => l());
     }
 
     preview() {
@@ -141,15 +150,21 @@ class LabNodeController {
         }
     }
 
-    ifCellType(type) {
+    ifCellType(typesArray) {
+        if (!typesArray.length) {
+            return false;
+        }
+        return typesArray.reduce((acc, type) => {
+            return this.isSameCellType(type) || acc;
+        }, this.isSameCellType(typesArray[0]));
+    }
+
+    isSameCellType(type) {
         return this.model.get('cellType') === type;
     }
 
     showCellBody() {
-        return (
-            this.currentView === 'BODY' &&
-                !this.isCollapsed
-        );
+        return this.currentView === 'BODY' && !this.isCollapsed;
     }
 
     onNodeClick(event) {
@@ -163,42 +178,49 @@ class LabNodeController {
         const nodeType = this.model.get('cellType');
         if (this.nodeId && this.analysis.id) {
             if (nodeType === 'projectSrc') {
-                this.tokenService.getOrCreateAnalysisMapToken({
-                    organizationId: this.analysis.organizationId,
-                    name: this.analysis.name + ' - ' + this.analysis.id,
-                    project: this.node.projId
-                }).then((mapToken) => {
-                    this.publishModal(
-                        this.projectService.getProjectTileURL(
-                            this.node.projId, {mapToken: mapToken.id}
-                        )
-                    );
-                });
+                this.tokenService
+                    .getOrCreateAnalysisMapToken({
+                        organizationId: this.analysis.organizationId,
+                        name: this.analysis.name + ' - ' + this.analysis.id,
+                        project: this.node.projId
+                    })
+                    .then(mapToken => {
+                        this.publishModal(
+                            this.projectService.getProjectTileURL(this.node.projId, {
+                                mapToken: mapToken.id
+                            })
+                        );
+                    });
             } else {
-                this.tokenService.getOrCreateAnalysisMapToken({
-                    organizationId: this.analysis.organizationId,
-                    name: this.analysis.name + ' - ' + this.analysis.id,
-                    toolRun: this.analysis.id
-                }).then((mapToken) => {
-                    this.publishModal(
-                        // eslint-disable-next-line max-len
-                        `${this.tileServer}/tools/${this.analysis.id}/{z}/{x}/{y}?mapToken=${mapToken.id}&node=${this.nodeId}`
-                    );
-                });
+                this.tokenService
+                    .getOrCreateAnalysisMapToken({
+                        organizationId: this.analysis.organizationId,
+                        name: this.analysis.name + ' - ' + this.analysis.id,
+                        toolRun: this.analysis.id
+                    })
+                    .then(mapToken => {
+                        this.publishModal(
+                            `${this.tileServer}/tools/${this.analysis.id}/{z}/{x}/{y}?mapToken=${
+                                mapToken.id
+                            }&node=${this.nodeId}`
+                        );
+                    });
             }
         }
     }
 
     publishModal(tileUrl) {
         if (tileUrl) {
-            this.modalService.open({
-                component: 'rfProjectPublishModal',
-                resolve: {
-                    tileUrl: () => tileUrl,
-                    noDownload: () => true,
-                    templateTitle: () => this.analysis.name
-                }
-            }).result.catch(() => {});
+            this.modalService
+                .open({
+                    component: 'rfProjectPublishModal',
+                    resolve: {
+                        tileUrl: () => tileUrl,
+                        noDownload: () => true,
+                        templateTitle: () => this.analysis.name
+                    }
+                })
+                .result.catch(() => {});
         }
         return false;
     }

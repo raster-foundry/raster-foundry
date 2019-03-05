@@ -19,8 +19,17 @@ const minZoom = 0.025;
 
 class DiagramContainerController {
     constructor( // eslint-disable-line max-params
-        $element, $scope, $state, $timeout, $compile, $document, $window, $rootScope,
-        mousetipService, labUtils, $ngRedux
+        $element,
+        $scope,
+        $state,
+        $timeout,
+        $compile,
+        $document,
+        $window,
+        $rootScope,
+        mousetipService,
+        labUtils,
+        $ngRedux
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -52,34 +61,35 @@ class DiagramContainerController {
 
         this.workspaceElement = this.$element[0].children[0];
         this.comparison = [false, false];
-        this.cellDimensions = {width: 400, height: 200 };
-        this.paddingFactor = 0.8;
-        this.nodeSeparationFactor = 0.2;
         this.panActive = false;
         // TODO nodes determine context menu options by type and redux state
 
         this.contextInitialized = true;
 
-        require.ensure(['jointjs'], (require) => {
-            const joint = require('jointjs');
-            this.labUtils.init(joint, { enableSharing: this.enableNodeSharing });
-            if (this.analysis && !this.shapes) {
-                this.initDiagram(joint);
-            } else {
-                const analysisWatch = this.$scope.$watch('$ctrl.analysis', (analysis) => {
-                    if (analysis && !this.shapes) {
-                        this.initDiagram(joint);
-                    } else {
-                        analysisWatch();
-                    }
-                });
+        require.ensure(
+            ['jointjs'],
+            require => {
+                const joint = require('jointjs');
+                this.labUtils.init(joint, { enableSharing: this.enableNodeSharing });
+                if (this.analysis && !this.shapes) {
+                    this.initDiagram(joint);
+                } else {
+                    const analysisWatch = this.$scope.$watch('$ctrl.analysis', analysis => {
+                        if (analysis && !this.shapes) {
+                            this.initDiagram(joint);
+                        } else {
+                            analysisWatch();
+                        }
+                    });
+                }
+            },
+            error => {
+                throw new Error(
+                    'There was an error fetching the JointJS dependency.' +
+                        ' Please check your webpack config.'
+                );
             }
-        }, (error) => {
-            throw new Error(
-                'There was an error fetching the JointJS dependency.' +
-                    ' Please check your webpack config.'
-            );
-        });
+        );
     }
 
     $onDestroy() {
@@ -95,24 +105,20 @@ class DiagramContainerController {
     }
 
     canPreview() {
-        return !this.preventSelecting &&
-            !(this.analysisErrors && this.analysisErrors.size);
+        return !this.preventSelecting && !(this.analysisErrors && this.analysisErrors.size);
     }
 
     initDiagram(joint) {
-        let definition = this.analysis.executionParameters ?
-            this.analysis.executionParameters :
-            this.analysis;
+        let definition = this.analysis.executionParameters
+            ? this.analysis.executionParameters
+            : this.analysis;
 
-        let extract = this.labUtils.extractShapes(
-            definition,
-            this.cellDimensions
-        );
+        let extract = this.labUtils.extractShapes(definition);
         let labNodes = nodesFromAst(definition);
         this.initNodes(labNodes);
 
         this.shapes = extract.shapes;
-        this.shapes.forEach((shape) => {
+        this.shapes.forEach(shape => {
             shape.on('change:position', (node, position) => {
                 if (this.nodePositionsSet) {
                     this.onShapeMove(shape.id, position);
@@ -148,14 +154,17 @@ class DiagramContainerController {
                 gridSize: 25,
                 drawGrid: {
                     name: 'doubleMesh',
-                    args: [{
-                        thickness: 1,
-                        scaleFactor: 6
-                    }, {
-                        color: 'lightgrey',
-                        thickness: 1,
-                        scaleFactor: 6
-                    }]
+                    args: [
+                        {
+                            thickness: 1,
+                            scaleFactor: 6
+                        },
+                        {
+                            color: 'lightgrey',
+                            thickness: 1,
+                            scaleFactor: 6
+                        }
+                    ]
                 },
                 model: this.graph,
                 clickThreshold: 4,
@@ -179,9 +188,7 @@ class DiagramContainerController {
             this.onWindowResize = () => {
                 let owidth = this.$element[0].offsetWidth;
                 let oheight = this.$element[0].offsetHeight;
-                this.paper.setDimensions(
-                    owidth, oheight
-                );
+                this.paper.setDimensions(owidth, oheight);
             };
             this.$rootScope.$on('lab.resize', () => {
                 this.$timeout(this.onWindowResize, 100);
@@ -191,7 +198,7 @@ class DiagramContainerController {
         }
 
         if (this.shapes) {
-            let padding = this.cellDimensions.width * this.nodeSeparationFactor;
+            let padding = 80;
             this.shapes.forEach(s => this.graph.addCell(s));
             joint.layout.DirectedGraph.layout(this.graph, {
                 setLinkVertices: false,
@@ -209,8 +216,8 @@ class DiagramContainerController {
     applyPositionOverrides(graph) {
         // eslint-disable-next-line
         Object.keys(graph._nodes)
-            .map((modelid) => this.paper.getModelById(modelid))
-            .forEach((model) => {
+            .map(modelid => this.paper.getModelById(modelid))
+            .forEach(model => {
                 let metadata = model.attributes.metadata;
                 if (metadata && metadata.positionOverride) {
                     model.position(
@@ -227,10 +234,8 @@ class DiagramContainerController {
         this.paper.scale(1);
 
         let preZoomBBox = this.paper.getContentBBox();
-        let xratio =
-            this.paper.options.width / (preZoomBBox.x * 2 + preZoomBBox.width);
-        let yratio =
-            this.paper.options.height / (preZoomBBox.y * 2 + preZoomBBox.height);
+        let xratio = this.paper.options.width / (preZoomBBox.x * 2 + preZoomBBox.width);
+        let yratio = this.paper.options.height / (preZoomBBox.y * 2 + preZoomBBox.height);
         let ratio = xratio > yratio ? yratio : xratio;
         this.setZoom(ratio > 1 ? 1 : ratio, {
             x: 0,
@@ -247,7 +252,8 @@ class DiagramContainerController {
 
     onMouseWheel(mouseEvent) {
         let localpoint = this.paper.clientToLocalPoint(
-            mouseEvent.originalEvent.x, mouseEvent.originalEvent.y
+            mouseEvent.originalEvent.x,
+            mouseEvent.originalEvent.y
         );
 
         if (mouseEvent.originalEvent.deltaY < 0) {
@@ -289,7 +295,8 @@ class DiagramContainerController {
                 y: this.$element[0].offsetHeight / 2
             };
             zoomCoords = this.paper.clientToLocalPoint(
-                middle.x + offset.left, middle.y + offset.top
+                middle.x + offset.left,
+                middle.y + offset.top
             );
         }
 
@@ -319,19 +326,11 @@ class DiagramContainerController {
 
     onShapeMove(nodeId, position) {
         // TODO redux update node position
-        let node = getNodeDefinition(this.reduxState, {nodeId});
-        let updatedNode = Object.assign(
-            {},
-            node,
-            {
-                metadata: Object.assign(
-                    {},
-                    node.metadata,
-                    {positionOverride: position}
-                )
-            }
-        );
-        this.debouncedUpdateNode({payload: updatedNode});
+        let node = getNodeDefinition(this.reduxState, { nodeId });
+        let updatedNode = Object.assign({}, node, {
+            metadata: Object.assign({}, node.metadata, { positionOverride: position })
+        });
+        this.debouncedUpdateNode({ payload: updatedNode });
     }
 
     onPreviewClick() {
@@ -356,9 +355,11 @@ class DiagramContainerController {
             return !this.selectingNode || this.selectingNode === 'preview';
         case 'compare':
         case 'select':
-            return !this.selectingNode ||
-                this.selectingNode === 'compare' ||
-                this.selectingNode === 'select';
+            return (
+                !this.selectingNode ||
+                    this.selectingNode === 'compare' ||
+                    this.selectingNode === 'select'
+            );
         default:
             return false;
         }
