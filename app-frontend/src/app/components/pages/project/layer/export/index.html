@@ -1,4 +1,4 @@
-<div class="sidebar-overlay" ng-if="$ctrl.isDrawAoiClicked || $ctrl.isDrawing"></div>
+<div class="sidebar-overlay" ng-if="$ctrl.isDrawAoiClicked || $ctrl.isDrawing || $ctrl.isCreatingExport"></div>
 <rf-aoi-draw-toolbar
   ng-if="$ctrl.isDrawAoiClicked"
   map-id="$ctrl.mapId"
@@ -10,7 +10,7 @@
   >
 </rf-aoi-draw-toolbar>
 <div class="sidebar-scrollable with-padding">
-  <div class="page-card page-card-form with-thin-bottom-margin">
+  <div class="page-card page-card-form cozy">
     <div class="form-group" ng-if="$ctrl.availableTargets && $ctrl.availableTargets.length">
       <label for="export-target">Export to</label>
       <div class="input-group">

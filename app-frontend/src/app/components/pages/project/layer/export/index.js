@@ -300,6 +300,7 @@ class LayerExportCreateController {
 
     finishExport() {
         this.$timeout(() => {
+            this.isCreatingExport = false;
             this.$state.go('project.layer.exports', {
                 projectId: this.project.id,
                 layerId: this.layer.id
