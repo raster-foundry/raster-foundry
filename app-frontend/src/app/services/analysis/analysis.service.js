@@ -13,7 +13,7 @@ export default (app) => {
                     id: '@properties.id'
                 }, {
                     query: {
-                        method: 'GET',
+                      method: 'GET',
                         cache: false
                     },
                     get: {
@@ -22,6 +22,12 @@ export default (app) => {
                     },
                     create: {
                         method: 'POST'
+                    },
+                    update: {
+                        method: 'PUT',
+                        params: {
+                            id: '@id'
+                        }
                     },
                     delete: {
                         method: 'DELETE'
@@ -357,6 +363,10 @@ export default (app) => {
                 this.isLoadingTemplate = false;
             });
             return request;
+        }
+
+        updateTemplate(template) {
+            return this.Template.update(template).$promise;
         }
 
         getAnalysisActions(id) {

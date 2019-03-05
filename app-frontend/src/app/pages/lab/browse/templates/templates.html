@@ -57,6 +57,7 @@
         template-data="template"
         on-template-delete="$ctrl.onTemplateDelete(templateId)"
         on-share-click="$ctrl.onTemplateShareClick(template)"
+        on-edit-click="$ctrl.onTemplateEditClick(template)"
       ></rf-template-item>
       <div
         ng-if="!$ctrl.currentQuery && !$ctrl.search && $ctrl.pagination && !$ctrl.pagination.count"

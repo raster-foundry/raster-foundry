@@ -11,7 +11,7 @@ object LicenseDao extends Dao[License] {
   val selectF =
     fr"""
        SELECT
-         short_name, name, url, osi_approved
+         short_name, name, url, osi_approved, id
        FROM
       """ ++ tableF
 }
