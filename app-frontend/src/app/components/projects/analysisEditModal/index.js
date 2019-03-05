@@ -91,7 +91,7 @@ class AnalysisEditModalController {
                         analysis.projectId, analysis.projectLayerId
                     ).then((datasources) => {
                         if (datasources.length === 0) {
-                            console.error('No datasources in layer, disabling changes');
+                            this.$log.error('No datasources in layer, disabling changes');
                         } else {
                             if (datasources.length !== 1) {
                                 this.$log.error(

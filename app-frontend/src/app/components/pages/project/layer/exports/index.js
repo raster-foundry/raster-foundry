@@ -158,7 +158,12 @@ class LayerExportsController {
         });
         modal.result.then(() => {
             this.exportService.deleteExports(exports.map(e => e.id))
-                .then(() => this.fetchPage())
+                .then(() => {
+                    this.fetchPage();
+                    this.visible = this.visible.substract(this.selected.keySeq());
+                    this.syncGeoJsonLayersToVisible(this.visible.toArray());
+                    this.selected = new Map();
+                })
                 .catch(() => {});
         });
     }
