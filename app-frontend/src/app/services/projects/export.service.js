@@ -1,6 +1,6 @@
 /* globals BUILDCONFIG */
 
-export default (app) => {
+export default app => {
     class ExportService {
         constructor($resource, $q, authService) {
             'ngInject';
@@ -8,9 +8,11 @@ export default (app) => {
             this.authService = authService;
 
             this.Export = $resource(
-                `${BUILDCONFIG.API_HOST}/api/exports/:id/`, {
+                `${BUILDCONFIG.API_HOST}/api/exports/:id/`,
+                {
                     id: '@properties.id'
-                }, {
+                },
+                {
                     query: {
                         method: 'GET',
                         cache: false,
@@ -40,15 +42,17 @@ export default (app) => {
 
         getFiles(exportObject) {
             const token = this.authService.token();
-            return this.$q((resolve) => {
-                this.Export
-                    .getFiles({ exportId: exportObject.id }).$promise
-                    .then(files => {
-                        resolve(files.map(f => {
+            return this.$q(resolve => {
+                this.Export.getFiles({ exportId: exportObject.id }).$promise.then(files => {
+                    resolve(
+                        files.map(f => {
                             // eslint-disable-next-line
-                            return `${BUILDCONFIG.API_HOST}/api/exports/${exportObject.id}/files/${f}?token=${token}`;
-                        }));
-                    });
+                            return `${BUILDCONFIG.API_HOST}/api/exports/${
+                                exportObject.id
+                            }/files/${f}?token=${token}`;
+                        })
+                    );
+                });
             });
         }
 
@@ -73,14 +77,14 @@ export default (app) => {
             const userRequest = this.authService.getCurrentUser();
 
             return userRequest.then(
-                (user) => {
+                user => {
                     return this.Export.createExport(
                         Object.assign(finalSettings, {
                             owner: user.id
                         })
                     ).$promise;
                 },
-                (error) => {
+                error => {
                     return error;
                 }
             );
@@ -141,16 +145,19 @@ export default (app) => {
                     label: 'Download',
                     value: 'internalS3',
                     default: true
-                }, {
+                },
+                {
                     label: 'Dropbox',
-                    value: 'dropbox'
+                    value: 'dropbox',
+                    default: false
                 }
             ];
 
             if (includeS3) {
                 targets.push({
                     label: 'S3 Bucket',
-                    value: 'externalS3'
+                    value: 'externalS3',
+                    default: false
                 });
             }
 
@@ -158,14 +165,13 @@ export default (app) => {
         }
 
         deleteExport(id) {
-            return this.Export.delete({id}).$promise;
+            return this.Export.delete({ id }).$promise;
         }
 
         deleteExports(ids) {
             return this.$q.all(ids.map(id => this.deleteExport(id)));
         }
     }
-
 
     app.service('exportService', ExportService);
 };

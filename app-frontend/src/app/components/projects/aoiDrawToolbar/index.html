@@ -2,13 +2,13 @@
      ng-style="$ctrl.eleStyle">
   <div class="navbar-section aoi-draw-toolbar-left"
        ng-style="$ctrl.leftStyle">
-    <button class="btn btn-small btn-transparent"
+    <button class="btn btn-small btn-primary btn-aoi-actions"
             ng-click="$ctrl.onDrawAoi()"
             ng-disabled="$ctrl.isDrawingAoi"
             ng-if="!$ctrl.isValidGeometry()">
       <i class="icon-plus"></i> Draw AOI
     </button>
-    <button class="btn btn-small btn-transparent"
+    <button class="btn btn-small btn-primary btn-aoi-actions"
             ng-if="$ctrl.isValidGeometry()"
             ng-disabled="$ctrl.isEditingAoi"
             uib-dropdown

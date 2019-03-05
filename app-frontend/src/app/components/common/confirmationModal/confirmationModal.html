@@ -12,14 +12,16 @@
   <div ng-bind-html="$ctrl.resolve.content"></div>
 </div>
 <div class="modal-footer">
-	<div class="pull-left">
-  <button type="button" class="btn"
-          ng-click="$ctrl.dismiss()">
-    {{$ctrl.resolve.cancelText}}
-  </button>
-  </div>
-    <button type="button"  class="btn btn-primary"
+	<div class="footer-section left">
+		<button type="button" class="btn"
+	          ng-click="$ctrl.dismiss()">
+	    {{$ctrl.resolve.cancelText}}
+	  </button>
+	</div>
+	<div class="footer-section right">
+		<button type="button"  class="btn btn-primary"
             ng-click="$ctrl.close()">
       {{$ctrl.resolve.confirmText}}
     </button>
+	</div>    
 </div>

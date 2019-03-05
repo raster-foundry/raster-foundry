@@ -23,6 +23,8 @@
 - Added flag for whether tools can sensibly be run with only a single layer as input [\#4701](https://github.com/raster-foundry/raster-foundry/pull/4701) and used it to filter templates for layer analysis creation [\#4711](https://github.com/raster-foundry/raster-foundry/pull/4711)
 - Added AOI creation UI and component [\#4702](https://github.com/raster-foundry/raster-foundry/pull/4702)
 - Added single band options to project layers [\#4712](https://github.com/raster-foundry/raster-foundry/pull/4712)
+- Added project layer export creation UI [\#4718](https://github.com/raster-foundry/raster-foundry/pull/4718)
+- Enforced project layer AOI existence when browsing for scenes [\#4724](https://github.com/raster-foundry/raster-foundry/pull/4724)
 - Made templates editable except for their formulas [\#4729](https://github.com/raster-foundry/raster-foundry/pull/4729)
 
 ### Changed
