@@ -24,7 +24,6 @@ class LayerColormodeController {
     $onInit() {
         this.isLoading = true;
         this.currentBands = null;
-        this.singleBandEnabled = true;
         this.defaultColorModes = {
             custom: {
                 label: 'Custom',
@@ -38,7 +37,6 @@ class LayerColormodeController {
         };
         this.setMapLayers();
         this.initColorModes();
-        console.log(this.layer.isSingleBand, this.layer.singleBandOptions);
     }
 
     $onDestroy() {
