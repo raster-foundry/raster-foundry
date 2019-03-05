@@ -217,10 +217,8 @@ class AnalysesListController {
     }
 
     allVisibleSelected() {
-        // const templateId = _.get(this.selected.values().next(), 'value.templateId');
         let itemSet = new Set(
             this.itemList
-                // .filter(i => i.templateId === templateId)
                 .map(l => l.id));
         return this.selected.size &&
             itemSet.intersect(this.selected.keySeq()).size === itemSet.size;

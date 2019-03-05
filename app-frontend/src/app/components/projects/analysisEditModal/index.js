@@ -24,7 +24,6 @@ class AnalysisEditModalController {
             this.editableNodes = this.editableNodesFromAnalyses(this.analyses);
             const geojson = _.get(this.editableNodes.find(n => n.type === 'mask'), 'node.mask');
             if (geojson) {
-                // convert geojson to latlng
                 const reprojected = this.geometryFromMaskGeometry(geojson);
                 this.getMap().then((mapContainer) => {
                     mapContainer.setGeojson('aoi', reprojected);
@@ -43,7 +42,6 @@ class AnalysisEditModalController {
     }
 
     geometryFromMaskGeometry(geom) {
-        // assume single multipolygon feature
         if (geom.type.toLowerCase() !== 'multipolygon') {
             throw new Error('Tried to reproject a shape that isn\'t a multipolygon');
         }
@@ -61,9 +59,6 @@ class AnalysisEditModalController {
         });
         return reprojected;
     }
-
-    // geometryToMaskGeometry() {
-    // }
 
     getMap() {
         return this.mapService.getMap('modal');
