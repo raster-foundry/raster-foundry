@@ -1,6 +1,6 @@
 import tpl from './index.html';
 import {colorStopsToRange, createRenderDefinition} from '_redux/histogram-utils';
-import {nodesFromAst, astFromNodesStateless} from '_redux/node-utils';
+import {nodesFromAst, astFromNodes} from '_redux/node-utils';
 import _ from 'lodash';
 
 class AnalysesListController {
@@ -174,7 +174,7 @@ class AnalysesListController {
                     }
                 );
                 let nodes = nodesFromAst(analysis.executionParameters);
-                let updatedAnalysis = astFromNodesStateless(analysis, nodes, [newNodeDefinition]);
+                let updatedAnalysis = astFromNodes({analysis, nodes}, [newNodeDefinition]);
                 return this.analysisService.updateAnalysis(updatedAnalysis);
             });
         }).then( () => {

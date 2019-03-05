@@ -5,7 +5,7 @@ import {authedRequest} from '../api/authentication';
 import {colorStopsToRange} from '_redux/histogram-utils';
 import {createRenderDefinition} from '_redux/histogram-utils';
 
-export function astFromNodesStateless(analysis, nodes, updatedNodes) {
+export function astFromNodes({analysis, nodes}, updatedNodes) {
     let root = Object.assign({}, _.first(nodes.filter((node) => !node.parent).toArray()));
     let stack = [root];
     const updatedNodeMap = updatedNodes.reduce((m, node) => m.set(node.id, node), new Map());
@@ -35,12 +35,6 @@ export function astFromNodesStateless(analysis, nodes, updatedNodes) {
     }
 
     return Object.assign({}, analysis, {executionParameters: root});
-}
-
-export function astFromNodes(labState, updatedNodes) {
-    const analysis = labState.analysis;
-    const nodes = labState.nodes;
-    return astFromNodesStateless(analysis, nodes, updatedNodes);
 }
 
 export function getNodeArgs(node) {
