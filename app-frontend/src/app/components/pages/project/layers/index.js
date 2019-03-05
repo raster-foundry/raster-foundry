@@ -4,7 +4,7 @@ import {Set, Map} from 'immutable';
 
 class ProjectLayersPageController {
     constructor(
-        $rootScope, $state,
+        $rootScope, $state, $q,
         projectService, paginationService, modalService, authService, mapService
     ) {
         'ngInject';
@@ -176,16 +176,18 @@ class ProjectLayersPageController {
         };
         const deleteAction = {
             name: 'Delete',
-            callback: () => this.deleteProjectLayer(layer),
+            callback: () => this.deleteProjectLayers(layer),
             menu: true
         };
         const section = {
             section: true
         };
 
-        const unimplementedActions = [publishAction, exportAction, settingsAction];
+        // TODO: add implement these when the views are finished:
+        // const unimplementedActions = [publishAction, exportAction, settingsAction];
         const layerActions = [
-            editAction, editAoiAction, createAnalysisAction, importAction, browseAction
+            previewAction, editAction, editAoiAction, createAnalysisAction,
+            importAction, browseAction
         ];
 
         return [
@@ -257,27 +259,58 @@ class ProjectLayersPageController {
         this.$state.go('project.create-analysis', {layers});
     }
 
-    deleteProjectLayer(layer) {
-        const modal = this.modalService.open({
-            component: 'rfFeedbackModal',
-            resolve: {
-                title: () => 'Really delete layer?',
-                subtitle: () => 'Deleting layers cannot be undone',
-                content: () =>
-                    '<h2>Do you wish to continue?</h2>'
-                    + '<p>Future attempts to access this '
-                    + 'layer or associated annotations, tiles, and scenes will fail.',
-                feedbackIconType: () => 'danger',
-                feedbackIcon: () => 'icon-warning',
-                feedbackBtnType: () => 'btn-danger',
-                feedbackBtnText: () => 'Delete layer',
-                cancelText: () => 'Cancel'
-            }
-        });
-        modal.result.then(() => {
-            this.projectService.deleteProjectLayer(this.project.id, layer.id).then(() => {
+    deleteProjectLayers(layers) {
+        let modal;
+        let ids = layers.length ? layers.map(l => l.id) : [layers.id];
+        if (ids.length > 1) {
+            modal = this.modalService.open({
+                component: 'rfFeedbackModal',
+                resolve: {
+                    title: () => `Really delete ${ids.length} layers?`,
+                    subtitle: () => 'Deleting layers cannot be undone',
+                    content: () =>
+                        '<h2>Do you wish to continue?</h2>'
+                        + '<p>Future attempts to access these '
+                        + 'layers or associated annotations, tiles, and scenes will fail.',
+                    feedbackIconType: () => 'danger',
+                    feedbackIcon: () => 'icon-warning',
+                    feedbackBtnType: () => 'btn-danger',
+                    feedbackBtnText: () => 'Delete layers',
+                    cancelText: () => 'Cancel'
+                }
+            }).result;
+        } else {
+            modal = this.modalService.open({
+                component: 'rfFeedbackModal',
+                resolve: {
+                    title: () => 'Really delete layer?',
+                    subtitle: () => 'Deleting layers cannot be undone',
+                    content: () =>
+                        '<h2>Do you wish to continue?</h2>'
+                        + '<p>Future attempts to access this '
+                        + 'layer or associated annotations, tiles, and scenes will fail.',
+                    feedbackIconType: () => 'danger',
+                    feedbackIcon: () => 'icon-warning',
+                    feedbackBtnType: () => 'btn-danger',
+                    feedbackBtnText: () => 'Delete layer',
+                    cancelText: () => 'Cancel'
+                }
+            }).result;
+        }
+        modal.then(() => {
+            const promises = ids.map(
+                id => this.projectService.deleteProjectLayer(this.project.id, id)
+            );
+            this.$q.all(promises).then(() => {
+                this.visible = this.visible.subtract(this.selected.keySeq());
+                this.selected = new Map();
+            }).catch(e => {
+                this.$log.error(e);
+            }).finally(() => {
                 this.fetchPage();
             });
+        }).catch(() => {
+            // modal closed
         });
     }
 

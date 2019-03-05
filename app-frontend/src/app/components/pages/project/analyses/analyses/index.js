@@ -6,7 +6,7 @@ import {Map, Set} from 'immutable';
 
 class AnalysesListController {
     constructor(
-        $q, $rootScope, $scope, $state,
+        $rootScope, $scope, $state, $log, $q,
         mapService, projectService, analysisService, paginationService,
         authService, modalService
     ) {
@@ -139,7 +139,7 @@ class AnalysesListController {
 
         const deleteAction = {
             name: 'Delete Analysis',
-            callback: () => this.deleteProjectAnalysis(analysis),
+            callback: () => this.deleteProjectAnalyses(analysis),
             menu: true
         };
 
@@ -206,30 +206,6 @@ class AnalysesListController {
         });
     }
 
-    deleteProjectAnalysis(analysis) {
-        const modal = this.modalService.open({
-            component: 'rfFeedbackModal',
-            resolve: {
-                title: () => 'Delete this analysis?',
-                subtitle: () => 'Deleting an analysis cannot be undone',
-                content: () =>
-                    '<h2>Do you wish to continue?</h2>'
-                    + '<p>Future attempts to access this '
-                    + 'analysis and its exports will fail.',
-                feedbackIconType: () => 'danger',
-                feedbackIcon: () => 'icon-warning',
-                feedbackBtnType: () => 'btn-danger',
-                feedbackBtnText: () => 'Delete analysis',
-                cancelText: () => 'Cancel'
-            }
-        });
-        modal.result.then(() => {
-            this.analysisService.deleteAnalysis(analysis.id).then(() => {
-                this.fetchPage();
-            });
-        });
-    }
-
     onToggle(id) {
         if (this.selected.has(id)) {
             this.selected = this.selected.delete(id);
@@ -278,12 +254,10 @@ class AnalysesListController {
 
     selectGroup(analysis) {
         const templateId = analysis.templateId;
-        this.selected = this.selected.merge(
-            new Map(
-                this.itemList
-                    .filter(i => i.templateId === templateId)
-                    .map(i => [i.id, i]))
-        );
+        this.selected = new Map(
+            this.itemList
+                .filter(i => i.templateId === templateId)
+                .map(i => [i.id, i]));
         this.updateSelectText();
     }
 
@@ -313,6 +287,65 @@ class AnalysesListController {
                 });
             }
         }).catch(() => {
+        });
+    }
+
+    deleteProjectAnalyses(analyses) {
+        const ids = analyses.length ? analyses.map(a => a.id) : [analyses.id];
+        let modal;
+        if (ids.length && ids.length > 1) {
+            modal = this.modalService.open({
+                component: 'rfFeedbackModal',
+                resolve: {
+                    title: () => 'Delete analyses?',
+                    subtitle: () => 'Deleting an analysis cannot be undone',
+                    content: () =>
+                        `<h2>You are attempting to delete ${ids.length} `
+                        + 'analyses. Do you wish to continue?</h2>'
+                        + '<p>Future attempts to access these '
+                        + 'analyses and their exports will fail.',
+                    feedbackIconType: () => 'danger',
+                    feedbackIcon: () => 'icon-warning',
+                    feedbackBtnType: () => 'btn-danger',
+                    feedbackBtnText: () => 'Delete analysis',
+                    cancelText: () => 'Cancel'
+                }
+            }).result;
+        } else if (ids.length) {
+            modal = this.modalService.open({
+                component: 'rfFeedbackModal',
+                resolve: {
+                    title: () => 'Delete this analysis?',
+                    subtitle: () => 'Deleting an analysis cannot be undone',
+                    content: () =>
+                        '<h2>Do you wish to continue?</h2>'
+                        + '<p>Future attempts to access this '
+                        + 'analysis and its exports will fail.',
+                    feedbackIconType: () => 'danger',
+                    feedbackIcon: () => 'icon-warning',
+                    feedbackBtnType: () => 'btn-danger',
+                    feedbackBtnText: () => 'Delete analysis',
+                    cancelText: () => 'Cancel'
+                }
+            }).result;
+        } else {
+            const message = 'Delete action called with no analyses';
+            this.$log.error(message);
+            throw new Error(message);
+        }
+        modal.then(() => {
+            const promises = ids.map((id) => this.analysisService.deleteAnalysis(id));
+            this.$q.all(promises).then(() => {
+                this.selected = this.selected.clear();
+                this.visible = this.visible.subtract(this.selected.keySeq());
+            }).catch((e) => {
+                this.$log.error(e);
+            }).finally(() => {
+                this.fetchPage();
+                this.syncMapLayersToVisible();
+            });
+        }).catch(() => {
+            // modal closed
         });
     }
 }

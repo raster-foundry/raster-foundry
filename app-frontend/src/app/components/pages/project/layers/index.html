@@ -24,7 +24,8 @@
       Create Analysis
     </button>
     <button class="btn btn-transparent"
-            ng-click="$ctrl.removeScenes($ctrl.selected.valueSeq().toArray())">
+            ng-click="$ctrl.deleteProjectLayers($ctrl.selected.valueSeq().toArray())"
+            ng-disabled="$ctrl.selected.has($ctrl.project.defaultLayerId)">
       Delete
     </button>
   </rf-selected-actions-bar>

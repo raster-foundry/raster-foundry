@@ -4,7 +4,11 @@
       <span aria-hidden="true">&times;</span>
     </button>
     <h4 class="modal-title" ng-if="!$ctrl.resolve.project">
-      Edit analysis parameters
+      Edit parameters for
+      <ng-pluralize count="$ctrl.analyses.length"
+                    when="{'1': 'one analysis',
+                           'other': '{} analyses'}"
+      ></ng-pluralize>
     </h4>
     <p>Update band selection and constant values</p>
   </div>
@@ -18,7 +22,7 @@
               Analysis AOI (read-only)
               <span class="icon-help"
                     tooltips
-                    tooltip-template="Analyses use the AOI of the layer used to create them"
+                    tooltip-template="Analyses inherit AOIs from layers when they are created"
                     tooltip-size="small"
                     tooltip-class="rf-tooltip"
                     tooltip-side="bottom"

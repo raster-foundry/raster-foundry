@@ -14,7 +14,7 @@
       on-click="$ctrl.selectAll()"
       action-text="$ctrl.selectText">
     <button class="btn btn-transparent"
-            ng-click="$ctrl.deleteExports($ctrl.selected.keySeq().toArray())">
+            ng-click="$ctrl.deleteExports($ctrl.selected.valueSeq().toArray())">
       Delete
     </button>
   </rf-selected-actions-bar>
@@ -62,8 +62,10 @@
     <item-title>
       <strong ng-attr-title="{{$ctrl.formatDateDisplay(export.createdAt)}}">
         {{$ctrl.formatDateDisplay(export.createdAt)}}</strong></item-title>
-    <item-subtitle><rf-export-status export="export"></rf-export-status></item-subtitle>
-    <item-date>{{export.createdAt | date}}</item-date>
+    <item-date>
+      <span class="export-date-subtext">{{export.createdAt | date : 'medium'}}</span>
+      <rf-export-status export="export" class="export-status export-date-subtext"></rf-export-status>
+    </item-date>
     <item-actions>
       <rf-list-item-actions actions="$ctrl.exportActions.get(export.id)"></rf-list-item-actions>
     </item-actions>
