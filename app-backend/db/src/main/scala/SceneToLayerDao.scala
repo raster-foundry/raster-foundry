@@ -116,7 +116,7 @@ object SceneToLayerDao extends Dao[SceneToLayer] with LazyLogging {
     val select = fr"""
     SELECT
       scene_id, project_id, project_layer_id, accepted, scene_order, mosaic_definition, scene_type, ingest_location,
-      data_footprint, is_single_band, single_band_options
+      data_footprint, project_layers.is_single_band, project_layers.single_band_options
     FROM (
       scenes_to_layers
     LEFT JOIN

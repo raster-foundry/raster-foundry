@@ -32,8 +32,8 @@
     ng-show="!$ctrl.isLoading && $ctrl.pagination && $ctrl.pagination.count"
 >
     <div class="page-card" ng-if="!$ctrl.isLoading && !$ctrl.bands.length">
-        There are currently no bands defined for one or more datasources used in this
-        project. Some color options are not available unless bands are defined.
+        There are currently no bands defined for one or more datasources used in this project. Some
+        color options are not available unless bands are defined.
         <br />
         <br />
 
@@ -70,7 +70,7 @@
                 </select>
             </div>
         </div>
-        <div ng-if="$ctrl.bands.length && $ctrl.projectBuffer.isSingleBand">
+        <div ng-if="$ctrl.bands.length && $ctrl.layerBuffer.isSingleBand">
             <div class="form-group">
                 <label for="color-mode">Band</label>
                 <rf-band-select
@@ -89,7 +89,7 @@
             </div>
         </div>
         <div
-            ng-if="$ctrl.bands.length && !$ctrl.projectBuffer.isSingleBand && $ctrl.activeColorModeKey === 'custom'"
+            ng-if="$ctrl.bands.length && !$ctrl.layerBuffer.isSingleBand && $ctrl.activeColorModeKey === 'custom'"
         >
             <div class="form-group">
                 <label for="color-mode">Blue</label>
