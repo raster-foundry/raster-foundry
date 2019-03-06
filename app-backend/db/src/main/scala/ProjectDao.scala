@@ -75,8 +75,7 @@ object ProjectDao
 
   def insertProject(newProject: Project.Create,
                     user: User): ConnectionIO[Project] = {
-    val s: Scene = ???
-    s.filterFields.acquisitionDate.get.toLocalDateTime.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)
+
     val id = UUID.randomUUID()
     val now = new Timestamp(new java.util.Date().getTime)
     val ownerId = util.Ownership.checkOwner(user, newProject.owner)
