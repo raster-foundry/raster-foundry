@@ -294,8 +294,21 @@ function projectStatesV2($stateProvider) {
         })
         .state('project.analyses.visualize', {
             title: 'Project Analyses Visualization',
-            url: '/visualize',
-            component: 'rfProjectAnalysesVisualizePage'
+            url: '/visualize?analysis',
+            params: {
+                analysis: {
+                    array: 'auto'
+                }
+            },
+            views: {
+                'projectlayernav@root': {
+                    component: 'rfProjectLayersNav'
+                },
+                'analyses-visualize@project': {
+                    component: 'rfProjectAnalysesVisualizePage'
+                }
+            }
+            // component: 'rfProjectAnalysesVisualizePage'
         })
         .state('project.create-analysis', {
             title: 'Create project analysis',

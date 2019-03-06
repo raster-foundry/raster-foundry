@@ -3296,10 +3296,12 @@ rf-project-scene-item {
     margin: 0.5em;
 }
 
+
 rf-project-settings-page,
 rf-project-options-page,
 rf-project-permissions-page,
-rf-project-publishing-page {
+rf-project-publishing-page,
+rf-project-analyses-visualize-page {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -3335,7 +3337,13 @@ rf-project-publishing-page {
     h6 {
         margin: 0;
     }
+
+    &.wide {
+        max-width: 1300px;
+    }
 }
+
+
 
 .page-card {
     flex: none;
@@ -3357,6 +3365,14 @@ rf-project-publishing-page {
     }
     &.cozy {
         margin-bottom: 1.5rem;
+    }
+    &.analysis-maps-card {
+        max-width: 1300px;
+        background: none;
+        border: none;
+        border-radius: none;
+        box-shadow: none;
+        padding: 0;
     }
 }
 
@@ -3611,4 +3627,17 @@ rf-aoi-draw-toolbar {
         width: 100%;
         height: 100%;
     }
+}
+
+.analysis-map-item-top-bar {
+    display: flex;
+}
+
+.analysis-viz-container {
+    padding: 1rem 3rem 1rem 0rem !important;
+}
+
+.panel-analysis-viz-container {
+    background-color: $white;
+    box-shadow: 0px 3px 8px rgba($shade-normal, 0.2);
 }

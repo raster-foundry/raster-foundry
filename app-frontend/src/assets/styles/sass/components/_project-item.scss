@@ -89,6 +89,9 @@
   overflow: hidden;
   position: relative;
   z-index: 1;
+  &.analysis-viz-map {
+    margin-top: 2rem;
+  }
 }
 
 .project-ownership {

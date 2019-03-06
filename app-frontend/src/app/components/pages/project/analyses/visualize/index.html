@@ -1,1 +1,23 @@
-visualize
+<div class="page-content-container">
+    <div class="page-header wide">
+        <h3>Key metrics</h3>
+    </div>
+    <div class="page-card analysis-maps-card">
+      <div class="row">
+        <div class="column-4 flex-display analysis-viz-container" ng-repeat="analysis in $ctrl.analyses track by $index">
+          <rf-analysis-map-item
+              class="panel panel-off-white project-item"
+              analysis-id="analysis.id"
+              analysis-tile="analysis.analysisTile">
+              <item-selector>
+                <rf-list-item-selector
+                    id="analysis.id"
+                    selected="$ctrl.selected.has(analysis.id)"
+                    color="$ctrl.layerColorHex[analysis.id]"
+                ></rf-list-item-selector>
+              </item-selector>
+          </rf-analysis-map-item>
+        </div>
+      </div>
+    </div>
+</div>
