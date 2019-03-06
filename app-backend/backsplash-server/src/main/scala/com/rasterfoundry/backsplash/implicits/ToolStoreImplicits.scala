@@ -53,7 +53,9 @@ class ToolStoreImplicits[HistStore](mosaicImplicits: MosaicImplicits[HistStore],
       }
     } yield {
       val decoded = executionParams.as[MapAlgebraAST] match {
-        case Right(x) => x
+        case Right(x) =>
+          println(s"AST in tile server is: ${x}")
+          x
         case Left(e) =>
           logger.error(e.getMessage)
           throw BadAnalysisASTException(e.getMessage)

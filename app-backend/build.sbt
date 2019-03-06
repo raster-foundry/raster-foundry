@@ -63,6 +63,7 @@ lazy val sharedSettings = Seq(
     Resolver.bintrayRepo("guizmaii", "maven"),
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
+    "azavea-snapshots" at "http://nexus.internal.azavea.com/repository/azavea-snapshots/",
     Resolver.bintrayRepo("naftoligug", "maven"),
     Classpaths.sbtPluginReleases,
     Opts.resolver.sonatypeReleases,

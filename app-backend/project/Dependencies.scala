@@ -90,6 +90,8 @@ object Dependencies {
   val dropbox = "com.dropbox.core" % "dropbox-core-sdk" % Version.dropbox
   val elasticacheClient = "com.amazonaws" % "elasticache-java-cluster-client" % Version.elasticacheClient
   val ficus = "com.iheart" %% "ficus" % Version.ficus
+  val geotrellisContribVLM = "com.azavea.geotrellis" %% "geotrellis-contrib-vlm" % Version.geotrellisContrib
+  val geotrellisContribGDAL = "com.azavea.geotrellis" %% "geotrellis-contrib-gdal" % Version.geotrellisContrib
   val geotrellisGeotools = "org.locationtech.geotrellis" %% "geotrellis-geotools" % Version.geotrellis
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % Version.geotrellis
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % Version.geotrellis
@@ -108,7 +110,6 @@ object Dependencies {
   val http4sDSL = "org.http4s" %% "http4s-dsl" % Version.http4s
   val http4sServer = "org.http4s" %% "http4s-server" % Version.http4s
   val mamlJvm = "com.azavea" %% "maml-jvm" % Version.maml
-  val mamlSpark = "com.azavea" %% "maml-spark" % Version.maml
   val nimbusJose = "com.guizmaii" %% "scala-nimbus-jose-jwt" % Version.nimbusJose
   val postgres = "org.postgresql" % "postgresql" % Version.postgres
   val postgis = "net.postgis" % "postgis-jdbc" % Version.postgis

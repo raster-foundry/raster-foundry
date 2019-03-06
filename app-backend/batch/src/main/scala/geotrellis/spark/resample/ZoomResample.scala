@@ -20,7 +20,7 @@ import org.apache.spark.rdd.RDD
 object ZoomResample {
   private def gridBoundsAtZoom(sourceZoom: Int,
                                spatialKey: SpatialKey,
-                               targetZoom: Int): GridBounds = {
+                               targetZoom: Int): GridBounds[Int] = {
     val SpatialKey(col, row) = spatialKey
     val zoomDiff = targetZoom - sourceZoom
     val factor = math.pow(2, zoomDiff).toInt
@@ -61,11 +61,11 @@ object ZoomResample {
     * @param       targetGridBounds Optionally, a grid bounds in the target zoom level we want to filter by.
     * @param       method           The resample method to use for resampling.
     */
-  def apply[K: SpatialComponent, V <: CellGrid](
+  def apply[K: SpatialComponent, V <: CellGrid[Int]](
       rdd: RDD[(K, V)] with Metadata[TileLayerMetadata[K]],
       sourceZoom: Int,
       targetZoom: Int,
-      targetGridBounds: Option[GridBounds] = None,
+      targetGridBounds: Option[GridBounds[Int]] = None,
       method: ResampleMethod = NearestNeighbor
   )(implicit ev: V => TileResampleMethods[V])
     : RDD[(K, V)] with Metadata[TileLayerMetadata[K]] = {
@@ -89,7 +89,7 @@ object ZoomResample {
             case Some(resampleGridBounds) => {
               val resampled: RDD[(K, V)] = rdd.flatMap {
                 case (key, tile) =>
-                  val gbaz: Option[GridBounds] =
+                  val gbaz: Option[GridBounds[Int]] =
                     gridBoundsAtZoom(sourceZoom,
                                      key.getComponent[SpatialKey],
                                      targetZoom)

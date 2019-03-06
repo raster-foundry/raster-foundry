@@ -123,7 +123,6 @@ object BacksplashImage extends RasterSourceUtils with LazyLogging {
         val rs = new GeoTiffRasterSource(uri)
         // access lazy vals so they are cached
         rs.tiff
-        rs.rasterExtent
         rs.resolutions
         rs
       }
