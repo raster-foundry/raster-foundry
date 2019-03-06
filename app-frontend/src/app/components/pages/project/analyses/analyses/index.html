@@ -20,6 +20,19 @@
     >
         <span
             tooltips
+            tooltip-template="View maps and histograms of selected analyses on one page"
+            tooltip-size="small"
+            tooltip-class="rf-tooltip shrink"
+            tooltip-side="bottom">
+          <button class="btn btn-transparent btn-tiny"
+                  ng-click="$ctrl.visualizeAnalyses()"
+                  ng-disabled="!$ctrl.canVisualize()"
+          >
+            Visualize
+          </button>
+        </span>
+        <span
+            tooltips
             tooltip-template="Edit analyses created from the same template"
             tooltip-size="small"
             tooltip-class="rf-tooltip shrink"

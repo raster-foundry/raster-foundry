@@ -184,7 +184,7 @@ class AnalysesListController {
                 let updatedAnalysis = astFromNodes({analysis, nodes}, [newNodeDefinition]);
                 return this.analysisService.updateAnalysis(updatedAnalysis);
             });
-        }).then( () => {
+        }).then(() => {
             const tileUrl = this.analysisService.getAnalysisTileUrl(analysisId);
             return L.tileLayer(tileUrl, {maxZoom: 30});
         });
@@ -195,7 +195,7 @@ class AnalysesListController {
         this.getMap().then(map => {
             this.$q.all(
                 visibleAnalysisIds.map(this.mapLayerFromAnalysis.bind(this)),
-            ).then( layers => {
+            ).then(layers => {
                 map.setLayer(
                     'Project Analyses',
                     layers,
@@ -344,6 +344,15 @@ class AnalysesListController {
         }).catch(() => {
             // modal closed
         });
+    }
+
+    visualizeAnalyses() {
+        this.$log.log(this.selected.size);
+        this.$state.go('project.analyses.visualize', {analysis: this.selected.keySeq().toArray()});
+    }
+
+    canVisualize() {
+        return this.selected.size <= 2;
     }
 }
 
