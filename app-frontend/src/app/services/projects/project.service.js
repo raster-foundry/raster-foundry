@@ -208,6 +208,13 @@ export default (app) => {
                             projectId: '@projectId'
                         }
                     },
+                    listAnalyses: {
+                       method: 'GET',
+                       url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/analyses`,
+                       params: {
+                         projectId: '@projectId'
+                       }
+                    },
                     getLayer: {
                         method: 'GET',
                         url: `${BUILDCONFIG.API_HOST}/api/projects/:projectId/layers/:layerId`,
@@ -444,6 +451,17 @@ export default (app) => {
         }
 
         getProjectLayerScenes(projectId, layerId, params = {}) {
+            return this.Project.layerScenes(
+                Object.assign({}, {
+                    projectId, layerId,
+                    pending: false,
+                    page: 0,
+                    pageSize: 30
+                }, params)
+            ).$promise;
+        }
+
+        getProjectAanalyses(projectId, layerId, params = {}) {
             return this.Project.layerScenes(
                 Object.assign({}, {
                     projectId, layerId,
@@ -718,6 +736,10 @@ export default (app) => {
 
         getProjectLayers(projectId, params = {}) {
             return this.Project.listLayers({...params, projectId}).$promise;
+        }
+
+        getProjectAnalyses(projectId, params = {}) {
+            return this.Project.listAnalyses({...params, projectId}).$promise;
         }
 
         getProjectLayer(projectId, layerId) {

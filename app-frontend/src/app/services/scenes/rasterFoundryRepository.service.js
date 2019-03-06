@@ -42,10 +42,6 @@ export default (app) => {
                 type: 'daterange',
                 default: 'None'
             }, {
-                type: 'shape',
-                label: 'Area of Interest',
-                param: 'shape'
-            }, {
                 params: {
                     min: 'minCloudCover',
                     max: 'maxCloudCover'
@@ -83,18 +79,8 @@ export default (app) => {
                 scale: 1
             }, {
                 param: 'ingested',
-                label: 'Ingest Status',
-                type: 'tag',
-                options: [{
-                    label: 'Show all',
-                    value: null
-                }, {
-                    label: 'Uningested Only',
-                    value: 'false'
-                }, {
-                    label: 'Ingested Only',
-                    value: 'true'
-                }]
+                label: 'Show Unprocessed',
+                type: 'checkbox'
             }, {
                 param: 'owner',
                 label: 'Owner',
@@ -161,7 +147,8 @@ export default (app) => {
                                 bbox,
                                 maxCreateDatetime: requestTime,
                                 project: projectId,
-                                layer: layerId
+                                layer: layerId,
+                                projectLayerShape: layerId
                             }, params)
                         ).then((response) => {
                             // We aren't supporting concurrent scene paged requests

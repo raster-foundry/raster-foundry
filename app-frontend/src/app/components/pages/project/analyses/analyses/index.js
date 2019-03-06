@@ -47,11 +47,10 @@ class AnalysesListController {
 
     fetchPage(page = this.$state.params.page || 1) {
         this.itemList = [];
-        const currentQuery = this.analysisService.fetchAnalyses(
+        const currentQuery = this.projectService.getProjectAnalyses(this.project.id,
             {
                 pageSize: 30,
-                page: page - 1,
-                projectId: this.project.id
+                page: page - 1
             }
         ).then((paginatedAnalyses) => {
             this.itemList = paginatedAnalyses.results;

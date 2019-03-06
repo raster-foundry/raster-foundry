@@ -32,7 +32,8 @@ trait SceneQueryParameterDirective extends QueryParametersCommon {
       'ingested.as[Boolean].?,
       'ingestStatus.as[String].*,
       'pending.as[Boolean].?,
-      'shape.as[UUID].?
+      'shape.as[UUID].?,
+      'projectLayerShape.as[UUID].?
     )).as(SceneQueryParameters.apply _)
 
   val sceneSearchModeQueryParams = parameters(
