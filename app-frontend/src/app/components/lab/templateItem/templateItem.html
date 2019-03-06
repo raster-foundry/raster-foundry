@@ -28,6 +28,9 @@
     </button>
     <ul class="dropdown-menu slim dropdown-menu-light dropdown-menu-right" uib-dropdown-menu role="menu" >
       <li class="dropdown-list-item" ng-if="$ctrl.showShare">
+        <a ng-click="$ctrl.onEditClick()">Edit</a>
+      </li>
+      <li class="dropdown-list-item" ng-if="$ctrl.showShare">
         <a ng-click="$ctrl.onShareClick()">Share</a>
       </li>
       <li class="dropdown-menu-item divider" ng-if="$ctrl.showShare && $ctrl.showDelete">

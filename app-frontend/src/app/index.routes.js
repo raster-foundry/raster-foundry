@@ -297,11 +297,6 @@ function projectStatesV2($stateProvider) {
             url: '/visualize',
             component: 'rfProjectAnalysesVisualizePage'
         })
-        .state('project.analysis', {
-            title: 'Project Analysis',
-            url: '/analysis/:analsisId',
-            component: 'rfProjectAnalysis'
-        })
         .state('project.create-analysis', {
             title: 'Create project analysis',
             url: '/create-analysis?page&search',

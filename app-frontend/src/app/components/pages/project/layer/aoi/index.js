@@ -8,9 +8,18 @@ const defaultColor = '#738FFC';
 
 class ProjectLayerAoiController {
     constructor(
-        $rootScope, $scope, $state, $log, $window,
-        uuid4, moment, projectService, paginationService, mapService,
-        modalService, shapesService
+        $rootScope,
+        $scope,
+        $state,
+        $log,
+        $window,
+        uuid4,
+        moment,
+        projectService,
+        paginationService,
+        mapService,
+        modalService,
+        shapesService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
@@ -73,21 +82,19 @@ class ProjectLayerAoiController {
         this.itemList = [];
         let fetchedList = [];
         const currentQuery = this.projectService
-            .getProjectLayers(this.project.id, {pageSize: 30, page: page - 1})
-            .then((paginatedResponse) => {
+            .getProjectLayers(this.project.id, { pageSize: 30, page: page - 1 })
+            .then(paginatedResponse => {
                 fetchedList = paginatedResponse.results;
-                this.itemList = fetchedList.filter(
-                    fl => fl.geometry && fl.id !== this.layer.id
-                ).map(fl => {
-                    return {
-                        id: fl.id,
-                        name: fl.name,
-                        subtext: '',
-                        date: fl.createdAt,
-                        colorGroupHex: fl.colorGroupHex,
-                        geometry: fl.geometry
-                    };
-                });
+                this.itemList = fetchedList
+                    .filter(fl => fl.geometry && fl.id !== this.layer.id).map(fl => {
+                        return {
+                            id: fl.id,
+                            name: fl.name,
+                            date: fl.createdAt,
+                            colorGroupHex: fl.colorGroupHex,
+                            geometry: fl.geometry
+                        };
+                    });
                 if (this.itemList.length) {
                     this.onSelect(this.layer.id);
                 }
@@ -97,7 +104,7 @@ class ProjectLayerAoiController {
                     delete this.fetchError;
                 }
             })
-            .catch((e) => {
+            .catch(e => {
                 if (this.currentQuery === currentQuery) {
                     this.fetchError = e;
                 }
@@ -115,14 +122,14 @@ class ProjectLayerAoiController {
         this.itemList = [];
         let fetchedList = [];
 
-        const currentQuery = this.shapesService.query({pageSize: 30, page: page - 1})
-            .then((paginatedResponse) => {
+        const currentQuery = this.shapesService
+            .query({ pageSize: 30, page: page - 1 })
+            .then(paginatedResponse => {
                 fetchedList = paginatedResponse.features;
                 this.itemList = fetchedList.map(fl => {
                     return {
                         id: fl.id,
                         name: fl.properties.name,
-                        subtext: '',
                         date: fl.properties.createdAt,
                         colorGroupHex: defaultColor,
                         geometry: fl.geometry
@@ -134,7 +141,7 @@ class ProjectLayerAoiController {
                     delete this.fetchError;
                 }
             })
-            .catch((e) => {
+            .catch(e => {
                 if (this.currentQuery === currentQuery) {
                     this.fetchError = e;
                 }
@@ -164,8 +171,8 @@ class ProjectLayerAoiController {
             this.$window.alert('The supplied AOI geometry is incorrect. Please try again.');
             return;
         }
-        const layerGeomToUpdate = this.generateFeature(geom);
-        const updatedLayer = Object.assign({}, this.layer, {geometry: layerGeomToUpdate});
+        const layerGeomToUpdate = this.shapesService.generateFeature(geom);
+        const updatedLayer = Object.assign({}, this.layer, { geometry: layerGeomToUpdate });
         this.projectService
             .updateProjectLayer(updatedLayer)
             .then(newLayer => {
@@ -179,8 +186,9 @@ class ProjectLayerAoiController {
             })
             .catch(err => {
                 this.$log.error(err);
-                this.$window.alert('There was an error updating this layer\'s AOI.'
-                    + ' Please try again later');
+                this.$window.alert(
+                    'There was an error updating this layer\'s AOI.' + ' Please try again later'
+                );
             });
     }
 
@@ -206,52 +214,35 @@ class ProjectLayerAoiController {
             component: 'rfEnterTokenModal',
             resolve: {
                 title: () => 'Enter a name for the vector data',
-                token: () => `${this.project.name} - ${layer.name} AOI `
-                    + `- ${this.formatDateDisplay(layer.createdAt)}`
+                token: () =>
+                    `${this.project.name} - ${layer.name} AOI ` +
+                    `- ${this.formatDateDisplay(layer.createdAt)}`
             }
         });
 
-        modal.result.then((name) => {
-            const geom = this.getMultipolygonGeom(layer.geometry);
+        modal.result
+            .then(name => {
+                const geom = this.getMultipolygonGeom(layer.geometry);
 
-            if (!geom) {
-                this.$window('The supplied geometry is incorrect, please try again.');
-                return;
-            }
+                if (!geom) {
+                    this.$window('The supplied geometry is incorrect, please try again.');
+                    return;
+                }
 
-            this.shapesService
-                .createShape(this.generateFeatureCollection(geom, name))
-                .then(() => {
-                    this.$state.go('project.layer');
-                })
-                .catch(err => {
-                    this.$window.alert('There was an error adding this layer\'s AOI as vector data.'
-                        + ' Please try again later');
-                    this.$log.error(err);
-                });
-        }).catch(() => {});
-    }
-
-    generateFeatureCollection(geometry, name = '') {
-        return {
-            type: 'FeatureCollection',
-            features: [this.generateFeature(geometry, name)]
-        };
-    }
-
-    generateFeature(geometry, name = '') {
-        let result = {
-            type: 'Feature',
-            properties: {},
-            geometry
-        };
-
-        if (name.length) {
-            result.id = this.uuid4.generate();
-            result.properties = { name };
-        }
-
-        return result;
+                this.shapesService
+                    .createShape(this.shapesService.generateFeatureCollection([geom], name))
+                    .then(() => {
+                        this.$state.go('project.layer');
+                    })
+                    .catch(err => {
+                        this.$window.alert(
+                            'There was an error adding this layer\'s AOI as vector data.' +
+                                ' Please try again later'
+                        );
+                        this.$log.error(err);
+                    });
+            })
+            .catch(() => {});
     }
 
     onCancelDrawAoi() {
@@ -303,5 +294,4 @@ const component = {
 export default angular
     .module('components.pages.project.layer.aoi', [])
     .controller(ProjectLayerAoiController.name, ProjectLayerAoiController)
-    .component('rfProjectLayerAoiPage', component)
-    .name;
+    .component('rfProjectLayerAoiPage', component).name;

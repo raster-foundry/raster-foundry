@@ -18,6 +18,7 @@ class ProjectCreateAnalysisPageController {
         this.currentOwnershipFilter = this.$state.params.ownership || '';
         this.selected = new Set();
         this.itemActions = new Map();
+        this.layerActions = new Map();
         this.fetchLayers();
         this.templateCreators = new Map();
         this.fetchTemplates();
@@ -26,17 +27,35 @@ class ProjectCreateAnalysisPageController {
     fetchLayers() {
         if (this.layers && this.layers.length) {
             this.layerList = this.layers.map(this.toLayerInfo);
+            this.layerActions = new Map(this.layerList.map(this.createLayerActions.bind(this)));
         } else {
             this.currentQuery = this.projectService
                 .getProjectLayer(this.project.id, this.project.defaultLayerId)
-                .then((layer) => {
+                .then((defaultLayer) => {
                     delete this.currentQuery;
-                    this.layerList = [this.toLayerInfo(layer)];
+                    this.layerList = [this.toLayerInfo(defaultLayer)];
+                    this.layerActions = new Map(
+                        this.layerList.map(this.createLayerActions.bind(this)));
                 }).catch(e => {
                     delete this.currentQuery;
                     this.fetchError = e;
                 });
         }
+    }
+
+    createLayerActions(layer) {
+        const hasGeom = _.get(layer, 'geometry.type');
+        let actions = [];
+        if (!hasGeom) {
+            actions.push({
+                icon: 'icon-warning color-danger',
+                tooltip: 'No AOI defined for this layer',
+                name: 'No AOI',
+                callback: () => {},
+                menu: false
+            });
+        }
+        return [layer.id, actions];
     }
 
     toLayerInfo(layer) {
@@ -258,8 +277,8 @@ class ProjectCreateAnalysisPageController {
         let nodes = root.args ? [...root.args] : [];
         while (nodes.length) {
             const node = nodes.pop();
-            if (node.args && node.args.length) {
-                nodes = nodes.concat(node.args);
+            if (node.args) {
+                nodes.push(...node.args);
             }
             if (['projectSrc', 'layerSrc'].includes(_.get(node, 'type'))) {
                 Object.assign(node, {
@@ -306,7 +325,9 @@ class ProjectCreateAnalysisPageController {
     }
 
     allVisibleSelected() {
-        return this.layerList && this.selected.size === this.layerList.length;
+        return this.layerList &&
+            this.selected.size &&
+            this.selected.size === this.layerList.length;
     }
 }
 

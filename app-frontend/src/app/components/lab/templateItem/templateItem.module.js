@@ -8,6 +8,7 @@ const TemplateItemComponent = {
         templateData: '<',
         onTemplateDelete: '&',
         onShareClick: '&',
+        onEditClick: '&',
         hideActions: '<'
     }
 };

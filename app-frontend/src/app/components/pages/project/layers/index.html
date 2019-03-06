@@ -24,23 +24,31 @@
       Create Analysis
     </button>
     <button class="btn btn-transparent"
-            ng-click="$ctrl.removeScenes($ctrl.selected.valueSeq().toArray())">
+            ng-click="$ctrl.deleteProjectLayers($ctrl.selected.valueSeq().toArray())"
+            ng-disabled="$ctrl.selected.has($ctrl.project.defaultLayerId)">
       Delete
     </button>
   </rf-selected-actions-bar>
 </div>
 <div class="sidebar-scrollable list-group">
-  <rf-layer-item
-      item-info="item"
-      item-actions="$ctrl.layerActions[$index]"
-      selected="$ctrl.isSelected(item.id)"
-      on-select="$ctrl.onSelect(id)"
-      visible="$ctrl.isVisible(item.id)"
-      on-hide="$ctrl.onHide(id)"
-      go-to-aoi-def="$ctrl.goToAoiDef(id)"
-      ng-repeat="item in $ctrl.itemList track by item.id">
-    <rf-layer-stats scene-count="$ctrl.getSceneCount(item.id)"></rf-layer-stats">
-  </rf-layer-item>
+  <rf-list-item ng-repeat="layer in $ctrl.layerList track by layer.id">
+    <item-selector>
+      <rf-list-item-selector
+          id="layer.id"
+          selected="$ctrl.isSelected(layer.id)"
+          on-select="$ctrl.onSelect(id)"
+          color="layer.colorGroupHex"
+      ></rf-list-item-selector></item-selector>
+    <item-title><strong ng-attr-title="{{layer.name}}">{{layer.name}}</strong></item-title>
+    <item-subtitle><span>{{layer.subtext}}</span></item-subtitle>
+    <item-date>{{layer.createdAt | date}}</item-date>
+    <item-actions>
+      <rf-list-item-actions actions="$ctrl.layerActions[$index]"></rf-list-item-actions>
+    </item-actions>
+    <item-statistics>
+      <rf-layer-stats scene-count="$ctrl.getSceneCount(layer.id)"></rf-layer-stats">
+    </item-statistics>
+  </rf-list-item>
   <rf-pagination-controls
       pagination="$ctrl.pagination"
       is-loading="$ctrl.currentQuery"

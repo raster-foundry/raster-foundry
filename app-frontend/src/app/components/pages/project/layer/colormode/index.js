@@ -19,13 +19,11 @@ class LayerColormodeController {
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
-        this.$parent = $scope.$parent.$ctrl;
     }
 
     $onInit() {
         this.isLoading = true;
         this.currentBands = null;
-        this.singleBandEnabled = false;
         this.defaultColorModes = {
             custom: {
                 label: 'Custom',
@@ -95,7 +93,7 @@ class LayerColormodeController {
                             ...this.defaultColorModes,
                             ...composites
                         };
-                        this.initProjectBuffer();
+                        this.initLayerBuffer();
                         this.isLoading = false;
                         this.activeColorModeKey = this.initActiveColorMode();
                     });
@@ -103,6 +101,10 @@ class LayerColormodeController {
     }
 
     initActiveColorMode() {
+        if (this.layer.isSingleBand) {
+            return 'singleband';
+        }
+
         const key = Object.keys(this.unifiedComposites).find(k => {
             const c = this.unifiedComposites[k].value;
 
@@ -128,33 +130,33 @@ class LayerColormodeController {
         this.currentBands.mode = 'custom-rgb';
     }
 
-    initProjectBuffer() {
+    initLayerBuffer() {
         this.initSingleBandDefaults();
-        this.projectBuffer = Object.assign({}, this.project);
-        if (this.projectBuffer.isSingleBand) {
+        this.layerBuffer = Object.assign({}, this.layer);
+        if (this.layerBuffer.isSingleBand) {
             this.initActiveScheme();
         }
     }
 
     initActiveScheme() {
-        this.projectBuffer.singleBandOptions = Object.assign(
+        this.layerBuffer.singleBandOptions = Object.assign(
             {},
             this.defaultSingleBandOptions,
-            this.projectBuffer.singleBandOptions
+            this.layerBuffer.singleBandOptions
         );
 
-        this.maskedValues = this.projectBuffer.singleBandOptions.extraNoData;
+        this.maskedValues = this.layerBuffer.singleBandOptions.extraNoData;
 
         this.activeColorSchemeType = this.colorSchemeService.defaultColorSchemeTypes.find(
-            t => t.value === this.projectBuffer.singleBandOptions.dataType
+            t => t.value === this.layerBuffer.singleBandOptions.dataType
         );
 
         this.activeColorScheme = this.colorSchemeService.matchSingleBandOptions(
-            this.projectBuffer.singleBandOptions
+            this.layerBuffer.singleBandOptions
         );
 
         this.activeColorBlendMode = this.colorSchemeService.defaultColorBlendModes.find(
-            m => m.value === this.projectBuffer.singleBandOptions.colorBins
+            m => m.value === this.layerBuffer.singleBandOptions.colorBins
         );
     }
 
@@ -200,20 +202,20 @@ class LayerColormodeController {
     }
 
     getSerializedSingleBandOptions() {
-        return angular.toJson(this.projectBuffer.singleBandOptions);
+        return angular.toJson(this.layerBuffer.singleBandOptions);
     }
 
     toggleProjectSingleBandMode(state) {
         this.initSingleBandDefaults();
-        if (!this.projectBuffer) {
+        if (!this.layerBuffer) {
             return;
         } else if (typeof state !== 'undefined') {
-            this.projectBuffer.isSingleBand = state;
+            this.layerBuffer.isSingleBand = state;
         } else {
-            this.projectBuffer.isSingleBand = !this.projectBuffer.isSingleBand;
+            this.layerBuffer.isSingleBand = !this.layerBuffer.isSingleBand;
         }
         this.initActiveScheme();
-        this.updateProjectFromBuffer();
+        this.updateLayerFromBuffer();
     }
 
     getActiveBand(bandName) {
@@ -221,12 +223,12 @@ class LayerColormodeController {
     }
 
     setActiveSingleBand(bandValue) {
-        this.projectBuffer.singleBandOptions.band = bandValue;
-        this.updateProjectFromBuffer();
+        this.layerBuffer.singleBandOptions.band = bandValue;
+        this.updateLayerFromBuffer();
     }
 
     getActiveSingleBand() {
-        return this.projectBuffer.singleBandOptions.band;
+        return this.layerBuffer.singleBandOptions.band;
     }
 
     getActiveColorScheme() {
@@ -252,21 +254,21 @@ class LayerColormodeController {
             this.activeColorSchemeType = this.colorSchemeService.defaultColorSchemeTypes.find(
                 t => t.value === scheme.type
             );
-            this.projectBuffer.singleBandOptions.dataType = scheme.type;
-            this.projectBuffer.singleBandOptions.extraNoData = _.filter(masked, isFinite);
+            this.layerBuffer.singleBandOptions.dataType = scheme.type;
+            this.layerBuffer.singleBandOptions.extraNoData = _.filter(masked, isFinite);
             if (scheme.type !== 'CATEGORICAL') {
-                this.projectBuffer.singleBandOptions.colorScheme = this.colorSchemeService
+                this.layerBuffer.singleBandOptions.colorScheme = this.colorSchemeService
                     .colorStopsToProportionalArray(
                         this.activeColorScheme.colors
                     );
             } else if (scheme.breaks) {
-                this.projectBuffer.singleBandOptions.colorScheme = this.colorSchemeService
+                this.layerBuffer.singleBandOptions.colorScheme = this.colorSchemeService
                     .schemeFromBreaksAndColors(
                         this.activeColorScheme.breaks,
                         this.activeColorScheme.colors
                     );
             } else {
-                this.projectBuffer.singleBandOptions.colorScheme = this.colorSchemeService
+                this.layerBuffer.singleBandOptions.colorScheme = this.colorSchemeService
                     .colorsToSequentialScheme(
                         this.colorSchemeService.colorStopsToProportionalArray(
                             this.activeColorScheme.colors
@@ -274,30 +276,34 @@ class LayerColormodeController {
                     );
             }
             if (save) {
-                this.updateProjectFromBuffer();
+                this.updateLayerFromBuffer();
             }
         }
     }
 
     shouldShowColorScheme() {
         return (
-            this.projectBuffer.singleBandOptions &&
-                this.projectBuffer.singleBandOptions.dataType === 'SEQUENTIAL' ||
-            this.projectBuffer.singleBandOptions.dataType === 'DIVERGING'
+            this.layerBuffer.singleBandOptions &&
+                this.layerBuffer.singleBandOptions.dataType === 'SEQUENTIAL' ||
+            this.layerBuffer.singleBandOptions.dataType === 'DIVERGING'
         );
     }
 
     shouldShowColorSchemeBuilder() {
-        return this.projectBuffer.singleBandOptions.dataType === 'CATEGORICAL';
+        return this.layerBuffer.singleBandOptions.dataType === 'CATEGORICAL';
     }
 
     shouldShowBlendMode() {
-        return this.projectBuffer.singleBandOptions.dataType !== 'CATEGORICAL';
+        return this.layerBuffer.singleBandOptions.dataType !== 'CATEGORICAL';
     }
 
-    updateProjectFromBuffer() {
-        this.projectEditService.updateCurrentProject(this.projectBuffer).then(() => {
-            this.project = this.projectBuffer;
+    updateLayerFromBuffer() {
+        this.projectService.updateLayer({
+            ...this.layerBuffer,
+            projectId: this.project.id,
+            layerId: this.layer.id
+        }).then(() => {
+            this.layer = this.layerBuffer;
             this.setMapLayers();
         });
     }
@@ -339,8 +345,8 @@ class LayerColormodeController {
     }
 
     isActiveColorMode(key) {
-        if (!this.isLoading && this.projectBuffer) {
-            return !this.projectBuffer.isSingleBand && key === this.activeColorModeKey;
+        if (!this.isLoading && this.layerBuffer) {
+            return !this.layerBuffer.isSingleBand && key === this.activeColorModeKey;
         }
         return false;
     }
@@ -386,26 +392,26 @@ class LayerColormodeController {
     }
 
     onColorSchemeChange(colorSchemeOptions) {
-        let oldOptions = this.projectBuffer.singleBandOptions;
+        let oldOptions = this.layerBuffer.singleBandOptions;
         this.activeColorSchemeType = oldOptions.dataType;
         if (
             JSON.stringify(colorSchemeOptions.colorScheme) !==
             JSON.stringify(oldOptions.colorScheme)
         ) {
             this.activeColorSchemeType = colorSchemeOptions.dataType;
-            this.projectBuffer.singleBandOptions = Object.assign(
+            this.layerBuffer.singleBandOptions = Object.assign(
                 {},
-                this.projectBuffer.singleBandOptions,
+                this.layerBuffer.singleBandOptions,
                 colorSchemeOptions
             );
-            this.updateProjectFromBuffer();
+            this.updateLayerFromBuffer();
         }
     }
 
     correctionsDisabled() {
         return (
-            this.projectBuffer && this.projectBuffer.isSingleBand ||
-            !this.projectBuffer ||
+            this.layerBuffer && this.layerBuffer.isSingleBand ||
+            !this.layerBuffer ||
             this.pagination && this.pagination.count > this.projectService.scenePageSize
         );
     }

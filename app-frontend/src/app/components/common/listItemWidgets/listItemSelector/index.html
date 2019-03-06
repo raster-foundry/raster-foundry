@@ -1,0 +1,16 @@
+<label class="checkbox layer-checkbox list-item-{{$ctrl.id}}"
+       ng-class="{
+              active: $ctrl.selected
+              }"
+       ng-disabled="$ctrl.disableSelection"
+>
+  <input type="checkbox"
+         ng-checked="$ctrl.selected"
+         ng-click="!$ctrl.disableSelection && $ctrl.onSelect({id: $ctrl.id})"
+  />
+</label>
+<style ng-if="$ctrl.color">
+ label.checkbox.list-item-{{$ctrl.id}}::after {
+     border: 2px solid {{$ctrl.color}};
+ }
+</style>

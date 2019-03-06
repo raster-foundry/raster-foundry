@@ -1689,11 +1689,7 @@ rf-node-statistics {
     justify-content: flex-end;
     flex-direction: column;
     &.overlayed {
-        background: linear-gradient(
-            0deg,
-            rgba(255, 255, 255, 1) 10%,
-            rgba(255, 255, 255, 0.15)
-        );
+        background: linear-gradient(0deg, rgba(255, 255, 255, 1) 10%, rgba(255, 255, 255, 0.15));
         position: absolute;
         top: 0;
         right: 0;
@@ -3265,7 +3261,8 @@ rf-project-create-analysis-page,
 rf-project-layer-annotations-page,
 rf-project-layer-colormode-page,
 rf-project-layer-corrections-page,
-rf-project-layer-aoi-page {
+rf-project-layer-aoi-page,
+rf-project-layer-export-page {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -3276,7 +3273,6 @@ rf-project-layer-aoi-page {
         flex: 1;
         overflow: hidden;
     }
-    rf-layer-item,
     rf-project-scene-item {
         display: block;
         background: $white;
@@ -3286,13 +3282,12 @@ rf-project-layer-aoi-page {
     }
 
     rf-layer-item {
-      .with-aoi-component {
-        z-index: 1040;
-      }
+        .with-aoi-component {
+            z-index: 1040;
+        }
     }
 }
 
-rf-layer-item,
 rf-project-scene-item {
     display: block;
     background: $white;
@@ -3613,8 +3608,22 @@ rf-selected-actions-bar {
     z-index: 1400;
 }
 rf-aoi-draw-toolbar {
-  position: absolute;
-  width: 100vw;
-  z-index: 1040;
-  bottom: 100%;
+    position: absolute;
+    width: 100vw;
+    z-index: 1040;
+    bottom: 100%;
+
+    button {
+        &.btn-aoi-actions {
+            margin-left: 1rem;
+        }
+    }
+}
+.modal-aoi-map-container {
+    width: 100%;
+    height: 255px;
+    rf-static-map {
+        width: 100%;
+        height: 100%;
+    }
 }
