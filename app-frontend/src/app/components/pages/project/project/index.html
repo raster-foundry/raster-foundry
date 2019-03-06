@@ -1,6 +1,6 @@
 <div
     ui-view="navbar-secondary"
-    ng-if="!('project.create-analysis' | includedByState)"
+    ng-if="!('project.create-analysis' | includedByState) && !('project.analyses.visualize' | includedByState)"
 >
     <div class="navbar light-navbar">
         <div class="navbar-section">
@@ -54,7 +54,8 @@
     class="container column-stretch container-not-scrollable with-secondary-navbar"
     ng-if="
             !('project.settings' | includedByState) &&
-            !('project.create-analysis' | includedByState)
+            !('project.create-analysis' | includedByState) &&
+            !('project.analyses.visualize' | includedByState)
             "
 >
     <div class="sidebar" ui-view></div>
@@ -72,4 +73,9 @@
     ng-if="('project.layer.browse' | includedByState)"
     class="sidebar project-side-modal"
     ui-view="project-sidemodal"
+></div>
+<div
+    ng-if="('project.analyses.visualize' | includedByState)"
+    class="container column-stretch container-not-scrollable"
+    ui-view="analyses-visualize"
 ></div>

@@ -50,6 +50,10 @@ class ProjectLayersNavController {
 
         if (stateCurrent.name.includes('project.analyses.visualize')) {
             this.navs.push({
+                title: 'Analyses',
+                sref: `project.analyses({projectId: '${this.project.id}'})`
+            },
+            {
                 title: 'Data visualizations'
             });
         }

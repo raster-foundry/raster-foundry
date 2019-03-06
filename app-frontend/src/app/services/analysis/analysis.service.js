@@ -380,6 +380,11 @@ export default (app) => {
                 `?token=${token}${node}&tag=${new Date().getTime()}`;
         }
 
+        transformWmPointToLatLngArray(wmPoint) {
+            const latLng = L.Projection.SphericalMercator.unproject(wmPoint);
+            return [latLng.lng, latLng.lat];
+        }
+
         // @TODO: implement getting related tags and categories
     }
 

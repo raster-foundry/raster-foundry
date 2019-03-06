@@ -347,12 +347,11 @@ class AnalysesListController {
     }
 
     visualizeAnalyses() {
-        this.$log.log(this.selected.size);
         this.$state.go('project.analyses.visualize', {analysis: this.selected.keySeq().toArray()});
     }
 
     canVisualize() {
-        return this.selected.size <= 2;
+        return this.selected.size <= 3;
     }
 }
 

@@ -5,6 +5,7 @@ import navbar from './navbar';
 import projectSettingsNavbar from './projectSettingsNavbar';
 import aoiDrawToolbar from './aoiDrawToolbar';
 import analysisEditModal from './analysisEditModal';
+import analysisMapItem from './analysisMapItem';
 
 export default [
     projectSettingsNavbar,
@@ -13,5 +14,6 @@ export default [
     selectedActionsBar,
     navbar,
     aoiDrawToolbar,
-    analysisEditModal
+    analysisEditModal,
+    analysisMapItem
 ];
