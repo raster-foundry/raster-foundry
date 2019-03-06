@@ -48,6 +48,12 @@ class ProjectLayersNavController {
             });
         }
 
+        if (stateCurrent.name.includes('project.analyses.visualize')) {
+            this.navs.push({
+                title: 'Data visualizations'
+            });
+        }
+
         if (stateCurrent.name === 'project.layer' ||
             stateCurrent.name.includes('project.layer.')
         ) {
