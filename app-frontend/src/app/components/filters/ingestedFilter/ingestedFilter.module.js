@@ -20,7 +20,7 @@ class IngestedFilterController {
       const urlParams = this.$location.search();
       const ingested = !urlParams.ingested;
 
-      this.filterData = {
+      this.filterData = { ingested };
         ingested: ingested
       };
 
