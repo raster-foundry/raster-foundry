@@ -3358,10 +3358,6 @@ rf-project-publishing-page {
     &.cozy {
         margin-bottom: 1.5rem;
     }
-    &.filter-pane {
-        margin-top: .5rem;
-        width: 97%;
-    }
 }
 
 .page-card-header {
@@ -3578,17 +3574,6 @@ rf-selected-actions-bar {
 }
 
 .color-correct-card {
-    .input-group.filter-input-group {
-        margin-bottom: 1.2rem;
-    }
-    label.checkbox {
-        font-size: 1.4rem;
-    }
-}
-
-.filter-pane-card {
-    margin-top: 0.5rem;
-
     .input-group.filter-input-group {
         margin-bottom: 1.2rem;
     }

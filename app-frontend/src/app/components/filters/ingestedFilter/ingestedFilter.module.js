@@ -21,8 +21,6 @@ class IngestedFilterController {
       const ingested = !urlParams.ingested;
 
       this.filterData = { ingested };
-        ingested: ingested
-      };
 
       this.setFilter(ingested);
     }
