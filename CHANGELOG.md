@@ -29,6 +29,7 @@
 - Made templates editable except for their formulas [\#4729](https://github.com/raster-foundry/raster-foundry/pull/4729)
 - Added project analyses edit modal for v2 UI [\#4709](https://github.com/raster-foundry/raster-foundry/pull/4709)
 - Added query parameter to limit scene search by layer AOI and updated filters on the frontend [\#4733](https://github.com/raster-foundry/raster-foundry/pull/4733)
+- Added endpoint for splitting layers up by date and datasource [\#4738](https://github.com/raster-foundry/raster-foundry/pull/4738)
 
 ### Changed
 
