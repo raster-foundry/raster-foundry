@@ -171,6 +171,26 @@
   flex: none !important;
 }
 
+.display-i {
+  display: inline;
+}
+
+.display-ib {
+  display: inline-block;
+}
+
+.display-b {
+  display: block;
+}
+
+.display-if {
+  display: inline-flex;
+}
+
+.display-f {
+  display: flex;
+}
+
 // Text overflow
 .text-overflow-ellipsis {
   overflow: hidden;
