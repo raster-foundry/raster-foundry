@@ -17,19 +17,21 @@
         ng-if="icon.isActive()"
   ></span>
 </div>
-<button class="btn btn-text btn-transparent"
-        uib-dropdown
-        ng-if="($ctrl.actions | filter: {menu: true}).length > 0"
-        uib-dropdown-toggle
->
-  <i class="icon-menu"></i>
-  <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
-    <li role="menuitem"
-        ng-repeat="action in $ctrl.actions | filter: {menu: true}">
-      <a href ng-click="action.callback($event)"
-         ng-show="action.name"
-         ng-attr-title="{{action.title}}">{{action.name}}</a>
-      <span class="menu-separator" ng-show="action.separator"></span>
-    </li>
-  </ul>
-</button>
+<div uib-dropdown class="display-ib">
+  <button class="btn btn-text btn-transparent"
+          ng-if="($ctrl.actions | filter: {menu: true}).length > 0"
+          uib-dropdown-toggle
+  >
+    <i class="icon-menu"></i>
+    <span class="sr-only">More actions</span>
+  </button>
+    <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
+      <li role="menuitem"
+          ng-repeat="action in $ctrl.actions | filter: {menu: true}">
+        <a href ng-click="action.callback($event)"
+          ng-show="action.name"
+          ng-attr-title="{{action.title}}">{{action.name}}</a>
+        <span class="menu-separator" ng-show="action.separator"></span>
+      </li>
+    </ul>
+</div>
