@@ -44,9 +44,6 @@ final case class ProjectLayer(
     )
   )
 }
-final case class LayerQueryResult(timestamp: Option[Timestamp],
-                                  datasource: Option[UUID],
-                                  count: Int)
 
 @JsonCodec
 final case class ProjectLayerProperties(
