@@ -2,7 +2,6 @@ package com.rasterfoundry.database
 
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.Implicits._
-import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -15,11 +14,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.UUID
-
-import cats.free.Free
-import doobie.free.connection
-
-import scala.collection.immutable
 
 object ProjectLayerDao extends Dao[ProjectLayer] {
   val tableName = "project_layers"
@@ -94,18 +88,11 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
     query.filter(fr"project_id = ${projectId}").filter(layerId).selectOption
 
   def deleteProjectLayer(layerId: UUID): ConnectionIO[Int] =
-    for {
-      deleteCount <- query.filter(layerId).delete
-    } yield deleteCount
+    query.filter(layerId).delete
 
   def updateProjectLayer(pl: ProjectLayer, plId: UUID): ConnectionIO[Int] = {
     updateProjectLayerQ(pl, plId).run
   }
-
-  def getLayerScenes(
-      layerId: UUID,
-      splitOptions: SplitOptions): ConnectionIO[List[Scene.ProjectScene]] =
-    ProjectLayerScenesDao.listLayerScenesRaw(layerId, splitOptions)
 
   def batchCreateLayers(
       groupedScenes: Map[(Option[(Timestamp, Timestamp)], Option[String]),
@@ -153,7 +140,8 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
          ),
          scenes)
     }
-    val createdProjectLayers = projectLayersAndScenes.toList traverse {
+
+    projectLayersAndScenes.toList traverse {
       case (projectLayerC: ProjectLayer.Create,
             scenes: List[Scene.ProjectScene]) =>
         (scenes.toNel, layer.projectId) match {
@@ -173,7 +161,6 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
             )
         }
     }
-    createdProjectLayers
   }
 
   def getDayRangeFromTimestamp(date: Timestamp): (Timestamp, Timestamp) = {
@@ -183,6 +170,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
      new Timestamp(
        startOfDay.plusHours(24).toEpochSecond(ZoneOffset.UTC) * 1000))
   }
+
   def getWeekRangeFromTimestamp(date: Timestamp): (Timestamp, Timestamp) = {
     val week = date.toLocalDateTime.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)
     val year = date.toLocalDateTime.get(IsoFields.WEEK_BASED_YEAR)
@@ -220,10 +208,9 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
                         layerId: UUID,
                         splitOptions: SplitOptions,
                         user: User): ConnectionIO[List[ProjectLayer]] = {
-    // TODO migration to rename smart_layer_id to parent_layer_id `with` dependency on itself
     for {
       layer <- unsafeGetProjectLayerById(layerId)
-      scenes <- getLayerScenes(layerId, splitOptions)
+      scenes <- ProjectLayerScenesDao.listLayerScenesRaw(layerId, splitOptions)
       groupedScenes = scenes.groupBy(groupScenesBySplitOptions(splitOptions))
       newLayers <- batchCreateLayers(groupedScenes, layer, splitOptions)
       _ <- splitOptions.removeFromLayer match {
