@@ -1,6 +1,5 @@
 package com.rasterfoundry.common.datamodel
 
-import com.typesafe.scalalogging.LazyLogging
 import io.circe.generic.JsonCodec
 import io.circe._
 import cats.syntax.either._
