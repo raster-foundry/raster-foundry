@@ -218,14 +218,22 @@ trait ObjectPermissions[Model] {
         Some(ownedF)
       // shared to the requesting user directly, across platform, or due to group membership
       case Some("shared") =>
+        val scenePublicExclude: Option[Fragment] =
+          if (objectType == ObjectType.Scene) {
+            Some(
+              Fragment
+                .const(s"(${tableName}visibility)") ++ fr" != 'PUBLIC' AND ")
+          } else {
+            None
+          }
         if (objectType == ObjectType.Shape || objectType == ObjectType.Template) {
           Some(
             fr"(" ++ acrFilterF ++ fr") AND" ++ Fragment.const(
               s"${tableName}owner") ++ fr"<> ${user.id}")
         } else {
-          Some(Fragment
-            .const(s"${tableName}visibility") ++ fr" != 'PUBLIC' AND (" ++ acrFilterF ++ fr") AND " ++ Fragment
-            .const(s"${tableName}owner") ++ fr"<> ${user.id}")
+          scenePublicExclude combine Some(
+            acrFilterF ++ fr" AND " ++ Fragment
+              .const(s"${tableName}owner") ++ fr"<> ${user.id}")
         }
       // shared to the requesting user due to group membership
       case Some("inherited") =>
