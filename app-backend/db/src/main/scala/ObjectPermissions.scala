@@ -161,14 +161,14 @@ trait ObjectPermissions[Model] {
                         tableName: String): Fragment =
     (objectType, actionType) match {
       case (ObjectType.Shape, ActionType.View) =>
-        Fragment.const("")
+        Fragment.empty
       case (_, ActionType.View) | (ObjectType.Scene, ActionType.Download) |
           (ObjectType.Project, ActionType.Export) |
           (ObjectType.Project, ActionType.Annotate) |
           (ObjectType.Analysis, ActionType.Export) =>
         Fragment.const(s"${tableName}visibility = 'PUBLIC' OR")
       case _ =>
-        Fragment.const("")
+        Fragment.empty
     }
 
   def createInheritedF(user: User,
