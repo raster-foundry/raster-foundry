@@ -15,7 +15,7 @@ import scala.concurrent.ExecutionContext
 
 trait DBTestConfig {
 
-  val connectExecutorService = Executors.newFixedThreadPool(10)
+  val connectExecutorService = Executors.newFixedThreadPool(20)
   val transactExecutorService = Executors.newFixedThreadPool(20)
   val connectEc = ExecutionContext.fromExecutorService(
     connectExecutorService,
