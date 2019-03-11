@@ -32,7 +32,8 @@
 - Added endpoint for splitting layers up by date and datasource [\#4738](https://github.com/raster-foundry/raster-foundry/pull/4738)
 - Added the map part of analysis data visualization UI [\#4739](https://github.com/raster-foundry/raster-foundry/pull/4739)
 - Enabled project layer selection in lab input raster nodes [\#4732](https://github.com/raster-foundry/raster-foundry/pull/4732)
-- Enabled project layer splitting on frontend  [\#4766](https://github.com/raster-foundry/raster-foundry/pull/4766)
+- Enabled project layer splitting on frontend [\#4766](https://github.com/raster-foundry/raster-foundry/pull/4766)
+- Added the histogram part of analysis data visualization UI [\#4756](https://github.com/raster-foundry/raster-foundry/pull/4756)
 
 ### Changed
 

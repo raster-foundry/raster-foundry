@@ -130,6 +130,57 @@ class ChannelHistogram extends D3Element {
     }
 }
 
+class StatHistogram extends D3Element {
+    render() {
+        // render d3 el
+        let svg = d3.select(this.el);
+        let defs = svg.select('defs');
+        if (!defs.nodes().length) {
+            defs = svg.append('defs');
+        }
+
+        if (this.data && this.data.histogram) {
+            this.calculateAxis(svg, defs);
+            this.renderData(svg, defs);
+        }
+
+        return super.render();
+    }
+
+    calculateAxis(svg, defs) {
+        const xRange = [this.options.margin.left,
+            this.el.width.baseVal.value - this.options.margin.right];
+        const yRange = [this.options.height - this.options.margin.bottom,
+            this.options.margin.top];
+        this.xScale = d3.scaleLinear()
+            .domain([this.options.dataRange.min, this.options.dataRange.max])
+            .range(xRange);
+        this.yScale = d3.scaleLinear()
+            .domain([d3.min(this.data.histogram, d => d.y), d3.max(this.data.histogram, d => d.y)])
+            .range(yRange);
+    }
+
+    renderData(svg, defs) {
+        let area = d3.area()
+            .x(v => this.xScale(v.x))
+            .y0(this.options.height - this.options.margin.bottom)
+            .y1(v => this.yScale(v.y))
+            .curve(d3.curveStepAfter);
+
+
+        let areaPath = svg.select('#area-path');
+        if (!areaPath.nodes().length) {
+            areaPath = svg.append('path');
+        }
+
+        areaPath.data([this.data.histogram])
+            .attr('id', 'area-path')
+            .attr('class', 'data-fill')
+            .attr('z-index', 11)
+            .attr('d', area);
+    }
+}
+
 class SinglebandHistogram extends D3Element {
     render() {
         // render d3 el
@@ -289,6 +340,9 @@ export default (app) => {
             switch (options.type) {
             case 'channel':
                 graph = new ChannelHistogram(el, id, options);
+                break;
+            case 'stat':
+                graph = new StatHistogram(el, id, options);
                 break;
             case 'single':
             default:

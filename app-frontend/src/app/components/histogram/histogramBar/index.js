@@ -1,5 +1,3 @@
-import { min, max, head, last } from 'lodash';
-
 import tpl from './index.html';
 
 class HistogramBarController {
@@ -14,38 +12,38 @@ class HistogramBarController {
         this.bars = [];
         this.$q.all({
             statistics: this.statistics,
-            bounds: this.bounds,
-            histStats: this.histogram
+            bounds: this.boundsPromise,
+            histStats: this.histogramPromise
         }).then(({statistics, bounds, histStats}) => {
             const { histogram } = histStats;
             this.bars = [
                 {
                     value: this.valueToPercentage(bounds, statistics.mean),
-                    color: 'blue'
+                    class: 'bg-gray-lighter'
                 },
                 {
                     value: this.valueToPercentage(bounds, statistics.median),
-                    color: 'green'
+                    class: 'bg-green '
                 },
                 {
                     value: this.valueToPercentage(bounds, statistics.mode),
-                    color: 'cyan'
+                    class: 'bg-tertiary'
                 },
                 {
                     value: this.valueToPercentage(bounds, statistics.mean - statistics.stddev),
-                    color: 'purple'
+                    class: 'bg-danger'
                 },
                 {
                     value: this.valueToPercentage(bounds, statistics.mean + statistics.stddev),
-                    color: 'purple'
+                    class: 'bg-danger'
                 },
                 {
                     value: this.valueToPercentage(bounds, statistics.zmin),
-                    color: 'black'
+                    class: 'bg-black'
                 },
                 {
                     value: this.valueToPercentage(bounds, statistics.zmax),
-                    color: 'black'
+                    class: 'bg-black'
                 }
             ];
         });
@@ -54,13 +52,17 @@ class HistogramBarController {
     valueToPercentage(bounds, val) {
         return (val - bounds.min) / (bounds.max - bounds.min) * 100;
     }
+
+    getStyle(val) {
+        return { left: val + '%' };
+    }
 }
 
 const component = {
     bindings: {
         statistics: '<',
-        bounds: '<',
-        histogram: '<'
+        boundsPromise: '<',
+        histogramPromise: '<'
     },
     templateUrl: tpl,
     controller: HistogramBarController.name

@@ -8,21 +8,27 @@ import {nodesFromAst, astFromNodes} from '_redux/node-utils';
 class AnalysesVisualizeController {
     constructor(
         $rootScope, $scope, $state, $log, $q,
-        mapService, projectService, analysisService
+        uuid4, mapService, projectService, analysisService
     ) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
 
     $onInit() {
+        this.isLoadingAnalysis = false;
+        this.isLoadingAnalysisError = false;
         this.selected = new Map();
         this.analysesMap = new Map();
         this.projectId = this.$state.params.projectId;
         this.layerColorHex = {};
         this.analyses = this.getAnalysisIds().map(analysisId => {
-            const analysisPromise = this.mapLayerFromAnalysis(analysisId);
+            // create a trackId for each analysis to enable displaying
+            // same analysis multiple times especially for map layers
+            const trackId = this.uuid4.generate();
+            const analysisPromise = this.mapLayerFromAnalysis(analysisId, trackId);
             return {
                 id: analysisId,
+                trackId,
                 analysisTile: analysisPromise.then(a => a.analysisTile),
                 histogram: analysisPromise.then(a => (
                     {histogram: a.histogram, statistics: a.statistics})),
@@ -49,13 +55,15 @@ class AnalysesVisualizeController {
         return analysis;
     }
 
-    mapLayerFromAnalysis(analysisId) {
+    mapLayerFromAnalysis(analysisId, trackId) {
+        this.isLoadingAnalysis = true;
+        this.isLoadingAnalysisError = false;
         return this.$q.all({
             analysis: this.analysisService.getAnalysis(analysisId),
             histogram: this.analysisService.getNodeHistogram(analysisId),
             statistics: this.analysisService.getNodeStatistics(analysisId)
         }).then(({analysis, histogram, statistics}) => {
-            this.analysesMap = this.analysesMap.set(analysis.id, analysis);
+            this.analysesMap = this.analysesMap.set(trackId, analysis);
             this.setLayerColorHex(analysis);
             const {
                 renderDefinition,
@@ -84,6 +92,11 @@ class AnalysesVisualizeController {
                     mapTile: L.tileLayer(tileUrl, {maxZoom: 30})
                 }
             };
+        }).catch(err => {
+            this.$log.error(err);
+            this.isLoadingAnalysisError = true;
+        }).finally(() => {
+            this.isLoadingAnalysis = false;
         });
     }
 

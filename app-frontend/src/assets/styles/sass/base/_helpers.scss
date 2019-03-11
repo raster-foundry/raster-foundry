@@ -58,6 +58,18 @@
     color: $green !important;
 }
 
+.color-gray-lighter {
+    color: $gray-lighter !important;
+}
+
+.color-tertiary {
+    color: $brand-tertiary;
+}
+
+.color-black {
+    color: black;
+}
+
 // background helpers
 .bg-primary {
     background-color: $brand-primary !important;
@@ -73,6 +85,22 @@
 
 .bg-danger {
     background-color: $danger !important;
+}
+
+.bg-gray-lighter {
+    background-color: $gray-lighter !important;
+}
+
+.bg-green {
+    background-color: $green !important;
+}
+
+.bg-tertiary {
+    background-color: $brand-tertiary !important;
+}
+
+.bg-black {
+    background-color: black !important;
 }
 
 // link helpers
