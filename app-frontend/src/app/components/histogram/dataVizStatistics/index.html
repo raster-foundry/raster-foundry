@@ -1,0 +1,34 @@
+<div class="flex-display flex-row">
+  <div class="row" style="width: 100%">
+    <div class="column-2">
+        <span style="color: blue;">&#19968;</span>Mean
+        <br/>
+        {{$ctrl.stat.mean | number}}
+    </div>
+    <div class="column-2">
+        <span style="color: green;">&#19968;</span>Median
+        <br/>
+        {{$ctrl.stat.median | number}}
+    </div>
+    <div class="column-2">
+        <span style="color: cyan;">&#19968;</span>Mode
+        <br/>
+        {{$ctrl.stat.mode | number}}
+    </div>
+    <div class="column-2">
+        <span style="color: purple;">&#19968;</span>Mean&plusmn;StdDev
+        <br/>
+        {{$ctrl.stat.stddev | number}}
+    </div>
+    <div class="column-2">
+        <span style="color: black;">&#19968;</span>Min
+        <br/>
+        {{$ctrl.stat.zmin | number}}
+    </div>
+    <div class="column-2">
+      <span style="color: black;">&#19968;</span>Max
+      <br/>
+        {{$ctrl.stat.zmax | number}}
+    </div>
+  </div>
+</div>
