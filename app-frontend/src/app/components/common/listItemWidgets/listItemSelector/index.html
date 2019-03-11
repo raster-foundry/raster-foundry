@@ -9,9 +9,9 @@
          ng-click="!$ctrl.disableSelection && $ctrl.onSelect({id: $ctrl.id})"
   />
 </label>
-<style ng-if="$ctrl.color">
+<style ng-if="$ctrl.colorValue">
  label.checkbox.list-item-{{$ctrl.id}}::after {
-     border: 2px solid {{$ctrl.color}};
+     border: 2px solid {{$ctrl.colorValue}};
  }
 </style>
 <style>
