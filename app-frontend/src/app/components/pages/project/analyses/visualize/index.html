@@ -4,7 +4,7 @@
     </div>
     <div class="page-card analysis-maps-card">
       <div class="row">
-        <div class="column-4 flex-display analysis-viz-container" ng-repeat="analysis in $ctrl.analyses track by $index">
+        <div class="column-4 flex-display analysis-viz-container" ng-repeat="analysis in $ctrl.analyses track by analysis.id">
           <rf-analysis-map-item
               class="panel panel-off-white project-item"
               analysis-id="analysis.id"
@@ -20,7 +20,33 @@
         </div>
       </div>
     </div>
-    <div class="page-card analysis-histogram-card">
-      Histogram
-    </div>
+
+    <rf-list-item ng-repeat="analysis in $ctrl.analyses track by analysis.id" class="histogram-item">
+      <item-selector>
+        <rf-list-item-selector
+            id="analysis.id"
+            color="$ctrl.layerColorHex[analysis.id]"
+        ></rf-list-item-selector>
+      </item-selector>
+      <item-title>{{$ctrl.analysesMap.get(analysis.id).name}}</item-title>
+      <item-date>{{$ctrl.analysesMap.get(analysis.id).modifiedAt | date: 'medium'}}</item-date>
+      <item-actions>
+        <rf-data-viz-histogram
+            histogram="analysis.histogram"
+            id="analysis.id"
+            bounds="$ctrl.histogramBounds"
+        >
+            <rf-histogram-bar
+                statistics="analysis.statistics"
+                bounds="$ctrl.histogramBounds"
+                histogram="analysis.histogram"
+            >
+            </rf-histogram-bar>
+        </rf-data-viz-histogram>
+        <div style="height:50px;">
+          <rf-data-viz-statistics statistics="analysis.statistics">
+          </rf-data-viz-statistics>
+        </div>
+      </item-actions>
+    </rf-list-item>
 </div>

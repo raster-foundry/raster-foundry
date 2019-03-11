@@ -4,6 +4,8 @@ import projectComponents from './components/projects';
 import sceneComponents from './components/scenes';
 import commonComponents from './components/common';
 import exportComponents from './components/exports';
+import histogramComponent from './components/histogram';
+
 export default angular.module('index.components', [
     //admin components
     require('./components/admin/editableLogo/editableLogo.js').default.name,
@@ -129,6 +131,7 @@ export default angular.module('index.components', [
     require('./components/histogram/nodeHistogram/nodeHistogram.module.js').default.name,
     require('./components/histogram/histogramBreakpoint/histogramBreakpoint.module.js').default.name,
     require('./components/histogram/reclassifyHistogram/reclassifyHistogram.module.js').default.name,
+    ...histogramComponent,
 
     // pages
     ...pages
