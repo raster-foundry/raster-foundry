@@ -1,34 +1,32 @@
-<div class="flex-display flex-row">
-  <div class="row" style="width: 100%">
-    <div class="column-2">
-        <span style="color: blue;">&#19968;</span>Mean
-        <br/>
-        {{$ctrl.stat.mean | number}}
-    </div>
-    <div class="column-2">
-        <span style="color: green;">&#19968;</span>Median
-        <br/>
-        {{$ctrl.stat.median | number}}
-    </div>
-    <div class="column-2">
-        <span style="color: cyan;">&#19968;</span>Mode
-        <br/>
-        {{$ctrl.stat.mode | number}}
-    </div>
-    <div class="column-2">
-        <span style="color: purple;">&#19968;</span>Mean&plusmn;StdDev
-        <br/>
-        {{$ctrl.stat.stddev | number}}
-    </div>
-    <div class="column-2">
-        <span style="color: black;">&#19968;</span>Min
-        <br/>
-        {{$ctrl.stat.zmin | number}}
-    </div>
-    <div class="column-2">
-      <span style="color: black;">&#19968;</span>Max
+<div class="row">
+  <div class="column-2 flex-display no-padding histogram-stat-numbers">
+      <span class="color-gray-lighter">&#19968;&nbsp;</span>Mean
       <br/>
-        {{$ctrl.stat.zmax | number}}
-    </div>
+      {{$ctrl.stat.mean | number : 2}}
+  </div>
+  <div class="column-2 flex-display no-padding histogram-stat-numbers">
+      <span class="color-green">&#19968;&nbsp;</span>Median
+      <br/>
+      {{$ctrl.stat.median | number : 2}}
+  </div>
+  <div class="column-2 flex-display no-padding histogram-stat-numbers">
+      <span class="color-tertiary">&#19968;&nbsp;</span>Mode
+      <br/>
+      {{$ctrl.stat.mode | number : 2}}
+  </div>
+  <div class="column-2 flex-display no-padding histogram-stat-numbers">
+      <span class="color-danger">&#19968;&nbsp;</span>Mean&nbsp;&plusmn;&nbsp;StdDev
+      <br/>
+      {{$ctrl.stat.median | number : 2}}&nbsp;&plusmn;&nbsp;{{$ctrl.stat.stddev | number : 2}}
+  </div>
+  <div class="column-2 flex-display no-padding histogram-stat-numbers">
+      <span class="color-black">&#19968;&nbsp;</span>Min
+      <br/>
+      {{$ctrl.stat.zmin | number : 2}}
+  </div>
+  <div class="column-2 flex-display no-padding histogram-stat-numbers">
+    <span class="color-black">&#19968;&nbsp;</span>Max
+    <br/>
+      {{$ctrl.stat.zmax | number : 2}}
   </div>
 </div>

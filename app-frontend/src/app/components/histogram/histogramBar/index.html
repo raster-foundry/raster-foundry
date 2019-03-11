@@ -1,5 +1,6 @@
 <div
     ng-repeat="bar in $ctrl.bars track by $index"
-    style="left: {{bar.value}}%;background-color: {{bar.color}}"
+    ng-style="$ctrl.getStyle(bar.value)"
+    ng-class="bar.class"
 >
 </div>
