@@ -3379,6 +3379,9 @@ rf-project-publishing-page {
         box-shadow: none;
         padding: 0;
     }
+    &.analysis-histogram-card {
+        max-width: 1284px;
+    }
 }
 
 .page-card-header {
@@ -3638,9 +3641,9 @@ rf-aoi-draw-toolbar {
     display: flex;
 }
 
-.analysis-viz-container {
-    padding: 1rem 3rem 1rem 0rem !important;
-}
+// .analysis-viz-container {
+//     padding: 1rem 3rem 1rem 0rem !important;
+// }
 
 .panel-analysis-viz-container {
     background-color: $white;
