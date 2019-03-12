@@ -161,14 +161,14 @@ trait ObjectPermissions[Model] {
                         tableName: String): Fragment =
     (objectType, actionType) match {
       case (ObjectType.Shape, ActionType.View) =>
-        Fragment.const("")
+        Fragment.empty
       case (_, ActionType.View) | (ObjectType.Scene, ActionType.Download) |
           (ObjectType.Project, ActionType.Export) |
           (ObjectType.Project, ActionType.Annotate) |
           (ObjectType.Analysis, ActionType.Export) =>
         Fragment.const(s"${tableName}visibility = 'PUBLIC' OR")
       case _ =>
-        Fragment.const("")
+        Fragment.empty
     }
 
   def createInheritedF(user: User,
@@ -218,14 +218,22 @@ trait ObjectPermissions[Model] {
         Some(ownedF)
       // shared to the requesting user directly, across platform, or due to group membership
       case Some("shared") =>
+        val scenePublicExclude: Option[Fragment] =
+          if (objectType == ObjectType.Scene) {
+            Some(
+              Fragment
+                .const(s"(${tableName}visibility)") ++ fr" != 'PUBLIC' AND ")
+          } else {
+            None
+          }
         if (objectType == ObjectType.Shape || objectType == ObjectType.Template) {
           Some(
             fr"(" ++ acrFilterF ++ fr") AND" ++ Fragment.const(
               s"${tableName}owner") ++ fr"<> ${user.id}")
         } else {
-          Some(Fragment
-            .const(s"${tableName}visibility") ++ fr" != 'PUBLIC' AND (" ++ acrFilterF ++ fr") AND " ++ Fragment
-            .const(s"${tableName}owner") ++ fr"<> ${user.id}")
+          scenePublicExclude combine Some(
+            acrFilterF ++ fr" AND " ++ Fragment
+              .const(s"${tableName}owner") ++ fr"<> ${user.id}")
         }
       // shared to the requesting user due to group membership
       case Some("inherited") =>

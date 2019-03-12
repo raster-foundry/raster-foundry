@@ -60,7 +60,6 @@ object ProjectLayerScenesDao extends Dao[Scene] {
       sceneParams: ProjectSceneQueryParameters
   ): ConnectionIO[PaginatedResponse[Scene.ProjectScene]] = {
 
-    val layerQuery = ProjectLayerDao.query.filter(layerId).select
     val andPendingF: Option[Fragment] =
       sceneParams.accepted match {
         case Some(true)  => Some(fr"accepted = true")
