@@ -105,9 +105,43 @@ import { projectResolves } from './components/pages/project';
 
 function shareStatesV2($stateProvider) {
     $stateProvider
-        .state('/v2/share/?mapToken')
-        .state('/v2/share/project/:projectId?mapToken')
-        .state('/v2/share/layer/:layerId?mapToken');
+        .state('shareProject', {
+            title: 'Share',
+            redirectTo: 'shareProject.layers',
+            component: 'rfShareProjectPage',
+            url: '/v2/share/:projectId?mapToken',
+            resolve: Object.assign({
+                mapToken: ['$transition$', $transition$ => $transition$.params().mapToken],
+                projectPromise: [
+                    '$transition$',
+                    'projectService',
+                    ($transition$, projectService) =>
+                        projectService.fetchProject($transition$.params().projectId, {
+                            mapToken: $transition$.params().mapToken
+                        })
+                ]
+            }),
+            resolvePolicy: { async: 'NOWAIT' },
+            bypassAuth: true
+        })
+        .state('shareProject.error', {
+            title: 'Invalid Share',
+            url: '/error',
+            component: 'rfShareProjectErrorPage',
+            bypassAuth: true
+        })
+        .state('shareProject.layers', {
+            title: 'Share Layers',
+            url: '/layers',
+            component: 'rfShareProjectLayersPage',
+            bypassAuth: true
+        })
+        .state('shareProject.analyses', {
+            title: 'Share Analyses',
+            url: '/analyses',
+            component: 'rfShareProjectAnalysesPage',
+            bypassAuth: true
+        });
 }
 
 function projectStatesV2($stateProvider) {
@@ -1020,6 +1054,7 @@ function routeConfig(
     settingsStates($stateProvider);
     labStates($stateProvider);
     shareStates($stateProvider);
+    shareStatesV2($stateProvider);
     homeStates($stateProvider);
     importStates($stateProvider);
     adminStates($stateProvider);

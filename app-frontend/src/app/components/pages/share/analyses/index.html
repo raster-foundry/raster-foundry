@@ -1,0 +1,34 @@
+<div class="sidebar-scrollable list-group">
+    <rf-list-item ng-repeat="analysis in $ctrl.analysisList track by analysis.id">
+        <item-selector>
+            <rf-list-item-selector id="analysis.id" color="analysis.colorGroupHex">
+            </rf-list-item-selector>
+        </item-selector>
+        <item-title>
+            <strong ng-attr-title="{{ analysis.name }}">{{ analysis.name }}</strong>
+        </item-title>
+        <item-date>{{ analysis.createdAt | date }}</item-date>
+        <item-actions>
+            <rf-list-item-actions actions="$ctrl.analysisActions.get(analysis.id)">
+            </rf-list-item-actions>
+        </item-actions>
+        <item-statistics>
+            <rf-layer-stats scene-count="$ctrl.getSceneCount(analysis.id)"> </rf-layer-stats>
+        </item-statistics>
+    </rf-list-item>
+    <div
+        class="modal-inner-container small text-center sidebar-top-margin"
+        ng-if="!$ctrl.analysisList.length && !$ctrl.currentQuery"
+    >
+        <span class="modal-icon"><i class="icon-info"></i></span>
+        <div>
+            <h2>This project has no analyses</h2>
+        </div>
+    </div>
+    <rf-pagination-controls
+        pagination="$ctrl.pagination"
+        is-loading="$ctrl.currentQuery"
+        on-change="$ctrl.fetchPage(value)"
+        ng-show="!$ctrl.currentQuery && !$ctrl.fetchError"
+    ></rf-pagination-controls>
+</div>
