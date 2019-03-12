@@ -320,7 +320,7 @@ export default app => {
                         let num = page.count;
                         let requests = [firstRequest];
                         if (page.count > pageSize) {
-                            let requestMaker = function *(totalResults) {
+                            let requestMaker = function*(totalResults) {
                                 let pageNum = 1;
                                 while (pageNum * pageSize <= totalResults) {
                                     let pageParams = {
