@@ -633,9 +633,12 @@ export default app => {
 
         getProjectTileURL(project, params) {
             let projectId = typeof project === 'object' ? project.id : project;
-            let queryParams = params || {};
-            queryParams.tag = new Date().getTime();
-            let formattedParams = L.Util.getParamString(queryParams);
+            let formattedParams = L.Util.getParamString(
+                _.omitBy(
+                    Object.assign({
+                        tag: new Date().getTime()
+                    }, params), (i) => !i)
+            );
             return `${this.tileServer}/${projectId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
@@ -841,10 +844,13 @@ export default app => {
         mapLayerFromLayer(
             project,
             layer,
-            tag = new Date().valueOf(),
-            token = this.authService.token()
+            params
         ) {
-            let url = this.getProjectLayerTileUrl(project, layer, { token, tag });
+            let defaultedParms = _.omitBy(Object.assign({}, {
+                tag: new Date().valueOf(),
+                token: this.authService.token()
+            }, params), p => !p);
+            let url = this.getProjectLayerTileUrl(project, layer, params);
             let mapLayer = L.tileLayer(url, {
                 maxZoom: 30
             });
