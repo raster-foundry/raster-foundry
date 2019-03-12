@@ -154,14 +154,13 @@ class InputNodeController {
     selectLayerModal() {
         this.modalService
             .open({
-                component: 'rfProjectSelectModal',
+                component: 'rfProjectLayerSelectModal',
                 resolve: {
                     project: () => this.selectedProject,
                     content: () => ({
                         title: 'Select a layer from this project',
                         nodeName: this.node.metadata.label
-                    }),
-                    isLayerSelect: () => true
+                    })
                 }
             })
             .result.then(projectLayer => {

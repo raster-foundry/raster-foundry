@@ -1,18 +1,7 @@
 import angular from 'angular';
-import projectSelectModalTpl from './projectSelectModal.html';
+import projectLayerSelectModalTpl from './index.html';
 
-const ProjectSelectModalComponent = {
-    templateUrl: projectSelectModalTpl,
-    bindings: {
-        close: '&',
-        dismiss: '&',
-        modalInstance: '<',
-        resolve: '<'
-    },
-    controller: 'ProjectSelectModalController'
-};
-
-class ProjectSelectModalController {
+class ProjectLayerSelectModalController {
     constructor($log, projectService, paginationService) {
         'ngInject';
         this.projectService = projectService;
@@ -20,22 +9,17 @@ class ProjectSelectModalController {
     }
 
     $onInit() {
-        // Can be one of {owned, shared}
-        this.currentOwnershipFilter = 'owned';
         this.fetchPage();
     }
 
-    fetchPage(page = 1, search = this.search) {
-        this.search = search && search.length ? search : null;
+    fetchPage(page = 1) {
         delete this.fetchError;
         this.results = [];
         const currentQuery = this.projectService
-            .query({
+            .getProjectLayers(this.resolve.project.id, {
                 sort: 'createdAt,desc',
                 pageSize: 9,
-                page: page - 1,
-                ownershipType: this.currentOwnershipFilter,
-                search: this.search
+                page: page - 1
             })
             .then(
                 paginatedResponse => {
@@ -63,15 +47,21 @@ class ProjectSelectModalController {
     setSelected(project) {
         this.close({ $value: project });
     }
-
-    handleOwnershipFilterChange(newFilterValue) {
-        this.fetchPage(1);
-    }
 }
 
-const ProjectSelectModalModule = angular.module('components.projects.projectSelectModal', []);
+const ProjectLayerSelectModalComponent = {
+    templateUrl: projectLayerSelectModalTpl,
+    bindings: {
+        close: '&',
+        dismiss: '&',
+        modalInstance: '<',
+        resolve: '<'
+    },
+    controller: 'ProjectLayerSelectModalController'
+};
 
-ProjectSelectModalModule.controller('ProjectSelectModalController', ProjectSelectModalController);
-ProjectSelectModalModule.component('rfProjectSelectModal', ProjectSelectModalComponent);
-
-export default ProjectSelectModalModule;
+export default angular
+    .module('components.projects.projectLayerSelectModal', [])
+    .controller('ProjectLayerSelectModalController', ProjectLayerSelectModalController)
+    .component('rfProjectLayerSelectModal', ProjectLayerSelectModalComponent)
+    .name;

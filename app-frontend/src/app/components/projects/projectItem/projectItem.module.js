@@ -9,18 +9,13 @@ const ProjectItemComponent = {
     controller: 'ProjectItemController',
     transclude: true,
     bindings: {
-        // item is project if isLayer is not provided
-        // item is project layer if isLayer is true
-        // parentProject is the project the layer is in
         item: '<',
         selected: '&',
         onSelect: '&',
         slim: '<',
         hideOptions: '<',
         platform: '<',
-        user: '<',
-        isLayer: '<?',
-        parentProject: '<?'
+        user: '<'
     }
 };
 
@@ -94,28 +89,9 @@ class ProjectItemController {
         });
     }
 
-    addProjectLayerTile() {
-        const layer = this.projectService.mapLayerFromLayer(this.parentProject, this.item);
-        this.getMap().then(m => {
-            m.addLayer('share-layer', layer);
-        });
-    }
-
     fitProjectExtent() {
         this.getMap().then(mapWrapper => {
             this.mapUtilsService.fitMapToProject(mapWrapper, this.item, -2);
-            mapWrapper.map.invalidateSize();
-        });
-    }
-
-    fitProjectLayerExtent() {
-        this.getMap().then(mapWrapper => {
-            this.mapUtilsService.fitMapToProjectLayer(
-                mapWrapper,
-                this.item,
-                this.parentProject,
-                -2
-            );
             mapWrapper.map.invalidateSize();
         });
     }
@@ -127,36 +103,18 @@ class ProjectItemController {
 
     getProjectStatus() {
         if (!this.statusFetched) {
-            if (this.isLayer) {
-                this.projectService
-                    .getProjectLayerStatus(this.parentProject.id, this.item.id)
-                    .then(status => {
-                        this.status = status;
-                        if (this.status === 'CURRENT') {
-                            this.fitProjectLayerExtent();
-                            this.addProjectLayerTile();
-                            if (this.showProjectThumbnail) {
-                                this.getThumbnailURL();
-                            } else {
-                                this.mapOptions = { attributionControl: false };
-                            }
-                        }
-                    });
-            } else {
-                this.projectService.getProjectStatus(this.item.id).then(status => {
-                    this.status = status;
-                    if (this.status === 'CURRENT') {
-                        this.fitProjectExtent();
-                        this.addProjectTile();
-                        if (this.showProjectThumbnail) {
-                            this.getThumbnailURL();
-                        } else {
-                            this.mapOptions = { attributionControl: false };
-                        }
+            this.projectService.getProjectStatus(this.item.id).then(status => {
+                this.status = status;
+                if (this.status === 'CURRENT') {
+                    this.fitProjectExtent();
+                    this.addProjectTile();
+                    if (this.showProjectThumbnail) {
+                        this.getThumbnailURL();
+                    } else {
+                        this.mapOptions = { attributionControl: false };
                     }
-                });
-            }
-
+                }
+            });
             this.statusFetched = true;
         }
     }
