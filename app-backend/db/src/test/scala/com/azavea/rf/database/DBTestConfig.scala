@@ -15,8 +15,8 @@ import scala.concurrent.ExecutionContext
 
 trait DBTestConfig {
 
-  val connectExecutorService = Executors.newFixedThreadPool(20)
-  val transactExecutorService = Executors.newFixedThreadPool(20)
+  val connectExecutorService = Executors.newFixedThreadPool(1)
+  val transactExecutorService = Executors.newFixedThreadPool(1)
   val connectEc = ExecutionContext.fromExecutorService(
     connectExecutorService,
     ExecutionContext.defaultReporter)
@@ -37,9 +37,6 @@ trait DBTestConfig {
       connectEc,
       transactEc
     ) map { Transactor.after.set(_, HC.rollback) }
-
-  implicit val transactor: Transactor[IO] =
-    xa.use(trx => IO { trx }).unsafeRunSync
 
   val defaultPlatformId =
     UUID.fromString("31277626-968b-4e40-840b-559d9c67863c")

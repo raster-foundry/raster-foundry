@@ -23,6 +23,7 @@ class LayerScenesDaoSpec
         (
             user: User.Create,
             org: Organization.Create,
+            platform: Platform,
             project: Project.Create,
             scenes: List[Scene.Create],
             dsCreate: Datasource.Create,
@@ -31,8 +32,10 @@ class LayerScenesDaoSpec
         ) =>
           {
             val scenesInsertWithUserProjectIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (_, dbUser, dbProject) = orgUserProject
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               datasource <- DatasourceDao.create(
                 dsCreate.toDatasource(dbUser),
                 dbUser
@@ -93,13 +96,17 @@ class LayerScenesDaoSpec
         (
             user: User.Create,
             org: Organization.Create,
+            platform: Platform,
             project: Project.Create,
             layersWithScenes: List[(ProjectLayer.Create, List[Scene.Create])],
             dsCreate: Datasource.Create
         ) =>
           {
             val countsWithCountedIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               dbDatasource <- fixupDatasource(dsCreate, dbUser)
               dbLayersWithSceneCounts <- layersWithScenes traverse {
                 case (projectLayerCreate, scenesList) =>

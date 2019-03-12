@@ -14,7 +14,6 @@ import doobie.postgres.circe.jsonb.implicits._
 import io.circe._
 import io.circe.syntax._
 import java.sql.Timestamp
-import java.time.temporal.IsoFields
 import java.util.UUID
 
 object ProjectDao

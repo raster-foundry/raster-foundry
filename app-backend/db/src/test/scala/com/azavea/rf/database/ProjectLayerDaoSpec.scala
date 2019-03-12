@@ -22,14 +22,16 @@ class ProjectLayerDaoSpec
       forAll {
         (orgCreate: Organization.Create,
          userCreate: User.Create,
+         platform: Platform,
          projectCreate: Project.Create,
          projectLayerCreate: ProjectLayer.Create,
          pageRequest: PageRequest) =>
           {
             val insertAndListIO = for {
-              (_, _, dbProject) <- insertUserOrgProject(userCreate,
-                                                        orgCreate,
-                                                        projectCreate)
+              (_, _, _, dbProject) <- insertUserOrgPlatProject(userCreate,
+                                                               orgCreate,
+                                                               platform,
+                                                               projectCreate)
               inserted <- ProjectLayerDao.insertProjectLayer(
                 projectLayerCreate
                   .copy(projectId = Some(dbProject.id))
@@ -59,6 +61,7 @@ class ProjectLayerDaoSpec
       forAll {
         (orgCreate: Organization.Create,
          userCreate: User.Create,
+         platform: Platform,
          projectCreate: Project.Create,
          projectLayerCreate: ProjectLayer.Create) =>
           {
@@ -70,9 +73,10 @@ class ProjectLayerDaoSpec
               "a legend orientation"
             )
             val updateIO = for {
-              (_, _, dbProject) <- insertUserOrgProject(userCreate,
-                                                        orgCreate,
-                                                        projectCreate)
+              (_, _, _, dbProject) <- insertUserOrgPlatProject(userCreate,
+                                                               orgCreate,
+                                                               platform,
+                                                               projectCreate)
               inserted <- ProjectLayerDao.insertProjectLayer(
                 projectLayerCreate
                   .copy(projectId = Some(dbProject.id))

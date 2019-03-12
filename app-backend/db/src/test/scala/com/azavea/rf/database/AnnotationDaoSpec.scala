@@ -21,18 +21,20 @@ class AnnotationDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          annotations: List[Annotation.Create]) =>
           {
-            val annotationsInsertIO = insertUserOrgProject(user, org, project) flatMap {
-              case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-                AnnotationDao.insertAnnotations(
-                  annotations,
-                  dbProject.id,
-                  dbUser
-                )
-              }
-            }
+            val annotationsInsertIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
+              annotations <- AnnotationDao.insertAnnotations(annotations,
+                                                             dbProject.id,
+                                                             dbUser)
+            } yield annotations
+
             xa.use((t: Transactor[IO]) =>
                 annotationsInsertIO
                   .transact(t))
@@ -48,12 +50,16 @@ class AnnotationDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          annotations: List[Annotation.Create],
          labelerC: User.Create) =>
           {
             val annotationsInsertIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               labeler <- UserDao.create(labelerC)
               insertedAnnotations <- AnnotationDao.insertAnnotations(
                 annotations.map(annotationCreate =>
@@ -83,34 +89,25 @@ class AnnotationDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          annotations: List[Annotation.Create]) =>
           {
-            val annotationsInsertWithUserAndProjectIO = insertUserOrgProject(
-              user,
-              org,
-              project) flatMap {
-              case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-                AnnotationDao.insertAnnotations(
-                  annotations,
-                  dbProject.id,
-                  dbUser
-                ) map {
-                  (dbUser, dbProject, _)
-                }
-              }
-            }
-            val annotationsListForProjectIO = annotationsInsertWithUserAndProjectIO flatMap {
-              case (dbUser: User,
-                    dbProject: Project,
-                    annotations: List[Annotation]) => {
-                AnnotationDao.listAnnotationsForProject(dbProject.id) map {
-                  (annotations, _)
-                }
-              }
-            }
+            val annotationsIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
+              inserted <- AnnotationDao.insertAnnotations(
+                annotations,
+                dbProject.id,
+                dbUser
+              )
+              forProject <- AnnotationDao.listAnnotationsForProject(
+                dbProject.id)
+            } yield { (inserted, forProject) }
             val (insertedAnnotations, annotationsForProject) =
-              xa.use(t => annotationsListForProjectIO.transact(t)).unsafeRunSync
+              xa.use(t => annotationsIO.transact(t)).unsafeRunSync
 
             insertedAnnotations.toSet == annotationsForProject.toSet
           }
@@ -123,13 +120,17 @@ class AnnotationDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          annotationInsert: Annotation.Create,
          annotationUpdate: Annotation.Create,
          verifierCreate: User.Create) =>
           {
             val annotationInsertWithUserAndProjectIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               annotations <- AnnotationDao.insertAnnotations(
                 List(annotationInsert),
                 dbProject.id,
@@ -190,20 +191,22 @@ class AnnotationDaoSpec
 
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          annotations: List[Annotation.Create]) =>
           {
-            val annotationsLabelsIO = insertUserOrgProject(user, org, project) flatMap {
-              case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-                AnnotationDao.insertAnnotations(
-                  annotations,
-                  dbProject.id,
-                  dbUser
-                ) flatMap { _ =>
-                  AnnotationDao.listProjectLabels(dbProject.id)
-                }
-              }
-            }
+            val annotationsLabelsIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
+              _ <- AnnotationDao.insertAnnotations(
+                annotations,
+                dbProject.id,
+                dbUser
+              )
+              labels <- AnnotationDao.listProjectLabels(dbProject.id)
+            } yield labels
 
             xa.use(
                 t => annotationsLabelsIO.transact(t)

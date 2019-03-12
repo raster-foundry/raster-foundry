@@ -1,6 +1,6 @@
 package com.rasterfoundry.database
 
-import com.rasterfoundry.common.datamodel.{User, Organization, Shape}
+import com.rasterfoundry.common.datamodel.{User, Organization, Platform, Shape}
 import com.rasterfoundry.common.datamodel.Generators.Implicits._
 
 import doobie.implicits._
@@ -26,15 +26,15 @@ class ShapeDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          shapes: Seq[Shape.Create]) =>
           {
-            val shapeInsertIO = insertUserAndOrg(user, org) flatMap {
-              case (dbOrg: Organization, dbUser: User) => {
-                ShapeDao.insertShapes(
-                  shapes map { fixupShapeCreate(dbUser, _) },
-                  dbUser)
-              }
-            }
+            val shapeInsertIO = for {
+              (dbUser, _, _) <- insertUserOrgPlatform(user, org, platform)
+              dbShapes <- ShapeDao.insertShapes(shapes map {
+                fixupShapeCreate(dbUser, _)
+              }, dbUser)
+            } yield shapes
             xa.use(t => shapeInsertIO.transact(t))
               .unsafeRunSync
               .length == shapes.length
@@ -48,36 +48,24 @@ class ShapeDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          shapeInsert: Shape.Create,
          shapeUpdate: Shape.GeoJSON) =>
           {
-            val shapeInsertWithUserAndOrgIO = insertUserAndOrg(user, org) flatMap {
-              case (dbOrg: Organization, dbUser: User) => {
-                ShapeDao.insertShapes(List(shapeInsert) map {
-                  fixupShapeCreate(dbUser, _)
-                }, dbUser) map { (shapes: Seq[Shape.GeoJSON]) =>
-                  (shapes.head.toShape, dbUser, dbOrg)
-                }
+            val shapeUpdateIO = for {
+              (dbUser, _, _) <- insertUserOrgPlatform(user, org, platform)
+              shape <- ShapeDao.insertShapes(List(shapeInsert), dbUser) map {
+                _.head
               }
-            }
-            val updateWithShapeIO = shapeInsertWithUserAndOrgIO flatMap {
-              case (insertShape: Shape, dbUser: User, dbOrg: Organization) => {
-                ShapeDao.updateShape(fixupShapeGeoJSON(dbUser,
-                                                       insertShape,
-                                                       shapeUpdate),
-                                     insertShape.id,
-                                     dbUser) flatMap { (affectedRows: Int) =>
-                  {
-                    ShapeDao.unsafeGetShapeById(insertShape.id) map {
-                      (affectedRows, _)
-                    }
-                  }
-                }
-              }
-            }
+              affectedRows <- ShapeDao.updateShape(
+                fixupShapeGeoJSON(dbUser, shape.toShape, shapeUpdate),
+                shape.id,
+                dbUser)
+              fetched <- ShapeDao.unsafeGetShapeById(shape.id)
+            } yield { (affectedRows, fetched) }
 
             val (affectedRows, updatedShape) =
-              xa.use(t => updateWithShapeIO.transact(t)).unsafeRunSync
+              xa.use(t => shapeUpdateIO.transact(t)).unsafeRunSync
 
             val shapeUpdateShape = shapeUpdate.toShape
 
@@ -86,37 +74,6 @@ class ShapeDaoSpec
             updatedShape.description == shapeUpdateShape.description &&
             updatedShape.geometry == shapeUpdateShape.geometry
 
-          }
-      }
-    }
-  }
-
-  test("get a shape by id") {
-    check {
-      forAll {
-        (user: User.Create, org: Organization.Create, shape: Shape.Create) =>
-          {
-            val shapeInsertWithUserIO = insertUserAndOrg(user, org) flatMap {
-              case (dbOrg: Organization, dbUser: User) => {
-                ShapeDao.insertShapes(List(shape) map {
-                  fixupShapeCreate(dbUser, _)
-                }, dbUser) map {
-                  (_, dbUser)
-                }
-              }
-            }
-
-            val shapeByIdIO = shapeInsertWithUserIO flatMap {
-              case (shapes, dbUser) => {
-                // safe because we just put it there -- errors here mean insert is broken
-                val insertedShape = shapes.head.toShape
-                ShapeDao.getShapeById(insertedShape.id) map {
-                  _.get == insertedShape
-                }
-              }
-            }
-
-            xa.use(t => shapeByIdIO.transact(t)).unsafeRunSync
           }
       }
     }

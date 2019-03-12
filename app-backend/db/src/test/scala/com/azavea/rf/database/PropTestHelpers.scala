@@ -90,30 +90,16 @@ trait PropTestHelpers {
     } yield (orgInsert, userInsert)
   }
 
-  def insertUserOrgProject(
-      user: User.Create,
-      org: Organization.Create,
-      proj: Project.Create): ConnectionIO[(Organization, User, Project)] = {
+  def insertUserOrgPlatScene(user: User.Create,
+                             org: Organization.Create,
+                             platform: Platform,
+                             scene: Scene.Create) = {
     for {
-      orgUserInsert <- insertUserAndOrg(user, org)
-      (org, user) = orgUserInsert
-      project <- ProjectDao.insertProject(
-        fixupProjectCreate(user, proj),
-        user
-      )
-    } yield (org, user, project)
-  }
-
-  def insertUserOrgScene(user: User.Create,
-                         org: Organization.Create,
-                         scene: Scene.Create) = {
-    for {
-      orgUserInsert <- insertUserAndOrg(user, org)
-      (dbOrg, dbUser) = orgUserInsert
+      (dbUser, dbOrg, dbPlatform) <- insertUserOrgPlatform(user, org, platform)
       dbDatasource <- unsafeGetRandomDatasource
       scene <- SceneDao.insert(fixupSceneCreate(dbUser, dbDatasource, scene),
                                dbUser)
-    } yield (dbOrg, dbUser, scene)
+    } yield (dbOrg, dbUser, dbPlatform, scene)
   }
 
   def unsafeGetRandomDatasource: ConnectionIO[Datasource] =
@@ -250,7 +236,8 @@ trait PropTestHelpers {
     for {
       dbUser <- UserDao.create(user)
       dbPlatform <- PlatformDao.create(platform)
-      orgInsert <- OrganizationDao.createOrganization(org)
+      orgInsert <- OrganizationDao.createOrganization(
+        org.copy(platformId = dbPlatform.id))
       dbOrg = orgInsert.copy(platformId = dbPlatform.id)
       dbTeam <- TeamDao.create(
         team.copy(organizationId = dbOrg.id).toTeam(dbUser))

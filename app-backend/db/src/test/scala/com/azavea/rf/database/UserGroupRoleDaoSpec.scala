@@ -28,18 +28,20 @@ class UserGroupRoleDaoSpec
       forAll {
         (userCreate: User.Create,
          orgCreate: Organization.Create,
-         teamCreate: Team.Create,
          platform: Platform,
+         teamCreate: Team.Create,
          ugrCreate: UserGroupRole.Create) =>
           {
             val insertUgrIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
-              (insertedOrg, insertedUser) = orgAndUser
+              (insertedUser, insertedOrg, insertedPlatform) <- insertUserOrgPlatform(
+                userCreate,
+                orgCreate,
+                platform,
+                false)
               insertedTeam <- TeamDao.create(
                 teamCreate
                   .copy(organizationId = insertedOrg.id)
                   .toTeam(insertedUser))
-              insertedPlatform <- PlatformDao.create(platform)
               insertedUgr <- UserGroupRoleDao.create(
                 fixupUserGroupRole(insertedUser,
                                    insertedOrg,
@@ -461,14 +463,17 @@ class UserGroupRoleDaoSpec
         (userCreate: User.Create,
          manager: User.Create,
          orgCreate: Organization.Create,
-         teamCreate: Team.Create,
          platform: Platform,
+         teamCreate: Team.Create,
          ugrCreate: UserGroupRole.Create,
          ugrUpdate: UserGroupRole.Create) =>
           {
             val insertUgrWithRelationsIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
-              (insertedOrg, insertedUser) = orgAndUser
+              (insertedUser, insertedOrg, insertedPlatform) <- insertUserOrgPlatform(
+                userCreate,
+                orgCreate,
+                platform,
+                false)
               managerUser <- UserDao.create(manager)
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
@@ -484,7 +489,6 @@ class UserGroupRoleDaoSpec
                 teamCreate
                   .copy(organizationId = insertedOrg.id)
                   .toTeam(insertedUser))
-              insertedPlatform <- PlatformDao.create(platform)
               insertedUgr <- UserGroupRoleDao.create(
                 fixupUserGroupRole(insertedUser,
                                    insertedOrg,
@@ -545,18 +549,20 @@ class UserGroupRoleDaoSpec
       forAll {
         (userCreate: User.Create,
          orgCreate: Organization.Create,
-         teamCreate: Team.Create,
          platform: Platform,
+         teamCreate: Team.Create,
          ugrCreate: UserGroupRole.Create) =>
           {
             val insertUgrWithUserIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
-              (insertedOrg, insertedUser) = orgAndUser
+              (insertedUser, insertedOrg, insertedPlatform) <- insertUserOrgPlatform(
+                userCreate,
+                orgCreate,
+                platform,
+                false)
               insertedTeam <- TeamDao.create(
                 teamCreate
                   .copy(organizationId = insertedOrg.id)
                   .toTeam(insertedUser))
-              insertedPlatform <- PlatformDao.create(platform)
               insertedUgr <- UserGroupRoleDao.create(
                 fixupUserGroupRole(insertedUser,
                                    insertedOrg,
@@ -604,13 +610,15 @@ class UserGroupRoleDaoSpec
          ugrCreate: UserGroupRole.Create) =>
           {
             val insertUgrWithUserIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate, false)
-              (insertedOrg, insertedUser) = orgAndUser
+              (insertedUser, insertedOrg, insertedPlatform) <- insertUserOrgPlatform(
+                userCreate,
+                orgCreate,
+                platform,
+                false)
               insertedTeam <- TeamDao.create(
                 teamCreate
                   .copy(organizationId = insertedOrg.id)
                   .toTeam(insertedUser))
-              insertedPlatform <- PlatformDao.create(platform)
               insertedUgr <- UserGroupRoleDao.create(
                 fixupUserGroupRole(insertedUser,
                                    insertedOrg,

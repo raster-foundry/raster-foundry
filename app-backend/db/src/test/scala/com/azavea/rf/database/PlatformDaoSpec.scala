@@ -60,28 +60,17 @@ class PlatformDaoSpec
          platform: Platform,
          platformUpdate: Platform) =>
           {
-            val insertPlatformWithUserIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-              (_, dbUser) = orgAndUser
-              insertedPlatform <- PlatformDao.create(platform)
-            } yield { (insertedPlatform, dbUser) }
-
-            val updatePlatformWithPlatformAndAffectedRowsIO = insertPlatformWithUserIO flatMap {
-              case (dbPlatform: Platform, dbUser: User) => {
-                PlatformDao.update(platformUpdate, dbPlatform.id) flatMap {
-                  (affectedRows: Int) =>
-                    {
-                      PlatformDao.unsafeGetPlatformById(dbPlatform.id) map {
-                        (affectedRows, _)
-                      }
-                    }
-                }
-              }
-            }
+            val platformUpdateIO = for {
+              (dbUser, _, dbPlatform) <- insertUserOrgPlatform(userCreate,
+                                                               orgCreate,
+                                                               platform)
+              affectedRows <- PlatformDao.update(platformUpdate, dbPlatform.id)
+              fetched <- PlatformDao.unsafeGetPlatformById(dbPlatform.id)
+            } yield { (affectedRows, fetched) }
 
             val (affectedRows, updatedPlatform) =
               xa.use(t =>
-                  updatePlatformWithPlatformAndAffectedRowsIO
+                  platformUpdateIO
                     .transact(t))
                 .unsafeRunSync
             affectedRows == 1 &&
@@ -126,16 +115,17 @@ class PlatformDaoSpec
         ) =>
           {
             val addPlatformRoleWithPlatformIO = for {
-              (_, dbUser) <- insertUserAndOrg(userCreate, orgCreate)
-              insertedPlatform <- PlatformDao.create(platform)
-              insertedUserGroupRole <- PlatformDao.addUserRole(
-                dbUser,
-                dbUser.id,
-                insertedPlatform.id,
-                userRole)
+              (dbUser, _, dbPlatform) <- insertUserOrgPlatform(userCreate,
+                                                               orgCreate,
+                                                               platform,
+                                                               false)
+              insertedUserGroupRole <- PlatformDao.addUserRole(dbUser,
+                                                               dbUser.id,
+                                                               dbPlatform.id,
+                                                               userRole)
               byIdUserGroupRole <- UserGroupRoleDao.getOption(
                 insertedUserGroupRole.id)
-            } yield { (insertedPlatform, byIdUserGroupRole) }
+            } yield { (dbPlatform, byIdUserGroupRole) }
 
             val (dbPlatform, dbUserGroupRole) =
               xa.use(t => addPlatformRoleWithPlatformIO.transact(t))
@@ -168,8 +158,10 @@ class PlatformDaoSpec
         ) =>
           {
             val setPlatformRoleIO = for {
-              (_, dbUser) <- insertUserAndOrg(userCreate, orgCreate)
-              insertedPlatform <- PlatformDao.create(platform)
+              (dbUser, _, insertedPlatform) <- insertUserOrgPlatform(userCreate,
+                                                                     orgCreate,
+                                                                     platform,
+                                                                     false)
               originalUserGroupRole <- PlatformDao.addUserRole(
                 dbUser,
                 dbUser.id,
@@ -219,8 +211,10 @@ class PlatformDaoSpec
         ) =>
           {
             val setPlatformRoleIO = for {
-              (_, dbUser) <- insertUserAndOrg(userCreate, orgCreate)
-              insertedPlatform <- PlatformDao.create(platform)
+              (dbUser, _, insertedPlatform) <- insertUserOrgPlatform(userCreate,
+                                                                     orgCreate,
+                                                                     platform,
+                                                                     false)
               originalUserGroupRole <- PlatformDao.addUserRole(
                 dbUser,
                 dbUser.id,
@@ -423,21 +417,24 @@ class PlatformDaoSpec
     check {
       forAll {
         (
+            userPlat: (User.Create, Platform),
             orgCreate1: Organization.Create,
             orgCreate2: Organization.Create,
             orgCreate3: Organization.Create,
             teamCreate1: Team.Create,
             teamCreate2: Team.Create,
             teamCreate3: Team.Create,
-            userCreate: User.Create,
             teamNamePartial: SearchQueryParameters
         ) =>
           {
+            val (userCreate, platform) = userPlat
             val createAndGetTeamsIO = for {
               // Team# is in Org#
               // User belongs to Org1 and Team1
-              orgUserInserted1 <- insertUserAndOrg(userCreate, orgCreate1, true)
-              (org1, user) = orgUserInserted1
+              (user, org1, dbPlatform) <- insertUserOrgPlatform(userCreate,
+                                                                orgCreate1,
+                                                                platform,
+                                                                true)
               teamInsert1 <- TeamDao.create(
                 fixupTeam(fixTeamName(teamCreate1, teamNamePartial),
                           org1,
@@ -453,7 +450,8 @@ class PlatformDaoSpec
                   .toUserGroupRole(user, MembershipStatus.Approved))
 
               // User belongs to Org2 but not Team2
-              org2 <- OrganizationDao.createOrganization(orgCreate2)
+              org2 <- OrganizationDao.createOrganization(
+                orgCreate2.copy(platformId = dbPlatform.id))
               _ <- UserGroupRoleDao.create(
                 UserGroupRole
                   .Create(
@@ -469,7 +467,8 @@ class PlatformDaoSpec
                           user))
 
               // User belongs to Team3 but not Org3
-              org3 <- OrganizationDao.createOrganization(orgCreate3)
+              org3 <- OrganizationDao.createOrganization(
+                orgCreate3.copy(platformId = dbPlatform.id))
               teamInsert3 <- TeamDao.create(fixupTeam(teamCreate3, org3, user))
               _ <- UserGroupRoleDao.create(
                 UserGroupRole

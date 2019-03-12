@@ -104,11 +104,15 @@ class SceneWithRelatedDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          scenes: List[Scene.Create]) =>
           {
             val scenesInsertWithUserProjectIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               datasource <- unsafeGetRandomDatasource
               scenesInsert <- (scenes map {
                 fixupSceneCreate(dbUser, datasource, _)

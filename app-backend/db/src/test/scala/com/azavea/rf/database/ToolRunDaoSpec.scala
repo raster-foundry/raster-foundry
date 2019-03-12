@@ -23,13 +23,16 @@ class ToolRunDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          projCreate: Project.Create,
          toolRunCreate: ToolRun.Create) =>
           {
             val toolRunInsertIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user,
-                                                             org,
-                                                             projCreate)
+              // TODO replace these here
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    projCreate)
               withProjectId = toolRunCreate.copy(projectId = Some(dbProject.id))
               inserted <- ToolRunDao.insertToolRun(withProjectId, dbUser)
             } yield (withProjectId.projectId, inserted)
@@ -72,13 +75,15 @@ class ToolRunDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          projCreate: Project.Create,
          toolRunCreate: ToolRun.Create) =>
           {
             val toolRunInsertIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user,
-                                                             org,
-                                                             projCreate)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    projCreate)
               withProjectLayerId = toolRunCreate.copy(
                 projectLayerId = Some(dbProject.defaultLayerId))
               inserted <- ToolRunDao.insertToolRun(withProjectLayerId, dbUser)
@@ -122,11 +127,15 @@ class ToolRunDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          templateCreate: Tool.Create,
          toolRunCreate: ToolRun.Create) =>
           {
             val toolRunInsertIO = for {
-              (_, dbUser) <- insertUserAndOrg(user, org)
+              platform <- PlatformDao.create(platform)
+              (_, dbUser) <- insertUserAndOrg(
+                user,
+                org.copy(platformId = platform.id))
               dbTemplate <- ToolDao.insert(templateCreate, dbUser)
               withTemplateId = toolRunCreate.copy(
                 templateId = Some(dbTemplate.id))
@@ -172,12 +181,16 @@ class ToolRunDaoSpec
         (
             user: User.Create,
             org: Organization.Create,
+            platform: Platform,
             toolRunCreate1: ToolRun.Create,
             toolRunCreate2: ToolRun.Create
         ) =>
           {
             val insertAndUpdateIO = for {
-              (_, dbUser) <- insertUserAndOrg(user, org)
+              dbPlatform <- PlatformDao.create(platform)
+              (_, dbUser) <- insertUserAndOrg(
+                user,
+                org.copy(platformId = dbPlatform.id))
               inserted1 <- ToolRunDao.insertToolRun(toolRunCreate1, dbUser)
               inserted2 <- ToolRunDao.insertToolRun(toolRunCreate2, dbUser)
               _ <- ToolRunDao.updateToolRun(inserted2, inserted1.id, dbUser)
@@ -211,13 +224,15 @@ class ToolRunDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          projCreate: Project.Create,
          toolRunCreate: ToolRun.Create) =>
           {
             val listIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user,
-                                                             org,
-                                                             projCreate)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    projCreate)
               withProject = toolRunCreate.copy(projectId = Some(dbProject.id))
               queryParams = CombinedToolRunQueryParameters(
                 toolRunParams = ToolRunQueryParameters(
@@ -270,11 +285,15 @@ class ToolRunDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          templateCreate: Tool.Create,
          toolRunCreate: ToolRun.Create) =>
           {
             val listIO = for {
-              (_, dbUser) <- insertUserAndOrg(user, org)
+              dbPlatform <- PlatformDao.create(platform)
+              (_, dbUser) <- insertUserAndOrg(
+                user,
+                org.copy(platformId = dbPlatform.id))
               dbTemplate <- ToolDao.insert(templateCreate, dbUser)
               withTemplateId = toolRunCreate.copy(
                 templateId = Some(dbTemplate.id))
@@ -328,13 +347,15 @@ class ToolRunDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          projCreate: Project.Create,
          toolRunCreate: ToolRun.Create) =>
           {
             val listIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user,
-                                                             org,
-                                                             projCreate)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    projCreate)
               withProjectLayer = toolRunCreate.copy(
                 projectLayerId = Some(dbProject.defaultLayerId))
               queryParams = CombinedToolRunQueryParameters(
@@ -387,15 +408,17 @@ class ToolRunDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          projCreate: Project.Create,
          toolCreate: Tool.Create,
          toolRunCreate: ToolRun.Create,
          page: PageRequest) =>
           {
             val listAnalysesWithRelatedIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user,
-                                                             org,
-                                                             projCreate)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    projCreate)
               dbTemplate <- ToolDao.insert(toolCreate, dbUser)
               withRelated = toolRunCreate.copy(
                 projectId = Some(dbProject.id),

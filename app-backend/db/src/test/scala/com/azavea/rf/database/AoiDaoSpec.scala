@@ -28,22 +28,22 @@ class AoiDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          aoi: AOI.Create,
          shape: Shape.Create) =>
           {
-            val aoiInsertIO = insertUserOrgProject(user, org, project) flatMap {
-              case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-                for {
-                  shape <- ShapeDao.insertShape(shape, dbUser)
-                  aoi <- AoiDao.createAOI(fixupAoiCreate(dbUser,
-                                                         dbProject,
-                                                         aoi,
-                                                         shape),
-                                          dbUser)
-                } yield (shape, aoi)
-              }
-            }
+            val aoiInsertIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
+              dbShape <- ShapeDao.insertShape(shape, dbUser)
+              dbAoi <- AoiDao.createAOI(
+                fixupAoiCreate(dbUser, dbProject, aoi, dbShape),
+                dbUser)
+            } yield { (dbShape, dbAoi) }
+
             val (insertedShape, insertedAoi) =
               xa.use(t => aoiInsertIO.transact(t)).unsafeRunSync
 
@@ -66,6 +66,7 @@ class AoiDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          aoiInsert: AOI.Create,
          aoiUpdate: AOI.Create,
@@ -73,7 +74,10 @@ class AoiDaoSpec
          shapeUpdate: Shape.Create) =>
           {
             val aoiInsertWithOrgUserProjectIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               shape <- ShapeDao.insertShape(shapeInsert, dbUser)
               dbAoi <- AoiDao.createAOI(
                 fixupAoiCreate(dbUser, dbProject, aoiInsert, shape),
@@ -112,23 +116,22 @@ class AoiDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          aoi: AOI.Create,
          shape: Shape.Create) =>
           {
-            val aoiDeleteIO = insertUserOrgProject(user, org, project) flatMap {
-              case (dbOrg: Organization, dbUser: User, dbProject: Project) => {
-                for {
-                  dbShape <- ShapeDao.insertShape(shape, dbUser)
-                  dbAoi <- AoiDao.createAOI(fixupAoiCreate(dbUser,
-                                                           dbProject,
-                                                           aoi,
-                                                           dbShape),
-                                            dbUser)
-                  deletedShapes <- AoiDao.deleteAOI(dbAoi.id)
-                } yield deletedShapes
-              }
-            }
+            val aoiDeleteIO = for {
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
+              dbShape <- ShapeDao.insertShape(shape, dbUser)
+              dbAoi <- AoiDao.createAOI(
+                fixupAoiCreate(dbUser, dbProject, aoi, dbShape),
+                dbUser)
+              deletedShapes <- AoiDao.deleteAOI(dbAoi.id)
+            } yield deletedShapes
 
             xa.use(t => aoiDeleteIO.transact(t)).unsafeRunSync == 1
           }
@@ -141,6 +144,7 @@ class AoiDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project1: Project.Create,
          aois1: List[AOI.Create],
          shape: Shape.Create,
@@ -148,9 +152,10 @@ class AoiDaoSpec
          aois2: List[AOI.Create]) =>
           {
             val aoisInsertWithProjectUserIO = for {
-              (_, dbUser, dbProject1) <- insertUserOrgProject(user,
-                                                              org,
-                                                              project1)
+              (dbUser, _, _, dbProject1) <- insertUserOrgPlatProject(user,
+                                                                     org,
+                                                                     platform,
+                                                                     project1)
               dbProject2 <- ProjectDao.insertProject(
                 fixupProjectCreate(dbUser, project2),
                 dbUser)
