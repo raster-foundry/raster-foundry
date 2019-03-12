@@ -15,9 +15,6 @@ git.gitTagToVersionNumber in ThisBuild := { tag: String =>
 cancelable in Global := true
 
 lazy val commonSettings = Seq(
-  version := {
-    "dev"
-  },
   // https://github.com/lucidsoftware/neo-sbt-scalafmt
   scalafmtOnCompile := true,
   // https://github.com/sksamuel/sbt-scapegoat
