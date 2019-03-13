@@ -283,6 +283,17 @@ export default app => {
                             projectId: '@projectId',
                             layerId: '@layerId'
                         }
+                    },
+                    splitLayers: {
+                        method: 'POST',
+                        url:
+                            `${BUILDCONFIG.API_HOST}/api/projects/:projectId/` +
+                            'layers/:layerId/split/',
+                        params: {
+                            projectId: '@projectId',
+                            layerId: '@layerId'
+                        },
+                        isArray: true
                     }
                 }
             );
@@ -842,6 +853,10 @@ export default app => {
 
         getAllowedActions(projectId) {
             return this.Project.actions({ projectId }).$promise;
+        }
+
+        splitLayers(projectId, layerId, splitOptions) {
+            return this.Project.splitLayers({ projectId, layerId }, splitOptions).$promise;
         }
     }
 
