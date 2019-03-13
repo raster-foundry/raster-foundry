@@ -8,6 +8,7 @@ import analysisEditModal from './analysisEditModal';
 import analysisMapItem from './analysisMapItem';
 import projectLayerSelectModal from './projectLayerSelectModal';
 import projectLayerItem from './projectLayerItem';
+import layerSplitModal from './layerSplitModal';
 
 export default [
     projectSettingsNavbar,
@@ -19,5 +20,6 @@ export default [
     analysisEditModal,
     analysisMapItem,
     projectLayerSelectModal,
-    projectLayerItem
+    projectLayerItem,
+    layerSplitModal
 ];
