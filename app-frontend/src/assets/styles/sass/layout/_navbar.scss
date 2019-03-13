@@ -45,6 +45,13 @@
       background: $shade-dark;
       border-radius: $border-radius-base $border-radius-base 0 0;
     }
+
+    &.nav-bar-dropdown-toggle {
+      .open .dropdown-toggle {
+        background: $off-white;
+        border-radius: $border-radius-base $border-radius-base 0 0;
+      }
+    }
   }
 
   .dropdown > a {
@@ -122,6 +129,17 @@
           &.aoi-draw-toolbar-menu {
             padding: 0.5rem 1rem;
             box-shadow: none;
+          }
+
+          &.menu-item {
+            padding: 0.5rem 1rem;
+            box-shadow: none;
+            color: $shade-light;
+            font-weight: 500;
+
+            &.with-bottom-border {
+              border-bottom: 1px solid $gray-lightest;
+            }
           }
       }
 
