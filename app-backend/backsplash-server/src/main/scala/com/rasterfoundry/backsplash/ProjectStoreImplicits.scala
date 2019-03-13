@@ -3,12 +3,7 @@ package com.rasterfoundry.backsplash.server
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.{
-  DatasourceDao,
-  SceneDao,
-  SceneToLayerDao,
-  SceneToProjectDao
-}
+import com.rasterfoundry.database.{DatasourceDao, SceneDao, SceneToLayerDao}
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.common.datamodel.{BandOverride, MosaicDefinition}
 import com.rasterfoundry.common.datamodel.color.{
@@ -161,26 +156,6 @@ class ProjectStoreImplicits(xa: Transactor[IO])
       }
     }
   }
-
-  implicit val projectStore: ProjectStore[SceneToProjectDao] =
-    new ProjectStore[SceneToProjectDao] {
-      def read(
-          self: SceneToProjectDao,
-          projId: UUID,
-          window: Option[Projected[Polygon]],
-          bandOverride: Option[BandOverride],
-          imageSubset: Option[NEL[UUID]]): fs2.Stream[IO, BacksplashImage] = {
-        SceneToProjectDao.getMosaicDefinition(
-          projId,
-          window,
-          bandOverride map { _.redBand },
-          bandOverride map { _.greenBand },
-          bandOverride map { _.blueBand },
-          imageSubset map { _.toList } getOrElse List.empty) map {
-          mosaicDefinitionToImage(_, bandOverride, projId)
-        } transact (xa)
-      }
-    }
 
   implicit val layerStore: ProjectStore[SceneToLayerDao] =
     new ProjectStore[SceneToLayerDao] {

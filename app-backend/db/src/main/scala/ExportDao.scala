@@ -285,13 +285,13 @@ object ExportDao extends Dao[Export] {
     logger.debug(s"Working with this many projects: ${projToIngestLoc.size}")
 
     val sceneProjectSelect = fr"""
-    SELECT stp.project_id, array_agg(stp.scene_id), array_agg(scenes.ingest_location)
+    SELECT stl.project_layer_id, array_agg(stl.scene_id), array_agg(scenes.ingest_location)
     FROM
-      scenes_to_projects as stp
+      scenes_to_layers as stl
     LEFT JOIN
       scenes
     ON
-      stp.scene_id = scenes.id
+      stl.scene_id = scenes.id
     """ ++ Fragments.whereAndOpt(
       projToIngestLoc.toList
         .map(_.projectId)

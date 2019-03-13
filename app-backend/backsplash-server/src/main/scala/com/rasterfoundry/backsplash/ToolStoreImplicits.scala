@@ -2,7 +2,7 @@ package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash._
 import com.rasterfoundry.backsplash.error._
-import com.rasterfoundry.database.{SceneToLayerDao, SceneToProjectDao}
+import com.rasterfoundry.database.{SceneToLayerDao}
 import com.rasterfoundry.database.Implicits._
 import com.rasterfoundry.database.ToolRunDao
 import com.rasterfoundry.common.datamodel._
@@ -25,9 +25,7 @@ class ToolStoreImplicits[HistStore](mosaicImplicits: MosaicImplicits[HistStore],
   implicit val tmsReification = rawMosaicTmsReification
 
   val mamlAdapter =
-    new BacksplashMamlAdapter(mosaicImplicits,
-                              SceneToProjectDao(),
-                              SceneToLayerDao())
+    new BacksplashMamlAdapter(mosaicImplicits, SceneToLayerDao(), xa)
 
   private def toolToColorRd(toolRd: RenderDefinition): RenderDefinition = {
     val scaleOpt = toolRd.scale match {

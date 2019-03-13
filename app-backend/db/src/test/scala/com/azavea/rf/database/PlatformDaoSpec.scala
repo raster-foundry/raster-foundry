@@ -241,7 +241,7 @@ class PlatformDaoSpec
     }
   }
 
-  test("get Platform Users And Projests By Consumers And Scene IDs") {
+  test("get Platform Users And Projects By Consumers And Scene IDs") {
     check {
       forAll {
         (
@@ -278,9 +278,12 @@ class PlatformDaoSpec
                                                               sceneCreate),
                                              dbUser)
               _ <- ProjectDao.addScenesToProject(List(sceneInsert.id),
-                                                 dbProject.id)
-              _ <- ProjectDao.addScenesToProject(List(sceneInsert.id),
-                                                 dbProjectAnother.id)
+                                                 dbProject.id,
+                                                 dbProject.defaultLayerId)
+              _ <- ProjectDao.addScenesToProject(
+                List(sceneInsert.id),
+                dbProjectAnother.id,
+                dbProjectAnother.defaultLayerId)
               listOfUserIds = List(dbUser.id, dbUserAnother.id)
               listOfPUSP <- PlatformDao.getPlatUsersAndProjByConsumerAndSceneID(
                 listOfUserIds,
@@ -384,7 +387,8 @@ class PlatformDaoSpec
                                                               sceneCreate),
                                              dbUser)
               _ <- ProjectDao.addScenesToProject(List(sceneInsert.id),
-                                                 dbProject.id)
+                                                 dbProject.id,
+                                                 dbProject.defaultLayerId)
               pUO <- PlatformDao.getPlatAndUsersBySceneOwnerId(
                 sceneInsert.owner)
             } yield (dbUser, dbPlatform, dbProject, pUO)

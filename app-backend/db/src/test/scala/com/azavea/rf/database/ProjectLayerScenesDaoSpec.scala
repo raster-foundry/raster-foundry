@@ -55,7 +55,8 @@ class LayerScenesDaoSpec
                   ) => {
                 ProjectDao.addScenesToProject(
                   dbScenes map { _.id },
-                  dbProject.id
+                  dbProject.id,
+                  dbProject.defaultLayerId
                 ) flatMap { _ =>
                   {
                     ProjectLayerScenesDao.listLayerScenes(
@@ -124,8 +125,8 @@ class LayerScenesDaoSpec
                     }
                     _ <- ProjectDao.addScenesToProject(dbScenes map { _.id },
                                                        dbProject.id,
-                                                       true,
-                                                       Some(dbProjectLayer.id))
+                                                       dbProjectLayer.id,
+                                                       true)
                   } yield { (dbProjectLayer.id, dbScenes.length) }
               }
               counted <- ProjectLayerScenesDao.countLayerScenes(dbProject.id)

@@ -677,7 +677,8 @@ trait ProjectRoutes
         complete {
           val acceptSceneIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            _ <- SceneToProjectDao.acceptScene(projectId, sceneId)
+            defaultLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
+              project.defaultLayerId)
             rowsAffected <- SceneToLayerDao.acceptScene(project.defaultLayerId,
                                                         sceneId)
           } yield { rowsAffected }
@@ -701,7 +702,6 @@ trait ProjectRoutes
 
         val acceptScenesIO = for {
           project <- ProjectDao.unsafeGetProjectById(projectId)
-          _ <- SceneToProjectDao.acceptScenes(projectId, sceneIds)
           rowsAffected <- SceneToLayerDao.acceptScenes(project.defaultLayerId,
                                                        sceneIds)
         } yield { rowsAffected }
@@ -720,12 +720,17 @@ trait ProjectRoutes
         .transact(xa)
         .unsafeToFuture
     } {
-      (withPagination & sceneQueryParameters) { (page, sceneParams) =>
+      (withPagination & projectSceneQueryParameters) { (page, sceneParams) =>
         complete {
-          ProjectScenesDao
-            .listProjectScenes(projectId, page, sceneParams)
-            .transact(xa)
-            .unsafeToFuture
+          val sceneListIO = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            scenes <- ProjectLayerScenesDao.listLayerScenes(
+              project.defaultLayerId,
+              page,
+              sceneParams
+            )
+          } yield scenes
+          sceneListIO.transact(xa).unsafeToFuture
         }
       }
     }
@@ -749,8 +754,12 @@ trait ProjectRoutes
         authorized.transact(xa).unsafeToFuture
       } {
         complete {
-          ProjectDatasourcesDao
-            .listProjectDatasources(projectId)
+          val datasourcesIO = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            datasources <- ProjectLayerDatasourcesDao
+              .listProjectLayerDatasources(project.defaultLayerId)
+          } yield datasources
+          datasourcesIO
             .transact(xa)
             .unsafeToFuture
         }
@@ -773,7 +782,6 @@ trait ProjectRoutes
 
         val setOrderIO = for {
           project <- ProjectDao.unsafeGetProjectById(projectId)
-          _ <- SceneToProjectDao.setManualOrder(projectId, sceneIds)
           updatedOrder <- SceneToLayerDao.setManualOrder(project.defaultLayerId,
                                                          sceneIds)
         } yield { updatedOrder }
@@ -797,7 +805,6 @@ trait ProjectRoutes
         complete {
           val getColorCorrectParamsIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            _ <- SceneToProjectDao.getColorCorrectParams(projectId, sceneId)
             params <- SceneToLayerDao.getColorCorrectParams(
               project.defaultLayerId,
               sceneId)
@@ -820,9 +827,6 @@ trait ProjectRoutes
         entity(as[ColorCorrect.Params]) { ccParams =>
           val setColorCorrectParamsIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            _ <- SceneToProjectDao.setColorCorrectParams(projectId,
-                                                         sceneId,
-                                                         ccParams)
             stl <- SceneToLayerDao.setColorCorrectParams(project.defaultLayerId,
                                                          sceneId,
                                                          ccParams)
@@ -846,7 +850,6 @@ trait ProjectRoutes
       entity(as[ProjectColorModeParams]) { colorBands =>
         val setProjectColorBandsIO = for {
           project <- ProjectDao.unsafeGetProjectById(projectId)
-          _ <- SceneToProjectDao.setProjectColorBands(projectId, colorBands)
           rowsAffected <- SceneToLayerDao
             .setProjectLayerColorBands(project.defaultLayerId, colorBands)
         } yield { rowsAffected }
@@ -870,7 +873,6 @@ trait ProjectRoutes
         entity(as[BatchParams]) { params =>
           val setColorCorrectParamsBatchIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            _ <- SceneToProjectDao.setColorCorrectParamsBatch(projectId, params)
             stl <- SceneToLayerDao
               .setColorCorrectParamsBatch(project.defaultLayerId, params)
           } yield { stl }
@@ -895,10 +897,6 @@ trait ProjectRoutes
         complete {
           val getMosaicDefinitionIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            _ <- SceneToProjectDao
-              .getMosaicDefinition(projectId)
-              .compile
-              .to[List]
             result <- SceneToLayerDao
               .getMosaicDefinition(project.defaultLayerId)
               .compile
@@ -913,7 +911,7 @@ trait ProjectRoutes
     }
   }
 
-  def addProjectScenes(projectId: UUID, layerId: Option[UUID] = None): Route =
+  def addProjectScenes(projectId: UUID, layerIdO: Option[UUID] = None): Route =
     authenticate { user =>
       authorizeAsync {
         ProjectDao
@@ -925,8 +923,15 @@ trait ProjectRoutes
           if (sceneIds.length > BULK_OPERATION_MAX_LIMIT) {
             complete(StatusCodes.RequestEntityTooLarge)
           }
-          val scenesAdded =
-            ProjectDao.addScenesToProject(sceneIds, projectId, true, layerId)
+
+          val scenesAdded = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            layerId = ProjectDao.getProjectLayerId(layerIdO, project)
+            addedScenes <- ProjectDao.addScenesToProject(sceneIds,
+                                                         projectId,
+                                                         layerId,
+                                                         true)
+          } yield addedScenes
 
           complete { scenesAdded.transact(xa).unsafeToFuture }
         }
@@ -934,7 +939,7 @@ trait ProjectRoutes
     }
 
   def updateProjectScenes(projectId: UUID,
-                          layerId: Option[UUID] = None): Route =
+                          layerIdO: Option[UUID] = None): Route =
     authenticate { user =>
       authorizeAsync {
         ProjectDao
@@ -948,14 +953,18 @@ trait ProjectRoutes
           }
 
           sceneIds.toList.toNel match {
-            case Some(ids) => {
+            case Some(ids) =>
+              val replaceIO = for {
+                project <- ProjectDao.unsafeGetProjectById(projectId)
+                layerId = ProjectDao.getProjectLayerId(layerIdO, project)
+                replacement <- ProjectDao.replaceScenesInProject(ids,
+                                                                 projectId,
+                                                                 layerId)
+              } yield replacement
+
               complete {
-                ProjectDao
-                  .replaceScenesInProject(ids, projectId, layerId)
-                  .transact(xa)
-                  .unsafeToFuture()
+                replaceIO.transact(xa).unsafeToFuture()
               }
-            }
             case _ => complete(StatusCodes.BadRequest)
           }
         }
@@ -963,7 +972,7 @@ trait ProjectRoutes
     }
 
   def deleteProjectScenes(projectId: UUID,
-                          layerId: Option[UUID] = None): Route = authenticate {
+                          layerIdO: Option[UUID] = None): Route = authenticate {
     user =>
       authorizeAsync {
         ProjectDao
@@ -976,11 +985,14 @@ trait ProjectRoutes
             complete(StatusCodes.RequestEntityTooLarge)
           }
 
-          onSuccess(
-            ProjectDao
-              .deleteScenesFromProject(sceneIds.toList, projectId, layerId)
-              .transact(xa)
-              .unsafeToFuture()) { _ =>
+          val deleteIO = for {
+            project <- ProjectDao.unsafeGetProjectById(projectId)
+            layerId = ProjectDao.getProjectLayerId(layerIdO, project)
+            deletion <- ProjectDao.deleteScenesFromProject(sceneIds.toList,
+                                                           projectId,
+                                                           layerId)
+          } yield deletion
+          onSuccess(deleteIO.transact(xa).unsafeToFuture) { _ =>
             complete(StatusCodes.NoContent)
           }
         }
