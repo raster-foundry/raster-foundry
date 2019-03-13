@@ -360,7 +360,8 @@ lazy val backsplashCore = Project("backsplash-core", file("backsplash-core"))
       "com.github.cb372" %% "scalacache-memcached" % "0.27.0" intransitive (),
       Dependencies.scalaCheck,
       Dependencies.elasticacheClient,
-      Dependencies.catsMeow
+      Dependencies.catsMeow,
+      Dependencies.geotrellisServerOgc
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
     addCompilerPlugin(
