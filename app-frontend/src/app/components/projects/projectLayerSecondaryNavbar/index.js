@@ -1,10 +1,7 @@
 import tpl from './index.html';
 
 class ProjectLayerSecondaryNavbarController {
-    constructor(
-        $rootScope, $state, $scope, $log,
-        modalService, projectService
-    ) {
+    constructor($rootScope, $state, $scope, $log, modalService, projectService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -28,20 +25,15 @@ class ProjectLayerSecondaryNavbarController {
             name: 'Publishing',
             title: 'publishing',
             menu: true,
-            callback: () => this.$state.go(
-                'project.settings.publishing',
-                { projectId: this.projectId }
-            )
+            callback: () =>
+                this.$state.go('project.settings.publishing', { projectId: this.projectId })
         };
 
         const layerSettings = {
             name: 'Layer settings',
             title: 'layer-settings',
             menu: true,
-            callback: () => this.$state.go(
-                'project.settings',
-                { projectId: this.projectId }
-            )
+            callback: () => this.$state.go('project.settings', { projectId: this.projectId })
         };
 
         const deleteLayer = {
@@ -54,18 +46,28 @@ class ProjectLayerSecondaryNavbarController {
         this.actions = [splitLayer, publishing, layerSettings, deleteLayer];
     }
 
-    openSplitLayerModal() {}
+    openSplitLayerModal() {
+        const modal = this.modalService.open({
+            component: 'rfLayerSplitModal',
+            resolve: {
+                projectId: () => this.projectId,
+                layerId: () => this.layerId
+            }
+        });
+
+        modal.result.then(() => this.fetchPage()).catch(() => {});
+    }
 
     openLayerDeleteModal() {
         const modal = this.modalService.open({
             component: 'rfFeedbackModal',
             resolve: {
-                title: () => 'Really delete this layer?',
+                title: () => 'Are you sure you want to delete this layer?',
                 subtitle: () => 'Deleting a layer cannot be undone',
                 content: () =>
-                    '<h2>Do you wish to continue?</h2>'
-                    + '<p>Future attempts to access this '
-                    + 'layer or associated annotations, tiles, and scenes will fail.',
+                    '<h2>Do you wish to continue?</h2>' +
+                    '<p>Future attempts to access this ' +
+                    'layer or associated annotations, tiles, and scenes will fail.',
                 feedbackIconType: () => 'danger',
                 feedbackIcon: () => 'icon-warning',
                 feedbackBtnType: () => 'btn-danger',
@@ -74,22 +76,26 @@ class ProjectLayerSecondaryNavbarController {
             }
         }).result;
 
-        modal.then(() => {
-            this.projectService
-                .deleteProjectLayer(this.projectId, this.layerId)
-                .then(() => {
-                    this.$state.go('project.layers', { projectId: this.projectId});
-                }).catch(e => {
-                    this.$window.alert('This layer cannot be deleted this time.');
-                    this.$log.error(e);
-                });
-        }).catch(() => {});
+        modal
+            .then(() => {
+                this.projectService
+                    .deleteProjectLayer(this.projectId, this.layerId)
+                    .then(() => {
+                        this.$state.go('project.layers', { projectId: this.projectId });
+                    })
+                    .catch(e => {
+                        this.$window.alert(
+                            'There was an error deleting this layer. Please try again later.'
+                        );
+                        this.$log.error(e);
+                    });
+            })
+            .catch(() => {});
     }
 }
 
 const component = {
-    bindings: {
-    },
+    bindings: {},
     templateUrl: tpl,
     controller: ProjectLayerSecondaryNavbarController.name
 };
@@ -97,5 +103,4 @@ const component = {
 export default angular
     .module('components.projects.projectLayerSecondaryNavbar', [])
     .controller(ProjectLayerSecondaryNavbarController.name, ProjectLayerSecondaryNavbarController)
-    .component('rfProjectLayerSecondaryNavbar', component)
-    .name;
+    .component('rfProjectLayerSecondaryNavbar', component).name;
