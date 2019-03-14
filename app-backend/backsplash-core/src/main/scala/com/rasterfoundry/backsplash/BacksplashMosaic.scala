@@ -1,5 +1,6 @@
 package com.rasterfoundry.backsplash
 
+import geotrellis.contrib.vlm.MosaicRasterSource
 import geotrellis.vector._
 import geotrellis.raster.histogram._
 import geotrellis.server._
@@ -13,6 +14,8 @@ import com.rasterfoundry.backsplash.error._
 import com.rasterfoundry.backsplash.HistogramStore.ToHistogramStoreOps
 
 object BacksplashMosaic extends ToHistogramStoreOps {
+
+  def toRasterSource(bsm: BacksplashMosaic): IO[MosaicRasterSource] = ???
 
   /** Filter out images that don't need to be included  */
   def filterRelevant(bsm: BacksplashMosaic): BacksplashMosaic = {

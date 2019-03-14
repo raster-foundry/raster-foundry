@@ -1,38 +1,38 @@
 package com.rasterfoundry.backsplash.implicits
 
-import com.rasterfoundry.backsplash.{OgcStore, ProjectStore}
-import com.rasterfoundry.database.ProjectDao
+import com.rasterfoundry.backsplash.{BacksplashMosaic, OgcStore, ProjectStore}
+import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
+import com.rasterfoundry.database.{ProjectDao, ProjectLayerDao}
 
-import cats.data.NonEmptyList
 import cats.effect.IO
+import cats.implicits._
 import doobie.Transactor
 import doobie.implicits._
-import geotrellis.server.ogc.conf._
+import geotrellis.server.ogc.{RasterSourcesModel, SimpleSource}
 
 import java.util.UUID
 
-class OgcImplicits[P: ProjectStore](xa: Transactor[IO]) {
-  // Question:
-  // I'm constructing an OgcSourceConf for a project
-  // Projects have layers
-  // layers have scenes
-  // I only get ONE RasterSourceConf for this OgcSourceConf
-  // How do I express the plurality? Where do the layers come in?
-  // It _seems_ like a RasterSourceConf <=> a layer
+class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
+    extends ToProjectStoreOps {
   implicit val projectOgcStore: OgcStore[ProjectDao] =
     new OgcStore[ProjectDao] {
-      def getConfig(self: ProjectDao, id: UUID): IO[OgcSourceConf] =
+      def getModel(self: ProjectDao, id: UUID): IO[RasterSourcesModel] =
         for {
-          project <- ProjectDao.unsafeGetProjectById(id).transact(xa)
-        } yield {
-          SimpleSourceConf(
-            project.name,
-            project.name,
-            Mosaic(
-              ??? : NonEmptyList[RasterSourceConf]
-            ),
-            Nil
-          )
-        }
+          projectLayers <- ProjectLayerDao
+            .listProjectLayersForProjectQ(id)
+            .list
+            .transact(xa)
+          sources <- projectLayers traverse { projectLayer =>
+            BacksplashMosaic.toRasterSource(
+              layers.read(projectLayer.id, None, None, None)) map {
+              SimpleSource(
+                projectLayer.id.toString,
+                projectLayer.name,
+                _,
+                Nil
+              )
+            }
+          }
+        } yield RasterSourcesModel(sources toSeq)
     }
 }
