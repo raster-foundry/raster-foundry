@@ -1,4 +1,4 @@
-package com.rasterfoundry.backsplash.implicits
+package com.rasterfoundry.backsplash.server
 
 import com.rasterfoundry.backsplash.{BacksplashMosaic, OgcStore, ProjectStore}
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
@@ -19,14 +19,13 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
       def getModel(self: ProjectDao, id: UUID): IO[RasterSourcesModel] =
         for {
           projectLayers <- ProjectLayerDao
-            .listProjectLayersForProjectQ(id)
-            .list
+            .listProjectLayersWithImagery(id)
             .transact(xa)
           sources <- projectLayers traverse { projectLayer =>
             BacksplashMosaic.toRasterSource(
               layers.read(projectLayer.id, None, None, None)) map {
               SimpleSource(
-                projectLayer.id.toString,
+                projectLayer.name,
                 projectLayer.name,
                 _,
                 Nil
