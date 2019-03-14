@@ -132,6 +132,12 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
     )
   )
 
+  val wmsService = authenticators.tokensAuthMiddleware(
+    AuthedAutoSlash(
+      new WmsService(ProjectDao()).routes
+    )
+  )
+
   val httpApp = errorHandling {
     Router(
       "/" -> ProjectToProjectLayerMiddleware(
@@ -140,6 +146,7 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
       "/scenes" -> withCORS(withTimeout(sceneMosaicService)),
       "/tools" -> withCORS(withTimeout(analysisService)),
       "/wcs" -> withCORS(withTimeout(wcsService)),
+      "/wms" -> withCORS(withTimeout(wmsService)),
       "/healthcheck" -> AutoSlash(new HealthcheckService(xa).routes)
     )
   }

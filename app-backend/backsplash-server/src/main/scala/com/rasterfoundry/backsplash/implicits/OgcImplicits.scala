@@ -9,6 +9,8 @@ import cats.implicits._
 import doobie.Transactor
 import doobie.implicits._
 import geotrellis.server.ogc.{RasterSourcesModel, SimpleSource}
+import geotrellis.server.ogc.wms.wmsScope
+import opengis.wms.{Name, OnlineResource, Service}
 
 import java.util.UUID
 
@@ -26,12 +28,31 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
               layers.read(projectLayer.id, None, None, None)) map {
               SimpleSource(
                 projectLayer.name,
-                projectLayer.name,
+                projectLayer.id.toString,
                 _,
                 Nil
               )
             }
           }
         } yield RasterSourcesModel(sources toSeq)
+
+      def getWmsServiceMetadata(self: ProjectDao, id: UUID): IO[Service] =
+        for {
+          project <- ProjectDao.unsafeGetProjectById(id).transact(xa)
+        } yield {
+          Service(
+            Name.fromString("WMS", wmsScope),
+            project.name,
+            None, // ???
+            None, // keyword list
+            OnlineResource(Map.empty), // online resource
+            None, // contact information
+            None, // ???
+            None, // ???
+            None, // ???
+            None, // ???
+            None // ???
+          )
+        }
     }
 }
