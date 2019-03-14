@@ -26,14 +26,13 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
     query.filter(projectLayerId).select
   }
 
+  def listProjectLayersForProjectQ(projectId: UUID) =
+    query.filter(fr"project_id = ${projectId}")
+
   def listProjectLayersForProject(
       page: PageRequest,
-      projectId: UUID): ConnectionIO[PaginatedResponse[ProjectLayer]] = {
-    query
-      .filter(fr"project_id = ${projectId}")
-      .page(page)
-
-  }
+      projectId: UUID): ConnectionIO[PaginatedResponse[ProjectLayer]] =
+    listProjectLayersForProjectQ(projectId).page(page)
 
   def insertProjectLayer(
       pl: ProjectLayer
