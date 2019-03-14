@@ -87,6 +87,9 @@ object ToolRunDao extends Dao[ToolRun] with ObjectPermissions[ToolRun] {
        """ ++ Fragments.whereAndOpt(Some(idFilter))).update.run
   }
 
+  def getToolRun(toolRunId: UUID): ConnectionIO[Option[ToolRun]] =
+    query.filter(toolRunId).selectOption
+
   def authQuery(user: User,
                 objectType: ObjectType,
                 ownershipTypeO: Option[String] = None,
