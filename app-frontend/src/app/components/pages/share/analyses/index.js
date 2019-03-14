@@ -1,6 +1,6 @@
 import tpl from './index.html';
 import _ from 'lodash';
-import { Set } from 'immutable';
+import { Map, Set } from 'immutable';
 
 class ShareProjectAnalysesController {
     constructor(
@@ -19,6 +19,8 @@ class ShareProjectAnalysesController {
     $onInit() {
         this.analysisActions = new Map();
         this.visible = new Set();
+        this.tileUrls = new Map();
+        this.copyTemplate = 'Copy tile URL';
         this.$q
             .all({
                 project: this.projectPromise,
@@ -54,7 +56,19 @@ class ShareProjectAnalysesController {
                 paginatedResponse => {
                     this.analysisList = paginatedResponse.results;
                     this.analysisActions = new Map(
-                        this.analysisList.map(l => this.createAnalysisActions(l))
+                        this.analysisList.map(a => this.createAnalysisActions(a))
+                    );
+                    this.tileUrls = new Map(
+                        this.analysisList.map(a => [
+                            a.id,
+                            this.analysisService.getAnalysisTileUrlForProject(
+                                this.project.id,
+                                a.id,
+                                {
+                                    mapToken: this.token
+                                }
+                            )
+                        ])
                     );
                     if (this.visible.size === 0 && this.analysisList.length) {
                         this.onVisibilityToggle(this.analysisList[0].id);
@@ -105,20 +119,9 @@ class ShareProjectAnalysesController {
             callback: () => this.viewAnalysisOnMap(analysis),
             menu: false
         };
-        const copyTileUrlAction = {
-            icon: 'icon-copy',
-            name: 'Copy Url',
-            tooltip: 'Copy Tile Url',
-            callback: () => this.copyUrl(analysis),
-            menu: false
-        };
         return [
             analysis.id,
-            [
-                previewAction,
-                ...(_.get(analysis, 'geometry.type') ? [goToAnalysisAction] : []),
-                copyTileUrlAction
-            ]
+            [previewAction, ...(_.get(analysis, 'layerGeometry.type') ? [goToAnalysisAction] : [])]
         ];
     }
 
@@ -149,17 +152,19 @@ class ShareProjectAnalysesController {
 
     viewAnalysisOnMap(analysis) {
         this.getMap().then(map => {
-            // TODO get geometry from mask
-            console.log('TODO: get analysis geometry and zoom to it');
-            let bounds = L.geoJSON(analysis.geometry).getBounds();
+            let bounds = L.geoJSON(analysis.layerGeometry).getBounds();
             map.map.fitBounds(bounds);
             this.visible = new Set([analysis.id]);
             this.syncMapLayersToVisible();
         });
     }
 
-    copyTileUrl(analysis) {
-        // TODO: Implement
+    onCopied() {
+        this.$log.log('Url copied');
+        this.copyTemplate = 'Copied';
+        this.$timeout(() => {
+            this.copyTemplate = 'Copy tile URL';
+        }, 1500);
     }
 }
 
