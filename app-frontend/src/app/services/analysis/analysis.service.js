@@ -384,6 +384,7 @@ export default (app) => {
             ), (i) => !i));
             return `${this.tileServer}/tools/${analysisId}/{z}/{x}/{y}/${formattedParams}`;
         }
+
         getAnalysisTileUrlForProject(projectId, analysisId, params) {
             const token = this.authService.token();
             const formattedParams = L.Util.getParamString(_.omitBy(Object.assign(
@@ -392,7 +393,8 @@ export default (app) => {
                     tag: new Date().getTime()
                 }, params
             ), (i) => !i));
-            return `${this.tileServer}/${projectId}/analyses/${analysisId}/{z}/{x}/{y}/${formattedParams}`;
+            return `${this.tileServer}/${projectId}/analyses/${
+                analysisId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
         transformWmPointToLatLngArray(wmPoint) {
