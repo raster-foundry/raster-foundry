@@ -3,8 +3,8 @@ package com.rasterfoundry.api.toolrun
 import com.rasterfoundry.akkautil._
 import com.rasterfoundry.common.datamodel._
 import com.rasterfoundry.database.filter.Filterables._
-import com.rasterfoundry.database.ToolRunDao
-
+import com.rasterfoundry.database.{ToolRunDao, UserDao}
+import com.rasterfoundry.api.project.ProjectAuthorizationDirectives
 import com.lonelyplanet.akka.http.extensions.PaginationDirectives
 import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
 import akka.http.scaladsl.model.StatusCodes
@@ -14,13 +14,14 @@ import cats.effect.IO
 import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
-
 import java.util.UUID
 
 trait ToolRunRoutes
     extends Authentication
     with PaginationDirectives
     with ToolRunQueryParametersDirective
+    with ToolRunAuthorizationDirective
+    with ProjectAuthorizationDirectives
     with CommonHandlers
     with UserErrorHandler {
 
@@ -63,36 +64,70 @@ trait ToolRunRoutes
       }
   }
 
-  def listToolRuns: Route = authenticate { user =>
-    (withPagination & toolRunQueryParameters) { (page, runParams) =>
-      complete {
-        runParams.toolRunParams.projectId match {
-          case Some(projectId) =>
-            ToolRunDao
-              .listAnalysesWithRelated(
-                Some(user),
-                page,
-                projectId,
-                runParams.ownershipTypeParams.ownershipType,
-                runParams.groupQueryParameters.groupType,
-                runParams.groupQueryParameters.groupId
-              )
-              .transact(xa)
-              .unsafeToFuture
-          case _ =>
-            ToolRunDao
-              .authQuery(user,
-                         ObjectType.Analysis,
-                         runParams.ownershipTypeParams.ownershipType,
-                         runParams.groupQueryParameters.groupType,
-                         runParams.groupQueryParameters.groupId)
-              .filter(runParams)
-              .page(page)
-              .transact(xa)
-              .unsafeToFuture
-        }
+  // This could probably be written cleaner, but I just want to get things working so I can work on the primary task
+  // of getting the share page working correctly
+  def listToolRuns: Route = (withPagination & toolRunQueryParameters) {
+    (page, runParams) =>
+      runParams.toolRunParams.projectId match {
+        case Some(projectId) =>
+          (extractTokenHeader & extractMapTokenParam) { (tokenO, mapTokenO) =>
+            (
+              toolRunAuthProjectFromMapTokenO(mapTokenO, projectId) |
+                projectAuthFromTokenO(tokenO, projectId)
+            ) {
+              complete {
+                val userOQuery
+                  : Option[doobie.ConnectionIO[User]] = tokenO flatMap {
+                  token: String =>
+                    verifyJWT(token.split(" ").last).toOption
+                } map {
+                  case (_, jwtClaims) =>
+                    val userId = jwtClaims.getStringClaim("sub")
+                    UserDao.unsafeGetUserById(userId)
+                }
+                val analysesQuery = userOQuery match {
+                  case Some(userQ) =>
+                    userQ.flatMap(
+                      user =>
+                        ToolRunDao.listAnalysesWithRelated(
+                          Some(user),
+                          page,
+                          projectId,
+                          runParams.ownershipTypeParams.ownershipType,
+                          runParams.groupQueryParameters.groupType,
+                          runParams.groupQueryParameters.groupId
+                      ))
+                  case _ =>
+                    ToolRunDao.listAnalysesWithRelated(
+                      None,
+                      page,
+                      projectId,
+                      None,
+                      None,
+                      None
+                    )
+                }
+                analysesQuery.transact(xa).unsafeToFuture
+              }
+            }
+          }
+        case _ =>
+          authenticate { user =>
+            complete {
+              ToolRunDao
+                .authQuery(user,
+                           ObjectType.Analysis,
+                           runParams.ownershipTypeParams.ownershipType,
+                           runParams.groupQueryParameters.groupType,
+                           runParams.groupQueryParameters.groupId)
+                .filter(runParams)
+                .page(page)
+                .transact(xa)
+                .unsafeToFuture
+
+            }
+          }
       }
-    }
   }
 
   def createToolRun: Route = authenticate { user =>

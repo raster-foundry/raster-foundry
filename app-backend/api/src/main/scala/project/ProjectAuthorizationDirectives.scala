@@ -1,7 +1,7 @@
 package com.rasterfoundry.api.project
 
 import com.rasterfoundry.akkautil.Authentication
-import com.rasterfoundry.database.{ProjectDao, UserDao, MapTokenDao}
+import com.rasterfoundry.database.{ProjectDao, ToolRunDao, UserDao, MapTokenDao}
 import com.rasterfoundry.common.datamodel._
 
 import cats.effect.IO
@@ -9,6 +9,7 @@ import cats.implicits._
 import akka.http.scaladsl.server._
 import doobie.Transactor
 import doobie.implicits._
+import doobie.ConnectionIO
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -47,7 +48,8 @@ trait ProjectAuthorizationDirectives extends Authentication with Directives {
   }
 
   def projectAuthFromTokenO(tokenO: Option[String],
-                            projectId: UUID): Directive0 = {
+                            projectId: UUID,
+                            analysisId: Option[UUID] = None): Directive0 = {
     authorizeAsync {
       tokenO map { token =>
         verifyJWT(token.split(" ").last) traverse {
@@ -59,7 +61,12 @@ trait ProjectAuthorizationDirectives extends Authentication with Directives {
                                                    ObjectType.Project,
                                                    projectId,
                                                    ActionType.View)
-            } yield projectAuth
+              authResult <- (projectAuth, analysisId) match {
+                case (false, Some(id: UUID)) =>
+                  ToolRunDao.authorizeReferencedProject(user, id, projectId)
+                case (_, _) => projectAuth.pure[ConnectionIO]
+              }
+            } yield authResult
         } map {
           case Right(result) => result
           case Left(_)       => false
@@ -67,5 +74,4 @@ trait ProjectAuthorizationDirectives extends Authentication with Directives {
       } getOrElse { Future.successful(false) }
     }
   }
-
 }
