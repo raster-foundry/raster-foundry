@@ -11,6 +11,15 @@
         <item-actions>
             <rf-list-item-actions actions="$ctrl.analysisActions.get(analysis.id)">
             </rf-list-item-actions>
+            <div
+                class="btn btn-text btn-transparent"
+                clipboard
+                text="$ctrl.tileUrls.get(analysis.id)"
+                ng-attr-title="{{$ctrl.tileUrls.get(analysis.id)}}"
+                ng-click="$ctrl.onCopied()"
+            >
+                <i class="icon-copy"></i>
+            </div>
         </item-actions>
         <item-statistics>
             <rf-layer-stats scene-count="$ctrl.getSceneCount(analysis.id)"> </rf-layer-stats>

@@ -4,7 +4,7 @@ import _ from 'lodash';
 import L from 'leaflet';
 
 class ShareProjectLayersController {
-    constructor($rootScope, $state, $q, mapService, projectService, paginationService) {
+    constructor($rootScope, $state, $q, $timeout, mapService, projectService, paginationService) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -12,6 +12,8 @@ class ShareProjectLayersController {
         this.layerList = [];
         this.layerActions = new Map();
         this.visible = new Set();
+        this.layerUrls = new Map();
+        this.copyTemplate = 'Copy tile URL';
         this.$q
             .all({
                 project: this.projectPromise,
@@ -49,6 +51,15 @@ class ShareProjectLayersController {
                     this.layerList = paginatedResponse.results;
                     this.layerActions = new Map(
                         this.layerList.map(l => this.createLayerActions(l))
+                    );
+                    // TODO
+                    this.layerUrls = new Map(
+                        this.layerList.map(l => [
+                            l.id,
+                            this.projectService.mapLayerFromLayer(this.project, l, {
+                                mapToken: this.token
+                            })
+                        ])
                     );
                     this.pagination = this.paginationService.buildPagination(paginatedResponse);
                     this.paginationService.updatePageParam(page);
@@ -96,20 +107,9 @@ class ShareProjectLayersController {
             callback: () => this.viewLayerOnMap(layer),
             menu: false
         };
-        const copyTileUrlAction = {
-            icon: 'icon-copy',
-            name: 'Copy Url',
-            tooltip: 'Copy Tile Url',
-            callback: () => this.copyUrl(layer),
-            menu: false
-        };
         return [
             layer.id,
-            [
-                previewAction,
-                ...(_.get(layer, 'geometry.type') ? [goToLayerAction] : []),
-                copyTileUrlAction
-            ]
+            [previewAction, ...(_.get(layer, 'geometry.type') ? [goToLayerAction] : [])]
         ];
     }
 
@@ -142,8 +142,11 @@ class ShareProjectLayersController {
         });
     }
 
-    copyTileUrl(layer) {
-        // TODO: Implement
+    onCopied() {
+        this.copyTemplate = 'Copied';
+        this.$timeout(() => {
+            this.copyTemplate = 'Copy tile URL';
+        }, 1500);
     }
 }
 
