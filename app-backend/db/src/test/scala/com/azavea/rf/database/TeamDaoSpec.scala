@@ -26,13 +26,14 @@ class TeamDaoSpec
       forAll(
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          teamCreate: Team.Create) => {
           val createTeamIO = for {
-            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
-            (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.create(
-              fixupTeam(teamCreate, orgInsert, userInsert))
-          } yield (teamInsert, orgInsert)
+            (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
+                                                        orgCreate,
+                                                        platform)
+            teamInsert <- TeamDao.create(fixupTeam(teamCreate, dbOrg, dbUser))
+          } yield (teamInsert, dbOrg)
 
           val getTeamAndOrgIO = createTeamIO flatMap {
             case (team: Team, org: Organization) => {
@@ -58,13 +59,14 @@ class TeamDaoSpec
       forAll(
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          teamCreate: Team.Create) => {
           val createTeamIO = for {
-            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
-            (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.create(
-              fixupTeam(teamCreate, orgInsert, userInsert))
-          } yield (teamInsert, orgInsert)
+            (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
+                                                        orgCreate,
+                                                        platform)
+            teamInsert <- TeamDao.create(fixupTeam(teamCreate, dbOrg, dbUser))
+          } yield (teamInsert, dbOrg)
 
           val getTeamAndOrgIO = createTeamIO flatMap {
             case (team: Team, org: Organization) => {
@@ -89,13 +91,14 @@ class TeamDaoSpec
       forAll(
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          teamCreate: Team.Create) => {
           val createTeamIO = for {
-            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
-            (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.create(
-              fixupTeam(teamCreate, orgInsert, userInsert))
-          } yield (teamInsert, orgInsert)
+            (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
+                                                        orgCreate,
+                                                        platform)
+            teamInsert <- TeamDao.create(fixupTeam(teamCreate, dbOrg, dbUser))
+          } yield (teamInsert, dbOrg)
 
           val (createdTeam, org) =
             xa.use(t => createTeamIO.transact(t)).unsafeRunSync
@@ -114,20 +117,20 @@ class TeamDaoSpec
       forAll(
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          teamCreate: Team.Create) => {
           val createTeamIO = for {
-            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
-            (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.createWithRole(fixupTeam(teamCreate,
-                                                           orgInsert,
-                                                           userInsert),
-                                                 userInsert)
+            (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
+                                                        orgCreate,
+                                                        platform)
+            teamInsert <- TeamDao
+              .createWithRole(fixupTeam(teamCreate, dbOrg, dbUser), dbUser)
             users <- TeamDao.listMembers(teamInsert.id,
                                          PageRequest(0, 30, Map.empty),
                                          SearchQueryParameters(),
-                                         userInsert)
-            isAdmin <- TeamDao.userIsAdmin(userInsert, teamInsert.id)
-          } yield (teamInsert, orgInsert, users, isAdmin)
+                                         dbUser)
+            isAdmin <- TeamDao.userIsAdmin(dbUser, teamInsert.id)
+          } yield (teamInsert, dbOrg, users, isAdmin)
 
           val (createdTeam, org, teamusers, isAdmin) =
             xa.use(t => createTeamIO.transact(t)).unsafeRunSync
@@ -147,14 +150,15 @@ class TeamDaoSpec
       forAll(
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          teamCreate: Team.Create,
          teamUpdate: Team.Create) => {
           val createTeamIO = for {
-            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
-            (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.create(
-              fixupTeam(teamCreate, orgInsert, userInsert))
-          } yield (teamInsert, orgInsert, userInsert)
+            (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
+                                                        orgCreate,
+                                                        platform)
+            teamInsert <- TeamDao.create(fixupTeam(teamCreate, dbOrg, dbUser))
+          } yield (teamInsert, dbOrg, dbUser)
 
           val updateTeamIO = createTeamIO flatMap {
             case (team: Team, org: Organization, user: User) => {
@@ -185,12 +189,13 @@ class TeamDaoSpec
       forAll(
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          teamCreate: Team.Create) => {
           val createTeamIO = for {
-            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
-            (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.create(
-              fixupTeam(teamCreate, orgInsert, userInsert))
+            (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
+                                                        orgCreate,
+                                                        platform)
+            teamInsert <- TeamDao.create(fixupTeam(teamCreate, dbOrg, dbUser))
           } yield teamInsert
 
           val deleteTeamIO = createTeamIO flatMap {
@@ -209,15 +214,16 @@ class TeamDaoSpec
       forAll(
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          teamCreate: Team.Create,
          acr: ObjectAccessControlRule,
          project: Project.Create) => {
           val createTeamIO = for {
-            orgAndUserInsert <- insertUserAndOrg(userCreate, orgCreate)
-            (orgInsert, userInsert) = orgAndUserInsert
-            teamInsert <- TeamDao.create(
-              fixupTeam(teamCreate, orgInsert, userInsert))
-            insertedProject <- ProjectDao.insertProject(project, userInsert)
+            (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
+                                                        orgCreate,
+                                                        platform)
+            teamInsert <- TeamDao.create(fixupTeam(teamCreate, dbOrg, dbUser))
+            insertedProject <- ProjectDao.insertProject(project, dbUser)
             acrToInsert = acr.copy(subjectType = SubjectType.Team,
                                    subjectId = Some(teamInsert.id.toString()))
             _ <- ProjectDao.addPermission(insertedProject.id, acrToInsert)
@@ -226,9 +232,9 @@ class TeamDaoSpec
               insertedProject.id)
             deactivatedTeams <- TeamDao.query
               .filter(fr"is_active = false")
-              .filter(fr"modified_by=${userInsert.id}")
+              .filter(fr"modified_by=${dbUser.id}")
               .list
-            activatedTeams <- TeamDao.listOrgTeams(orgInsert.id,
+            activatedTeams <- TeamDao.listOrgTeams(dbOrg.id,
                                                    PageRequest(0,
                                                                30,
                                                                Map.empty),
@@ -262,15 +268,18 @@ class TeamDaoSpec
         (
             userCreate: User.Create,
             orgCreate: Organization.Create,
+            platform: Platform,
             teamCreate: Team.Create,
             userRole: GroupRole
         ) =>
           {
             val addUserTeamRoleIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-              (org, dbUser) = orgAndUser
-              insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
-              insertedUserGroupRole <- TeamDao.addUserRole(org.platformId,
+              (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
+                                                          orgCreate,
+                                                          platform)
+              insertedTeam <- TeamDao.create(
+                fixupTeam(teamCreate, dbOrg, dbUser))
+              insertedUserGroupRole <- TeamDao.addUserRole(dbOrg.platformId,
                                                            dbUser,
                                                            dbUser.id,
                                                            insertedTeam.id,
@@ -304,15 +313,18 @@ class TeamDaoSpec
         (
             userCreate: User.Create,
             orgCreate: Organization.Create,
+            platform: Platform,
             teamCreate: Team.Create,
             userRole: GroupRole
         ) =>
           {
             val setTeamRoleIO = for {
-              orgAndUser <- insertUserAndOrg(userCreate, orgCreate)
-              (org, dbUser) = orgAndUser
-              insertedTeam <- TeamDao.create(fixupTeam(teamCreate, org, dbUser))
-              originalUserGroupRole <- TeamDao.addUserRole(org.platformId,
+              (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
+                                                          orgCreate,
+                                                          platform)
+              insertedTeam <- TeamDao.create(
+                fixupTeam(teamCreate, dbOrg, dbUser))
+              originalUserGroupRole <- TeamDao.addUserRole(dbOrg.platformId,
                                                            dbUser,
                                                            dbUser.id,
                                                            insertedTeam.id,
@@ -347,10 +359,9 @@ class TeamDaoSpec
           {
             val groupRole = GroupRole.Member
             val teamsForUserIO = for {
-              userOrgPlatform <- insertUserOrgPlatform(userCreate,
-                                                       orgCreate,
-                                                       platform)
-              (dbUser, dbOrg, _) = userOrgPlatform
+              (dbUser, dbOrg, _) <- insertUserOrgPlatform(userCreate,
+                                                          orgCreate,
+                                                          platform)
               team1 <- TeamDao.create(fixupTeam(teamCreate1, dbOrg, dbUser))
               team2 <- TeamDao.create(fixupTeam(teamCreate2, dbOrg, dbUser))
               _ <- UserGroupRoleDao.create(

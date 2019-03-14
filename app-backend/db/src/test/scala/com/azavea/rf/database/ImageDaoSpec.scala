@@ -23,10 +23,11 @@ class ImageDaoSpec
       forAll(
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          scene: Scene.Create,
          image: Image.Banded) => {
           val sceneInsertIO = for {
-            (_, insertedUser) <- insertUserAndOrg(user, org)
+            (insertedUser, _, _) <- insertUserOrgPlatform(user, org, platform)
             datasource <- unsafeGetRandomDatasource
             insertedScene <- SceneDao.insert(
               fixupSceneCreate(insertedUser, datasource, scene),
@@ -60,11 +61,12 @@ class ImageDaoSpec
       forAll(
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          scene: Scene.Create,
          imageBanded: Image.Banded,
          imageUpdate: Image) => {
           val sceneInsertIO = for {
-            (_, insertedUser) <- insertUserAndOrg(user, org)
+            (insertedUser, _, _) <- insertUserOrgPlatform(user, org, platform)
             datasource <- unsafeGetRandomDatasource
             insertedScene <- SceneDao.insert(
               fixupSceneCreate(insertedUser, datasource, scene),

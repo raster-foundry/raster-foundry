@@ -23,10 +23,13 @@ class SceneDaoSpec
   test("insert a scene") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, scene: Scene.Create) =>
+        (user: User.Create,
+         org: Organization.Create,
+         platform: Platform,
+         scene: Scene.Create) =>
           {
             val sceneInsertIO = for {
-              (_, dbUser) <- insertUserAndOrg(user, org)
+              (dbUser, _, _) <- insertUserOrgPlatform(user, org, platform)
               datasource <- unsafeGetRandomDatasource
               fixedUpSceneCreate = fixupSceneCreate(dbUser, datasource, scene)
               sceneInsert <- SceneDao.insert(fixedUpSceneCreate, dbUser)
@@ -68,10 +71,13 @@ class SceneDaoSpec
   test("maybe insert a scene") {
     check {
       forAll {
-        (user: User.Create, org: Organization.Create, scene: Scene.Create) =>
+        (user: User.Create,
+         org: Organization.Create,
+         platform: Platform,
+         scene: Scene.Create) =>
           {
             val sceneInsertIO = for {
-              (_, dbUser) <- insertUserAndOrg(user, org)
+              (dbUser, _, _) <- insertUserOrgPlatform(user, org, platform)
               datasource <- unsafeGetRandomDatasource
               fixedUpSceneCreate = fixupSceneCreate(dbUser, datasource, scene)
               sceneInsert <- SceneDao.insertMaybe(fixedUpSceneCreate, dbUser)
@@ -118,11 +124,12 @@ class SceneDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          insertScene: Scene.Create,
          updateScene: Scene.Create) =>
           {
             val sceneUpdateIO = for {
-              (_, dbUser) <- insertUserAndOrg(user, org)
+              (dbUser, _, _) <- insertUserOrgPlatform(user, org, platform)
               datasource <- unsafeGetRandomDatasource
               fixedUpSceneCreate = fixupSceneCreate(dbUser,
                                                     datasource,

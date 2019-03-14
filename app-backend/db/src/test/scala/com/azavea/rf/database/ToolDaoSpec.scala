@@ -27,10 +27,13 @@ class ToolDaoSpec
       forAll {
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          toolCreates: List[Tool.Create]) =>
           {
             val toolListIO = for {
-              (_, dbUser) <- insertUserAndOrg(userCreate, orgCreate)
+              (dbUser, _, _) <- insertUserOrgPlatform(userCreate,
+                                                      orgCreate,
+                                                      platform)
               dbTools <- toolCreates traverse { toolCreate =>
                 ToolDao.insert(toolCreate, dbUser)
               }
@@ -48,9 +51,9 @@ class ToolDaoSpec
                    "all of the tools were inserted into the db")
             assert(inserted.length == listed.length,
                    "counts of inserted and listed tools match")
-            assert(Set(toolCreates map { _.title }) == Set(listed map {
+            assert(Set(toolCreates map { _.title }: _*) == Set(listed map {
               _.title
-            }), "titles of listed tools are the same as the Tool.Creates")
+            }: _*), "titles of listed tools are the same as the Tool.Creates")
             true
           }
       }
@@ -62,11 +65,14 @@ class ToolDaoSpec
       forAll {
         (userCreate: User.Create,
          orgCreate: Organization.Create,
+         platform: Platform,
          toolCreate1: Tool.Create,
          toolCreate2: Tool.Create) =>
           {
             val updateIO = for {
-              (_, dbUser) <- insertUserAndOrg(userCreate, orgCreate)
+              (dbUser, _, _) <- insertUserOrgPlatform(userCreate,
+                                                      orgCreate,
+                                                      platform)
               dbTool1 <- ToolDao.insert(toolCreate1, dbUser)
               dbTool2 <- ToolDao.insert(toolCreate1, dbUser)
               _ <- ToolDao.update(dbTool2, dbTool1.id, dbUser)

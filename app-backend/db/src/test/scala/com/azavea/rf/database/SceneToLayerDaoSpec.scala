@@ -25,6 +25,7 @@ class SceneToLayerDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          scenes: List[Scene.Create],
          dsCreate: Datasource.Create,
@@ -32,8 +33,10 @@ class SceneToLayerDaoSpec
          csq: CombinedSceneQueryParams) =>
           {
             val acceptedSceneAndStlIO = for {
-              orgUserProject <- insertUserOrgProject(user, org, project)
-              (_, dbUser, dbProject) = orgUserProject
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               datasource <- DatasourceDao.create(dsCreate.toDatasource(dbUser),
                                                  dbUser)
               scenesInsert <- (scenes map {
@@ -68,6 +71,7 @@ class SceneToLayerDaoSpec
       forAll {
         (user: User.Create,
          org: Organization.Create,
+         platform: Platform,
          project: Project.Create,
          scenes: List[Scene.Create],
          dsCreate: Datasource.Create,
@@ -75,7 +79,10 @@ class SceneToLayerDaoSpec
          csq: CombinedSceneQueryParams) =>
           {
             val mdAndStpsIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(user, org, project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(user,
+                                                                    org,
+                                                                    platform,
+                                                                    project)
               datasource <- DatasourceDao.create(dsCreate.toDatasource(dbUser),
                                                  dbUser)
               scenesInsert <- (scenes map {

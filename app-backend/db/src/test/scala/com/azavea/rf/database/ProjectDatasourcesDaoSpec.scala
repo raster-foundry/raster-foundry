@@ -18,9 +18,7 @@ class ProjectDatasourcesDaoSpec
   test("list datasources for a project") {
     check {
       forAll {
-        (userCreate: User.Create,
-         orgCreate: Organization.Create,
-         project: Project.Create,
+        (baseData: (User.Create, Organization.Create, Platform, Project.Create),
          dsCreate1: Datasource.Create,
          dsCreate2: Datasource.Create,
          dsCreate3: Datasource.Create,
@@ -38,10 +36,13 @@ class ProjectDatasourcesDaoSpec
             }
             val expected = expected1 + expected2
 
+            val (userCreate, orgCreate, platform, project) = baseData
+
             val createDsIO = for {
-              (_, dbUser, dbProject) <- insertUserOrgProject(userCreate,
-                                                             orgCreate,
-                                                             project)
+              (dbUser, _, _, dbProject) <- insertUserOrgPlatProject(userCreate,
+                                                                    orgCreate,
+                                                                    platform,
+                                                                    project)
               dsInsert1 <- fixupDatasource(dsCreate1, dbUser)
               dsInsert2 <- fixupDatasource(dsCreate2, dbUser)
               dsInsert3 <- fixupDatasource(dsCreate3, dbUser)
