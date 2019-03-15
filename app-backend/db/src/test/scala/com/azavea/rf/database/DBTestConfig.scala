@@ -1,6 +1,7 @@
 package com.rasterfoundry.database
 
 import com.rasterfoundry.database.Implicits._
+import com.rasterfoundry.database.util.RFTransactor
 
 import doobie._
 import doobie.implicits._
@@ -15,39 +16,14 @@ import scala.concurrent.ExecutionContext
 
 trait DBTestConfig {
 
-  val connectExecutorService = Executors.newFixedThreadPool(1)
-  val transactExecutorService = Executors.newFixedThreadPool(1)
-  val connectEc = ExecutionContext.fromExecutorService(
-    connectExecutorService,
-    ExecutionContext.defaultReporter)
-  val transactEc = ExecutionContext.fromExecutorService(
-    transactExecutorService,
-    ExecutionContext.defaultReporter
-  )
-
-  implicit val cs: ContextShift[IO] =
-    IO.contextShift(transactEc)
-
   val xa =
-    HikariTransactor.newHikariTransactor[IO](
-      "org.postgresql.Driver",
-      "jdbc:postgresql://database.service.rasterfoundry.internal/",
-      "rasterfoundry",
-      "rasterfoundry",
-      connectEc,
-      transactEc
-    ) map { Transactor.after.set(_, HC.rollback) }
-
-  val defaultPlatformId =
-    UUID.fromString("31277626-968b-4e40-840b-559d9c67863c")
+    RFTransactor.xaResource map { Transactor.after.set(_, HC.rollback) }
 
   val defaultUserQ = UserDao.unsafeGetUserById("default")
   val rootOrgQ = OrganizationDao.query
     .filter(UUID.fromString("9e2bef18-3f46-426b-a5bd-9913ee1ff840"))
     .selectQ
     .unique
-  val defaultPlatformQ =
-    PlatformDao.query.filter(defaultPlatformId).selectQ.unique
   val changeDetectionProjQ = ProjectDao.query
     .filter(fr"id = ${UUID.fromString("30fd336a-d360-4c9f-9f99-bb7ac4b372c4")}")
     .selectQ
