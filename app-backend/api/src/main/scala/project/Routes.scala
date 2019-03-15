@@ -677,8 +677,6 @@ trait ProjectRoutes
         complete {
           val acceptSceneIO = for {
             project <- ProjectDao.unsafeGetProjectById(projectId)
-            defaultLayer <- ProjectLayerDao.unsafeGetProjectLayerById(
-              project.defaultLayerId)
             rowsAffected <- SceneToLayerDao.acceptScene(project.defaultLayerId,
                                                         sceneId)
           } yield { rowsAffected }
