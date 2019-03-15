@@ -5,14 +5,10 @@ import com.rasterfoundry.database.util.RFTransactor
 
 import doobie._
 import doobie.implicits._
-import doobie.hikari._
 import doobie.postgres.implicits._
-import cats.effect._
 import cats.implicits._
 
 import java.util.UUID
-import java.util.concurrent._
-import scala.concurrent.ExecutionContext
 
 trait DBTestConfig {
 
