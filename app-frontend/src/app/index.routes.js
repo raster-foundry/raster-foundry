@@ -132,13 +132,19 @@ function shareStatesV2($stateProvider) {
         })
         .state('shareProject.layers', {
             title: 'Share Layers',
-            url: '/layers',
+            url: '/layers?page',
+            params: {
+                page: { dynamic: true }
+            },
             component: 'rfShareProjectLayersPage',
             bypassAuth: true
         })
         .state('shareProject.analyses', {
             title: 'Share Analyses',
-            url: '/analyses',
+            url: '/analyses?page',
+            params: {
+                page: { dynamic: true }
+            },
             component: 'rfShareProjectAnalysesPage',
             bypassAuth: true
         });

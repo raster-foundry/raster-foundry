@@ -47,7 +47,7 @@ class ShareProjectAnalysesController {
         this.analysisList = [];
         const currentQuery = this.analysisService
             .fetchAnalyses({
-                pageSize: 30,
+                pageSize: 10,
                 page: page - 1,
                 mapToken: this.token,
                 projectId: this.project.id
@@ -119,9 +119,20 @@ class ShareProjectAnalysesController {
             callback: () => this.viewAnalysisOnMap(analysis),
             menu: false
         };
+        const disabledGoToAction = {
+            icon: 'icon-map color-light',
+            name: 'View on map',
+            tooltip: 'Analysis does not have an area defined to go to',
+            menu: false
+        };
         return [
             analysis.id,
-            [previewAction, ...(_.get(analysis, 'layerGeometry.type') ? [goToAnalysisAction] : [])]
+            [
+                previewAction,
+                ...(_.get(analysis, 'layerGeometry.type')
+                    ? [goToAnalysisAction]
+                    : [disabledGoToAction])
+            ]
         ];
     }
 
