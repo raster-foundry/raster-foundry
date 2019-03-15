@@ -42,7 +42,7 @@ class ShareProjectLayersController {
         this.layerList = [];
         const currentQuery = this.projectService
             .getProjectLayers(this.project.id, {
-                pageSize: 30,
+                pageSize: 10,
                 page: page - 1,
                 mapToken: this.token
             })
@@ -52,7 +52,6 @@ class ShareProjectLayersController {
                     this.layerActions = new Map(
                         this.layerList.map(l => this.createLayerActions(l))
                     );
-                    // TODO
                     this.layerUrls = new Map(
                         this.layerList.map(l => [
                             l.id,
@@ -107,9 +106,18 @@ class ShareProjectLayersController {
             callback: () => this.viewLayerOnMap(layer),
             menu: false
         };
+        const disabledGoToAction = {
+            icon: 'icon-map color-light',
+            name: 'View on map',
+            tooltip: 'Layer does not have an area defined to go to',
+            menu: false
+        };
         return [
             layer.id,
-            [previewAction, ...(_.get(layer, 'geometry.type') ? [goToLayerAction] : [])]
+            [
+                previewAction,
+                ...(_.get(layer, 'geometry.type') ? [goToLayerAction] : [disabledGoToAction])
+            ]
         ];
     }
 

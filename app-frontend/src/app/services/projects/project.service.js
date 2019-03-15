@@ -429,7 +429,7 @@ export default app => {
             throw new Error(
                 'ERROR: Update project.service getProjectCorners to use the ' +
                     'project extent. This function was not updated because ' +
-                    'we don\'t seem to use it anywhere right now.'
+                    "we don't seem to use it anywhere right now."
             );
             // return this.fetchProject(id).then(({project}) => {
 
@@ -478,22 +478,6 @@ export default app => {
         }
 
         getProjectLayerScenes(projectId, layerId, params = {}) {
-            return this.Project.layerScenes(
-                Object.assign(
-                    {},
-                    {
-                        projectId,
-                        layerId,
-                        pending: false,
-                        page: 0,
-                        pageSize: 30
-                    },
-                    params
-                )
-            ).$promise;
-        }
-
-        getProjectAanalyses(projectId, layerId, params = {}) {
             return this.Project.layerScenes(
                 Object.assign(
                     {},
@@ -635,19 +619,36 @@ export default app => {
             let projectId = typeof project === 'object' ? project.id : project;
             let formattedParams = L.Util.getParamString(
                 _.omitBy(
-                    Object.assign({
-                        tag: new Date().getTime()
-                    }, params), (i) => !i)
+                    Object.assign(
+                        {
+                            tag: new Date().getTime(),
+                            token: params.mapToken ? null : this.authService.token()
+                        },
+                        params
+                    ),
+                    i => !i
+                )
             );
             return `${this.tileServer}/${projectId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
-        getProjectLayerTileUrl(project, layer, params = {}, tag = new Date().getTime()) {
+        getProjectLayerTileUrl(project, layer, params = {}) {
             let projectId = typeof project === 'object' ? project.id : project;
             let layerId = typeof layer === 'object' ? layer.id : layer;
+
+            let defaultedParams = _.omitBy(
+                Object.assign(
+                    {},
+                    {
+                        tag: new Date().valueOf(),
+                        token: this.authService.token()
+                    },
+                    params
+                ),
+                p => !p
+            );
             let formattedParams = L.Util.getParamString({
-                tag,
-                ...params
+                ...defaultedParams
             });
 
             return (
@@ -841,15 +842,7 @@ export default app => {
             return this.Project.updateLayer(params).$promise;
         }
 
-        mapLayerFromLayer(
-            project,
-            layer,
-            params
-        ) {
-            let defaultedParms = _.omitBy(Object.assign({}, {
-                tag: new Date().valueOf(),
-                token: this.authService.token()
-            }, params), p => !p);
+        mapLayerFromLayer(project, layer, params) {
             let url = this.getProjectLayerTileUrl(project, layer, params);
             let mapLayer = L.tileLayer(url, {
                 maxZoom: 30

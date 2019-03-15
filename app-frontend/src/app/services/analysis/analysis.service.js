@@ -389,7 +389,7 @@ export default (app) => {
             const token = this.authService.token();
             const formattedParams = L.Util.getParamString(_.omitBy(Object.assign(
                 {
-                    token: this.authService.token(),
+                    token: params.mapToken ? null : this.authService.token(),
                     tag: new Date().getTime()
                 }, params
             ), (i) => !i));
