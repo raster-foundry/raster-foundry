@@ -41,6 +41,7 @@
 - Bumped Nginx buffer size for scene creation requests [\#4672](https://github.com/raster-foundry/raster-foundry/pull/4672)
 - Use layer geometry to add a mask when creating analyses [\#4694](https://github.com/raster-foundry/raster-foundry/pull/4694)
 - Made tools reference licenses by id [\#4701](https://github.com/raster-foundry/raster-foundry/pull/4701)
+- Enabled inserting annotations in bulk in one `INSERT INTO` command [\#4777](https://github.com/raster-foundry/raster-foundry/pull/4777)
 
 ### Deprecated
 
