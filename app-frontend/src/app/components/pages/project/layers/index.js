@@ -131,6 +131,13 @@ class ProjectLayersPageController {
             callback: () => this.onHide(layer.id),
             menu: false
         };
+        const goToLayerAction = {
+            icon: 'icon-map',
+            name: 'View on map',
+            tooltip: 'View layer on map',
+            callback: () => this.viewLayerOnMap(layer),
+            menu: false
+        };
         const editAction = {
             name: 'Edit',
             callback: () =>
@@ -215,10 +222,20 @@ class ProjectLayersPageController {
         ];
 
         return [
-            ...(!_.get(layer, 'geometry.type') ? [alertAoiAction] : []),
             ...layerActions,
+            ...(_.get(layer, 'geometry.type') ? [goToLayerAction] : [alertAoiAction]),
             ...(!isDefaultLayer ? [setDefaultAction, deleteAction] : [])
         ];
+    }
+
+    viewLayerOnMap(layer) {
+        this.getMap().then(map => {
+            let bounds = L.geoJSON(layer.geometry).getBounds();
+            map.map.fitBounds(bounds);
+            this.visible = new Set([layer.id]);
+            this.projectEditService.setVisibleProjectLayers(this.visible);
+            this.syncMapLayersToVisible();
+        });
     }
 
     allVisibleSelected() {

@@ -259,3 +259,15 @@
 .right-margin-1 {
     margin-right: 1px !important;
 }
+
+.focus {
+    box-shadow: 0 0 0 3px rgba($brand-primary, .2);
+    border-color: $brand-primary;
+}
+.no-auto-focus:focus {
+    outline: none;
+    &.focus {
+        box-shadow: 0 0 0 3px rgba($brand-primary, .2);
+        border-color: $brand-primary;
+    }
+}

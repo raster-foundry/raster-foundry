@@ -1,6 +1,6 @@
 <div class="sidebar-actions-group" ng-show="$ctrl.selected.size === 0">
-    <div style="flex: 1;"></div>
-    <a class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
+    <div class="flex-fill"></div>
+    <div class="btn btn-small btn-transparent" uib-dropdown uib-dropdown-toggle>
         Analysis Visibility
         <ul class="dropdown-menu dropdown-menu-light drop-left" uib-dropdown-menu role="menu">
             <li role="menuitem">
@@ -10,7 +10,7 @@
                 <a href ng-click="$ctrl.showAllAnalyses()">Show all on page</a>
             </li>
         </ul>
-    </a>
+    </div>
 </div>
 <div class="selected-actions-group" ng-show="$ctrl.selected.size > 0">
     <rf-selected-actions-bar
@@ -60,7 +60,12 @@
             <i class="icon-load animate-spin" ng-class="{'stop': !$ctrl.updatePromise}"></i>
         </span>
     </div>
-    <rf-list-item ng-repeat="item in $ctrl.itemList track by item.id">
+    <rf-list-item
+        class="no-auto-focus"
+        ng-class="{'focus': $ctrl.focused.id === item.id}"
+        ng-click="$ctrl.onAnalysisClickDebounced(item)"
+        ng-repeat="item in $ctrl.itemList track by item.id"
+    >
         <item-selector>
             <rf-list-item-selector
                 id="item.id"

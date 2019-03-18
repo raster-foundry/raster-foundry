@@ -1,6 +1,7 @@
 import angular from 'angular';
 import $ from 'jquery';
 import histogramBreakpointTpl from './histogramBreakpoint.html';
+import { get, debounce } from 'lodash';
 
 const HistogramBreakpointComponent = {
     templateUrl: histogramBreakpointTpl,
@@ -23,9 +24,7 @@ const defaultOptions = {
 };
 
 class HistogramBreakpointController {
-    constructor(
-        $rootScope, $element, $scope, $log, $document
-    ) {
+    constructor($rootScope, $element, $scope, $log, $document) {
         'ngInject';
         $rootScope.autoInject(this, arguments);
     }
@@ -46,65 +45,84 @@ class HistogramBreakpointController {
     $onChanges(changes) {
         if (changes.options && changes.options.currentValue) {
             this._options = Object.assign({}, defaultOptions, changes.options.currentValue);
-            this.setPositionFromBreakpoint();
-        } else if (
-            changes.range && changes.range.currentValue ||
-            changes.precision && changes.precision.currentValue ||
-            changes.breakpoint && Number.isFinite(changes.breakpoint.currentValue)
-        ) {
-            this.setPositionFromBreakpoint();
+            if (this.breakpoint) {
+                this.setPositionFromBreakpoint(this.breakpoint);
+            }
+        }
+        const breakpoint = get(changes, 'breakpoint.currentValue');
+        const breakpointUpdated = Number.isFinite(breakpoint);
+        const shouldUpdateBreakpoint =
+            get(changes, 'range.currentValue') ||
+            get(changes, 'precision.currentValue') ||
+            breakpointUpdated;
+        if (shouldUpdateBreakpoint && breakpointUpdated) {
+            this.setPositionFromBreakpoint(breakpoint);
+        } else if (shouldUpdateBreakpoint && Number.isFinite(this.breakpoint)) {
+            this.setPositionFromBreakpoint(this.breakpoint);
+        }
+        const range = get(changes, 'range.currentValue');
+        if (range) {
+            const { precision, min, max } = range;
+            this.roundedMin = Math.round((min - precision) / precision) * precision;
+            this.roundedMax = Math.round((max + precision) / precision) * precision;
         }
     }
 
     validateBreakpoint(value) {
         let breakpoint = value;
-        if (breakpoint > this.range.max) {
-            breakpoint = this.range.max;
-        } else if (breakpoint < this.range.min) {
-            breakpoint = this.range.min;
-        }
 
-        if (this.precision && breakpoint > this.upperBound - this.precision) {
+        const areFinite = numbers => {
+            return numbers.reduce((acc, val) => {
+                return acc && Number.isFinite(val);
+            }, true);
+        };
+
+        if (
+            areFinite([this.upperBound, breakpoint, this.precision]) &&
+            breakpoint > this.upperBound - this.precision
+        ) {
             breakpoint = this.upperBound - this.precision;
-        } else if (breakpoint > this.upperBound) {
+        } else if (areFinite([breakpoint, this.upperBound]) && breakpoint > this.upperBound) {
             breakpoint = this.upperBound;
-        } else if (this.precision && breakpoint < this.lowerBound + this.precision) {
+        } else if (
+            areFinite([this.upperBound, breakpoint, this.precision]) &&
+            breakpoint < this.lowerBound + this.precision
+        ) {
             breakpoint = this.lowerBound + this.precision;
-        } else if (breakpoint < this.lowerBound) {
+        } else if (areFinite([breakpoint, this.lowerBound]) && breakpoint < this.lowerBound) {
             breakpoint = this.lowerBound;
         }
 
-        if (Number.isFinite(this.precision) && this.precision > 0) {
-            breakpoint = Math.round(breakpoint / this.precision) * this.precision;
-        } else if (this.precision === 0) {
-            breakpoint = Math.round(breakpoint);
+        if (areFinite([breakpoint, this.precision])) {
+            if (this.precision > 0) {
+                breakpoint = Math.round(breakpoint / this.precision) * this.precision;
+            } else if (this.precision === 0) {
+                breakpoint = Math.round(breakpoint);
+            }
         }
         return breakpoint;
     }
 
-    setPositionFromBreakpoint() {
-        let hide = false;
-        if (this.range &&
+    setPositionFromBreakpoint(breakpoint) {
+        if (
+            this.range &&
             Number.isFinite(this.range.min) &&
             Number.isFinite(this.range.max) &&
-            Number.isFinite(this.breakpoint)
+            Number.isFinite(breakpoint)
         ) {
-            this._breakpoint = this.validateBreakpoint(this.breakpoint);
+            this._breakpoint = this.validateBreakpoint(breakpoint);
+            let percent =
+                ((this._breakpoint - this.range.min) / (this.range.max - this.range.min)) * 100;
+            percent = Math.min(Math.max(0, percent), 100);
 
-            let percent = (
-                this._breakpoint - this.range.min
-            ) / (
-                this.range.max - this.range.min
-            ) * 100;
-
-            if (percent < 0) {
-                percent = 0;
-            }
             this.breakpointPosition = `${percent}%`;
         } else {
             this.breakpointPosition = '0%';
         }
-        this.$element.css({left: this.breakpointPosition, display: hide ? 'none' : 'initial'});
+        this.$element.css({
+            left: this.breakpointPosition,
+            display: 'initial'
+        });
     }
 
     registerEvents() {
@@ -112,8 +130,15 @@ class HistogramBreakpointController {
     }
 
     onInputChange() {
-        this.setPositionFromBreakpoint();
-        this.onBreakpointChange({breakpoint: this._breakpoint});
+        if (
+            Number.isFinite(this._breakpoint) &&
+            ['bar', 'arrow', 'point'].includes(this._options.style)
+        ) {
+            this.setPositionFromBreakpoint(this._breakpoint);
+            this.onBreakpointChange({
+                breakpoint: this._breakpoint
+            });
+        }
     }
 
     onGrabberMouseDown() {
@@ -125,10 +150,11 @@ class HistogramBreakpointController {
     }
 
     onMouseMove(event) {
-        if (event.target &&
-            event.target.classList.contains('graph-container') ||
-            event.target.tagName === 'rf-node-histogram' ||
-            event.target.tagName === 'rf-reclassify-histogram'
+        const classList = get(event, 'target.classList') || [];
+        const tagName = get(event, 'target.tagName');
+        if (
+            classList.contains('graph-container') ||
+            ['rf-node-histogram', 'rf-reclassify-histogram'].includes('tagName')
         ) {
             event.stopPropagation();
             // this is changing depending on the zoom width, so we need to find a way around it
@@ -139,16 +165,17 @@ class HistogramBreakpointController {
                 (this.range.max - this.range.min) * percent + this.range.min
             );
 
-            if (this.breakpoint !== breakpoint) {
-                this.breakpoint = breakpoint;
-                this.setPositionFromBreakpoint();
+            if (this._breakpoint !== breakpoint) {
+                this.setPositionFromBreakpoint(breakpoint);
                 this.$scope.$evalAsync();
             }
         }
     }
 
     onMouseUp() {
-        this.onBreakpointChange({breakpoint: this.breakpoint});
+        this.onBreakpointChange({
+            breakpoint: this._breakpoint
+        });
         this.documentBody.off('mouseup mouseleave');
         this.parent.off('mousemove mouseleave');
         this.parent.removeClass('dragging');
@@ -167,7 +194,8 @@ const HistogramBreakpointModule = angular.module('components.histogram.histgramB
 
 HistogramBreakpointModule.component('rfHistogramBreakpoint', HistogramBreakpointComponent);
 HistogramBreakpointModule.controller(
-    'HistogramBreakpointController', HistogramBreakpointController
+    'HistogramBreakpointController',
+    HistogramBreakpointController
 );
 
 export default HistogramBreakpointModule;

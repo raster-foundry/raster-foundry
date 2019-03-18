@@ -3786,3 +3786,172 @@ rf-data-viz-statistics {
         top: calc(50% - 9px);
     }
 }
+
+.project-map-modal {
+    z-index: 1039;
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    background: $white;
+    border: 2px solid $off-white;
+    box-shadow: 0 5px 10px -4px rgba($shade-dark, .2);
+    border-radius: 5px;
+    padding: 15px;
+
+    @media (max-width: 1220px) {
+        bottom: 25px;
+    }
+}
+
+rf-project-analysis-quickedit-page {
+    position: relative;
+    display: flex;
+
+    .graph {
+        flex: 1;
+        min-width: 420px;
+    }
+    .graph-placeholder {
+        display: flex;
+        flex-direction: row;
+        justify-content: stretch;
+        .btn {
+            margin: auto;
+        }
+        .modal-icon {
+            margin: 2rem;
+            padding: 2rem;
+            width: 4.5rem;
+            height: 4.5rem;
+            font-size: 2rem;
+        }
+        p {
+            margin: auto 0;
+        }
+    }
+    .graph-loading {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        background: white;
+        div {
+            margin: auto;
+            font-size: 2rem;
+        }
+    }
+    .separator {
+        flex: 0;
+        width: 2px;
+        height: 80%;
+        border-radius: 1px;
+        border: 1px solid $shade-light;
+        background: $shade-light;
+    }
+    .parameters {
+        padding: 0 0 0 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        margin-left: 20px;
+        border-left: 1px solid $gray-lightest;
+        font-size: 13px;
+        .btn-link {
+            margin: 0;
+            padding: 0;
+        }
+    }
+    .overlay {
+        position: absolute;
+        background: rgba(255,255,255,0.5);
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+
+        .overlay-text {
+            margin: auto;
+        }
+    }
+}
+
+.quickedit-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 12px;
+    >:first-child {
+        margin: 0 10px 0 0;
+        line-height: 1;
+        font-weight: 400;
+    }
+
+    .histogram-checkboxes {
+        display: flex;
+        flex-direction: row;
+        label {
+            font-size: 1em;
+        }
+
+        .checkbox input {
+            margin-left: -1.2rem;
+        }
+    }
+}
+
+rf-quick-edit-histogram {
+    .graph-container {
+        display: block;
+    }
+    rf-histogram-breakpoint {
+        height: 50px;
+
+        .breakpoint-input {
+            transform: translate(-50%, -5px) !important;
+            font-size: 12px;
+            opacity: 0;
+
+            input {
+                max-width: 4.5em;
+                border-radius: 0 0 4px 4px;
+                text-align: center;
+            }
+
+            &:hover,
+            &:active,
+            &:focus,
+            &:focus-within {
+                opacity: 1;
+                display: block;
+            }
+        }
+
+        &:hover .breakpoint-input,
+        &:active .breakpoint-input,
+        &:focus .breakpoint-input,
+        &:focus-within .breakpoint-input {
+            opacity: 1;
+            display: block;
+        }
+    }
+    rf-color-scheme-dropdown {
+        display: block;
+        width: 10em;
+        margin-right: 10px;
+        .btn.dropdown-toggle i {
+            display: none;
+        }
+        .gradient-bar {
+            height: 1.25rem;
+
+        }
+        .dropdown-menu {
+            top: initial;
+            bottom: 1.3em;
+        }
+    }
+}

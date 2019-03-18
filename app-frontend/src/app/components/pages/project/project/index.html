@@ -62,11 +62,15 @@
     <div class="main">
         <rf-map-container
             map-id="project"
-            ng-if="!$ctrl.showPreviewmap"
             initial-center="$ctrl.initialCenter"
             initial-zoom="$ctrl.initialZoom"
         >
         </rf-map-container>
+        <div
+            ui-view="project-mapmodal"
+            class="project-map-modal"
+            ng-if="('project.analyses.quickedit' | includedByState)"
+        ></div>
     </div>
 </div>
 <div

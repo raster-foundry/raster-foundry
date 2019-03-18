@@ -303,6 +303,22 @@ function projectStatesV2($stateProvider) {
             component: 'rfProjectLayerAnnotationsPage'
         })
         // Project analyses routes
+        .state('project.analyses.quickedit', {
+            title: 'Edit histograms on map',
+            views: {
+                'project-mapmodal@project': {
+                    component: 'rfProjectAnalysisQuickeditPage'
+                }
+            },
+            params: {
+                analysis: null,
+                onAnalysisUpdate: null
+            },
+            resolve: {
+                analysis: ['$transition$', ($transition$) => $transition$.params().analysis],
+                onAnalysisUpdate: ['$transition$', ($transition$) => $transition$.params().onAnalysisUpdate]
+            }
+        })
         .state('project.analyses.compare', {
             title: 'Compare Project Analyses',
             url: '/compare?id',

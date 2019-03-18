@@ -3,7 +3,7 @@ import pages from './components/pages';
 import projectComponents from './components/projects';
 import sceneComponents from './components/scenes';
 import commonComponents from './components/common';
-import histogramComponent from './components/histogram';
+import histogramComponents from './components/histogram';
 
 export default angular.module('index.components', [
     //admin components
@@ -140,7 +140,7 @@ export default angular.module('index.components', [
         .name,
     require('./components/histogram/reclassifyHistogram/reclassifyHistogram.module.js').default
         .name,
-    ...histogramComponent,
+    ...histogramComponents,
 
     // pages
     ...pages
