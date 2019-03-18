@@ -23,7 +23,7 @@ object OgcMapTokenRewrite extends LazyLogging {
     if (basePath.contains("map-token")) {
       req match {
         case _ -> prior / "map-token" / UUIDWrapper(mapTokenId) =>
-          logger.info("Translating uri to move map token to qp")
+          logger.debug("Translating uri to move map token to qp")
           val newUri = sanitize(s"$prior")
           logger.debug(s"New uri after path replacement: $newUri")
           val withParams =
