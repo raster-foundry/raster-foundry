@@ -48,5 +48,17 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader)
               BadRequest("not yet implemented")
           }
       }
+
+    case r @ GET -> Root / UUIDWrapper(_) / "map-token" / UUIDWrapper(_) as user =>
+      logger.debug(s"Request path info to start: ${r.req.pathInfo}")
+      val rewritten = OgcMapTokenRewrite(r)
+      logger.debug(
+        s"Request path info after rewrite: ${rewritten.req.pathInfo}")
+      routes(rewritten).value flatMap {
+        case Some(resp) =>
+          IO.pure { resp }
+        case _ =>
+          NotFound()
+      }
   }
 }
