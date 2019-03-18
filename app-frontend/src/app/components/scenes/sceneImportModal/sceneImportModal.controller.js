@@ -602,8 +602,7 @@ export default class SceneImportModalController {
         let datasetPromises = files.map(file => {
             return this.$q.resolve(loamOpen(file))
                 .catch((error) => {
-                    // eslint-disable-next-line
-                    console.log("Error in loam caught", error);
+                    this.$log.error("Error in loam caught", error);
                 });
         });
         let bandCountPromises = datasetPromises.map(dsPromise => {
