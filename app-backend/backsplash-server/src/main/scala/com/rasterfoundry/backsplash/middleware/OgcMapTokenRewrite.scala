@@ -8,9 +8,9 @@ import org.http4s.dsl.io._
 import com.typesafe.scalalogging.LazyLogging
 
 object OgcMapTokenRewrite extends LazyLogging {
-  private def sanitize[F[_]](req: Request[F]): Uri = {
+  private def sanitize(requestBase: String): Uri = {
     val safePath =
-      req.pathInfo.replace("/wcs", "").replace("/wms", "").stripSuffix("/")
+      requestBase.replace("/wcs", "").replace("/wms", "").stripSuffix("/")
     Uri.fromString(safePath).right.get
   }
 
@@ -24,7 +24,7 @@ object OgcMapTokenRewrite extends LazyLogging {
       req match {
         case _ -> prior / "map-token" / UUIDWrapper(mapTokenId) =>
           logger.info("Translating uri to move map token to qp")
-          val newUri = sanitize(req)
+          val newUri = sanitize(s"$prior")
           logger.debug(s"New uri after path replacement: $newUri")
           val withParams =
             newUri.setQueryParams(

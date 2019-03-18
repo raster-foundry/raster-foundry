@@ -14,10 +14,13 @@ import org.http4s._
 import org.http4s.scalaxml._
 import org.http4s.dsl.io._
 
+import com.typesafe.scalalogging.LazyLogging
+
 import java.net.URL
 
 class WmsService[LayerReader: OgcStore](layers: LayerReader)
-    extends ToOgcStoreOps {
+    extends ToOgcStoreOps
+    with LazyLogging {
 
   private val urlPrefix = "https://tiles.staging.rasterfoundry.com/"
 
@@ -25,7 +28,7 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader)
     List(urlPrefix, request.scriptName, request.pathInfo).mkString("/")
   }
 
-  def routes = AuthedService[User, IO] {
+  def routes: AuthedService[User, IO] = AuthedService[User, IO] {
     case authedReq @ GET -> Root / UUIDWrapper(projectId) as user =>
       val serviceUrl = requestToServiceUrl(authedReq.req)
       WmsParams(authedReq.req.multiParams) match {
@@ -50,10 +53,9 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader)
       }
 
     case r @ GET -> Root / UUIDWrapper(_) / "map-token" / UUIDWrapper(_) as user =>
-      logger.debug(s"Request path info to start: ${r.req.pathInfo}")
+      logger.info(s"Request path info to start: ${r.req.pathInfo}")
       val rewritten = OgcMapTokenRewrite(r)
-      logger.debug(
-        s"Request path info after rewrite: ${rewritten.req.pathInfo}")
+      logger.info(s"Request path info after rewrite: ${rewritten.req.pathInfo}")
       routes(rewritten).value flatMap {
         case Some(resp) =>
           IO.pure { resp }
