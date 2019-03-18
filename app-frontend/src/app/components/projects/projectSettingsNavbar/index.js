@@ -1,7 +1,9 @@
+/* global BUILDCONFIG  */
 import tpl from './index.html';
-
 class ProjectSettingsNavbarController {
-
+    constructor() {
+        this.BUILDCONFIG = BUILDCONFIG;
+    }
 }
 
 const component = {

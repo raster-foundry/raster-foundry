@@ -3314,7 +3314,8 @@ rf-project-settings-page,
 rf-project-options-page,
 rf-project-permissions-page,
 rf-project-publishing-page,
-rf-project-analyses-visualize-page {
+rf-project-analyses-visualize-page,
+rf-project-embed-page {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -3325,7 +3326,8 @@ rf-project-analyses-visualize-page {
     }
 }
 
-rf-project-publishing-page {
+rf-project-publishing-page,
+rf-project-embed-page {
     flex-direction: row;
 }
 .page-content-container {
@@ -3422,6 +3424,17 @@ rf-project-publishing-page {
         margin-bottom: 2rem;
         &.cozy {
             margin-bottom: 1rem;
+        }
+    }
+    .side-by-side {
+        display: flex;
+        .form-group {
+            flex: 1;
+            margin-right: 2rem;
+            margin-bottom: 0;
+            &:last-child {
+                margin-right: 0;
+            }
         }
     }
 }
@@ -3716,4 +3729,18 @@ rf-data-viz-statistics {
 
 .modal-inner-container.small.sidebar-top-margin {
     margin-top: 5em;
+}
+
+.page-card-list {
+    .page-card-list-item {
+        padding: 1em;
+        border-bottom: 1px solid $shade-light;
+        display: flex;
+        &.header {
+            padding-top: 0;
+        }
+        &:last-child {
+            border-bottom: none;
+        }
+    }
 }
