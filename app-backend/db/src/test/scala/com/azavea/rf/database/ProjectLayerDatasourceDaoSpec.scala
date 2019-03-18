@@ -55,7 +55,8 @@ class ProjectLayerDatasourceDaoSpec
                   ) => {
                 ProjectDao.addScenesToProject(
                   dbScenes map { _.id },
-                  dbProject.id
+                  dbProject.id,
+                  dbProject.defaultLayerId
                 ) flatMap { _ =>
                   {
                     ProjectLayerDatasourcesDao.listProjectLayerDatasources(

@@ -217,14 +217,13 @@ object ProjectDao
     updateStatusQuery.update.run
   }
 
-  def addScenesToProject(
-      sceneIds: List[UUID],
-      projectId: UUID,
-      isAccepted: Boolean = true,
-      projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] = {
+  def addScenesToProject(sceneIds: List[UUID],
+                         projectId: UUID,
+                         projectLayerId: UUID,
+                         isAccepted: Boolean = true): ConnectionIO[Int] = {
     sceneIds.toNel match {
       case Some(ids) =>
-        addScenesToProject(ids, projectId, isAccepted, projectLayerIdO)
+        addScenesToProject(ids, projectId, projectLayerId, isAccepted)
       case _ => 0.pure[ConnectionIO]
     }
   }
@@ -278,12 +277,11 @@ object ProjectDao
 
   def addScenesToProject(sceneIds: NonEmptyList[UUID],
                          projectId: UUID,
-                         isAccepted: Boolean,
-                         projectLayerIdO: Option[UUID]): ConnectionIO[Int] = {
+                         projectLayerId: UUID,
+                         isAccepted: Boolean): ConnectionIO[Int] = {
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
       user <- UserDao.unsafeGetUserById(project.owner)
-      projectLayerId = getProjectLayerId(projectLayerIdO, project)
       sceneIdWithDatasource <- sceneIdWithDatasourceF(sceneIds, projectLayerId)
         .query[(UUID, Datasource)]
         .to[List]
@@ -295,17 +293,6 @@ object ProjectDao
         val insertScenesToLayers =
           "INSERT INTO scenes_to_layers (scene_id, project_layer_id, accepted, scene_order, mosaic_definition) VALUES (?, ?, ?, ?, ?)"
         Update[SceneToLayer](insertScenesToLayers).updateMany(scenesToLayer)
-      }
-      // TODO: delete this when we can get rid of scenes_to_projects entirely
-      _ <- {
-        val scenesToProject: List[SceneToProject] = sceneIdWithDatasource.map {
-          case (sceneId, datasource) =>
-            createScenesToProject(sceneId, projectId, datasource, isAccepted)
-        }
-        val insertScenesToProjects =
-          "INSERT INTO scenes_to_projects (scene_id, project_id, accepted, scene_order, mosaic_definition) VALUES (?, ?, ?, ?, ?)"
-        Update[SceneToProject](insertScenesToProjects)
-          .updateMany(scenesToProject)
       }
       _ <- updateProjectExtentIO(projectId)
       _ <- updateSceneIngestStatus(projectLayerId)
@@ -367,81 +354,28 @@ object ProjectDao
     )
   }
 
-  // TODO: delete this function when we can get rid of scenes_to_projects entirely
-  def createScenesToProject(sceneId: UUID,
-                            projectId: UUID,
-                            datasource: Datasource,
-                            isAccepted: Boolean): SceneToProject = {
-    val naturalComposites = datasource.composites.get("natural")
-    val (redBand, greenBand, blueBand) = naturalComposites map { composite =>
-      (composite.value.redBand,
-       composite.value.greenBand,
-       composite.value.blueBand)
-    } getOrElse { (0, 1, 2) }
-    (
-      sceneId,
-      projectId,
-      isAccepted,
-      None,
-      Some(
-        ColorCorrect
-          .Params(
-            redBand,
-            greenBand,
-            blueBand, // Bands
-            // Color corrections; everything starts out disabled (false) and null for now
-            BandGamma(enabled = false, None, None, None), // Gamma
-            PerBandClipping(enabled = false,
-                            None,
-                            None,
-                            None, // Clipping Max: R,G,B
-                            None,
-                            None,
-                            None), // Clipping Min: R,G,B
-            MultiBandClipping(enabled = false, None, None), // Min, Max
-            SigmoidalContrast(enabled = false, None, None), // Alpha, Beta
-            Saturation(enabled = false, None), // Saturation
-            Equalization(false), // Equalize
-            AutoWhiteBalance(false) // Auto White Balance
-          )
-          .asJson
-      )
-    )
-  }
-
   def replaceScenesInProject(
       sceneIds: NonEmptyList[UUID],
       projectId: UUID,
-      projectLayerIdO: Option[UUID] = None): ConnectionIO[Iterable[Scene]] =
+      projectLayerId: UUID): ConnectionIO[Iterable[Scene]] =
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
-      projectLayerId = getProjectLayerId(projectLayerIdO, project)
-      // TODO: delete below one line when we are ready to remove scenes_to_projects table
-      _ <- sql"DELETE FROM scenes_to_projects WHERE project_id = ${projectId}".update.run
       _ <- sql"DELETE FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId}".update.run
-      _ <- addScenesToProject(sceneIds,
-                              projectId,
-                              isAccepted = true,
-                              projectLayerIdO)
+      _ <- addScenesToProject(sceneIds, projectId, projectLayerId, true)
       scenes <- SceneDao.query
         .filter(
           fr"scenes.id IN (SELECT scene_id FROM scenes_to_layers WHERE project_layer_id = ${projectLayerId})")
         .list
     } yield scenes
 
-  def deleteScenesFromProject(
-      sceneIds: List[UUID],
-      projectId: UUID,
-      projectLayerIdO: Option[UUID] = None): ConnectionIO[Int] = {
+  def deleteScenesFromProject(sceneIds: List[UUID],
+                              projectId: UUID,
+                              projectLayerId: UUID): ConnectionIO[Int] = {
     val f: Option[Fragment] = sceneIds.toNel.map(Fragments.in(fr"scene_id", _))
     f match {
       case fragO @ Some(_) =>
         for {
           project <- ProjectDao.unsafeGetProjectById(projectId)
-          projectLayerId = getProjectLayerId(projectLayerIdO, project)
-          // TODO: delete below line when we are ready to remove scenes_to_projects table
-          _ <- (fr"DELETE FROM scenes_to_projects" ++
-            Fragments.whereAndOpt(f, Some(fr"project_id = ${projectId}"))).update.run
           rowsDeleted <- (fr"DELETE FROM scenes_to_layers" ++
             Fragments.whereAndOpt(
               f,

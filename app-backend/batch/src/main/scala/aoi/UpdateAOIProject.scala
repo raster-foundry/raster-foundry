@@ -223,6 +223,7 @@ final case class UpdateAOIProject(projectId: UUID)(
       for {
         baseData <- fetchBaseData
         (userId, g, startTime, lastChecked, qp) = baseData
+        project <- ProjectDao.unsafeGetProjectById(projectId)
         user <- UserDao.unsafeGetUserById(userId)
         sceneIds <- fetchProjectScenes(user,
                                        g,
@@ -231,7 +232,10 @@ final case class UpdateAOIProject(projectId: UUID)(
                                        qp.toOption)
         _ <- logger.info(s"Found ${sceneIds.length} scenes").pure[ConnectionIO]
         _ <- updateProjectIO(user, projectId)
-        _ <- ProjectDao.addScenesToProject(sceneIds, projectId, false)
+        _ <- ProjectDao.addScenesToProject(sceneIds,
+                                           projectId,
+                                           project.defaultLayerId,
+                                           false)
       } yield { (projectId, sceneIds) }
     }
 

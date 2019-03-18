@@ -47,6 +47,7 @@
 ### Removed
 
 - Removed layer re-ordering, layer sorting, layer type selection from UI [\#4616](https://github.com/raster-foundry/raster-foundry/pull/4616)
+- Removed lingering database assocation of scenes and projects (in deference to scenes to layers to projects) [\#4764](https://github.com/raster-foundry/raster-foundry/pull/4764)
 
 ### Fixed
 

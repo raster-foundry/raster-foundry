@@ -46,6 +46,7 @@ class SceneToLayerDaoSpec
               )
               _ <- ProjectDao.addScenesToProject(scenesInsert map { _.id },
                                                  dbProject.id,
+                                                 dbProject.defaultLayerId,
                                                  false)
               acceptedSceneCount <- SceneToLayerDao.acceptScenes(
                 dbProject.defaultLayerId,
@@ -93,6 +94,7 @@ class SceneToLayerDaoSpec
               selectedSceneIds = scenesInsert.take(2) map { _.id }
               _ <- ProjectDao.addScenesToProject(scenesInsert map { _.id },
                                                  dbProject.id,
+                                                 dbProject.defaultLayerId,
                                                  false)
               _ <- SceneToLayerDao.setManualOrder(dbProject.defaultLayerId,
                                                   scenesInsert map { _.id })

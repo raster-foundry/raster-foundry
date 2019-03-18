@@ -125,7 +125,8 @@ class SceneWithRelatedDaoSpec
               scenesUserProject <- scenesInsertWithUserProjectIO
               (dbScenes, _, dbProject) = scenesUserProject
               _ <- ProjectDao.addScenesToProject(dbScenes map { _.id },
-                                                 dbProject.id)
+                                                 dbProject.id,
+                                                 dbProject.defaultLayerId)
               retrievedScenes <- dbScenes traverse { scene =>
                 SceneDao.unsafeGetSceneById(scene.id)
               }

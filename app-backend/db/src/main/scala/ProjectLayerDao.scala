@@ -151,8 +151,8 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
               _ <- ProjectDao.addScenesToProject(
                 s.map(_.id),
                 pId,
-                true,
-                Some(insertedLayer.id)
+                insertedLayer.id,
+                true
               )
             } yield insertedLayer
           case _ =>
@@ -217,7 +217,7 @@ object ProjectLayerDao extends Dao[ProjectLayer] {
         case Some(true) =>
           ProjectDao.deleteScenesFromProject(scenes.map(_.id),
                                              projectId,
-                                             Some(layerId))
+                                             layerId)
         case _ => 0.pure[ConnectionIO]
       }
     } yield newLayers

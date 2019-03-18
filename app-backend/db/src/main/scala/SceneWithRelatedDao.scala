@@ -123,18 +123,6 @@ object SceneWithRelatedDao
         List.empty[Thumbnail].pure[ConnectionIO]
     }
 
-  def getSceneToProjects(sceneIds: List[UUID],
-                         projectId: UUID): ConnectionIO[List[SceneToProject]] =
-    sceneIds.toNel match {
-      case Some(ids) =>
-        SceneToProjectDao.query
-          .filter(Fragments.in(fr"scene_id", ids))
-          .filter(fr"project_id=$projectId")
-          .list
-      case _ =>
-        List.empty[SceneToProject].pure[ConnectionIO]
-    }
-
   def getScenesToLayers(
       sceneIds: List[UUID],
       layerId: UUID
