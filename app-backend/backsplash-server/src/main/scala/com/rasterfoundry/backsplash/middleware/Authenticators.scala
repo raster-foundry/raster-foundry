@@ -44,9 +44,12 @@ class Authenticators(val xa: Transactor[IO])
       case req @ _ -> UUIDWrapper(projectId) /: _
             :? TokenQueryParamMatcher(tokenQP)
             :? MapTokenQueryParamMatcher(mapTokenQP) => {
+        val withMapToken = OgcMapTokenRewrite(AuthedRequest((), req)).req
         val authHeaderO: Option[Header] =
-          req.headers.get(CaseInsensitiveString("Authorization"))
-        (authHeaderO, tokenQP, mapTokenQP) match {
+          withMapToken.headers.get(CaseInsensitiveString("Authorization"))
+        val mapTokenO = mapTokenQP orElse (withMapToken.params
+          .get("mapToken") map { UUID.fromString _ })
+        (authHeaderO, tokenQP, mapTokenO) match {
           case (None, None, None) =>
             userFromPublicProject(projectId)
           case _ =>
@@ -54,7 +57,7 @@ class Authenticators(val xa: Transactor[IO])
               OptionT.fromOption(authHeaderO)
             checkTokenAndHeader(tokenQP, authHeader) :+
               (
-                OptionT.fromOption[IO](mapTokenQP) flatMap { (mapToken: UUID) =>
+                OptionT.fromOption[IO](mapTokenO) flatMap { (mapToken: UUID) =>
                   userFromMapToken(MapTokenDao.checkProject(projectId),
                                    mapToken)
                 }

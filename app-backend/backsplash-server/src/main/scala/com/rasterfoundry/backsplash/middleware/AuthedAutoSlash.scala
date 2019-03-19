@@ -25,13 +25,14 @@ object AuthedAutoSlash {
           } else if (scriptName.isEmpty) {
             // Request has not been translated already
             http.apply(
-              authedReq.copy(req = authedReq.req.withPathInfo(
-                pathInfo.substring(0, pathInfo.length - 1))))
+              authedReq.copy(req = authedReq.req
+                .withPathInfo(pathInfo.substring(0, pathInfo.length - 1))))
           } else {
             val translated = AuthedTranslateUri(scriptName)(http)
+            val substring = pathInfo.substring(0, pathInfo.length - 1)
             translated.apply(
-              authedReq.copy(req = authedReq.req.withPathInfo(
-                pathInfo.substring(0, pathInfo.length - 1))))
+              authedReq.copy(req = authedReq.req
+                .withPathInfo(substring)))
           }
         }
       }

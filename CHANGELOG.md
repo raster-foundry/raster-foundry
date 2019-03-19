@@ -39,6 +39,7 @@
 - Added support for listing annotations on public projects without auth or with a map token query parameter [\#4795](https://github.com/raster-foundry/raster-foundry/pull/4795)
 - OGC
   - Added GetCapabilities WMS and WCS endpoints for projects [\#4767](https://github.com/raster-foundry/raster-foundry/pull/4767)
+  - Added map token authentication to OGC services [\#4778](https://github.com/raster-foundry/raster-foundry/pull/4778)
 
 ### Changed
 
