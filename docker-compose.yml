@@ -5,6 +5,8 @@ services:
     volumes:
       - ./data/:/tmp/data/
     env_file: .env
+    ports:
+      - 5434:5432
     expose:
       - "5432"
     healthcheck:
