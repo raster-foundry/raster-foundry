@@ -39,6 +39,13 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   val xa = RFTransactor.transactor(dbContextShift)
 
+
+  val ogcUrlPrefix = Properties.env("ENVIRONMENT") match {
+    case Some("Production") => "https://tiles.rasterfoundry.com"
+    case Some("Staging") => "https://tiles.staging.rasterfoundry.com"
+    case _ => "http://localhost:8081"
+  }
+
   override protected implicit def contextShift: ContextShift[IO] =
     IO.contextShift(
       ExecutionContext.fromExecutor(
@@ -128,13 +135,13 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   val wcsService = authenticators.tokensAuthMiddleware(
     AuthedAutoSlash(
-      new WcsService(ProjectDao()).routes
+      new WcsService(ProjectDao(), ogcUrlPrefix).routes
     )
   )
 
   val wmsService = authenticators.tokensAuthMiddleware(
     AuthedAutoSlash(
-      new WmsService(ProjectDao()).routes
+      new WmsService(ProjectDao(), ogcUrlPrefix).routes
     )
   )
 

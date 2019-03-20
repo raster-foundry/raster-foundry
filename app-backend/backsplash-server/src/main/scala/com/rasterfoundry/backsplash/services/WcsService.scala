@@ -6,25 +6,26 @@ import com.rasterfoundry.backsplash.Parameters._
 import com.rasterfoundry.common.datamodel.User
 
 import cats.data.Validated
-import cats.effect.IO
+import cats.effect.{ContextShift, IO}
 import geotrellis.server.ogc.wcs.params.{
+  DescribeCoverageWcsParams,
   GetCapabilitiesWcsParams,
+  GetCoverageWcsParams,
   WcsParams,
   WcsParamsError
 }
-import geotrellis.server.ogc.wcs.ops.Operations
+import geotrellis.server.ogc.wcs.ops.{GetCoverage, Operations}
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.scalaxml._
 
 import com.typesafe.scalalogging.LazyLogging
 
-class WcsService[LayerReader: OgcStore](layers: LayerReader)
-    extends ToOgcStoreOps
-    with LazyLogging {
+import scala.util.Properties
 
-  // TODO lookup from environment
-  private val urlPrefix = "https://tiles.staging.rasterfoundry.com"
+class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
+    implicit contextShift: ContextShift[IO])
+    extends ToOgcStoreOps with LazyLogging {
 
   private def requestToServiceUrl(request: Request[IO]) = {
     List(urlPrefix, request.scriptName, request.pathInfo).mkString
@@ -44,9 +45,24 @@ class WcsService[LayerReader: OgcStore](layers: LayerReader)
           p match {
             case params: GetCapabilitiesWcsParams =>
               for {
-                rsm <- layers.getModel(projectId)
+                rsm <- layers.getWcsModel(projectId)
                 resp <- Ok(Operations.getCapabilities(serviceUrl, rsm, params))
               } yield resp
+
+            case params: DescribeCoverageWcsParams =>
+              for {
+                rsm <- layers.getWcsModel(projectId)
+                resp <- Ok(Operations.describeCoverage(rsm, params))
+              } yield {
+                resp
+              }
+
+            case params: GetCoverageWcsParams =>
+              for {
+                rsm <- layers.getWcsModel(projectId)
+                resp <- Ok(new GetCoverage(rsm).build(params))
+              } yield resp
+
             case _ =>
               BadRequest("not yet implemented")
           }
