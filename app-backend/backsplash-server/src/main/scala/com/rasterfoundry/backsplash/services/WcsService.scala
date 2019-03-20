@@ -21,11 +21,10 @@ import org.http4s.scalaxml._
 
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.util.Properties
-
 class WcsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     implicit contextShift: ContextShift[IO])
-    extends ToOgcStoreOps with LazyLogging {
+    extends ToOgcStoreOps
+    with LazyLogging {
 
   private def requestToServiceUrl(request: Request[IO]) = {
     List(urlPrefix, request.scriptName, request.pathInfo).mkString

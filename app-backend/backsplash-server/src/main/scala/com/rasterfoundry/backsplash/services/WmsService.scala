@@ -112,7 +112,8 @@ class WmsService[LayerReader: OgcStore](layers: LayerReader, urlPrefix: String)(
     case r @ GET -> Root / UUIDWrapper(_) / "map-token" / UUIDWrapper(_) as user =>
       logger.debug(s"Request path info to start: ${r.req.pathInfo}")
       val rewritten = OgcMapTokenRewrite(r)
-      logger.debug(s"Request path info after rewrite: ${rewritten.req.pathInfo}")
+      logger.debug(
+        s"Request path info after rewrite: ${rewritten.req.pathInfo}")
       routes(rewritten).value flatMap {
         case Some(resp) =>
           IO.pure { resp }

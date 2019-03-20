@@ -9,8 +9,7 @@ import cats.implicits._
 import doobie.Transactor
 import doobie.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.raster.render.ColorRamps
-import geotrellis.server.ogc.{OgcSource, SimpleSource, StyleModel}
+import geotrellis.server.ogc.{OgcSource, SimpleSource}
 import geotrellis.server.ogc.ows._
 import geotrellis.server.ogc.wcs.WcsModel
 import geotrellis.server.ogc.wms.{WmsModel, WmsParentLayerMeta}

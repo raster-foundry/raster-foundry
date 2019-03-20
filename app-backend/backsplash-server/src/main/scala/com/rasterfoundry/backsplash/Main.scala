@@ -26,6 +26,7 @@ import doobie.implicits._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
+import scala.util.Properties
 import java.util.concurrent.{Executors, TimeUnit}
 
 object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
@@ -39,11 +40,10 @@ object Main extends IOApp with HistogramStoreImplicits with LazyLogging {
 
   val xa = RFTransactor.transactor(dbContextShift)
 
-
-  val ogcUrlPrefix = Properties.env("ENVIRONMENT") match {
+  val ogcUrlPrefix = Properties.envOrNone("ENVIRONMENT") match {
     case Some("Production") => "https://tiles.rasterfoundry.com"
-    case Some("Staging") => "https://tiles.staging.rasterfoundry.com"
-    case _ => "http://localhost:8081"
+    case Some("Staging")    => "https://tiles.staging.rasterfoundry.com"
+    case _                  => "http://localhost:8081"
   }
 
   override protected implicit def contextShift: ContextShift[IO] =
