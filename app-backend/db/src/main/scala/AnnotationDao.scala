@@ -94,13 +94,12 @@ object AnnotationDao extends Dao[Annotation] {
       user: User,
       projectLayerIdO: Option[UUID] = None
   ): ConnectionIO[List[Annotation]] = {
-    val updateSql = "INSERT INTO " ++ tableName ++ """
-        (id, project_id, created_at, created_by, modified_at, modified_by, owner,
-        label, description, machine_generated, confidence,
-        quality, geometry, annotation_group, labeled_by, verified_by,
-        project_layer_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """
+    val insertFragment: Fragment = fr"INSERT INTO" ++ tableF ++ fr"""(
+      id, project_id, created_at, created_by, modified_at, modified_by, owner,
+      label, description, machine_generated, confidence,
+      quality, geometry, annotation_group, labeled_by, verified_by,
+      project_layer_id
+    ) VALUES"""
     for {
       project <- ProjectDao.unsafeGetProjectById(projectId)
       projectLayerId = ProjectDao.getProjectLayerId(projectLayerIdO, project)
@@ -125,35 +124,48 @@ object AnnotationDao extends Dao[Annotation] {
                     user)
                   .map(_ => defaultId))
       }
-      insertedAnnotations <- Update[Annotation](updateSql)
-        .updateManyWithGeneratedKeys[Annotation](
-          "id",
-          "project_id",
-          "created_at",
-          "created_by",
-          "modified_at",
-          "modified_by",
-          "owner",
-          "label",
-          "description",
-          "machine_generated",
-          "confidence",
-          "quality",
-          "geometry",
-          "annotation_group",
-          "labeled_by",
-          "verified_by",
-          "project_layer_id"
-        )(annotations map {
-          _.toAnnotation(
+      annotationFragments: List[Fragment] = annotations.map(
+        (annotationCreate: Annotation.Create) => {
+          val annotation: Annotation = annotationCreate.toAnnotation(
             projectId,
             user,
             defaultAnnotationGroup,
             projectLayerId
           )
+          fr"""(
+          ${annotation.id}, ${annotation.projectId}, ${annotation.createdAt}, ${annotation.createdBy},
+          ${annotation.modifiedAt}, ${annotation.modifiedBy}, ${annotation.owner}, ${annotation.label},
+          ${annotation.description}, ${annotation.machineGenerated}, ${annotation.confidence}, ${annotation.quality},
+          ${annotation.geometry}, ${annotation.annotationGroup}, ${annotation.labeledBy}, ${annotation.verifiedBy},
+          ${annotation.projectLayerId}
+        )"""
         })
-        .compile
-        .toList
+      insertedAnnotations <- annotationFragments.toNel
+        .map(
+          fragments =>
+            (insertFragment ++ fragments.intercalate(fr",")).update
+              .withGeneratedKeys[Annotation](
+                "id",
+                "project_id",
+                "created_at",
+                "created_by",
+                "modified_at",
+                "modified_by",
+                "owner",
+                "label",
+                "description",
+                "machine_generated",
+                "confidence",
+                "quality",
+                "geometry",
+                "annotation_group",
+                "labeled_by",
+                "verified_by",
+                "project_layer_id"
+              )
+              .compile
+              .toList)
+        .getOrElse(List[Annotation]().pure[ConnectionIO])
     } yield insertedAnnotations
   }
 
