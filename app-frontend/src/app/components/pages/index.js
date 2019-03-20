@@ -1,4 +1,3 @@
 import projectPages from './project';
-export default [
-    ...projectPages
-];
+import sharePages from './share';
+export default [...projectPages, ...sharePages];

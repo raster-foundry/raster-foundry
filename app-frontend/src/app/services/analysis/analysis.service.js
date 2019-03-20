@@ -1,4 +1,5 @@
 /* globals BUILDCONFIG */
+import _ from 'lodash';
 
 export default (app) => {
     class AnalysisService {
@@ -373,11 +374,27 @@ export default (app) => {
             return this.Analysis.actions({id}).$promise;
         }
 
-        getAnalysisTileUrl(analysisId, nodeId = null) {
+        getAnalysisTileUrl(analysisId, params) {
             const token = this.authService.token();
-            const node = nodeId ? `&node=${nodeId}` : '';
-            return `${this.tileServer}/tools/${analysisId}/{z}/{x}/{y}` +
-                `?token=${token}${node}&tag=${new Date().getTime()}`;
+            const formattedParams = L.Util.getParamString(_.omitBy(Object.assign(
+                {
+                    token: this.authService.token(),
+                    tag: new Date().getTime()
+                }, params
+            ), (i) => !i));
+            return `${this.tileServer}/tools/${analysisId}/{z}/{x}/{y}/${formattedParams}`;
+        }
+
+        getAnalysisTileUrlForProject(projectId, analysisId, params) {
+            const token = this.authService.token();
+            const formattedParams = L.Util.getParamString(_.omitBy(Object.assign(
+                {
+                    token: params.mapToken ? null : this.authService.token(),
+                    tag: new Date().getTime()
+                }, params
+            ), (i) => !i));
+            return `${this.tileServer}/${projectId}/analyses/${
+                analysisId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
         transformWmPointToLatLngArray(wmPoint) {

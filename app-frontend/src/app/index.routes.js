@@ -1,6 +1,6 @@
 /* eslint max-len: 0 */
 import _ from 'lodash';
-import {Map} from 'immutable';
+import { Map } from 'immutable';
 
 import rootTpl from './pages/root/root.html';
 import loginTpl from './pages/login/login.html';
@@ -103,13 +103,51 @@ import teamAnalysesTpl from './pages/admin/team/analyses/analyses.html';
 
 import { projectResolves } from './components/pages/project';
 
-
 function shareStatesV2($stateProvider) {
     $stateProvider
-        .state('/v2/share/?mapToken')
-        .state('/v2/share/project/:projectId?mapToken')
-        .state('/v2/share/layer/:layerId?mapToken')
-    ;
+        .state('shareProject', {
+            title: 'Share',
+            redirectTo: 'shareProject.layers',
+            component: 'rfShareProjectPage',
+            url: '/v2/share/:projectId?mapToken',
+            resolve: Object.assign({
+                mapToken: ['$transition$', $transition$ => $transition$.params().mapToken],
+                projectPromise: [
+                    '$transition$',
+                    'projectService',
+                    ($transition$, projectService) =>
+                        projectService.fetchProject($transition$.params().projectId, {
+                            mapToken: $transition$.params().mapToken
+                        })
+                ]
+            }),
+            resolvePolicy: { async: 'NOWAIT' },
+            bypassAuth: true
+        })
+        .state('shareProject.error', {
+            title: 'Invalid Share',
+            url: '/error',
+            component: 'rfShareProjectErrorPage',
+            bypassAuth: true
+        })
+        .state('shareProject.layers', {
+            title: 'Share Layers',
+            url: '/layers?page',
+            params: {
+                page: { dynamic: true }
+            },
+            component: 'rfShareProjectLayersPage',
+            bypassAuth: true
+        })
+        .state('shareProject.analyses', {
+            title: 'Share Analyses',
+            url: '/analyses?page',
+            params: {
+                page: { dynamic: true }
+            },
+            component: 'rfShareProjectAnalysesPage',
+            bypassAuth: true
+        });
 }
 
 function projectStatesV2($stateProvider) {
@@ -128,10 +166,9 @@ function projectStatesV2($stateProvider) {
         'ingested',
         'owner'
     ];
-    let dynamicSceneParams = addScenesQueryParamsList.reduce(
-        (acc, param) => acc.set(param, {dynamic: true}),
-        new Map()
-    ).toJSON();
+    let dynamicSceneParams = addScenesQueryParamsList
+        .reduce((acc, param) => acc.set(param, { dynamic: true }), new Map())
+        .toJSON();
     let addScenesQueryParams = addScenesQueryParamsList.join('&');
 
     $stateProvider
@@ -139,17 +176,21 @@ function projectStatesV2($stateProvider) {
             parent: 'root',
             title: 'Project',
             url: '/v2/project/:projectId',
-            resolve: Object.assign({
-                projectId: ['$transition$', ($transition$) => $transition$.params().projectId],
-                project: [
-                    '$transition$', 'projectService',
-                    ($transition$, projectService) =>
-                        projectService.fetchProject($transition$.params().projectId)
-                ]
-            }, projectResolves.resolve),
+            resolve: Object.assign(
+                {
+                    projectId: ['$transition$', $transition$ => $transition$.params().projectId],
+                    project: [
+                        '$transition$',
+                        'projectService',
+                        ($transition$, projectService) =>
+                            projectService.fetchProject($transition$.params().projectId)
+                    ]
+                },
+                projectResolves.resolve
+            ),
             redirectTo: 'project.layers',
             views: {
-                'projectlayernav': {
+                projectlayernav: {
                     component: 'rfProjectLayersNav'
                 },
                 '': {
@@ -165,7 +206,7 @@ function projectStatesV2($stateProvider) {
             },
             component: 'rfProjectLayersPage'
         })
-    // top level project routes
+        // top level project routes
         .state('project.analyses', {
             title: 'Project Analyses',
             url: '/analyses?page&search',
@@ -191,9 +232,10 @@ function projectStatesV2($stateProvider) {
             title: 'Project Layer',
             url: '/layer/:layerId',
             resolve: {
-                layerId: ['$transition$', ($transition$) => $transition$.params().layerId],
+                layerId: ['$transition$', $transition$ => $transition$.params().layerId],
                 layer: [
-                    '$transition$', 'projectService',
+                    '$transition$',
+                    'projectService',
                     ($transition$, projectService) =>
                         projectService.getProjectLayer(
                             $transition$.params().projectId,
@@ -214,7 +256,7 @@ function projectStatesV2($stateProvider) {
             },
             redirectTo: 'project.layer.scenes'
         })
-    // project layer routes
+        // project layer routes
         .state('project.layer.aoi', {
             title: 'Project Layer AOI',
             url: '/aoi',
@@ -260,7 +302,7 @@ function projectStatesV2($stateProvider) {
             url: '/annotations?page',
             component: 'rfProjectLayerAnnotationsPage'
         })
-    // Project analyses routes
+        // Project analyses routes
         .state('project.analyses.compare', {
             title: 'Compare Project Analyses',
             url: '/compare?id',
@@ -326,10 +368,10 @@ function projectStatesV2($stateProvider) {
                 }
             },
             resolve: {
-                layers: ['$transition$', ($transition$) => $transition$.params().layers]
+                layers: ['$transition$', $transition$ => $transition$.params().layers]
             }
         })
-    // project settings routes
+        // project settings routes
         .state('project.settings.options', {
             title: 'Project Options',
             url: '/options',
@@ -368,7 +410,7 @@ function projectEditStates($stateProvider) {
         .state('projects.edit', {
             title: 'Project: Edit',
             url: '/edit/:projectid',
-            params: {project: null},
+            params: { project: null },
             views: {
                 'navmenu@root': {
                     templateUrl: projectsNavbarTpl,
@@ -676,38 +718,35 @@ function labStates($stateProvider) {
 }
 
 function shareStates($stateProvider) {
-    $stateProvider
-        .state('share', {
-            title: 'Shared Project',
-            url: '/share/:projectid',
-            templateUrl: shareTpl,
-            controller: 'ShareController',
-            controllerAs: '$ctrl',
-            bypassAuth: true
-        });
+    $stateProvider.state('share', {
+        title: 'Shared Project',
+        url: '/share/:projectid',
+        templateUrl: shareTpl,
+        controller: 'ShareController',
+        controllerAs: '$ctrl',
+        bypassAuth: true
+    });
 }
 
 function loginStates($stateProvider) {
-    $stateProvider
-        .state('login', {
-            title: 'Login',
-            url: '/login',
-            templateUrl: loginTpl,
-            controller: 'LoginController',
-            controllerAs: '$ctrl',
-            bypassAuth: true
-        });
+    $stateProvider.state('login', {
+        title: 'Login',
+        url: '/login',
+        templateUrl: loginTpl,
+        controller: 'LoginController',
+        controllerAs: '$ctrl',
+        bypassAuth: true
+    });
 }
 
 function homeStates($stateProvider) {
-    $stateProvider
-        .state('home', {
-            parent: 'root',
-            url: '/home',
-            templateUrl: homeTpl,
-            controller: 'HomeController',
-            controllerAs: '$ctrl'
-        });
+    $stateProvider.state('home', {
+        parent: 'root',
+        url: '/home',
+        templateUrl: homeTpl,
+        controller: 'HomeController',
+        controllerAs: '$ctrl'
+    });
 }
 
 function importStates($stateProvider) {
@@ -996,20 +1035,24 @@ function adminStates($stateProvider) {
 }
 
 function routeConfig(
-    $urlRouterProvider, $stateProvider, $urlMatcherFactoryProvider, $locationProvider
+    $urlRouterProvider,
+    $stateProvider,
+    $urlMatcherFactoryProvider,
+    $locationProvider
 ) {
     'ngInject';
 
     $urlMatcherFactoryProvider.strictMode(false);
     $locationProvider.html5Mode(true);
 
-
-    $stateProvider.state('root', {
-        templateUrl: rootTpl,
-        controller: 'IndexController'
-    }).state('callback', {
-        url: '/callback'
-    });
+    $stateProvider
+        .state('root', {
+            templateUrl: rootTpl,
+            controller: 'IndexController'
+        })
+        .state('callback', {
+            url: '/callback'
+        });
 
     loginStates($stateProvider);
     projectStates($stateProvider);
@@ -1017,23 +1060,20 @@ function routeConfig(
     settingsStates($stateProvider);
     labStates($stateProvider);
     shareStates($stateProvider);
+    shareStatesV2($stateProvider);
     homeStates($stateProvider);
     importStates($stateProvider);
     adminStates($stateProvider);
 
-    $stateProvider
-        .state('error', {
-            url: '/error',
-            templateUrl: errorTpl,
-            controller: 'ErrorController',
-            controllerAs: '$ctrl',
-            bypassAuth: true
-        });
+    $stateProvider.state('error', {
+        url: '/error',
+        templateUrl: errorTpl,
+        controller: 'ErrorController',
+        controllerAs: '$ctrl',
+        bypassAuth: true
+    });
 
     $urlRouterProvider.otherwise('/home');
 }
 
-
-export default angular
-    .module('index.routes', [])
-    .config(routeConfig);
+export default angular.module('index.routes', []).config(routeConfig);

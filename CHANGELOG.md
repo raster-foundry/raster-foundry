@@ -32,6 +32,9 @@
 - Added endpoint for splitting layers up by date and datasource [\#4738](https://github.com/raster-foundry/raster-foundry/pull/4738)
 - Added the map part of analysis data visualization UI [\#4739](https://github.com/raster-foundry/raster-foundry/pull/4739)
 - Enabled project layer selection in lab input raster nodes [\#4732](https://github.com/raster-foundry/raster-foundry/pull/4732)
+- Enabled project layer splitting on frontend [\#4766](https://github.com/raster-foundry/raster-foundry/pull/4766)
+- Added the histogram part of analysis data visualization UI [\#4756](https://github.com/raster-foundry/raster-foundry/pull/4756)
+- Add v2 project share page with layers and analyses [\#4768](https://github.com/raster-foundry/raster-foundry/pull/4768)
 
 ### Changed
 
@@ -41,6 +44,7 @@
 - Bumped Nginx buffer size for scene creation requests [\#4672](https://github.com/raster-foundry/raster-foundry/pull/4672)
 - Use layer geometry to add a mask when creating analyses [\#4694](https://github.com/raster-foundry/raster-foundry/pull/4694)
 - Made tools reference licenses by id [\#4701](https://github.com/raster-foundry/raster-foundry/pull/4701)
+- Support map tokens on /projects/{} get route, /tool-runs/ get route [\#4768](https://github.com/raster-foundry/raster-foundry/pull/4768)
 - Enabled inserting annotations in bulk in one `INSERT INTO` command [\#4777](https://github.com/raster-foundry/raster-foundry/pull/4777)
 
 ### Deprecated

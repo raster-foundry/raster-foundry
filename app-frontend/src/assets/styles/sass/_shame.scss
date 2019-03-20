@@ -223,7 +223,6 @@ rf-project-editor .leaflet-tile {
     }
 }
 
-
 .mask-item {
     padding: 1rem 2rem;
     border-bottom: 1px solid $border-color-default;
@@ -723,7 +722,9 @@ rf-box-select-item {
 }
 
 .modal-content-header-thin {
-    margin: 0 0 1rem 0;
+    margin: 2rem 0 0.5rem 0;
+    flex: 1;
+    font-style: normal;
 }
 
 .list-group-item.no-flex {
@@ -2471,6 +2472,16 @@ rf-histogram-breakpoint {
             border: 1px solid $brand-primary;
         }
     }
+    &.data-viz-histogram {
+          width: 100%;
+          height: 50px;
+
+        &.mask {
+            position: absolute;
+            z-index: 100;
+            background-color: $white;
+        }
+    }
 }
 
 .histogram-spacer {
@@ -3299,7 +3310,6 @@ rf-project-scene-item {
     margin: 0.5em;
 }
 
-
 rf-project-settings-page,
 rf-project-options-page,
 rf-project-permissions-page,
@@ -3346,8 +3356,6 @@ rf-project-publishing-page {
     }
 }
 
-
-
 .page-card {
     flex: none;
     width: 100%;
@@ -3376,6 +3384,10 @@ rf-project-publishing-page {
         border-radius: none;
         box-shadow: none;
         padding: 0;
+    }
+    &.analysis-histogram-card {
+        max-width: 1284px;
+        padding: 1rem;
     }
 }
 
@@ -3459,6 +3471,11 @@ rf-list-item {
     margin: 0.5em;
     &[ng-click] {
         cursor: pointer;
+    }
+
+    &.histogram-item {
+        margin: 0.5rem auto;
+        max-width: 1288px;
     }
 }
 
@@ -3636,11 +3653,67 @@ rf-aoi-draw-toolbar {
     display: flex;
 }
 
-.analysis-viz-container {
-    padding: 1rem 3rem 1rem 0rem !important;
-}
-
 .panel-analysis-viz-container {
     background-color: $white;
     box-shadow: 0px 3px 8px rgba($shade-normal, 0.2);
+}
+
+.right-gray-border-only {
+    border: none !important;
+    border-right: 1px solid $gray-lightest !important;
+}
+
+.background-inherit {
+    background: inherit !important;
+}
+
+.no-border {
+    border: none !important;
+}
+
+.input-cursor-pointer {
+    cursor: pointer !important;
+}
+
+rf-data-viz-histogram {
+    position: relative;
+    display: block;
+    width: 100%;
+    .data-fill {
+        fill: #465076 !important;
+        fill-opacity: 1 !important;
+    }
+    ng-transclude {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        position: absolute;
+    }
+}
+
+rf-histogram-bar {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+
+    div {
+        height: 50px;
+        width: 2px;
+        position: absolute;
+    }
+}
+
+rf-data-viz-statistics {
+    width: 100%;
+}
+
+.histogram-stat-numbers {
+    justify-content: center;
+}
+
+.modal-inner-container.small.sidebar-top-margin {
+    margin-top: 5em;
 }

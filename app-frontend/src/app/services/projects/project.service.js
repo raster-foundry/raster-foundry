@@ -283,6 +283,17 @@ export default app => {
                             projectId: '@projectId',
                             layerId: '@layerId'
                         }
+                    },
+                    splitLayers: {
+                        method: 'POST',
+                        url:
+                            `${BUILDCONFIG.API_HOST}/api/projects/:projectId/` +
+                            'layers/:layerId/split/',
+                        params: {
+                            projectId: '@projectId',
+                            layerId: '@layerId'
+                        },
+                        isArray: true
                     }
                 }
             );
@@ -309,7 +320,7 @@ export default app => {
                         let num = page.count;
                         let requests = [firstRequest];
                         if (page.count > pageSize) {
-                            let requestMaker = function *(totalResults) {
+                            let requestMaker = function*(totalResults) {
                                 let pageNum = 1;
                                 while (pageNum * pageSize <= totalResults) {
                                     let pageParams = {
@@ -418,7 +429,7 @@ export default app => {
             throw new Error(
                 'ERROR: Update project.service getProjectCorners to use the ' +
                     'project extent. This function was not updated because ' +
-                    'we don\'t seem to use it anywhere right now.'
+                    "we don't seem to use it anywhere right now."
             );
             // return this.fetchProject(id).then(({project}) => {
 
@@ -467,22 +478,6 @@ export default app => {
         }
 
         getProjectLayerScenes(projectId, layerId, params = {}) {
-            return this.Project.layerScenes(
-                Object.assign(
-                    {},
-                    {
-                        projectId,
-                        layerId,
-                        pending: false,
-                        page: 0,
-                        pageSize: 30
-                    },
-                    params
-                )
-            ).$promise;
-        }
-
-        getProjectAanalyses(projectId, layerId, params = {}) {
             return this.Project.layerScenes(
                 Object.assign(
                     {},
@@ -622,18 +617,38 @@ export default app => {
 
         getProjectTileURL(project, params) {
             let projectId = typeof project === 'object' ? project.id : project;
-            let queryParams = params || {};
-            queryParams.tag = new Date().getTime();
-            let formattedParams = L.Util.getParamString(queryParams);
+            let formattedParams = L.Util.getParamString(
+                _.omitBy(
+                    Object.assign(
+                        {
+                            tag: new Date().getTime(),
+                            token: params.mapToken ? null : this.authService.token()
+                        },
+                        params
+                    ),
+                    i => !i
+                )
+            );
             return `${this.tileServer}/${projectId}/{z}/{x}/{y}/${formattedParams}`;
         }
 
-        getProjectLayerTileUrl(project, layer, params = {}, tag = new Date().getTime()) {
+        getProjectLayerTileUrl(project, layer, params = {}) {
             let projectId = typeof project === 'object' ? project.id : project;
             let layerId = typeof layer === 'object' ? layer.id : layer;
+
+            let defaultedParams = _.omitBy(
+                Object.assign(
+                    {},
+                    {
+                        tag: new Date().valueOf(),
+                        token: this.authService.token()
+                    },
+                    params
+                ),
+                p => !p
+            );
             let formattedParams = L.Util.getParamString({
-                tag,
-                ...params
+                ...defaultedParams
             });
 
             return (
@@ -827,13 +842,8 @@ export default app => {
             return this.Project.updateLayer(params).$promise;
         }
 
-        mapLayerFromLayer(
-            project,
-            layer,
-            tag = new Date().valueOf(),
-            token = this.authService.token()
-        ) {
-            let url = this.getProjectLayerTileUrl(project, layer, { token, tag });
+        mapLayerFromLayer(project, layer, params) {
+            let url = this.getProjectLayerTileUrl(project, layer, params);
             let mapLayer = L.tileLayer(url, {
                 maxZoom: 30
             });
@@ -842,6 +852,10 @@ export default app => {
 
         getAllowedActions(projectId) {
             return this.Project.actions({ projectId }).$promise;
+        }
+
+        splitLayers(projectId, layerId, splitOptions) {
+            return this.Project.splitLayers({ projectId, layerId }, splitOptions).$promise;
         }
     }
 

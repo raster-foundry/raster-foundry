@@ -540,48 +540,20 @@ trait ProjectRoutes
     }
   }
 
-  def getProject(projectId: UUID): Route = {
-    onComplete(
-      ProjectDao.isProjectPublic(projectId).transact(xa).unsafeToFuture
-    ) {
-      case Success(true) =>
-        rejectEmptyResponse {
+  def getProject(projectId: UUID): Route = extractTokenHeader { tokenO =>
+    (extractMapTokenParam & projectQueryParameters) {
+      (mapTokenO, projectQueryParams) =>
+        (projectAuthFromMapTokenO(mapTokenO, projectId) |
+          projectAuthFromTokenO(tokenO,
+                                projectId,
+                                projectQueryParams.analysisId) |
+          projectIsPublic(projectId)) {
           complete {
             ProjectDao.query
               .filter(projectId)
               .selectOption
               .transact(xa)
               .unsafeToFuture
-          }
-        }
-      case _ =>
-        authenticate { user =>
-          (projectQueryParameters) { projectQueryParams =>
-            authorizeAsync {
-              val authorized = for {
-                authProject <- ProjectDao.authorized(user,
-                                                     ObjectType.Project,
-                                                     projectId,
-                                                     ActionType.View)
-                authResult <- (authProject, projectQueryParams.analysisId) match {
-                  case (false, Some(analysisId: UUID)) =>
-                    ToolRunDao
-                      .authorizeReferencedProject(user, analysisId, projectId)
-                  case (_, _) => authProject.pure[ConnectionIO]
-                }
-              } yield authResult
-              authorized.transact(xa).unsafeToFuture
-            } {
-              rejectEmptyResponse {
-                complete {
-                  ProjectDao.query
-                    .filter(projectId)
-                    .selectOption
-                    .transact(xa)
-                    .unsafeToFuture
-                }
-              }
-            }
           }
         }
     }

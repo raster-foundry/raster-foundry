@@ -78,7 +78,10 @@ object ProjectLayerScenesDao extends Dao[Scene] {
       .filter(sceneParams)
 
     val paginatedScenes = for {
-      page <- filterQ.page(pageRequest, manualOrder)
+      page <- pageRequest.sort.isEmpty match {
+        case true => filterQ.page(pageRequest, manualOrder)
+        case false => filterQ.page(pageRequest)
+      }
     } yield page
     paginatedScenes.flatMap { (pr: PaginatedResponse[Scene]) =>
       scenesToProjectScenes(pr.results.toList, layerId).map(
