@@ -34,6 +34,7 @@
 - Enabled project layer selection in lab input raster nodes [\#4732](https://github.com/raster-foundry/raster-foundry/pull/4732)
 - OGC
   - Added GetCapabilities WMS and WCS endpoints for projects [\#4767](https://github.com/raster-foundry/raster-foundry/pull/4767)
+  - Added parameter handling for DescribeCoverage, GetCoverage, and GetMap requests [\#4782](https://github.com/raster-foundry/raster-foundry/pull/4782)
   - Added map token authentication to OGC services [\#4778](https://github.com/raster-foundry/raster-foundry/pull/4778)
 
 ### Changed
