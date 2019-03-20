@@ -1,8 +1,18 @@
 package com.rasterfoundry.backsplash.server
 
-import com.rasterfoundry.backsplash.{BacksplashMosaic, OgcStore, ProjectStore, StyleModels}
+import com.rasterfoundry.backsplash.{BacksplashMosaic, OgcStore, ProjectStore}
+import com.rasterfoundry.backsplash.color.{
+  BandDataType,
+  OgcStyles,
+  SingleBandOptions
+}
 import com.rasterfoundry.backsplash.ProjectStore.ToProjectStoreOps
-import com.rasterfoundry.common.datamodel.{ColorComposite, ProjectLayer}
+import com.rasterfoundry.common.datamodel.{
+  Band,
+  ColorComposite,
+  Datasource,
+  ProjectLayer
+}
 import com.rasterfoundry.database.{
   ProjectDao,
   ProjectLayerDao,
@@ -14,7 +24,7 @@ import cats.implicits._
 import doobie.Transactor
 import doobie.implicits._
 import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.server.ogc.{OgcSource, SimpleSource, StyleModel}
+import geotrellis.server.ogc.{OgcSource, SimpleSource, OgcStyle}
 import geotrellis.server.ogc.ows._
 import geotrellis.server.ogc.wcs.WcsModel
 import geotrellis.server.ogc.wms.{WmsModel, WmsParentLayerMeta}
@@ -27,37 +37,43 @@ import java.util.UUID
 class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
     extends ToProjectStoreOps {
 
-  private def compositesToStyleModels(
-      composites: Map[String, ColorComposite]): List[StyleModel] =
-    composites.values map { StyleModels.fromColorComposite _ }
+  private def compositesToOgcStyles(
+      composites: Map[String, ColorComposite]): List[OgcStyle] =
+    composites.values map { OgcStyles.fromColorComposite _ } toList
 
-  private def datasourcesToStyleModels(
-    datasources: List[Datasource]): List[StyleModel] = {
-    val bands: List[Band] = datasources flatMap {
+  private def datasourcesToOgcStyles(
+      datasources: List[Datasource]): List[OgcStyle] = {
+    val bands: List[List[Band]] = datasources map {
       _.bands.as[List[Band]].toOption getOrElse Nil
     }
     val shortest = bands.minBy(_.length)
+    // TODO Getting a NIL from this for a datasource with defined bands, so probably
+    // decoding to the wrong type
     shortest.zipWithIndex map {
       case (_, i) =>
-        StyleModels.fromSingleBandOptions(
+        OgcStyles.fromSingleBandOptions(
           SingleBandOptions.Params(
             i,
             BandDataType.Sequential,
             0,
-            () asJson, // colorScheme -- need to construct this from Viridis somehow
+            () asJson, // TODO colorScheme -- need to construct this from Viridis somehow
             "left"
-          )
+          ),
+          s"Single band - $i"
         )
     }
   }
 
-  private def getStyles(projectLayerId: UUID): IO[List[StyleModel]] =
+  private def getStyles(projectLayerId: UUID): IO[List[OgcStyle]] =
     ProjectLayerDatasourcesDao
       .listProjectLayerDatasources(projectLayerId)
       .transact(xa) map { datasources =>
-      (datasources flatMap { datasource =>
-        compositesToStyleModels(datasource.composites)
-      }) ++ datasourcesToStyleModels(datasources)
+      println(s"Number of datasources: ${datasources.length}")
+      val out = (datasources flatMap { datasource =>
+        compositesToOgcStyles(datasource.composites)
+      }) ++ datasourcesToOgcStyles(datasources)
+      println(s"Number of styles produces: ${out.length}")
+      out
     }
 
   private def projectLayerToSimpleSource(
@@ -65,13 +81,13 @@ class OgcImplicits[P: ProjectStore](layers: P, xa: Transactor[IO])
     for {
       rsm <- BacksplashMosaic.toRasterSource(
         layers.read(projectLayer.id, None, None, None))
-      styleModels <- getStyles(projectLayer.id)
+      ogcStyles <- getStyles(projectLayer.id)
     } yield {
       SimpleSource(
         projectLayer.name,
         projectLayer.id.toString,
         rsm,
-        styleModels
+        ogcStyles
       )
     }
 
